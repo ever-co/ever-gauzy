@@ -6,7 +6,8 @@ import {
 	Organization,
 	IDateRange,
 	PermissionsEnum,
-	TimeLogFilters
+	TimeLogFilters,
+	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import {
@@ -20,7 +21,8 @@ import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
-import { Router } from '@angular/router';
+import { untilDestroyed } from 'ngx-take-until-destroy';
+import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 
 @Component({
 	selector: 'ngx-daily',
@@ -28,6 +30,8 @@ import { Router } from '@angular/router';
 	styleUrls: ['./daily.component.scss']
 })
 export class DailyComponent implements OnInit, OnDestroy {
+	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	PermissionsEnum = PermissionsEnum;
 	timeLogs: TimeLog[];
 	today: Date = new Date();
 	checkboxAll = false;
@@ -51,7 +55,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 			title: 'Delete'
 		}
 	];
-	canChangeSelectedEmployee: boolean;
 	logRequest: TimeLogFilters = {};
 
 	updateLogs$: Subject<any> = new Subject();
@@ -61,8 +64,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 		private timesheetService: TimesheetService,
 		private dialogService: NbDialogService,
 		private store: Store,
-		private nbMenuService: NbMenuService,
-		private router: Router
+		private nbMenuService: NbMenuService
 	) {}
 
 	async ngOnInit() {
@@ -74,12 +76,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
-
-		this.store.user$.subscribe(() => {
-			this.canChangeSelectedEmployee = this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		});
 
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -175,22 +171,40 @@ export class DailyComponent implements OnInit, OnDestroy {
 	openAdd() {
 		this.dialogService
 			.open(EditTimeLogModalComponent)
-			.onClose.subscribe(() => {
-				this.updateLogs$.next();
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
 			});
 	}
 	openEdit(timeLog: TimeLog) {
 		this.dialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose.subscribe(() => {
-				this.updateLogs$.next();
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
+			});
+	}
+
+	openView(timeLog: TimeLog) {
+		this.dialogService
+			.open(ViewTimeLogModalComponent, { context: { timeLog } })
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
 			});
 	}
 
 	onDeleteConfirm(log) {
 		this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.subscribe((type) => {
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((type) => {
 				if (type === 'ok') {
 					this.timesheetService.deleteLogs(log.id).then(() => {
 						const index = this.timeLogs.indexOf(log);
@@ -204,7 +218,8 @@ export class DailyComponent implements OnInit, OnDestroy {
 		if (action === 'Delete') {
 			this.dialogService
 				.open(DeleteConfirmationComponent)
-				.onClose.subscribe((type) => {
+				.onClose.pipe(untilDestroyed(this))
+				.subscribe((type) => {
 					if (type === 'ok') {
 						const logIds = [];
 						for (const key in this.selectedIds) {

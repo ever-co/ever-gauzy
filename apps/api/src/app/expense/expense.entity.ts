@@ -29,7 +29,7 @@ import { OrganizationVendor } from '../organization-vendors/organization-vendors
 @Entity('expense')
 export class Expense extends Base implements IExpense {
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.expense)
 	@JoinTable({
 		name: 'tag_expense'
 	})

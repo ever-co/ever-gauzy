@@ -23,13 +23,16 @@
 						'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
 					}}"
 					id="add-vendor"
+					[(ngModel)]="vendor"
+					required
+					#theAddVendor="ngModel"
 				/>
 			</div>
 			<ga-tags-color-input
 				[selectedTags]="tags"
 				(selectedTagsEvent)="selectedTagsEvent($event)"
 				class="col-sm-3"
-				[isTenantLevel]="true"
+				[isOrgLevel]="true"
 			>
 			</ga-tags-color-input>
 			<span class="col-sm-3" style="margin-top: 29px;"
@@ -38,6 +41,7 @@
 					(click)="addVendor(addInput.value)"
 					nbButton
 					status="success"
+					[disabled]="theAddVendor.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
@@ -78,12 +82,15 @@
 							type="text"
 							[value]="selectedVendor.name"
 							fullWidth
+							[(ngModel)]="vendor"
+							required
+							#theEditVendor="ngModel"
 						/>
 					</div>
 					<ga-tags-color-input
 						[selectedTags]="tags"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isTenantLevel]="true"
+						[isOrgLevel]="true"
 					>
 					</ga-tags-color-input>
 					<span class="col-2 pl-2 pr-1">
@@ -94,6 +101,7 @@
 							"
 							nbButton
 							status="success"
+							[disabled]="theEditVendor.invalid"
 						>
 							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span

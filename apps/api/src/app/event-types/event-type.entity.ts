@@ -25,7 +25,7 @@ import { Tag } from '../tags/tag.entity';
 @Entity('event_type')
 export class EventType extends Base implements IEventType {
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.eventType)
 	@JoinTable({ name: 'tag_event_type' })
 	tags?: Tag[];
 
@@ -46,6 +46,7 @@ export class EventType extends Base implements IEventType {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((eventType: EventType) => eventType.organization)
+	@Column({ nullable: true })
 	readonly organizationId: string;
 
 	@ApiProperty({ type: Number })

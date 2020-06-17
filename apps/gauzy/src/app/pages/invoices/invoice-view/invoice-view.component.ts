@@ -3,15 +3,8 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import {
-	Invoice,
-	OrganizationClients,
-	Organization,
-	InvoiceTypeEnum
-} from '@gauzy/models';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { Invoice, InvoiceTypeEnum } from '@gauzy/models';
 import { Subject } from 'rxjs';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
@@ -30,8 +23,6 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	invoiceId: string;
 	invoice: Invoice;
-	client: OrganizationClients;
-	organization: Organization;
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input() isEstimate: boolean;
@@ -40,8 +31,6 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute,
 		private invoicesService: InvoicesService,
-		private organizationClientsService: OrganizationClientsService,
-		private organizationService: OrganizationsService,
 		private toastrService: NbToastrService,
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
@@ -60,16 +49,11 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 
 	async getInvoice() {
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems'
+			'invoiceItems',
+			'fromOrganization',
+			'toClient'
 		]);
 		this.invoice = invoice;
-		const client = await this.organizationClientsService.getById(
-			this.invoice.clientId
-		);
-		this.client = client;
-		this.organizationService
-			.getById(this.invoice.organizationId)
-			.subscribe((org) => (this.organization = org));
 	}
 
 	async download() {
@@ -96,8 +80,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 
 		docDefinition = await generatePdf(
 			this.invoice,
-			this.organization,
-			this.client,
+			this.invoice.fromOrganization,
+			this.invoice.toClient,
 			service
 		);
 

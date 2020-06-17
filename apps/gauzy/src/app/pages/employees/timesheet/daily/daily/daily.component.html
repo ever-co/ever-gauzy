@@ -13,11 +13,6 @@
 	<div class="col">
 		<ngx-filters (filtersChange)="filtersChange($event)"></ngx-filters>
 	</div>
-	<!-- <div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
-		<ga-employee-selector
-			class="header-selector employee-selector"
-		></ga-employee-selector>
-	</div> -->
 </div>
 <div
 	class="log-container"
@@ -42,7 +37,12 @@
 	<div
 		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 	>
-		<div class="col-auto check-box" *ngIf="organization?.allowDeleteTime">
+		<div
+			class="col-auto check-box"
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+			]"
+		>
 			<nb-checkbox
 				[indeterminate]="false"
 				#checkAllCheckbox
@@ -54,7 +54,10 @@
 		<div class="col project-name">
 			Project
 		</div>
-		<div class="col employee-name" *ngIf="canChangeSelectedEmployee">
+		<div
+			class="col employee-name"
+			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+		>
 			Employee
 		</div>
 		<div class="col">Log type</div>
@@ -69,7 +72,9 @@
 		>
 			<div
 				class="col-auto check-box"
-				*ngIf="organization?.allowDeleteTime"
+				*ngxPermissionsOnly="[
+					OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+				]"
 			>
 				<nb-checkbox
 					[value]="log.id"
@@ -79,30 +84,29 @@
 				></nb-checkbox>
 			</div>
 			<div class="col project-name">
-				<span *ngIf="log?.task; else noProfject">{{
-					log?.project?.name
-				}}</span>
+				<span *ngIf="log?.task; else noProfject">
+					{{ log?.project?.name }}
+				</span>
 				<ng-template #noProfject>
 					<span>No project</span>
 				</ng-template>
 				<div class="mt-2 small">
 					<span *ngIf="log?.task; else noToDo">
 						<strong>TO-DO : </strong>
-						{{ log?.task?.title }}</span
-					>
+						{{ log?.task?.title }}
+					</span>
 					<ng-template #noToDo>
 						<span>No to-do</span>
 					</ng-template>
 				</div>
 			</div>
-			<div class="col employee-name" *ngIf="canChangeSelectedEmployee">
+			<div
+				class="col employee-name"
+				*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+			>
 				<div class="name-container">
 					<ngx-avatar
-						[name]="
-							log?.employee?.user?.firstName +
-							' ' +
-							log?.employee?.user?.lastName
-						"
+						[name]="log?.employee?.user?.name"
 						[src]="log?.employee?.user?.imageUrl"
 					></ngx-avatar>
 				</div>
@@ -110,15 +114,16 @@
 			<div class="col">{{ log.logType }}</div>
 			<div class="col">{{ log.duration | durationFormat }}</div>
 			<div class="col">
-				<span class="start-timer">{{
-					log.startedAt | utcToLocal | timeFormat: true
-				}}</span>
+				<span class="start-timer">
+					{{ log.startedAt | utcToLocal | timeFormat: true }}
+				</span>
 				-
 				<span
 					class="end-timer"
 					*ngIf="log.stoppedAt; else runningTimer"
-					>{{ log.stoppedAt | utcToLocal | timeFormat: true }}</span
 				>
+					{{ log.stoppedAt | utcToLocal | timeFormat: true }}
+				</span>
 				<ng-template #runningTimer>
 					<span class="running-timer"> Till now </span>
 				</ng-template>
@@ -126,7 +131,18 @@
 			<div class="col action">
 				<div class="action-button">
 					<button
-						*ngIf="organization?.allowModifyTime"
+						class="m-1"
+						nbButton
+						status="primary"
+						size="small"
+						(click)="openView(log)"
+					>
+						<nb-icon icon="eye-outline"></nb-icon> View
+					</button>
+					<button
+						*ngxPermissionsOnly="[
+							OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+						]"
 						[disabled]="!log.stoppedAt"
 						class="m-1"
 						nbButton
@@ -134,10 +150,12 @@
 						size="small"
 						(click)="openEdit(log)"
 					>
-						Edit
+						<nb-icon icon="edit"></nb-icon> Edit
 					</button>
 					<button
-						*ngIf="organization?.allowDeleteTime"
+						*ngxPermissionsOnly="[
+							OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+						]"
 						[disabled]="!log.stoppedAt"
 						class="m-1"
 						nbButton
@@ -145,7 +163,7 @@
 						size="small"
 						(click)="onDeleteConfirm(log)"
 					>
-						Delete
+						<nb-icon icon="trash-2-outline"></nb-icon> Delete
 					</button>
 				</div>
 			</div>

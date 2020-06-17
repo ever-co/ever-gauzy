@@ -40,7 +40,10 @@ export class GoalController extends CrudController<Goal> {
 	})
 	@Get('all')
 	async getAll() {
-		return this.goalService.findAll();
+		return this.goalService.findAll({
+			relations: ['keyResults', 'keyResults.updates', 'keyResults.goal'],
+			order: { createdAt: 'ASC' }
+		});
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })

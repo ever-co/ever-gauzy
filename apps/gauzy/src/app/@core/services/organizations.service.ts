@@ -65,18 +65,14 @@ export class OrganizationsService {
 
 	getByProfileLink(
 		profile_link: string = '',
-		select?: OrganizationSelectInput[]
+		select?: OrganizationSelectInput[],
+		relations?: string[]
 	): Observable<Organization> {
-		const option = JSON.stringify({
-			relations: ['skills']
-		});
+		const option = JSON.stringify(relations || '');
 		return this.http.get<Organization>(
 			`/api/organization/profile/${profile_link}/${JSON.stringify(
 				select || ''
-			)}`,
-			{
-				params: { option }
-			}
+			)}/${option}`
 		);
 	}
 }

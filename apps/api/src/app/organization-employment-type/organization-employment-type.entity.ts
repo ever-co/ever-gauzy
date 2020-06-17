@@ -10,7 +10,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class OrganizationEmploymentType extends Base
 	implements IOrganizationEmploymentType {
 	@ApiProperty()
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.organizationEmploymentType)
 	@JoinTable({
 		name: 'tag_organization_employment_types'
 	})

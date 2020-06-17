@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Organization, PermissionGroups, RolePermissions, RolesEnum } from '@gauzy/models';
+import { Organization, PermissionGroups, RolePermissions, RolesEnum, User } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { RolePermissionsService } from 'apps/gauzy/src/app/@core/services/role-permissions.service';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { Store } from '../../../@core/services/store.service';
 
@@ -17,6 +17,7 @@ import { Store } from '../../../@core/services/store.service';
 export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
+	private currentUser: User;
 
 	organization: Organization;
 
@@ -45,7 +46,12 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.loadPermissionsForSelectedRole();
+		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+			this.currentUser = user;
+			if (this.currentUser && this.currentUser.tenant) {
+				this.loadPermissionsForSelectedRole();
+			}
+		});
 	}
 
 	async updateOrganizationSettings() {
@@ -70,7 +76,7 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 		const role = await this.rolesService
 			.getRoleByName({
 				name: this.selectedRole,
-				tenant: this.store.user.tenant
+				tenant: this.currentUser.tenant
 			})
 			.pipe(first())
 			.toPromise();

@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { OrganizationAwardsService } from '../../../@core/services/organization-awards.service';
 import { OrganizationLanguagesService } from '../../../@core/services/organization-languages.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ngx-public-page-mutation',
@@ -28,6 +29,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 	currencies = Object.values(CurrenciesEnum);
 	client_focus = Object.values(ClientFocusEnum);
 
+	selectedLanguageLevel: string;
 	showAddAward: boolean;
 	showAddLanguage: boolean;
 	awardExist: boolean;
@@ -39,9 +41,10 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 	organization_languages: OrganizationLanguages[];
 	skills: Skill[] = [];
 	languages: Language[] = [];
+	moment = moment;
 
-	get size() {
-		return this.form.get('size').value;
+	get totalEmployees() {
+		return this.form.get('totalEmployees').value;
 	}
 
 	get banner() {
@@ -90,7 +93,11 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 			if (!formValue.client_focus) {
 				formValue.client_focus = this.organization.client_focus;
 			}
-			console.log(formValue);
+			if (!!formValue.founded) {
+				formValue.registrationDate = moment(
+					this.organization.registrationDate
+				).year(formValue.founded);
+			}
 			this.dialogRef.close(formValue);
 		}
 	}
@@ -110,8 +117,8 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 			this.form = this.fb.group({
 				name: [this.organization.name, Validators.required],
 				banner: this.organization.banner,
-				size: this.organization.size,
-				founded: this.organization.founded,
+				totalEmployees: this.organization.totalEmployees,
+				founded: moment(this.organization.registrationDate).format('Y'),
 				short_description: this.organization.short_description,
 				overview: this.organization.overview,
 				show_income: this.organization.show_income,
@@ -122,7 +129,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 					.show_minimum_project_size,
 				show_projects_count: this.organization.show_projects_count,
 				client_focus: [],
-				skills: [],
+				skills: this.organization.skills,
 				languages: []
 			});
 		}

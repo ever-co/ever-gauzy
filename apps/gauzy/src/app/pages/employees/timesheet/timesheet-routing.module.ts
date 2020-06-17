@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsEnum } from '@gauzy/models';
 
 const routes: Routes = [
 	{
@@ -31,6 +33,13 @@ const routes: Routes = [
 			},
 			{
 				path: 'approvals',
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.CAN_APPROVE_TIMESHEET],
+						redirectTo: '/pages/employees/timesheets/daily'
+					}
+				},
 				loadChildren: () =>
 					import('./approvals/approvals.module').then(
 						(m) => m.ApprovalsModule

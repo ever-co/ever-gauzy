@@ -1,18 +1,23 @@
-import { Entity, Column } from 'typeorm';
+import {
+	Entity,
+	Column,
+	ManyToOne,
+	RelationId,
+	JoinColumn,
+	OneToMany
+} from 'typeorm';
 import { KeyResult as IKeyResult } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
+import { Goal } from '../goal/goal.entity';
+import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 
 @Entity('key_result')
 export class KeyResult extends Base implements IKeyResult {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	goalId: string;
 
 	@ApiProperty({ type: String })
 	@Column()
@@ -68,4 +73,22 @@ export class KeyResult extends Base implements IKeyResult {
 	@Column()
 	@IsOptional()
 	status?: string;
+
+	@ApiProperty({ type: Goal })
+	@ManyToOne((type) => Goal, (goal) => goal.keyResults)
+	@JoinColumn({ name: 'goalId' })
+	goal: Goal;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((keyResult: KeyResult) => keyResult.goal)
+	@Column({ nullable: true })
+	readonly goalId?: string;
+
+	@ApiProperty({ type: KeyResultUpdate })
+	@OneToMany(
+		(type) => KeyResultUpdate,
+		(keyResultUpdate) => keyResultUpdate.keyResult
+	)
+	@IsOptional()
+	updates?: KeyResultUpdate[];
 }

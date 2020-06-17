@@ -6,13 +6,15 @@ import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
-import { EditKeyresultsComponent } from './edit-keyresults/edit-keyresults.component';
+import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
-import { Goals, KeyResult } from '@gauzy/models';
+import { Goal, KeyResult } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
-import { KeyresultUpdateComponent } from './keyresult-update/keyresult-update.component';
+import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { GoalService } from '../../@core/services/goal.service';
-import { KeyresultService } from '../../@core/services/keyresult.service';
+import { KeyResultService } from '../../@core/services/keyresult.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 
 @Component({
 	selector: 'ga-goals',
@@ -27,7 +29,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	employee: SelectedEmployee;
 	employeeId: string;
 	private _ngDestroy$ = new Subject<void>();
-	goals: Goals[];
+	goals: Goal[];
 	noGoals = true;
 	keyResult: KeyResult[];
 	constructor(
@@ -36,32 +38,13 @@ export class GoalsComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private goalService: GoalService,
-		private keyResultService: KeyresultService
+		private errorHandler: ErrorHandlingService,
+		private keyResultService: KeyResultService
 	) {
 		super(translate);
 	}
 
 	async ngOnInit() {
-		this.goalService
-			.getAllGoals()
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((goals) => {
-				if (goals.items.length > 0) {
-					this.noGoals = false;
-				}
-				this.goals = goals.items;
-				this.goals.forEach(async (goal, index) => {
-					await this.keyResultService
-						.getAllKeyResults(goal.id)
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe((val) => {
-							if (!!val.items) {
-								this.goals[index].keyResults = val.items;
-							}
-						});
-				});
-			});
-
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -73,13 +56,21 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	private async loadPage() {
-		const { name } = this.store.selectedOrganization;
+		const { name } = this.store.selectedOrganization
+			? this.store.selectedOrganization
+			: { name: 'new' };
 		this.loading = false;
 		this.organizationName = name;
+		this.goalService.getAllGoals().then((goals) => {
+			if (goals.items.length > 0) {
+				this.noGoals = false;
+			}
+			this.goals = goals.items;
+		});
 	}
 
 	async addKeyResult(index, keyResult) {
-		const dialog = this.dialogService.open(EditKeyresultsComponent, {
+		const dialog = this.dialogService.open(EditKeyResultsComponent, {
 			hasScroll: true,
 			context: {
 				data: keyResult
@@ -87,25 +78,47 @@ export class GoalsComponent extends TranslationBaseComponent
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (response) {
-			const data = {
-				...response,
-				goalId: this.goals[index].id
-			};
-			this.keyResultService.createKeyResult(data);
-			this.toastrService.primary('key result added', 'Success');
-			this.loadPage();
+			if (!!keyResult) {
+				const keyResultData = response;
+				delete keyResultData.goal;
+				delete keyResultData.updates;
+				await this.keyResultService
+					.update(keyResult.id, keyResultData)
+					.then((val) => {
+						if (val) {
+							this.toastrService.primary(
+								'Key Result Updated',
+								'Success'
+							);
+							this.loadPage();
+						}
+					});
+			} else {
+				const data = {
+					...response,
+					goalId: this.goals[index].id
+				};
+				await this.keyResultService
+					.createKeyResult(data)
+					.then((val) => {
+						if (val) {
+							this.toastrService.primary(
+								'Key Result Added',
+								'Success'
+							);
+							this.loadPage();
+						}
+					});
+			}
 		}
 	}
 
 	calculateGoalProgress(totalCount, keyResults) {
-		console.table(keyResults);
 		const progressTotal = keyResults.reduce((a, b) => a + b.progress, 0);
-		console.log((progressTotal / totalCount) * 100);
 		return Math.round((progressTotal / totalCount) * 100);
 	}
 
 	async createObjective(goal, index) {
-		console.log(goal);
 		const dialog = this.dialogService.open(EditObjectiveComponent, {
 			hasScroll: true,
 			context: {
@@ -122,26 +135,43 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.goals[index].deadline = response.deadline;
 				this.goals[index].owner = response.owner;
 				this.goals[index].lead = response.lead;
-				this.goalService.update(goal.id, this.goals[index]);
-				this.toastrService.primary('Objective updated', 'Success');
+				const goalData = this.goals[index];
+				delete goalData.keyResults;
+				await this.goalService.update(goal.id, goalData).then((res) => {
+					if (res) {
+						this.toastrService.primary(
+							'Objective updated',
+							'Success'
+						);
+					}
+				});
 			} else {
 				this.goals.push({
 					...response,
-					type: 'organization',
+					level: 'organization',
 					organizationId: this.selectedOrganizationId,
 					progress: 0
 				});
 				const data = {
 					...response,
-					type: 'organization',
+					level: 'organization',
 					organizationId: this.selectedOrganizationId,
 					progress: 0
 				};
-				console.table(data);
-				await this.goalService.createGoal(data);
-				this.toastrService.primary('Objective added', 'Success');
+				try {
+					await this.goalService
+						.createGoal(data)
+						.then(async (val) => {
+							await this.goalService.getAllGoals();
+							this.toastrService.primary(
+								'Objective added',
+								'Success'
+							);
+						});
+				} catch (error) {
+					this.errorHandler.handleError(error);
+				}
 			}
-			await this.goalService.getAllGoals();
 			this.loadPage();
 		}
 	}
@@ -155,19 +185,52 @@ export class GoalsComponent extends TranslationBaseComponent
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			await this.goalService.update(response.id, response);
-			this.toastrService.primary('Goal updated', 'Success');
-			this.loadPage();
+			const goalData = response;
+			delete goalData.keyResults;
+			await this.goalService.update(response.id, goalData).then((res) => {
+				if (res) {
+					this.toastrService.primary('Goal updated', 'Success');
+					this.loadPage();
+				}
+			});
 		}
 	}
 
-	async keyResultUpdate(index, selectedkeyResult: KeyResult) {
+	async openKeyResultDetails(index, selectedkeyResult) {
+		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
+			hasScroll: true,
+			context: {
+				keyResult: selectedkeyResult,
+				owner: this.goals[index].owner
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			if (response === 'deleted') {
+				this.toastrService.danger('Key Result deleted', 'Success');
+				this.loadPage();
+			} else {
+				const keyResNumber = this.goals[index].keyResults.length * 100;
+				this.goals[index].progress = this.calculateGoalProgress(
+					keyResNumber,
+					this.goals[index].keyResults
+				);
+				const goalData = this.goals[index];
+				delete goalData.keyResults;
+				await this.goalService.update(this.goals[index].id, goalData);
+				this.toastrService.primary('Key Result updated', 'Success');
+				this.loadPage();
+			}
+		}
+	}
+
+	async keyResultUpdate(index, selectedKeyResult: KeyResult) {
 		const keyResultDialog = this.dialogService.open(
-			KeyresultUpdateComponent,
+			KeyResultUpdateComponent,
 			{
 				hasScroll: true,
 				context: {
-					keyResult: selectedkeyResult
+					keyResult: selectedKeyResult
 				}
 			}
 		);
@@ -175,13 +238,24 @@ export class GoalsComponent extends TranslationBaseComponent
 			.pipe(first())
 			.toPromise();
 		if (!!response) {
-			await this.keyResultService.update(selectedkeyResult.id, response);
+			const keyResultData = response;
+			delete keyResultData.goal;
+			delete keyResultData.updates;
+			await this.keyResultService.update(
+				selectedKeyResult.id,
+				keyResultData
+			);
 			const keyResNumber = this.goals[index].keyResults.length * 100;
 			this.goals[index].progress = this.calculateGoalProgress(
 				keyResNumber,
 				this.goals[index].keyResults
 			);
-			this.goalService.update(this.goals[index].id, this.goals[index]);
+			await this.goalService.update(
+				this.goals[index].id,
+				this.goals[index]
+			);
+			this.toastrService.primary('Key Result updated', 'Success');
+			this.loadPage();
 		}
 	}
 

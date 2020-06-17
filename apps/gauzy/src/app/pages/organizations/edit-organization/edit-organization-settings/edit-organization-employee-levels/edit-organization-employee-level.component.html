@@ -19,12 +19,15 @@
 					nbInput
 					type="text"
 					[placeholder]="'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate"
+					[(ngModel)]="add"
+					required
+					#addLevel="ngModel"
 				/>
 			</div>
 			<ga-tags-color-input
 				[selectedTags]="tags"
 				(selectedTagsEvent)="selectedTagsEvent($event)"
-				[isTenantLevel]="true"
+				[isOrgLevel]="true"
 				class="col-sm-3"
 			>
 			</ga-tags-color-input>
@@ -34,6 +37,7 @@
 					(click)="addEmployeeLevel(addInput.value)"
 					nbButton
 					status="success"
+					[disabled]="addLevel.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
@@ -69,13 +73,21 @@
 						<label class="label">{{
 							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
 						}}</label>
-						<input nbInput type="text" #level [value]="e.level" />
+						<input
+							nbInput
+							type="text"
+							#level
+							[value]="e.level"
+							[(ngModel)]="edit"
+							required
+							#editLevel="ngModel"
+						/>
 					</div>
 					<ga-tags-color-input
 						class="col-3"
 						[selectedTags]="tags"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isTenantLevel]="true"
+						[isOrgLevel]="true"
 					>
 					</ga-tags-color-input>
 					<span
@@ -86,6 +98,7 @@
 							(click)="editEmployeeLevel(e.id, level.value)"
 							nbButton
 							status="success"
+							[disabled]="editLevel.invalid"
 						>
 							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span

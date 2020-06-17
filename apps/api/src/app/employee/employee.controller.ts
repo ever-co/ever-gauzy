@@ -104,7 +104,9 @@ export class EmployeeController extends CrudController<Employee> {
 	async findAllWorkingEmployees(
 		@Query('data') data: string
 	): Promise<IPagination<Employee>> {
-		const { organizationId, forMonth, withUser } = JSON.parse(data);
+		const { organizationId, forMonth = new Date(), withUser } = JSON.parse(
+			data
+		);
 		return this.employeeService.findWorkingEmployees(
 			organizationId,
 			new Date(forMonth),
@@ -127,10 +129,17 @@ export class EmployeeController extends CrudController<Employee> {
 		@Param('id') id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Employee> {
-		const { relations = [] } = data;
-		return this.employeeService.findOne(id, {
-			relations
-		});
+		const { relations = [], useTenant } = data;
+
+		if (useTenant) {
+			return this.employeeService.findOne(id, {
+				relations
+			});
+		} else {
+			return this.employeeService.findWithoutTennant(id, {
+				relations
+			});
+		}
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
