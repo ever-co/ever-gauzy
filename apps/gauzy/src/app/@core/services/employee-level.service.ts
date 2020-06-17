@@ -16,12 +16,13 @@ export class EmployeeLevelService {
 		items: EmployeeLevel[];
 		total: number;
 	}> {
+		const data = JSON.stringify({ relations });
 		return this.http
 			.get<{
 				items: EmployeeLevel[];
 				total: number;
 			}>(`/api/employee-level/${orgId}`, {
-				params: { relations }
+				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
