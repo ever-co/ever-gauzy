@@ -23,6 +23,9 @@
 						'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
 					}}"
 					id="add-vendor"
+					[(ngModel)]="vendor"
+					required
+					#theAddVendor="ngModel"
 				/>
 			</div>
 			<ga-tags-color-input
@@ -38,6 +41,7 @@
 					(click)="addVendor(addInput.value)"
 					nbButton
 					status="success"
+					[disabled]="theAddVendor.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
@@ -78,6 +82,9 @@
 							type="text"
 							[value]="selectedVendor.name"
 							fullWidth
+							[(ngModel)]="vendor"
+							required
+							#theEditVendor="ngModel"
 						/>
 					</div>
 					<ga-tags-color-input
@@ -94,6 +101,7 @@
 							"
 							nbButton
 							status="success"
+							[disabled]="theEditVendor.invalid"
 						>
 							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span
