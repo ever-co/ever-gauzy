@@ -1,3 +1,4 @@
+import { HelpCenterArticle } from './../help-center-article/help-center-article.entity';
 // Copyright (c) 2019-2020 Ever Co. LTD
 
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
@@ -161,6 +162,7 @@ const entities = [
 	CandidateTechnologies,
 	CandidateCriterionsRating,
 	HelpCenter,
+	HelpCenterArticle,
 	IntegrationSetting,
 	Integration,
 	IntegrationType,

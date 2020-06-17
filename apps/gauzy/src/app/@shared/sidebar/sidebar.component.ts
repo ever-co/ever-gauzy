@@ -22,6 +22,7 @@ import { EditBaseComponent } from './edit-base/edit-base.component';
 import { AddCategoryComponent } from './add-category/add-category.component';
 import { EditCategoryComponent } from './edit-category/edit-category.component';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
+import { DeleteBaseComponent } from './delete-base/delete-base.component';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -82,10 +83,13 @@ export class SidebarComponent extends TranslationBaseComponent
 		});
 		this.settingsContextMenu = [
 			{
+				title: 'Add Category'
+			},
+			{
 				title: 'Edit Knowledge Base'
 			},
 			{
-				title: 'Add Category'
+				title: 'Delete Base'
 			}
 		];
 		this.nbMenuService.onItemClick().subscribe((elem) => {
@@ -93,6 +97,8 @@ export class SidebarComponent extends TranslationBaseComponent
 				this.dialogService.open(EditBaseComponent);
 			if (elem.item.title === 'Add Category')
 				this.dialogService.open(AddCategoryComponent);
+			if (elem.item.title === 'Delete Base')
+				this.dialogService.open(DeleteBaseComponent);
 		});
 	}
 

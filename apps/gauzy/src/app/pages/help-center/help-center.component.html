@@ -25,18 +25,14 @@
 					<p class="create-at">create at:</p>
 				</div>
 			</div>
-			<nb-icon class="edit-icon" icon="edit-outline"></nb-icon>
-		</nb-card>
-		<nb-card class="cards">
-			<div>
-				<h6 class="label">aaaa</h6>
-				<p>description</p>
-				<div class="user-info">
-					<p>written by</p>
-					<p class="create-at">create at:</p>
-				</div>
+			<div class="mr-3">
+				<nb-icon class="edit-icon" icon="edit-outline"></nb-icon>
+				<nb-icon
+					class="edit-icon"
+					icon="trash-2-outline"
+					(click)="deleteNode()"
+				></nb-icon>
 			</div>
-			<nb-icon class="edit-icon" icon="edit-outline"></nb-icon>
 		</nb-card>
 	</div>
 </div>

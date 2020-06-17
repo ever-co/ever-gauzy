@@ -1,4 +1,3 @@
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { ThemeModule, HttpLoaderFactory } from '../../../@theme/theme.module';
 import {
@@ -10,9 +9,8 @@ import {
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { AddArticleComponent } from './add-article.component';
 import { CKEditorModule } from 'ng2-ckeditor';
-import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
+import { EditArticleComponent } from './edit-article.component';
 
 @NgModule({
 	imports: [
@@ -23,9 +21,6 @@ import { HelpCenterArticleService } from '../../../@core/services/help-center-ar
 		NbInputModule,
 		NbButtonModule,
 		NbSelectModule,
-		FormsModule,
-		ReactiveFormsModule,
-		HelpCenterArticleService,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -34,9 +29,8 @@ import { HelpCenterArticleService } from '../../../@core/services/help-center-ar
 			}
 		})
 	],
-	// providers: [],
-	entryComponents: [AddArticleComponent],
-	declarations: [AddArticleComponent],
-	exports: [AddArticleComponent]
+	entryComponents: [EditArticleComponent],
+	declarations: [EditArticleComponent],
+	exports: [EditArticleComponent]
 })
-export class AddArticleModule {}
+export class EditArticleModule {}

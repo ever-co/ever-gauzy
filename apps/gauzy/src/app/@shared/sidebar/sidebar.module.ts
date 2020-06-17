@@ -25,12 +25,14 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 import { EditBaseModule } from './edit-base/edit-base.module';
 import { EditCategoryModule } from './edit-category/edit-category.module';
 import { DeleteCategoryModule } from './delete-category/delete-category.module';
+import { DeleteBaseModule } from './delete-base/delete-base.module';
 
 @NgModule({
 	imports: [
 		AddBaseModule,
 		AddIconModule,
 		EditBaseModule,
+		DeleteBaseModule,
 		AddCategoryModule,
 		EditCategoryModule,
 		DeleteCategoryModule,

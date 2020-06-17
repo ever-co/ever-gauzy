@@ -5,6 +5,8 @@ import { AddArticleComponent } from './add-article/add-article.component';
 import { Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { first } from 'rxjs/operators';
+import { DeleteArticleComponent } from './delete-article/delete-article.component';
+import { EditArticleComponent } from './edit-article/edit-article.component';
 
 @Component({
 	selector: 'ga-help-center',
@@ -24,6 +26,14 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	async addNode() {
 		const dialog = this.dialogService.open(AddArticleComponent);
 		const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
+	}
+
+	deleteNode() {
+		this.dialogService.open(DeleteArticleComponent);
+	}
+
+	editNode() {
+		this.dialogService.open(EditArticleComponent);
 	}
 
 	ngOnDestroy() {
