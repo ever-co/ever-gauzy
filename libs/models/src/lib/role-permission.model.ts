@@ -100,7 +100,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
 		PermissionsEnum.ORG_TAGS_EDIT,
 		PermissionsEnum.VIEW_ALL_EMAILS,
-		PermissionsEnum.ORG_HELP_CENTER_EDIT
+		PermissionsEnum.ORG_HELP_CENTER_EDIT,
+    PermissionsEnum.EDIT_SALES_PIPELINES
 	],
 
 	//Readonly permissions, are only enabled for admin role
@@ -124,6 +125,5 @@ export const PermissionGroups = {
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
 		PermissionsEnum.REQUEST_APPROVAL_VIEW,
-    PermissionsEnum.EDIT_SALES_PIPELINES
 	]
 };
