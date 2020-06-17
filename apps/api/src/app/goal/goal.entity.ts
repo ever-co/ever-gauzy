@@ -1,5 +1,5 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { Goals as IGoal } from '@gauzy/models';
+import { Goal as IGoal } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
@@ -30,7 +30,7 @@ export class Goal extends Base implements IGoal {
 
 	@ApiProperty({ type: String })
 	@Column()
-	type: string;
+	level: string;
 
 	@ApiProperty({ type: Number })
 	@Column()
@@ -41,7 +41,7 @@ export class Goal extends Base implements IGoal {
 	organizationId: string;
 
 	@ApiProperty({ type: KeyResult })
-	@OneToMany((type) => KeyResult, (keyresult) => keyresult.goal)
+	@OneToMany((type) => KeyResult, (keyResult) => keyResult.goal)
 	@IsOptional()
 	keyResults?: KeyResult[];
 }

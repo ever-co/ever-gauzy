@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Goals } from '@gauzy/models';
+import { Goal } from '@gauzy/models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { tap, catchError, first } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
 
 interface IGoalResponse {
-	items: Goals[];
+	items: Goal[];
 	count: number;
 }
 
@@ -20,9 +20,9 @@ export class GoalService {
 		private toastrService: NbToastrService
 	) {}
 
-	createGoal(goal): Promise<Goals> {
+	createGoal(goal): Promise<Goal> {
 		return this._http
-			.post<Goals>(`${this.API_URL}/create`, goal)
+			.post<Goal>(`${this.API_URL}/create`, goal)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary('Goal Created', 'Success')
@@ -32,9 +32,9 @@ export class GoalService {
 			.toPromise();
 	}
 
-	update(id: string, goals: Goals): Promise<Goals> {
+	update(id: string, goal: Goal): Promise<Goal> {
 		return this._http
-			.put<Goals>(`${this.API_URL}/${id}`, goals)
+			.put<Goal>(`${this.API_URL}/${id}`, goal)
 			.pipe(first())
 			.toPromise();
 	}
