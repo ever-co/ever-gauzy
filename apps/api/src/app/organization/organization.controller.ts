@@ -94,14 +94,16 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('profile/:profile_link/:select')
+	@Get('profile/:profile_link/:select/:relations')
 	async findOneByProfileLink(
 		@Param('profile_link') profile_link: string,
-		@Param('select') select: string
+		@Param('select') select: string,
+		@Param('relations') relations: string
 	): Promise<Organization> {
 		return await this.organizationService.findByPublicLink(
 			profile_link,
-			select
+			select,
+			relations
 		);
 	}
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Goals } from '@gauzy/models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { throwError } from 'rxjs';
 import { tap, catchError, first } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
 
@@ -20,11 +20,16 @@ export class GoalService {
 		private toastrService: NbToastrService
 	) {}
 
-	createGoal(goal): Observable<Goals> {
-		return this._http.post<Goals>(`${this.API_URL}/create`, goal).pipe(
-			tap(() => this.toastrService.primary('Goal Created', 'Success')),
-			catchError((error) => this.errorHandler(error))
-		);
+	createGoal(goal): Promise<Goals> {
+		return this._http
+			.post<Goals>(`${this.API_URL}/create`, goal)
+			.pipe(
+				tap(() =>
+					this.toastrService.primary('Goal Created', 'Success')
+				),
+				catchError((error) => this.errorHandler(error))
+			)
+			.toPromise();
 	}
 
 	update(id: string, goals: Goals): Promise<Goals> {
@@ -34,10 +39,11 @@ export class GoalService {
 			.toPromise();
 	}
 
-	getAllGoals(): Observable<IGoalResponse> {
+	getAllGoals(): Promise<IGoalResponse> {
 		return this._http
 			.get<IGoalResponse>(`${this.API_URL}/all`)
-			.pipe(catchError((error) => this.errorHandler(error)));
+			.pipe(catchError((error) => this.errorHandler(error)))
+			.toPromise();
 	}
 
 	errorHandler(error: HttpErrorResponse) {

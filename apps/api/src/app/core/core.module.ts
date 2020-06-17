@@ -91,6 +91,7 @@ import { CandidatePersonalQualities } from '../candidate-personal-qualities/cand
 import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
 import { Goal } from '../goal/goal.entity';
 import { KeyResult } from '../keyresult/keyresult.entity';
+import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 
 const entities = [
@@ -134,6 +135,7 @@ const entities = [
 	Task,
 	Goal,
 	KeyResult,
+	KeyResultUpdate,
 	TimeSlot,
 	Timesheet,
 	TimeLog,

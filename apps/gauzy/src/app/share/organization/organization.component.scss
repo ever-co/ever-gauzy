@@ -142,3 +142,9 @@ h5.org-title span.client-focus {
   float: left;
   padding-left: 0;
 }
+
+.nb_list.org_skills .nb_list_item.item,
+.nb_list.org_languages .nb_list_item.item,
+.nb_list.org_awards .nb_list_item.item {
+  padding-right: 0;
+}

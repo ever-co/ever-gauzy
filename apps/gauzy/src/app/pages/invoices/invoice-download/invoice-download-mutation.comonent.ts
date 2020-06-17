@@ -2,12 +2,7 @@ import { Component } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import {
-	OrganizationClients,
-	Invoice,
-	Organization,
-	InvoiceTypeEnum
-} from '@gauzy/models';
+import { Invoice, InvoiceTypeEnum } from '@gauzy/models';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { EmployeesService } from '../../../@core/services';
@@ -22,9 +17,7 @@ import { generatePdf } from '../../../@shared/invoice/generate-pdf';
 	styleUrls: ['./invoice-download-mutation.component.scss']
 })
 export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
-	client: OrganizationClients;
 	invoice: Invoice;
-	organization: Organization;
 	isEstimate: boolean;
 	tableBody: any;
 
@@ -68,8 +61,8 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 
 		docDefinition = await generatePdf(
 			this.invoice,
-			this.organization,
-			this.client,
+			this.invoice.fromOrganization,
+			this.invoice.toClient,
 			service
 		);
 
