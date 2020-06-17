@@ -80,16 +80,18 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@JoinColumn()
 	source?: ICandidateSource;
 
-	@ManyToOne((type) => CandidateDocument)
-	@JoinTable({
-		name: 'candidate_document'
-	})
-	documents: ICandidateDocument[];
+	@OneToMany(
+		(type) => CandidateDocument,
+		(candidateDocument) => candidateDocument.candidate
+	)
+	@JoinColumn()
+	documents?: ICandidateDocument[];
 
-	@ManyToOne((type) => CandidateFeedback)
-	@JoinTable({
-		name: 'candidate_feedback'
-	})
+	@OneToMany(
+		(type) => CandidateFeedback,
+		(candidateFeedback) => candidateFeedback.candidate
+	)
+	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: User })

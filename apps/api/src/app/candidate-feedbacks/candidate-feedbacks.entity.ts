@@ -1,15 +1,24 @@
-import { Column, Entity, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+	Column,
+	Entity,
+	OneToOne,
+	JoinColumn,
+	OneToMany,
+	ManyToOne
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateFeedback,
 	CandidateStatus,
 	ICandidateInterviewers,
-	ICandidateCriterionsRating
+	ICandidateCriterionsRating,
+	Candidate as ICandidate
 } from '@gauzy/models';
 import { IsEnum, IsOptional } from 'class-validator';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Entity('candidate_feedback')
 export class CandidateFeedback extends Base implements ICandidateFeedback {
@@ -46,4 +55,7 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 	)
 	@JoinColumn()
 	criterionsRating?: ICandidateCriterionsRating[];
+
+	@ManyToOne((type) => Candidate, (candidate) => candidate.feedbacks)
+	candidate: ICandidate;
 }
