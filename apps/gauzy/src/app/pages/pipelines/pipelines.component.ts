@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AuthService } from '../../@core/services/auth.service';
 import { Subscription } from 'rxjs';
