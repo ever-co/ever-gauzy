@@ -21,6 +21,7 @@ import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 
 @Controller()
 @ApiTags('Pipeline')
@@ -60,6 +61,7 @@ export class PipelineController extends CrudController<Pipeline> {
   })
   @Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(PermissionGuard)
   @Post()
   async create(
     @Body() entity: DeepPartial<Pipeline>,
@@ -84,6 +86,7 @@ export class PipelineController extends CrudController<Pipeline> {
       'Invalid input, The response body may contain clues as to what went wrong'
   })
   @HttpCode(HttpStatus.ACCEPTED)
+  @UseGuards(PermissionGuard)
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -104,6 +107,7 @@ export class PipelineController extends CrudController<Pipeline> {
     description: 'Record not found'
   })
   @HttpCode(HttpStatus.ACCEPTED)
+  @UseGuards(PermissionGuard)
   @Delete(':id')
   async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
     return super.delete( id );
