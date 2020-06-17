@@ -5,10 +5,10 @@ import * as _ from 'underscore';
 import {
 	IGetTimeLogInput,
 	Organization,
-	PermissionsEnum,
 	TimeLog,
 	OrganizationProjects,
-	TimeLogFilters
+	TimeLogFilters,
+	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -17,6 +17,8 @@ import { debounceTime } from 'rxjs/operators';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
+import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.component';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 interface WeeklyDayData {
 	project?: OrganizationProjects;
@@ -29,23 +31,19 @@ interface WeeklyDayData {
 	styleUrls: ['./weekly.component.scss']
 })
 export class WeeklyComponent implements OnInit, OnDestroy {
+	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	today: Date = new Date();
 	logRequest: TimeLogFilters = {};
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
-	canChangeSelectedEmployee: boolean;
 
 	weekData: WeeklyDayData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
-
-	constructor(
-		private timesheetService: TimesheetService,
-		private nbDialogService: NbDialogService,
-		private store: Store
-	) {}
+	viewTimeLogComponent = ViewTimeLogComponent;
 
 	private _selectedDate: Date = new Date();
+	futureDateAllowed: boolean;
 	public get selectedDate(): Date {
 		return this._selectedDate;
 	}
@@ -53,16 +51,24 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this._selectedDate = value;
 	}
 
+	constructor(
+		private timesheetService: TimesheetService,
+		private nbDialogService: NbDialogService,
+		private ngxPermissionsService: NgxPermissionsService,
+		private store: Store
+	) {}
+
+	addTimeCallback = (data) => {
+		if (data) {
+			this.updateLogs$.next();
+		}
+	};
+
 	ngOnInit() {
 		this.logRequest.startDate = moment(this.today).startOf('week').toDate();
 		this.logRequest.endDate = moment(this.today).endOf('week').toDate();
 		this.updateWeekDayList();
 
-		this.store.user$.subscribe(() => {
-			this.canChangeSelectedEmployee = this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		});
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: Organization) => {
@@ -73,6 +79,14 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
 				this.getLogs();
+			});
+
+		this.ngxPermissionsService.permissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(async () => {
+				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
+					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
+				);
 			});
 
 		this.updateLogs$.next();
@@ -92,11 +106,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 
 	filtersChange($event: TimeLogFilters) {
-		const dateChagne = $event.startDate !== this.logRequest.startDate;
 		this.logRequest = $event;
-		if (dateChagne) {
-			this.updateWeekDayList();
-		}
+		this.updateWeekDayList();
 		this.updateLogs$.next();
 	}
 
@@ -127,7 +138,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 									},
 									0
 								);
-								return sum;
+								return { sum, logs };
 							})
 							.value();
 
@@ -147,10 +158,42 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	openAddEdit(timeLog?: TimeLog) {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose.subscribe(() => {
-				this.updateLogs$.next();
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
 			});
 	}
 
+	openAddByDateProject(date, projectId) {
+		const minutes = moment().minutes();
+		const stoppedAt = new Date(
+			moment(date).format('YYYY-MM-DD') +
+				' ' +
+				moment()
+					.set('minutes', minutes - (minutes % 10))
+					.format('HH:mm')
+		);
+		const startedAt = moment(stoppedAt).subtract('1', 'hour').toDate();
+		this.nbDialogService
+			.open(EditTimeLogModalComponent, {
+				context: {
+					timeLog: { startedAt, stoppedAt, projectId: projectId }
+				}
+			})
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
+			});
+	}
+
+	allowAdd(date) {
+		return this.futureDateAllowed
+			? true
+			: moment(date).isSameOrBefore(moment());
+	}
 	ngOnDestroy(): void {}
 }

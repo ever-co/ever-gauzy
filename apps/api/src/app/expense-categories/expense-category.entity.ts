@@ -8,7 +8,7 @@ import { Tag } from '../tags/tag.entity';
 @Entity('expense_category')
 export class ExpenseCategory extends Base implements IExpenseCategory {
 	@ApiProperty()
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.expenseCategory)
 	@JoinTable({
 		name: 'tag_organization_expense_categories'
 	})

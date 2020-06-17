@@ -96,21 +96,30 @@
 									"
 								>
 									<button
+										*ngxPermissionsOnly="[
+											OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+										]"
 										[disabled]="!log.stoppedAt"
 										class="m-1"
 										nbButton
 										status="success"
 										size="small"
 									>
-										Edit
+										<nb-icon icon="edit"></nb-icon> Edit
 									</button>
 									<button
+										*ngxPermissionsOnly="[
+											OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+										]"
 										[disabled]="!log.stoppedAt"
 										class="m-1"
 										nbButton
 										status="danger"
 										size="small"
 									>
+										<nb-icon
+											icon="trash-2-outline"
+										></nb-icon>
 										Delete
 									</button>
 								</div>

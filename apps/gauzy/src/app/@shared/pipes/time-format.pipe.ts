@@ -1,26 +1,27 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, OnDestroy } from '@angular/core';
 import { Store } from '../../@core/services/store.service';
-import { Subject } from 'rxjs/internal/Subject';
 import { Organization } from '@gauzy/models';
 import * as moment from 'moment';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Pipe({
 	name: 'timeFormat',
 	pure: false
 })
-export class TimeFormatPipe implements PipeTransform {
-	private _ngDestroy$ = new Subject<void>();
+export class TimeFormatPipe implements PipeTransform, OnDestroy {
 	private format: 12 | 24;
 
 	constructor(private store: Store) {
-		this.store.selectedOrganization$.subscribe((org: Organization) => {
-			this.format = org ? org.timeFormat : 12;
-		});
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((org: Organization) => {
+				this.format = org ? org.timeFormat : 12;
+			});
 	}
 
 	transform(value: any, seconds: boolean = false): any {
 		let format = 'HH:mm' + (seconds ? ':ss' : '');
-		if (this.format == 12) {
+		if (this.format === 12) {
 			format = 'hh:mm' + (seconds ? ':ss' : '') + ' A';
 		}
 		let date = moment(value);
@@ -30,8 +31,5 @@ export class TimeFormatPipe implements PipeTransform {
 		return date.format(format);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

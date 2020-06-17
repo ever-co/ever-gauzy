@@ -15,7 +15,6 @@ import { OnDestroy } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
 import { EmployeeSettingService } from '../employee-setting';
-import { EquipmentService } from '../equipment';
 import { EquipmentSharingService } from '../equipment-sharing';
 import { ExpenseService } from '../expense/expense.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
@@ -49,6 +48,7 @@ import { AppointmentEmployeesService } from '../appointment-employees/appointmen
 import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
 import { CandidateService } from '../candidate/candidate.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
+import { EquipmentService } from '../equipment/equipment.service';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {

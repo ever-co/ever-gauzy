@@ -3,7 +3,6 @@ import {
 	IGetTimeLogInput,
 	Organization,
 	IDateRange,
-	PermissionsEnum,
 	TimesheetStatus,
 	Timesheet,
 	TimeLogFilters
@@ -76,12 +75,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
-
-		this.store.user$.pipe(untilDestroyed(this)).subscribe(() => {
-			this.canChangeSelectedEmployee = this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		});
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))

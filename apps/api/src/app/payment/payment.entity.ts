@@ -98,7 +98,7 @@ export class Payment extends Base implements IPayment {
 	@RelationId((payment: Payment) => payment.tenant)
 	readonly tenantId?: string;
 
-	@ManyToMany(() => Tag)
+	@ManyToMany(() => Tag, (tag) => tag.payment)
 	@JoinTable({
 		name: 'tag_payment'
 	})
