@@ -3,7 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ViewTimeLogModalComponent } from './view-time-log-modal/view-time-log-modal.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
-import { NbCardModule, NbButtonModule, NbDialogModule } from '@nebular/theme';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbDialogModule,
+	NbIconModule
+} from '@nebular/theme';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 
 @NgModule({
@@ -17,7 +22,8 @@ import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-mod
 		NbCardModule,
 		NbButtonModule,
 		NbDialogModule.forChild(),
-		EditTimeLogModalModule
+		EditTimeLogModalModule,
+		NbIconModule
 	]
 })
 export class ViewTimeLogModalModule {}

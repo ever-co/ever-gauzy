@@ -8,7 +8,8 @@ import {
 	PermissionsEnum,
 	TimeLog,
 	OrganizationProjects,
-	TimeLogFilters
+	TimeLogFilters,
+	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -18,6 +19,7 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.component';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 interface WeeklyDayData {
 	project?: OrganizationProjects;
@@ -30,11 +32,11 @@ interface WeeklyDayData {
 	styleUrls: ['./weekly.component.scss']
 })
 export class WeeklyComponent implements OnInit, OnDestroy {
+	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	today: Date = new Date();
 	logRequest: TimeLogFilters = {};
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
-	canChangeSelectedEmployee: boolean;
 
 	weekData: WeeklyDayData[] = [];
 	weekDayList: string[] = [];
@@ -42,6 +44,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	viewTimeLogComponent = ViewTimeLogComponent;
 
 	private _selectedDate: Date = new Date();
+	futureDateAllowed: boolean;
 	public get selectedDate(): Date {
 		return this._selectedDate;
 	}
@@ -52,6 +55,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	constructor(
 		private timesheetService: TimesheetService,
 		private nbDialogService: NbDialogService,
+		private ngxPermissionsService: NgxPermissionsService,
 		private store: Store
 	) {}
 
@@ -66,11 +70,6 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.logRequest.endDate = moment(this.today).endOf('week').toDate();
 		this.updateWeekDayList();
 
-		this.store.user$.subscribe(() => {
-			this.canChangeSelectedEmployee = this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		});
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: Organization) => {
@@ -81,6 +80,14 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
 				this.getLogs();
+			});
+
+		this.ngxPermissionsService.permissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(async () => {
+				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
+					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
+				);
 			});
 
 		this.updateLogs$.next();
@@ -100,11 +107,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 
 	filtersChange($event: TimeLogFilters) {
-		// const dateChagne = $event.startDate !== this.logRequest.startDate;
 		this.logRequest = $event;
-		// if (dateChagne) {
 		this.updateWeekDayList();
-		//}
 		this.updateLogs$.next();
 	}
 
@@ -148,8 +152,6 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 						return { project, dates };
 					})
 					.value();
-
-				console.log(this.weekData);
 			})
 			.finally(() => (this.loading = false));
 	}
@@ -189,5 +191,10 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			});
 	}
 
+	allowAdd(date) {
+		return this.futureDateAllowed
+			? true
+			: moment(date).isSameOrBefore(moment());
+	}
 	ngOnDestroy(): void {}
 }

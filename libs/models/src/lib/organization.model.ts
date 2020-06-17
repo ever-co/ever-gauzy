@@ -8,7 +8,8 @@ import { ITenant } from '@gauzy/models';
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'allowManualTime',
 	ALLOW_MODIFY_TIME = 'allowModifyTime',
-	ALLOW_DELETE_TIME = 'allowDeleteTime'
+	ALLOW_DELETE_TIME = 'allowDeleteTime',
+	ALLOW_FUTURE_DATE = 'futureDateAllowed'
 }
 
 export interface Organization extends IBaseEntityModel, ILocation {

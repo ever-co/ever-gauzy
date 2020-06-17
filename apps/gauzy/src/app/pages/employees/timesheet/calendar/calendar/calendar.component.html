@@ -3,7 +3,14 @@
 		{{ 'TIMESHEET.CALENDAR' | translate }}
 	</h5>
 	<div class="col-auto">
-		<button nbButton status="primary" (click)="openDialog()">
+		<button
+			nbButton
+			status="primary"
+			(click)="openDialog()"
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+			]"
+		>
 			<nb-icon icon="plus-outline"></nb-icon> Add Time
 		</button>
 	</div>

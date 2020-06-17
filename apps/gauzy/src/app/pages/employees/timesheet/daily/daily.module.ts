@@ -25,6 +25,7 @@ import { DailyComponent } from './daily/daily.component';
 import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 import { ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.module';
+import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -46,6 +47,7 @@ import { ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet/view-tim
 		TaskSelectModule,
 		ProjectSelectModule,
 		EditTimeLogModalModule,
+		ViewTimeLogModalModule,
 		NbIconModule,
 		EmployeeSelectorsModule,
 		FiltersModule,

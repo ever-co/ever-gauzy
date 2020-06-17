@@ -65,7 +65,8 @@ export enum PermissionsEnum {
 	ORG_CANDIDATES_INTERVIEWERS_EDIT = 'ORG_CANDIDATES_INTERVIEWERS_EDIT',
 	PROPOSALS_EDIT = 'PROPOSALS_EDIT',
 	VIEW_ALL_EMAILS = 'VIEW_ALL_EMAILS',
-	ORG_HELP_CENTER_EDIT = 'ORG_HELP_CENTER_EDIT'
+	ORG_HELP_CENTER_EDIT = 'ORG_HELP_CENTER_EDIT',
+	CAN_APPROVE_TIMESHEET = 'CAN_APPROVE_TIMESHEET'
 }
 
 export const PermissionGroups = {
@@ -99,7 +100,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
 		PermissionsEnum.ORG_TAGS_EDIT,
 		PermissionsEnum.VIEW_ALL_EMAILS,
-		PermissionsEnum.ORG_HELP_CENTER_EDIT
+		PermissionsEnum.ORG_HELP_CENTER_EDIT,
+		PermissionsEnum.CAN_APPROVE_TIMESHEET
 	],
 
 	//Readonly permissions, are only enabled for admin role

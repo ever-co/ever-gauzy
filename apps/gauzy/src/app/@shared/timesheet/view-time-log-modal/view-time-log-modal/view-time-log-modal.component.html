@@ -1,7 +1,25 @@
 <nb-card class="view-log-dialog">
-	<nb-card-header>Time Log</nb-card-header>
-	<nb-card-body>
-		<div class="mb-3" *ngIf="canSelectEmployee">
+	<nb-card-header>
+		<div class="row">
+			<div class="col">
+				{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}
+			</div>
+			<button
+				class="col-auto"
+				nbButton
+				ghost
+				(click)="close()"
+				type="button"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="custom-scroll">
+		<div
+			class="mb-3"
+			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+		>
 			<div class="font-weight-bold mb-2">Employee</div>
 			<div class="description">
 				<ngx-avatar
@@ -52,15 +70,32 @@
 		</div>
 		<div class="mb-3">
 			<div class="font-weight-bold mb-2">Description</div>
-			<div class="description">{{ timeLog?.description }}</div>
+			<div class="description">{{ timeLog?.description || '-' }}</div>
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-2" nbButton status="primary" (click)="openDialog()">
-			{{ 'TIMESHEET.EDIT' | translate }}
+		<button
+			class="mr-2"
+			nbButton
+			status="primary"
+			(click)="openDialog()"
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+			]"
+		>
+			<nb-icon icon="edit"></nb-icon> {{ 'TIMESHEET.EDIT' | translate }}
 		</button>
-		<button nbButton (click)="close()">
-			{{ 'TIMESHEET.CLOSE' | translate }}
+		<button
+			class="mr-2"
+			nbButton
+			status="danger"
+			(click)="onDeleteConfirm()"
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+			]"
+		>
+			<nb-icon icon="trash-2-outline"></nb-icon>
+			{{ 'TIMESHEET.DELETE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

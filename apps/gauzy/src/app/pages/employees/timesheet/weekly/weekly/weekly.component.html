@@ -3,9 +3,15 @@
 		{{ 'TIMESHEET.WEEKLY' | translate }}
 	</h5>
 	<div class="col-auto">
-		<button nbButton status="primary" (click)="openAddEdit()">
-			<nb-icon icon="plus-outline"></nb-icon> Add Time
-		</button>
+		<ng-template
+			[ngxPermissionsOnly]="[
+				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+			]"
+		>
+			<button nbButton status="primary" (click)="openAddEdit()">
+				<nb-icon icon="plus-outline"></nb-icon> Add Time
+			</button>
+		</ng-template>
 	</div>
 </div>
 
@@ -27,7 +33,7 @@
 		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 	>
 		<div class="col-sm-3 project-name">Project</div>
-		<div class="col day-col" *ngFor="let date of weekDayList">
+		<div class="col text-center day-col" *ngFor="let date of weekDayList">
 			{{ date | date }}
 		</div>
 	</div>
@@ -44,7 +50,10 @@
 					<span>No project</span>
 				</ng-template>
 			</div>
-			<div class="col day-col" *ngFor="let date of weekDayList">
+			<div
+				class="col text-center day-col"
+				*ngFor="let date of weekDayList"
+			>
 				<button
 					*ngIf="day.dates[date]?.sum > 0; else noLogsCol"
 					nbButton
@@ -59,14 +68,27 @@
 					{{ day.dates[date]?.sum | durationFormat }}
 				</button>
 				<ng-template #noLogsCol>
-					<button
-						nbButton
-						outline
-						status="primary"
-						(click)="openAddByDateProject(date, day?.project?.id)"
+					<ng-template
+						[ngxPermissionsOnly]="[
+							OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+						]"
+						[ngxPermissionsOnlyElse]="notAllowAddTimeBlock"
 					>
-						<nb-icon icon="plus-outline"></nb-icon>
-					</button>
+						<button
+							nbButton
+							outline
+							status="primary"
+							(click)="
+								openAddByDateProject(date, day?.project?.id)
+							"
+							*ngIf="allowAdd(date); else notAllowAddTimeBlock"
+						>
+							<nb-icon icon="plus-outline"></nb-icon>
+						</button>
+					</ng-template>
+					<ng-template #notAllowAddTimeBlock>
+						-
+					</ng-template>
 				</ng-template>
 			</div>
 		</div>
