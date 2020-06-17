@@ -54,6 +54,7 @@ import { SelectorService } from '../@core/utils/selector.service';
 import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
 import { OrganizationsService } from '../@core/services/organizations.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
+import { LanguagesService } from '../@core/services/languages.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -113,7 +114,8 @@ const PIPES = [
 		SelectorService,
 		UsersOrganizationsService,
 		OrganizationsService,
-		NbLayoutDirectionService
+		NbLayoutDirectionService,
+		LanguagesService
 	]
 })
 export class ThemeModule {

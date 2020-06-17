@@ -46,6 +46,7 @@ export class EventType extends Base implements IEventType {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((eventType: EventType) => eventType.organization)
+	@Column({ nullable: true })
 	readonly organizationId: string;
 
 	@ApiProperty({ type: Number })

@@ -13,7 +13,8 @@ import {
 	NbCheckboxModule,
 	NbTooltipModule,
 	NbBadgeModule,
-	NbToggleModule
+	NbToggleModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { PublicPageMutationComponent } from './public-page-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -56,7 +57,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		}),
 		NbBadgeModule,
-		NbToggleModule
+		NbToggleModule,
+		NbTabsetModule
 	],
 	declarations: [PublicPageMutationComponent],
 	entryComponents: [PublicPageMutationComponent],

@@ -21,6 +21,16 @@ export class LanguagesService {
 			.toPromise();
 	}
 
+	getSystemLanguages(): Promise<{ items: Language[] }> {
+		const option = JSON.stringify({ is_system: true });
+		return this.http
+			.get<{ items: Language[] }>(`/api/languages`, {
+				params: { option }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/languages/${id}`)
@@ -34,6 +44,7 @@ export class LanguagesService {
 			.pipe(first())
 			.toPromise();
 	}
+
 	findByName(name: string): Promise<{ item: Language }> {
 		return this.http
 			.get<{ item: Language }>(`/api/languages/getByName/${name}`)

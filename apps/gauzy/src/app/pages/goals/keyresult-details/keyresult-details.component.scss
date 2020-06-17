@@ -1,4 +1,9 @@
-.min-width-800 {
-  min-width: 800px;
+.min-width-1000 {
+  min-width: 1000px;
 }
 
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

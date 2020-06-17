@@ -1,12 +1,7 @@
 import { Component } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit } from '@angular/core';
-import {
-	Invoice,
-	OrganizationClients,
-	Organization,
-	InvoiceTypeEnum
-} from '@gauzy/models';
+import { Invoice, InvoiceTypeEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
@@ -26,8 +21,6 @@ import { generatePdf } from '../../../@shared/invoice/generate-pdf';
 export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	invoice: Invoice;
-	client: OrganizationClients;
-	organization: Organization;
 	form: FormGroup;
 	isEstimate: boolean;
 
@@ -79,8 +72,8 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 
 		docDefinition = await generatePdf(
 			this.invoice,
-			this.organization,
-			this.client,
+			this.invoice.fromOrganization,
+			this.invoice.toClient,
 			service
 		);
 

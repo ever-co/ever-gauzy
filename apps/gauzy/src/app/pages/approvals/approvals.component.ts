@@ -13,6 +13,7 @@ import { Store } from '../../@core/services/store.service';
 import { RequestApprovalStatusComponent } from './table-components/request-approval-status/request-approval-status.component';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
+
 export interface IApprovalsData {
 	icon: string;
 	title: string;

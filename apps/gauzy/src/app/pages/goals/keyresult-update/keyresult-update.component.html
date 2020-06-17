@@ -42,9 +42,6 @@
 				formControlName="newValueNumber"
 			/>
 			<div class="row">
-				<!-- <label class="label">
-                    Update Status
-                </label> -->
 				<nb-toggle
 					id="updated-value"
 					class="row ml-3"
@@ -81,14 +78,16 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
+		<button class="mr-3" nbButton (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
 		<button
 			[disabled]="!keyresultUpdateForm.valid"
 			nbButton
 			status="success"
 			(click)="updateKeyResult()"
 		>
-			Update
+			{{ 'BUTTONS.UPDATE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

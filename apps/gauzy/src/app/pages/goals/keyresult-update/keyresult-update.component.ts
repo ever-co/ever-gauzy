@@ -2,19 +2,25 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { KeyResult } from '@gauzy/models';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-keyresult-update',
 	templateUrl: './keyresult-update.component.html',
 	styleUrls: ['./keyresult-update.component.scss']
 })
-export class KeyresultUpdateComponent implements OnInit {
+export class KeyresultUpdateComponent extends TranslationBaseComponent
+	implements OnInit {
 	keyresultUpdateForm: FormGroup;
 	keyResult: KeyResult;
 	constructor(
 		private dialogRef: NbDialogRef<KeyresultUpdateComponent>,
-		private fb: FormBuilder
-	) {}
+		private fb: FormBuilder,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		console.log(this.keyResult);

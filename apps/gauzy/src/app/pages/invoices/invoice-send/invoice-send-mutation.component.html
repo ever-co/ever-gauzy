@@ -7,15 +7,13 @@
 			<span *ngIf="isEstimate">{{
 				'INVOICES_PAGE.SEND.CONFIRMATION_ESTIMATE' | translate
 			}}</span>
-			{{ client.name }} ?
+			{{ invoice.toClient.name }} ?
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
 		<span *ngIf="!alreadySent">
 			<ga-invoice-view-inner
 				[invoice]="invoice"
-				[client]="client"
-				[organization]="organization"
 				[isEstimate]="isEstimate"
 			>
 			</ga-invoice-view-inner>
@@ -27,7 +25,7 @@
 			<span *ngIf="isEstimate">{{
 				'INVOICES_PAGE.SEND.ALREADY_SENT_ESTIMATE' | translate
 			}}</span>
-			{{ client.name }}.
+			{{ invoice.toClient.name }}.
 		</span>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
