@@ -23,7 +23,7 @@ import {
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { Subject, merge } from 'rxjs';
+import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';

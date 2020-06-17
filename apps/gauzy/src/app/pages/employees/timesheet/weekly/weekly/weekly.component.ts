@@ -5,7 +5,6 @@ import * as _ from 'underscore';
 import {
 	IGetTimeLogInput,
 	Organization,
-	PermissionsEnum,
 	TimeLog,
 	OrganizationProjects,
 	TimeLogFilters,
