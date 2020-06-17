@@ -173,7 +173,7 @@ export class CandidateInterviewFeedbackComponent
 					interviewId: this.interviewId
 				});
 
-				const criterions = await this.candidateCriterionsRatingService.createBulk(
+				await this.candidateCriterionsRatingService.createBulk(
 					feedback.id,
 					this.technologiesList,
 					this.personalQualitiesList

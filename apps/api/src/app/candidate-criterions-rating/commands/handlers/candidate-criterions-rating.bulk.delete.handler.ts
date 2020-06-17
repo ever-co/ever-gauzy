@@ -12,8 +12,8 @@ export class CandidateCriterionsRatingBulkDeleteHandler
 	public async execute(
 		command: CandidateCriterionsRatingBulkDeleteCommand
 	): Promise<any> {
-		const { id } = command;
-
+		// const { id } = command;
+		// TO DO
 		return;
 	}
 }
