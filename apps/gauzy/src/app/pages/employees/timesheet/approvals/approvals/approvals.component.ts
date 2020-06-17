@@ -1,13 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-  IDateRange,
-  IGetTimeLogInput,
-  Organization,
-  PermissionsEnum,
-  TimeLogFilters,
-  Timesheet,
-  TimesheetStatus
-} from '@gauzy/models';
+import { IDateRange, IGetTimeLogInput, Organization, TimeLogFilters, Timesheet, TimesheetStatus } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { NbCheckboxComponent, NbDialogRef, NbMenuService } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
