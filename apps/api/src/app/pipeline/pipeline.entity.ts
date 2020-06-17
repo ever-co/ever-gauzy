@@ -5,6 +5,7 @@ import {
   AfterInsert,
   AfterLoad,
   AfterUpdate,
+  BeforeInsert,
   Column,
   Entity,
   JoinColumn,
@@ -19,7 +20,8 @@ import { Stage } from '../stage/stage.entity';
 @Entity( 'pipeline' )
 export class Pipeline extends Base implements IPipeline
 {
-  @OneToMany( () => Stage, ({ pipeline }) => pipeline )
+
+  @OneToMany( () => Stage, ({ pipeline }) => pipeline, { cascade: [ 'insert' ] })
   @ApiProperty({ type: Stage })
   public stages: Stage[];
 
@@ -46,10 +48,19 @@ export class Pipeline extends Base implements IPipeline
   @Column()
   public name: string;
 
+  @BeforeInsert()
+  public __before_persist(): void {
+    const pipelineId = this.id ? { pipelineId: this.id } : {};
+    let index = 0;
+
+    this.stages?.forEach( stage =>
+      Object.assign( stage, pipelineId, { index: ++index }) );
+  }
+
   @AfterLoad()
   @AfterInsert()
   @AfterUpdate()
-  private [ Symbol() as any ](): void {
+  public __after_fetch(): void {
     if ( this.stages ) {
       this.stages = this.stages.sort( ({ index: a }, { index: b }) => a - b );
     }

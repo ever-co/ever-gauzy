@@ -1,13 +1,13 @@
 import { CrudService } from '../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
-	DeepPartial,
-	EntityManager,
-	FindConditions,
-	Repository,
-	Transaction,
-	TransactionManager,
-	UpdateResult
+  DeepPartial,
+  EntityManager,
+  FindConditions,
+  Repository,
+  Transaction,
+  TransactionManager,
+  UpdateResult,
 } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stage } from '../stage/stage.entity';
@@ -18,44 +18,9 @@ import { Injectable } from '@nestjs/common';
 export class PipelineService extends CrudService<Pipeline> {
 	public constructor(
 		@InjectRepository(Pipeline)
-		pipelineRepository: Repository<Pipeline>
+		protected pipelineRepository: Repository<Pipeline>
 	) {
 		super(pipelineRepository);
-	}
-
-	@Transaction()
-	public async create(
-		entity: DeepPartial<Pipeline>,
-		@TransactionManager() manager: EntityManager,
-		...options
-	): Promise<Pipeline> {
-		// Persist pipeline
-		const { name, description, organizationId } = entity;
-		const pipeline = await manager.save(
-			manager.create(Pipeline, {
-				organizationId,
-				description,
-				name
-			})
-		);
-		const { id: pipelineId } = pipeline;
-		let index = 0;
-
-		// Persist pipeline stages
-		if (entity.stages?.length) {
-			for (const { name, description } of entity.stages) {
-				await manager.save(
-					manager.create(Stage, {
-						index: ++index,
-						description,
-						pipelineId,
-						name
-					})
-				);
-			}
-		}
-
-		return pipeline;
 	}
 
 	@Transaction()
@@ -65,8 +30,13 @@ export class PipelineService extends CrudService<Pipeline> {
 		@TransactionManager() manager: EntityManager,
 		...options
 	): Promise<UpdateResult | Pipeline> {
+    const onePipeline = await manager.findOne(Pipeline, id as any);
+    const pipeline = manager.create( Pipeline, {
+      ...partialEntity,
+      id: onePipeline.id,
+    } as any );
 		const updatedStages =
-			partialEntity.stages?.filter(({ id }) => id) || [];
+      pipeline.stages?.filter(({ id }) => id) || [];
 		const deletedStages = await manager
 			.find(Stage, {
 				where: {
@@ -79,17 +49,16 @@ export class PipelineService extends CrudService<Pipeline> {
 
 				return stages.filter(({ id }) => !requestStageIds.includes(id));
 			});
-		const createdStages = partialEntity.stages?.filter(
+		const createdStages = pipeline.stages?.filter(
 			(stage) => !updatedStages.includes(stage)
 		) || [];
-		const pipeline = await manager.findOne(Pipeline, id as any);
-		const _pipeline = { ...partialEntity };
 
-		partialEntity.stages?.forEach((stage, index) => {
-			stage.pipelineId = pipeline.id;
-			stage.index = ++index;
-		});
-		delete _pipeline.stages;
+		// partialEntity.stages?.forEach((stage, index) => {
+		// 	stage.pipelineId = pipeline.id;
+		// 	stage.index = ++index;
+		// });
+    pipeline.__before_persist();
+		delete pipeline.stages;
 
 		await manager.remove(deletedStages);
 		await Promise.all(
@@ -103,6 +72,6 @@ export class PipelineService extends CrudService<Pipeline> {
 			updatedStages.map((stage) => manager.update(Stage, stage.id, stage))
 		);
 
-		return await manager.update(Pipeline, id, _pipeline);
+		return await manager.update(Pipeline, id, pipeline);
 	}
 }
