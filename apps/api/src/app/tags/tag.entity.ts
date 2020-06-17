@@ -17,7 +17,6 @@ import { OrganizationVendor } from '../organization-vendors/organization-vendors
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
-import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
