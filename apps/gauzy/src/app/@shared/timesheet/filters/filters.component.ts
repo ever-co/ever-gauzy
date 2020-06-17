@@ -12,7 +12,8 @@ import {
 	TimeLogType,
 	TimeLogSourceEnum,
 	Organization,
-	PermissionsEnum
+	PermissionsEnum,
+	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
@@ -20,6 +21,7 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Options, ChangeContext } from 'ng5-slider';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
 	selector: 'ngx-filters',
@@ -27,8 +29,8 @@ import { Options, ChangeContext } from 'ng5-slider';
 	styleUrls: ['./filters.component.scss']
 })
 export class FiltersComponent implements OnInit, OnDestroy {
+	PermissionsEnum = PermissionsEnum;
 	today: Date = new Date();
-	canChangeSelectedEmployee = false;
 	TimeLogType = TimeLogType;
 	TimeLogSourceEnum = TimeLogSourceEnum;
 	updateLogs$: Subject<any> = new Subject();
@@ -39,6 +41,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		source: [],
 		logType: []
 	};
+	futureDateAllowed: boolean;
 
 	@Input()
 	public get filters(): TimeLogFilters {
@@ -84,7 +87,8 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private store: Store,
-		private employeesService: EmployeesService
+		private employeesService: EmployeesService,
+		private ngxPermissionsService: NgxPermissionsService
 	) {}
 
 	ngOnInit() {
@@ -116,12 +120,6 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			this.filtersChange.emit(this.filters);
 		});
 
-		this.store.user$.pipe(untilDestroyed(this)).subscribe(() => {
-			this.canChangeSelectedEmployee = this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		});
-
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: Organization) => {
@@ -130,12 +128,29 @@ export class FiltersComponent implements OnInit, OnDestroy {
 					this.loadEmployees();
 				}
 			});
+
+		this.ngxPermissionsService.permissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(async () => {
+				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
+					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
+				);
+			});
+
 		this.updateLogs$.next();
 	}
 
+	isNextDisabled() {
+		return this.futureDateAllowed
+			? false
+			: moment(this.selectedDate).isSameOrAfter(moment(), 'day');
+	}
+	isTodayDisabled() {
+		return moment(this.selectedDate).isSame(moment(), 'day');
+	}
 	async nextDay() {
 		const date = moment(this.selectedDate).add(1, this.dateRange);
-		if (date.isAfter(this.today)) {
+		if (!this.futureDateAllowed && date.isAfter(this.today)) {
 			return;
 		}
 		this.selectedDate = date.toDate();

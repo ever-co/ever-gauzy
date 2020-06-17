@@ -18140,6 +18140,13 @@ ngx-perfect-scrollbar@^8.0.0:
     perfect-scrollbar "^1.4.0"
     resize-observer-polyfill "^1.5.0"
 
+ngx-permissions@^7.0.3:
+  version "7.0.3"
+  resolved "https://registry.yarnpkg.com/ngx-permissions/-/ngx-permissions-7.0.3.tgz#aefc58a14d5a71042277cbdb322560cb6e9b6535"
+  integrity sha512-WwmUcO2IuE5gSgsR+wf23XkJDJzUzQ9iVNOGGfHq7tavdQK1VBY7C0oJOq7+H5vLDSfc+pEDsBwc03lXhq7J1g==
+  dependencies:
+    tslib "^1.9.0"
+
 ngx-take-until-destroy@^5.4.0:
   version "5.4.0"
   resolved "https://registry.yarnpkg.com/ngx-take-until-destroy/-/ngx-take-until-destroy-5.4.0.tgz#6c8606ee956584dc947e2eb609c48b8f98b09900"
