@@ -8,9 +8,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AuthService } from '../../@core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   templateUrl: './pipelines.component.html',
@@ -42,6 +43,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   public name: string;
 
   private readonly $akitaPreUpdate: AppStore[ 'akitaPreUpdate' ];
+  private permissionSubscription: Subscription;
 
   public constructor(
     private usersOrganizationsService: UsersOrganizationsService,
@@ -66,10 +68,14 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     };
   }
 
-  public async ngOnInit(): Promise<void>
+  public ngOnInit(): void
   {
-    this.CAN_EDIT_SALES_PIPELINES = await this.authService
-      .hasPermission( PermissionsEnum.EDIT_SALES_PIPELINES ).toPromise();
+
+    this.permissionSubscription = this.store.userRolePermissions$.subscribe( () => {
+      this.CAN_EDIT_SALES_PIPELINES = this.store.hasPermission( PermissionsEnum.EDIT_SALES_PIPELINES );
+      console.log({ CAN_EDIT_SALES_PIPELINES: this.CAN_EDIT_SALES_PIPELINES });
+    });
+
     if ( ! this.organizationId ) {
       setTimeout(  async () => {
         this.organizationId = this.store.selectedOrganization?.id;
@@ -81,6 +87,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   public ngOnDestroy(): void
   {
     this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
+    this.permissionSubscription.unsubscribe();
   }
 
   public async updatePipelines(): Promise<void> {
