@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Employee, Goals } from '@gauzy/models';
+import { Employee, Goal } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -14,7 +14,7 @@ import { Subject } from 'rxjs';
 export class EditObjectiveComponent implements OnInit, OnDestroy {
 	objectiveForm: FormGroup;
 	employees: Employee[];
-	data: Goals;
+	data: Goal;
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -29,6 +29,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			description: [''],
 			owner: ['', Validators.required],
 			lead: [''],
+			level: ['Organization', Validators.required],
 			deadline: ['Quarterly', Validators.required]
 		});
 		this.employeeService
@@ -43,7 +44,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	}
 
 	selectEmployee(event, control) {
-		if (control == 'lead') {
+		if (control === 'lead') {
 			this.objectiveForm.patchValue({ lead: event });
 		} else {
 			this.objectiveForm.patchValue({ owner: event });

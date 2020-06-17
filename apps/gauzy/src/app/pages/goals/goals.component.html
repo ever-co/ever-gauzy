@@ -25,9 +25,12 @@
 			*ngFor="let goal of goals; let index = index"
 		>
 			<nb-accordion-item expanded="true">
-				<nb-accordion-item-header status="primary"
+				<nb-accordion-item-header
 					>{{ goal.name }}
-					<nb-actions class="ml-auto mr-3 mt-1 float-right">
+					<nb-actions
+						class="ml-auto mr-3 mt-1 float-right"
+						size="small"
+					>
 						<nb-action
 							icon="eye"
 							(click)="openGoalDetials(goal)"
@@ -39,10 +42,11 @@
 					</nb-actions>
 				</nb-accordion-item-header>
 				<nb-accordion-item-body
+					class="ml-4"
 					*ngFor="let keyResult of goal.keyResults"
 				>
 					{{ keyResult.name }}
-					<nb-actions class="ml-auto float-right">
+					<nb-actions class="ml-auto float-right" size="small">
 						<nb-action
 							icon="eye"
 							(click)="openKeyResultDetails(index, keyResult)"

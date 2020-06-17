@@ -27,7 +27,7 @@
 				</div>
 			</div>
 		</div>
-		<form [formGroup]="keyresultUpdateForm">
+		<form [formGroup]="keyResultUpdateForm">
 			<label for="updated-value" class="label">
 				Updated Value
 			</label>
@@ -60,9 +60,9 @@
 				id="updated-value-status"
 				filled
 				[status]="
-					keyresultUpdateForm.value.newStatus == 'on track'
+					keyResultUpdateForm.value.newStatus == 'on track'
 						? 'success'
-						: keyresultUpdateForm.value.newStatus ==
+						: keyResultUpdateForm.value.newStatus ==
 						  'needs attention'
 						? 'warning'
 						: 'danger'
@@ -82,7 +82,7 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			[disabled]="!keyresultUpdateForm.valid"
+			[disabled]="!keyResultUpdateForm.valid"
 			nbButton
 			status="success"
 			(click)="updateKeyResult()"

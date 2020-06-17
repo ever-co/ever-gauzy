@@ -16,7 +16,7 @@ import { Employee, KeyResult } from '@gauzy/models';
 	templateUrl: './edit-keyresults.component.html',
 	styleUrls: ['./edit-keyresults.component.scss']
 })
-export class EditKeyresultsComponent implements OnInit, OnDestroy {
+export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: Employee[];
 	keyResultsForm: FormGroup;
 	data: KeyResult;
@@ -24,7 +24,7 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 	softDeadline: FormControl;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
-		private dialogRef: NbDialogRef<EditKeyresultsComponent>,
+		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
 		public fb: FormBuilder,
 		private employeeService: EmployeesService
 	) {}
@@ -34,7 +34,7 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 			name: ['', Validators.required],
 			description: [''],
 			type: ['', Validators.required],
-			targetValue: [null],
+			targetValue: [1],
 			initialValue: [0],
 			owner: ['', Validators.required],
 			lead: [''],
@@ -60,11 +60,16 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 		} else {
 			this.keyResultsForm.patchValue({ owner: event });
 		}
-		console.log(this.keyResultsForm);
 	}
 
 	saveKeyResult() {
 		if (!!this.data) {
+			this.keyResultsForm.patchValue({
+				targetValue:
+					this.keyResultsForm.value.type === 'True/False'
+						? 1
+						: this.keyResultsForm.value.targetValue
+			});
 			this.closeDialog({
 				...this.keyResultsForm.value,
 				update: this.data.update

@@ -7,7 +7,8 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	UseGuards
+	UseGuards,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KeyResult } from './keyresult.entity';
@@ -52,7 +53,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	async getAll(@Param('id') findInput: string) {
 		return this.keyResultService.findAll({
 			where: { id: findInput },
-			relations: ['updates']
+			relations: ['updates', 'goal']
 		});
 	}
 
@@ -87,5 +88,11 @@ export class KeyResultController extends CrudController<KeyResult> {
 			console.log(error);
 			return;
 		}
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async deleteTask(@Param('id') id: string): Promise<any> {
+		return this.keyResultService.delete(id);
 	}
 }

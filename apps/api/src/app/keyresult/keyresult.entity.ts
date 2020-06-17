@@ -76,18 +76,18 @@ export class KeyResult extends Base implements IKeyResult {
 
 	@ApiProperty({ type: Goal })
 	@ManyToOne((type) => Goal, (goal) => goal.keyResults)
-	@JoinColumn({ name: 'goal_id' })
+	@JoinColumn({ name: 'goalId' })
 	goal: Goal;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((keyresult: KeyResult) => keyresult.goal)
+	@RelationId((keyResult: KeyResult) => keyResult.goal)
 	@Column({ nullable: true })
-	readonly goal_id?: string;
+	readonly goalId?: string;
 
 	@ApiProperty({ type: KeyResultUpdate })
 	@OneToMany(
 		(type) => KeyResultUpdate,
-		(keyresultUpdate) => keyresultUpdate.keyResult
+		(keyResultUpdate) => keyResultUpdate.keyResult
 	)
 	@IsOptional()
 	updates?: KeyResultUpdate[];

@@ -30,15 +30,19 @@
 						</div>
 						<div class="col-md-6">{{ keyResult.initialValue }}</div>
 					</div>
-					<div class="row mt-1">
+					<div class="row mt-2">
 						<div class="col-md-6 font-weight-bold">
 							Target value
 						</div>
 						<div class="col-md-6">{{ keyResult.targetValue }}</div>
 					</div>
-					<div class="row mt-1">
+					<div class="row mt-2">
 						<div class="col-md-6 font-weight-bold">Progress</div>
 						<div class="col-md-6">{{ keyResult.progress }} %</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col-md-6 font-weight-bold">Goal</div>
+						<div class="col-md-6">{{ keyResult.goal.name }} %</div>
 					</div>
 				</div>
 			</div>
@@ -89,4 +93,17 @@
 			</div>
 		</div>
 	</nb-card-body>
+	<nb-card-footer>
+		<button nbButton status="success" (click)="closeDialog()">
+			Save
+		</button>
+		<button
+			class="float-right"
+			status="danger"
+			nbButton
+			(click)="deleteKeyResult()"
+		>
+			Delete
+		</button>
+	</nb-card-footer>
 </nb-card>
