@@ -21,7 +21,7 @@ import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('product')
 export class Product extends Base implements IProduct {
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.product)
 	@JoinTable({
 		name: 'tag_product'
 	})

@@ -9,7 +9,7 @@ import { Tag } from '../tags/tag.entity';
 export class OrganizationPositions extends Base
 	implements IOrganizationPositions {
 	@ApiProperty()
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.organizationPosition)
 	@JoinTable({
 		name: 'tag_organization_position'
 	})
