@@ -38,8 +38,6 @@ export class CandidateInterviewFeedbackComponent
 	status: any;
 	statusHire = 0;
 	interviewers: ICandidateInterviewers[];
-	description: string;
-	rating: number;
 	feedbackInterviewer: ICandidateInterviewers;
 	isRejected: boolean;
 	selectedEmployeeId: string;
@@ -48,6 +46,12 @@ export class CandidateInterviewFeedbackComponent
 	technologiesList: ICandidateTechnologies[];
 	personalQualitiesList: ICandidatePersonalQualities[];
 	averageRating = null;
+	emptyFeedback = {
+		description: '',
+		rating: null,
+		status: null,
+		interviewer: null
+	};
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: FormBuilder,
@@ -85,8 +89,7 @@ export class CandidateInterviewFeedbackComponent
 			);
 		});
 	}
-	setRating(technologies: number[], qualities: number[]) {
-		// TO DO : fix rating
+	private setRating(technologies: number[], qualities: number[]) {
 		this.technologiesList.map(
 			(tech, index) => (tech.rating = technologies[index])
 		);
@@ -100,7 +103,7 @@ export class CandidateInterviewFeedbackComponent
 		return res;
 	}
 
-	async loadData() {
+	private async loadData() {
 		const res = await this.candidateInterviewService.findById(
 			this.interviewId
 		);
@@ -124,7 +127,7 @@ export class CandidateInterviewFeedbackComponent
 		}
 	}
 
-	async loadFeedbacks() {
+	private async loadFeedbacks() {
 		const result = await this.candidateFeedbacksService.getAll(
 			['interviewer'],
 			{ candidateId: this.candidateId }
@@ -151,7 +154,7 @@ export class CandidateInterviewFeedbackComponent
 		}
 	}
 
-	async onMembersSelected(id: string) {
+	onMembersSelected(id: string) {
 		this.selectedEmployeeId = id;
 		for (const item of this.interviewers) {
 			if (this.selectedEmployeeId === item.employeeId) {
@@ -161,20 +164,23 @@ export class CandidateInterviewFeedbackComponent
 	}
 
 	async createFeedback() {
-		// await this.candidateCriterionsRatingService.createBulk(
-		// 	this.technologiesList
-		// );
-		this.description = this.form.get('description').value;
-		// await this.candidateTechnologiesService.updateBulk(
-		// 	this.technologiesList
-		// );
+		const description = this.form.get('description').value;
 		if (this.form.valid) {
 			try {
-				await this.candidateFeedbacksService.create({
-					description: this.description,
-					rating: this.averageRating,
+				const feedback = await this.candidateFeedbacksService.create({
+					...this.emptyFeedback,
 					candidateId: this.candidateId,
-					interviewId: this.interviewId,
+					interviewId: this.interviewId
+				});
+
+				const criterions = await this.candidateCriterionsRatingService.createBulk(
+					feedback.id,
+					this.technologiesList,
+					this.personalQualitiesList
+				);
+				await this.candidateFeedbacksService.update(feedback.id, {
+					description: description,
+					rating: this.averageRating,
 					interviewer: this.feedbackInterviewer,
 					status: this.status
 				});
@@ -202,7 +208,7 @@ export class CandidateInterviewFeedbackComponent
 		}
 	}
 
-	async setStatus(status: string) {
+	private async setStatus(status: string) {
 		if (status === CandidateStatus.REJECTED) {
 			await this.candidatesService.setCandidateAsRejected(
 				this.candidateId
@@ -237,7 +243,7 @@ export class CandidateInterviewFeedbackComponent
 		const personalQualityRating = this.form.get(
 			'personalQualities'
 		) as FormArray;
-		this.personalQualitiesList.forEach((item, index) => {
+		this.personalQualitiesList.forEach((item) => {
 			personalQualityRating.push(this.fb.control(item.rating));
 		});
 	}

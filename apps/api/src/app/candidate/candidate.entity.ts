@@ -22,7 +22,8 @@ import {
 	ManyToMany,
 	ManyToOne,
 	OneToOne,
-	RelationId
+	RelationId,
+	OneToMany
 } from 'typeorm';
 import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
@@ -51,11 +52,12 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	})
 	educations: IEducation[];
 
-	@ManyToOne((type) => CandidateInterview)
-	@JoinTable({
-		name: 'candidate_interview'
-	})
-	interview: ICandidateInterview[];
+	@OneToMany(
+		(type) => CandidateInterview,
+		(candidateInterview) => candidateInterview.candidate
+	)
+	@JoinColumn()
+	interview?: ICandidateInterview[];
 
 	@ManyToOne((type) => CandidateExperience)
 	@JoinTable({

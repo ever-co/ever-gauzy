@@ -77,7 +77,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	private async loadFeedbacks(interviewId?: string) {
 		const res = await this.candidateFeedbacksService.getAll(
-			['interviewer'],
+			['interviewer', 'criterionsRating'],
 			{ candidateId: this.candidateId }
 		);
 		if (res) {

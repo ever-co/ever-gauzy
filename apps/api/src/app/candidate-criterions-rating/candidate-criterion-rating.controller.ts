@@ -1,20 +1,33 @@
-import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
+import {
+	HttpStatus,
+	Get,
+	Query,
+	UseGuards,
+	Post,
+	Controller,
+	Body
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
+import { CommandBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
 import { CandidateCriterionsRatingService } from './candidate-criterion-rating.service';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
-import { ICandidateCriterionsRating } from '@gauzy/models';
+import { ICandidateCriterionsRating, RolesEnum } from '@gauzy/models';
+import { RoleGuard } from '../shared/guards/auth/role.guard';
+import { Roles } from '../shared/decorators/roles';
+import { CandidateCriterionsRatingBulkCreateCommand } from './commands/candidate-criterions-rating.bulk.create.command';
 
 @ApiTags('candidate_criterion_rating')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateCriterionsRatingController extends CrudController<
-	ICandidateCriterionsRating
+	CandidateCriterionsRating
 > {
 	constructor(
-		private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService
+		private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService,
+		private commandBus: CommandBus
 	) {
 		super(candidateCriterionsRatingService);
 	}
@@ -38,5 +51,21 @@ export class CandidateCriterionsRatingController extends CrudController<
 		return this.candidateCriterionsRatingService.findAll({
 			where: findInput
 		});
+	}
+
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Post('createBulk')
+	async createBulk(
+		@Body() input: any
+	): Promise<ICandidateCriterionsRating[]> {
+		const { feedbackId = null, technologies = [], qualities = [] } = input;
+		return this.commandBus.execute(
+			new CandidateCriterionsRatingBulkCreateCommand(
+				feedbackId,
+				technologies,
+				qualities
+			)
+		);
 	}
 }

@@ -68,7 +68,7 @@ export class CandidateFeedbacksController extends CrudController<
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
+	//@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Get('getByInterviewId/:interviewId')
 	async findByInterviewId(
 		@Param('interviewId') interviewId: string
