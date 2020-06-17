@@ -19,7 +19,6 @@ import {
 	EmployeeRecurringExpense
 } from '../employee-recurring-expense';
 import { EmployeeSettingService, EmployeeSetting } from '../employee-setting';
-import { Equipment, EquipmentService } from '../equipment';
 import {
 	EquipmentSharingService,
 	EquipmentSharing
@@ -88,6 +87,8 @@ import { CandidateService } from '../candidate/candidate.service';
 import { Candidate } from '../candidate/candidate.entity';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
+import { Equipment } from '../equipment/equipment.entity';
+import { EquipmentService } from '../equipment/equipment.service';
 
 @Module({
 	imports: [
