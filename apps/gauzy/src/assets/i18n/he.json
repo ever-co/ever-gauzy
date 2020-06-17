@@ -908,6 +908,7 @@
 			"VIEW_ALL_EMAILS": "View All Emails",
 			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
 			"PUBLIC_PAGE_EDIT": "Public Page Edit",
+			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
 			"GROUPS": {
 				"GENERAL": "כללי",
 				"ADMINISTRATION": "Administration"
@@ -1605,9 +1606,12 @@
 		"SELECT_LOG_TYPE": "Select Log Type",
 		"ADD_TIME_LOGS": "Add Time Logs",
 		"EDIT_TIME_LOGS": "Edit Time Logs",
+		"VIEW_TIME_LOGS": "Time Logs",
 		"ADD_TIME": "Add Time",
 		"UPDATE_TIME": "Update Time",
+		"EDIT": "ערוך",
 		"CLOSE": "סוֹף",
+		"DELETE": "מחק",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",
