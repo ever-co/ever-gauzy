@@ -7,50 +7,54 @@ import { PipelinesService } from '../../../@core/services/pipelines.service';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-  templateUrl: './pipeline-form.component.html',
-  selector: 'ga-pipeline-form',
+	templateUrl: './pipeline-form.component.html',
+	selector: 'ga-pipeline-form'
 })
-export class PipelineFormComponent implements OnInit
-{
+export class PipelineFormComponent implements OnInit {
+	@Input()
+	public pipeline: PipelineCreateInput & { id?: string };
 
-  @Input()
-  public pipeline: PipelineCreateInput & { id?: string };
+	public userOrganizations: UserOrganization[];
+	public form: FormGroup;
+	public icon: string;
 
-  public userOrganizations: UserOrganization[];
-  public form: FormGroup;
-  public icon: string;
+	public constructor(
+		private dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
+		private usersOrganizationsService: UsersOrganizationsService,
+		private pipelinesService: PipelinesService,
+		private fb: FormBuilder,
+		private store: Store
+	) {}
 
-  public constructor(
-    private dialogRef: NbDialogRef<PipelineFormComponent[ 'pipeline' ]>,
-    private usersOrganizationsService: UsersOrganizationsService,
-    private pipelinesService: PipelinesService,
-    private fb: FormBuilder,
-    private store: Store )
-  {
-  }
+	public ngOnInit(): void {
+		const { id } = this.pipeline;
+		const { userId } = this.store;
 
-  public ngOnInit(): void
-  {
-    const { userId } = this.store;
+		this.usersOrganizationsService
+			.getAll(['organization'], { userId })
+			.then(({ items }) => (this.userOrganizations = items));
+		this.form = this.fb.group({
+			organizationId: [
+				this.pipeline.organizationId || '',
+				Validators.required
+			],
+			name: [this.pipeline.name || '', Validators.required],
+			...(id ? { id: [id, Validators.required] } : {}),
+			description: [this.pipeline.description],
+			stages: this.fb.array([])
+		});
+	}
 
-    this.usersOrganizationsService
-      .getAll( [ 'organization' ], { userId } )
-      .then( ( { items } ) => this.userOrganizations = items );
-    this.form = this.fb.group({
-      ...this.pipeline?.id ? { id: [ this.pipeline?.id || '', Validators.required ] } : {},
-      organizationId: [ this.pipeline?.organizationId || '', Validators.required ],
-      name: [ this.pipeline?.name || '', Validators.required ],
-      description: [ this.pipeline?.description ],
-    });
-  }
+	public persist(): void {
+		const {
+			value,
+			value: { id }
+		} = this.form;
 
-  public persist(): void {
-    const { value, value: { id } } = this.form;
-
-    Promise.race( [ id ?
-      this.pipelinesService.update( id, value )
-      : this.pipelinesService.create( value ) ]
-    ).then( entity => this.dialogRef.close( entity ) );
-  }
-
+		Promise.race([
+			id
+				? this.pipelinesService.update(id, value)
+				: this.pipelinesService.create(value)
+		]).then((entity) => this.dialogRef.close(entity));
+	}
 }

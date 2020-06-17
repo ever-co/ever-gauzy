@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { Pipeline } from '@gauzy/models';
+import { PermissionsEnum, Pipeline } from '@gauzy/models';
 import { AppStore, Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -10,6 +10,8 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { AuthService } from '../../@core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   templateUrl: './pipelines.component.html',
@@ -35,11 +37,13 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     },
   };
   public pipelines = new LocalDataSource( [] as Pipeline[] );
+  public CAN_EDIT_SALES_PIPELINES = false;
   public organizationId: string;
   public pipeline: Pipeline;
   public name: string;
 
   private readonly $akitaPreUpdate: AppStore[ 'akitaPreUpdate' ];
+  private permissionSubscription: Subscription;
 
   public constructor(
     private usersOrganizationsService: UsersOrganizationsService,
@@ -47,6 +51,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     private nbToastrService: NbToastrService,
     private dialogService: NbDialogService,
     translateService: TranslateService,
+    private authService: AuthService,
     private appStore: AppStore,
     private store: Store )
   {
@@ -65,6 +70,12 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
 
   public ngOnInit(): void
   {
+
+    this.permissionSubscription = this.store.userRolePermissions$.subscribe( () => {
+      this.CAN_EDIT_SALES_PIPELINES = this.store.hasPermission( PermissionsEnum.EDIT_SALES_PIPELINES );
+      console.log({ CAN_EDIT_SALES_PIPELINES: this.CAN_EDIT_SALES_PIPELINES });
+    });
+
     if ( ! this.organizationId ) {
       setTimeout(  async () => {
         this.organizationId = this.store.selectedOrganization?.id;
@@ -76,6 +87,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   public ngOnDestroy(): void
   {
     this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
+    this.permissionSubscription.unsubscribe();
   }
 
   public async updatePipelines(): Promise<void> {
@@ -83,7 +95,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     const organizationId = value || void 0;
 
     await this.pipelinesService
-      .find( [], { organizationId })
+      .find( [ 'stages' ], { organizationId })
       .then( ({ items }) => {
         this.pipelines.load( items );
         this.filterPipelines();
@@ -135,7 +147,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       context,
     });
     const data = await dialogRef.onClose.pipe( first() ).toPromise();
-    const { id } = context;
+    const { pipeline: { id } } = context;
 
     if ( data ) {
       this.nbToastrService.success(

@@ -87,6 +87,7 @@ import { HelpCenterModule } from './help-center/help-center.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
+import { StageModule } from './stage/stage.module';
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
 import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
@@ -434,6 +435,7 @@ import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/c
 		EventTypeModule,
 		AvailabilitySlotsModule,
 		PipelineModule,
+		StageModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
