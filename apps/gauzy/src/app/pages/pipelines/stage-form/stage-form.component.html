@@ -6,8 +6,8 @@
     </button>
   </nb-card-header>
   <nb-card-body>
-    <nb-accordion>
-      <nb-accordion-item *ngFor="let stage of control.controls; let i = index" [formGroup]="stage" [expanded]="isAdding && control.length - 1 === i">
+    <nb-accordion cdkDropList (cdkDropListDropped)="reorder($event)">
+      <nb-accordion-item *ngFor="let stage of control.controls; let i = index" [formGroup]="stage" [expanded]="isAdding && control.length - 1 === i" cdkDrag [cdkDragData]="stage">
         <nb-accordion-item-header>
           <button nbButton size="tiny" status="warning" type="button" (click)="isAdding && control.length - 1 === i && (isAdding = false); control.removeAt( i )">
             <nb-icon pack="eva" icon="trash-2-outline"></nb-icon>
