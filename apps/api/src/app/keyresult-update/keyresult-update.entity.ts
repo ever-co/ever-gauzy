@@ -25,12 +25,14 @@ export class KeyResultUpdate extends Base implements IKeyResultUpdate {
 	status?: string;
 
 	@ApiProperty({ type: KeyResult })
-	@ManyToOne((type) => KeyResult, (keyresult) => keyresult.update)
-	@JoinColumn({ name: 'keyresult_id' })
+	@ManyToOne((type) => KeyResult, (keyResult) => keyResult.update, {
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn({ name: 'keyResultId' })
 	keyResult: KeyResult;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((keyresult: KeyResultUpdate) => keyresult.keyResult)
+	@RelationId((keyResult: KeyResultUpdate) => keyResult.keyResult)
 	@Column({ nullable: true })
-	readonly keyresult_id?: string;
+	readonly keyResultId?: string;
 }

@@ -900,6 +900,7 @@
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
 			"INVOICES_EDIT": "Edit Invoices",
+			"EDIT_SALES_PIPELINES": "Edit Sales Pipelines",
 			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
 			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
 			"REQUEST_APPROVAL_EDIT": "Edit Approval Request",
@@ -908,6 +909,7 @@
 			"VIEW_ALL_EMAILS": "View All Emails",
 			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
 			"PUBLIC_PAGE_EDIT": "Public Page Edit",
+			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Администрация"
@@ -1605,9 +1607,12 @@
 		"SELECT_LOG_TYPE": "Select Log Type",
 		"ADD_TIME_LOGS": "Add Time Logs",
 		"EDIT_TIME_LOGS": "Edit Time Logs",
+		"VIEW_TIME_LOGS": "Time Logs",
 		"ADD_TIME": "Add Time",
 		"UPDATE_TIME": "Update Time",
+		"EDIT": "Редактиране",
 		"CLOSE": "Затвори",
+		"DELETE": "Изтрий",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",
@@ -1680,6 +1685,7 @@
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
+		"HEADER_STAGES": "Stages",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
 		"HEADER_FORM_CREATE": "Create Pipeline",
 		"RECORD_TYPE": "pipeline \"{{ name }}\""

@@ -138,6 +138,11 @@ export class TagsComponent extends TranslationBaseComponent
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
 					type: 'string',
 					filter: false
+				},
+				counter: {
+					title: this.getTranslation('Counter'),
+					type: 'string',
+					filter: false
 				}
 			}
 		};
@@ -155,9 +160,19 @@ export class TagsComponent extends TranslationBaseComponent
 				this.selectedOrganization.tenantId,
 				['tenant']
 			);
-			const AllTags = tagsByOrgLevel.concat(tagsByTenantLevel);
 
-			this.smartTableSource.load(AllTags);
+			const orgId = this.selectedOrganization.id;
+			let allTags = [];
+			if (tagsByOrgLevel.length > 0) {
+				const result = await this.tagsService.getTagUsageCount(orgId);
+				allTags = result.concat(tagsByTenantLevel);
+
+				this.smartTableSource.load(allTags);
+			} else if (tagsByTenantLevel.length > 0) {
+				this.smartTableSource.load(tagsByTenantLevel);
+			} else {
+				this.smartTableSource.load([]);
+			}
 		}
 	}
 

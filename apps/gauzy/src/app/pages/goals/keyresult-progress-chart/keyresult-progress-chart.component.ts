@@ -6,13 +6,17 @@ import { KeyResult } from '@gauzy/models';
 	templateUrl: './keyresult-progress-chart.component.html',
 	styleUrls: ['./keyresult-progress-chart.component.scss']
 })
-export class KeyresultProgressChartComponent implements OnInit {
+export class KeyResultProgressChartComponent implements OnInit {
 	data: any;
 	options: any;
 	@Input() keyResult: KeyResult;
 	constructor() {}
 
-	ngOnInit(): void {
+	ngOnInit() {
+		this.updateChart(this.keyResult);
+	}
+
+	public updateChart(keyResult) {
 		this.data = {
 			labels: [
 				'January',
@@ -27,8 +31,8 @@ export class KeyresultProgressChartComponent implements OnInit {
 				{
 					label: 'Expected',
 					data: this.rangeCalculation(
-						this.keyResult.initialValue,
-						this.keyResult.targetValue,
+						keyResult.initialValue,
+						keyResult.targetValue,
 						7
 					),
 					borderWidth: 2,
@@ -37,11 +41,11 @@ export class KeyresultProgressChartComponent implements OnInit {
 				},
 				{
 					label: 'Progress',
-					data: this.keyResult.updates
+					data: keyResult.updates
 						.sort(
 							(a, b) =>
-								new Date(b.createdAt).getUTCSeconds() -
-								new Date(a.createdAt).getUTCSeconds()
+								new Date(a.createdAt).getTime() -
+								new Date(b.createdAt).getTime()
 						)
 						.map((val) => val.update),
 					borderWidth: 3,

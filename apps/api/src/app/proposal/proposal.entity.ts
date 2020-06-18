@@ -19,7 +19,7 @@ import { Tag } from '../tags/tag.entity';
 @Entity('proposal')
 export class Proposal extends Base implements IProposal {
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.proposal)
 	@JoinTable({ name: 'tag_proposal' })
 	tags: Tag[];
 

@@ -21,7 +21,7 @@ export class ProductCategoryService {
 			.toPromise();
 	}
 
-	getAll(
+	getAllTranslated(
 		langCode: string,
 		relations?: string[],
 		findInput?: any

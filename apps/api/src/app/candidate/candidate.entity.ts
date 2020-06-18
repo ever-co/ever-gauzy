@@ -40,7 +40,7 @@ import { CandidateInterview } from '../candidate-interview/candidate-interview.e
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.candidate)
 	@JoinTable({
 		name: 'tag_candidate'
 	})

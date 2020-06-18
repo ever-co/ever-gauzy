@@ -8,17 +8,17 @@ import { NbToastrService } from '@nebular/theme';
 @Injectable({
 	providedIn: 'root'
 })
-export class KeyresultUpdateService {
+export class KeyResultUpdateService {
 	private readonly API_URL = '/api/key-result-updates';
 	constructor(
 		private _http: HttpClient,
 		private toastrService: NbToastrService
 	) {}
 
-	createUpdate(keyresultUpdate): Promise<KeyResultUpdates> {
-		console.log(keyresultUpdate);
+	createUpdate(keyResultUpdate): Promise<KeyResultUpdates> {
+		console.log(keyResultUpdate);
 		return this._http
-			.post<KeyResultUpdates>(`${this.API_URL}/create`, keyresultUpdate)
+			.post<KeyResultUpdates>(`${this.API_URL}/create`, keyResultUpdate)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary('Update Added', 'Success')

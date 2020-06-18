@@ -21,7 +21,7 @@ import { OrganizationTeam } from '../organization-team/organization-team.entity'
 @Entity('task')
 export class Task extends Base implements ITask {
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.task)
 	@JoinTable({
 		name: 'tag_task'
 	})
@@ -75,10 +75,7 @@ export class Task extends Base implements ITask {
 	teams: OrganizationTeam[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany(
-		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.task
-	)
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.task)
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 }

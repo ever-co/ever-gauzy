@@ -30,7 +30,7 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 
 @Entity('employee')
 export class Employee extends TenantLocationBase implements IEmployee {
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.employee)
 	@JoinTable({
 		name: 'tag_employee'
 	})
@@ -162,11 +162,9 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	anonymousBonus?: boolean;
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany(
-		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.employee,
-		{ onDelete: 'SET NULL' }
-	)
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.employee, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 

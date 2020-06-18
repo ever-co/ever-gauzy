@@ -68,7 +68,6 @@ import {
 	seedRandomEmploymentTypes
 } from '../../organization/employment-types.seed';
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
-import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
@@ -142,6 +141,7 @@ import {
 	createCandidateFeedbacks,
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
+import { Equipment } from '../../equipment/equipment.entity';
 
 const allEntities = [
 	TimeOffPolicy,

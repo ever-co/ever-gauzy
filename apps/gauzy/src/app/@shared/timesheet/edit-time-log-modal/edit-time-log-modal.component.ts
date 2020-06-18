@@ -5,12 +5,13 @@ import {
 	TimeLog,
 	Employee,
 	PermissionsEnum,
-	IManualTimeInput
+	IManualTimeInput,
+	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { TimesheetService } from '../timesheet.service';
 import { NgForm } from '@angular/forms';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
@@ -18,6 +19,8 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 import { EmployeesService } from '../../../@core/services';
 import * as moment from 'moment';
 import * as _ from 'underscore';
+import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
 	selector: 'ngx-edit-time-log-modal',
@@ -25,9 +28,10 @@ import * as _ from 'underscore';
 	styleUrls: ['./edit-time-log-modal.component.scss']
 })
 export class EditTimeLogModalComponent implements OnInit, OnDestroy {
+	PermissionsEnum = PermissionsEnum;
+	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
-	canSelectEmployee: boolean;
 	loading: boolean;
 
 	addEditRequest: IManualTimeInput = {
@@ -71,6 +75,8 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	constructor(
 		private timesheetService: TimesheetService,
 		private toastrService: ToastrService,
+		private dialogService: NbDialogService,
+		private ngxPermissionsService: NgxPermissionsService,
 		private store: Store,
 		private employeesService: EmployeesService,
 		private dialogRef: NbDialogRef<EditTimeLogModalComponent>
@@ -88,24 +94,16 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: Organization) => {
 				this.organization = organization;
-				this.futureDateAllowed = this.organization.futureDateAllowed;
 				this.loadEmployees();
 			});
 
-		this.store.user$.pipe(untilDestroyed(this)).subscribe(() => {
-			this.canSelectEmployee = this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		});
-
-		// this.store.selectedEmployee
-		// 	.pipe(untilDestroyed(this))
-		// 	.subscribe((employee: SelectedEmployee) => {
-		// 		if (this.mode === 'update'){
-		// 			this.employee = employee;
-		// 			this.addEditRequest.employeeId = employee.id;
-		// 		}
-		// 	});
+		this.ngxPermissionsService.permissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(async () => {
+				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
+					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
+				);
+			});
 	}
 
 	close() {
@@ -155,6 +153,17 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			true
 		);
 		this.employees = items;
+	}
+
+	onDeleteConfirm(log) {
+		this.dialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((type) => {
+				if (type === 'ok') {
+					this.timesheetService.deleteLogs(log.id);
+				}
+			});
 	}
 
 	ngOnDestroy(): void {}

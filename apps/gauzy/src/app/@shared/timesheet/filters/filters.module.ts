@@ -12,12 +12,14 @@ import {
 } from '@nebular/theme';
 import { Ng5SliderModule } from 'ng5-slider';
 import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	declarations: [FiltersComponent],
 	exports: [FiltersComponent],
 	imports: [
 		CommonModule,
+		SharedModule,
 		FormsModule,
 		EmployeeMultiSelectModule,
 		NbButtonModule,

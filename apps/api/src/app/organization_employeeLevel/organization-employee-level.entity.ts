@@ -8,7 +8,7 @@ import { Base } from '../core/entities/base';
 })
 export class EmployeeLevel extends Base {
 	@ApiProperty()
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.employeeLevel)
 	@JoinTable({
 		name: 'tag_organization_employee_level'
 	})

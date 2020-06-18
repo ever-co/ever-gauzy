@@ -1,18 +1,19 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProductTypesComponent } from './product-types.component';
 
-describe('ProductTypeComponent', () => {
-	let component: ProductTypesComponent;
-	let fixture: ComponentFixture<ProductTypesComponent>;
+import { ViewTimeLogModalComponent } from './view-time-log-modal.component';
+
+describe('ViewTimeLogModalComponent', () => {
+	let component: ViewTimeLogModalComponent;
+	let fixture: ComponentFixture<ViewTimeLogModalComponent>;
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [ProductTypesComponent]
+			declarations: [ViewTimeLogModalComponent]
 		}).compileComponents();
 	}));
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(ProductTypesComponent);
+		fixture = TestBed.createComponent(ViewTimeLogModalComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
