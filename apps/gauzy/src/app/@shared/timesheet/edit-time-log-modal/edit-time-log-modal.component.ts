@@ -6,9 +6,10 @@ import {
 	Employee,
 	PermissionsEnum,
 	IManualTimeInput,
-	OrganizationPermissionsEnum
+	OrganizationPermissionsEnum,
+	IGetTimeLogConflictInput
 } from '@gauzy/models';
-import { toUTC } from 'libs/utils';
+import { toUTC, toLocal } from 'libs/utils';
 import { TimesheetService } from '../timesheet.service';
 import { NgForm } from '@angular/forms';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
@@ -33,6 +34,7 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
 	loading: boolean;
+	overlaps: TimeLog[] = [];
 
 	addEditRequest: IManualTimeInput = {
 		isBillable: true,
@@ -110,6 +112,71 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 		this.dialogRef.close(null);
 	}
 
+	checkOverlaps() {
+		if (this.selectedRange && this.addEditRequest.employeeId) {
+			const startDate = toUTC(this.selectedRange.start).toISOString();
+			const endDate = toUTC(this.selectedRange.end).toISOString();
+			const request: IGetTimeLogConflictInput = {
+				...(this.addEditRequest.id
+					? { ignoreId: [this.addEditRequest.id] }
+					: {}),
+				startDate,
+				endDate,
+				employeeId: this.addEditRequest.employeeId,
+				relations: ['project', 'task']
+			};
+			this.timesheetService.checkOverlaps(request).then((timeLogs) => {
+				this.overlaps = timeLogs.map((timeLog) => {
+					const timeLogStartedAt = toLocal(timeLog.startedAt);
+					const timeLogStoppedAt = toLocal(timeLog.stoppedAt);
+					let overlapDueration = 0;
+					if (
+						moment(timeLogStartedAt).isBetween(
+							moment(startDate),
+							moment(endDate)
+						)
+					) {
+						if (
+							moment(timeLogStoppedAt).isBetween(
+								moment(startDate),
+								moment(endDate)
+							)
+						) {
+							overlapDueration = moment(timeLogStoppedAt).diff(
+								moment(timeLogStartedAt),
+								'seconds'
+							);
+						} else {
+							overlapDueration = moment(endDate).diff(
+								moment(timeLogStartedAt),
+								'seconds'
+							);
+						}
+					} else {
+						if (
+							moment(timeLogStoppedAt).isBetween(
+								moment(startDate),
+								moment(endDate)
+							)
+						) {
+							overlapDueration = moment(timeLogStoppedAt).diff(
+								moment(startDate),
+								'seconds'
+							);
+						} else {
+							overlapDueration = moment(endDate).diff(
+								moment(startDate),
+								'seconds'
+							);
+						}
+					}
+					timeLog.overlapDueration = overlapDueration;
+					return timeLog;
+				});
+			});
+		}
+	}
+
 	addTime(f: NgForm) {
 		if (!f.valid) {
 			return;
@@ -161,7 +228,9 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((type) => {
 				if (type === 'ok') {
-					this.timesheetService.deleteLogs(log.id);
+					this.timesheetService.deleteLogs(log.id).then((res) => {
+						this.dialogRef.close(res);
+					});
 				}
 			});
 	}

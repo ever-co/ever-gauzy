@@ -67,6 +67,7 @@ export interface IDateRange {
 	end: Date;
 }
 export interface TimeLog extends IBaseEntityModel {
+	[x: string]: any;
 	employee: Employee;
 	timesheet?: Timesheet;
 	task?: Task;
@@ -235,4 +236,12 @@ export interface IGetTimeLogInput {
 	logType?: TimeLogType | TimeLogType[];
 	activityLevel?: { start: number; end: number };
 	organizationId?: string;
+}
+export interface IGetTimeLogConflictInput {
+	ignoreId?: string | string[];
+	startDate: string | Date;
+	endDate: string | Date;
+	employeeId: string;
+	organizationId?: string;
+	relations?: string[];
 }

@@ -191,7 +191,12 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 	openView(timeLog: TimeLog) {
 		this.dialogService
-			.open(ViewTimeLogModalComponent, { context: { timeLog } })
+			.open(ViewTimeLogModalComponent, {
+				context: {
+					timeLog
+				},
+				dialogClass: 'view-log-dialog'
+			})
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {

@@ -6,7 +6,8 @@ import {
 	IManualTimeInput,
 	TimesheetStatus,
 	Timesheet,
-	IGetTimesheetInput
+	IGetTimesheetInput,
+	IGetTimeLogConflictInput
 } from '@gauzy/models';
 import { toParams } from 'libs/utils';
 
@@ -27,6 +28,14 @@ export class TimesheetService {
 	updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
 		return this.http
 			.put<TimeLog>('/api/timesheet/time-log/' + id, request)
+			.toPromise();
+	}
+
+	checkOverlaps(request: IGetTimeLogConflictInput): Promise<TimeLog[]> {
+		return this.http
+			.get<TimeLog[]>('/api/timesheet/time-log/conflict', {
+				params: toParams(request)
+			})
 			.toPromise();
 	}
 
