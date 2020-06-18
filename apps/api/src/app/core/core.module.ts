@@ -94,6 +94,7 @@ import { Goal } from '../goal/goal.entity';
 import { KeyResult } from '../keyresult/keyresult.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
+import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 
 const entities = [
 	Invite,
@@ -135,6 +136,7 @@ const entities = [
 	EmployeeLevel,
 	Task,
 	Goal,
+	GoalTimeFrame,
 	KeyResult,
 	KeyResultUpdate,
 	TimeSlot,

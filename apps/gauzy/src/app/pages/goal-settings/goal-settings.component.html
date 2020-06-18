@@ -1,0 +1,48 @@
+<nb-card>
+	<nb-card-header>
+		<h4>Set Timeframes</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3">
+			<button
+				nbButton
+				status="success"
+				(click)="editTimeFrame('add')"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="editTimeFrame('edit')"
+				class="mr-2"
+				[disabled]="!selectedTimeFrame"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="danger"
+				(click)="deleteTimeFrame()"
+				class="mr-2"
+				[disabled]="!selectedTimeFrame"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+		<ng-container>
+			<ng2-smart-table
+				[settings]="smartTableSettings"
+				[source]="smartTableData"
+				(userRowSelect)="selectTimeFrame($event)"
+				style="cursor: pointer;"
+				#timeFrameTable
+			>
+			</ng2-smart-table>
+		</ng-container>
+	</nb-card-body>
+</nb-card>
