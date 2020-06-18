@@ -21,12 +21,11 @@ export class EmployeeLevelController extends CrudController<EmployeeLevel> {
 
 	@Get(':orgId')
 	async findByOrgId(
-		@Query() data,
+		@Query('data') data: string,
 		@Param() id
 	): Promise<IPagination<EmployeeLevel>> {
 		const orgId = id.orgId;
-		const relations = [];
-		relations.push(data.relations);
+		const { relations } = JSON.parse(data);
 		return await this.employeeLevelService.findAll({
 			where: { organizationId: orgId },
 			relations
