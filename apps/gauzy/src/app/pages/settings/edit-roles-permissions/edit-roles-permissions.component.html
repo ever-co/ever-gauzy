@@ -90,7 +90,7 @@
 								(checkedChange)="
 									permissionChanged(permission, $event)
 								"
-								disabled
+								[disabled]="selectedRole !== adminRole"
 								>{{
 									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
 										permission | translate

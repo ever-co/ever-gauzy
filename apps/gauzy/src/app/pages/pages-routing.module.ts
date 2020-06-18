@@ -301,9 +301,9 @@ const routes: Routes = [
 					{
 						path: 'settings',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./goal-settings/goal-settings.module').then(
+								(m) => m.GoalSettingsModule
+							)
 					}
 				]
 			},

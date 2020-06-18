@@ -17,6 +17,8 @@ import { StarRatingInputModule } from '../../star-rating/star-rating-input/star-
 import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
 import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
+import { StarRatingOutputModule } from '../../star-rating/star-rating-output/star-rating-output.module';
+import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -34,6 +36,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbRadioModule,
 		NbIconModule,
 		StarRatingInputModule,
+		StarRatingOutputModule,
 		CandidateSelectModule,
 		NbAccordionModule,
 		TranslateModule.forChild({
@@ -47,6 +50,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],
 	entryComponents: [CandidateInterviewFeedbackComponent],
-	providers: [CandidateTechnologiesService, CandidatePersonalQualitiesService]
+	providers: [
+		CandidateTechnologiesService,
+		CandidatePersonalQualitiesService,
+		CandidateCriterionsRatingService
+	]
 })
 export class CandidateInterviewFeedbackModule {}

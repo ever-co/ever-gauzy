@@ -127,7 +127,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				0,
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
-			// paid: [''],
 			tax: [
 				0,
 				Validators.compose([Validators.required, Validators.min(0)])
@@ -168,52 +167,74 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		let quantity = {};
 		switch (this.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-				this.settingsSmartTable['columns']['selectedEmployee'] = {
+				this.settingsSmartTable['columns']['selectedItem'] = {
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE'
 					),
-					type: 'custom',
-					renderComponent: InvoiceEmployeesSelectorComponent,
 					filter: false,
-					addable: false,
-					editable: false,
-					width: '25%'
+					width: '25%',
+					editor: {
+						type: 'custom',
+						component: InvoiceEmployeesSelectorComponent
+					},
+					valuePrepareFunction: (cell) => {
+						const employee = this.employees.find(
+							(e) => e.id === cell
+						);
+						return `${employee.user.firstName} ${employee.user.lastName}`;
+					}
 				};
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
-				this.settingsSmartTable['columns']['project'] = {
+				this.settingsSmartTable['columns']['selectedItem'] = {
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.PROJECT'
 					),
-					type: 'custom',
-					renderComponent: InvoiceProjectsSelectorComponent,
 					filter: false,
-					addable: false,
-					editable: false
+					editor: {
+						type: 'custom',
+						component: InvoiceProjectsSelectorComponent
+					},
+					valuePrepareFunction: (cell) => {
+						const project = this.projects.find(
+							(p) => p.id === cell
+						);
+						return `${project.name}`;
+					}
 				};
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
-				this.settingsSmartTable['columns']['task'] = {
+				this.settingsSmartTable['columns']['selectedItem'] = {
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.TASK'
 					),
-					type: 'custom',
-					renderComponent: InvoiceTasksSelectorComponent,
 					filter: false,
-					addable: false,
-					editable: false
+					editor: {
+						type: 'custom',
+						component: InvoiceTasksSelectorComponent
+					},
+					valuePrepareFunction: (cell) => {
+						const task = this.tasks.find((t) => t.id === cell);
+						return `${task.title}`;
+					}
 				};
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
-				this.settingsSmartTable['columns']['product'] = {
+				this.settingsSmartTable['columns']['selectedItem'] = {
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.PRODUCT'
 					),
-					type: 'custom',
-					renderComponent: InvoiceProductsSelectorComponent,
 					filter: false,
-					addable: false,
-					editable: false
+					editor: {
+						type: 'custom',
+						component: InvoiceProductsSelectorComponent
+					},
+					valuePrepareFunction: (cell) => {
+						const product = this.products.find(
+							(p) => p.id === cell
+						);
+						return `${product.name}`;
+					}
 				};
 				break;
 			default:
@@ -364,6 +385,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
+				toClient: invoiceData.client,
 				clientId: invoiceData.client.id,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
@@ -372,60 +394,31 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				isEstimate: this.isEstimate
 			});
 
-			if (tableData[0].selectedEmployee) {
-				for (const invoiceItem of tableData) {
-					await this.invoiceItemService.add({
-						description: invoiceItem.description,
-						price: invoiceItem.price,
-						quantity: invoiceItem.quantity,
-						totalValue: invoiceItem.totalValue,
-						invoiceId: createdInvoice.id,
-						employeeId: invoiceItem.selectedEmployee
-					});
+			for (const invoiceItem of tableData) {
+				const itemToAdd = {
+					description: invoiceItem.description,
+					price: invoiceItem.price,
+					quantity: invoiceItem.quantity,
+					totalValue: invoiceItem.totalValue,
+					invoiceId: createdInvoice.id
+				};
+				switch (this.selectedInvoiceType) {
+					case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+						itemToAdd['employeeId'] = invoiceItem.selectedItem;
+						break;
+					case InvoiceTypeEnum.BY_PROJECT_HOURS:
+						itemToAdd['projectId'] = invoiceItem.selectedItem;
+						break;
+					case InvoiceTypeEnum.BY_TASK_HOURS:
+						itemToAdd['taskId'] = invoiceItem.selectedItem;
+						break;
+					case InvoiceTypeEnum.BY_PRODUCTS:
+						itemToAdd['productId'] = invoiceItem.selectedItem;
+						break;
+					default:
+						break;
 				}
-			} else if (tableData[0].project) {
-				for (const invoiceItem of tableData) {
-					await this.invoiceItemService.add({
-						description: invoiceItem.description,
-						price: invoiceItem.price,
-						quantity: invoiceItem.quantity,
-						totalValue: invoiceItem.totalValue,
-						invoiceId: createdInvoice.id,
-						projectId: invoiceItem.project.id
-					});
-				}
-			} else if (tableData[0].task) {
-				for (const invoiceItem of tableData) {
-					await this.invoiceItemService.add({
-						description: invoiceItem.description,
-						price: invoiceItem.price,
-						quantity: invoiceItem.quantity,
-						totalValue: invoiceItem.totalValue,
-						invoiceId: createdInvoice.id,
-						taskId: invoiceItem.task.id
-					});
-				}
-			} else if (tableData[0].product) {
-				for (const invoiceItem of tableData) {
-					await this.invoiceItemService.add({
-						description: invoiceItem.description,
-						price: invoiceItem.price,
-						quantity: invoiceItem.quantity,
-						totalValue: invoiceItem.totalValue,
-						invoiceId: createdInvoice.id,
-						productId: invoiceItem.product.id
-					});
-				}
-			} else {
-				for (const invoiceItem of tableData) {
-					await this.invoiceItemService.add({
-						description: invoiceItem.description,
-						price: invoiceItem.price,
-						quantity: invoiceItem.quantity,
-						totalValue: invoiceItem.totalValue,
-						invoiceId: createdInvoice.id
-					});
-				}
+				await this.invoiceItemService.add(itemToAdd);
 			}
 
 			if (this.isEstimate) {
@@ -547,7 +540,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.isProductTable = isProductTable;
 	}
 
-	generateTable() {
+	async generateTable() {
 		this.selectedInvoiceType = this.invoiceType;
 		this.smartTableSource.refresh();
 		const fakeData = [];
@@ -560,8 +553,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						description: 'Desc',
 						price: fakePrice,
 						quantity: fakeQuantity,
-						selectedEmployee: employeeId,
-						allEmployees: this.employees,
+						selectedItem: employeeId,
 						totalValue: fakePrice * fakeQuantity
 					};
 					fakeData.push(data);
@@ -576,7 +568,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						description: 'Desc',
 						price: fakePrice,
 						quantity: fakeQuantity,
-						project: project,
+						selectedItem: project.id,
 						totalValue: fakePrice * fakeQuantity
 					};
 					fakeData.push(data);
@@ -591,8 +583,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						description: 'Desc',
 						price: fakePrice,
 						quantity: fakeQuantity,
-						task: task,
-						allTasks: this.tasks,
+						selectedItem: task.id,
 						totalValue: fakePrice * fakeQuantity
 					};
 					fakeData.push(data);
@@ -607,7 +598,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						description: 'Desc',
 						price: fakePrice,
 						quantity: fakeQuantity,
-						product: product,
+						selectedItem: product.id,
 						totalValue: fakePrice * fakeQuantity
 					};
 					fakeData.push(data);
@@ -712,15 +703,13 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	}
 
 	onCreateConfirm(event) {
-		if (event.newData.selectedEmployee === '') {
-			event.newData['allEmployees'] = this.employees;
-		}
 		if (
 			!isNaN(event.newData.quantity) &&
 			!isNaN(event.newData.price) &&
 			event.newData.quantity &&
 			event.newData.price &&
-			event.newData.description
+			event.newData.description &&
+			event.newData.selectedItem
 		) {
 			const newData = event.newData;
 			const itemTotal = +event.newData.quantity * +event.newData.price;
@@ -743,7 +732,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			!isNaN(event.newData.price) &&
 			event.newData.quantity &&
 			event.newData.price &&
-			event.newData.description
+			event.newData.description &&
+			event.newData.selectedItem
 		) {
 			const newData = event.newData;
 			const oldValue = +event.data.quantity * +event.data.price;

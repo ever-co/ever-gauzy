@@ -67,12 +67,11 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@Column({ nullable: true })
 	banner: string;
 
-	@ApiProperty({ type: String, maxLength: 4 })
+	@ApiProperty({ type: Number, maxLength: 4 })
 	@IsString()
 	@Index()
-	@IsOptional()
 	@Column({ nullable: true })
-	size: string;
+	totalEmployees: number;
 
 	@ApiProperty({ type: String, maxLength: 600 })
 	@IsString()
@@ -94,13 +93,6 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	overview: string;
-
-	@ApiProperty({ type: String, maxLength: 4 })
-	@IsString()
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	founded: string;
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
@@ -209,7 +201,7 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
-	show_business_paid?: boolean;
+	show_bonuses_paid?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
@@ -225,6 +217,11 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_projects_count?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_clients_count?: boolean;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

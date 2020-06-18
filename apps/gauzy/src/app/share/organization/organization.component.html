@@ -84,7 +84,9 @@
 						<img
 							*ngIf="imageUrl"
 							[src]="imageUrl"
-							alt="Organization Photo"
+							alt="{{
+								'PUBLIC_PAGE.COMPANY_PROFILE' | translate
+							}}"
 							(mouseenter)="hoverState = true"
 							(mouseleave)="hoverState = false"
 						/>
@@ -103,18 +105,39 @@
 					<h4 class="org-name" [textContent]="organization.name"></h4>
 					<div class="org-year-found">
 						<h5
-							*ngIf="organization.founded"
+							*ngIf="organization.registrationDate"
 							class="org-title"
 							[textContent]="
-								'Year Founded: ' + organization.founded
+								('PUBLIC_PAGE.YEAR_FOUNDED' | translate) +
+								': ' +
+								moment(organization.registrationDate).format(
+									'Y'
+								)
 							"
 						></h5>
 					</div>
 					<div class="org-size">
 						<h5
-							*ngIf="organization.founded"
+							*ngIf="organization.totalEmployees"
 							class="org-title"
-							[textContent]="'Company Size: ' + organization.size"
+							[textContent]="
+								('PUBLIC_PAGE.COMPANY_SIZE' | translate) +
+								': ' +
+								organization.totalEmployees
+							"
+						></h5>
+					</div>
+					<div
+						class="org-size"
+						*ngIf="organization.show_clients_count && total_clients"
+					>
+						<h5
+							class="org-title"
+							[textContent]="
+								('PUBLIC_PAGE.TOTAL_CLIENTS' | translate) +
+								': ' +
+								total_clients
+							"
 						></h5>
 					</div>
 					<div
@@ -122,7 +145,7 @@
 						*ngIf="organization.client_focus"
 					>
 						<h5 class="org-title">
-							Client Focus:
+							{{ 'PUBLIC_PAGE.CLIENT_FOCUS' | translate }}:
 							<span
 								class="client-focus"
 								[textContent]="
@@ -137,16 +160,25 @@
 			<div class="row" *ngIf="languageExist">
 				<div class="col">
 					<div class="org-year-found">
-						<h5 class="org-title">Languages</h5>
-						<nb-list class="nb_list block_style">
+						<h5 class="org-title">
+							{{ 'PUBLIC_PAGE.LANGUAGES' | translate }}
+						</h5>
+						<nb-list class="nb_list block_style org_languages">
 							<nb-list-item
-								*ngFor="let l of organization_languages"
+								*ngFor="
+									let l of organization_languages;
+									let i = index
+								"
 								class="nb_list_item item"
 							>
 								<span
 									class="award_title"
 									[textContent]="
-										l.name + ' (' + l.level + ')'
+										(i !== 0 ? ', ' : ' ') +
+										l.name +
+										' (' +
+										l.level +
+										')'
 									"
 								></span>
 							</nb-list-item>
@@ -156,15 +188,23 @@
 			</div>
 			<div class="row" *ngIf="awardExist">
 				<div class="col">
-					<h5 class="org-title">Awards</h5>
-					<nb-list class="nb_list block_style">
+					<h5 class="org-title">
+						{{ 'PUBLIC_PAGE.AWARDS' | translate }}
+					</h5>
+					<nb-list class="nb_list block_style org_awards">
 						<nb-list-item
-							*ngFor="let a of awards"
+							*ngFor="let a of awards; let i = index"
 							class="nb_list_item item"
 						>
 							<span
 								class="award_title"
-								[textContent]="a.name + ' (' + a.year + ')'"
+								[textContent]="
+									(i !== 0 ? ', ' : ' ') +
+									a.name +
+									' (' +
+									a.year +
+									')'
+								"
 							></span>
 						</nb-list-item>
 					</nb-list>
@@ -173,8 +213,42 @@
 			<div class="row" *ngIf="organization.skills">
 				<div class="col">
 					<div class="org-skills">
-						<h5 class="org-title">Company Skills</h5>
-						<span class="skills"></span>
+						<h5 class="org-title">
+							{{ 'PUBLIC_PAGE.COMPANY_SKILLS' | translate }}
+						</h5>
+						<nb-list class="nb_list block_style org_skills">
+							<nb-list-item
+								*ngFor="
+									let skill of organization.skills;
+									let i = index
+								"
+								class="nb_list_item item"
+							>
+								<span
+									class="skill_title"
+									[textContent]="
+										(i !== 0 ? ', ' : ' ') + skill.name
+									"
+								></span>
+							</nb-list-item>
+						</nb-list>
+					</div>
+				</div>
+			</div>
+
+			<div
+				class="row"
+				*ngIf="organization.show_bonuses_paid && bonuses_paid"
+			>
+				<div class="col">
+					<div class="org-bonuses-paid">
+						<h5 class="org-title">
+							{{ 'PUBLIC_PAGE.TOTAL_BONUSES_PAID' | translate }}
+						</h5>
+						<span
+							class="paid_bonuses"
+							[textContent]="'$' + bonuses_paid"
+						></span>
 					</div>
 				</div>
 			</div>

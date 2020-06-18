@@ -9,7 +9,7 @@
 		<form class="form" [formGroup]="form" *ngIf="form">
 			<ga-candidate-select
 				class="select"
-				[allCandidates]="employeesForSelect"
+				[allCandidates]="currentInterview.employees"
 				[placeholder]="
 					'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEE' | translate
 				"
@@ -18,9 +18,15 @@
 			>
 			</ga-candidate-select>
 			<div class="label-wrap">
-				<ga-star-rating-input
-					formControlName="rating"
-				></ga-star-rating-input>
+				<!-- <ga-star-rating-output
+					[rate]="averageRating"
+				></ga-star-rating-output> -->
+				<span
+					>Average Rating:
+					<span *ngIf="averageRating">
+						{{ averageRating }}
+					</span></span
+				>
 				<nb-radio-group
 					[(ngModel)]="status"
 					[ngModelOptions]="{ standalone: true }"
@@ -70,16 +76,22 @@
 										}}
 									</div>
 
-									<!-- <div
-										formArrayName="demoArray"
-										*ngFor="
-											let technology of arrayItems;
-											let i = index
-										"
+									<div
 										class="criterion"
+										*ngFor="
+											let technologyRating of form.get(
+												'technologies'
+											).controls as controls;
+											index as i
+										"
 									>
-										<input [formControl]="demoArray[i]" />
-									</div> -->
+										<div *ngIf="technologiesList">
+											{{ technologiesList[i]?.name }}
+										</div>
+										<ga-star-rating-input
+											[formControl]="technologyRating"
+										></ga-star-rating-input>
+									</div>
 								</div>
 								<div class="form-block">
 									<div class="label mb-2">
@@ -89,13 +101,22 @@
 										}}
 									</div>
 									<div
-										*ngFor="
-											let quality of personalQualitiesList
-										"
 										class="criterion"
+										*ngFor="
+											let personalQualityRating of form.get(
+												'personalQualities'
+											).controls as controls;
+											index as i
+										"
 									>
-										<div>{{ quality.name }}</div>
-										<ga-star-rating-input></ga-star-rating-input>
+										<div *ngIf="personalQualitiesList">
+											{{ personalQualitiesList[i]?.name }}
+										</div>
+										<ga-star-rating-input
+											[formControl]="
+												personalQualityRating
+											"
+										></ga-star-rating-input>
 									</div>
 								</div>
 							</div>

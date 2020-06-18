@@ -1,12 +1,11 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
+	IDateRange,
 	IGetTimeLogInput,
 	Organization,
-	IDateRange,
-	PermissionsEnum,
-	TimesheetStatus,
+	TimeLogFilters,
 	Timesheet,
-	TimeLogFilters
+	TimesheetStatus
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import {
@@ -16,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { filter, map, debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, map } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Router } from '@angular/router';
@@ -76,12 +75,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
-
-		this.store.user$.pipe(untilDestroyed(this)).subscribe(() => {
-			this.canChangeSelectedEmployee = this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		});
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))

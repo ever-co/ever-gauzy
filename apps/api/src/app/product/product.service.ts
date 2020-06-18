@@ -14,10 +14,14 @@ export class ProductService extends CrudService<Product> {
 		super(productRepository);
 	}
 
-	async findAllProducts(langCode?: string): Promise<IPagination<Product>> {
+	async findAllProducts(
+		langCode?: string,
+		relations?: string[],
+		findInput?: any
+	): Promise<IPagination<Product>> {
 		const total = await this.productRepository.count();
 		const items = await this.productRepository.find({
-			relations: ['category', 'type', 'options', 'variants', 'tags']
+			relations: relations
 		});
 
 		if (langCode) {

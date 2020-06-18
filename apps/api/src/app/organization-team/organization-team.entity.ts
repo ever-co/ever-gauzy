@@ -17,7 +17,7 @@ import { RequestApprovalTeam } from '../request-approval-team/request-approval-t
 @Entity('organization_team')
 export class OrganizationTeam extends Base implements IOrganizationTeam {
 	@ApiProperty()
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.organizationTeam)
 	@JoinTable({
 		name: 'tag_organization_team'
 	})

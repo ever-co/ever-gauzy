@@ -9,7 +9,7 @@ import {
 	Put,
 	Post,
 	Query,
-	UseGuards,
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
@@ -36,30 +36,29 @@ export class EventTypeController extends CrudController<EventType> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found expense',
-		type: EventType,
+		type: EventType
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get()
 	async findAllEventTypes(
 		@Query('data') data: string
 	): Promise<IPagination<EventType>> {
 		const { relations, findInput } = JSON.parse(data);
-
 		return this.eventTypeService.findAll({ where: findInput, relations });
 	}
 
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully updated.',
+		description: 'The record has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -70,7 +69,7 @@ export class EventTypeController extends CrudController<EventType> {
 	): Promise<any> {
 		return this.eventTypeService.create({
 			id,
-			...entity,
+			...entity
 		});
 	}
 
@@ -78,11 +77,11 @@ export class EventTypeController extends CrudController<EventType> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Find Event type',
-		type: EventType,
+		type: EventType
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get(':id')
 	async findById(
@@ -91,19 +90,19 @@ export class EventTypeController extends CrudController<EventType> {
 	): Promise<EventType> {
 		const { relations = [] } = data;
 		return this.eventTypeService.findOne(id, {
-			relations,
+			relations
 		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.',
+		description: 'The record has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
 	async create(

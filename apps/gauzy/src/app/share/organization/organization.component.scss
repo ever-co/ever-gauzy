@@ -84,18 +84,19 @@
       float: left;
       padding: 0 20px;
 
-      .org-year-found {
-        font-weight: 600;
-        font-size: 18px;
-        padding: 10px 0;
-      }
-
       .org-banner {
         font-size: 18px;
         line-height: 26px;
         font-weight: 400;
       }
     }
+  }
+
+  .org-bonuses-paid span.paid_bonuses {
+    padding: 10px 0;
+    font-size: 15px;
+    font-weight: 500;
+    display: block;
   }
 
   .org-details {
@@ -107,17 +108,11 @@
     p.short_description {
       font-size: 15px;
     }
-
-    .org-skills {
-      padding: 20px 0;
-      font-size: 18px;
-      font-weight: 500;
-    }
   }
 }
 
 h5.org-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   margin: 0;
 }
@@ -141,4 +136,10 @@ h5.org-title span.client-focus {
   border: none !important;
   float: left;
   padding-left: 0;
+}
+
+.nb_list.org_skills .nb_list_item.item,
+.nb_list.org_languages .nb_list_item.item,
+.nb_list.org_awards .nb_list_item.item {
+  padding-right: 0;
 }

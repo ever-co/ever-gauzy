@@ -1,61 +1,50 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Task } from '@gauzy/models';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { Observable } from 'rxjs';
+import { DefaultEditor } from 'ng2-smart-table';
+import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 
 @Component({
 	template: `
-		<ng-select
-			[(items)]="tasks"
-			bindName="title"
+		<nb-select
+			fullWidth
 			placeholder="{{ 'INVOICES_PAGE.SELECT_TASK' | translate }}"
 			[(ngModel)]="task"
-			(change)="selectTask($event)"
-			[searchFn]="searchTask"
+			(selectedChange)="selectTask($event)"
 		>
-			<ng-template ng-option-tmp let-item="item" let-index="index">
-				{{ item.title }}
-			</ng-template>
-			<ng-template ng-label-tmp let-item="item">
-				<div class="selector-template">
-					<span>{{ item.title }}</span>
-				</div>
-			</ng-template>
-		</ng-select>
+			<nb-option *ngFor="let task of tasks" [value]="task">
+				{{ task.title }}
+			</nb-option>
+		</nb-select>
 	`,
 	styles: []
 })
-export class InvoiceTasksSelectorComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class InvoiceTasksSelectorComponent extends DefaultEditor
+	implements OnInit {
 	tasks: Task[] = [];
 	task: Task;
-	private _ngDestroy$ = new Subject<void>();
 
-	constructor(readonly translateService: TranslateService) {
-		super(translateService);
+	constructor(private tasksStore: TasksStoreService) {
+		super();
+		this.observableTasks = this.tasksStore.tasks$;
 	}
 
-	value: any;
-	rowData: any;
+	observableTasks: Observable<Task[]>;
 
 	ngOnInit() {
-		this.tasks = this.rowData.allTasks;
-		this.task = this.rowData.task ? this.rowData.task : null;
+		this._loadTasks();
+	}
+
+	private async _loadTasks() {
+		this.tasksStore.fetchTasks();
+		this.observableTasks.subscribe((data) => {
+			this.tasks = data;
+			const task = this.tasks.find((t) => t.id === this.cell.newValue);
+			this.task = task;
+		});
 	}
 
 	selectTask($event) {
-		this.rowData.task = $event;
-	}
-
-	searchTask(term: string, item: any) {
-		if (item.title) {
-			return item.title.toLowerCase().includes(term.toLowerCase());
-		}
-	}
-
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+		this.cell.newValue = $event.id;
 	}
 }

@@ -6,7 +6,8 @@ import {
 	Delete,
 	Param,
 	Query,
-	Get
+	Get,
+	Put
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -20,7 +21,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ParseJsonPipe } from '../shared';
 import {
 	CandidateTechnologiesBulkCreateCommand,
-	CandidateTechnologiesBulkDeleteCommand
+	CandidateTechnologiesBulkDeleteCommand,
+	CandidateTechnologiesBulkUpdateCommand
 } from './commands';
 @ApiTags('candidate_technology')
 @UseGuards(AuthGuard('jwt'))
@@ -64,6 +66,17 @@ export class CandidateTechnologiesController extends CrudController<
 
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Put('updateBulk')
+	async updateBulk(
+		@Body() technologies: ICandidateTechnologies[]
+	): Promise<ICandidateTechnologies[]> {
+		return this.commandBus.execute(
+			new CandidateTechnologiesBulkUpdateCommand(technologies)
+		);
+	}
+
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Get('getByInterviewId/:interviewId')
 	async findByInterviewId(
 		@Param('interviewId') interviewId: string
@@ -75,8 +88,10 @@ export class CandidateTechnologiesController extends CrudController<
 
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Delete('deleteBulk')
-	async deleteBulk(@Query('data', ParseJsonPipe) data: any): Promise<any> {
+	@Delete('deleteBulkTechnologies')
+	async deleteBulkTechnologies(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
 		const { id = null } = data;
 		return this.commandBus.execute(
 			new CandidateTechnologiesBulkDeleteCommand(id)

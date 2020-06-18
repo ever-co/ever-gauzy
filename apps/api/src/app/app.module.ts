@@ -87,10 +87,14 @@ import { HelpCenterModule } from './help-center/help-center.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
+import { StageModule } from './stage/stage.module';
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
 import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
 import { RequestApprovalTeamModule } from './request-approval-team/request-approval-team.module';
+import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
+import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
+import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 
 @Module({
 	imports: [
@@ -141,6 +145,10 @@ import { RequestApprovalTeamModule } from './request-approval-team/request-appro
 					{
 						path: '/candidate-technologies',
 						module: CandidateTechnologiesModule
+					},
+					{
+						path: '/candidate-criterions-rating',
+						module: CandidateCriterionsRatingModule
 					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
@@ -357,8 +365,16 @@ import { RequestApprovalTeamModule } from './request-approval-team/request-appro
 						module: GoalModule
 					},
 					{
+						path: '/goal-time-frame',
+						module: GoalTimeFrameModule
+					},
+					{
 						path: '/key-results',
 						module: KeyResultModule
+					},
+					{
+						path: '/key-result-updates',
+						module: KeyResultUpdateModule
 					}
 				]
 			}
@@ -378,6 +394,7 @@ import { RequestApprovalTeamModule } from './request-approval-team/request-appro
 		CandidateInterviewersModule,
 		CandidatePersonalQualitiesModule,
 		CandidateTechnologiesModule,
+		CandidateCriterionsRatingModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
@@ -419,11 +436,14 @@ import { RequestApprovalTeamModule } from './request-approval-team/request-appro
 		InvoiceItemModule,
 		PaymentModule,
 		GoalModule,
+		GoalTimeFrameModule,
 		KeyResultModule,
+		KeyResultUpdateModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,
 		PipelineModule,
+		StageModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({

@@ -22,6 +22,7 @@
 @import './includes/ng-select';
 @import './includes/ng5-slider';
 @import './includes/dialog';
+@import './includes/scroll';
 
 // install the framework and custom global styles
 @include nb-install() {

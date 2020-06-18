@@ -4,7 +4,13 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Invoice, PermissionsEnum, Tag } from '@gauzy/models';
+import {
+	Invoice,
+	PermissionsEnum,
+	Tag,
+	Organization,
+	InvoiceTypeEnum
+} from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router } from '@angular/router';
 import { first, takeUntil } from 'rxjs/operators';
@@ -12,11 +18,9 @@ import { Store } from '../../@core/services/store.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { Subject } from 'rxjs';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
-import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
-import { OrganizationsService } from '../../@core/services/organizations.service';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
 
 export interface SelectedInvoice {
@@ -40,6 +44,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	hasInvoiceEditPermission: boolean;
 	invoices: Invoice[];
 	tags: Tag[];
+	organization: Organization;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -54,9 +59,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
-		private organizationClientsService: OrganizationClientsService,
-		private router: Router,
-		private organizationService: OrganizationsService
+		private router: Router
 	) {
 		super(translateService);
 	}
@@ -118,60 +121,31 @@ export class InvoicesComponent extends TranslationBaseComponent
 			isEstimate: this.isEstimate
 		});
 
-		if (this.selectedInvoice.invoiceItems[0].employeeId) {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
-					employeeId: item.employeeId
-				});
+		for (const item of this.selectedInvoice.invoiceItems) {
+			const itemToAdd = {
+				description: item.description,
+				price: item.price,
+				quantity: item.quantity,
+				totalValue: item.totalValue,
+				invoiceId: createdInvoice.id
+			};
+			switch (this.selectedInvoice.invoiceType) {
+				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+					itemToAdd['employeeId'] = item.employeeId;
+					break;
+				case InvoiceTypeEnum.BY_PROJECT_HOURS:
+					itemToAdd['projectId'] = item.projectId;
+					break;
+				case InvoiceTypeEnum.BY_TASK_HOURS:
+					itemToAdd['taskId'] = item.taskId;
+					break;
+				case InvoiceTypeEnum.BY_PRODUCTS:
+					itemToAdd['productId'] = item.productId;
+					break;
+				default:
+					break;
 			}
-		} else if (this.selectedInvoice.invoiceItems[0].projectId) {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
-					projectId: item.projectId
-				});
-			}
-		} else if (this.selectedInvoice.invoiceItems[0].taskId) {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
-					taskId: item.taskId
-				});
-			}
-		} else if (this.selectedInvoice.invoiceItems[0].productId) {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
-					productId: item.productId
-				});
-			}
-		} else {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id
-				});
-			}
+			await this.invoiceItemService.add(itemToAdd);
 		}
 
 		if (this.isEstimate) {
@@ -196,49 +170,27 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	download() {
-		if (this.selectedInvoice) {
-			this.organizationService
-				.getById(this.selectedInvoice.organizationId)
-				.subscribe(async (org) => {
-					const client = await this.organizationClientsService.getById(
-						this.selectedInvoice.clientId
-					);
-					if (client.organizationId) {
-						this.dialogService.open(
-							InvoiceDownloadMutationComponent,
-							{
-								context: {
-									client: client,
-									invoice: this.selectedInvoice,
-									organization: org,
-									isEstimate: this.isEstimate
-								}
-							}
-						);
-					}
-				});
-		}
+		this.dialogService.open(InvoiceDownloadMutationComponent, {
+			context: {
+				invoice: this.selectedInvoice,
+				isEstimate: this.isEstimate
+			}
+		});
 	}
 
 	async send() {
-		if (this.selectedInvoice) {
-			this.organizationService
-				.getById(this.selectedInvoice.organizationId)
-				.subscribe(async (org) => {
-					const client = await this.organizationClientsService.getById(
-						this.selectedInvoice.clientId
-					);
-					if (client.organizationId) {
-						this.dialogService.open(InvoiceSendMutationComponent, {
-							context: {
-								client: client,
-								invoice: this.selectedInvoice,
-								organization: org,
-								isEstimate: this.isEstimate
-							}
-						});
-					}
-				});
+		if (this.selectedInvoice.toClient.clientOrganizationId) {
+			this.dialogService.open(InvoiceSendMutationComponent, {
+				context: {
+					invoice: this.selectedInvoice,
+					isEstimate: this.isEstimate
+				}
+			});
+		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
 		}
 	}
 
@@ -284,25 +236,12 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	email() {
-		if (this.selectedInvoice) {
-			this.organizationService
-				.getById(this.selectedInvoice.organizationId)
-				.subscribe(async (org) => {
-					const client = await this.organizationClientsService.getById(
-						this.selectedInvoice.clientId
-					);
-					if (client.organizationId) {
-						this.dialogService.open(InvoiceEmailMutationComponent, {
-							context: {
-								client: client,
-								invoice: this.selectedInvoice,
-								organization: org,
-								isEstimate: this.isEstimate
-							}
-						});
-					}
-				});
-		}
+		this.dialogService.open(InvoiceEmailMutationComponent, {
+			context: {
+				invoice: this.selectedInvoice,
+				isEstimate: this.isEstimate
+			}
+		});
 	}
 
 	async loadSettings() {
@@ -312,13 +251,20 @@ export class InvoicesComponent extends TranslationBaseComponent
 				if (org) {
 					this.selectedInvoice = null;
 					const { items } = await this.invoicesService.getAll(
-						['invoiceItems', 'tags', 'payments'],
+						[
+							'invoiceItems',
+							'tags',
+							'payments',
+							'fromOrganization',
+							'toClient'
+						],
 						{
 							organizationId: org.id,
 							isEstimate: this.isEstimate
 						}
 					);
 					this.invoices = items;
+					this.organization = org;
 					this.loading = false;
 					this.smartTableSource.load(items);
 				}
@@ -358,16 +304,18 @@ export class InvoicesComponent extends TranslationBaseComponent
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
 					}
-				},
-				paid: {
-					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-					type: 'custom',
-					renderComponent: InvoicePaidComponent,
-					filter: false,
-					width: '40%'
 				}
 			}
 		};
+
+		if (!this.isEstimate) {
+			this.settingsSmartTable['columns']['paid'] = {
+				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
+				type: 'custom',
+				renderComponent: InvoicePaidComponent,
+				filter: false
+			};
+		}
 	}
 
 	_applyTranslationOnSmartTable() {

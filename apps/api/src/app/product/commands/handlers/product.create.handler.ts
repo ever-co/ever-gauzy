@@ -25,7 +25,7 @@ export class ProductCreateHandler
 			}
 		);
 
-		const savedOptions = await this.productOptionService.createBulk(
+		const savedOptions = await this.productOptionService.saveBulk(
 			optionsCreate
 		);
 

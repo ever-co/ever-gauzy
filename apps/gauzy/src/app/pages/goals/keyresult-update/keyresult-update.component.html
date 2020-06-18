@@ -27,7 +27,7 @@
 				</div>
 			</div>
 		</div>
-		<form [formGroup]="keyresultUpdateForm">
+		<form [formGroup]="keyResultUpdateForm">
 			<label for="updated-value" class="label">
 				Updated Value
 			</label>
@@ -42,9 +42,6 @@
 				formControlName="newValueNumber"
 			/>
 			<div class="row">
-				<!-- <label class="label">
-                    Update Status
-                </label> -->
 				<nb-toggle
 					id="updated-value"
 					class="row ml-3"
@@ -63,9 +60,9 @@
 				id="updated-value-status"
 				filled
 				[status]="
-					keyresultUpdateForm.value.newStatus == 'on track'
+					keyResultUpdateForm.value.newStatus == 'on track'
 						? 'success'
-						: keyresultUpdateForm.value.newStatus ==
+						: keyResultUpdateForm.value.newStatus ==
 						  'needs attention'
 						? 'warning'
 						: 'danger'
@@ -81,14 +78,16 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
+		<button class="mr-3" nbButton (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
 		<button
-			[disabled]="!keyresultUpdateForm.valid"
+			[disabled]="!keyResultUpdateForm.valid"
 			nbButton
 			status="success"
 			(click)="updateKeyResult()"
 		>
-			Update
+			{{ 'BUTTONS.UPDATE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

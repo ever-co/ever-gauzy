@@ -35,6 +35,10 @@ export class TagsComponent extends TranslationBaseComponent
 	disableButton = true;
 	private selectedOrganization: Organization;
 	private subscribeTakingSelectedOrganziation: Subscription;
+	private allTags = [];
+
+	filterOptions = [{ property: 'all', displayName: 'All' }];
+	private filterOption: any;
 
 	@ViewChild('tagsTable') tagsTable;
 
@@ -138,6 +142,11 @@ export class TagsComponent extends TranslationBaseComponent
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
 					type: 'string',
 					filter: false
+				},
+				counter: {
+					title: this.getTranslation('Counter'),
+					type: 'string',
+					filter: false
 				}
 			}
 		};
@@ -145,7 +154,8 @@ export class TagsComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedTag = null;
-
+		this.allTags = [];
+		this.filterOptions = [{ property: 'all', displayName: 'All' }];
 		if (this.selectedOrganization) {
 			const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
 				this.selectedOrganization.id,
@@ -155,9 +165,18 @@ export class TagsComponent extends TranslationBaseComponent
 				this.selectedOrganization.tenantId,
 				['tenant']
 			);
-			const AllTags = tagsByOrgLevel.concat(tagsByTenantLevel);
-
-			this.smartTableSource.load(AllTags);
+			const orgId = this.selectedOrganization.id;
+			if (tagsByOrgLevel.length) {
+				const result = await this.tagsService.getTagUsageCount(orgId);
+				this.allTags = result.concat(tagsByTenantLevel);
+				this._generateUniqueTags(this.allTags);
+				this.smartTableSource.load(this.allTags);
+			} else if (tagsByTenantLevel.length) {
+				this._generateUniqueTags(this.allTags);
+				this.smartTableSource.load(tagsByTenantLevel);
+			} else {
+				this.smartTableSource.load([]);
+			}
 		}
 	}
 
@@ -169,5 +188,59 @@ export class TagsComponent extends TranslationBaseComponent
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();
 		});
+	}
+
+	selectedFilterOption(value) {
+		this.filterOption = value;
+		if (value === 'all') {
+			this.loadSettings();
+			this.smartTableSource.load(this.allTags);
+			return;
+		}
+		if (this.filterOption) {
+			const filterTags = this.allTags.filter(
+				(tag) => tag[value] && tag[value].length
+			);
+			this.smartTableSource.load(filterTags);
+		}
+	}
+
+	private _generateUniqueTags(tags: any[]) {
+		tags.forEach((tag) => {
+			for (const property in tag) {
+				if (
+					Array.isArray(tag[property]) &&
+					tag[property].length &&
+					!this.filterOptions.find(
+						(option) => option.property === property
+					)
+				) {
+					this.filterOptions.push({
+						property,
+						displayName: this._splitCamelCase(property)
+					});
+				}
+			}
+		});
+	}
+
+	private _splitCamelCase(word: string): string {
+		let output: string[], i: number, l: number;
+		const capRe = /[A-Z]/;
+		if (typeof word !== 'string') {
+			throw new Error('The "word" parameter must be a string.');
+		}
+		output = [];
+		for (i = 0, l = word.length; i < l; i++) {
+			if (i === 0) {
+				output.push(word[i].toUpperCase());
+			} else {
+				if (i > 0 && capRe.test(word[i])) {
+					output.push(' ');
+				}
+				output.push(word[i]);
+			}
+		}
+		return output.join('');
 	}
 }

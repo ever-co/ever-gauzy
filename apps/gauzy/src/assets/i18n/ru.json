@@ -417,9 +417,13 @@
 		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Общий доход за месяц",
 		"PROFITS": "Прибыль",
 		"BONUSES_PAID": "Бонусы выплачены",
-		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего отработано часов (над гаузи)",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего часов работы над Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
-		"PROJECTS_COUNT": "Количество проектов"
+		"PROJECTS_COUNT": "Количество проектов",
+		"CLIENTS_COUNT": "Количество клиентов",
+		"DETAILS": "Детали",
+		"SKILLS": "Навыки",
+		"PRIVACY": "Приватность"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -897,6 +901,16 @@
 			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"INVOICES_VIEW": "Просмотр счетов",
 			"INVOICES_EDIT": "Редактировать счета",
+			"EDIT_SALES_PIPELINES": "Редактировать Трубопровод продаж",
+			"APPROVALS_POLICY_EDIT": "Редактировать политику одобрения",
+			"APPROVALS_POLICY_VIEW": "Просмотр политики одобрения",
+			"REQUEST_APPROVAL_EDIT": "Редактировать запрос на утверждение",
+			"REQUEST_APPROVAL_VIEW": "Просмотр запроса на утверждение",
+			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Создать/редактировать интервьюера",
+			"VIEW_ALL_EMAILS": "Посмотреть все письма",
+			"ORG_HELP_CENTER_EDIT": "Редактировать справочный центр организации",
+			"PUBLIC_PAGE_EDIT": "Редактирование публичной страницы",
+			"CAN_APPROVE_TIMESHEET": "Одобрить график работы",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -904,6 +918,17 @@
 			"ONLY_ADMIN": "Эти разрешения доступны только для чтения и включены только для администратора",
 			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:"
 		}
+	},
+	"PUBLIC_PAGE": {
+		"LANGUAGES": "Языки",
+		"AWARDS": "Награды",
+		"COMPANY_SKILLS": "Навыки компании",
+		"TOTAL_BONUSES_PAID": "Всего выплачено бонусов",
+		"COMPANY_PROFILE": "Профиль компании",
+		"TOTAL_CLIENTS": "Всего клиентов",
+		"YEAR_FOUNDED": "Дата создания",
+		"COMPANY_SIZE": "Размер компании",
+		"CLIENT_FOCUS": "Фокус клиента"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
@@ -1007,6 +1032,11 @@
 	"LANGUAGE_PAGE": {
 		"HEADER": "Языки",
 		"ADD_NEW_LANGUAGE": "Добавить новый язык"
+	},
+	"LANGUAGE_LEVELS": {
+		"CONVERSATIONAL": "Разговор",
+		"NATIVE": "Родной",
+		"FLUENT": "Флейтент"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
@@ -1291,7 +1321,8 @@
 			"CONFIRMATION_INVOICE": "Отправить этот счет",
 			"CONFIRMATION_ESTIMATE": "Отправить эту оценку",
 			"ALREADY_SENT_INVOICE": "Этот счет уже был отправлен на",
-			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена"
+			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена",
+			"NOT_LINKED": "Клиент не имеет организации"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
@@ -1593,9 +1624,12 @@
 		"SELECT_LOG_TYPE": "Выберите тип журнала",
 		"ADD_TIME_LOGS": "Добавить журнал времени",
 		"EDIT_TIME_LOGS": "Редактировать журналы времени",
+		"VIEW_TIME_LOGS": "Журналы времени",
 		"ADD_TIME": "Добавить время",
 		"UPDATE_TIME": "Время обновления",
+		"EDIT": "Редактировать",
 		"CLOSE": "Закрыть",
+		"DELETE": "Удалить",
 		"VALIDATION": {
 			"DESCRIPTION": "Описание обязательно",
 			"TASK": "Пожалуйста, выберите задачу",
@@ -1668,6 +1702,7 @@
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",
+		"HEADER_STAGES": "Этапы",
 		"HEADER_FORM_EDIT": "Изменить конвейер",
 		"HEADER_FORM_CREATE": "Создать конвейер",
 		"RECORD_TYPE": "конвейер \"{{ name }}\""

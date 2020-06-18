@@ -4,12 +4,14 @@ import {
 	PermissionsEnum,
 	RolePermissions,
 	User,
-	LanguagesEnum
+	LanguagesEnum,
+	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
+import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
 
 export interface AppState {
 	user: User;
@@ -82,7 +84,9 @@ export class Store {
 		protected appStore: AppStore,
 		protected appQuery: AppQuery,
 		protected persistStore: PersistStore,
-		protected persistQuery: PersistQuery
+		protected persistQuery: PersistQuery,
+		protected permissionsService: NgxPermissionsService,
+		protected ngxRolesService: NgxRolesService
 	) {}
 
 	user$ = this.appQuery.select((state) => state.user);
@@ -118,6 +122,7 @@ export class Store {
 		this.appStore.update({
 			selectedOrganization: organization
 		});
+		this.loadPermissions();
 	}
 
 	get token(): string | null {
@@ -193,6 +198,7 @@ export class Store {
 		this.appStore.update({
 			userRolePermissions: rolePermissions
 		});
+		this.loadPermissions();
 	}
 
 	hasPermission(permission: PermissionsEnum) {
@@ -232,12 +238,12 @@ export class Store {
 		});
 	}
 
-	get preferredLanguage(): LanguagesEnum | null {
+	get preferredLanguage(): any | null {
 		const { preferredLanguage } = this.persistQuery.getValue();
 		return preferredLanguage;
 	}
 
-	set preferredLanguage(preferredLanguage: LanguagesEnum) {
+	set preferredLanguage(preferredLanguage) {
 		this.persistStore.update({
 			preferredLanguage: preferredLanguage
 		});
@@ -246,5 +252,32 @@ export class Store {
 	clear() {
 		this.appStore.reset();
 		this.persistStore.reset();
+	}
+
+	loadRoles() {
+		const { user } = this.appQuery.getValue();
+		this.ngxRolesService.flushRoles();
+		this.ngxRolesService.addRole(user.role.name, () => true);
+	}
+	loadPermissions() {
+		const { selectedOrganization } = this.appQuery.getValue();
+		let permissions = [];
+		const userPermissions = Object.keys(PermissionsEnum)
+			.map((key) => PermissionsEnum[key])
+			.filter((permission) => this.hasPermission(permission));
+		permissions = permissions.concat(userPermissions);
+
+		if (selectedOrganization) {
+			const orginizationPermissions = Object.keys(
+				OrganizationPermissionsEnum
+			)
+				.map((key) => OrganizationPermissionsEnum[key])
+				.filter((permission) => selectedOrganization[permission]);
+
+			permissions = permissions.concat(orginizationPermissions);
+		}
+
+		this.permissionsService.flushPermissions();
+		this.permissionsService.loadPermissions(permissions);
 	}
 }

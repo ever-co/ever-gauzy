@@ -89,9 +89,15 @@ export class ProductController extends CrudController<Product> {
 	})
 	@Get('local/:langCode')
 	async findAllProductsTranslated(
-		@Param('langCode') langCode: string
+		@Param('langCode') langCode: string,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Product>> {
-		return this.productService.findAllProducts(langCode);
+		const { relations = [], findInput = null } = data;
+		return this.productService.findAllProducts(
+			langCode,
+			relations,
+			findInput
+		);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

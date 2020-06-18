@@ -23,10 +23,10 @@ export class GoalController extends CrudController<Goal> {
 		super(goalService);
 	}
 
-	@ApiOperation({ summary: 'Find all Goals.' })
+	@ApiOperation({ summary: 'Create Goal' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found goals',
+		description: 'Goal Created successfully',
 		type: Goal
 	})
 	@Post('/create')
@@ -40,7 +40,10 @@ export class GoalController extends CrudController<Goal> {
 	})
 	@Get('all')
 	async getAll() {
-		return this.goalService.findAll();
+		return this.goalService.findAll({
+			relations: ['keyResults', 'keyResults.updates', 'keyResults.goal'],
+			order: { createdAt: 'ASC' }
+		});
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })

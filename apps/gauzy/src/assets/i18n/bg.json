@@ -417,9 +417,13 @@
 		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Total Income/Monthly Income",
 		"PROFITS": "Profits",
 		"BONUSES_PAID": "Bonuses Paid",
-		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked (over Gauzy of course)",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked over Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
-		"PROJECTS_COUNT": "Projects Count"
+		"PROJECTS_COUNT": "Projects Count",
+		"CLIENTS_COUNT": "Clients Count",
+		"DETAILS": "Детайли",
+		"SKILLS": "Skills",
+		"PRIVACY": "Privacy"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -897,6 +901,16 @@
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
 			"INVOICES_EDIT": "Edit Invoices",
+			"EDIT_SALES_PIPELINES": "Edit Sales Pipelines",
+			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
+			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
+			"REQUEST_APPROVAL_EDIT": "Edit Approval Request",
+			"REQUEST_APPROVAL_VIEW": "View Approval Request",
+			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Create/Edit Interviewers",
+			"VIEW_ALL_EMAILS": "View All Emails",
+			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
+			"PUBLIC_PAGE_EDIT": "Public Page Edit",
+			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Администрация"
@@ -904,6 +918,17 @@
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
 		}
+	},
+	"PUBLIC_PAGE": {
+		"LANGUAGES": "Languages",
+		"AWARDS": "Awards",
+		"COMPANY_SKILLS": "Company Skills",
+		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
+		"COMPANY_PROFILE": "Company Profile",
+		"TOTAL_CLIENTS": "Total Clients",
+		"YEAR_FOUNDED": "Year Founded",
+		"COMPANY_SIZE": "Company Size",
+		"CLIENT_FOCUS": "Client Focus"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",
@@ -1007,6 +1032,11 @@
 	"LANGUAGE_PAGE": {
 		"HEADER": "Languages",
 		"ADD_NEW_LANGUAGE": "Add new Language"
+	},
+	"LANGUAGE_LEVELS": {
+		"CONVERSATIONAL": "Conversational",
+		"NATIVE": "Native",
+		"FLUENT": "Fluent"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
@@ -1291,7 +1321,8 @@
 			"CONFIRMATION_INVOICE": "Send this invoice to",
 			"CONFIRMATION_ESTIMATE": "Send this estimate to",
 			"ALREADY_SENT_INVOICE": "This invoice has already been sent to",
-			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to"
+			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to",
+			"NOT_LINKED": "Client does not have an organization"
 		},
 		"VIEW": {
 			"FROM": "FROM",
@@ -1593,9 +1624,12 @@
 		"SELECT_LOG_TYPE": "Select Log Type",
 		"ADD_TIME_LOGS": "Add Time Logs",
 		"EDIT_TIME_LOGS": "Edit Time Logs",
+		"VIEW_TIME_LOGS": "Time Logs",
 		"ADD_TIME": "Add Time",
 		"UPDATE_TIME": "Update Time",
+		"EDIT": "Редактиране",
 		"CLOSE": "Затвори",
+		"DELETE": "Изтрий",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",
@@ -1668,6 +1702,7 @@
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
+		"HEADER_STAGES": "Stages",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
 		"HEADER_FORM_CREATE": "Create Pipeline",
 		"RECORD_TYPE": "pipeline \"{{ name }}\""

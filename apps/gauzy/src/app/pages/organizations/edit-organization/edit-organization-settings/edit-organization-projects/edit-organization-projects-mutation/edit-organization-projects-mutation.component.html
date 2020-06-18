@@ -38,18 +38,16 @@
 				<label for="clients" class="label">{{
 					'FORM.PLACEHOLDERS.CLIENTS' | translate
 				}}</label>
-				<nb-select
-					fullWidth
+				<ng-select
+					id="clients"
+					[addTag]="addNewClient"
+					[items]="clients"
+					bindLabel="clientName"
+					[searchable]="true"
 					formControlName="client"
 					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
-					id="clients"
 				>
-					<nb-option
-						*ngFor="let client of clients"
-						value="{{ client.id }}"
-						>{{ client.name }}</nb-option
-					>
-				</nb-select>
+				</ng-select>
 			</div>
 			<div class="form-group col-4">
 				<label for="type" class="label">{{
@@ -129,7 +127,7 @@
 				<ga-tags-color-input
 					[selectedTags]="tags"
 					(selectedTagsEvent)="selectedTagsEvent($event)"
-					[isTenantLevel]="true"
+					[isOrgLevel]="true"
 				>
 				</ga-tags-color-input>
 			</div>
