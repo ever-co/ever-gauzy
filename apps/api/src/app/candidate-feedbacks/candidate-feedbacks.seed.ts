@@ -43,10 +43,7 @@ export const createRandomCandidateFeedbacks = async (
 	tenantCandidatesMap: Map<Tenant, Candidate[]>
 ): Promise<Map<Candidate, CandidateFeedback[]>> => {
 	let candidateFeedbacks = [];
-	const candidateFeedbacksMap: Map<
-		Candidate,
-		CandidateFeedback[]
-	> = new Map();
+	const candidateFeedbacksMap: Map<Candidate, any[]> = new Map();
 
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);

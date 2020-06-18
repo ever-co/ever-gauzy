@@ -1,13 +1,13 @@
 import { CrudService } from '../core/crud';
 import { Pipeline } from './pipeline.entity';
 import {
-  DeepPartial,
-  EntityManager,
-  FindConditions,
-  Repository,
-  Transaction,
-  TransactionManager,
-  UpdateResult,
+	DeepPartial,
+	EntityManager,
+	FindConditions,
+	Repository,
+	Transaction,
+	TransactionManager,
+	UpdateResult
 } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stage } from '../stage/stage.entity';
@@ -30,13 +30,12 @@ export class PipelineService extends CrudService<Pipeline> {
 		@TransactionManager() manager: EntityManager,
 		...options
 	): Promise<UpdateResult | Pipeline> {
-    const onePipeline = await manager.findOne(Pipeline, id as any);
-    const pipeline = manager.create( Pipeline, {
-      ...partialEntity,
-      id: onePipeline.id,
-    } as any );
-		const updatedStages =
-      pipeline.stages?.filter(({ id }) => id) || [];
+		const onePipeline = await manager.findOne(Pipeline, id as any);
+		const pipeline = manager.create(Pipeline, {
+			...partialEntity,
+			id: onePipeline.id
+		} as any);
+		const updatedStages = pipeline.stages?.filter(({ id }) => id) || [];
 		const deletedStages = await manager
 			.find(Stage, {
 				where: {
@@ -49,15 +48,16 @@ export class PipelineService extends CrudService<Pipeline> {
 
 				return stages.filter(({ id }) => !requestStageIds.includes(id));
 			});
-		const createdStages = pipeline.stages?.filter(
-			(stage) => !updatedStages.includes(stage)
-		) || [];
+		const createdStages =
+			pipeline.stages?.filter(
+				(stage) => !updatedStages.includes(stage)
+			) || [];
 
 		// partialEntity.stages?.forEach((stage, index) => {
 		// 	stage.pipelineId = pipeline.id;
 		// 	stage.index = ++index;
 		// });
-    pipeline.__before_persist();
+		pipeline.__before_persist();
 		delete pipeline.stages;
 
 		await manager.remove(deletedStages);

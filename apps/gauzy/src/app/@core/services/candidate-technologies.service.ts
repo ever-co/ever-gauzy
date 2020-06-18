@@ -51,7 +51,6 @@ export class CandidateTechnologiesService {
 			.toPromise();
 	}
 	updateBulk(technologies: ICandidateTechnologies[]): Promise<any> {
-		console.log(technologies);
 		return this.http
 			.put('/api/candidate-technologies/updateBulk', technologies)
 			.pipe(first())
@@ -77,7 +76,7 @@ export class CandidateTechnologiesService {
 	deleteBulk(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
 		return this.http
-			.delete('/api/candidate-technologies/deleteBulk', {
+			.delete('/api/candidate-technologies/deleteBulkTechnologies', {
 				params: { data }
 			})
 			.pipe(first())

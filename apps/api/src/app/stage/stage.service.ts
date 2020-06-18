@@ -5,14 +5,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@angular/core';
 
 @Injectable()
-export class StageService extends CrudService<Stage>
-{
-
-  public constructor(
-    @InjectRepository( Stage )
-    stageRepository: Repository<Stage> )
-  {
-    super( stageRepository );
-  }
-
+export class StageService extends CrudService<Stage> {
+	public constructor(
+		@InjectRepository(Stage)
+		stageRepository: Repository<Stage>
+	) {
+		super(stageRepository);
+	}
 }

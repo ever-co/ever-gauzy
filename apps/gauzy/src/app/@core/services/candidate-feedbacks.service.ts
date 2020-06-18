@@ -37,6 +37,12 @@ export class CandidateFeedbacksService {
 			.pipe(first())
 			.toPromise();
 	}
+	findById(id: string): Promise<ICandidateFeedback> {
+		return this.http
+			.get<ICandidateFeedback>(`/api/candidate-feedbacks/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
 
 	findByInterviewId(interviewId: string): Promise<ICandidateFeedback[]> {
 		return this.http

@@ -6,10 +6,9 @@ import {
 	Delete,
 	Param,
 	Query,
-	HttpStatus,
 	Get
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
@@ -79,21 +78,10 @@ export class CandidatePersonalQualitiesController extends CrudController<
 		);
 	}
 
-	@ApiOperation({
-		summary: 'Delete PersonalQualities By Interview Id.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found candidate PersonalQualities',
-		type: CandidatePersonalQualities
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	async deleteBulkPersonalQualities(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Delete('deleteBulk')
+	async deleteBulk(@Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { id = null } = data;
 		return this.commandBus.execute(
 			new CandidatePersonalQualitiesBulkDeleteCommand(id)

@@ -9,7 +9,7 @@
 		<form class="form" [formGroup]="form" *ngIf="form">
 			<ga-candidate-select
 				class="select"
-				[allCandidates]="employeesForSelect"
+				[allCandidates]="currentInterview.employees"
 				[placeholder]="
 					'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEE' | translate
 				"

@@ -66,7 +66,7 @@ export enum PermissionsEnum {
 	PROPOSALS_EDIT = 'PROPOSALS_EDIT',
 	VIEW_ALL_EMAILS = 'VIEW_ALL_EMAILS',
 	ORG_HELP_CENTER_EDIT = 'ORG_HELP_CENTER_EDIT',
-  EDIT_SALES_PIPELINES = 'EDIT_SALES_PIPELINES',
+	EDIT_SALES_PIPELINES = 'EDIT_SALES_PIPELINES',
 	CAN_APPROVE_TIMESHEET = 'CAN_APPROVE_TIMESHEET'
 }
 
@@ -102,7 +102,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TAGS_EDIT,
 		PermissionsEnum.VIEW_ALL_EMAILS,
 		PermissionsEnum.ORG_HELP_CENTER_EDIT,
-    PermissionsEnum.EDIT_SALES_PIPELINES,
+		PermissionsEnum.EDIT_SALES_PIPELINES,
 		PermissionsEnum.CAN_APPROVE_TIMESHEET
 	],
 
@@ -126,6 +126,6 @@ export const PermissionGroups = {
 		PermissionsEnum.APPROVAL_POLICY_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
-		PermissionsEnum.REQUEST_APPROVAL_VIEW,
+		PermissionsEnum.REQUEST_APPROVAL_VIEW
 	]
 };

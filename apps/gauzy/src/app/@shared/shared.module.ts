@@ -13,7 +13,13 @@ const Modules = [NgxPermissionsModule, BackNavigationModule];
 @NgModule({
 	declarations: [...Pipes, ...Components, ...Directives],
 	imports: [CommonModule, RouterModule, ...Modules],
-	exports: [AlertModalModule, ...Pipes, ...Components, ...Modules, ...Directives]
+	exports: [
+		AlertModalModule,
+		...Pipes,
+		...Components,
+		...Modules,
+		...Directives
+	]
 })
 export class SharedModule {
 	static forRoot(): ModuleWithProviders<SharedModule> {

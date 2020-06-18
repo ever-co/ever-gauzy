@@ -16,7 +16,6 @@ import {
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
-import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 
@@ -34,7 +33,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
 	form: FormGroup;
-	interviewResult: any;
 	constructor(
 		private dialogService: NbDialogService,
 		translate: TranslateService,
@@ -44,7 +42,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		private candidateStore: CandidateStore,
 		private candidateInterviewersService: CandidateInterviewersService,
 		private toastrService: NbToastrService,
-		private candidateFeedbacksService: CandidateFeedbacksService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
 		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
 	) {
@@ -82,28 +79,30 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	private async loadInterview() {
-		this.interviewResult = await this.candidateInterviewService.getAll(
-			['interviewers'],
+		const res = await this.candidateInterviewService.getAll(
+			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
 			{ candidateId: this.candidateId }
 		);
-		if (this.interviewResult) {
-			this.interviewList = this.interviewResult.items;
+
+		if (res) {
+			this.interviewList = res.items;
 			this.loadEmployee();
 		}
 	}
 
 	async addInterviewFeedback(id: string) {
-		const feedbacks = await this.candidateFeedbacksService.findByInterviewId(
-			id
+		const currentInterview = this.interviewList.find(
+			(item) => item.id === id
 		);
-		const interviewers = await this.candidateInterviewersService.findByInterviewId(
-			id
-		);
-		if (feedbacks.length !== interviewers.length) {
+		if (
+			currentInterview.feedbacks.length !==
+			currentInterview.interviewers.length
+		) {
 			const dialog = this.dialogService.open(
 				CandidateInterviewFeedbackComponent,
 				{
 					context: {
+						currentInterview: currentInterview,
 						candidateId: this.selectedCandidate.id,
 						interviewId: id
 					}
@@ -119,16 +118,10 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 
 	async editInterview(id: string) {
 		const currentInterview = await this.candidateInterviewService.findById(
-			id
+			id,
+			['interviewers']
 		);
-		// TO DO
 		currentInterview.interviewers = await this.candidateInterviewersService.findByInterviewId(
-			id
-		);
-		currentInterview.personalQualities = await this.candidatePersonalQualitiesService.findByInterviewId(
-			id
-		);
-		currentInterview.technologies = await this.candidateTechnologiesService.findByInterviewId(
 			id
 		);
 		const dialog = this.dialogService.open(
@@ -152,24 +145,18 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	async loadEmployee() {
-		for (const item of this.interviewList) {
+		for (const interview of this.interviewList) {
 			const employees = [];
-			const interviewers = await this.candidateInterviewersService.findByInterviewId(
-				item.id
-			);
-			if (interviewers) {
-				item.interviewers = [];
-				for (const interviewer of interviewers) {
-					const res = await this.employeesService.getEmployeeById(
-						interviewer.employeeId,
-						['user']
-					);
-					if (res) {
-						employees.push(res);
-					}
+			for (const interviewer of interview.interviewers) {
+				const res = await this.employeesService.getEmployeeById(
+					interviewer.employeeId,
+					['user']
+				);
+				if (res) {
+					employees.push(res);
 				}
-				item.employees = employees;
 			}
+			interview.employees = employees;
 		}
 	}
 	isPastInterview(interview: ICandidateInterview) {
@@ -195,13 +182,10 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 	async removeInterview(id: string) {
 		try {
-			await this.candidateInterviewService.delete(id);
-			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
+			// await this.candidateInterviewersService.deleteBulkByInterviewId(id);
 			// await this.candidateTechnologiesService.deleteBulk(id);
-			// await this.candidatePersonalQualitiesService.deleteBulkPersonalQualities(
-			// 	id
-			// );
-
+			// await this.candidatePersonalQualitiesService.deleteBulk(id);
+			// await this.candidateInterviewService.delete(id);
 			this.toastrSuccess('DELETED');
 			this.loadInterview();
 		} catch (error) {

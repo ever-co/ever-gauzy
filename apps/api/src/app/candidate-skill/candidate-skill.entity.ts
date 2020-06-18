@@ -1,8 +1,9 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { ISkill } from '@gauzy/models';
+import { ISkill, Candidate as ICandidate } from '@gauzy/models';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Entity('candidate_skill')
 export class CandidateSkill extends Base implements ISkill {
@@ -15,4 +16,7 @@ export class CandidateSkill extends Base implements ISkill {
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	candidateId?: string;
+
+	@ManyToOne((type) => Candidate, (candidate) => candidate.skills)
+	candidate: ICandidate;
 }

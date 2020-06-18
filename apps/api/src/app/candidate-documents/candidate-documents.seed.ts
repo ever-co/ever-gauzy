@@ -45,10 +45,7 @@ export const createRandomCandidateDocuments = async (
 	tenantCandidatesMap: Map<Tenant, Candidate[]>
 ): Promise<Map<Candidate, CandidateDocument[]>> => {
 	let candidateDocuments = [];
-	const candidateDocumentsMap: Map<
-		Candidate,
-		CandidateDocument[]
-	> = new Map();
+	const candidateDocumentsMap: Map<Candidate, any[]> = new Map();
 
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);

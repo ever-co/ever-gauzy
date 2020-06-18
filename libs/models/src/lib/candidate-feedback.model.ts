@@ -1,6 +1,6 @@
 import { ICandidateInterviewers } from './candidate-interviewers.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { ICandidateTechnologies, ICandidatePersonalQualities } from '..';
+import { ICandidateCriterionsRating } from './candidate-criterions-rating.model';
 
 export interface ICandidateFeedback extends IBaseEntityModel {
 	description: string;
@@ -10,8 +10,7 @@ export interface ICandidateFeedback extends IBaseEntityModel {
 	status?: string;
 	interviewer?: ICandidateInterviewers;
 	interviewTitle?: string;
-	technologies?: ICandidateTechnologies[];
-	personalQualities?: ICandidatePersonalQualities[];
+	criterionsRating?: ICandidateCriterionsRating[];
 }
 
 export interface ICandidateFeedbackFindInput extends IBaseEntityModel {
@@ -21,8 +20,7 @@ export interface ICandidateFeedbackFindInput extends IBaseEntityModel {
 	interviewId?: string;
 	status?: string;
 	interviewer?: ICandidateInterviewers;
-	technologies?: ICandidateTechnologies[];
-	personalQualities?: ICandidatePersonalQualities[];
+	criterionsRating?: ICandidateCriterionsRating[];
 }
 
 export interface ICandidateFeedbackCreateInput {
@@ -32,6 +30,5 @@ export interface ICandidateFeedbackCreateInput {
 	interviewId?: string;
 	status?: string;
 	interviewer?: ICandidateInterviewers;
-	technologies?: ICandidateTechnologies[];
-	personalQualities?: ICandidatePersonalQualities[];
+	criterionsRating?: ICandidateCriterionsRating[];
 }

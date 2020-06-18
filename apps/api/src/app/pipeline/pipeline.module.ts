@@ -7,23 +7,9 @@ import { Pipeline } from './pipeline.entity';
 import { StageModule } from '../stage/stage.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      Pipeline,
-    ]),
-    StageModule,
-    AuthModule,
-  ],
-  controllers: [
-    PipelineController,
-  ],
-  providers: [
-    PipelineService,
-  ],
-  exports: [
-    PipelineService,
-  ],
+	imports: [TypeOrmModule.forFeature([Pipeline]), StageModule, AuthModule],
+	controllers: [PipelineController],
+	providers: [PipelineService],
+	exports: [PipelineService]
 })
-export class PipelineModule
-{
-}
+export class PipelineModule {}

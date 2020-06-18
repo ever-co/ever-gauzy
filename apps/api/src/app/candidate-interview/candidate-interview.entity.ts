@@ -1,6 +1,6 @@
 import { CandidatePersonalQualities } from './../candidate-personal-qualities/candidate-personal-qualities.entity';
 import { CandidateTechnologies } from './../candidate-technologies/candidate-technologies.entity';
-import { Column, Entity, ManyToOne, JoinTable } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -8,10 +8,12 @@ import {
 	ICandidateFeedback,
 	ICandidateInterviewers,
 	ICandidateTechnologies,
-	ICandidatePersonalQualities
+	ICandidatePersonalQualities,
+	Candidate as ICandidate
 } from '@gauzy/models';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Entity('candidate_interview')
 export class CandidateInterview extends Base implements ICandidateInterview {
@@ -27,16 +29,11 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@Column({ nullable: true })
 	endTime: Date;
 
-	@ManyToOne((type) => CandidateInterviewers, { cascade: true })
-	@JoinTable({
-		name: 'candidate_interviewer'
-	})
-	interviewers?: ICandidateInterviewers[];
-
-	@ManyToOne((type) => CandidateFeedback, { cascade: true })
-	@JoinTable({
-		name: 'candidate_feedback'
-	})
+	@OneToMany(
+		(type) => CandidateFeedback,
+		(candidateFeedback) => candidateFeedback.interview
+	)
+	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: String })
@@ -51,15 +48,27 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@Column()
 	note?: string;
 
-	@ManyToOne((type) => CandidateTechnologies, { cascade: true })
-	@JoinTable({
-		name: 'candidate_technology'
-	})
+	@OneToMany(
+		(type) => CandidateTechnologies,
+		(candidateTechnologies) => candidateTechnologies.interview
+	)
+	@JoinColumn()
 	technologies?: ICandidateTechnologies[];
 
-	@ManyToOne((type) => CandidatePersonalQualities, { cascade: true })
-	@JoinTable({
-		name: 'candidate_personal_quality'
-	})
+	@OneToMany(
+		(type) => CandidatePersonalQualities,
+		(candidatePersonalQualities) => candidatePersonalQualities.interview
+	)
+	@JoinColumn()
 	personalQualities?: ICandidatePersonalQualities[];
+
+	@OneToMany(
+		(type) => CandidateInterviewers,
+		(candidateInterviewers) => candidateInterviewers.interview
+	)
+	@JoinColumn()
+	interviewers?: ICandidateInterviewers[];
+
+	@ManyToOne((type) => Candidate, (candidate) => candidate.interview)
+	candidate: ICandidate;
 }
