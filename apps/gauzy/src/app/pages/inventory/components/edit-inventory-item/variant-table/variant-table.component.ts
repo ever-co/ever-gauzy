@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
+import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
 
 export interface SelectedProductVariant {
 	data: ProductVariant;
@@ -86,7 +87,8 @@ export class VariantTableComponent extends TranslationBaseComponent
 				},
 				enabled: {
 					title: this.getTranslation('INVENTORY_PAGE.ENABLED'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: EnabledStatusComponent
 				}
 			}
 		};

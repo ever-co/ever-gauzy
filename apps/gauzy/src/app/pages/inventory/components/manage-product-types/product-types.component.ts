@@ -1,5 +1,9 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { Organization, ProductTypeTranslated } from '@gauzy/models';
+import {
+	Organization,
+	ProductTypeTranslated,
+	LanguagesEnum
+} from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -101,7 +105,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 			: null;
 
 		const { items } = await this.productTypeService.getAllTranslated(
-			this.store.preferredLanguage,
+			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
 			['organization'],
 			searchCriteria
 		);
