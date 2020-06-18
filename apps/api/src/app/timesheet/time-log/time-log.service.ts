@@ -12,7 +12,6 @@ import {
 	TimeLogType,
 	IManualTimeInput,
 	IGetTimeLogInput,
-	RolesEnum,
 	PermissionsEnum
 } from '@gauzy/models';
 import * as moment from 'moment';

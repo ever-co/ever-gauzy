@@ -13,7 +13,6 @@ import { Product } from '../product/product.entity';
 import { Organization } from '../organization/organization.entity';
 import { TranslatableBase } from '../core/entities/translate-base';
 import { ProductTypeTranslation } from './product-type-translation.entity';
-import { ProductOption } from '../product-option/product-option.entity';
 
 @Entity('product_type')
 export class ProductType extends TranslatableBase {

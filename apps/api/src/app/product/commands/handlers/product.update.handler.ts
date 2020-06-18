@@ -25,7 +25,7 @@ export class ProductUpdateHandler
 			}
 		);
 
-		const deletedOptions = await this.productOptionService.deleteBulk(
+		await this.productOptionService.deleteBulk(
 			productUpdateRequest.optionDeleteInputs
 		);
 

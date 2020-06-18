@@ -5,7 +5,6 @@ import {
 } from './translation.model';
 import { Organization } from './organization.model';
 import { Tag } from './tag-entity.model';
-import { InvoiceItem } from './invoice-item.model';
 
 export interface Product extends IBaseEntityModel {
 	name: string;
@@ -20,7 +19,6 @@ export interface Product extends IBaseEntityModel {
 	type?: ProductTypeTranslatable;
 	category?: ProductCategoryTranslatable;
 	tags?: Tag[];
-	invoiceItems?: InvoiceItem[];
 }
 
 export interface IProductCreateInput {
