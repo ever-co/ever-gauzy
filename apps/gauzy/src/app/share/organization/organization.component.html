@@ -123,6 +123,19 @@
 						></h5>
 					</div>
 					<div
+						class="org-size"
+						*ngIf="organization.show_clients_count && total_clients"
+					>
+						<h5
+							class="org-title"
+							[textContent]="
+								('PUBLIC_PAGE.TOTAL_CLIENTS' | translate) +
+								': ' +
+								total_clients
+							"
+						></h5>
+					</div>
+					<div
 						class="org-client-focus"
 						*ngIf="organization.client_focus"
 					>

@@ -924,7 +924,8 @@
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
-		"TOTAL_BONUSES_PAID": "Total Bonuses Paid"
+		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
+		"TOTAL_CLIENTS": "Total Clients"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",

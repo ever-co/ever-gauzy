@@ -19,6 +19,7 @@ import { OrganizationLanguagesService } from '../../@core/services/organization-
 import { OrganizationAwardsService } from '../../@core/services/organization-awards.service';
 import * as moment from 'moment';
 import { IncomeService } from '../../@core/services/income.service';
+import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 
 @Component({
 	selector: 'ngx-organization',
@@ -35,6 +36,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	awards: OrganizationAwards[];
 	loading = true;
 	bonuses_paid = 0;
+	total_clients = 0;
 	imageUrl: string;
 	hoverState: boolean;
 	languageExist: boolean;
@@ -51,6 +53,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private organization_language_service: OrganizationLanguagesService,
 		private organizationAwardsService: OrganizationAwardsService,
 		private incomeService: IncomeService,
+		private organizationClientsService: OrganizationClientsService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -90,6 +93,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 					}
 					if (!!this.organization.show_bonuses_paid) {
 						this.getTotalBonusesPaid();
+					}
+					if (!!this.organization.show_clients_count) {
+						this.getClientsCount();
 					}
 					this.reloadPageData();
 				} catch (error) {
@@ -155,6 +161,13 @@ export class OrganizationComponent extends TranslationBaseComponent
 				this.bonuses_paid += parseFloat(String(items[inc].amount));
 			}
 		}
+	}
+
+	private async getClientsCount() {
+		const { total } = await this.organizationClientsService.getAll(null, {
+			organizationId: this.organization.id
+		});
+		this.total_clients = total;
 	}
 
 	private reloadPageData() {
