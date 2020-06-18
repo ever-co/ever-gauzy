@@ -94,7 +94,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 			}
 		});
 
-		const response = dialog.onClose.pipe(first()).toPromise();
+		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			this._loadTableSettings();
 			await this._loadTableData();
