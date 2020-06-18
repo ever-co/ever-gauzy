@@ -128,6 +128,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 				show_minimum_project_size: this.organization
 					.show_minimum_project_size,
 				show_projects_count: this.organization.show_projects_count,
+				show_clients_count: this.organization.show_clients_count,
 				client_focus: [],
 				skills: this.organization.skills,
 				languages: []
@@ -147,7 +148,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 		this.selectedLanguage = ev;
 	}
 
-	private changeShowIncome(sel: any) {
+	private changeShowAction(sel: any) {
 		this.form.get(sel).setValue(this.organization[sel]);
 	}
 

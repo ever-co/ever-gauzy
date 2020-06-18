@@ -218,6 +218,11 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@Column({ nullable: true })
 	show_projects_count?: boolean;
 
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_clients_count?: boolean;
+
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ nullable: true })

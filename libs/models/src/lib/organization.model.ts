@@ -24,6 +24,7 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	show_total_hours?: boolean;
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
+	show_clients_count?: boolean;
 	overview: string;
 	skills: Skill[];
 	currency: string;
@@ -80,6 +81,7 @@ export interface OrganizationCreateInput extends ILocation {
 	show_total_hours?: boolean;
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
+	show_clients_count?: boolean;
 	defaultValueDateType: DefaultValueDateTypeEnum;
 	dateFormat?: string;
 	timeZone?: string;

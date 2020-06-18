@@ -520,7 +520,7 @@
 									class="nb_toggle"
 									id="showIncome"
 									[(checked)]="organization.show_income"
-									(change)="changeShowIncome('show_income')"
+									(change)="changeShowAction('show_income')"
 								>
 								</nb-toggle>
 							</div>
@@ -534,7 +534,7 @@
 									class="nb_toggle"
 									id="showProfits"
 									[(checked)]="organization.show_profits"
-									(change)="changeShowIncome('show_profits')"
+									(change)="changeShowAction('show_profits')"
 								>
 								</nb-toggle>
 							</div>
@@ -549,7 +549,7 @@
 									id="showBusinessPaid"
 									[(checked)]="organization.show_bonuses_paid"
 									(change)="
-										changeShowIncome('show_bonuses_paid')
+										changeShowAction('show_bonuses_paid')
 									"
 								>
 								</nb-toggle>
@@ -566,7 +566,7 @@
 									id="showTotalHours"
 									[(checked)]="organization.show_total_hours"
 									(change)="
-										changeShowIncome('show_total_hours')
+										changeShowAction('show_total_hours')
 									"
 								>
 								</nb-toggle>
@@ -589,7 +589,7 @@
 										organization.show_minimum_project_size
 									"
 									(change)="
-										changeShowIncome(
+										changeShowAction(
 											'show_minimum_project_size'
 										)
 									"
@@ -609,7 +609,25 @@
 										organization.show_projects_count
 									"
 									(change)="
-										changeShowIncome('show_projects_count')
+										changeShowAction('show_projects_count')
+									"
+								>
+								</nb-toggle>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<label class="check" for="showClientsCount">{{
+									'POP_UPS.CLIENTS_COUNT' | translate
+								}}</label>
+								<nb-toggle
+									class="nb_toggle"
+									id="showClientsCount"
+									[(checked)]="
+										organization.show_clients_count
+									"
+									(change)="
+										changeShowAction('show_clients_count')
 									"
 								>
 								</nb-toggle>
