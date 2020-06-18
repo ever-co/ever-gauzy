@@ -122,14 +122,6 @@ export class TableInventoryComponent extends TranslationBaseComponent
 		]);
 	}
 
-	async save() {
-		this.router.navigate([
-			`/pages/organization/inventory/edit/${this.selectedItem.id}`
-		]);
-
-		this.loadSettings();
-	}
-
 	async delete() {
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
@@ -151,7 +143,7 @@ export class TableInventoryComponent extends TranslationBaseComponent
 				);
 			}
 		} catch {
-			this.toastrService.success(
+			this.toastrService.danger(
 				this.getTranslation('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
@@ -163,7 +155,7 @@ export class TableInventoryComponent extends TranslationBaseComponent
 	async loadSettings() {
 		this.selectedItem = null;
 		const { items } = await this.productService.getAll(
-			null,
+			['type', 'category', 'tags'],
 			null,
 			this.selectedLanguage
 		);

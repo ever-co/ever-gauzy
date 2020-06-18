@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ControlContainer, FormArray, FormBuilder, Validators } from '@angular/forms';
+import { ControlContainer, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { StageUpdateInput } from '@gauzy/models';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
   templateUrl: './stage-form.component.html',
@@ -29,6 +30,13 @@ export class StageFormComponent implements OnInit
   {
     this.control = this.controlContainer.control as FormArray;
     this.stages?.forEach( ({ id, name, description }) => this.pushNewStage({ id, name, description }) );
+  }
+
+  public reorder( event: CdkDragDrop<FormGroup> ) {
+    const index = this.control.controls.indexOf( event.item.data );
+
+    this.control.removeAt( index );
+    this.control.insert( event.currentIndex, event.item.data );
   }
 
   public pushNewStage({ id, name, description }: Omit<StageUpdateInput, 'pipelineId'> = {} as any ): void {
