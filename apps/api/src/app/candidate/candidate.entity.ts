@@ -46,10 +46,11 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	})
 	tags: Tag[];
 
-	@ManyToOne((type) => CandidateEducation)
-	@JoinTable({
-		name: 'candidate_education'
-	})
+	@OneToMany(
+		(type) => CandidateEducation,
+		(candidateEducation) => candidateEducation.candidate
+	)
+	@JoinColumn()
 	educations: IEducation[];
 
 	@OneToMany(
@@ -59,16 +60,18 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@JoinColumn()
 	interview?: ICandidateInterview[];
 
-	@ManyToOne((type) => CandidateExperience)
-	@JoinTable({
-		name: 'candidate_experience'
-	})
+	@OneToMany(
+		(type) => CandidateExperience,
+		(candidateExperience) => candidateExperience.candidate
+	)
+	@JoinColumn()
 	experience: IExperience[];
 
-	@ManyToOne((type) => CandidateSkill)
-	@JoinTable({
-		name: 'candidate_skill'
-	})
+	@OneToMany(
+		(type) => CandidateSkill,
+		(candidateSkill) => candidateSkill.candidate
+	)
+	@JoinColumn()
 	skills: ISkill[];
 
 	@ApiProperty({ type: CandidateSource })

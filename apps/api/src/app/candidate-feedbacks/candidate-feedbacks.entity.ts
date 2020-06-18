@@ -13,12 +13,14 @@ import {
 	CandidateStatus,
 	ICandidateInterviewers,
 	ICandidateCriterionsRating,
-	Candidate as ICandidate
+	Candidate as ICandidate,
+	ICandidateInterview
 } from '@gauzy/models';
 import { IsEnum, IsOptional } from 'class-validator';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { Candidate } from '../candidate/candidate.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 
 @Entity('candidate_feedback')
 export class CandidateFeedback extends Base implements ICandidateFeedback {
@@ -55,6 +57,12 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 	)
 	@JoinColumn()
 	criterionsRating?: ICandidateCriterionsRating[];
+
+	@ManyToOne(
+		(type) => CandidateInterview,
+		(candidateInterview) => candidateInterview.feedbacks
+	)
+	interview: ICandidateInterview;
 
 	@ManyToOne((type) => Candidate, (candidate) => candidate.feedbacks)
 	candidate: ICandidate;

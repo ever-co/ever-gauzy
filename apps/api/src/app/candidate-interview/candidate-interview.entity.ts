@@ -36,10 +36,11 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@Column({ nullable: true })
 	endTime: Date;
 
-	@ManyToOne((type) => CandidateFeedback, { cascade: true })
-	@JoinTable({
-		name: 'candidate_feedback'
-	})
+	@OneToMany(
+		(type) => CandidateFeedback,
+		(candidateFeedback) => candidateFeedback.interview
+	)
+	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: String })

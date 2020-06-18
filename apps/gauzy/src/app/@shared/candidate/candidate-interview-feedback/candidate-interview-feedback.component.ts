@@ -5,19 +5,15 @@ import { CandidateFeedbacksService } from '../../../@core/services/candidate-fee
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import {
 	CandidateStatus,
 	ICandidateFeedback,
 	ICandidateInterviewers,
 	ICandidateTechnologies,
-	ICandidatePersonalQualities
+	ICandidatePersonalQualities,
+	ICandidateInterview
 } from '@gauzy/models';
-import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { EmployeesService } from '../../../@core/services';
-import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
-import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
 import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
 
 @Component({
@@ -30,6 +26,7 @@ export class CandidateInterviewFeedbackComponent
 	implements OnInit {
 	@Input() candidateId: string;
 	@Input() interviewId: string;
+	@Input() currentInterview: ICandidateInterview;
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	form: any;
@@ -41,7 +38,6 @@ export class CandidateInterviewFeedbackComponent
 	feedbackInterviewer: ICandidateInterviewers;
 	isRejected: boolean;
 	selectedEmployeeId: string;
-	employeesForSelect: any[] = [];
 	disabledIds: string[] = [];
 	technologiesList: ICandidateTechnologies[];
 	personalQualitiesList: ICandidatePersonalQualities[];
@@ -58,20 +54,14 @@ export class CandidateInterviewFeedbackComponent
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private candidatesService: CandidatesService,
-		private candidateInterviewService: CandidateInterviewService,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
-		private candidateInterviewersService: CandidateInterviewersService,
-		private employeesService: EmployeesService,
-		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
 		private candidateCriterionsRatingService: CandidateCriterionsRatingService
 	) {
 		super(translateService);
 	}
 	ngOnInit() {
-		this.loadData();
-		this.loadCriterions();
 		this._initializeForm();
+		this.loadCriterions();
 		this.loadFeedbacks();
 	}
 
@@ -103,30 +93,6 @@ export class CandidateInterviewFeedbackComponent
 		return res;
 	}
 
-	private async loadData() {
-		const res = await this.candidateInterviewService.findById(
-			this.interviewId
-		);
-		if (res) {
-			this.interviewTitle = res.title;
-		}
-		const interviewers = await this.candidateInterviewersService.findByInterviewId(
-			this.interviewId
-		);
-		if (interviewers) {
-			this.interviewers = interviewers;
-			for (const item of interviewers) {
-				const employee = await this.employeesService.getEmployeeById(
-					item.employeeId,
-					['user']
-				);
-				if (employee) {
-					this.employeesForSelect.push(employee);
-				}
-			}
-		}
-	}
-
 	private async loadFeedbacks() {
 		const result = await this.candidateFeedbacksService.getAll(
 			['interviewer'],
@@ -156,7 +122,7 @@ export class CandidateInterviewFeedbackComponent
 
 	onMembersSelected(id: string) {
 		this.selectedEmployeeId = id;
-		for (const item of this.interviewers) {
+		for (const item of this.currentInterview.interviewers) {
 			if (this.selectedEmployeeId === item.employeeId) {
 				this.feedbackInterviewer = item;
 			}
@@ -213,7 +179,10 @@ export class CandidateInterviewFeedbackComponent
 			await this.candidatesService.setCandidateAsRejected(
 				this.candidateId
 			);
-		} else if (this.statusHire + 1 === this.employeesForSelect.length) {
+		} else if (
+			this.statusHire + 1 ===
+			this.currentInterview.employees.length
+		) {
 			await this.candidatesService.setCandidateAsHired(this.candidateId);
 		} else {
 			await this.candidatesService.setCandidateAsApplied(
@@ -221,19 +190,9 @@ export class CandidateInterviewFeedbackComponent
 			);
 		}
 	}
-	private async loadCriterions() {
-		const technologies = await this.candidateTechnologiesService.findByInterviewId(
-			this.interviewId
-		);
-		if (technologies) {
-			this.technologiesList = technologies;
-		}
-		const qualities = await this.candidatePersonalQualitiesService.findByInterviewId(
-			this.interviewId
-		);
-		if (qualities) {
-			this.personalQualitiesList = qualities;
-		}
+	private loadCriterions() {
+		this.technologiesList = this.currentInterview.technologies;
+		this.personalQualitiesList = this.currentInterview.personalQualities;
 
 		const technologyRating = this.form.get('technologies') as FormArray;
 		this.technologiesList.forEach((item) => {

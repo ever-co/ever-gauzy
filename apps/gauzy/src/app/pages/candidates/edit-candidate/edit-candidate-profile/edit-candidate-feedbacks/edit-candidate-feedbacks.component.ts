@@ -38,6 +38,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	all = 'all';
 	interviewersHire: ICandidateInterviewers[] = [];
 	allInterviews: ICandidateInterview[] = [];
+	interviewers = [];
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -63,7 +64,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				}
 			});
 	}
-	private async _initializeForm() {
+	private _initializeForm() {
 		this.form = new FormGroup({
 			feedbacks: this.fb.array([])
 		});
@@ -129,14 +130,14 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.status = this.feedbackList[index].status;
 		this.feedbackInterviewer = this.feedbackList[index].interviewer;
 		this.feedbackInterviewId = this.feedbackList[index].interviewId;
-		const interviewers = await this.candidateInterviewersService.findByInterviewId(
+		this.interviewers = await this.candidateInterviewersService.findByInterviewId(
 			this.feedbackInterviewId
 		);
 		this.getStatusHire(this.feedbackInterviewId);
-		this.interviewersHire = interviewers ? interviewers : null;
+		this.interviewersHire = this.interviewers ? this.interviewers : null;
 	}
 
-	async submitForm() {
+	submitForm() {
 		const feedbackForm = this.form.controls.feedbacks as FormArray;
 		const formValue = { ...feedbackForm.value[0] };
 
@@ -204,14 +205,14 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	async setStatus(status: string, interviewId: string) {
 		this.getStatusHire(this.feedbackInterviewId);
-		const interviewers = await this.candidateInterviewersService.findByInterviewId(
-			interviewId
-		);
 		if (status === CandidateStatus.REJECTED) {
 			await this.candidatesService.setCandidateAsRejected(
 				this.candidateId
 			);
-		} else if (interviewers && this.statusHire === interviewers.length) {
+		} else if (
+			this.interviewers &&
+			this.statusHire === this.interviewers.length
+		) {
 			await this.candidatesService.setCandidateAsHired(this.candidateId);
 		} else {
 			await this.candidatesService.setCandidateAsApplied(
@@ -228,7 +229,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.toastrError(error);
 		}
 	}
-	async onInterviewSelected(value: any) {
+	onInterviewSelected(value: any) {
 		if (value === 'all') {
 			this.loadFeedbacks();
 		} else {

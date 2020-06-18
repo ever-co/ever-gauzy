@@ -16,7 +16,6 @@ import {
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
-import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -40,8 +39,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private candidateInterviewersService: CandidateInterviewersService,
-		private toastrService: NbToastrService,
-		private candidateFeedbacksService: CandidateFeedbacksService
+		private toastrService: NbToastrService
 	) {
 		super(translate);
 	}
@@ -78,7 +76,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 
 	private async loadInterview() {
 		const res = await this.candidateInterviewService.getAll(
-			['interviewers', 'technologies', 'personalQualities'],
+			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
 			{ candidateId: this.candidateId }
 		);
 
@@ -89,17 +87,20 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	async addInterviewFeedback(id: string) {
-		const feedbacks = await this.candidateFeedbacksService.findByInterviewId(
-			id
+		const currentInterview = this.interviewList.find(
+			(item) => item.id === id
 		);
-		const interviewers = await this.candidateInterviewersService.findByInterviewId(
-			id
-		);
-		if (feedbacks.length !== interviewers.length) {
+		console.log(currentInterview);
+
+		if (
+			currentInterview.feedbacks.length !==
+			currentInterview.interviewers.length
+		) {
 			const dialog = this.dialogService.open(
 				CandidateInterviewFeedbackComponent,
 				{
 					context: {
+						currentInterview: currentInterview,
 						candidateId: this.selectedCandidate.id,
 						interviewId: id
 					}
