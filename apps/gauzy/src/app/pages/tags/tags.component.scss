@@ -1,8 +1,13 @@
 .search {
-	float: right;
-	margin: auto;
+  float: right;
+  margin: auto;
 }
 
 .tags-table {
-	padding-top: 10px;
+  padding-top: 10px;
+}
+
+.filter-item:hover {
+  text-decoration: underline;
+  cursor: pointer;
 }
