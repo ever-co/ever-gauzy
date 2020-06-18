@@ -9,7 +9,7 @@
 			<span *ngIf="selectedUser?.username">
 				<ng-container
 					*ngIf="
-						selectedUser.firstName || selectedUser.lastName;
+						selectedUser?.firstName || selectedUser?.lastName;
 						then withBraces;
 						else withQuotes
 					"

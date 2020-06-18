@@ -151,26 +151,23 @@ export class UsersComponent extends TranslationBaseComponent
 			}
 		});
 
-		const response = await dialog.onClose.pipe(first()).toPromise();
-		if (response) {
-			response.map((data) => {
-				if (data.user.firstName || data.user.lastName) {
-					this.userName =
-						data.user.firstName + ' ' + data.user.lastName;
-				}
-				this.toastrService.primary(
-					this.getTranslation(
-						'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
-						{
-							username: this.userName.trim(),
-							orgname: this.store.selectedOrganization.name
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			if (data.user.firstName || data.user.lastName) {
+				this.userName = data.user.firstName + ' ' + data.user.lastName;
+			}
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
+					{
+						username: this.userName.trim(),
+						orgname: this.store.selectedOrganization.name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 
-				this.loadPage();
-			});
+			this.loadPage();
 		}
 	}
 
