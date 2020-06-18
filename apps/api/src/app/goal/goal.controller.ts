@@ -23,10 +23,10 @@ export class GoalController extends CrudController<Goal> {
 		super(goalService);
 	}
 
-	@ApiOperation({ summary: 'Find all Goals.' })
+	@ApiOperation({ summary: 'Create Goal' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found goals',
+		description: 'Goal Created successfully',
 		type: Goal
 	})
 	@Post('/create')

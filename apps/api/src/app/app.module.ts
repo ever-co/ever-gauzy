@@ -93,6 +93,7 @@ import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
 import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
+import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 
 @Module({
 	imports: [
@@ -363,6 +364,10 @@ import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/c
 						module: GoalModule
 					},
 					{
+						path: '/goal-time-frame',
+						module: GoalTimeFrameModule
+					},
+					{
 						path: '/key-results',
 						module: KeyResultModule
 					},
@@ -429,6 +434,7 @@ import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/c
 		InvoiceItemModule,
 		PaymentModule,
 		GoalModule,
+		GoalTimeFrameModule,
 		KeyResultModule,
 		KeyResultUpdateModule,
 		EmployeeLevelModule,

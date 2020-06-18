@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Employee, Goal } from '@gauzy/models';
+import { Employee, Goal, GoalTimeFrame } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 
 @Component({
 	selector: 'ga-edit-objective',
@@ -15,15 +16,17 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	objectiveForm: FormGroup;
 	employees: Employee[];
 	data: Goal;
+	timeFrames: GoalTimeFrame[] = [];
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private dialogRef: NbDialogRef<EditObjectiveComponent>,
 		private fb: FormBuilder,
-		private employeeService: EmployeesService
+		private employeeService: EmployeesService,
+		private goalSettingService: GoalSettingsService
 	) {}
 
-	ngOnInit(): void {
+	async ngOnInit() {
 		this.objectiveForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
@@ -32,7 +35,13 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			level: ['Organization', Validators.required],
 			deadline: ['Quarterly', Validators.required]
 		});
-		this.employeeService
+
+		await this.goalSettingService.getAllTimeFrames().then((res) => {
+			if (res) {
+				this.timeFrames = res.items;
+			}
+		});
+		await this.employeeService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
