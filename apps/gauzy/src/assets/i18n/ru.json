@@ -952,7 +952,17 @@
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Запрос на утверждение",
 		"APPROVAL_POLICY": "Политика одобрения",
-		"CHOOSE_POLICIES": "Выбрать политики/с"
+		"CHOOSE_POLICIES": "Выбрать политики/с",
+		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
+		"ADD_APPROVAL_REQUEST": "Add Request Approval"
+	},
+	"APPROVAL_POLICY_PAGE": {
+		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
+		"ADD_APPROVAL_POLICY": "Add Approval Policy",
+		"HEADER": "Approval Policy",
+		"APPROVAL_POLICY_NAME": "name",
+		"APPROVAL_POLICY_TYPE": "type",
+		"APPROVAL_POLICY_DESCRIPTION": "description"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Время выключено",

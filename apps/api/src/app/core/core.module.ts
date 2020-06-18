@@ -91,6 +91,7 @@ import { CandidatePersonalQualities } from '../candidate-personal-qualities/cand
 import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
 import { Goal } from '../goal/goal.entity';
 import { KeyResult } from '../keyresult/keyresult.entity';
+import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
 
 const entities = [
 	Invite,
@@ -167,6 +168,7 @@ const entities = [
 	IntegrationEntitySettingTiedEntity,
 	RequestApproval,
 	RequestApprovalEmployee,
+	RequestApprovalTeam,
 	ApprovalPolicy,
 	EmployeeAppointment,
 	AppointmentEmployees,

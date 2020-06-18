@@ -952,7 +952,17 @@
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Approval Request",
 		"APPROVAL_POLICY": "Approval Policy",
-		"CHOOSE_POLICIES": "Choose policies/s"
+		"CHOOSE_POLICIES": "Choose policies/s",
+		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
+		"ADD_APPROVAL_REQUEST": "Add Request Approval"
+	},
+	"APPROVAL_POLICY_PAGE": {
+		"HEADER": "Approval Policy",
+		"APPROVAL_POLICY_NAME": "name",
+		"APPROVAL_POLICY_TYPE": "type",
+		"APPROVAL_POLICY_DESCRIPTION": "description",
+		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
+		"ADD_APPROVAL_POLICY": "Add Approval Policy"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",

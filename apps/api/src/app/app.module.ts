@@ -90,6 +90,7 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
 import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
+import { RequestApprovalTeamModule } from './request-approval-team/request-approval-team.module';
 
 @Module({
 	imports: [
@@ -400,6 +401,7 @@ import { KeyResultModule } from './keyresult/keyresult.module';
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
 		RequestApprovalEmployeeModule,
+		RequestApprovalTeamModule,
 		ProposalModule,
 		EmailModule,
 		EmailTemplateModule,

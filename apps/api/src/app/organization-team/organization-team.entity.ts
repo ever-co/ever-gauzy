@@ -4,7 +4,7 @@ import {
 	Index,
 	OneToMany,
 	ManyToMany,
-	JoinTable,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
@@ -12,13 +12,14 @@ import { Base } from '../core/entities/base';
 import { OrganizationTeam as IOrganizationTeam } from '@gauzy/models';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Tag } from '../tags/tag.entity';
+import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
 
 @Entity('organization_team')
 export class OrganizationTeam extends Base implements IOrganizationTeam {
 	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({
-		name: 'tag_organization_team',
+		name: 'tag_organization_team'
 	})
 	tags?: Tag[];
 
@@ -39,8 +40,14 @@ export class OrganizationTeam extends Base implements IOrganizationTeam {
 		(type) => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.organizationTeam,
 		{
-			cascade: true,
+			cascade: true
 		}
 	)
 	members?: OrganizationTeamEmployee[];
+
+	@OneToMany(
+		(type) => RequestApprovalTeam,
+		(requestApprovals) => requestApprovals.team
+	)
+	requestApprovals?: RequestApprovalTeam[];
 }
