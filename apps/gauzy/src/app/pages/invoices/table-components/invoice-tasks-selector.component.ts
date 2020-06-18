@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Task } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { DefaultEditor } from 'ng2-smart-table';
