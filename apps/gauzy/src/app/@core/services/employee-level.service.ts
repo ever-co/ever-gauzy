@@ -16,11 +16,7 @@ export class EmployeeLevelService {
 		items: EmployeeLevel[];
 		total: number;
 	}> {
-<<<<<<< HEAD
 		const data = JSON.stringify({ relations: relations || [] });
-=======
-		const data = JSON.stringify({ relations });
->>>>>>> f52301a95d9829730422253043050b61f859fcd2
 		return this.http
 			.get<{
 				items: EmployeeLevel[];
