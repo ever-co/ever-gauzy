@@ -27,4 +27,18 @@ export class CandidateCriterionsRatingService extends CrudService<
 			await this.repository.save(qualityCreateInput)
 		];
 	}
+
+	async getCriterionsByFeedbackId(
+		feedbackId: string
+	): Promise<CandidateCriterionsRating[]> {
+		return await this.repository
+			.createQueryBuilder('candidate_feedback')
+			.where('candidate_feedback.feedbackId = :feedbackId', {
+				feedbackId
+			})
+			.getMany();
+	}
+	async deleteBulk(ids: string[]) {
+		return await this.repository.delete(ids);
+	}
 }

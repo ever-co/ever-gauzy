@@ -37,4 +37,14 @@ export class CandidateCriterionsRatingService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	deleteBulk(id: string): Promise<any> {
+		const data = JSON.stringify({ id });
+		return this.http
+			.delete('/api/candidate-criterions-rating/deleteBulk', {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
 }

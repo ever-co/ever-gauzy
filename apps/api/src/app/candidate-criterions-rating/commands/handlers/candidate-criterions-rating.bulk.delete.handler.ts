@@ -12,8 +12,13 @@ export class CandidateCriterionsRatingBulkDeleteHandler
 	public async execute(
 		command: CandidateCriterionsRatingBulkDeleteCommand
 	): Promise<any> {
-		// const { id } = command;
-		// TO DO
+		const { id } = command;
+		const criterions = await this.candidateCriterionsRatingService.getCriterionsByFeedbackId(
+			id
+		);
+		await this.candidateCriterionsRatingService.deleteBulk(
+			criterions.map((item) => item.id)
+		);
 		return;
 	}
 }

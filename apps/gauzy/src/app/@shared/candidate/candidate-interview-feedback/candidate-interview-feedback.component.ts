@@ -151,6 +151,8 @@ export class CandidateInterviewFeedbackComponent
 					status: this.status
 				});
 				this.setStatus(this.status);
+				this.technologiesList.map((tech) => (tech.rating = null));
+				this.personalQualitiesList.map((qual) => (qual.rating = null));
 				this.dialogRef.close();
 				this.toastrService.success(
 					this.getTranslation('TOASTR.TITLE.SUCCESS'),

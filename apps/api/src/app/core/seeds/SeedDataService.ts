@@ -132,6 +132,16 @@ import { ProductOption } from '../../product-option/product-option.entity';
 import { HelpCenter } from '../../help-center/help-center.entity';
 import { createHelpCenter } from '../../help-center/help-center.seed';
 import { createDefaultProducts } from '../../product/product.seed';
+import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
+import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
+import {
+	createCandidateDocuments,
+	createRandomCandidateDocuments
+} from '../../candidate-documents/candidate-documents.seed';
+import {
+	createCandidateFeedbacks,
+	createRandomCandidateFeedbacks
+} from '../../candidate-feedbacks/candidate-feedbacks.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -185,6 +195,8 @@ const allEntities = [
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
+	CandidateDocument,
+	CandidateFeedback,
 	HelpCenter,
 	Product,
 	ProductVariant,
@@ -353,7 +365,8 @@ export class SeedDataService {
 			defaultOrganizations[0],
 			defaultEmployees
 		);
-
+		await createCandidateDocuments(this.connection, defaultCandidates);
+		await createCandidateFeedbacks(this.connection, defaultCandidates);
 		await createDefaultIncomes(this.connection, {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees
@@ -465,7 +478,16 @@ export class SeedDataService {
 			tenantCandidatesMap
 		);
 		await createRandomIncomes(this.connection, tenants, tenantEmployeeMap);
-
+		await createRandomCandidateDocuments(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
+		await createRandomCandidateFeedbacks(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
 		const organizationVendorsMap = await createRandomOrganizationVendors(
 			this.connection,
 			tenants,

@@ -17,6 +17,7 @@ import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/can
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
+import { CandidateCriterionsRatingService } from 'apps/gauzy/src/app/@core/services/candidate-criterions-rating.service';
 
 @Component({
 	selector: 'ga-edit-candidate-feedbacks',
@@ -48,7 +49,8 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		private employeesService: EmployeesService,
 		private candidateInterviewersService: CandidateInterviewersService,
 		private candidatesService: CandidatesService,
-		private candidateInterviewService: CandidateInterviewService
+		private candidateInterviewService: CandidateInterviewService,
+		private candidateCriterionsRatingService: CandidateCriterionsRatingService
 	) {
 		super(translateService);
 	}
@@ -73,6 +75,9 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.fb.group({
 				description: ['', Validators.required],
 				rating: ['', Validators.required]
+				// TO DO
+				// technologies: this.fb.array([]),
+				// personalQualities: this.fb.array([])
 			})
 		);
 	}
@@ -95,7 +100,24 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.loadInterviews(this.feedbackList);
 		}
 	}
-
+	private async loadCriterions(feedback: ICandidateFeedback) {
+		const res = await this.candidateInterviewService.getAll(
+			['technologies', 'personalQualities'],
+			{ candidateId: this.candidateId }
+		);
+		if (res) {
+			const interview = res.items.find(
+				(item) => item.id === feedback.interviewId
+			);
+			for (const criterionsRating of feedback.criterionsRating) {
+				for (const item of interview.technologies) {
+					if (item.id === criterionsRating.technologyId) {
+						item.rating = criterionsRating.rating;
+					}
+				}
+			}
+		}
+	}
 	async loadInterviews(feedbackList: ICandidateFeedback[]) {
 		for (const item of feedbackList) {
 			if (item.interviewId) {
@@ -124,12 +146,14 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 
 	async editFeedback(index: number, id: string) {
+		const currentFeedback = this.feedbackList[index];
+		this.loadCriterions(currentFeedback);
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.feedbacks.patchValue([this.feedbackList[index]]);
+		this.form.controls.feedbacks.patchValue([currentFeedback]);
 		this.feedbackId = id;
-		this.status = this.feedbackList[index].status;
-		this.feedbackInterviewer = this.feedbackList[index].interviewer;
-		this.feedbackInterviewId = this.feedbackList[index].interviewId;
+		this.status = currentFeedback.status;
+		this.feedbackInterviewer = currentFeedback.interviewer;
+		this.feedbackInterviewId = currentFeedback.interviewId;
 		this.interviewers = await this.candidateInterviewersService.findByInterviewId(
 			this.feedbackInterviewId
 		);
@@ -164,7 +188,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			});
 			this.loadFeedbacks();
 			this.toastrSuccess('UPDATED');
-			this.setStatus(this.status, this.feedbackInterviewId);
+			this.setStatus(this.status);
 			this.showAddCard = !this.showAddCard;
 			this.form.controls.feedbacks.reset();
 		} catch (error) {
@@ -203,7 +227,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			}
 		}
 	}
-	async setStatus(status: string, interviewId: string) {
+	async setStatus(status: string) {
 		this.getStatusHire(this.feedbackInterviewId);
 		if (status === CandidateStatus.REJECTED) {
 			await this.candidatesService.setCandidateAsRejected(
@@ -222,6 +246,10 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	async removeFeedback(id: string) {
 		try {
+			const res = await this.candidateFeedbacksService.findById(id);
+			if (res && res.interviewId) {
+				await this.candidateCriterionsRatingService.deleteBulk(id);
+			}
 			await this.candidateFeedbacksService.delete(id);
 			this.toastrSuccess('DELETED');
 			this.loadFeedbacks();

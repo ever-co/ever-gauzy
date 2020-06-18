@@ -16,6 +16,8 @@ import {
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
+import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
+import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -39,7 +41,9 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private candidateInterviewersService: CandidateInterviewersService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private candidateTechnologiesService: CandidateTechnologiesService,
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
 	) {
 		super(translate);
 	}
@@ -90,8 +94,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		const currentInterview = this.interviewList.find(
 			(item) => item.id === id
 		);
-		console.log(currentInterview);
-
 		if (
 			currentInterview.feedbacks.length !==
 			currentInterview.interviewers.length
@@ -180,13 +182,10 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 	async removeInterview(id: string) {
 		try {
-			await this.candidateInterviewService.delete(id);
-			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
+			// await this.candidateInterviewersService.deleteBulkByInterviewId(id);
 			// await this.candidateTechnologiesService.deleteBulk(id);
-			// await this.candidatePersonalQualitiesService.deleteBulkPersonalQualities(
-			// 	id
-			// );
-
+			// await this.candidatePersonalQualitiesService.deleteBulk(id);
+			// await this.candidateInterviewService.delete(id);
 			this.toastrSuccess('DELETED');
 			this.loadInterview();
 		} catch (error) {
