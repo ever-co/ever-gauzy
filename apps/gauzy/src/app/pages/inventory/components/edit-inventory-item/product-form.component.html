@@ -89,12 +89,12 @@
 								(mouseleave)="hoverState = false"
 							/>
 							<img
-							*ngIf="form && form.get('imageUrl').value"
-							[src]="form.get('imageUrl').value"
-							alt="Inventory item Image"
-							(mouseenter)="hoverState = true"
-							(mouseleave)="hoverState = false"
-						/>
+								*ngIf="form && form.get('imageUrl').value"
+								[src]="form.get('imageUrl').value"
+								alt="Inventory item Image"
+								(mouseenter)="hoverState = true"
+								(mouseleave)="hoverState = false"
+							/>
 						</div>
 						<!-- <nb-badge
 							status="danger"

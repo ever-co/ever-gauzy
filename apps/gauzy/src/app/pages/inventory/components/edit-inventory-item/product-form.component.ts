@@ -69,26 +69,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.route.params
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe(async (params) => {
-				this.inventoryItem = params.id
-					? await this.productService.getById(params.id, [
-							'category',
-							'type',
-							'options',
-							'variants',
-							'tags'
-					  ])
-					: null;
-
-				this.variants$.next(
-					this.inventoryItem ? this.inventoryItem.variants : []
-				);
-
-				this.options = this.inventoryItem
-					? this.inventoryItem.options
-					: [];
-				this.tags = this.inventoryItem ? this.inventoryItem.tags : [];
-
-				this._initializeForm();
+				const productId = params.id || null;
+				this.loadProduct(productId);
 			});
 
 		this.store.selectedOrganization$
@@ -134,6 +116,27 @@ export class ProductFormComponent extends TranslationBaseComponent
 				this.inventoryItem ? this.inventoryItem.description : ''
 			]
 		});
+	}
+
+	async loadProduct(id: string) {
+		if (id) {
+			this.inventoryItem = await this.productService.getById(id, [
+				'category',
+				'type',
+				'options',
+				'variants',
+				'tags'
+			]);
+		}
+
+		this.variants$.next(
+			this.inventoryItem ? this.inventoryItem.variants : []
+		);
+
+		this.options = this.inventoryItem ? this.inventoryItem.options : [];
+		this.tags = this.inventoryItem ? this.inventoryItem.tags : [];
+
+		this._initializeForm();
 	}
 
 	async loadProductTypes() {
@@ -187,31 +190,24 @@ export class ProductFormComponent extends TranslationBaseComponent
 		}
 
 		try {
+			let productResult: Product;
+
 			if (!productRequest['id']) {
-				this.inventoryItem = await this.productService.create(
+				productResult = await this.productService.create(
 					productRequest
 				);
 			} else {
-				this.inventoryItem = await this.productService.update(
+				productResult = await this.productService.update(
 					productRequest
 				);
 			}
 
-			if (!this.inventoryItem.variants) {
-				this.inventoryItem.variants = [];
-			}
+			await this.productVariantService.createProductVariants({
+				product: productResult,
+				optionCombinations: this.optionsCombinations
+			});
 
-			this.inventoryItem.variants.push(
-				...(await this.productVariantService.createProductVariants({
-					product: this.inventoryItem,
-					optionCombinations: this.optionsCombinations
-				}))
-			);
-
-			//tstodo
-			console.log(this.inventoryItem.variants);
-
-			this.variants$.next(this.inventoryItem.variants);
+			await this.loadProduct(productResult.id);
 
 			this.router.navigate([
 				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
