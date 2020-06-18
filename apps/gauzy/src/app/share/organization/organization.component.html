@@ -218,6 +218,23 @@
 				</div>
 			</div>
 
+			<div
+				class="row"
+				*ngIf="organization.show_bonuses_paid && bonuses_paid"
+			>
+				<div class="col">
+					<div class="org-bonuses-paid">
+						<h5 class="org-title">
+							{{ 'PUBLIC_PAGE.TOTAL_BONUSES_PAID' | translate }}
+						</h5>
+						<span
+							class="paid_bonuses"
+							[textContent]="'$' + bonuses_paid"
+						></span>
+					</div>
+				</div>
+			</div>
+
 			<div class="row" *ngIf="organization.banner">
 				<div class="col">
 					<p

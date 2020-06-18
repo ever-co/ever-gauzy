@@ -20,7 +20,7 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	client_focus: string;
 	show_income?: boolean;
 	show_profits?: boolean;
-	show_business_paid?: boolean;
+	show_bonuses_paid?: boolean;
 	show_total_hours?: boolean;
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
@@ -76,7 +76,7 @@ export interface OrganizationCreateInput extends ILocation {
 	client_focus: string;
 	show_income?: boolean;
 	show_profits?: boolean;
-	show_business_paid?: boolean;
+	show_bonuses_paid?: boolean;
 	show_total_hours?: boolean;
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;

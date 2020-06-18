@@ -547,11 +547,9 @@
 								<nb-toggle
 									class="nb_toggle"
 									id="showBusinessPaid"
-									[(checked)]="
-										organization.show_business_paid
-									"
+									[(checked)]="organization.show_bonuses_paid"
 									(change)="
-										changeShowIncome('show_business_paid')
+										changeShowIncome('show_bonuses_paid')
 									"
 								>
 								</nb-toggle>

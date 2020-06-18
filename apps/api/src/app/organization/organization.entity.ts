@@ -201,7 +201,7 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
-	show_business_paid?: boolean;
+	show_bonuses_paid?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()

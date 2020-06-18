@@ -922,7 +922,8 @@
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
-		"COMPANY_SKILLS": "Company Skills"
+		"COMPANY_SKILLS": "Company Skills",
+		"TOTAL_BONUSES_PAID": "Total Bonuses Paid"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",

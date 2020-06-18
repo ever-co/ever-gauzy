@@ -98,6 +98,13 @@
     }
   }
 
+  .org-bonuses-paid span.paid_bonuses {
+    padding: 10px 0;
+    font-size: 15px;
+    font-weight: 500;
+    display: block;
+  }
+
   .org-details {
     width: 100%;
     display: block;
@@ -106,12 +113,6 @@
 
     p.short_description {
       font-size: 15px;
-    }
-
-    .org-skills {
-      padding: 20px 0;
-      font-size: 18px;
-      font-weight: 500;
     }
   }
 }
