@@ -118,21 +118,11 @@ import { Product } from '../../product/product.entity';
 import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
 import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
-import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
 import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
 import {
 	createCandidateSources,
 	createRandomCandidateSources
 } from '../../candidate-source/candidate-source.seed';
-import {
-	createCandidateDocuments,
-	createRandomCandidateDocuments
-} from '../../candidate-documents/candidate-documents.seed';
-import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
-import {
-	createCandidateFeedbacks,
-	createRandomCandidateFeedbacks
-} from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
 import { createDefaultIntegrations } from '../../integration/integration.seed';
 import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
@@ -141,6 +131,16 @@ import { ProductOption } from '../../product-option/product-option.entity';
 import { HelpCenter } from '../../help-center/help-center.entity';
 import { createHelpCenter } from '../../help-center/help-center.seed';
 import { createDefaultProducts } from '../../product/product.seed';
+import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
+import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
+import {
+	createCandidateDocuments,
+	createRandomCandidateDocuments
+} from '../../candidate-documents/candidate-documents.seed';
+import {
+	createCandidateFeedbacks,
+	createRandomCandidateFeedbacks
+} from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { Equipment } from '../../equipment/equipment.entity';
 
 const allEntities = [
@@ -195,14 +195,14 @@ const allEntities = [
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
+	CandidateDocument,
+	CandidateFeedback,
 	HelpCenter,
 	Product,
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
-	ProductOption,
-	CandidateDocument,
-	CandidateFeedback
+	ProductOption
 ];
 
 @Injectable()
@@ -358,8 +358,6 @@ export class SeedDataService {
 		);
 
 		await createCandidateSources(this.connection, defaultCandidates);
-		await createCandidateDocuments(this.connection, defaultCandidates);
-		await createCandidateFeedbacks(this.connection, defaultCandidates);
 
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
@@ -367,7 +365,8 @@ export class SeedDataService {
 			defaultOrganizations[0],
 			defaultEmployees
 		);
-
+		await createCandidateDocuments(this.connection, defaultCandidates);
+		await createCandidateFeedbacks(this.connection, defaultCandidates);
 		await createDefaultIncomes(this.connection, {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees
@@ -473,6 +472,12 @@ export class SeedDataService {
 			tenantUsersMap,
 			env.randomSeedConfig.candidatesPerOrganization || 1
 		);
+		await createRandomCandidateSources(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
+		await createRandomIncomes(this.connection, tenants, tenantEmployeeMap);
 		await createRandomCandidateDocuments(
 			this.connection,
 			tenants,
@@ -483,13 +488,6 @@ export class SeedDataService {
 			tenants,
 			tenantCandidatesMap
 		);
-		await createRandomCandidateSources(
-			this.connection,
-			tenants,
-			tenantCandidatesMap
-		);
-		await createRandomIncomes(this.connection, tenants, tenantEmployeeMap);
-
 		const organizationVendorsMap = await createRandomOrganizationVendors(
 			this.connection,
 			tenants,

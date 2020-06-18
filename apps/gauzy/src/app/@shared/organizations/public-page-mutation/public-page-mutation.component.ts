@@ -123,11 +123,12 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 				overview: this.organization.overview,
 				show_income: this.organization.show_income,
 				show_profits: this.organization.show_profits,
-				show_business_paid: this.organization.show_business_paid,
+				show_bonuses_paid: this.organization.show_bonuses_paid,
 				show_total_hours: this.organization.show_total_hours,
 				show_minimum_project_size: this.organization
 					.show_minimum_project_size,
 				show_projects_count: this.organization.show_projects_count,
+				show_clients_count: this.organization.show_clients_count,
 				client_focus: [],
 				skills: this.organization.skills,
 				languages: []
@@ -147,7 +148,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 		this.selectedLanguage = ev;
 	}
 
-	private changeShowIncome(sel: any) {
+	private changeShowAction(sel: any) {
 		this.form.get(sel).setValue(this.organization[sel]);
 	}
 

@@ -1,0 +1,99 @@
+<nb-card>
+	<nb-card-header>
+		Add Time Frame
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog(null)"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="timeFrameForm">
+			<label for="time-frame-title" class="label"> Name </label>
+			<input
+				type="text"
+				id="time-frame-title"
+				nbInput
+				fullWidth
+				formControlName="name"
+				placeholder="Time frame name eg. 'Q4-2020'"
+			/>
+
+			<label for="time-frame-status" class="label mt-3">
+				Status
+			</label>
+			<nb-select
+				id="time-frame-status"
+				fullWidth
+				filled
+				[status]="
+					timeFrameForm.value.status === 'active'
+						? 'success'
+						: 'danger'
+				"
+				formControlName="status"
+			>
+				<nb-option value="active">Active</nb-option>
+				<nb-option value="inactive">Inactive</nb-option>
+			</nb-select>
+
+			<div class="row mt-3">
+				<div class="col-md-6">
+					<label for="start-date" class="label">
+						Start Date
+					</label>
+					<input
+						nbInput
+						id="start-date"
+						fullWidth
+						placeholder="Start Date"
+						[nbDatepicker]="startDatePicker"
+						formControlName="startDate"
+					/>
+					<nb-datepicker
+						#startDatePicker
+						[max]="
+							timeFrameForm.value.endDate
+								? timeFrameForm.value.endDate
+								: null
+						"
+					></nb-datepicker>
+				</div>
+				<div class="col-md-6">
+					<label for="end-date" class="label">
+						End Date
+					</label>
+					<input
+						nbInput
+						id="end-date"
+						fullWidth
+						placeholder="End Date"
+						[nbDatepicker]="endDatePicker"
+						formControlName="endDate"
+					/>
+					<nb-datepicker
+						#endDatePicker
+						[min]="
+							timeFrameForm.value.startDate
+								? timeFrameForm.value.startDate
+								: null
+						"
+					></nb-datepicker>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-3" nbButton (click)="closeDialog(null)">
+			Cancel
+		</button>
+		<button
+			[disabled]="!timeFrameForm.valid"
+			nbButton
+			status="success"
+			(click)="saveTimeFrame()"
+		>
+			Save
+		</button>
+	</nb-card-footer>
+</nb-card>

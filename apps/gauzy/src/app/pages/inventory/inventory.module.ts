@@ -45,10 +45,23 @@ import { ProductVariantSettingsService } from '../../@core/services/product-vari
 import { ProductVariantPriceService } from '../../@core/services/product-variant-price.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
+import { EnabledStatusComponent } from './components/table-components/enabled-row.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
+
+const NB_MODULES = [
+	NbCardModule,
+	NbButtonModule,
+	NbIconModule,
+	NbSpinnerModule,
+	NbDialogModule,
+	NbCheckboxModule,
+	NbSelectModule,
+	NbTabsetModule,
+	NbInputModule
+];
 
 @NgModule({
 	declarations: [
@@ -62,27 +75,21 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InventoryComponent,
 		VariantTableComponent,
 		OptionsFormComponent,
-		InventoryVariantFormComponent
+		InventoryVariantFormComponent,
+		EnabledStatusComponent
 	],
 	imports: [
 		UserFormsModule,
 		InventoryRoutingModule,
 		ThemeModule,
 		CommonModule,
-		NbCardModule,
-		NbButtonModule,
-		NbCheckboxModule,
-		NbIconModule,
 		Ng2SmartTableModule,
 		TableComponentsModule,
 		ProductMutationModule,
-		NbSelectModule,
-		NbTabsetModule,
 		TagsColorInputModule,
 		ReactiveFormsModule,
 		NgSelectModule,
 		FormsModule,
-		NbInputModule,
 		SharedModule,
 		ImageUploaderModule,
 		NbDialogModule.forChild(),
@@ -93,13 +100,14 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NbSpinnerModule
+		...NB_MODULES
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,
 		ProductCategoryMutationComponent,
 		ImageRowComponent,
-		IconRowComponent
+		IconRowComponent,
+		EnabledStatusComponent
 	],
 	providers: [
 		ProductTypeService,

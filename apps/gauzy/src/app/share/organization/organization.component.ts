@@ -18,6 +18,8 @@ import { PublicPageMutationComponent } from '../../@shared/organizations/public-
 import { OrganizationLanguagesService } from '../../@core/services/organization-languages.service';
 import { OrganizationAwardsService } from '../../@core/services/organization-awards.service';
 import * as moment from 'moment';
+import { IncomeService } from '../../@core/services/income.service';
+import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 
 @Component({
 	selector: 'ngx-organization',
@@ -33,6 +35,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 	organization_languages: OrganizationLanguages[];
 	awards: OrganizationAwards[];
 	loading = true;
+	bonuses_paid = 0;
+	total_clients = 0;
 	imageUrl: string;
 	hoverState: boolean;
 	languageExist: boolean;
@@ -48,6 +52,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private employeesService: EmployeesService,
 		private organization_language_service: OrganizationLanguagesService,
 		private organizationAwardsService: OrganizationAwardsService,
+		private incomeService: IncomeService,
+		private organizationClientsService: OrganizationClientsService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -84,6 +90,12 @@ export class OrganizationComponent extends TranslationBaseComponent
 					this.imageUrl = this.organization.imageUrl;
 					if (typeof this.organization.totalEmployees !== 'number') {
 						this.loadEmployeesCount();
+					}
+					if (!!this.organization.show_bonuses_paid) {
+						this.getTotalBonusesPaid();
+					}
+					if (!!this.organization.show_clients_count) {
+						this.getClientsCount();
 					}
 					this.reloadPageData();
 				} catch (error) {
@@ -135,6 +147,27 @@ export class OrganizationComponent extends TranslationBaseComponent
 				this.awardExist = true;
 			}
 		}
+	}
+
+	private async getTotalBonusesPaid() {
+		let { items } = await this.incomeService.getAll(['employee'], {
+			organization: {
+				id: this.organization.id
+			}
+		});
+
+		for (let inc = 0; inc < items.length; inc++) {
+			if (items[inc].employee && items[inc].employee.anonymousBonus) {
+				this.bonuses_paid += parseFloat(String(items[inc].amount));
+			}
+		}
+	}
+
+	private async getClientsCount() {
+		const { total } = await this.organizationClientsService.getAll(null, {
+			organizationId: this.organization.id
+		});
+		this.total_clients = total;
 	}
 
 	private reloadPageData() {

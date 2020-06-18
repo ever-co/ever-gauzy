@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Goal, KeyResult } from '@gauzy/models';
+import { Goal, KeyResult, KeyResultUpdates } from '@gauzy/models';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
@@ -15,6 +15,7 @@ export class GoalDetailsComponent implements OnInit {
 	goal: Goal;
 	src: string;
 	ownerName: string;
+	updates: Array<KeyResultUpdates> = [];
 	constructor(
 		private dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private employeeService: EmployeesService,
@@ -29,6 +30,9 @@ export class GoalDetailsComponent implements OnInit {
 		);
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;
+		this.goal.keyResults.forEach((keyResult) => {
+			this.updates.push(...keyResult.updates);
+		});
 	}
 
 	async keyResultUpdate(selectedKeyResult) {

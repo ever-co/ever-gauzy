@@ -420,6 +420,7 @@
 		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked over Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"PROJECTS_COUNT": "Projects Count",
+		"CLIENTS_COUNT": "Clients Count",
 		"DETAILS": "Details",
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy"
@@ -900,6 +901,7 @@
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
 			"INVOICES_EDIT": "Edit Invoices",
+			"EDIT_SALES_PIPELINES": "Edit Sales Pipelines",
 			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
 			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
 			"REQUEST_APPROVAL_EDIT": "Edit Approval Request",
@@ -920,7 +922,13 @@
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
-		"COMPANY_SKILLS": "Company Skills"
+		"COMPANY_SKILLS": "Company Skills",
+		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
+		"COMPANY_PROFILE": "Company Profile",
+		"TOTAL_CLIENTS": "Total Clients",
+		"YEAR_FOUNDED": "Year Founded",
+		"COMPANY_SIZE": "Company Size",
+		"CLIENT_FOCUS": "Client Focus"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -1684,6 +1692,7 @@
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
+		"HEADER_STAGES": "Stages",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
 		"HEADER_FORM_CREATE": "Create Pipeline",
 		"RECORD_TYPE": "pipeline \"{{ name }}\""

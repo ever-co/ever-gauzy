@@ -1,51 +1,77 @@
-<nb-card
-	class="tags-component"
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
-	<nb-card-header>
-		<h4>
-			{{ 'TAGS_PAGE.HEADER' | translate }}
-		</h4>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="mb-3">
-			<button nbButton status="success" (click)="add()" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<button
-				nbButton
-				status="info"
-				(click)="edit()"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="danger"
-				(click)="delete()"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
-			<ngx-search-input class="search"></ngx-search-input>
-		</div>
+<div class="row">
+	<div class="col-2">
+		<nb-card class="filter">
+			<nb-card-header>
+				Tags type
+			</nb-card-header>
+			<nb-list>
+				<nb-list-item
+					*ngFor="let option of filterOptions"
+					class="filter-item"
+					(click)="selectedFilterOption(option.property)"
+				>
+					{{ option.displayName }}
+				</nb-list-item>
+			</nb-list>
+		</nb-card>
+	</div>
 
-		<ng2-smart-table
-			class="tags-table"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			(userRowSelect)="selectTag($event)"
-			style="cursor: pointer;"
-			#tagsTable
+	<div class="col-10">
+		<nb-card
+			class="tags-component"
+			[nbSpinner]="loading"
+			nbSpinnerStatus="primary"
+			nbSpinnerSize="large"
 		>
-		</ng2-smart-table>
-	</nb-card-body>
-</nb-card>
+			<nb-card-header>
+				<h4>
+					{{ 'TAGS_PAGE.HEADER' | translate }}
+				</h4>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="mb-3">
+					<button
+						nbButton
+						status="success"
+						(click)="add()"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+						>{{ 'BUTTONS.ADD' | translate }}
+					</button>
+					<button
+						nbButton
+						status="info"
+						(click)="edit()"
+						class="mr-2"
+						[disabled]="disableButton"
+					>
+						<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+						{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+					<button
+						nbButton
+						status="danger"
+						(click)="delete()"
+						class="mr-2"
+						[disabled]="disableButton"
+					>
+						<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+						{{ 'BUTTONS.DELETE' | translate }}
+					</button>
+					<ngx-search-input class="search"></ngx-search-input>
+				</div>
+
+				<ng2-smart-table
+					class="tags-table"
+					[settings]="settingsSmartTable"
+					[source]="smartTableSource"
+					(userRowSelect)="selectTag($event)"
+					style="cursor: pointer;"
+					#tagsTable
+				>
+				</ng2-smart-table>
+			</nb-card-body>
+		</nb-card>
+	</div>
+</div>

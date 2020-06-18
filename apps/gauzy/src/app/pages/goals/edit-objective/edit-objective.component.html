@@ -41,9 +41,9 @@
 				fullWidth
 				selected="Organization"
 			>
-				<nb-option value="Organization">Organization</nb-option>
-				<nb-option value="Team">Team</nb-option>
-				<nb-option value="Individual">Individual</nb-option>
+				<nb-option value="organization">Organization</nb-option>
+				<nb-option value="team">Team</nb-option>
+				<nb-option value="individual">Individual</nb-option>
 			</nb-select>
 
 			<label for="objective-owner" class="label mt-3"> Owner </label>
@@ -80,10 +80,11 @@
 				fullWidth
 				selected="Q4-2020"
 			>
-				<nb-option value="Q2-2020">Q2-2020</nb-option>
-				<nb-option value="Q3-2020">Q3-2020</nb-option>
-				<nb-option value="Q4-2020">Q4-2020</nb-option>
-				<nb-option value="Annual-2020">Annual-2020</nb-option>
+				<nb-option
+					*ngFor="let deadline of timeFrames"
+					[value]="deadline.name"
+					>{{ deadline.name }}</nb-option
+				>
 			</nb-select>
 		</form>
 	</nb-card-body>

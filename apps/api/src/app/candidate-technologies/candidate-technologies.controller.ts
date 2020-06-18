@@ -88,8 +88,10 @@ export class CandidateTechnologiesController extends CrudController<
 
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Delete('deleteBulk')
-	async deleteBulk(@Query('data', ParseJsonPipe) data: any): Promise<any> {
+	@Delete('deleteBulkTechnologies')
+	async deleteBulkTechnologies(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
 		const { id = null } = data;
 		return this.commandBus.execute(
 			new CandidateTechnologiesBulkDeleteCommand(id)

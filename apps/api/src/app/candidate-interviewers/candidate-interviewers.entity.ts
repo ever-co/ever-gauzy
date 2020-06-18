@@ -1,7 +1,8 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
-import { ICandidateInterviewers } from '@gauzy/models';
+import { ICandidateInterviewers, ICandidateInterview } from '@gauzy/models';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 
 @Entity('candidate_interviewer')
 export class CandidateInterviewers extends Base
@@ -13,4 +14,10 @@ export class CandidateInterviewers extends Base
 	@ApiProperty({ type: String })
 	@Column()
 	employeeId: string;
+
+	@ManyToOne(
+		(type) => CandidateInterview,
+		(interview) => interview.interviewers
+	)
+	interview: ICandidateInterview;
 }

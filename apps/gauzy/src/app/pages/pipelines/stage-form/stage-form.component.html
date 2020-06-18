@@ -16,11 +16,13 @@
 		</button>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-accordion>
+		<nb-accordion cdkDropList (cdkDropListDropped)="reorder($event)">
 			<nb-accordion-item
 				*ngFor="let stage of control.controls; let i = index"
 				[formGroup]="stage"
 				[expanded]="isAdding && control.length - 1 === i"
+				cdkDrag
+				[cdkDragData]="stage"
 			>
 				<nb-accordion-item-header>
 					<button

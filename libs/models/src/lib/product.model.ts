@@ -11,6 +11,7 @@ export interface Product extends IBaseEntityModel {
 	description: string;
 	enabled: boolean;
 	code: string;
+	imageUrl: string;
 	variants?: ProductVariant[];
 	options?: ProductOption[];
 	productTypeId: string;
@@ -25,6 +26,7 @@ export interface IProductCreateInput {
 	description: string;
 	enabled: boolean;
 	code: string;
+	imageUrl: string;
 	type?: ProductTypeTranslatable;
 	category?: ProductCategoryTranslatable;
 	tags?: Tag[];
@@ -42,6 +44,7 @@ export interface ProductTypeTranslatable
 	icon: string;
 	organizationId?: string;
 	organization?: Organization;
+	products?: Product[];
 }
 
 export interface ProductTypeTranslation
@@ -61,6 +64,7 @@ export interface ProductCategoryTranslatable
 	imageUrl: string;
 	organizationId?: string;
 	organization?: Organization;
+	products?: Product[];
 }
 
 export interface ProductCategoryTranslation
@@ -103,6 +107,7 @@ export interface ProductVariantPrice extends IBaseEntityModel {
 	unitCostCurrency: string;
 	retailPrice: number;
 	retailPriceCurrency: string;
+	productVariant: ProductVariant;
 }
 
 export interface ProductVariantSettings extends IBaseEntityModel {
@@ -114,6 +119,7 @@ export interface ProductVariantSettings extends IBaseEntityModel {
 	canBeRented: boolean;
 	isEquipment: boolean;
 	trackInventory: boolean;
+	productVariant: ProductVariant;
 }
 
 export interface ProductOption extends IBaseEntityModel {

@@ -18,6 +18,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageFormComponent } from './stage-form/stage-form.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
 	declarations: [
@@ -35,6 +36,7 @@ import { StageFormComponent } from './stage-form/stage-form.component';
 		NbFormFieldModule,
 		PipelinesRouting,
 		TranslateModule,
+		DragDropModule,
 		NbButtonModule,
 		NbSelectModule,
 		NbInputModule,
