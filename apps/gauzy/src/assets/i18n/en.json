@@ -925,7 +925,11 @@
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
 		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
-		"TOTAL_CLIENTS": "Total Clients"
+		"COMPANY_PROFILE": "Company Profile",
+		"TOTAL_CLIENTS": "Total Clients",
+		"YEAR_FOUNDED": "Year Founded",
+		"COMPANY_SIZE": "Company Size",
+		"CLIENT_FOCUS": "Client Focus"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
