@@ -4,31 +4,24 @@ import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
+import { DefaultEditor } from 'ng2-smart-table';
 
 @Component({
 	template: `
-		<ng-select
-			[(items)]="projects"
-			bindName="name"
+		<nb-select
+			fullWidth
 			placeholder="{{ 'INVOICES_PAGE.SELECT_PROJECT' | translate }}"
 			[(ngModel)]="project"
-			(change)="selectProject($event)"
+			(selectedChange)="selectProject($event)"
 		>
-			<ng-template ng-option-tmp let-item="item" let-index="index">
-				{{ item.name }}
-			</ng-template>
-			<ng-template ng-label-tmp let-item="item">
-				<div class="selector-template">
-					<span>{{ item.name }}</span>
-				</div>
-			</ng-template>
-		</ng-select>
+			<nb-option *ngFor="let project of projects" [value]="project">
+				{{ project.name }}
+			</nb-option>
+		</nb-select>
 	`,
 	styles: []
 })
-export class InvoiceProjectsSelectorComponent extends TranslationBaseComponent
+export class InvoiceProjectsSelectorComponent extends DefaultEditor
 	implements OnInit, OnDestroy {
 	project: OrganizationProjects;
 	projects: OrganizationProjects[];
@@ -36,18 +29,13 @@ export class InvoiceProjectsSelectorComponent extends TranslationBaseComponent
 
 	constructor(
 		private store: Store,
-		private organizationProjectsService: OrganizationProjectsService,
-		readonly translateService: TranslateService
+		private organizationProjectsService: OrganizationProjectsService
 	) {
-		super(translateService);
+		super();
 	}
-
-	value: any;
-	rowData: any;
 
 	ngOnInit() {
 		this._loadProjects();
-		this.project = this.rowData.project ? this.rowData.project : null;
 	}
 
 	private async _loadProjects() {
@@ -60,12 +48,16 @@ export class InvoiceProjectsSelectorComponent extends TranslationBaseComponent
 						{ organizationId: organization.id }
 					);
 					this.projects = projects.items;
+					const project = this.projects.find(
+						(p) => p.id === this.cell.newValue
+					);
+					this.project = project;
 				}
 			});
 	}
 
 	selectProject($event) {
-		this.rowData.project = $event;
+		this.cell.newValue = $event.id;
 	}
 
 	ngOnDestroy() {
