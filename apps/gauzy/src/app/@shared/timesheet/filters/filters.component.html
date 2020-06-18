@@ -25,12 +25,18 @@
 				/>
 			</div>
 			<div class="input-group-append ml-1" id="button-addon4">
-				<button nbButton status="primary" (click)="nextDay()">
+				<button
+					nbButton
+					status="primary"
+					(click)="nextDay()"
+					[disabled]="isNextDisabled()"
+				>
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 				</button>
 			</div>
 			<div class="input-group-append ml-1" id="button-addon4">
 				<button
+					[disabled]="isTodayDisabled()"
 					nbButton
 					status="primary"
 					(click)="selectedDate = today"
@@ -38,25 +44,32 @@
 					{{ 'TIMESHEET.TODAY' | translate }}
 				</button>
 			</div>
-			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
+			<nb-datepicker
+				#formpicker
+				[max]="futureDateAllowed ? null : today"
+			></nb-datepicker>
 		</div>
 	</div>
 	<div class="col-auto ml-auto">
 		<div class="row align-items-end">
-			<div
-				class="col-auto ml-auto pr-1"
-				*ngIf="canChangeSelectedEmployee && hasEmployeeFilter"
+			<ng-template
+				[ngxPermissionsOnly]="[
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				]"
 			>
-				<ga-employee-multi-select
-					class="select-box"
-					name="employeeId"
-					[placeholder]="'TIMESHEET.ALL_EMPLOYEE' | translate"
-					[(ngModel)]="filters.employeeId"
-					[allEmployees]="employees"
-					(selectedChange)="triggerFilterChange()"
-				>
-				</ga-employee-multi-select>
-			</div>
+				<div class="col-auto ml-auto pr-1" *ngIf="hasEmployeeFilter">
+					<ga-employee-multi-select
+						class="select-box"
+						name="employeeId"
+						[label]="false"
+						[placeholder]="'TIMESHEET.ALL_EMPLOYEE' | translate"
+						[(ngModel)]="filters.employeeId"
+						[allEmployees]="employees"
+						(selectedChange)="triggerFilterChange()"
+					>
+					</ga-employee-multi-select>
+				</div>
+			</ng-template>
 			<div class="col-auto ml-auto pr-1" *ngIf="hasSourceFilter">
 				<nb-select
 					multiple
@@ -68,13 +81,13 @@
 						*ngFor="let source of TimeLogSourceEnum | keyvalue"
 						[value]="source.key"
 					>
-						{{ source.value }}</nb-option
-					>
+						{{ source.value }}
+					</nb-option>
 				</nb-select>
 			</div>
 			<div class="col-auto ml-auto pr-1" *ngIf="hasActivityLevelFilter">
 				<button
-					class="activity-level-filter"
+					class="activity-level-filter text-capitalize"
 					nbButton
 					status="basic"
 					outline
@@ -94,14 +107,6 @@
 						></ng5-slider>
 					</div>
 				</ng-template>
-				<!-- <nb-select
-					placeholder="Select Activity Level"
-					[(selected)]="filters.activityLevel"
-					(selectedChange)="triggerFilterChange()"
-				>
-					<nb-option [value]=""> All </nb-option>
-					<nb-option *ngFor="let logType of TimeLogType | keyvalue" [value]="logType.key"> {{ logType.value }}</nb-option>
-				</nb-select> -->
 			</div>
 			<div class="col-auto ml-auto pr-1" *ngIf="hasLogTypeFilter">
 				<nb-select
@@ -114,8 +119,8 @@
 						*ngFor="let logType of TimeLogType | keyvalue"
 						[value]="logType.key"
 					>
-						{{ logType.value }}</nb-option
-					>
+						{{ logType.value }}
+					</nb-option>
 				</nb-select>
 			</div>
 		</div>

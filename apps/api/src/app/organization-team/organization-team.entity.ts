@@ -4,7 +4,7 @@ import {
 	Index,
 	OneToMany,
 	ManyToMany,
-	JoinTable,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
@@ -16,9 +16,9 @@ import { Tag } from '../tags/tag.entity';
 @Entity('organization_team')
 export class OrganizationTeam extends Base implements IOrganizationTeam {
 	@ApiProperty()
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.organizationTeam)
 	@JoinTable({
-		name: 'tag_organization_team',
+		name: 'tag_organization_team'
 	})
 	tags?: Tag[];
 
@@ -39,7 +39,7 @@ export class OrganizationTeam extends Base implements IOrganizationTeam {
 		(type) => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.organizationTeam,
 		{
-			cascade: true,
+			cascade: true
 		}
 	)
 	members?: OrganizationTeamEmployee[];

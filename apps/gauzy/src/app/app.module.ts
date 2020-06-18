@@ -49,6 +49,7 @@ import { HubstaffTokenInterceptor } from './@core/hubstaff-token-interceptor';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import { LanguageInterceptor } from './@core/language.interceptor';
 import { NgxElectronModule } from 'ngx-electron';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -57,7 +58,7 @@ export const cloudinary = {
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http);
 }
-if (environment.SENTRY_DNS) {
+if (environment.SENTRY_DNS && environment.production) {
 	Sentry.init({
 		dsn: environment.SENTRY_DNS,
 		environment: environment.production ? 'production' : 'development'
@@ -96,7 +97,8 @@ if (environment.SENTRY_DNS) {
 		TimeTrackerModule.forRoot(),
 		environment.production ? [] : AkitaNgDevtools,
 		SharedModule.forRoot(),
-		NgxElectronModule
+		NgxElectronModule,
+		NgxPermissionsModule.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [
@@ -131,6 +133,10 @@ if (environment.SENTRY_DNS) {
 			useFactory: serverConnectionFactory,
 			deps: [ServerConnectionService, Store],
 			multi: true
+		},
+		{
+			provide: ErrorHandler,
+			useClass: SentryErrorHandler
 		},
 		AppModuleGuard
 	]

@@ -31,6 +31,21 @@
 				placeholder="Objective Description."
 			></textarea>
 
+			<label for="objective-level" class="label mt-3">
+				Level
+			</label>
+			<nb-select
+				id="objective-level"
+				formControlName="level"
+				placeholder="Goal Level"
+				fullWidth
+				selected="Organization"
+			>
+				<nb-option value="Organization">Organization</nb-option>
+				<nb-option value="Team">Team</nb-option>
+				<nb-option value="Individual">Individual</nb-option>
+			</nb-select>
+
 			<label for="objective-owner" class="label mt-3"> Owner </label>
 			<ga-employee-multi-select
 				[multiple]="false"
@@ -63,7 +78,7 @@
 				formControlName="deadline"
 				placeholder="Deadline"
 				fullWidth
-				selected="0"
+				selected="Q4-2020"
 			>
 				<nb-option value="Q2-2020">Q2-2020</nb-option>
 				<nb-option value="Q3-2020">Q3-2020</nb-option>

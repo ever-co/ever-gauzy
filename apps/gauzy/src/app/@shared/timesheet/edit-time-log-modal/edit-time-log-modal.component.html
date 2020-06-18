@@ -1,19 +1,35 @@
-<nb-card>
-	<nb-card-header class="header">
-		<h4>
-			{{
-				mode == 'update'
-					? 'TIMESHEET.ADD_TIME_LOGS'
-					: ('TIMESHEET.EDIT_TIME_LOGS' | translate)
-			}}
-		</h4>
-	</nb-card-header>
-	<nb-card-body>
-		<form #f="ngForm" ngForm>
-			<div class="form-group" *ngIf="canSelectEmployee">
+<form #f="ngForm" ngForm>
+	<nb-card>
+		<nb-card-header class="header">
+			<div class="row">
+				<div class="col">
+					{{
+						(mode == 'update'
+							? 'TIMESHEET.EDIT_TIME_LOGS'
+							: 'TIMESHEET.ADD_TIME_LOGS'
+						) | translate
+					}}
+				</div>
+				<button
+					class="col-auto"
+					nbButton
+					ghost
+					(click)="close()"
+					type="button"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+		</nb-card-header>
+		<nb-card-body class="custom-scroll">
+			<div
+				class="form-group"
+				*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+			>
 				<ga-employee-multi-select
 					name="employeeId"
 					[multiple]="false"
+					label="TIMESHEET.SELECT_EMPLOYEE"
 					[placeholder]="'TIMESHEET.SELECT_EMPLOYEE' | translate"
 					#employeeInput="ngModel"
 					[(ngModel)]="addEditRequest.employeeId"
@@ -36,7 +52,7 @@
 					<div class="col-12">
 						<ngx-timer-range-picker
 							name="selectedRange"
-							[maxDate]="today"
+							[maxDate]="futureDateAllowed ? null : today"
 							[(ngModel)]="selectedRange"
 						>
 						</ngx-timer-range-picker>
@@ -116,24 +132,43 @@
 				</div>
 			</div>
 
-			<div class="form-group">
+			<div class="form-group"></div>
+		</nb-card-body>
+		<nb-card-footer>
+			<button
+				nbButton
+				status="primary"
+				class="mr-2"
+				(click)="addTime(f)"
+				[nbSpinner]="loading"
+				[disabled]="loading"
+				nbSpinnerStatus="primary"
+			>
+				<nb-icon icon="save-outline"></nb-icon>
+				{{
+					(mode == 'create'
+						? 'TIMESHEET.ADD_TIME'
+						: 'TIMESHEET.UPDATE_TIME'
+					) | translate
+				}}
+			</button>
+			<ng-template
+				*ngxPermissionsOnly="[
+					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+				]"
+			>
 				<button
-					nbButton
-					status="primary"
+					type="button"
 					class="mr-2"
-					(click)="addTime(f)"
+					nbButton
+					status="danger"
+					(click)="onDeleteConfirm()"
+					*ngIf="mode == 'update'"
 				>
-					{{
-						(mode == 'create'
-							? 'TIMESHEET.ADD_TIME'
-							: 'TIMESHEET.UPDATE_TIME'
-						) | translate
-					}}
+					<nb-icon icon="trash-2-outline"></nb-icon>
+					{{ 'TIMESHEET.DELETE' | translate }}
 				</button>
-				<button nbButton status="default" (click)="close()">
-					{{ 'TIMESHEET.CLOSE' | translate }}
-				</button>
-			</div>
-		</form>
-	</nb-card-body>
-</nb-card>
+			</ng-template>
+		</nb-card-footer>
+	</nb-card>
+</form>

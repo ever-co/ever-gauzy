@@ -38,9 +38,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				organizationId
 			})
 			.andWhere('"employee"."startedWorkOn" <= :startedWorkOnCondition', {
-				startedWorkOnCondition: moment(forMonth)
-					.endOf('month')
-					.toDate()
+				startedWorkOnCondition: moment(forMonth).endOf('month').toDate()
 			})
 			.andWhere(
 				new Brackets((notEndedCondition) => {
@@ -66,5 +64,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			total,
 			items
 		};
+	}
+
+	async findWithoutTennant(id: string, relations?: any) {
+		return await this.repository.findOne(id, relations);
 	}
 }

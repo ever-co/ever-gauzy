@@ -201,7 +201,9 @@
 			"NOTE": "Примечание",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"DESCRIPTION": "Описание",
-			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников"
+			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников",
+			"ADD_REMOVE_MANAGERS": "Добавление и удаление менеджеров",
+			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -230,6 +232,7 @@
 			"END_DATE_PROJECT": "Дата окончания (необязательно)",
 			"TEAM_NAME": "Имя команды",
 			"ADD_REMOVE_MEMBERS": "Добавление или удаление членов команды",
+			"ADD_REMOVE_MANAGERS": "Добавление и удаление менеджеров команды",
 			"MEMBERS_COUNT": "Количество участников",
 			"OFFICIAL_NAME": "Введите официальное имя",
 			"PROFILE_LINK": "Введите ссылку на профиль",
@@ -414,9 +417,12 @@
 		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Общий доход за месяц",
 		"PROFITS": "Прибыль",
 		"BONUSES_PAID": "Бонусы выплачены",
-		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего отработано часов (над гаузи)",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего часов работы над Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
-		"PROJECTS_COUNT": "Количество проектов"
+		"PROJECTS_COUNT": "Количество проектов",
+		"DETAILS": "Детали",
+		"SKILLS": "Навыки",
+		"PRIVACY": "Приватность"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -476,7 +482,7 @@
 		"INVOICES": "Счета",
 		"ORGANIZATION": "Организация",
 		"RECURRING_INVOICES": "Повторяющиеся счета",
-		"INVOICES_RECEIVED": "Полученные счета",
+		"INVOICES_RECEIVED": "Получены счета",
 		"ESTIMATES_RECEIVED": "Полученные оценки",
 		"ESTIMATES": "Оценки",
 		"MY_TASKS": "Мои задачи",
@@ -852,6 +858,10 @@
 				"REQUIRE_PROJECT": "Требовать проект",
 				"REQUIRE_TASK": "Требовать задание",
 				"REQUIRE_CLIENT": "Требовать клиента"
+			},
+			"TEAMS_PAGE": {
+				"MANAGERS": "Менеджеры",
+				"MEMBERS": "Члены Комитета"
 			}
 		},
 		"PERMISSIONS": {
@@ -890,6 +900,15 @@
 			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"INVOICES_VIEW": "Просмотр счетов",
 			"INVOICES_EDIT": "Редактировать счета",
+			"APPROVALS_POLICY_EDIT": "Редактировать политику одобрения",
+			"APPROVALS_POLICY_VIEW": "Просмотр политики одобрения",
+			"REQUEST_APPROVAL_EDIT": "Редактировать запрос на утверждение",
+			"REQUEST_APPROVAL_VIEW": "Просмотр запроса на утверждение",
+			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Создать/редактировать интервьюера",
+			"VIEW_ALL_EMAILS": "Посмотреть все письма",
+			"ORG_HELP_CENTER_EDIT": "Редактировать справочный центр организации",
+			"PUBLIC_PAGE_EDIT": "Редактирование публичной страницы",
+			"CAN_APPROVE_TIMESHEET": "Одобрить график работы",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -897,6 +916,11 @@
 			"ONLY_ADMIN": "Эти разрешения доступны только для чтения и включены только для администратора",
 			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:"
 		}
+	},
+	"PUBLIC_PAGE": {
+		"LANGUAGES": "Языки",
+		"AWARDS": "Награды",
+		"COMPANY_SKILLS": "Навыки компании"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
@@ -944,7 +968,8 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Политика одобрения",
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Запрос на утверждение",
-		"APPROVAL_POLICY": "Политика одобрения"
+		"APPROVAL_POLICY": "Политика одобрения",
+		"CHOOSE_POLICIES": "Выбрать политики/с"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Время выключено",
@@ -989,6 +1014,11 @@
 	"LANGUAGE_PAGE": {
 		"HEADER": "Языки",
 		"ADD_NEW_LANGUAGE": "Добавить новый язык"
+	},
+	"LANGUAGE_LEVELS": {
+		"CONVERSATIONAL": "Разговор",
+		"NATIVE": "Родной",
+		"FLUENT": "Флейтент"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
@@ -1273,7 +1303,8 @@
 			"CONFIRMATION_INVOICE": "Отправить этот счет",
 			"CONFIRMATION_ESTIMATE": "Отправить эту оценку",
 			"ALREADY_SENT_INVOICE": "Этот счет уже был отправлен на",
-			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена"
+			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена",
+			"NOT_LINKED": "Клиент не имеет организации"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
@@ -1575,9 +1606,12 @@
 		"SELECT_LOG_TYPE": "Выберите тип журнала",
 		"ADD_TIME_LOGS": "Добавить журнал времени",
 		"EDIT_TIME_LOGS": "Редактировать журналы времени",
+		"VIEW_TIME_LOGS": "Журналы времени",
 		"ADD_TIME": "Добавить время",
 		"UPDATE_TIME": "Время обновления",
+		"EDIT": "Редактировать",
 		"CLOSE": "Закрыть",
+		"DELETE": "Удалить",
 		"VALIDATION": {
 			"DESCRIPTION": "Описание обязательно",
 			"TASK": "Пожалуйста, выберите задачу",

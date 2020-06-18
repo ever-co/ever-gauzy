@@ -201,7 +201,9 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
-			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees"
+			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
+			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
+			"ADD_REMOVE_MEMBERS": "Add or Remove Members"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -230,6 +232,7 @@
 			"END_DATE_PROJECT": "תאריך סיום של הפרויקט",
 			"TEAM_NAME": "Team Name",
 			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
+			"ADD_REMOVE_MANAGERS": "Add or Remove Team Managers",
 			"MEMBERS_COUNT": "Members count",
 			"OFFICIAL_NAME": "Enter Official Name",
 			"PROFILE_LINK": "Enter Profile Link",
@@ -414,9 +417,12 @@
 		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Total Income/Monthly Income",
 		"PROFITS": "Profits",
 		"BONUSES_PAID": "Bonuses Paid",
-		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked (over Gauzy of course)",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked over Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
-		"PROJECTS_COUNT": "Projects Count"
+		"PROJECTS_COUNT": "Projects Count",
+		"DETAILS": "Details",
+		"SKILLS": "Skills",
+		"PRIVACY": "Privacy"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -475,9 +481,9 @@
 		"TASKS": "Tasks",
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
-		"RECURRING_INVOICES": "Recurring Invoices",
-		"INVOICES_RECEIVED": "Received Invoices",
-		"ESTIMATES_RECEIVED": "Received Estimates",
+		"RECURRING_INVOICES": "Invoices Recurring",
+		"INVOICES_RECEIVED": "Invoices Received",
+		"ESTIMATES_RECEIVED": "Estimates Received",
 		"ESTIMATES": "Estimates",
 		"MY_TASKS": "My Tasks",
 		"TEAM_TASKS": "Team's Tasks",
@@ -852,6 +858,10 @@
 				"REQUIRE_PROJECT": "Require Project",
 				"REQUIRE_TASK": "Require Task",
 				"REQUIRE_CLIENT": "Require Client"
+			},
+			"TEAMS_PAGE": {
+				"MANAGERS": "Managers",
+				"MEMBERS": "Members"
 			}
 		},
 		"PERMISSIONS": {
@@ -890,6 +900,15 @@
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
 			"INVOICES_EDIT": "Edit Invoices",
+			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
+			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
+			"REQUEST_APPROVAL_EDIT": "Edit Approval Request",
+			"REQUEST_APPROVAL_VIEW": "View Approval Request",
+			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Create/Edit Interviewers",
+			"VIEW_ALL_EMAILS": "View All Emails",
+			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
+			"PUBLIC_PAGE_EDIT": "Public Page Edit",
+			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
 			"GROUPS": {
 				"GENERAL": "כללי",
 				"ADMINISTRATION": "Administration"
@@ -897,6 +916,11 @@
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
 		}
+	},
+	"PUBLIC_PAGE": {
+		"LANGUAGES": "Languages",
+		"AWARDS": "Awards",
+		"COMPANY_SKILLS": "Company Skills"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -944,7 +968,8 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "עבודה",
 		"HEADER": "Approval Request",
-		"APPROVAL_POLICY": "Approval Policy"
+		"APPROVAL_POLICY": "Approval Policy",
+		"CHOOSE_POLICIES": "Choose policies/s"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
@@ -989,6 +1014,11 @@
 	"LANGUAGE_PAGE": {
 		"HEADER": "Languages",
 		"ADD_NEW_LANGUAGE": "Add new Language"
+	},
+	"LANGUAGE_LEVELS": {
+		"CONVERSATIONAL": "Conversational",
+		"NATIVE": "Native",
+		"FLUENT": "Fluent"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
@@ -1273,7 +1303,8 @@
 			"CONFIRMATION_INVOICE": "Send this invoice to",
 			"CONFIRMATION_ESTIMATE": "Send this estimate to",
 			"ALREADY_SENT_INVOICE": "This invoice has already been sent to",
-			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to"
+			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to",
+			"NOT_LINKED": "Client does not have an organization"
 		},
 		"VIEW": {
 			"FROM": "FROM",
@@ -1575,9 +1606,12 @@
 		"SELECT_LOG_TYPE": "Select Log Type",
 		"ADD_TIME_LOGS": "Add Time Logs",
 		"EDIT_TIME_LOGS": "Edit Time Logs",
+		"VIEW_TIME_LOGS": "Time Logs",
 		"ADD_TIME": "Add Time",
 		"UPDATE_TIME": "Update Time",
+		"EDIT": "ערוך",
 		"CLOSE": "סוֹף",
+		"DELETE": "מחק",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",

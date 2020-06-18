@@ -8,7 +8,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LanguagesEnum } from '@gauzy/models';
+import { LanguagesEnum, User } from '@gauzy/models';
+import { LanguagesService } from '../../../@core/services/languages.service';
+import { UsersService } from '../../../@core/services';
 
 @Component({
 	selector: 'ngx-theme-settings',
@@ -35,29 +37,14 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		}
 	];
 
-	languages = [
-		{
-			value: LanguagesEnum.ENGLISH,
-			name: 'SETTINGS_MENU.ENGLISH'
-		},
-		{
-			value: LanguagesEnum.BULGARIAN,
-			name: 'SETTINGS_MENU.BULGARIAN'
-		},
-		{
-			value: LanguagesEnum.HEBREW,
-			name: 'SETTINGS_MENU.HEBREW'
-		},
-		{
-			value: LanguagesEnum.RUSSIAN,
-			name: 'SETTINGS_MENU.RUSSIAN'
-		}
-	];
+	languages = [];
+	languagesEnum = {};
 
 	currentTheme = 'default';
-	currentLang = LanguagesEnum.ENGLISH;
+	currentLang: string = LanguagesEnum.ENGLISH;
 
-	supportedLanguages = Object.values(LanguagesEnum);
+	supportedLanguages = [];
+	currentUser: User;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -65,28 +52,33 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		private themeService: NbThemeService,
 		private translate: TranslateService,
 		private directionService: NbLayoutDirectionService,
-		private store: Store
+		private store: Store,
+		private readonly languagesService: LanguagesService,
+		private readonly userService: UsersService
 	) {
 		translate.addLangs(this.supportedLanguages);
-		translate.setDefaultLang(LanguagesEnum.ENGLISH);
+		translate.setDefaultLang(this.currentLang);
 
-		const browserLang = translate.getBrowserLang() as LanguagesEnum;
+		const browserLang = translate.getBrowserLang() as string;
 		this.currentLang =
 			this.store.preferredLanguage ||
 			this.supportedLanguages.includes(browserLang)
 				? browserLang
-				: (translate.defaultLang as LanguagesEnum);
+				: (translate.defaultLang as string);
 		this.translate.use(this.currentLang);
 	}
 
-	ngOnInit() {
+	async ngOnInit() {
+		await this.loadLanguages();
 		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
-			if (
-				user &&
-				user.preferredLanguage &&
-				user.preferredLanguage !== this.currentLang
-			) {
-				this.currentLang = user.preferredLanguage as LanguagesEnum;
+			if (user) {
+				this.currentUser = user;
+				if (
+					user.preferredLanguage &&
+					user.preferredLanguage !== this.currentLang
+				) {
+					this.currentLang = this.currentUser.preferredLanguage;
+				}
 				this.switchLanguage();
 			}
 		});
@@ -103,23 +95,47 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 			});
 	}
 
+	private async loadLanguages() {
+		const res = await this.languagesService.getSystemLanguages();
+		this.supportedLanguages = res.items.map((item) => item.code);
+		this.languages = res.items.map((item) => {
+			return {
+				value: item.code,
+				name: 'SETTINGS_MENU.' + item.name.toUpperCase()
+			};
+		});
+	}
+
 	toggleTheme() {
 		this.themeService.changeTheme(this.currentTheme);
 	}
 
 	switchLanguage() {
-		if (this.currentLang === LanguagesEnum.HEBREW) {
+		if (this.currentLang === LanguagesEnum['HEBREW']) {
 			this.directionService.setDirection(NbLayoutDirection.RTL);
 		} else {
 			this.directionService.setDirection(NbLayoutDirection.LTR);
 		}
 
 		this.store.preferredLanguage = this.currentLang;
-		this.translate.use(
-			this.supportedLanguages.includes(this.currentLang)
-				? this.currentLang
-				: this.translate.defaultLang
-		);
+		const updatedUserData = {
+			preferredLanguage: this.store.preferredLanguage
+		};
+		this.updateUserLanguage(updatedUserData);
+
+		if (this.supportedLanguages.length) {
+			this.translate.use(
+				this.supportedLanguages.includes(this.currentLang)
+					? this.currentLang
+					: this.translate.defaultLang
+			);
+		}
+	}
+
+	private async updateUserLanguage(updatedUserData: any) {
+		try {
+			await this.userService.update(this.currentUser.id, updatedUserData);
+		} catch (error) {}
 	}
 
 	ngOnDestroy() {

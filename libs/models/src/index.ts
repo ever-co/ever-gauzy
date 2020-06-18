@@ -12,6 +12,7 @@ export * from './lib/candidate-interview.model';
 export * from './lib/candidate-source.model';
 export * from './lib/candidate-personal-qualities.model';
 export * from './lib/candidate-technologies.model';
+export * from './lib/candidate-criterions-rating.model';
 export * from './lib/organization.model';
 export * from './lib/income.model';
 export * from './lib/proposal.model';
@@ -74,3 +75,4 @@ export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
 
 export * from './lib/pipeline.model';
+export * from './lib/stage.model';

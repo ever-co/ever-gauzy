@@ -18,9 +18,15 @@
 			>
 			</ga-candidate-select>
 			<div class="label-wrap">
-				<ga-star-rating-input
-					formControlName="rating"
-				></ga-star-rating-input>
+				<!-- <ga-star-rating-output
+					[rate]="averageRating"
+				></ga-star-rating-output> -->
+				<span
+					>Average Rating:
+					<span *ngIf="averageRating">
+						{{ averageRating }}
+					</span></span
+				>
 				<nb-radio-group
 					[(ngModel)]="status"
 					[ngModelOptions]="{ standalone: true }"
@@ -52,42 +58,71 @@
 				</nb-radio-group>
 			</div>
 			<div class="form-group">
-				<label for="description" class="label">{{
-					'CANDIDATES_PAGE.CRITERIONS.RATE_CANDIDATE_BY_CRITERIONS'
-						| translate
-				}}</label>
-				<div class="form-blocks">
-					<div class="form-block">
-						<div class="label mb-2">
+				<nb-accordion class="accordion">
+					<nb-accordion-item>
+						<nb-accordion-item-header class="accordion-title">
 							{{
-								'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
+								'CANDIDATES_PAGE.CRITERIONS.RATE_CANDIDATE_BY_CRITERIONS'
 									| translate
 							}}
-						</div>
-						<div
-							*ngFor="let technology of technologiesList"
-							class="criterion"
-						>
-							<div>{{ technology.name }}</div>
-							<ga-star-rating-input></ga-star-rating-input>
-						</div>
-					</div>
-					<div class="form-block">
-						<div class="label mb-2">
-							{{
-								'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'
-									| translate
-							}}
-						</div>
-						<div
-							*ngFor="let quality of personalQualitiesList"
-							class="criterion"
-						>
-							<div>{{ quality.name }}</div>
-							<ga-star-rating-input></ga-star-rating-input>
-						</div>
-					</div>
-				</div>
+						</nb-accordion-item-header>
+						<nb-accordion-item-body>
+							<div class="form-blocks">
+								<div class="form-block">
+									<div class="label mb-2">
+										{{
+											'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
+												| translate
+										}}
+									</div>
+
+									<div
+										class="criterion"
+										*ngFor="
+											let technologyRating of form.get(
+												'technologies'
+											).controls as controls;
+											index as i
+										"
+									>
+										<div *ngIf="technologiesList">
+											{{ technologiesList[i]?.name }}
+										</div>
+										<ga-star-rating-input
+											[formControl]="technologyRating"
+										></ga-star-rating-input>
+									</div>
+								</div>
+								<div class="form-block">
+									<div class="label mb-2">
+										{{
+											'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'
+												| translate
+										}}
+									</div>
+									<div
+										class="criterion"
+										*ngFor="
+											let personalQualityRating of form.get(
+												'personalQualities'
+											).controls as controls;
+											index as i
+										"
+									>
+										<div *ngIf="personalQualitiesList">
+											{{ personalQualitiesList[i]?.name }}
+										</div>
+										<ga-star-rating-input
+											[formControl]="
+												personalQualityRating
+											"
+										></ga-star-rating-input>
+									</div>
+								</div>
+							</div>
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+				</nb-accordion>
 			</div>
 
 			<div class="form-group">

@@ -1,13 +1,11 @@
-// tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
+	IDateRange,
 	IGetTimeLogInput,
 	Organization,
-	IDateRange,
-	PermissionsEnum,
-	TimesheetStatus,
+	TimeLogFilters,
 	Timesheet,
-	TimeLogFilters
+	TimesheetStatus
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import {
@@ -17,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { filter, map, debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, map } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Router } from '@angular/router';
@@ -33,7 +31,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
-	private _selectedDate: Date;
 	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
 	organization: Organization;
@@ -59,6 +56,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	logRequest: TimeLogFilters = {};
 
 	updateLogs$: Subject<any> = new Subject();
+	loading: boolean;
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -77,12 +75,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
-
-		this.store.user$.pipe(untilDestroyed(this)).subscribe(() => {
-			this.canChangeSelectedEmployee = this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		});
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
@@ -116,6 +108,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
+		this.loading = true;
 		this.timeSheets = await this.timesheetService
 			.getTimeSheets(request)
 			.then((logs) => {
@@ -126,7 +119,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 				}
 				logs.forEach((log) => (this.selectedIds[log.id] = false));
 				return logs;
-			});
+			})
+			.finally(() => (this.loading = false));
 	}
 
 	toggleCheckbox(event: any, type?: any) {

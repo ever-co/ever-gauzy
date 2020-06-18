@@ -17,19 +17,20 @@ import * as moment from 'moment';
 import {
 	IGetTimeLogInput,
 	Organization,
-	PermissionsEnum,
 	TimeLog,
-	RolesEnum,
-	TimeLogFilters
+	TimeLogFilters,
+	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { Subject, merge } from 'rxjs';
+import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
+import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
 	selector: 'ngx-calendar',
@@ -37,6 +38,7 @@ import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/
 	styleUrls: ['./calendar.component.scss']
 })
 export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
+	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	@ViewChild('viewLogTemplate', { static: true })
 	viewLogTemplate: TemplateRef<any>;
@@ -44,15 +46,16 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	calendarOptions: OptionsInput;
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
-	canChangeSelectedEmployee: boolean;
 	employeeId: string;
 	loading: boolean;
+	futureDateAllowed: boolean;
 	logRequest: TimeLogFilters = {};
 
 	constructor(
 		private timesheetService: TimesheetService,
 		private store: Store,
-		private nbDialogService: NbDialogService
+		private nbDialogService: NbDialogService,
+		private ngxPermissionsService: NgxPermissionsService
 	) {
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
@@ -72,10 +75,8 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			height: 'auto',
 			editable: true,
 			selectable: true,
-			selectAllow: ({ start, end }) =>
-				moment(start).isSame(moment(end), 'day'),
+			selectAllow: this.selectAllow.bind(this),
 			events: this.getEvents.bind(this),
-			loading: this.handleLoading.bind(this),
 			eventDrop: this.handleEventDrop.bind(this),
 			eventResize: this.handleEventResize.bind(this),
 			select: this.handleEventSelect.bind(this),
@@ -87,40 +88,42 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		merge(this.store.user$, this.store.selectedOrganization$)
+		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.canChangeSelectedEmployee = this.store.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				);
-				const user = this.store.user;
-				this.organization = this.store.selectedOrganization;
-				if (!this.organization) {
-					return;
+			.subscribe(async (organization) => {
+				if (organization) {
+					this.organization = organization;
+					this.updateLogs$.next();
 				}
+			});
+
+		this.ngxPermissionsService.permissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(async () => {
+				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
+					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
+				);
 				const calendar = this.calendar.getApi();
+
 				if (
-					user &&
-					(user.role.name === RolesEnum.ADMIN ||
-						user.role.name === RolesEnum.SUPER_ADMIN)
+					await this.ngxPermissionsService.hasPermission(
+						OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+					)
 				) {
 					calendar.setOption('selectable', true);
-					calendar.setOption('editable', true);
 				} else {
-					if (this.organization.allowManualTime) {
-						calendar.setOption('selectable', true);
-					} else {
-						calendar.setOption('selectable', false);
-					}
-
-					if (this.organization.allowModifyTime) {
-						calendar.setOption('editable', true);
-					} else {
-						calendar.setOption('editable', false);
-					}
+					calendar.setOption('selectable', false);
 				}
 
-				this.updateLogs$.next();
+				if (
+					await this.ngxPermissionsService.hasPermission(
+						OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+					)
+				) {
+					calendar.setOption('editable', true);
+				} else {
+					calendar.setOption('editable', false);
+				}
 			});
 	}
 
@@ -151,40 +154,48 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 
-		this.timesheetService.getTimeLogs(request).then((logs: TimeLog[]) => {
-			const events = logs.map(
-				(log: TimeLog): EventInput => {
-					const title = log.project ? log.project.name : 'No project';
-					// if (this.canChangeSelectedEmployee){
-					// 	title += ` (${log.employee.user.firstName} ${log.employee.user.lastName})`
-					// }
-					return {
-						id: log.id,
-						title: title,
-						start: toLocal(log.startedAt).toDate(),
-						end: toLocal(log.stoppedAt).toDate(),
-						log: log
-					};
-				}
-			);
-			callback(events);
-		});
+		this.loading = true;
+		this.timesheetService
+			.getTimeLogs(request)
+			.then((logs: TimeLog[]) => {
+				const events = logs.map(
+					(log: TimeLog): EventInput => {
+						const title = log.project
+							? log.project.name
+							: 'No project';
+						return {
+							id: log.id,
+							title: title,
+							start: toLocal(log.startedAt).toDate(),
+							end: toLocal(log.stoppedAt).toDate(),
+							log: log
+						};
+					}
+				);
+				callback(events);
+			})
+			.finally(() => (this.loading = false));
+	}
+
+	selectAllow({ start, end }) {
+		const isOneDay = moment(start).isSame(moment(end), 'day');
+		return this.futureDateAllowed
+			? isOneDay
+			: isOneDay && moment(end).isSameOrBefore(moment());
 	}
 
 	handleEventClick({ event }) {
-		this.nbDialogService.open(this.viewLogTemplate, {
-			context: event.extendedProps.log,
+		this.nbDialogService.open(ViewTimeLogModalComponent, {
+			context: { timeLog: event.extendedProps.log },
 			dialogClass: 'view-log-dialog'
 		});
 	}
 
 	handleDateClick(event) {
-		console.log('handleDateClick', event);
 		this.calendar.getApi().changeView('timeGridWeek', event.date);
 	}
 
 	handleEventSelect(event) {
-		console.log('handleEventSelect', event);
 		this.openDialog({
 			startedAt: event.start,
 			stoppedAt: event.end
@@ -201,7 +212,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	handleEventDrop({ event }) {
-		console.log('handleEventDrop', event);
 		this.updateTimeLog(event.id, {
 			startedAt: event.start,
 			stoppedAt: event.end
@@ -209,15 +219,12 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	handleEventResize({ event }) {
-		console.log('handleEventResize', event);
 		this.updateTimeLog(event.id, {
 			startedAt: event.start,
 			stoppedAt: event.end
 		});
 	}
-	handleLoading(loading) {
-		this.loading = loading;
-	}
+
 	hasOverflow(el: HTMLElement) {
 		if (!el) {
 			return;

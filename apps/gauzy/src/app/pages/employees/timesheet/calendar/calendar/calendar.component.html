@@ -3,7 +3,14 @@
 		{{ 'TIMESHEET.CALENDAR' | translate }}
 	</h5>
 	<div class="col-auto">
-		<button nbButton status="primary" (click)="openDialog()">
+		<button
+			nbButton
+			status="primary"
+			(click)="openDialog()"
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+			]"
+		>
 			<nb-icon icon="plus-outline"></nb-icon> Add Time
 		</button>
 	</div>
@@ -18,78 +25,10 @@
 	</div>
 </div>
 
-<full-calendar #calendar [options]="calendarOptions"></full-calendar>
-
-<ng-template #viewLogTemplate let-data let-ref="dialogRef">
-	<nb-card>
-		<nb-card-header>Time Log</nb-card-header>
-		<nb-card-body>
-			<div class="mb-3" *ngIf="canChangeSelectedEmployee">
-				<div class="font-weight-bold mb-2">Employee</div>
-				<div class="description">
-					<ngx-avatar
-						[name]="
-							data?.employee?.user?.firstName +
-							' ' +
-							data?.employee?.user?.lastName
-						"
-						[src]="data?.employee?.user?.imageUrl"
-					></ngx-avatar>
-				</div>
-			</div>
-			<div class="mb-3">
-				<div class="font-weight-bold mb-2">Project</div>
-				<div class="description">
-					{{ data?.project ? data?.project.name : 'No project' }}
-				</div>
-			</div>
-			<div class="mb-3">
-				<div class="font-weight-bold mb-2">Task</div>
-				<div class="description">
-					{{ data?.task ? data?.task?.title : 'No to-do' }}
-				</div>
-			</div>
-			<div class="mb-3">
-				<div class="font-weight-bold mb-2">Log Type</div>
-				<div class="description">{{ data?.logType }}</div>
-			</div>
-			<div class="mb-3">
-				<div class="font-weight-bold mb-2">Time</div>
-				<div class="description">
-					<span class="start-timer">{{
-						data?.startedAt | utcToLocal | timeFormat: true
-					}}</span>
-					-
-					<span
-						class="end-timer"
-						*ngIf="data?.stoppedAt; else runningTimer"
-						>{{
-							data?.stoppedAt | utcToLocal | timeFormat: true
-						}}</span
-					>
-					<ng-template #runningTimer>
-						<span class="running-timer"> Till now </span>
-					</ng-template>
-				</div>
-			</div>
-			<div class="mb-3">
-				<div class="font-weight-bold mb-2">Dueration</div>
-				<div class="description">
-					{{ data?.duration | durationFormat }}
-				</div>
-			</div>
-			<div class="mb-3">
-				<div class="font-weight-bold mb-2">Description</div>
-				<div class="description">{{ data?.description }}</div>
-			</div>
-		</nb-card-body>
-		<nb-card-footer>
-			<button class="mr-2" nbButton (click)="openDialog(data)">
-				Edit
-			</button>
-			<button nbButton (click)="ref.close()" status="default">
-				Close
-			</button>
-		</nb-card-footer>
-	</nb-card>
-</ng-template>
+<full-calendar
+	#calendar
+	[options]="calendarOptions"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+></full-calendar>

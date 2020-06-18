@@ -11,11 +11,13 @@ import {
 	NbDialogModule,
 	NbCardModule,
 	NbButtonModule,
-	NbIconModule
+	NbIconModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
+import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
 
 @NgModule({
 	declarations: [CalendarComponent],
@@ -31,8 +33,10 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 		NbCardModule,
 		NbButtonModule,
 		EditTimeLogModalModule,
+		ViewTimeLogModalModule,
 		FiltersModule,
-		NbIconModule
+		NbIconModule,
+		NbSpinnerModule
 	]
 })
 export class CalendarModule {}

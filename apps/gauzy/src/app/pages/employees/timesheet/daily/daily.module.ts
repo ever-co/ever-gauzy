@@ -10,7 +10,9 @@ import {
 	NbDatepickerModule,
 	NbContextMenuModule,
 	NbIconModule,
-	NbDialogModule
+	NbDialogModule,
+	NbSpinnerModule,
+	NbPopoverModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
@@ -22,6 +24,8 @@ import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/he
 import { DailyComponent } from './daily/daily.component';
 import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
+import { ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.module';
+import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -43,9 +47,13 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 		TaskSelectModule,
 		ProjectSelectModule,
 		EditTimeLogModalModule,
+		ViewTimeLogModalModule,
 		NbIconModule,
 		EmployeeSelectorsModule,
-		FiltersModule
+		FiltersModule,
+		NbSpinnerModule,
+		ViewTimeLogModule,
+		NbPopoverModule
 	]
 })
 export class DailyModule {}

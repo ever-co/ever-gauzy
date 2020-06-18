@@ -50,6 +50,22 @@ export class CandidateTechnologiesService {
 			.pipe(first())
 			.toPromise();
 	}
+	updateBulk(technologies: ICandidateTechnologies[]): Promise<any> {
+		console.log(technologies);
+		return this.http
+			.put('/api/candidate-technologies/updateBulk', technologies)
+			.pipe(first())
+			.toPromise();
+	}
+
+	findByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
+		return this.http
+			.get<ICandidateTechnologies[]>(
+				`/api/candidate-technologies/getByInterviewId/${interviewId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
 
 	delete(id: string): Promise<any> {
 		return this.http

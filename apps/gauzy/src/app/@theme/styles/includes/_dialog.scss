@@ -1,0 +1,13 @@
+nb-dialog-container {
+  nb-card {
+    max-height: 90vh;
+  }
+}
+
+.view-log-dialog {
+  max-width: 500px;
+  width: 90%;
+  nb-dialog-container {
+    width: 100%;
+  }
+}

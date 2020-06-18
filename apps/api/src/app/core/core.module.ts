@@ -88,9 +88,12 @@ import { ProductCategoryTranslation } from '../product-category/product-category
 import { Pipeline } from '../pipeline/pipeline.entity';
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { Stage } from '../stage/stage.entity';
 import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
 import { Goal } from '../goal/goal.entity';
 import { KeyResult } from '../keyresult/keyresult.entity';
+import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
+import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 
 const entities = [
 	Invite,
@@ -133,6 +136,7 @@ const entities = [
 	Task,
 	Goal,
 	KeyResult,
+	KeyResultUpdate,
 	TimeSlot,
 	Timesheet,
 	TimeLog,
@@ -156,6 +160,7 @@ const entities = [
 	CandidateInterviewers,
 	CandidatePersonalQualities,
 	CandidateTechnologies,
+	CandidateCriterionsRating,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,
@@ -175,6 +180,8 @@ const entities = [
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
 	Pipeline,
+	Payment,
+	Stage,
 	Payment
 ];
 

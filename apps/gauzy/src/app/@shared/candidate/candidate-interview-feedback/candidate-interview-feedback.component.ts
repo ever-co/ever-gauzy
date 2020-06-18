@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -18,6 +18,8 @@ import { EmployeeSelectorComponent } from '../../../@theme/components/header/sel
 import { EmployeesService } from '../../../@core/services';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
+import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
+
 @Component({
 	selector: 'ga-candidate-interview-feedback',
 	templateUrl: './candidate-interview-feedback.component.html',
@@ -45,6 +47,7 @@ export class CandidateInterviewFeedbackComponent
 	disabledIds: string[] = [];
 	technologiesList: ICandidateTechnologies[];
 	personalQualitiesList: ICandidatePersonalQualities[];
+	averageRating = null;
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: FormBuilder,
@@ -56,23 +59,45 @@ export class CandidateInterviewFeedbackComponent
 		private candidateInterviewersService: CandidateInterviewersService,
 		private employeesService: EmployeesService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
+		private candidateCriterionsRatingService: CandidateCriterionsRatingService
 	) {
 		super(translateService);
 	}
-
-	async ngOnInit() {
+	ngOnInit() {
 		this.loadData();
+		this.loadCriterions();
 		this._initializeForm();
 		this.loadFeedbacks();
-		this.loadCriterions();
 	}
 
-	private async _initializeForm() {
+	private _initializeForm() {
 		this.form = this.fb.group({
 			description: ['', Validators.required],
-			rating: ['', Validators.required]
+			rating: [''],
+			technologies: this.fb.array([]),
+			personalQualities: this.fb.array([])
 		});
+		this.form.valueChanges.subscribe((item) => {
+			this.averageRating = this.setRating(
+				item.technologies,
+				item.personalQualities
+			);
+		});
+	}
+	setRating(technologies: number[], qualities: number[]) {
+		// TO DO : fix rating
+		this.technologiesList.map(
+			(tech, index) => (tech.rating = technologies[index])
+		);
+		this.personalQualitiesList.map(
+			(qual, index) => (qual.rating = qualities[index])
+		);
+		const techSum = technologies.reduce((sum, current) => sum + current, 0);
+		const qualSum = qualities.reduce((sum, current) => sum + current, 0);
+		const res =
+			(techSum / technologies.length + qualSum / qualities.length) / 2;
+		return res;
 	}
 
 	async loadData() {
@@ -136,13 +161,18 @@ export class CandidateInterviewFeedbackComponent
 	}
 
 	async createFeedback() {
+		// await this.candidateCriterionsRatingService.createBulk(
+		// 	this.technologiesList
+		// );
 		this.description = this.form.get('description').value;
-		this.rating = this.form.get('rating').value;
+		// await this.candidateTechnologiesService.updateBulk(
+		// 	this.technologiesList
+		// );
 		if (this.form.valid) {
 			try {
 				await this.candidateFeedbacksService.create({
 					description: this.description,
-					rating: this.rating,
+					rating: this.averageRating,
 					candidateId: this.candidateId,
 					interviewId: this.interviewId,
 					interviewer: this.feedbackInterviewer,
@@ -186,18 +216,30 @@ export class CandidateInterviewFeedbackComponent
 		}
 	}
 	private async loadCriterions() {
-		const technologies = await this.candidateTechnologiesService.getAll();
+		const technologies = await this.candidateTechnologiesService.findByInterviewId(
+			this.interviewId
+		);
 		if (technologies) {
-			this.technologiesList = technologies.items.filter(
-				(item) => !item.interviewId
-			);
+			this.technologiesList = technologies;
 		}
-		const qualities = await this.candidatePersonalQualitiesService.getAll();
+		const qualities = await this.candidatePersonalQualitiesService.findByInterviewId(
+			this.interviewId
+		);
 		if (qualities) {
-			this.personalQualitiesList = qualities.items.filter(
-				(item) => !item.interviewId
-			);
+			this.personalQualitiesList = qualities;
 		}
+
+		const technologyRating = this.form.get('technologies') as FormArray;
+		this.technologiesList.forEach((item) => {
+			technologyRating.push(this.fb.control(item.rating));
+		});
+
+		const personalQualityRating = this.form.get(
+			'personalQualities'
+		) as FormArray;
+		this.personalQualitiesList.forEach((item, index) => {
+			personalQualityRating.push(this.fb.control(item.rating));
+		});
 	}
 	closeDialog() {
 		this.dialogRef.close();
