@@ -1,13 +1,6 @@
 import { CandidatePersonalQualities } from './../candidate-personal-qualities/candidate-personal-qualities.entity';
 import { CandidateTechnologies } from './../candidate-technologies/candidate-technologies.entity';
-import {
-	Column,
-	Entity,
-	ManyToOne,
-	JoinTable,
-	OneToMany,
-	JoinColumn
-} from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
