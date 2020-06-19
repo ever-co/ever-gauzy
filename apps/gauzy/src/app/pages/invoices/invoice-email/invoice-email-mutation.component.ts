@@ -87,6 +87,10 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 			);
 		});
 
+		await this.invoiceService.update(this.invoice.id, {
+			sentStatus: true
+		});
+
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.EMAIL.EMAIL_SENT'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
