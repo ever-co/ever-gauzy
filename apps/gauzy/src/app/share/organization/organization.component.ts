@@ -43,6 +43,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	profits = 0;
 	minimum_project_size = 0;
 	total_projects = 0;
+	employees = [];
 	imageUrl: string;
 	hoverState: boolean;
 	languageExist: boolean;
@@ -170,15 +171,12 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getTotalIncome() {
-		let { items } = await this.incomeService.getAll(null, {
+		let { items } = await this.incomeService.getAll(['employee'], {
 			organization: {
 				id: this.organization.id
-			}
+			},
+			isBonus: true
 		});
-
-		for (let inc = 0; inc < items.length; inc++) {
-			this.total_income += parseFloat(String(items[inc].amount));
-		}
 	}
 
 	private async getEmployeeStatistics() {
@@ -188,9 +186,10 @@ export class OrganizationComponent extends TranslationBaseComponent
 				filterDate: new Date()
 			}
 		);
-
+		this.employees = statistics.employees;
+		console.log(this.employees);
 		if (typeof this.organization.totalEmployees !== 'number') {
-			this.organization.totalEmployees = statistics.employees.length;
+			this.organization.totalEmployees = this.employees.length;
 		}
 		if (!!this.organization.show_bonuses_paid) {
 			this.bonuses_paid = statistics.total.bonus;
@@ -199,7 +198,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 			this.total_income = statistics.total.income;
 		}
 		if (!!this.organization.show_profits) {
-			this.total_income = statistics.total.profit;
+			this.profits = statistics.total.profit;
 		}
 	}
 

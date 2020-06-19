@@ -183,9 +183,7 @@
 				<div class="col">
 					<div class="org-year-found">
 						<h5 class="org-title org-key">
-							{{
-								'PUBLIC_PAGE.MINIMUM_PROJECT_SIZE' | translate
-							}}
+							{{ 'PUBLIC_PAGE.MINIMUM_PROJECT_SIZE' | translate }}
 							:
 						</h5>
 						<span
@@ -231,7 +229,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="row" *ngIf="this.organization.show_profits && profits">
+			<div class="row" *ngIf="this.organization.show_profits">
 				<div class="col">
 					<div class="org-year-found">
 						<h5 class="org-title org-key">
