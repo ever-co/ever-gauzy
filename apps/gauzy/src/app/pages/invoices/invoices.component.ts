@@ -22,6 +22,7 @@ import { InvoicePaidComponent } from './table-components/invoice-paid.component'
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
+import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -293,17 +294,24 @@ export class InvoicesComponent extends TranslationBaseComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '30%',
+					width: '20%',
 					renderComponent: NotesWithTagsComponent
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'text',
 					filter: false,
-					width: '30%',
+					width: '20%',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
 					}
+				},
+				sentStatus: {
+					title: 'Sent Status',
+					type: 'custom',
+					renderComponent: InvoiceSentStatusComponent,
+					filter: false,
+					width: '20%'
 				}
 			}
 		};

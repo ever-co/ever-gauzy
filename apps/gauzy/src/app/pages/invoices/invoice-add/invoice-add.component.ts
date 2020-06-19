@@ -391,7 +391,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
 				tags: this.tags,
-				isEstimate: this.isEstimate
+				isEstimate: this.isEstimate,
+				sentStatus: false
 			});
 
 			for (const invoiceItem of tableData) {

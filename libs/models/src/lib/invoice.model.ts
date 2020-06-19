@@ -26,7 +26,7 @@ export interface Invoice extends IBaseEntityModel {
 	sentTo?: string;
 	tags?: Tag[];
 	isEstimate?: boolean;
-	emailSent?: boolean;
+	sentStatus?: boolean;
 	payments?: Payment[];
 }
 
@@ -47,6 +47,7 @@ export interface InvoiceUpdateInput {
 	invoiceType?: string;
 	sentTo?: string;
 	tags?: Tag[];
+	sentStatus?: boolean;
 }
 
 export interface InvoiceFindInput {

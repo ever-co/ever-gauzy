@@ -1313,7 +1313,9 @@
 			"CONFIRMATION_ESTIMATE": "Send this estimate to",
 			"ALREADY_SENT_INVOICE": "This invoice has already been sent to",
 			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to",
-			"NOT_LINKED": "Client does not have an organization"
+			"NOT_LINKED": "Client does not have an organization",
+			"SENT": "Sent",
+			"NOT_SENT": "Not Sent"
 		},
 		"VIEW": {
 			"FROM": "FROM",

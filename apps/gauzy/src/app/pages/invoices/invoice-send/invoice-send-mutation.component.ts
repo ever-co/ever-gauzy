@@ -38,7 +38,8 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 
 	async send() {
 		await this.invoicesService.update(this.invoice.id, {
-			sentTo: this.invoice.toClient.clientOrganizationId
+			sentTo: this.invoice.toClient.clientOrganizationId,
+			sentStatus: true
 		});
 		this.dialogRef.close();
 
