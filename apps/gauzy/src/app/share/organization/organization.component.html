@@ -129,7 +129,7 @@
 					</div>
 					<div
 						class="org-size"
-						*ngIf="organization.show_clients_count && total_clients"
+						*ngIf="organization.show_clients_count"
 					>
 						<h5
 							class="org-title"
@@ -159,6 +159,44 @@
 			<div class="section_block"></div>
 			<div
 				class="row"
+				*ngIf="this.organization.show_projects_count && total_projects"
+			>
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.TOTAL_PROJECTS' | translate }} :
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="total_projects"
+						></span>
+					</div>
+				</div>
+			</div>
+			<div
+				class="row"
+				*ngIf="
+					this.organization.show_minimum_project_size &&
+					minimum_project_size
+				"
+			>
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{
+								'PUBLIC_PAGE.MINIMUM_PROJECT_SIZE' | translate
+							}}
+							:
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="minimum_project_size"
+						></span>
+					</div>
+				</div>
+			</div>
+			<div
+				class="row"
 				*ngIf="this.organization.show_income && total_income"
 			>
 				<div class="col">
@@ -170,6 +208,24 @@
 							class="org-value"
 							[textContent]="
 								organization.currency + ' ' + total_income
+							"
+						></span>
+					</div>
+				</div>
+			</div>
+			<div
+				class="row"
+				*ngIf="this.organization.show_bonuses_paid && bonuses_paid"
+			>
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.TOTAL_BONUSES_PAID' | translate }} :
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="
+								organization.currency + ' ' + bonuses_paid
 							"
 						></span>
 					</div>
@@ -265,25 +321,6 @@
 								></span>
 							</nb-list-item>
 						</nb-list>
-					</div>
-				</div>
-			</div>
-
-			<div
-				class="row"
-				*ngIf="organization.show_bonuses_paid && bonuses_paid"
-			>
-				<div class="col">
-					<div class="org-bonuses-paid">
-						<h5 class="org-title">
-							{{ 'PUBLIC_PAGE.TOTAL_BONUSES_PAID' | translate }}
-						</h5>
-						<span
-							class="paid_bonuses"
-							[textContent]="
-								organization.currency + ' ' + bonuses_paid
-							"
-						></span>
 					</div>
 				</div>
 			</div>

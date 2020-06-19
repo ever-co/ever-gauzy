@@ -21,6 +21,7 @@ import * as moment from 'moment';
 import { IncomeService } from '../../@core/services/income.service';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
+import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 
 @Component({
 	selector: 'ngx-organization',
@@ -40,6 +41,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 	total_clients = 0;
 	total_income = 0;
 	profits = 0;
+	minimum_project_size = 0;
+	total_projects = 0;
 	imageUrl: string;
 	hoverState: boolean;
 	languageExist: boolean;
@@ -58,6 +61,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private incomeService: IncomeService,
 		private organizationClientsService: OrganizationClientsService,
 		private employeeStatisticsService: EmployeeStatisticsService,
+		private organizationProjectsService: OrganizationProjectsService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -96,6 +100,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 					await this.getEmployeeStatistics();
 					if (!!this.organization.show_clients_count) {
 						await this.getClientsCount();
+					}
+					if (!!this.organization.show_projects_count) {
+						await this.getProjectCount();
 					}
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
@@ -141,6 +148,25 @@ export class OrganizationComponent extends TranslationBaseComponent
 			organizationId: this.organization.id
 		});
 		this.total_clients = total;
+	}
+
+	private async getProjectCount() {
+		const { items, total } = await this.organizationProjectsService.getAll(
+			['members'],
+			{
+				organizationId: this.organization.id,
+				public: true
+			}
+		);
+		this.total_projects = total;
+		if (total) {
+			this.minimum_project_size = items[0].members.length;
+			for (let inc = 0; inc < items.length; inc++) {
+				if (items[inc].members.length < this.minimum_project_size) {
+					this.minimum_project_size = items[inc].members.length;
+				}
+			}
+		}
 	}
 
 	private async getTotalIncome() {
