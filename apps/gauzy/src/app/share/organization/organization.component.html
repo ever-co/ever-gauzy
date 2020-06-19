@@ -84,7 +84,9 @@
 						<img
 							*ngIf="imageUrl"
 							[src]="imageUrl"
-							alt="Organization Photo"
+							alt="{{
+								'PUBLIC_PAGE.COMPANY_PROFILE' | translate
+							}}"
 							(mouseenter)="hoverState = true"
 							(mouseleave)="hoverState = false"
 						/>
@@ -106,7 +108,8 @@
 							*ngIf="organization.registrationDate"
 							class="org-title"
 							[textContent]="
-								'Year Founded: ' +
+								('PUBLIC_PAGE.YEAR_FOUNDED' | translate) +
+								': ' +
 								moment(organization.registrationDate).format(
 									'Y'
 								)
@@ -118,7 +121,22 @@
 							*ngIf="organization.totalEmployees"
 							class="org-title"
 							[textContent]="
-								'Company Size: ' + organization.totalEmployees
+								('PUBLIC_PAGE.COMPANY_SIZE' | translate) +
+								': ' +
+								organization.totalEmployees
+							"
+						></h5>
+					</div>
+					<div
+						class="org-size"
+						*ngIf="organization.show_clients_count && total_clients"
+					>
+						<h5
+							class="org-title"
+							[textContent]="
+								('PUBLIC_PAGE.TOTAL_CLIENTS' | translate) +
+								': ' +
+								total_clients
 							"
 						></h5>
 					</div>
@@ -127,7 +145,7 @@
 						*ngIf="organization.client_focus"
 					>
 						<h5 class="org-title">
-							Client Focus:
+							{{ 'PUBLIC_PAGE.CLIENT_FOCUS' | translate }}:
 							<span
 								class="client-focus"
 								[textContent]="
@@ -214,6 +232,23 @@
 								></span>
 							</nb-list-item>
 						</nb-list>
+					</div>
+				</div>
+			</div>
+
+			<div
+				class="row"
+				*ngIf="organization.show_bonuses_paid && bonuses_paid"
+			>
+				<div class="col">
+					<div class="org-bonuses-paid">
+						<h5 class="org-title">
+							{{ 'PUBLIC_PAGE.TOTAL_BONUSES_PAID' | translate }}
+						</h5>
+						<span
+							class="paid_bonuses"
+							[textContent]="'$' + bonuses_paid"
+						></span>
 					</div>
 				</div>
 			</div>

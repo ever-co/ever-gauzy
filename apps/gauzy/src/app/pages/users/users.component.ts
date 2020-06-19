@@ -152,7 +152,6 @@ export class UsersComponent extends TranslationBaseComponent
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
-
 		if (data) {
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;

@@ -11,7 +11,8 @@ import {
 	NbSelectModule,
 	NbTooltipModule,
 	NbRadioModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbListModule
 } from '@nebular/theme';
 import { TagsComponent } from './tags.component';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -32,6 +33,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		NbListModule,
 		TagsRoutingModule,
 		ThemeModule,
 		UserFormsModule,

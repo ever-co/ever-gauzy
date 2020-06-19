@@ -3,51 +3,36 @@ import { Product } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ProductService } from '../../../@core/services/product.service';
+import { DefaultEditor } from 'ng2-smart-table';
 
 @Component({
 	template: `
-		<ng-select
-			[(items)]="products"
-			bindName="name"
-			placeholder="{{ 'INVOICES_PAGE.SELECT_PROJECT' | translate }}"
+		<nb-select
+			fullWidth
+			placeholder="{{ 'INVOICES_PAGE.SELECT_PRODUCT' | translate }}"
 			[(ngModel)]="product"
-			(change)="selectProduct($event)"
+			(selectedChange)="selectProduct($event)"
 		>
-			<ng-template ng-option-tmp let-item="item" let-index="index">
-				{{ item.name }}
-			</ng-template>
-			<ng-template ng-label-tmp let-item="item">
-				<div class="selector-template">
-					<span>{{ item.name }}</span>
-				</div>
-			</ng-template>
-		</ng-select>
+			<nb-option *ngFor="let product of products" [value]="product">
+				{{ product.name }}
+			</nb-option>
+		</nb-select>
 	`,
 	styles: []
 })
-export class InvoiceProductsSelectorComponent extends TranslationBaseComponent
+export class InvoiceProductsSelectorComponent extends DefaultEditor
 	implements OnInit, OnDestroy {
 	product: Product;
 	products: Product[];
 	private _ngDestroy$ = new Subject<void>();
 
-	constructor(
-		private store: Store,
-		private productService: ProductService,
-		readonly translateService: TranslateService
-	) {
-		super(translateService);
+	constructor(private store: Store, private productService: ProductService) {
+		super();
 	}
-
-	value: any;
-	rowData: any;
 
 	ngOnInit() {
 		this._loadProducts();
-		this.product = this.rowData.product ? this.rowData.product : null;
 	}
 
 	private async _loadProducts() {
@@ -59,12 +44,16 @@ export class InvoiceProductsSelectorComponent extends TranslationBaseComponent
 						organizationId: organization.id
 					});
 					this.products = products.items;
+					const product = this.products.find(
+						(p) => p.id === this.cell.newValue
+					);
+					this.product = product;
 				}
 			});
 	}
 
 	selectProduct($event) {
-		this.rowData.product = $event;
+		this.cell.newValue = $event.id;
 	}
 
 	ngOnDestroy() {

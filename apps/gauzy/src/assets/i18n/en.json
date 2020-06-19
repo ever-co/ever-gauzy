@@ -421,6 +421,7 @@
 		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked over Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"PROJECTS_COUNT": "Projects Count",
+		"CLIENTS_COUNT": "Clients Count",
 		"DETAILS": "Details",
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy"
@@ -922,7 +923,13 @@
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
-		"COMPANY_SKILLS": "Company Skills"
+		"COMPANY_SKILLS": "Company Skills",
+		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
+		"COMPANY_PROFILE": "Company Profile",
+		"TOTAL_CLIENTS": "Total Clients",
+		"YEAR_FOUNDED": "Year Founded",
+		"COMPANY_SIZE": "Company Size",
+		"CLIENT_FOCUS": "Client Focus"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",

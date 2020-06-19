@@ -420,6 +420,7 @@
 		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего часов работы над Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
 		"PROJECTS_COUNT": "Количество проектов",
+		"CLIENTS_COUNT": "Количество клиентов",
 		"DETAILS": "Детали",
 		"SKILLS": "Навыки",
 		"PRIVACY": "Приватность"
@@ -921,7 +922,13 @@
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Языки",
 		"AWARDS": "Награды",
-		"COMPANY_SKILLS": "Навыки компании"
+		"COMPANY_SKILLS": "Навыки компании",
+		"TOTAL_BONUSES_PAID": "Всего выплачено бонусов",
+		"COMPANY_PROFILE": "Профиль компании",
+		"TOTAL_CLIENTS": "Всего клиентов",
+		"YEAR_FOUNDED": "Дата создания",
+		"COMPANY_SIZE": "Размер компании",
+		"CLIENT_FOCUS": "Фокус клиента"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",

@@ -4,7 +4,13 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Invoice, PermissionsEnum, Tag, Organization } from '@gauzy/models';
+import {
+	Invoice,
+	PermissionsEnum,
+	Tag,
+	Organization,
+	InvoiceTypeEnum
+} from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router } from '@angular/router';
 import { first, takeUntil } from 'rxjs/operators';
@@ -115,60 +121,31 @@ export class InvoicesComponent extends TranslationBaseComponent
 			isEstimate: this.isEstimate
 		});
 
-		if (this.selectedInvoice.invoiceItems[0].employeeId) {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
-					employeeId: item.employeeId
-				});
+		for (const item of this.selectedInvoice.invoiceItems) {
+			const itemToAdd = {
+				description: item.description,
+				price: item.price,
+				quantity: item.quantity,
+				totalValue: item.totalValue,
+				invoiceId: createdInvoice.id
+			};
+			switch (this.selectedInvoice.invoiceType) {
+				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+					itemToAdd['employeeId'] = item.employeeId;
+					break;
+				case InvoiceTypeEnum.BY_PROJECT_HOURS:
+					itemToAdd['projectId'] = item.projectId;
+					break;
+				case InvoiceTypeEnum.BY_TASK_HOURS:
+					itemToAdd['taskId'] = item.taskId;
+					break;
+				case InvoiceTypeEnum.BY_PRODUCTS:
+					itemToAdd['productId'] = item.productId;
+					break;
+				default:
+					break;
 			}
-		} else if (this.selectedInvoice.invoiceItems[0].projectId) {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
-					projectId: item.projectId
-				});
-			}
-		} else if (this.selectedInvoice.invoiceItems[0].taskId) {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
-					taskId: item.taskId
-				});
-			}
-		} else if (this.selectedInvoice.invoiceItems[0].productId) {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
-					productId: item.productId
-				});
-			}
-		} else {
-			for (const item of this.selectedInvoice.invoiceItems) {
-				await this.invoiceItemService.add({
-					description: item.description,
-					price: item.price,
-					quantity: item.quantity,
-					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id
-				});
-			}
+			await this.invoiceItemService.add(itemToAdd);
 		}
 
 		if (this.isEstimate) {

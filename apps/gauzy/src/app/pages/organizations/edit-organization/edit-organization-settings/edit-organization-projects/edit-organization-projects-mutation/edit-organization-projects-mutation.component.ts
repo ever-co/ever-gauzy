@@ -9,18 +9,24 @@ import {
 	ProjectTypeEnum,
 	Tag
 } from '@gauzy/models';
+import { OrganizationClientsService } from '../../../../../../@core/services/organization-clients.service ';
+import { Store } from '../../../../../../@core/services/store.service';
+import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
+import { ErrorHandlingService } from '../../../../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-edit-organization-projects-mutation',
 	templateUrl: './edit-organization-projects-mutation.component.html'
 })
-export class EditOrganizationProjectsMutationComponent implements OnInit {
+export class EditOrganizationProjectsMutationComponent
+	extends TranslationBaseComponent
+	implements OnInit {
 	@Input()
 	employees: Employee[];
 	@Input()
 	organization: Organization;
-	@Input()
-	clients?: OrganizationClients[];
 	@Input()
 	project: OrganizationProjects;
 
@@ -35,13 +41,38 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 	types: string[] = Object.values(ProjectTypeEnum);
 	currencies: string[] = Object.values(CurrenciesEnum);
 	defaultCurrency: string;
-	public: boolean = true;
+	public: Boolean = true;
 	tags: Tag[] = [];
+	organizationId: string;
+	clients: Object[] = [];
 
-	constructor(private readonly fb: FormBuilder) {}
+	constructor(
+		private readonly fb: FormBuilder,
+		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly toastrService: NbToastrService,
+		private store: Store,
+		readonly translateService: TranslateService,
+		private errorHandler: ErrorHandlingService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this._initializeForm();
+		this._getClients();
+	}
+
+	private async _getClients() {
+		this.organizationId = this.store.selectedOrganization.id;
+		const { items } = await this.organizationClientsService.getAll([], {
+			organizationId: this.store.selectedOrganization.id
+		});
+		items.forEach((i) => {
+			this.clients = [
+				...this.clients,
+				{ clientName: i.name, clientId: i.id }
+			];
+		});
 	}
 
 	private _initializeForm() {
@@ -100,9 +131,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 				id: this.project ? this.project.id : undefined,
 				organizationId: this.organization.id,
 				name: this.form.value['name'],
-				client: this.clients.find(
-					(c) => c.id === this.form.value['client']
-				),
+				client: this.form.value['client'].clientId,
 				type: this.form.value['type'],
 				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],
@@ -120,4 +149,24 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
+
+	addNewClient = (name: string): Promise<OrganizationClients> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationClientsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
 }
