@@ -13,6 +13,7 @@
 .project
 .classpath
 .c9/
+*.iml
 *.launch
 .settings/
 *.sublime-workspace
@@ -37,4 +38,5 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+.deploy/nginx/log
 /apps/api/src/app/integrations/upwork/csv
