@@ -62,6 +62,46 @@ Note: together with Gauzy, Docker Compose will run following:
 -   [OmniDb](https://github.com/OmniDB/OmniDB), on <http://localhost:8083> and using default credentials (admin:admin) configure connection string `postgres://postgres:root@db:5432/postgres?sslmode=disable`.
 -   [Adminer](https://www.adminer.org) Database management in a single PHP file, on <http://localhost:8084>
 
+#### Configuration, customization
+
+The project favors convention over configuration and `docker-compose up` is enough to get started un development.
+
+You can still configure your app through `.env` file... And their usage is as follows:
+
+
+`NODE_ENV`
+It is used to determine target stage for docker build.
+`docker-compose` config falls back to `development`.
+Valid targets are `development` and `production`.
+
+`API_PORT`
+API internal port. It defaults to `3000`.
+
+`API_HOST`
+API host, as accessible from within a container. It defaults to `api`.
+
+`DB_NAME`
+Database name. It defaults to `postgres`.
+
+`DB_USER`
+Database user. It defaults to `postgres`.
+
+`DB_PASS`
+Database user password. It defaults to `root`.
+
+`DB_HOST`
+Database host, as accessible from within a container. It defaults to `db`. 
+
+`DB_PORT`
+Database internal port. We don't expose it to host.
+
+`HOST`
+The internal web client host to run app on. It matters only during development and defaults to `0.0.0.0`.
+Change it only if you know better!!!
+
+`PORT`
+The internal web client port to run app on. It defaults to `4200`.
+
 ### Manually
 
 -   Install and run latest [PostgreSQL](https://www.postgresql.org) (optionally, other DB can be configured manually).
