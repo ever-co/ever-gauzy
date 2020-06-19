@@ -75,7 +75,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	private tree: TreeComponent;
 
 	ngOnInit() {
-		console.log('pochti');
 		this.loadMenu();
 		this.form = this.fb.group({
 			name: [''],
@@ -148,8 +147,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.tree.treeModel.update();
 	}
 	async addNode() {
-		const dialog = this.dialogService.open(AddBaseComponent);
-		const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
+		this.dialogService.open(AddBaseComponent);
+		// const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
 		// if (chosenIcon) {
 		// 	const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		// 	someNode.data.icon = chosenIcon;
@@ -203,7 +202,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	// 	this.showCategoryButton = false;
 	// }
 	onNodeClicked(node: any) {
-		console.log('gdfsgdfsg');
 		this.nodeId = node.id.toString();
 		this.isChosenNode = true;
 		this.articleName = node.name;
@@ -367,7 +365,6 @@ export class SidebarComponent extends TranslationBaseComponent
 			this.tempNodes = result.items;
 			this.nodes = this.tempNodes.filter((item) => item.parent === null);
 			this.sortMenu(this.nodes);
-			console.log(this.nodes);
 		}
 	}
 
