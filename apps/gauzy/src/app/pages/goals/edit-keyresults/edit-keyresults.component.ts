@@ -51,6 +51,10 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			});
 		if (!!this.data) {
 			this.keyResultsForm.patchValue(this.data);
+			this.keyResultsForm.patchValue({
+				softDeadline: new Date(this.data.softDeadline),
+				hardDeadline: new Date(this.data.hardDeadline)
+			});
 		}
 	}
 

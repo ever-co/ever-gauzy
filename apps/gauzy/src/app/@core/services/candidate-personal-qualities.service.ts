@@ -68,14 +68,13 @@ export class CandidatePersonalQualitiesService {
 			.pipe(first())
 			.toPromise();
 	}
-	deleteBulkPersonalQualities(id: string): Promise<any> {
+
+	deleteBulk(id: string): Promise<any> {
+		const data = JSON.stringify({ id });
 		return this.http
-			.delete(
-				'/api/candidate-personal-qualities/deleteBulkPersonalQualities',
-				{
-					params: { id }
-				}
-			)
+			.delete('/api/candidate-personal-qualities/deleteBulk', {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}

@@ -5,19 +5,8 @@ import { Stage } from './stage.entity';
 import { StageService } from './stage.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      Stage,
-    ]),
-    AuthModule,
-  ],
-  providers: [
-    StageService,
-  ],
-  exports: [
-    StageService,
-  ],
+	imports: [TypeOrmModule.forFeature([Stage]), AuthModule],
+	providers: [StageService],
+	exports: [StageService]
 })
-export class StageModule
-{
-}
+export class StageModule {}

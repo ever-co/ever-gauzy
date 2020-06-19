@@ -22,7 +22,8 @@ import {
 	ManyToMany,
 	ManyToOne,
 	OneToOne,
-	RelationId
+	RelationId,
+	OneToMany
 } from 'typeorm';
 import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
@@ -45,28 +46,32 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	})
 	tags: Tag[];
 
-	@ManyToOne((type) => CandidateEducation)
-	@JoinTable({
-		name: 'candidate_education'
-	})
+	@OneToMany(
+		(type) => CandidateEducation,
+		(candidateEducation) => candidateEducation.candidate
+	)
+	@JoinColumn()
 	educations: IEducation[];
 
-	@ManyToOne((type) => CandidateInterview)
-	@JoinTable({
-		name: 'candidate_interview'
-	})
-	interview: ICandidateInterview[];
+	@OneToMany(
+		(type) => CandidateInterview,
+		(candidateInterview) => candidateInterview.candidate
+	)
+	@JoinColumn()
+	interview?: ICandidateInterview[];
 
-	@ManyToOne((type) => CandidateExperience)
-	@JoinTable({
-		name: 'candidate_experience'
-	})
+	@OneToMany(
+		(type) => CandidateExperience,
+		(candidateExperience) => candidateExperience.candidate
+	)
+	@JoinColumn()
 	experience: IExperience[];
 
-	@ManyToOne((type) => CandidateSkill)
-	@JoinTable({
-		name: 'candidate_skill'
-	})
+	@OneToMany(
+		(type) => CandidateSkill,
+		(candidateSkill) => candidateSkill.candidate
+	)
+	@JoinColumn()
 	skills: ISkill[];
 
 	@ApiProperty({ type: CandidateSource })
@@ -78,16 +83,18 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@JoinColumn()
 	source?: ICandidateSource;
 
-	@ManyToOne((type) => CandidateDocument)
-	@JoinTable({
-		name: 'candidate_document'
-	})
-	documents: ICandidateDocument[];
+	@OneToMany(
+		(type) => CandidateDocument,
+		(candidateDocument) => candidateDocument.candidate
+	)
+	@JoinColumn()
+	documents?: ICandidateDocument[];
 
-	@ManyToOne((type) => CandidateFeedback)
-	@JoinTable({
-		name: 'candidate_feedback'
-	})
+	@OneToMany(
+		(type) => CandidateFeedback,
+		(candidateFeedback) => candidateFeedback.candidate
+	)
+	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: User })

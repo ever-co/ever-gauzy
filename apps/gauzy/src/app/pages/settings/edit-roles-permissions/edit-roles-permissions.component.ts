@@ -1,5 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Organization, PermissionGroups, RolePermissions, RolesEnum, User } from '@gauzy/models';
+import {
+	Organization,
+	PermissionGroups,
+	RolePermissions,
+	RolesEnum,
+	User
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { RolePermissionsService } from 'apps/gauzy/src/app/@core/services/role-permissions.service';
@@ -21,9 +27,9 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 
 	organization: Organization;
 
-  adminRole: RolesEnum = RolesEnum.ADMIN;
-  selectedRole: RolesEnum = RolesEnum.EMPLOYEE;
-  superAdminRole: RolesEnum = RolesEnum.SUPER_ADMIN;
+	adminRole: RolesEnum = RolesEnum.ADMIN;
+	selectedRole: RolesEnum = RolesEnum.EMPLOYEE;
+	superAdminRole: RolesEnum = RolesEnum.SUPER_ADMIN;
 	selectedRoleId: string;
 
 	allRoles: string[] = Object.values(RolesEnum);

@@ -1,7 +1,18 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { IDateRange, IGetTimeLogInput, Organization, TimeLogFilters, Timesheet, TimesheetStatus } from '@gauzy/models';
+import {
+	IDateRange,
+	IGetTimeLogInput,
+	Organization,
+	TimeLogFilters,
+	Timesheet,
+	TimesheetStatus
+} from '@gauzy/models';
 import { toUTC } from 'libs/utils';
-import { NbCheckboxComponent, NbDialogRef, NbMenuService } from '@nebular/theme';
+import {
+	NbCheckboxComponent,
+	NbDialogRef,
+	NbMenuService
+} from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { debounceTime, filter, map } from 'rxjs/operators';

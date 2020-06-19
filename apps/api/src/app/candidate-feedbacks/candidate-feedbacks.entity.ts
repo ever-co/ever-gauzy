@@ -3,8 +3,8 @@ import {
 	Entity,
 	OneToOne,
 	JoinColumn,
-	ManyToOne,
-	JoinTable
+	OneToMany,
+	ManyToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -12,13 +12,15 @@ import {
 	ICandidateFeedback,
 	CandidateStatus,
 	ICandidateInterviewers,
-	ICandidatePersonalQualities,
-	ICandidateTechnologies
+	ICandidateCriterionsRating,
+	Candidate as ICandidate,
+	ICandidateInterview
 } from '@gauzy/models';
 import { IsEnum, IsOptional } from 'class-validator';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
-import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
-import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
+import { Candidate } from '../candidate/candidate.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 
 @Entity('candidate_feedback')
 export class CandidateFeedback extends Base implements ICandidateFeedback {
@@ -49,15 +51,19 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
 
-	@ManyToOne((type) => CandidateTechnologies, { cascade: true })
-	@JoinTable({
-		name: 'candidate_technology'
-	})
-	technologies?: ICandidateTechnologies[];
+	@OneToMany(
+		(type) => CandidateCriterionsRating,
+		(candidateCriterionsRating) => candidateCriterionsRating.feedback
+	)
+	@JoinColumn()
+	criterionsRating?: ICandidateCriterionsRating[];
 
-	@ManyToOne((type) => CandidatePersonalQualities, { cascade: true })
-	@JoinTable({
-		name: 'candidate_personal_quality'
-	})
-	personalQualities?: ICandidatePersonalQualities[];
+	@ManyToOne(
+		(type) => CandidateInterview,
+		(candidateInterview) => candidateInterview.feedbacks
+	)
+	interview: ICandidateInterview;
+
+	@ManyToOne((type) => Candidate, (candidate) => candidate.feedbacks)
+	candidate: ICandidate;
 }

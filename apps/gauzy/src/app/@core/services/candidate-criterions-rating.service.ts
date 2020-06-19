@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
-	ICandidateCriterionsRatingCreateInput,
-	ICandidateCriterionsRating
+	ICandidatePersonalQualities,
+	ICandidateCriterionsRating,
+	ICandidateTechnologies
 } from '@gauzy/models';
 
 @Injectable()
@@ -11,12 +12,18 @@ export class CandidateCriterionsRatingService {
 	constructor(private http: HttpClient) {}
 
 	createBulk(
-		createInput: ICandidateCriterionsRatingCreateInput[]
+		feedbackId: string,
+		technologies: ICandidateTechnologies[],
+		qualities: ICandidatePersonalQualities[]
 	): Promise<ICandidateCriterionsRating[]> {
 		return this.http
 			.post<ICandidateCriterionsRating[]>(
 				'/api/candidate-criterions-rating/createBulk',
-				{ createInput }
+				{
+					feedbackId,
+					technologies,
+					qualities
+				}
 			)
 			.pipe(first())
 			.toPromise();
@@ -27,6 +34,16 @@ export class CandidateCriterionsRatingService {
 			.get<{ items: ICandidateCriterionsRating[]; total: number }>(
 				`/api/candidate-criterions-rating`
 			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	deleteBulk(id: string): Promise<any> {
+		const data = JSON.stringify({ id });
+		return this.http
+			.delete('/api/candidate-criterions-rating/deleteBulk', {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}

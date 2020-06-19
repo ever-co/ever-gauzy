@@ -1,32 +1,72 @@
 <nb-card>
-  <nb-card-header>
-    <span>{{ 'PIPELINES_PAGE.HEADER_STAGES' | translate }}</span>
-    <button nbButton type="button" size="tiny" style="float: right" (click)="isAdding = true; pushNewStage({ name: '' } );">
-      <nb-icon pack="eva" status="success" icon="plus-circle-outline"></nb-icon>
-    </button>
-  </nb-card-header>
-  <nb-card-body>
-    <nb-accordion cdkDropList (cdkDropListDropped)="reorder($event)">
-      <nb-accordion-item *ngFor="let stage of control.controls; let i = index" [formGroup]="stage" [expanded]="isAdding && control.length - 1 === i" cdkDrag [cdkDragData]="stage">
-        <nb-accordion-item-header>
-          <button nbButton size="tiny" status="warning" type="button" (click)="isAdding && control.length - 1 === i && (isAdding = false); control.removeAt( i )">
-            <nb-icon pack="eva" icon="trash-2-outline"></nb-icon>
-          </button>
-          <span class="ml-2">
-            {{ stage.value.name }}
-          </span>
-        </nb-accordion-item-header>
-        <nb-accordion-item-body>
-          <nb-form-field>
-            <input nbInput fullWidth formControlName="name" type="text" [placeholder]="'FORM.PLACEHOLDERS.NAME' | translate">
-          </nb-form-field>
+	<nb-card-header>
+		<span>{{ 'PIPELINES_PAGE.HEADER_STAGES' | translate }}</span>
+		<button
+			nbButton
+			type="button"
+			size="tiny"
+			style="float: right;"
+			(click)="isAdding = true; pushNewStage({ name: '' })"
+		>
+			<nb-icon
+				pack="eva"
+				status="success"
+				icon="plus-circle-outline"
+			></nb-icon>
+		</button>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-accordion cdkDropList (cdkDropListDropped)="reorder($event)">
+			<nb-accordion-item
+				*ngFor="let stage of control.controls; let i = index"
+				[formGroup]="stage"
+				[expanded]="isAdding && control.length - 1 === i"
+				cdkDrag
+				[cdkDragData]="stage"
+			>
+				<nb-accordion-item-header>
+					<button
+						nbButton
+						size="tiny"
+						status="warning"
+						type="button"
+						(click)="
+							isAdding &&
+								control.length - 1 === i &&
+								(isAdding = false);
+							control.removeAt(i)
+						"
+					>
+						<nb-icon pack="eva" icon="trash-2-outline"></nb-icon>
+					</button>
+					<span class="ml-2">
+						{{ stage.value.name }}
+					</span>
+				</nb-accordion-item-header>
+				<nb-accordion-item-body>
+					<nb-form-field>
+						<input
+							nbInput
+							fullWidth
+							formControlName="name"
+							type="text"
+							[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
+						/>
+					</nb-form-field>
 
-          <br>
-          <nb-form-field>
-            <textarea nbInput fullWidth formControlName="description" [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"></textarea>
-          </nb-form-field>
-        </nb-accordion-item-body>
-      </nb-accordion-item>
-    </nb-accordion>
-  </nb-card-body>
+					<br />
+					<nb-form-field>
+						<textarea
+							nbInput
+							fullWidth
+							formControlName="description"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+							"
+						></textarea>
+					</nb-form-field>
+				</nb-accordion-item-body>
+			</nb-accordion-item>
+		</nb-accordion>
+	</nb-card-body>
 </nb-card>
