@@ -89,13 +89,13 @@ export class OrganizationComponent extends TranslationBaseComponent
 						.toPromise();
 					this.imageUrl = this.organization.imageUrl;
 					if (typeof this.organization.totalEmployees !== 'number') {
-						this.loadEmployeesCount();
+						await this.loadEmployeesCount();
 					}
 					if (!!this.organization.show_bonuses_paid) {
-						this.getTotalBonusesPaid();
+						await this.getTotalBonusesPaid();
 					}
 					if (!!this.organization.show_clients_count) {
-						this.getClientsCount();
+						await this.getClientsCount();
 					}
 					this.reloadPageData();
 				} catch (error) {
