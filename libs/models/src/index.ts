@@ -70,6 +70,7 @@ export * from './lib/language.model';
 export * from './lib/organization-languages.model';
 export * from './lib/payment.model';
 export * from './lib/goals.model';
+export * from './lib/request-approval-team.model';
 export * from './lib/goal-settings.model';
 
 export { Role, RolesEnum } from './lib/role.model';

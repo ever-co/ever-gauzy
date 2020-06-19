@@ -91,6 +91,7 @@ import { StageModule } from './stage/stage.module';
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
 import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
+import { RequestApprovalTeamModule } from './request-approval-team/request-approval-team.module';
 import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
@@ -417,6 +418,7 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
 		RequestApprovalEmployeeModule,
+		RequestApprovalTeamModule,
 		ProposalModule,
 		EmailModule,
 		EmailTemplateModule,

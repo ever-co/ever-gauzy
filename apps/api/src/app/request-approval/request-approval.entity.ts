@@ -20,6 +20,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
+import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
 
 @Entity('request_approval')
 export class RequestApproval extends Base implements IRequestApproval {
@@ -59,10 +60,14 @@ export class RequestApproval extends Base implements IRequestApproval {
 	)
 	employeeApprovals?: RequestApprovalEmployee[];
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	employeeId: string;
+	@OneToMany(
+		(type) => RequestApprovalEmployee,
+		(teamApprovals) => teamApprovals.requestApproval,
+		{
+			cascade: true
+		}
+	)
+	teamApprovals?: RequestApprovalTeam[];
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
