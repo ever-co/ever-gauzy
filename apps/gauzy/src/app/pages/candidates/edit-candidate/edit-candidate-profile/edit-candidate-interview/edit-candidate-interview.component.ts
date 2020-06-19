@@ -18,7 +18,6 @@ import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
-import { resetCustomAction } from '@datorama/akita';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',

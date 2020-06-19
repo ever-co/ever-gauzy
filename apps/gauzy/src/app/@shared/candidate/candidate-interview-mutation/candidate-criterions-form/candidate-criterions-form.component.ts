@@ -63,13 +63,13 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 	isChecked(id: string) {
 		// TO DO: ids
 		// this.editSelectedTechnologies.filter((item) => item.id === id);
-		if (this.editSelectedTechnologies[0]) {
-			for (const item of this.editSelectedTechnologies) {
-				// 	if (item.id === id) {
-				// 		return true;
-				// 	}
-			}
-		}
+		// if (this.editSelectedTechnologies[0]) {
+		// for (const item of this.editSelectedTechnologies) {
+		// 	if (item.id === id) {
+		// 		return true;
+		// 	}
+		// }
+		// }
 	}
 	private async loadCriterions() {
 		const technologies = await this.candidateTechnologiesService.getAll();
