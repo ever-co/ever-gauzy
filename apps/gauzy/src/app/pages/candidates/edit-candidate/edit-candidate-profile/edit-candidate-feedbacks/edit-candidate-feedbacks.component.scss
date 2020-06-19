@@ -168,3 +168,18 @@
 .center {
   text-align: center;
 }
+
+.criterions-rating {
+  flex-direction: column;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.form-blocks {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+  flex-wrap: wrap;
+}

@@ -5,7 +5,9 @@ import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 import * as url from 'url';
-require(path.join(__dirname, 'api/main.js'));
+const Store = require('electron-store');
+
+const store = new Store();
 
 let serve: boolean;
 const args = process.argv.slice(1);
@@ -57,7 +59,8 @@ function initMainListener() {
  */
 function createWindow() {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
-
+	mainWindowSettings.frame = true;
+	mainWindowSettings.webPreferences.nodeIntegration = true;
 	if (debugMode) {
 		process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
@@ -110,6 +113,55 @@ function createWindow() {
 	}
 }
 
+function createSetupWindow() {
+	mainWindowSettings.width = 800;
+	mainWindowSettings.height = 600;
+	mainWindowSettings.frame = false;
+	mainWindowSettings.webPreferences.nodeIntegration = true;
+	win = new BrowserWindow(mainWindowSettings);
+	const launchPath = url.format({
+		pathname: path.join(__dirname, 'ui/index.html'),
+		protocol: 'file:',
+		slashes: true
+	});
+
+	win.loadURL(launchPath);
+}
+
+function startServer(value) {
+	if (value.db === 'sqlite') {
+		process.env.DB_TYPE = 'sqlite';
+	} else {
+		process.env.DB_TYPE = 'postgres';
+		process.env.DB_HOST = value.dbHost;
+		process.env.DB_PORT = value.dbPort;
+		process.env.DB_NAME = value.dbName;
+		process.env.DB_USER = value.dbUsername;
+		process.env.DB_PASS = value.dbPassword;
+	}
+	if (value.isLocalServer) {
+		process.env.port = value.port;
+		require(path.join(__dirname, 'api/main.js'));
+	}
+
+	try {
+		const config: any = {
+			...value,
+			isSetup: true
+		};
+		store.set({
+			configs: config
+		});
+	} catch (error) {}
+
+	setTimeout(() => {
+		if (!value.isSetup) win.close();
+		createWindow();
+	}, 5000);
+
+	return true;
+}
+
 try {
 	// app.allowRendererProcessReuse = true;
 
@@ -119,9 +171,33 @@ try {
 	// Added 5000 ms to fix the black background issue while using transparent window.
 	// More details at https://github.com/electron/electron/issues/15947
 	app.on('ready', () => {
-		setTimeout(() => {
-			createWindow();
-		}, 5000);
+		try {
+			const configs: any = store.get('configs');
+			console.log('config', configs);
+			if (configs.isSetup) {
+				global.variableGlobal = {
+					API_BASE_URL: configs.serverUrl
+						? configs.serverUrl
+						: configs.port
+						? `http://localhost:${configs.port}`
+						: 'http://localhost:3000'
+				};
+				startServer(configs);
+			}
+		} catch (e) {
+			createSetupWindow();
+		}
+
+		ipcMain.on('go', (event, arg) => {
+			global.variableGlobal = {
+				API_BASE_URL: arg.serverUrl
+					? arg.serverUrl
+					: arg.port
+					? `http://localhost:${arg.port}`
+					: 'http://localhost:3000'
+			};
+			startServer(arg);
+		});
 	});
 
 	app.on('window-all-closed', quit);

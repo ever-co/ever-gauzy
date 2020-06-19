@@ -14,14 +14,14 @@ import { ProductVariant } from '../product-variant/product-variant.entity';
 import { ProductType } from '../product-type/product-type.entity';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 import { ProductOption } from '../product-option/product-option.entity';
 import { Tag } from '../tags/tag.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('product')
 export class Product extends Base implements IProduct {
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.product)
 	@JoinTable({
 		name: 'tag_product'
 	})
@@ -46,10 +46,15 @@ export class Product extends Base implements IProduct {
 	@Column()
 	code: string;
 
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	imageUrl: string;
+
 	@OneToMany(
 		() => ProductVariant,
 		(productVariant) => productVariant.product,
-		{ onDelete: 'CASCADE', eager: true }
+		{ onDelete: 'CASCADE' }
 	)
 	variants: ProductVariant[];
 
@@ -71,8 +76,7 @@ export class Product extends Base implements IProduct {
 
 	@OneToMany(
 		(type) => ProductOption,
-		(productOption) => productOption.product,
-		{ eager: true }
+		(productOption) => productOption.product
 	)
 	options: ProductOption[];
 

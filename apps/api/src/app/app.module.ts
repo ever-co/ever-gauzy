@@ -87,12 +87,14 @@ import { HelpCenterModule } from './help-center/help-center.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
+import { StageModule } from './stage/stage.module';
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
 import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
 import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
 import { HelpCenterArticleModule } from './help-center-article/help-center-article.module';
+import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 
 @Module({
 	imports: [
@@ -367,6 +369,10 @@ import { HelpCenterArticleModule } from './help-center-article/help-center-artic
 						module: GoalModule
 					},
 					{
+						path: '/goal-time-frame',
+						module: GoalTimeFrameModule
+					},
+					{
 						path: '/key-results',
 						module: KeyResultModule
 					},
@@ -433,12 +439,14 @@ import { HelpCenterArticleModule } from './help-center-article/help-center-artic
 		InvoiceItemModule,
 		PaymentModule,
 		GoalModule,
+		GoalTimeFrameModule,
 		KeyResultModule,
 		KeyResultUpdateModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,
 		PipelineModule,
+		StageModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({

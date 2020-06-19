@@ -13,16 +13,16 @@ interface IKeyResultResponse {
 @Injectable({
 	providedIn: 'root'
 })
-export class KeyresultService {
+export class KeyResultService {
 	private readonly API_URL = '/api/key-results';
 	constructor(
 		private _http: HttpClient,
 		private toastrService: NbToastrService
 	) {}
 
-	createKeyResult(keyresult): Promise<KeyResult> {
+	createKeyResult(keyResult): Promise<KeyResult> {
 		return this._http
-			.post<KeyResult>(`${this.API_URL}/create`, keyresult)
+			.post<KeyResult>(`${this.API_URL}/create`, keyResult)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary('Key Result Created', 'Success')
@@ -32,9 +32,9 @@ export class KeyresultService {
 			.toPromise();
 	}
 
-	async update(id: string, keyresult: KeyResult): Promise<KeyResult> {
+	async update(id: string, keyResult: KeyResult): Promise<KeyResult> {
 		return this._http
-			.put<KeyResult>(`${this.API_URL}/${id}`, keyresult)
+			.put<KeyResult>(`${this.API_URL}/${id}`, keyResult)
 			.pipe(first())
 			.toPromise();
 	}
@@ -55,5 +55,12 @@ export class KeyresultService {
 	errorHandler(error: HttpErrorResponse) {
 		this.toastrService.danger(error.message, 'Error');
 		return throwError(error.message);
+	}
+
+	delete(id: string): Promise<any> {
+		return this._http
+			.delete(`${this.API_URL}/${id}`)
+			.pipe(first())
+			.toPromise();
 	}
 }

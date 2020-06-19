@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Goals, KeyResult } from '@gauzy/models';
+import { Goal, KeyResult, KeyResultUpdates } from '@gauzy/models';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
-import { KeyresultUpdateComponent } from '../keyresult-update/keyresult-update.component';
+import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
+import { KeyResultService } from '../../../@core/services/keyresult.service';
 
 @Component({
 	selector: 'ga-goal-details',
@@ -11,13 +12,15 @@ import { first } from 'rxjs/operators';
 	styleUrls: ['./goal-details.component.scss']
 })
 export class GoalDetailsComponent implements OnInit {
-	goal: Goals;
+	goal: Goal;
 	src: string;
 	ownerName: string;
+	updates: Array<KeyResultUpdates> = [];
 	constructor(
 		private dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private employeeService: EmployeesService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private keyResultService: KeyResultService
 	) {}
 
 	async ngOnInit() {
@@ -27,17 +30,27 @@ export class GoalDetailsComponent implements OnInit {
 		);
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;
+		this.goal.keyResults.forEach((keyResult) => {
+			this.updates.push(...keyResult.updates);
+		});
 	}
 
-	async keyResultUpdate(selectedkeyResult) {
-		const dialog = this.dialogService.open(KeyresultUpdateComponent, {
+	async keyResultUpdate(selectedKeyResult) {
+		const dialog = this.dialogService.open(KeyResultUpdateComponent, {
 			hasScroll: true,
 			context: {
-				keyResult: selectedkeyResult
+				keyResult: selectedKeyResult
 			}
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
+			const keyResultData = response;
+			delete keyResultData.goal;
+			delete keyResultData.updates;
+			await this.keyResultService.update(
+				selectedKeyResult.id,
+				keyResultData
+			);
 			const keyResNumber = this.goal.keyResults.length * 100;
 			this.goal.progress = this.calculateGoalProgress(
 				keyResNumber,
@@ -47,12 +60,10 @@ export class GoalDetailsComponent implements OnInit {
 	}
 
 	calculateGoalProgress(totalCount, keyResults) {
-		console.table(keyResults);
 		const progressTotal = keyResults.reduce(
 			(a: number, b: KeyResult) => a + b.progress,
 			0
 		);
-		console.log((progressTotal / totalCount) * 100);
 		return (progressTotal / totalCount) * 100;
 	}
 

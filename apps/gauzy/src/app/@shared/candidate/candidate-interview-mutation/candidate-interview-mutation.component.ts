@@ -164,21 +164,14 @@ export class CandidateInterviewMutationComponent
 		});
 		this.addInterviewers(interview.id, this.selectedInterviewers);
 		this.addCriterions(interview.id);
-		//find interviewers for this interview
-		const interviewers = await this.candidateInterviewersService.findByInterviewId(
-			interview.id
-		);
 		try {
 			const createdInterview = await this.candidateInterviewService.update(
 				interview.id,
 				{
 					title: this.interview.title,
-					interviewers: interviewers ? interviewers : null,
 					location: this.interview.location,
 					startTime: this.interview.startTime,
 					endTime: this.interview.endTime,
-					technologies: this.technologies,
-					personalQualities: this.personalQualities,
 					note: this.interview.note
 				}
 			);

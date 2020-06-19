@@ -17,21 +17,22 @@ import {
 	NbTabsetModule,
 	NbLayoutModule,
 	NbProgressBarModule,
-	NbToggleModule
+	NbToggleModule,
+	NbContextMenuModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
-import { EditKeyresultsComponent } from './edit-keyresults/edit-keyresults.component';
+import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
 import { SharedModule } from '../../@shared/shared.module';
-import { KeyresultDetailsComponent } from './keyresult-details/keyresult-details.component';
-import { KeyresultUpdateComponent } from './keyresult-update/keyresult-update.component';
-import { KeyresultProgressChartComponent } from './keyresult-progress-chart/keyresult-progress-chart.component';
+import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
+import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
+import { KeyResultProgressChartComponent } from './keyresult-progress-chart/keyresult-progress-chart.component';
 import { ChartModule } from 'angular2-chartjs';
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -42,11 +43,11 @@ export function HttpLoaderFactory(http: HttpClient) {
 	declarations: [
 		GoalsComponent,
 		EditObjectiveComponent,
-		EditKeyresultsComponent,
+		EditKeyResultsComponent,
 		GoalDetailsComponent,
-		KeyresultDetailsComponent,
-		KeyresultUpdateComponent,
-		KeyresultProgressChartComponent
+		KeyResultDetailsComponent,
+		KeyResultUpdateComponent,
+		KeyResultProgressChartComponent
 	],
 	imports: [
 		CommonModule,
@@ -65,6 +66,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbLayoutModule,
 		NbToggleModule,
 		NbProgressBarModule,
+		NbContextMenuModule,
 		SharedModule,
 		ChartModule,
 		NbDialogModule.forChild(),

@@ -88,12 +88,14 @@ import { ProductCategoryTranslation } from '../product-category/product-category
 import { Pipeline } from '../pipeline/pipeline.entity';
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { Stage } from '../stage/stage.entity';
 import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
 import { Goal } from '../goal/goal.entity';
 import { KeyResult } from '../keyresult/keyresult.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
+import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 
 const entities = [
 	Invite,
@@ -135,6 +137,7 @@ const entities = [
 	EmployeeLevel,
 	Task,
 	Goal,
+	GoalTimeFrame,
 	KeyResult,
 	KeyResultUpdate,
 	TimeSlot,
@@ -181,6 +184,8 @@ const entities = [
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
 	Pipeline,
+	Payment,
+	Stage,
 	Payment
 ];
 

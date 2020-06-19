@@ -1,31 +1,33 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { KeyResult, KeyResultUpdates } from '@gauzy/models';
-import { KeyresultUpdateComponent } from '../keyresult-update/keyresult-update.component';
+import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
-import { KeyresultService } from '../../../@core/services/keyresult.service';
+import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { Subject } from 'rxjs';
-import { KeyresultUpdateService } from '../../../@core/services/keyresult-update.service';
+import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
+import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 
 @Component({
 	selector: 'ga-keyresult-details',
 	templateUrl: './keyresult-details.component.html',
 	styleUrls: ['./keyresult-details.component.scss']
 })
-export class KeyresultDetailsComponent implements OnInit, OnDestroy {
+export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	owner: string;
 	src: string;
 	keyResult: KeyResult;
 	updates: KeyResultUpdates[];
 	private _ngDestroy$ = new Subject<void>();
 	ownerName: string;
+	@ViewChild(KeyResultProgressChartComponent)
+	chart: KeyResultProgressChartComponent;
 	constructor(
-		private dialogRef: NbDialogRef<KeyresultDetailsComponent>,
+		private dialogRef: NbDialogRef<KeyResultDetailsComponent>,
 		private employeeService: EmployeesService,
 		private dialogService: NbDialogService,
-		private keyresultService: KeyresultService,
-		private keyresultUpdateService: KeyresultUpdateService
+		private keyResultService: KeyResultService
 	) {}
 
 	async ngOnInit() {
@@ -33,28 +35,31 @@ export class KeyresultDetailsComponent implements OnInit, OnDestroy {
 			this.owner,
 			['user']
 		);
-		console.log(this.keyResult);
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;
 		this.updates = this.keyResult.updates.sort(
 			(a, b) =>
-				new Date(a.createdAt).getUTCSeconds() -
-				new Date(b.createdAt).getUTCSeconds()
+				new Date(b.createdAt).getTime() -
+				new Date(a.createdAt).getTime()
 		);
 	}
 
 	async loadModal() {
-		await this.keyresultService
+		await this.keyResultService
 			.findKeyResult(this.keyResult.id)
-			.then((keyresult) => {
-				console.log(keyresult);
-				this.keyResult = keyresult.items[0];
-				this.updates = keyresult.items[0].updates;
+			.then((keyResult) => {
+				this.keyResult = keyResult.items[0];
+				this.updates = keyResult.items[0].updates.sort(
+					(a, b) =>
+						new Date(b.createdAt).getTime() -
+						new Date(a.createdAt).getTime()
+				);
+				this.chart.updateChart(this.keyResult);
 			});
 	}
 
 	async keyResultUpdate() {
-		const dialog = this.dialogService.open(KeyresultUpdateComponent, {
+		const dialog = this.dialogService.open(KeyResultUpdateComponent, {
 			hasScroll: true,
 			context: {
 				keyResult: this.keyResult
@@ -62,34 +67,37 @@ export class KeyresultDetailsComponent implements OnInit, OnDestroy {
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			console.log(response);
-
 			try {
-				const update: KeyResultUpdates = {
-					keyresult_id: this.keyResult.id,
-					owner: response.owner,
-					update: response.update,
-					progress: response.progress,
-					status: response.status
-				};
-
-				delete response.updates;
-
-				await this.keyresultUpdateService
-					.createUpdate(update)
-					.then(async (res) => {
-						if (res) {
-							await this.keyresultService
-								.update(this.keyResult.id, response)
-								.then((updateRes) => {
-									if (updateRes) {
-										this.loadModal();
-									}
-								});
+				await this.keyResultService
+					.update(this.keyResult.id, response)
+					.then((updateRes) => {
+						if (updateRes) {
+							this.loadModal();
 						}
 					});
 			} catch (error) {
 				console.log(error);
+			}
+		}
+	}
+
+	async deleteKeyResult() {
+		const dialog = this.dialogService.open(AlertModalComponent, {
+			context: {
+				alertOptions: {
+					title: 'Delete Key Result',
+					message: 'Are you sure? This action is irreversible.',
+					status: 'danger'
+				}
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			if (response === 'yes') {
+				await this.keyResultService
+					.delete(this.keyResult.id)
+					.catch((error) => console.log(error));
+				this.dialogRef.close('deleted');
 			}
 		}
 	}

@@ -40,7 +40,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
-	documents: ICandidateDocument[];
+	documents?: ICandidateDocument[];
 	educations?: IEducation[];
 	source?: ICandidateSource;
 	cvUrl?: string;

@@ -27,6 +27,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	isNextBtn = true;
 	index = 1;
 	isPreviousBtn = false;
+	interviewers = [];
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewInfoComponent>,
 		private candidateInterviewersService: CandidateInterviewersService,
@@ -40,9 +41,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 	async edit() {
-		this.currentInterview.interviewers = await this.candidateInterviewersService.findByInterviewId(
-			this.currentInterview.id
-		);
+		this.currentInterview.interviewers = this.interviewers;
 		const dialog = this.dialogService.open(
 			CandidateInterviewMutationComponent,
 			{
@@ -88,13 +87,13 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 
 	async getData(id: string) {
 		this.interviewerNames = [];
-		const res = await this.candidateInterviewersService.findByInterviewId(
+		this.interviewers = await this.candidateInterviewersService.findByInterviewId(
 			id
 		);
-		if (res) {
-			for (const interview of res) {
+		if (this.interviewers) {
+			for (const interviewer of this.interviewers) {
 				const employee = await this.employeesService.getEmployeeById(
-					interview.employeeId,
+					interviewer.employeeId,
 					['user']
 				);
 				if (employee) {

@@ -22,13 +22,16 @@
 						'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
 					}}"
 					fullWidth
+					[(ngModel)]="add"
+					required
+					#theAddPosition="ngModel"
 				/>
 			</div>
 			<ga-tags-color-input
 				[selectedTags]="tags"
 				(selectedTagsEvent)="selectedTagsEvent($event)"
 				class="col-sm-3"
-				[isTenantLevel]="true"
+				[isOrgLevel]="true"
 			>
 			</ga-tags-color-input>
 			<span class="col-3" style="margin-top: 29px;"
@@ -37,6 +40,7 @@
 					(click)="addPosition(addInput.value)"
 					nbButton
 					status="success"
+					[disabled]="theAddPosition.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
@@ -74,12 +78,15 @@
 						type="text"
 						[value]="selectedPosition.name"
 						fullWidth
+						[(ngModel)]="edit"
+						required
+						#theEditPosition="ngModel"
 					/>
 				</div>
 				<ga-tags-color-input
 					[selectedTags]="tags"
 					(selectedTagsEvent)="selectedTagsEvent($event)"
-					[isTenantLevel]="true"
+					[isOrgLevel]="true"
 				>
 				</ga-tags-color-input>
 				<span class="col-2 pl-2 pr-1">
@@ -90,6 +97,7 @@
 						"
 						nbButton
 						status="success"
+						[disabled]="theEditPosition.invalid"
 					>
 						{{ 'BUTTONS.UPDATE' | translate }}
 					</button></span

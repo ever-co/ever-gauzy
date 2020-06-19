@@ -5,7 +5,8 @@ import { ITenant, Tag, Skill } from '@gauzy/models';
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'allowManualTime',
 	ALLOW_MODIFY_TIME = 'allowModifyTime',
-	ALLOW_DELETE_TIME = 'allowDeleteTime'
+	ALLOW_DELETE_TIME = 'allowDeleteTime',
+	ALLOW_FUTURE_DATE = 'futureDateAllowed'
 }
 
 export interface Organization extends IBaseEntityModel, ILocation {
@@ -20,10 +21,11 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	client_focus: string;
 	show_income?: boolean;
 	show_profits?: boolean;
-	show_business_paid?: boolean;
+	show_bonuses_paid?: boolean;
 	show_total_hours?: boolean;
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
+	show_clients_count?: boolean;
 	overview: string;
 	skills: Skill[];
 	currency: string;
@@ -76,10 +78,11 @@ export interface OrganizationCreateInput extends ILocation {
 	client_focus: string;
 	show_income?: boolean;
 	show_profits?: boolean;
-	show_business_paid?: boolean;
+	show_bonuses_paid?: boolean;
 	show_total_hours?: boolean;
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
+	show_clients_count?: boolean;
 	defaultValueDateType: DefaultValueDateTypeEnum;
 	dateFormat?: string;
 	timeZone?: string;

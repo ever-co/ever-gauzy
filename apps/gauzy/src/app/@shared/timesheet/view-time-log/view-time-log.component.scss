@@ -1,0 +1,13 @@
+:host {
+  .time-log-view-contiainer {
+    min-width: 300px;
+  }
+  nb-list {
+    max-height: 220px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  nb-list-item {
+    cursor: pointer;
+  }
+}

@@ -86,6 +86,38 @@
 								{{ 'BUTTONS.ADD_NEW' | translate }}
 							</button>
 						</div>
+						<div
+							class="section mt-2 overflow-scroll"
+							*ngIf="!!this.updates"
+						>
+							<nb-card *ngFor="let update of updates">
+								<nb-card-header>
+									<div class="main-header">
+										<ngx-avatar
+											class="ml-2"
+											size="sm"
+											[src]="src"
+											[name]="ownerName"
+										>
+										</ngx-avatar>
+										<p>{{ update.createdAt | date }}</p>
+									</div>
+								</nb-card-header>
+								<nb-card-footer>
+									<div class="main-header p-3">
+										<p class="font-weight-bold">
+											Update : {{ update.update }}
+										</p>
+										<p class="font-weight-bold">
+											{{ update.status }}
+										</p>
+										<p class="font-weight-bold">
+											Progress : {{ update.progress }}%
+										</p>
+									</div>
+								</nb-card-footer>
+							</nb-card>
+						</div>
 					</nb-card-header>
 				</nb-card>
 			</nb-tab>

@@ -5,7 +5,7 @@
 			"typescriptMismatch": false,
 			"versionMismatch": false
 		},
-		"defaultCollection": "@nstudio/xplat",
+		"defaultCollection": "@nrwl/angular",
 		"packageManager": "yarn",
 		"analytics": false
 	},
@@ -412,6 +412,115 @@
 								}
 							]
 						}
+					}
+				}
+			}
+		},
+		"desktop-ui": {
+			"projectType": "application",
+			"schematics": {
+				"@nrwl/angular:component": {
+					"style": "scss"
+				}
+			},
+			"root": "apps/desktop",
+			"sourceRoot": "apps/desktop/src",
+			"prefix": "gauzy",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:browser",
+					"options": {
+						"outputPath": "dist/apps/desktop/ui",
+						"index": "apps/desktop/src/index.html",
+						"main": "apps/desktop/src/main.ts",
+						"polyfills": "apps/desktop/src/polyfills.ts",
+						"tsConfig": "apps/desktop/tsconfig.app.json",
+						"aot": true,
+						"assets": [
+							"apps/desktop/src/favicon.ico",
+							"apps/desktop/src/assets"
+						],
+						"styles": [
+							"node_modules/@nebular/theme/styles/prebuilt/default.css",
+							"node_modules/bootstrap/dist/css/bootstrap.css",
+							"node_modules/typeface-exo/index.css",
+							"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+							"node_modules/ionicons/dist/scss/ionicons.scss",
+							"node_modules/@fortawesome/fontawesome-free/css/all.css",
+							"node_modules/socicon/css/socicon.css",
+							"node_modules/nebular-icons/scss/nebular-icons.scss",
+							"node_modules/angular-tree-component/dist/angular-tree-component.css",
+							"node_modules/pace-js/templates/pace-theme-flash.tmpl.css",
+							"node_modules/leaflet/dist/leaflet.css",
+							"apps/desktop/src/styles.scss"
+						],
+						"scripts": []
+					},
+					"configurations": {
+						"production": {
+							"fileReplacements": [
+								{
+									"replace": "apps/desktop/src/environments/environment.ts",
+									"with": "apps/desktop/src/environments/environment.prod.ts"
+								}
+							],
+							"optimization": true,
+							"outputHashing": "all",
+							"sourceMap": false,
+							"extractCss": true,
+							"namedChunks": false,
+							"extractLicenses": true,
+							"vendorChunk": false,
+							"buildOptimizer": true,
+							"budgets": [
+								{
+									"type": "initial",
+									"maximumWarning": "2mb",
+									"maximumError": "5mb"
+								},
+								{
+									"type": "anyComponentStyle",
+									"maximumWarning": "6kb",
+									"maximumError": "10kb"
+								}
+							]
+						}
+					}
+				},
+				"serve": {
+					"builder": "@angular-devkit/build-angular:dev-server",
+					"options": {
+						"browserTarget": "desktop-ui:build"
+					},
+					"configurations": {
+						"production": {
+							"browserTarget": "desktop-ui:build:production"
+						}
+					}
+				},
+				"extract-i18n": {
+					"builder": "@angular-devkit/build-angular:extract-i18n",
+					"options": {
+						"browserTarget": "desktop-ui:build"
+					}
+				},
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"apps/desktop/tsconfig.app.json",
+							"apps/desktop/tsconfig.spec.json"
+						],
+						"exclude": ["**/node_modules/**", "!apps/desktop/**"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "apps/desktop/web-ui/jest.config.js",
+						"tsConfig": "apps/desktop/web-ui/tsconfig.spec.json",
+						"passWithNoTests": true,
+						"setupFile": "apps/desktop/web-ui/src/test-setup.ts"
 					}
 				}
 			}

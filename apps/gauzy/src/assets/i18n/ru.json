@@ -420,6 +420,7 @@
 		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего часов работы над Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
 		"PROJECTS_COUNT": "Количество проектов",
+		"CLIENTS_COUNT": "Количество клиентов",
 		"DETAILS": "Детали",
 		"SKILLS": "Навыки",
 		"PRIVACY": "Приватность"
@@ -900,6 +901,7 @@
 			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"INVOICES_VIEW": "Просмотр счетов",
 			"INVOICES_EDIT": "Редактировать счета",
+			"EDIT_SALES_PIPELINES": "Редактировать Трубопровод продаж",
 			"APPROVALS_POLICY_EDIT": "Редактировать политику одобрения",
 			"APPROVALS_POLICY_VIEW": "Просмотр политики одобрения",
 			"REQUEST_APPROVAL_EDIT": "Редактировать запрос на утверждение",
@@ -908,6 +910,7 @@
 			"VIEW_ALL_EMAILS": "Посмотреть все письма",
 			"ORG_HELP_CENTER_EDIT": "Редактировать справочный центр организации",
 			"PUBLIC_PAGE_EDIT": "Редактирование публичной страницы",
+			"CAN_APPROVE_TIMESHEET": "Одобрить график работы",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -919,7 +922,13 @@
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Языки",
 		"AWARDS": "Награды",
-		"COMPANY_SKILLS": "Навыки компании"
+		"COMPANY_SKILLS": "Навыки компании",
+		"TOTAL_BONUSES_PAID": "Всего выплачено бонусов",
+		"COMPANY_PROFILE": "Профиль компании",
+		"TOTAL_CLIENTS": "Всего клиентов",
+		"YEAR_FOUNDED": "Дата создания",
+		"COMPANY_SIZE": "Размер компании",
+		"CLIENT_FOCUS": "Фокус клиента"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
@@ -1605,9 +1614,12 @@
 		"SELECT_LOG_TYPE": "Выберите тип журнала",
 		"ADD_TIME_LOGS": "Добавить журнал времени",
 		"EDIT_TIME_LOGS": "Редактировать журналы времени",
+		"VIEW_TIME_LOGS": "Журналы времени",
 		"ADD_TIME": "Добавить время",
 		"UPDATE_TIME": "Время обновления",
+		"EDIT": "Редактировать",
 		"CLOSE": "Закрыть",
+		"DELETE": "Удалить",
 		"VALIDATION": {
 			"DESCRIPTION": "Описание обязательно",
 			"TASK": "Пожалуйста, выберите задачу",
@@ -1680,6 +1692,7 @@
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",
+		"HEADER_STAGES": "Этапы",
 		"HEADER_FORM_EDIT": "Изменить конвейер",
 		"HEADER_FORM_CREATE": "Создать конвейер",
 		"RECORD_TYPE": "конвейер \"{{ name }}\""

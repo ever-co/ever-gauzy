@@ -38,6 +38,9 @@ export class ProductVariantCreateHandler
 			});
 
 			newProductVariant.options = variantOptions;
+			newProductVariant.internalReference = variantOptions
+				.map((option) => option.name)
+				.join('-');
 			newProductVariant.settings = await this.productVariantSettingsService.createDefaultVariantSettings();
 			newProductVariant.price = await this.productVariantPriceService.createDefaultProductVariantPrice();
 			newProductVariant.product = await this.productService.findOne({

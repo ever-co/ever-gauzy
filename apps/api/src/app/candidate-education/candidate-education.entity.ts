@@ -1,8 +1,9 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { IEducation } from '@gauzy/models';
+import { IEducation, Candidate as ICandidate } from '@gauzy/models';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Entity('candidate_education')
 export class CandidateEducation extends Base implements IEducation {
@@ -31,4 +32,7 @@ export class CandidateEducation extends Base implements IEducation {
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	candidateId?: string;
+
+	@ManyToOne((type) => Candidate, (candidate) => candidate.educations)
+	candidate: ICandidate;
 }
