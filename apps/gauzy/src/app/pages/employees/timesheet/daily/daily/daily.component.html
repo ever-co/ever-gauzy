@@ -4,7 +4,8 @@
 	</h5>
 	<div class="col-auto">
 		<button nbButton status="primary" (click)="openAdd()">
-			<nb-icon icon="plus-outline"></nb-icon> Add Time
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'TIMESHEET.ADD_TIME' | translate }}
 		</button>
 	</div>
 </div>
@@ -29,7 +30,8 @@
 				[nbContextMenu]="bulkActionOptions"
 				nbContextMenuTag="time-logs-bulk-acton"
 			>
-				Bulk action <nb-icon icon="chevron-down-outline"></nb-icon>
+				{{ 'TIMESHEET.BULK_ACTION' | translate }}
+				<nb-icon icon="chevron-down-outline"></nb-icon>
 			</button>
 		</div>
 	</div>
@@ -52,18 +54,19 @@
 			</nb-checkbox>
 		</div>
 		<div class="col project-name">
-			Project
+			{{ 'TIMESHEET.PROJECT' | translate }} /
+			{{ 'TIMESHEET.TODO' | translate }}
 		</div>
 		<div
 			class="col employee-name"
 			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
 		>
-			Employee
+			{{ 'TIMESHEET.EMPLOYEE' | translate }}
 		</div>
-		<div class="col">Log type</div>
-		<div class="col">Duration</div>
-		<div class="col">Time span</div>
-		<div class="col action">Action</div>
+		<div class="col">{{ 'TIMESHEET.LOG_TYPE' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.DURATION' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
+		<div class="col action">{{ 'TIMESHEET.ACTION' | translate }}</div>
 	</div>
 	<ng-template [ngIf]="timeLogs?.length > 0" [ngIfElse]="notFound">
 		<div
@@ -88,15 +91,15 @@
 					{{ log?.project?.name }}
 				</span>
 				<ng-template #noProfject>
-					<span>No project</span>
+					<span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
 				</ng-template>
 				<div class="mt-2 small">
 					<span *ngIf="log?.task; else noToDo">
-						<strong>TO-DO : </strong>
+						<strong>{{ 'TIMESHEET.TODO' | translate }} : </strong>
 						{{ log?.task?.title }}
 					</span>
 					<ng-template #noToDo>
-						<span>No to-do</span>
+						<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
 					</ng-template>
 				</div>
 			</div>
@@ -125,7 +128,9 @@
 					{{ log.stoppedAt | utcToLocal | timeFormat: true }}
 				</span>
 				<ng-template #runningTimer>
-					<span class="running-timer"> Till now </span>
+					<span class="running-timer">
+						{{ 'TIMESHEET.TILL_NOW' | translate }}
+					</span>
 				</ng-template>
 			</div>
 			<div class="col action">
@@ -137,7 +142,8 @@
 						size="small"
 						(click)="openView(log)"
 					>
-						<nb-icon icon="eye-outline"></nb-icon> View
+						<nb-icon icon="eye-outline"></nb-icon>
+						{{ 'TIMESHEET.VIEW' | translate }}
 					</button>
 					<button
 						*ngxPermissionsOnly="[
@@ -150,7 +156,8 @@
 						size="small"
 						(click)="openEdit(log)"
 					>
-						<nb-icon icon="edit"></nb-icon> Edit
+						<nb-icon icon="edit"></nb-icon>
+						{{ 'TIMESHEET.EDIT' | translate }}
 					</button>
 					<button
 						*ngxPermissionsOnly="[
@@ -163,7 +170,8 @@
 						size="small"
 						(click)="onDeleteConfirm(log)"
 					>
-						<nb-icon icon="trash-2-outline"></nb-icon> Delete
+						<nb-icon icon="trash-2-outline"></nb-icon>
+						{{ 'TIMESHEET.DELETE' | translate }}
 					</button>
 				</div>
 			</div>
@@ -171,7 +179,9 @@
 	</ng-template>
 	<ng-template #notFound>
 		<div class="row font-weight-bold py-3 align-items-center">
-			<div class="col text-center">No logs found.</div>
+			<div class="col text-center">
+				{{ 'TIMESHEET.NO_TIMELOG' | translate }}
+			</div>
 		</div>
 	</ng-template>
 </div>

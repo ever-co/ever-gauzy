@@ -7,7 +7,8 @@ import {
 	TimeLog,
 	Timesheet,
 	TimesheetStatus,
-	OrganizationPermissionsEnum
+	OrganizationPermissionsEnum,
+	PermissionsEnum
 } from '@gauzy/models';
 import * as _ from 'underscore';
 import * as moment from 'moment';
@@ -26,6 +27,7 @@ export class ViewComponent implements OnInit, OnDestroy {
 	} = {};
 
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
 	timeLogs: any;
 	updateLogs$: Subject<any> = new Subject();

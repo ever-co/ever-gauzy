@@ -9,7 +9,8 @@
 			]"
 		>
 			<button nbButton status="primary" (click)="openAddEdit()">
-				<nb-icon icon="plus-outline"></nb-icon> Add Time
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'TIMESHEET.ADD_TIME' | translate }}
 			</button>
 		</ng-template>
 	</div>
@@ -32,7 +33,10 @@
 	<div
 		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 	>
-		<div class="col-sm-3 project-name">Project</div>
+		<div class="col-sm-3 project-name">
+			{{ 'TIMESHEET.PROJECT' | translate }} /
+			{{ 'TIMESHEET.TODO' | translate }}
+		</div>
 		<div class="col text-center day-col" *ngFor="let date of weekDayList">
 			{{ date | date }}
 		</div>
@@ -47,7 +51,7 @@
 					day?.project?.name
 				}}</span>
 				<ng-template #noProfject>
-					<span>No project</span>
+					<span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
 				</ng-template>
 			</div>
 			<div
@@ -95,7 +99,9 @@
 	</ng-template>
 	<ng-template #notFound>
 		<div class="row font-weight-bold py-3 align-items-center">
-			<div class="col text-center">No logs found.</div>
+			<div class="col text-center">
+				{{ 'TIMESHEET.NO_TIMELOG' | translate }}
+			</div>
 		</div>
 	</ng-template>
 </div>

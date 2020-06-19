@@ -15,6 +15,9 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	bulkCreateOrUpdate(slots) {
+		if (slots.length === 0) {
+			return null;
+		}
 		return this.timeSlotRepository
 			.createQueryBuilder()
 			.insert()
@@ -27,6 +30,9 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	bulkCreate(slots) {
+		if (slots.length === 0) {
+			return null;
+		}
 		return this.timeSlotRepository
 			.createQueryBuilder()
 			.insert()
@@ -38,14 +44,14 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 
 	generateTimeSlots(start: Date, end: Date) {
 		let mStart = moment(start);
-		let mEnd = moment(end);
+		const mEnd = moment(end);
 		const slots = [];
 		while (mStart.isBefore(mEnd)) {
 			let tempEnd: moment.Moment;
 			let duration = 0;
 
 			/* Check start time is Rounded 10 minutes slot I.E 10:20, false if 10:14 */
-			if (mStart.get('minute') % 10 == 0) {
+			if (mStart.get('minute') % 10 === 0) {
 				console.log('if');
 				tempEnd = mStart.clone().add(10, 'minute');
 				if (tempEnd.isBefore(mEnd)) {

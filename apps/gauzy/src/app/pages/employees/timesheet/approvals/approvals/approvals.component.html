@@ -24,7 +24,8 @@
 			[nbContextMenu]="bulkActionOptions"
 			nbContextMenuTag="timesheet-bulk-acton"
 		>
-			Bulk action <nb-icon icon="chevron-down-outline"></nb-icon>
+			{{ 'TIMESHEET.BULK_ACTION' | translate }}
+			<nb-icon icon="chevron-down-outline"></nb-icon>
 		</button>
 	</div>
 </div>
@@ -37,14 +38,16 @@
 	<div
 		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 	>
-		<div class="col employee-name">Employee</div>
-		<div class="col">Total Time</div>
-		<div class="col">Activites</div>
-		<div class="col">Duration</div>
-		<div class="col">Approved At</div>
-		<div class="col">Submitted At</div>
-		<div class="col">Status</div>
-		<div class="col action">Action</div>
+		<div class="col employee-name">
+			{{ 'TIMESHEET.EMPLOYEE' | translate }}
+		</div>
+		<div class="col">{{ 'TIMESHEET.TOTAL_TIME' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.ACTIVITES' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.DURATION' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.APPROVED_AT' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.SUBMITTED_AT' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.STATUS' | translate }}</div>
+		<div class="col action">{{ 'TIMESHEET.ACTION' | translate }}</div>
 	</div>
 	<ng-template [ngIf]="timeSheets?.length > 0" [ngIfElse]="notFound">
 		<div
@@ -81,7 +84,7 @@
 						[nbPopover]="templateRef"
 						nbPopoverPlacement="bottom"
 					>
-						Action
+						{{ 'TIMESHEET.ACTION' | translate }}
 					</button>
 
 					<ng-template #templateRef>
@@ -93,7 +96,7 @@
 								ghost
 								size="small"
 							>
-								View
+								{{ 'TIMESHEET.VIEW' | translate }}
 							</button>
 						</div>
 						<div class="menu-item" *ngIf="!timesheet.submittedAt">
@@ -104,7 +107,7 @@
 								size="small"
 								(click)="submitTimeheet(timesheet.id, 'submit')"
 							>
-								Submit Timesheet
+								{{ 'TIMESHEET.SUBMIT_TIMESHEET' | translate }}
 							</button>
 						</div>
 						<div
@@ -113,7 +116,7 @@
 							(click)="submitTimeheet(timesheet.id, 'unsubmit')"
 						>
 							<button class="m-1" nbButton ghost size="small">
-								Unsubmit Timesheet
+								{{ 'TIMESHEET.UNSUBMIT_TIMESHEET' | translate }}
 							</button>
 						</div>
 						<div
@@ -132,7 +135,7 @@
 									)
 								"
 							>
-								Approve
+								{{ 'TIMESHEET.APPROVE' | translate }}
 							</button>
 						</div>
 						<div
@@ -151,7 +154,7 @@
 									)
 								"
 							>
-								Deny
+								{{ 'TIMESHEET.DENY' | translate }}
 							</button>
 						</div>
 					</ng-template>
@@ -161,7 +164,9 @@
 	</ng-template>
 	<ng-template #notFound>
 		<div class="row font-weight-bold py-3 align-items-center">
-			<div class="col text-center">No logs found.</div>
+			<div class="col text-center">
+				{{ 'TIMESHEET.NO_TIMELOG' | translate }}
+			</div>
 		</div>
 	</ng-template>
 </div>

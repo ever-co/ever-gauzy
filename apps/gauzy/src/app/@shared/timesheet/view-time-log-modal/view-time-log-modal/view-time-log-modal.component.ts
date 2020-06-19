@@ -29,9 +29,14 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {}
 
 	openDialog() {
-		this.nbDialogService.open(EditTimeLogModalComponent, {
-			context: { timeLog: this.timeLog }
-		});
+		this.nbDialogService
+			.open(EditTimeLogModalComponent, {
+				context: { timeLog: this.timeLog }
+			})
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((type) => {
+				this.dialogRef.close(type);
+			});
 	}
 
 	close() {
@@ -44,7 +49,11 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((type) => {
 				if (type === 'ok') {
-					this.timesheetService.deleteLogs(this.timeLog.id);
+					this.timesheetService
+						.deleteLogs(this.timeLog.id)
+						.then((res) => {
+							this.dialogRef.close(res);
+						});
 				}
 			});
 	}

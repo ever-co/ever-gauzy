@@ -33,6 +33,7 @@
 					[placeholder]="'TIMESHEET.SELECT_EMPLOYEE' | translate"
 					#employeeInput="ngModel"
 					[(ngModel)]="addEditRequest.employeeId"
+					(ngModelChange)="checkOverlaps()"
 					[allEmployees]="employees"
 					required
 				>
@@ -48,28 +49,81 @@
 			</div>
 
 			<div class="form-group">
-				<div class="row">
-					<div class="col-12">
-						<ngx-timer-range-picker
-							name="selectedRange"
-							[maxDate]="futureDateAllowed ? null : today"
-							[(ngModel)]="selectedRange"
-						>
-						</ngx-timer-range-picker>
-					</div>
-
-					<div class="col-12">
-						<nb-checkbox
-							[(ngModel)]="addEditRequest.isBillable"
-							name="isBillable"
-							status="primary"
-						>
-							{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
-						</nb-checkbox>
-					</div>
-				</div>
+				<ngx-timer-range-picker
+					name="selectedRange"
+					[maxDate]="futureDateAllowed ? null : today"
+					[(ngModel)]="selectedRange"
+					(ngModelChange)="checkOverlaps()"
+				>
+				</ngx-timer-range-picker>
 			</div>
 
+			<nb-card status="danger" *ngIf="overlaps.length > 0">
+				<nb-card-header>
+					<div class="d-flex align-items-center">
+						<nb-icon
+							icon="alert-triangle-outline"
+							class="mr-3"
+						></nb-icon>
+						Time overlaps
+					</div>
+				</nb-card-header>
+				<nb-card-body>
+					<p>{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
+					<div
+						class="row border-bottom border-top font-weight-bold align-items-center py-2"
+					>
+						<div class="col">
+							{{ 'TIMESHEET.PROJECT' | translate }} /
+							{{ 'TIMESHEET.TODO' | translate }}
+						</div>
+						<div class="col text-center">
+							{{ 'TIMESHEET.DURATION' | translate }}
+						</div>
+					</div>
+					<div
+						class="row border-top py-2"
+						*ngFor="let timelog of overlaps"
+					>
+						<div class="col">
+							<span *ngIf="timelog?.task; else noProfject">
+								{{ timelog?.project?.name }}
+							</span>
+							<ng-template #noProfject>
+								<span>{{
+									'TIMESHEET.NO_PROJECT' | translate
+								}}</span>
+							</ng-template>
+							<div class="mt-2 small">
+								<span *ngIf="timelog?.task; else noToDo">
+									<strong
+										>{{ 'TIMESHEET.TODO' | translate }} :
+									</strong>
+									{{ timelog?.task?.title }}
+								</span>
+								<ng-template #noToDo>
+									<span>{{
+										'TIMESHEET.NO_TODO' | translate
+									}}</span>
+								</ng-template>
+							</div>
+						</div>
+						<div class="col text-center">
+							{{ timelog.overlapDueration | durationFormat }}
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+
+			<div class="form-group">
+				<nb-checkbox
+					[(ngModel)]="addEditRequest.isBillable"
+					name="isBillable"
+					status="primary"
+				>
+					{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
+				</nb-checkbox>
+			</div>
 			<div class="form-group">
 				<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
 				<ga-project-selector

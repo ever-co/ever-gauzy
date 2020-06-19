@@ -18,19 +18,28 @@
 				>
 				</nb-user>
 			</div>
-			<div
-				class="time-log-action col-auto"
-				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
-				]"
-			>
+			<div class="time-log-action col-auto">
 				<button
+					*ngxPermissionsOnly="[
+						OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+					]"
 					nbButton
 					ghost
 					status="primary"
 					(click)="openEdit($event, timelog)"
 				>
 					<nb-icon icon="edit"></nb-icon>
+				</button>
+				<button
+					*ngxPermissionsOnly="[
+						OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+					]"
+					nbButton
+					ghost
+					status="danger"
+					(click)="onDeleteConfirm($event, timelog)"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
 				</button>
 			</div>
 		</nb-list-item>
