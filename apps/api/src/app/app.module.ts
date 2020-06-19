@@ -92,6 +92,7 @@ import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
 import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
+import { HelpCenterArticleModule } from './help-center-article/help-center-article.module';
 
 @Module({
 	imports: [
@@ -154,6 +155,10 @@ import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/c
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
 					{ path: '/help-center', module: HelpCenterModule },
+					{
+						path: '/help-center-article',
+						module: HelpCenterArticleModule
+					},
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
 

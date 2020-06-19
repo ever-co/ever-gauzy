@@ -1,7 +1,9 @@
-import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
+import { IHelpCenterArticle } from './../../../../../libs/models/src/lib/help-center-article.model';
+import { Entity, Column, ManyToOne, OneToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IHelpCenter } from '@gauzy/models';
 import { Base } from '../core/entities/base';
+import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
 
 @Entity('knowledge_base')
 export class HelpCenter extends Base implements IHelpCenter {
@@ -52,4 +54,10 @@ export class HelpCenter extends Base implements IHelpCenter {
 		nullable: true
 	})
 	children?: IHelpCenter[];
+
+	@ManyToOne((type) => HelpCenterArticle, { cascade: true })
+	@JoinTable({
+		name: 'HelpCenterArticle'
+	})
+	articles?: IHelpCenterArticle[];
 }

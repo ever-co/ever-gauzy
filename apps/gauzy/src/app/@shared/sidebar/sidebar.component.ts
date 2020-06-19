@@ -15,7 +15,6 @@ import {
 } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
-import { HelpCenterService } from '../../@core/services/help-center.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { AddBaseComponent } from './add-base/add-base.component';
 import { EditBaseComponent } from './edit-base/edit-base.component';
@@ -23,6 +22,7 @@ import { AddCategoryComponent } from './add-category/add-category.component';
 import { EditCategoryComponent } from './edit-category/edit-category.component';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
+import { HelpCenterService } from '../../@core/services/help-center.service';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -75,6 +75,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	private tree: TreeComponent;
 
 	ngOnInit() {
+		console.log('pochti');
 		this.loadMenu();
 		this.form = this.fb.group({
 			name: [''],
@@ -202,6 +203,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	// 	this.showCategoryButton = false;
 	// }
 	onNodeClicked(node: any) {
+		console.log('gdfsgdfsg');
 		this.nodeId = node.id.toString();
 		this.isChosenNode = true;
 		this.articleName = node.name;
@@ -365,6 +367,7 @@ export class SidebarComponent extends TranslationBaseComponent
 			this.tempNodes = result.items;
 			this.nodes = this.tempNodes.filter((item) => item.parent === null);
 			this.sortMenu(this.nodes);
+			console.log(this.nodes);
 		}
 	}
 

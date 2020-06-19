@@ -6,7 +6,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 	{
 		name: 'Gauzy Platform',
 		icon: 'book-open-outline',
-		flag: 'category',
+		flag: 'base',
 		privacy: 'eye-outline',
 		language: 'en',
 		color: 'blue',
@@ -15,7 +15,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 			{
 				name: 'Cookies',
 				icon: 'alert-circle-outline',
-				flag: 'article',
+				flag: 'category',
 				privacy: 'eye-outline',
 				description: 'Information',
 				data: 'Cookies and Similar Technologies Information',
@@ -26,20 +26,42 @@ const helpCenterMenuList: IHelpCenter[] = [
 			{
 				name: 'Device',
 				icon: 'book-open-outline',
-				flag: 'article',
+				flag: 'category',
 				privacy: 'eye-off-outline',
 				description: 'Device Information',
 				data: 'We may collect certain information about your device',
 				language: 'en',
 				color: 'black',
 				index: 1
+			},
+			{
+				flag: 'category',
+				icon: 'book-open-outline',
+				privacy: 'eye-off-outline',
+				name: 'Privacy',
+				description: 'Gauzy Privacy Statement',
+				data: 'Usage Information',
+				language: 'en',
+				color: 'black',
+				index: 2
+			},
+			{
+				flag: 'category',
+				icon: 'book-open-outline',
+				privacy: 'eye-off-outline',
+				name: 'Testing',
+				description: 'Gauzy Testing',
+				data: 'Test Information',
+				language: 'en',
+				color: 'black',
+				index: 3
 			}
 		]
 	},
 	{
 		name: 'Ever Platform',
 		icon: 'book-open-outline',
-		flag: 'category',
+		flag: 'base',
 		privacy: 'eye-off-outline',
 		language: 'en',
 		color: 'blue',
@@ -48,7 +70,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 			{
 				name: 'Cookies',
 				icon: 'alert-circle-outline',
-				flag: 'article',
+				flag: 'category',
 				privacy: 'eye-outline',
 				description: 'Information',
 				data: 'Cookies and Similar Technologies Information',
@@ -59,15 +81,26 @@ const helpCenterMenuList: IHelpCenter[] = [
 		]
 	},
 	{
-		flag: 'article',
+		flag: 'base',
 		icon: 'book-open-outline',
 		privacy: 'eye-off-outline',
 		name: 'Privacy',
-		description: 'Gauzy Privacy Statement',
-		data: 'Usage Information',
 		language: 'en',
 		color: 'black',
-		index: 2
+		index: 2,
+		children: [
+			{
+				name: 'Cookies',
+				icon: 'alert-circle-outline',
+				flag: 'category',
+				privacy: 'eye-outline',
+				description: 'Information',
+				data: 'Cookies and Similar Technologies Information',
+				language: 'en',
+				color: 'black',
+				index: 0
+			}
+		]
 	}
 ];
 

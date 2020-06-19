@@ -1,3 +1,4 @@
+import { HelpCenterArticle } from './help-center-article.entity';
 import { IHelpCenter, PermissionsEnum } from '@gauzy/models';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -10,23 +11,19 @@ import {
 	Query
 } from '@nestjs/common';
 import { CrudController, IPagination } from '../core';
-import { HelpCenterService } from './help-center.service';
-import { HelpCenter } from './help-center.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { ParseJsonPipe } from '../shared';
-import { CommandBus } from '@nestjs/cqrs';
-import { HelpCenterCreateCommand } from './commands';
+import { HelpCenterArticleService } from './help-center-article.service';
 
-@ApiTags('knowledge_base')
+@ApiTags('knowledge_base_article')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class HelpCenterController extends CrudController<HelpCenter> {
-	constructor(
-		private readonly helpCenterService: HelpCenterService,
-		private readonly commandBus: CommandBus
-	) {
+export class HelpCenterArticleController extends CrudController<
+	HelpCenterArticle
+> {
+	constructor(private readonly helpCenterService: HelpCenterArticleService) {
 		super(helpCenterService);
 	}
 	@ApiOperation({
@@ -35,7 +32,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tree',
-		type: HelpCenter
+		type: HelpCenterArticle
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -44,7 +41,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@Get()
 	async findMenu(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<HelpCenter>> {
+	): Promise<IPagination<HelpCenterArticle>> {
 		const { relations = [] } = data;
 		return this.helpCenterService.findAll({
 			relations
@@ -57,32 +54,12 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'Success Add category',
-		type: HelpCenter
+		type: HelpCenterArticle
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post()
 	async createNode(@Body() entity: IHelpCenter): Promise<any> {
 		return this.helpCenterService.create(entity);
-	}
-
-	@ApiOperation({ summary: 'Update indexes in Bulk' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Indexes have been successfully updated.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
-	@Post('createBulk')
-	async createBulk(@Body() input: any): Promise<IHelpCenter[]> {
-		const { oldChildren = [], newChildren = [] } = input;
-		return this.commandBus.execute(
-			new HelpCenterCreateCommand(oldChildren, newChildren)
-		);
 	}
 }
