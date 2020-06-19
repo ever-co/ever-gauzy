@@ -1,48 +1,57 @@
-# Webapp
+#
+# devependecies
+#
+FROM node:alpine AS dependencies
+RUN apk add --no-cache --virtual .gyp g++ git make python
 
+COPY apps/desktop/package.json apps/desktop/yarn[.]lock /opt/app/apps/desktop/
+COPY apps/api/package.json apps/api/yarn[.]lock /opt/app/apps/api/
+COPY package.json yarn[.]lock /opt/app/
+
+RUN yarn --cwd /opt/app install
+RUN apk del .gyp
+
+
+
+#
+# development
+#
 FROM node:alpine AS development
+COPY wait .deploy/webapp/entrypoint /
+RUN chmod +x /wait /entrypoint
+ENTRYPOINT [ "/entrypoint" ]
+WORKDIR /opt/app
 
-RUN apk update \
-    && apk add libexecinfo libexecinfo-dev \
-    && npm i -g npm \
-    && apk --no-cache add --virtual builds-deps build-base \
-    snappy g++ snappy-dev gcc libgcc libstdc++ linux-headers autoconf automake make nasm python git \
-    && npm install --quiet node-gyp -g \ 
-    && npm config set python /usr/bin/python \
-    && npm install yarn@latest -g --force
+ENV NODE_OPTIONS --max_old_space_size=4096
+ENV NODE_ENV development
+ENV API_PORT 3000
 
-RUN mkdir /srv/gauzy
-
-WORKDIR /srv/gauzy
-
-COPY package.json yarn.lock ./
-COPY apps/api/package.json ./apps/api/package.json
-# COPY .snyk /tmp/.snyk
-RUN yarn install
-
-FROM node:alpine AS production
-
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
-
-RUN npm install cross-env -g \
-    && npm install pm2 -g --unsafe-perm \
-    && chmod +x /wait
-
-RUN mkdir /srv/gauzy
-RUN mkdir /srv/gauzy/dist
-
-WORKDIR /srv/gauzy
-
-ARG NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_OPTIONS $NODE_OPTIONS
-ENV NODE_ENV production
-
-COPY --from=development /srv/gauzy/node_modules ./node_modules
-
+COPY --from=dependencies /opt/app/ .
 COPY . .
 
-EXPOSE 4200
 
-CMD /wait \
-    && cross-env NODE_ENV=production yarn run config:prod \
-    && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn ng serve gauzy --disable-host-check --host 0.0.0.0 -c=production --prod
+
+#
+# build
+#
+FROM node:alpine AS build
+COPY --from=development /opt/app /opt/app
+RUN sed -i -e "s/let API_BASE_URL = [^;]*;/let API_BASE_URL = \`$\{ location.host }\/api\`;/g" \
+    /opt/app/apps/gauzy/src/environments/environment.ts
+RUN yarn --cwd /opt/app nx build gauzy
+
+
+
+#
+# production
+#
+FROM nginx:alpine AS production
+COPY wait .deploy/webapp/entrypoint /
+CMD [ "nginx", "-g", "daemon off;" ]
+RUN chmod +x /wait /entrypoint
+ENTRYPOINT [ "/entrypoint" ]
+WORKDIR /opt/app-prod
+ENV API_PORT 3000
+
+COPY .deploy/webapp/nginx.conf /etc/nginx
+COPY --from=build /opt/app/dist/apps/gauzy .
