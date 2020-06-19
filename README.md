@@ -68,7 +68,6 @@ The project favors convention over configuration and `docker-compose up` is enou
 
 You can still configure your app through `.env` file... And their usage is as follows:
 
-
 `NODE_ENV`
 It is used to determine target stage for docker build.
 `docker-compose` config falls back to `development`.
