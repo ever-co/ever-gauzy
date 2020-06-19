@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AddArticleComponent } from './add-article/add-article.component';
 import { Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
-import { first } from 'rxjs/operators';
 import { DeleteArticleComponent } from './delete-article/delete-article.component';
 import { EditArticleComponent } from './edit-article/edit-article.component';
 
@@ -24,8 +23,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	}
 	ngOnInit() {}
 	async addNode() {
-		const dialog = this.dialogService.open(AddArticleComponent);
-		const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
+		this.dialogService.open(AddArticleComponent);
 	}
 
 	deleteNode() {
