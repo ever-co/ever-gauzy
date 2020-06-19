@@ -930,7 +930,8 @@
 		"YEAR_FOUNDED": "Year Founded",
 		"COMPANY_SIZE": "Company Size",
 		"CLIENT_FOCUS": "Client Focus",
-		"MONTHLY_INCOME": "Monthly Income"
+		"MONTHLY_INCOME": "Monthly Income",
+		"PROFITS": "Profits"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",

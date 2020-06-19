@@ -39,6 +39,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	bonuses_paid = 0;
 	total_clients = 0;
 	total_income = 0;
+	profits = 0;
 	imageUrl: string;
 	hoverState: boolean;
 	languageExist: boolean;
@@ -170,6 +171,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 		if (!!this.organization.show_income) {
 			this.total_income = statistics.total.income;
+		}
+		if (!!this.organization.show_profits) {
+			this.total_income = statistics.total.profit;
 		}
 	}
 

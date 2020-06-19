@@ -173,6 +173,19 @@
 					</div>
 				</div>
 			</div>
+			<div class="row" *ngIf="this.organization.show_profits && profits">
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.PROFITS' | translate }} :
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="'$' + profits"
+						></span>
+					</div>
+				</div>
+			</div>
 			<div class="row" *ngIf="languageExist">
 				<div class="col">
 					<div class="org-year-found">
