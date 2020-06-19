@@ -1434,6 +1434,8 @@
 			"SOMETHING_BAD_HAPPENED": "Something bad happened!",
 			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully",
 			"DELETED": "Successfully deleted",
+			"CREATED": "Successfully created",
+			"UPDATED": "Successfully updated",
 			"MOVED_ARTICLE": "Article has been moved",
 			"MOVED_CATEGORY": "Category has been moved",
 			"CREATED_ARTICLE": "Article has been created",

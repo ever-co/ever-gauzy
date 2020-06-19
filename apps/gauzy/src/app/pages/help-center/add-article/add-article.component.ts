@@ -1,10 +1,11 @@
+import { IHelpCenterArticle } from '@gauzy/models';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
-// import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
+import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
 
 @Component({
 	selector: 'ga-add-article',
@@ -17,7 +18,8 @@ export class AddArticleComponent extends TranslationBaseComponent
 	constructor(
 		protected dialogRef: NbDialogRef<AddArticleComponent>,
 		readonly translateService: TranslateService,
-		private readonly fb: FormBuilder // private readonly helpCenterArticleService: HelpCenterArticleService
+		private readonly fb: FormBuilder,
+		private helpCenterArticleService: HelpCenterArticleService
 	) {
 		super(translateService);
 	}
@@ -27,6 +29,7 @@ export class AddArticleComponent extends TranslationBaseComponent
 		desc: '',
 		data: ''
 	};
+	public article: IHelpCenterArticle = null;
 	ngOnInit() {
 		this.form = this.fb.group({
 			name: [''],
@@ -45,17 +48,14 @@ export class AddArticleComponent extends TranslationBaseComponent
 	}
 
 	async submit() {
-		console.log('event', this.form.value);
-
-		// await this.helpService.create({
-		// 	name: `${event.target.value}`,
-		// 	icon: 'book-open-outline',
-		// 	flag: 'category',
-		// 	privacy: 'eye-outline',
-		// 	language: 'en',
-		// 	color: 'black',
-		// });
-		// this.toastrSuccess('CREATED_CATEGORY');
+		this.article = await this.helpCenterArticleService.create({
+			name: `${this.form.value.name}`,
+			privacy: 'public',
+			description: `${this.form.value.desc}`,
+			data: `${this.form.value.data}`,
+			categoryId: 'id'
+		});
+		this.dialogRef.close(this.article);
 	}
 
 	closeDialog() {

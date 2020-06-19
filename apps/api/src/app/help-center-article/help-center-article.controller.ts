@@ -8,13 +8,12 @@ import {
 	Body,
 	UseGuards,
 	Get,
-	Query
+	Param
 } from '@nestjs/common';
-import { CrudController, IPagination } from '../core';
+import { CrudController } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { ParseJsonPipe } from '../shared';
 import { HelpCenterArticleService } from './help-center-article.service';
 
 @ApiTags('knowledge_base_article')
@@ -26,34 +25,13 @@ export class HelpCenterArticleController extends CrudController<
 	constructor(private readonly helpCenterService: HelpCenterArticleService) {
 		super(helpCenterService);
 	}
-	@ApiOperation({
-		summary: 'Find all menus.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found tree',
-		type: HelpCenterArticle
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get()
-	async findMenu(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<HelpCenterArticle>> {
-		const { relations = [] } = data;
-		return this.helpCenterService.findAll({
-			relations
-		});
-	}
 
 	@ApiOperation({
-		summary: 'Create new category'
+		summary: 'Create new article'
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Success Add category',
+		description: 'Success Add article',
 		type: HelpCenterArticle
 	})
 	@UseGuards(PermissionGuard)
@@ -61,5 +39,25 @@ export class HelpCenterArticleController extends CrudController<
 	@Post()
 	async createNode(@Body() entity: IHelpCenter): Promise<any> {
 		return this.helpCenterService.create(entity);
+	}
+
+	@ApiOperation({
+		summary: 'Find articles By Category Id.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found category articles',
+		type: HelpCenterArticle
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Get(':categoryId')
+	async findByCategoryId(
+		@Param('categoryId') categoryId: string
+	): Promise<HelpCenterArticle[]> {
+		return this.helpCenterService.getArticlesByCategoryId(categoryId);
 	}
 }

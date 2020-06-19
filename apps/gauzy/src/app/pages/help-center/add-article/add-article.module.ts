@@ -12,7 +12,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { AddArticleComponent } from './add-article.component';
 import { CKEditorModule } from 'ng2-ckeditor';
-// import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
+import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
 
 @NgModule({
 	imports: [
@@ -25,7 +25,6 @@ import { CKEditorModule } from 'ng2-ckeditor';
 		NbSelectModule,
 		FormsModule,
 		ReactiveFormsModule,
-		// HelpCenterArticleService,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -34,7 +33,7 @@ import { CKEditorModule } from 'ng2-ckeditor';
 			}
 		})
 	],
-	// providers: [],
+	providers: [HelpCenterArticleService],
 	entryComponents: [AddArticleComponent],
 	declarations: [AddArticleComponent],
 	exports: [AddArticleComponent]

@@ -15,9 +15,14 @@ export class HelpCenterArticleService extends CrudService<HelpCenterArticle> {
 		super(HelpCenterArticleRepository);
 	}
 
-	async getAllNodes(): Promise<HelpCenterArticle[]> {
+	async getArticlesByCategoryId(
+		categoryId: string
+	): Promise<HelpCenterArticle[]> {
 		return await this.repository
 			.createQueryBuilder('knowledge_base_article')
+			.where('knowledge_base_article.categoryId = :categoryId', {
+				categoryId
+			})
 			.getMany();
 	}
 }

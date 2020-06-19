@@ -431,6 +431,7 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 		ApprovalPolicyModule,
 		RequestApprovalModule,
 		RolePermissionsModule,
+		HelpCenterArticleModule,
 		TenantModule,
 		TagModule,
 		SkillModule,

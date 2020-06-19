@@ -6,7 +6,7 @@
 		</div>
 		<span class="label">Are you sure? This cannot be undone.</span>
 		<div class="save-button">
-			<button status="warning" nbButton>
+			<button status="warning" (click)="delete()" nbButton>
 				{{ 'BUTTONS.DELETE' | translate }}
 			</button>
 		</div>

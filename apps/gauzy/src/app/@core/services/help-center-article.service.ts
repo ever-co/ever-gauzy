@@ -3,7 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class HelpCenterArticleService {
 	constructor(private http: HttpClient) {}
 
@@ -14,15 +16,9 @@ export class HelpCenterArticleService {
 			.toPromise();
 	}
 
-	getAll(relations?: string[]): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ relations });
+	findByCategoryId(categoryId: string): Promise<IHelpCenterArticle[]> {
 		return this.http
-			.get<{ items: IHelpCenterArticle[]; total: number }>(
-				`/api/help-center-article`,
-				{
-					params: { data }
-				}
-			)
+			.get<IHelpCenterArticle[]>(`/api/help-center-article/${categoryId}`)
 			.pipe(first())
 			.toPromise();
 	}
