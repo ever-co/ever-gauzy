@@ -98,13 +98,13 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				),
 				icon: 'award-outline',
 				responsive: true,
-				route: this.getRoute('positions')
+				route: this.getRoute('employeeLevels')
 			},
 			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.POSITIONS'),
 				icon: 'award-outline',
 				responsive: true,
-				route: this.getRoute('employeeLevels')
+				route: this.getRoute('positions')
 			},
 			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
