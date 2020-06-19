@@ -168,7 +168,9 @@
 						</h5>
 						<span
 							class="org-value"
-							[textContent]="'$' + total_income"
+							[textContent]="
+								organization.currency + ' ' + total_income
+							"
 						></span>
 					</div>
 				</div>
@@ -181,7 +183,9 @@
 						</h5>
 						<span
 							class="org-value"
-							[textContent]="'$' + profits"
+							[textContent]="
+								organization.currency + ' ' + profits
+							"
 						></span>
 					</div>
 				</div>
@@ -276,7 +280,9 @@
 						</h5>
 						<span
 							class="paid_bonuses"
-							[textContent]="'$' + bonuses_paid"
+							[textContent]="
+								organization.currency + ' ' + bonuses_paid
+							"
 						></span>
 					</div>
 				</div>
