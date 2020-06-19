@@ -151,6 +151,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 
 	private async getTotalBonusesPaid() {
 		let { items } = await this.incomeService.getAll(['employee'], {
+			isBonus: true,
 			organization: {
 				id: this.organization.id
 			}

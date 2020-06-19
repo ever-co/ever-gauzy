@@ -3246,7 +3246,7 @@
   resolved "https://registry.yarnpkg.com/@nstudio/electron/-/electron-9.0.3.tgz#ff9bfb8147170b50b8fc4efb8a5b2d9d26810456"
   integrity sha512-j2P8N+A1l+s9MNWe6KJl1WT3OUovnmUQVNiMQe6yrd8v8aX7qH05O1sul1PRTLNe4+hkf/yeRmQu0Ttoohjprw==
 
-"@nstudio/web-angular@^9.0.3":
+"@nstudio/web-angular@9.0.3":
   version "9.0.3"
   resolved "https://registry.yarnpkg.com/@nstudio/web-angular/-/web-angular-9.0.3.tgz#fcdc0ffc33feceecd576cb7e5ae353706bd74837"
   integrity sha512-WeCSGxFXeoAoE1cAZl/Y9Ke20wxZkweeS32T95/JxE3nR40RtfsYdw6jLOGc5bOWXoIyFmx+bhz5LT1NQqJCDA==
@@ -6246,6 +6246,11 @@ base64-arraybuffer@0.1.5:
   resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-0.1.5.tgz#73926771923b5a19747ad666aa5cd4bf9c6e9ce8"
   integrity sha1-c5JncZI7Whl0etZmqlzUv5xunOg=
 
+base64-arraybuffer@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-0.2.0.tgz#4b944fac0191aa5907afe2d8c999ccc57ce80f45"
+  integrity sha512-7emyCsu1/xiBXgQZrscw/8KPRT44I4Yq9Pe6EGs3aPRTsWuggML1/1DTuZUuIaJPIm1FTDUVXl4x/yW8s0kQDQ==
+
 base64-js@0.0.8:
   version "0.0.8"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-0.0.8.tgz#1101e9544f4a76b1bc3b26d452ca96d7a35e7978"
@@ -8843,6 +8848,13 @@ css-declaration-sorter@^4.0.1:
     postcss "^7.0.1"
     timsort "^0.3.0"
 
+css-line-break@1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/css-line-break/-/css-line-break-1.1.1.tgz#d5e9bdd297840099eb0503c7310fd34927a026ef"
+  integrity sha512-1feNVaM4Fyzdj4mKPIQNL2n70MmuYzAXZ1aytlROFX1JsOo070OsugwGjj7nl6jnDJWHDM8zRZswkmeYVWZJQA==
+  dependencies:
+    base64-arraybuffer "^0.2.0"
+
 css-loader@3.4.2:
   version "3.4.2"
   resolved "https://registry.yarnpkg.com/css-loader/-/css-loader-3.4.2.tgz#d3fdb3358b43f233b78501c5ed7b1c6da6133202"
@@ -10470,10 +10482,10 @@ electron-reload@~1.5.0:
   dependencies:
     chokidar "^3.0.2"
 
-electron-store@~5.1.0:
-  version "5.1.1"
-  resolved "https://registry.yarnpkg.com/electron-store/-/electron-store-5.1.1.tgz#3040e5b4ad25d2e4caea59d505646c1e7c94a09b"
-  integrity sha512-FLidOVE8JVCdJXHd7xY/JojKJ2r2WNmWt0O/LlX2LuSVV7dkG2RSy2/Gm2LFw8OKDfrNBd9c/s4X1ikMrJEUKg==
+electron-store@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/electron-store/-/electron-store-5.2.0.tgz#a15718fc1fa21acfd07af55f9b94f9fa6a536665"
+  integrity sha512-iU3WDqEDAYNYR9XV7p0tJajq/zs9z7Nrn0sAoR5nDyn8h/9dr9kusKbTxD8NtVEBD1TB1pkGMqcbIt/y6knDwQ==
   dependencies:
     conf "^6.2.1"
     type-fest "^0.7.1"
@@ -13158,6 +13170,13 @@ html-to-text@5.1.1, html-to-text@^5.1.1:
     htmlparser2 "^3.10.1"
     lodash "^4.17.11"
     minimist "^1.2.0"
+
+html2canvas@^1.0.0-rc.5:
+  version "1.0.0-rc.5"
+  resolved "https://registry.yarnpkg.com/html2canvas/-/html2canvas-1.0.0-rc.5.tgz#4ee3cac9f6e20a0fa0c2f35a6f99c960ae7ec4c1"
+  integrity sha512-DtNqPxJNXPoTajs+lVQzGS1SULRI4GQaROeU5R41xH8acffHukxRh/NBVcTBsfCkJSkLq91rih5TpbEwUP9yWA==
+  dependencies:
+    css-line-break "1.1.1"
 
 htmlparser2@^3.10.0, htmlparser2@^3.10.1, htmlparser2@^3.9.1, htmlparser2@^3.9.2:
   version "3.10.1"
@@ -18101,6 +18120,13 @@ ngx-echarts@^4.2.1:
   version "4.2.2"
   resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-4.2.2.tgz#9eb5f69f923084869ea014f117915cd6cc366343"
   integrity sha512-iLxOFnfKhUYP8Qw22AUY2ugSEd1Uvt6AeYhiaSqpg/G6NDmM/NwpdLt+fGAjax2aY7e94ORuwhXnl2gxtNzt7Q==
+  dependencies:
+    tslib "^1.9.0"
+
+ngx-electron@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/ngx-electron/-/ngx-electron-2.2.0.tgz#8ab65427476153b499d26f332fa5ca88714d8477"
+  integrity sha512-Yl7Dsnvp97k0XpIuiB54X7Ij2+zU5x0pCAYnN//VZ9tF7c6S3//OZ9dN9Et7p/zIjCV3Hg9vyw68dPJEZGk+LQ==
   dependencies:
     tslib "^1.9.0"
 
