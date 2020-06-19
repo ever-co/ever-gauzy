@@ -42,6 +42,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				new Date(b.createdAt).getTime() -
 				new Date(a.createdAt).getTime()
 		);
+		console.log(this.updates);
 	}
 
 	async loadModal() {
