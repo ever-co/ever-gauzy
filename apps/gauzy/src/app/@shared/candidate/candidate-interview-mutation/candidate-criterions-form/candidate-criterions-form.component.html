@@ -13,6 +13,7 @@
 			<div *ngFor="let technology of technologiesList">
 				<nb-checkbox
 					(checkedChange)="checkedTechnologies(technology.name)"
+					[checked]="isChecked(technology.id)"
 					>{{ technology.name }}</nb-checkbox
 				>
 			</div>

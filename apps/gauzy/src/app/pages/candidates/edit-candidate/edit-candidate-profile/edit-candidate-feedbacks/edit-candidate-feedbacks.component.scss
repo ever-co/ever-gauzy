@@ -1,9 +1,15 @@
 .form {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .form-btn {
   margin: 0.5rem 0;
+  width: 15%;
 }
 
 .feedbacks-line {
@@ -53,9 +59,10 @@
 
 .buttons {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
+  justify-content: space-around;
   align-items: center;
+  width: 100%;
 }
 
 .description {
@@ -89,6 +96,10 @@
 
 .feedbacks-card-wrap {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .form-group {
@@ -174,12 +185,47 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-}
+  width: 100%;
 
-.form-blocks {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: stretch;
-  flex-wrap: wrap;
+  &-radio-group {
+    flex-direction: row;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .form-blocks {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    flex-wrap: wrap;
+    width: 100%;
+
+    .form-block {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: stretch;
+      flex-wrap: wrap;
+      border: 0.0625rem solid #e4e9f2;
+      width: 48%;
+      padding: 1rem;
+
+      &-criterion {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: stretch;
+        flex-wrap: wrap;
+
+        &-title {
+          font-size: 0.9rem;
+          font-weight: 600;
+          line-height: 1.5rem;
+        }
+      }
+    }
+  }
 }

@@ -11,7 +11,9 @@ import {
 	ICandidateFeedback,
 	CandidateStatus,
 	ICandidateInterviewers,
-	ICandidateInterview
+	ICandidateInterview,
+	ICandidateTechnologies,
+	ICandidatePersonalQualities
 } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -33,6 +35,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	candidateId: string;
 	form: FormGroup;
 	status: string;
+	currentInterview: ICandidateInterview;
 	feedbackInterviewId: string;
 	feedbackInterviewer: ICandidateInterviewers;
 	statusHire: number;
@@ -40,6 +43,9 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	interviewersHire: ICandidateInterviewers[] = [];
 	allInterviews: ICandidateInterview[] = [];
 	interviewers = [];
+	averageRating: number;
+	technologiesList: ICandidateTechnologies[];
+	personalQualitiesList: ICandidatePersonalQualities[];
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -74,12 +80,25 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		feedbackForm.push(
 			this.fb.group({
 				description: ['', Validators.required],
-				rating: ['', Validators.required]
-				// TO DO
-				// technologies: this.fb.array([]),
-				// personalQualities: this.fb.array([])
+				rating: [this.averageRating ? this.averageRating : null],
+				technologies: this.fb.array([]),
+				personalQualities: this.fb.array([])
 			})
 		);
+	}
+
+	private setRating(technologies: number[], qualities: number[]) {
+		this.technologiesList.map(
+			(tech, index) => (tech.rating = technologies[index])
+		);
+		this.personalQualitiesList.map(
+			(qual, index) => (qual.rating = qualities[index])
+		);
+		const techSum = technologies.reduce((sum, current) => sum + current, 0);
+		const qualSum = qualities.reduce((sum, current) => sum + current, 0);
+		const res =
+			(techSum / technologies.length + qualSum / qualities.length) / 2;
+		return res;
 	}
 	private async loadFeedbacks(interviewId?: string) {
 		const res = await this.candidateFeedbacksService.getAll(
@@ -106,17 +125,52 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			{ candidateId: this.candidateId }
 		);
 		if (res) {
-			const interview = res.items.find(
+			this.currentInterview = res.items.find(
 				(item) => item.id === feedback.interviewId
 			);
-			for (const criterionsRating of feedback.criterionsRating) {
-				for (const item of interview.technologies) {
-					if (item.id === criterionsRating.technologyId) {
-						item.rating = criterionsRating.rating;
-					}
-				}
-			}
+			feedback.criterionsRating.forEach((item) => {
+				this.currentInterview.technologies.map((tech) =>
+					tech.id === item.technologyId
+						? (tech.rating = item.rating)
+						: null
+				);
+				this.currentInterview.personalQualities.map((qual) =>
+					qual.id === item.personalQualityId
+						? (qual.rating = item.rating)
+						: null
+				);
+			});
 		}
+		this.technologiesList = this.currentInterview.technologies;
+		this.personalQualitiesList = this.currentInterview.personalQualities;
+		// TO DO: initial rating
+		// this.averageRating = this.setRating(
+		// 	technologies,
+		// personalQualities
+		// );
+		const technologyRating = this.form.get([
+			'feedbacks',
+			0,
+			'technologies'
+		]) as FormArray;
+		this.technologiesList.forEach((item) => {
+			technologyRating.push(this.fb.control(item.rating));
+		});
+
+		const personalQualityRating = this.form.get([
+			'feedbacks',
+			0,
+			'personalQualities'
+		]) as FormArray;
+		this.personalQualitiesList.forEach((item) => {
+			personalQualityRating.push(this.fb.control(item.rating));
+		});
+		this.form.valueChanges.subscribe((item) => {
+			this.averageRating = this.setRating(
+				item.feedbacks[0].technologies,
+				item.feedbacks[0].personalQualities
+			);
+		});
 	}
 	async loadInterviews(feedbackList: ICandidateFeedback[]) {
 		for (const item of feedbackList) {
@@ -164,7 +218,6 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	submitForm() {
 		const feedbackForm = this.form.controls.feedbacks as FormArray;
 		const formValue = { ...feedbackForm.value[0] };
-
 		if (feedbackForm.valid) {
 			if (this.feedbackId !== null) {
 				this.updateFeedback(formValue);
@@ -178,12 +231,12 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 
 	async updateFeedback(formValue: ICandidateFeedback) {
 		try {
+			//TO DO
+			// await this.candidateCriterionsRatingService.updateBulk( );
 			await this.candidateFeedbacksService.update(this.feedbackId, {
 				description: formValue.description,
 				rating: formValue.rating,
-				interviewId: this.feedbackInterviewId,
 				interviewer: this.feedbackInterviewer,
-				candidateId: this.candidateId,
 				status: this.status
 			});
 			this.loadFeedbacks();

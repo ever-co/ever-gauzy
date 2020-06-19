@@ -72,7 +72,11 @@
 						| translate
 				}}</ng-template>
 
-				<ga-candidate-criterions-form #candidateCriterionsForm>
+				<ga-candidate-criterions-form
+					#candidateCriterionsForm
+					[editSelectedTechnologies]="editData?.technologies"
+					[editSelectedQualities]="editData?.personalQualities"
+				>
 				</ga-candidate-criterions-form>
 
 				<div class="button-container">

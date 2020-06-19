@@ -18,6 +18,7 @@ import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
+import { resetCustomAction } from '@datorama/akita';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -117,12 +118,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	async editInterview(id: string) {
-		const currentInterview = await this.candidateInterviewService.findById(
-			id,
-			['interviewers']
-		);
-		currentInterview.interviewers = await this.candidateInterviewersService.findByInterviewId(
-			id
+		const currentInterview = this.interviewList.find(
+			(item) => item.id === id
 		);
 		const dialog = this.dialogService.open(
 			CandidateInterviewMutationComponent,
