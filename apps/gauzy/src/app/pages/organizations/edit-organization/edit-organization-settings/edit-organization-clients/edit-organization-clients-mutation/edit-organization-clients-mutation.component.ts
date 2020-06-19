@@ -6,12 +6,20 @@ import {
 	OrganizationProjects,
 	Tag
 } from '@gauzy/models';
+import { OrganizationProjectsService } from '../../../../../../@core/services/organization-projects.service';
+import { Store } from '../../../../../../@core/services/store.service';
+import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { ErrorHandlingService } from '../../../../../../@core/services/error-handling.service';
+import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-edit-organization-clients-mutation',
 	templateUrl: './edit-organization-clients-mutation.component.html'
 })
-export class EditOrganizationClientMutationComponent implements OnInit {
+export class EditOrganizationClientMutationComponent
+	extends TranslationBaseComponent
+	implements OnInit {
 	@Input()
 	employees: Employee[];
 	@Input()
@@ -31,8 +39,18 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 	selectedEmployeeIds: string[];
 	allProjects: OrganizationProjects[] = [];
 	tags: Tag[] = [];
+	projects: Object[] = [];
 
-	constructor(private readonly fb: FormBuilder) {}
+	constructor(
+		private readonly fb: FormBuilder,
+		private store: Store,
+		private organizationProjectsService: OrganizationProjectsService,
+		private readonly toastrService: NbToastrService,
+		readonly translateService: TranslateService,
+		private errorHandler: ErrorHandlingService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this._initializeForm();
@@ -44,6 +62,20 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 				(member) => member.id
 			);
 		}
+		this._getProjects();
+	}
+
+	private async _getProjects() {
+		this.organizationId = this.store.selectedOrganization.id;
+		const { items } = await this.organizationProjectsService.getAll([], {
+			organizationId: this.store.selectedOrganization.id
+		});
+		items.forEach((i) => {
+			this.projects = [
+				...this.projects,
+				{ projectName: i.name, projectId: i.id }
+			];
+		});
 	}
 
 	private _initializeForm() {
@@ -71,6 +103,26 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 		});
 	}
 
+	addNewProject = (name: string): Promise<OrganizationProjects> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationProjectsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
+
 	onMembersSelected(members: string[]) {
 		this.members = members;
 	}
@@ -91,9 +143,7 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 				country: this.form.value['country'],
 				city: this.form.value['city'],
 				street: this.form.value['street'],
-				projects: this.form.value['selectProjects']
-					.map((id) => this.allProjects.find((e) => e.id === id))
-					.filter((e) => !!e),
+				projects: this.form.value['selectProjects'].projectId,
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e)
