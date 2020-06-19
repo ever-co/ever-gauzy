@@ -20,6 +20,7 @@ import { OrganizationAwardsService } from '../../@core/services/organization-awa
 import * as moment from 'moment';
 import { IncomeService } from '../../@core/services/income.service';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 
 @Component({
 	selector: 'ngx-organization',
@@ -55,6 +56,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private organizationAwardsService: OrganizationAwardsService,
 		private incomeService: IncomeService,
 		private organizationClientsService: OrganizationClientsService,
+		private employeeStatisticsService: EmployeeStatisticsService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -89,35 +91,15 @@ export class OrganizationComponent extends TranslationBaseComponent
 						.pipe(first())
 						.toPromise();
 					this.imageUrl = this.organization.imageUrl;
-					if (typeof this.organization.totalEmployees !== 'number') {
-						await this.loadEmployeesCount();
-					}
-					if (!!this.organization.show_bonuses_paid) {
-						await this.getTotalBonusesPaid();
-					}
+					this.reloadPageData();
+					await this.getEmployeeStatistics();
 					if (!!this.organization.show_clients_count) {
 						await this.getClientsCount();
 					}
-					if (!!this.organization.show_income) {
-						await this.getTotalIncome();
-					}
-					this.reloadPageData();
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}
 			});
-	}
-
-	private async loadEmployeesCount() {
-		const { total } = await this.employeesService
-			.getAll([], {
-				organization: {
-					id: this.organization.id
-				}
-			})
-			.pipe(first())
-			.toPromise();
-		this.organization.totalEmployees = total;
 	}
 
 	private async loadLanguages() {
@@ -153,21 +135,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async getTotalBonusesPaid() {
-		let { items } = await this.incomeService.getAll(['employee'], {
-			isBonus: true,
-			organization: {
-				id: this.organization.id
-			}
-		});
-
-		for (let inc = 0; inc < items.length; inc++) {
-			if (items[inc].employee && items[inc].employee.anonymousBonus) {
-				this.bonuses_paid += parseFloat(String(items[inc].amount));
-			}
-		}
-	}
-
 	private async getClientsCount() {
 		const { total } = await this.organizationClientsService.getAll(null, {
 			organizationId: this.organization.id
@@ -184,6 +151,25 @@ export class OrganizationComponent extends TranslationBaseComponent
 
 		for (let inc = 0; inc < items.length; inc++) {
 			this.total_income += parseFloat(String(items[inc].amount));
+		}
+	}
+
+	private async getEmployeeStatistics() {
+		let statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
+			{
+				organizationId: this.organization.id,
+				filterDate: new Date()
+			}
+		);
+
+		if (typeof this.organization.totalEmployees !== 'number') {
+			this.organization.totalEmployees = statistics.employees.length;
+		}
+		if (!!this.organization.show_bonuses_paid) {
+			this.bonuses_paid = statistics.total.bonus;
+		}
+		if (!!this.organization.show_income) {
+			this.total_income = statistics.total.income;
 		}
 	}
 
