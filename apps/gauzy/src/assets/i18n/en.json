@@ -929,7 +929,8 @@
 		"TOTAL_CLIENTS": "Total Clients",
 		"YEAR_FOUNDED": "Year Founded",
 		"COMPANY_SIZE": "Company Size",
-		"CLIENT_FOCUS": "Client Focus"
+		"CLIENT_FOCUS": "Client Focus",
+		"TOTAL_INCOME": "Total Income"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",

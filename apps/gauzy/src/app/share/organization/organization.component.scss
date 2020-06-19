@@ -117,6 +117,18 @@ h5.org-title {
   margin: 0;
 }
 
+h5.org-title.org-key {
+  float: left;
+  display: block;
+  line-height: 2rem;
+}
+
+span.org-value {
+  float: left;
+  line-height: 2rem;
+  padding-left: 10px;
+}
+
 h5.org-title span.client-focus {
   font-size: 16px;
   font-weight: 500;

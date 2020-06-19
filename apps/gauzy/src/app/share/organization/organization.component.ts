@@ -37,6 +37,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	loading = true;
 	bonuses_paid = 0;
 	total_clients = 0;
+	total_income = 0;
 	imageUrl: string;
 	hoverState: boolean;
 	languageExist: boolean;
@@ -96,6 +97,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 					}
 					if (!!this.organization.show_clients_count) {
 						await this.getClientsCount();
+					}
+					if (!!this.organization.show_income) {
+						await this.getTotalIncome();
 					}
 					this.reloadPageData();
 				} catch (error) {
@@ -169,6 +173,18 @@ export class OrganizationComponent extends TranslationBaseComponent
 			organizationId: this.organization.id
 		});
 		this.total_clients = total;
+	}
+
+	private async getTotalIncome() {
+		let { items } = await this.incomeService.getAll(null, {
+			organization: {
+				id: this.organization.id
+			}
+		});
+
+		for (let inc = 0; inc < items.length; inc++) {
+			this.total_income += parseFloat(String(items[inc].amount));
+		}
 	}
 
 	private reloadPageData() {

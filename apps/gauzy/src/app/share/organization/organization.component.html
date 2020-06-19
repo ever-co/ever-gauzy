@@ -157,6 +157,22 @@
 				</div>
 			</div>
 			<div class="section_block"></div>
+			<div
+				class="row"
+				*ngIf="this.organization.show_income && total_income"
+			>
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.TOTAL_INCOME' | translate }} :
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="'$' + total_income"
+						></span>
+					</div>
+				</div>
+			</div>
 			<div class="row" *ngIf="languageExist">
 				<div class="col">
 					<div class="org-year-found">
