@@ -207,7 +207,9 @@
 						}
 					},
 					"options": {
-						"buildTarget": "api:build"
+						"buildTarget": "api:build",
+						"inspect": true,
+						"port": 9229
 					}
 				},
 				"lint": {
