@@ -24,6 +24,19 @@ export class HelpCenterService {
 			.toPromise();
 	}
 
+	createBulk(
+		oldChildren: IHelpCenter[],
+		newChildren: IHelpCenter[]
+	): Promise<IHelpCenter[]> {
+		return this.http
+			.post<IHelpCenter[]>('/api/help-center/createBulk', {
+				oldChildren,
+				newChildren
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
 			.put(`/api/help-center/${id}`, updateInput)

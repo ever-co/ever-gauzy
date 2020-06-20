@@ -1,7 +1,47 @@
-<nb-card class="card">
-	<nb-card-body>
-		<div>
-			<ga-sidebar></ga-sidebar>
-		</div>
-	</nb-card-body>
-</nb-card>
+<div class="global">
+	<ga-sidebar></ga-sidebar>
+	<div class="main">
+		<nb-card class="header">
+			<div class="header-article">
+				<h5>Category Name</h5>
+				<h5 class="articles">{{ this.nodes.length }} articles</h5>
+			</div>
+			<button
+				status="success"
+				class="base-button"
+				(click)="addNode()"
+				nbButton
+			>
+				Add article
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			</button>
+		</nb-card>
+		<nb-card
+			class="cards"
+			*ngFor="let article of this.nodes; let i = index"
+		>
+			<div>
+				<h6 class="label">{{ article.name }}</h6>
+				<p>{{ article.description }}</p>
+				<div class="user-info">
+					<p>written by</p>
+					<p class="create-at">
+						create at: {{ article.createdAt | date: 'mediumDate' }}
+					</p>
+				</div>
+			</div>
+			<div class="mr-3">
+				<nb-icon
+					class="edit-icon"
+					icon="edit-outline"
+					(click)="editNode()"
+				></nb-icon>
+				<nb-icon
+					class="edit-icon"
+					icon="trash-2-outline"
+					(click)="deleteNode(i)"
+				></nb-icon>
+			</div>
+		</nb-card>
+	</div>
+</div>

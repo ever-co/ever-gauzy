@@ -1,51 +1,40 @@
 @import '~angular-tree-component/dist/angular-tree-component.css';
 
+.sidemenu-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
 .sidemenu {
+  display: flex;
   flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
   min-height: 800px;
+  width: 99%;
 }
 
-.sidebar {
-  max-width: 300px;
-}
-
-.sidebar-button {
-  height: 30px;
-  width: 30px;
-  padding: 5px !important;
-  margin-left: 5px;
-}
-
-.add-base-field {
-  flex-direction: row;
-}
-
-.input-button {
-  position: absolute;
-  margin-left: -40px;
-}
-
-.main-buttons {
-  margin-right: 10px;
+.base-button {
   margin-bottom: 10px;
-}
-
-.edit-node-field {
-  margin-top: 10px;
 }
 
 .blue {
   color: blue;
 }
 
-.icons {
-  font-size: 1.05rem;
-}
-
 .text {
   font-size: 1.1rem;
 }
+
 .add-icon-field {
+  flex-direction: column;
+  display: flex;
+}
+
+.edit-field {
+  justify-content: space-between;
   flex-direction: row;
   display: flex;
 }
@@ -56,17 +45,19 @@
   color: gray;
 }
 
-.ck-editor {
-  margin-top: 10px;
-  margin-bottom: 10px;
+.base {
+  padding: 10px;
+  border: 1px #e4e9f2 solid;
+  min-width: 240px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
-.add-buttons {
-  margin-right: 5px;
-  margin-bottom: 5px;
-  max-width: 92px;
+.edit-icons {
+  display: none;
 }
 
-.close-add-buttons {
-  margin-bottom: 5px;
+.base:hover .edit-icons {
+  display: inline-block;
 }

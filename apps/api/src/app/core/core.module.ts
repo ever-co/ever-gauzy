@@ -95,6 +95,7 @@ import { KeyResult } from '../keyresult/keyresult.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
+import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 
 const entities = [
@@ -165,6 +166,7 @@ const entities = [
 	CandidateTechnologies,
 	CandidateCriterionsRating,
 	HelpCenter,
+	HelpCenterArticle,
 	IntegrationSetting,
 	Integration,
 	IntegrationType,

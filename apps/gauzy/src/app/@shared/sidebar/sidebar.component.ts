@@ -7,9 +7,21 @@ import { isEqual } from './delete-node';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbToastrService,
+	NbMenuItem,
+	NbMenuService
+} from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { AddBaseComponent } from './add-base/add-base.component';
+import { EditBaseComponent } from './edit-base/edit-base.component';
+import { AddCategoryComponent } from './add-category/add-category.component';
+import { EditCategoryComponent } from './edit-category/edit-category.component';
+import { DeleteCategoryComponent } from './delete-category/delete-category.component';
+import { DeleteBaseComponent } from './delete-base/delete-base.component';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 
 @Component({
@@ -26,7 +38,9 @@ export class SidebarComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private sanitizer: DomSanitizer,
 		private helpService: HelpCenterService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private errorHandler: ErrorHandlingService,
+		private nbMenuService: NbMenuService
 	) {
 		super(translateService);
 	}
@@ -36,19 +50,17 @@ export class SidebarComponent extends TranslationBaseComponent
 	public articleData: SafeHtml;
 	public tempData: string;
 	public tempNodes: IHelpCenter[] = [];
-	public languages = ['en', 'ru', 'he', 'bg'];
-	public colors = ['black', 'blue'];
-	public selectedLang = '';
-	public selectedColor = '';
 	public showArticleButton = false;
 	public showCategoryButton = false;
-	public nodeId = 0;
+	public nodeId = '';
 	public chosenCategory = false;
 	public chosenArticle = false;
 	public isVisibleAdd = false;
 	public isVisibleEdit = false;
 	public isChosenNode = false;
+	public isLoadBase = false;
 	public nodes: IHelpCenter[] = [];
+	settingsContextMenu: NbMenuItem[];
 	options: ITreeOptions = {
 		allowDrag: true,
 		allowDrop: (el, { parent, index }) => {
@@ -62,113 +74,145 @@ export class SidebarComponent extends TranslationBaseComponent
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
-	async onMoveNode($event) {
-		// console.log($event.node.id);
-		for (const node of this.tempNodes) {
-			// console.log(node.id);
-			if (node.id === $event.node.id) {
-				// console.log(node);
-				// 	if (!$event.to.parent.virtual) {
-				// 		await this.helpService.update(node.id, {
-				// 			parent: $event.to.parent,
-				// 			index: $event.to.index
-				// 		});
-				// 	} else {
-				// 		await this.helpService.update(node.id, {
-				// 			// parent: null,
-				// 			index: $event.to.index
-				// 		});
-				// 	}
-				// if (node.children.length !== 0)
-				// 	await this.helpService.update(node.id, {
-				// 		children: node.children
-				// 	});
+	ngOnInit() {
+		this.loadMenu();
+		this.form = this.fb.group({
+			name: [''],
+			desc: [''],
+			data: ['']
+		});
+		this.settingsContextMenu = [
+			{
+				title: 'Add Category'
+			},
+			{
+				title: 'Edit Knowledge Base'
+			},
+			{
+				title: 'Delete Base'
 			}
-			// if (node.parent.id === $event.to.parent) {
-			// 	console.log('child');
-			// }
+		];
+		this.nbMenuService.onItemClick().subscribe((elem) => {
+			if (elem.item.title === 'Edit Knowledge Base')
+				this.dialogService.open(EditBaseComponent);
+			if (elem.item.title === 'Add Category')
+				this.dialogService.open(AddCategoryComponent);
+			if (elem.item.title === 'Delete Base')
+				this.dialogService.open(DeleteBaseComponent);
+		});
+	}
+
+	editCategory() {
+		this.dialogService.open(EditCategoryComponent);
+	}
+
+	deleteCategory() {
+		this.dialogService.open(DeleteCategoryComponent);
+	}
+
+	// async updateIndexes(
+	// 	oldChildren: IHelpCenter[],
+	// 	newChildren: IHelpCenter[]
+	// ) {
+	// 	try {
+	// 		await this.helpService.createBulk(oldChildren, newChildren);
+	// 	} catch (error) {
+	// 		this.errorHandler.handleError(error);
+	// 	}
+	// }
+	async onMoveNode($event) {
+		// this.updateIndexes(
+		// 	$event.from.parent.children,
+		// 	$event.to.parent.children
+		// );
+		for (const node of this.tempNodes) {
+			if (node.id === $event.node.id) {
+				// if (!$event.to.parent.virtual) {
+				// 	await this.helpService.update(node.id, {
+				// 		parent: $event.to.parent
+				// 	});
+				// } else {
+				// 	await this.helpService.update(node.id, {
+				// 		parent: null
+				// 	});
+				// }
+				if (node.children.length !== 0) {
+					this.toastrSuccess('MOVED_CATEGORY');
+				} else {
+					this.toastrSuccess('MOVED_ARTICLE');
+				}
+			}
 		}
-		// const movedNode = $event.node;
-		// console.log(movedNode);
-		// if (!$event.to.parent.virtual) {
-		// 	await this.helpService.update(movedNode.id, {
-		// 		parent: $event.to.parent,
-		// 		index: $event.to.index
-		// 	});
-		// } else {
-		// 	await this.helpService.update(movedNode.id, {
-		// 		index: $event.to.index
+		// this.loadMenu();
+		this.tree.treeModel.update();
+	}
+	async addNode() {
+		this.dialogService.open(AddBaseComponent);
+		// const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
+		// if (chosenIcon) {
+		// 	const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		// 	someNode.data.icon = chosenIcon;
+		// 	await this.helpService.update(someNode.data.id, {
+		// 		icon: `${someNode.data.icon}`
 		// 	});
 		// }
 
-		// if ($event.node.children)
-		// 	await this.helpService.update(movedNode.id, {
-		// 		children: $event.node.children
-		// 	});
-		this.loadMenu();
-		this.tree.treeModel.update();
-		this.toastrSuccess('MOVED_ARTICLE');
-		this.toastrSuccess('MOVED_CATEGORY');
+		// this.tree.treeModel.update();
+		// this.isVisibleAdd = true;
 	}
-	addNode() {
-		this.isVisibleAdd = true;
-	}
-	showInput(key: number) {
-		if (key === 1) {
-			this.showArticleButton = true;
-		} else {
-			this.showCategoryButton = true;
-		}
-	}
+	// showInput(key: number) {
+	// 	if (key === 1) {
+	// 		this.showArticleButton = true;
+	// 	} else {
+	// 		this.showCategoryButton = true;
+	// 	}
+	// }
 
-	async addName(event: any, key: number) {
-		if (key !== 1) {
-			await this.helpService.create({
-				name: `${event.target.value}`,
-				icon: 'book-open-outline',
-				flag: 'category',
-				privacy: 'eye-outline',
-				language: 'en',
-				color: 'black',
-				index: this.nodes.length,
-				children: []
-			});
-			this.toastrSuccess('CREATED_CATEGORY');
-		} else {
-			await this.helpService.create({
-				name: `${event.target.value}`,
-				icon: 'book-open-outline',
-				flag: 'article',
-				privacy: 'eye-outline',
-				description: '',
-				language: 'en',
-				color: 'black',
-				index: this.nodes.length,
-				data: ''
-			});
-			this.toastrSuccess('CREATED_ARTICLE');
-		}
-		this.loadMenu();
-		this.tree.treeModel.update();
-		this.isVisibleAdd = false;
-		this.showArticleButton = false;
-		this.showCategoryButton = false;
-	}
+	// async addName(event: any, key: number) {
+	// 	if (key !== 1) {
+	// 		await this.helpService.create({
+	// 			name: `${event.target.value}`,
+	// 			icon: 'book-open-outline',
+	// 			flag: 'category',
+	// 			privacy: 'eye-outline',
+	// 			language: 'en',
+	// 			color: 'black',
+	// 			index: this.nodes.length,
+	// 			children: []
+	// 		});
+	// 		this.toastrSuccess('CREATED_CATEGORY');
+	// 	} else {
+	// 		await this.helpService.create({
+	// 			name: `${event.target.value}`,
+	// 			icon: 'book-open-outline',
+	// 			flag: 'article',
+	// 			privacy: 'eye-outline',
+	// 			description: '',
+	// 			language: 'en',
+	// 			color: 'black',
+	// 			index: this.nodes.length,
+	// 			data: ''
+	// 		});
+	// 		this.toastrSuccess('CREATED_ARTICLE');
+	// 	}
+	// 	this.loadMenu();
+	// 	this.tree.treeModel.update();
+	// 	this.isVisibleAdd = false;
+	// 	this.showArticleButton = false;
+	// 	this.showCategoryButton = false;
+	// }
 	onNodeClicked(node: any) {
-		console.log(node.data.index);
-		this.nodeId = node.data.id;
+		this.nodeId = node.id.toString();
 		this.isChosenNode = true;
-		this.articleName = node.data.name;
-		this.selectedLang = node.data.language;
-		this.selectedColor = node.data.color;
-		if (node.data.flag === 'article') {
-			this.articleDesc = node.data.description;
+		this.articleName = node.name;
+		if (node.flag === 'article') {
+			this.articleDesc = node.description;
 			this.articleData = this.sanitizer.bypassSecurityTrustHtml(
-				`${node.data.data}`
+				`${node.data}`
 			);
 			this.chosenCategory = false;
 			this.chosenArticle = true;
-			this.loadFormData(node.data);
+			this.loadFormData(node);
 		} else {
 			this.chosenCategory = true;
 			this.chosenArticle = false;
@@ -193,7 +237,6 @@ export class SidebarComponent extends TranslationBaseComponent
 				icon: `${someNode.data.icon}`
 			});
 		}
-
 		this.tree.treeModel.update();
 	}
 
@@ -215,9 +258,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		someNode.data.name = event.target.value;
 		this.isVisibleEdit = false;
 		await this.helpService.update(someNode.data.id, {
-			name: `${someNode.data.name}`,
-			language: this.selectedLang,
-			color: this.selectedColor
+			name: `${someNode.data.name}`
 		});
 		this.loadMenu();
 		this.toastrSuccess('EDITED_CATEGORY');
@@ -237,6 +278,56 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.isChosenNode = false;
 		this.articleName = 'Chose any article';
 		this.toastrSuccess('DELETED');
+	}
+
+	prevArticle() {
+		for (const node of this.tempNodes)
+			if (node.id === this.nodeId.toString()) {
+				const childNodes = this.tempNodes.filter(
+					(item) =>
+						((item.parent &&
+							node.parent &&
+							item.parent.id === node.parent.id) ||
+							(item.parent === null && node.parent === null)) &&
+						item.flag === 'article'
+				);
+				childNodes.forEach((child) => {
+					if (child.index === node.index - 1) {
+						this.nodeId = child.id;
+						this.articleName = child.name;
+						this.articleDesc = child.description;
+						this.articleData = this.sanitizer.bypassSecurityTrustHtml(
+							`${child.data}`
+						);
+						this.loadFormData(child);
+					}
+				});
+			}
+	}
+
+	nextArticle() {
+		for (const node of this.tempNodes)
+			if (node.id === this.nodeId.toString()) {
+				const childNodes = this.tempNodes.filter(
+					(item) =>
+						((item.parent &&
+							node.parent &&
+							item.parent.id === node.parent.id) ||
+							(item.parent === null && node.parent === null)) &&
+						item.flag === 'article'
+				);
+				childNodes.forEach((child) => {
+					if (child.index === node.index + 1) {
+						this.nodeId = child.id;
+						this.articleName = child.name;
+						this.articleDesc = child.description;
+						this.articleData = this.sanitizer.bypassSecurityTrustHtml(
+							`${child.data}`
+						);
+						this.loadFormData(child);
+					}
+				});
+			}
 	}
 
 	loadFormData(data) {
@@ -261,9 +352,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		await this.helpService.update(someNode.data.id, {
 			name: `${someNode.data.name}`,
 			description: `${someNode.data.description}`,
-			data: this.tempData,
-			language: this.selectedLang,
-			color: this.selectedColor
+			data: this.tempData
 		});
 		this.toastrSuccess('EDITED_ARTICLE');
 		this.loadMenu();
@@ -293,15 +382,6 @@ export class SidebarComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.${text}`)
 		);
-	}
-
-	ngOnInit() {
-		this.loadMenu();
-		this.form = this.fb.group({
-			name: [''],
-			desc: [''],
-			data: ['']
-		});
 	}
 
 	ngOnDestroy() {

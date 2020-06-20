@@ -1,3 +1,4 @@
+import { IHelpCenterArticle } from './help-center-article.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface IHelpCenter extends IBaseEntityModel {
@@ -12,4 +13,5 @@ export interface IHelpCenter extends IBaseEntityModel {
 	index: number;
 	children?: IHelpCenter[];
 	parent?: IHelpCenter;
+	article?: IHelpCenterArticle[];
 }
