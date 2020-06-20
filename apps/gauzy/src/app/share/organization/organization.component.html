@@ -200,7 +200,7 @@
 				<div class="col">
 					<div class="org-year-found">
 						<h5 class="org-title org-key">
-							{{ 'PUBLIC_PAGE.MONTHLY_INCOME' | translate }} :
+							{{ 'PUBLIC_PAGE.TOTAL_INCOME' | translate }} :
 						</h5>
 						<span
 							class="org-value"
@@ -337,6 +337,7 @@
 									class="employee_name"
 									[name]="
 										employee.user.firstName +
+										' ' +
 										employee.user.lastName
 									"
 									[picture]="employee.user.imageUrl"

@@ -5,7 +5,7 @@
 			"typescriptMismatch": false,
 			"versionMismatch": false
 		},
-		"defaultCollection": "@nrwl/angular",
+		"defaultCollection": "@nstudio/xplat",
 		"packageManager": "yarn",
 		"analytics": false
 	},
