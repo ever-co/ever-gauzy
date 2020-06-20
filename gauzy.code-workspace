@@ -14,5 +14,16 @@
 		"git.ignoreLimitWarning": true,
 		"checkpoints.showActiveFileOnly": true,
 		"deepscan.enable": true
+	},
+	"launch": {
+		"configurations": [
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Debug Server",
+				"port": 9229,
+				"cwd": "${workspaceFolder:apps}/.."
+			}
+		]
 	}
 }

@@ -7,20 +7,10 @@
 		{
 			"type": "node",
 			"request": "attach",
-			"name": "Debug API",
+			"name": "Debug Server",
 			"sourceMaps": true,
 			"port": 9229
 		},
-		// {
-		// "type": "node",
-		// "request": "launch",
-		// "name": "Debug Nest Framework",
-		// "args": ["${workspaceFolder}\\apps\\api\\src\\main.ts"],
-		// "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
-		// "sourceMaps": true,
-		// "cwd": "${workspaceRoot}",
-		// "protocol": "inspector"
-		// },
 		{
 			"type": "node",
 			"request": "launch",
