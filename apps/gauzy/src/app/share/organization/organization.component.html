@@ -247,44 +247,39 @@
 			<div class="row" *ngIf="languageExist">
 				<div class="col">
 					<div class="org-year-found">
-						<h5 class="org-title">
-							{{ 'PUBLIC_PAGE.LANGUAGES' | translate }}
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.LANGUAGES' | translate }} :
 						</h5>
-						<nb-list class="nb_list block_style org_languages">
-							<nb-list-item
+						<span class="org-value">
+							<span
+								class="org_list_data"
 								*ngFor="
 									let l of organization_languages;
 									let i = index
 								"
-								class="nb_list_item item"
+								[textContent]="
+									(i !== 0 ? ', ' : ' ') +
+									l.name +
+									' (' +
+									l.level +
+									')'
+								"
 							>
-								<span
-									class="award_title"
-									[textContent]="
-										(i !== 0 ? ', ' : ' ') +
-										l.name +
-										' (' +
-										l.level +
-										')'
-									"
-								></span>
-							</nb-list-item>
-						</nb-list>
+							</span>
+						</span>
 					</div>
 				</div>
 			</div>
 			<div class="row" *ngIf="awardExist">
 				<div class="col">
-					<h5 class="org-title">
-						{{ 'PUBLIC_PAGE.AWARDS' | translate }}
-					</h5>
-					<nb-list class="nb_list block_style org_awards">
-						<nb-list-item
-							*ngFor="let a of awards; let i = index"
-							class="nb_list_item item"
-						>
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.AWARDS' | translate }} :
+						</h5>
+						<span class="org-value">
 							<span
-								class="award_title"
+								class="org_list_data"
+								*ngFor="let a of awards; let i = index"
 								[textContent]="
 									(i !== 0 ? ', ' : ' ') +
 									a.name +
@@ -292,31 +287,60 @@
 									a.year +
 									')'
 								"
-							></span>
-						</nb-list-item>
-					</nb-list>
+							>
+							</span>
+						</span>
+					</div>
 				</div>
 			</div>
 			<div class="row" *ngIf="organization.skills">
 				<div class="col">
 					<div class="org-skills">
-						<h5 class="org-title">
-							{{ 'PUBLIC_PAGE.COMPANY_SKILLS' | translate }}
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.COMPANY_SKILLS' | translate }} :
 						</h5>
-						<nb-list class="nb_list block_style org_skills">
-							<nb-list-item
+						<span class="org-value">
+							<span
+								class="org_list_data"
 								*ngFor="
 									let skill of organization.skills;
 									let i = index
 								"
-								class="nb_list_item item"
+								[textContent]="
+									(i !== 0 ? ', ' : ' ') + skill.name
+								"
 							>
-								<span
-									class="skill_title"
-									[textContent]="
-										(i !== 0 ? ', ' : ' ') + skill.name
+							</span>
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="row" *ngIf="employees">
+				<div class="col">
+					<h5 class="org-title title-employees">
+						{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }}
+						<span
+							class="org-employee-total"
+							[textContent]="'(' + employees.length + ')'"
+						></span>
+					</h5>
+					<div class="employee-list">
+						<nb-list class="nb_list block_style org_skills">
+							<nb-list-item
+								*ngFor="
+									let employee of employees;
+									let i = index
+								"
+								class="nb_list_employee"
+								><nb-user
+									class="employee_name"
+									[name]="
+										employee.user.firstName +
+										employee.user.lastName
 									"
-								></span>
+									[picture]="employee.user.imageUrl"
+								></nb-user>
 							</nb-list-item>
 						</nb-list>
 					</div>

@@ -43,6 +43,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	profits = 0;
 	minimum_project_size = 0;
 	total_projects = 0;
+	employee_bonuses = [];
 	employees = [];
 	imageUrl: string;
 	hoverState: boolean;
@@ -105,6 +106,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 					if (!!this.organization.show_projects_count) {
 						await this.getProjectCount();
 					}
+					await this.getEmployees();
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}
@@ -120,12 +122,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		);
 		if (res) {
 			this.organization_languages = res.items;
-
-			if (this.organization_languages.length <= 0) {
-				this.languageExist = false;
-			} else {
-				this.languageExist = true;
-			}
+			this.languageExist = !!this.organization_languages.length;
 		}
 	}
 
@@ -135,12 +132,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		});
 		if (res) {
 			this.awards = res.items;
-
-			if (this.awards.length <= 0) {
-				this.awardExist = false;
-			} else {
-				this.awardExist = true;
-			}
+			this.awardExist = !!this.awards.length;
 		}
 	}
 
@@ -170,13 +162,35 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async getTotalIncome() {
-		let { items } = await this.incomeService.getAll(['employee'], {
-			organization: {
-				id: this.organization.id
-			},
-			isBonus: true
-		});
+	private async getEmployees() {
+		let employees = await this.employeesService
+			.getAll(['user'], {
+				organization: {
+					id: this.organization.id
+				}
+			})
+			.pipe(first())
+			.toPromise();
+		this.employees = employees.items;
+
+		if (typeof this.organization.totalEmployees !== 'number') {
+			this.organization.totalEmployees = employees.total;
+		}
+	}
+
+	private async getEmployeeBonuses() {
+		let employeeBonuses = await this.incomeService.getAll(
+			['employee', 'employee.user'],
+			{
+				organization: {
+					id: this.organization.id
+				},
+				isBonus: true
+			}
+		);
+		this.employee_bonuses = employeeBonuses.items.filter(
+			(item) => !!item.employee.anonymousBonus
+		);
 	}
 
 	private async getEmployeeStatistics() {
@@ -186,11 +200,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 				filterDate: new Date()
 			}
 		);
-		this.employees = statistics.employees;
-		console.log(this.employees);
-		if (typeof this.organization.totalEmployees !== 'number') {
-			this.organization.totalEmployees = this.employees.length;
-		}
+
 		if (!!this.organization.show_bonuses_paid) {
 			this.bonuses_paid = statistics.total.bonus;
 		}

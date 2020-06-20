@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
-	NbListModule
+	NbListModule,
+	NbUserModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationComponent } from './organization.component';
@@ -42,7 +43,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NbListModule
+		NbListModule,
+		NbUserModule
 	],
 	declarations: [OrganizationComponent],
 	entryComponents: [],

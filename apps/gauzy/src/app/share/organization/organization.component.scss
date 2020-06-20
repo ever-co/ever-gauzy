@@ -143,8 +143,26 @@ h5.org-title span.client-focus {
   padding-left: 0;
 }
 
-.nb_list.org_skills .nb_list_item.item,
-.nb_list.org_languages .nb_list_item.item,
-.nb_list.org_awards .nb_list_item.item {
-  padding-right: 0;
+.nb_list_employee {
+  border: none;
+  padding: 0;
+  padding-bottom: 17px;
+  float: left;
+  padding-right: 30px;
+  min-width: 14%;
+  max-width: 100%;
+}
+
+.nb_list_employee:first-child {
+  border: none;
+}
+
+h5.org-title.title-employees {
+  text-align: center;
+  padding: 9px;
+  border-bottom: 1px solid #222b45;
+  margin: 0 auto;
+  max-width: 180px;
+  margin-bottom: 25px;
+  line-height: 15px;
 }
