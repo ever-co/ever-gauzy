@@ -23,11 +23,11 @@ import { EditRolesPermissionsComponent } from './edit-roles-permissions/edit-rol
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { DangerZoneMutationModule } from '../../@shared/settings/danger-zone-mutation.module';
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
 import { EmailFiltersComponent } from './email-history/email-filters/email-filters.component';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { EmailTemplatesModule } from '../email-templates/email-templates.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -36,6 +36,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 @NgModule({
 	imports: [
 		SettingsRoutingModule,
+		EmailTemplatesModule,
 		ThemeModule,
 		NbCardModule,
 		UserFormsModule,
