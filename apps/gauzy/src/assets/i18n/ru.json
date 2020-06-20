@@ -1445,6 +1445,8 @@
 			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!",
 			"EMAIL_TEMPLATE_SAVED": "{{templateName}} шаблон письма успешно сохранен",
 			"DELETED": "Успешно удален",
+			"CREATED": "Успешно создано",
+			"UPDATED": "Успешно обновлено",
 			"MOVED_ARTICLE": "Статья была перемещена",
 			"MOVED_CATEGORY": "Категория была перемещена",
 			"CREATED_ARTICLE": "Статья создана",
