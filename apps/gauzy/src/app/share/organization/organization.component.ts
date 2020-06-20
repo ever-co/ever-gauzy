@@ -6,10 +6,13 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { EmployeesService } from '../../@core/services';
 import { TranslateService } from '@ngx-translate/core';
 import {
+	IGetTimeLogInput,
 	Organization,
 	OrganizationAwards,
 	OrganizationLanguages,
-	PermissionsEnum
+	PermissionsEnum,
+	TimeLogFilters,
+	Timesheet
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -22,6 +25,8 @@ import { IncomeService } from '../../@core/services/income.service';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
+import { TimesheetService } from '../../@shared/timesheet/timesheet.service';
+import { toUTC } from '../../../../../../libs/utils';
 
 @Component({
 	selector: 'ngx-organization',
@@ -51,6 +56,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	awardExist: boolean;
 	imageUpdateButton: boolean = false;
 	moment = moment;
+	timeSheets: Timesheet[];
 
 	constructor(
 		private route: ActivatedRoute,
@@ -64,6 +70,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private organizationClientsService: OrganizationClientsService,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private organizationProjectsService: OrganizationProjectsService,
+		private timesheetService: TimesheetService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -105,6 +112,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 					}
 					if (!!this.organization.show_projects_count) {
 						await this.getProjectCount();
+					}
+					if (!!this.organization.show_total_hours) {
+						await this.getTimeSheets();
 					}
 					await this.getEmployees();
 				} catch (error) {
@@ -191,6 +201,17 @@ export class OrganizationComponent extends TranslationBaseComponent
 		this.employee_bonuses = employeeBonuses.items.filter(
 			(item) => !!item.employee.anonymousBonus
 		);
+	}
+
+	private async getTimeSheets() {
+		const request: IGetTimeLogInput = {
+			organizationId: this.organization.id
+		};
+		this.loading = true;
+		this.timeSheets = await this.timesheetService
+			.getTimeSheets(request)
+			.then((logs) => logs)
+			.finally(() => (this.loading = false));
 	}
 
 	private async getEmployeeStatistics() {
