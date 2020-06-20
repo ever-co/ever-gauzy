@@ -22,6 +22,7 @@
 				"request": "attach",
 				"name": "Debug Server",
 				"port": 9229,
+				"restart": true,
 				"cwd": "${workspaceFolder:apps}/.."
 			}
 		]

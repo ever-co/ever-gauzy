@@ -9,6 +9,7 @@
 			"request": "attach",
 			"name": "Debug Server",
 			"sourceMaps": true,
+			"restart": true,
 			"port": 9229
 		},
 		{
