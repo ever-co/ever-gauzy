@@ -928,7 +928,13 @@
 		"TOTAL_CLIENTS": "Всего клиентов",
 		"YEAR_FOUNDED": "Дата создания",
 		"COMPANY_SIZE": "Размер компании",
-		"CLIENT_FOCUS": "Фокус клиента"
+		"CLIENT_FOCUS": "Фокус клиента",
+		"MONTHLY_INCOME": "Ежемесячный доход",
+		"TOTAL_INCOME": "Общий доход",
+		"TOTAL_PROJECTS": "Всего проектов",
+		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
+		"EMPLOYEES": "Сотрудники",
+		"PROFITS": "Прибыль"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
