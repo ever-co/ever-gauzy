@@ -20,8 +20,8 @@ import {
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import {
-	OrganizationClients as IOrganizationClients,
-	ClientOrganizationInviteStatus
+	Contacts as IContacts
+	// ClientOrganizationInviteStatus
 } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
@@ -29,21 +29,14 @@ import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 
-@Entity('organization_client')
-export class OrganizationClients extends Base implements IOrganizationClients {
-	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.organizationClient)
-	@JoinTable({
-		name: 'tag_organization_client'
-	})
-	tags: Tag[];
-
-	// contactId
-	// @ManyToMany((type) => Employee, { cascade: ['update'] })
+@Entity('contact')
+export class Contacts extends Base implements IContacts {
+	// @ApiProperty()
+	// @ManyToMany((type) => Tag, (tag) => tag.organizationClient)
 	// @JoinTable({
-	// 	name: 'organization_client_employee'
+	// 	name: 'tag_contact'
 	// })
-	// members?: Employee[];
+	// tags: Tag[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -51,6 +44,20 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	@Index()
 	@Column()
 	name: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	firstName: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	lastName: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -106,41 +113,41 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	@Column({ nullable: true })
 	state?: string;
 
-	@ApiProperty({ type: String, enum: ClientOrganizationInviteStatus })
-	@IsEnum(ClientOrganizationInviteStatus)
-	@IsOptional()
-	@Column({ nullable: true })
-	inviteStatus?: string;
+	// @ApiProperty({ type: String, enum: ClientOrganizationInviteStatus })
+	// @IsEnum(ClientOrganizationInviteStatus)
+	// @IsOptional()
+	// @Column({ nullable: true })
+	// inviteStatus?: string;
 
-	@ApiProperty({ type: Organization })
-	@OneToOne((type) => Organization, { nullable: true, onDelete: 'SET NULL' })
-	@JoinColumn()
-	clientOrganization?: Organization;
+	// @ApiProperty({ type: Organization })
+	// @OneToOne((type) => Organization, { nullable: true, onDelete: 'SET NULL' })
+	// @JoinColumn()
+	// clientOrganization?: Organization;
 
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((client: OrganizationClients) => client.clientOrganization)
-	@Column({ nullable: true })
-	readonly clientOrganizationId?: string;
+	// @ApiProperty({ type: String, readOnly: true })
+	// @RelationId((client: OrganizationClients) => client.clientOrganization)
+	// @Column({ nullable: true })
+	// readonly clientOrganizationId?: string;
 
-	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
-	@OneToMany((type) => OrganizationProjects, (projects) => projects.client)
-	@JoinColumn()
-	projects?: OrganizationProjects[];
+	// @ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
+	// @OneToMany((type) => OrganizationProjects, (projects) => projects.client)
+	// @JoinColumn()
+	// projects?: OrganizationProjects[];
 
-	@ApiPropertyOptional({ type: Invoice, isArray: true })
-	@OneToMany((type) => Invoice, (invoices) => invoices.toClient)
-	@JoinColumn()
-	invoices?: Invoice[];
+	// @ApiPropertyOptional({ type: Invoice, isArray: true })
+	// @OneToMany((type) => Invoice, (invoices) => invoices.toClient)
+	// @JoinColumn()
+	// invoices?: Invoice[];
 
-	@ApiPropertyOptional({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	notes?: string;
+	// @ApiPropertyOptional({ type: String })
+	// @IsString()
+	// @IsOptional()
+	// @Column({ nullable: true })
+	// notes?: string;
 
-	@ManyToMany((type) => Employee, { cascade: ['update'] })
-	@JoinTable({
-		name: 'organization_client_employee'
-	})
-	members?: Employee[];
+	// @ManyToMany((type) => Employee, { cascade: ['update'] })
+	// @JoinTable({
+	// 	name: 'organization_client_employee'
+	// })
+	// members?: Employee[];
 }
