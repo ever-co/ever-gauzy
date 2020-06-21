@@ -11,7 +11,6 @@ import {
 	OrganizationAwards,
 	OrganizationLanguages,
 	PermissionsEnum,
-	TimeLogFilters,
 	Timesheet
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -26,7 +25,6 @@ import { OrganizationClientsService } from '../../@core/services/organization-cl
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { TimesheetService } from '../../@shared/timesheet/timesheet.service';
-import { toUTC } from '../../../../../../libs/utils';
 
 @Component({
 	selector: 'ngx-organization',
