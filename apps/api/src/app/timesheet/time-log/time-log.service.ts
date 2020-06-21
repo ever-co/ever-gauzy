@@ -13,9 +13,11 @@ import {
 	IManualTimeInput,
 	IGetTimeLogInput,
 	PermissionsEnum,
-	IGetTimeLogConflictInput
+	IGetTimeLogConflictInput,
+	IDateRange
 } from '@gauzy/models';
 import * as moment from 'moment';
+import * as _ from 'underscore';
 import { CrudService } from '../../core';
 import { TimeSheetService } from '../timesheet/timesheet.service';
 import { TimeSlotService } from '../time-slot.service';
@@ -169,6 +171,15 @@ export class TimeLogService extends CrudService<TimeLog> {
 			endDate: request.stoppedAt,
 			...(request.id ? { ignoreId: request.id } : {})
 		});
+
+		const times: IDateRange = {
+			start: new Date(request.startedAt),
+			end: new Date(request.stoppedAt)
+		};
+		for (let index = 0; index < confict.length; index++) {
+			await this.updateConflict(times, confict[index]);
+		}
+
 		const timesheet = await this.timesheetService.createOrFindTimeSheet(
 			request.employeeId,
 			request.startedAt
@@ -223,9 +234,10 @@ export class TimeLogService extends CrudService<TimeLog> {
 		);
 		const isDateAllow = this.allowDate(
 			request.startedAt,
-			request.startedAt,
+			request.stoppedAt,
 			employee.organization
 		);
+
 		if (!isDateAllow) {
 			throw new BadRequestException(
 				'Please select valid Date start and end time'
@@ -240,70 +252,72 @@ export class TimeLogService extends CrudService<TimeLog> {
 			...(request.id ? { ignoreId: request.id } : {})
 		});
 
+		const times: IDateRange = {
+			start: new Date(request.startedAt),
+			end: new Date(request.stoppedAt)
+		};
+		for (let index = 0; index < confict.length; index++) {
+			await this.updateConflict(times, confict[index]);
+		}
+
 		const timesheet = await this.timesheetService.createOrFindTimeSheet(
 			timeLog.employeeId,
-			request.startedAt
+			times.start
 		);
 
-		if (confict.length === 0) {
-			const timeSlots = this.timeSlotService.generateTimeSlots(
-				timeLog.startedAt,
-				timeLog.stoppedAt
-			);
-			let updateTimeSlots = this.timeSlotService.generateTimeSlots(
-				request.startedAt,
-				request.stoppedAt
-			);
+		const timeSlots = this.timeSlotService.generateTimeSlots(
+			timeLog.startedAt,
+			timeLog.stoppedAt
+		);
+		let updateTimeSlots = this.timeSlotService.generateTimeSlots(
+			times.start,
+			times.end
+		);
 
-			await this.timeLogRepository.update(
-				{ id: request.id },
-				{
-					startedAt: request.startedAt,
-					stoppedAt: request.stoppedAt,
-					timesheetId: timesheet.id,
-					projectId: request.projectId || null,
-					taskId: request.taskId || null,
-					clientId: request.clientId || null,
-					logType: TimeLogType.MANUAL,
-					description: request.description || '',
-					isBillable: request.isBillable || false
-				}
-			);
-
-			const startTimes = timeSlots
-				.filter((timeslot) => {
-					return (
-						updateTimeSlots.filter(
-							(newSlot) =>
-								newSlot.startedAt.getTime() ===
-								timeslot.startedAt.getTime()
-						).length === 0
-					);
-				})
-				.map((timeslot) => new Date(timeslot.startedAt));
-
-			if (startTimes.length > 0) {
-				await this.timeSlotService.delete({
-					employeeId: timeLog.employeeId,
-					startedAt: In(startTimes)
-				});
+		await this.timeLogRepository.update(
+			{ id: request.id },
+			{
+				startedAt: times.start,
+				stoppedAt: times.end,
+				timesheetId: timesheet.id,
+				projectId: request.projectId || null,
+				taskId: request.taskId || null,
+				clientId: request.clientId || null,
+				logType: TimeLogType.MANUAL,
+				description: request.description || '',
+				isBillable: request.isBillable || false
 			}
+		);
 
-			updateTimeSlots = updateTimeSlots.map((slot) => ({
-				...slot,
+		const startTimes = timeSlots
+			.filter((timeslot) => {
+				return (
+					updateTimeSlots.filter(
+						(newSlot) =>
+							newSlot.startedAt.getTime() ===
+							timeslot.startedAt.getTime()
+					).length === 0
+				);
+			})
+			.map((timeslot) => new Date(timeslot.startedAt));
+
+		if (startTimes.length > 0) {
+			await this.timeSlotService.delete({
 				employeeId: timeLog.employeeId,
-				keyboard: 0,
-				mouse: 0,
-				overall: 0
-			}));
-			await this.timeSlotService.bulkCreate(updateTimeSlots);
-
-			return await this.timeLogRepository.findOne(request.id);
-		} else {
-			throw new BadRequestException(
-				"You can't add add twice for same time."
-			);
+				startedAt: In(startTimes)
+			});
 		}
+
+		updateTimeSlots = updateTimeSlots.map((slot) => ({
+			...slot,
+			employeeId: timeLog.employeeId,
+			keyboard: 0,
+			mouse: 0,
+			overall: 0
+		}));
+		await this.timeSlotService.bulkCreate(updateTimeSlots);
+
+		return await this.timeLogRepository.findOne(request.id);
 	}
 
 	async deleteTimeLog(ids: string | string[]): Promise<any> {
@@ -332,6 +346,84 @@ export class TimeLogService extends CrudService<TimeLog> {
 			return true;
 		}
 		return moment(end).isSameOrBefore(moment());
+	}
+
+	async updateConflict(newTime: IDateRange, timeLog: TimeLog) {
+		console.log('updateConflict', { newTime, timeLog });
+		const { start, end } = newTime;
+		if (moment(timeLog.startedAt).isBetween(moment(start), moment(end))) {
+			if (
+				moment(timeLog.stoppedAt).isBetween(moment(start), moment(end))
+			) {
+				/* Delete time log because overlap entire time.
+				 * New Start time							New Stop time
+				 *  |----------------------------------------------|
+				 * 		DB Start Time				DB Stop Time
+				 *  			|----------------------------|
+				 */
+				await this.timeLogRepository.delete({
+					id: timeLog.id
+				});
+			} else {
+				/* Update start time I.e
+				 * New Start time							New Stop time
+				 *  |----------------------------------------------|
+				 * 						DB Start Time							DB Stop Time
+				 *  							|---------------------------------------|
+				 */
+				await this.timeLogRepository.update(
+					{
+						startedAt: end
+					},
+					{
+						id: timeLog.id
+					}
+				);
+			}
+		} else {
+			if (
+				moment(timeLog.stoppedAt).isBetween(moment(start), moment(end))
+			) {
+				/* Split database time in two entries.
+				 * 		New Start time				New Stop time
+				 *  			|----------------------------|
+				 * DB Start Time									DB Stop Time
+				 *  |--------------------------------------------------|
+				 */
+				await this.timeLogRepository.update(
+					{
+						stoppedAt: start
+					},
+					{
+						id: timeLog.id
+					}
+				);
+
+				const newLog = _.omit(timeLog, [
+					'createdAt',
+					'updatedAt',
+					'id'
+				]);
+				newLog.startedAt = end;
+				await this.timeLogRepository.insert(newLog);
+			} else {
+				/* Update stopped time I.e
+				 * 			New Start time							New Stop time
+				 *  			|----------------------------------------------|
+				 * DB Start Time			DB Stop Time
+				 *  	|-----------------------|
+				 */
+				await this.timeLogRepository.update(
+					{
+						stoppedAt: end
+					},
+					{
+						id: timeLog.id
+					}
+				);
+			}
+		}
+		return true;
 	}
 
 	async checkConfictTime(request: IGetTimeLogConflictInput) {
