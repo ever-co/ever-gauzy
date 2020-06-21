@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag, Task, Employee } from '..';
+import { Tag, Task, Employee, EmployeeFindInput } from '..';
 import { OrganizationClients } from './organization-clients.model';
 import { OrganizationProjects } from './organization-projects.model';
 
@@ -33,6 +33,18 @@ export interface ITimesheetCreateInput {
 	lockedAt?: Date;
 	isBilled?: boolean;
 	status?: string;
+}
+
+export interface TimeSheetFindInput {
+	employeeId: string;
+	approvedById?: string;
+	employee: EmployeeFindInput;
+	isBilled?: boolean;
+	status?: string;
+	startedAt: Date;
+	stoppedAt?: Date;
+	approvedAt?: Date;
+	submittedAt?: Date;
 }
 
 export enum TimesheetStatus {
