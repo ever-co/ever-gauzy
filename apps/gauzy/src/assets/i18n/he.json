@@ -928,7 +928,13 @@
 		"TOTAL_CLIENTS": "Total Clients",
 		"YEAR_FOUNDED": "Year Founded",
 		"COMPANY_SIZE": "Company Size",
-		"CLIENT_FOCUS": "Client Focus"
+		"CLIENT_FOCUS": "Client Focus",
+		"MONTHLY_INCOME": "Monthly Income",
+		"TOTAL_INCOME": "הכנסה כוללת",
+		"TOTAL_PROJECTS": "Total Projects",
+		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
+		"EMPLOYEES": "עובדים",
+		"PROFITS": "Profits"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
