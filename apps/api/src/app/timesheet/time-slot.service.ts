@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { TimeSlot } from './time-slot.entity';
 import * as moment from 'moment';
@@ -42,6 +42,13 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			.execute();
 	}
 
+	rangeDelete(employeeId: string, start: Date, stop: Date) {
+		return this.timeSlotRepository.delete({
+			employeeId: employeeId,
+			startedAt: Between(start, stop)
+		});
+	}
+
 	generateTimeSlots(start: Date, end: Date) {
 		let mStart = moment(start);
 		const mEnd = moment(end);
@@ -52,7 +59,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 
 			/* Check start time is Rounded 10 minutes slot I.E 10:20, false if 10:14 */
 			if (mStart.get('minute') % 10 === 0) {
-				console.log('if');
 				tempEnd = mStart.clone().add(10, 'minute');
 				if (tempEnd.isBefore(mEnd)) {
 					duration = tempEnd.diff(mStart, 'seconds');
