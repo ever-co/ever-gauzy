@@ -7,7 +7,9 @@ import {
 	TimesheetStatus,
 	Timesheet,
 	IGetTimesheetInput,
-	IGetTimeLogConflictInput
+	IGetTimeLogConflictInput,
+	IGetTimeSlotInput,
+	TimeSlot
 } from '@gauzy/models';
 import { toParams } from 'libs/utils';
 
@@ -81,6 +83,16 @@ export class TimesheetService {
 			.get('/api/timesheet/time-log', { params })
 			.toPromise()
 			.then((data: TimeLog[]) => {
+				return data;
+			});
+	}
+
+	getTimeSlots(request?: IGetTimeSlotInput) {
+		const params = toParams(request);
+		return this.http
+			.get('/api/timesheet/time-slot', { params })
+			.toPromise()
+			.then((data: TimeSlot[]) => {
 				return data;
 			});
 	}

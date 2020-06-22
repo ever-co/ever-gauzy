@@ -150,6 +150,9 @@ export interface TimeLogFilters {
 
 export interface TimeSlot extends IBaseEntityModel {
 	employee: Employee;
+	screenshots?: Screenshot[];
+	activities?: Activity[];
+	minutesLogs?: TimeSlotMinute[];
 	project?: OrganizationProjects;
 	duration?: number;
 	keyboard?: number;
@@ -173,6 +176,14 @@ export interface Activity extends IBaseEntityModel {
 	data?: string;
 	duration?: number;
 	type?: string;
+}
+
+export interface TimeSlotMinute extends IBaseEntityModel {
+	timeSlot: TimeSlot;
+	timeSlotId: string;
+	keyboard: number;
+	mouse: number;
+	datetime: Date;
 }
 
 export interface ICreateActivityInput {
@@ -249,11 +260,26 @@ export interface IGetTimeLogInput {
 	activityLevel?: { start: number; end: number };
 	organizationId?: string;
 }
+
 export interface IGetTimeLogConflictInput {
 	ignoreId?: string | string[];
 	startDate: string | Date;
 	endDate: string | Date;
 	employeeId: string;
+	organizationId?: string;
+	relations?: string[];
+}
+
+export interface IGetTimeSlotInput {
+	timesheetId?: string;
+	startDate?: string;
+	endDate?: string;
+	projectId?: string[];
+	clientId?: string[];
+	employeeId?: string | string[];
+	source?: TimeLogSourceEnum | TimeLogSourceEnum[];
+	logType?: TimeLogType | TimeLogType[];
+	activityLevel?: { start: number; end: number };
 	organizationId?: string;
 	relations?: string[];
 }

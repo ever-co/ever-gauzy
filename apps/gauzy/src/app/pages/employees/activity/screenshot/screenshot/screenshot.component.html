@@ -1,1 +1,31 @@
-<p>screenshot works!</p>
+<div class="filters row mb-3">
+	<div class="col">
+		<ngx-filters (filtersChange)="filtersChange($event)"></ngx-filters>
+	</div>
+</div>
+<div
+	class="screenshot-container"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
+	<div class="row" *ngFor="let hourSlot of timeSlots">
+		<div class="col">
+			<div
+				class="row align-items-center justify-content-center"
+				*ngFor="let timeSlot of hourSlot.timeSlots"
+			>
+				<div class="col">
+					<div class="activity" *ngIf="timeSlot; else noActivity">
+						<img [src]="(timeSlot?.screenshots)[0]?.fullUrl" />
+					</div>
+					<ng-template #noActivity>
+						<div class="no-activity p-3 text-center">
+							No Activity
+						</div>
+					</ng-template>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
