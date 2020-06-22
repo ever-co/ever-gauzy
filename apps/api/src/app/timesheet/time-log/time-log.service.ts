@@ -202,8 +202,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 			employee.organization
 		);
 
-		console.log({ isDateAllow });
-
 		if (!isDateAllow) {
 			throw new BadRequestException(
 				'Please select valid Date start and end time'
@@ -414,27 +412,12 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	private allowDate(start: Date, end: Date, organization: Organization) {
-		console.log(
-			'moment(start).isBefore(moment(end))',
-			moment(start).isBefore(moment(end)),
-			start,
-			end
-		);
 		if (!moment(start).isBefore(moment(end))) {
 			return false;
 		}
-		console.log(
-			'organization.futureDateAllowed',
-			organization.futureDateAllowed
-		);
 		if (organization.futureDateAllowed) {
 			return true;
 		}
-
-		console.log(
-			'moment(end).isSameOrBefore(moment())',
-			moment(end).isSameOrBefore(moment())
-		);
 		return moment(end).isSameOrBefore(moment());
 	}
 
