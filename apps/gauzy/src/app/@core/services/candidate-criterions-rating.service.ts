@@ -37,6 +37,20 @@ export class CandidateCriterionsRatingService {
 			.pipe(first())
 			.toPromise();
 	}
+	updateBulk(
+		criterionsRating: ICandidateCriterionsRating[],
+		technologies: number[],
+		personalQualities: number[]
+	): Promise<any> {
+		return this.http
+			.put('/api/candidate-criterions-rating/updateBulk', {
+				criterionsRating,
+				technologies,
+				personalQualities
+			})
+			.pipe(first())
+			.toPromise();
+	}
 
 	deleteBulk(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
