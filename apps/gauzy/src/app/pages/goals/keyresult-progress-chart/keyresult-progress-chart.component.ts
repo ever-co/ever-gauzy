@@ -107,7 +107,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 	}
 
 	progressData(keyResult) {
-		let updates = [];
+		const updates = [];
 		keyResult.updates
 			.sort(
 				(a, b) =>
@@ -129,7 +129,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 			if (index === 0) {
 				update.push(val);
 			} else if (
-				val.x.getDate() == update[update.length - 1].x.getDate()
+				val.x.getDate() === update[update.length - 1].x.getDate()
 			) {
 				if (val.y > update[update.length - 1].y) {
 					update.pop();

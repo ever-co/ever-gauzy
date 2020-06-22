@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
-import { KeyResult, KeyResultUpdates, GoalTimeFrame } from '@gauzy/models';
+import { KeyResult, KeyResultUpdates } from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
