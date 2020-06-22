@@ -19,54 +19,68 @@ export class KeyResultProgressChartComponent implements OnInit {
 
 	public async updateChart(keyResult: KeyResult) {
 		await this.goalSettingsService
-			.getTimeFrameByName(this.keyResult.goal.deadline)
+			.getTimeFrameByName(
+				keyResult.goal.deadline === '' ? null : keyResult.goal.deadline
+			)
 			.then((res) => {
-				let start;
-				let end;
-				let period;
-				if (keyResult.deadline === 'No Custom Deadline') {
-					start = new Date(res.items[0].startDate);
-					end = new Date(res.items[0].endDate);
-				} else {
-					console.log(keyResult.createdAt);
-					start = new Date(keyResult.createdAt);
-					end = new Date(keyResult.hardDeadline);
-				}
-				const noOfDays =
-					(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-				period =
-					noOfDays > 30 ? 'month' : noOfDays > 7 ? 'week' : 'day';
-
-				const labels = this.labelCalculator(start, end, period);
-				const progressParts = labels.length;
-
-				this.calculateData(labels, progressParts, keyResult);
-
-				this.options = {
-					responsive: true,
-					maintainAspectRatio: false,
-					scales: {
-						xAxes: [
-							{
-								type: 'time',
-								time: {
-									displayFormats: {
-										hour: 'MMM DD'
-									},
-									tooltipFormat: 'MMM D'
-								},
-								ticks: {
-									maxTicksLimit: progressParts + 1
-								}
-							}
-						],
-						yAxes: [
-							{
-								display: 'true'
-							}
-						]
+				if (res.items.length > 0) {
+					let start;
+					let end;
+					let period;
+					if (keyResult.deadline === 'No Custom Deadline') {
+						start = new Date(res.items[0].startDate);
+						end = new Date(res.items[0].endDate);
+					} else {
+						start = new Date(keyResult.createdAt);
+						end = new Date(
+							keyResult.hardDeadline
+								? keyResult.hardDeadline
+								: res.items[0].endDate
+						);
 					}
-				};
+					const noOfDays =
+						(end.getTime() - start.getTime()) /
+						(1000 * 60 * 60 * 24);
+					period =
+						noOfDays > 40
+							? 'month'
+							: noOfDays > 14
+							? 'week'
+							: 'day';
+
+					const labels = this.labelCalculator(start, end, period);
+					const progressParts = labels.length - 1;
+
+					this.calculateData(labels, progressParts, keyResult);
+					this.options = {
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							xAxes: [
+								{
+									type: 'time',
+									time: {
+										displayFormats: {
+											hour: 'MMM DD'
+										},
+										tooltipFormat: 'MMM D'
+									},
+									ticks: {
+										maxTicksLimit: progressParts
+									}
+								}
+							],
+							yAxes: [
+								{
+									display: 'true'
+								}
+							]
+						}
+					};
+				}
+			})
+			.catch((error) => {
+				console.log(error);
 			});
 	}
 
@@ -120,28 +134,32 @@ export class KeyResultProgressChartComponent implements OnInit {
 			});
 		const update = [];
 		const sortedUpdates = updates.sort((a, b) => a.x - b.x);
-		console.log(sortedUpdates);
 		sortedUpdates.forEach((val, index) => {
 			if (index === 0) {
 				update.push(val);
 			} else if (index + 1 < sortedUpdates.length) {
 				if (val.x.getDate() !== sortedUpdates[index + 1].x.getDate()) {
 					update.push(sortedUpdates[index + 1]);
+				} else if (
+					update[update.length - 1].y < sortedUpdates[index + 1].y
+				) {
+					update.pop();
+					update.push(sortedUpdates[index + 1]);
 				}
 			}
 		});
-		console.log(update);
 		return update;
 	}
 
 	labelCalculator(start, end, period) {
 		const labels = [];
+		start.setDate(start.getDate());
 		while (start <= end) {
 			labels.push(new Date(start));
 			if (period === 'week') {
 				start.setDate(start.getDate() + 7);
 			} else if (period === 'month') {
-				start.setMonth(start.getMonth() + 1);
+				start.setDate(start.getDate() + 30);
 			} else if (period === 'day') {
 				start.setDate(start.getDate() + 1);
 			}
@@ -153,6 +171,9 @@ export class KeyResultProgressChartComponent implements OnInit {
 		const result = [];
 		const delta = (target - start) / (parts - 1);
 		let index = 0;
+		if (target === 1) {
+			result.push({ x: labelsData[index], y: Math.ceil(start) });
+		}
 		while (start < target) {
 			if (target !== 1) {
 				result.push({ x: labelsData[index], y: Math.ceil(start) });

@@ -12,6 +12,8 @@ import { GoalTimeFrame } from '@gauzy/models';
 export class EditTimeFrameComponent implements OnInit {
 	timeFrameForm: FormGroup;
 	timeFrame: GoalTimeFrame;
+	today = new Date();
+	type: string;
 	constructor(
 		private dialogRef: NbDialogRef<EditTimeFrameComponent>,
 		private fb: FormBuilder,
@@ -36,13 +38,23 @@ export class EditTimeFrameComponent implements OnInit {
 	}
 
 	async saveTimeFrame() {
-		await this.goalSettingsService
-			.createTimeFrame(this.timeFrameForm.value)
-			.then((res) => {
-				if (res) {
-					this.closeDialog(res);
-				}
-			});
+		if (this.type === 'add') {
+			await this.goalSettingsService
+				.createTimeFrame(this.timeFrameForm.value)
+				.then((res) => {
+					if (res) {
+						this.closeDialog(res);
+					}
+				});
+		} else {
+			await this.goalSettingsService
+				.update(this.timeFrame.id, this.timeFrameForm.value)
+				.then((res) => {
+					if (res) {
+						this.closeDialog(res);
+					}
+				});
+		}
 	}
 
 	closeDialog(val) {

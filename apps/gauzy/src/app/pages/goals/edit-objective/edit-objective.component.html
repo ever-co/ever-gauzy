@@ -1,4 +1,4 @@
-<nb-card size="large">
+<nb-card size="large" class="max-width-800">
 	<nb-card-header>
 		Add Objective
 		<nb-icon
@@ -74,6 +74,7 @@
 				Deadline
 			</label>
 			<nb-select
+				*ngIf="timeFrames.length > 0"
 				id="objective-deadline"
 				formControlName="deadline"
 				placeholder="Deadline"
@@ -86,6 +87,17 @@
 					>{{ deadline.name }}</nb-option
 				>
 			</nb-select>
+			<p>
+				<button
+					id="objective-deadline"
+					*ngIf="timeFrames.length == 0"
+					status="primary"
+					nbButton
+					(click)="openSetTimeFrame()"
+				>
+					Add Time Frame
+				</button>
+			</p>
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
