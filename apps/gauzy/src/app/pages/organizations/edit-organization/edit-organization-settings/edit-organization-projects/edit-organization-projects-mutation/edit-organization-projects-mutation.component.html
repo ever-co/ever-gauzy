@@ -39,10 +39,9 @@
 					'FORM.PLACEHOLDERS.CLIENTS' | translate
 				}}</label>
 				<ng-select
-					id="clients"
 					[addTag]="addNewClient"
 					[items]="clients"
-					bindLabel="clientName"
+					bindLabel="name"
 					[searchable]="true"
 					formControlName="client"
 					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
