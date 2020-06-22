@@ -928,7 +928,13 @@
 		"TOTAL_CLIENTS": "Total Clients",
 		"YEAR_FOUNDED": "Year Founded",
 		"COMPANY_SIZE": "Company Size",
-		"CLIENT_FOCUS": "Client Focus"
+		"CLIENT_FOCUS": "Client Focus",
+		"MONTHLY_INCOME": "Monthly Income",
+		"TOTAL_INCOME": "הכנסה כוללת",
+		"TOTAL_PROJECTS": "Total Projects",
+		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
+		"EMPLOYEES": "עובדים",
+		"PROFITS": "Profits"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -977,7 +983,17 @@
 		"APPROVAL_REQUEST_STATUS": "עבודה",
 		"HEADER": "Approval Request",
 		"APPROVAL_POLICY": "Approval Policy",
-		"CHOOSE_POLICIES": "Choose policies/s"
+		"CHOOSE_POLICIES": "Choose policies/s",
+		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
+		"ADD_APPROVAL_REQUEST": "Add Request Approval"
+	},
+	"APPROVAL_POLICY_PAGE": {
+		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
+		"ADD_APPROVAL_POLICY": "Add Approval Policy",
+		"HEADER": "Approval Policy",
+		"APPROVAL_POLICY_NAME": "שם",
+		"APPROVAL_POLICY_TYPE": "סוג",
+		"APPROVAL_POLICY_DESCRIPTION": "Description"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
@@ -1312,7 +1328,9 @@
 			"CONFIRMATION_ESTIMATE": "Send this estimate to",
 			"ALREADY_SENT_INVOICE": "This invoice has already been sent to",
 			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to",
-			"NOT_LINKED": "Client does not have an organization"
+			"NOT_LINKED": "Client does not have an organization",
+			"SENT": "Sent",
+			"NOT_SENT": "Not Sent"
 		},
 		"VIEW": {
 			"FROM": "FROM",
@@ -1433,6 +1451,8 @@
 			"SOMETHING_BAD_HAPPENED": "Something bad happened!",
 			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully",
 			"DELETED": "Successfully deleted",
+			"CREATED": "Successfully created",
+			"UPDATED": "Successfully updated",
 			"MOVED_ARTICLE": "Article has been moved",
 			"MOVED_CATEGORY": "Category has been moved",
 			"CREATED_ARTICLE": "Article has been created",
@@ -1617,9 +1637,34 @@
 		"VIEW_TIME_LOGS": "Time Logs",
 		"ADD_TIME": "Add Time",
 		"UPDATE_TIME": "Update Time",
+		"TILL_NOW": "Till now",
+		"VIEW": "View",
 		"EDIT": "ערוך",
 		"CLOSE": "סוֹף",
 		"DELETE": "מחק",
+		"IMMUTABLE_TIME": "Immutable Time",
+		"ADD_TIME ": "Add Time",
+		"BULK_ACTION ": "Bulk action",
+		"LOG_TYPE": "Log type",
+		"TOTAL_TIME": "Total Time",
+		"ACTIVITES": "Activites",
+		"APPROVED_AT": "Approved At",
+		"SUBMITTED_AT": "Submitted At",
+		"STATUS": "עבודה",
+		"SUBMIT_TIMESHEET": "Submit Timesheet",
+		"UNSUBMIT_TIMESHEET": "Unsubmit Timesheet",
+		"APPROVE": "Approve",
+		"DENY": "Deny",
+		"TIME_SPAN": "Time span",
+		"ACTION": "Action",
+		"EMPLOYEE": "עובד",
+		"DURATION": "Duration",
+		"PROJECT": "פרויקטים",
+		"NO_PROJECT": "No Project",
+		"NO_TIMELOG": "No timelogs found",
+		"TODO": "To-do",
+		"NO_TODO": "No To-do",
+		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",

@@ -928,7 +928,13 @@
 		"TOTAL_CLIENTS": "Всего клиентов",
 		"YEAR_FOUNDED": "Дата создания",
 		"COMPANY_SIZE": "Размер компании",
-		"CLIENT_FOCUS": "Фокус клиента"
+		"CLIENT_FOCUS": "Фокус клиента",
+		"MONTHLY_INCOME": "Ежемесячный доход",
+		"TOTAL_INCOME": "Общий доход",
+		"TOTAL_PROJECTS": "Всего проектов",
+		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
+		"EMPLOYEES": "Сотрудники",
+		"PROFITS": "Прибыль"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
@@ -977,7 +983,17 @@
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Запрос на утверждение",
 		"APPROVAL_POLICY": "Политика одобрения",
-		"CHOOSE_POLICIES": "Выбрать политики/с"
+		"CHOOSE_POLICIES": "Выбрать политики/с",
+		"EDIT_APPROVAL_REQUEST": "Редактировать подтверждение запроса",
+		"ADD_APPROVAL_REQUEST": "Добавить подтверждение запроса"
+	},
+	"APPROVAL_POLICY_PAGE": {
+		"EDIT_APPROVAL_POLICY": "Редактировать политику утверждения",
+		"ADD_APPROVAL_POLICY": "Добавить политику утверждения",
+		"HEADER": "Политика одобрения",
+		"APPROVAL_POLICY_NAME": "Имя",
+		"APPROVAL_POLICY_TYPE": "Тип",
+		"APPROVAL_POLICY_DESCRIPTION": "Описание"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Время выключено",
@@ -1312,7 +1328,9 @@
 			"CONFIRMATION_ESTIMATE": "Отправить эту оценку",
 			"ALREADY_SENT_INVOICE": "Этот счет уже был отправлен на",
 			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена",
-			"NOT_LINKED": "Клиент не имеет организации"
+			"NOT_LINKED": "Клиент не имеет организации",
+			"SENT": "Отправлено",
+			"NOT_SENT": "Не отправлено"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
@@ -1433,6 +1451,8 @@
 			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!",
 			"EMAIL_TEMPLATE_SAVED": "{{templateName}} шаблон письма успешно сохранен",
 			"DELETED": "Успешно удален",
+			"CREATED": "Успешно создано",
+			"UPDATED": "Успешно обновлено",
 			"MOVED_ARTICLE": "Статья была перемещена",
 			"MOVED_CATEGORY": "Категория была перемещена",
 			"CREATED_ARTICLE": "Статья создана",
@@ -1617,9 +1637,34 @@
 		"VIEW_TIME_LOGS": "Журналы времени",
 		"ADD_TIME": "Добавить время",
 		"UPDATE_TIME": "Время обновления",
+		"TILL_NOW": "Till now",
+		"VIEW": "Вид",
 		"EDIT": "Редактировать",
 		"CLOSE": "Закрыть",
 		"DELETE": "Удалить",
+		"IMMUTABLE_TIME": "Неизменяемое время",
+		"ADD_TIME ": "Добавить время",
+		"BULK_ACTION ": "Массовое действие",
+		"LOG_TYPE": "Тип журнала",
+		"TOTAL_TIME": "Общее время",
+		"ACTIVITES": "Activites",
+		"APPROVED_AT": "Одобрено",
+		"SUBMITTED_AT": "Отправлено в",
+		"STATUS": "Статус",
+		"SUBMIT_TIMESHEET": "Отправить расписание",
+		"UNSUBMIT_TIMESHEET": "Отмена расчёта времени",
+		"APPROVE": "Одобрить",
+		"DENY": "Запретить",
+		"TIME_SPAN": "Расстояние времени",
+		"ACTION": "Действие",
+		"EMPLOYEE": "Сотрудник",
+		"DURATION": "Продолжительность",
+		"PROJECT": "Проект",
+		"NO_PROJECT": "Нет проекта",
+		"NO_TIMELOG": "Сроки не найдены",
+		"TODO": "Задачи",
+		"NO_TODO": "Нет задач",
+		"OVERLAP_MESSAGE": "Эта запись перекрывает деятельность в других проектах/задачах, которые будут заменены:",
 		"VALIDATION": {
 			"DESCRIPTION": "Описание обязательно",
 			"TASK": "Пожалуйста, выберите задачу",

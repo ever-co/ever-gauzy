@@ -12,7 +12,8 @@ import {
 	TimeLogType,
 	IManualTimeInput,
 	IGetTimeLogInput,
-	PermissionsEnum
+	PermissionsEnum,
+	IGetTimeLogConflictInput
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
@@ -93,7 +94,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 						endDate
 					});
 				}
-				qb.andWhere('"deletedAt" IS NULL');
 				if (employeeId) {
 					if (employeeId instanceof Array) {
 						qb.andWhere('"employeeId" IN (:...employeeId)', {
@@ -163,17 +163,19 @@ export class TimeLogService extends CrudService<TimeLog> {
 			);
 		}
 
-		const confict = await this.checkConfictTime(
-			request,
-			request.employeeId
-		);
+		const confict = await this.checkConfictTime({
+			employeeId: request.employeeId,
+			startDate: request.startedAt,
+			endDate: request.stoppedAt,
+			...(request.id ? { ignoreId: request.id } : {})
+		});
 		const timesheet = await this.timesheetService.createOrFindTimeSheet(
 			request.employeeId,
 			request.startedAt
 		);
 
 		let newTimeLog: TimeLog;
-		if (!confict) {
+		if (confict.length === 0) {
 			newTimeLog = await this.timeLogRepository.save({
 				startedAt: request.startedAt,
 				stoppedAt: request.stoppedAt,
@@ -201,11 +203,12 @@ export class TimeLogService extends CrudService<TimeLog> {
 			}));
 			await this.timeSlotService.bulkCreate(timeSlots);
 			return newTimeLog;
-		} else {
-			throw new BadRequestException(
-				"You can't add add twice for same time."
-			);
 		}
+		// else {
+		// 	throw new BadRequestException(
+		// 		"You can't add add twice for same time."
+		// 	);
+		// }
 	}
 
 	async updateManualTime(request: IManualTimeInput): Promise<TimeLog> {
@@ -230,18 +233,19 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}
 
 		const timeLog = await this.timeLogRepository.findOne(request.id);
-
-		const confict = await this.checkConfictTime(
-			request,
-			timeLog.employeeId
-		);
+		const confict = await this.checkConfictTime({
+			employeeId: timeLog.employeeId,
+			startDate: request.startedAt,
+			endDate: request.stoppedAt,
+			...(request.id ? { ignoreId: request.id } : {})
+		});
 
 		const timesheet = await this.timesheetService.createOrFindTimeSheet(
 			timeLog.employeeId,
 			request.startedAt
 		);
 
-		if (!confict) {
+		if (confict.length === 0) {
 			const timeSlots = this.timeSlotService.generateTimeSlots(
 				timeLog.startedAt,
 				timeLog.stoppedAt
@@ -304,31 +308,20 @@ export class TimeLogService extends CrudService<TimeLog> {
 
 	async deleteTimeLog(ids: string | string[]): Promise<any> {
 		const user = RequestContext.currentUser();
-
-		// const employee = await this.employeeRepository.findOne(
-		// 	user.employeeId,
-		// 	{
-		// 		relations: ['organization']
-		// 	}
-		// );
-
-		// if (!employee.organization || !employee.organization.allowManualTime) {
-		// 	throw new UnauthorizedException(
-		// 		'You have not sufficient permission to add time'
-		// 	);
-		// }
-
 		if (typeof ids === 'string') {
 			ids = [ids];
 		}
-		await this.timeLogRepository.update(
+		return await this.timeLogRepository.update(
 			{
-				employeeId: user.employeeId,
+				...(RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)
+					? {}
+					: { employeeId: user.employeeId }),
 				id: In(ids)
 			},
 			{ deletedAt: new Date() }
 		);
-		return true;
 	}
 
 	private allowDate(start: Date, end: Date, organization: Organization) {
@@ -341,26 +334,40 @@ export class TimeLogService extends CrudService<TimeLog> {
 		return moment(end).isSameOrBefore(moment());
 	}
 
-	private async checkConfictTime(
-		request: IManualTimeInput,
-		employeeId: string
-	) {
-		let confictQuery = this.timeLogRepository
-			.createQueryBuilder()
-			.where('"employeeId" = :employeeId', { employeeId: employeeId })
-			.andWhere('"deletedAt" = :deletedAt', { deletedAt: null })
+	async checkConfictTime(request: IGetTimeLogConflictInput) {
+		const startedAt = moment(request.startDate).toISOString();
+		const stoppedAt = moment(request.endDate).toISOString();
+		let confictQuery = this.timeLogRepository.createQueryBuilder();
+
+		confictQuery = confictQuery
+			.where(`"${confictQuery.alias}"."employeeId" = :employeeId`, {
+				employeeId: request.employeeId
+			})
+			.andWhere(`"${confictQuery.alias}"."deletedAt" IS null`)
 			.andWhere(
-				`("startedAt", "stoppedAt") OVERLAPS (\'${moment(
-					request.startedAt
-				).format('YYYY-MM-DD HH:ss')}\', \'${moment(
-					request.stoppedAt
-				).format('YYYY-MM-DD HH:ss')}\')`
+				`("${confictQuery.alias}"."startedAt", "${confictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 			);
-		if (request.id) {
-			confictQuery = confictQuery.andWhere('id != :id', {
-				id: request.id
+
+		if (request.relations) {
+			request.relations.forEach((relation) => {
+				confictQuery = confictQuery.leftJoinAndSelect(
+					`${confictQuery.alias}.${relation}`,
+					relation
+				); // Get all the ProfilePhoto info
 			});
 		}
-		return await confictQuery.getOne();
+
+		if (request.ignoreId) {
+			confictQuery = confictQuery.andWhere(
+				`${confictQuery.alias}.id IN (:...id)`,
+				{
+					id:
+						request.ignoreId instanceof Array
+							? request.ignoreId
+							: [request.ignoreId]
+				}
+			);
+		}
+		return await confictQuery.getMany();
 	}
 }

@@ -2,7 +2,7 @@ import { ExpenseCategoriesEnum } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { ExpenseCategory } from './expense-category.entity';
 
-const mapCategoryName = (name) => ({ name });
+const mapCategoryName = (name, organizationId) => ({ name, organizationId });
 const defaultExpenseCategories = Object.values(ExpenseCategoriesEnum).map(
 	mapCategoryName
 );

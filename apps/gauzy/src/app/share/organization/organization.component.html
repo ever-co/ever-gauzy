@@ -129,7 +129,7 @@
 					</div>
 					<div
 						class="org-size"
-						*ngIf="organization.show_clients_count && total_clients"
+						*ngIf="organization.show_clients_count"
 					>
 						<h5
 							class="org-title"
@@ -157,47 +157,129 @@
 				</div>
 			</div>
 			<div class="section_block"></div>
+			<div
+				class="row"
+				*ngIf="this.organization.show_projects_count && total_projects"
+			>
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.TOTAL_PROJECTS' | translate }} :
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="total_projects"
+						></span>
+					</div>
+				</div>
+			</div>
+			<div
+				class="row"
+				*ngIf="
+					this.organization.show_minimum_project_size &&
+					minimum_project_size
+				"
+			>
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.MINIMUM_PROJECT_SIZE' | translate }}
+							:
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="minimum_project_size"
+						></span>
+					</div>
+				</div>
+			</div>
+			<div
+				class="row"
+				*ngIf="this.organization.show_income && total_income"
+			>
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.TOTAL_INCOME' | translate }} :
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="
+								organization.currency + ' ' + total_income
+							"
+						></span>
+					</div>
+				</div>
+			</div>
+			<div
+				class="row"
+				*ngIf="this.organization.show_bonuses_paid && bonuses_paid"
+			>
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.TOTAL_BONUSES_PAID' | translate }} :
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="
+								organization.currency + ' ' + bonuses_paid
+							"
+						></span>
+					</div>
+				</div>
+			</div>
+			<div class="row" *ngIf="this.organization.show_profits">
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.PROFITS' | translate }} :
+						</h5>
+						<span
+							class="org-value"
+							[textContent]="
+								organization.currency + ' ' + profits
+							"
+						></span>
+					</div>
+				</div>
+			</div>
 			<div class="row" *ngIf="languageExist">
 				<div class="col">
 					<div class="org-year-found">
-						<h5 class="org-title">
-							{{ 'PUBLIC_PAGE.LANGUAGES' | translate }}
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.LANGUAGES' | translate }} :
 						</h5>
-						<nb-list class="nb_list block_style org_languages">
-							<nb-list-item
+						<span class="org-value">
+							<span
+								class="org_list_data"
 								*ngFor="
 									let l of organization_languages;
 									let i = index
 								"
-								class="nb_list_item item"
+								[textContent]="
+									(i !== 0 ? ', ' : ' ') +
+									l.name +
+									' (' +
+									l.level +
+									')'
+								"
 							>
-								<span
-									class="award_title"
-									[textContent]="
-										(i !== 0 ? ', ' : ' ') +
-										l.name +
-										' (' +
-										l.level +
-										')'
-									"
-								></span>
-							</nb-list-item>
-						</nb-list>
+							</span>
+						</span>
 					</div>
 				</div>
 			</div>
 			<div class="row" *ngIf="awardExist">
 				<div class="col">
-					<h5 class="org-title">
-						{{ 'PUBLIC_PAGE.AWARDS' | translate }}
-					</h5>
-					<nb-list class="nb_list block_style org_awards">
-						<nb-list-item
-							*ngFor="let a of awards; let i = index"
-							class="nb_list_item item"
-						>
+					<div class="org-year-found">
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.AWARDS' | translate }} :
+						</h5>
+						<span class="org-value">
 							<span
-								class="award_title"
+								class="org_list_data"
+								*ngFor="let a of awards; let i = index"
 								[textContent]="
 									(i !== 0 ? ', ' : ' ') +
 									a.name +
@@ -205,50 +287,63 @@
 									a.year +
 									')'
 								"
-							></span>
-						</nb-list-item>
-					</nb-list>
+							>
+							</span>
+						</span>
+					</div>
 				</div>
 			</div>
 			<div class="row" *ngIf="organization.skills">
 				<div class="col">
 					<div class="org-skills">
-						<h5 class="org-title">
-							{{ 'PUBLIC_PAGE.COMPANY_SKILLS' | translate }}
+						<h5 class="org-title org-key">
+							{{ 'PUBLIC_PAGE.COMPANY_SKILLS' | translate }} :
 						</h5>
-						<nb-list class="nb_list block_style org_skills">
-							<nb-list-item
+						<span class="org-value">
+							<span
+								class="org_list_data"
 								*ngFor="
 									let skill of organization.skills;
 									let i = index
 								"
-								class="nb_list_item item"
+								[textContent]="
+									(i !== 0 ? ', ' : ' ') + skill.name
+								"
 							>
-								<span
-									class="skill_title"
-									[textContent]="
-										(i !== 0 ? ', ' : ' ') + skill.name
-									"
-								></span>
-							</nb-list-item>
-						</nb-list>
+							</span>
+						</span>
 					</div>
 				</div>
 			</div>
 
-			<div
-				class="row"
-				*ngIf="organization.show_bonuses_paid && bonuses_paid"
-			>
+			<div class="row" *ngIf="employees">
 				<div class="col">
-					<div class="org-bonuses-paid">
-						<h5 class="org-title">
-							{{ 'PUBLIC_PAGE.TOTAL_BONUSES_PAID' | translate }}
-						</h5>
+					<h5 class="org-title title-employees">
+						{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }}
 						<span
-							class="paid_bonuses"
-							[textContent]="'$' + bonuses_paid"
+							class="org-employee-total"
+							[textContent]="'(' + employees.length + ')'"
 						></span>
+					</h5>
+					<div class="employee-list">
+						<nb-list class="nb_list block_style org_skills">
+							<nb-list-item
+								*ngFor="
+									let employee of employees;
+									let i = index
+								"
+								class="nb_list_employee"
+								><nb-user
+									class="employee_name"
+									[name]="
+										employee.user.firstName +
+										' ' +
+										employee.user.lastName
+									"
+									[picture]="employee.user.imageUrl"
+								></nb-user>
+							</nb-list-item>
+						</nb-list>
 					</div>
 				</div>
 			</div>

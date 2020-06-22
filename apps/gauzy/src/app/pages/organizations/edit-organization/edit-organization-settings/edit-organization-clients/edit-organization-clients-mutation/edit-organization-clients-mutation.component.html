@@ -204,18 +204,17 @@
 				<label class="label">{{
 					'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
 				}}</label>
-				<nb-select
-					multiple
-					fullWidth
+				<ng-select
+					[addTag]="addNewProject"
+					[items]="projects"
+					bindLabel="projectName"
+					[searchable]="true"
 					formControlName="selectProjects"
 					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
 					}}"
 				>
-					<nb-option *ngFor="let p of allProjects" [value]="p.id">{{
-						p.name
-					}}</nb-option>
-				</nb-select>
+				</ng-select>
 			</div>
 			<div class="form-group col-4">
 				<ga-employee-multi-select

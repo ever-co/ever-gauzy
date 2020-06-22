@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag, Task, Employee } from '..';
+import { Tag, Task, Employee, EmployeeFindInput } from '..';
 import { OrganizationClients } from './organization-clients.model';
 import { OrganizationProjects } from './organization-projects.model';
 
@@ -35,6 +35,18 @@ export interface ITimesheetCreateInput {
 	status?: string;
 }
 
+export interface TimeSheetFindInput {
+	employeeId: string;
+	approvedById?: string;
+	employee: EmployeeFindInput;
+	isBilled?: boolean;
+	status?: string;
+	startedAt: Date;
+	stoppedAt?: Date;
+	approvedAt?: Date;
+	submittedAt?: Date;
+}
+
 export enum TimesheetStatus {
 	DRAFT = 'DRAFT',
 	PENDING = 'PENDING',
@@ -67,6 +79,7 @@ export interface IDateRange {
 	end: Date;
 }
 export interface TimeLog extends IBaseEntityModel {
+	[x: string]: any;
 	employee: Employee;
 	timesheet?: Timesheet;
 	task?: Task;
@@ -235,4 +248,12 @@ export interface IGetTimeLogInput {
 	logType?: TimeLogType | TimeLogType[];
 	activityLevel?: { start: number; end: number };
 	organizationId?: string;
+}
+export interface IGetTimeLogConflictInput {
+	ignoreId?: string | string[];
+	startDate: string | Date;
+	endDate: string | Date;
+	employeeId: string;
+	organizationId?: string;
+	relations?: string[];
 }

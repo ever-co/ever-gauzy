@@ -1,4 +1,5 @@
 export * from './lib/help-center-menu.model';
+export * from './lib/help-center-article.model';
 export * from './lib/user.model';
 export * from './lib/employee.model';
 export * from './lib/candidate-document.model';
@@ -70,6 +71,7 @@ export * from './lib/language.model';
 export * from './lib/organization-languages.model';
 export * from './lib/payment.model';
 export * from './lib/goals.model';
+export * from './lib/request-approval-team.model';
 export * from './lib/goal-settings.model';
 
 export { Role, RolesEnum } from './lib/role.model';

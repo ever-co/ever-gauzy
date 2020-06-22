@@ -16,12 +16,17 @@ import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { ParseJsonPipe } from '../shared';
+import { CommandBus } from '@nestjs/cqrs';
+import { HelpCenterCreateCommand } from './commands';
 
 @ApiTags('knowledge_base')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class HelpCenterController extends CrudController<HelpCenter> {
-	constructor(private readonly helpCenterService: HelpCenterService) {
+	constructor(
+		private readonly helpCenterService: HelpCenterService,
+		private readonly commandBus: CommandBus
+	) {
 		super(helpCenterService);
 	}
 	@ApiOperation({
@@ -59,5 +64,25 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@Post()
 	async createNode(@Body() entity: IHelpCenter): Promise<any> {
 		return this.helpCenterService.create(entity);
+	}
+
+	@ApiOperation({ summary: 'Update indexes in Bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Indexes have been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@Post('createBulk')
+	async createBulk(@Body() input: any): Promise<IHelpCenter[]> {
+		const { oldChildren = [], newChildren = [] } = input;
+		return this.commandBus.execute(
+			new HelpCenterCreateCommand(oldChildren, newChildren)
+		);
 	}
 }

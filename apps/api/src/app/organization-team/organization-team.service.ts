@@ -5,7 +5,7 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, UpdateResult } from 'typeorm';
+import { Repository, FindManyOptions } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
@@ -92,9 +92,9 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 	async updateOrgTeam(
 		id: string,
 		entity: IOrganizationTeamCreateInput
-	): Promise<OrganizationTeam | UpdateResult> {
+	): Promise<OrganizationTeam> {
 		const {
-			// tags,
+			tags,
 			name,
 			organizationId,
 			members: memberIds,
@@ -124,9 +124,10 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 				memberIds
 			);
 
-			// TODO: Update tags
+			const organizationTeam = await this.findOne(id);
+			this.repository.merge(organizationTeam, { name, tags });
 
-			return this.update(id, { name });
+			return this.repository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

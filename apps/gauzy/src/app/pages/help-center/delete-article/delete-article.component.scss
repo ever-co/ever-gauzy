@@ -1,0 +1,24 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+  min-width: 500px;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.main-buttons {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.save-button {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}

@@ -6,10 +6,12 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { EmployeesService } from '../../@core/services';
 import { TranslateService } from '@ngx-translate/core';
 import {
+	IGetTimeLogInput,
 	Organization,
 	OrganizationAwards,
 	OrganizationLanguages,
-	PermissionsEnum
+	PermissionsEnum,
+	Timesheet
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -20,6 +22,9 @@ import { OrganizationAwardsService } from '../../@core/services/organization-awa
 import * as moment from 'moment';
 import { IncomeService } from '../../@core/services/income.service';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
+import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
+import { TimesheetService } from '../../@shared/timesheet/timesheet.service';
 
 @Component({
 	selector: 'ngx-organization',
@@ -37,12 +42,19 @@ export class OrganizationComponent extends TranslationBaseComponent
 	loading = true;
 	bonuses_paid = 0;
 	total_clients = 0;
+	total_income = 0;
+	profits = 0;
+	minimum_project_size = 0;
+	total_projects = 0;
+	employee_bonuses = [];
+	employees = [];
 	imageUrl: string;
 	hoverState: boolean;
 	languageExist: boolean;
 	awardExist: boolean;
 	imageUpdateButton: boolean = false;
 	moment = moment;
+	timeSheets: Timesheet[];
 
 	constructor(
 		private route: ActivatedRoute,
@@ -54,6 +66,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private organizationAwardsService: OrganizationAwardsService,
 		private incomeService: IncomeService,
 		private organizationClientsService: OrganizationClientsService,
+		private employeeStatisticsService: EmployeeStatisticsService,
+		private organizationProjectsService: OrganizationProjectsService,
+		private timesheetService: TimesheetService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -88,32 +103,22 @@ export class OrganizationComponent extends TranslationBaseComponent
 						.pipe(first())
 						.toPromise();
 					this.imageUrl = this.organization.imageUrl;
-					if (typeof this.organization.totalEmployees !== 'number') {
-						this.loadEmployeesCount();
-					}
-					if (!!this.organization.show_bonuses_paid) {
-						this.getTotalBonusesPaid();
-					}
-					if (!!this.organization.show_clients_count) {
-						this.getClientsCount();
-					}
 					this.reloadPageData();
+					await this.getEmployeeStatistics();
+					if (!!this.organization.show_clients_count) {
+						await this.getClientsCount();
+					}
+					if (!!this.organization.show_projects_count) {
+						await this.getProjectCount();
+					}
+					if (!!this.organization.show_total_hours) {
+						await this.getTimeSheets();
+					}
+					await this.getEmployees();
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}
 			});
-	}
-
-	private async loadEmployeesCount() {
-		const { total } = await this.employeesService
-			.getAll([], {
-				organization: {
-					id: this.organization.id
-				}
-			})
-			.pipe(first())
-			.toPromise();
-		this.organization.totalEmployees = total;
 	}
 
 	private async loadLanguages() {
@@ -125,12 +130,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		);
 		if (res) {
 			this.organization_languages = res.items;
-
-			if (this.organization_languages.length <= 0) {
-				this.languageExist = false;
-			} else {
-				this.languageExist = true;
-			}
+			this.languageExist = !!this.organization_languages.length;
 		}
 	}
 
@@ -140,26 +140,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		});
 		if (res) {
 			this.awards = res.items;
-
-			if (this.awards.length <= 0) {
-				this.awardExist = false;
-			} else {
-				this.awardExist = true;
-			}
-		}
-	}
-
-	private async getTotalBonusesPaid() {
-		let { items } = await this.incomeService.getAll(['employee'], {
-			organization: {
-				id: this.organization.id
-			}
-		});
-
-		for (let inc = 0; inc < items.length; inc++) {
-			if (items[inc].employee && items[inc].employee.anonymousBonus) {
-				this.bonuses_paid += parseFloat(String(items[inc].amount));
-			}
+			this.awardExist = !!this.awards.length;
 		}
 	}
 
@@ -168,6 +149,86 @@ export class OrganizationComponent extends TranslationBaseComponent
 			organizationId: this.organization.id
 		});
 		this.total_clients = total;
+	}
+
+	private async getProjectCount() {
+		const { items, total } = await this.organizationProjectsService.getAll(
+			['members'],
+			{
+				organizationId: this.organization.id,
+				public: true
+			}
+		);
+		this.total_projects = total;
+		if (total) {
+			this.minimum_project_size = items[0].members.length;
+			for (let inc = 0; inc < items.length; inc++) {
+				if (items[inc].members.length < this.minimum_project_size) {
+					this.minimum_project_size = items[inc].members.length;
+				}
+			}
+		}
+	}
+
+	private async getEmployees() {
+		let employees = await this.employeesService
+			.getAll(['user'], {
+				organization: {
+					id: this.organization.id
+				}
+			})
+			.pipe(first())
+			.toPromise();
+		this.employees = employees.items;
+
+		if (typeof this.organization.totalEmployees !== 'number') {
+			this.organization.totalEmployees = employees.total;
+		}
+	}
+
+	private async getEmployeeBonuses() {
+		let employeeBonuses = await this.incomeService.getAll(
+			['employee', 'employee.user'],
+			{
+				organization: {
+					id: this.organization.id
+				},
+				isBonus: true
+			}
+		);
+		this.employee_bonuses = employeeBonuses.items.filter(
+			(item) => !!item.employee.anonymousBonus
+		);
+	}
+
+	private async getTimeSheets() {
+		const request: IGetTimeLogInput = {
+			organizationId: this.organization.id
+		};
+		this.loading = true;
+		this.timeSheets = await this.timesheetService
+			.getTimeSheets(request)
+			.then((logs) => logs)
+			.finally(() => (this.loading = false));
+	}
+
+	private async getEmployeeStatistics() {
+		let statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
+			{
+				organizationId: this.organization.id,
+				filterDate: new Date()
+			}
+		);
+
+		if (!!this.organization.show_bonuses_paid) {
+			this.bonuses_paid = statistics.total.bonus;
+		}
+		if (!!this.organization.show_income) {
+			this.total_income = statistics.total.income;
+		}
+		if (!!this.organization.show_profits) {
+			this.profits = statistics.total.profit;
+		}
 	}
 
 	private reloadPageData() {
