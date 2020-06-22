@@ -34,7 +34,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			description: [''],
 			owner: ['', Validators.required],
 			lead: [''],
-			level: ['organization', Validators.required],
+			level: ['Organization', Validators.required],
 			deadline: ['', Validators.required]
 		});
 

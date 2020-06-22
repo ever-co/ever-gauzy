@@ -1,13 +1,14 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
-import { KeyResult, KeyResultUpdates } from '@gauzy/models';
+import { KeyResult, KeyResultUpdates, GoalTimeFrame } from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
+import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -19,6 +20,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	src: string;
 	keyResult: KeyResult;
 	updates: KeyResultUpdates[];
+	isUpdatable = true;
 	private _ngDestroy$ = new Subject<void>();
 	ownerName: string;
 	@ViewChild(KeyResultProgressChartComponent)
@@ -27,7 +29,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		private dialogRef: NbDialogRef<KeyResultDetailsComponent>,
 		private employeeService: EmployeesService,
 		private dialogService: NbDialogService,
-		private keyResultService: KeyResultService
+		private keyResultService: KeyResultService,
+		private goalSettingsService: GoalSettingsService
 	) {}
 
 	async ngOnInit() {
@@ -42,6 +45,19 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				new Date(b.createdAt).getTime() -
 				new Date(a.createdAt).getTime()
 		);
+
+		// prevent keyresult updates after deadline
+		if (this.keyResult.deadline === 'No Custom Deadline') {
+			this.goalSettingsService
+				.getTimeFrameByName(this.keyResult.goal.deadline)
+				.then((res) => {
+					this.isUpdatable =
+						new Date(res.items[0].endDate) > new Date();
+				});
+		} else {
+			this.isUpdatable =
+				new Date(this.keyResult.hardDeadline) > new Date();
+		}
 	}
 
 	async loadModal() {

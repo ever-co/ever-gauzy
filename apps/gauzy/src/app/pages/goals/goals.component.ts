@@ -64,6 +64,8 @@ export class GoalsComponent extends TranslationBaseComponent
 		this.goalService.getAllGoals().then((goals) => {
 			if (goals.items.length > 0) {
 				this.noGoals = false;
+			} else {
+				this.noGoals = true;
 			}
 			this.goals = goals.items;
 		});
@@ -185,14 +187,24 @@ export class GoalsComponent extends TranslationBaseComponent
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			const goalData = response;
-			delete goalData.keyResults;
-			await this.goalService.update(response.id, goalData).then((res) => {
-				if (res) {
-					this.toastrService.primary('Goal updated', 'Success');
-					this.loadPage();
-				}
-			});
+			if (response === 'deleted') {
+				this.toastrService.danger('Goal deleted', 'Success');
+				this.loadPage();
+			} else {
+				const goalData = response;
+				delete goalData.keyResults;
+				await this.goalService
+					.update(response.id, goalData)
+					.then((res) => {
+						if (res) {
+							this.toastrService.primary(
+								'Goal updated',
+								'Success'
+							);
+							this.loadPage();
+						}
+					});
+			}
 		}
 	}
 

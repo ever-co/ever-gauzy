@@ -672,7 +672,9 @@
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"GOALS_PAGE": {
-		"HEADER": "All Objectives for "
+		"HEADER": "כל היעדים עבור ",
+		"GOALS_EMPTY": "עדיין לא יצרת יעדים. לחץ על הוסף חדש כדי ליצור אחד",
+		"ADD_NEW_KEY_RESULT": "הוסף תוצאת מפתח חדשה"
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",

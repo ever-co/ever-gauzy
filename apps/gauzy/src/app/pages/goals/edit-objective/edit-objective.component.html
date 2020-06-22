@@ -41,9 +41,9 @@
 				fullWidth
 				selected="Organization"
 			>
-				<nb-option value="organization">Organization</nb-option>
-				<nb-option value="team">Team</nb-option>
-				<nb-option value="individual">Individual</nb-option>
+				<nb-option value="Organization">Organization</nb-option>
+				<nb-option value="Team">Team</nb-option>
+				<nb-option value="Individual">Individual</nb-option>
 			</nb-select>
 
 			<label for="objective-owner" class="label mt-3"> Owner </label>
@@ -101,14 +101,16 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
+		<button class="mr-3" nbButton (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
 		<button
 			nbButton
 			[disabled]="!objectiveForm.valid"
 			status="success"
 			(click)="saveObjective()"
 		>
-			Save
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

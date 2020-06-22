@@ -22,6 +22,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	data: KeyResult;
 	showAllEmployees = false;
 	softDeadline: FormControl;
+	minDate = new Date();
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
@@ -30,6 +31,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
+		this.minDate = new Date(
+			this.minDate.setDate(this.minDate.getDate() + 1)
+		);
 		this.keyResultsForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],

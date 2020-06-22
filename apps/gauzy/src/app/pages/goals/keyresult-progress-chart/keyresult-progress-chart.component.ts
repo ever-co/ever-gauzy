@@ -42,15 +42,10 @@ export class KeyResultProgressChartComponent implements OnInit {
 						(end.getTime() - start.getTime()) /
 						(1000 * 60 * 60 * 24);
 					period =
-						noOfDays > 40
-							? 'month'
-							: noOfDays > 14
-							? 'week'
-							: 'day';
+						noOfDays > 30 ? 'month' : noOfDays > 7 ? 'week' : 'day';
 
 					const labels = this.labelCalculator(start, end, period);
-					const progressParts = labels.length - 1;
-
+					const progressParts = labels.length;
 					this.calculateData(labels, progressParts, keyResult);
 					this.options = {
 						responsive: true,
@@ -112,7 +107,8 @@ export class KeyResultProgressChartComponent implements OnInit {
 	}
 
 	progressData(keyResult) {
-		const updates = keyResult.updates
+		let updates = [];
+		keyResult.updates
 			.sort(
 				(a, b) =>
 					new Date(b.createdAt).getTime() -
@@ -120,32 +116,27 @@ export class KeyResultProgressChartComponent implements OnInit {
 			)
 			.map((val) => {
 				if (val.status === 'on track') {
-					const date = new Date(val.createdAt).getMonth();
-					return {
-						x: new Date(new Date().setMonth(date)),
-						y: val.update
-					};
-				} else {
-					return {
+					updates.push({
 						x: new Date(val.createdAt),
 						y: val.update
-					};
+					});
 				}
 			});
+
 		const update = [];
 		const sortedUpdates = updates.sort((a, b) => a.x - b.x);
 		sortedUpdates.forEach((val, index) => {
 			if (index === 0) {
 				update.push(val);
-			} else if (index + 1 < sortedUpdates.length) {
-				if (val.x.getDate() !== sortedUpdates[index + 1].x.getDate()) {
-					update.push(sortedUpdates[index + 1]);
-				} else if (
-					update[update.length - 1].y < sortedUpdates[index + 1].y
-				) {
+			} else if (
+				val.x.getDate() == update[update.length - 1].x.getDate()
+			) {
+				if (val.y > update[update.length - 1].y) {
 					update.pop();
-					update.push(sortedUpdates[index + 1]);
+					update.push(val);
 				}
+			} else {
+				update.push(val);
 			}
 		});
 		return update;
@@ -159,11 +150,12 @@ export class KeyResultProgressChartComponent implements OnInit {
 			if (period === 'week') {
 				start.setDate(start.getDate() + 7);
 			} else if (period === 'month') {
-				start.setDate(start.getDate() + 30);
+				start.setMonth(start.getMonth() + 1);
 			} else if (period === 'day') {
 				start.setDate(start.getDate() + 1);
 			}
 		}
+		labels.push(end);
 		return labels;
 	}
 
@@ -172,16 +164,16 @@ export class KeyResultProgressChartComponent implements OnInit {
 		const delta = (target - start) / (parts - 1);
 		let index = 0;
 		if (target === 1) {
-			result.push({ x: labelsData[index], y: Math.ceil(start) });
+			result.push({ x: labelsData[index], y: Math.round(start) });
 		}
 		while (start < target) {
 			if (target !== 1) {
-				result.push({ x: labelsData[index], y: Math.ceil(start) });
+				result.push({ x: labelsData[index], y: Math.round(start) });
 			}
 			start += delta;
 			index++;
 		}
-		result.push({ x: labelsData[index], y: Math.ceil(target) });
+		result.push({ x: labelsData[index], y: Math.round(target) });
 		return result;
 	}
 }
