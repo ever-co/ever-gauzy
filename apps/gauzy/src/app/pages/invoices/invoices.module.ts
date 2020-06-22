@@ -57,6 +57,7 @@ import { InvoicePaymentsComponent } from './invoice-payments/payments.component'
 import { PaymentService } from '../../@core/services/payment.service';
 import { PaymentMutationComponent } from './invoice-payments/payment-mutation/payment-mutation.component';
 import { TasksStoreService } from '../../@core/services/tasks-store.service';
+import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
 import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -130,7 +131,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoiceSentStatusComponent
+		InvoiceSentStatusComponent,
+		EstimateAcceptedComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -154,7 +156,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoiceSentStatusComponent
+		InvoiceSentStatusComponent,
+		EstimateAcceptedComponent
 	]
 })
 export class InvoicesModule {}

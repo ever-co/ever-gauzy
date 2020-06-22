@@ -134,7 +134,9 @@ export class EmailService extends CrudService<IEmail> {
 				},
 				locals: {
 					locale: languageCode,
-					host: originUrl || environment.host
+					host: originUrl || environment.host,
+					generatedUrl:
+						originUrl + `#/pages/accounting/invoices/estimates`
 				}
 			})
 			.then((res) => {

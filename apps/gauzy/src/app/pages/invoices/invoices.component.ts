@@ -23,6 +23,7 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
 import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
+import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -181,12 +182,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	async send() {
 		if (this.selectedInvoice.toClient.clientOrganizationId) {
-			this.dialogService.open(InvoiceSendMutationComponent, {
-				context: {
-					invoice: this.selectedInvoice,
-					isEstimate: this.isEstimate
-				}
-			});
+			this.dialogService
+				.open(InvoiceSendMutationComponent, {
+					context: {
+						invoice: this.selectedInvoice,
+						isEstimate: this.isEstimate
+					}
+				})
+				.onClose.subscribe(async () => {
+					await this.loadSettings();
+				});
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
@@ -237,12 +242,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	email() {
-		this.dialogService.open(InvoiceEmailMutationComponent, {
-			context: {
-				invoice: this.selectedInvoice,
-				isEstimate: this.isEstimate
-			}
-		});
+		this.dialogService
+			.open(InvoiceEmailMutationComponent, {
+				context: {
+					invoice: this.selectedInvoice,
+					isEstimate: this.isEstimate
+				}
+			})
+			.onClose.subscribe(async () => {
+				await this.loadSettings();
+			});
 	}
 
 	async loadSettings() {
@@ -294,14 +303,14 @@ export class InvoicesComponent extends TranslationBaseComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '20%',
+					width: '25%',
 					renderComponent: NotesWithTagsComponent
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'text',
 					filter: false,
-					width: '20%',
+					width: '25%',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
 					}
@@ -311,7 +320,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					type: 'custom',
 					renderComponent: InvoiceSentStatusComponent,
 					filter: false,
-					width: '20%'
+					width: '25%'
 				}
 			}
 		};
@@ -321,7 +330,18 @@ export class InvoicesComponent extends TranslationBaseComponent
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
 				renderComponent: InvoicePaidComponent,
-				filter: false
+				filter: false,
+				width: '25%'
+			};
+		} else {
+			this.settingsSmartTable['columns']['isAccepted'] = {
+				title: this.getTranslation(
+					'INVOICES_PAGE.ESTIMATES.ACCEPTED_STATUS'
+				),
+				type: 'custom',
+				renderComponent: EstimateAcceptedComponent,
+				filter: false,
+				width: '25%'
 			};
 		}
 	}
