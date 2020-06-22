@@ -8,7 +8,6 @@ import {
 	AfterLoad,
 	OneToMany,
 	ManyToMany,
-	JoinTable
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeSlot as ITimeSlot } from '@gauzy/models';
@@ -37,11 +36,6 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
 	@JoinColumn()
 	screenshots?: Screenshot[];
-
-	@ApiProperty({ type: Activity })
-	@OneToMany((type) => Activity, (activity) => activity.timeSlot)
-	@JoinColumn()
-	activities?: Activity[];
 
 	@ApiProperty({ type: TimeSlotMinute })
 	@OneToMany(
