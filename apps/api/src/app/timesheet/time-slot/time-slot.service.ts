@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
-import { TimeSlot } from './time-slot.entity';
+import { Repository } from 'typeorm';
+import { CrudService } from '../../core/crud/crud.service';
+import { TimeSlot } from '../time-slot.entity';
 import * as moment from 'moment';
 
 @Injectable()

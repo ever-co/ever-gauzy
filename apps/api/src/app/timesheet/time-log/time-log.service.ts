@@ -20,7 +20,7 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import { CrudService } from '../../core';
 import { TimeSheetService } from '../timesheet/timesheet.service';
-import { TimeSlotService } from '../time-slot.service';
+import { TimeSlotService } from '../time-slot/time-slot.service';
 import { Organization } from '../../organization/organization.entity';
 import { Employee } from '../../employee/employee.entity';
 
