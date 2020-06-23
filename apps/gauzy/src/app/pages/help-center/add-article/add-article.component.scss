@@ -26,3 +26,17 @@
   flex-direction: row;
   justify-content: flex-end;
 }
+
+.first-row {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+}
+
+.second-row {
+  margin-bottom: 10px;
+}
+
+.selector {
+  margin-left: 10px;
+}

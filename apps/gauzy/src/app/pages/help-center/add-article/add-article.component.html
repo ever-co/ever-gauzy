@@ -6,17 +6,33 @@
 		</div>
 		<form [formGroup]="form" (ngSubmit)="submit()">
 			<div class="edit-field">
-				<div>
-					<p class="label">Name of the article:</p>
-					<input
-						formControlName="name"
-						type="text"
-						size="24"
-						maxlength="18"
-						nbInput
-					/>
+				<div class="first-row">
+					<div>
+						<p class="label">Name of the article:</p>
+						<input
+							formControlName="name"
+							type="text"
+							size="24"
+							maxlength="18"
+							nbInput
+						/>
+					</div>
+					<div class="selector">
+						<p class="label">Status</p>
+						<nb-select
+							placeholder="Select Status"
+							[selected]="selectedPrivacy"
+							(selectedChange)="privacySelect($event)"
+						>
+							<nb-option
+								*ngFor="let privacy of isDraft"
+								[value]="privacy"
+								>{{ privacy }}</nb-option
+							>
+						</nb-select>
+					</div>
 				</div>
-				<div>
+				<div class="second-row">
 					<p class="label">Description:</p>
 					<input
 						formControlName="desc"
@@ -40,7 +56,7 @@
 				</div>
 			</div>
 			<div class="save-button">
-				<button status="success" nbButton>
+				<button [disabled]="!selectedPrivacy" status="success" nbButton>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</div>

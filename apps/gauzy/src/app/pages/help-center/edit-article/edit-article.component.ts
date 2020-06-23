@@ -1,9 +1,10 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { IHelpCenterArticle } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-article',
@@ -12,6 +13,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 })
 export class EditArticleComponent extends TranslationBaseComponent
 	implements OnDestroy {
+	@Input() article: IHelpCenterArticle;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		protected dialogRef: NbDialogRef<EditArticleComponent>,
@@ -21,14 +23,9 @@ export class EditArticleComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 	form: FormGroup;
-	public selectedLang = '';
-	public selectedColor = '';
-	public languages = ['en', 'ru', 'he', 'bg'];
-	public colors = ['black', 'blue'];
-
-	editData($event) {}
 
 	closeDialog() {
+		console.log(this.article);
 		this.dialogRef.close();
 	}
 

@@ -29,6 +29,8 @@ export class AddArticleComponent extends TranslationBaseComponent
 		desc: '',
 		data: ''
 	};
+	public selectedPrivacy = '';
+	public isDraft = ['draft', 'publish'];
 	public article: IHelpCenterArticle = null;
 	ngOnInit() {
 		this.form = this.fb.group({
@@ -37,6 +39,10 @@ export class AddArticleComponent extends TranslationBaseComponent
 			data: ['']
 		});
 		this.loadFormData(this.data);
+	}
+
+	privacySelect(value: string) {
+		this.selectedPrivacy = value;
 	}
 
 	loadFormData(data) {
@@ -50,9 +56,9 @@ export class AddArticleComponent extends TranslationBaseComponent
 	async submit() {
 		this.article = await this.helpCenterArticleService.create({
 			name: `${this.form.value.name}`,
-			privacy: 'public',
 			description: `${this.form.value.desc}`,
 			data: `${this.form.value.data}`,
+			draft: `${this.selectedPrivacy}`,
 			categoryId: 'id'
 		});
 		this.dialogRef.close(this.article);
