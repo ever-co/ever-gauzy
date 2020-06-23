@@ -31,11 +31,14 @@
 						<ngx-timer-range-picker
 							[slotStartTime]="start"
 							[slotEndTime]="end"
+							[maxDate]="selectedRange.end"
+							[minDate]="selectedRange.start"
 							[allowedDuration]="allowedDuration"
 							[disableDatePicker]="disabled"
 							[disableEndPicker]="disabled"
 							name="selectedRange"
 							formControlName="selectedRange"
+							fromEmployeeAppointment="true"
 						>
 						</ngx-timer-range-picker>
 					</div>
