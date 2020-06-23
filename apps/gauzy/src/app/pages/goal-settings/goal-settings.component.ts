@@ -90,7 +90,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		}
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
 			context: {
-				timeFrame: this.selectedTimeFrame
+				timeFrame: this.selectedTimeFrame,
+				type: source
 			}
 		});
 

@@ -19,54 +19,63 @@ export class KeyResultProgressChartComponent implements OnInit {
 
 	public async updateChart(keyResult: KeyResult) {
 		await this.goalSettingsService
-			.getTimeFrameByName(this.keyResult.goal.deadline)
+			.getTimeFrameByName(
+				keyResult.goal.deadline === '' ? null : keyResult.goal.deadline
+			)
 			.then((res) => {
-				let start;
-				let end;
-				let period;
-				if (keyResult.deadline === 'No Custom Deadline') {
-					start = new Date(res.items[0].startDate);
-					end = new Date(res.items[0].endDate);
-				} else {
-					console.log(keyResult.createdAt);
-					start = new Date(keyResult.createdAt);
-					end = new Date(keyResult.hardDeadline);
-				}
-				const noOfDays =
-					(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-				period =
-					noOfDays > 30 ? 'month' : noOfDays > 7 ? 'week' : 'day';
-
-				const labels = this.labelCalculator(start, end, period);
-				const progressParts = labels.length;
-
-				this.calculateData(labels, progressParts, keyResult);
-
-				this.options = {
-					responsive: true,
-					maintainAspectRatio: false,
-					scales: {
-						xAxes: [
-							{
-								type: 'time',
-								time: {
-									displayFormats: {
-										hour: 'MMM DD'
-									},
-									tooltipFormat: 'MMM D'
-								},
-								ticks: {
-									maxTicksLimit: progressParts + 1
-								}
-							}
-						],
-						yAxes: [
-							{
-								display: 'true'
-							}
-						]
+				if (res.items.length > 0) {
+					let start;
+					let end;
+					let period;
+					if (keyResult.deadline === 'No Custom Deadline') {
+						start = new Date(res.items[0].startDate);
+						end = new Date(res.items[0].endDate);
+					} else {
+						start = new Date(keyResult.createdAt);
+						end = new Date(
+							keyResult.hardDeadline
+								? keyResult.hardDeadline
+								: res.items[0].endDate
+						);
 					}
-				};
+					const noOfDays =
+						(end.getTime() - start.getTime()) /
+						(1000 * 60 * 60 * 24);
+					period =
+						noOfDays > 30 ? 'month' : noOfDays > 7 ? 'week' : 'day';
+
+					const labels = this.labelCalculator(start, end, period);
+					const progressParts = labels.length;
+					this.calculateData(labels, progressParts, keyResult);
+					this.options = {
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							xAxes: [
+								{
+									type: 'time',
+									time: {
+										displayFormats: {
+											hour: 'MMM DD'
+										},
+										tooltipFormat: 'MMM D'
+									},
+									ticks: {
+										maxTicksLimit: progressParts
+									}
+								}
+							],
+							yAxes: [
+								{
+									display: 'true'
+								}
+							]
+						}
+					};
+				}
+			})
+			.catch((error) => {
+				console.log(error);
 			});
 	}
 
@@ -98,7 +107,8 @@ export class KeyResultProgressChartComponent implements OnInit {
 	}
 
 	progressData(keyResult) {
-		const updates = keyResult.updates
+		const updates = [];
+		keyResult.updates
 			.sort(
 				(a, b) =>
 					new Date(b.createdAt).getTime() -
@@ -106,36 +116,35 @@ export class KeyResultProgressChartComponent implements OnInit {
 			)
 			.map((val) => {
 				if (val.status === 'on track') {
-					const date = new Date(val.createdAt).getMonth();
-					return {
-						x: new Date(new Date().setMonth(date)),
-						y: val.update
-					};
-				} else {
-					return {
+					updates.push({
 						x: new Date(val.createdAt),
 						y: val.update
-					};
+					});
 				}
 			});
+
 		const update = [];
 		const sortedUpdates = updates.sort((a, b) => a.x - b.x);
-		console.log(sortedUpdates);
 		sortedUpdates.forEach((val, index) => {
 			if (index === 0) {
 				update.push(val);
-			} else if (index + 1 < sortedUpdates.length) {
-				if (val.x.getDate() !== sortedUpdates[index + 1].x.getDate()) {
-					update.push(sortedUpdates[index + 1]);
+			} else if (
+				val.x.getDate() === update[update.length - 1].x.getDate()
+			) {
+				if (val.y > update[update.length - 1].y) {
+					update.pop();
+					update.push(val);
 				}
+			} else {
+				update.push(val);
 			}
 		});
-		console.log(update);
 		return update;
 	}
 
 	labelCalculator(start, end, period) {
 		const labels = [];
+		start.setDate(start.getDate());
 		while (start <= end) {
 			labels.push(new Date(start));
 			if (period === 'week') {
@@ -146,6 +155,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 				start.setDate(start.getDate() + 1);
 			}
 		}
+		labels.push(end);
 		return labels;
 	}
 
@@ -153,14 +163,17 @@ export class KeyResultProgressChartComponent implements OnInit {
 		const result = [];
 		const delta = (target - start) / (parts - 1);
 		let index = 0;
+		if (target === 1) {
+			result.push({ x: labelsData[index], y: Math.round(start) });
+		}
 		while (start < target) {
 			if (target !== 1) {
-				result.push({ x: labelsData[index], y: Math.ceil(start) });
+				result.push({ x: labelsData[index], y: Math.round(start) });
 			}
 			start += delta;
 			index++;
 		}
-		result.push({ x: labelsData[index], y: Math.ceil(target) });
+		result.push({ x: labelsData[index], y: Math.round(target) });
 		return result;
 	}
 }
