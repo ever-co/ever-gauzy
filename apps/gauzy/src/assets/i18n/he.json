@@ -672,9 +672,9 @@
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"GOALS_PAGE": {
-		"HEADER": "כל היעדים עבור ",
-		"GOALS_EMPTY": "עדיין לא יצרת יעדים. לחץ על הוסף חדש כדי ליצור אחד",
-		"ADD_NEW_KEY_RESULT": "הוסף תוצאת מפתח חדשה"
+		"HEADER": "All Objectives for ",
+		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
+		"ADD_NEW_KEY_RESULT": "Add new key result"
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -1455,11 +1455,11 @@
 			"DELETED": "Successfully deleted",
 			"CREATED": "Successfully created",
 			"UPDATED": "Successfully updated",
-			"MOVED_ARTICLE": "Article has been moved",
+			"MOVED_BASE": "Base has been moved",
 			"MOVED_CATEGORY": "Category has been moved",
-			"CREATED_ARTICLE": "Article has been created",
+			"CREATED_BASE": "Base has been created",
 			"CREATED_CATEGORY": "Category has been created",
-			"EDITED_ARTICLE": "Article has been edited",
+			"EDITED_BASE": "Base has been edited",
 			"EDITED_CATEGORY": "Category has been edited",
 			"PIPELINE_CREATED": "Pipeline has been created",
 			"PIPELINE_UPDATED": "Pipeline has been updated"
