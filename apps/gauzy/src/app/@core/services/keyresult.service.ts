@@ -52,15 +52,15 @@ export class KeyResultService {
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
-	errorHandler(error: HttpErrorResponse) {
-		this.toastrService.danger(error.message, 'Error');
-		return throwError(error.message);
-	}
-
 	delete(id: string): Promise<any> {
 		return this._http
 			.delete(`${this.API_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
+	}
+
+	errorHandler(error: HttpErrorResponse) {
+		this.toastrService.danger(error.message, 'Error');
+		return throwError(error.message);
 	}
 }

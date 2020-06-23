@@ -5,6 +5,8 @@ import { EmployeesService } from '../../../@core/services';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
+import { GoalService } from '../../../@core/services/goal.service';
+import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 
 @Component({
 	selector: 'ga-goal-details',
@@ -20,7 +22,8 @@ export class GoalDetailsComponent implements OnInit {
 		private dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private employeeService: EmployeesService,
 		private dialogService: NbDialogService,
-		private keyResultService: KeyResultService
+		private keyResultService: KeyResultService,
+		private goalService: GoalService
 	) {}
 
 	async ngOnInit() {
@@ -33,6 +36,27 @@ export class GoalDetailsComponent implements OnInit {
 		this.goal.keyResults.forEach((keyResult) => {
 			this.updates.push(...keyResult.updates);
 		});
+	}
+
+	async deleteGoal() {
+		const dialog = this.dialogService.open(AlertModalComponent, {
+			context: {
+				alertOptions: {
+					title: 'Delete Objective',
+					message: 'Are you sure? This action is irreversible.',
+					status: 'danger'
+				}
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			if (response === 'yes') {
+				await this.goalService
+					.delete(this.goal.id)
+					.catch((error) => console.log(error));
+				this.dialogRef.close('deleted');
+			}
+		}
 	}
 
 	async keyResultUpdate(selectedKeyResult) {
