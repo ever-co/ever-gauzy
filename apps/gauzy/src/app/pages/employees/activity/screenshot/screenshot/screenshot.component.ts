@@ -9,10 +9,16 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 import { debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { toUTC } from 'libs/utils';
+import { toUTC, toLocal } from 'libs/utils';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+
+export interface ScreenshotMap {
+	startTime: string;
+	endTime: string;
+	timeSlots: TimeSlot[];
+}
 
 @Component({
 	selector: 'ngx-screenshot',
@@ -22,20 +28,11 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 export class ScreenshotComponent implements OnInit, OnDestroy {
 	request: TimeLogFilters;
 	loading: boolean;
-	timeSlots: { hour: string; timeSlots: TimeSlot[] }[];
+	timeSlots: ScreenshotMap[];
 	checkAllCheckbox: any;
 	selectedIds: {};
 	updateLogs$: Subject<any> = new Subject();
 	organization: any;
-
-	defaultSlots: {
-		'00': null;
-		'10': null;
-		'20': null;
-		'30': null;
-		'40': null;
-		'50': null;
-	};
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -62,6 +59,18 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
+	prgressStatus(value) {
+		if (value <= 25) {
+			return 'danger';
+		} else if (value <= 50) {
+			return 'warning';
+		} else if (value <= 75) {
+			return 'info';
+		} else {
+			return 'success';
+		}
+	}
+
 	async getLogs() {
 		if (!this.organization) {
 			return;
@@ -75,7 +84,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
-			relations: ['screenshots']
+			relations: ['screenshots', 'timeLogs']
 		};
 
 		this.loading = true;
@@ -87,25 +96,48 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 					this.checkAllCheckbox.checked = false;
 					this.checkAllCheckbox.indeterminate = false;
 				}
-				timeSlots.forEach((log) => (this.selectedIds[log.id] = false));
-
-				const hourlySlots = _.groupBy(timeSlots, (timeSlot) =>
-					moment(timeSlot.startedAt).format('HH')
-				);
-
-				this.timeSlots = Object.keys(hourlySlots)
-					.map((hour) => ({
-						hour,
-						timeSlots: _.values(
-							_.extend(
-								this.defaultSlots,
-								_.groupBy(hourlySlots[hour], (timeSlot) =>
-									moment(timeSlot.startedAt).format('MM')
-								)
-							)
-						)
-					}))
-					.filter((hourlySlot) => hourlySlot.timeSlots.length === 0);
+				this.timeSlots = _.chain(timeSlots)
+					.map((timeSlot) => {
+						this.selectedIds[timeSlot.id] = false;
+						timeSlot.localStartedAt = toLocal(
+							timeSlot.startedAt
+						).toDate();
+						timeSlot.localStoppedAt = toLocal(
+							timeSlot.stoppedAt
+						).toDate();
+						return timeSlot;
+					})
+					.groupBy((timeSlot) =>
+						moment(timeSlot.localStartedAt).format('HH')
+					)
+					.mapObject(
+						(hourTimeSlots: TimeSlot[], hour): ScreenshotMap => {
+							const byMinutes = _.indexBy(
+								hourTimeSlots,
+								(timeSlot) =>
+									moment(timeSlot.localStartedAt).format('mm')
+							);
+							const timeSlots = [
+								'00',
+								'10',
+								'20',
+								'30',
+								'40',
+								'50'
+							].map((key) => byMinutes[key] || null);
+							const time = moment()
+								.set('hour', hour)
+								.set('minute', 0);
+							const startTime = time.format('HH:mm');
+							const endTime = time.add(1, 'hour').format('HH:mm');
+							return { startTime, endTime, timeSlots };
+						}
+					)
+					.values()
+					.sortBy(({ startTime }) =>
+						moment(startTime, 'HH:mm').toDate().getTime()
+					)
+					.value();
 			})
 			.finally(() => (this.loading = false));
 	}

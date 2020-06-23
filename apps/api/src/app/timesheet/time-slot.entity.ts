@@ -6,7 +6,9 @@ import {
 	JoinColumn,
 	Unique,
 	AfterLoad,
-	OneToMany
+	OneToMany,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeSlot as ITimeSlot } from '@gauzy/models';
@@ -17,6 +19,7 @@ import * as moment from 'moment';
 import { Screenshot } from './screenshot.entity';
 import { Activity } from './activity.entity';
 import { TimeSlotMinute } from './time-slot-minute.entity';
+import { TimeLog } from './time-log.entity';
 
 @Entity('time_slot')
 @Unique(['employeeId', 'startedAt'])
@@ -31,17 +34,27 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@Column()
 	readonly employeeId: string;
 
+	@ApiProperty({ type: Screenshot })
 	@OneToMany((type) => Screenshot, (screenshot) => screenshot.timeSlot)
 	@JoinColumn()
 	screenshots?: Screenshot[];
 
+	@ApiProperty({ type: Activity })
 	@OneToMany((type) => Activity, (activity) => activity.timeSlot)
 	@JoinColumn()
 	activities?: Activity[];
 
-	@OneToMany((type) => TimeSlotMinute, (activity) => activity.timeSlot)
+	@ApiProperty({ type: TimeSlotMinute })
+	@OneToMany(
+		(type) => TimeSlotMinute,
+		(timeSlotMinute) => timeSlotMinute.timeSlot
+	)
 	@JoinColumn()
-	minutesLogs?: TimeSlotMinute[];
+	timeSlotMinutes?: TimeSlotMinute[];
+
+	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots)
+	@JoinTable()
+	timeLogs?: TimeLog[];
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

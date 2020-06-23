@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimerController } from './timer/timer.controller';
 import { TimerService } from './timer/timer.service';
 import { Employee } from '../employee/employee.entity';
+import { TimeSlotMinute } from './time-slot-minute.entity';
 import { TimeSheetService } from './timesheet/timesheet.service';
 import { ActivityService } from './activity/activity.service';
 import { ScreenshotService } from './screenshot/screenshot.service';
@@ -24,9 +25,9 @@ import { ScreenshotController } from './screenshot/screenshot.controller';
 	controllers: [
 		TimerController,
 		TimeLogController,
-		TimeSheetController,
 		TimeSlotController,
-		ScreenshotController
+		ScreenshotController,
+		TimeSheetController
 	],
 	imports: [
 		TypeOrmModule.forFeature([
@@ -35,7 +36,8 @@ import { ScreenshotController } from './screenshot/screenshot.controller';
 			Screenshot,
 			TimeLog,
 			Timesheet,
-			Employee
+			Employee,
+			TimeSlotMinute
 		]),
 		CqrsModule
 	],

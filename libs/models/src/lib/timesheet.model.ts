@@ -83,6 +83,7 @@ export interface TimeLog extends IBaseEntityModel {
 	employee: Employee;
 	timesheet?: Timesheet;
 	task?: Task;
+	timeSlots?: TimeSlot[];
 	project?: OrganizationProjects;
 	startedAt?: Date;
 	stoppedAt?: Date;
@@ -149,10 +150,12 @@ export interface TimeLogFilters {
 }
 
 export interface TimeSlot extends IBaseEntityModel {
+	[x: string]: any;
 	employee: Employee;
 	screenshots?: Screenshot[];
 	activities?: Activity[];
-	minutesLogs?: TimeSlotMinute[];
+	timeLogs?: TimeLog[];
+	timeSlotMinutes?: TimeSlotMinute[];
 	project?: OrganizationProjects;
 	duration?: number;
 	keyboard?: number;

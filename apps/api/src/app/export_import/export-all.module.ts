@@ -74,6 +74,7 @@ import { TimeSlot } from '../timesheet/time-slot.entity';
 import { Activity } from '../timesheet/activity.entity';
 import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
+import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
 import { ActivityService } from '../timesheet/activity/activity.service';
 import { ScreenshotService } from '../timesheet/screenshot/screenshot.service';
@@ -133,6 +134,7 @@ import { EquipmentService } from '../equipment/equipment.service';
 			Activity,
 			Screenshot,
 			TimeLog,
+			TimeSlotMinute,
 			AppointmentEmployees,
 			ApprovalPolicy,
 			Candidate

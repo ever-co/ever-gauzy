@@ -5,7 +5,8 @@ import { ScreenshotRoutingModule } from './screenshot-routing.module';
 import { ScreenshotComponent } from './screenshot/screenshot.component';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
-import { NbSpinnerModule } from '@nebular/theme';
+import { NbSpinnerModule, NbProgressBarModule } from '@nebular/theme';
+import { MomentModule } from 'ngx-moment';
 
 @NgModule({
 	declarations: [ScreenshotComponent],
@@ -14,7 +15,9 @@ import { NbSpinnerModule } from '@nebular/theme';
 		ScreenshotRoutingModule,
 		SharedModule,
 		FiltersModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		MomentModule,
+		NbProgressBarModule
 	]
 })
 export class ScreenshotModule {}

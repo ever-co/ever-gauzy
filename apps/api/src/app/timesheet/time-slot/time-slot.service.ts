@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { TimeSlot } from '../time-slot.entity';
 import * as moment from 'moment';
+import { RequestContext } from '../../core/context/request-context';
+import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
@@ -12,6 +14,110 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		private readonly timeSlotRepository: Repository<TimeSlot>
 	) {
 		super(timeSlotRepository);
+	}
+
+	async getTimeSlots(request: IGetTimeSlotInput) {
+		let employeeId: string | string[];
+
+		if (
+			RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			if (request.employeeId) {
+				employeeId = request.employeeId;
+			}
+		} else {
+			const user = RequestContext.currentUser();
+			employeeId = user.employeeId;
+		}
+
+		const logs = await this.timeSlotRepository.find({
+			join: {
+				alias: 'time_slots',
+				leftJoin: {
+					employee: 'time_slots.employee',
+					timeLog: 'time_slots.timeLogs'
+				}
+			},
+			relations: [
+				...(RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)
+					? ['employee', 'employee.user']
+					: []),
+				...(request.relations ? request.relations : [])
+			],
+			where: (qb: SelectQueryBuilder<TimeSlot>) => {
+				if (request.startDate && request.endDate) {
+					const startDate = moment(request.startDate).format(
+						'YYYY-MM-DD HH:mm:ss'
+					);
+					const endDate = moment(request.endDate).format(
+						'YYYY-MM-DD HH:mm:ss'
+					);
+					qb.andWhere(
+						`"${qb.alias}"."startedAt" Between :startDate AND :endDate`,
+						{
+							startDate,
+							endDate
+						}
+					);
+				}
+				if (employeeId) {
+					if (employeeId instanceof Array) {
+						qb.andWhere(
+							`"${qb.alias}"."employeeId" IN (:...employeeId)`,
+							{
+								employeeId: employeeId
+							}
+						);
+					} else {
+						qb.andWhere(
+							`"${qb.alias}"."employeeId" = :employeeId`,
+							{
+								employeeId
+							}
+						);
+					}
+				}
+				if (request.organizationId) {
+					qb.andWhere(
+						'"employee"."organizationId" = :organizationId',
+						{ organizationId: request.organizationId }
+					);
+				}
+				if (request.activityLevel) {
+					qb.andWhere(
+						`"${qb.alias}"."overall" BETWEEN :start AND :end`,
+						request.activityLevel
+					);
+				}
+				if (request.source) {
+					if (request.source instanceof Array) {
+						qb.andWhere('"timeLog.source" IN (:...source)', {
+							source: request.source
+						});
+					} else {
+						qb.andWhere('"timeLog.source" = :source', {
+							source: request.source
+						});
+					}
+				}
+				if (request.logType) {
+					if (request.logType instanceof Array) {
+						qb.andWhere('"timeLog.logType" IN (:...logType)', {
+							logType: request.logType
+						});
+					} else {
+						qb.andWhere('"timeLog.logType" = :logType', {
+							logType: request.logType
+						});
+					}
+				}
+			}
+		});
+		return logs;
 	}
 
 	bulkCreateOrUpdate(slots) {
