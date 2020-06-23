@@ -14,8 +14,8 @@ import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/
 	styleUrls: ['candidate-criterions-form.component.scss']
 })
 export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
-	@Input() editSelectedTechnologies: ICandidateTechnologies[];
-	@Input() editSelectedQualities: ICandidatePersonalQualities[];
+	@Input() editSelectedTechnologies: ICandidateTechnologies[] = [];
+	@Input() editSelectedQualities: ICandidatePersonalQualities[] = [];
 	form: any;
 	technologiesList: ICandidateTechnologies[];
 	personalQualitiesList: ICandidatePersonalQualities[];
@@ -60,16 +60,17 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 			);
 		}
 	}
-	isChecked(id: string) {
-		// TO DO: ids
-		// this.editSelectedTechnologies.filter((item) => item.id === id);
-		// if (this.editSelectedTechnologies[0]) {
-		// for (const item of this.editSelectedTechnologies) {
-		// 	if (item.id === id) {
-		// 		return true;
-		// 	}
-		// }
-		// }
+	isChecked(
+		name: string,
+		data: ICandidateTechnologies[] | ICandidatePersonalQualities[]
+	) {
+		if (data) {
+			for (const item of data) {
+				if (item.name === name) {
+					return true;
+				}
+			}
+		}
 	}
 	private async loadCriterions() {
 		const technologies = await this.candidateTechnologiesService.getAll();
