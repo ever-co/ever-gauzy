@@ -29,6 +29,7 @@
 						<div
 							class="base"
 							[ngClass]="{ blue: node.data.color === 'blue' }"
+							[ngClass]="{ child: node.data.flag === 'category' }"
 							(click)="onNodeClicked(node.data)"
 						>
 							<div>

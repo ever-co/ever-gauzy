@@ -94,7 +94,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	async addCategory() {
-		//in progress
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		const dialog = this.dialogService.open(AddCategoryComponent, {
 			context: {
