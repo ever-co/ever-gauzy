@@ -62,13 +62,6 @@ export class AddArticleComponent extends TranslationBaseComponent
 		this.dialogRef.close();
 	}
 
-	OnInit() {
-		this.form = this.fb.group({
-			name: [''],
-			desc: [''],
-			data: ['']
-		});
-	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
