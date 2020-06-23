@@ -122,6 +122,7 @@
 				Deadline
 			</label>
 			<nb-select
+				(selectedChange)="deadlineValidators()"
 				id="key-result-deadline"
 				fullWidth
 				formControlName="deadline"
@@ -155,6 +156,7 @@
 					/>
 					<nb-datepicker
 						#softDeadlinePicker
+						[min]="minDate"
 						[max]="
 							keyResultsForm.value.hardDeadline
 								? keyResultsForm.value.hardDeadline
@@ -186,7 +188,7 @@
 						[min]="
 							keyResultsForm.value.softDeadline
 								? keyResultsForm.value.softDeadline
-								: null
+								: minDate
 						"
 					></nb-datepicker>
 				</div>
@@ -194,14 +196,16 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
+		<button class="mr-3" nbButton (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
 		<button
-			[disabled]="!keyResultsForm.valid"
+			[disabled]="keyResultsForm.invalid"
 			nbButton
 			status="success"
 			(click)="saveKeyResult()"
 		>
-			Save
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

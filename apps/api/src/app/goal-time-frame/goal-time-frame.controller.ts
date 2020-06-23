@@ -7,7 +7,8 @@ import {
 	Get,
 	HttpCode,
 	Delete,
-	Param
+	Param,
+	Put
 } from '@nestjs/common';
 import { CrudController } from '../core';
 import { GoalTimeFrame } from './goal-time-frame.entity';
@@ -66,5 +67,35 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	@Delete(':id')
 	async deleteTask(@Param('id') id: string): Promise<any> {
 		return this.goalTimeFrameService.delete(id);
+	}
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	async update(
+		@Param('id') id: string,
+		@Body() entity: GoalTimeFrame
+	): Promise<GoalTimeFrame> {
+		try {
+			return this.goalTimeFrameService.create({
+				id,
+				...entity
+			});
+		} catch (error) {
+			console.log(error);
+			return;
+		}
 	}
 }

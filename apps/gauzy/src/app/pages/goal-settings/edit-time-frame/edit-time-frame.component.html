@@ -85,7 +85,7 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<button class="mr-3" nbButton (click)="closeDialog(null)">
-			Cancel
+			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
 			[disabled]="!timeFrameForm.valid"
@@ -93,7 +93,7 @@
 			status="success"
 			(click)="saveTimeFrame()"
 		>
-			Save
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

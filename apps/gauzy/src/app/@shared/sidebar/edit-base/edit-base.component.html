@@ -4,7 +4,6 @@
 			<h6>Manage Knowledge Base</h6>
 			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 		</div>
-		<br />
 		<div class="select">
 			<nb-select
 				class="main-buttons"
@@ -21,20 +20,36 @@
 				}}</nb-option>
 			</nb-select>
 		</div>
-		<p class="label">Title:</p>
-		<input
-			class="main-buttons"
-			type="text"
-			size="24"
-			maxlength="18"
-			nbInput
-		/>
-		<p class="label">Description:</p>
-		<input type="text" size="24" maxlength="18" nbInput />
-		<div class="save-button">
-			<button status="success" nbButton>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</div>
+		<form [formGroup]="form" (ngSubmit)="submit()">
+			<div class="edit-field">
+				<div>
+					<p class="label">Name of the base:</p>
+					<input
+						formControlName="name"
+						class="main-buttons"
+						type="text"
+						size="24"
+						maxlength="18"
+						nbInput
+					/>
+				</div>
+				<div>
+					<p class="label">Description:</p>
+					<input
+						formControlName="desc"
+						class="main-buttons"
+						type="text"
+						size="30"
+						maxlength="26"
+						nbInput
+					/>
+				</div>
+			</div>
+			<div class="save-button">
+				<button status="success" nbButton>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</div>
+		</form>
 	</nb-card-body>
 </nb-card>
