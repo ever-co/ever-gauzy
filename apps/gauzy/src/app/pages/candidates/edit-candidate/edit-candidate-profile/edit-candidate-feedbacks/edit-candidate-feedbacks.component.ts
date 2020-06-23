@@ -49,6 +49,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	currentFeedback: ICandidateFeedback;
 	qualRating = null;
 	techRating = null;
+	isCancel = false;
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -118,21 +119,22 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.currentInterview = res.items.find(
 				(item) => item.id === feedback.interviewId
 			);
+			this.technologiesList = this.currentInterview.technologies;
+			this.personalQualitiesList = this.currentInterview.personalQualities;
 			feedback.criterionsRating.forEach((item) => {
-				this.currentInterview.technologies.map((tech) =>
+				this.technologiesList.map((tech) =>
 					tech.id === item.technologyId
 						? (tech.rating = item.rating)
 						: null
 				);
-				this.currentInterview.personalQualities.map((qual) =>
+				this.personalQualitiesList.map((qual) =>
 					qual.id === item.personalQualityId
 						? (qual.rating = item.rating)
 						: null
 				);
 			});
 		}
-		this.technologiesList = this.currentInterview.technologies;
-		this.personalQualitiesList = this.currentInterview.personalQualities;
+
 		this.techRating = this.form.get([
 			'feedbacks',
 			0,
@@ -143,7 +145,6 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			0,
 			'personalQualities'
 		]) as FormArray;
-		// TO DO: rating after update
 		if (
 			this.qualRating.controls.length < this.personalQualitiesList.length
 		) {
@@ -205,7 +206,8 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 
 	async editFeedback(index: number, id: string) {
 		this.currentFeedback = this.feedbackList[index];
-		this.averageRating = this.currentFeedback.rating;
+		this._initializeForm();
+		this.loadFeedbacks();
 		this.loadCriterions(this.currentFeedback);
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.feedbacks.patchValue([this.currentFeedback]);
@@ -218,6 +220,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		);
 		this.getStatusHire(this.feedbackInterviewId);
 		this.interviewersHire = this.interviewers ? this.interviewers : null;
+		this.averageRating = this.currentFeedback.rating;
 	}
 
 	submitForm() {
@@ -349,11 +352,11 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	cancel() {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.feedbacks.value.length = 0;
+		this.form.reset();
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.feedbacks.reset();
+		this.form.reset();
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
