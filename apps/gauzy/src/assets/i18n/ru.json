@@ -510,7 +510,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "English",
+		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
@@ -1455,11 +1455,11 @@
 			"DELETED": "Успешно удален",
 			"CREATED": "Успешно создано",
 			"UPDATED": "Успешно обновлено",
-			"MOVED_ARTICLE": "Статья была перемещена",
+			"MOVED_BASE": "База была перемещена",
 			"MOVED_CATEGORY": "Категория была перемещена",
-			"CREATED_ARTICLE": "Статья создана",
+			"CREATED_BASE": "База была создана",
 			"CREATED_CATEGORY": "Категория создана",
-			"EDITED_ARTICLE": "Статья была отредактирована",
+			"EDITED_BASE": "База была отредактирована",
 			"EDITED_CATEGORY": "Категория была отредактирована",
 			"PIPELINE_CREATED": "Конвейер создан",
 			"PIPELINE_UPDATED": "Конвейер обновлен"
