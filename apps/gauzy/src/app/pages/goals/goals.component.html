@@ -16,8 +16,7 @@
 	<nb-card-body>
 		<div class="row tex-center p-5" *ngIf="noGoals == true">
 			<p>
-				You haven't created any Objectives yet. Click Add New to create
-				one.
+				{{ 'GOALS_PAGE.GOALS_EMPTY' | translate }}
 			</p>
 		</div>
 		<nb-accordion
@@ -65,7 +64,9 @@
 							title="Add new key result"
 							(click)="addKeyResult(index, null)"
 						></nb-action>
-						<nb-action>Add new key result</nb-action>
+						<nb-action>{{
+							'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate
+						}}</nb-action>
 					</nb-actions>
 				</nb-accordion-item-body>
 			</nb-accordion-item>

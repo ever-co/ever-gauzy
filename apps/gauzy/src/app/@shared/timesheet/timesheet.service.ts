@@ -87,7 +87,7 @@ export class TimesheetService {
 
 	deleteLogs(logIds: string | string[]) {
 		let payload = new HttpParams();
-		if (typeof logIds == 'string') {
+		if (typeof logIds === 'string') {
 			logIds = [logIds];
 		}
 		logIds.forEach((id: string) => {

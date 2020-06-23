@@ -20,7 +20,6 @@
 			class="mb-3"
 			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
 		>
-			<div class="font-weight-bold mb-2">Employee</div>
 			<div class="description">
 				<ngx-avatar
 					[name]="timeLog?.employee?.user?.name"
@@ -29,23 +28,39 @@
 			</div>
 		</div>
 		<div class="mb-3">
-			<div class="font-weight-bold mb-2">Project</div>
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.PROJECT' | translate }}
+			</div>
 			<div class="description">
-				{{ timeLog?.project ? timeLog?.project.name : 'No project' }}
+				{{
+					timeLog?.project
+						? timeLog?.project.name
+						: ('TIMESHEET.NO_PROJECT' | translate)
+				}}
 			</div>
 		</div>
 		<div class="mb-3">
-			<div class="font-weight-bold mb-2">Task</div>
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.TODO' | translate }}
+			</div>
 			<div class="description">
-				{{ timeLog?.task ? timeLog?.task?.title : 'No to-do' }}
+				{{
+					timeLog?.task
+						? timeLog?.task?.title
+						: ('TIMESHEET.NO_TOTO' | translate)
+				}}
 			</div>
 		</div>
 		<div class="mb-3">
-			<div class="font-weight-bold mb-2">Log Type</div>
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.LOG_TYPE' | translate }}
+			</div>
 			<div class="description">{{ timeLog?.logType }}</div>
 		</div>
 		<div class="mb-3">
-			<div class="font-weight-bold mb-2">Time</div>
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.TIME_SPAN' | translate }}
+			</div>
 			<div class="description">
 				<span class="start-timer">
 					{{ timeLog?.startedAt | utcToLocal | timeFormat: true }}
@@ -58,12 +73,16 @@
 					{{ timeLog?.stoppedAt | utcToLocal | timeFormat: true }}
 				</span>
 				<ng-template #runningTimer>
-					<span class="running-timer"> Till now </span>
+					<span class="running-timer">
+						{{ 'TIMESHEET.TILL_NOW' | translate }}
+					</span>
 				</ng-template>
 			</div>
 		</div>
 		<div class="mb-3">
-			<div class="font-weight-bold mb-2">Dueration</div>
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.DURATION' | translate }}
+			</div>
 			<div class="description">
 				{{ timeLog?.duration | durationFormat }}
 			</div>
