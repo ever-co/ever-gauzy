@@ -89,7 +89,10 @@ export class CandidateInterviewFeedbackComponent
 		const techSum = technologies.reduce((sum, current) => sum + current, 0);
 		const qualSum = qualities.reduce((sum, current) => sum + current, 0);
 		const res =
-			(techSum / technologies.length + qualSum / qualities.length) / 2;
+			techSum || qualSum
+				? (techSum / technologies.length + qualSum / qualities.length) /
+				  2
+				: 0;
 		return res;
 	}
 
@@ -154,6 +157,7 @@ export class CandidateInterviewFeedbackComponent
 				this.technologiesList.map((tech) => (tech.rating = null));
 				this.personalQualitiesList.map((qual) => (qual.rating = null));
 				this.dialogRef.close();
+				this.form.reset();
 				this.toastrService.success(
 					this.getTranslation('TOASTR.TITLE.SUCCESS'),
 					this.getTranslation('TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED')
@@ -210,5 +214,6 @@ export class CandidateInterviewFeedbackComponent
 	}
 	closeDialog() {
 		this.dialogRef.close();
+		this.form.reset();
 	}
 }
