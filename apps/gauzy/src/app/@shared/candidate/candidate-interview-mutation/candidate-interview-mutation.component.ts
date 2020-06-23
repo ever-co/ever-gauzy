@@ -163,7 +163,13 @@ export class CandidateInterviewMutationComponent
 			candidateId: this.selectedCandidate.id
 		});
 		this.addInterviewers(interview.id, this.selectedInterviewers);
-		this.addCriterions(interview.id);
+		this.candidateCriterionsForm.loadFormData();
+		const criterionsForm = this.candidateCriterionsForm.form.value;
+		this.addCriterions(
+			interview.id,
+			criterionsForm.selectedTechnologies,
+			criterionsForm.selectedQualities
+		);
 		try {
 			const createdInterview = await this.candidateInterviewService.update(
 				interview.id,
@@ -191,16 +197,14 @@ export class CandidateInterviewMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	}
-	async addCriterions(interviewId: string) {
-		this.candidateCriterionsForm.loadFormData();
-		const criterionsForm = this.candidateCriterionsForm.form.value;
+	async addCriterions(interviewId: string, tech?: string[], qual?: string[]) {
 		this.technologies = await this.candidateTechnologiesService.createBulk(
 			interviewId,
-			criterionsForm.selectedTechnologies
+			tech
 		);
 		this.personalQualities = await this.candidatePersonalQualitiesService.createBulk(
 			interviewId,
-			criterionsForm.selectedQualities
+			qual
 		);
 	}
 	async editInterview() {
@@ -219,6 +223,10 @@ export class CandidateInterviewMutationComponent
 			);
 		}
 		try {
+			this.updateCriterions(
+				this.editData.personalQualities,
+				this.editData.technologies
+			);
 			updatedInterview = await this.candidateInterviewService.update(
 				this.interviewId,
 				{
@@ -235,7 +243,42 @@ export class CandidateInterviewMutationComponent
 		this.interviewId = null;
 		return updatedInterview;
 	}
-
+	async updateCriterions(
+		qual: ICandidatePersonalQualities[],
+		tech: ICandidateTechnologies[]
+	) {
+		this.candidateCriterionsForm.loadFormData();
+		const criterionsForm = this.candidateCriterionsForm.form.value;
+		this.setCriterions(tech, criterionsForm.selectedTechnologies);
+		this.setCriterions(qual, criterionsForm.selectedPersonalQualities);
+		//TO DO
+		// this.addCriterions(
+		// 	this.editData.id,
+		// 	techResult ? techResult.createInput : [],
+		// 	qualResult ? qualResult.createInput : []
+		// );
+		//TO DO delete criterions
+	}
+	setCriterions(
+		data: ICandidateTechnologies[] | ICandidatePersonalQualities[],
+		selectedItems: string[]
+	) {
+		//TO DO
+		const createInput = [];
+		const deleteInput = [];
+		if (selectedItems) {
+			selectedItems.forEach((selectedItem) => {
+				data.forEach((item) => {
+					if (item.name === selectedItem) {
+						deleteInput.push(item);
+					} else {
+						createInput.push(selectedItem);
+					}
+				});
+			});
+			return { createInput: createInput, deleteInput: deleteInput };
+		}
+	}
 	async onCandidateSelected(id: string) {
 		const candidate = await this.candidatesService.getCandidateById(id, [
 			'user'
