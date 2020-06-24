@@ -680,10 +680,10 @@
 	"KEY_RESULT_PAGE": {
 		"UPDATE": {
 			"STATUS": {
-				"ON_TRACK": "на път",
-				"NEEDS_ATTENTION": "има нужда от внимание",
-				"OFF_TRACK": "извън пистата",
-				"NONE": "нито един"
+				"ON_TRACK": "on track",
+				"NEEDS_ATTENTION": "needs attention",
+				"OFF_TRACK": "off track",
+				"NONE": "none"
 			}
 		}
 	},
@@ -1684,6 +1684,11 @@
 			"PROJECT": "Please selct project",
 			"EMPLOYEE": "Please selct employee"
 		}
+	},
+	"ACTIVITY": {
+		"SCREENSHOTS": "Screenshots",
+		"APPS": "Apps Activity",
+		"URLS": "Urls Activity"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
