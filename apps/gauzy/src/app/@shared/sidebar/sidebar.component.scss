@@ -103,11 +103,13 @@
     background: #fff;
     box-shadow: none;
   }
+
   .node-content-wrapper-active,
   .node-content-wrapper-focused,
   .node-content-wrapper:hover {
     box-shadow: inset 0 0 1px #fff;
   }
+
   .node-content-wrapper-active
     .node-content-wrapper-focused
     .node-content-wrapper:hover {
@@ -121,6 +123,7 @@
     box-shadow: none;
     border: none;
   }
+
   .toggle-children-wrapper-collapsed .toggle-children {
     transform: rotate(225deg);
   }
