@@ -103,6 +103,35 @@
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
+								<label for="Banner">{{
+									'POP_UPS.BANNER' | translate
+								}}</label>
+								<input
+									id="Banner"
+									nbInput
+									type="text"
+									fullWidth
+									placeholder="{{
+										'POP_UPS.BANNER' | translate
+									}}"
+									formControlName="banner"
+									class="banner"
+									[ngClass]="{
+										'status-danger':
+											banner?.invalid &&
+											(banner.dirty || banner.touched),
+										'status-success':
+											banner?.valid &&
+											(banner.dirty || banner.touched)
+									}"
+									autocomplete="off"
+								/>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
 								<label for="addClientFocus">{{
 									'POP_UPS.CLIENT_FOCUS' | translate
 								}}</label>
@@ -141,35 +170,6 @@
 										>
 									</ng-template>
 								</ng-select>
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
-								<label for="Banner">{{
-									'POP_UPS.BANNER' | translate
-								}}</label>
-								<textarea
-									id="Banner"
-									nbInput
-									fullWidth
-									placeholder="{{
-										'POP_UPS.BANNER' | translate
-									}}"
-									formControlName="banner"
-									class="banner"
-									rows="2"
-									[ngClass]="{
-										'status-danger':
-											banner?.invalid &&
-											(banner.dirty || banner.touched),
-										'status-success':
-											banner?.valid &&
-											(banner.dirty || banner.touched)
-									}"
-									autocomplete="off"
-								></textarea>
 							</div>
 						</div>
 					</div>
