@@ -675,15 +675,15 @@
 		"HEADER": "Все цели для ",
 		"GOALS_EMPTY": "Вы еще не создали ни одной цели. Нажмите \"Добавить\", чтобы создать одну",
 		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа",
-		"ADD_NEW_OBJECTIVE": "Add new Objective"
+		"ADD_NEW_OBJECTIVE": "Добавить новую цель"
 	},
 	"KEY_RESULT_PAGE": {
 		"UPDATE": {
 			"STATUS": {
-				"ON_TRACK": "on track",
-				"NEEDS_ATTENTION": "needs attention",
-				"OFF_TRACK": "off track",
-				"NONE": "none"
+				"ON_TRACK": "на треке",
+				"NEEDS_ATTENTION": "требует внимания",
+				"OFF_TRACK": "от трека",
+				"NONE": "нет"
 			}
 		}
 	},
