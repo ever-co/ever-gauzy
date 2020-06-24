@@ -674,7 +674,18 @@
 	"GOALS_PAGE": {
 		"HEADER": "Все цели для ",
 		"GOALS_EMPTY": "Вы еще не создали ни одной цели. Нажмите \"Добавить\", чтобы создать одну",
-		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа"
+		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа",
+		"ADD_NEW_OBJECTIVE": "Add new Objective"
+	},
+	"KEY_RESULT_PAGE": {
+		"UPDATE": {
+			"STATUS": {
+				"ON_TRACK": "on track",
+				"NEEDS_ATTENTION": "needs attention",
+				"OFF_TRACK": "off track",
+				"NONE": "none"
+			}
+		}
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
