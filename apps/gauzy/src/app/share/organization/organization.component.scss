@@ -20,18 +20,18 @@
   }
   .org-head {
     .org-head-left-sec {
-      width: 180px;
-      float: left;
-
       img.org-image {
         object-fit: cover;
         object-position: center;
         width: 180px;
-        height: auto;
-        border-radius: 13px;
+        height: 180px;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
       }
 
       .organization-photo {
+        float: left;
+        margin-right: 35px;
         width: fit-content;
         height: fit-content;
         position: relative;
@@ -80,9 +80,7 @@
     }
 
     .org-head-right-sec {
-      width: calc(100% - 180px);
-      float: left;
-      padding: 0 20px;
+      border-left: 1px solid lightgray;
       .org-banner {
         color: #617083;
         margin: 5px 0;
