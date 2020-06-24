@@ -117,12 +117,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	async editInterview(id: string) {
-		const currentInterview = await this.candidateInterviewService.findById(
-			id,
-			['interviewers']
-		);
-		currentInterview.interviewers = await this.candidateInterviewersService.findByInterviewId(
-			id
+		const currentInterview = this.interviewList.find(
+			(item) => item.id === id
 		);
 		const dialog = this.dialogService.open(
 			CandidateInterviewMutationComponent,

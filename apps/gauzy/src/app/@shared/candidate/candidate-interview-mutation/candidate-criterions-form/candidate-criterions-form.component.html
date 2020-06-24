@@ -13,6 +13,9 @@
 			<div *ngFor="let technology of technologiesList">
 				<nb-checkbox
 					(checkedChange)="checkedTechnologies(technology.name)"
+					[checked]="
+						isChecked(technology.name, editSelectedTechnologies)
+					"
 					>{{ technology.name }}</nb-checkbox
 				>
 			</div>
@@ -24,9 +27,11 @@
 				}}
 			</div>
 			<div *ngFor="let quality of personalQualitiesList">
-				<nb-checkbox (checkedChange)="checkedQualities(quality.name)">{{
-					quality.name
-				}}</nb-checkbox>
+				<nb-checkbox
+					(checkedChange)="checkedQualities(quality.name)"
+					[checked]="isChecked(quality.name, editSelectedQualities)"
+					>{{ quality.name }}</nb-checkbox
+				>
 			</div>
 		</div>
 	</div>

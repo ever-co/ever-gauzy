@@ -18,7 +18,6 @@ const helpCenterMenuList: IHelpCenter[] = [
 				flag: 'category',
 				privacy: 'eye-outline',
 				description: 'Information',
-				data: 'Cookies and Similar Technologies Information',
 				language: 'en',
 				color: 'black',
 				index: 0
@@ -29,7 +28,6 @@ const helpCenterMenuList: IHelpCenter[] = [
 				flag: 'category',
 				privacy: 'eye-off-outline',
 				description: 'Device Information',
-				data: 'We may collect certain information about your device',
 				language: 'en',
 				color: 'black',
 				index: 1
@@ -51,7 +49,6 @@ const helpCenterMenuList: IHelpCenter[] = [
 				privacy: 'eye-off-outline',
 				name: 'Testing',
 				description: 'Gauzy Testing',
-				data: 'Test Information',
 				language: 'en',
 				color: 'black',
 				index: 3
@@ -73,7 +70,6 @@ const helpCenterMenuList: IHelpCenter[] = [
 				flag: 'category',
 				privacy: 'eye-outline',
 				description: 'Information',
-				data: 'Cookies and Similar Technologies Information',
 				language: 'en',
 				color: 'black',
 				index: 0
@@ -95,7 +91,6 @@ const helpCenterMenuList: IHelpCenter[] = [
 				flag: 'category',
 				privacy: 'eye-outline',
 				description: 'Information',
-				data: 'Cookies and Similar Technologies Information',
 				language: 'en',
 				color: 'black',
 				index: 0

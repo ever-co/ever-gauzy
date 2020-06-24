@@ -107,7 +107,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 				let eventObject = event.event;
 				eventObject.extendedProps['type'] !== 'BookedSlot' &&
 					this.router.navigate(
-						[this.appointmentFormURL || this.getRoute('manage')],
+						[
+							this.appointmentFormURL ||
+								this.getManageRoute(this._selectedEmployeeId)
+						],
 						{
 							state: {
 								dateStart: eventObject.start,
@@ -155,43 +158,56 @@ export class AppointmentComponent extends TranslationBaseComponent
 				}
 			});
 
-		if (this.employee && this.employee.id) {
-			const findObj = {
-				employee: {
-					id: this.employee.id
+		this.store.selectedEmployee$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employee) => {
+				if (employee && employee.id) {
+					this._selectedEmployeeId = employee.id;
+					this.renderAppointmentsAndSlots(this._selectedEmployeeId);
 				}
-			};
+			});
 
-			this.employeeAppointmentService
-				.getAll(['employee', 'employee.user'], findObj)
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((appointments) => {
-					this.appointments = appointments.items;
-					for (let appointment of this.appointments) {
-						this.checkAndAddEventToCalendar(
-							moment(appointment.startDateTime).utc().format(),
-							moment(appointment.endDateTime).utc().format(),
-							appointment.id,
-							'BookedSlot'
-						);
-					}
-					this._fetchAvailableSlots();
-				});
+		if (this.employee && this.employee.id) {
+			this.renderAppointmentsAndSlots(this.employee.id);
 		}
+	}
+
+	renderAppointmentsAndSlots(employeeId: string) {
+		const findObj = {
+			employee: {
+				id: employeeId
+			}
+		};
+
+		this.employeeAppointmentService
+			.getAll(['employee', 'employee.user'], findObj)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((appointments) => {
+				this.appointments = appointments.items;
+				for (let appointment of this.appointments) {
+					this.checkAndAddEventToCalendar(
+						moment(appointment.startDateTime).utc().format(),
+						moment(appointment.endDateTime).utc().format(),
+						appointment.id,
+						'BookedSlot'
+					);
+				}
+				this._fetchAvailableSlots(employeeId);
+			});
 	}
 
 	getEvents(arg, callback) {
 		callback(this.calendarEvents);
 	}
 
-	getRoute(name: string) {
-		return `/pages/employees/appointments/${name}`;
+	getManageRoute(employeeId: string = '') {
+		return `/pages/employees/appointments/manage/${employeeId}`;
 	}
 
-	private async _fetchAvailableSlots() {
+	private async _fetchAvailableSlots(employeeId: string) {
 		const findObj = {
 			employee: {
-				id: this.employee.id
+				id: employeeId
 			}
 		};
 
@@ -289,6 +305,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 					new Date(endTime).getTime()
 		) &&
 			(!durationCheck ||
+				this._selectedEmployeeId ||
 				moment(endTime).diff(moment(startTime), 'minutes') >=
 					this.allowedDuration) &&
 			this.calendarEvents.push({
@@ -479,7 +496,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 	markUnavailability() {}
 
 	manageAppointments() {
-		this.router.navigate([this.getRoute('manage')]);
+		this.router.navigate([this.getManageRoute()]);
 	}
 
 	ngOnDestroy() {

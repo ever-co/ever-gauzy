@@ -56,7 +56,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		}
 	}
 
-	async deleteNode(i) {
+	async deleteNode(i: number) {
 		const dialog = this.dialogService.open(DeleteArticleComponent, {
 			context: {
 				article: this.nodes[i]
