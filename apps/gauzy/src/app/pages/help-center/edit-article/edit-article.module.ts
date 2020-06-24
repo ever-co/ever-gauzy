@@ -1,3 +1,4 @@
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { ThemeModule, HttpLoaderFactory } from '../../../@theme/theme.module';
 import {
@@ -21,6 +22,8 @@ import { EditArticleComponent } from './edit-article.component';
 		NbInputModule,
 		NbButtonModule,
 		NbSelectModule,
+		FormsModule,
+		ReactiveFormsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

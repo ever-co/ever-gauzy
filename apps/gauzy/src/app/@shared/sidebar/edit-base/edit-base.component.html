@@ -1,10 +1,13 @@
 <nb-card class="main">
-	<nb-card-body>
+	<nb-card-header>
 		<div class="header">
 			<h6>Manage Knowledge Base</h6>
 			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 		</div>
+	</nb-card-header>
+	<nb-card-body>
 		<div class="select">
+			<p class="label">Language:</p>
 			<nb-select
 				class="main-buttons"
 				placeholder="Select Language"
@@ -14,10 +17,38 @@
 					lang
 				}}</nb-option>
 			</nb-select>
-			<nb-select placeholder="Select Color" [(selected)]="selectedColor">
+			<p class="label">Color:</p>
+			<nb-select
+				class="main-buttons"
+				placeholder="Select Color"
+				[(selected)]="selectedColor"
+			>
 				<nb-option *ngFor="let color of colors" [value]="color">{{
 					color
 				}}</nb-option>
+			</nb-select>
+			<p class="label">Status:</p>
+			<nb-select
+				class="main-buttons"
+				placeholder="Select Status"
+				[(selected)]="selectedStatus"
+			>
+				<nb-option *ngFor="let status of isDraft" [value]="status">{{
+					status
+				}}</nb-option>
+			</nb-select>
+		</div>
+		<div class="mb-1">
+			<p class="label">Select Icon:</p>
+			<nb-select
+				class="main-buttons"
+				placeholder="Select Icon"
+				[(selected)]="selectedIcon"
+			>
+				<nb-option *ngFor="let icon of icons" [value]="icon"
+					><nb-icon class="ml-1" icon="{{ icon }}"></nb-icon
+					>{{ icon | slice: 0:icon.length - 8 }}</nb-option
+				>
 			</nb-select>
 		</div>
 		<form [formGroup]="form" (ngSubmit)="submit()">

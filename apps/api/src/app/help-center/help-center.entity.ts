@@ -60,4 +60,8 @@ export class HelpCenter extends Base implements IHelpCenter {
 		name: 'HelpCenterArticle'
 	})
 	articles?: IHelpCenterArticle[];
+
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
+	parentId?: string;
 }
