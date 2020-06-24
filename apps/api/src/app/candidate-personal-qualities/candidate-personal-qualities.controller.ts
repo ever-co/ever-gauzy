@@ -5,8 +5,8 @@ import {
 	Body,
 	Delete,
 	Param,
-	Query,
-	Get
+	Get,
+	Query
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -16,12 +16,12 @@ import { Roles } from '../shared/decorators/roles';
 import { RolesEnum, ICandidatePersonalQualities } from '@gauzy/models';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
 import { CandidatePersonalQualitiesService } from './candidate-personal-qualities.service';
-import { ParseJsonPipe } from '../shared';
 import {
 	CandidatePersonalQualitiesBulkCreateCommand,
 	CandidatePersonalQualitiesBulkDeleteCommand
 } from './commands';
 import { CommandBus } from '@nestjs/cqrs';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('candidate_personal_quality')
 @UseGuards(AuthGuard('jwt'))
@@ -80,11 +80,17 @@ export class CandidatePersonalQualitiesController extends CrudController<
 
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Delete('deleteBulk')
-	async deleteBulk(@Query('data', ParseJsonPipe) data: any): Promise<any> {
-		const { id = null } = data;
+	@Delete('deleteBulk/:id')
+	async deleteBulk(
+		@Param() id: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { personalQualities = null } = data;
 		return this.commandBus.execute(
-			new CandidatePersonalQualitiesBulkDeleteCommand(id)
+			new CandidatePersonalQualitiesBulkDeleteCommand(
+				id,
+				personalQualities
+			)
 		);
 	}
 }
