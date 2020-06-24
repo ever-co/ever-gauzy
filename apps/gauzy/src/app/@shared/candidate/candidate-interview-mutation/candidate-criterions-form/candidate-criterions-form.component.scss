@@ -4,12 +4,21 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: stretch;
-  padding-bottom: 1rem;
+  padding-bottom: 1.5rem;
 
   &-block {
     width: 48%;
     border: 1px #e4e9f2 solid;
     padding: 1rem;
+
+    .placeholder {
+      color: #222b45;
+      font-family: Open Sans, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1rem;
+      text-align: center;
+    }
   }
 
   &-blocks {

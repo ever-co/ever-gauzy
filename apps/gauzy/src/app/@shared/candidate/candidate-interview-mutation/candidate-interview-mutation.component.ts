@@ -29,6 +29,7 @@ import { CandidateInterviewersService } from '../../../@core/services/candidate-
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -80,7 +81,8 @@ export class CandidateInterviewMutationComponent
 		private errorHandler: ErrorHandlingService,
 		private candidateInterviewersService: CandidateInterviewersService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
+		private router: Router
 	) {}
 
 	async ngOnInit() {
@@ -336,6 +338,10 @@ export class CandidateInterviewMutationComponent
 		this.candidateInterviewForm.form.patchValue(this.interview);
 		this.candidateInterviewForm.form.patchValue({ valid: true });
 		this.employees = [];
+	}
+	route() {
+		this.dialogRef.close();
+		this.router.navigate(['/pages/employees/candidates/criterions']);
 	}
 
 	ngOnDestroy() {
