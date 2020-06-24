@@ -3,6 +3,16 @@ import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { GoalTimeFrame } from '@gauzy/models';
+import {
+	getQuarter,
+	startOfQuarter,
+	endOfQuarter,
+	getYear,
+	lastDayOfQuarter,
+	addDays,
+	startOfYear,
+	endOfYear
+} from 'date-fns';
 
 @Component({
 	selector: 'ga-edit-time-frame',
@@ -14,6 +24,7 @@ export class EditTimeFrameComponent implements OnInit {
 	timeFrame: GoalTimeFrame;
 	today = new Date();
 	type: string;
+	predefinedTimeFrames = [];
 	constructor(
 		private dialogRef: NbDialogRef<EditTimeFrameComponent>,
 		private fb: FormBuilder,
@@ -35,6 +46,34 @@ export class EditTimeFrameComponent implements OnInit {
 				endDate: new Date(this.timeFrame.endDate)
 			});
 		}
+		this.generateTimeFrames();
+	}
+
+	updateTimeFrameValues(timeFrame) {
+		this.timeFrameForm.patchValue({
+			name: timeFrame.name,
+			startDate: timeFrame.start,
+			endDate: timeFrame.end
+		});
+	}
+
+	generateTimeFrames() {
+		const today = new Date();
+		let date = today;
+		// Add Quarters
+		while (getYear(date) === getYear(today)) {
+			this.predefinedTimeFrames.push({
+				name: `Q${getQuarter(date)}-${getYear(date)}`,
+				start: startOfQuarter(date),
+				end: endOfQuarter(date)
+			});
+			date = addDays(lastDayOfQuarter(date), 1);
+		}
+		this.predefinedTimeFrames.push({
+			name: `Annual-${getYear(today)}`,
+			start: startOfYear(today),
+			end: endOfYear(today)
+		});
 	}
 
 	async saveTimeFrame() {
