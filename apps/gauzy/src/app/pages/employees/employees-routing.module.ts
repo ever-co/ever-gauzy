@@ -79,6 +79,11 @@ const routes: Routes = [
 			import('./timesheet/timesheet.module').then(
 				(m) => m.TimesheetModule
 			)
+	},
+	{
+		path: 'activity',
+		loadChildren: () =>
+			import('./activity/activity.module').then((m) => m.ActivityModule)
 	}
 ];
 

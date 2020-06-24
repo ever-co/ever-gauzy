@@ -4,7 +4,9 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	AfterLoad
+	AfterLoad,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import {
@@ -20,6 +22,7 @@ import { OrganizationProjects } from '../organization-projects/organization-proj
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { Task } from '../tasks/task.entity';
 import * as moment from 'moment';
+import { TimeSlot } from './time-slot.entity';
 
 @Entity('time_log')
 export class TimeLog extends Base implements ITimeLog {
@@ -42,6 +45,12 @@ export class TimeLog extends Base implements ITimeLog {
 	@RelationId((timeLog: TimeLog) => timeLog.timesheet)
 	@Column({ nullable: true })
 	readonly timesheetId?: string;
+
+	@ManyToMany(() => TimeSlot, (timeSlots) => timeSlots.timeLogs)
+	@JoinTable({
+		name: 'time_slot_time_logs'
+	})
+	timeSlots?: TimeSlot[];
 
 	@ApiProperty({ type: OrganizationProjects })
 	@ManyToOne(() => OrganizationProjects, { nullable: true })
