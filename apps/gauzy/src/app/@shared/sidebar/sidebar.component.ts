@@ -78,6 +78,15 @@ export class SidebarComponent extends TranslationBaseComponent
 		});
 	}
 
+	setClasses(node) {
+		const classes = {
+			blue: node.data.color === 'blue',
+			child: node.data.flag === 'category',
+			parent: node.data.flag === 'base'
+		};
+		return classes;
+	}
+
 	async editBase() {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		const dialog = this.dialogService.open(EditBaseComponent, {
@@ -108,8 +117,19 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 	}
 
-	editCategory() {
-		this.dialogService.open(EditCategoryComponent);
+	async editCategory(node) {
+		this.isChosenNode = true;
+		const dialog = this.dialogService.open(EditCategoryComponent, {
+			context: {
+				category: node
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('EDITED_CATEGORY');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
 	}
 
 	deleteCategory() {
@@ -181,7 +201,9 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.tree.treeModel.update();
 	}
 
-	async changePrivacy() {
+	async changePrivacy(node) {
+		this.nodeId = node.id.toString();
+		this.isChosenNode = true;
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		someNode.data.privacy =
 			someNode.data.privacy === 'eye-outline'

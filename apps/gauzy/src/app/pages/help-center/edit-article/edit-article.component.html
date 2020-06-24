@@ -4,31 +4,62 @@
 			<h5>Edit Article</h5>
 			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 		</div>
-		<p class="label">Title:</p>
-		<input
-			class="main-buttons"
-			type="text"
-			size="24"
-			maxlength="18"
-			nbInput
-		/>
-		<p class="label">Description:</p>
-		<input type="text" size="24" maxlength="18" nbInput />
-		<div class="edit-node-field">
-			<p class="label">Article text:</p>
-			<div class="ck-editor">
-				<ckeditor
-					[config]="{
-						width: '100%',
-						height: '200'
-					}"
-				></ckeditor>
+		<form [formGroup]="form" (ngSubmit)="submit()">
+			<div class="edit-field">
+				<div class="first-row">
+					<div>
+						<p class="label">Name of the article:</p>
+						<input
+							formControlName="name"
+							type="text"
+							size="24"
+							maxlength="18"
+							nbInput
+						/>
+					</div>
+					<div class="selector">
+						<p class="label">Status</p>
+						<nb-select
+							placeholder="Select Status"
+							[selected]="selectedPrivacy"
+							(selectedChange)="privacySelect($event)"
+						>
+							<nb-option
+								*ngFor="let privacy of isDraft"
+								[value]="privacy"
+								>{{ privacy }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</div>
+				<div class="second-row">
+					<p class="label">Description:</p>
+					<input
+						formControlName="desc"
+						type="text"
+						size="30"
+						maxlength="26"
+						nbInput
+					/>
+				</div>
 			</div>
-		</div>
-		<div class="save-button">
-			<button status="success" nbButton>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</div>
+			<div class="edit-node-field">
+				<p class="label">Article text:</p>
+				<div class="ck-editor">
+					<ckeditor
+						formControlName="data"
+						[config]="{
+							width: '100%',
+							height: '200'
+						}"
+					></ckeditor>
+				</div>
+			</div>
+			<div class="save-button">
+				<button status="success" nbButton>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</div>
+		</form>
 	</nb-card-body>
 </nb-card>

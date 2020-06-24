@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { IHelpCenter } from '@gauzy/models';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HelpCenterService } from '../../../@core/services/help-center.service';
 
 @Component({
@@ -26,16 +26,28 @@ export class EditBaseComponent extends TranslationBaseComponent
 	}
 	public selectedLang: string;
 	public selectedColor: string;
+	public selectedStatus: string;
+	public selectedIcon: string;
+	public icons = [
+		'book-open-outline',
+		'archive-outline',
+		'alert-circle-outline',
+		'attach-outline'
+	];
+	public isDraft = ['draft', 'publish'];
 	public languages = ['en', 'ru', 'he', 'bg'];
 	public colors = ['black', 'blue'];
 	form: FormGroup;
 
 	ngOnInit() {
+		this.selectedStatus =
+			this.base.privacy === 'eye-outline' ? 'publish' : 'draft';
 		this.selectedLang = this.base.language;
 		this.selectedColor = this.base.color;
+		this.selectedIcon = this.base.icon;
 		this.form = this.fb.group({
-			name: [''],
-			desc: ['']
+			name: ['', Validators.required],
+			desc: ['', Validators.required]
 		});
 		this.loadFormData(this.base);
 	}
@@ -52,7 +64,12 @@ export class EditBaseComponent extends TranslationBaseComponent
 			name: `${this.form.value.name}`,
 			description: `${this.form.value.desc}`,
 			language: `${this.selectedLang}`,
-			color: `${this.selectedColor}`
+			color: `${this.selectedColor}`,
+			icon: `${this.selectedIcon}`,
+			privacy:
+				this.selectedStatus === 'publish'
+					? 'eye-outline'
+					: 'eye-off-outline'
 		});
 		this.dialogRef.close(this.base);
 	}

@@ -77,7 +77,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('EDITED_ARTICLE');
+			this.toastrSuccess('EDITED');
 			this.loadArticles();
 		}
 	}

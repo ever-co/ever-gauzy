@@ -48,7 +48,6 @@
 .base {
   padding: 10px;
   border: 1px #e4e9f2 solid;
-  min-width: 240px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -67,8 +66,13 @@
 }
 
 .child {
-  margin-left: -17px;
+  min-width: 233px;
+  margin-left: -10px;
   background-color: #fafafa;
+}
+
+.parent {
+  min-width: 240px;
 }
 
 ::ng-deep {
@@ -99,7 +103,11 @@
     background: #fff;
     box-shadow: none;
   }
-
+  .node-content-wrapper-active,
+  .node-content-wrapper-focused,
+  .node-content-wrapper:hover {
+    box-shadow: inset 0 0 1px #fff;
+  }
   .node-content-wrapper-active
     .node-content-wrapper-focused
     .node-content-wrapper:hover {
