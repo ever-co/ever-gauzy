@@ -15,6 +15,26 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 	implements OnInit {
 	keyResultUpdateForm: FormGroup;
 	keyResult: KeyResult;
+	hideStatus = false;
+	updateStatus: any = [
+		{
+			name: 'on track',
+			value: 'on track'
+		},
+		{
+			name: 'needs attention',
+			value: 'needs attention'
+		},
+		{
+			name: 'off track',
+			value: 'off track'
+		},
+		{
+			name: 'none',
+			value: 'none'
+		}
+	];
+
 	constructor(
 		private dialogRef: NbDialogRef<KeyResultUpdateComponent>,
 		private fb: FormBuilder,
@@ -28,7 +48,7 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 		this.keyResultUpdateForm = this.fb.group({
 			newValueNumber: [null],
 			newValueBoolean: [0],
-			newStatus: ['none']
+			newStatus: ['on track']
 		});
 		this.keyResultUpdateForm.patchValue({
 			newStatus: this.keyResult.status
@@ -41,6 +61,7 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 				newValueNumber: this.keyResult.update
 			});
 		} else if (this.keyResult.type === 'True/False') {
+			this.hideStatus = true;
 			this.keyResultUpdateForm.patchValue({
 				newValueBoolean: this.keyResult.update === 1 ? true : false
 			});

@@ -53,10 +53,15 @@
 				</nb-toggle>
 			</div>
 
-			<label for="updated-value-status" class="label mt-3">
+			<label
+				*ngIf="!hideStatus"
+				for="updated-value-status"
+				class="label mt-3"
+			>
 				Status
 			</label>
 			<nb-select
+				*ngIf="!hideStatus"
 				id="updated-value-status"
 				filled
 				[status]="
@@ -70,10 +75,11 @@
 				fullWidth
 				formControlName="newStatus"
 			>
-				<nb-option value="on track">on track</nb-option>
-				<nb-option value="needs attention">needs attention</nb-option>
-				<nb-option value="off track">off track</nb-option>
-				<nb-option value="none">none</nb-option>
+				<nb-option
+					[value]="status.value"
+					*ngFor="let status of updateStatus"
+					>{{ status.name }}</nb-option
+				>
 			</nb-select>
 		</form>
 	</nb-card-body>

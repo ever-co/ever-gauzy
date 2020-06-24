@@ -680,10 +680,10 @@
 	"KEY_RESULT_PAGE": {
 		"UPDATE": {
 			"STATUS": {
-				"ON_TRACK": "on track",
-				"NEEDS_ATTENTION": "needs attention",
-				"OFF_TRACK": "off track",
-				"NONE": "none"
+				"ON_TRACK": "на път",
+				"NEEDS_ATTENTION": "има нужда от внимание",
+				"OFF_TRACK": "извън пистата",
+				"NONE": "нито един"
 			}
 		}
 	},

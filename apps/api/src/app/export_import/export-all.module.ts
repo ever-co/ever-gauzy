@@ -74,10 +74,11 @@ import { TimeSlot } from '../timesheet/time-slot.entity';
 import { Activity } from '../timesheet/activity.entity';
 import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
+import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
-import { ActivityService } from '../timesheet/activity.service';
-import { ScreenShotService } from '../timesheet/screenshot.service';
-import { TimeSlotService } from '../timesheet/time-slot.service';
+import { ActivityService } from '../timesheet/activity/activity.service';
+import { ScreenshotService } from '../timesheet/screenshot/screenshot.service';
+import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
 import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
@@ -133,6 +134,7 @@ import { EquipmentService } from '../equipment/equipment.service';
 			Activity,
 			Screenshot,
 			TimeLog,
+			TimeSlotMinute,
 			AppointmentEmployees,
 			ApprovalPolicy,
 			Candidate
@@ -177,7 +179,7 @@ import { EquipmentService } from '../equipment/equipment.service';
 		TimeOffPolicyService,
 		TimeSheetService,
 		ActivityService,
-		ScreenShotService,
+		ScreenshotService,
 		TimeLogService,
 		TimeSlotService,
 		AppointmentEmployeesService,
@@ -222,7 +224,7 @@ import { EquipmentService } from '../equipment/equipment.service';
 		TimeOffPolicyService,
 		TimeSheetService,
 		ActivityService,
-		ScreenShotService,
+		ScreenshotService,
 		TimeLogService,
 		TimeSlotService,
 		AppointmentEmployeesService,

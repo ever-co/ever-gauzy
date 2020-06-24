@@ -42,6 +42,7 @@
 									<div class="criterions-rating-radio-group">
 										<ga-star-rating-output
 											[rate]="null"
+											class="stars-output"
 										></ga-star-rating-output>
 										<span
 											>Average Rating:
@@ -96,34 +97,35 @@
 														| translate
 												}}
 											</div>
-
-											<div
-												class="form-block-criterion"
-												*ngFor="
-													let technologyRating of form.get(
-														[
-															'feedbacks',
-															0,
-															'technologies'
-														]
-													).controls as controls;
-													index as i
-												"
-											>
-												<span
-													class="form-block-criterion-title"
-													*ngIf="technologiesList"
-												>
-													{{
-														technologiesList[i]
-															?.name
-													}}
-												</span>
-												<ga-star-rating-input
-													[formControl]="
-														technologyRating
+											<div class="form-block-criterion">
+												<div
+													class="form-block-criterion-item"
+													*ngFor="
+														let technologyRating of form.get(
+															[
+																'feedbacks',
+																0,
+																'technologies'
+															]
+														).controls as controls;
+														index as i
 													"
-												></ga-star-rating-input>
+												>
+													<span
+														class="form-block-criterion-title"
+														*ngIf="technologiesList"
+													>
+														{{
+															technologiesList[i]
+																?.name
+														}}
+													</span>
+													<ga-star-rating-input
+														[formControl]="
+															technologyRating
+														"
+													></ga-star-rating-input>
+												</div>
 											</div>
 										</div>
 										<div class="form-block">
@@ -133,47 +135,50 @@
 														| translate
 												}}
 											</div>
-											<div
-												class="form-block-criterion"
-												*ngFor="
-													let personalQualityRating of form.get(
-														[
-															'feedbacks',
-															0,
-															'personalQualities'
-														]
-													).controls as controls;
-													index as i
-												"
-											>
-												<span
-													class="form-block-criterion-title"
-													*ngIf="
-														personalQualitiesList
+											<div class="form-block-criterion">
+												<div
+													class="form-block-criterion-item"
+													*ngFor="
+														let personalQualityRating of form.get(
+															[
+																'feedbacks',
+																0,
+																'personalQualities'
+															]
+														).controls as controls;
+														index as i
 													"
 												>
-													{{
-														personalQualitiesList[i]
-															?.name
-													}}
-												</span>
-												<ga-star-rating-input
-													[formControl]="
-														personalQualityRating
-													"
-												></ga-star-rating-input>
+													<span
+														class="form-block-criterion-title"
+														*ngIf="
+															personalQualitiesList
+														"
+													>
+														{{
+															personalQualitiesList[
+																i
+															]?.name
+														}}
+													</span>
+													<ga-star-rating-input
+														[formControl]="
+															personalQualityRating
+														"
+													></ga-star-rating-input>
+												</div>
 											</div>
 										</div>
 									</div>
 								</div>
-								<div class="col-12 add-card-wrap">
+								<div class="add-card-wrap">
 									<label for="description" class="label">{{
 										'FORM.LABELS.FEEDBACK_DESCRIPTION'
 											| translate
 									}}</label>
 									<textarea
 										id="description"
-										class="description col-6"
+										class="description"
 										nbInput
 										formControlName="description"
 										placeholder="{{

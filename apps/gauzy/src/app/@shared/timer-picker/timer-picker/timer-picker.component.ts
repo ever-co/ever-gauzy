@@ -68,7 +68,7 @@ export class TimerPickerComponent implements OnInit {
 	}
 
 	updateSlots() {
-		const interval = 10;
+		const interval = 5;
 		let slotTime = moment(this.min, 'HH:mm');
 		let endTime = moment(this.max, 'HH:mm');
 

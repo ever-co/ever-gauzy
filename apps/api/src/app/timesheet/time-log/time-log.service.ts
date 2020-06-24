@@ -20,12 +20,14 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import { CrudService } from '../../core';
 import { TimeSheetService } from '../timesheet/timesheet.service';
-import { TimeSlotService } from '../time-slot.service';
+import { TimeSlotService } from '../time-slot/time-slot.service';
 import { Organization } from '../../organization/organization.entity';
 import { Employee } from '../../employee/employee.entity';
+import { DBHelper } from '../../core/DBHelper';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
+	private timeLogDBHelper: DBHelper<TimeLog>;
 	constructor(
 		@Inject(forwardRef(() => TimeSheetService))
 		private readonly timesheetService: TimeSheetService,
@@ -40,6 +42,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 		private readonly employeeRepository: Repository<Employee>
 	) {
 		super(timeLogRepository);
+
+		this.timeLogDBHelper = new DBHelper<TimeLog>(this.timeLogRepository);
 	}
 
 	async getTimeLogs(request: IGetTimeLogInput) {
