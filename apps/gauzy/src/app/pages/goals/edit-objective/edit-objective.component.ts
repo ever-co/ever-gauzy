@@ -34,7 +34,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			description: [''],
 			owner: ['', Validators.required],
 			lead: [''],
-			level: ['Organization', Validators.required],
+			level: ['', Validators.required],
 			deadline: ['', Validators.required]
 		});
 
@@ -53,7 +53,9 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	async getTimeFrames() {
 		await this.goalSettingService.getAllTimeFrames().then((res) => {
 			if (res) {
-				this.timeFrames = res.items;
+				this.timeFrames = res.items.filter(
+					(timeframe) => timeframe.status === 'active'
+				);
 			}
 		});
 	}
