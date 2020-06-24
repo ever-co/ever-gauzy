@@ -83,10 +83,16 @@
       width: calc(100% - 180px);
       float: left;
       padding: 0 20px;
+      .org-banner {
+        color: #617083;
+        margin: 5px 0;
+        font-size: 15px;
+        font-weight: 400;
+      }
     }
   }
 
-  .org-banner {
+  .short_description {
     font-size: 15px;
     line-height: 26px;
     font-weight: 600;
@@ -97,10 +103,6 @@
     display: block;
     clear: both;
     padding: 20px 0;
-
-    p.short_description {
-      font-size: 15px;
-    }
   }
 
   ul.org-value li.org_list_data {

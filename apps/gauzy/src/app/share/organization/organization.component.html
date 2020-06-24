@@ -103,6 +103,10 @@
 				</div>
 				<div class="org-head-right-sec">
 					<h4 class="org-name" [textContent]="organization.name"></h4>
+					<span
+						class="org-banner"
+						[textContent]="organization.banner"
+					></span>
 					<div class="org-year-found">
 						<h5
 							*ngIf="organization.registrationDate"
@@ -316,24 +320,12 @@
 						</div>
 					</div>
 					<div class="section_block"></div>
-					<div class="row" *ngIf="organization.banner">
+					<div class="row" *ngIf="organization.short_description">
 						<div class="col">
 							<p
 								class="org-banner"
-								[textContent]="organization.banner"
+								[textContent]="organization.short_description"
 							></p>
-						</div>
-					</div>
-					<div class="row" *ngIf="organization.short_description">
-						<div class="col">
-							<div class="org-details">
-								<p
-									class="short_description"
-									[textContent]="
-										organization.short_description
-									"
-								></p>
-							</div>
 						</div>
 					</div>
 					<div class="row" *ngIf="organization.overview">
