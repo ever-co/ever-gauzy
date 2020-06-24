@@ -143,6 +143,7 @@ h5.org-title.org-key {
 }
 
 .org-skills p.org-title.org-key {
+  color: #222b45;
   line-height: 2rem;
   text-transform: uppercase;
   font-size: 16px;
@@ -208,9 +209,16 @@ h5.org-title.title-employees {
   line-height: 15px;
 }
 
+p,
+.paragraph,
+.org-overview p {
+  color: #617083;
+}
+
 .nb-theme-default p,
 .nb-theme-default .paragraph,
-.nb-theme-default li {
+.nb-theme-default li,
+.col ul li {
   color: #617083;
-  line-height: 1.35rem;
+  line-height: 1.35rem !important;
 }

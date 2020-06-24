@@ -211,9 +211,7 @@
 						<div class="col">
 							<div class="org-year-found">
 								<h5 class="org-title org-key">
-									{{
-										'PUBLIC_PAGE.TOTAL_INCOME' | translate
-									}}
+									{{ 'PUBLIC_PAGE.TOTAL_INCOME' | translate }}
 									:
 								</h5>
 								<span
@@ -339,11 +337,8 @@
 						</div>
 					</div>
 					<div class="row" *ngIf="organization.overview">
-						<div class="col">
-							<p
-								class="org-overview"
-								[outerHTML]="organization.overview"
-							></p>
+						<div class="col org-overview">
+							<div [outerHTML]="organization.overview"></div>
 						</div>
 					</div>
 					<div class="row" *ngIf="organization.skills">
