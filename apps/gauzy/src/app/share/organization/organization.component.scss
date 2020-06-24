@@ -16,10 +16,14 @@
     nb-icon {
       position: absolute;
       cursor: pointer;
+      z-index: 999;
     }
   }
   .org-head {
     .org-head-left-sec {
+      h4.org-name {
+        padding-top: 20px;
+      }
       img.org-image {
         object-fit: cover;
         object-position: center;
@@ -47,8 +51,9 @@
 
         img {
           width: 180px;
-          height: auto;
-          border-radius: 13px;
+          height: 180px;
+          border-radius: 50%;
+          box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
         }
 
         input {
@@ -139,7 +144,6 @@ h5.org-title.org-key {
   float: left;
   display: block;
   line-height: 2rem;
-  text-transform: uppercase;
 }
 
 .org-skills p.org-title.org-key {

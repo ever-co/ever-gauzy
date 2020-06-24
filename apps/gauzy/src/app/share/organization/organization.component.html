@@ -174,6 +174,26 @@
 								></span>
 							</h5>
 						</div>
+						<div class="row" *ngIf="this.organization.show_profits">
+							<div class="col">
+								<div class="org-year-found">
+									<h5 class="org-title org-key">
+										{{
+											'PUBLIC_PAGE.PROFITS' | translate
+										}}
+										:
+									</h5>
+									<span
+										class="org-value"
+										[textContent]="
+											organization.currency +
+											' ' +
+											profits
+										"
+									></span>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -267,21 +287,6 @@
 										organization.currency +
 										' ' +
 										bonuses_paid
-									"
-								></span>
-							</div>
-						</div>
-					</div>
-					<div class="row" *ngIf="this.organization.show_profits">
-						<div class="col">
-							<div class="org-year-found">
-								<h5 class="org-title org-key">
-									{{ 'PUBLIC_PAGE.PROFITS' | translate }} :
-								</h5>
-								<span
-									class="org-value"
-									[textContent]="
-										organization.currency + ' ' + profits
 									"
 								></span>
 							</div>
