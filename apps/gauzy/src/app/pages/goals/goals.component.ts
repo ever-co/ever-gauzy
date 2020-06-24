@@ -1,10 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbToastrService,
+	NbPopoverDirective
+} from '@nebular/theme';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
@@ -23,13 +27,33 @@ import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details
 })
 export class GoalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 	loading = true;
 	selectedOrganizationId: string;
 	organizationName: string;
 	employee: SelectedEmployee;
 	employeeId: string;
+	filter = [
+		{
+			title: 'All Objectives',
+			value: 'all'
+		},
+		{
+			title: "My Team's Objectives",
+			value: 'team'
+		},
+		{
+			title: 'My Organization Objectives',
+			value: 'organization'
+		},
+		{
+			title: 'My Objectives',
+			value: 'employee'
+		}
+	];
 	private _ngDestroy$ = new Subject<void>();
 	goals: Goal[];
+	allGoals: Goal[];
 	noGoals = true;
 	keyResult: KeyResult[];
 	constructor(
@@ -62,12 +86,10 @@ export class GoalsComponent extends TranslationBaseComponent
 		this.loading = false;
 		this.organizationName = name;
 		this.goalService.getAllGoals().then((goals) => {
-			if (goals.items.length > 0) {
-				this.noGoals = false;
-			} else {
-				this.noGoals = true;
-			}
+			this.noGoals = goals.items.length > 0 ? false : true;
 			this.goals = goals.items;
+			console.log(goals);
+			this.allGoals = goals.items;
 		});
 	}
 
@@ -120,6 +142,18 @@ export class GoalsComponent extends TranslationBaseComponent
 		return Math.round((progressTotal / totalCount) * 100);
 	}
 
+	filterGoals(selection) {
+		if (selection !== 'all') {
+			this.goals = this.allGoals.filter(
+				(goal) => goal.level.toLowerCase() === selection
+			);
+		} else {
+			this.goals = this.allGoals;
+		}
+		this.noGoals = this.goals.length > 0 ? false : true;
+		this.popover.hide();
+	}
+
 	async createObjective(goal, index) {
 		const dialog = this.dialogService.open(EditObjectiveComponent, {
 			hasScroll: true,
@@ -132,14 +166,7 @@ export class GoalsComponent extends TranslationBaseComponent
 		if (response) {
 			if (!!goal) {
 				// Update Goal
-				this.goals[index].name = response.name;
-				this.goals[index].description = response.description;
-				this.goals[index].deadline = response.deadline;
-				this.goals[index].owner = response.owner;
-				this.goals[index].lead = response.lead;
-				const goalData = this.goals[index];
-				delete goalData.keyResults;
-				await this.goalService.update(goal.id, goalData).then((res) => {
+				await this.goalService.update(goal.id, response).then((res) => {
 					if (res) {
 						this.toastrService.primary(
 							'Objective updated',
@@ -148,15 +175,9 @@ export class GoalsComponent extends TranslationBaseComponent
 					}
 				});
 			} else {
-				this.goals.push({
-					...response,
-					level: 'organization',
-					organizationId: this.selectedOrganizationId,
-					progress: 0
-				});
+				// Add Goal
 				const data = {
 					...response,
-					level: 'organization',
 					organizationId: this.selectedOrganizationId,
 					progress: 0
 				};

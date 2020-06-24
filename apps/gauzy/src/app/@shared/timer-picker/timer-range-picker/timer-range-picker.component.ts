@@ -34,6 +34,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	@Input() allowedDuration: number;
 	@Input() disableEndPicker = false;
 	@Input() disableDatePicker = false;
+	@Input() fromEmployeeAppointment = false;
 
 	@Input('maxDate')
 	public get maxDate(): Date {
@@ -41,7 +42,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 	public set maxDate(value: Date) {
 		this._maxDate = value;
-		this.updateTimePickerLimit(value);
+		!this.fromEmployeeAppointment && this.updateTimePickerLimit(value);
 	}
 
 	@Input('minDate')
@@ -50,7 +51,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 	public set minDate(value: Date) {
 		this._minDate = value;
-		this.updateTimePickerLimit(value);
+		!this.fromEmployeeAppointment && this.updateTimePickerLimit(value);
 	}
 
 	@Input('disabledDates')
@@ -87,7 +88,21 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	onTouched: any = () => {};
 	filter = (date) => !this._disabledDates.includes(date.getTime());
 
-	ngOnInit() {}
+	ngOnInit() {
+		if (this.fromEmployeeAppointment) {
+			let maxTime = moment(this._maxDate);
+			let minTime = moment(this._minDate);
+
+			this.minSlotStartTime = minTime.format('HH:mm');
+			this.maxSlotStartTime = moment(maxTime, 'HH:mm')
+				.subtract(5, 'minutes')
+				.format('HH:mm');
+			this.maxSlotEndTime = maxTime.format('HH:mm');
+			this.minSlotEndTime = moment(minTime, 'HH:mm')
+				.add(5, 'minutes')
+				.format('HH:mm');
+		}
+	}
 
 	ngAfterViewInit() {
 		merge(
@@ -181,7 +196,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				!moment(time, 'HH:mm').isBefore(moment(this.endTime, 'HH:mm'))
 			) {
 				this.endTime = moment(time, 'HH:mm')
-					.add(30, 'minutes')
+					.add(this.fromEmployeeAppointment ? 5 : 30, 'minutes')
 					.format('HH:mm');
 			}
 		} else {
@@ -208,12 +223,16 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 			this.date = start.toDate();
 
 			let hour = start.get('hour');
-			let minute = start.get('minute') - (start.minutes() % 10);
+			let minute = this.fromEmployeeAppointment
+				? start.get('minute')
+				: start.get('minute') - (start.minutes() % 10);
 			this.startTime = `${hour}:${minute}`;
 
 			const end = moment(value.end);
 			hour = end.get('hour');
-			minute = end.get('minute') - (end.minutes() % 10);
+			minute = this.fromEmployeeAppointment
+				? end.get('minute')
+				: end.get('minute') - (end.minutes() % 10);
 			this.endTime = `${hour}:${minute}`;
 		}
 		this._selectedRange = value;

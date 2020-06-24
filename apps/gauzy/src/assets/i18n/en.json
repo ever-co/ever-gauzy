@@ -675,7 +675,18 @@
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives for ",
 		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
-		"ADD_NEW_KEY_RESULT": "Add new key result"
+		"ADD_NEW_KEY_RESULT": "Add new key result",
+		"ADD_NEW_OBJECTIVE": "Add new Objective"
+	},
+	"KEY_RESULT_PAGE": {
+		"UPDATE": {
+			"STATUS": {
+				"ON_TRACK": "on track",
+				"NEEDS_ATTENTION": "needs attention",
+				"OFF_TRACK": "off track",
+				"NONE": "none"
+			}
+		}
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -1677,6 +1688,11 @@
 			"PROJECT": "Please selct project",
 			"EMPLOYEE": "Please selct employee"
 		}
+	},
+	"ACTIVITY": {
+		"SCREENSHOTS": "Screenshots",
+		"APPS": "Apps Activity",
+		"URLS": "Urls Activity"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
