@@ -69,10 +69,13 @@ export class CandidatePersonalQualitiesService {
 			.toPromise();
 	}
 
-	deleteBulk(id: string): Promise<any> {
-		const data = JSON.stringify({ id });
+	deleteBulkByInterviewId(
+		id: string,
+		personalQualities?: ICandidatePersonalQualities[]
+	): Promise<any> {
+		const data = JSON.stringify({ personalQualities });
 		return this.http
-			.delete('/api/candidate-personal-qualities/deleteBulk', {
+			.delete(`/api/candidate-personal-qualities/deleteBulk/${id}`, {
 				params: { data }
 			})
 			.pipe(first())

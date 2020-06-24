@@ -73,10 +73,13 @@ export class CandidateTechnologiesService {
 			.toPromise();
 	}
 
-	deleteBulk(id: string): Promise<any> {
-		const data = JSON.stringify({ id });
+	deleteBulkByInterviewId(
+		id: string,
+		technologies?: ICandidateTechnologies[]
+	): Promise<any> {
+		const data = JSON.stringify({ technologies });
 		return this.http
-			.delete('/api/candidate-technologies/deleteBulkTechnologies', {
+			.delete(`/api/candidate-technologies/deleteBulk/${id}`, {
 				params: { data }
 			})
 			.pipe(first())

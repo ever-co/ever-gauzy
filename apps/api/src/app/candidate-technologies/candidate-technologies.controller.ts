@@ -5,9 +5,9 @@ import {
 	Body,
 	Delete,
 	Param,
-	Query,
 	Get,
-	Put
+	Put,
+	Query
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -18,12 +18,12 @@ import { RolesEnum, ICandidateTechnologies } from '@gauzy/models';
 import { CandidateTechnologiesService } from './candidate-technologies.service';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { CommandBus } from '@nestjs/cqrs';
-import { ParseJsonPipe } from '../shared';
 import {
 	CandidateTechnologiesBulkCreateCommand,
 	CandidateTechnologiesBulkDeleteCommand,
 	CandidateTechnologiesBulkUpdateCommand
 } from './commands';
+import { ParseJsonPipe } from '../shared';
 @ApiTags('candidate_technology')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
@@ -88,13 +88,14 @@ export class CandidateTechnologiesController extends CrudController<
 
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Delete('deleteBulkTechnologies')
+	@Delete('deleteBulk/:id')
 	async deleteBulkTechnologies(
+		@Param() id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
-		const { id = null } = data;
+		const { technologies = null } = data;
 		return this.commandBus.execute(
-			new CandidateTechnologiesBulkDeleteCommand(id)
+			new CandidateTechnologiesBulkDeleteCommand(id, technologies)
 		);
 	}
 }
