@@ -47,7 +47,9 @@ export class TimeLog extends Base implements ITimeLog {
 	readonly timesheetId?: string;
 
 	@ManyToMany(() => TimeSlot, (timeSlots) => timeSlots.timeLogs)
-	@JoinTable()
+	@JoinTable({
+		name: 'time_slot_time_logs'
+	})
 	timeSlots?: TimeSlot[];
 
 	@ApiProperty({ type: OrganizationProjects })

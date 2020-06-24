@@ -53,7 +53,9 @@ export class TimeSlot extends Base implements ITimeSlot {
 	timeSlotMinutes?: TimeSlotMinute[];
 
 	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots)
-	@JoinTable()
+	@JoinTable({
+		name: 'time_slot_time_logs'
+	})
 	timeLogs?: TimeLog[];
 
 	@ApiProperty({ type: Number })
