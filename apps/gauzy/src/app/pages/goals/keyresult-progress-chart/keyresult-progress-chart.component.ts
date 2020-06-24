@@ -1,6 +1,14 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { KeyResult } from '@gauzy/models';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import {
+	differenceInCalendarDays,
+	addMonths,
+	compareDesc,
+	addDays,
+	addWeeks,
+	addQuarters
+} from 'date-fns';
 
 @Component({
 	selector: 'ga-keyresult-progress-chart',
@@ -38,15 +46,18 @@ export class KeyResultProgressChartComponent implements OnInit {
 								: res.items[0].endDate
 						);
 					}
-					const noOfDays =
-						(end.getTime() - start.getTime()) /
-						(1000 * 60 * 60 * 24);
+					const diffInDays = differenceInCalendarDays(end, start);
 					period =
-						noOfDays > 30 ? 'month' : noOfDays > 7 ? 'week' : 'day';
-
+						diffInDays > 180
+							? 'quarter'
+							: diffInDays > 30
+							? 'month'
+							: diffInDays > 7
+							? 'week'
+							: 'day';
 					const labels = this.labelCalculator(start, end, period);
 					const progressParts = labels.length;
-					this.calculateData(labels, progressParts, keyResult);
+					this.calculateData(labels, keyResult);
 					this.options = {
 						responsive: true,
 						maintainAspectRatio: false,
@@ -54,7 +65,9 @@ export class KeyResultProgressChartComponent implements OnInit {
 							xAxes: [
 								{
 									type: 'time',
+									distribution: 'series',
 									time: {
+										unit: period,
 										displayFormats: {
 											hour: 'MMM DD'
 										},
@@ -67,7 +80,10 @@ export class KeyResultProgressChartComponent implements OnInit {
 							],
 							yAxes: [
 								{
-									display: 'true'
+									display: 'true',
+									ticks: {
+										beginAtZero: true
+									}
 								}
 							]
 						}
@@ -79,25 +95,25 @@ export class KeyResultProgressChartComponent implements OnInit {
 			});
 	}
 
-	calculateData(labelsData, progressParts, keyResult) {
+	calculateData(labelsData, keyResult) {
 		this.data = {
 			labels: labelsData,
 			datasets: [
 				{
 					label: 'Expected',
-					data: this.rangeCalculation(
+					data: this.expectedDataCalculation(
 						keyResult.initialValue,
 						keyResult.targetValue,
-						progressParts,
 						labelsData
 					),
 					borderWidth: 2,
-					borderColor: 'rgba(255, 99, 132, 0.2)',
+					borderColor: 'rgb(76, 23, 33,0.25)',
+					borderDash: [10, 5],
 					fill: false
 				},
 				{
 					label: 'Progress',
-					data: this.progressData(keyResult),
+					data: this.progressData(keyResult, labelsData),
 					borderWidth: 3,
 					borderColor: '#00d68f',
 					fill: false
@@ -106,14 +122,12 @@ export class KeyResultProgressChartComponent implements OnInit {
 		};
 	}
 
-	progressData(keyResult) {
+	progressData(keyResult, labelsData) {
 		const updates = [];
 		keyResult.updates
-			.sort(
-				(a, b) =>
-					new Date(b.createdAt).getTime() -
-					new Date(a.createdAt).getTime()
-			)
+			.sort((a, b) => {
+				compareDesc(new Date(a.createdAt), new Date(b.createdAt));
+			})
 			.map((val) => {
 				if (val.status === 'on track') {
 					updates.push({
@@ -124,6 +138,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 			});
 
 		const update = [];
+		update.push({ x: labelsData[0], y: 0 });
 		const sortedUpdates = updates.sort((a, b) => a.x - b.x);
 		sortedUpdates.forEach((val, index) => {
 			if (index === 0) {
@@ -144,36 +159,29 @@ export class KeyResultProgressChartComponent implements OnInit {
 
 	labelCalculator(start, end, period) {
 		const labels = [];
-		start.setDate(start.getDate());
 		while (start <= end) {
-			labels.push(new Date(start));
+			labels.push(start);
 			if (period === 'week') {
-				start.setDate(start.getDate() + 7);
+				start = addWeeks(start, 1);
 			} else if (period === 'month') {
-				start.setMonth(start.getMonth() + 1);
+				start = addMonths(start, 1);
 			} else if (period === 'day') {
-				start.setDate(start.getDate() + 1);
+				start = addDays(start, 1);
+			} else if (period === 'quarter') {
+				start = addQuarters(start, 1);
 			}
 		}
 		labels.push(end);
 		return labels;
 	}
 
-	rangeCalculation(start, target, parts, labelsData) {
+	expectedDataCalculation(start, target, labelsData) {
 		const result = [];
-		const delta = (target - start) / (parts - 1);
-		let index = 0;
-		if (target === 1) {
-			result.push({ x: labelsData[index], y: Math.round(start) });
-		}
-		while (start < target) {
-			if (target !== 1) {
-				result.push({ x: labelsData[index], y: Math.round(start) });
-			}
-			start += delta;
-			index++;
-		}
-		result.push({ x: labelsData[index], y: Math.round(target) });
+		result.push({ x: labelsData[0], y: Math.round(start) });
+		result.push({
+			x: labelsData[labelsData.length - 1],
+			y: Math.round(target)
+		});
 		return result;
 	}
 }

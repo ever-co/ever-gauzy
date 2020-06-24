@@ -9,6 +9,7 @@ import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { isFuture, isToday } from 'date-fns';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -52,11 +53,13 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				.getTimeFrameByName(this.keyResult.goal.deadline)
 				.then((res) => {
 					this.isUpdatable =
-						new Date(res.items[0].endDate) > new Date();
+						isFuture(new Date(res.items[0].endDate)) ||
+						isToday(new Date(res.items[0].endDate));
 				});
 		} else {
 			this.isUpdatable =
-				new Date(this.keyResult.hardDeadline) > new Date();
+				isFuture(new Date(this.keyResult.hardDeadline)) ||
+				isToday(new Date(this.keyResult.hardDeadline));
 		}
 	}
 
