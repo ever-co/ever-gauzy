@@ -1,5 +1,5 @@
 import { HelpCenterArticle } from './help-center-article.entity';
-import { IHelpCenter, PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, IHelpCenterArticle } from '@gauzy/models';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	Controller,
@@ -37,7 +37,7 @@ export class HelpCenterArticleController extends CrudController<
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post()
-	async createNode(@Body() entity: IHelpCenter): Promise<any> {
+	async createNode(@Body() entity: IHelpCenterArticle): Promise<any> {
 		return this.helpCenterService.create(entity);
 	}
 
