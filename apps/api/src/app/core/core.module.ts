@@ -96,6 +96,7 @@ import { RequestApprovalTeam } from '../request-approval-team/request-approval-t
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
+import { Contacts } from '../contacts/contacts.entity';
 
 const entities = [
 	Invite,
@@ -186,7 +187,8 @@ const entities = [
 	Pipeline,
 	Payment,
 	Stage,
-	Payment
+	Payment,
+	Contacts
 ];
 
 @Module({

@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
+import { CrudService } from '../core';
 import { Contacts } from './contacts.entity';
+import { ContactsCreateInput } from '@gauzy/models';
 
 @Injectable()
 export class ContactsService extends CrudService<Contacts> {
@@ -13,11 +14,23 @@ export class ContactsService extends CrudService<Contacts> {
 		super(contactsRepository);
 	}
 
-	async findByEmployee(id: string): Promise<any> {
-		return await this.contactsRepository
-			.createQueryBuilder('contact')
-			// .leftJoin('organization_client.members', 'member')
-			// .where('member.id = :id', { id })
-			.getMany();
+	async saveContacts(
+		contactsRequest: ContactsCreateInput
+	): Promise<Contacts> {
+		// const contact = new Contacts();
+		// contact.name = 'Joe Smith';
+		// contact.profile = profile;
+		// await connection.manager.save(user);
+		return this.contactsRepository.save(
+			contactsRequest
+		);
 	}
+
+	
+
+	// async findAllContact(): Promise<any> {
+	// 	return await this.contactsRepository
+	// 		.createQueryBuilder('contact')
+	// 		// .getMany();
+	// }
 }

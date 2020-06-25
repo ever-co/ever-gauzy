@@ -7,7 +7,8 @@ import {
 	OneToMany,
 	JoinTable,
 	OneToOne,
-	RelationId
+	RelationId,
+	ManyToOne
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -28,6 +29,7 @@ import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
+import { Contacts } from '../contacts/contacts.entity';
 
 @Entity('organization_client')
 export class OrganizationClients extends Base implements IOrganizationClients {
@@ -38,12 +40,14 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	})
 	tags: Tag[];
 
-	// contactId
-	// @ManyToMany((type) => Employee, { cascade: ['update'] })
-	// @JoinTable({
-	// 	name: 'organization_client_employee'
-	// })
-	// members?: Employee[];
+	@ApiProperty({ type: Contacts })
+	@ManyToOne(() => Contacts, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	contact: Contacts;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((organizationClient: OrganizationClients) => organizationClient.contact)
+	readonly contactId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -75,36 +79,6 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ApiPropertyOptional({ type: String, isArray: true })
 	phones?: string[];
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	country?: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	street?: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	city?: string;
-
-	@ApiPropertyOptional({ type: Number })
-	@IsNumber()
-	@IsOptional()
-	@Column({ nullable: true })
-	zipCode?: number;
-
-	@ApiPropertyOptional({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	state?: string;
 
 	@ApiProperty({ type: String, enum: ClientOrganizationInviteStatus })
 	@IsEnum(ClientOrganizationInviteStatus)

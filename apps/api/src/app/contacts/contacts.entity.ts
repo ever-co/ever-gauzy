@@ -5,6 +5,7 @@ import {
 	JoinColumn,
 	ManyToMany,
 	OneToMany,
+	ManyToOne,
 	JoinTable,
 	OneToOne,
 	RelationId
@@ -13,75 +14,38 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
 	IsString,
-	IsEmail,
 	IsOptional,
-	IsNumber,
-	IsEnum
+	IsNumber
 } from 'class-validator';
 import { Base } from '../core/entities/base';
-import {
-	Contacts as IContacts
-	// ClientOrganizationInviteStatus
-} from '@gauzy/models';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
-import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
-import { Invoice } from '../invoice/invoice.entity';
-import { Tag } from '../tags/tag.entity';
+import { Contacts as IContacts } from '../../../../../libs/models/src/lib/contacts.model';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 
 @Entity('contact')
 export class Contacts extends Base implements IContacts {
-	// @ApiProperty()
-	// @ManyToMany((type) => Tag, (tag) => tag.organizationClient)
-	// @JoinTable({
-	// 	name: 'tag_contact'
-	// })
-	// tags: Tag[];
-
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
-	@Index()
+	// @IsNotEmpty()
+	// @Index()
+	@IsOptional()
 	@Column()
-	name: string;
+	name?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
-	@Index()
+	// @IsNotEmpty()
+	// @Index()
+	@IsOptional()
 	@Column()
-	firstName: string;
+	firstName?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
-	@Index()
+	// @IsNotEmpty()
+	// @Index()
+	@IsOptional()
 	@Column()
-	lastName: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
-
-	@ApiProperty({ type: String })
-	@IsEmail()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	primaryEmail: string;
-
-	@ApiPropertyOptional({ type: String, isArray: true })
-	emailAddresses?: string[];
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	primaryPhone: string;
-
-	@ApiPropertyOptional({ type: String, isArray: true })
-	phones?: string[];
+	lastName?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -113,41 +77,13 @@ export class Contacts extends Base implements IContacts {
 	@Column({ nullable: true })
 	state?: string;
 
-	// @ApiProperty({ type: String, enum: ClientOrganizationInviteStatus })
-	// @IsEnum(ClientOrganizationInviteStatus)
-	// @IsOptional()
-	// @Column({ nullable: true })
-	// inviteStatus?: string;
-
-	// @ApiProperty({ type: Organization })
-	// @OneToOne((type) => Organization, { nullable: true, onDelete: 'SET NULL' })
+	// @ApiProperty({ type: OrganizationClients })
+	// @ManyToOne(() => OrganizationClients, { nullable: true, onDelete: 'CASCADE' })
 	// @JoinColumn()
-	// clientOrganization?: Organization;
+	// organizationClient: OrganizationClients;
 
 	// @ApiProperty({ type: String, readOnly: true })
-	// @RelationId((client: OrganizationClients) => client.clientOrganization)
-	// @Column({ nullable: true })
-	// readonly clientOrganizationId?: string;
-
-	// @ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
-	// @OneToMany((type) => OrganizationProjects, (projects) => projects.client)
-	// @JoinColumn()
-	// projects?: OrganizationProjects[];
-
-	// @ApiPropertyOptional({ type: Invoice, isArray: true })
-	// @OneToMany((type) => Invoice, (invoices) => invoices.toClient)
-	// @JoinColumn()
-	// invoices?: Invoice[];
-
-	// @ApiPropertyOptional({ type: String })
-	// @IsString()
-	// @IsOptional()
-	// @Column({ nullable: true })
-	// notes?: string;
-
-	// @ManyToMany((type) => Employee, { cascade: ['update'] })
-	// @JoinTable({
-	// 	name: 'organization_client_employee'
-	// })
-	// members?: Employee[];
+	// @RelationId((contact: Contacts) => contact.organizationClient)
+	// readonly organzationClientId?: string;
+	
 }

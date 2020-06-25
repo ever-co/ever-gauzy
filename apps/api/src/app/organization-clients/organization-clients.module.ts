@@ -11,17 +11,23 @@ import { EmailService, Email } from '../email';
 import { EmailTemplate } from '../email-template';
 import { OrganizationService } from '../organization/organization.service';
 import { Organization } from '../organization/organization.entity';
+// import { ContactsService } from '../contacts/contacts.service';
+// import { ContactModule } from '../contacts/contacts.module';
+// import { Contacts } from '../contacts/contacts.entity';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
 			OrganizationClients,
 			Organization,
+			// Contacts,
 			User,
 			Email,
 			EmailTemplate
 		]),
-		CqrsModule
+		CqrsModule,			
+		// ContactModule,
+
 	],
 	controllers: [OrganizationClientsController],
 	providers: [
@@ -29,6 +35,7 @@ import { Organization } from '../organization/organization.entity';
 		UserService,
 		EmailService,
 		OrganizationService,
+		// ContactsService,
 		...CommandHandlers
 	],
 	exports: [OrganizationClientsService]
