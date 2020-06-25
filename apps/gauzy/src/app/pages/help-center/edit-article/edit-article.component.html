@@ -19,17 +19,6 @@
 					</div>
 					<div class="selector">
 						<p class="label">Status</p>
-						<nb-select
-							placeholder="Select Status"
-							[selected]="selectedPrivacy"
-							(selectedChange)="privacySelect($event)"
-						>
-							<nb-option
-								*ngFor="let privacy of isDraft"
-								[value]="privacy"
-								>{{ privacy }}</nb-option
-							>
-						</nb-select>
 					</div>
 				</div>
 				<div class="second-row">

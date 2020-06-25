@@ -28,6 +28,7 @@
 					>
 						<div
 							class="base"
+							[ngStyle]="{ color: node.data.color }"
 							[ngClass]="setClasses(node)"
 							(click)="onNodeClicked(node.data)"
 						>
@@ -53,12 +54,14 @@
 								></nb-action>
 								<nb-icon
 									*ngIf="node.data.flag === 'category'"
+									[ngStyle]="{ color: 'black' }"
 									class="edit-icons"
 									icon="edit-outline"
 									(click)="editCategory(node.data)"
 								></nb-icon>
 								<nb-icon
 									*ngIf="node.data.flag === 'category'"
+									[ngStyle]="{ color: 'black' }"
 									class="edit-icons"
 									icon="trash-2-outline"
 									(click)="deleteCategory()"

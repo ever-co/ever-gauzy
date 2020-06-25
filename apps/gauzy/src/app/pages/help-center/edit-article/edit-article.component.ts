@@ -35,7 +35,7 @@ export class EditArticleComponent extends TranslationBaseComponent
 			data: ['']
 		});
 		this.loadFormData(this.article);
-		this.selectedPrivacy = this.article.draft;
+		// this.selectedPrivacy = this.article.draft;
 	}
 
 	closeDialog() {
@@ -60,8 +60,8 @@ export class EditArticleComponent extends TranslationBaseComponent
 			{
 				name: `${this.form.value.name}`,
 				description: `${this.form.value.desc}`,
-				data: `${this.form.value.data}`,
-				draft: `${this.selectedPrivacy}`
+				data: `${this.form.value.data}`
+				// draft: `${this.selectedPrivacy}`
 			}
 		);
 		this.dialogRef.close(this.article);

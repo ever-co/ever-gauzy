@@ -5,12 +5,14 @@ import {
 	NbIconModule,
 	NbButtonModule,
 	NbSelectModule,
-	NbInputModule
+	NbInputModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EditBaseComponent } from './edit-base.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
 
 @NgModule({
 	imports: [
@@ -20,8 +22,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 		NbInputModule,
 		NbButtonModule,
 		NbSelectModule,
+		NbToggleModule,
 		FormsModule,
 		ReactiveFormsModule,
+		ColorPickerModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -32,6 +36,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 	],
 	entryComponents: [EditBaseComponent],
 	declarations: [EditBaseComponent],
-	exports: [EditBaseComponent]
+	exports: [EditBaseComponent],
+	providers: [ColorPickerService]
 })
 export class EditBaseModule {}

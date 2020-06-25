@@ -1,8 +1,30 @@
 <nb-card class="main">
-	<nb-card-body>
+	<nb-card-header>
 		<div class="header">
 			<h5>Add Article</h5>
 			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="selector">
+			<nb-toggle
+				class="select"
+				status="primary"
+				labelPosition="start"
+				[(ngModel)]="selectedStatus"
+				(checkedChange)="toggleStatus($event)"
+			>
+				<p class="select-label ml-3">Publish Status:</p>
+			</nb-toggle>
+			<nb-toggle
+				class="select"
+				status="primary"
+				labelPosition="start"
+				[(ngModel)]="selectedPrivacy"
+				(checkedChange)="togglePrivacy($event)"
+			>
+				<p class="select-label ml-3">Only for employees:</p>
+			</nb-toggle>
 		</div>
 		<form [formGroup]="form" (ngSubmit)="submit()">
 			<div class="edit-field">
@@ -16,20 +38,6 @@
 							maxlength="18"
 							nbInput
 						/>
-					</div>
-					<div class="selector">
-						<p class="label">Status</p>
-						<nb-select
-							placeholder="Select Status"
-							[selected]="selectedPrivacy"
-							(selectedChange)="privacySelect($event)"
-						>
-							<nb-option
-								*ngFor="let privacy of isDraft"
-								[value]="privacy"
-								>{{ privacy }}</nb-option
-							>
-						</nb-select>
 					</div>
 				</div>
 				<div class="second-row">
@@ -56,7 +64,7 @@
 				</div>
 			</div>
 			<div class="save-button">
-				<button [disabled]="!selectedPrivacy" status="success" nbButton>
+				<button status="success" nbButton>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</div>

@@ -23,8 +23,11 @@
 			<div>
 				<div class="row-name">
 					<p class="name">{{ article.name }}</p>
-					<p class="draft" *ngIf="article.draft === 'draft'">
-						{{ article.draft }}
+					<p class="draft" *ngIf="article.draft === true">
+						draft
+					</p>
+					<p class="privacy" *ngIf="article.privacy === true">
+						employees
 					</p>
 				</div>
 				<p>{{ article.description }}</p>

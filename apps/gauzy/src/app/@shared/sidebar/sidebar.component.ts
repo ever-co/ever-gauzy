@@ -13,9 +13,7 @@ import {
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { AddBaseComponent } from './add-base/add-base.component';
 import { EditBaseComponent } from './edit-base/edit-base.component';
-import { AddCategoryComponent } from './add-category/add-category.component';
 import { EditCategoryComponent } from './edit-category/edit-category.component';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
@@ -80,18 +78,35 @@ export class SidebarComponent extends TranslationBaseComponent
 
 	setClasses(node) {
 		const classes = {
-			blue: node.data.color === 'blue',
 			child: node.data.flag === 'category',
 			parent: node.data.flag === 'base'
 		};
 		return classes;
 	}
 
+	async addNode() {
+		const chosenType = 'add';
+		const dialog = this.dialogService.open(EditBaseComponent, {
+			context: {
+				base: null,
+				editType: chosenType
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('CREATED_BASE');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
+	}
+
 	async editBase() {
+		const chosenType = 'edit';
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		const dialog = this.dialogService.open(EditBaseComponent, {
 			context: {
-				base: someNode.data
+				base: someNode.data,
+				editType: chosenType
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -103,10 +118,13 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	async addCategory() {
+		const chosenType = 'add';
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		const dialog = this.dialogService.open(AddCategoryComponent, {
+		const dialog = this.dialogService.open(EditCategoryComponent, {
 			context: {
-				base: someNode.data
+				category: null,
+				base: someNode.data,
+				editType: chosenType
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -118,10 +136,14 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	async editCategory(node) {
+		const chosenType = 'edit';
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		this.isChosenNode = true;
 		const dialog = this.dialogService.open(EditCategoryComponent, {
 			context: {
-				category: node
+				base: someNode.data,
+				category: node,
+				editType: chosenType
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -171,16 +193,6 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 		// this.loadMenu();
 		this.tree.treeModel.update();
-	}
-
-	async addNode() {
-		const dialog = this.dialogService.open(AddBaseComponent);
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			this.toastrSuccess('CREATED_BASE');
-			this.loadMenu();
-			this.tree.treeModel.update();
-		}
 	}
 
 	onNodeClicked(node: any) {

@@ -21,7 +21,11 @@ export class HelpCenterArticle extends Base implements IHelpCenterArticle {
 	@Column()
 	categoryId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: Boolean })
 	@Column()
-	draft: string;
+	draft: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@Column()
+	privacy: boolean;
 }

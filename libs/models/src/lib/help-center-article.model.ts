@@ -4,6 +4,7 @@ export interface IHelpCenterArticle extends IBaseEntityModel {
 	name: string;
 	description?: string;
 	data?: string;
-	draft: string;
+	draft: boolean;
+	privacy: boolean;
 	categoryId: string;
 }
