@@ -178,9 +178,7 @@
 							<div class="col">
 								<div class="org-year-found">
 									<h5 class="org-title org-key">
-										{{
-											'PUBLIC_PAGE.PROFITS' | translate
-										}}
+										{{ 'PUBLIC_PAGE.PROFITS' | translate }}
 										:
 									</h5>
 									<span
@@ -337,6 +335,20 @@
 										"
 									>
 									</span>
+								</span>
+							</div>
+						</div>
+					</div>
+					<div class="row" *ngIf="employees">
+						<div class="col">
+							<div class="org-year-found">
+								<h5 class="org-title org-key">
+									{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }} :
+								</h5>
+								<span
+									class="org-value"
+									[textContent]="employees.length"
+								>
 								</span>
 							</div>
 						</div>
