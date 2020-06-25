@@ -391,31 +391,127 @@
 				<nb-tab tabTitle="Employees" class="o__p__s__t">
 					<div class="row" *ngIf="employees">
 						<div class="col">
-							<h5 class="org-title title-employees">
-								{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }}
-								<span
-									class="org-employee-total"
-									[textContent]="'(' + employees.length + ')'"
-								></span>
-							</h5>
 							<div class="employee-list">
-								<nb-list class="nb_list block_style org_skills">
+								<nb-list class="nb_list">
+									<!-- New Code -->
 									<nb-list-item
 										*ngFor="
 											let employee of employees;
 											let i = index
 										"
-										class="nb_list_employee"
-										><nb-user
-											class="employee_name"
-											[name]="
-												employee.user.firstName +
-												' ' +
-												employee.user.lastName
-											"
-											[picture]="employee.user.imageUrl"
-										></nb-user>
+										class="search-result"
+									>
+										<div class="avatar has-aura">
+											<a href="#">
+												<img
+													src="{{
+														employee.user.imageUrl
+													}}"
+												/>
+											</a>
+										</div>
+										<div class="main-details">
+											<a
+												class="name margin-right-10"
+												href="#"
+											>
+												{{
+													employee.user.firstName +
+														' ' +
+														employee.user.lastName
+												}}
+											</a>
+											<div
+												class="label label-hourly margin-right-10"
+											>
+												hourly
+											</div>
+											<div class="pay-rate">
+												$25/hr
+											</div>
+											<div class="clearfix"></div>
+											<div class="speciality">
+												Full Stack Web Developer
+											</div>
+											<a
+												class="works-at"
+												href="/agencies/ever-technologies"
+											>
+												<nb-icon
+													icon="globe-2-outline"
+													[options]="{
+														color: '#55a8fd'
+													}"
+												>
+												</nb-icon>
+												Ever Technologies
+											</a>
+											<span class="location text-success">
+												<nb-icon
+													icon="navigation-2-outline"
+													[options]="{
+														color: '#28a745'
+													}"
+												>
+												</nb-icon>
+												Sofia, Sofia, Bulgaria
+											</span>
+											<div
+												class="profil-bio push-bottom-10"
+											>
+												I am Full-stack Web Developer
+												with experience in the following
+												languages &amp;amp; platforms
+												TypeScript and JavaScript
+												React.js, G...
+											</div>
+											<div
+												class="list-inline push-bottom-20"
+											>
+												<li>
+													<span class="tag tag-sm"
+														>MySQL</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>React</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>AngularJS</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>ASP &amp; ASP.NET</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>jQuery</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>Node.js</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>TypeScript</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>GraphQL</span
+													>
+												</li>
+											</div>
+										</div>
 									</nb-list-item>
+									<!-- New Code -->
 								</nb-list>
 							</div>
 						</div>
