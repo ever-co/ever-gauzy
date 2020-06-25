@@ -15,15 +15,13 @@
   flex-direction: row;
   justify-content: space-between;
   padding: 10px;
-  margin-bottom: 1px;
+  margin-bottom: 2px;
   height: 55px;
   background-color: #fafafa;
 }
 
 .cards {
-  padding-left: 10px;
-  padding-top: 8px;
-  height: 100px;
+  padding: 0.5rem 0.5rem 0 1rem;
   margin-bottom: 10px;
   display: flex;
   flex-direction: row;
@@ -59,4 +57,28 @@
   margin-top: 27px;
   font-size: 24px;
   display: none;
+}
+
+.row-name {
+  display: flex;
+  flex-direction: row;
+  margin-right: 10px;
+}
+
+.draft {
+  padding-top: 0.1rem;
+  color: #fff;
+  background-color: #aaaeb3;
+  margin-left: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  width: 55px;
+  text-align: center;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 18px;
+  padding-bottom: 0.1rem;
 }

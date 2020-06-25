@@ -721,10 +721,10 @@
 	"KEY_RESULT_PAGE": {
 		"UPDATE": {
 			"STATUS": {
-				"ON_TRACK": "на път",
-				"NEEDS_ATTENTION": "има нужда от внимание",
-				"OFF_TRACK": "извън пистата",
-				"NONE": "нито един"
+				"ON_TRACK": "on track",
+				"NEEDS_ATTENTION": "needs attention",
+				"OFF_TRACK": "off track",
+				"NONE": "none"
 			}
 		},
 		"TYPE": {
@@ -822,6 +822,7 @@
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "Запази",
+				"CREATE_CRITERIONS": "Create criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"SUMMARY": "Summary",
 				"DETAILS": "Send interview details to",
@@ -870,7 +871,9 @@
 			"RATE_CANDIDATE_BY_CRITERIONS": "Rate candidate by criterions",
 			"TECHNOLOGY_STACK": "Technology Stack",
 			"PERSONAL_QUALITIES": "Personal Qualities",
-			"CHOOSE_CRITERIONS": "Choose criterions for candidate"
+			"CHOOSE_CRITERIONS": "Choose criterions for candidate",
+			"TECHNOLOGY_PLACEHOLDER": "If you want to add criteria from the technology stack, you need to create them",
+			"PERSONAL_QUALITIES_PLACEHOLDER": "If you want to add criteria from the personal quality list, you need to create them"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1762,6 +1765,11 @@
 			"PROJECT": "Please selct project",
 			"EMPLOYEE": "Please selct employee"
 		}
+	},
+	"ACTIVITY": {
+		"SCREENSHOTS": "Screenshots",
+		"APPS": "Apps Activity",
+		"URLS": "Urls Activity"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

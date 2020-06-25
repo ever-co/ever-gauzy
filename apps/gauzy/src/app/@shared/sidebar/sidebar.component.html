@@ -28,7 +28,7 @@
 					>
 						<div
 							class="base"
-							[ngClass]="{ blue: node.data.color === 'blue' }"
+							[ngClass]="setClasses(node)"
 							(click)="onNodeClicked(node.data)"
 						>
 							<div>
@@ -41,7 +41,7 @@
 								<nb-icon
 									class="icons"
 									icon="{{ node.data.privacy }}"
-									(click)="changePrivacy(node)"
+									(click)="changePrivacy(node.data)"
 								></nb-icon>
 							</div>
 							<div>
@@ -55,7 +55,7 @@
 									*ngIf="node.data.flag === 'category'"
 									class="edit-icons"
 									icon="edit-outline"
-									(click)="editCategory()"
+									(click)="editCategory(node.data)"
 								></nb-icon>
 								<nb-icon
 									*ngIf="node.data.flag === 'category'"

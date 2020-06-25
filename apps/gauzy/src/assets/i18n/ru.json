@@ -823,6 +823,7 @@
 				"NEXT": "Следующий",
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
+				"CREATE_CRITERIONS": "Создать критерии",
 				"EMAIL_NOTIFICATION": "Уведомление по e-mail",
 				"SUMMARY": "Summary",
 				"DETAILS": "Отправить данные интервью",
@@ -871,7 +872,9 @@
 			"RATE_CANDIDATE_BY_CRITERIONS": "Оценить кандидата по критериям",
 			"TECHNOLOGY_STACK": "Стек технологий",
 			"PERSONAL_QUALITIES": "Личные качества",
-			"CHOOSE_CRITERIONS": "Выберите критерии для кандидата"
+			"CHOOSE_CRITERIONS": "Выберите критерии для кандидата",
+			"TECHNOLOGY_PLACEHOLDER": "Если вы хотите добавить критерии из стека технологий, их нужно создать",
+			"PERSONAL_QUALITIES_PLACEHOLDER": "Если вы хотите добавить критерии из личного списка качества, необходимо создать их"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1763,6 +1766,11 @@
 			"PROJECT": "Пожалуйста, выберите проект",
 			"EMPLOYEE": "Пожалуйста, выберите сотрудника"
 		}
+	},
+	"ACTIVITY": {
+		"SCREENSHOTS": "Скриншот",
+		"APPS": "Активность приложений",
+		"URLS": "Активность ссылок"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",

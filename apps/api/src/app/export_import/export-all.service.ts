@@ -40,9 +40,9 @@ import { TaskService } from '../tasks/task.service';
 import { TenantService } from '../tenant/tenant.service';
 import { TimeOffPolicyService } from '../time-off-policy/time-off-policy.service';
 import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
-import { ActivityService } from '../timesheet/activity.service';
-import { ScreenShotService } from '../timesheet/screenshot.service';
-import { TimeSlotService } from '../timesheet/time-slot.service';
+import { ActivityService } from '../timesheet/activity/activity.service';
+import { ScreenshotService } from '../timesheet/screenshot/screenshot.service';
+import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
 import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
 import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
@@ -178,7 +178,7 @@ export class ExportAllService implements OnDestroy {
 		private timeOffPolicyService: TimeOffPolicyService,
 		private timeSheetService: TimeSheetService,
 		private activityService: ActivityService,
-		private screenShotService: ScreenShotService,
+		private screenShotService: ScreenshotService,
 		private timeLogService: TimeLogService,
 		private timeSlotService: TimeSlotService,
 		private appointmentEmployeeService: AppointmentEmployeesService,

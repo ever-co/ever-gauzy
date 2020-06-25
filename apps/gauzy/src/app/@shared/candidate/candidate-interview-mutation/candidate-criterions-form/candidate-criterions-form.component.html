@@ -7,7 +7,7 @@
 	>
 	<div class="form-blocks">
 		<div class="form-block">
-			<div class="label mb-2">
+			<div class="label mb-2" *ngIf="technologiesList?.length > 0">
 				{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
 			</div>
 			<div *ngFor="let technology of technologiesList">
@@ -19,9 +19,15 @@
 					>{{ technology.name }}</nb-checkbox
 				>
 			</div>
+			<div class="placeholder" *ngIf="technologiesList?.length === 0">
+				{{
+					'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_PLACEHOLDER'
+						| translate
+				}}
+			</div>
 		</div>
 		<div class="form-block">
-			<div class="label mb-2">
+			<div class="label mb-2" *ngIf="personalQualitiesList?.length > 0">
 				{{
 					'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate
 				}}
@@ -32,6 +38,15 @@
 					[checked]="isChecked(quality.name, editSelectedQualities)"
 					>{{ quality.name }}</nb-checkbox
 				>
+			</div>
+			<div
+				class="placeholder"
+				*ngIf="personalQualitiesList?.length === 0"
+			>
+				{{
+					'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES_PLACEHOLDER'
+						| translate
+				}}
 			</div>
 		</div>
 	</div>

@@ -10,10 +10,6 @@ export class HelpCenterArticle extends Base implements IHelpCenterArticle {
 	name: string;
 
 	@ApiProperty({ type: String })
-	@Column()
-	privacy: string;
-
-	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	description?: string;
 
@@ -24,4 +20,8 @@ export class HelpCenterArticle extends Base implements IHelpCenterArticle {
 	@ApiProperty({ type: String })
 	@Column()
 	categoryId: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	draft: string;
 }
