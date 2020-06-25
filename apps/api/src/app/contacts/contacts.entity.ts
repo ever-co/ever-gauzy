@@ -11,12 +11,7 @@ import {
 	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsNotEmpty,
-	IsString,
-	IsOptional,
-	IsNumber
-} from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Contacts as IContacts } from '../../../../../libs/models/src/lib/contacts.model';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
@@ -85,5 +80,4 @@ export class Contacts extends Base implements IContacts {
 	// @ApiProperty({ type: String, readOnly: true })
 	// @RelationId((contact: Contacts) => contact.organizationClient)
 	// readonly organzationClientId?: string;
-	
 }

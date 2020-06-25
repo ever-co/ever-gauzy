@@ -8,9 +8,9 @@ import { ContactsService } from '../../../contacts/contacts.service';
 export class OrganizationClientsCreateHandler
 	implements ICommandHandler<OrganizationClientsCreateCommand> {
 	constructor(
-		private readonly organizationClientsService: OrganizationClientsService,
-		// private readonly contactsService: ContactsService
-	) {}
+		private readonly organizationClientsService: OrganizationClientsService
+	) // private readonly contactsService: ContactsService
+	{}
 
 	public async execute(
 		command: OrganizationClientsCreateCommand

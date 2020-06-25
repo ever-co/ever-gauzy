@@ -46,7 +46,9 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	contact: Contacts;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((organizationClient: OrganizationClients) => organizationClient.contact)
+	@RelationId(
+		(organizationClient: OrganizationClients) => organizationClient.contact
+	)
 	readonly contactId?: string;
 
 	@ApiProperty({ type: String })

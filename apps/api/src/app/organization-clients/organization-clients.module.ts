@@ -25,9 +25,8 @@ import { Organization } from '../organization/organization.entity';
 			Email,
 			EmailTemplate
 		]),
-		CqrsModule,			
+		CqrsModule
 		// ContactModule,
-
 	],
 	controllers: [OrganizationClientsController],
 	providers: [

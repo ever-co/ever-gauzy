@@ -7,7 +7,7 @@ import { User, LanguagesEnum } from './user.model';
 import { Tag } from './tag-entity.model';
 import { Contacts, ContactsCreateInput } from './contacts.model';
 
-export interface OrganizationClients extends  Contacts, IBaseEntityWithMembers {
+export interface OrganizationClients extends Contacts, IBaseEntityWithMembers {
 	name: string;
 	organizationId: string;
 	primaryEmail: string;
@@ -29,7 +29,9 @@ export interface OrganizationClients extends  Contacts, IBaseEntityWithMembers {
 	contact: Contacts;
 }
 
-export interface OrganizationClientsFindInput extends Contacts, IBaseEntityModel {
+export interface OrganizationClientsFindInput
+	extends Contacts,
+		IBaseEntityModel {
 	name?: string;
 	organizationId?: string;
 	primaryEmail?: string;
@@ -42,7 +44,9 @@ export interface OrganizationClientsFindInput extends Contacts, IBaseEntityModel
 	notes?: string;
 }
 
-export interface OrganizationClientsCreateInput extends ContactsCreateInput, IBaseEntityModel {
+export interface OrganizationClientsCreateInput
+	extends ContactsCreateInput,
+		IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	contactId?: string;

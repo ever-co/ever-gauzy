@@ -27,7 +27,6 @@ export class ContactsController extends CrudController<Contacts> {
 		super(contactsService);
 	}
 
-	
 	@ApiOperation({
 		summary: 'Find all contacts.'
 	})
@@ -41,9 +40,10 @@ export class ContactsController extends CrudController<Contacts> {
 		description: 'Record not found'
 	})
 	@Get()
-	async getAllContacts(@Query('data') data: string): Promise<IPagination<Contacts>> {
+	async getAllContacts(
+		@Query('data') data: string
+	): Promise<IPagination<Contacts>> {
 		const { relations, findInput } = JSON.parse(data);
 		return this.contactsService.findAll({ where: findInput, relations });
 	}
-
 }

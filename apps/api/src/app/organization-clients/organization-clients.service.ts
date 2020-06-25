@@ -10,7 +10,9 @@ export class OrganizationClientsService extends CrudService<
 > {
 	constructor(
 		@InjectRepository(OrganizationClients)
-		private readonly organizationClientsRepository: Repository<OrganizationClients>
+		private readonly organizationClientsRepository: Repository<
+			OrganizationClients
+		>
 	) {
 		super(organizationClientsRepository);
 	}
@@ -26,5 +28,4 @@ export class OrganizationClientsService extends CrudService<
 	// async users(){
 	// 	await this.organizationClientsRepository.find({ relations: ["contact"] });
 	// }
-
 }

@@ -21,12 +21,8 @@ export class ContactsService extends CrudService<Contacts> {
 		// contact.name = 'Joe Smith';
 		// contact.profile = profile;
 		// await connection.manager.save(user);
-		return this.contactsRepository.save(
-			contactsRequest
-		);
+		return this.contactsRepository.save(contactsRequest);
 	}
-
-	
 
 	// async findAllContact(): Promise<any> {
 	// 	return await this.contactsRepository
