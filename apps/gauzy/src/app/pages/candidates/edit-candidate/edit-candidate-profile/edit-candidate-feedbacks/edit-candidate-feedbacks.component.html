@@ -90,7 +90,17 @@
 									</div>
 
 									<div class="form-blocks">
-										<div class="form-block">
+										<div
+											class="form-block"
+											[ngStyle]="{
+												width:
+													personalQualitiesList?.length ===
+													0
+														? '100%'
+														: '48%'
+											}"
+											*ngIf="technologiesList?.length > 0"
+										>
 											<div class="label mb-2">
 												{{
 													'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
@@ -128,7 +138,20 @@
 												</div>
 											</div>
 										</div>
-										<div class="form-block">
+										<div
+											class="form-block"
+											[ngStyle]="{
+												width:
+													technologiesList?.length ===
+													0
+														? '100%'
+														: '48%'
+											}"
+											*ngIf="
+												personalQualitiesList?.length >
+												0
+											"
+										>
 											<div class="label mb-2">
 												{{
 													'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'

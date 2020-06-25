@@ -1,0 +1,37 @@
+<h5>
+	{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWS' | translate }}
+</h5>
+<nb-card-body>
+	<nb-accordion>
+		<nb-accordion-item
+			*ngFor="let interview of interviewList; let i = index"
+		>
+			<nb-accordion-item-header
+				><strong>
+					{{ interview?.title }}
+				</strong></nb-accordion-item-header
+			>
+			<nb-accordion-item-body>
+				<div>
+					{{
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
+							| translate
+					}}
+					<strong
+						>{{ interview?.startTime | date: 'fullDate' }} </strong
+					>{{
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
+							| translate
+					}}
+					<strong>{{
+						interview?.startTime | date: 'shortTime'
+					}}</strong
+					>-
+					<strong>{{
+						interview?.endTime | date: 'shortTime'
+					}}</strong>
+				</div>
+			</nb-accordion-item-body>
+		</nb-accordion-item>
+	</nb-accordion>
+</nb-card-body>
