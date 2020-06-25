@@ -21,7 +21,12 @@
 			*ngFor="let article of this.nodes; let i = index"
 		>
 			<div>
-				<h6 class="label">{{ article.name }}</h6>
+				<div class="row-name">
+					<p class="name">{{ article.name }}</p>
+					<p class="draft" *ngIf="article.draft === 'draft'">
+						{{ article.draft }}
+					</p>
+				</div>
 				<p>{{ article.description }}</p>
 				<div class="user-info">
 					<p>written by</p>
@@ -34,7 +39,7 @@
 				<nb-icon
 					class="edit-icon"
 					icon="edit-outline"
-					(click)="editNode()"
+					(click)="editNode(i)"
 				></nb-icon>
 				<nb-icon
 					class="edit-icon"

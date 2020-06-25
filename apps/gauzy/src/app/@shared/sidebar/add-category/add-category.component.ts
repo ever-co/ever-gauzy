@@ -49,10 +49,9 @@ export class AddCategoryComponent extends TranslationBaseComponent
 			desc: data.desc
 		});
 		this.parentId = this.base.id;
-		console.log(this.parentId);
 	}
 	async submit() {
-		await this.helpCenterService.create({
+		const res = await this.helpCenterService.create({
 			name: `${this.form.value.name}`,
 			privacy: 'eye-outline',
 			icon: 'book-open-outline',
@@ -63,7 +62,8 @@ export class AddCategoryComponent extends TranslationBaseComponent
 			color: `${this.selectedColor}`,
 			parentId: `${this.parentId}`
 		});
-		this.dialogRef.close(this.base);
+
+		this.dialogRef.close(res);
 	}
 
 	closeDialog() {
