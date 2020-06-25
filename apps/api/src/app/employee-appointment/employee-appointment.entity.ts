@@ -112,5 +112,5 @@ export class EmployeeAppointment extends Base implements IEmployeeAppointment {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	invitees: AppointmentEmployees[];
+	invitees?: AppointmentEmployees[];
 }

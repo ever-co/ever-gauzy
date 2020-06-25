@@ -40,25 +40,30 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent
 				const appointmentId = params.appointmentId;
 				const employeeId = params.id;
 				if (employeeId && appointmentId) {
-					this.appointment = await this.employeeAppointmentService
-						.getById(appointmentId)
-						.pipe(first())
-						.toPromise();
-
-					this.employee = await this.employeeService.getEmployeeById(
-						employeeId,
-						['user']
-					);
-					this.duration = `${moment(
-						this.appointment.startDateTime
-					).format('llll')} - ${moment(
-						this.appointment.endDateTime
-					).format('llll')}`;
+					this.loadAppointment(appointmentId, employeeId);
 					this.loading = false;
 				} else {
 					this.router.navigate(['/share/404']);
 				}
 			});
+	}
+
+	async loadAppointment(appointmentId: string, employeeId: string = '') {
+		this.appointment = await this.employeeAppointmentService
+			.getById(appointmentId)
+			.pipe(first())
+			.toPromise();
+
+		if (employeeId) {
+			this.employee = await this.employeeService.getEmployeeById(
+				employeeId,
+				['user']
+			);
+		}
+
+		this.duration = `${moment(this.appointment.startDateTime).format(
+			'llll'
+		)} - ${moment(this.appointment.endDateTime).format('llll')}`;
 	}
 
 	async cancelAppointment(appointmentId: string) {
@@ -77,6 +82,7 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent
 				await this.employeeAppointmentService.update(appointmentId, {
 					status: 'Cancelled'
 				});
+				this.loadAppointment(appointmentId);
 			}
 		}
 	}
