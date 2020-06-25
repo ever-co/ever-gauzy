@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Goal } from '@gauzy/models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
-import { tap, catchError, first } from 'rxjs/operators';
+import { catchError, first } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
 
 interface IGoalResponse {
@@ -23,12 +23,7 @@ export class GoalService {
 	createGoal(goal): Promise<Goal> {
 		return this._http
 			.post<Goal>(`${this.API_URL}/create`, goal)
-			.pipe(
-				tap(() =>
-					this.toastrService.primary('Goal Created', 'Success')
-				),
-				catchError((error) => this.errorHandler(error))
-			)
+			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
 

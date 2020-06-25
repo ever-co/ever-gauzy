@@ -1,21 +1,29 @@
 <nb-card>
 	<nb-card-header>
-		<h5>Add Time Frame</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog(null)"
-		></nb-icon>
+		<div class="main-header">
+			<h5>
+				{{ 'GOALS_PAGE.SETTINGS.ADD_TIME_FRAME_TITLE' | translate }}
+			</h5>
+			<nb-icon
+				class="ml-auto mt-1 close"
+				icon="close-outline"
+				(click)="closeDialog(null)"
+			></nb-icon>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
 			<div class="col-md-4">
-				<h6>Predefined Time Frames</h6>
+				<h6>
+					{{
+						'GOALS_PAGE.SETTINGS.PREDEFINED_TIME_FRAMES' | translate
+					}}
+				</h6>
 				<nb-list>
 					<nb-list-item
 						style="cursor: pointer; font-weight: bold;"
 						*ngFor="let timeFrame of predefinedTimeFrames"
-						(click)="updateTimeFrameValues(timeFrame)"
+						(click)="updateTimeFrameValues(timeFrame, $event)"
 					>
 						{{ timeFrame.name }}
 					</nb-list-item>
@@ -23,65 +31,76 @@
 			</div>
 			<div class="col-md-8">
 				<form [formGroup]="timeFrameForm">
-					<label for="time-frame-title" class="label"> Name </label>
+					<label for="time-frame-title" class="label">
+						{{ 'FORM.LABELS.NAME' | translate }}
+					</label>
 					<input
 						type="text"
 						id="time-frame-title"
 						nbInput
 						fullWidth
 						formControlName="name"
-						placeholder="Time frame name eg. 'Q4-2020'"
+						placeholder="{{
+							'GOALS_PAGE.FORM.PLACEHOLDERS.TIME_FRAME_NAME'
+								| translate
+						}}"
 					/>
 
 					<label for="time-frame-status" class="label mt-3">
-						Status
+						{{ 'GOALS_PAGE.FORM.LABELS.STATUS' | translate }}
 					</label>
 					<nb-select
 						id="time-frame-status"
 						fullWidth
 						filled
 						[status]="
-							timeFrameForm.value.status === 'active'
+							timeFrameForm.value.status ===
+							timeFrameStatusEnum.ACTIVE
 								? 'success'
 								: 'danger'
 						"
 						formControlName="status"
 					>
-						<nb-option value="active">Active</nb-option>
-						<nb-option value="inactive">Inactive</nb-option>
+						<nb-option
+							*ngFor="
+								let status of timeFrameStatusEnum | keyvalue
+							"
+							[value]="status.value"
+							>{{
+								'GOALS_PAGE.TIME_FRAME_STATUS.' + status.key
+									| translate
+							}}</nb-option
+						>
 					</nb-select>
 
 					<div class="row mt-3">
 						<div class="col-md-6">
 							<label for="start-date" class="label">
-								Start Date
+								{{ 'SM_TABLE.START_DATE' | translate }}
 							</label>
 							<input
 								nbInput
 								id="start-date"
 								fullWidth
-								placeholder="Start Date"
+								placeholder="{{
+									'SM_TABLE.START_DATE' | translate
+								}}"
 								[nbDatepicker]="startDatePicker"
 								formControlName="startDate"
 							/>
-							<nb-datepicker
-								#startDatePicker
-								[max]="
-									timeFrameForm.value.endDate
-										? timeFrameForm.value.endDate
-										: null
-								"
-							></nb-datepicker>
+							<nb-datepicker #startDatePicker></nb-datepicker>
 						</div>
 						<div class="col-md-6">
 							<label for="end-date" class="label">
-								End Date
+								{{ 'SM_TABLE.END_DATE' | translate }}
 							</label>
 							<input
 								nbInput
 								id="end-date"
 								fullWidth
-								placeholder="End Date"
+								placeholder="{{
+									'SM_TABLE.END_DATE' | translate
+								}}"
 								[nbDatepicker]="endDatePicker"
 								formControlName="endDate"
 							/>
@@ -104,7 +123,7 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			[disabled]="!timeFrameForm.valid"
+			[disabled]="timeFrameForm.invalid"
 			nbButton
 			status="success"
 			(click)="saveTimeFrame()"

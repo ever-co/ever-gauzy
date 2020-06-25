@@ -58,14 +58,14 @@ export class GoalsComponent extends TranslationBaseComponent
 	keyResult: KeyResult[];
 	constructor(
 		private store: Store,
-		private translate: TranslateService,
+		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private goalService: GoalService,
 		private errorHandler: ErrorHandlingService,
 		private keyResultService: KeyResultService
 	) {
-		super(translate);
+		super(translateService);
 	}
 
 	async ngOnInit() {
@@ -111,8 +111,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					.then((val) => {
 						if (val) {
 							this.toastrService.primary(
-								'Key Result Updated',
-								'Success'
+								this.getTranslation(
+									'TOASTR.MESSAGE.KEY_RESULT_UPDATED'
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.loadPage();
 						}
@@ -127,8 +129,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					.then((val) => {
 						if (val) {
 							this.toastrService.primary(
-								'Key Result Added',
-								'Success'
+								this.getTranslation(
+									'TOASTR.MESSAGE.KEY_RESULT_ADDED'
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.loadPage();
 						}
@@ -169,8 +173,10 @@ export class GoalsComponent extends TranslationBaseComponent
 				await this.goalService.update(goal.id, response).then((res) => {
 					if (res) {
 						this.toastrService.primary(
-							'Objective updated',
-							'Success'
+							this.getTranslation(
+								'TOASTR.MESSAGE.OBJECTIVE_UPDATED'
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 					}
 				});
@@ -187,8 +193,10 @@ export class GoalsComponent extends TranslationBaseComponent
 						.then(async (val) => {
 							await this.goalService.getAllGoals();
 							this.toastrService.primary(
-								'Objective added',
-								'Success'
+								this.getTranslation(
+									'TOASTR.MESSAGE.OBJECTIVE_ADDED'
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 						});
 				} catch (error) {
@@ -209,7 +217,10 @@ export class GoalsComponent extends TranslationBaseComponent
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			if (response === 'deleted') {
-				this.toastrService.danger('Goal deleted', 'Success');
+				this.toastrService.danger(
+					this.getTranslation('TOASTR.MESSAGE.OBJECTIVE_DELETED'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
 				this.loadPage();
 			} else {
 				const goalData = response;
@@ -219,8 +230,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					.then((res) => {
 						if (res) {
 							this.toastrService.primary(
-								'Goal updated',
-								'Success'
+								this.getTranslation(
+									'TOASTR.MESSAGE.OBJECTIVE_UPDATED'
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.loadPage();
 						}
@@ -240,7 +253,10 @@ export class GoalsComponent extends TranslationBaseComponent
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			if (response === 'deleted') {
-				this.toastrService.danger('Key Result deleted', 'Success');
+				this.toastrService.danger(
+					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_DELETED'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
 				this.loadPage();
 			} else {
 				const keyResNumber = this.goals[index].keyResults.length * 100;
@@ -251,7 +267,10 @@ export class GoalsComponent extends TranslationBaseComponent
 				const goalData = this.goals[index];
 				delete goalData.keyResults;
 				await this.goalService.update(this.goals[index].id, goalData);
-				this.toastrService.primary('Key Result updated', 'Success');
+				this.toastrService.primary(
+					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
 				this.loadPage();
 			}
 		}
@@ -287,7 +306,10 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.goals[index].id,
 				this.goals[index]
 			);
-			this.toastrService.primary('Key Result updated', 'Success');
+			this.toastrService.primary(
+				this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 			this.loadPage();
 		}
 	}

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { GoalTimeFrame } from '@gauzy/models';
+import { GoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/models';
 import {
 	getQuarter,
 	startOfQuarter,
@@ -25,6 +25,7 @@ export class EditTimeFrameComponent implements OnInit {
 	today = new Date();
 	type: string;
 	predefinedTimeFrames = [];
+	timeFrameStatusEnum = TimeFrameStatusEnum;
 	constructor(
 		private dialogRef: NbDialogRef<EditTimeFrameComponent>,
 		private fb: FormBuilder,
@@ -34,7 +35,7 @@ export class EditTimeFrameComponent implements OnInit {
 	ngOnInit() {
 		this.timeFrameForm = this.fb.group({
 			name: ['', Validators.required],
-			status: ['active', Validators.required],
+			status: [TimeFrameStatusEnum.ACTIVE, Validators.required],
 			startDate: [null, Validators.required],
 			endDate: [null, Validators.required]
 		});
@@ -46,15 +47,20 @@ export class EditTimeFrameComponent implements OnInit {
 				endDate: new Date(this.timeFrame.endDate)
 			});
 		}
+
 		this.generateTimeFrames();
 	}
 
-	updateTimeFrameValues(timeFrame) {
+	updateTimeFrameValues(timeFrame, event) {
+		event.stopPropagation();
 		this.timeFrameForm.patchValue({
-			name: timeFrame.name,
-			startDate: timeFrame.start,
-			endDate: timeFrame.end
+			name: !!timeFrame.name ? timeFrame.name : '',
+			startDate: !!timeFrame.start ? new Date(timeFrame.start) : null,
+			endDate: !!timeFrame.end ? new Date(timeFrame.end) : null,
+			status: TimeFrameStatusEnum.ACTIVE
 		});
+		this.timeFrameForm.patchValue({ startDate: timeFrame.start });
+		this.timeFrameForm.controls['startDate'].updateValueAndValidity();
 	}
 
 	generateTimeFrames() {
