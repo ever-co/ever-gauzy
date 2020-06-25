@@ -14,12 +14,20 @@
 					>You've received a new estimate!</mj-text
 				>
 				<mj-button
-					href="{{generatedUrl}}"
+					href="{{acceptUrl}}"
 					font-family="Helvetica"
 					background-color="#3366ff"
 					color="white"
 				>
-					View your estimates
+					Accept
+				</mj-button>
+				<mj-button
+					href="{{rejectUrl}}"
+					font-family="Helvetica"
+					background-color="#3366ff"
+					color="white"
+				>
+					Reject
 				</mj-button>
 				<mj-divider
 					border-color="#1B005D"

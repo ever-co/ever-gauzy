@@ -24,20 +24,15 @@ import {
 } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
-import { EmailService } from '../email';
 
 @ApiTags('Invoice')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class InvoiceController extends CrudController<Invoice> {
-	constructor(
-		private invoiceService: InvoiceService,
-		private readonly emailService: EmailService
-	) {
+	constructor(private invoiceService: InvoiceService) {
 		super(invoiceService);
 	}
 
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
 	async findAllInvoices(
@@ -51,14 +46,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		});
 	}
 
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('highest')
 	async findHighestInvoiceNumber(): Promise<IPagination<IInvoice>> {
 		return this.invoiceService.getHighestInvoiceNumber();
 	}
 
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get(':id')
 	async findByIdWithRelations(
@@ -73,10 +68,21 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Put(':id')
 	async updateInvoice(
+		@Param('id') id: string,
+		@Body() entity: IInvoice
+	): Promise<any> {
+		return this.invoiceService.create({
+			id,
+			...entity
+		});
+	}
+
+	@Put('estimate/:id')
+	async updateWithoutGuard(
 		@Param('id') id: string,
 		@Body() entity: IInvoice
 	): Promise<any> {
@@ -94,11 +100,12 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Req() request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<any> {
-		return this.emailService.emailInvoice(
+		return this.invoiceService.sendEmail(
 			languageCode,
 			email,
 			request.body.params.base64,
 			request.body.params.invoiceNumber,
+			request.body.params.invoiceId,
 			request.body.params.isEstimate,
 			request.get('Origin')
 		);

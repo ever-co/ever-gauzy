@@ -259,7 +259,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (org) => {
 				if (org) {
-					this.selectedInvoice = null;
+					// this.selectedInvoice = null;
 					const { items } = await this.invoicesService.getAll(
 						[
 							'invoiceItems',
