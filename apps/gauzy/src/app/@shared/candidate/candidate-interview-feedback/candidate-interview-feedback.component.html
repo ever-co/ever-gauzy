@@ -2,7 +2,7 @@
 	<nb-card-header>
 		<h5>
 			{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.LEAVE_FEEDBACK' | translate }}
-			{{ interviewTitle }}
+			{{ currentInterview?.title }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
@@ -68,7 +68,15 @@
 						</nb-accordion-item-header>
 						<nb-accordion-item-body>
 							<div class="form-blocks">
-								<div class="form-block">
+								<div
+									[ngStyle]="{
+										width:
+											personalQualitiesList.length === 0
+												? '100%'
+												: '50%'
+									}"
+									*ngIf="technologiesList.length > 0"
+								>
 									<div class="label mb-2">
 										{{
 											'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
@@ -93,7 +101,15 @@
 										></ga-star-rating-input>
 									</div>
 								</div>
-								<div class="form-block">
+								<div
+									[ngStyle]="{
+										width:
+											technologiesList.length === 0
+												? '100%'
+												: '50%'
+									}"
+									*ngIf="personalQualitiesList.length > 0"
+								>
 									<div class="label mb-2">
 										{{
 											'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'
