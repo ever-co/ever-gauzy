@@ -1705,10 +1705,13 @@
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:",
-		"CONFIRM_APPOINTMENT": "Appointment confirmed",
+		"CONFIRM_APPOINTMENT": "Appointment Confirmed",
+		"APPOINTMENT_INFO": "Appointment Information",
 		"DETAILS": "Booking Details",
 		"PARTICIPANTS": "Participant Emails",
 		"HOST": "Host",
+		"CANCEL": "Cancel Appointment",
+		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
 	},
 	"EMAIL_TEMPLATES_PAGE": {

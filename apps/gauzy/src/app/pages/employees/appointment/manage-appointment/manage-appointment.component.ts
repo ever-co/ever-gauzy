@@ -88,6 +88,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			});
 
 		// this._parseParams();
+		this._initializeForm();
 		this._loadEmployees();
 	}
 
@@ -243,7 +244,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				for (let e of this.selectedEmployeeIds) {
 					await this.appointmentEmployeesService.add({
 						employeeId: e,
-						appointmentId: this.employeeAppointment.id
+						appointmentId: this.employeeAppointment.id,
+						employeeAppointment: this.employeeAppointment
 					});
 				}
 			}

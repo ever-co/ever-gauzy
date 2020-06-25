@@ -93,6 +93,11 @@ export class EmployeeAppointment extends Base implements IEmployeeAppointment {
 	@Column({ nullable: true })
 	emails?: string;
 
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	status?: string;
+
 	@ApiProperty({ type: Organization })
 	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn()
