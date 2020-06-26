@@ -33,6 +33,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	organizationName: string;
 	employee: SelectedEmployee;
 	employeeId: string;
+	selectedFilter: string;
 	filter = [
 		{
 			title: 'All Objectives',
@@ -69,13 +70,18 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
-		this.store.selectedOrganization$
+		await this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
-					this.loadPage();
 				}
+			});
+		await this.store.selectedEmployee$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((emp) => {
+				this.employee = emp;
+				this.loadPage();
 			});
 	}
 
@@ -88,8 +94,10 @@ export class GoalsComponent extends TranslationBaseComponent
 		this.goalService.getAllGoals().then((goals) => {
 			this.noGoals = goals.items.length > 0 ? false : true;
 			this.goals = goals.items;
-			console.log(goals);
 			this.allGoals = goals.items;
+			if (!!this.selectedFilter && this.selectedFilter !== 'all') {
+				this.filterGoals(this.selectedFilter);
+			}
 		});
 	}
 
@@ -147,10 +155,19 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	filterGoals(selection) {
+		this.selectedFilter = selection;
 		if (selection !== 'all') {
-			this.goals = this.allGoals.filter(
-				(goal) => goal.level.toLowerCase() === selection
-			);
+			if (selection === 'employee' && !!this.employee) {
+				this.goals = this.allGoals.filter((goal) =>
+					this.employee.id == null
+						? goal.level.toLowerCase() === selection
+						: goal.owner === this.employee.id
+				);
+			} else {
+				this.goals = this.allGoals.filter(
+					(goal) => goal.level.toLowerCase() === selection
+				);
+			}
 		} else {
 			this.goals = this.allGoals;
 		}

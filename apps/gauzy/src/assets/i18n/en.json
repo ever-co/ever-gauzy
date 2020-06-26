@@ -713,6 +713,9 @@
 				"DESCRIPTION": "Objective Description.",
 				"LEVEL": "Goal Level",
 				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'"
+			},
+			"ERROR": {
+				"START_DATE_GREATER": "End Date must be greater than Start Date"
 			}
 		},
 		"BUTTONS": {

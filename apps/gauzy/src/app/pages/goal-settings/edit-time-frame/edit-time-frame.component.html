@@ -104,15 +104,17 @@
 								[nbDatepicker]="endDatePicker"
 								formControlName="endDate"
 							/>
-							<nb-datepicker
-								#endDatePicker
-								[min]="
-									timeFrameForm.value.startDate
-										? timeFrameForm.value.startDate
-										: null
-								"
-							></nb-datepicker>
+							<nb-datepicker #endDatePicker></nb-datepicker>
 						</div>
+					</div>
+					<div
+						class="text-danger mt-2 text-center"
+						*ngIf="timeFrameForm.controls['endDate'].errors"
+					>
+						{{
+							timeFrameForm.controls['endDate'].errors
+								.beforeRequestDayMsg
+						}}
 					</div>
 				</form>
 			</div>
