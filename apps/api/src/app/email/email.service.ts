@@ -114,7 +114,9 @@ export class EmailService extends CrudService<IEmail> {
 		email: string,
 		base64: string,
 		invoiceNumber: number,
+		invoiceId: string,
 		isEstimate: boolean,
+		token: any,
 		originUrl?: string
 	) {
 		this.email
@@ -134,7 +136,13 @@ export class EmailService extends CrudService<IEmail> {
 				},
 				locals: {
 					locale: languageCode,
-					host: originUrl || environment.host
+					host: originUrl || environment.host,
+					acceptUrl:
+						originUrl +
+						`#/auth/estimate/?token=${token}&id=${invoiceId}&action=accept&email=${email}`,
+					rejectUrl:
+						originUrl +
+						`#/auth/estimate/?token=${token}&id=${invoiceId}&action=reject&email=${email}`
 				}
 			})
 			.then((res) => {

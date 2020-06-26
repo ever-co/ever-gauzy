@@ -90,6 +90,8 @@ import { OrganizationTeamEmployeeService } from '../organization-team-employee/o
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Equipment } from '../equipment/equipment.entity';
 import { EquipmentService } from '../equipment/equipment.service';
+import { EstimateEmailService } from '../estimate-email/estimate-email.service';
+import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 
 @Module({
 	imports: [
@@ -137,7 +139,8 @@ import { EquipmentService } from '../equipment/equipment.service';
 			TimeSlotMinute,
 			AppointmentEmployees,
 			ApprovalPolicy,
-			Candidate
+			Candidate,
+			EstimateEmail
 		])
 	],
 	controllers: [ExportAllController],
@@ -184,7 +187,8 @@ import { EquipmentService } from '../equipment/equipment.service';
 		TimeSlotService,
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
-		CandidateService
+		CandidateService,
+		EstimateEmailService
 	],
 	exports: [
 		ExportAllService,
@@ -229,7 +233,8 @@ import { EquipmentService } from '../equipment/equipment.service';
 		TimeSlotService,
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
-		CandidateService
+		CandidateService,
+		EstimateEmailService
 	]
 })
 export class ExportAllModule {}
