@@ -1,12 +1,10 @@
 import {
-	Body,
 	Controller,
 	Get,
 	HttpStatus,
 	Query,
-	UseGuards,
-	
-} from '@nestjs/common';
+	UseGuards
+	} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
