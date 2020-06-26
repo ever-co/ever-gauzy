@@ -109,6 +109,8 @@
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
 		"NO_RESULT": "Нет результатов",
+		"CLIENT": "клиент",
+		"INTERNAL": "внутренний",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "Русский (Соединенные Штаты)",
@@ -284,6 +286,7 @@
 			"ORGANIZATION": "Выберите организацию",
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"PROJECTS_TYPE": "Тип проекта",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
@@ -834,6 +837,7 @@
 			"END_DATE": "Дата окончания",
 			"TYPE": "Тип",
 			"CURRENCY": "Валюта",
+			"PROJECTS_TYPE": "Тип проекта",
 			"TEAMS": "Команды",
 			"ADD_NEW_CLIENT": "Добавить клиента",
 			"GENERAL_SETTINGS": "Общие настройки",

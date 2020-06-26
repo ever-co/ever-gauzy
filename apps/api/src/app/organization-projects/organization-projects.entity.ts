@@ -100,4 +100,10 @@ export class OrganizationProjects extends Base
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ nullable: true })
+	projectsType: string;
 }

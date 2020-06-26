@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	CurrenciesEnum,
 	Employee,
@@ -7,7 +7,8 @@ import {
 	OrganizationClients,
 	OrganizationProjects,
 	ProjectTypeEnum,
-	Tag
+	Tag,
+	ProjectsTypesEnum
 } from '@gauzy/models';
 import { OrganizationClientsService } from '../../../../../../@core/services/organization-clients.service ';
 import { Store } from '../../../../../../@core/services/store.service';
@@ -45,6 +46,7 @@ export class EditOrganizationProjectsMutationComponent
 	tags: Tag[] = [];
 	organizationId: string;
 	clients: Object[] = [];
+	projectsTypes: string[] = Object.values(ProjectsTypesEnum);
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -75,6 +77,13 @@ export class EditOrganizationProjectsMutationComponent
 		});
 	}
 
+	changeProjectType(projectsTypes: ProjectsTypesEnum) {
+		const clientControl = this.form.get('client');
+		if (projectsTypes === ProjectsTypesEnum.INTERNAL) {
+			clientControl.setValue('');
+		}
+	}
+
 	private _initializeForm() {
 		if (!this.organization) {
 			return;
@@ -87,14 +96,13 @@ export class EditOrganizationProjectsMutationComponent
 		}
 
 		this.defaultCurrency = this.organization.currency || 'USD';
-
 		this.form = this.fb.group({
 			tags: [this.project ? (this.tags = this.project.tags) : ''],
 			public: this.project ? this.project.public : this.public,
-			name: [this.project ? this.project.name : ''],
+			name: [this.project ? this.project.name : '', Validators.required],
 			client: [
 				this.project && this.project.client
-					? this.project.client.id
+					? this.project.client.name
 					: ''
 			],
 			type: [this.project ? this.project.type : 'RATE'],
@@ -107,7 +115,8 @@ export class EditOrganizationProjectsMutationComponent
 				}
 			],
 			startDate: [this.project ? this.project.startDate : null],
-			endDate: [this.project ? this.project.endDate : null]
+			endDate: [this.project ? this.project.endDate : null],
+			projectsType: [this.project ? this.project.projectsType : 'CLIENT']
 		});
 	}
 
@@ -136,11 +145,11 @@ export class EditOrganizationProjectsMutationComponent
 				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],
 				endDate: this.form.value['endDate'],
+				projectsType: this.form.value['projectsType'],
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e)
 			});
-
 			this.selectedEmployeeIds = [];
 			this.members = [];
 		}
