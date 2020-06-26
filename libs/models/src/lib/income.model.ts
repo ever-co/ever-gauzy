@@ -48,6 +48,7 @@ export interface IncomeFindInput extends IBaseEntityModel {
 	employee?: EmployeeFindInput;
 	organization?: OrganizationFindInput;
 	amount?: number;
+	isBonus?: boolean;
 	clientId?: string;
 	clientName?: string;
 	valueDate?: Date;

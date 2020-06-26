@@ -21,6 +21,7 @@ import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { AceEditorModule } from 'ng2-ace-editor';
+import { CommonModule } from '@angular/common';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -29,6 +30,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 @NgModule({
 	imports: [
 		NbLayoutModule,
+		CommonModule,
 		EmailTemplatesRoutingModule,
 		ThemeModule,
 		UserFormsModule,

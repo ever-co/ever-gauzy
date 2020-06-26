@@ -1,3 +1,5 @@
+import { AddCategoryModule } from './add-category/add-category.module';
+import { AddBaseModule } from './add-base/add-base.module';
 import { AddIconModule } from './add-icon/add-icon.module';
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -9,7 +11,9 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbSidebarModule,
-	NbLayoutModule
+	NbLayoutModule,
+	NbActionsModule,
+	NbContextMenuModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/selectors.module';
@@ -18,11 +22,23 @@ import { SidebarComponent } from './sidebar.component';
 import { TreeModule } from 'angular-tree-component';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { HelpCenterService } from '../../@core/services/help-center.service';
+import { EditBaseModule } from './edit-base/edit-base.module';
+import { EditCategoryModule } from './edit-category/edit-category.module';
+import { DeleteCategoryModule } from './delete-category/delete-category.module';
+import { DeleteBaseModule } from './delete-base/delete-base.module';
 
 @NgModule({
 	imports: [
+		AddBaseModule,
 		AddIconModule,
+		EditBaseModule,
+		DeleteBaseModule,
+		AddCategoryModule,
+		EditCategoryModule,
+		DeleteCategoryModule,
 		CKEditorModule,
+		NbActionsModule,
+		NbContextMenuModule,
 		TreeModule.forRoot(),
 		NbSelectModule,
 		ThemeModule,
@@ -32,7 +48,6 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
-		NbSelectModule,
 		NbLayoutModule,
 		NbSidebarModule.forRoot(),
 		TranslateModule.forChild({

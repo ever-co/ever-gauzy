@@ -1,3 +1,84 @@
-.card {
+.global {
+  display: flex;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 85%;
+  margin-left: 5px;
+}
+
+.header {
+  display: flex;
   flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: 2px;
+  height: 55px;
+  background-color: #fafafa;
+}
+
+.cards {
+  padding: 0.5rem 0.5rem 0 1rem;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.user-info {
+  padding-right: 100px;
+  display: flex;
+  flex-direction: row;
+}
+
+.create-at {
+  margin-left: 100px;
+}
+
+.articles {
+  margin-left: 10px;
+  margin-right: 10px;
+  color: gray;
+}
+
+.header-article {
+  display: flex;
+  flex-direction: row;
+}
+
+.cards:hover .edit-icon {
+  display: inline-block;
+}
+
+.edit-icon {
+  margin-top: 27px;
+  font-size: 24px;
+  display: none;
+}
+
+.row-name {
+  display: flex;
+  flex-direction: row;
+  margin-right: 10px;
+}
+
+.draft {
+  padding-top: 0.1rem;
+  color: #fff;
+  background-color: #aaaeb3;
+  margin-left: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  width: 55px;
+  text-align: center;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 18px;
+  padding-bottom: 0.1rem;
 }

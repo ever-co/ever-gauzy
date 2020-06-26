@@ -15,8 +15,15 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		super(employeeRepository);
 	}
 
-	async createBulk(input: EmployeeCreateInput[]) {
-		return await this.repository.save(input);
+	async createBulk(input: EmployeeCreateInput[]): Promise<Employee[]> {
+		return Promise.all(
+			input.map((emp) => {
+				emp.user.tenant = {
+					id: emp.organization.tenantId
+				};
+				return this.create(emp);
+			})
+		);
 	}
 
 	/**

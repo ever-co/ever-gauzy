@@ -94,6 +94,7 @@ import { KeyResultModule } from './keyresult/keyresult.module';
 import { RequestApprovalTeamModule } from './request-approval-team/request-approval-team.module';
 import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
+import { HelpCenterArticleModule } from './help-center-article/help-center-article.module';
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 
 @Module({
@@ -157,6 +158,10 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
 					{ path: '/help-center', module: HelpCenterModule },
+					{
+						path: '/help-center-article',
+						module: HelpCenterArticleModule
+					},
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
 
@@ -428,6 +433,7 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 		ApprovalPolicyModule,
 		RequestApprovalModule,
 		RolePermissionsModule,
+		HelpCenterArticleModule,
 		TenantModule,
 		TagModule,
 		SkillModule,

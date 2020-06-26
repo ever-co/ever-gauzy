@@ -92,13 +92,6 @@
     }
   }
 
-  .org-bonuses-paid span.paid_bonuses {
-    padding: 10px 0;
-    font-size: 15px;
-    font-weight: 500;
-    display: block;
-  }
-
   .org-details {
     width: 100%;
     display: block;
@@ -115,6 +108,18 @@ h5.org-title {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
+}
+
+h5.org-title.org-key {
+  float: left;
+  display: block;
+  line-height: 2rem;
+}
+
+span.org-value {
+  float: left;
+  line-height: 2rem;
+  padding-left: 10px;
 }
 
 h5.org-title span.client-focus {
@@ -138,8 +143,26 @@ h5.org-title span.client-focus {
   padding-left: 0;
 }
 
-.nb_list.org_skills .nb_list_item.item,
-.nb_list.org_languages .nb_list_item.item,
-.nb_list.org_awards .nb_list_item.item {
-  padding-right: 0;
+.nb_list_employee {
+  border: none;
+  padding: 0;
+  padding-bottom: 17px;
+  float: left;
+  padding-right: 30px;
+  min-width: 20%;
+  max-width: 100%;
+}
+
+.nb_list_employee:first-child {
+  border: none;
+}
+
+h5.org-title.title-employees {
+  text-align: center;
+  padding: 9px;
+  border-bottom: 1px solid #222b45;
+  margin: 0 auto;
+  max-width: 180px;
+  margin-bottom: 25px;
+  line-height: 15px;
 }

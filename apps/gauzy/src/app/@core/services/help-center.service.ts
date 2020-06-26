@@ -3,7 +3,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class HelpCenterService {
 	constructor(private http: HttpClient) {}
 
@@ -19,6 +21,19 @@ export class HelpCenterService {
 		return this.http
 			.get<{ items: IHelpCenter[]; total: number }>(`/api/help-center`, {
 				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	createBulk(
+		oldChildren: IHelpCenter[],
+		newChildren: IHelpCenter[]
+	): Promise<IHelpCenter[]> {
+		return this.http
+			.post<IHelpCenter[]>('/api/help-center/createBulk', {
+				oldChildren,
+				newChildren
 			})
 			.pipe(first())
 			.toPromise();
