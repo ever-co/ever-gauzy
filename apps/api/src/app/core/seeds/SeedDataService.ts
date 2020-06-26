@@ -3,7 +3,7 @@ import { CandidateExperience } from './../../candidate-experience/candidate-expe
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpService } from '@nestjs/common';
 import {
 	Connection,
 	createConnection,
@@ -143,6 +143,8 @@ import {
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { Equipment } from '../../equipment/equipment.entity';
 import { Contact } from '../../contact/contact.entity';
+import { createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
+import { createRandomTask } from '../../tasks/task.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -515,6 +517,9 @@ export class SeedDataService {
 
 		await createSkills(this.connection);
 		await createLanguages(this.connection);
+
+		await createRandomTask(this.connection);
+		await createRandomTimesheet(this.connection);
 	}
 
 	/**
@@ -543,7 +548,9 @@ export class SeedDataService {
 		try {
 			for (const entity of entities) {
 				const repository = await getRepository(entity.name);
-				await repository.query(`DELETE FROM "${entity.tableName}";`);
+				await repository.query(
+					`TRUNCATE  "${entity.tableName}" RESTART IDENTITY CASCADE;`
+				);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

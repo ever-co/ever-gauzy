@@ -35,6 +35,7 @@
 		"@nestjsx/crud": "^4.5.0",
 		"@nestjsx/crud-typeorm": "^4.5.0",
 		"@ntegral/nestjs-sentry": "^1.0.2",
+		"@nestjs/serve-static": "^2.1.3",
 		"bcrypt": "^4.0.1",
 		"cache-manager": "^3.3.0",
 		"class-transformer": "^0.2.3",

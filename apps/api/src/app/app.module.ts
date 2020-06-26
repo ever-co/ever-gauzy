@@ -98,9 +98,14 @@ import { HelpCenterArticleModule } from './help-center-article/help-center-artic
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 import { EstimateEmail } from './estimate-email/estimate-email.entity';
 import { EstimateEmailModule } from './estimate-email/estimate-email.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
 	imports: [
+		ServeStaticModule.forRoot({
+			rootPath: path.join(__dirname, '..', 'public'),
+			serveRoot: '/public/'
+		}),
 		RouterModule.forRoutes([
 			{
 				path: '',

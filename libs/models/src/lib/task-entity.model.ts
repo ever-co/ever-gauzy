@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationProjects, Tag } from '..';
+import { OrganizationProjects, Tag, InvoiceItem } from '..';
 import { Employee } from './employee.model';
 import { OrganizationTeam } from './organization-team-model';
 
@@ -13,12 +13,20 @@ export interface Task extends IBaseEntityModel {
 	projectId?: string;
 	tags?: Tag[];
 	members?: Employee[];
+	invoiceItems?: InvoiceItem[];
 	teams?: OrganizationTeam[];
 }
 
 export interface GetTaskOptions {
 	projectId?: string;
 	organizationId?: string;
+}
+
+export enum TaskStatusEnum {
+	TODO = 'Todo',
+	IN_PROGRESS = 'In Progress',
+	FOR_TESTING = 'For Testing',
+	COMPLETED = 'Completed'
 }
 
 export interface ITaskCreateInput extends Task {}
