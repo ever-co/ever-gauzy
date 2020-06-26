@@ -90,9 +90,9 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	@Column({ length: 200, nullable: true })
 	short_description?: string;
 
-	@ApiPropertyOptional({ type: String, maxLength: 700 })
+	@ApiPropertyOptional({ type: String })
 	@IsOptional()
-	@Column({ length: 700, nullable: true })
+	@Column({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: Date })

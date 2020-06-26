@@ -54,9 +54,11 @@ import { EmployeeWorkStatusComponent } from './table-components/employee-work-st
 import { SharedModule } from '../../@shared/shared.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { SkillsInputModule } from '../../@shared/skills/skills-input/skills-input.module';
 import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { SkillsService } from '../../@core/services/skills.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -121,6 +123,7 @@ const COMPONENTS = [
 		NbDatepickerModule,
 		RecurringExpenseBlockModule,
 		TagsColorInputModule,
+		SkillsInputModule,
 		EmployeeLocationModule,
 		EmployeeRatesModule
 	],
@@ -138,7 +141,8 @@ const COMPONENTS = [
 		InviteGuard,
 		CountryService,
 		CandidatesService,
-		OrganizationEmploymentTypesService
+		OrganizationEmploymentTypesService,
+		SkillsService
 	]
 })
 export class EmployeesModule {}

@@ -49,6 +49,25 @@
 		</div>
 	</div>
 	<div class="row">
+		<div class="col">
+			<div class="form-group">
+				<label class="label" for="descriptionInput">{{
+					'FORM.LABELS.DESCRIPTION' | translate
+				}}</label>
+				<textarea
+					fullWidth
+					id="descriptionInput"
+					type="text-area"
+					nbInput
+					formControlName="description"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+					}}"
+				></textarea>
+			</div>
+		</div>
+	</div>
+	<div class="row">
 		<div class="col-md-6">
 			<div class="form-group">
 				<label for="employmentType" class="label">{{
@@ -132,6 +151,15 @@
 					[isOrgLevel]="true"
 				>
 				</ga-tags-color-input>
+			</div>
+		</div>
+		<div class="col-md-6">
+			<div class="form-group">
+				<ngx-skills-input
+					[selectedSkills]="skills"
+					(selectedSkillsEvent)="selectedSkillsHandler($event)"
+				>
+				</ngx-skills-input>
 			</div>
 		</div>
 	</div>
