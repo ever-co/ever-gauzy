@@ -1,14 +1,21 @@
 <nb-card class="main">
 	<nb-card-header>
 		<div class="header">
-			<h6>Manage Knowledge Category</h6>
+			<h6 *ngIf="editType === 'edit'">
+				{{ 'HELP_PAGE.MANAGE_CATEGORY' | translate }}
+			</h6>
+			<h6 *ngIf="editType === 'add'">
+				{{ 'HELP_PAGE.ADD_CATEGORY' | translate }}
+			</h6>
 			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="select-wrap">
 			<div class="select">
-				<p class="select-label">Language:</p>
+				<p class="select-label">
+					{{ 'HELP_PAGE.LANGUAGE' | translate }}:
+				</p>
 				<nb-select
 					class="ml-3"
 					placeholder="Select"
@@ -26,11 +33,13 @@
 				[(ngModel)]="isToggled"
 				(checkedChange)="toggleStatus($event)"
 			>
-				<p class="select-label ml-3">Publish Status:</p>
+				<p class="select-label ml-3">
+					{{ 'HELP_PAGE.PUBLISH_STATUS' | translate }}:
+				</p>
 			</nb-toggle>
 		</div>
 		<div class="mb-1">
-			<p class="label">Select Icon:</p>
+			<p class="label">{{ 'HELP_PAGE.CHOSE_ICON' | translate }}:</p>
 			<nb-select
 				class="main-buttons"
 				placeholder="Select Icon"
@@ -51,7 +60,7 @@
 			</nb-select>
 		</div>
 		<form [formGroup]="form" (ngSubmit)="submit()">
-			<p class="label">Color:</p>
+			<p class="label">{{ 'HELP_PAGE.COLOR' | translate }}:</p>
 			<input
 				class="select-color"
 				nbInput
@@ -65,7 +74,9 @@
 			/>
 			<div class="edit-field">
 				<div>
-					<p class="label">Name of the category:</p>
+					<p class="label">
+						{{ 'HELP_PAGE.NAME_CATEGORY' | translate }}:
+					</p>
 					<input
 						formControlName="name"
 						class="main-buttons"
@@ -76,7 +87,9 @@
 					/>
 				</div>
 				<div>
-					<p class="label">Description:</p>
+					<p class="label">
+						{{ 'HELP_PAGE.DESCRIPTION' | translate }}:
+					</p>
 					<input
 						formControlName="desc"
 						class="main-buttons"

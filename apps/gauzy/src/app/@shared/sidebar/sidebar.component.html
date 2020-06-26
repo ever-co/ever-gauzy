@@ -8,7 +8,7 @@
 					(click)="addNode()"
 					nbButton
 				>
-					Knowledge Base
+					{{ 'HELP_PAGE.KNOWLEDGE_BASE' | translate }}
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 				</button>
 			</div>
@@ -64,7 +64,7 @@
 									[ngStyle]="{ color: 'black' }"
 									class="edit-icons"
 									icon="trash-2-outline"
-									(click)="deleteCategory()"
+									(click)="deleteCategory(node.data)"
 								></nb-icon>
 							</div>
 						</div>

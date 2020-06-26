@@ -43,11 +43,12 @@
 .first-row {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
   margin-bottom: 10px;
 }
 
 .second-row {
-  margin-bottom: 10px;
+  width: 49%;
 }
 
 .selector {

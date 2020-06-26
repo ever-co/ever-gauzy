@@ -1,18 +1,25 @@
 <div class="global">
-	<ga-sidebar></ga-sidebar>
+	<ga-sidebar (clickedNode)="clickedNode($event)"></ga-sidebar>
 	<div class="main">
 		<nb-card class="header">
 			<div class="header-article">
-				<h5>Category Name</h5>
-				<h5 class="articles">{{ this.nodes.length }} articles</h5>
+				<h5 *ngIf="!categoryName">
+					{{ 'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate }}
+				</h5>
+				<h5 *ngIf="categoryName">{{ categoryName }}</h5>
+				<h5 class="articles">
+					{{ this.nodes.length }}
+					{{ 'HELP_PAGE.ARTICLES' | translate }}
+				</h5>
 			</div>
 			<button
+				[disabled]="!categoryName"
 				status="success"
 				class="base-button"
 				(click)="addNode()"
 				nbButton
 			>
-				Add article
+				{{ 'HELP_PAGE.ADD_ARTICLE' | translate }}
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 			</button>
 		</nb-card>
@@ -24,18 +31,24 @@
 				<div class="row-name">
 					<p class="name">{{ article.name }}</p>
 					<p class="draft" *ngIf="article.draft === true">
-						draft
+						{{ 'HELP_PAGE.DRAFT' | translate }}
 					</p>
 					<p class="privacy" *ngIf="article.privacy === true">
-						employees
+						{{ 'HELP_PAGE.EMPLOYEES' | translate }}
 					</p>
 				</div>
 				<p>{{ article.description }}</p>
 				<div class="user-info">
-					<p>written by</p>
-					<p class="create-at">
-						create at: {{ article.createdAt | date: 'mediumDate' }}
+					<p>
+						{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
 					</p>
+					<div class="create-at">
+						<nb-icon class="icon" icon="clock-outline"></nb-icon>
+						<p>
+							{{ 'HELP_PAGE.CREATE_AT' | translate }}:
+							{{ article.createdAt | date: 'short' }}
+						</p>
+					</div>
 				</div>
 			</div>
 			<div class="mr-3">

@@ -10,12 +10,12 @@ export class HelpCenterArticle extends Base implements IHelpCenterArticle {
 	name: string;
 
 	@ApiProperty({ type: String })
-	@Column({ nullable: true })
-	description?: string;
+	@Column()
+	description: string;
 
 	@ApiProperty({ type: String })
-	@Column({ nullable: true })
-	data?: string;
+	@Column()
+	data: string;
 
 	@ApiProperty({ type: String })
 	@Column()
@@ -28,4 +28,8 @@ export class HelpCenterArticle extends Base implements IHelpCenterArticle {
 	@ApiProperty({ type: Boolean })
 	@Column()
 	privacy: boolean;
+
+	@ApiProperty({ type: Number })
+	@Column()
+	index: number;
 }

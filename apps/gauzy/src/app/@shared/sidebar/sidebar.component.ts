@@ -1,5 +1,12 @@
 import { IHelpCenter } from '@gauzy/models';
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import {
+	Component,
+	ViewChild,
+	OnInit,
+	OnDestroy,
+	Output,
+	EventEmitter
+} from '@angular/core';
 import { TreeComponent, ITreeOptions } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -26,6 +33,7 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 })
 export class SidebarComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	@Output() clickedNode = new EventEmitter<IHelpCenter>();
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogService: NbDialogService,
@@ -45,7 +53,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	options: ITreeOptions = {
 		allowDrag: true,
 		allowDrop: (el, { parent, index }) => {
-			if (parent.data.flag === 'article') {
+			if (parent.data.flag === 'category') {
 				return false;
 			} else {
 				return true;
@@ -154,8 +162,12 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 	}
 
-	deleteCategory() {
-		this.dialogService.open(DeleteCategoryComponent);
+	deleteCategory(node) {
+		this.dialogService.open(DeleteCategoryComponent, {
+			context: {
+				category: node
+			}
+		});
 	}
 
 	// async updateIndexes(
@@ -197,6 +209,7 @@ export class SidebarComponent extends TranslationBaseComponent
 
 	onNodeClicked(node: any) {
 		this.nodeId = node.id.toString();
+		this.clickedNode.emit(node);
 		this.isChosenNode = true;
 	}
 
