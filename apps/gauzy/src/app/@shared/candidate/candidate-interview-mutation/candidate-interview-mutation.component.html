@@ -72,7 +72,11 @@
 						| translate
 				}}</ng-template>
 
-				<ga-candidate-criterions-form #candidateCriterionsForm>
+				<ga-candidate-criterions-form
+					#candidateCriterionsForm
+					[editSelectedTechnologies]="editData?.technologies"
+					[editSelectedQualities]="editData?.personalQualities"
+				>
 				</ga-candidate-criterions-form>
 
 				<div class="button-container">
@@ -84,6 +88,12 @@
 					>
 						{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS'
+								| translate
+						}}
+					</button>
+					<button status="warning" (click)="route()" nbButton>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CREATE_CRITERIONS'
 								| translate
 						}}
 					</button>

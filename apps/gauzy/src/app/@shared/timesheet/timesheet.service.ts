@@ -7,7 +7,9 @@ import {
 	TimesheetStatus,
 	Timesheet,
 	IGetTimesheetInput,
-	IGetTimeLogConflictInput
+	IGetTimeLogConflictInput,
+	IGetTimeSlotInput,
+	TimeSlot
 } from '@gauzy/models';
 import { toParams } from 'libs/utils';
 
@@ -85,9 +87,19 @@ export class TimesheetService {
 			});
 	}
 
+	getTimeSlots(request?: IGetTimeSlotInput) {
+		const params = toParams(request);
+		return this.http
+			.get('/api/timesheet/time-slot', { params })
+			.toPromise()
+			.then((data: TimeSlot[]) => {
+				return data;
+			});
+	}
+
 	deleteLogs(logIds: string | string[]) {
 		let payload = new HttpParams();
-		if (typeof logIds == 'string') {
+		if (typeof logIds === 'string') {
 			logIds = [logIds];
 		}
 		logIds.forEach((id: string) => {

@@ -57,4 +57,11 @@ export class GoalSettingsService {
 		this.toastrService.danger(error.message, 'Error');
 		return throwError(error.message);
 	}
+
+	update(id: string, goalTimeFrame: GoalTimeFrame): Promise<GoalTimeFrame> {
+		return this._http
+			.put<GoalTimeFrame>(`${this.TIME_FRAME_URL}/${id}`, goalTimeFrame)
+			.pipe(first())
+			.toPromise();
+	}
 }

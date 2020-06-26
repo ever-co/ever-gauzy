@@ -70,7 +70,7 @@ export class EditOrganizationProjectsMutationComponent
 		items.forEach((i) => {
 			this.clients = [
 				...this.clients,
-				{ clientName: i.name, clientId: i.id }
+				{ name: i.name, clientId: i.id }
 			];
 		});
 	}

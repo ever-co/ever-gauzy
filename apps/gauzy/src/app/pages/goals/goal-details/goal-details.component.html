@@ -12,6 +12,17 @@
 			<ngx-avatar class="ml-3" size="sm" [src]="src" [name]="ownerName">
 			</ngx-avatar>
 			<span class="ml-3 mt-1">Session: {{ goal.deadline }}</span>
+			<span class="ml-5 mt-1"
+				><button
+					class="float-right"
+					status="danger"
+					nbButton
+					size="tiny"
+					(click)="deleteGoal()"
+				>
+					{{ 'BUTTONS.DELETE' | translate }}
+				</button></span
+			>
 		</div>
 		<div class="row mt-3">
 			<p class="ml-3">

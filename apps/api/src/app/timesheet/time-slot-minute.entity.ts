@@ -13,7 +13,7 @@ import { IsNumber, IsDateString } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
 
 @Entity('time_slot_minutes')
-@Unique(['employeeId', 'startedAt'])
+@Unique(['timeSlotId', 'datetime'])
 export class TimeSlotMinute extends Base implements ITimeSlotMinute {
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })

@@ -7,26 +7,46 @@
 	>
 	<div class="form-blocks">
 		<div class="form-block">
-			<div class="label mb-2">
+			<div class="label mb-2" *ngIf="technologiesList?.length > 0">
 				{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
 			</div>
 			<div *ngFor="let technology of technologiesList">
 				<nb-checkbox
 					(checkedChange)="checkedTechnologies(technology.name)"
+					[checked]="
+						isChecked(technology.name, editSelectedTechnologies)
+					"
 					>{{ technology.name }}</nb-checkbox
 				>
 			</div>
+			<div class="placeholder" *ngIf="technologiesList?.length === 0">
+				{{
+					'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_PLACEHOLDER'
+						| translate
+				}}
+			</div>
 		</div>
 		<div class="form-block">
-			<div class="label mb-2">
+			<div class="label mb-2" *ngIf="personalQualitiesList?.length > 0">
 				{{
 					'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate
 				}}
 			</div>
 			<div *ngFor="let quality of personalQualitiesList">
-				<nb-checkbox (checkedChange)="checkedQualities(quality.name)">{{
-					quality.name
-				}}</nb-checkbox>
+				<nb-checkbox
+					(checkedChange)="checkedQualities(quality.name)"
+					[checked]="isChecked(quality.name, editSelectedQualities)"
+					>{{ quality.name }}</nb-checkbox
+				>
+			</div>
+			<div
+				class="placeholder"
+				*ngIf="personalQualitiesList?.length === 0"
+			>
+				{{
+					'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES_PLACEHOLDER'
+						| translate
+				}}
 			</div>
 		</div>
 	</div>
