@@ -75,7 +75,9 @@ export class KeyResult extends Base implements IKeyResult {
 	status?: string;
 
 	@ApiProperty({ type: Goal })
-	@ManyToOne((type) => Goal, (goal) => goal.keyResults)
+	@ManyToOne((type) => Goal, (goal) => goal.keyResults, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn({ name: 'goalId' })
 	goal: Goal;
 

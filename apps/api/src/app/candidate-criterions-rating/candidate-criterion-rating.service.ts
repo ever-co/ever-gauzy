@@ -1,3 +1,4 @@
+import { ICandidateCriterionsRating } from './../../../../../libs/models/src/lib/candidate-criterions-rating.model';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -40,5 +41,14 @@ export class CandidateCriterionsRatingService extends CrudService<
 	}
 	async deleteBulk(ids: string[]) {
 		return await this.repository.delete(ids);
+	}
+	async updateBulk(
+		tech: ICandidateCriterionsRating[],
+		qual: ICandidateCriterionsRating[]
+	) {
+		return [
+			await this.repository.save(tech),
+			await this.repository.save(qual)
+		];
 	}
 }

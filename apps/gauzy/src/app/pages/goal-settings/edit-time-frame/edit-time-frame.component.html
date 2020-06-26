@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header>
-		Add Time Frame
+		<h5>Add Time Frame</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -8,84 +8,100 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="timeFrameForm">
-			<label for="time-frame-title" class="label"> Name </label>
-			<input
-				type="text"
-				id="time-frame-title"
-				nbInput
-				fullWidth
-				formControlName="name"
-				placeholder="Time frame name eg. 'Q4-2020'"
-			/>
-
-			<label for="time-frame-status" class="label mt-3">
-				Status
-			</label>
-			<nb-select
-				id="time-frame-status"
-				fullWidth
-				filled
-				[status]="
-					timeFrameForm.value.status === 'active'
-						? 'success'
-						: 'danger'
-				"
-				formControlName="status"
-			>
-				<nb-option value="active">Active</nb-option>
-				<nb-option value="inactive">Inactive</nb-option>
-			</nb-select>
-
-			<div class="row mt-3">
-				<div class="col-md-6">
-					<label for="start-date" class="label">
-						Start Date
-					</label>
-					<input
-						nbInput
-						id="start-date"
-						fullWidth
-						placeholder="Start Date"
-						[nbDatepicker]="startDatePicker"
-						formControlName="startDate"
-					/>
-					<nb-datepicker
-						#startDatePicker
-						[max]="
-							timeFrameForm.value.endDate
-								? timeFrameForm.value.endDate
-								: null
-						"
-					></nb-datepicker>
-				</div>
-				<div class="col-md-6">
-					<label for="end-date" class="label">
-						End Date
-					</label>
-					<input
-						nbInput
-						id="end-date"
-						fullWidth
-						placeholder="End Date"
-						[nbDatepicker]="endDatePicker"
-						formControlName="endDate"
-					/>
-					<nb-datepicker
-						#endDatePicker
-						[min]="
-							timeFrameForm.value.startDate
-								? timeFrameForm.value.startDate
-								: null
-						"
-					></nb-datepicker>
-				</div>
+		<div class="row">
+			<div class="col-md-4">
+				<h6>Predefined Time Frames</h6>
+				<nb-list>
+					<nb-list-item
+						style="cursor: pointer; font-weight: bold;"
+						*ngFor="let timeFrame of predefinedTimeFrames"
+						(click)="updateTimeFrameValues(timeFrame)"
+					>
+						{{ timeFrame.name }}
+					</nb-list-item>
+				</nb-list>
 			</div>
-		</form>
+			<div class="col-md-8">
+				<form [formGroup]="timeFrameForm">
+					<label for="time-frame-title" class="label"> Name </label>
+					<input
+						type="text"
+						id="time-frame-title"
+						nbInput
+						fullWidth
+						formControlName="name"
+						placeholder="Time frame name eg. 'Q4-2020'"
+					/>
+
+					<label for="time-frame-status" class="label mt-3">
+						Status
+					</label>
+					<nb-select
+						id="time-frame-status"
+						fullWidth
+						filled
+						[status]="
+							timeFrameForm.value.status === 'active'
+								? 'success'
+								: 'danger'
+						"
+						formControlName="status"
+					>
+						<nb-option value="active">Active</nb-option>
+						<nb-option value="inactive">Inactive</nb-option>
+					</nb-select>
+
+					<div class="row mt-3">
+						<div class="col-md-6">
+							<label for="start-date" class="label">
+								Start Date
+							</label>
+							<input
+								nbInput
+								id="start-date"
+								fullWidth
+								placeholder="Start Date"
+								[nbDatepicker]="startDatePicker"
+								formControlName="startDate"
+							/>
+							<nb-datepicker
+								#startDatePicker
+								[max]="
+									timeFrameForm.value.endDate
+										? timeFrameForm.value.endDate
+										: null
+								"
+							></nb-datepicker>
+						</div>
+						<div class="col-md-6">
+							<label for="end-date" class="label">
+								End Date
+							</label>
+							<input
+								nbInput
+								id="end-date"
+								fullWidth
+								placeholder="End Date"
+								[nbDatepicker]="endDatePicker"
+								formControlName="endDate"
+							/>
+							<nb-datepicker
+								#endDatePicker
+								[min]="
+									timeFrameForm.value.startDate
+										? timeFrameForm.value.startDate
+										: null
+								"
+							></nb-datepicker>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
 	</nb-card-body>
 	<nb-card-footer>
 		<button class="mr-3" nbButton (click)="closeDialog(null)">
-			Cancel
+			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
 			[disabled]="!timeFrameForm.valid"
@@ -93,7 +109,7 @@
 			status="success"
 			(click)="saveTimeFrame()"
 		>
-			Save
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

@@ -6,7 +6,8 @@ import {
 	Post,
 	Controller,
 	Body,
-	Delete
+	Delete,
+	Put
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -21,6 +22,7 @@ import { Roles } from '../shared/decorators/roles';
 import { CandidateCriterionsRatingBulkCreateCommand } from './commands/candidate-criterions-rating.bulk.create.command';
 import { ParseJsonPipe } from '../shared';
 import { CandidateCriterionsRatingBulkDeleteCommand } from './commands/candidate-criterions-rating.bulk.delete.command';
+import { CandidateCriterionsRatingBulkUpdateCommand } from './commands';
 
 @ApiTags('candidate_criterion_rating')
 @UseGuards(AuthGuard('jwt'))
@@ -69,6 +71,22 @@ export class CandidateCriterionsRatingController extends CrudController<
 				technologies,
 				qualities
 			)
+		);
+	}
+
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Put('updateBulk')
+	async updateBulk(
+		@Body()
+		data: {
+			criterionsRating: ICandidateCriterionsRating[];
+			technologies: number[];
+			personalQualities: number[];
+		}
+	): Promise<ICandidateCriterionsRating[]> {
+		return this.commandBus.execute(
+			new CandidateCriterionsRatingBulkUpdateCommand(data)
 		);
 	}
 

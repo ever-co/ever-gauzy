@@ -1,9 +1,6 @@
 import { IHelpCenter } from '@gauzy/models';
 import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { TreeComponent, ITreeOptions } from 'angular-tree-component';
-import { FormGroup, FormBuilder } from '@angular/forms';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { isEqual } from './delete-node';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -34,9 +31,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogService: NbDialogService,
-		private readonly fb: FormBuilder,
 		private readonly toastrService: NbToastrService,
-		private sanitizer: DomSanitizer,
 		private helpService: HelpCenterService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
@@ -44,21 +39,9 @@ export class SidebarComponent extends TranslationBaseComponent
 	) {
 		super(translateService);
 	}
-	form: FormGroup;
-	public articleName = 'Chose any article';
-	public articleDesc = '';
-	public articleData: SafeHtml;
-	public tempData: string;
 	public tempNodes: IHelpCenter[] = [];
-	public showArticleButton = false;
-	public showCategoryButton = false;
 	public nodeId = '';
-	public chosenCategory = false;
-	public chosenArticle = false;
-	public isVisibleAdd = false;
-	public isVisibleEdit = false;
 	public isChosenNode = false;
-	public isLoadBase = false;
 	public nodes: IHelpCenter[] = [];
 	settingsContextMenu: NbMenuItem[];
 	options: ITreeOptions = {
@@ -76,11 +59,6 @@ export class SidebarComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.loadMenu();
-		this.form = this.fb.group({
-			name: [''],
-			desc: [''],
-			data: ['']
-		});
 		this.settingsContextMenu = [
 			{
 				title: 'Add Category'
@@ -93,17 +71,65 @@ export class SidebarComponent extends TranslationBaseComponent
 			}
 		];
 		this.nbMenuService.onItemClick().subscribe((elem) => {
-			if (elem.item.title === 'Edit Knowledge Base')
-				this.dialogService.open(EditBaseComponent);
-			if (elem.item.title === 'Add Category')
-				this.dialogService.open(AddCategoryComponent);
+			if (elem.item.title === 'Edit Knowledge Base') this.editBase();
+			if (elem.item.title === 'Add Category') this.addCategory();
 			if (elem.item.title === 'Delete Base')
 				this.dialogService.open(DeleteBaseComponent);
 		});
 	}
 
-	editCategory() {
-		this.dialogService.open(EditCategoryComponent);
+	setClasses(node) {
+		const classes = {
+			blue: node.data.color === 'blue',
+			child: node.data.flag === 'category',
+			parent: node.data.flag === 'base'
+		};
+		return classes;
+	}
+
+	async editBase() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		const dialog = this.dialogService.open(EditBaseComponent, {
+			context: {
+				base: someNode.data
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('EDITED_BASE');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
+	}
+
+	async addCategory() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		const dialog = this.dialogService.open(AddCategoryComponent, {
+			context: {
+				base: someNode.data
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('CREATED_CATEGORY');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
+	}
+
+	async editCategory(node) {
+		this.isChosenNode = true;
+		const dialog = this.dialogService.open(EditCategoryComponent, {
+			context: {
+				category: node
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('EDITED_CATEGORY');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
 	}
 
 	deleteCategory() {
@@ -146,88 +172,23 @@ export class SidebarComponent extends TranslationBaseComponent
 		// this.loadMenu();
 		this.tree.treeModel.update();
 	}
+
 	async addNode() {
-		this.dialogService.open(AddBaseComponent);
-		// const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
-		// if (chosenIcon) {
-		// 	const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		// 	someNode.data.icon = chosenIcon;
-		// 	await this.helpService.update(someNode.data.id, {
-		// 		icon: `${someNode.data.icon}`
-		// 	});
-		// }
-
-		// this.tree.treeModel.update();
-		// this.isVisibleAdd = true;
+		const dialog = this.dialogService.open(AddBaseComponent);
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('CREATED_BASE');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
 	}
-	// showInput(key: number) {
-	// 	if (key === 1) {
-	// 		this.showArticleButton = true;
-	// 	} else {
-	// 		this.showCategoryButton = true;
-	// 	}
-	// }
 
-	// async addName(event: any, key: number) {
-	// 	if (key !== 1) {
-	// 		await this.helpService.create({
-	// 			name: `${event.target.value}`,
-	// 			icon: 'book-open-outline',
-	// 			flag: 'category',
-	// 			privacy: 'eye-outline',
-	// 			language: 'en',
-	// 			color: 'black',
-	// 			index: this.nodes.length,
-	// 			children: []
-	// 		});
-	// 		this.toastrSuccess('CREATED_CATEGORY');
-	// 	} else {
-	// 		await this.helpService.create({
-	// 			name: `${event.target.value}`,
-	// 			icon: 'book-open-outline',
-	// 			flag: 'article',
-	// 			privacy: 'eye-outline',
-	// 			description: '',
-	// 			language: 'en',
-	// 			color: 'black',
-	// 			index: this.nodes.length,
-	// 			data: ''
-	// 		});
-	// 		this.toastrSuccess('CREATED_ARTICLE');
-	// 	}
-	// 	this.loadMenu();
-	// 	this.tree.treeModel.update();
-	// 	this.isVisibleAdd = false;
-	// 	this.showArticleButton = false;
-	// 	this.showCategoryButton = false;
-	// }
 	onNodeClicked(node: any) {
 		this.nodeId = node.id.toString();
 		this.isChosenNode = true;
-		this.articleName = node.name;
-		if (node.flag === 'article') {
-			this.articleDesc = node.description;
-			this.articleData = this.sanitizer.bypassSecurityTrustHtml(
-				`${node.data}`
-			);
-			this.chosenCategory = false;
-			this.chosenArticle = true;
-			this.loadFormData(node);
-		} else {
-			this.chosenCategory = true;
-			this.chosenArticle = false;
-		}
-	}
-	onCloseAdding() {
-		this.isVisibleAdd = false;
-	}
-	onCloseInput() {
-		this.showArticleButton = false;
-		this.showCategoryButton = false;
 	}
 
-	async addIcon(node) {
-		this.onNodeClicked(node);
+	async addIcon() {
 		const dialog = this.dialogService.open(AddIconComponent);
 		const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
 		if (chosenIcon) {
@@ -240,8 +201,9 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.tree.treeModel.update();
 	}
 
-	async changePrivacy(node: any) {
-		this.onNodeClicked(node);
+	async changePrivacy(node) {
+		this.nodeId = node.id.toString();
+		this.isChosenNode = true;
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		someNode.data.privacy =
 			someNode.data.privacy === 'eye-outline'
@@ -253,111 +215,30 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.tree.treeModel.update();
 	}
 
-	async editNameCategory(event: any) {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		someNode.data.name = event.target.value;
-		this.isVisibleEdit = false;
-		await this.helpService.update(someNode.data.id, {
-			name: `${someNode.data.name}`
-		});
-		this.loadMenu();
-		this.toastrSuccess('EDITED_CATEGORY');
-	}
-	onCloseEditing() {
-		this.isVisibleEdit = false;
-	}
-
-	onEditArticle() {
-		this.isVisibleEdit = true;
-	}
-
-	async onDeleteArticle() {
-		isEqual(this.nodes, this.nodeId);
-		await this.helpService.delete(`${this.nodeId}`);
-		this.tree.treeModel.update();
-		this.isChosenNode = false;
-		this.articleName = 'Chose any article';
-		this.toastrSuccess('DELETED');
-	}
-
-	prevArticle() {
-		for (const node of this.tempNodes)
-			if (node.id === this.nodeId.toString()) {
-				const childNodes = this.tempNodes.filter(
-					(item) =>
-						((item.parent &&
-							node.parent &&
-							item.parent.id === node.parent.id) ||
-							(item.parent === null && node.parent === null)) &&
-						item.flag === 'article'
-				);
-				childNodes.forEach((child) => {
-					if (child.index === node.index - 1) {
-						this.nodeId = child.id;
-						this.articleName = child.name;
-						this.articleDesc = child.description;
-						this.articleData = this.sanitizer.bypassSecurityTrustHtml(
-							`${child.data}`
-						);
-						this.loadFormData(child);
-					}
-				});
-			}
-	}
-
-	nextArticle() {
-		for (const node of this.tempNodes)
-			if (node.id === this.nodeId.toString()) {
-				const childNodes = this.tempNodes.filter(
-					(item) =>
-						((item.parent &&
-							node.parent &&
-							item.parent.id === node.parent.id) ||
-							(item.parent === null && node.parent === null)) &&
-						item.flag === 'article'
-				);
-				childNodes.forEach((child) => {
-					if (child.index === node.index + 1) {
-						this.nodeId = child.id;
-						this.articleName = child.name;
-						this.articleDesc = child.description;
-						this.articleData = this.sanitizer.bypassSecurityTrustHtml(
-							`${child.data}`
-						);
-						this.loadFormData(child);
-					}
-				});
-			}
-	}
-
-	loadFormData(data) {
-		this.form.patchValue({
-			name: data.name,
-			desc: data.description,
-			data: data.data.toString()
-		});
-	}
-
-	editData(value: string) {
-		this.tempData = value;
-	}
-
-	async submit() {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		someNode.data.description = this.form.controls.desc.value;
-		someNode.data.name = this.form.controls.name.value;
-		this.articleDesc = someNode.data.description;
-		this.articleName = someNode.data.name;
-		this.articleData = this.tempData;
-		await this.helpService.update(someNode.data.id, {
-			name: `${someNode.data.name}`,
-			description: `${someNode.data.description}`,
-			data: this.tempData
-		});
-		this.toastrSuccess('EDITED_ARTICLE');
-		this.loadMenu();
-		this.isVisibleEdit = false;
-	}
+	// nextArticle() {
+	// 	for (const node of this.tempNodes)
+	// 		if (node.id === this.nodeId.toString()) {
+	// 			const childNodes = this.tempNodes.filter(
+	// 				(item) =>
+	// 					((item.parent &&
+	// 						node.parent &&
+	// 						item.parent.id === node.parent.id) ||
+	// 						(item.parent === null && node.parent === null)) &&
+	// 					item.flag === 'article'
+	// 			);
+	// 			childNodes.forEach((child) => {
+	// 				if (child.index === node.index + 1) {
+	// 					this.nodeId = child.id;
+	// 					this.articleName = child.name;
+	// 					this.articleDesc = child.description;
+	// 					this.articleData = this.sanitizer.bypassSecurityTrustHtml(
+	// 						`${child.data}`
+	// 					);
+	// 					this.loadFormData(child);
+	// 				}
+	// 			});
+	// 		}
+	// }
 
 	async loadMenu() {
 		const result = await this.helpService.getAll(['parent', 'children']);

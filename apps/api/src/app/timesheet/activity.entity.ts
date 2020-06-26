@@ -2,7 +2,13 @@ import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Activity as IActivity, ActivityType } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, IsNumber } from 'class-validator';
+import {
+	IsString,
+	IsEnum,
+	IsOptional,
+	IsNumber,
+	IsDateString
+} from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
 
 @Entity('activity')
@@ -39,4 +45,9 @@ export class Activity extends Base implements IActivity {
 	@IsOptional()
 	@Column({ nullable: true })
 	type?: string;
+
+	@ApiProperty({ type: 'timestamptz' })
+	@IsDateString()
+	@Column({ nullable: true, default: null })
+	deletedAt?: Date;
 }

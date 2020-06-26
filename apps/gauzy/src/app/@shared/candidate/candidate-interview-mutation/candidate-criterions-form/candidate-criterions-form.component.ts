@@ -2,7 +2,7 @@ import {
 	ICandidateTechnologies,
 	ICandidatePersonalQualities
 } from '@gauzy/models';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { FormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -14,6 +14,8 @@ import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/
 	styleUrls: ['candidate-criterions-form.component.scss']
 })
 export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
+	@Input() editSelectedTechnologies: ICandidateTechnologies[] = [];
+	@Input() editSelectedQualities: ICandidatePersonalQualities[] = [];
 	form: any;
 	technologiesList: ICandidateTechnologies[];
 	personalQualitiesList: ICandidatePersonalQualities[];
@@ -56,6 +58,18 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 				this.selectedQualities.findIndex((item) => item === value),
 				1
 			);
+		}
+	}
+	isChecked(
+		name: string,
+		data: ICandidateTechnologies[] | ICandidatePersonalQualities[]
+	) {
+		if (data) {
+			for (const item of data) {
+				if (item.name === name) {
+					return true;
+				}
+			}
 		}
 	}
 	private async loadCriterions() {

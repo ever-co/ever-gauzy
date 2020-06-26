@@ -12,13 +12,19 @@ export class CandidatePersonalQualitiesBulkDeleteHandler
 	public async execute(
 		command: CandidatePersonalQualitiesBulkDeleteCommand
 	): Promise<any> {
-		const { id } = command;
-		const personalQualities = await this.candidatePersonalQualitiesService.getPersonalQualitiesByInterviewId(
-			id
-		);
-		await this.candidatePersonalQualitiesService.deleteBulk(
-			personalQualities.map((item) => item.id)
-		);
+		const { id, personalQualities } = command;
+		if (personalQualities) {
+			await this.candidatePersonalQualitiesService.deleteBulk(
+				personalQualities.map((item) => item.id)
+			);
+		} else {
+			const qual = await this.candidatePersonalQualitiesService.getPersonalQualitiesByInterviewId(
+				id['id']
+			);
+			await this.candidatePersonalQualitiesService.deleteBulk(
+				qual.map((item) => item.id)
+			);
+		}
 
 		return;
 	}

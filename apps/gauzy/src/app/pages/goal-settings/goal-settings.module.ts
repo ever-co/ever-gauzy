@@ -10,7 +10,8 @@ import {
 	NbSelectModule,
 	NbDatepickerModule,
 	NbInputModule,
-	NbDialogModule
+	NbDialogModule,
+	NbListModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -38,6 +39,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbInputModule,
 		NbDatepickerModule,
 		GoalSettingsRoutingModule,
+		NbListModule,
 		SharedModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({

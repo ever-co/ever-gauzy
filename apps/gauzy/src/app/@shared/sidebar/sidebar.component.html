@@ -11,89 +11,7 @@
 					Knowledge Base
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 				</button>
-				<!-- <nb-icon
-					class="add-icon"
-					icon="plus-outline"
-					(click)="addNode()"
-				>
-				</nb-icon> -->
-				<!-- <nb-icon
-					*ngIf="isChosenNode"
-					class="add-icon"
-					icon="edit-outline"
-					(click)="onEditArticle()"
-				>
-				</nb-icon>
-				<nb-icon
-					*ngIf="isChosenNode"
-					class="add-icon"
-					icon="trash-2-outline"
-					(click)="onDeleteArticle()"
-				>
-				</nb-icon> -->
 			</div>
-			<!-- <div *ngIf="isVisibleAdd" class="add-menu">
-				<button
-					class="add-buttons"
-					status="primary"
-					(click)="showInput(1)"
-					nbButton
-				>
-					Category
-				</button>
-				<button
-					class="add-buttons"
-					status="primary"
-					(click)="showInput(2)"
-					nbButton
-				>
-					Article
-				</button>
-				<button
-					class="close-add-buttons"
-					status="danger"
-					(click)="onCloseAdding()"
-					nbButton
-				>
-					<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-				</button>
-			</div> -->
-			<!-- <div *ngIf="showArticleButton" class="add-base-field">
-				<input
-					type="text"
-					size="24"
-					ngModel
-					maxlength="18"
-					(keyup.enter)="addName($event, 2)"
-					nbInput
-				/>
-				<button
-					class="input-button"
-					status="danger"
-					(click)="onCloseInput()"
-					nbButton
-				>
-					<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-				</button>
-			</div> -->
-			<!-- <div *ngIf="showCategoryButton" class="add-base-field">
-				<input
-					type="text"
-					size="24"
-					ngModel
-					maxlength="18"
-					(keyup.enter)="addName($event, 1)"
-					nbInput
-				/>
-				<button
-					class="input-button"
-					status="danger"
-					(click)="onCloseInput()"
-					nbButton
-				>
-					<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-				</button>
-			</div> -->
 			<div class="edit-node-field">
 				<tree-root
 					#tree
@@ -110,7 +28,8 @@
 					>
 						<div
 							class="base"
-							[ngClass]="{ blue: node.data.color === 'blue' }"
+							[ngClass]="setClasses(node)"
+							(click)="onNodeClicked(node.data)"
 						>
 							<div>
 								<nb-icon
@@ -118,15 +37,11 @@
 									class="icons"
 									(click)="addIcon(node)"
 								></nb-icon>
-								<span
-									class="text"
-									(click)="onNodeClicked(node.data)"
-									>{{ node.data.name }}</span
-								>
+								<span class="text">{{ node.data.name }}</span>
 								<nb-icon
 									class="icons"
 									icon="{{ node.data.privacy }}"
-									(click)="changePrivacy(node)"
+									(click)="changePrivacy(node.data)"
 								></nb-icon>
 							</div>
 							<div>
@@ -140,7 +55,7 @@
 									*ngIf="node.data.flag === 'category'"
 									class="edit-icons"
 									icon="edit-outline"
-									(click)="editCategory()"
+									(click)="editCategory(node.data)"
 								></nb-icon>
 								<nb-icon
 									*ngIf="node.data.flag === 'category'"
@@ -155,123 +70,4 @@
 			</div>
 		</nb-card-body>
 	</nb-card>
-	<!-- <nb-card>
-		<nb-card-body>
-			<div *ngIf="isChosenNode" class="edit-field">
-				<h4>{{ articleName }}</h4>
-				<div *ngIf="isVisibleEdit" class="edit-field">
-					<nb-select
-						class="main-buttons"
-						placeholder="Select Language"
-						[(selected)]="selectedLang"
-					>
-						<nb-option
-							*ngFor="let lang of languages"
-							[value]="lang"
-							>{{ lang }}</nb-option
-						>
-					</nb-select>
-					<nb-select
-						placeholder="Select Color"
-						[(selected)]="selectedColor"
-					>
-						<nb-option
-							*ngFor="let color of colors"
-							[value]="color"
-							>{{ color }}</nb-option
-						>
-					</nb-select>
-				</div>
-			</div>
-			<div
-				*ngIf="isChosenNode && !isVisibleEdit && chosenArticle"
-				class="data"
-			>
-				<h6>{{ articleDesc }}</h6>
-				<div [innerHtml]="articleData"></div>
-				<div class="footer-field">
-				<button class="footer-buttons" nbButton (click)="prevArticle()">
-					<nb-icon
-						class="mr-1"
-						icon="arrow-ios-back-outline"
-					></nb-icon
-					>{{ 'BUTTONS.PREVIOUS' | translate }}
-				</button>
-				<button class="footer-buttons" nbButton (click)="nextArticle()">
-					{{ 'BUTTONS.NEXT' | translate }}
-					<nb-icon
-						class="mr-1"
-						icon="arrow-ios-forward-outline"
-					></nb-icon>
-				</button>
-			</div>
-			</div>
-			<div *ngIf="isVisibleEdit && chosenCategory" class="content-card">
-				<p class="label">Press enter to save category name</p>
-				<input
-					type="text"
-					size="24"
-					ngModel
-					maxlength="18"
-					(keyup.enter)="editNameCategory($event)"
-					nbInput
-				/>
-				<button
-					class="input-button"
-					status="danger"
-					(click)="onCloseEditing()"
-					nbButton
-				>
-					<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-				</button>
-			</div>
-			<div *ngIf="isVisibleEdit && chosenArticle">
-				<form [formGroup]="form" (ngSubmit)="submit()">
-					<div class="edit-field">
-						<div>
-							<p class="label">Name of the article:</p>
-							<input
-								formControlName="name"
-								type="text"
-								size="24"
-								maxlength="18"
-								nbInput
-							/>
-						</div>
-						<div>
-							<p class="label">Description:</p>
-							<input
-								formControlName="desc"
-								type="text"
-								size="30"
-								maxlength="26"
-								nbInput
-							/>
-						</div>
-					</div>
-					<div class="edit-node-field">
-						<p class="label">Article text:</p>
-						<div class="ck-editor">
-							<ckeditor
-								[formControl]="form.controls['data']"
-								(change)="editData($event)"
-								[config]="{
-									width: '100%',
-									height: '200'
-								}"
-							></ckeditor>
-						</div>
-					</div>
-					<button
-						*ngIf="isChosenNode"
-						class="main-buttons"
-						status="success"
-						nbButton
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-				</form>
-			</div>
-		</nb-card-body>
-	</nb-card> -->
 </div>

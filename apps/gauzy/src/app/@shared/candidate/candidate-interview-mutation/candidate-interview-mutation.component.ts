@@ -29,6 +29,7 @@ import { CandidateInterviewersService } from '../../../@core/services/candidate-
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -42,21 +43,15 @@ export class CandidateInterviewMutationComponent
 	@Input() interviewId = null;
 	@Input() isCalendar: boolean;
 	@Input() selectedRangeCalendar: IDateRange;
-
 	@Input() header: string;
-
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
-
 	@ViewChild('candidateCriterionsForm')
 	candidateCriterionsForm: CandidateCriterionsFormComponent;
-
 	@ViewChild('candidateInterviewForm')
 	candidateInterviewForm: CandidateInterviewFormComponent;
-
 	@ViewChild('candidateNotificationForm')
 	candidateNotificationForm: CandidateInterviewFormComponent;
-
 	form: FormGroup;
 	candidateForm: FormGroup;
 	interviewerForm: FormGroup;
@@ -86,7 +81,8 @@ export class CandidateInterviewMutationComponent
 		private errorHandler: ErrorHandlingService,
 		private candidateInterviewersService: CandidateInterviewersService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
+		private router: Router
 	) {}
 
 	async ngOnInit() {
@@ -125,7 +121,6 @@ export class CandidateInterviewMutationComponent
 			endTime: interviewForm.endTime,
 			note: this.form.get('note').value
 		};
-
 		//	if editing
 		if (interviewForm.interviewers === null) {
 			interviewForm.interviewers = this.candidateInterviewForm.employeeIds;
@@ -163,7 +158,13 @@ export class CandidateInterviewMutationComponent
 			candidateId: this.selectedCandidate.id
 		});
 		this.addInterviewers(interview.id, this.selectedInterviewers);
-		this.addCriterions(interview.id);
+		this.candidateCriterionsForm.loadFormData();
+		const criterionsForm = this.candidateCriterionsForm.form.value;
+		this.addCriterions(
+			interview.id,
+			criterionsForm.selectedTechnologies,
+			criterionsForm.selectedQualities
+		);
 		try {
 			const createdInterview = await this.candidateInterviewService.update(
 				interview.id,
@@ -191,17 +192,19 @@ export class CandidateInterviewMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	}
-	async addCriterions(interviewId: string) {
-		this.candidateCriterionsForm.loadFormData();
-		const criterionsForm = this.candidateCriterionsForm.form.value;
-		this.technologies = await this.candidateTechnologiesService.createBulk(
-			interviewId,
-			criterionsForm.selectedTechnologies
-		);
-		this.personalQualities = await this.candidatePersonalQualitiesService.createBulk(
-			interviewId,
-			criterionsForm.selectedQualities
-		);
+	async addCriterions(interviewId: string, tech?: string[], qual?: string[]) {
+		try {
+			this.technologies = await this.candidateTechnologiesService.createBulk(
+				interviewId,
+				tech
+			);
+			this.personalQualities = await this.candidatePersonalQualitiesService.createBulk(
+				interviewId,
+				qual
+			);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 	}
 	async editInterview() {
 		let deletedIds = [];
@@ -219,10 +222,18 @@ export class CandidateInterviewMutationComponent
 			);
 		}
 		try {
+			this.updateCriterions(
+				this.editData.personalQualities,
+				this.editData.technologies
+			);
 			updatedInterview = await this.candidateInterviewService.update(
 				this.interviewId,
 				{
-					...this.interview
+					title: this.interview.title,
+					location: this.interview.location,
+					startTime: this.interview.startTime,
+					endTime: this.interview.endTime,
+					note: this.interview.note
 				}
 			);
 		} catch (error) {
@@ -235,7 +246,83 @@ export class CandidateInterviewMutationComponent
 		this.interviewId = null;
 		return updatedInterview;
 	}
-
+	async updateCriterions(
+		qual: ICandidatePersonalQualities[],
+		tech: ICandidateTechnologies[]
+	) {
+		this.candidateCriterionsForm.loadFormData();
+		const criterionsForm = this.candidateCriterionsForm.form.value;
+		const techCriterions = this.setCriterions(
+			tech,
+			criterionsForm.selectedTechnologies
+		);
+		const qualCriterions = this.setCriterions(
+			qual,
+			criterionsForm.selectedQualities
+		);
+		//CREATE NEW
+		if (techCriterions.createInput) {
+			try {
+				await this.candidateTechnologiesService.createBulk(
+					this.editData.id,
+					techCriterions.createInput
+				);
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
+		}
+		if (qualCriterions.createInput) {
+			try {
+				await this.candidatePersonalQualitiesService.createBulk(
+					this.editData.id,
+					qualCriterions.createInput
+				);
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
+		}
+		//DELETE OLD
+		if (techCriterions.deleteInput.length > 0) {
+			try {
+				await this.candidateTechnologiesService.deleteBulkByInterviewId(
+					this.editData.id,
+					techCriterions.deleteInput
+				);
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
+		}
+		if (qualCriterions.deleteInput.length > 0) {
+			try {
+				await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(
+					this.editData.id,
+					qualCriterions.deleteInput
+				);
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
+		}
+	}
+	setCriterions(
+		data: ICandidateTechnologies[] | ICandidatePersonalQualities[],
+		selectedItems: string[]
+	) {
+		const createInput = [];
+		const deleteInput = [];
+		const dataName = [];
+		if (selectedItems) {
+			data.forEach((item) => dataName.push(item.name));
+			selectedItems.forEach((item) =>
+				dataName.includes(item) ? item : createInput.push(item)
+			);
+			data.forEach((item) =>
+				!selectedItems.includes(item.name)
+					? item
+					: deleteInput.push(item)
+			);
+			return { createInput: createInput, deleteInput: deleteInput };
+		}
+	}
 	async onCandidateSelected(id: string) {
 		const candidate = await this.candidatesService.getCandidateById(id, [
 			'user'
@@ -251,6 +338,10 @@ export class CandidateInterviewMutationComponent
 		this.candidateInterviewForm.form.patchValue(this.interview);
 		this.candidateInterviewForm.form.patchValue({ valid: true });
 		this.employees = [];
+	}
+	route() {
+		this.dialogRef.close();
+		this.router.navigate(['/pages/employees/candidates/criterions']);
 	}
 
 	ngOnDestroy() {

@@ -52,6 +52,7 @@
 					<button
 						nbButton
 						size="small"
+						[disabled]="!isUpdatable"
 						status="primary"
 						(click)="keyResultUpdate()"
 					>
@@ -95,7 +96,7 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<button nbButton status="success" (click)="closeDialog()">
-			Save
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 		<button
 			class="float-right"
@@ -103,7 +104,7 @@
 			nbButton
 			(click)="deleteKeyResult()"
 		>
-			Delete
+			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
