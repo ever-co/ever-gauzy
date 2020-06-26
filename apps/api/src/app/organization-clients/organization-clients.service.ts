@@ -25,7 +25,4 @@ export class OrganizationClientsService extends CrudService<
 			.getMany();
 	}
 
-	// async users(){
-	// 	await this.organizationClientsRepository.find({ relations: ["contact"] });
-	// }
 }

@@ -14,11 +14,6 @@ export interface OrganizationClients extends Contacts, IBaseEntityWithMembers {
 	emailAddresses?: string[];
 	primaryPhone: string;
 	phones?: string[];
-	// country?: string;
-	// street?: string;
-	// city?: string;
-	// zipCode?: number;
-	// state?: string;
 	projects?: OrganizationProjects[];
 	notes?: string;
 	members?: Employee[];
@@ -29,24 +24,15 @@ export interface OrganizationClients extends Contacts, IBaseEntityWithMembers {
 	contact: Contacts;
 }
 
-export interface OrganizationClientsFindInput
-	extends Contacts,
-		IBaseEntityModel {
+export interface OrganizationClientsFindInput extends Contacts, IBaseEntityModel {
 	name?: string;
 	organizationId?: string;
 	primaryEmail?: string;
 	primaryPhone?: string;
-	// country?: string;
-	// street?: string;
-	// city?: string;
-	// zipCode?: number;
-	// state?: string;
 	notes?: string;
 }
 
-export interface OrganizationClientsCreateInput
-	extends ContactsCreateInput,
-		IBaseEntityModel {
+export interface OrganizationClientsCreateInput extends Contacts, IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	contactId?: string;
@@ -54,12 +40,6 @@ export interface OrganizationClientsCreateInput
 	emailAddresses?: string[];
 	primaryPhone?: string;
 	phones?: string[];
-	// country?: string;
-	// street?: string;
-	// city?: string;
-	// zipCode?: number;
-	// state?: string;
-	projects?: OrganizationProjects[];
 	notes?: string;
 }
 

@@ -41,7 +41,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	tags: Tag[];
 
 	@ApiProperty({ type: Contacts })
-	@ManyToOne(() => Contacts, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Contacts, { nullable: true, cascade: true })
 	@JoinColumn()
 	contact: Contacts;
 

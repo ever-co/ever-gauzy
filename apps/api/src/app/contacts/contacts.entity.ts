@@ -1,45 +1,30 @@
 import {
 	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToMany,
-	OneToMany,
-	ManyToOne,
-	JoinTable,
-	OneToOne,
-	RelationId
+	Entity
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsNumber } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Contacts as IContacts } from '../../../../../libs/models/src/lib/contacts.model';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 
 @Entity('contact')
 export class Contacts extends Base implements IContacts {
 	@ApiProperty({ type: String })
 	@IsString()
-	// @IsNotEmpty()
-	// @Index()
 	@IsOptional()
-	@Column()
+	@Column({ nullable: true })
 	name?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
-	// @IsNotEmpty()
-	// @Index()
 	@IsOptional()
-	@Column()
+	@Column({ nullable: true })
 	firstName?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
-	// @IsNotEmpty()
-	// @Index()
 	@IsOptional()
-	@Column()
+	@Column({ nullable: true })
 	lastName?: string;
 
 	@ApiProperty({ type: String })
@@ -72,12 +57,4 @@ export class Contacts extends Base implements IContacts {
 	@Column({ nullable: true })
 	state?: string;
 
-	// @ApiProperty({ type: OrganizationClients })
-	// @ManyToOne(() => OrganizationClients, { nullable: true, onDelete: 'CASCADE' })
-	// @JoinColumn()
-	// organizationClient: OrganizationClients;
-
-	// @ApiProperty({ type: String, readOnly: true })
-	// @RelationId((contact: Contacts) => contact.organizationClient)
-	// readonly organzationClientId?: string;
 }

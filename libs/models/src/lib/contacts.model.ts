@@ -9,8 +9,6 @@ export interface Contacts {
 	city?: string;
 	zipCode?: number;
 	state?: string;
-	organizationId?: string;
-	// organization?: Organization;
 }
 
 export interface ContactsFindInput extends IBaseEntityModel {
@@ -22,8 +20,6 @@ export interface ContactsFindInput extends IBaseEntityModel {
 	city?: string;
 	zipCode?: number;
 	state?: string;
-	organizationId?: string;
-	organizationClientId?: string;
 }
 
 export interface ContactsCreateInput extends IBaseEntityModel {
@@ -35,6 +31,4 @@ export interface ContactsCreateInput extends IBaseEntityModel {
 	city?: string;
 	zipCode?: number;
 	state?: string;
-	organizationId?: string;
-	organizationClientId?: string;
 }
