@@ -41,15 +41,10 @@
 								>
 									<div class="criterions-rating-radio-group">
 										<ga-star-rating-output
-											[rate]="null"
+											[rate]="averageRating"
 											class="stars-output"
 										></ga-star-rating-output>
-										<span
-											>Average Rating:
-											<span *ngIf="averageRating">
-												{{ averageRating }}
-											</span></span
-										>
+
 										<nb-radio-group
 											class="radio-group"
 											[(ngModel)]="status"

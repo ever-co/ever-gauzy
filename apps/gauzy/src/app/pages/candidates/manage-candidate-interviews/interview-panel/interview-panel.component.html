@@ -6,30 +6,75 @@
 		<nb-accordion-item
 			*ngFor="let interview of interviewList; let i = index"
 		>
-			<nb-accordion-item-header
-				><strong>
-					{{ interview?.title }}
-				</strong></nb-accordion-item-header
-			>
-			<nb-accordion-item-body>
-				<div>
-					{{
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
-							| translate
-					}}
+			<nb-accordion-item-header class="header">
+				<div class="header-small-block">
+					<img
+						class="header-small-block-image"
+						[src]="interview?.candidate?.user?.imageUrl"
+						alt="Candidate Avatar"
+						(click)="goToCandidate(interview.candidateId)"
+					/>
+				</div>
+				<div class="header-large-block">
+					<strong>
+						{{ interview?.candidate?.user?.name }}
+					</strong>
+				</div>
+				<div class="header-large-block">
+					<strong>
+						{{ interview?.title }}
+					</strong>
+				</div>
+				<div class="header-small-block">
 					<strong
-						>{{ interview?.startTime | date: 'fullDate' }} </strong
-					>{{
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
-							| translate
-					}}
-					<strong>{{
-						interview?.startTime | date: 'shortTime'
-					}}</strong
-					>-
-					<strong>{{
-						interview?.endTime | date: 'shortTime'
-					}}</strong>
+						>{{ interview?.startTime | date: 'shortDate' }}
+					</strong>
+				</div>
+				<div class="header-large-block pl-5">
+					<strong
+						>{{ interview?.startTime | date: 'shortTime' }}-{{
+							interview?.endTime | date: 'shortTime'
+						}}
+					</strong>
+				</div>
+
+				<div class="header-large-block">
+					<span
+						*ngFor="let employee of interview.employees"
+						nbTooltip=" {{ employee?.user?.firstName }}
+				{{ employee?.user?.lastName }}"
+						nbTooltipPlacement="top"
+					>
+						<img
+							class="header-large-block-image-employee"
+							[src]="employee?.user?.imageUrl"
+							alt="employee Avatar"
+						/>
+					</span>
+				</div>
+			</nb-accordion-item-header>
+			<nb-accordion-item-body class="body">
+				<div class="body-block">
+					<ga-star-rating-output
+						nbTooltip=" Average interview rating"
+						nbTooltipPlacement="right"
+						[rate]="interview?.rating ? interview?.rating : null"
+						class="ml-2"
+					>
+					</ga-star-rating-output>
+					<span class="body-block-update">
+						updated: {{ interview?.updatedAt | date: 'short' }}
+					</span>
+				</div>
+				<div class="body-block">
+					<div *ngIf="interview?.location" class="body-block-content">
+						<nb-icon icon="navigation-outline"></nb-icon>
+						<span class="ml-2">{{ interview?.location }}</span>
+					</div>
+					<div class="body-block-content" *ngIf="interview?.note">
+						<nb-icon icon="info-outline"></nb-icon>
+						<span class="ml-2">{{ interview?.note }}</span>
+					</div>
 				</div>
 			</nb-accordion-item-body>
 		</nb-accordion-item>

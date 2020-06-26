@@ -18,15 +18,10 @@
 			>
 			</ga-candidate-select>
 			<div class="label-wrap">
-				<!-- <ga-star-rating-output
+				<ga-star-rating-output
 					[rate]="averageRating"
-				></ga-star-rating-output> -->
-				<span
-					>Average Rating:
-					<span *ngIf="averageRating">
-						{{ averageRating }}
-					</span></span
-				>
+				></ga-star-rating-output>
+
 				<nb-radio-group
 					[(ngModel)]="status"
 					[ngModelOptions]="{ standalone: true }"
