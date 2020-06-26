@@ -165,5 +165,10 @@ export enum ClientFocusEnum {
 	LARGE_BUSINESSES = 'Large Businesses'
 }
 
+export enum ProjectsTypesEnum {
+	CLIENT = 'CLIENT',
+	INTERNAL = 'INTERNAL'
+}
+
 export const DEFAULT_PROFIT_BASED_BONUS = 75;
 export const DEFAULT_REVENUE_BASED_BONUS = 10;
