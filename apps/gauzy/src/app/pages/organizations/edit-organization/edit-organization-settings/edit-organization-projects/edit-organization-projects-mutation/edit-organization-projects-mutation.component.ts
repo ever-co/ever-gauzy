@@ -16,7 +16,6 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../../../../@core/services/error-handling.service';
-import { disableCursor } from '@fullcalendar/core';
 
 @Component({
 	selector: 'ga-edit-organization-projects-mutation',
