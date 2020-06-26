@@ -15,6 +15,7 @@
 							'FORM.PLACEHOLDERS.COUNTRY' | translate
 						}}"
 						fullWidth="true"
+						required
 					>
 						<nb-option
 							*ngFor="let c of countries"
@@ -37,6 +38,7 @@
 						nbInput
 						formControlName="city"
 						placeholder="{{ 'FORM.PLACEHOLDERS.CITY' | translate }}"
+						required
 					/>
 				</div>
 			</div>
@@ -53,6 +55,7 @@
 						type="text-area"
 						nbInput
 						formControlName="address"
+						required
 						placeholder="{{
 							'FORM.PLACEHOLDERS.ADDRESS' | translate
 						}}"
@@ -92,6 +95,7 @@
 						placeholder="{{
 							'FORM.PLACEHOLDERS.POSTCODE' | translate
 						}}"
+						required
 					/>
 				</div>
 			</div>
