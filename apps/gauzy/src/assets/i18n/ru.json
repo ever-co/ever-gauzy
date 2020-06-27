@@ -530,7 +530,9 @@
 			"SETTINGS_UPDATED": "Обновлены настройки интеграции",
 			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей",
 			"TOOLTIP_ACTIVITY_INFO": "Диапазон дат: 7 дней до даты: 6 месяцев",
-			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
+			"DATE_RANGE_PLACEHOLDER": "Выберите дату между",
+			"CLIENT_ID": "Идентификатор клиента Hubstaff",
+			"CLIENT_SECRET": "Секрет клиента Hubstaff"
 		},
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "Действия",

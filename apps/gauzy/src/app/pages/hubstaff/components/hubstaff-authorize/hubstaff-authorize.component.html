@@ -9,7 +9,9 @@
 			*ngIf="!hubStaffAppCode; else clientFormVar"
 		>
 			<div class="form-group">
-				<label for="client_id" class="label">Hubstaff Client ID</label>
+				<label for="client_id" class="label">{{
+					'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate
+				}}</label>
 				<input
 					fullWidth
 					id="client_id"
@@ -31,9 +33,9 @@
 		<ng-template #clientFormVar>
 			<form [formGroup]="clientSecretForm" (ngSubmit)="addIntegration()">
 				<div class="form-group">
-					<label for="client_secret" class="label"
-						>Hubstaff Client Secret</label
-					>
+					<label for="client_secret" class="label">{{
+						'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_SECRET' | translate
+					}}</label>
 					<input
 						fullWidth
 						id="client_secret"
