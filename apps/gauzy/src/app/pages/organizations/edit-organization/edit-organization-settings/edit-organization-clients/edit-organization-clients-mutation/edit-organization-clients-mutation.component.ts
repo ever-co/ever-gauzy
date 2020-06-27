@@ -94,9 +94,9 @@ export class EditOrganizationClientMutationComponent
 				this.client ? this.client.primaryPhone : '',
 				Validators.required
 			],
-			country: [this.client ? this.client.country : ''],
-			city: [this.client ? this.client.city : ''],
-			street: [this.client ? this.client.street : ''],
+			country: [this.client ? this.client.contact.country : ''],
+			city: [this.client ? this.client.contact.city : ''],
+			street: [this.client ? this.client.contact.street : ''],
 			selectProjects: [
 				this.client ? (this.client.projects || []).map((m) => m.id) : []
 			]

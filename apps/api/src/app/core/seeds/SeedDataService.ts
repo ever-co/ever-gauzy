@@ -142,6 +142,7 @@ import {
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { Equipment } from '../../equipment/equipment.entity';
+import { Contact } from '../../contact/contact.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -202,7 +203,8 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
-	ProductOption
+	ProductOption,
+	Contact
 ];
 
 @Injectable()

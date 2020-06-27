@@ -92,7 +92,8 @@ import { Equipment } from '../equipment/equipment.entity';
 import { EquipmentService } from '../equipment/equipment.service';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
 import { EstimateEmail } from '../estimate-email/estimate-email.entity';
-
+import { Contact } from '../contact/contact.entity';
+import { ContactService } from '../contact/contact.service';
 @Module({
 	imports: [
 		CqrsModule,
@@ -140,7 +141,8 @@ import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 			AppointmentEmployees,
 			ApprovalPolicy,
 			Candidate,
-			EstimateEmail
+			EstimateEmail,
+			Contact
 		])
 	],
 	controllers: [ExportAllController],
@@ -188,7 +190,8 @@ import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
 		CandidateService,
-		EstimateEmailService
+		EstimateEmailService,
+		ContactService
 	],
 	exports: [
 		ExportAllService,
@@ -234,7 +237,8 @@ import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
 		CandidateService,
-		EstimateEmailService
+		EstimateEmailService,
+		ContactService
 	]
 })
 export class ExportAllModule {}
