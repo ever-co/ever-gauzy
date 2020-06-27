@@ -867,6 +867,12 @@
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
 		},
+		"MANAGE_INTERVIEWS": {
+			"CALENDAR": "Calendar",
+			"INTERVIEWS": "Interviews",
+			"MANAGE_INTERVIEWS": "Manage Interviews",
+			"CRITERIONS": "Criterions"
+		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
