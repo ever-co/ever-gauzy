@@ -201,6 +201,7 @@
 			"NOTE": "Примечание",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"DESCRIPTION": "Описание",
+			"DESCRIPTION_OPTIONAL": "Описание (необязательно)",
 			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников",
 			"ADD_REMOVE_MANAGERS": "Добавление и удаление менеджеров",
 			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников"
@@ -510,7 +511,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Russian",
+		"ENGLISH": "English",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
@@ -673,17 +674,91 @@
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Все цели для ",
-		"GOALS_EMPTY": "Вы еще не создали ни одной цели. Нажмите \"Добавить\", чтобы создать одну",
-		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа",
-		"ADD_NEW_OBJECTIVE": "Добавить новую цель"
+		"GOAL": "Цель",
+		"GOALS_EMPTY": "Вы еще не создали никаких целей. Нажмите Add New, чтобы создать",
+		"ADD_NEW_KEY_RESULT": "Добавить новый ключевой результат",
+		"ADD_NEW_OBJECTIVE": "Добавить новую цель",
+		"SESSION": "сессия",
+		"NO_DESCRIPTION": "Без описания",
+		"PROGRESS": "Прогресс",
+		"UPDATES": "Обновления",
+		"UPDATE": "Обновить",
+		"COMMENTS": "Комментарии",
+		"KEY_RESULTS": "Ключевые результаты",
+		"SETTINGS": {
+			"ADD_TIME_FRAME_TITLE": "Добавить таймфрейм",
+			"TIME_FRAME_PAGE_TITLE": "Установить сроки",
+			"PREDEFINED_TIME_FRAMES": "Предопределенные временные рамки"
+		},
+		"LEVELS": {
+			"ORGANIZATION": "организация",
+			"TEAM": "команда",
+			"EMPLOYEE": "Наемный рабочий"
+		},
+		"TIME_FRAME_STATUS": {
+			"ACTIVE": "активный",
+			"INACTIVE": "Неактивный"
+		},
+		"FORM": {
+			"LABELS": {
+				"LEVEL": "уровень",
+				"OWNER": "владелец",
+				"LEAD": "Свинец (необязательно)",
+				"DEADLINE": "Крайний срок",
+				"STATUS": "Положение дел"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Объективное имя. например. Улучшить SEO сайта",
+				"DESCRIPTION": "Объективное описание.",
+				"LEVEL": "Уровень цели",
+				"TIME_FRAME_NAME": "Название периода времени, например. 'Q4-2020'"
+			},
+			"ERROR": {
+				"START_DATE_GREATER": "Дата окончания должна быть больше даты начала"
+			}
+		},
+		"BUTTONS": {
+			"ADD_TIME_FRAME": "Добавить таймфрейм"
+		}
 	},
 	"KEY_RESULT_PAGE": {
+		"UPDATE_KEY_RESULT": "Обновить ключ Результат",
 		"UPDATE": {
 			"STATUS": {
-				"ON_TRACK": "на треке",
-				"NEEDS_ATTENTION": "требует внимания",
-				"OFF_TRACK": "от трека",
-				"NONE": "нет"
+				"ON_TRACK": "на трассе",
+				"NEEDS_ATTENTION": "необходимо внимание",
+				"OFF_TRACK": "отстают",
+				"NONE": "никто"
+			}
+		},
+		"TYPE": {
+			"NUMBER": "Число",
+			"TRUE_OR_FALSE": "Правда/Ложь",
+			"CURRENCY": "валюта",
+			"TASK": "задача"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "Нет пользовательских сроков",
+			"HARD_DEADLINE": "Жесткий срок",
+			"HARD_AND_SOFT_DEADLINE": "Жесткий и мягкий срок исполнения"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "Тип ключевого результата",
+				"INITIAL_VALUE": "Начальное значение",
+				"TARGET_VALUE": "Целевое значение",
+				"OWNER": "владелец",
+				"LEAD": "Свинец (необязательно)",
+				"DEADLINE": "Крайний срок",
+				"SOFT_DEADLINE": "Мягкий срок",
+				"HARD_DEADLINE": "Жесткий срок",
+				"UPDATED_VALUE": "Обновленное значение",
+				"MARK_COMPLETE": "Отметить как завершенный",
+				"STATUS": "Положение дел"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Ключевое имя результата. например. Добавить метаданные для улучшения SEO",
+				"DESCRIPTION": "Краткое описание, чтобы дать некоторый контекст о ключевом результате"
 			}
 		}
 	},
@@ -1482,7 +1557,14 @@
 			"EDITED_BASE": "База была отредактирована",
 			"EDITED_CATEGORY": "Категория была отредактирована",
 			"PIPELINE_CREATED": "Конвейер создан",
-			"PIPELINE_UPDATED": "Конвейер обновлен"
+			"PIPELINE_UPDATED": "Конвейер обновлен",
+			"OBJECTIVE_ADDED": "Цель добавлена",
+			"OBJECTIVE_DELETED": "Цель удалена",
+			"OBJECTIVE_UPDATED": "Цель обновлена",
+			"KEY_RESULT_ADDED": "Добавлен ключевой результат",
+			"KEY_RESULT_DELETED": "Ключ Результат удален",
+			"KEY_RESULT_UPDATED": "Ключевые результаты обновлены",
+			"TIME_FRAME_DELETED": "Таймфрейм удален"
 		}
 	},
 	"ACCEPT_INVITE": {

@@ -201,6 +201,7 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
+			"DESCRIPTION_OPTIONAL": "תיאור (אופציונאלי)",
 			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
 			"ADD_REMOVE_MEMBERS": "Add or Remove Members"
@@ -672,18 +673,92 @@
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"GOALS_PAGE": {
-		"HEADER": "All Objectives for ",
-		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
-		"ADD_NEW_KEY_RESULT": "Add new key result",
-		"ADD_NEW_OBJECTIVE": "Add new Objective"
+		"HEADER": "כל היעדים עבור ",
+		"GOAL": "מטרה",
+		"GOALS_EMPTY": "עדיין לא יצרת יעדים. לחץ על הוסף חדש כדי ליצור אחת",
+		"ADD_NEW_KEY_RESULT": "הוסף תוצאת מפתח חדשה",
+		"ADD_NEW_OBJECTIVE": "הוסף יעד חדש",
+		"SESSION": "מוֹשָׁב",
+		"NO_DESCRIPTION": "אין תיאור",
+		"PROGRESS": "התקדמות",
+		"UPDATES": "עדכונים",
+		"UPDATE": "עדכון",
+		"COMMENTS": "הערות",
+		"KEY_RESULTS": "תוצאות מפתח",
+		"SETTINGS": {
+			"ADD_TIME_FRAME_TITLE": "הוסף מסגרת זמן",
+			"TIME_FRAME_PAGE_TITLE": "הגדר מסגרת זמן",
+			"PREDEFINED_TIME_FRAMES": "מסגרות זמן מוגדרות מראש"
+		},
+		"LEVELS": {
+			"ORGANIZATION": "אִרגוּן",
+			"TEAM": "קְבוּצָה",
+			"EMPLOYEE": "עוֹבֵד"
+		},
+		"TIME_FRAME_STATUS": {
+			"ACTIVE": "פָּעִיל",
+			"INACTIVE": "לֹא פָּעִיל"
+		},
+		"FORM": {
+			"LABELS": {
+				"LEVEL": "רָמָה",
+				"OWNER": "בעלים",
+				"LEAD": "עופרת (לא חובה)",
+				"DEADLINE": "מועד אחרון",
+				"STATUS": "סטָטוּס"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "שם אובייקטיבי. לְמָשָׁל. שפר את קידום אתרים באתר",
+				"DESCRIPTION": "תיאור אובייקטיבי.",
+				"LEVEL": "רמת יעד",
+				"TIME_FRAME_NAME": "שם מסגרת זמן למשל. 'Q4-2020'"
+			},
+			"ERROR": {
+				"START_DATE_GREATER": "תאריך הסיום חייב להיות גדול מתאריך ההתחלה"
+			}
+		},
+		"BUTTONS": {
+			"ADD_TIME_FRAME": "הוסף מסגרת זמן"
+		}
 	},
 	"KEY_RESULT_PAGE": {
+		"UPDATE_KEY_RESULT": "עדכן את תוצאת המפתח",
 		"UPDATE": {
 			"STATUS": {
-				"ON_TRACK": "on track",
-				"NEEDS_ATTENTION": "needs attention",
-				"OFF_TRACK": "off track",
-				"NONE": "none"
+				"ON_TRACK": "במעקב",
+				"NEEDS_ATTENTION": "זקוק לתשומת לב",
+				"OFF_TRACK": "מחוץ למסלול",
+				"NONE": "אף אחד"
+			}
+		},
+		"TYPE": {
+			"NUMBER": "מספר",
+			"TRUE_OR_FALSE": "אמת שקר",
+			"CURRENCY": "מַטְבֵּעַ",
+			"TASK": "מְשִׁימָה"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "אין תאריך יעד מותאם אישית",
+			"HARD_DEADLINE": "דדליין קשה",
+			"HARD_AND_SOFT_DEADLINE": "דדליין קשה וקשה"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "סוג תוצאת מפתח",
+				"INITIAL_VALUE": "ערך התחלתי",
+				"TARGET_VALUE": "ערך מטרה",
+				"OWNER": "בעלים",
+				"LEAD": "עופרת (לא חובה)",
+				"DEADLINE": "מועד אחרון",
+				"SOFT_DEADLINE": "דדליין רך",
+				"HARD_DEADLINE": "דדליין קשה",
+				"UPDATED_VALUE": "ערך מעודכן",
+				"MARK_COMPLETE": "סמן כשלם",
+				"STATUS": "סטָטוּס"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "שם התוצאה העיקרית. לְמָשָׁל. הוסף מטא נתונים לשיפור קידום אתרים",
+				"DESCRIPTION": "תיאור קצר לתת קצת הקשר לגבי התוצאה העיקרית"
 			}
 		}
 	},
@@ -1482,7 +1557,14 @@
 			"EDITED_BASE": "Base has been edited",
 			"EDITED_CATEGORY": "Category has been edited",
 			"PIPELINE_CREATED": "Pipeline has been created",
-			"PIPELINE_UPDATED": "Pipeline has been updated"
+			"PIPELINE_UPDATED": "Pipeline has been updated",
+			"OBJECTIVE_ADDED": "המטרה נוספה",
+			"OBJECTIVE_DELETED": "המטרה נמחקה",
+			"OBJECTIVE_UPDATED": "המטרה עודכנה",
+			"KEY_RESULT_ADDED": "תוצאת המפתח נוספה",
+			"KEY_RESULT_DELETED": "תוצאת המפתח נמחקה",
+			"KEY_RESULT_UPDATED": "תוצאת המפתח עודכנה",
+			"TIME_FRAME_DELETED": "מסגרת הזמן נמחקה"
 		}
 	},
 	"ACCEPT_INVITE": {

@@ -1,8 +1,8 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { Goal as IGoal } from '@gauzy/models';
+import { Goal as IGoal, GoalLevelEnum } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsEnum } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
 
 @Entity('goal')
@@ -28,7 +28,8 @@ export class Goal extends Base implements IGoal {
 	@Column()
 	deadline: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: String, enum: GoalLevelEnum })
+	@IsEnum(GoalLevelEnum)
 	@Column()
 	level: string;
 

@@ -38,9 +38,35 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 	owner: string;
 	progress: number;
 	update: number;
-	status?: string;
+	status: string;
 }
 
 export interface GetKeyResultOptions {
 	goalId?: string;
+}
+
+export enum KeyResultTypeEnum {
+	NUMBER = 'Number',
+	TRUE_OR_FALSE = 'True/False',
+	CURRENCY = 'Currency',
+	TASK = 'Task'
+}
+
+export enum KeyResultDeadlineEnum {
+	NO_CUSTOM_DEADLINE = 'No Custom Deadline',
+	HARD_DEADLINE = 'Hard Deadline',
+	HARD_AND_SOFT_DEADLINE = 'Hard and Soft Deadline'
+}
+
+export enum GoalLevelEnum {
+	ORGANIZATION = 'Organization',
+	TEAM = 'Team',
+	EMPLOYEE = 'Employee'
+}
+
+export enum KeyResultUpdateStatusEnum {
+	ON_TRACK = 'on track',
+	NEEDS_ATTENTION = 'needs attention',
+	OFF_TRACK = 'off track',
+	NONE = 'none'
 }
