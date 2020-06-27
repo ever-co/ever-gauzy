@@ -42,7 +42,8 @@ import {
 	TimeLogCreateCommand,
 	TimeSlotCreateCommand,
 	TimesheetGetCommand,
-	TimesheetCreateCommand
+	TimesheetCreateCommand,
+	ScreenshotCreateCommand
 } from '../timesheet/commands';
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
@@ -320,6 +321,38 @@ export class HubstaffService {
 		return await Promise.all(integrationMaps);
 	}
 
+	/*
+	 * Sync screenshot using timeslot
+	 */
+	async syncScreenshots({
+		integrationId,
+		projectId,
+		screenshots
+	}): Promise<IIntegrationMap[]> {
+		const integrationMaps = await screenshots.map(
+			async ({ id, time_slot, full_url, thumb_url, recorded_at }) => {
+				const gauzyScreenshot = await this.commandBus.execute(
+					new ScreenshotCreateCommand({
+						timeSlotId: time_slot,
+						fullUrl: full_url,
+						thumbUrl: thumb_url,
+						recordedAt: recorded_at,
+						timeSlot: time_slot
+					})
+				);
+
+				return await this._integrationMapService.create({
+					gauzyId: gauzyScreenshot.id,
+					integrationId,
+					sourceId: id,
+					entity: IntegrationEntity.SCREENSHOT
+				});
+			}
+		);
+
+		return await Promise.all(integrationMaps);
+	}
+
 	async syncTasks({
 		integrationId,
 		projectId,
@@ -578,7 +611,7 @@ export class HubstaffService {
 			})
 		);
 
-		return tasksMap.flat();
+		return tasksMap;
 	}
 
 	private async _handleActivities(
@@ -629,6 +662,36 @@ export class HubstaffService {
 		return syncedActivities;
 	}
 
+	/**
+	 * Sync activities screenshots
+	 */
+	private async _handleScreenshots(
+		projectsMap,
+		integrationId,
+		token,
+		organizationId,
+		dateRange
+	) {
+		const start = moment(dateRange.start).format('YYYY-MM-DD');
+		const end = moment(dateRange.end).format('YYYY-MM-DD');
+
+		const screenshotsMaped = await Promise.all(
+			projectsMap.map(async (project) => {
+				const { screenshots } = await this.fetchIntegration(
+					`https://api.hubstaff.com/v2/projects/${project.sourceId}/screenshots?time_slot[start]=${start}&time_slot[stop]=${end}`,
+					token
+				);
+
+				return await this.syncScreenshots({
+					integrationId,
+					projectId: project.gauzyId,
+					screenshots
+				});
+			})
+		);
+		return screenshotsMaped;
+	}
+
 	async autoSync({
 		integrationId,
 		entitiesToSync,
@@ -643,7 +706,7 @@ export class HubstaffService {
 			entitiesToSync.map(async (setting) => {
 				switch (setting.entity) {
 					case IntegrationEntity.PROJECT:
-						let tasks, activities;
+						let tasks, activities, screenshots;
 						const projectsMap = await this._handleProjects(
 							sourceId,
 							integrationId,
@@ -659,6 +722,12 @@ export class HubstaffService {
 							(setting) =>
 								setting.entity === IntegrationEntity.ACTIVITY
 						);
+
+						const screenshotSetting = setting.tiedEntities.find(
+							(setting) =>
+								setting.entity === IntegrationEntity.SCREENSHOT
+						);
+
 						if (taskSetting.sync) {
 							tasks = await this._handleTasks(
 								projectsMap,
@@ -676,7 +745,17 @@ export class HubstaffService {
 								dateRange
 							);
 						}
-						return { tasks, projectsMap, activities };
+
+						// if (typeof screenshotSetting == 'object' && screenshotSetting.sync) {
+						screenshots = await this._handleScreenshots(
+							projectsMap,
+							integrationId,
+							token,
+							gauzyId,
+							dateRange
+						);
+						// }
+						return { tasks, projectsMap, activities, screenshots };
 					case IntegrationEntity.CLIENT:
 						const clients = await this._handleClients(
 							sourceId,

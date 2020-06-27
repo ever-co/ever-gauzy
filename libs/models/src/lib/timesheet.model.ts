@@ -192,6 +192,14 @@ export enum ActivityType {
 	APP = 'APP'
 }
 
+export interface ICreateScreenshotInput {
+	timeSlotId?: string;
+	timeSlot: string;
+	fullUrl: string;
+	thumbUrl?: string;
+	recordedAt: Date;
+}
+
 export interface Screenshot extends IBaseEntityModel {
 	timeSlot: TimeSlot;
 	fullUrl: string;
