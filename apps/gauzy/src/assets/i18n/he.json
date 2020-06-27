@@ -201,10 +201,11 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
-			"DESCRIPTION_OPTIONAL": "תיאור (אופציונאלי)",
+			"DESCRIPTION_OPTIONAL": "Description (optional)",
 			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
-			"ADD_REMOVE_MEMBERS": "Add or Remove Members"
+			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
+			"SHORT_DESCRIPTION": "Short Description"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -318,7 +319,9 @@
 			"BREAK_TIME": "Break minutes",
 			"DESCRIPTION": "Description",
 			"DURATION": "Duration",
-			"TITLE": "Title"
+			"TITLE": "Title",
+			"SHORT_DESCRIPTION": "Short Description",
+			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -760,6 +763,36 @@
 				"NAME": "שם התוצאה העיקרית. לְמָשָׁל. הוסף מטא נתונים לשיפור קידום אתרים",
 				"DESCRIPTION": "תיאור קצר לתת קצת הקשר לגבי התוצאה העיקרית"
 			}
+		},
+		"TYPE": {
+			"NUMBER": "Number",
+			"TRUE_OR_FALSE": "True/False",
+			"CURRENCY": "מטבע",
+			"TASK": "Task"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
+			"HARD_DEADLINE": "Hard Deadline",
+			"HARD_AND_SOFT_DEADLINE": "Hard and Soft Deadline"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "Key Result Type",
+				"INITIAL_VALUE": "Initial value",
+				"TARGET_VALUE": "Target value",
+				"OWNER": "Owner",
+				"LEAD": "Lead (optional)",
+				"DEADLINE": "Deadline",
+				"SOFT_DEADLINE": "Soft Deadline",
+				"HARD_DEADLINE": "Hard Deadline",
+				"UPDATED_VALUE": "Updated Value",
+				"MARK_COMPLETE": "Mark as Complete",
+				"STATUS": "עבודה"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
+				"DESCRIPTION": "A short desciption to give some context about the Key Result"
+			}
 		}
 	},
 	"CANDIDATES_PAGE": {
@@ -862,6 +895,12 @@
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
+		},
+		"MANAGE_INTERVIEWS": {
+			"CALENDAR": "Calendar",
+			"INTERVIEWS": "Interviews",
+			"MANAGE_INTERVIEWS": "Manage Interviews",
+			"CRITERIONS": "Criterions"
 		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
@@ -1014,6 +1053,7 @@
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
+		"SKILLS": "SKILLS",
 		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
 		"COMPANY_PROFILE": "Company Profile",
 		"TOTAL_CLIENTS": "Total Clients",
@@ -1811,10 +1851,13 @@
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:",
-		"CONFIRM_APPOINTMENT": "Appointment confirmed",
+		"CONFIRM_APPOINTMENT": "Appointment Confirmed",
+		"APPOINTMENT_INFO": "Appointment Information",
 		"DETAILS": "Booking Details",
 		"PARTICIPANTS": "Participant Emails",
 		"HOST": "Host",
+		"CANCEL": "Cancel Appointment",
+		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
 	},
 	"EMAIL_TEMPLATES_PAGE": {
