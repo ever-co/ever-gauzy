@@ -49,6 +49,7 @@ import { ApprovalPolicyService } from '../approval-policy/approval-policy.servic
 import { CandidateService } from '../candidate/candidate.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { EquipmentService } from '../equipment/equipment.service';
+import { ContactService } from '../contact/contact.service';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {
@@ -138,7 +139,8 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'appointment_employees'
 		},
 		{ service: this.approvalPolicyService, nameFile: 'approval_policy' },
-		{ service: this.candidateService, nameFile: 'candidate' }
+		{ service: this.candidateService, nameFile: 'candidate' },
+		{ service: this.contactService, nameFile: 'contact' }
 	];
 
 	constructor(
@@ -183,7 +185,8 @@ export class ExportAllService implements OnDestroy {
 		private timeSlotService: TimeSlotService,
 		private appointmentEmployeeService: AppointmentEmployeesService,
 		private approvalPolicyService: ApprovalPolicyService,
-		private candidateService: CandidateService
+		private candidateService: CandidateService,
+		private contactService: ContactService
 	) {}
 
 	async createFolders(): Promise<any> {

@@ -99,6 +99,7 @@ import { HelpCenterArticle } from '../help-center-article/help-center-article.en
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
+import { Contact } from '../contact/contact.entity';
 
 const entities = [
 	Invite,
@@ -192,7 +193,8 @@ const entities = [
 	Payment,
 	Stage,
 	Payment,
-	EstimateEmail
+	EstimateEmail,
+	Contact
 ];
 
 @Module({

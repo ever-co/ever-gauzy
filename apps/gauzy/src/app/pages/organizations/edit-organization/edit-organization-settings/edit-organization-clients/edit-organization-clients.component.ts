@@ -7,11 +7,11 @@ import {
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { EmployeesService } from '../../../../../@core/services';
+import { OrganizationClientsService } from '../../../../../@core/services/organization-clients.service ';
+import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
+import { OrganizationProjectsService } from '../../../../../@core/services/organization-projects.service';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { InviteClientComponent } from './invite-client/invite-client.component';
@@ -81,8 +81,17 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 	}
 
 	private async addOrEditClient(client: OrganizationClientsCreateInput) {
+		const contact = {
+			country :client.country,
+			city :client.city,
+			street :client.street,
+		};
+		const clientData = {
+			...client,
+			contact
+		}
 		if (client.name && client.primaryEmail && client.primaryPhone) {
-			await this.organizationClientsService.create(client);
+			await this.organizationClientsService.create(clientData);
 
 			this.showAddCard = !this.showAddCard;
 			this.selectProjects = [];
@@ -116,7 +125,7 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 		}
 
 		const res = await this.organizationClientsService.getAll(
-			['projects', 'members', 'members.user', 'tags'],
+			['projects', 'members', 'members.user', 'tags', 'contact'],
 			{
 				organizationId: this.organizationId
 			}
