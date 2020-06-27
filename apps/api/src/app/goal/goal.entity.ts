@@ -1,12 +1,12 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { Goal as IGoal } from '@gauzy/models';
-import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('goal')
-export class Goal extends Base implements IGoal {
+export class Goal extends TenantBase implements IGoal {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
