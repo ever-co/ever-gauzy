@@ -27,7 +27,8 @@ import {
 	NbTabsetModule,
 	NbRadioModule,
 	NbMenuModule,
-	NbContextMenuModule
+	NbContextMenuModule,
+	NbAccordionModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -76,10 +77,12 @@ import { CandidateStatisticComponent } from './candidate-statistic/candidate-sta
 import { ChartModule } from 'angular2-chartjs';
 import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-rating-chart/candidate-rating-chart.component';
 import { InterviewerAssessmentChartComponent } from './candidate-statistic/candidate-statistic-charts/interviewer-assessment-chart/interviewer-assessment-chart.component';
-import { CandidateCriterionsComponent } from './candidate-criterions/candidate-criterions.component';
-import { CandidatePersonalQualitiesComponent } from './candidate-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
-import { CandidateTechnologiesComponent } from './candidate-criterions/candidate-technologies/candidate-technologies.component';
 import { CandidateTechnologiesService } from '../../@core/services/candidate-technologies.service';
+import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
+import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
+import { InterviewCriterionsComponent } from './manage-candidate-interviews/interview-criterions/interview-criterions.component';
+import { CandidateTechnologiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-technologies/candidate-technologies.component';
+import { CandidatePersonalQualitiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -108,9 +111,11 @@ const COMPONENTS = [
 	EditCandidateEducationComponent,
 	EditCandidateExperienceFormComponent,
 	ManageCandidateInterviewsComponent,
+	InterviewCalendarComponent,
+	InterviewPanelComponent,
 	CandidateRatingChartComponent,
 	InterviewerAssessmentChartComponent,
-	CandidateCriterionsComponent,
+	InterviewCriterionsComponent,
 	CandidateTechnologiesComponent,
 	CandidatePersonalQualitiesComponent
 ];
@@ -142,6 +147,7 @@ const COMPONENTS = [
 		NbTabsetModule,
 		NbRadioModule,
 		NbActionsModule,
+		NbAccordionModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

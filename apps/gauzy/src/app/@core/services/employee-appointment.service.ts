@@ -5,7 +5,8 @@ import { Observable } from 'rxjs';
 import {
 	EmployeeAppointment,
 	IEmployeeAppointmentCreateInput,
-	IEmployeeAppointmentFindInput
+	IEmployeeAppointmentFindInput,
+	IEmployeeAppointmentUpdateInput
 } from '@gauzy/models';
 
 @Injectable()
@@ -45,7 +46,7 @@ export class EmployeeAppointmentService {
 
 	update(
 		id: string,
-		employeeAppointment: IEmployeeAppointmentCreateInput
+		employeeAppointment: IEmployeeAppointmentUpdateInput
 	): Promise<any> {
 		return this.http
 			.put<EmployeeAppointment>(

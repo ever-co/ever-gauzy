@@ -1,7 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Employee, Goal, GoalTimeFrame } from '@gauzy/models';
+import {
+	Employee,
+	Goal,
+	GoalTimeFrame,
+	GoalLevelEnum,
+	TimeFrameStatusEnum
+} from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -18,6 +24,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	employees: Employee[];
 	data: Goal;
 	timeFrames: GoalTimeFrame[] = [];
+	goalLevelEnum = GoalLevelEnum;
+	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -34,7 +42,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			description: [''],
 			owner: ['', Validators.required],
 			lead: [''],
-			level: ['Organization', Validators.required],
+			level: ['', Validators.required],
 			deadline: ['', Validators.required]
 		});
 
@@ -53,7 +61,10 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	async getTimeFrames() {
 		await this.goalSettingService.getAllTimeFrames().then((res) => {
 			if (res) {
-				this.timeFrames = res.items;
+				this.timeFrames = res.items.filter(
+					(timeframe) =>
+						timeframe.status === this.timeFrameStatusEnum.ACTIVE
+				);
 			}
 		});
 	}

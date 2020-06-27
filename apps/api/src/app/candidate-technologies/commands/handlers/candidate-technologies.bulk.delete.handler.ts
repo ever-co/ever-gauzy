@@ -12,14 +12,20 @@ export class CandidateTechnologiesBulkDeleteHandler
 	public async execute(
 		command: CandidateTechnologiesBulkDeleteCommand
 	): Promise<any> {
-		const { id } = command;
-		const technologies = await this.candidateTechnologiesService.getTechnologiesByInterviewId(
-			id
-		);
-		await this.candidateTechnologiesService.deleteBulk(
-			technologies.map((item) => item.id)
-		);
+		const { id, technologies } = command;
 
+		if (technologies) {
+			await this.candidateTechnologiesService.deleteBulk(
+				technologies.map((item) => item.id)
+			);
+		} else {
+			const tech = await this.candidateTechnologiesService.getTechnologiesByInterviewId(
+				id['id']
+			);
+			await this.candidateTechnologiesService.deleteBulk(
+				tech.map((item) => item.id)
+			);
+		}
 		return;
 	}
 }

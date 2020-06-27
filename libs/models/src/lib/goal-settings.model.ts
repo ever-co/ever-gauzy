@@ -6,3 +6,8 @@ export interface GoalTimeFrame extends IBaseEntityModel {
 	startDate: Date;
 	endDate: Date;
 }
+
+export enum TimeFrameStatusEnum {
+	ACTIVE = 'Active',
+	INACTIVE = 'Inactive'
+}

@@ -21,6 +21,14 @@ export class AppointmentEmployeesService {
 		return this.http.get<AppointmentEmployees[]>(this.URI + '/' + id);
 	}
 
+	findEmployeeAppointments(
+		id: string = ''
+	): Observable<AppointmentEmployees[]> {
+		return this.http.get<AppointmentEmployees[]>(
+			this.URI + '/findEmployeeAppointments/' + id
+		);
+	}
+
 	add(
 		appointmentEmployees: AppointmentEmployees
 	): Promise<AppointmentEmployees> {
@@ -44,9 +52,6 @@ export class AppointmentEmployeesService {
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`${this.URI}/${id}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.delete(`${this.URI}/${id}`).pipe(first()).toPromise();
 	}
 }

@@ -97,6 +97,8 @@ import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
+import { EstimateEmail } from '../estimate-email/estimate-email.entity';
+import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 
 const entities = [
 	Invite,
@@ -146,6 +148,7 @@ const entities = [
 	TimeLog,
 	Activity,
 	Screenshot,
+	TimeSlotMinute,
 	ExpenseCategory,
 	ProductVariantPrice,
 	ProductOption,
@@ -188,7 +191,8 @@ const entities = [
 	Pipeline,
 	Payment,
 	Stage,
-	Payment
+	Payment,
+	EstimateEmail
 ];
 
 @Module({

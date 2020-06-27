@@ -26,6 +26,7 @@ import { SkillsInputModule } from '../../skills/skills-input/skills-input.module
 import { LanguageInputModule } from '../../language/language-input/language-input.module';
 import { SkillsService } from '../../../@core/services/skills.service';
 import { LanguagesService } from '../../../@core/services/languages.service';
+import { CKEditorModule } from 'ng2-ckeditor';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -58,7 +59,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbBadgeModule,
 		NbToggleModule,
-		NbTabsetModule
+		NbTabsetModule,
+		CKEditorModule
 	],
 	declarations: [PublicPageMutationComponent],
 	entryComponents: [PublicPageMutationComponent],

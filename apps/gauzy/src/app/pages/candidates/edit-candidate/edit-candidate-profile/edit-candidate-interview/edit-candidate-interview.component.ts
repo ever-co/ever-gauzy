@@ -178,10 +178,12 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 	async removeInterview(id: string) {
 		try {
-			// await this.candidateInterviewersService.deleteBulkByInterviewId(id);
-			// await this.candidateTechnologiesService.deleteBulk(id);
-			// await this.candidatePersonalQualitiesService.deleteBulk(id);
-			// await this.candidateInterviewService.delete(id);
+			await this.candidateTechnologiesService.deleteBulkByInterviewId(id);
+			await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(
+				id
+			);
+			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
+			await this.candidateInterviewService.delete(id);
 			this.toastrSuccess('DELETED');
 			this.loadInterview();
 		} catch (error) {

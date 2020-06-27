@@ -7,6 +7,7 @@
 
 .select {
   flex-direction: row;
+  width: 100%;
 }
 
 .header {
@@ -16,8 +17,10 @@
 }
 
 .main-buttons {
-  margin-right: 10px;
+  margin-top: -10px;
   margin-bottom: 10px;
+  width: 100% !important;
+  max-width: 30rem !important;
 }
 
 .save-button {

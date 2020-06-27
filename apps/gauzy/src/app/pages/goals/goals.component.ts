@@ -1,10 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbToastrService,
+	NbPopoverDirective
+} from '@nebular/theme';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
@@ -23,35 +27,61 @@ import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details
 })
 export class GoalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 	loading = true;
 	selectedOrganizationId: string;
 	organizationName: string;
 	employee: SelectedEmployee;
 	employeeId: string;
+	selectedFilter: string;
+	filter = [
+		{
+			title: 'All Objectives',
+			value: 'all'
+		},
+		{
+			title: "My Team's Objectives",
+			value: 'team'
+		},
+		{
+			title: 'My Organization Objectives',
+			value: 'organization'
+		},
+		{
+			title: 'My Objectives',
+			value: 'employee'
+		}
+	];
 	private _ngDestroy$ = new Subject<void>();
 	goals: Goal[];
+	allGoals: Goal[];
 	noGoals = true;
 	keyResult: KeyResult[];
 	constructor(
 		private store: Store,
-		private translate: TranslateService,
+		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private goalService: GoalService,
 		private errorHandler: ErrorHandlingService,
 		private keyResultService: KeyResultService
 	) {
-		super(translate);
+		super(translateService);
 	}
 
 	async ngOnInit() {
-		this.store.selectedOrganization$
+		await this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
-					this.loadPage();
 				}
+			});
+		await this.store.selectedEmployee$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((emp) => {
+				this.employee = emp;
+				this.loadPage();
 			});
 	}
 
@@ -62,12 +92,12 @@ export class GoalsComponent extends TranslationBaseComponent
 		this.loading = false;
 		this.organizationName = name;
 		this.goalService.getAllGoals().then((goals) => {
-			if (goals.items.length > 0) {
-				this.noGoals = false;
-			} else {
-				this.noGoals = true;
-			}
+			this.noGoals = goals.items.length > 0 ? false : true;
 			this.goals = goals.items;
+			this.allGoals = goals.items;
+			if (!!this.selectedFilter && this.selectedFilter !== 'all') {
+				this.filterGoals(this.selectedFilter);
+			}
 		});
 	}
 
@@ -89,8 +119,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					.then((val) => {
 						if (val) {
 							this.toastrService.primary(
-								'Key Result Updated',
-								'Success'
+								this.getTranslation(
+									'TOASTR.MESSAGE.KEY_RESULT_UPDATED'
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.loadPage();
 						}
@@ -105,8 +137,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					.then((val) => {
 						if (val) {
 							this.toastrService.primary(
-								'Key Result Added',
-								'Success'
+								this.getTranslation(
+									'TOASTR.MESSAGE.KEY_RESULT_ADDED'
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.loadPage();
 						}
@@ -118,6 +152,27 @@ export class GoalsComponent extends TranslationBaseComponent
 	calculateGoalProgress(totalCount, keyResults) {
 		const progressTotal = keyResults.reduce((a, b) => a + b.progress, 0);
 		return Math.round((progressTotal / totalCount) * 100);
+	}
+
+	filterGoals(selection) {
+		this.selectedFilter = selection;
+		if (selection !== 'all') {
+			if (selection === 'employee' && !!this.employee) {
+				this.goals = this.allGoals.filter((goal) =>
+					this.employee.id == null
+						? goal.level.toLowerCase() === selection
+						: goal.owner === this.employee.id
+				);
+			} else {
+				this.goals = this.allGoals.filter(
+					(goal) => goal.level.toLowerCase() === selection
+				);
+			}
+		} else {
+			this.goals = this.allGoals;
+		}
+		this.noGoals = this.goals.length > 0 ? false : true;
+		this.popover.hide();
 	}
 
 	async createObjective(goal, index) {
@@ -132,31 +187,20 @@ export class GoalsComponent extends TranslationBaseComponent
 		if (response) {
 			if (!!goal) {
 				// Update Goal
-				this.goals[index].name = response.name;
-				this.goals[index].description = response.description;
-				this.goals[index].deadline = response.deadline;
-				this.goals[index].owner = response.owner;
-				this.goals[index].lead = response.lead;
-				const goalData = this.goals[index];
-				delete goalData.keyResults;
-				await this.goalService.update(goal.id, goalData).then((res) => {
+				await this.goalService.update(goal.id, response).then((res) => {
 					if (res) {
 						this.toastrService.primary(
-							'Objective updated',
-							'Success'
+							this.getTranslation(
+								'TOASTR.MESSAGE.OBJECTIVE_UPDATED'
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 					}
 				});
 			} else {
-				this.goals.push({
-					...response,
-					level: 'organization',
-					organizationId: this.selectedOrganizationId,
-					progress: 0
-				});
+				// Add Goal
 				const data = {
 					...response,
-					level: 'organization',
 					organizationId: this.selectedOrganizationId,
 					progress: 0
 				};
@@ -166,8 +210,10 @@ export class GoalsComponent extends TranslationBaseComponent
 						.then(async (val) => {
 							await this.goalService.getAllGoals();
 							this.toastrService.primary(
-								'Objective added',
-								'Success'
+								this.getTranslation(
+									'TOASTR.MESSAGE.OBJECTIVE_ADDED'
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 						});
 				} catch (error) {
@@ -188,7 +234,10 @@ export class GoalsComponent extends TranslationBaseComponent
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			if (response === 'deleted') {
-				this.toastrService.danger('Goal deleted', 'Success');
+				this.toastrService.danger(
+					this.getTranslation('TOASTR.MESSAGE.OBJECTIVE_DELETED'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
 				this.loadPage();
 			} else {
 				const goalData = response;
@@ -198,8 +247,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					.then((res) => {
 						if (res) {
 							this.toastrService.primary(
-								'Goal updated',
-								'Success'
+								this.getTranslation(
+									'TOASTR.MESSAGE.OBJECTIVE_UPDATED'
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.loadPage();
 						}
@@ -219,7 +270,10 @@ export class GoalsComponent extends TranslationBaseComponent
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			if (response === 'deleted') {
-				this.toastrService.danger('Key Result deleted', 'Success');
+				this.toastrService.danger(
+					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_DELETED'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
 				this.loadPage();
 			} else {
 				const keyResNumber = this.goals[index].keyResults.length * 100;
@@ -230,7 +284,10 @@ export class GoalsComponent extends TranslationBaseComponent
 				const goalData = this.goals[index];
 				delete goalData.keyResults;
 				await this.goalService.update(this.goals[index].id, goalData);
-				this.toastrService.primary('Key Result updated', 'Success');
+				this.toastrService.primary(
+					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
 				this.loadPage();
 			}
 		}
@@ -266,7 +323,10 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.goals[index].id,
 				this.goals[index]
 			);
-			this.toastrService.primary('Key Result updated', 'Success');
+			this.toastrService.primary(
+				this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 			this.loadPage();
 		}
 	}

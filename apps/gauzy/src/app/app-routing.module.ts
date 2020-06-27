@@ -17,6 +17,7 @@ import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 import { NoAuthGuard } from './@core/auth/no-auth.guard';
 import { OnboardOrganizationClientModule } from './auth/onboard-organization-client/onboard-organization-client.module';
 import { AcceptClientInvitePage } from './auth/onboard-organization-client/accept-client-invite.component';
+import { EstimateEmailComponent } from './auth/estimate-email/estimate-email.component';
 
 const routes: Routes = [
 	{
@@ -81,6 +82,11 @@ const routes: Routes = [
 			{
 				path: 'accept-client-invite',
 				component: AcceptClientInvitePage,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'estimate',
+				component: EstimateEmailComponent,
 				canActivate: [NoAuthGuard]
 			}
 		]

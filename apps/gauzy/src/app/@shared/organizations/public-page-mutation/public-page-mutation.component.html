@@ -103,6 +103,35 @@
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
+								<label for="Banner">{{
+									'POP_UPS.BANNER' | translate
+								}}</label>
+								<input
+									id="Banner"
+									nbInput
+									type="text"
+									fullWidth
+									placeholder="{{
+										'POP_UPS.BANNER' | translate
+									}}"
+									formControlName="banner"
+									class="banner"
+									[ngClass]="{
+										'status-danger':
+											banner?.invalid &&
+											(banner.dirty || banner.touched),
+										'status-success':
+											banner?.valid &&
+											(banner.dirty || banner.touched)
+									}"
+									autocomplete="off"
+								/>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
 								<label for="addClientFocus">{{
 									'POP_UPS.CLIENT_FOCUS' | translate
 								}}</label>
@@ -147,35 +176,6 @@
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
-								<label for="Banner">{{
-									'POP_UPS.BANNER' | translate
-								}}</label>
-								<textarea
-									id="Banner"
-									nbInput
-									fullWidth
-									placeholder="{{
-										'POP_UPS.BANNER' | translate
-									}}"
-									formControlName="banner"
-									class="banner"
-									rows="2"
-									[ngClass]="{
-										'status-danger':
-											banner?.invalid &&
-											(banner.dirty || banner.touched),
-										'status-success':
-											banner?.valid &&
-											(banner.dirty || banner.touched)
-									}"
-									autocomplete="off"
-								></textarea>
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
 								<label for="shortDescription">{{
 									'POP_UPS.SHORT_DESCRIPTION' | translate
 								}}</label>
@@ -207,30 +207,29 @@
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
-								<label for="companyOverview">{{
-									'POP_UPS.OVERVIEW' | translate
-								}}</label>
-								<textarea
-									id="companyOverview"
-									nbInput
-									fullWidth
-									rows="3"
-									placeholder="{{
-										'POP_UPS.OVERVIEW' | translate
-									}}"
-									formControlName="overview"
-									class="overview"
-									[ngClass]="{
-										'status-danger':
-											overview?.invalid &&
-											(overview.dirty ||
-												overview.touched),
-										'status-success':
-											overview?.valid &&
-											(overview.dirty || overview.touched)
-									}"
-								>
-								</textarea>
+								<p class="label">
+									{{ 'POP_UPS.OVERVIEW' | translate }}
+								</p>
+								<div class="ck-editor">
+									<ckeditor
+										formControlName="overview"
+										class="overview"
+										[config]="{
+											width: '100%',
+											height: '200'
+										}"
+										[ngClass]="{
+											'status-danger':
+												overview?.invalid &&
+												(overview.dirty ||
+													overview.touched),
+											'status-success':
+												overview?.valid &&
+												(overview.dirty ||
+													overview.touched)
+										}"
+									></ckeditor>
+								</div>
 							</div>
 						</div>
 					</div>

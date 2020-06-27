@@ -69,8 +69,17 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		}
 	}
 
-	editNode() {
-		this.dialogService.open(EditArticleComponent);
+	async editNode(i: number) {
+		const dialog = this.dialogService.open(EditArticleComponent, {
+			context: {
+				article: this.nodes[i]
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('EDITED');
+			this.loadArticles();
+		}
 	}
 
 	ngOnDestroy() {

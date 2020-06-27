@@ -201,9 +201,11 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
+			"DESCRIPTION_OPTIONAL": "Description (optional)",
 			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
-			"ADD_REMOVE_MEMBERS": "Add or Remove Members"
+			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
+			"SHORT_DESCRIPTION": "Short Description"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -317,7 +319,9 @@
 			"BREAK_TIME": "Break minutes",
 			"DESCRIPTION": "Description",
 			"DURATION": "Duration",
-			"TITLE": "Title"
+			"TITLE": "Title",
+			"SHORT_DESCRIPTION": "Short Description",
+			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -674,9 +678,124 @@
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"GOALS_PAGE": {
-		"HEADER": "All Objectives for ",
-		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
-		"ADD_NEW_KEY_RESULT": "Add new key result"
+		"HEADER": "כל היעדים עבור ",
+		"GOAL": "מטרה",
+		"GOALS_EMPTY": "עדיין לא יצרת יעדים. לחץ על הוסף חדש כדי ליצור אחת",
+		"ADD_NEW_KEY_RESULT": "הוסף תוצאת מפתח חדשה",
+		"ADD_NEW_OBJECTIVE": "הוסף יעד חדש",
+		"SESSION": "מוֹשָׁב",
+		"NO_DESCRIPTION": "אין תיאור",
+		"PROGRESS": "התקדמות",
+		"UPDATES": "עדכונים",
+		"UPDATE": "עדכון",
+		"COMMENTS": "הערות",
+		"KEY_RESULTS": "תוצאות מפתח",
+		"SETTINGS": {
+			"ADD_TIME_FRAME_TITLE": "הוסף מסגרת זמן",
+			"TIME_FRAME_PAGE_TITLE": "הגדר מסגרת זמן",
+			"PREDEFINED_TIME_FRAMES": "מסגרות זמן מוגדרות מראש"
+		},
+		"LEVELS": {
+			"ORGANIZATION": "אִרגוּן",
+			"TEAM": "קְבוּצָה",
+			"EMPLOYEE": "עוֹבֵד"
+		},
+		"TIME_FRAME_STATUS": {
+			"ACTIVE": "פָּעִיל",
+			"INACTIVE": "לֹא פָּעִיל"
+		},
+		"FORM": {
+			"LABELS": {
+				"LEVEL": "רָמָה",
+				"OWNER": "בעלים",
+				"LEAD": "עופרת (לא חובה)",
+				"DEADLINE": "מועד אחרון",
+				"STATUS": "סטָטוּס"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "שם אובייקטיבי. לְמָשָׁל. שפר את קידום אתרים באתר",
+				"DESCRIPTION": "תיאור אובייקטיבי.",
+				"LEVEL": "רמת יעד",
+				"TIME_FRAME_NAME": "שם מסגרת זמן למשל. 'Q4-2020'"
+			},
+			"ERROR": {
+				"START_DATE_GREATER": "תאריך הסיום חייב להיות גדול מתאריך ההתחלה"
+			}
+		},
+		"BUTTONS": {
+			"ADD_TIME_FRAME": "הוסף מסגרת זמן"
+		}
+	},
+	"KEY_RESULT_PAGE": {
+		"UPDATE_KEY_RESULT": "עדכן את תוצאת המפתח",
+		"UPDATE": {
+			"STATUS": {
+				"ON_TRACK": "במעקב",
+				"NEEDS_ATTENTION": "זקוק לתשומת לב",
+				"OFF_TRACK": "מחוץ למסלול",
+				"NONE": "אף אחד"
+			}
+		},
+		"TYPE": {
+			"NUMBER": "מספר",
+			"TRUE_OR_FALSE": "אמת שקר",
+			"CURRENCY": "מַטְבֵּעַ",
+			"TASK": "מְשִׁימָה"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "אין תאריך יעד מותאם אישית",
+			"HARD_DEADLINE": "דדליין קשה",
+			"HARD_AND_SOFT_DEADLINE": "דדליין קשה וקשה"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "סוג תוצאת מפתח",
+				"INITIAL_VALUE": "ערך התחלתי",
+				"TARGET_VALUE": "ערך מטרה",
+				"OWNER": "בעלים",
+				"LEAD": "עופרת (לא חובה)",
+				"DEADLINE": "מועד אחרון",
+				"SOFT_DEADLINE": "דדליין רך",
+				"HARD_DEADLINE": "דדליין קשה",
+				"UPDATED_VALUE": "ערך מעודכן",
+				"MARK_COMPLETE": "סמן כשלם",
+				"STATUS": "סטָטוּס"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "שם התוצאה העיקרית. לְמָשָׁל. הוסף מטא נתונים לשיפור קידום אתרים",
+				"DESCRIPTION": "תיאור קצר לתת קצת הקשר לגבי התוצאה העיקרית"
+			}
+		},
+		"TYPE": {
+			"NUMBER": "Number",
+			"TRUE_OR_FALSE": "True/False",
+			"CURRENCY": "מטבע",
+			"TASK": "Task"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
+			"HARD_DEADLINE": "Hard Deadline",
+			"HARD_AND_SOFT_DEADLINE": "Hard and Soft Deadline"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "Key Result Type",
+				"INITIAL_VALUE": "Initial value",
+				"TARGET_VALUE": "Target value",
+				"OWNER": "Owner",
+				"LEAD": "Lead (optional)",
+				"DEADLINE": "Deadline",
+				"SOFT_DEADLINE": "Soft Deadline",
+				"HARD_DEADLINE": "Hard Deadline",
+				"UPDATED_VALUE": "Updated Value",
+				"MARK_COMPLETE": "Mark as Complete",
+				"STATUS": "עבודה"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
+				"DESCRIPTION": "A short desciption to give some context about the Key Result"
+			}
+		}
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -742,6 +861,7 @@
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "לשמור",
+				"CREATE_CRITERIONS": "Create criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"SUMMARY": "Summary",
 				"DETAILS": "Send interview details to",
@@ -778,6 +898,12 @@
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
 		},
+		"MANAGE_INTERVIEWS": {
+			"CALENDAR": "Calendar",
+			"INTERVIEWS": "Interviews",
+			"MANAGE_INTERVIEWS": "Manage Interviews",
+			"CRITERIONS": "Criterions"
+		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
@@ -790,7 +916,9 @@
 			"RATE_CANDIDATE_BY_CRITERIONS": "Rate candidate by criterions",
 			"TECHNOLOGY_STACK": "Technology Stack",
 			"PERSONAL_QUALITIES": "Personal Qualities",
-			"CHOOSE_CRITERIONS": "Choose criterions for candidate"
+			"CHOOSE_CRITERIONS": "Choose criterions for candidate",
+			"TECHNOLOGY_PLACEHOLDER": "If you want to add criteria from the technology stack, you need to create them",
+			"PERSONAL_QUALITIES_PLACEHOLDER": "If you want to add criteria from the personal quality list, you need to create them"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -927,6 +1055,7 @@
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
+		"SKILLS": "SKILLS",
 		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
 		"COMPANY_PROFILE": "Company Profile",
 		"TOTAL_CLIENTS": "Total Clients",
@@ -1304,6 +1433,7 @@
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
 			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
+			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
 			"SELECT_TASKS": "Select tasks",
 			"SELECT_PRODUCTS": "Select products"
@@ -1354,7 +1484,12 @@
 		"ESTIMATES": {
 			"HEADER": "Estimates",
 			"ESTIMATE_NUMBER": "Estimate Number",
-			"ESTIMATE_DATE": "Estimate Date"
+			"ESTIMATE_DATE": "Estimate Date",
+			"ACCEPT": "Accept",
+			"REJECT": "Reject",
+			"ACCEPTED": "Accepted",
+			"REJECTED": "Rejected",
+			"ACCEPTED_STATUS": "Accepted Status"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments",
@@ -1464,7 +1599,14 @@
 			"EDITED_BASE": "Base has been edited",
 			"EDITED_CATEGORY": "Category has been edited",
 			"PIPELINE_CREATED": "Pipeline has been created",
-			"PIPELINE_UPDATED": "Pipeline has been updated"
+			"PIPELINE_UPDATED": "Pipeline has been updated",
+			"OBJECTIVE_ADDED": "המטרה נוספה",
+			"OBJECTIVE_DELETED": "המטרה נמחקה",
+			"OBJECTIVE_UPDATED": "המטרה עודכנה",
+			"KEY_RESULT_ADDED": "תוצאת המפתח נוספה",
+			"KEY_RESULT_DELETED": "תוצאת המפתח נמחקה",
+			"KEY_RESULT_UPDATED": "תוצאת המפתח עודכנה",
+			"TIME_FRAME_DELETED": "מסגרת הזמן נמחקה"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1676,6 +1818,11 @@
 			"EMPLOYEE": "Please selct employee"
 		}
 	},
+	"ACTIVITY": {
+		"SCREENSHOTS": "Screenshots",
+		"APPS": "Apps Activity",
+		"URLS": "Urls Activity"
+	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
@@ -1706,10 +1853,13 @@
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:",
-		"CONFIRM_APPOINTMENT": "Appointment confirmed",
+		"CONFIRM_APPOINTMENT": "Appointment Confirmed",
+		"APPOINTMENT_INFO": "Appointment Information",
 		"DETAILS": "Booking Details",
 		"PARTICIPANTS": "Participant Emails",
 		"HOST": "Host",
+		"CANCEL": "Cancel Appointment",
+		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
 	},
 	"EMAIL_TEMPLATES_PAGE": {

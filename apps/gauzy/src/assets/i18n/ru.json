@@ -201,9 +201,11 @@
 			"NOTE": "Примечание",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"DESCRIPTION": "Описание",
+			"DESCRIPTION_OPTIONAL": "Описание (необязательно)",
 			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников",
 			"ADD_REMOVE_MANAGERS": "Добавление и удаление менеджеров",
-			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников"
+			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников",
+			"SHORT_DESCRIPTION": "Краткое описание"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -317,7 +319,9 @@
 			"BREAK_TIME": "Минут остановки",
 			"DESCRIPTION": "Описание",
 			"DURATION": "Продолжительность",
-			"TITLE": "Заголовок"
+			"TITLE": "Заголовок",
+			"SHORT_DESCRIPTION": "Краткое описание",
+			"EG_FULL_STACK_WEB_DEVELOPER": "Например, разработчик Full-Stack"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -510,7 +514,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Russian",
+		"ENGLISH": "English",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
@@ -675,8 +679,123 @@
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Все цели для ",
-		"GOALS_EMPTY": "Вы еще не создали ни одной цели. Нажмите \"Добавить\", чтобы создать одну",
-		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа"
+		"GOAL": "Цель",
+		"GOALS_EMPTY": "Вы еще не создали никаких целей. Нажмите Add New, чтобы создать",
+		"ADD_NEW_KEY_RESULT": "Добавить новый ключевой результат",
+		"ADD_NEW_OBJECTIVE": "Добавить новую цель",
+		"SESSION": "сессия",
+		"NO_DESCRIPTION": "Без описания",
+		"PROGRESS": "Прогресс",
+		"UPDATES": "Обновления",
+		"UPDATE": "Обновить",
+		"COMMENTS": "Комментарии",
+		"KEY_RESULTS": "Ключевые результаты",
+		"SETTINGS": {
+			"ADD_TIME_FRAME_TITLE": "Добавить таймфрейм",
+			"TIME_FRAME_PAGE_TITLE": "Установить сроки",
+			"PREDEFINED_TIME_FRAMES": "Предопределенные временные рамки"
+		},
+		"LEVELS": {
+			"ORGANIZATION": "организация",
+			"TEAM": "команда",
+			"EMPLOYEE": "Наемный рабочий"
+		},
+		"TIME_FRAME_STATUS": {
+			"ACTIVE": "активный",
+			"INACTIVE": "Неактивный"
+		},
+		"FORM": {
+			"LABELS": {
+				"LEVEL": "уровень",
+				"OWNER": "владелец",
+				"LEAD": "Свинец (необязательно)",
+				"DEADLINE": "Крайний срок",
+				"STATUS": "Положение дел"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Объективное имя. например. Улучшить SEO сайта",
+				"DESCRIPTION": "Объективное описание.",
+				"LEVEL": "Уровень цели",
+				"TIME_FRAME_NAME": "Название периода времени, например. 'Q4-2020'"
+			},
+			"ERROR": {
+				"START_DATE_GREATER": "Дата окончания должна быть больше даты начала"
+			}
+		},
+		"BUTTONS": {
+			"ADD_TIME_FRAME": "Добавить таймфрейм"
+		}
+	},
+	"KEY_RESULT_PAGE": {
+		"UPDATE_KEY_RESULT": "Обновить ключ Результат",
+		"UPDATE": {
+			"STATUS": {
+				"ON_TRACK": "на трассе",
+				"NEEDS_ATTENTION": "необходимо внимание",
+				"OFF_TRACK": "отстают",
+				"NONE": "никто"
+			}
+		},
+		"TYPE": {
+			"NUMBER": "Число",
+			"TRUE_OR_FALSE": "Правда/Ложь",
+			"CURRENCY": "валюта",
+			"TASK": "задача"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "Нет пользовательских сроков",
+			"HARD_DEADLINE": "Жесткий срок",
+			"HARD_AND_SOFT_DEADLINE": "Жесткий и мягкий срок исполнения"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "Тип ключевого результата",
+				"INITIAL_VALUE": "Начальное значение",
+				"TARGET_VALUE": "Целевое значение",
+				"OWNER": "владелец",
+				"LEAD": "Свинец (необязательно)",
+				"DEADLINE": "Крайний срок",
+				"SOFT_DEADLINE": "Мягкий срок",
+				"HARD_DEADLINE": "Жесткий срок",
+				"UPDATED_VALUE": "Обновленное значение",
+				"MARK_COMPLETE": "Отметить как завершенный",
+				"STATUS": "Положение дел"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Ключевое имя результата. например. Добавить метаданные для улучшения SEO",
+				"DESCRIPTION": "Краткое описание, чтобы дать некоторый контекст о ключевом результате"
+			}
+		},
+		"TYPE": {
+			"NUMBER": "Номер",
+			"TRUE_OR_FALSE": "Истина/Ложь",
+			"CURRENCY": "Валюта",
+			"TASK": "Задача"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "Нет пользовательских сроков",
+			"HARD_DEADLINE": "Тяжелый срок",
+			"HARD_AND_SOFT_DEADLINE": "Жесткий и мягкий срок"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "Тип результата ключа",
+				"INITIAL_VALUE": "Начальное значение",
+				"TARGET_VALUE": "Целевое значение",
+				"OWNER": "Владелец",
+				"LEAD": "Ведущий (опционально)",
+				"DEADLINE": "Срок сдачи",
+				"SOFT_DEADLINE": "Мягкий срок",
+				"HARD_DEADLINE": "Тяжелый срок",
+				"UPDATED_VALUE": "Значение обновлено",
+				"MARK_COMPLETE": "Отметить как завершенное",
+				"STATUS": "Статус"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Имя результата ключа. Например. Добавить метаданные для улучшения SEO",
+				"DESCRIPTION": "Короткое отчуждение, чтобы дать контекст о ключевых результатах"
+			}
+		}
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
@@ -742,6 +861,7 @@
 				"NEXT": "Следующий",
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
+				"CREATE_CRITERIONS": "Создать критерии",
 				"EMAIL_NOTIFICATION": "Уведомление по e-mail",
 				"SUMMARY": "Summary",
 				"DETAILS": "Отправить данные интервью",
@@ -778,6 +898,12 @@
 			"NEXT": "Следующий",
 			"PREVIOUS": "Предыдущий"
 		},
+		"MANAGE_INTERVIEWS": {
+			"CALENDAR": "Календарь",
+			"INTERVIEWS": "Интервью",
+			"MANAGE_INTERVIEWS": "Управление интервью",
+			"CRITERIONS": "Критерии"
+		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
 			"CANDIDATE_RATING": "Рейтинг Кандидата",
@@ -790,7 +916,9 @@
 			"RATE_CANDIDATE_BY_CRITERIONS": "Оценить кандидата по критериям",
 			"TECHNOLOGY_STACK": "Стек технологий",
 			"PERSONAL_QUALITIES": "Личные качества",
-			"CHOOSE_CRITERIONS": "Выберите критерии для кандидата"
+			"CHOOSE_CRITERIONS": "Выберите критерии для кандидата",
+			"TECHNOLOGY_PLACEHOLDER": "Если вы хотите добавить критерии из стека технологий, их нужно создать",
+			"PERSONAL_QUALITIES_PLACEHOLDER": "Если вы хотите добавить критерии из личного списка качества, необходимо создать их"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -927,6 +1055,7 @@
 		"LANGUAGES": "Языки",
 		"AWARDS": "Награды",
 		"COMPANY_SKILLS": "Навыки компании",
+		"SKILLS": "Навыки",
 		"TOTAL_BONUSES_PAID": "Всего выплачено бонусов",
 		"COMPANY_PROFILE": "Профиль компании",
 		"TOTAL_CLIENTS": "Всего клиентов",
@@ -1304,6 +1433,7 @@
 			"DETAILS_INVOICE_ITEMS": "Детали накладной",
 			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов",
 			"SELECT_INVOICE_TYPE": "Выберите тип счета",
+			"SELECT_ESTIMATE_TYPE": "Выберите тип оценки",
 			"SELECT_PROJECTS": "Выберите проекты",
 			"SELECT_TASKS": "Выберите задачи",
 			"SELECT_PRODUCTS": "Выберите товары"
@@ -1354,7 +1484,12 @@
 		"ESTIMATES": {
 			"HEADER": "Оценки",
 			"ESTIMATE_NUMBER": "Расчетный номер",
-			"ESTIMATE_DATE": "Предполагаемая дата"
+			"ESTIMATE_DATE": "Предполагаемая дата",
+			"ACCEPT": "Принять",
+			"REJECT": "Отклонить",
+			"ACCEPTED": "Принято",
+			"REJECTED": "Отклонено",
+			"ACCEPTED_STATUS": "Статус принят"
 		},
 		"PAYMENTS": {
 			"HEADER": "Платежи",
@@ -1464,7 +1599,14 @@
 			"EDITED_BASE": "База была отредактирована",
 			"EDITED_CATEGORY": "Категория была отредактирована",
 			"PIPELINE_CREATED": "Конвейер создан",
-			"PIPELINE_UPDATED": "Конвейер обновлен"
+			"PIPELINE_UPDATED": "Конвейер обновлен",
+			"OBJECTIVE_ADDED": "Цель добавлена",
+			"OBJECTIVE_DELETED": "Цель удалена",
+			"OBJECTIVE_UPDATED": "Цель обновлена",
+			"KEY_RESULT_ADDED": "Добавлен ключевой результат",
+			"KEY_RESULT_DELETED": "Ключ Результат удален",
+			"KEY_RESULT_UPDATED": "Ключевые результаты обновлены",
+			"TIME_FRAME_DELETED": "Таймфрейм удален"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1676,6 +1818,11 @@
 			"EMPLOYEE": "Пожалуйста, выберите сотрудника"
 		}
 	},
+	"ACTIVITY": {
+		"SCREENSHOTS": "Скриншот",
+		"APPS": "Активность приложений",
+		"URLS": "Активность ссылок"
+	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
 		"COMPLETE": "Все готово!"
@@ -1706,10 +1853,13 @@
 		"PICK_DATETIME": "Выберите дату и время",
 		"DURATION": "Продолжительность:",
 		"EVENT_TYPE": "Тип события:",
-		"CONFIRM_APPOINTMENT": "Назначение подтверждено",
+		"CONFIRM_APPOINTMENT": "Назначение Подтверждено",
+		"APPOINTMENT_INFO": "Назначение Информации",
 		"DETAILS": "Детали бронирования",
 		"PARTICIPANTS": "Email участника",
 		"HOST": "Хост",
+		"CANCEL": "Отменить назначение",
+		"EXPIRED_OR_CANCELLED": "**Срок действия контракта истёк или был отменен.",
 		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания."
 	},
 	"EMAIL_TEMPLATES_PAGE": {

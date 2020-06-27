@@ -15,7 +15,7 @@
 					'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
 				}}</label>
 				<input
-					#addInput
+					#addInput="ngModel"
 					nbInput
 					type="text"
 					style="max-width: none;"
@@ -23,9 +23,8 @@
 						'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
 					}}"
 					id="add-vendor"
-					[(ngModel)]="vendor"
+					[ngModel]="vendor"
 					required
-					#theAddVendor="ngModel"
 				/>
 			</div>
 			<ga-tags-color-input
@@ -41,7 +40,7 @@
 					(click)="addVendor(addInput.value)"
 					nbButton
 					status="success"
-					[disabled]="theAddVendor.invalid"
+					[disabled]="addInput.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
@@ -77,14 +76,12 @@
 							'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
 						}}</label>
 						<input
-							#editInput
+							#editInput="ngModel"
 							nbInput
 							type="text"
-							[value]="selectedVendor.name"
 							fullWidth
-							[(ngModel)]="vendor"
+							[(ngModel)]="selectedVendor.name"
 							required
-							#theEditVendor="ngModel"
 						/>
 					</div>
 					<ga-tags-color-input
@@ -101,7 +98,7 @@
 							"
 							nbButton
 							status="success"
-							[disabled]="theEditVendor.invalid"
+							[disabled]="editInput.invalid"
 						>
 							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span

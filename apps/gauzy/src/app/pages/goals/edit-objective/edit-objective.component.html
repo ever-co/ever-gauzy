@@ -1,4 +1,4 @@
-<nb-card size="large" class="max-width-800">
+<nb-card size="large" class="max-width-1000">
 	<nb-card-header>
 		Add Objective
 		<nb-icon
@@ -10,43 +10,56 @@
 
 	<nb-card-body>
 		<form [formGroup]="objectiveForm">
-			<label for="objective-title" class="label"> Name </label>
+			<label for="objective-title" class="label">
+				{{ 'FORM.LABELS.NAME' | translate }}
+			</label>
 			<input
 				type="text"
 				id="objective-title"
 				nbInput
 				fullWidth
 				formControlName="name"
-				placeholder="Objective Name. eg. Improve Website SEO"
+				placeholder="{{
+					'GOALS_PAGE.FORM.PLACEHOLDERS.NAME' | translate
+				}}"
 			/>
 
 			<label for="objective-description" class="label mt-3">
-				Description
+				{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
 			</label>
 			<textarea
 				id="objective-description"
 				nbInput
 				fullWidth
 				formControlName="description"
-				placeholder="Objective Description."
+				placeholder="{{
+					'GOALS_PAGE.FORM.PLACEHOLDERS.DESCRIPTION' | translate
+				}}"
 			></textarea>
 
 			<label for="objective-level" class="label mt-3">
-				Level
+				{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
 			</label>
 			<nb-select
 				id="objective-level"
 				formControlName="level"
-				placeholder="Goal Level"
+				placeholder="{{
+					'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL' | translate
+				}}"
 				fullWidth
-				selected="Organization"
 			>
-				<nb-option value="Organization">Organization</nb-option>
-				<nb-option value="Team">Team</nb-option>
-				<nb-option value="Individual">Individual</nb-option>
+				<nb-option
+					*ngFor="let level of goalLevelEnum | keyvalue"
+					[value]="level.value"
+					>{{
+						'GOALS_PAGE.LEVELS.' + level.key | translate
+					}}</nb-option
+				>
 			</nb-select>
 
-			<label for="objective-owner" class="label mt-3"> Owner </label>
+			<label for="objective-owner" class="label mt-3">
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
+			</label>
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
@@ -54,11 +67,13 @@
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'owner')"
 				id="key-result-owner"
-				placeholder="Owner"
+				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
 
-			<label for="objective-Lead" class="label mt-3"> Lead </label>
+			<label for="objective-Lead" class="label mt-3">
+				{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}
+			</label>
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
@@ -66,20 +81,21 @@
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'lead')"
 				id="key-result-Lead"
-				placeholder="Lead"
+				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
 
 			<label for="objective-deadline" class="label mt-3">
-				Deadline
+				{{ 'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate }}
 			</label>
 			<nb-select
 				*ngIf="timeFrames.length > 0"
 				id="objective-deadline"
 				formControlName="deadline"
-				placeholder="Deadline"
+				placeholder="{{
+					'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate
+				}}"
 				fullWidth
-				selected="Q4-2020"
 			>
 				<nb-option
 					*ngFor="let deadline of timeFrames"
@@ -95,7 +111,7 @@
 					nbButton
 					(click)="openSetTimeFrame()"
 				>
-					Add Time Frame
+					{{ 'GOALS_PAGE.BUTTONS.ADD_TIME_FRAME' | translate }}
 				</button>
 			</p>
 		</form>

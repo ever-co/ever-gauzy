@@ -19,6 +19,28 @@
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.VIEW' | translate }}
 			</button>
+			<button
+				*ngIf="isEstimate"
+				nbButton
+				status="success"
+				class="mr-2"
+				(click)="accept()"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="checkmark-outline"></nb-icon>
+				{{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
+			</button>
+			<button
+				*ngIf="isEstimate"
+				nbButton
+				status="danger"
+				class="mr-2"
+				(click)="reject()"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+				{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
+			</button>
 		</div>
 		<ng2-smart-table
 			class="tags-table"

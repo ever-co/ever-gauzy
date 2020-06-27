@@ -74,10 +74,11 @@ import { TimeSlot } from '../timesheet/time-slot.entity';
 import { Activity } from '../timesheet/activity.entity';
 import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
+import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
-import { ActivityService } from '../timesheet/activity.service';
-import { ScreenShotService } from '../timesheet/screenshot.service';
-import { TimeSlotService } from '../timesheet/time-slot.service';
+import { ActivityService } from '../timesheet/activity/activity.service';
+import { ScreenshotService } from '../timesheet/screenshot/screenshot.service';
+import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
 import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
@@ -89,6 +90,8 @@ import { OrganizationTeamEmployeeService } from '../organization-team-employee/o
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Equipment } from '../equipment/equipment.entity';
 import { EquipmentService } from '../equipment/equipment.service';
+import { EstimateEmailService } from '../estimate-email/estimate-email.service';
+import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 
 @Module({
 	imports: [
@@ -133,9 +136,11 @@ import { EquipmentService } from '../equipment/equipment.service';
 			Activity,
 			Screenshot,
 			TimeLog,
+			TimeSlotMinute,
 			AppointmentEmployees,
 			ApprovalPolicy,
-			Candidate
+			Candidate,
+			EstimateEmail
 		])
 	],
 	controllers: [ExportAllController],
@@ -177,12 +182,13 @@ import { EquipmentService } from '../equipment/equipment.service';
 		TimeOffPolicyService,
 		TimeSheetService,
 		ActivityService,
-		ScreenShotService,
+		ScreenshotService,
 		TimeLogService,
 		TimeSlotService,
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
-		CandidateService
+		CandidateService,
+		EstimateEmailService
 	],
 	exports: [
 		ExportAllService,
@@ -222,12 +228,13 @@ import { EquipmentService } from '../equipment/equipment.service';
 		TimeOffPolicyService,
 		TimeSheetService,
 		ActivityService,
-		ScreenShotService,
+		ScreenshotService,
 		TimeLogService,
 		TimeSlotService,
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
-		CandidateService
+		CandidateService,
+		EstimateEmailService
 	]
 })
 export class ExportAllModule {}

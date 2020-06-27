@@ -30,6 +30,7 @@ import { Store } from '../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 
 @Component({
 	selector: 'ga-appointment-calendar',
@@ -98,6 +99,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private availabilitySlotsService: AvailabilitySlotsService,
 		private employeeAppointmentService: EmployeeAppointmentService,
+		private appointmentEmployeesService: AppointmentEmployeesService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -174,6 +176,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 
 	renderAppointmentsAndSlots(employeeId: string) {
 		const findObj = {
+			status: null,
 			employee: {
 				id: employeeId
 			}
@@ -182,18 +185,42 @@ export class AppointmentComponent extends TranslationBaseComponent
 		this.employeeAppointmentService
 			.getAll(['employee', 'employee.user'], findObj)
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((appointments) => {
+			.subscribe(async (appointments) => {
+				this.calendarEvents = [];
+				this.calendarComponent.getApi().refetchEvents();
+
 				this.appointments = appointments.items;
-				for (let appointment of this.appointments) {
-					this.checkAndAddEventToCalendar(
-						moment(appointment.startDateTime).utc().format(),
-						moment(appointment.endDateTime).utc().format(),
-						appointment.id,
-						'BookedSlot'
-					);
-				}
+				this.renderBookedAppointments(this.appointments);
+				await this.fetchEmployeeAppointments(employeeId);
+
+				this.fetchEmployeeAppointments(employeeId);
 				this._fetchAvailableSlots(employeeId);
 			});
+	}
+
+	// fetch appointments where the employee is an invitee
+	async fetchEmployeeAppointments(employeeId: string) {
+		const employeeAppointments = await this.appointmentEmployeesService
+			.findEmployeeAppointments(employeeId)
+			.pipe(takeUntil(this._ngDestroy$))
+			.toPromise();
+
+		this.renderBookedAppointments(
+			employeeAppointments
+				.map((o) => o.employeeAppointment)
+				.filter((o) => o)
+		);
+	}
+
+	renderBookedAppointments(appointments) {
+		for (let appointment of appointments) {
+			this.checkAndAddEventToCalendar(
+				moment(appointment.startDateTime).utc().format(),
+				moment(appointment.endDateTime).utc().format(),
+				appointment.id,
+				'BookedSlot'
+			);
+		}
 	}
 
 	getEvents(arg, callback) {
@@ -296,6 +323,11 @@ export class AppointmentComponent extends TranslationBaseComponent
 		id: string,
 		type: string
 	) {
+		if (
+			startTime === endTime ||
+			new Date(startTime).getTime() < new Date().getTime()
+		)
+			return;
 		const durationCheck = type === 'AvailabilitySlot' ? true : false;
 		!this.calendarEvents.find(
 			(o) =>

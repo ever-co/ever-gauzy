@@ -51,6 +51,16 @@ export class InvoicesService {
 			.toPromise();
 	}
 
+	updateWithoutAuth(
+		id: string,
+		updateInput: InvoiceUpdateInput
+	): Promise<Invoice> {
+		return this.http
+			.put<Invoice>(`/api/invoices/estimate/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
 	edit(invoice: Invoice): Promise<Invoice> {
 		return this.http
 			.put<Invoice>(`/api/invoices/${invoice.id}`, invoice)
@@ -69,6 +79,7 @@ export class InvoicesService {
 		email: string,
 		base64: string,
 		invoiceNumber: number,
+		invoiceId: string,
 		isEstimate: boolean
 	): Promise<any> {
 		return this.http
@@ -76,7 +87,8 @@ export class InvoicesService {
 				params: {
 					isEstimate,
 					base64,
-					invoiceNumber
+					invoiceNumber,
+					invoiceId
 				}
 			})
 			.pipe(first())
