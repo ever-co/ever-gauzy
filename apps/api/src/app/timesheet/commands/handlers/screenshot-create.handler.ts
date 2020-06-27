@@ -2,14 +2,14 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import * as moment from 'moment';
 import { ScreenshotCreateCommand } from '..';
-import { ScreenShotService } from '../../screenshot.service';
-import { TimeSlotService } from '../../time-slot.service';
+import { ScreenshotService } from '../../screenshot/screenshot.service';
+import { TimeSlotService } from '../../time-slot/time-slot.service';
 
 @CommandHandler(ScreenshotCreateCommand)
 export class ScreenshotCreateHandler
 	implements ICommandHandler<ScreenshotCreateCommand> {
 	constructor(
-		private _screenshotService: ScreenShotService,
+		private _screenshotService: ScreenshotService,
 		private _timeSlotService: TimeSlotService
 	) {}
 
