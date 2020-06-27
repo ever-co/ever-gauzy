@@ -7,8 +7,7 @@ export class OrganizationClientsCreateHandler
 	implements ICommandHandler<OrganizationClientsCreateCommand> {
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService
-	)
-	{}
+	){}
 
 	public async execute(
 		command: OrganizationClientsCreateCommand
