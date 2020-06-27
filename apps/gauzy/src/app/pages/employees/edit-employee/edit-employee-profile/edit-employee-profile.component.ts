@@ -202,7 +202,8 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 					'organizationDepartments',
 					'organizationPosition',
 					'organizationEmploymentTypes',
-					'tags'
+					'tags',
+					'skills'
 				],
 				{ id }
 			)

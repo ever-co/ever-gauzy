@@ -11,7 +11,10 @@
 		<div class="row mt-3">
 			<ngx-avatar class="ml-3" size="sm" [src]="src" [name]="ownerName">
 			</ngx-avatar>
-			<span class="ml-3 mt-1">Session: {{ goal.deadline }}</span>
+			<span class="ml-3 mt-1"
+				>{{ 'GOALS_PAGE.SESSION' | translate }}:
+				{{ goal.deadline }}</span
+			>
 			<span class="ml-5 mt-1"
 				><button
 					class="float-right"
@@ -27,12 +30,14 @@
 		<div class="row mt-3">
 			<p class="ml-3">
 				{{
-					goal.description != '' ? goal.description : 'No Description'
+					goal.description != ''
+						? goal.description
+						: ('GOALS_PAGE.NO_DESCRIPTION' | translate)
 				}}
 			</p>
 		</div>
 		<div class="row mt-3 text-center">
-			<p class="ml-3">Progress</p>
+			<p class="ml-3">{{ 'GOALS_PAGE.PROGRESS' | translate }}</p>
 			<div class="col-md-8">
 				<nb-progress-bar
 					class="ml-3"
@@ -52,7 +57,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<nb-tabset fullWidth>
-			<nb-tab tabTitle="Key Results">
+			<nb-tab tabTitle="{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}">
 				<nb-card *ngFor="let keyResult of goal.keyResults">
 					<nb-card-header>
 						<div class="row">
@@ -88,11 +93,11 @@
 					</nb-card-header>
 				</nb-card>
 			</nb-tab>
-			<nb-tab tabTitle="Updates">
+			<nb-tab tabTitle="{{ 'GOALS_PAGE.UPDATES' | translate }}">
 				<nb-card>
 					<nb-card-header>
 						<div class="main-header">
-							<h6>Updates</h6>
+							<h6>{{ 'GOALS_PAGE.UPDATES' | translate }}</h6>
 							<button nbButton status="primary">
 								{{ 'BUTTONS.ADD_NEW' | translate }}
 							</button>
@@ -117,13 +122,18 @@
 								<nb-card-footer>
 									<div class="main-header p-3">
 										<p class="font-weight-bold">
-											Update : {{ update.update }}
+											{{
+												'GOALS_PAGE.UPDATE' | translate
+											}}: {{ update.update }}
 										</p>
 										<p class="font-weight-bold">
 											{{ update.status }}
 										</p>
 										<p class="font-weight-bold">
-											Progress : {{ update.progress }}%
+											{{
+												'GOALS_PAGE.PROGRESS'
+													| translate
+											}}: {{ update.progress }}%
 										</p>
 									</div>
 								</nb-card-footer>
@@ -138,7 +148,7 @@
 		<nb-card>
 			<nb-card-header>
 				<div class="main-header">
-					<h6>Comments</h6>
+					<h6>{{ 'GOALS_PAGE.COMMENTS' | translate }}</h6>
 					<button nbButton status="primary">
 						{{ 'BUTTONS.ADD_NEW' | translate }}
 					</button>

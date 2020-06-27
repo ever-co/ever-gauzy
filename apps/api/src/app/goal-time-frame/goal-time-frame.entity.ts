@@ -1,7 +1,11 @@
 import { Entity, Column } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { GoalTimeFrame as IGoalTimeFrame } from '@gauzy/models';
+import {
+	GoalTimeFrame as IGoalTimeFrame,
+	TimeFrameStatusEnum
+} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum } from 'class-validator';
 
 @Entity('goal_time_frame')
 export class GoalTimeFrame extends Base implements IGoalTimeFrame {
@@ -9,7 +13,8 @@ export class GoalTimeFrame extends Base implements IGoalTimeFrame {
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: String, enum: TimeFrameStatusEnum })
+	@IsEnum(TimeFrameStatusEnum)
 	@Column()
 	status: string;
 

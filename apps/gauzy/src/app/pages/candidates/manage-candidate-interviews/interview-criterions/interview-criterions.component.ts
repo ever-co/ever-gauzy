@@ -1,11 +1,11 @@
-<nb-card>
-	<nb-card-header>
-		<ngx-back-navigation class="d-block"></ngx-back-navigation>
-		<h4>
+import { Component } from '@angular/core';
+
+@Component({
+	selector: 'ga-interview-criterions',
+	template: `
+		<h5 id="criterions">
 			{{ 'CANDIDATES_PAGE.CRITERIONS.CANDIDATE_CRITERIONS' | translate }}
-		</h4>
-	</nb-card-header>
-	<nb-card-body>
+		</h5>
 		<div class="add-criterion">
 			<ga-candidate-technologies
 				class="add-criterion-card"
@@ -14,5 +14,9 @@
 				class="add-criterion-card"
 			></ga-candidate-personal-qualities>
 		</div>
-	</nb-card-body>
-</nb-card>
+	`,
+	styleUrls: ['./interview-criterions.component.scss']
+})
+export class InterviewCriterionsComponent {
+	constructor() {}
+}

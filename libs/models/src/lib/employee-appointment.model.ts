@@ -43,3 +43,18 @@ export interface IEmployeeAppointmentCreateInput {
 	emails?: string;
 	invitees?: AppointmentEmployees[];
 }
+
+export interface IEmployeeAppointmentUpdateInput {
+	description?: string;
+	location?: string;
+	agenda?: string;
+	startDateTime?: Date;
+	endDateTime?: Date;
+	bufferTimeStart?: Boolean;
+	bufferTimeEnd?: Boolean;
+	bufferTimeInMins?: Number;
+	breakTimeInMins?: Number;
+	breakStartTime?: Date;
+	organizationId?: string;
+	status?: string;
+}

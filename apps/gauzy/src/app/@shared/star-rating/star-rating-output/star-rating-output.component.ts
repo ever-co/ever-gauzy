@@ -19,6 +19,7 @@ export class StarRatingOutputComponent {
 		}
 		const integerPart = Math.floor(rate);
 		const doublePart = rate % 1;
+		this.stars = [];
 		for (let i = 0; i < this.starsCount; i++) {
 			if (i > integerPart) {
 				this.stars.push({ icon: StarsIcon.BORDERED, active: false });

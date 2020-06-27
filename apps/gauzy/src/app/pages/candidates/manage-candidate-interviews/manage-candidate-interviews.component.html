@@ -1,38 +1,34 @@
 <nb-card>
-	<nb-card-header>
-		<ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
-		<div class="main-header">
-			<h4>
-				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULED_INTERVIEWS'
-						| translate
-				}}
-			</h4>
-			<div class="buttons">
-				<ga-employee-multi-select
-					class="multi-select"
-					[allEmployees]="employees"
-					[label]="false"
-					(selectedChange)="onEmployeeSelected($event)"
-				>
-				</ga-employee-multi-select>
-				<ga-candidate-multi-select
-					class="multi-select"
-					[allCandidates]="candidates"
-					(selectedChange)="onCandidateSelected($event)"
-				>
-				</ga-candidate-multi-select>
-				<button nbButton status="primary" (click)="add()">
-					<nb-icon icon="plus-outline"></nb-icon>
-					{{
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
-							| translate
-					}}
-				</button>
-			</div>
-		</div>
+	<nb-card-header
+		><ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
+		<h4>
+			{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.MANAGE_INTERVIEWS'
+					| translate
+			}}
+		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<full-calendar #calendar [options]="calendarOptions"></full-calendar>
+		<nb-tabset>
+			<nb-tab
+				tabTitle="{{
+					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CALENDAR' | translate
+				}}"
+				><ga-interview-calendar></ga-interview-calendar>
+			</nb-tab>
+			<nb-tab
+				tabTitle="{{
+					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWS' | translate
+				}}"
+				><ga-interview-panel></ga-interview-panel>
+			</nb-tab>
+
+			<nb-tab
+				tabTitle="{{
+					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS' | translate
+				}}"
+				><ga-interview-criterions></ga-interview-criterions>
+			</nb-tab>
+		</nb-tabset>
 	</nb-card-body>
 </nb-card>
