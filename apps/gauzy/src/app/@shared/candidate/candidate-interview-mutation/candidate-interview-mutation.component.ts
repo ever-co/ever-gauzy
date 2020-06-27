@@ -341,7 +341,7 @@ export class CandidateInterviewMutationComponent
 	}
 	route() {
 		this.dialogRef.close();
-		this.router.navigate(['/pages/employees/candidates/criterions']);
+		this.router.navigate(['/pages/employees/candidates/interviews']);
 	}
 
 	ngOnDestroy() {

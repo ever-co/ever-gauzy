@@ -1,0 +1,10 @@
+.add-criterion {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  &-card {
+    width: 48%;
+  }
+}

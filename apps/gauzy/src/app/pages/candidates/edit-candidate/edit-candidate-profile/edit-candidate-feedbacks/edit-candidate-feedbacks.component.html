@@ -41,15 +41,10 @@
 								>
 									<div class="criterions-rating-radio-group">
 										<ga-star-rating-output
-											[rate]="null"
+											[rate]="averageRating"
 											class="stars-output"
 										></ga-star-rating-output>
-										<span
-											>Average Rating:
-											<span *ngIf="averageRating">
-												{{ averageRating }}
-											</span></span
-										>
+
 										<nb-radio-group
 											class="radio-group"
 											[(ngModel)]="status"
@@ -90,7 +85,17 @@
 									</div>
 
 									<div class="form-blocks">
-										<div class="form-block">
+										<div
+											class="form-block"
+											[ngStyle]="{
+												width:
+													personalQualitiesList?.length ===
+													0
+														? '100%'
+														: '48%'
+											}"
+											*ngIf="technologiesList?.length > 0"
+										>
 											<div class="label mb-2">
 												{{
 													'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
@@ -128,7 +133,20 @@
 												</div>
 											</div>
 										</div>
-										<div class="form-block">
+										<div
+											class="form-block"
+											[ngStyle]="{
+												width:
+													technologiesList?.length ===
+													0
+														? '100%'
+														: '48%'
+											}"
+											*ngIf="
+												personalQualitiesList?.length >
+												0
+											"
+										>
 											<div class="label mb-2">
 												{{
 													'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'

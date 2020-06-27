@@ -97,6 +97,11 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true })
 	isEstimate?: boolean;
 
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isAccepted?: boolean;
+
 	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })

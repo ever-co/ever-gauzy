@@ -1,16 +1,24 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	*ngIf="appointment && employee"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header>
 		<div class="main-header">
-			<h4>
+			<h4 *ngIf="!appointment.status">
 				{{ 'PUBLIC_APPOINTMENTS.CONFIRM_APPOINTMENT' | translate }}
 				<nb-icon
 					icon="checkmark-circle-2-outline"
 					class="icons"
 				></nb-icon>
 			</h4>
+			<h4 *ngIf="appointment.status">
+				{{ 'PUBLIC_APPOINTMENTS.APPOINTMENT_INFO' | translate }}
+			</h4>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="appointment && employee">
+	<nb-card-body>
 		<nb-card class="p-3">
 			<h6>
 				{{ 'PUBLIC_APPOINTMENTS.DETAILS' | translate }}
@@ -42,17 +50,39 @@
 				<strong
 					>{{ 'FORM.LABELS.MEETING_LOCATION' | translate }}:
 				</strong>
-				<span>{{ appointment.location }}</span>
+				<span>{{ appointment.location || 'N/A' }}</span>
 			</div>
 			<div class="p-2">
 				<strong>{{ 'FORM.LABELS.DURATION' | translate }}: </strong>
 				<span>{{ duration }}</span>
 			</div>
 		</nb-card>
-		<nb-card>
+		<nb-card *ngIf="!appointment.status">
 			<div class="p-3 caption-2">
 				<span>{{ 'PUBLIC_APPOINTMENTS.EMAIL_SENT' | translate }} </span>
 			</div>
 		</nb-card>
+		<nb-card *ngIf="appointment.status">
+			<div class="p-3">
+				<span style="color: red;"
+					>{{
+						'PUBLIC_APPOINTMENTS.EXPIRED_OR_CANCELLED' | translate
+					}}
+				</span>
+			</div>
+		</nb-card>
+		<div
+			*ngIf="!appointment.status"
+			class="col-3"
+			style="padding-left: 0%;"
+		>
+			<button
+				(click)="cancelAppointment(appointment.id)"
+				status="warning"
+				nbButton
+			>
+				{{ 'PUBLIC_APPOINTMENTS.CANCEL' | translate }}
+			</button>
+		</div>
 	</nb-card-body>
 </nb-card>

@@ -297,7 +297,7 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	timeFormat?: 12 | 24;
 
 	@ApiProperty({ type: Skill })
-	@ManyToMany((type) => Skill)
+	@ManyToMany((type) => Skill, (skill) => skill.organization)
 	@JoinTable({
 		name: 'skill_organization'
 	})

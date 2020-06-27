@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { KeyResult } from '@gauzy/models';
+import { KeyResult, KeyResultDeadlineEnum } from '@gauzy/models';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import {
 	differenceInCalendarDays,
@@ -36,7 +36,10 @@ export class KeyResultProgressChartComponent implements OnInit {
 					let start;
 					let end;
 					let period;
-					if (keyResult.deadline === 'No Custom Deadline') {
+					if (
+						keyResult.deadline ===
+						KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+					) {
 						start = new Date(res.items[0].startDate);
 						end = new Date(res.items[0].endDate);
 					} else {

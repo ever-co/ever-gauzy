@@ -96,6 +96,8 @@ import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.modul
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
 import { HelpCenterArticleModule } from './help-center-article/help-center-article.module';
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
+import { EstimateEmail } from './estimate-email/estimate-email.entity';
+import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 
 @Module({
 	imports: [
@@ -244,6 +246,10 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 					{
 						path: '/email-template',
 						module: EmailTemplateModule
+					},
+					{
+						path: '/estimate-email',
+						module: EstimateEmailModule
 					},
 					{
 						path: 'time-off-policy',
@@ -441,6 +447,7 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		EstimateEmail,
 		GoalModule,
 		GoalTimeFrameModule,
 		KeyResultModule,

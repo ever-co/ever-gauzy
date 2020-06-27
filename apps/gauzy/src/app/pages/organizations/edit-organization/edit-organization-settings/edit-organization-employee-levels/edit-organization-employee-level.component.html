@@ -15,13 +15,12 @@
 					'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
 				}}</label>
 				<input
-					#addInput
+					#addInput="ngModel"
 					nbInput
 					type="text"
 					[placeholder]="'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate"
-					[(ngModel)]="add"
+					[ngModel]="add"
 					required
-					#addLevel="ngModel"
 				/>
 			</div>
 			<ga-tags-color-input
@@ -37,7 +36,7 @@
 					(click)="addEmployeeLevel(addInput.value)"
 					nbButton
 					status="success"
-					[disabled]="addLevel.invalid"
+					[disabled]="addInput.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
@@ -76,11 +75,9 @@
 						<input
 							nbInput
 							type="text"
-							#level
-							[value]="e.level"
-							[(ngModel)]="edit"
+							[(ngModel)]="e.level"
+							#level="ngModel"
 							required
-							#editLevel="ngModel"
 						/>
 					</div>
 					<ga-tags-color-input
@@ -98,7 +95,7 @@
 							(click)="editEmployeeLevel(e.id, level.value)"
 							nbButton
 							status="success"
-							[disabled]="editLevel.invalid"
+							[disabled]="level.invalid"
 						>
 							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span

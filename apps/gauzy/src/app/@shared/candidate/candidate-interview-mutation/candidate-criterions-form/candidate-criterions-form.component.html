@@ -10,12 +10,10 @@
 			<div class="label mb-2" *ngIf="technologiesList?.length > 0">
 				{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
 			</div>
-			<div *ngFor="let technology of technologiesList">
+			<div *ngFor="let technology of technologiesList; let i = index">
 				<nb-checkbox
 					(checkedChange)="checkedTechnologies(technology.name)"
-					[checked]="
-						isChecked(technology.name, editSelectedTechnologies)
-					"
+					[checked]="checkedTech[i]"
 					>{{ technology.name }}</nb-checkbox
 				>
 			</div>
@@ -32,10 +30,10 @@
 					'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate
 				}}
 			</div>
-			<div *ngFor="let quality of personalQualitiesList">
+			<div *ngFor="let quality of personalQualitiesList; let i = index">
 				<nb-checkbox
 					(checkedChange)="checkedQualities(quality.name)"
-					[checked]="isChecked(quality.name, editSelectedQualities)"
+					[checked]="checkedQual[i]"
 					>{{ quality.name }}</nb-checkbox
 				>
 			</div>

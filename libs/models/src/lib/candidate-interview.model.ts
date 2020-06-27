@@ -3,7 +3,8 @@ import { Employee } from './employee.model';
 import {
 	ICandidateFeedback,
 	ICandidateInterviewers,
-	ICandidateTechnologies
+	ICandidateTechnologies,
+	Candidate
 } from '@gauzy/models';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 export interface ICandidateInterview extends IBaseEntityModel {
@@ -18,6 +19,8 @@ export interface ICandidateInterview extends IBaseEntityModel {
 	employees?: Employee[];
 	technologies?: ICandidateTechnologies[];
 	personalQualities?: ICandidatePersonalQualities[];
+	candidate: Candidate;
+	rating?: number;
 }
 
 export interface ICandidateInterviewFindInput extends IBaseEntityModel {

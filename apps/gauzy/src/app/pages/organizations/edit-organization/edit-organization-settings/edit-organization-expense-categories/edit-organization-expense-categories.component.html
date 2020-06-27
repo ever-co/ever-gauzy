@@ -15,7 +15,9 @@
 					'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
 				}}</label>
 				<input
-					#addInput
+					#addInput="ngModel"
+					[ngModel]="add"
+					required
 					nbInput
 					type="text"
 					placeholder="{{
@@ -36,6 +38,7 @@
 					(click)="addCategory(addInput.value)"
 					nbButton
 					status="success"
+					[disabled]="addInput.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
@@ -72,10 +75,11 @@
 							'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
 						}}</label>
 						<input
-							#editInput
+							#editInput="ngModel"
 							nbInput
 							type="text"
-							[value]="selectedExpenseCategory.name"
+							[(ngModel)]="selectedExpenseCategory.name"
+							required
 						/>
 					</div>
 					<ga-tags-color-input
@@ -98,8 +102,9 @@
 							"
 							nbButton
 							status="success"
+							[disabled]="editInput.invalid"
 						>
-							Update
+							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span
 					>
 					<span
