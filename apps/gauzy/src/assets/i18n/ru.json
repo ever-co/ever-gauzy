@@ -1316,6 +1316,7 @@
 			"DETAILS_INVOICE_ITEMS": "Детали накладной",
 			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов",
 			"SELECT_INVOICE_TYPE": "Выберите тип счета",
+			"SELECT_ESTIMATE_TYPE": "Выберите тип оценки",
 			"SELECT_PROJECTS": "Выберите проекты",
 			"SELECT_TASKS": "Выберите задачи",
 			"SELECT_PRODUCTS": "Выберите товары"
@@ -1366,7 +1367,12 @@
 		"ESTIMATES": {
 			"HEADER": "Оценки",
 			"ESTIMATE_NUMBER": "Расчетный номер",
-			"ESTIMATE_DATE": "Предполагаемая дата"
+			"ESTIMATE_DATE": "Предполагаемая дата",
+			"ACCEPT": "Принять",
+			"REJECT": "Отклонить",
+			"ACCEPTED": "Принято",
+			"REJECTED": "Отклонено",
+			"ACCEPTED_STATUS": "Статус принят"
 		},
 		"PAYMENTS": {
 			"HEADER": "Платежи",

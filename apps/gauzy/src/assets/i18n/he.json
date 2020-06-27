@@ -1316,6 +1316,7 @@
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
 			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
+			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
 			"SELECT_TASKS": "Select tasks",
 			"SELECT_PRODUCTS": "Select products"
@@ -1366,7 +1367,12 @@
 		"ESTIMATES": {
 			"HEADER": "Estimates",
 			"ESTIMATE_NUMBER": "Estimate Number",
-			"ESTIMATE_DATE": "Estimate Date"
+			"ESTIMATE_DATE": "Estimate Date",
+			"ACCEPT": "Accept",
+			"REJECT": "Reject",
+			"ACCEPTED": "Accepted",
+			"REJECTED": "Rejected",
+			"ACCEPTED_STATUS": "Accepted Status"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments",
