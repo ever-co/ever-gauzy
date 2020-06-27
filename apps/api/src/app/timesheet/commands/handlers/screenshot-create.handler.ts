@@ -18,18 +18,32 @@ export class ScreenshotCreateHandler
 			const { input } = command;
 			const { fullUrl, thumbUrl, recordedAt, timeSlot } = input;
 
-			const { record } = await this._timeSlotService.findOneOrFail({
+			const {
+				record: findTimeSlot
+			} = await this._timeSlotService.findOneOrFail({
 				where: {
 					startedAt: moment(timeSlot).format('YYYY-MM-DD HH:mm:ss')
 				}
 			});
 
-			return await this._screenshotService.create({
-				timeSlotId: record.id,
-				fullUrl,
-				thumbUrl,
-				recordedAt
+			const {
+				record: screenshot
+			} = await this._screenshotService.findOneOrFail({
+				where: {
+					timeSlotId: findTimeSlot
+				}
 			});
+
+			if (!screenshot) {
+				return await this._screenshotService.create({
+					timeSlotId: findTimeSlot,
+					fullUrl,
+					thumbUrl,
+					recordedAt
+				});
+			}
+
+			return screenshot;
 		} catch (error) {
 			throw new BadRequestException(
 				'Cant create screenshot for time slot'

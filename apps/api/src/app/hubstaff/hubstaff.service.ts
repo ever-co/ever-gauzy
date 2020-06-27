@@ -728,7 +728,10 @@ export class HubstaffService {
 								setting.entity === IntegrationEntity.SCREENSHOT
 						);
 
-						if (taskSetting.sync) {
+						if (
+							typeof taskSetting == 'object' &&
+							taskSetting.sync
+						) {
 							tasks = await this._handleTasks(
 								projectsMap,
 								integrationId,
@@ -736,7 +739,10 @@ export class HubstaffService {
 							);
 						}
 
-						if (activitySetting.sync) {
+						if (
+							typeof activitySetting == 'object' &&
+							activitySetting.sync
+						) {
 							activities = await this._handleActivities(
 								projectsMap,
 								integrationId,
@@ -746,15 +752,18 @@ export class HubstaffService {
 							);
 						}
 
-						// if (typeof screenshotSetting == 'object' && screenshotSetting.sync) {
-						screenshots = await this._handleScreenshots(
-							projectsMap,
-							integrationId,
-							token,
-							gauzyId,
-							dateRange
-						);
-						// }
+						if (
+							typeof screenshotSetting == 'object' &&
+							screenshotSetting.sync
+						) {
+							screenshots = await this._handleScreenshots(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+						}
 						return { tasks, projectsMap, activities, screenshots };
 					case IntegrationEntity.CLIENT:
 						const clients = await this._handleClients(
