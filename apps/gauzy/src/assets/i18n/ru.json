@@ -866,6 +866,12 @@
 			"NEXT": "Следующий",
 			"PREVIOUS": "Предыдущий"
 		},
+		"MANAGE_INTERVIEWS": {
+			"CALENDAR": "Календарь",
+			"INTERVIEWS": "Интервью",
+			"MANAGE_INTERVIEWS": "Управление интервью",
+			"CRITERIONS": "Критерии"
+		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
 			"CANDIDATE_RATING": "Рейтинг Кандидата",
