@@ -204,7 +204,8 @@
 			"DESCRIPTION_OPTIONAL": "Описание (необязательно)",
 			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников",
 			"ADD_REMOVE_MANAGERS": "Добавление и удаление менеджеров",
-			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников"
+			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников",
+			"SHORT_DESCRIPTION": "Краткое описание"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -318,7 +319,9 @@
 			"BREAK_TIME": "Минут остановки",
 			"DESCRIPTION": "Описание",
 			"DURATION": "Продолжительность",
-			"TITLE": "Заголовок"
+			"TITLE": "Заголовок",
+			"SHORT_DESCRIPTION": "Краткое описание",
+			"EG_FULL_STACK_WEB_DEVELOPER": "Например, разработчик Full-Stack"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -760,6 +763,36 @@
 				"NAME": "Ключевое имя результата. например. Добавить метаданные для улучшения SEO",
 				"DESCRIPTION": "Краткое описание, чтобы дать некоторый контекст о ключевом результате"
 			}
+		},
+		"TYPE": {
+			"NUMBER": "Номер",
+			"TRUE_OR_FALSE": "Истина/Ложь",
+			"CURRENCY": "Валюта",
+			"TASK": "Задача"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "Нет пользовательских сроков",
+			"HARD_DEADLINE": "Тяжелый срок",
+			"HARD_AND_SOFT_DEADLINE": "Жесткий и мягкий срок"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "Тип результата ключа",
+				"INITIAL_VALUE": "Начальное значение",
+				"TARGET_VALUE": "Целевое значение",
+				"OWNER": "Владелец",
+				"LEAD": "Ведущий (опционально)",
+				"DEADLINE": "Срок сдачи",
+				"SOFT_DEADLINE": "Мягкий срок",
+				"HARD_DEADLINE": "Тяжелый срок",
+				"UPDATED_VALUE": "Значение обновлено",
+				"MARK_COMPLETE": "Отметить как завершенное",
+				"STATUS": "Статус"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Имя результата ключа. Например. Добавить метаданные для улучшения SEO",
+				"DESCRIPTION": "Короткое отчуждение, чтобы дать контекст о ключевых результатах"
+			}
 		}
 	},
 	"CANDIDATES_PAGE": {
@@ -862,6 +895,12 @@
 			"FINISHED_ADDING": "Я добавил все текущие Кандидаты",
 			"NEXT": "Следующий",
 			"PREVIOUS": "Предыдущий"
+		},
+		"MANAGE_INTERVIEWS": {
+			"CALENDAR": "Календарь",
+			"INTERVIEWS": "Интервью",
+			"MANAGE_INTERVIEWS": "Управление интервью",
+			"CRITERIONS": "Критерии"
 		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
@@ -1014,6 +1053,7 @@
 		"LANGUAGES": "Языки",
 		"AWARDS": "Награды",
 		"COMPANY_SKILLS": "Навыки компании",
+		"SKILLS": "Навыки",
 		"TOTAL_BONUSES_PAID": "Всего выплачено бонусов",
 		"COMPANY_PROFILE": "Профиль компании",
 		"TOTAL_CLIENTS": "Всего клиентов",
@@ -1811,10 +1851,13 @@
 		"PICK_DATETIME": "Выберите дату и время",
 		"DURATION": "Продолжительность:",
 		"EVENT_TYPE": "Тип события:",
-		"CONFIRM_APPOINTMENT": "Назначение подтверждено",
+		"CONFIRM_APPOINTMENT": "Назначение Подтверждено",
+		"APPOINTMENT_INFO": "Назначение Информации",
 		"DETAILS": "Детали бронирования",
 		"PARTICIPANTS": "Email участника",
 		"HOST": "Хост",
+		"CANCEL": "Отменить назначение",
+		"EXPIRED_OR_CANCELLED": "**Срок действия контракта истёк или был отменен.",
 		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания."
 	},
 	"EMAIL_TEMPLATES_PAGE": {
