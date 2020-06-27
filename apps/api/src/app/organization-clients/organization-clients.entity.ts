@@ -16,7 +16,6 @@ import {
 	IsString,
 	IsEmail,
 	IsOptional,
-	IsNumber,
 	IsEnum
 } from 'class-validator';
 import { Base } from '../core/entities/base';
