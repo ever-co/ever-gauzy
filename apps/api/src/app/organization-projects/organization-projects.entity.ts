@@ -105,5 +105,5 @@ export class OrganizationProjects extends Base
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	projectsType: string;
+	projectType: string;
 }

@@ -165,7 +165,7 @@ export enum ClientFocusEnum {
 	LARGE_BUSINESSES = 'Large Businesses'
 }
 
-export enum ProjectsTypesEnum {
+export enum ProjectTypesEnum {
 	CLIENT = 'CLIENT',
 	INTERNAL = 'INTERNAL'
 }

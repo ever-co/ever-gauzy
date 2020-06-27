@@ -8,7 +8,7 @@ import {
 	OrganizationProjects,
 	ProjectTypeEnum,
 	Tag,
-	ProjectsTypesEnum
+	ProjectTypesEnum
 } from '@gauzy/models';
 import { OrganizationClientsService } from '../../../../../../@core/services/organization-clients.service ';
 import { Store } from '../../../../../../@core/services/store.service';
@@ -46,7 +46,7 @@ export class EditOrganizationProjectsMutationComponent
 	tags: Tag[] = [];
 	organizationId: string;
 	clients: Object[] = [];
-	projectsTypes: string[] = Object.values(ProjectsTypesEnum);
+	projectTypes: string[] = Object.values(ProjectTypesEnum);
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -77,9 +77,9 @@ export class EditOrganizationProjectsMutationComponent
 		});
 	}
 
-	changeProjectType(projectsTypes: ProjectsTypesEnum) {
+	changeProjectType(projectType: ProjectTypesEnum) {
 		const clientControl = this.form.get('client');
-		if (projectsTypes === ProjectsTypesEnum.INTERNAL) {
+		if (projectType === ProjectTypesEnum.INTERNAL) {
 			clientControl.setValue('');
 		}
 	}
@@ -116,7 +116,7 @@ export class EditOrganizationProjectsMutationComponent
 			],
 			startDate: [this.project ? this.project.startDate : null],
 			endDate: [this.project ? this.project.endDate : null],
-			projectsType: [this.project ? this.project.projectsType : 'CLIENT']
+			projectType: [this.project ? this.project.projectType : 'CLIENT']
 		});
 	}
 
@@ -145,7 +145,7 @@ export class EditOrganizationProjectsMutationComponent
 				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],
 				endDate: this.form.value['endDate'],
-				projectsType: this.form.value['projectsType'],
+				projectType: this.form.value['projectType'],
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e)
