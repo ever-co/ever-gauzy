@@ -1,11 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
-import { Base } from '../core/entities/base';
+import { Column, Entity, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
 import { IIntegration } from '@gauzy/models';
 import { IntegrationType } from './integration-type.entity';
+import { TenantBase } from '../core/entities/tenant-base';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('integration')
-export class Integration extends Base implements IIntegration {
+export class Integration extends TenantBase implements IIntegration {
 	@ApiProperty({ type: String })
 	@Column({ nullable: false })
 	name: string;
@@ -23,4 +24,7 @@ export class Integration extends Base implements IIntegration {
 		name: 'integration_integration_type'
 	})
 	integrationTypes?: IntegrationType[];
+
+	@ManyToOne((type) => Organization, (organization) => organization.id)
+	organization: Organization;
 }
