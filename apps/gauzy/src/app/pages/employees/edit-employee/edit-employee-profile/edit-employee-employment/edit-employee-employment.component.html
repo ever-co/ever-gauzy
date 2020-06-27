@@ -29,6 +29,45 @@
 		</div>
 	</div>
 	<div class="row">
+		<div class="col">
+			<div class="form-group">
+				<label class="label" for="shortDescription">{{
+					'FORM.LABELS.SHORT_DESCRIPTION' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="shortDescription"
+					type="text"
+					nbInput
+					formControlName="short_description"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.EG_FULL_STACK_WEB_DEVELOPER'
+							| translate
+					}}"
+				/>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col">
+			<div class="form-group">
+				<p class="label">
+					{{ 'FORM.LABELS.DESCRIPTION' | translate }}
+				</p>
+				<div class="ck-editor">
+					<ckeditor
+						formControlName="description"
+						class="description"
+						[config]="{
+							width: '100%',
+							height: '200'
+						}"
+					></ckeditor>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
 		<div class="col-md-6">
 			<div class="form-group">
 				<label for="employmentType" class="label">{{
@@ -112,6 +151,15 @@
 					[isOrgLevel]="true"
 				>
 				</ga-tags-color-input>
+			</div>
+		</div>
+		<div class="col-md-6">
+			<div class="form-group">
+				<ngx-skills-input
+					[selectedSkills]="skills"
+					(selectedSkillsEvent)="selectedSkillsHandler($event)"
+				>
+				</ngx-skills-input>
 			</div>
 		</div>
 	</div>

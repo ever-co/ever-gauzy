@@ -10,7 +10,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { Tag, Organization } from '@gauzy/models';
+import { Tag, Organization, Skill } from '@gauzy/models';
 import { ActivatedRoute } from '@angular/router';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 
@@ -24,6 +24,7 @@ export interface SelectedEmployee {
 	imageUrl: string;
 	defaultType?: DEFAULT_TYPE;
 	tags?: Tag[];
+	skills?: Skill[];
 }
 
 export enum DEFAULT_TYPE {
@@ -37,7 +38,8 @@ export const ALL_EMPLOYEES_SELECTED: SelectedEmployee = {
 	lastName: '',
 	imageUrl: 'https://i.imgur.com/XwA2T62.jpg',
 	defaultType: DEFAULT_TYPE.ALL_EMPLOYEE,
-	tags: []
+	tags: [],
+	skills: []
 };
 
 export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
@@ -46,7 +48,8 @@ export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
 	lastName: '',
 	imageUrl: '',
 	defaultType: DEFAULT_TYPE.NO_EMPLOYEE,
-	tags: []
+	tags: [],
+	skills: []
 };
 
 @Component({

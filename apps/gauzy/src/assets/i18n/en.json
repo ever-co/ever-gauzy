@@ -204,7 +204,8 @@
 			"DESCRIPTION": "Description",
 			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
-			"ADD_REMOVE_MEMBERS": "Add or Remove Members"
+			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
+			"SHORT_DESCRIPTION": "Short Description"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -318,7 +319,9 @@
 			"BREAK_TIME": "Break minutes",
 			"DESCRIPTION": "Description",
 			"DURATION": "Duration",
-			"TITLE": "Title"
+			"TITLE": "Title",
+			"SHORT_DESCRIPTION": "Short Description",
+			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -940,6 +943,7 @@
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
+		"SKILLS": "SKILLS",
 		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
 		"COMPANY_PROFILE": "Company Profile",
 		"TOTAL_CLIENTS": "Total Clients",
