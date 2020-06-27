@@ -8,19 +8,19 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
-import { Contacts } from './contacts.entity';
-import { ContactsService } from './contacts.service';
+import { Contact } from './contact.entity';
+import { ContactService } from './contact.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Contacts')
+@ApiTags('Contact')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class ContactsController extends CrudController<Contacts> {
+export class ContactsController extends CrudController<Contact> {
 	constructor(
-		private readonly contactsService: ContactsService,
+		private readonly contactService: ContactService,
 		private readonly commandBus: CommandBus
 	) {
-		super(contactsService);
+		super(contactService);
 	}
 
 	@ApiOperation({
@@ -29,7 +29,7 @@ export class ContactsController extends CrudController<Contacts> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found contact recurring expense',
-		type: Contacts
+		type: Contact
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -38,8 +38,8 @@ export class ContactsController extends CrudController<Contacts> {
 	@Get()
 	async getAllContacts(
 		@Query('data') data: string
-	): Promise<IPagination<Contacts>> {
+	): Promise<IPagination<Contact>> {
 		const { relations, findInput } = JSON.parse(data);
-		return this.contactsService.findAll({ where: findInput, relations });
+		return this.contactService.findAll({ where: findInput, relations });
 	}
 }

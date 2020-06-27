@@ -28,7 +28,7 @@ import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
-import { Contacts } from '../contacts/contacts.entity';
+import { Contact } from '../contact/contact.entity';
 
 @Entity('organization_client')
 export class OrganizationClients extends Base implements IOrganizationClients {
@@ -39,10 +39,10 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	})
 	tags: Tag[];
 
-	@ApiProperty({ type: Contacts })
-	@ManyToOne(() => Contacts, { nullable: true, cascade: true })
+	@ApiProperty({ type: Contact })
+	@ManyToOne(() => Contact, { nullable: true, cascade: true })
 	@JoinColumn()
-	contact: Contacts;
+	contact: Contact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId(

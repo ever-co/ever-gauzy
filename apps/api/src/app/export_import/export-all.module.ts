@@ -90,8 +90,8 @@ import { OrganizationTeamEmployeeService } from '../organization-team-employee/o
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Equipment } from '../equipment/equipment.entity';
 import { EquipmentService } from '../equipment/equipment.service';
-import { Contacts } from '../contacts/contacts.entity';
-import { ContactsService } from '../contacts/contacts.service';
+import { Contact } from '../contact/contact.entity';
+import { ContactService } from '../contact/contact.service';
 
 @Module({
 	imports: [
@@ -140,7 +140,7 @@ import { ContactsService } from '../contacts/contacts.service';
 			AppointmentEmployees,
 			ApprovalPolicy,
 			Candidate,
-			Contacts
+			Contact
 		])
 	],
 	controllers: [ExportAllController],
@@ -188,7 +188,7 @@ import { ContactsService } from '../contacts/contacts.service';
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
 		CandidateService,
-		ContactsService
+		ContactService
 	],
 	exports: [
 		ExportAllService,
@@ -234,7 +234,7 @@ import { ContactsService } from '../contacts/contacts.service';
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
 		CandidateService,
-		ContactsService
+		ContactService
 	]
 })
 export class ExportAllModule {}

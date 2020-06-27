@@ -5,9 +5,9 @@ import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-m
 import { Organization, OrganizationCreateInput } from './organization.model';
 import { User, LanguagesEnum } from './user.model';
 import { Tag } from './tag-entity.model';
-import { Contacts } from './contacts.model';
+import { Contact } from './contacts.model';
 
-export interface OrganizationClients extends Contacts, IBaseEntityWithMembers {
+export interface OrganizationClients extends Contact, IBaseEntityWithMembers {
 	name: string;
 	organizationId: string;
 	primaryEmail: string;
@@ -21,10 +21,10 @@ export interface OrganizationClients extends Contacts, IBaseEntityWithMembers {
 	clientOrganizationId?: string;
 	inviteStatus?: string;
 	tags: Tag[];
-	contact: Contacts;
+	contact: Contact;
 }
 
-export interface OrganizationClientsFindInput extends Contacts, IBaseEntityModel {
+export interface OrganizationClientsFindInput extends Contact, IBaseEntityModel {
 	name?: string;
 	organizationId?: string;
 	primaryEmail?: string;
@@ -32,7 +32,7 @@ export interface OrganizationClientsFindInput extends Contacts, IBaseEntityModel
 	notes?: string;
 }
 
-export interface OrganizationClientsCreateInput extends Contacts, IBaseEntityModel {
+export interface OrganizationClientsCreateInput extends Contact, IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	contactId?: string;

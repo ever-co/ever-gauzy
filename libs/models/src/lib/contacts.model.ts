@@ -1,6 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
-export interface Contacts {
+export interface Contact {
 	name?: string;
 	firstName?: string;
 	lastname?: string;
@@ -11,7 +11,7 @@ export interface Contacts {
 	state?: string;
 }
 
-export interface ContactsFindInput extends IBaseEntityModel {
+export interface ContactFindInput extends IBaseEntityModel {
 	name?: string;
 	firstName?: string;
 	lastname?: string;
@@ -22,7 +22,7 @@ export interface ContactsFindInput extends IBaseEntityModel {
 	state?: string;
 }
 
-export interface ContactsCreateInput extends IBaseEntityModel {
+export interface ContactCreateInput extends IBaseEntityModel {
 	name?: string;
 	firstName?: string;
 	lastname?: string;

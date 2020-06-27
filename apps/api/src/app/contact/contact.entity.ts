@@ -5,10 +5,10 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Contacts as IContacts } from '../../../../../libs/models/src/lib/contacts.model';
+import { Contact as IContact } from '../../../../../libs/models/src/lib/contacts.model';
 
 @Entity('contact')
-export class Contacts extends Base implements IContacts {
+export class Contact extends Base implements IContact {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsOptional()
