@@ -339,7 +339,10 @@ export class SeedDataService {
 			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
 		});
 
-		await createHelpCenter(this.connection);
+		await createHelpCenter(this.connection, {
+			tenant,
+			org: defaultOrganizations[0]
+		});
 
 		//User level data that needs connection, tenant, organization, role, users
 		const defaultEmployees = await createDefaultEmployees(this.connection, {

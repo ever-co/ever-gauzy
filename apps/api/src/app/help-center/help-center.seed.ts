@@ -1,6 +1,8 @@
 import { HelpCenter } from './help-center.entity';
 import { IHelpCenter } from '@gauzy/models';
 import { Connection } from 'typeorm';
+import { Tenant } from '../tenant/tenant.entity';
+import { Organization } from '../organization/organization.entity';
 
 const helpCenterMenuList: IHelpCenter[] = [
 	{
@@ -100,10 +102,22 @@ const helpCenterMenuList: IHelpCenter[] = [
 ];
 
 export const createHelpCenter = async (
-	connection: Connection
+	connection: Connection,
+	{
+		tenant,
+		org
+	}: {
+		tenant: Tenant;
+		org: Organization;
+	}
 ): Promise<IHelpCenter[]> => {
 	for (const node of helpCenterMenuList) {
-		const entity = await createEntity(connection, node);
+		const helpCenter: HelpCenter = { ...node, tenant, organization: org };
+		helpCenter.children.map((child: HelpCenter) => {
+			child.organization = org;
+			child.tenant = tenant;
+		});
+		const entity = await createEntity(connection, helpCenter);
 		await save(connection, entity);
 	}
 
@@ -117,7 +131,7 @@ const save = async (
 	await connection.manager.save(node);
 };
 
-const createEntity = async (connection: Connection, node: IHelpCenter) => {
+const createEntity = async (connection: Connection, node: HelpCenter) => {
 	if (!node) {
 		return;
 	}
