@@ -195,8 +195,9 @@ export class EmployeeStatisticsService {
 	}
 
 	private _formatDate(date: Date) {
-		return `${this._monthNames[date.getMonth()]} '${date.getFullYear() -
-			2000}`;
+		return `${this._monthNames[date.getMonth()]} '${
+			date.getFullYear() - 2000
+		}`;
 	}
 	/**
 	 * Return bonus value based on the bonus type and percentage
@@ -426,7 +427,7 @@ export class EmployeeStatisticsService {
 			],
 			where: [
 				{
-					orgId: employee.organization.id,
+					organizationId: employee.organization.id,
 					splitExpense: true,
 					startDate: LessThanOrEqual(endOfMonth(searchMonth)),
 					endDate: MoreThanOrEqual(
@@ -434,7 +435,7 @@ export class EmployeeStatisticsService {
 					)
 				},
 				{
-					orgId: employee.organization.id,
+					organizationId: employee.organization.id,
 					splitExpense: true,
 					startDate: LessThanOrEqual(endOfMonth(searchMonth)),
 					endDate: IsNull()

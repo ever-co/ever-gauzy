@@ -157,8 +157,8 @@ export abstract class RecurringExpenseDeleteHandler<
 				parentRecurringExpenseId:
 					originalExpense.parentRecurringExpenseId
 			};
-			if (originalExpense.orgId) {
-				createOptions.orgId = originalExpense.orgId;
+			if (originalExpense.organizationId) {
+				createOptions.organizationId = originalExpense.organizationId;
 				createOptions.splitExpense = originalExpense.splitExpense;
 			} else if (originalExpense.employeeId) {
 				createOptions.employeeId = originalExpense.employeeId;
