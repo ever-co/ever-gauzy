@@ -98,6 +98,7 @@ import { CandidateCriterionsRating } from '../candidate-criterions-rating/candid
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { Contact } from '../contact/contact.entity';
+import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 
 const entities = [
@@ -192,7 +193,8 @@ const entities = [
 	Payment,
 	Stage,
 	Payment,
-	Contact
+	Contact,
+	EstimateEmail
 ];
 
 @Module({

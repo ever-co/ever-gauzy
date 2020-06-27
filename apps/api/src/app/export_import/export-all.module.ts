@@ -92,6 +92,8 @@ import { Equipment } from '../equipment/equipment.entity';
 import { EquipmentService } from '../equipment/equipment.service';
 import { Contact } from '../contact/contact.entity';
 import { ContactService } from '../contact/contact.service';
+import { EstimateEmailService } from '../estimate-email/estimate-email.service';
+import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 
 @Module({
 	imports: [
@@ -140,7 +142,8 @@ import { ContactService } from '../contact/contact.service';
 			AppointmentEmployees,
 			ApprovalPolicy,
 			Candidate,
-			Contact
+			Contact,
+			EstimateEmail
 		])
 	],
 	controllers: [ExportAllController],
@@ -188,7 +191,8 @@ import { ContactService } from '../contact/contact.service';
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
 		CandidateService,
-		ContactService
+		ContactService,
+		EstimateEmailService
 	],
 	exports: [
 		ExportAllService,
@@ -234,7 +238,8 @@ import { ContactService } from '../contact/contact.service';
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
 		CandidateService,
-		ContactService
+		ContactService,
+		EstimateEmailService
 	]
 })
 export class ExportAllModule {}
