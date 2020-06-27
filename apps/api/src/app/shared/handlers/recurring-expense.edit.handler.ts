@@ -144,8 +144,8 @@ export abstract class RecurringExpenseEditHandler<
 		if (originalExpense.employeeId) {
 			createObject.employeeId = originalExpense.employeeId;
 		}
-		if (originalExpense.orgId) {
-			createObject.orgId = originalExpense.orgId;
+		if (originalExpense.organizationId) {
+			createObject.organizationId = originalExpense.organizationId;
 			createObject.splitExpense = originalExpense.splitExpense;
 		}
 		const newExpense = await this.crudService.create(createObject);

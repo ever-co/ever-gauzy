@@ -15,4 +15,5 @@ export interface IHelpCenter extends IBaseEntityModel {
 	parent?: IHelpCenter;
 	article?: IHelpCenterArticle[];
 	parentId?: string;
+	organizationId?: string;
 }

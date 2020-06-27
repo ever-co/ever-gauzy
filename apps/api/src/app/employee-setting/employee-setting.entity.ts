@@ -1,4 +1,4 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -13,6 +13,7 @@ import {
 	EmployeeSetting as IEmployeeSetting,
 	CurrenciesEnum
 } from '@gauzy/models';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('employee_setting')
 export class EmployeeSetting extends Base implements IEmployeeSetting {
@@ -57,4 +58,7 @@ export class EmployeeSetting extends Base implements IEmployeeSetting {
 	@Index()
 	@Column()
 	currency: string;
+
+	@ManyToOne((type) => Employee, (employee) => employee.id)
+	employee: Employee;
 }

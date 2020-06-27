@@ -210,7 +210,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		if (result) {
 			try {
 				await this.organizationRecurringExpenseService.create({
-					orgId: this.selectedOrg.id,
+					organizationId: this.selectedOrg.id,
 					...result
 				});
 
@@ -281,7 +281,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		if (this.selectedOrg && this.selectedDate) {
 			this.selectedOrgRecurringExpense = (
 				await this.organizationRecurringExpenseService.getAllByMonth({
-					orgId: this.selectedOrg.id,
+					organizationId: this.selectedOrg.id,
 					year: this.selectedDate.getFullYear(),
 					month: this.selectedDate.getMonth()
 				})
