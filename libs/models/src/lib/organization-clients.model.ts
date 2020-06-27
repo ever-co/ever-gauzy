@@ -5,7 +5,7 @@ import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-m
 import { Organization, OrganizationCreateInput } from './organization.model';
 import { User, LanguagesEnum } from './user.model';
 import { Tag } from './tag-entity.model';
-import { Contact } from './contacts.model';
+import { Contact } from './contact.model';
 
 export interface OrganizationClients extends Contact, IBaseEntityWithMembers {
 	name: string;

@@ -9,15 +9,15 @@ import { ContactCreateInput } from '@gauzy/models';
 export class ContactService extends CrudService<Contact> {
 	constructor(
 		@InjectRepository(Contact)
-		private readonly contactsRepository: Repository<Contact>
+		private readonly contactRepository: Repository<Contact>
 	) {
-		super(contactsRepository);
+		super(contactRepository);
 	}
 
-	async saveContacts(
+	async saveContact(
 		contactRequest: ContactCreateInput
 	): Promise<Contact> {
-		return this.contactsRepository.save(contactRequest);
+		return this.contactRepository.save(contactRequest);
 	}
 
 }

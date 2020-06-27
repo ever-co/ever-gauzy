@@ -5,7 +5,6 @@ import {
 	Query,
 	UseGuards
 	} from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
 import { Contact } from './contact.entity';
@@ -15,10 +14,9 @@ import { AuthGuard } from '@nestjs/passport';
 @ApiTags('Contact')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class ContactsController extends CrudController<Contact> {
+export class ContactController extends CrudController<Contact> {
 	constructor(
 		private readonly contactService: ContactService,
-		private readonly commandBus: CommandBus
 	) {
 		super(contactService);
 	}
@@ -36,7 +34,7 @@ export class ContactsController extends CrudController<Contact> {
 		description: 'Record not found'
 	})
 	@Get()
-	async getAllContacts(
+	async getAllContact(
 		@Query('data') data: string
 	): Promise<IPagination<Contact>> {
 		const { relations, findInput } = JSON.parse(data);

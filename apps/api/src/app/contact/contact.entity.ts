@@ -5,7 +5,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Contact as IContact } from '../../../../../libs/models/src/lib/contacts.model';
+import { Contact as IContact } from '../../../../../libs/models/src/lib/contact.model';
 
 @Entity('contact')
 export class Contact extends Base implements IContact {

@@ -3,12 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Contact } from './contact.entity';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
-import { ContactsController } from './contact.controller';
+import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
 
 @Module({
 	imports: [TypeOrmModule.forFeature([Contact]), CqrsModule],
-	controllers: [ContactsController],
+	controllers: [ContactController],
 	providers: [ContactService, ...CommandHandlers],
 	exports: [ContactService]
 })
