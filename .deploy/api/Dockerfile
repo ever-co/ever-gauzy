@@ -1,13 +1,23 @@
-# API
+#
+# devependecies
+#
+FROM node:alpine AS dependencies
+RUN apk add --no-cache \
+    g++ git make python
+WORKDIR /srv/gauzy
+
+COPY apps/desktop/package.json ./apps/desktop/
+COPY apps/api/package.json ./apps/api/
+COPY package.json yarn.lock ./
+RUN yarn install
+
+
+
 FROM node:alpine AS development
 USER node
 WORKDIR /srv/gauzy
 RUN chown -r node:node .
-RUN apk add --no-cache g++ git make python
-
-COPY --chown=node:node apps/api/package.json ./apps/api/package.json
-COPY --chown=node:node package.json yarn.lock ./
-RUN yarn install
+COPY --from=dependencies /srv/gauzy .
 
 
 

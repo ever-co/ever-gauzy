@@ -1,11 +1,21 @@
-# Webapp
-FROM node:alpine AS development
-RUN apk add --no-cache g++ git make python
+#
+# devependecies
+#
+FROM node:alpine AS dependencies
+RUN apk add --no-cache \
+    g++ git make python
 WORKDIR /srv/gauzy
 
-COPY apps/api/package.json ./apps/api
+COPY apps/desktop/package.json ./apps/desktop/
+COPY apps/api/package.json ./apps/api/
 COPY package.json yarn.lock ./
 RUN yarn install
+
+
+
+FROM node:alpine AS development
+WORKDIR /srv/gauzy
+COPY --from=dependencies /srv/gauzy .
 
 
 
