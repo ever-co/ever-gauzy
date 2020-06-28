@@ -323,7 +323,7 @@ export class SeedDataService {
 
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
 
-		await createDefaultProducts(this.connection);
+		await createDefaultProducts(this.connection, tenant);
 
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,
