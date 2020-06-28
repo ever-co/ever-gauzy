@@ -17,6 +17,7 @@ FROM node:alpine AS development
 USER node:node
 WORKDIR /srv/gauzy
 COPY --from=dependencies /srv/gauzy .
+COPY . .
 
 
 
