@@ -18,7 +18,6 @@ import {
 	IsOptional,
 	IsEnum
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import {
 	OrganizationClients as IOrganizationClients,
 	ClientOrganizationInviteStatus

@@ -4,7 +4,6 @@ import {
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum
 } from '@gauzy/models';
-import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
