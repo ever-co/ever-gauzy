@@ -16,7 +16,7 @@ RUN yarn install
 
 FROM node:alpine AS production
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
+COPY wait /
 
 RUN npm install cross-env -g \
     && npm install pm2 -g --unsafe-perm \

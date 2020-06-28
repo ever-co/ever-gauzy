@@ -6,19 +6,17 @@ RUN apk add --no-cache g++ git make python
 
 
 COPY package.json yarn.lock ./
-COPY apps/api/package.json ./apps/api/package.json
-# COPY .snyk /tmp/.snyk
+COPY apps/api/package.json ./apps/api
 RUN yarn install
 
 FROM node:alpine AS production
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
+COPY wait /
 
 RUN npm install cross-env -g \
     && npm install pm2 -g --unsafe-perm \
     && chmod +x /wait
 
-RUN mkdir /srv/gauzy
 RUN mkdir /srv/gauzy/dist
 
 WORKDIR /srv/gauzy
