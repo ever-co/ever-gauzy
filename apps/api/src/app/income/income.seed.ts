@@ -31,6 +31,7 @@ export const createDefaultIncomes = async (
 				income.employee = foundEmployee;
 				income.clientName = seedIncome.clientName;
 				income.organization = defaultData.org;
+				income.tenant = defaultData.org.tenant;
 				income.amount = seedIncome.amount;
 				income.clientId = faker.random
 					.number({ min: 10, max: 9999 })
@@ -78,6 +79,7 @@ export const createRandomIncomes = async (
 				});
 
 				income.organization = employee.organization;
+				income.tenant = tenant;
 				income.employee = employee;
 				income.clientName = clientsArray[currentIndex];
 				income.amount = faker.random.number({ min: 10, max: 9999 });
