@@ -48,6 +48,7 @@ export const createDefaultExpenses = async (
 
 				expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
+				expense.tenant = defaultData.org.tenant;
 				expense.amount = Math.abs(seedExpense.amount);
 				expense.vendor = foundVendor;
 				expense.category = foundCategory;
@@ -104,6 +105,7 @@ export const createRandomExpenses = async (
 				});
 
 				expense.organization = employee.organization;
+				expense.tenant = tenant;
 				expense.employee = employee;
 				expense.amount = faker.random.number({ min: 10, max: 999 });
 				expense.vendor =

@@ -65,7 +65,7 @@ export class EmployeeStatisticsService {
 		});
 
 		const mappedEmployeeExpenses = (
-			await this.expenseService.findAll(
+			await this.expenseService.findAllExpenses(
 				{
 					where: {
 						employee: {
