@@ -1,9 +1,7 @@
 # Webapp
-
 FROM node:alpine AS development
 WORKDIR /srv/gauzy
 RUN apk add --no-cache g++ git make python
-
 
 COPY package.json yarn.lock ./
 COPY apps/api/package.json ./apps/api
@@ -13,9 +11,7 @@ FROM node:alpine AS production
 
 COPY wait /
 
-RUN npm install cross-env -g \
-    && npm install pm2 -g --unsafe-perm \
-    && chmod +x /wait
+RUN chmod +x /wait
 
 RUN mkdir /srv/gauzy/dist
 

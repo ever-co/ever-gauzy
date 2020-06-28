@@ -11,16 +11,13 @@ USER node
 
 COPY --chown=node:node package.json yarn.lock ./
 COPY --chown=node:node apps/api/package.json ./apps/api/package.json
-# COPY .snyk /tmp/.snyk
 RUN yarn install
 
 FROM node:alpine AS production
 
 COPY wait /
 
-RUN npm install cross-env -g \
-    && npm install pm2 -g --unsafe-perm \
-    && chmod +x /wait
+RUN chmod +x /wait
 
 WORKDIR /srv/gauzy
 USER node
