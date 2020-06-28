@@ -14,23 +14,25 @@ RUN yarn install
 
 
 FROM node:alpine AS development
+USER node:node
 WORKDIR /srv/gauzy
 COPY --from=dependencies /srv/gauzy .
 
 
 
 FROM node:alpine AS production
-EXPOSE 4200
 COPY wait /
-RUN mkdir dist
+EXPOSE 4200
+USER node:node
 WORKDIR /srv/gauzy
+
 
 ARG NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_OPTIONS $NODE_OPTIONS
 ENV NODE_ENV production
 
-RUN chown node:node -r .
 RUN chmod +x /wait
+RUN mkdir dist
 
 COPY --from=development /srv/gauzy/node_modules ./node_modules
 COPY . .

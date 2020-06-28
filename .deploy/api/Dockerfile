@@ -14,15 +14,14 @@ RUN yarn install
 
 
 FROM node:alpine AS development
-USER node
+USER node:node
 WORKDIR /srv/gauzy
-RUN chown -r node:node .
 COPY --from=dependencies /srv/gauzy .
 
 
 
 FROM node:alpine AS production
-USER node
+USER node:node
 EXPOSE 3000
 RUN mkdir dist
 WORKDIR /srv/gauzy
