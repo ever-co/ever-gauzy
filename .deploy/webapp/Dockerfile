@@ -1,12 +1,9 @@
 # Webapp
 
 FROM node:alpine AS development
-
+WORKDIR /srv/gauzy
 RUN apk add --no-cache g++ git make python
 
-RUN mkdir /srv/gauzy
-
-WORKDIR /srv/gauzy
 
 COPY package.json yarn.lock ./
 COPY apps/api/package.json ./apps/api/package.json
@@ -25,6 +22,8 @@ RUN mkdir /srv/gauzy
 RUN mkdir /srv/gauzy/dist
 
 WORKDIR /srv/gauzy
+RUN mkdir dist
+RUN chown node:node -r .
 
 ARG NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_OPTIONS $NODE_OPTIONS

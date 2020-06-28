@@ -4,11 +4,10 @@ FROM node:alpine AS development
 
 RUN apk add --no-cache g++ git make python
 
-RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
-
+WORKDIR /srv/gauzy
+RUN chown node:node /srv/gauzy
 USER node
 
-WORKDIR /srv/gauzy
 
 COPY --chown=node:node package.json yarn.lock ./
 COPY --chown=node:node apps/api/package.json ./apps/api/package.json
@@ -23,10 +22,10 @@ RUN npm install cross-env -g \
     && npm install pm2 -g --unsafe-perm \
     && chmod +x /wait
 
-RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
-RUN mkdir /srv/gauzy/dist && chown node:node /srv/gauzy/dist
-
+WORKDIR /srv/gauzy
 USER node
+RUN mkdir -p dist
+RUN chown node:node -r .
 
 WORKDIR /srv/gauzy
 
