@@ -19,6 +19,10 @@ RUN yarn install
 FROM node:alpine AS development
 USER node:node
 WORKDIR /srv/gauzy
+
+ENV DB_NAME postgres
+ENV DB_PORT 5432
+
 COPY --from=dependencies /srv/gauzy .
 COPY . .
 
@@ -46,6 +50,8 @@ WORKDIR /srv/gauzy
 
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_ENV production
+ENV DB_NAME postgres
+ENV DB_PORT 5432
 
 COPY wait /
 RUN chmod +x /wait

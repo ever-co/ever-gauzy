@@ -18,6 +18,9 @@ RUN yarn install
 FROM node:alpine AS development
 USER node:node
 WORKDIR /srv/gauzy
+
+ENV API_PORT 3000
+
 COPY --from=dependencies /srv/gauzy .
 COPY . .
 
@@ -43,6 +46,8 @@ WORKDIR /srv/gauzy
 USER node:node
 EXPOSE 4200
 COPY wait /
+
+ENV API_PORT 3000
 
 RUN chmod +x /wait
 COPY .deploy/webapp/nginx.conf /etc/nginx
