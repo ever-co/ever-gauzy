@@ -29,9 +29,11 @@ import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 import { Contact } from '../contact/contact.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization_client')
-export class OrganizationClients extends Base implements IOrganizationClients {
+export class OrganizationClients extends TenantBase
+	implements IOrganizationClients {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationClient)
 	@JoinTable({
@@ -80,7 +82,6 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ApiPropertyOptional({ type: String, isArray: true })
 	phones?: string[];
-
 
 	@ApiProperty({ type: String, enum: ClientOrganizationInviteStatus })
 	@IsEnum(ClientOrganizationInviteStatus)
