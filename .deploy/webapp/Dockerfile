@@ -1,33 +1,29 @@
 # Webapp
 FROM node:alpine AS development
-WORKDIR /srv/gauzy
 RUN apk add --no-cache g++ git make python
+WORKDIR /srv/gauzy
 
-COPY package.json yarn.lock ./
 COPY apps/api/package.json ./apps/api
+COPY package.json yarn.lock ./
 RUN yarn install
 
+
+
 FROM node:alpine AS production
-
+EXPOSE 4200
 COPY wait /
-
-RUN chmod +x /wait
-
-RUN mkdir /srv/gauzy/dist
-
-WORKDIR /srv/gauzy
 RUN mkdir dist
-RUN chown node:node -r .
+WORKDIR /srv/gauzy
 
 ARG NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_OPTIONS $NODE_OPTIONS
 ENV NODE_ENV production
 
+RUN chown node:node -r .
+RUN chmod +x /wait
+
 COPY --from=development /srv/gauzy/node_modules ./node_modules
-
 COPY . .
-
-EXPOSE 4200
 
 CMD /wait \
     && cross-env NODE_ENV=production yarn run config:prod \
