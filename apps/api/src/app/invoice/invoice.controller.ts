@@ -12,7 +12,8 @@ import {
 	Body,
 	Query,
 	Get,
-	Req
+	Req,
+	Post
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
@@ -109,5 +110,15 @@ export class InvoiceController extends CrudController<Invoice> {
 			request.body.params.isEstimate,
 			request.get('Origin')
 		);
+	}
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Post()
+	async create(
+		@Body() entity: IInvoice,
+		...options: any[]
+	): Promise<Invoice> {
+		return this.invoiceService.create(entity);
 	}
 }
