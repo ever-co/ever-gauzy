@@ -43,7 +43,8 @@ import {
 	TimeSlotCreateCommand,
 	TimesheetGetCommand,
 	TimesheetCreateCommand,
-	ScreenshotCreateCommand
+	ScreenshotCreateCommand,
+	ActivityCreateCommand
 } from '../timesheet/commands';
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
@@ -614,6 +615,143 @@ export class HubstaffService {
 		return tasksMap;
 	}
 
+	/*
+	 * Sync with database urls activities
+	 */
+	async syncUrlActivities({
+		integrationId,
+		projectId,
+		activities
+	}): Promise<IIntegrationMap[]> {
+		const integrationMaps = await activities.map(
+			async ({ id, site, time_slot, tracked, details }) => {
+				const gauzyActivity = await this.commandBus.execute(
+					new ActivityCreateCommand({
+						title: site,
+						duration: tracked,
+						type: 'url',
+						timeSlot: time_slot,
+						data: details
+					})
+				);
+
+				return await this._integrationMapService.create({
+					gauzyId: gauzyActivity.id,
+					integrationId,
+					sourceId: id,
+					entity: IntegrationEntity.ACTIVITY
+				});
+			}
+		);
+
+		return await Promise.all(integrationMaps);
+	}
+
+	/*
+	 * auto sync for urls activities for seperate project
+	 */
+	private async _handleUrlActivities(
+		projectsMap,
+		integrationId,
+		token,
+		organizationId,
+		dateRange
+	) {
+		try {
+			const start = moment(dateRange.start).format('YYYY-MM-DD');
+			const end = moment(dateRange.end).format('YYYY-MM-DD');
+			const pageLimit = 500;
+
+			const urlActivitiesMapped = await Promise.all(
+				projectsMap.map(async (project) => {
+					const { gauzyId, sourceId } = project;
+					const { urls } = await this.fetchIntegration(
+						`https://api.hubstaff.com/v2/projects/${sourceId}/url_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`,
+						token
+					);
+
+					return await this.syncUrlActivities({
+						integrationId,
+						projectId: gauzyId,
+						activities: urls
+					});
+				})
+			);
+			return urlActivitiesMapped;
+		} catch (error) {
+			throw new BadRequestException('Cannot sync url activities');
+		}
+	}
+
+	/*
+	 * Sync with database application activities
+	 */
+	async syncAppActivities({
+		integrationId,
+		projectId,
+		activities
+	}): Promise<IIntegrationMap[]> {
+		const integrationMaps = await activities.map(
+			async ({ id, name, time_slot, tracked, activations }) => {
+				const gauzyActivity = await this.commandBus.execute(
+					new ActivityCreateCommand({
+						title: name,
+						duration: tracked,
+						type: 'app',
+						data: activations,
+						timeSlot: time_slot
+					})
+				);
+
+				return await this._integrationMapService.create({
+					gauzyId: gauzyActivity.id,
+					integrationId,
+					sourceId: id,
+					entity: IntegrationEntity.ACTIVITY
+				});
+			}
+		);
+
+		return await Promise.all(integrationMaps);
+	}
+
+	/*
+	 * auto sync for application activities for seperate project
+	 */
+
+	private async _handleAppActivities(
+		projectsMap,
+		integrationId,
+		token,
+		organizationId,
+		dateRange
+	) {
+		try {
+			const start = moment(dateRange.start).format('YYYY-MM-DD');
+			const end = moment(dateRange.end).format('YYYY-MM-DD');
+			const pageLimit = 500;
+
+			const appActivitiesMapped = await Promise.all(
+				projectsMap.map(async (project) => {
+					const { gauzyId, sourceId } = project;
+					const { applications } = await this.fetchIntegration(
+						`https://api.hubstaff.com/v2/projects/${sourceId}/application_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`,
+						token
+					);
+
+					return await this.syncAppActivities({
+						integrationId,
+						projectId: gauzyId,
+						activities: applications
+					});
+				})
+			);
+			return appActivitiesMapped;
+		} catch (error) {
+			throw new BadRequestException('Cannot sync application activities');
+		}
+	}
+
 	private async _handleActivities(
 		projectsMap,
 		integrationId,
@@ -672,24 +810,29 @@ export class HubstaffService {
 		organizationId,
 		dateRange
 	) {
-		const start = moment(dateRange.start).format('YYYY-MM-DD');
-		const end = moment(dateRange.end).format('YYYY-MM-DD');
+		try {
+			const start = moment(dateRange.start).format('YYYY-MM-DD');
+			const end = moment(dateRange.end).format('YYYY-MM-DD');
 
-		const screenshotsMaped = await Promise.all(
-			projectsMap.map(async (project) => {
-				const { screenshots } = await this.fetchIntegration(
-					`https://api.hubstaff.com/v2/projects/${project.sourceId}/screenshots?time_slot[start]=${start}&time_slot[stop]=${end}`,
-					token
-				);
+			const screenshotsMapped = await Promise.all(
+				projectsMap.map(async (project) => {
+					const { gauzyId } = project;
+					const { screenshots } = await this.fetchIntegration(
+						`https://api.hubstaff.com/v2/projects/${project.sourceId}/screenshots?time_slot[start]=${start}&time_slot[stop]=${end}`,
+						token
+					);
 
-				return await this.syncScreenshots({
-					integrationId,
-					projectId: project.gauzyId,
-					screenshots
-				});
-			})
-		);
-		return screenshotsMaped;
+					return await this.syncScreenshots({
+						integrationId,
+						projectId: gauzyId,
+						screenshots
+					});
+				})
+			);
+			return screenshotsMapped;
+		} catch (error) {
+			throw new BadRequestException('Cannot sync activities screenshots');
+		}
 	}
 
 	async autoSync({
@@ -701,7 +844,6 @@ export class HubstaffService {
 		dateRange
 	}) {
 		// entities have depended entity. eg to fetch Task we need Project id or Org id, because our Task entity is related to Project, the relation here is same, we need project id to fetch Tasks
-
 		const integratedMaps = await Promise.all(
 			entitiesToSync.map(async (setting) => {
 				switch (setting.entity) {
@@ -744,6 +886,22 @@ export class HubstaffService {
 							activitySetting.sync
 						) {
 							activities = await this._handleActivities(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+
+							activities.application = await this._handleAppActivities(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+
+							activities.urls = await this._handleUrlActivities(
 								projectsMap,
 								integrationId,
 								token,
