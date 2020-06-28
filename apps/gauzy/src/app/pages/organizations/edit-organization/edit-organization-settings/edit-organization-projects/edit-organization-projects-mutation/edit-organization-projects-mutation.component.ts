@@ -6,9 +6,9 @@ import {
 	Organization,
 	OrganizationClients,
 	OrganizationProjects,
-	ProjectTypeEnum,
+	ProjectBillingEnum,
 	Tag,
-	ProjectTypesEnum
+	ProjectOwnerEnum
 } from '@gauzy/models';
 import { OrganizationClientsService } from '../../../../../../@core/services/organization-clients.service ';
 import { Store } from '../../../../../../@core/services/store.service';
@@ -39,14 +39,14 @@ export class EditOrganizationProjectsMutationComponent
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];
-	types: string[] = Object.values(ProjectTypeEnum);
+	billings: string[] = Object.values(ProjectBillingEnum);
 	currencies: string[] = Object.values(CurrenciesEnum);
 	defaultCurrency: string;
 	public: Boolean = true;
 	tags: Tag[] = [];
 	organizationId: string;
 	clients: Object[] = [];
-	projectTypes: string[] = Object.values(ProjectTypesEnum);
+	owners: string[] = Object.values(ProjectOwnerEnum);
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -77,9 +77,9 @@ export class EditOrganizationProjectsMutationComponent
 		});
 	}
 
-	changeProjectType(projectType: ProjectTypesEnum) {
+	changeProjectOwner(owner: ProjectOwnerEnum) {
 		const clientControl = this.form.get('client');
-		if (projectType === ProjectTypesEnum.INTERNAL) {
+		if (owner === ProjectOwnerEnum.INTERNAL) {
 			clientControl.setValue('');
 		}
 	}
@@ -105,7 +105,7 @@ export class EditOrganizationProjectsMutationComponent
 					? this.project.client.name
 					: ''
 			],
-			type: [this.project ? this.project.type : 'RATE'],
+			billing: [this.project ? this.project.billing : 'RATE'],
 			currency: [
 				{
 					value: this.project
@@ -116,7 +116,7 @@ export class EditOrganizationProjectsMutationComponent
 			],
 			startDate: [this.project ? this.project.startDate : null],
 			endDate: [this.project ? this.project.endDate : null],
-			projectType: [this.project ? this.project.projectType : 'CLIENT']
+			owner: [this.project ? this.project.owner : 'CLIENT']
 		});
 	}
 
@@ -141,11 +141,11 @@ export class EditOrganizationProjectsMutationComponent
 				organizationId: this.organization.id,
 				name: this.form.value['name'],
 				client: this.form.value['client'].clientId,
-				type: this.form.value['type'],
+				billing: this.form.value['billing'],
 				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],
 				endDate: this.form.value['endDate'],
-				projectType: this.form.value['projectType'],
+				owner: this.form.value['owner'],
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e)

@@ -3,8 +3,8 @@ import { Employee } from './employee.model';
 import { OrganizationClients } from './organization-clients.model';
 import {
 	CurrenciesEnum,
-	ProjectTypeEnum,
-	ProjectTypesEnum
+	ProjectBillingEnum,
+	ProjectOwnerEnum
 } from './organization.model';
 import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 import { Tag } from './tag-entity.model';
@@ -15,12 +15,12 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	client?: OrganizationClients;
 	startDate?: Date;
 	endDate?: Date;
-	type: string;
+	billing: string;
 	currency: string;
 	members?: Employee[];
 	public: boolean;
 	tags: Tag[];
-	projectType: string;
+	owner: string;
 }
 
 export interface OrganizationProjectsFindInput extends IBaseEntityModel {
@@ -38,10 +38,10 @@ export interface OrganizationProjectsCreateInput {
 	client?: OrganizationClients;
 	startDate?: Date;
 	endDate?: Date;
-	type?: ProjectTypeEnum;
+	billing?: ProjectBillingEnum;
 	currency?: CurrenciesEnum;
 	members?: Employee[];
 	public?: boolean;
 	tags?: Tag[];
-	projectType?: ProjectTypesEnum;
+	owner?: ProjectOwnerEnum;
 }

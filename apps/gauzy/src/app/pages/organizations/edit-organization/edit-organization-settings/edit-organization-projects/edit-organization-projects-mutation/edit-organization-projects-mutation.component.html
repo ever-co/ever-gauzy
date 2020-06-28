@@ -56,17 +56,20 @@
 				</ng-select>
 			</div>
 			<div class="form-group col-4">
-				<label for="type" class="label">{{
-					'FORM.PLACEHOLDERS.TYPE' | translate
+				<label for="billing" class="label">{{
+					'FORM.PLACEHOLDERS.BILLING' | translate
 				}}</label>
 				<nb-select
 					fullWidth
-					placeholder="{{ 'FORM.PLACEHOLDERS.TYPE' | translate }}"
-					formControlName="type"
-					id="type"
+					placeholder="{{ 'FORM.PLACEHOLDERS.BILLING' | translate }}"
+					formControlName="billing"
+					id="billing"
 				>
-					<nb-option *ngFor="let type of types" [value]="type">
-						{{ 'SM_TABLE.' + type | translate }}
+					<nb-option
+						*ngFor="let billing of billings"
+						[value]="billing"
+					>
+						{{ 'SM_TABLE.' + billing | translate }}
 					</nb-option>
 				</nb-select>
 			</div>
@@ -138,22 +141,18 @@
 				</ga-tags-color-input>
 			</div>
 			<div class="form-group col-4">
-				<label for="projectsType" class="label">{{
-					'FORM.PLACEHOLDERS.PROJECT_TYPE' | translate
+				<label for="owner" class="label">{{
+					'FORM.PLACEHOLDERS.OWNER' | translate
 				}}</label>
 				<nb-select
 					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.PROJECT_TYPE' | translate
-					}}"
-					formControlName="projectType"
-					id="projectType"
-					(selectedChange)="changeProjectType($event)"
+					placeholder="{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}"
+					formControlName="owner"
+					id="owner"
+					(selectedChange)="changeProjectOwner($event)"
 				>
-					<nb-option
-						*ngFor="let projectType of projectTypes"
-						[value]="projectType"
-						>{{ 'SM_TABLE.' + projectType | translate }}
+					<nb-option *ngFor="let owner of owners" [value]="owner"
+						>{{ 'SM_TABLE.' + owner | translate }}
 					</nb-option>
 				</nb-select>
 			</div>

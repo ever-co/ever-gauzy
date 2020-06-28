@@ -74,7 +74,7 @@ export class OrganizationProjects extends Base
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	type: string;
+	billing: string;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
@@ -105,5 +105,5 @@ export class OrganizationProjects extends Base
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	projectType: string;
+	owner: string;
 }

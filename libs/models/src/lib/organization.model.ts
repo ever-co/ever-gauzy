@@ -131,7 +131,7 @@ export enum DefaultValueDateTypeEnum {
 	START_OF_MONTH = 'START_OF_MONTH'
 }
 
-export enum ProjectTypeEnum {
+export enum ProjectBillingEnum {
 	RATE = 'RATE',
 	FLAT_FEE = 'FLAT_FEE',
 	MILESTONES = 'MILESTONES'
@@ -165,7 +165,7 @@ export enum ClientFocusEnum {
 	LARGE_BUSINESSES = 'Large Businesses'
 }
 
-export enum ProjectTypesEnum {
+export enum ProjectOwnerEnum {
 	CLIENT = 'CLIENT',
 	INTERNAL = 'INTERNAL'
 }
