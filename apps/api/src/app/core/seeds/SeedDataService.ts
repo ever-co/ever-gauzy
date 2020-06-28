@@ -145,6 +145,7 @@ import { Equipment } from '../../equipment/equipment.entity';
 import { Contact } from '../../contact/contact.entity';
 import { createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
 import { createRandomTask } from '../../tasks/task.seed';
+import { createRandomOrganizationProjects } from '../../organization-projects/organization-projects.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -213,7 +214,7 @@ const allEntities = [
 export class SeedDataService {
 	connection: Connection;
 	log = console.log;
-
+	organizations: Organization[];
 	constructor() {}
 
 	async createConnection() {
@@ -307,6 +308,8 @@ export class SeedDataService {
 			this.connection,
 			tenant
 		);
+
+		this.organizations = defaultOrganizations;
 
 		const superAdminUsers = await createDefaultSuperAdminUsers(
 			this.connection,
@@ -518,6 +521,10 @@ export class SeedDataService {
 		await createSkills(this.connection);
 		await createLanguages(this.connection);
 
+		await createRandomOrganizationProjects(
+			this.connection,
+			this.organizations
+		);
 		await createRandomTask(this.connection);
 		await createRandomTimesheet(this.connection);
 	}

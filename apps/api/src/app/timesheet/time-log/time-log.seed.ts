@@ -106,6 +106,7 @@ export const createRandomTimeLogs = async (
 					false
 				]);
 				timelog.deletedAt = null;
+				timelogs.push(timelog);
 			}
 		}
 
