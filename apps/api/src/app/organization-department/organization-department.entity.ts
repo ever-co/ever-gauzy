@@ -9,7 +9,6 @@ import {
 	ManyToMany,
 	ManyToOne
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { Organization } from '../organization/organization.entity';
