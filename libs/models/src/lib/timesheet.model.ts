@@ -190,15 +190,12 @@ export interface TimeSlotMinute extends IBaseEntityModel {
 }
 
 export interface ICreateActivityInput {
-	employeeId: string;
-	projectId: string;
-	duration?: number;
-	keyboard?: number;
-	mouse?: number;
-	overall?: number;
-	startedAt: Date;
-	stoppedAt: Date;
+	timeSlotId?: string;
+	timeSlot: string;
+	duration: number;
+	type: string;
 	title: string;
+	data?: string;
 }
 
 export enum ActivityType {
