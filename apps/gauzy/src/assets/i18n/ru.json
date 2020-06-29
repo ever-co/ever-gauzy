@@ -55,6 +55,7 @@
 		"START_DATE": "Дата начала",
 		"END_DATE": "Дата окончания",
 		"CLIENT_NAME": "Имя клиента",
+		"CONTACT_NAME": "Имя контакта",
 		"NAME": "Имя",
 		"VENDOR": "Продавец",
 		"CATEGORY": "Категория",
@@ -229,7 +230,7 @@
 			"ADD_CANDIDATE_QUALITY": "Добавить персональное качество",
 			"ADD_TECHNOLOGY": "Добавить технологию",
 			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
-			"CLIENTS": "Клиенты",
+			"CONTACTS": "Контакты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
 			"END_DATE_PROJECT": "Дата окончания (необязательно)",
 			"TEAM_NAME": "Имя команды",
@@ -514,7 +515,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "English",
+		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
@@ -654,14 +655,14 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Кафедры работника:",
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
-			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
+			"EMPLOYEE_CONTACTS": "Контакты сотрудника:",
 			"EMPLOYMENT_TYPE": "Тип занятости",
 			"ACCOUNT": "Аккаунт",
 			"EMPLOYMENT": "Занятость",
 			"LOCATION": "Местоположение",
 			"RATES": "Тарифы",
 			"PROJECTS": "Проекты",
-			"CLIENTS": "Клиенты",
+			"CONTACTS": "Контакты",
 			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
@@ -678,90 +679,60 @@
 	"GOALS_PAGE": {
 		"HEADER": "Все цели для ",
 		"GOAL": "Цель",
-		"GOALS_EMPTY": "Вы еще не создали никаких целей. Нажмите Add New, чтобы создать",
-		"ADD_NEW_KEY_RESULT": "Добавить новый ключевой результат",
+		"GOALS_EMPTY": "Вы еще не создали ни одной цели. Нажмите \"Добавить\", чтобы создать одну",
+		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа",
 		"ADD_NEW_OBJECTIVE": "Добавить новую цель",
-		"SESSION": "сессия",
-		"NO_DESCRIPTION": "Без описания",
+		"SESSION": "Сессия",
+		"NO_DESCRIPTION": "Нет описания",
 		"PROGRESS": "Прогресс",
 		"UPDATES": "Обновления",
 		"UPDATE": "Обновить",
 		"COMMENTS": "Комментарии",
 		"KEY_RESULTS": "Ключевые результаты",
 		"SETTINGS": {
-			"ADD_TIME_FRAME_TITLE": "Добавить таймфрейм",
-			"TIME_FRAME_PAGE_TITLE": "Установить сроки",
-			"PREDEFINED_TIME_FRAMES": "Предопределенные временные рамки"
+			"ADD_TIME_FRAME_TITLE": "Добавить временной кадр",
+			"TIME_FRAME_PAGE_TITLE": "Установить время",
+			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров"
 		},
 		"LEVELS": {
-			"ORGANIZATION": "организация",
-			"TEAM": "команда",
-			"EMPLOYEE": "Наемный рабочий"
+			"ORGANIZATION": "Организация",
+			"TEAM": "Команда",
+			"EMPLOYEE": "Сотрудник"
 		},
 		"TIME_FRAME_STATUS": {
-			"ACTIVE": "активный",
+			"ACTIVE": "Активный",
 			"INACTIVE": "Неактивный"
 		},
 		"FORM": {
 			"LABELS": {
-				"LEVEL": "уровень",
-				"OWNER": "владелец",
-				"LEAD": "Свинец (необязательно)",
-				"DEADLINE": "Крайний срок",
-				"STATUS": "Положение дел"
+				"LEVEL": "Уровень",
+				"OWNER": "Владелец",
+				"LEAD": "Ведущий (опционально)",
+				"DEADLINE": "Срок сдачи",
+				"STATUS": "Статус"
 			},
 			"PLACEHOLDERS": {
-				"NAME": "Объективное имя. например. Улучшить SEO сайта",
-				"DESCRIPTION": "Объективное описание.",
+				"NAME": "Объективное имя. Например: Улучшение SEO сайта",
+				"DESCRIPTION": "Описание цели.",
 				"LEVEL": "Уровень цели",
-				"TIME_FRAME_NAME": "Название периода времени, например. 'Q4-2020'"
+				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'"
 			},
 			"ERROR": {
-				"START_DATE_GREATER": "Дата окончания должна быть больше даты начала"
+				"START_DATE_GREATER": "Дата окончания должна быть больше, чем дата начала"
 			}
 		},
 		"BUTTONS": {
-			"ADD_TIME_FRAME": "Добавить таймфрейм"
+			"ADD_TIME_FRAME": "Добавить временной кадр"
 		}
 	},
 	"KEY_RESULT_PAGE": {
-		"UPDATE_KEY_RESULT": "Обновить ключ Результат",
+		"UPDATE_KEY_RESULT": "Обновить результат ключа",
 		"UPDATE": {
 			"STATUS": {
-				"ON_TRACK": "на трассе",
-				"NEEDS_ATTENTION": "необходимо внимание",
-				"OFF_TRACK": "отстают",
-				"NONE": "никто"
-			}
-		},
-		"TYPE": {
-			"NUMBER": "Число",
-			"TRUE_OR_FALSE": "Правда/Ложь",
-			"CURRENCY": "валюта",
-			"TASK": "задача"
-		},
-		"DEADLINE": {
-			"NO_CUSTOM_DEADLINE": "Нет пользовательских сроков",
-			"HARD_DEADLINE": "Жесткий срок",
-			"HARD_AND_SOFT_DEADLINE": "Жесткий и мягкий срок исполнения"
-		},
-		"FORM": {
-			"LABELS": {
-				"KEY_RESULT_TYPE": "Тип ключевого результата",
-				"INITIAL_VALUE": "Начальное значение",
-				"TARGET_VALUE": "Целевое значение",
-				"OWNER": "владелец",
-				"LEAD": "Свинец (необязательно)",
-				"DEADLINE": "Крайний срок",
-				"SOFT_DEADLINE": "Мягкий срок",
-				"HARD_DEADLINE": "Жесткий срок",
-				"UPDATED_VALUE": "Обновленное значение",
-				"MARK_COMPLETE": "Отметить как завершенный",
-				"STATUS": "Положение дел"
-			},
-			"PLACEHOLDERS": {
-				"NAME": "Ключевое имя результата. например. Добавить метаданные для улучшения SEO",
-				"DESCRIPTION": "Краткое описание, чтобы дать некоторый контекст о ключевом результате"
+				"ON_TRACK": "на треке",
+				"NEEDS_ATTENTION": "требует внимания",
+				"OFF_TRACK": "от трека",
+				"NONE": "нет"
 			}
 		},
 		"TYPE": {
@@ -926,7 +897,7 @@
 		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
 		"DEPARTMENTS": "Департаменты",
-		"CLIENTS": "Клиенты",
+		"CONTACTS": "Контакты",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Вендоры",
 		"EXPENSE_CATEGORIES": "Категории расходов",
@@ -938,7 +909,7 @@
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Организационные периодические расходы",
 		"EMPLOYMENT_TYPES": "Типы занятости",
-		"INVITE_CLIENT": "Пригласить клиента",
+		"INVITE_CONTACT": "Пригласить контакт",
 		"EMAIL_INVITE": "Приглашение",
 		"ADD_LEVEL_OF_EMPLOYEE": "Добавить уровень сотрудника",
 		"LEVEL_OF_EMPLOYEE": "Уровни сотрудников",
@@ -949,6 +920,7 @@
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
+			"CONTACT": "Контакт",
 			"NEW_CLIENT": "Добавить клиента",
 			"NAME": "Имя",
 			"PRIMARY_EMAIL": "Основной адрес э-почты",
@@ -965,7 +937,7 @@
 			"TYPE": "Тип",
 			"CURRENCY": "Валюта",
 			"TEAMS": "Команды",
-			"ADD_NEW_CLIENT": "Добавить клиента",
+			"ADD_NEW_CONTACT": "Добавить новый контакт",
 			"GENERAL_SETTINGS": "Общие настройки",
 			"DESIGN": "Дизайн",
 			"BONUS": "Бонус",
@@ -1601,10 +1573,10 @@
 			"OBJECTIVE_ADDED": "Цель добавлена",
 			"OBJECTIVE_DELETED": "Цель удалена",
 			"OBJECTIVE_UPDATED": "Цель обновлена",
-			"KEY_RESULT_ADDED": "Добавлен ключевой результат",
-			"KEY_RESULT_DELETED": "Ключ Результат удален",
-			"KEY_RESULT_UPDATED": "Ключевые результаты обновлены",
-			"TIME_FRAME_DELETED": "Таймфрейм удален"
+			"KEY_RESULT_ADDED": "Результат ключа добавлен",
+			"KEY_RESULT_DELETED": "Результат ключа удален",
+			"KEY_RESULT_UPDATED": "Результат ключа загружен",
+			"TIME_FRAME_DELETED": "Рамка времени удалена"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1712,6 +1684,14 @@
 				"INVITE_CLIENT": "Письмо с приглашением отправлено {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Произошла ошибка при попытке пригласить клиента.",
 				"EMAIL_EXISTS": "Этот адрес электронной почты уже существует в качестве пользователя"
+			},
+			"EDIT_ORGANIZATIONS_CONTACTS": {
+				"ADD_CONTACT": "Новый контакт {{ name }} успешно добавлен!",
+				"REMOVE_CONTACT": "Контакт {{ name }} успешно удален!",
+				"INVALID_CONTACT_DATA": "Пожалуйста, проверьте имя, основной адрес электронной почты и номер телефона вашего контакта",
+				"INVITE_CONTACT": "Письмо с приглашением отправлено {{ name }}.",
+				"INVITE_CONTACT_ERROR": "Произошла ошибка при попытке пригласить контакта.",
+				"EMAIL_EXISTS": "Этот контактный адрес электронной почты уже существует в качестве пользователя"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
 				"ADD_EMPLOYMENT_TYPE": "Новый тип занятости {{ name }} успешно добавлен!",
