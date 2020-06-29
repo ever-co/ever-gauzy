@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 set -eux
 
+export PORT=${PORT:-4200}
+export HOST=${HOST:-0.0.0.0}
+
 if [ -z "$@" ]; then
   "$0" yarn nx serve gauzy --host "$HOST" --port "$PORT" --disable-host-check
   exit
