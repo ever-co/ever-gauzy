@@ -53,10 +53,10 @@ RUN yarn nx build api --configuration=production
 FROM node:alpine AS production
 USER node:node
 WORKDIR /srv/gauzy
+EXPOSE ${API_PORT:-3000}
 CMD [ "node", "main.js" ]
 ENTRYPOINT [ "/entrypoint" ]
 COPY --from=dependencies /wait /entrypoint
-EXPOSE 3000
 
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_ENV production

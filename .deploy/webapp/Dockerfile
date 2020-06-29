@@ -56,10 +56,10 @@ RUN yarn nx build gauzy
 FROM nginx:alpine AS production
 USER node:node
 WORKDIR /srv/gauzy
+EXPOSE ${PORT:-4200}
 ENTRYPOINT [ "/entrypoint" ]
 CMD [ "nginx", "-g", "daemon off;" ]
 COPY --from=dependencies /wait /entrypoint
-EXPOSE 4200
 
 ENV API_PORT 3000
 
