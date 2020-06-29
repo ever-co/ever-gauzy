@@ -2,8 +2,9 @@
 # devependecies
 #
 FROM node:alpine AS dependencies
-RUN apk add --no-cache \
-    g++ git make python
+RUN apk add --no-cache g++ git make python
+COPY wait .deploy/webapp/entrypoint /
+RUN chmod +x /wait /entrypoint
 WORKDIR /srv/gauzy
 
 COPY apps/desktop/package.json ./apps/desktop/
@@ -17,8 +18,10 @@ RUN yarn install
 # development
 #
 FROM node:alpine AS development
-USER node:node
+COPY --from=dependencies /wait /entrypoint
+ENTRYPOINT [ "/entrypoint" ]
 WORKDIR /srv/gauzy
+USER node:node
 
 ENV DB_NAME postgres
 ENV DB_PORT 5432
@@ -43,10 +46,12 @@ RUN yarn nx build api --configuration=production
 # production
 #
 FROM node:alpine AS production
+COPY --from=dependencies /wait /entrypoint
+ENTRYPOINT [ "/entrypoint" ]
+CMD [ "node", "main.js" ]
+WORKDIR /srv/gauzy
 USER node:node
 EXPOSE 3000
-RUN mkdir dist
-WORKDIR /srv/gauzy
 
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_ENV production
@@ -54,6 +59,7 @@ ENV DB_NAME postgres
 ENV DB_PORT 5432
 
 COPY wait /
+RUN mkdir dist
 RUN chmod +x /wait
 
 COPY apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates

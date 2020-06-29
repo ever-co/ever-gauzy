@@ -2,8 +2,9 @@
 # devependecies
 #
 FROM node:alpine AS dependencies
-RUN apk add --no-cache \
-    g++ git make python
+RUN apk add --no-cache g++ git make python
+COPY wait .deploy/webapp/entrypoint /
+RUN chmod +x /wait /entrypoint
 WORKDIR /srv/gauzy
 
 COPY apps/desktop/package.json ./apps/desktop/
@@ -16,8 +17,10 @@ RUN yarn install
 # development
 #
 FROM node:alpine AS development
-USER node:node
+COPY --from=dependencies /wait /entrypoint
+ENTRYPOINT [ "/entrypoint" ]
 WORKDIR /srv/gauzy
+USER node:node
 
 ENV API_PORT 3000
 
@@ -42,13 +45,14 @@ RUN yarn nx build gauzy
 # production
 #
 FROM nginx:alpine AS production
+COPY --from=dependencies /wait /entrypoint
+CMD [ "nginx", "-g", "daemon off;" ]
+ENTRYPOINT [ "/entrypoint" ]
 WORKDIR /srv/gauzy
 USER node:node
 EXPOSE 4200
-COPY wait /
 
 ENV API_PORT 3000
 
-RUN chmod +x /wait
 COPY .deploy/webapp/nginx.conf /etc/nginx
 COPY --from=build /srv/gauzy/dist/apps/gauzy .

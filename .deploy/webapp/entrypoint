@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -eux
+
+if [ -z "$@" ]; then
+  "$0" yarn nx serve gauzy --host "$HOST" --port "$PORT" --disable-host-check
+  exit
+fi
+
+/wait
+exec "$@"

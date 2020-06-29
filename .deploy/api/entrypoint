@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -eux
+
+if [ -z "$@" ]; then
+  "$0" yarn nx serve api
+  exit
+fi
+
+/wait
+exec "$@"
