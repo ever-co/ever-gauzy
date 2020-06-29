@@ -1,6 +1,14 @@
 // Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
 
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import {
+	app,
+	BrowserWindow,
+	ipcMain,
+	screen,
+	Tray,
+	Menu,
+	nativeImage
+} from 'electron';
 import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
@@ -14,6 +22,8 @@ const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
 
 let win: BrowserWindow = null;
+let win2: BrowserWindow = null;
+let tray = null;
 
 const getFromEnv = parseInt(process.env.ELECTRON_IS_DEV, 10) === 1;
 
@@ -113,19 +123,21 @@ function createWindow() {
 	}
 }
 
-function createSetupWindow() {
+function createSetupWindow(value) {
 	mainWindowSettings.width = 800;
 	mainWindowSettings.height = 600;
 	mainWindowSettings.frame = false;
 	mainWindowSettings.webPreferences.nodeIntegration = true;
-	win = new BrowserWindow(mainWindowSettings);
+	win2 = new BrowserWindow(mainWindowSettings);
 	const launchPath = url.format({
 		pathname: path.join(__dirname, 'ui/index.html'),
 		protocol: 'file:',
 		slashes: true
 	});
-
-	win.loadURL(launchPath);
+	win2.loadURL(launchPath);
+	if (value) {
+		win2.hide();
+	}
 }
 
 function startServer(value) {
@@ -155,11 +167,56 @@ function startServer(value) {
 	} catch (error) {}
 
 	setTimeout(() => {
-		if (!value.isSetup) win.close();
+		if (!value.isSetup) {
+			win2.hide();
+		}
 		createWindow();
+		systemTrayMenu();
 	}, 5000);
 
 	return true;
+}
+
+function systemTrayMenu() {
+	const iconPath = path.join(
+		__dirname,
+		'assets',
+		'images',
+		'logos',
+		'icon.png'
+	);
+	const trayIcon = nativeImage.createFromPath(iconPath);
+	trayIcon.resize({ width: 16, height: 16 });
+	tray = new Tray(trayIcon);
+	console.log(tray);
+	const contextMenu = Menu.buildFromTemplate([
+		{
+			label: 'Start Tracking Time',
+			click() {
+				console.log('event click');
+				win2.webContents.send('start_tracking');
+			}
+		},
+		{
+			label: 'Stop Tracking Time',
+			click() {
+				win2.webContents.send('stop_tracking_time');
+			}
+		},
+		{
+			label: 'Setting',
+			click() {
+				win2.webContents.send('open_setting_page');
+			}
+		},
+		{
+			label: 'quit',
+			click() {
+				app.quit();
+			}
+		}
+	]);
+	tray.setContextMenu(contextMenu);
 }
 
 try {
@@ -182,10 +239,11 @@ try {
 						? `http://localhost:${configs.port}`
 						: 'http://localhost:3000'
 				};
+				createSetupWindow(true);
 				startServer(configs);
 			}
 		} catch (e) {
-			createSetupWindow();
+			createSetupWindow(false);
 		}
 
 		ipcMain.on('go', (event, arg) => {
