@@ -123,6 +123,8 @@ services:
             DB_NAME: postgres
             DB_USER: postgres
             DB_PASS: root
+        env_file:
+          - .env
         restart: on-failure
         depends_on:
             - db:${DB_HOST:-db}
@@ -145,6 +147,8 @@ services:
             dockerfile: .deploy/webapp/Dockerfile
         environment:
             NODE_ENV: production
+        env_file:
+          - .env
         restart: on-failure
         links:
             - db:${DB_HOST:-db}
