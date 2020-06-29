@@ -1,5 +1,3 @@
-import { AddCategoryModule } from './add-category/add-category.module';
-import { AddBaseModule } from './add-base/add-base.module';
 import { AddIconModule } from './add-icon/add-icon.module';
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -29,11 +27,9 @@ import { DeleteBaseModule } from './delete-base/delete-base.module';
 
 @NgModule({
 	imports: [
-		AddBaseModule,
 		AddIconModule,
 		EditBaseModule,
 		DeleteBaseModule,
-		AddCategoryModule,
 		EditCategoryModule,
 		DeleteCategoryModule,
 		CKEditorModule,

@@ -7,7 +7,8 @@ import {
 	Body,
 	UseGuards,
 	Get,
-	Query
+	Query,
+	Param
 } from '@nestjs/common';
 import { CrudController, IPagination } from '../core';
 import { HelpCenterService } from './help-center.service';
@@ -18,6 +19,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { ParseJsonPipe } from '../shared';
 import { CommandBus } from '@nestjs/cqrs';
 import { HelpCenterCreateCommand } from './commands';
+import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands/help-center.menu.bulk.delete.command';
 
 @ApiTags('knowledge_base')
 @UseGuards(AuthGuard('jwt'))
@@ -77,12 +79,31 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post('createBulk')
 	async createBulk(@Body() input: any): Promise<IHelpCenter[]> {
 		const { oldChildren = [], newChildren = [] } = input;
 		return this.commandBus.execute(
 			new HelpCenterCreateCommand(oldChildren, newChildren)
+		);
+	}
+
+	@ApiOperation({ summary: 'Update indexes in Bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Indexes have been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
+	@Post('deleteBulk/:id')
+	async deleteBulk(@Param('id') id: string): Promise<any> {
+		return this.commandBus.execute(
+			new KnowledgeBaseCategoryBulkDeleteCommand(id)
 		);
 	}
 }

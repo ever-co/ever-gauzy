@@ -4,7 +4,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HelpCenterService } from '../../../@core/services/help-center.service';
 
 @Component({
@@ -24,9 +24,10 @@ export class EditCategoryComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 	@Input() category: IHelpCenter;
+	@Input() base: IHelpCenter;
+	@Input() editType: string;
 	public selectedLang: string;
-	public selectedColor: string;
-	public selectedStatus: string;
+	public isToggled = false;
 	public selectedIcon: string;
 	public icons = [
 		'book-open-outline',
@@ -34,43 +35,76 @@ export class EditCategoryComponent extends TranslationBaseComponent
 		'alert-circle-outline',
 		'attach-outline'
 	];
-	public isDraft = ['draft', 'publish'];
 	public languages = ['en', 'ru', 'he', 'bg'];
-	public colors = ['black', 'blue'];
+	public parentId: string;
+	public color: string;
 	public form: FormGroup;
 
 	ngOnInit() {
-		this.selectedStatus =
-			this.category.privacy === 'eye-outline' ? 'publish' : 'draft';
-		this.selectedLang = this.category.language;
-		this.selectedColor = this.category.color;
-		this.selectedIcon = this.category.icon;
+		if (this.editType === 'edit') {
+			this.isToggled =
+				this.category.privacy === 'eye-outline' ? true : false;
+			this.selectedLang = this.category.language;
+			this.selectedIcon = this.category.icon;
+		}
 		this.form = this.fb.group({
-			name: [''],
-			desc: ['']
+			name: ['', Validators.required],
+			color: [''],
+			desc: ['', Validators.required]
 		});
 		this.loadFormData(this.category);
 	}
 
+	toggleStatus(event: boolean) {
+		this.isToggled = event;
+	}
+
 	loadFormData(category) {
-		this.form.patchValue({
-			name: category.name,
-			desc: category.description
-		});
+		if (this.editType === 'edit')
+			this.form.patchValue({
+				name: category.name,
+				desc: category.description,
+				color: category.color
+			});
+		if (this.editType === 'add') {
+			this.form.patchValue({
+				name: '',
+				desc: '',
+				color: ''
+			});
+			this.parentId = this.base.id;
+		}
 	}
 
 	async submit() {
-		this.category = await this.helpCenterService.update(this.category.id, {
-			name: `${this.form.value.name}`,
-			description: `${this.form.value.desc}`,
-			language: `${this.selectedLang}`,
-			color: `${this.selectedColor}`,
-			icon: `${this.selectedIcon}`,
-			privacy:
-				this.selectedStatus === 'publish'
-					? 'eye-outline'
-					: 'eye-off-outline'
-		});
+		if (this.editType === 'edit')
+			this.category = await this.helpCenterService.update(
+				this.category.id,
+				{
+					name: `${this.form.value.name}`,
+					description: `${this.form.value.desc}`,
+					language: `${this.selectedLang}`,
+					color: `${this.color}`,
+					icon: `${this.selectedIcon}`,
+					privacy:
+						this.isToggled === true
+							? 'eye-outline'
+							: 'eye-off-outline'
+				}
+			);
+		if (this.editType === 'add')
+			this.category = await this.helpCenterService.create({
+				name: `${this.form.value.name}`,
+				privacy:
+					this.isToggled === true ? 'eye-outline' : 'eye-off-outline',
+				icon: `${this.selectedIcon}`,
+				flag: 'category',
+				index: 0,
+				description: `${this.form.value.desc}`,
+				language: `${this.selectedLang}`,
+				color: `${this.color}`,
+				parentId: `${this.parentId}`
+			});
 		this.dialogRef.close(this.category);
 	}
 

@@ -1,10 +1,10 @@
 <nb-card class="main">
 	<nb-card-body>
 		<div class="header">
-			<h5>Remove Article</h5>
+			<h5>{{ 'HELP_PAGE.REMOVE_ARTICLE' | translate }}</h5>
 			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 		</div>
-		<span class="label">Are you sure? This cannot be undone.</span>
+		<span class="label">{{ 'HELP_PAGE.ARE_YOU_SURE' | translate }}</span>
 		<div class="save-button">
 			<button status="warning" (click)="delete()" nbButton>
 				{{ 'BUTTONS.DELETE' | translate }}

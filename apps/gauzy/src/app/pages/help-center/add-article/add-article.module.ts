@@ -6,7 +6,8 @@ import {
 	NbIconModule,
 	NbButtonModule,
 	NbSelectModule,
-	NbInputModule
+	NbInputModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -23,6 +24,7 @@ import { HelpCenterArticleService } from '../../../@core/services/help-center-ar
 		NbInputModule,
 		NbButtonModule,
 		NbSelectModule,
+		NbToggleModule,
 		FormsModule,
 		ReactiveFormsModule,
 		TranslateModule.forChild({

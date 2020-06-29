@@ -11,7 +11,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 		flag: 'base',
 		privacy: 'eye-outline',
 		language: 'en',
-		color: 'blue',
+		color: '#d53636',
 		index: 0,
 		children: [
 			{
@@ -21,7 +21,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				privacy: 'eye-outline',
 				description: 'Information',
 				language: 'en',
-				color: 'black',
+				color: '#d53636',
 				index: 0
 			},
 			{
@@ -31,7 +31,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				privacy: 'eye-off-outline',
 				description: 'Device Information',
 				language: 'en',
-				color: 'black',
+				color: '#d53636',
 				index: 1
 			},
 			{
@@ -42,7 +42,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Gauzy Privacy Statement',
 				data: 'Usage Information',
 				language: 'en',
-				color: 'black',
+				color: '#d53636',
 				index: 2
 			},
 			{
@@ -52,7 +52,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				name: 'Testing',
 				description: 'Gauzy Testing',
 				language: 'en',
-				color: 'black',
+				color: '#d53636',
 				index: 3
 			}
 		]
@@ -63,7 +63,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 		flag: 'base',
 		privacy: 'eye-off-outline',
 		language: 'en',
-		color: 'blue',
+		color: '#d53636',
 		index: 1,
 		children: [
 			{
@@ -73,7 +73,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				privacy: 'eye-outline',
 				description: 'Information',
 				language: 'en',
-				color: 'black',
+				color: '#d53636',
 				index: 0
 			}
 		]
@@ -84,7 +84,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 		privacy: 'eye-off-outline',
 		name: 'Privacy',
 		language: 'en',
-		color: 'black',
+		color: '#d53636',
 		index: 2,
 		children: [
 			{
@@ -94,7 +94,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				privacy: 'eye-outline',
 				description: 'Information',
 				language: 'en',
-				color: 'black',
+				color: '#d53636',
 				index: 0
 			}
 		]
