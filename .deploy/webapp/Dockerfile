@@ -12,7 +12,9 @@ COPY package.json yarn.lock ./
 RUN yarn install
 
 
-
+#
+# development
+#
 FROM node:alpine AS development
 USER node:node
 WORKDIR /srv/gauzy
@@ -20,24 +22,28 @@ COPY --from=dependencies /srv/gauzy .
 COPY . .
 
 
-
-FROM node:alpine AS production
-COPY wait /
-EXPOSE 4200
-USER node:node
+#
+# build
+#
+FROM node:alpine AS build
 WORKDIR /srv/gauzy
-
-
+COPY --from=development /srv/gauzy ./
 ARG NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_OPTIONS $NODE_OPTIONS
-ENV NODE_ENV production
+
+RUN yarn config:prod
+RUN yarn nx build gauzy
+
+
+
+#
+# production
+#
+FROM nginx:alpine AS production
+WORKDIR /srv/gauzy
+USER node:node
+EXPOSE 4200
+COPY wait /
 
 RUN chmod +x /wait
-RUN mkdir dist
-
-COPY --from=development /srv/gauzy/node_modules ./node_modules
-COPY . .
-
-CMD /wait \
-    && cross-env NODE_ENV=production yarn run config:prod \
-    && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn ng serve gauzy --disable-host-check --host 0.0.0.0 -c=production --prod
+COPY .deploy/webapp/nginx.conf /etc/nginx
+COPY --from=build /srv/gauzy/dist/apps/gauzy .
