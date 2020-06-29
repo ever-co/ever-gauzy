@@ -34,7 +34,12 @@ COPY . .
 FROM node:alpine AS build
 WORKDIR /srv/gauzy
 COPY --from=development /srv/gauzy ./
+
 ARG NODE_OPTIONS="--max-old-space-size=2048"
+ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
+
+RUN sed -i -e "s/API_BASE_URL.*;/API_BASE_URL = ${API_BASE_URL};/" \
+    apps/gauzy/src/environments/environment.ts
 
 RUN yarn config:prod
 RUN yarn nx build gauzy
