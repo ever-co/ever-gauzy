@@ -119,7 +119,6 @@ services:
             dockerfile: .deploy/api/Dockerfile
         environment:
             NODE_ENV: production
-            WAIT_HOSTS: db:5432
             DB_HOST: db
             DB_NAME: postgres
             DB_USER: postgres
@@ -146,7 +145,6 @@ services:
             dockerfile: .deploy/webapp/Dockerfile
         environment:
             NODE_ENV: production
-            WAIT_HOSTS: db:5432
         restart: on-failure
         links:
             - db:${DB_HOST:-db}
