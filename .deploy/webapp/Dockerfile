@@ -1,47 +1,42 @@
-# Webapp
-
-FROM node:alpine AS development
-
-RUN apk update \
-    && apk add libexecinfo libexecinfo-dev \
-    && npm i -g npm \
-    && apk --no-cache add --virtual builds-deps build-base \
-    snappy g++ snappy-dev gcc libgcc libstdc++ linux-headers autoconf automake make nasm python git \
-    && npm install --quiet node-gyp -g \ 
-    && npm config set python /usr/bin/python \
-    && npm install yarn@latest -g --force
-
-RUN mkdir /srv/gauzy
-
+#
+# devependecies
+#
+FROM node:alpine AS dependencies
+RUN apk add --no-cache \
+    g++ git make python
 WORKDIR /srv/gauzy
 
+COPY apps/desktop/package.json ./apps/desktop/
+COPY apps/api/package.json ./apps/api/
 COPY package.json yarn.lock ./
-COPY apps/api/package.json ./apps/api/package.json
-# COPY .snyk /tmp/.snyk
 RUN yarn install
 
-FROM node:alpine AS production
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
 
-RUN npm install cross-env -g \
-    && npm install pm2 -g --unsafe-perm \
-    && chmod +x /wait
-
-RUN mkdir /srv/gauzy
-RUN mkdir /srv/gauzy/dist
-
+FROM node:alpine AS development
+USER node:node
 WORKDIR /srv/gauzy
+COPY --from=dependencies /srv/gauzy .
+COPY . .
+
+
+
+FROM node:alpine AS production
+COPY wait /
+EXPOSE 4200
+USER node:node
+WORKDIR /srv/gauzy
+
 
 ARG NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_OPTIONS $NODE_OPTIONS
 ENV NODE_ENV production
 
+RUN chmod +x /wait
+RUN mkdir dist
+
 COPY --from=development /srv/gauzy/node_modules ./node_modules
-
 COPY . .
-
-EXPOSE 4200
 
 CMD /wait \
     && cross-env NODE_ENV=production yarn run config:prod \
