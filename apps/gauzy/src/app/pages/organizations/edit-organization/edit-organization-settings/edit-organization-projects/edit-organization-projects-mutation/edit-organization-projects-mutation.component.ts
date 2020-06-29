@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	CurrenciesEnum,
 	Employee,
 	Organization,
 	OrganizationContact,
 	OrganizationProjects,
-	ProjectTypeEnum,
-	Tag
+	ProjectBillingEnum,
+	Tag,
+	ProjectOwnerEnum
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../../../../../@core/services/organization-contact.service';
 import { Store } from '../../../../../../@core/services/store.service';
@@ -38,13 +39,14 @@ export class EditOrganizationProjectsMutationComponent
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];
-	types: string[] = Object.values(ProjectTypeEnum);
+	billings: string[] = Object.values(ProjectBillingEnum);
 	currencies: string[] = Object.values(CurrenciesEnum);
 	defaultCurrency: string;
 	public: Boolean = true;
 	tags: Tag[] = [];
 	organizationId: string;
 	organizationContacts: Object[] = [];
+	owners: string[] = Object.values(ProjectOwnerEnum);
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -75,6 +77,13 @@ export class EditOrganizationProjectsMutationComponent
 		});
 	}
 
+	changeProjectOwner(owner: ProjectOwnerEnum) {
+		const clientControl = this.form.get('client');
+		if (owner === ProjectOwnerEnum.INTERNAL) {
+			clientControl.setValue('');
+		}
+	}
+
 	private _initializeForm() {
 		if (!this.organization) {
 			return;
@@ -87,17 +96,16 @@ export class EditOrganizationProjectsMutationComponent
 		}
 
 		this.defaultCurrency = this.organization.currency || 'USD';
-
 		this.form = this.fb.group({
 			tags: [this.project ? (this.tags = this.project.tags) : ''],
 			public: this.project ? this.project.public : this.public,
-			name: [this.project ? this.project.name : ''],
+			name: [this.project ? this.project.name : '', Validators.required],
 			organizationContact: [
 				this.project && this.project.organizationContact
 					? this.project.organizationContact
 					: ''
 			],
-			type: [this.project ? this.project.type : 'RATE'],
+			billing: [this.project ? this.project.billing : 'RATE'],
 			currency: [
 				{
 					value: this.project
@@ -107,7 +115,8 @@ export class EditOrganizationProjectsMutationComponent
 				}
 			],
 			startDate: [this.project ? this.project.startDate : null],
-			endDate: [this.project ? this.project.endDate : null]
+			endDate: [this.project ? this.project.endDate : null],
+			owner: [this.project ? this.project.owner : 'CLIENT']
 		});
 	}
 
@@ -131,17 +140,16 @@ export class EditOrganizationProjectsMutationComponent
 				id: this.project ? this.project.id : undefined,
 				organizationId: this.organization.id,
 				name: this.form.value['name'],
-				organizationContact: this.form.value['organizationContact']
-					.organizationContactId,
-				type: this.form.value['type'],
+				organizationContact: this.form.value['organizationContact'].organizationContactId,
+				billing: this.form.value['billing'],
 				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],
 				endDate: this.form.value['endDate'],
+				owner: this.form.value['owner'],
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e)
 			});
-
 			this.selectedEmployeeIds = [];
 			this.members = [];
 		}

@@ -247,7 +247,7 @@ export class HubstaffService {
 						name,
 						organizationId: orgId,
 						public: true,
-						type: 'RATE',
+						billing: 'RATE',
 						currency: 'BGN'
 					}
 				);

@@ -1,26 +1,24 @@
-// import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-// import { CandidateInterviewersService } from '../../candidate-interviewers.service';
-// import { CandidateInterviewersInterviewBulkDeleteCommand } from '../candidate-interviewers.interview.bulk.delete.command';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { KnowledgeBaseCategoryBulkDeleteCommand } from '../help-center.menu.bulk.delete.command';
+import { HelpCenterService } from '../../help-center.service';
 
-// @CommandHandler(CandidateInterviewersInterviewBulkDeleteCommand)
-// export class CandidateInterviewersInterviewBulkDeleteHandler
-// 	implements
-// 		ICommandHandler<CandidateInterviewersInterviewBulkDeleteCommand> {
-// 	constructor(
-// 		private readonly candidateInterviewersService: CandidateInterviewersService
-// 	) {}
+@CommandHandler(KnowledgeBaseCategoryBulkDeleteCommand)
+export class KnowledgeBaseCategoryBulkDeleteHandler
+	implements ICommandHandler<KnowledgeBaseCategoryBulkDeleteCommand> {
+	constructor(private readonly helpCenterService: HelpCenterService) {}
 
-// 	public async execute(
-// 		command: CandidateInterviewersInterviewBulkDeleteCommand
-// 	): Promise<any> {
-// 		const { id } = command;
-// 		const interviewers = await this.candidateInterviewersService.getInterviewersByInterviewId(
-// 			id
-// 		);
-// 		await this.candidateInterviewersService.deleteBulk(
-// 			interviewers.map((item) => item.id)
-// 		);
+	public async execute(
+		command: KnowledgeBaseCategoryBulkDeleteCommand
+	): Promise<any> {
+		const { id } = command;
+		console.log(id);
+		// const interviewers = await this.candidateInterviewersService.getInterviewersByInterviewId(
+		// 	id
+		// );
+		// await this.candidateInterviewersService.deleteBulk(
+		// 	interviewers.map((item) => item.id)
+		// );
 
-// 		return;
-// 	}
-// }
+		return;
+	}
+}

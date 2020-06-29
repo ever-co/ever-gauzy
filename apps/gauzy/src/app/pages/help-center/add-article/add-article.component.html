@@ -1,14 +1,47 @@
 <nb-card class="main">
-	<nb-card-body>
+	<nb-card-header>
 		<div class="header">
-			<h5>Add Article</h5>
+			<h5 *ngIf="editType === 'add'">
+				{{ 'HELP_PAGE.ADD_ARTICLE' | translate }}
+			</h5>
+			<h5 *ngIf="editType === 'edit'">
+				{{ 'HELP_PAGE.EDIT_ARTICLE' | translate }}
+			</h5>
 			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="selector">
+			<nb-toggle
+				class="select"
+				status="primary"
+				labelPosition="start"
+				[(ngModel)]="selectedStatus"
+				(checkedChange)="toggleStatus($event)"
+			>
+				<p class="select-label ml-3">
+					{{ 'HELP_PAGE.PRIVATE_STATUS' | translate }}:
+				</p>
+			</nb-toggle>
+			<nb-toggle
+				class="select"
+				status="primary"
+				labelPosition="start"
+				[(ngModel)]="selectedPrivacy"
+				(checkedChange)="togglePrivacy($event)"
+			>
+				<p class="select-label ml-3">
+					{{ 'HELP_PAGE.ONLY_FOR_EMPLOYEES' | translate }}:
+				</p>
+			</nb-toggle>
 		</div>
 		<form [formGroup]="form" (ngSubmit)="submit()">
 			<div class="edit-field">
 				<div class="first-row">
-					<div>
-						<p class="label">Name of the article:</p>
+					<div class="second-row">
+						<p class="label">
+							{{ 'HELP_PAGE.NAME_ARTICLE' | translate }}:
+						</p>
 						<input
 							formControlName="name"
 							type="text"
@@ -17,34 +50,22 @@
 							nbInput
 						/>
 					</div>
-					<div class="selector">
-						<p class="label">Status</p>
-						<nb-select
-							placeholder="Select Status"
-							[selected]="selectedPrivacy"
-							(selectedChange)="privacySelect($event)"
-						>
-							<nb-option
-								*ngFor="let privacy of isDraft"
-								[value]="privacy"
-								>{{ privacy }}</nb-option
-							>
-						</nb-select>
+					<div class="second-row">
+						<p class="label">
+							{{ 'HELP_PAGE.DESCRIPTION' | translate }}:
+						</p>
+						<input
+							formControlName="desc"
+							type="text"
+							size="30"
+							maxlength="26"
+							nbInput
+						/>
 					</div>
-				</div>
-				<div class="second-row">
-					<p class="label">Description:</p>
-					<input
-						formControlName="desc"
-						type="text"
-						size="30"
-						maxlength="26"
-						nbInput
-					/>
 				</div>
 			</div>
 			<div class="edit-node-field">
-				<p class="label">Article text:</p>
+				<p class="label">{{ 'HELP_PAGE.ARTICLE_TEXT' | translate }}:</p>
 				<div class="ck-editor">
 					<ckeditor
 						formControlName="data"
@@ -56,7 +77,7 @@
 				</div>
 			</div>
 			<div class="save-button">
-				<button [disabled]="!selectedPrivacy" status="success" nbButton>
+				<button status="success" [disabled]="form.invalid" nbButton>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</div>

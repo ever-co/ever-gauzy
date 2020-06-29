@@ -17,7 +17,6 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HelpCenterComponent } from './help-center.component';
 import { HelpCenterRoutingModule } from './help-center-routing.module';
 import { DeleteArticleModule } from './delete-article/delete-article.module';
-import { EditArticleModule } from './edit-article/edit-article.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -25,7 +24,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 @NgModule({
 	imports: [
 		AddArticleModule,
-		EditArticleModule,
 		DeleteArticleModule,
 		HelpCenterRoutingModule,
 		ThemeModule,

@@ -85,7 +85,8 @@
 		"build:sqlite:windows": "cd node_modules/sqlite3 && cross-env HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --target_platform=win32 --dist-url=https://electronjs.org/headers",
 		"debug:desktop:app:mac": "lldb ./dist/apps/desktop-packages/mac/GauzyDesktop.app && run",
 		"start:desktop:ui": "npm run postinstall.web && cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 && yarn ng serve desktop-ui",
-		"build:desktop:ui": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 && ng build desktop-ui --prod --base-href"
+		"build:desktop:ui": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 && ng build desktop-ui --prod --base-href",
+		"prepare:desktop:dev": "npm run postinstall.electron && tsc -p apps/desktop/tsconfig.dev.json"
 	},
 	"config": {
 		"commitizen": {

@@ -1,8 +1,7 @@
-// import { ICommand } from '@nestjs/cqrs';
+import { ICommand } from '@nestjs/cqrs';
 
-// export class CandidateInterviewersInterviewBulkDeleteCommand
-// 	implements ICommand {
-// 	static readonly type = '[CandidateInterviewers] Delete';
+export class KnowledgeBaseCategoryBulkDeleteCommand implements ICommand {
+	static readonly type = '[KnowledgeBaseCategory] Delete';
 
-// 	constructor(public readonly id: string) {}
-// }
+	constructor(public readonly id: string) {}
+}

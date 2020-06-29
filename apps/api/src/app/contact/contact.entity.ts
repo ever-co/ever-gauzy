@@ -1,7 +1,4 @@
-import {
-	Column,
-	Entity
-} from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import { Base } from '../core/entities/base';
@@ -56,5 +53,4 @@ export class Contact extends Base implements IContact {
 	@IsOptional()
 	@Column({ nullable: true })
 	state?: string;
-
 }

@@ -14,10 +14,7 @@ export class ContactService extends CrudService<Contact> {
 		super(contactRepository);
 	}
 
-	async saveContact(
-		contactRequest: ContactCreateInput
-	): Promise<Contact> {
+	async saveContact(contactRequest: ContactCreateInput): Promise<Contact> {
 		return this.contactRepository.save(contactRequest);
 	}
-
 }

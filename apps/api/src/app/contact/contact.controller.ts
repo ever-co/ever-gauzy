@@ -1,10 +1,4 @@
-import {
-	Controller,
-	Get,
-	HttpStatus,
-	Query,
-	UseGuards
-	} from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
 import { Contact } from './contact.entity';
@@ -15,9 +9,7 @@ import { AuthGuard } from '@nestjs/passport';
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ContactController extends CrudController<Contact> {
-	constructor(
-		private readonly contactService: ContactService,
-	) {
+	constructor(private readonly contactService: ContactService) {
 		super(contactService);
 	}
 

@@ -131,7 +131,7 @@ export enum DefaultValueDateTypeEnum {
 	START_OF_MONTH = 'START_OF_MONTH'
 }
 
-export enum ProjectTypeEnum {
+export enum ProjectBillingEnum {
 	RATE = 'RATE',
 	FLAT_FEE = 'FLAT_FEE',
 	MILESTONES = 'MILESTONES'
@@ -163,6 +163,11 @@ export enum ClientFocusEnum {
 	SMALL_BUSINESSES = 'Small Businesses',
 	MEDIUM_BUSINESSES = 'Medium Businesses',
 	LARGE_BUSINESSES = 'Large Businesses'
+}
+
+export enum ProjectOwnerEnum {
+	CLIENT = 'CLIENT',
+	INTERNAL = 'INTERNAL'
 }
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;

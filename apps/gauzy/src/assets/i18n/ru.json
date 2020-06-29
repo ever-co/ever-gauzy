@@ -289,6 +289,7 @@
 			"ORGANIZATION": "Выберите организацию",
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"PROJECT_TYPE": "Тип проекта",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"OWNER": "Владелец",
 			"ADD_EDUCATION": {
@@ -940,6 +941,7 @@
 			"BILLING": "Биллинг",
 			"CURRENCY": "Валюта",
 			"OWNER": "Владелец",
+			"PROJECT_TYPE": "Тип проекта",
 			"TEAMS": "Команды",
 			"ADD_NEW_CONTACT": "Добавить новый контакт",
 			"GENERAL_SETTINGS": "Общие настройки",
