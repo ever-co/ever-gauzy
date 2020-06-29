@@ -83,6 +83,7 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 				this.form.value.email,
 				data,
 				this.invoice.invoiceNumber,
+				this.invoice.id,
 				this.isEstimate
 			);
 		});

@@ -51,6 +51,7 @@ import { LanguageInterceptor } from './@core/language.interceptor';
 import { NgxElectronModule } from 'ngx-electron';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
+import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -68,6 +69,7 @@ if (environment.SENTRY_DNS && environment.production) {
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
+		EstimateEmailModule,
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,

@@ -87,7 +87,10 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				const id = params.id;
 
 				const { items } = await this.employeeService
-					.getAll(['user', 'organizationPosition', 'tags'], { id })
+					.getAll(
+						['user', 'organizationPosition', 'tags', 'skills'],
+						{ id }
+					)
 					.pipe(first())
 					.toPromise();
 
@@ -98,7 +101,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 					firstName: items[0].user.firstName,
 					lastName: items[0].user.lastName,
 					imageUrl: items[0].user.imageUrl,
-					tags: items[0].user.tags
+					tags: items[0].user.tags,
+					skills: items[0].skills
 				};
 
 				const checkUsername = this.selectedEmployee.user.username;

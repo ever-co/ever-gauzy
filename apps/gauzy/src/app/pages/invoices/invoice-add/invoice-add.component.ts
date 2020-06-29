@@ -6,7 +6,7 @@ import { Store } from '../../../@core/services/store.service';
 import {
 	CurrenciesEnum,
 	Invoice,
-	OrganizationClients,
+	OrganizationContact,
 	Organization,
 	OrganizationProjects,
 	Task,
@@ -23,7 +23,7 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Subject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
@@ -56,8 +56,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	selectedTasks: Task[];
 	observableTasks: Observable<Task[]>;
 	tasks: Task[];
-	client: OrganizationClients;
-	clients: OrganizationClients[];
+	client: OrganizationContact;
+	clients: OrganizationContact[];
 	selectedProjects: OrganizationProjects[];
 	projects: OrganizationProjects[];
 	employees: Employee[];
@@ -85,7 +85,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	constructor(
 		private fb: FormBuilder,
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactService,
 		readonly translateService: TranslateService,
 		private store: Store,
 		private router: Router,
@@ -486,7 +486,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						this.currency.setValue(orgData.currency);
 					}
 
-					const res = await this.organizationClientsService.getAll(
+					const res = await this.organizationContactService.getAll(
 						['projects'],
 						{
 							organizationId: organization.id
@@ -775,7 +775,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		return d1 > d2;
 	}
 
-	addNewClient = (name: string): Promise<OrganizationClients> => {
+	addNewClient = (name: string): Promise<OrganizationContact> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
@@ -787,7 +787,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			return this.organizationClientsService.create({
+			return this.organizationContactService.create({
 				name,
 				organizationId: this.organizationId
 			});

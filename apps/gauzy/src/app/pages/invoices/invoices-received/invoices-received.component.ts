@@ -9,6 +9,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { Invoice } from '@gauzy/models';
 import { Router } from '@angular/router';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
+import { EstimateAcceptedComponent } from '../table-components/estimate-accepted.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -27,6 +28,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	selectedInvoice: Invoice;
+	invoices: Invoice[];
 	disableButton = true;
 
 	@Input() isEstimate: boolean;
@@ -63,6 +65,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 						}
 					);
 					this.loading = false;
+					this.invoices = invoices.items;
 					this.smartTableSource.load(invoices.items);
 				}
 			});
@@ -78,6 +81,20 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 				`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
 			]);
 		}
+	}
+
+	async accept() {
+		await this.invoicesService.update(this.selectedInvoice.id, {
+			isAccepted: true
+		});
+		await this.getInvoices();
+	}
+
+	async reject() {
+		await this.invoicesService.update(this.selectedInvoice.id, {
+			isAccepted: false
+		});
+		await this.getInvoices();
 	}
 
 	loadSmartTable() {
@@ -105,6 +122,16 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
 				renderComponent: InvoicePaidComponent,
+				filter: false,
+				width: '33%'
+			};
+		} else {
+			this.settingsSmartTable['columns']['isAccepted'] = {
+				title: this.getTranslation(
+					'INVOICES_PAGE.ESTIMATES.ACCEPTED_STATUS'
+				),
+				type: 'custom',
+				renderComponent: EstimateAcceptedComponent,
 				filter: false,
 				width: '33%'
 			};

@@ -1,7 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
-import { KeyResult, KeyResultUpdates } from '@gauzy/models';
+import {
+	KeyResult,
+	KeyResultUpdates,
+	KeyResultDeadlineEnum
+} from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
@@ -21,6 +25,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	src: string;
 	keyResult: KeyResult;
 	updates: KeyResultUpdates[];
+	keyResultDeadlineEnum = KeyResultDeadlineEnum;
 	isUpdatable = true;
 	private _ngDestroy$ = new Subject<void>();
 	ownerName: string;
@@ -46,9 +51,11 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				new Date(b.createdAt).getTime() -
 				new Date(a.createdAt).getTime()
 		);
-
 		// prevent keyresult updates after deadline
-		if (this.keyResult.deadline === 'No Custom Deadline') {
+		if (
+			this.keyResult.deadline ===
+			this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+		) {
 			this.goalSettingsService
 				.getTimeFrameByName(this.keyResult.goal.deadline)
 				.then((res) => {

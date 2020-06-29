@@ -24,7 +24,7 @@ import { InvoiceService } from '../invoice/invoice.service';
 import { InvoiceItemService } from '../invoice-item/invoice-item.service';
 import { OrganizationService } from '../organization/organization.service';
 import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
 import { OrganizationPositionsService } from '../organization-positions/organization-positions.service';
@@ -49,6 +49,7 @@ import { ApprovalPolicyService } from '../approval-policy/approval-policy.servic
 import { CandidateService } from '../candidate/candidate.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { EquipmentService } from '../equipment/equipment.service';
+import { ContactService } from '../contact/contact.service';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {
@@ -90,8 +91,8 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'organization_employee_level'
 		},
 		{
-			service: this.organizationClientsService,
-			nameFile: 'organization_client'
+			service: this.organizationContactService,
+			nameFile: 'organization_contact'
 		},
 		{
 			service: this.organizationDepartmentService,
@@ -138,7 +139,8 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'appointment_employees'
 		},
 		{ service: this.approvalPolicyService, nameFile: 'approval_policy' },
-		{ service: this.candidateService, nameFile: 'candidate' }
+		{ service: this.candidateService, nameFile: 'candidate' },
+		{ service: this.contactService, nameFile: 'contact' }
 	];
 
 	constructor(
@@ -160,7 +162,7 @@ export class ExportAllService implements OnDestroy {
 		private invoiceItemService: InvoiceItemService,
 		private organizationService: OrganizationService,
 		private employeeLevelService: EmployeeLevelService,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactService: OrganizationContactService,
 		private organizationDepartmentService: OrganizationDepartmentService,
 		private organizationEmploymentTypeService: OrganizationEmploymentTypeService,
 		private organizationPositionsService: OrganizationPositionsService,
@@ -183,7 +185,8 @@ export class ExportAllService implements OnDestroy {
 		private timeSlotService: TimeSlotService,
 		private appointmentEmployeeService: AppointmentEmployeesService,
 		private approvalPolicyService: ApprovalPolicyService,
-		private candidateService: CandidateService
+		private candidateService: CandidateService,
+		private contactService: ContactService
 	) {}
 
 	async createFolders(): Promise<any> {

@@ -31,7 +31,7 @@ import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { TasksService } from '../../@core/services/tasks.service';
-import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { InvoiceEmployeesSelectorComponent } from './table-components/invoice-employees-selector.component';
 import { EmployeesService } from '../../@core/services/employees.service';
@@ -57,6 +57,7 @@ import { InvoicePaymentsComponent } from './invoice-payments/payments.component'
 import { PaymentService } from '../../@core/services/payment.service';
 import { PaymentMutationComponent } from './invoice-payments/payment-mutation/payment-mutation.component';
 import { TasksStoreService } from '../../@core/services/tasks-store.service';
+import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
 import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -101,7 +102,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		OrganizationsService,
 		InvoiceItemService,
 		TasksService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationProjectsService,
 		EmployeesService,
 		ProductService,
@@ -130,7 +131,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoiceSentStatusComponent
+		InvoiceSentStatusComponent,
+		EstimateAcceptedComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -154,7 +156,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoiceSentStatusComponent
+		InvoiceSentStatusComponent,
+		EstimateAcceptedComponent
 	]
 })
 export class InvoicesModule {}

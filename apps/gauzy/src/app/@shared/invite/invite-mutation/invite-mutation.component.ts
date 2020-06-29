@@ -3,14 +3,14 @@ import {
 	InvitationTypeEnum,
 	Invite,
 	OrganizationProjects,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationDepartment
 } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { EmailInviteFormComponent } from '../forms/email-invite-form/email-invite-form.component';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
@@ -37,13 +37,13 @@ export class InviteMutationComponent extends TranslationBaseComponent
 	emailInviteForm: EmailInviteFormComponent;
 
 	organizationProjects: OrganizationProjects[];
-	organizationClients: OrganizationClients[];
+	organizationContact: OrganizationContact[];
 	organizationDepartments: OrganizationDepartment[];
 
 	constructor(
 		private dialogRef: NbDialogRef<InviteMutationComponent>,
 		private organizationProjectsService: OrganizationProjectsService,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactService: OrganizationContactService,
 		private organizationDepartmentsService: OrganizationDepartmentsService,
 		readonly translateService: TranslateService,
 		private toastrService: NbToastrService
@@ -66,7 +66,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 
 		try {
 			this.loadProjects();
-			this.loadClients();
+			this.loadOrganizationContacts();
 			this.loadDepartments();
 		} catch (error) {
 			this.toastrService.danger(
@@ -83,11 +83,11 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		this.organizationProjects = res.items;
 	}
 
-	async loadClients() {
-		const res = await this.organizationClientsService.getAll([], {
+	async loadOrganizationContacts() {
+		const res = await this.organizationContactService.getAll([], {
 			organizationId: this.selectedOrganizationId
 		});
-		this.organizationClients = res.items;
+		this.organizationContact = res.items;
 	}
 
 	async loadDepartments() {

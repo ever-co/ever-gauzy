@@ -131,11 +131,11 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CLIENTS'
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS'
 				),
 				icon: 'book-open-outline',
 				responsive: true,
-				route: this.getRoute('clients')
+				route: this.getRoute('contacts')
 			}
 		];
 	}
@@ -202,7 +202,8 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 					'organizationDepartments',
 					'organizationPosition',
 					'organizationEmploymentTypes',
-					'tags'
+					'tags',
+					'skills'
 				],
 				{ id }
 			)

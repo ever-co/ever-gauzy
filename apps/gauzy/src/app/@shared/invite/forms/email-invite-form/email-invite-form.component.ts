@@ -5,14 +5,14 @@ import {
 	InvitationTypeEnum,
 	OrganizationProjects,
 	RolesEnum,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationDepartment
 } from '@gauzy/models';
-import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
-import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
+import { InviteService } from '../../../../@core/services/invite.service';
+import { RoleService } from '../../../../@core/services/role.service';
 import { first } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from '../../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-email-invite-form',
@@ -22,7 +22,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 export class EmailInviteFormComponent implements OnInit {
 	@Input() public organizationProjects: OrganizationProjects[];
 
-	@Input() public organizationClients: OrganizationClients[];
+	@Input() public organizationContact: OrganizationContact[];
 
 	@Input() public organizationDepartments: OrganizationDepartment[];
 
@@ -46,7 +46,7 @@ export class EmailInviteFormComponent implements OnInit {
 	form: any;
 	emails: any;
 	projects: any;
-	clients: any;
+	organizationContacts: any;
 	departments: any;
 	roleName: any;
 	startedWorkOn: string;
@@ -101,7 +101,7 @@ export class EmailInviteFormComponent implements OnInit {
 			startedWorkOn: [''],
 			appliedDate: [''],
 			departments: [''],
-			clients: [''],
+			organizationContacts: [''],
 			roleName: [
 				'',
 				this.isEmployeeInvitation() || this.isCandidateInvitation()
@@ -112,7 +112,7 @@ export class EmailInviteFormComponent implements OnInit {
 
 		this.emails = this.form.get('emails');
 		this.projects = this.form.get('projects');
-		this.clients = this.form.get('clients');
+		this.organizationContacts = this.form.get('organizationContacts');
 		this.departments = this.form.get('departments');
 		this.roleName = this.form.get('roleName');
 		this.startedWorkOn = this.form.get('startedWork');
@@ -135,11 +135,11 @@ export class EmailInviteFormComponent implements OnInit {
 		);
 	}
 
-	selectAllClients() {
-		this.clients.setValue(
-			this.organizationClients
-				.filter((client) => !!client.id)
-				.map((client) => client.id)
+	selectAllOrganizationContacts() {
+		this.organizationContacts.setValue(
+			this.organizationContact
+				.filter((organizationContact) => !!organizationContact.id)
+				.map((organizationContact) => organizationContact.id)
 		);
 	}
 
@@ -163,7 +163,7 @@ export class EmailInviteFormComponent implements OnInit {
 				emailIds: this.emails.value.map((email) => email.emailAddress),
 				projectIds: this.projects.value,
 				departmentIds: this.departments.value,
-				clientIds: this.clients.value,
+				organizationContactIds: this.organizationContacts.value,
 				roleId: role.id,
 				organizationId: this.selectedOrganizationId,
 				invitedById: this.currentUserId,

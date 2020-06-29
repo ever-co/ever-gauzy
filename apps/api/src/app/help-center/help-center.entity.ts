@@ -2,11 +2,12 @@ import { IHelpCenterArticle } from './../../../../../libs/models/src/lib/help-ce
 import { Entity, Column, ManyToOne, OneToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IHelpCenter } from '@gauzy/models';
-import { Base } from '../core/entities/base';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
+import { TenantBase } from '../core/entities/tenant-base';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('knowledge_base')
-export class HelpCenter extends Base implements IHelpCenter {
+export class HelpCenter extends TenantBase implements IHelpCenter {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -64,4 +65,7 @@ export class HelpCenter extends Base implements IHelpCenter {
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	parentId?: string;
+
+	@ManyToOne((type) => Organization, (organization) => organization.id)
+	organization: Organization;
 }

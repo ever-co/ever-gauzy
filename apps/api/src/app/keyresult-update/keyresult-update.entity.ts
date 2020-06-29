@@ -1,8 +1,11 @@
 import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
-import { KeyResultUpdates as IKeyResultUpdate } from '@gauzy/models';
+import {
+	KeyResultUpdates as IKeyResultUpdate,
+	KeyResultUpdateStatusEnum
+} from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsEnum } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
 
 @Entity('key_result_update')
@@ -19,10 +22,10 @@ export class KeyResultUpdate extends Base implements IKeyResultUpdate {
 	@Column()
 	owner: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: String, enum: KeyResultUpdateStatusEnum })
+	@IsEnum(KeyResultUpdateStatusEnum)
 	@Column()
-	@IsOptional()
-	status?: string;
+	status: string;
 
 	@ApiProperty({ type: KeyResult })
 	@ManyToOne((type) => KeyResult, (keyResult) => keyResult.update, {

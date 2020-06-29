@@ -25,7 +25,7 @@ import { EmployeeStatisticsModule } from './employee-statistics/employee-statist
 import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
 import { OrganizationRecurringExpenseModule } from './organization-recurring-expense/organization-recurring-expense.module';
 import { EmployeeRecurringExpenseModule } from './employee-recurring-expense/employee-recurring-expense.module';
-import { OrganizationClientsModule } from './organization-clients/organization-clients.module';
+import { OrganizationContactModule } from './organization-contact/organization-contact.module';
 import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
 import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
@@ -96,6 +96,8 @@ import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.modul
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
 import { HelpCenterArticleModule } from './help-center-article/help-center-article.module';
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
+import { EstimateEmail } from './estimate-email/estimate-email.entity';
+import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 
 @Module({
 	imports: [
@@ -190,8 +192,8 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 						module: OrganizationDepartmentModule
 					},
 					{
-						path: '/organization-clients',
-						module: OrganizationClientsModule
+						path: '/organization-contact',
+						module: OrganizationContactModule
 					},
 					{
 						path: '/organization-positions',
@@ -244,6 +246,10 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 					{
 						path: '/email-template',
 						module: EmailTemplateModule
+					},
+					{
+						path: '/estimate-email',
+						module: EstimateEmailModule
 					},
 					{
 						path: 'time-off-policy',
@@ -413,7 +419,7 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 		UserOrganizationModule,
 		OrganizationDepartmentModule,
 		OrganizationRecurringExpenseModule,
-		OrganizationClientsModule,
+		OrganizationContactModule,
 		OrganizationPositionsModule,
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
@@ -441,6 +447,7 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		EstimateEmail,
 		GoalModule,
 		GoalTimeFrameModule,
 		KeyResultModule,

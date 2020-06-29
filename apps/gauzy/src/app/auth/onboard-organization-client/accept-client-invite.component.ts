@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Invite, IOrganizationClientRegistrationInput } from '@gauzy/models';
+import { Invite, IOrganizationContactRegistrationInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { InviteService } from '../../@core/services/invite.service';
@@ -49,18 +49,18 @@ export class AcceptClientInvitePage extends SetLanguageBaseComponent
 	};
 
 	submitForm = async (
-		clientRegistrationInput: IOrganizationClientRegistrationInput
+		contactRegistrationInput: IOrganizationContactRegistrationInput
 	) => {
 		try {
-			await this.inviteService.acceptOrganizationClientInvite({
-				...clientRegistrationInput,
+			await this.inviteService.acceptOrganizationContactInvite({
+				...contactRegistrationInput,
 				inviteId: this.invitation.id
 			});
 			this.toastrService.primary(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
 					{
-						name: clientRegistrationInput.clientOrganization.name
+						name: contactRegistrationInput.contactOrganization.name
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')

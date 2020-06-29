@@ -85,7 +85,7 @@ import { Invite } from '../../invite/invite.entity';
 import { EmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.entity';
 import { ExpenseCategory } from '../../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../../equipment-sharing/equipment-sharing.entity';
-import { OrganizationClients } from '../../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../../organization-contact/organization-contact.entity';
 import { OrganizationVendor } from '../../organization-vendors/organization-vendors.entity';
 import { OrganizationDepartment } from '../../organization-department/organization-department.entity';
 import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
@@ -142,6 +142,7 @@ import {
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { Equipment } from '../../equipment/equipment.entity';
+import { Contact } from '../../contact/contact.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -163,7 +164,7 @@ const allEntities = [
 	EmployeeSetting,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationVendor,
 	OrganizationDepartment,
 	OrganizationPositions,
@@ -202,7 +203,8 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
-	ProductOption
+	ProductOption,
+	Contact
 ];
 
 @Injectable()
@@ -339,7 +341,10 @@ export class SeedDataService {
 			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
 		});
 
-		await createHelpCenter(this.connection);
+		await createHelpCenter(this.connection, {
+			tenant,
+			org: defaultOrganizations[0]
+		});
 
 		//User level data that needs connection, tenant, organization, role, users
 		const defaultEmployees = await createDefaultEmployees(this.connection, {

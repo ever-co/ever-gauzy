@@ -1,0 +1,21 @@
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.multi-select {
+  width: 16rem;
+}
+
+.buttons {
+  width: 45rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navigation {
+  height: 24px;
+  margin-bottom: 5px;
+}

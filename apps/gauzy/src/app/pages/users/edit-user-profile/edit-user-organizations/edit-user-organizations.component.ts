@@ -219,7 +219,8 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 		this.selectedUserId = items[0].userId;
 
 		const user = await this.usersService.getUserById(items[0].userId);
-		this.selectedUserName = user.firstName + ' ' + user.lastName;
+		this.selectedUserName =
+			(user.firstName || '') + ' ' + (user.lastName || '');
 
 		const all_orgs = await this.organizationsService.getAll();
 

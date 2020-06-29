@@ -55,6 +55,7 @@
 		"START_DATE": "תאריך התחלה",
 		"END_DATE": "תאריך סיום",
 		"CLIENT_NAME": "שם הלקוח",
+		"CONTACT_NAME": "Contact Name",
 		"NAME": "שם",
 		"VENDOR": "ספק",
 		"CATEGORY": "קטגוריה",
@@ -201,9 +202,11 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
+			"DESCRIPTION_OPTIONAL": "Description (optional)",
 			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
-			"ADD_REMOVE_MEMBERS": "Add or Remove Members"
+			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
+			"SHORT_DESCRIPTION": "Short Description"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -227,7 +230,7 @@
 			"ADD_CANDIDATE_QUALITY": "Add personal quality",
 			"ADD_TECHNOLOGY": "Add technology",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
-			"CLIENTS": "לקוחות",
+			"CONTACTS": "Contacts",
 			"START_DATE_PROJECT": "תאריך התחלת הפרויקט",
 			"END_DATE_PROJECT": "תאריך סיום של הפרויקט",
 			"TEAM_NAME": "Team Name",
@@ -317,7 +320,9 @@
 			"BREAK_TIME": "Break minutes",
 			"DESCRIPTION": "Description",
 			"DURATION": "Duration",
-			"TITLE": "Title"
+			"TITLE": "Title",
+			"SHORT_DESCRIPTION": "Short Description",
+			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -650,14 +655,14 @@
 			"POSITION": "עמדה",
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:",
+			"EMPLOYEE_CONTACTS": "Employee's Contacts:",
 			"EMPLOYMENT_TYPE": "Employment Type",
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
 			"RATES": "Rates",
 			"PROJECTS": "פרויקטים",
-			"CLIENTS": "לקוחות",
+			"CONTACTS": "Contacts",
 			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
@@ -673,17 +678,91 @@
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives for ",
+		"GOAL": "Goal",
 		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
 		"ADD_NEW_KEY_RESULT": "Add new key result",
-		"ADD_NEW_OBJECTIVE": "Add new Objective"
+		"ADD_NEW_OBJECTIVE": "Add new Objective",
+		"SESSION": "Session",
+		"NO_DESCRIPTION": "No Description",
+		"PROGRESS": "Progress",
+		"UPDATES": "Updates",
+		"UPDATE": "Update",
+		"COMMENTS": "Comments",
+		"KEY_RESULTS": "Key Results",
+		"SETTINGS": {
+			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
+			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
+			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames"
+		},
+		"LEVELS": {
+			"ORGANIZATION": "Organization",
+			"TEAM": "Team",
+			"EMPLOYEE": "עובד"
+		},
+		"TIME_FRAME_STATUS": {
+			"ACTIVE": "פעיל",
+			"INACTIVE": "Inactive"
+		},
+		"FORM": {
+			"LABELS": {
+				"LEVEL": "Level",
+				"OWNER": "Owner",
+				"LEAD": "Lead (optional)",
+				"DEADLINE": "Deadline",
+				"STATUS": "עבודה"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Objective Name. eg. Improve Website SEO",
+				"DESCRIPTION": "Objective Description.",
+				"LEVEL": "Goal Level",
+				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'"
+			},
+			"ERROR": {
+				"START_DATE_GREATER": "End Date must be greater than Start Date"
+			}
+		},
+		"BUTTONS": {
+			"ADD_TIME_FRAME": "Add Time Frame"
+		}
 	},
 	"KEY_RESULT_PAGE": {
+		"UPDATE_KEY_RESULT": "Update Key Result",
 		"UPDATE": {
 			"STATUS": {
 				"ON_TRACK": "on track",
 				"NEEDS_ATTENTION": "needs attention",
 				"OFF_TRACK": "off track",
 				"NONE": "none"
+			}
+		},
+		"TYPE": {
+			"NUMBER": "Number",
+			"TRUE_OR_FALSE": "True/False",
+			"CURRENCY": "מטבע",
+			"TASK": "Task"
+		},
+		"DEADLINE": {
+			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
+			"HARD_DEADLINE": "Hard Deadline",
+			"HARD_AND_SOFT_DEADLINE": "Hard and Soft Deadline"
+		},
+		"FORM": {
+			"LABELS": {
+				"KEY_RESULT_TYPE": "Key Result Type",
+				"INITIAL_VALUE": "Initial value",
+				"TARGET_VALUE": "Target value",
+				"OWNER": "Owner",
+				"LEAD": "Lead (optional)",
+				"DEADLINE": "Deadline",
+				"SOFT_DEADLINE": "Soft Deadline",
+				"HARD_DEADLINE": "Hard Deadline",
+				"UPDATED_VALUE": "Updated Value",
+				"MARK_COMPLETE": "Mark as Complete",
+				"STATUS": "עבודה"
+			},
+			"PLACEHOLDERS": {
+				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
+				"DESCRIPTION": "A short desciption to give some context about the Key Result"
 			}
 		}
 	},
@@ -788,6 +867,12 @@
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
 		},
+		"MANAGE_INTERVIEWS": {
+			"CALENDAR": "Calendar",
+			"INTERVIEWS": "Interviews",
+			"MANAGE_INTERVIEWS": "Manage Interviews",
+			"CRITERIONS": "Criterions"
+		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
@@ -812,7 +897,7 @@
 		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
 		"DEPARTMENTS": "מחלקות",
-		"CLIENTS": "לקוחות",
+		"CONTACTS": "Contacts",
 		"POSITIONS": "עמדות",
 		"VENDORS": "ספקים",
 		"EXPENSE_CATEGORIES": "Expense Categories",
@@ -824,7 +909,7 @@
 		"ROLES": "Roles",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EMPLOYMENT_TYPES": "Employment Types",
-		"INVITE_CLIENT": "Invite Client",
+		"INVITE_CONTACT": "Invite Contact",
 		"EMAIL_INVITE": "Email Invite",
 		"ADD_LEVEL_OF_EMPLOYEE": "Add level of employee",
 		"LEVEL_OF_EMPLOYEE": "Employee Levels",
@@ -835,6 +920,7 @@
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
+			"CONTACT": "Contact",
 			"NEW_CLIENT": "הוסף לקוח חדש",
 			"NAME": "שם",
 			"PRIMARY_EMAIL": "דוא\"ל עיקרי",
@@ -851,7 +937,7 @@
 			"TYPE": "סוג",
 			"CURRENCY": "מטבע",
 			"TEAMS": "Teams",
-			"ADD_NEW_CLIENT": "הוסף לקוח חדש",
+			"ADD_NEW_CONTACT": "Add new contact",
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
 			"BONUS": "בונוס",
@@ -939,6 +1025,7 @@
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
+		"SKILLS": "SKILLS",
 		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
 		"COMPANY_PROFILE": "Company Profile",
 		"TOTAL_CLIENTS": "Total Clients",
@@ -1316,6 +1403,7 @@
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
 			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
+			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
 			"SELECT_TASKS": "Select tasks",
 			"SELECT_PRODUCTS": "Select products"
@@ -1366,7 +1454,12 @@
 		"ESTIMATES": {
 			"HEADER": "Estimates",
 			"ESTIMATE_NUMBER": "Estimate Number",
-			"ESTIMATE_DATE": "Estimate Date"
+			"ESTIMATE_DATE": "Estimate Date",
+			"ACCEPT": "Accept",
+			"REJECT": "Reject",
+			"ACCEPTED": "Accepted",
+			"REJECTED": "Rejected",
+			"ACCEPTED_STATUS": "Accepted Status"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments",
@@ -1476,7 +1569,14 @@
 			"EDITED_BASE": "Base has been edited",
 			"EDITED_CATEGORY": "Category has been edited",
 			"PIPELINE_CREATED": "Pipeline has been created",
-			"PIPELINE_UPDATED": "Pipeline has been updated"
+			"PIPELINE_UPDATED": "Pipeline has been updated",
+			"OBJECTIVE_ADDED": "Objective added",
+			"OBJECTIVE_DELETED": "Objective deleted",
+			"OBJECTIVE_UPDATED": "Objective updated",
+			"KEY_RESULT_ADDED": "Key Result added",
+			"KEY_RESULT_DELETED": "Key Result deleted",
+			"KEY_RESULT_UPDATED": "Key Result upadated",
+			"TIME_FRAME_DELETED": "Time Frame deleted"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1584,6 +1684,14 @@
 				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
+			},
+			"EDIT_ORGANIZATIONS_CONTACTS": {
+				"ADD_CONTACT": "New contact {{ name }} successfully added!",
+				"REMOVE_CONTACT": "Contact {{ name }} successfully removed!",
+				"INVALID_CONTACT_DATA": "Please check the Name, Primary Email and Primary Phone of your contact",
+				"INVITE_CONTACT": "Invitation email sent to {{ name }}.",
+				"INVITE_CONTACT_ERROR": "Some error occurred while trying to invite contact.",
+				"EMAIL_EXISTS": "This contact email already exists as a user"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
 				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
@@ -1723,10 +1831,13 @@
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:",
-		"CONFIRM_APPOINTMENT": "Appointment confirmed",
+		"CONFIRM_APPOINTMENT": "Appointment Confirmed",
+		"APPOINTMENT_INFO": "Appointment Information",
 		"DETAILS": "Booking Details",
 		"PARTICIPANTS": "Participant Emails",
 		"HOST": "Host",
+		"CANCEL": "Cancel Appointment",
+		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
 	},
 	"EMAIL_TEMPLATES_PAGE": {

@@ -6,8 +6,8 @@ import { EmailModule } from '../email/email.module';
 import { EmailService } from '../email/email.service';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
@@ -39,7 +39,7 @@ import { RolePermissions } from '../role-permissions/role-permissions.entity';
 			User,
 			UserOrganization,
 			OrganizationProjects,
-			OrganizationClients,
+			OrganizationContact,
 			OrganizationDepartment,
 			Organization,
 			Tenant,
@@ -60,7 +60,7 @@ import { RolePermissions } from '../role-permissions/role-permissions.entity';
 		UserOrganizationService,
 		EmailService,
 		OrganizationProjectsService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationService,
 		TenantService,
