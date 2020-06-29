@@ -25,7 +25,7 @@ import {
 	JoinTable
 } from 'typeorm';
 import { Organization } from '../organization/organization.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Payment } from '../payment/payment.entity';
@@ -141,10 +141,10 @@ export class Invoice extends Base implements IInvoice {
 	@JoinColumn()
 	fromOrganization?: Organization;
 
-	@ApiPropertyOptional({ type: OrganizationClients })
-	@ManyToOne((type) => OrganizationClients)
+	@ApiPropertyOptional({ type: OrganizationContact })
+	@ManyToOne((type) => OrganizationContact)
 	@JoinColumn()
-	toClient?: OrganizationClients;
+	toClient?: OrganizationContact;
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {

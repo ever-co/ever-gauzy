@@ -181,7 +181,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	async send() {
-		if (this.selectedInvoice.toClient.clientOrganizationId) {
+		if (this.selectedInvoice.toClient.contactOrganizationId) {
 			this.dialogService
 				.open(InvoiceSendMutationComponent, {
 					context: {

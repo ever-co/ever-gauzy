@@ -31,7 +31,7 @@ import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { TasksService } from '../../@core/services/tasks.service';
-import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { InvoiceEmployeesSelectorComponent } from './table-components/invoice-employees-selector.component';
 import { EmployeesService } from '../../@core/services/employees.service';
@@ -102,7 +102,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		OrganizationsService,
 		InvoiceItemService,
 		TasksService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationProjectsService,
 		EmployeesService,
 		ProductService,

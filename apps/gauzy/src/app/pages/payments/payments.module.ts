@@ -7,7 +7,7 @@ import { NbCardModule } from '@nebular/theme';
 import { PaymentsRoutingModule } from './payments-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { PaymentService } from '../../@core/services/payment.service';
-import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -26,7 +26,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		PaymentsRoutingModule,
 		Ng2SmartTableModule
 	],
-	providers: [PaymentService, OrganizationClientsService],
+	providers: [PaymentService, OrganizationContactService],
 	entryComponents: [PaymentsComponent],
 	declarations: [PaymentsComponent]
 })

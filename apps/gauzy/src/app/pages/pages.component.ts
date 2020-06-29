@@ -390,7 +390,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Clients',
+					title: 'Contacts',
 					icon: 'book-open-outline',
 					link: `/pages/organizations/`,
 					data: {
@@ -398,8 +398,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/clients',
-						translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
+						urlPostfix: '/settings/contacts',
+						translationKey: 'ORGANIZATIONS_PAGE.CONTACTS'
 					}
 				},
 				{

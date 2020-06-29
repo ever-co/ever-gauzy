@@ -34,7 +34,7 @@ import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invit
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { InviteGuard } from './../../@core/role/invite.guard';
-import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
+import { EditEmployeeContactComponent } from './edit-employee/edit-employee-profile/edit-employee-contact/edit-employee-contact.component';
 import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
 import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
 import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
@@ -78,7 +78,7 @@ const COMPONENTS = [
 	EditEmployeeRatesComponent,
 	ManageEmployeeInviteComponent,
 	EditEmployeeProjectsComponent,
-	EditEmployeeClientComponent,
+	EditEmployeeContactComponent,
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
 	EditEmployeeEmploymentComponent

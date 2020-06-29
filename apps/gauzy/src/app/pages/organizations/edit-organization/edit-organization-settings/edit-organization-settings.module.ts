@@ -19,19 +19,19 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
-import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
-import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
-import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/employee-multi-select/employee-multi-select.module';
-import { EntityWithMembersModule } from 'apps/gauzy/src/app/@shared/entity-with-members-card/entity-with-members-card.module';
-import { ImageUploaderModule } from 'apps/gauzy/src/app/@shared/image-uploader/image-uploader.module';
-import { OrganizationsMutationModule } from 'apps/gauzy/src/app/@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { RemoveLodashModule } from 'apps/gauzy/src/app/@shared/remove-lodash/remove-lodash.module';
-import { UserFormsModule } from 'apps/gauzy/src/app/@shared/user/forms/user-forms.module';
-import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
+import { EmployeeStore } from '../../../../@core/services/employee-store.service';
+import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
+import { OrganizationDepartmentsService } from '../../../../@core/services/organization-departments.service';
+import { OrganizationEditStore } from '../../../../@core/services/organization-edit-store.service';
+import { OrganizationPositionsService } from '../../../../@core/services/organization-positions';
+import { OrganizationVendorsService } from '../../../../@core/services/organization-vendors.service';
+import { EmployeeMultiSelectModule } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { EntityWithMembersModule } from '../../../../@shared/entity-with-members-card/entity-with-members-card.module';
+import { ImageUploaderModule } from '../../../../@shared/image-uploader/image-uploader.module';
+import { OrganizationsMutationModule } from '../../../../@shared/organizations/organizations-mutation/organizations-mutation.module';
+import { RemoveLodashModule } from '../../../../@shared/remove-lodash/remove-lodash.module';
+import { UserFormsModule } from '../../../../@shared/user/forms/user-forms.module';
+import { EmployeeSelectorsModule } from '../../../../@theme/components/header/selectors/employee/employee.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
 import {
@@ -39,9 +39,9 @@ import {
 	ThemeModule
 } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
-import { EditOrganizationClientMutationComponent } from './edit-organization-clients/edit-organization-clients-mutation/edit-organization-clients-mutation.component';
-import { EditOrganizationClientsComponent } from './edit-organization-clients/edit-organization-clients.component';
-import { InviteClientComponent } from './edit-organization-clients/invite-client/invite-client.component';
+import { EditOrganizationContactMutationComponent } from './edit-organization-contacts/edit-organization-contact-mutation/edit-organization-contact-mutation.component';
+import { EditOrganizationContactComponent } from './edit-organization-contacts/edit-organization-contact.component';
+import { InviteContactComponent } from './edit-organization-contacts/invite-contact/invite-contact.component';
 import { EditOrganizationDepartmentsMutationComponent } from './edit-organization-departments/edit-organization-departments-mutation/edit-organization-departments-mutation.component';
 import { EditOrganizationDepartmentsComponent } from './edit-organization-departments/edit-organization-departments.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
@@ -55,11 +55,11 @@ import { EditOrganizationTeamsMutationComponent } from './edit-organization-team
 import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
 import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization-employment-types/edit-organization-employment-types.component';
-import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color-input/tags-color-input.module';
+import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { EditOrganizationExpenseCategoriesComponent } from './edit-organization-expense-categories/edit-organization-expense-categories.component';
-import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
+import { OrganizationExpenseCategoriesService } from '../../../../@core/services/organization-expense-categories.service';
 import { InviteService } from '../../../../@core/services/invite.service';
-import { TableComponentsModule } from 'apps/gauzy/src/app/@shared/table-components/table-components.module';
+import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization-employee-levels/edit-organization-employee-level.component';
 
 @NgModule({
@@ -107,12 +107,12 @@ import { EditOrganizationEmployeeLevelComponent } from './edit-organization-empl
 		OrganizationVendorsService,
 		OrganizationExpenseCategoriesService,
 		OrganizationPositionsService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationEditStore,
 		EmployeeStore,
 		InviteService
 	],
-	entryComponents: [InviteClientComponent],
+	entryComponents: [InviteContactComponent],
 	declarations: [
 		EditOrganizationSettingsComponent,
 		EditOrganizationMainComponent,
@@ -123,16 +123,16 @@ import { EditOrganizationEmployeeLevelComponent } from './edit-organization-empl
 		EditOrganizationExpenseCategoriesComponent,
 		EditOrganizationPositionsComponent,
 		EditOrganizationPositionsComponent,
-		EditOrganizationClientsComponent,
+		EditOrganizationContactComponent,
 		EditOrganizationProjectsComponent,
 		EditOrganizationTeamsComponent,
 		EditOrganizationTeamsMutationComponent,
 		EditOrganizationOtherSettingsComponent,
 		EditOrganizationDepartmentsMutationComponent,
-		EditOrganizationClientMutationComponent,
+		EditOrganizationContactMutationComponent,
 		EditOrganizationProjectsMutationComponent,
 		EditOrganizationEmploymentTypes,
-		InviteClientComponent,
+		InviteContactComponent,
 		EditOrganizationEmployeeLevelComponent
 	]
 })

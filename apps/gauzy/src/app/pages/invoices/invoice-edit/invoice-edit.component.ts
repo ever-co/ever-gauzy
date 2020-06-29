@@ -5,7 +5,7 @@ import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	Invoice,
-	OrganizationClients,
+	OrganizationContact,
 	CurrenciesEnum,
 	OrganizationSelectInput,
 	InvoiceItem,
@@ -21,7 +21,7 @@ import {
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Subject, Observable } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -53,7 +53,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private toastrService: NbToastrService,
 		private organizationsService: OrganizationsService,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactService: OrganizationContactService,
 		private route: ActivatedRoute,
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
@@ -77,8 +77,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	organization: Organization;
 	itemsToDelete: string[] = [];
 	invoiceItems: InvoiceItem[];
-	selectedClient: OrganizationClients;
-	clients: OrganizationClients[];
+	selectedClient: OrganizationContact;
+	clients: OrganizationContact[];
 	employees: Employee[];
 	projects: OrganizationProjects[];
 	products: Product[];
@@ -270,7 +270,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					},
 					valuePrepareFunction: (cell) => {
 						if (this.products) {
-							console.log(this.products);
 							const product = this.products.find(
 								(p) => p.id === cell
 							);
@@ -395,7 +394,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 						this.currency.setValue(orgData.currency);
 					}
 
-					const res = await this.organizationClientsService.getAll(
+					const res = await this.organizationContactService.getAll(
 						['projects'],
 						{
 							organizationId: organization.id
