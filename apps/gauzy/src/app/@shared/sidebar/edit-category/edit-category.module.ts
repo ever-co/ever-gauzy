@@ -10,6 +10,7 @@ import {
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EditCategoryComponent } from './edit-category.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
 	imports: [
@@ -19,6 +20,8 @@ import { EditCategoryComponent } from './edit-category.component';
 		NbInputModule,
 		NbButtonModule,
 		NbSelectModule,
+		FormsModule,
+		ReactiveFormsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

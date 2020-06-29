@@ -49,8 +49,13 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	employees: Employee[];
 	futureDateAllowed: boolean;
 
+	private _timeLog: TimeLog | Partial<TimeLog>;
 	@Input()
+	public get timeLog(): TimeLog | Partial<TimeLog> {
+		return this._timeLog;
+	}
 	public set timeLog(value: TimeLog | Partial<TimeLog>) {
+		this._timeLog = value;
 		this.addEditRequest = _.pick(
 			value,
 			'id',

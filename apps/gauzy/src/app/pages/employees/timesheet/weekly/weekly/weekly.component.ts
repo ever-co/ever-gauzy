@@ -114,6 +114,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	async getLogs() {
 		const { startDate, endDate, employeeId } = this.logRequest;
 		const request: IGetTimeLogInput = {
+			...this.logRequest,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),

@@ -1,9 +1,15 @@
 .form {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .form-btn {
   margin: 0.5rem 0;
+  width: 15%;
 }
 
 .feedbacks-line {
@@ -47,20 +53,24 @@
 }
 
 .add-card-wrap {
-  padding: 0;
-  margin: 1rem 0 0 0;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
 }
 
 .buttons {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
+  justify-content: space-around;
   align-items: center;
+  width: 100%;
 }
 
 .description {
-  max-width: 70rem !important;
-  height: 6rem;
+  min-height: 8rem !important;
+  max-width: 100% !important;
 }
 
 .label-wrap {
@@ -89,6 +99,10 @@
 
 .feedbacks-card-wrap {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .form-group {
@@ -169,17 +183,65 @@
   text-align: center;
 }
 
+.stars-output {
+  padding-left: 1rem;
+}
 .criterions-rating {
   flex-direction: column;
   display: flex;
   justify-content: flex-start;
   align-items: center;
-}
+  width: 100%;
 
-.form-blocks {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: stretch;
-  flex-wrap: wrap;
+  &-radio-group {
+    flex-direction: row;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .form-blocks {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    flex-wrap: wrap;
+    width: 100%;
+
+    .form-block {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      flex-wrap: wrap;
+      padding: 1rem;
+
+      &-criterion {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+
+        &-title {
+          font-size: 12px;
+          font-weight: 600;
+          line-height: 1.5rem;
+        }
+
+        &-item {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          width: 49%;
+          border: 1px #e4e9f2 solid;
+          margin: 0.15rem 0.15rem 0.15rem 0;
+          padding: 0.2rem 0.5rem;
+          border-radius: 0.2rem;
+        }
+      }
+    }
+  }
 }

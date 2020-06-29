@@ -1,7 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { KeyResult, KeyResultUpdates } from '@gauzy/models';
+import {
+	KeyResult,
+	KeyResultUpdates,
+	KeyResultTypeEnum,
+	KeyResultUpdateStatusEnum
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
@@ -15,6 +20,10 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 	implements OnInit {
 	keyResultUpdateForm: FormGroup;
 	keyResult: KeyResult;
+	keyResultTypeEnum = KeyResultTypeEnum;
+	hideStatus = false;
+	updateStatusEnum = KeyResultUpdateStatusEnum;
+
 	constructor(
 		private dialogRef: NbDialogRef<KeyResultUpdateComponent>,
 		private fb: FormBuilder,
@@ -28,19 +37,20 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 		this.keyResultUpdateForm = this.fb.group({
 			newValueNumber: [null],
 			newValueBoolean: [0],
-			newStatus: ['none']
+			newStatus: [KeyResultUpdateStatusEnum.ON_TRACK]
 		});
 		this.keyResultUpdateForm.patchValue({
 			newStatus: this.keyResult.status
 		});
 		if (
-			this.keyResult.type === 'Number' ||
-			this.keyResult.type === 'Currency'
+			this.keyResult.type === KeyResultTypeEnum.NUMBER ||
+			this.keyResult.type === KeyResultTypeEnum.CURRENCY
 		) {
 			this.keyResultUpdateForm.patchValue({
 				newValueNumber: this.keyResult.update
 			});
-		} else if (this.keyResult.type === 'True/False') {
+		} else if (this.keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
+			this.hideStatus = true;
 			this.keyResultUpdateForm.patchValue({
 				newValueBoolean: this.keyResult.update === 1 ? true : false
 			});
@@ -53,8 +63,8 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 
 	async updateKeyResult() {
 		if (
-			this.keyResult.type === 'Number' ||
-			this.keyResult.type === 'Currency'
+			this.keyResult.type === KeyResultTypeEnum.NUMBER ||
+			this.keyResult.type === KeyResultTypeEnum.CURRENCY
 		) {
 			this.keyResult.update = this.keyResultUpdateForm.value.newValueNumber;
 			const diff =
@@ -65,7 +75,7 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 			this.keyResult.progress = Math.round(
 				(Math.abs(updateDiff) / Math.abs(diff)) * 100
 			);
-		} else if (this.keyResult.type === 'True/False') {
+		} else if (this.keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
 			this.keyResult.update =
 				this.keyResultUpdateForm.value.newValueBoolean === true ? 1 : 0;
 			this.keyResult.progress = this.keyResult.update === 0 ? 0 : 100;

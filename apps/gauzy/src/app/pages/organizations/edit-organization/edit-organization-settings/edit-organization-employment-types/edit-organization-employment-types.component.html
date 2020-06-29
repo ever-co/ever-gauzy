@@ -15,7 +15,9 @@
 					'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME' | translate
 				}}</label>
 				<input
-					#addInput
+					#addInput="ngModel"
+					[ngModel]="add"
+					required
 					nbInput
 					type="text"
 					(keyup)="onKeyEnter($event)"
@@ -37,6 +39,7 @@
 					(click)="addEmploymentType(addInput.value)"
 					nbButton
 					status="success"
+					[disabled]="addInput.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
@@ -65,17 +68,23 @@
 			<nb-card-body>
 				<ga-notes-with-tags [rowData]="employmentType">
 				</ga-notes-with-tags>
-				<div *ngIf="showEditDiv" class="row m-0">
+				<div
+					*ngIf="
+						showEditDiv && employmentType === selectedOrgEmplType
+					"
+					class="row m-0"
+				>
 					<div class="col-3 d-flex flex-column justify-content-end">
 						<label class="label">{{
 							'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME'
 								| translate
 						}}</label>
 						<input
-							#editInput
+							#editInput="ngModel"
+							required
 							nbInput
 							type="text"
-							[value]="employmentType.name"
+							[(ngModel)]="employmentType.name"
 						/>
 					</div>
 					<ga-tags-color-input
@@ -92,14 +101,15 @@
 							class="w-100"
 							(click)="
 								editOrgEmplType(
-									employmentType['id'],
-									employmentType['name']
+									employmentType.id,
+									editInput.value
 								)
 							"
 							nbButton
 							status="success"
+							[disabled]="editInput.invalid"
 						>
-							Update
+							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span
 					>
 					<span
@@ -128,8 +138,8 @@
 					<nb-action
 						(click)="
 							deleteEmploymentType(
-								employmentType['id'],
-								employmentType['name']
+								employmentType.id,
+								employmentType.name
 							)
 						"
 						class="d-inline pr-0"

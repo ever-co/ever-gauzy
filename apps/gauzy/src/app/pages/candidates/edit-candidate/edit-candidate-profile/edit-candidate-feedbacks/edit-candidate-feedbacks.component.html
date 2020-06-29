@@ -24,129 +24,196 @@
 		</div>
 
 		<div *ngIf="showAddCard" class="add-card">
-			<div class="criterions-rating" *ngIf="feedbackInterviewId">
-				<nb-radio-group class="radio-group" [(ngModel)]="status">
-					<nb-radio [value]="'HIRED'">
-						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
-								| translate
-						}}
-						<span *ngIf="interviewersHire?.length > 1">
-							({{ statusHire }}/{{ interviewersHire?.length }})
-						</span>
-
-						<i class="fas fa-thumbs-up success"></i>
-					</nb-radio>
-					<nb-radio [value]="'REJECTED'"
-						>{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
-								| translate
-						}}
-						<i class="fas error fa-thumbs-down"></i
-					></nb-radio>
-				</nb-radio-group>
-				<div class="form-blocks">
-					<div class="form-block">
-						<div class="label mb-2">
-							{{
-								'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
-									| translate
-							}}
-						</div>
-
-						<!--<div
-							class="criterion"
+			<div class="feedbacks-card-wrap">
+				<form class="form" [formGroup]="form" *ngIf="form">
+					<div class="w-100" formArrayName="feedbacks">
+						<div
 							*ngFor="
-								let technologyRating of form.get(
-									'technologies'
-								).controls as controls;
-								index as i
+								let feedback of form.controls.feedbacks
+									?.controls;
+								let i = index
 							"
 						>
-							<div *ngIf="technologiesList">
-								{{ technologiesList[i]?.name }}
-							</div>
-							<ga-star-rating-input
-								[formControl]="technologyRating"
-							></ga-star-rating-input>
-						</div>-->
-					</div>
-					<div class="form-block">
-						<div class="label mb-2">
-							{{
-								'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'
-									| translate
-							}}
-						</div>
-						<!--<div
-							class="criterion"
-							*ngFor="
-								let personalQualityRating of form.get(
-									'personalQualities'
-								).controls as controls;
-								index as i
-							"
-						>
-							<div *ngIf="personalQualitiesList">
-								{{ personalQualitiesList[i]?.name }}
-							</div>
-							<ga-star-rating-input
-								[formControl]="
-									personalQualityRating
-								"
-							></ga-star-rating-input>
-						</div>-->
-					</div>
-				</div>
-			</div>
+							<div [formGroupName]="i">
+								<div
+									class="criterions-rating"
+									*ngIf="feedbackInterviewId"
+								>
+									<div class="criterions-rating-radio-group">
+										<ga-star-rating-output
+											[rate]="averageRating"
+											class="stars-output"
+										></ga-star-rating-output>
 
-			<div class="row m-0 feedbacks-card-wrap">
-				<div class="col-10 feedbacks-card">
-					<form class="col-12 form" [formGroup]="form" *ngIf="form">
-						<div formArrayName="feedbacks">
-							<div
-								*ngFor="
-									let feedback of form.controls.feedbacks
-										?.controls;
-									let i = index
-								"
-							>
-								<div [formGroupName]="i">
-									<div class="col-12 add-card-wrap">
-										<div class="label-wrap">
-											<label
-												for="description"
-												class="label"
-												>{{
-													'FORM.LABELS.FEEDBACK_DESCRIPTION'
-														| translate
-												}}</label
-											>
-											<ga-star-rating-input
-												formControlName="rating"
-											></ga-star-rating-input>
-										</div>
-
-										<textarea
-											id="description"
-											class="description col-6"
-											nbInput
-											formControlName="description"
-											placeholder="{{
-												'FORM.PLACEHOLDERS.FEEDBACK_DESCRIPTION'
-													| translate
-											}}"
+										<nb-radio-group
+											class="radio-group"
+											[(ngModel)]="status"
+											[ngModelOptions]="{
+												standalone: true
+											}"
 										>
-										</textarea>
+											<nb-radio [value]="'HIRED'">
+												{{
+													'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
+														| translate
+												}}
+												<span
+													*ngIf="
+														interviewersHire?.length >
+														1
+													"
+												>
+													({{ statusHire }}/{{
+														interviewersHire?.length
+													}})
+												</span>
+
+												<i
+													class="fas fa-thumbs-up success"
+												></i>
+											</nb-radio>
+											<nb-radio [value]="'REJECTED'"
+												>{{
+													'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
+														| translate
+												}}
+												<i
+													class="fas error fa-thumbs-down"
+												></i
+											></nb-radio>
+										</nb-radio-group>
 									</div>
+
+									<div class="form-blocks">
+										<div
+											class="form-block"
+											[ngStyle]="{
+												width:
+													personalQualitiesList?.length ===
+													0
+														? '100%'
+														: '48%'
+											}"
+											*ngIf="technologiesList?.length > 0"
+										>
+											<div class="label mb-2">
+												{{
+													'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
+														| translate
+												}}
+											</div>
+											<div class="form-block-criterion">
+												<div
+													class="form-block-criterion-item"
+													*ngFor="
+														let technologyRating of form.get(
+															[
+																'feedbacks',
+																0,
+																'technologies'
+															]
+														).controls as controls;
+														index as i
+													"
+												>
+													<span
+														class="form-block-criterion-title"
+														*ngIf="technologiesList"
+													>
+														{{
+															technologiesList[i]
+																?.name
+														}}
+													</span>
+													<ga-star-rating-input
+														[formControl]="
+															technologyRating
+														"
+													></ga-star-rating-input>
+												</div>
+											</div>
+										</div>
+										<div
+											class="form-block"
+											[ngStyle]="{
+												width:
+													technologiesList?.length ===
+													0
+														? '100%'
+														: '48%'
+											}"
+											*ngIf="
+												personalQualitiesList?.length >
+												0
+											"
+										>
+											<div class="label mb-2">
+												{{
+													'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'
+														| translate
+												}}
+											</div>
+											<div class="form-block-criterion">
+												<div
+													class="form-block-criterion-item"
+													*ngFor="
+														let personalQualityRating of form.get(
+															[
+																'feedbacks',
+																0,
+																'personalQualities'
+															]
+														).controls as controls;
+														index as i
+													"
+												>
+													<span
+														class="form-block-criterion-title"
+														*ngIf="
+															personalQualitiesList
+														"
+													>
+														{{
+															personalQualitiesList[
+																i
+															]?.name
+														}}
+													</span>
+													<ga-star-rating-input
+														[formControl]="
+															personalQualityRating
+														"
+													></ga-star-rating-input>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="add-card-wrap">
+									<label for="description" class="label">{{
+										'FORM.LABELS.FEEDBACK_DESCRIPTION'
+											| translate
+									}}</label>
+									<textarea
+										id="description"
+										class="description"
+										nbInput
+										formControlName="description"
+										placeholder="{{
+											'FORM.PLACEHOLDERS.FEEDBACK_DESCRIPTION'
+												| translate
+										}}"
+									>
+									</textarea>
 								</div>
 							</div>
 						</div>
-					</form>
-				</div>
-				<div class="col-2 buttons">
+					</div>
+				</form>
+
+				<div class="buttons">
 					<button
-						class="w-100 form-btn"
+						class="form-btn"
 						(click)="submitForm()"
 						nbButton
 						status="success"
@@ -154,7 +221,7 @@
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 					<button
-						class="w-100 form-btn"
+						class="form-btn"
 						(click)="cancel()"
 						nbButton
 						status="danger"

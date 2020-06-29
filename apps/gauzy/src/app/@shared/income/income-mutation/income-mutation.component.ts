@@ -10,14 +10,14 @@ import {
 	Income,
 	OrganizationSelectInput,
 	Tag,
-	OrganizationClients
+	OrganizationContact
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -107,7 +107,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		protected dialogRef: NbDialogRef<IncomeMutationComponent>,
 		private organizationsService: OrganizationsService,
 		private store: Store,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService
@@ -123,7 +123,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 	private async _getClients() {
 		this.organizationId = this.store.selectedOrganization.id;
-		const { items } = await this.organizationClientsService.getAll([], {
+		const { items } = await this.organizationContactService.getAll([], {
 			organizationId: this.store.selectedOrganization.id
 		});
 		items.forEach((i) => {
@@ -145,7 +145,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	addNewClient = (name: string): Promise<OrganizationClients> => {
+	addNewClient = (name: string): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -156,7 +156,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			return this.organizationClientsService.create({
+			return this.organizationContactService.create({
 				name,
 				organizationId: this.organizationId
 			});

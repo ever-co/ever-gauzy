@@ -12,6 +12,7 @@
 				(click)="addOrEditDepartments()"
 				nbButton
 				status="success"
+				[disabled]="!name"
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>

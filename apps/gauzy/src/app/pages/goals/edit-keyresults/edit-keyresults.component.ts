@@ -9,7 +9,12 @@ import {
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, KeyResult } from '@gauzy/models';
+import {
+	Employee,
+	KeyResult,
+	KeyResultTypeEnum,
+	KeyResultDeadlineEnum
+} from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-keyresults',
@@ -22,6 +27,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	data: KeyResult;
 	showAllEmployees = false;
 	softDeadline: FormControl;
+	keyResultTypeEnum = KeyResultTypeEnum;
+	keyResultDeadlineEnum = KeyResultDeadlineEnum;
+	minDate = new Date();
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
@@ -30,15 +38,21 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
+		this.minDate = new Date(
+			this.minDate.setDate(this.minDate.getDate() + 1)
+		);
 		this.keyResultsForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			type: ['', Validators.required],
+			type: [this.keyResultTypeEnum.NUMBER, Validators.required],
 			targetValue: [1],
 			initialValue: [0],
 			owner: ['', Validators.required],
 			lead: [''],
-			deadline: ['No Custom Deadline', Validators.required],
+			deadline: [
+				this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE,
+				Validators.required
+			],
 			softDeadline: [null],
 			hardDeadline: [null]
 		});
@@ -52,9 +66,62 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		if (!!this.data) {
 			this.keyResultsForm.patchValue(this.data);
 			this.keyResultsForm.patchValue({
-				softDeadline: new Date(this.data.softDeadline),
-				hardDeadline: new Date(this.data.hardDeadline)
+				softDeadline: this.data.softDeadline
+					? new Date(this.data.softDeadline)
+					: null,
+				hardDeadline: this.data.hardDeadline
+					? new Date(this.data.hardDeadline)
+					: null
 			});
+		}
+	}
+
+	deadlineValidators() {
+		if (
+			this.keyResultsForm.get('deadline').value ===
+			this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+		) {
+			this.keyResultsForm.controls['softDeadline'].clearValidators();
+			this.keyResultsForm.patchValue({ softDeadline: undefined });
+			this.keyResultsForm.controls[
+				'softDeadline'
+			].updateValueAndValidity();
+			this.keyResultsForm.controls['hardDeadline'].clearValidators();
+			this.keyResultsForm.patchValue({ hardDeadline: undefined });
+			this.keyResultsForm.controls[
+				'hardDeadline'
+			].updateValueAndValidity();
+		} else if (
+			this.keyResultsForm.get('deadline').value ===
+			this.keyResultDeadlineEnum.HARD_DEADLINE
+		) {
+			this.keyResultsForm.controls['softDeadline'].clearValidators();
+			this.keyResultsForm.patchValue({ softDeadline: undefined });
+			this.keyResultsForm.controls[
+				'softDeadline'
+			].updateValueAndValidity();
+			this.keyResultsForm.controls['hardDeadline'].setValidators([
+				Validators.required
+			]);
+			this.keyResultsForm.controls[
+				'hardDeadline'
+			].updateValueAndValidity();
+		} else if (
+			this.keyResultsForm.get('deadline').value ===
+			this.keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE
+		) {
+			this.keyResultsForm.controls['softDeadline'].setValidators([
+				Validators.required
+			]);
+			this.keyResultsForm.controls[
+				'softDeadline'
+			].updateValueAndValidity();
+			this.keyResultsForm.controls['hardDeadline'].setValidators([
+				Validators.required
+			]);
+			this.keyResultsForm.controls[
+				'hardDeadline'
+			].updateValueAndValidity();
 		}
 	}
 
@@ -70,7 +137,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		if (!!this.data) {
 			this.keyResultsForm.patchValue({
 				targetValue:
-					this.keyResultsForm.value.type === 'True/False'
+					this.keyResultsForm.value.type ===
+					this.keyResultTypeEnum.TRUE_OR_FALSE
 						? 1
 						: this.keyResultsForm.value.targetValue
 			});

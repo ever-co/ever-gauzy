@@ -2,7 +2,11 @@
 	<nb-card-body>
 		<div class="header">
 			<p>{{ 'HELP_PAGE.CHOSE_ICON' | translate }}</p>
-			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
+			<nb-icon
+				class="ml-1"
+				icon="close-outline"
+				(click)="closeDialog()"
+			></nb-icon>
 		</div>
 		<div class="add-icon-field">
 			<button

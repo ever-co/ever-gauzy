@@ -4,13 +4,13 @@ import {
 	CurrenciesEnum,
 	Employee,
 	Organization,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationProjects,
 	ProjectBillingEnum,
 	Tag,
 	ProjectOwnerEnum
 } from '@gauzy/models';
-import { OrganizationClientsService } from '../../../../../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../../../../../@core/services/organization-contact.service';
 import { Store } from '../../../../../../@core/services/store.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -45,12 +45,12 @@ export class EditOrganizationProjectsMutationComponent
 	public: Boolean = true;
 	tags: Tag[] = [];
 	organizationId: string;
-	clients: Object[] = [];
+	organizationContacts: Object[] = [];
 	owners: string[] = Object.values(ProjectOwnerEnum);
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
 		private store: Store,
 		readonly translateService: TranslateService,
@@ -61,18 +61,18 @@ export class EditOrganizationProjectsMutationComponent
 
 	ngOnInit() {
 		this._initializeForm();
-		this._getClients();
+		this._getOrganizationContacts();
 	}
 
-	private async _getClients() {
+	private async _getOrganizationContacts() {
 		this.organizationId = this.store.selectedOrganization.id;
-		const { items } = await this.organizationClientsService.getAll([], {
+		const { items } = await this.organizationContactService.getAll([], {
 			organizationId: this.store.selectedOrganization.id
 		});
 		items.forEach((i) => {
-			this.clients = [
-				...this.clients,
-				{ clientName: i.name, clientId: i.id }
+			this.organizationContacts = [
+				...this.organizationContacts,
+				{ name: i.name, organizationContactId: i.id }
 			];
 		});
 	}
@@ -100,9 +100,9 @@ export class EditOrganizationProjectsMutationComponent
 			tags: [this.project ? (this.tags = this.project.tags) : ''],
 			public: this.project ? this.project.public : this.public,
 			name: [this.project ? this.project.name : '', Validators.required],
-			client: [
-				this.project && this.project.client
-					? this.project.client.name
+			organizationContact: [
+				this.project && this.project.organizationContact
+					? this.project.organizationContact
 					: ''
 			],
 			billing: [this.project ? this.project.billing : 'RATE'],
@@ -140,7 +140,7 @@ export class EditOrganizationProjectsMutationComponent
 				id: this.project ? this.project.id : undefined,
 				organizationId: this.organization.id,
 				name: this.form.value['name'],
-				client: this.form.value['client'].clientId,
+				organizationContact: this.form.value['organizationContact'].organizationContactId,
 				billing: this.form.value['billing'],
 				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],
@@ -159,18 +159,20 @@ export class EditOrganizationProjectsMutationComponent
 		this.tags = ev;
 	}
 
-	addNewClient = (name: string): Promise<OrganizationClients> => {
+	addNewOrganizationContact = (
+		name: string
+	): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
 					{
 						name: name
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			return this.organizationClientsService.create({
+			return this.organizationContactService.create({
 				name,
 				organizationId: this.organizationId
 			});

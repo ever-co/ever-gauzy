@@ -26,32 +26,43 @@
 				<div class="p-3">
 					<div class="row mt-2">
 						<div class="col-md-6 font-weight-bold">
-							Intital value
+							{{
+								'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+									| translate
+							}}
 						</div>
 						<div class="col-md-6">{{ keyResult.initialValue }}</div>
 					</div>
 					<div class="row mt-2">
 						<div class="col-md-6 font-weight-bold">
-							Target value
+							{{
+								'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+									| translate
+							}}
 						</div>
 						<div class="col-md-6">{{ keyResult.targetValue }}</div>
 					</div>
 					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">Progress</div>
+						<div class="col-md-6 font-weight-bold">
+							{{ 'GOALS_PAGE.PROGRESS' | translate }}
+						</div>
 						<div class="col-md-6">{{ keyResult.progress }} %</div>
 					</div>
 					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">Goal</div>
+						<div class="col-md-6 font-weight-bold">
+							{{ 'GOALS_PAGE.GOAL' | translate }}
+						</div>
 						<div class="col-md-6">{{ keyResult.goal.name }} %</div>
 					</div>
 				</div>
 			</div>
 			<div class="col-md-6">
 				<div class="main-header">
-					<h6 class="mt-3">Updates</h6>
+					<h6 class="mt-3">{{ 'GOALS_PAGE.UPDATES' | translate }}</h6>
 					<button
 						nbButton
 						size="small"
+						[disabled]="!isUpdatable"
 						status="primary"
 						(click)="keyResultUpdate()"
 					>
@@ -78,13 +89,15 @@
 						<nb-card-footer>
 							<div class="main-header p-3">
 								<p class="font-weight-bold">
-									Update : {{ update.update }}
+									{{ 'GOALS_PAGE.UPDATE' | translate }} :
+									{{ update.update }}
 								</p>
 								<p class="font-weight-bold">
 									{{ update.status }}
 								</p>
 								<p class="font-weight-bold">
-									Progress : {{ update.progress }}%
+									{{ 'GOALS_PAGE.PROGRESS' | translate }} :
+									{{ update.progress }}%
 								</p>
 							</div>
 						</nb-card-footer>
@@ -95,7 +108,7 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<button nbButton status="success" (click)="closeDialog()">
-			Save
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 		<button
 			class="float-right"
@@ -103,7 +116,7 @@
 			nbButton
 			(click)="deleteKeyResult()"
 		>
-			Delete
+			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

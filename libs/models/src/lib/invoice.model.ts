@@ -1,6 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Organization } from './organization.model';
-import { OrganizationClients } from './organization-clients.model';
+import { OrganizationContact } from './organization-contact.model';
 import { InvoiceItem } from './invoice-item.model';
 import { Tag } from './tag-entity.model';
 import { Payment } from './payment.model';
@@ -20,7 +20,7 @@ export interface Invoice extends IBaseEntityModel {
 	clientId?: string;
 	organizationId?: string;
 	fromOrganization?: Organization;
-	toClient?: OrganizationClients;
+	toClient?: OrganizationContact;
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;
 	sentTo?: string;
@@ -28,6 +28,7 @@ export interface Invoice extends IBaseEntityModel {
 	isEstimate?: boolean;
 	sentStatus?: boolean;
 	payments?: Payment[];
+	isAccepted?: boolean;
 }
 
 export interface InvoiceUpdateInput {
@@ -48,6 +49,7 @@ export interface InvoiceUpdateInput {
 	sentTo?: string;
 	tags?: Tag[];
 	sentStatus?: boolean;
+	isAccepted?: boolean;
 }
 
 export interface InvoiceFindInput {

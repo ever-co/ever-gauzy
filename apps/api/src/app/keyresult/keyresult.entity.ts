@@ -6,10 +6,14 @@ import {
 	JoinColumn,
 	OneToMany
 } from 'typeorm';
-import { KeyResult as IKeyResult } from '@gauzy/models';
+import {
+	KeyResult as IKeyResult,
+	KeyResultTypeEnum,
+	KeyResultDeadlineEnum
+} from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsEnum } from 'class-validator';
 import { Goal } from '../goal/goal.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 
@@ -24,7 +28,8 @@ export class KeyResult extends Base implements IKeyResult {
 	@IsOptional()
 	description?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: String, enum: KeyResultTypeEnum })
+	@IsEnum(KeyResultTypeEnum)
 	@Column()
 	type: string;
 
@@ -55,7 +60,8 @@ export class KeyResult extends Base implements IKeyResult {
 	@IsOptional()
 	lead: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: String, enum: KeyResultDeadlineEnum })
+	@IsEnum(KeyResultDeadlineEnum)
 	@Column()
 	deadline: string;
 
@@ -75,7 +81,9 @@ export class KeyResult extends Base implements IKeyResult {
 	status?: string;
 
 	@ApiProperty({ type: Goal })
-	@ManyToOne((type) => Goal, (goal) => goal.keyResults)
+	@ManyToOne((type) => Goal, (goal) => goal.keyResults, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn({ name: 'goalId' })
 	goal: Goal;
 

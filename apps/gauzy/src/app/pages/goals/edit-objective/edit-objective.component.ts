@@ -1,11 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Employee, Goal, GoalTimeFrame } from '@gauzy/models';
+import {
+	Employee,
+	Goal,
+	GoalTimeFrame,
+	GoalLevelEnum,
+	TimeFrameStatusEnum
+} from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { EditTimeFrameComponent } from '../../goal-settings/edit-time-frame/edit-time-frame.component';
 
 @Component({
 	selector: 'ga-edit-objective',
@@ -17,13 +24,16 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	employees: Employee[];
 	data: Goal;
 	timeFrames: GoalTimeFrame[] = [];
+	goalLevelEnum = GoalLevelEnum;
+	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private dialogRef: NbDialogRef<EditObjectiveComponent>,
 		private fb: FormBuilder,
 		private employeeService: EmployeesService,
-		private goalSettingService: GoalSettingsService
+		private goalSettingService: GoalSettingsService,
+		private dialogService: NbDialogService
 	) {}
 
 	async ngOnInit() {
@@ -32,15 +42,11 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			description: [''],
 			owner: ['', Validators.required],
 			lead: [''],
-			level: ['Organization', Validators.required],
-			deadline: ['Quarterly', Validators.required]
+			level: ['', Validators.required],
+			deadline: ['', Validators.required]
 		});
 
-		await this.goalSettingService.getAllTimeFrames().then((res) => {
-			if (res) {
-				this.timeFrames = res.items;
-			}
-		});
+		this.getTimeFrames();
 		await this.employeeService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
@@ -49,6 +55,29 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			});
 		if (!!this.data) {
 			this.objectiveForm.patchValue(this.data);
+		}
+	}
+
+	async getTimeFrames() {
+		await this.goalSettingService.getAllTimeFrames().then((res) => {
+			if (res) {
+				this.timeFrames = res.items.filter(
+					(timeframe) =>
+						timeframe.status === this.timeFrameStatusEnum.ACTIVE
+				);
+			}
+		});
+	}
+
+	async openSetTimeFrame() {
+		const dialog = this.dialogService.open(EditTimeFrameComponent, {
+			context: {
+				type: 'add'
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (response) {
+			await this.getTimeFrames();
 		}
 	}
 

@@ -72,6 +72,11 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		if (this.selectedRange) {
 			this.start = this.selectedRange.start;
 			this.end = this.selectedRange.end;
+		} else {
+			this.selectedRange = {
+				start: history.state.dateStart,
+				end: history.state.dateEnd
+			};
 		}
 
 		this.store.selectedOrganization$
@@ -82,7 +87,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				}
 			});
 
-		this._parseParams();
+		// this._parseParams();
+		this._initializeForm();
 		this._loadEmployees();
 	}
 
@@ -202,9 +208,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 
 	async onSaveRequest() {
 		const employeeAppointmentRequest = {
-			emails: this.emails.value
-				.map((email) => email.emailAddress)
-				.join(', '),
+			emails:
+				this.emails.value &&
+				this.emails.value.map((email) => email.emailAddress).join(', '),
 			agenda: this.form.get('agenda').value,
 			location: this.form.get('location').value,
 			description: this.form.get('description').value,
@@ -238,7 +244,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				for (let e of this.selectedEmployeeIds) {
 					await this.appointmentEmployeesService.add({
 						employeeId: e,
-						appointmentId: this.employeeAppointment.id
+						appointmentId: this.employeeAppointment.id,
+						employeeAppointment: this.employeeAppointment
 					});
 				}
 			}

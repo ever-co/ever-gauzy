@@ -41,4 +41,29 @@ export class AppointmentEmployeesController extends CrudController<
 			})
 		).items;
 	}
+
+	@ApiOperation({ summary: 'Find appointments based on employee id.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records',
+		type: AppointmentEmployees
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('findEmployeeAppointments/:employeeId')
+	async findEmployeeAppointments(
+		@Param('employeeId', UUIDValidationPipe) employeeId: string
+	): Promise<AppointmentEmployees[]> {
+		return (
+			await this.appointmentEmployeesService.findAll({
+				where: {
+					employeeId: employeeId
+				},
+				relations: ['employeeAppointment']
+			})
+		).items;
+	}
 }

@@ -1,13 +1,19 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
-import { KeyResult, KeyResultUpdates } from '@gauzy/models';
+import {
+	KeyResult,
+	KeyResultUpdates,
+	KeyResultDeadlineEnum
+} from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
+import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { isFuture, isToday } from 'date-fns';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -19,6 +25,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	src: string;
 	keyResult: KeyResult;
 	updates: KeyResultUpdates[];
+	keyResultDeadlineEnum = KeyResultDeadlineEnum;
+	isUpdatable = true;
 	private _ngDestroy$ = new Subject<void>();
 	ownerName: string;
 	@ViewChild(KeyResultProgressChartComponent)
@@ -27,7 +35,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		private dialogRef: NbDialogRef<KeyResultDetailsComponent>,
 		private employeeService: EmployeesService,
 		private dialogService: NbDialogService,
-		private keyResultService: KeyResultService
+		private keyResultService: KeyResultService,
+		private goalSettingsService: GoalSettingsService
 	) {}
 
 	async ngOnInit() {
@@ -42,6 +51,23 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				new Date(b.createdAt).getTime() -
 				new Date(a.createdAt).getTime()
 		);
+		// prevent keyresult updates after deadline
+		if (
+			this.keyResult.deadline ===
+			this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+		) {
+			this.goalSettingsService
+				.getTimeFrameByName(this.keyResult.goal.deadline)
+				.then((res) => {
+					this.isUpdatable =
+						isFuture(new Date(res.items[0].endDate)) ||
+						isToday(new Date(res.items[0].endDate));
+				});
+		} else {
+			this.isUpdatable =
+				isFuture(new Date(this.keyResult.hardDeadline)) ||
+				isToday(new Date(this.keyResult.hardDeadline));
+		}
 	}
 
 	async loadModal() {

@@ -21,7 +21,7 @@ import { OrganizationLanguagesService } from '../../@core/services/organization-
 import { OrganizationAwardsService } from '../../@core/services/organization-awards.service';
 import * as moment from 'moment';
 import { IncomeService } from '../../@core/services/income.service';
-import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { TimesheetService } from '../../@shared/timesheet/timesheet.service';
@@ -65,7 +65,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private organization_language_service: OrganizationLanguagesService,
 		private organizationAwardsService: OrganizationAwardsService,
 		private incomeService: IncomeService,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactService: OrganizationContactService,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private organizationProjectsService: OrganizationProjectsService,
 		private timesheetService: TimesheetService,
@@ -145,7 +145,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getClientsCount() {
-		const { total } = await this.organizationClientsService.getAll(null, {
+		const { total } = await this.organizationContactService.getAll(null, {
 			organizationId: this.organization.id
 		});
 		this.total_clients = total;

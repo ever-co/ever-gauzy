@@ -41,17 +41,16 @@
 				/>
 			</div>
 			<div class="form-group col-4">
-				<label for="clients" class="label">{{
-					'FORM.PLACEHOLDERS.CLIENTS' | translate
+				<label for="organizationContacts" class="label">{{
+					'FORM.PLACEHOLDERS.CONTACTS' | translate
 				}}</label>
 				<ng-select
-					id="clients"
-					[addTag]="addNewClient"
-					[items]="clients"
-					bindLabel="clientName"
+					[addTag]="addNewOrganizationContact"
+					[items]="organizationContacts"
+					bindLabel="name"
 					[searchable]="true"
-					formControlName="client"
-					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+					formControlName="organizationContact"
+					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
 				>
 				</ng-select>
 			</div>

@@ -86,10 +86,19 @@ export class CandidateInterviewFeedbackComponent
 		this.personalQualitiesList.map(
 			(qual, index) => (qual.rating = qualities[index])
 		);
-		const techSum = technologies.reduce((sum, current) => sum + current, 0);
-		const qualSum = qualities.reduce((sum, current) => sum + current, 0);
-		const res =
-			(techSum / technologies.length + qualSum / qualities.length) / 2;
+		const techSum =
+			technologies.length > 0
+				? technologies.reduce((sum, current) => sum + current, 0) /
+				  technologies.length
+				: 0;
+		const qualSum =
+			qualities.length > 0
+				? qualities.reduce((sum, current) => sum + current, 0) /
+				  qualities.length
+				: 0;
+		const isSomeEmpty =
+			(technologies.length > 0 ? 1 : 0) + (qualities.length > 0 ? 1 : 0);
+		const res = techSum || qualSum ? (techSum + qualSum) / isSomeEmpty : 0;
 		return res;
 	}
 
@@ -154,6 +163,7 @@ export class CandidateInterviewFeedbackComponent
 				this.technologiesList.map((tech) => (tech.rating = null));
 				this.personalQualitiesList.map((qual) => (qual.rating = null));
 				this.dialogRef.close();
+				this.form.reset();
 				this.toastrService.success(
 					this.getTranslation('TOASTR.TITLE.SUCCESS'),
 					this.getTranslation('TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED')
@@ -210,5 +220,6 @@ export class CandidateInterviewFeedbackComponent
 	}
 	closeDialog() {
 		this.dialogRef.close();
+		this.form.reset();
 	}
 }

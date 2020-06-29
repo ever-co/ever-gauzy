@@ -7,7 +7,8 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	UseGuards
+	UseGuards,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GoalService } from './goal.service';
@@ -74,5 +75,11 @@ export class GoalController extends CrudController<Goal> {
 			console.log(error);
 			return;
 		}
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async deleteGoal(@Param('id') id: string): Promise<any> {
+		return this.goalService.delete(id);
 	}
 }

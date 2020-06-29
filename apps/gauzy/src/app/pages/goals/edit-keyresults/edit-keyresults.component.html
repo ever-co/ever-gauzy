@@ -9,90 +9,121 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="keyResultsForm">
-			<label for="key-result-title" class="label"> Name </label>
+			<label for="key-result-title" class="label">
+				{{ 'FORM.LABELS.NAME' | translate }}
+			</label>
 			<input
 				type="text"
 				id="key-result-title"
 				nbInput
 				fullWidth
 				formControlName="name"
-				placeholder="Key Result Name. eg. Add Metadata to improve SEO"
+				placeholder="{{
+					'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.NAME' | translate
+				}}"
 			/>
 
 			<label for="key-result-description" class="label mt-3">
-				Description (optional)
+				{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
 			</label>
 			<textarea
 				id="key-result-description"
 				nbInput
 				fullWidth
 				formControlName="description"
-				placeholder="Key Result Description."
+				placeholder="{{
+					'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.DESCRIPTION' | translate
+				}}"
 			></textarea>
 
 			<label for="key-result-type" class="label mt-3">
-				Key result Type
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE' | translate }}
 			</label>
 			<nb-select id="key-result-type" fullWidth formControlName="type">
-				<nb-option value="Number">Number</nb-option>
-				<nb-option value="True/False">True/False</nb-option>
-				<nb-option value="Currency">Currency</nb-option>
-				<nb-option value="Tasks">Tasks</nb-option>
+				<nb-option
+					*ngFor="let type of keyResultTypeEnum | keyvalue"
+					[value]="type.value"
+					>{{
+						'KEY_RESULT_PAGE.TYPE.' + type.key | translate
+					}}</nb-option
+				>
 			</nb-select>
 
 			<div class="row">
 				<div class="col-md-6">
 					<label
 						*ngIf="
-							keyResultsForm.value.type == 'Number' ||
-							keyResultsForm.value.type == 'Currency'
+							keyResultsForm.value.type ==
+								keyResultTypeEnum.NUMBER ||
+							keyResultsForm.value.type ==
+								keyResultTypeEnum.CURRENCY
 						"
 						for="initial-value"
 						class="label"
 					>
-						Initial value
+						{{
+							'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+								| translate
+						}}
 					</label>
 					<input
 						type="number"
 						id="initial-value"
 						*ngIf="
-							keyResultsForm.value.type == 'Number' ||
-							keyResultsForm.value.type == 'Currency'
+							keyResultsForm.value.type ==
+								keyResultTypeEnum.NUMBER ||
+							keyResultsForm.value.type ==
+								keyResultTypeEnum.CURRENCY
 						"
 						nbInput
 						fullWidth
 						formControlName="initialValue"
-						placeholder="Start"
+						placeholder="						{{
+							'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+								| translate
+						}}"
 					/>
 				</div>
 
 				<div class="col-md-6">
 					<label
 						*ngIf="
-							keyResultsForm.value.type == 'Number' ||
-							keyResultsForm.value.type == 'Currency'
+							keyResultsForm.value.type ==
+								keyResultTypeEnum.NUMBER ||
+							keyResultsForm.value.type ==
+								keyResultTypeEnum.CURRENCY
 						"
 						for="target-value"
 						class="label"
 					>
-						Target value
+						{{
+							'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+								| translate
+						}}
 					</label>
 					<input
 						type="number"
 						id="target-value"
 						*ngIf="
-							keyResultsForm.value.type == 'Number' ||
-							keyResultsForm.value.type == 'Currency'
+							keyResultsForm.value.type ==
+								keyResultTypeEnum.NUMBER ||
+							keyResultsForm.value.type ==
+								keyResultTypeEnum.CURRENCY
 						"
 						nbInput
 						fullWidth
 						formControlName="targetValue"
-						placeholder="Target"
+						placeholder="{{
+							'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+								| translate
+						}}"
 					/>
 				</div>
 			</div>
 
-			<label for="key-result-owner" class="label mt-3"> Owner </label>
+			<label for="key-result-owner" class="label mt-3">
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
+			</label>
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
@@ -100,12 +131,14 @@
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'owner')"
 				id="key-result-owner"
-				placeholder="Owner"
+				placeholder="{{
+					'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate
+				}}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
 
 			<label for="key-result-Lead" class="label mt-3">
-				Lead (optional)</label
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}</label
 			>
 			<ga-employee-multi-select
 				[multiple]="false"
@@ -114,24 +147,27 @@
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'lead')"
 				id="key-result-Lead"
-				placeholder="Lead"
+				placeholder="{{
+					'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate
+				}}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
 
 			<label for="key-result-deadline" class="label mt-3">
-				Deadline
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}
 			</label>
 			<nb-select
+				(selectedChange)="deadlineValidators()"
 				id="key-result-deadline"
 				fullWidth
 				formControlName="deadline"
 			>
-				<nb-option value="No Custom Deadline"
-					>No Custom Deadline</nb-option
-				>
-				<nb-option value="Hard deadline">Hard deadline</nb-option>
-				<nb-option value="Hard and soft deadline"
-					>Hard and soft deadline</nb-option
+				<nb-option
+					*ngFor="let deadline of keyResultDeadlineEnum | keyvalue"
+					[value]="deadline.value"
+					>{{
+						'KEY_RESULT_PAGE.DEADLINE.' + deadline.key | translate
+					}}</nb-option
 				>
 			</nb-select>
 			<div class="row mt-3">
@@ -139,22 +175,29 @@
 					class="col-md-6"
 					*ngIf="
 						keyResultsForm.value.deadline ==
-						'Hard and soft deadline'
+						keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE
 					"
 				>
 					<label for="soft-deadline" class="label">
-						Soft Deadline
+						{{
+							'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE'
+								| translate
+						}}
 					</label>
 					<input
 						nbInput
 						id="soft-deadline"
 						fullWidth
-						placeholder="Soft Deadline"
+						placeholder="{{
+							'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE'
+								| translate
+						}}"
 						[nbDatepicker]="softDeadlinePicker"
 						formControlName="softDeadline"
 					/>
 					<nb-datepicker
 						#softDeadlinePicker
+						[min]="minDate"
 						[max]="
 							keyResultsForm.value.hardDeadline
 								? keyResultsForm.value.hardDeadline
@@ -166,18 +209,25 @@
 					class="col-md-6"
 					*ngIf="
 						keyResultsForm.value.deadline ==
-							'Hard and soft deadline' ||
-						keyResultsForm.value.deadline == 'Hard deadline'
+							keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE ||
+						keyResultsForm.value.deadline ==
+							keyResultDeadlineEnum.HARD_DEADLINE
 					"
 				>
 					<label for="hard-deadline" class="label">
-						Hard Deadline
+						{{
+							'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE'
+								| translate
+						}}
 					</label>
 					<input
 						nbInput
 						id="hard-deadline"
 						fullWidth
-						placeholder="Hard Picker"
+						placeholder="{{
+							'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE'
+								| translate
+						}}"
 						[nbDatepicker]="hardDeadlinePicker"
 						formControlName="hardDeadline"
 					/>
@@ -186,7 +236,7 @@
 						[min]="
 							keyResultsForm.value.softDeadline
 								? keyResultsForm.value.softDeadline
-								: null
+								: minDate
 						"
 					></nb-datepicker>
 				</div>
@@ -194,14 +244,16 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
+		<button class="mr-3" nbButton (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
 		<button
-			[disabled]="!keyResultsForm.valid"
+			[disabled]="keyResultsForm.invalid"
 			nbButton
 			status="success"
 			(click)="saveKeyResult()"
 		>
-			Save
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
