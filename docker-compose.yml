@@ -25,9 +25,9 @@ services:
         container_name: db
         restart: always
         environment:
-            POSTGRES_DB: postgres
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: root
+            POSTGRES_DB: ${DB_NAME:-postgres}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASS:-root}
         healthcheck:
             test:
                 [
@@ -50,10 +50,10 @@ services:
         links:
             - db:${DB_HOST:-db}
         environment:
-            POSTGRES_DB: postgres
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: root
-            DATABASE_URL: postgres://postgres:root@db:5432/postgres?sslmode=disable
+            POSTGRES_DB: ${DB_NAME:-postgres}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASS:-root}
+            DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASS:-root}@${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-postgres}?sslmode=disable
         ports:
             - '8081:8081'
         networks:
@@ -68,11 +68,11 @@ services:
         links:
             - db:${DB_HOST:-db}
         environment:
-            PGHOST: db
-            PGDATABASE: postgres
-            PGUSER: postgres
-            PGPASSWORD: root
-            PGPORT: 5432
+            PGHOST: ${DB_HOST:-db}
+            PGDATABASE: ${DB_NAME:-postgres}
+            PGUSER: ${DB_USER:-postgres}
+            PGPASSWORD: ${DB_PASS:-root}
+            PGPORT: ${DB_PORT:-5432}
         ports:
             - '8082:80'
             - '14645:14645'
@@ -103,9 +103,9 @@ services:
             - db:${DB_HOST:-db}
         environment:
             ADMINER_DEFAULT_DB_DRIVER: pgsql
-            ADMINER_DEFAULT_DB_HOST: db
-            ADMINER_DEFAULT_DB_NAME: postgres
-            ADMINER_DEFAULT_DB_PASSWORD: root
+            ADMINER_DEFAULT_DB_HOST: ${DB_HOST:-db}
+            ADMINER_DEFAULT_DB_NAME: ${DB_NAME:-postgres}
+            ADMINER_DEFAULT_DB_PASSWORD: ${DB_PASS:-root}
         ports:
             - '8084:8080'
         networks:
@@ -118,11 +118,7 @@ services:
             context: .
             dockerfile: .deploy/api/Dockerfile
         environment:
-            NODE_ENV: production
-            DB_HOST: db
-            DB_NAME: postgres
-            DB_USER: postgres
-            DB_PASS: root
+            NODE_ENV: ${NODE_ENV:-development}
         env_file:
           - .env
         restart: on-failure
@@ -146,7 +142,7 @@ services:
             context: .
             dockerfile: .deploy/webapp/Dockerfile
         environment:
-            NODE_ENV: production
+            NODE_ENV: ${NODE_ENV:-development}
         env_file:
           - .env
         restart: on-failure
