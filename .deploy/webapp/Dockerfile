@@ -29,6 +29,8 @@ ENV API_PORT 3000
 
 COPY --from=dependencies /srv/gauzy .
 COPY . .
+RUN sed -i -e "s/API_BASE_URL.*;/API_BASE_URL = ${API_BASE_URL};/" \
+    apps/gauzy/src/environments/environment.ts
 
 
 #
