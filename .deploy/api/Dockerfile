@@ -2,10 +2,12 @@
 # devependecies
 #
 FROM node:alpine AS dependencies
+USER node:node
+WORKDIR /srv/gauzy
+
 RUN apk add --no-cache g++ git make python
 COPY wait .deploy/webapp/entrypoint /
 RUN chmod +x /wait /entrypoint
-WORKDIR /srv/gauzy
 
 COPY apps/desktop/package.json ./apps/desktop/
 COPY apps/api/package.json ./apps/api/
@@ -18,10 +20,10 @@ RUN yarn install
 # development
 #
 FROM node:alpine AS development
-COPY --from=dependencies /wait /entrypoint
-ENTRYPOINT [ "/entrypoint" ]
-WORKDIR /srv/gauzy
 USER node:node
+WORKDIR /srv/gauzy
+ENTRYPOINT [ "/entrypoint" ]
+COPY --from=dependencies /wait /entrypoint
 
 ARG NODE_OPTIONS="--max-old-space-size=2048"
 ENV DB_NAME postgres
@@ -37,6 +39,7 @@ COPY . .
 # build
 #
 FROM node:alpine AS build
+USER node:node
 WORKDIR /srv/gauzy
 COPY --from=development /srv/gauzy .
 ARG NODE_OPTIONS="--max-old-space-size=2048"
@@ -48,11 +51,11 @@ RUN yarn nx build api --configuration=production
 # production
 #
 FROM node:alpine AS production
-COPY --from=dependencies /wait /entrypoint
-ENTRYPOINT [ "/entrypoint" ]
-CMD [ "node", "main.js" ]
-WORKDIR /srv/gauzy
 USER node:node
+WORKDIR /srv/gauzy
+CMD [ "node", "main.js" ]
+ENTRYPOINT [ "/entrypoint" ]
+COPY --from=dependencies /wait /entrypoint
 EXPOSE 3000
 
 ENV NODE_OPTIONS="--max-old-space-size=2048"
