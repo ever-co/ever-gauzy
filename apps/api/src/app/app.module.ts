@@ -25,7 +25,7 @@ import { EmployeeStatisticsModule } from './employee-statistics/employee-statist
 import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
 import { OrganizationRecurringExpenseModule } from './organization-recurring-expense/organization-recurring-expense.module';
 import { EmployeeRecurringExpenseModule } from './employee-recurring-expense/employee-recurring-expense.module';
-import { OrganizationClientsModule } from './organization-clients/organization-clients.module';
+import { OrganizationContactModule } from './organization-contact/organization-contact.module';
 import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
 import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
@@ -192,8 +192,8 @@ import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 						module: OrganizationDepartmentModule
 					},
 					{
-						path: '/organization-clients',
-						module: OrganizationClientsModule
+						path: '/organization-contact',
+						module: OrganizationContactModule
 					},
 					{
 						path: '/organization-positions',
@@ -419,7 +419,7 @@ import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 		UserOrganizationModule,
 		OrganizationDepartmentModule,
 		OrganizationRecurringExpenseModule,
-		OrganizationClientsModule,
+		OrganizationContactModule,
 		OrganizationPositionsModule,
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,

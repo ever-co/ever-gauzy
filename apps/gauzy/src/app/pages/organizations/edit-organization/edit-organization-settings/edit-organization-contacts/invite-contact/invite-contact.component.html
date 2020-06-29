@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header class="d-flex">
-		<h5>{{ 'ORGANIZATIONS_PAGE.INVITE_CLIENT' | translate }}</h5>
+		<h5>{{ 'ORGANIZATIONS_PAGE.INVITE_CONTACT' | translate }}</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -12,7 +12,7 @@
 			<div class="row">
 				<div class="form-group col-12">
 					<label for="emailsSelect" class="label">{{
-						'SM_TABLE.CLIENT_NAME' | translate
+						'SM_TABLE.CONTACT_NAME' | translate
 					}}</label>
 					<input
 						type="text"
@@ -20,7 +20,7 @@
 						nbInput
 						fullWidth
 						formControlName="name"
-						placeholder="{{ 'SM_TABLE.CLIENT_NAME' | translate }}"
+						placeholder="{{ 'SM_TABLE.CONTACT_NAME' | translate }}"
 						[status]="
 							form.controls.name.touched
 								? form.controls.name.value == 0
@@ -117,7 +117,7 @@
 					>
 						<p class="caption status-danger">
 							{{
-								'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.EMAIL_EXISTS'
+								'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.EMAIL_EXISTS'
 									| translate
 							}}
 						</p>
@@ -134,7 +134,7 @@
 			class="mr-2"
 			status="success"
 			[disabled]="form.invalid"
-			(click)="inviteClient()"
+			(click)="inviteContact()"
 			nbButton
 		>
 			{{ 'ORGANIZATIONS_PAGE.EMAIL_INVITE' | translate }}

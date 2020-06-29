@@ -10,7 +10,7 @@ import {
 	IsEnum
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 @Entity('timesheet')
 export class Timesheet extends Base implements ITimesheet {
@@ -24,10 +24,10 @@ export class Timesheet extends Base implements ITimesheet {
 	@Column()
 	readonly employeeId: string;
 
-	@ApiProperty({ type: OrganizationClients })
-	@ManyToOne(() => OrganizationClients, { nullable: true })
+	@ApiProperty({ type: OrganizationContact })
+	@ManyToOne(() => OrganizationContact, { nullable: true })
 	@JoinColumn()
-	approvedBy?: OrganizationClients;
+	approvedBy?: OrganizationContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timesheet: Timesheet) => timesheet.approvedBy)

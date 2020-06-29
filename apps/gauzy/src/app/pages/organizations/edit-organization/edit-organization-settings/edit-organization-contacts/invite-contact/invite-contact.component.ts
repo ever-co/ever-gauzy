@@ -1,25 +1,25 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
 import { FormBuilder, Validators } from '@angular/forms';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
-import { OrganizationClients } from '@gauzy/models';
-import { UsersService } from 'apps/gauzy/src/app/@core/services';
-import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
+import { OrganizationContactService } from '../../../../../../@core/services/organization-contact.service';
+import { OrganizationContact } from '@gauzy/models';
+import { UsersService } from '../../../../../../@core/services';
+import { InviteService } from '../../../../../../@core/services/invite.service';
 
 @Component({
-	selector: 'ga-invite-client',
-	templateUrl: './invite-client.component.html'
+	selector: 'ga-invite-contact',
+	templateUrl: './invite-contact.component.html'
 })
-export class InviteClientComponent extends TranslationBaseComponent
+export class InviteContactComponent extends TranslationBaseComponent
 	implements OnInit {
 	constructor(
-		private readonly dialogRef: NbDialogRef<InviteClientComponent>,
+		private readonly dialogRef: NbDialogRef<InviteContactComponent>,
 		readonly translateService: TranslateService,
 		private readonly toastrService: NbToastrService,
 		private readonly fb: FormBuilder,
-		private readonly organizationClientService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactService,
 		private readonly usersService: UsersService,
 		private readonly inviteService: InviteService
 	) {
@@ -33,24 +33,24 @@ export class InviteClientComponent extends TranslationBaseComponent
 	organizationId = '';
 
 	@Input()
-	organizationClient?: OrganizationClients = undefined;
+	organizationContact?: OrganizationContact = undefined;
 
 	ngOnInit(): void {
 		this.form = this.fb.group(
 			{
 				name: [
-					this.organizationClient ? this.organizationClient.name : '',
+					this.organizationContact ? this.organizationContact.name : '',
 					Validators.required
 				],
 				primaryEmail: [
-					this.organizationClient
-						? this.organizationClient.primaryEmail
+					this.organizationContact
+						? this.organizationContact.primaryEmail
 						: '',
 					[Validators.required, Validators.email]
 				],
 				primaryPhone: [
-					this.organizationClient
-						? this.organizationClient.primaryPhone
+					this.organizationContact
+						? this.organizationContact.primaryPhone
 						: '',
 					Validators.required
 				]
@@ -69,16 +69,16 @@ export class InviteClientComponent extends TranslationBaseComponent
 		);
 	}
 
-	closeDialog(organizationClient?) {
-		this.dialogRef.close(organizationClient);
+	closeDialog(organizationContact?) {
+		this.dialogRef.close(organizationContact);
 	}
 
-	async inviteClient() {
-		const organizationClient: OrganizationClients = await this.addOrEditClient();
+	async inviteContact() {
+		const organizationContact: OrganizationContact = await this.addOrEditOrganizationContact();
 		try {
-			if (organizationClient) {
-				const invited = this.inviteService.inviteOrganizationClient(
-					organizationClient.id
+			if (organizationContact) {
+				const invited = this.inviteService.inviteOrganizationContact(
+					organizationContact.id
 				);
 				this.closeDialog(invited);
 			}
@@ -90,15 +90,15 @@ export class InviteClientComponent extends TranslationBaseComponent
 		}
 	}
 
-	async addOrEditClient(): Promise<OrganizationClients> {
+	async addOrEditOrganizationContact(): Promise<OrganizationContact> {
 		try {
-			if (this.organizationClient) {
-				return await this.organizationClientService.create({
-					...this.organizationClient,
+			if (this.organizationContact) {
+				return await this.organizationContactService.create({
+					...this.organizationContact,
 					...this.form.getRawValue()
 				});
 			} else if (this.form.valid) {
-				return await this.organizationClientService.create({
+				return await this.organizationContactService.create({
 					organizationId: this.organizationId,
 					...this.form.getRawValue()
 				});

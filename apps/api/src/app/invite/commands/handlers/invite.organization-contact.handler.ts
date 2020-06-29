@@ -1,53 +1,53 @@
 import {
-	OrganizationClients,
-	ClientOrganizationInviteStatus,
+	OrganizationContact,
+	ContactOrganizationInviteStatus,
 	RolesEnum
 } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { User } from '../../../user/user.entity';
 import { UserService } from '../../../user/user.service';
 import { InternalServerErrorException } from '@nestjs/common';
-import { InviteOrganizationClientsCommand } from '../invite.organization-clients.command';
-import { OrganizationClientsService } from '../../../organization-clients/organization-clients.service';
+import { InviteOrganizationContactCommand } from '../invite.organization-contact.command';
+import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { InviteService } from '../../invite.service';
 import { RoleService } from '../../../role/role.service';
 
 /**
- * Sends an invitation email to the organization client's primaryEmail
+ * Sends an invitation email to the organization organizationContact's primaryEmail
  */
-@CommandHandler(InviteOrganizationClientsCommand)
-export class InviteOrganizationClientsHandler
-	implements ICommandHandler<InviteOrganizationClientsCommand> {
+@CommandHandler(InviteOrganizationContactCommand)
+export class InviteOrganizationContactHandler
+	implements ICommandHandler<InviteOrganizationContactCommand> {
 	constructor(
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactService,
 		private readonly inviteService: InviteService,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService
 	) {}
 
 	public async execute(
-		command: InviteOrganizationClientsCommand
-	): Promise<OrganizationClients> {
+		command: InviteOrganizationContactCommand
+	): Promise<OrganizationContact> {
 		const {
 			input: { id, originalUrl, inviterUser, languageCode }
 		} = command;
 
-		const organizationClient: OrganizationClients = await this.organizationClientsService.findOne(
+		const organizationContact: OrganizationContact = await this.organizationContactService.findOne(
 			id
 		);
 
-		if (!organizationClient.primaryEmail) {
+		if (!organizationContact.primaryEmail) {
 			throw new InternalServerErrorException('No Primary Email');
 		}
 
 		const alreadyExists = await this.userExistsForSameTenant(
-			organizationClient.primaryEmail,
+			organizationContact.primaryEmail,
 			inviterUser.tenantId
 		);
 
 		if (alreadyExists) {
 			throw new InternalServerErrorException(
-				'Client email already exists in the account as a user'
+				'Contact email already exists in the account as a user'
 			);
 		}
 
@@ -55,23 +55,23 @@ export class InviteOrganizationClientsHandler
 			where: { name: RolesEnum.VIEWER }
 		});
 
-		this.inviteService.createOrganizationClientInvite({
-			emailId: organizationClient.primaryEmail,
+		this.inviteService.createOrganizationContactInvite({
+			emailId: organizationContact.primaryEmail,
 			roleId,
-			clientId: organizationClient.id,
-			organizationId: organizationClient.organizationId,
+			organizationContactId: organizationContact.id,
+			organizationId: organizationContact.organizationId,
 			invitedById: inviterUser.id,
 			originalUrl,
 			languageCode
 		});
 
-		await this.organizationClientsService.update(id, {
-			inviteStatus: ClientOrganizationInviteStatus.INVITED
+		await this.organizationContactService.update(id, {
+			inviteStatus: ContactOrganizationInviteStatus.INVITED
 		});
 
 		return {
-			...organizationClient,
-			inviteStatus: ClientOrganizationInviteStatus.INVITED
+			...organizationContact,
+			inviteStatus: ContactOrganizationInviteStatus.INVITED
 		};
 	}
 
@@ -80,7 +80,7 @@ export class InviteOrganizationClientsHandler
 	 * exists for the same tenant.
 	 *
 	 * @param email Email address of the user to check
-	 * @param tenantId Tenant id of the client organization
+	 * @param tenantId Tenant id of the contact organization
 	 */
 	private async userExistsForSameTenant(email, tenantId) {
 		let user: User;

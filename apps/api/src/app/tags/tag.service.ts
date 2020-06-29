@@ -118,7 +118,7 @@ export class TagService extends CrudService<Tag> {
 					tagCounterAllRelations[arrayIndex].employeeLevel.length +
 					tagCounterAllRelations[arrayIndex].organizationDepartment
 						.length +
-					tagCounterAllRelations[arrayIndex].organizationClient
+					tagCounterAllRelations[arrayIndex].organizationContact
 						.length +
 					tagCounterAllRelations[arrayIndex].product.length +
 					tagCounterAllRelations[arrayIndex].payment.length

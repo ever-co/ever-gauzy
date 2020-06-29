@@ -1,4 +1,4 @@
-.client-list {
+.contact-list {
 	display: flex;
 	flex-wrap: wrap;
 	.member-card {
@@ -7,7 +7,7 @@
 		max-width: 340px;
 		width: 100%;
 	}
-	.client-info {
+	.contact-info {
 		padding: 0px 12px;
 		display: flex;
 		flex-direction: column;

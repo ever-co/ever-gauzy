@@ -22,7 +22,7 @@ export * from './lib/user-organization.model';
 export * from './lib/employee-settings.model';
 export * from './lib/employee-statistics.model';
 export * from './lib/organization-department.model';
-export * from './lib/organization-clients.model';
+export * from './lib/organization-contact.model';
 export * from './lib/organization-positions.model';
 export * from './lib/organization-projects.model';
 export * from './lib/organization-vendors.model';

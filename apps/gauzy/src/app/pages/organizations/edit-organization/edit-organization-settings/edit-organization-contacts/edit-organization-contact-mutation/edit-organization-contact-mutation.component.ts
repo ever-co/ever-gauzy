@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	Employee,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationProjects,
 	Tag
 } from '@gauzy/models';
@@ -14,10 +14,10 @@ import { ErrorHandlingService } from '../../../../../../@core/services/error-han
 import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
 
 @Component({
-	selector: 'ga-edit-organization-clients-mutation',
-	templateUrl: './edit-organization-clients-mutation.component.html'
+	selector: 'ga-edit-organization-contact-mutation',
+	templateUrl: './edit-organization-contact-mutation.component.html'
 })
-export class EditOrganizationClientMutationComponent
+export class EditOrganizationContactMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
@@ -25,14 +25,14 @@ export class EditOrganizationClientMutationComponent
 	@Input()
 	organizationId: string;
 	@Input()
-	client?: OrganizationClients;
+	organizationContact?: OrganizationContact;
 	@Input()
-	projectsWithoutClients: OrganizationProjects[];
+	projectsWithoutOrganizationContact: OrganizationProjects[];
 
 	@Output()
 	canceled = new EventEmitter();
 	@Output()
-	addOrEditClient = new EventEmitter();
+	addOrEditOrganizationContact = new EventEmitter();
 
 	form: FormGroup;
 	members: string[];
@@ -54,11 +54,11 @@ export class EditOrganizationClientMutationComponent
 
 	ngOnInit() {
 		this._initializeForm();
-		this.allProjects = (this.projectsWithoutClients || []).concat(
-			this.client ? this.client.projects : []
+		this.allProjects = (this.projectsWithoutOrganizationContact || []).concat(
+			this.organizationContact ? this.organizationContact.projects : []
 		);
-		if (this.client) {
-			this.selectedEmployeeIds = this.client.members.map(
+		if (this.organizationContact) {
+			this.selectedEmployeeIds = this.organizationContact.members.map(
 				(member) => member.id
 			);
 		}
@@ -82,23 +82,22 @@ export class EditOrganizationClientMutationComponent
 		if (!this.organizationId) {
 			return;
 		}
-
 		this.form = this.fb.group({
-			tags: [this.client ? (this.tags = this.client.tags) : ''],
-			name: [this.client ? this.client.name : '', Validators.required],
+			tags: [this.organizationContact ? (this.tags = this.organizationContact.tags) : ''],
+			name: [this.organizationContact ? this.organizationContact.name : '', Validators.required],
 			primaryEmail: [
-				this.client ? this.client.primaryEmail : '',
+				this.organizationContact ? this.organizationContact.primaryEmail : '',
 				[Validators.required, Validators.email]
 			],
 			primaryPhone: [
-				this.client ? this.client.primaryPhone : '',
+				this.organizationContact ? this.organizationContact.primaryPhone : '',
 				Validators.required
 			],
-			country: [this.client ? this.client.contact.country : ''],
-			city: [this.client ? this.client.contact.city : ''],
-			street: [this.client ? this.client.contact.street : ''],
+			country: [this.organizationContact ? (this.organizationContact.contact ? this.organizationContact.contact.country : '') : ''],
+			city: [this.organizationContact ? (this.organizationContact.contact ? this.organizationContact.contact.city : '') : ''],
+			street: [this.organizationContact ? (this.organizationContact.contact ? this.organizationContact.contact.street : '') : ''],
 			selectProjects: [
-				this.client ? (this.client.projects || []).map((m) => m.id) : []
+				this.organizationContact ? (this.organizationContact.projects || []).map((m) => m.id) : []
 			]
 		});
 	}
@@ -133,9 +132,9 @@ export class EditOrganizationClientMutationComponent
 
 	async submitForm() {
 		if (this.form.valid) {
-			this.addOrEditClient.emit({
+			this.addOrEditOrganizationContact.emit({
 				tags: this.tags,
-				id: this.client ? this.client.id : undefined,
+				id: this.organizationContact ? this.organizationContact.id : undefined,
 				organizationId: this.organizationId,
 				name: this.form.value['name'],
 				primaryEmail: this.form.value['primaryEmail'],

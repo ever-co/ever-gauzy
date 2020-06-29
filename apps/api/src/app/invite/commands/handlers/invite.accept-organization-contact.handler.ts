@@ -6,7 +6,7 @@ import {
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
-import { OrganizationClientsService } from '../../../organization-clients/organization-clients.service';
+import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { RolePermissionsService } from '../../../role-permissions/role-permissions.service';
 import { RoleService } from '../../../role/role.service';
@@ -14,73 +14,73 @@ import { Tenant } from '../../../tenant/tenant.entity';
 import { TenantService } from '../../../tenant/tenant.service';
 import { Invite } from '../../invite.entity';
 import { InviteService } from '../../invite.service';
-import { InviteAcceptOrganizationClientCommand } from '../invite.accept-organization-client.command';
+import { InviteAcceptOrganizationContactCommand } from '../invite.accept-organization-contact.command';
 
-@CommandHandler(InviteAcceptOrganizationClientCommand)
-export class InviteAcceptOrganizationClientHandler
-	implements ICommandHandler<InviteAcceptOrganizationClientCommand> {
+@CommandHandler(InviteAcceptOrganizationContactCommand)
+export class InviteAcceptOrganizationContactHandler
+	implements ICommandHandler<InviteAcceptOrganizationContactCommand> {
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		private readonly organizationService: OrganizationService,
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactService,
 		private readonly tenantService: TenantService,
 		private readonly roleService: RoleService,
 		private readonly rolePermissionService: RolePermissionsService
 	) {}
 
 	public async execute(
-		command: InviteAcceptOrganizationClientCommand
+		command: InviteAcceptOrganizationContactCommand
 	): Promise<Invite | UpdateResult> {
 		const {
 			input: {
 				user,
 				password,
-				clientOrganization,
+				contactOrganization,
 				inviteId,
 				originalUrl
 			},
 			languageCode
 		} = command;
 
-		// 1. Create new tenant for the client
+		// 1. Create new tenant for the contact
 		const tenant: Tenant = await this.tenantService.create({
-			name: clientOrganization.name
+			name: contactOrganization.name
 		});
 
-		// 2. Create Organization for the client
-		const clientOrg: IOrganization = await this.organizationService.create({
-			...clientOrganization,
+		// 2. Create Organization for the contact
+		const contactOrg: IOrganization = await this.organizationService.create({
+			...contactOrganization,
 			tenant
 		});
 
-		// 3. Create Role and Role Permissions for client
+		// 3. Create Role and Role Permissions for contact
 		const role = await this.roleService.create({
 			name: RolesEnum.SUPER_ADMIN,
 			tenant
 		});
 		this.rolePermissionService.updateRoles(tenant, role);
 
-		// 4. Create user account for client and link role, tenant and organization
+		// 4. Create user account for contact and link role, tenant and organization
 		await this.authService.register(
 			{
 				user: { ...user, tenant, role },
 				password,
 				originalUrl,
-				organizationId: clientOrg.id
+				organizationId: contactOrg.id
 			},
 			languageCode
 		);
 
-		//4. Link newly created client organization to organization client invite
-		const { clients } = await this.inviteService.findOne(inviteId, {
-			relations: ['clients']
+		//4. Link newly created contact organization to organization contact invite
+		const { organizationContact } = await this.inviteService.findOne(inviteId, {
+			relations: ['contact']
 		});
 
-		// TODO Make invite and client as one to one, since an invite is not shared by multiple clients
-		const organizationClientId = clients[0].id;
-		await this.organizationClientsService.update(organizationClientId, {
-			clientOrganizationId: clientOrg.id,
+		// TODO Make invite and contact as one to one, since an invite is not shared by multiple contacts
+		const organizationContactId = organizationContact[0].id;
+		await this.organizationContactService.update(organizationContactId, {
+			contactOrganizationId: contactOrg.id,
 			inviteStatus: InviteStatusEnum.ACCEPTED
 		});
 

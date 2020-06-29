@@ -7,7 +7,7 @@ import { Store } from '../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Payment } from '@gauzy/models';
-import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 
 export interface SelectedPayment {
 	data: Payment;
@@ -25,7 +25,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private paymentService: PaymentService,
 		private store: Store,
-		private organizationClientsService: OrganizationClientsService
+		private organizationContactService: OrganizationContactService
 	) {
 		super(translateService);
 	}
@@ -58,7 +58,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 					const allData = [];
 					let data = {};
 					for (const item of items) {
-						const client = await this.organizationClientsService.getById(
+						const client = await this.organizationContactService.getById(
 							item.invoice.clientId
 						);
 						data = {

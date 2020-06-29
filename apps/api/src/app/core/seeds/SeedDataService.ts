@@ -85,7 +85,7 @@ import { Invite } from '../../invite/invite.entity';
 import { EmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.entity';
 import { ExpenseCategory } from '../../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../../equipment-sharing/equipment-sharing.entity';
-import { OrganizationClients } from '../../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../../organization-contact/organization-contact.entity';
 import { OrganizationVendor } from '../../organization-vendors/organization-vendors.entity';
 import { OrganizationDepartment } from '../../organization-department/organization-department.entity';
 import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
@@ -164,7 +164,7 @@ const allEntities = [
 	EmployeeSetting,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationVendor,
 	OrganizationDepartment,
 	OrganizationPositions,

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { OrganizationClients } from './organization-clients.entity';
-import { OrganizationClientsController } from './organization-clients.controller';
-import { OrganizationClientsService } from './organization-clients.service';
+import { OrganizationContact } from './organization-contact.entity';
+import { OrganizationContactController } from './organization-contact.controller';
+import { OrganizationContactService } from './organization-contact.service';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
 import { User } from '../user/user.entity';
@@ -15,7 +15,7 @@ import { Organization } from '../organization/organization.entity';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
-			OrganizationClients,
+			OrganizationContact,
 			Organization,
 			User,
 			Email,
@@ -23,14 +23,14 @@ import { Organization } from '../organization/organization.entity';
 		]),
 		CqrsModule
 	],
-	controllers: [OrganizationClientsController],
+	controllers: [OrganizationContactController],
 	providers: [
-		OrganizationClientsService,
+		OrganizationContactService,
 		UserService,
 		EmailService,
 		OrganizationService,
 		...CommandHandlers
 	],
-	exports: [OrganizationClientsService]
+	exports: [OrganizationContactService]
 })
-export class OrganizationClientsModule {}
+export class OrganizationContactModule {}

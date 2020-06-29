@@ -6,7 +6,7 @@ import {
 	IInviteResendInput,
 	PermissionsEnum,
 	LanguagesEnum,
-	IOrganizationClientAcceptInviteInput
+	IOrganizationContactAcceptInviteInput
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -34,16 +34,16 @@ import { UpdateResult } from 'typeorm';
 import { IPagination } from '../core';
 import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.command';
 import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
-import { InviteOrganizationClientsCommand } from './commands/invite.organization-clients.command';
+import { InviteOrganizationContactCommand } from './commands/invite.organization-contact.command';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { InviteResendCommand } from './commands/invite.resend.command';
 import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
-import { InviteAcceptOrganizationClientCommand } from './commands/invite.accept-organization-client.command';
+import { InviteAcceptOrganizationContactCommand } from './commands/invite.accept-organization-contact.command';
 
 @ApiTags('Invite')
 @Controller()
@@ -174,7 +174,7 @@ export class InviteController {
 		);
 	}
 
-	@ApiOperation({ summary: 'Accept organization client invite.' })
+	@ApiOperation({ summary: 'Accept organization Contact invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.'
@@ -184,15 +184,15 @@ export class InviteController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('client')
-	async acceptOrganizationClientInvite(
-		@Body() input: IOrganizationClientAcceptInviteInput,
+	@Post('contact')
+	async acceptOrganizationContactInvite(
+		@Body() input: IOrganizationContactAcceptInviteInput,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<any> {
 		input.originalUrl = request.get('Origin');
 		return this.commandBus.execute(
-			new InviteAcceptOrganizationClientCommand(input, languageCode)
+			new InviteAcceptOrganizationContactCommand(input, languageCode)
 		);
 	}
 
@@ -255,14 +255,14 @@ export class InviteController {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
-	@Put('organization-client/:id')
-	async inviteClient(
+	@Put('organization-contact/:id')
+	async inviteOrganizationContact(
 		@Param('id') id: string,
 		@Req() request,
 		@I18nLang() languageCode: LanguagesEnum
-	): Promise<OrganizationClients> {
+	): Promise<OrganizationContact> {
 		return this.commandBus.execute(
-			new InviteOrganizationClientsCommand({
+			new InviteOrganizationContactCommand({
 				id,
 				originalUrl: request.get('Origin'),
 				inviterUser: request.user,

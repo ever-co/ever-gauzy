@@ -20,8 +20,8 @@ import {
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import {
-	OrganizationClients as IOrganizationClients,
-	ClientOrganizationInviteStatus
+	OrganizationContact as IOrganizationContact,
+	ContactOrganizationInviteStatus
 } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
@@ -30,12 +30,12 @@ import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 import { Contact } from '../contact/contact.entity';
 
-@Entity('organization_client')
-export class OrganizationClients extends Base implements IOrganizationClients {
+@Entity('organization_contact')
+export class OrganizationContact extends Base implements IOrganizationContact {
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.organizationClient)
+	@ManyToMany((type) => Tag, (tag) => tag.organizationContact)
 	@JoinTable({
-		name: 'tag_organization_client'
+		name: 'tag_organization_contact'
 	})
 	tags: Tag[];
 
@@ -46,7 +46,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId(
-		(organizationClient: OrganizationClients) => organizationClient.contact
+		(organizationContact: OrganizationContact) => organizationContact.contact
 	)
 	readonly contactId?: string;
 
@@ -82,8 +82,8 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	phones?: string[];
 
 
-	@ApiProperty({ type: String, enum: ClientOrganizationInviteStatus })
-	@IsEnum(ClientOrganizationInviteStatus)
+	@ApiProperty({ type: String, enum: ContactOrganizationInviteStatus })
+	@IsEnum(ContactOrganizationInviteStatus)
 	@IsOptional()
 	@Column({ nullable: true })
 	inviteStatus?: string;
@@ -91,15 +91,15 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	@ApiProperty({ type: Organization })
 	@OneToOne((type) => Organization, { nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn()
-	clientOrganization?: Organization;
+	contactOrganization?: Organization;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((client: OrganizationClients) => client.clientOrganization)
+	@RelationId((contact: OrganizationContact) => contact.contactOrganization)
 	@Column({ nullable: true })
-	readonly clientOrganizationId?: string;
+	readonly contactOrganizationId?: string;
 
 	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
-	@OneToMany((type) => OrganizationProjects, (projects) => projects.client)
+	@OneToMany((type) => OrganizationProjects, (projects) => projects.organizationContact)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
 
@@ -116,7 +116,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ManyToMany((type) => Employee, { cascade: ['update'] })
 	@JoinTable({
-		name: 'organization_client_employee'
+		name: 'organization_contact_employee'
 	})
 	members?: Employee[];
 }
