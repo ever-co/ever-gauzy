@@ -110,6 +110,8 @@
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
 		"NO_RESULT": "No Result",
+		"CLIENT": "Client",
+		"INTERNAL": "Internal",
 
 		"REGION": {
 			"BG": "Български (България)",
@@ -222,7 +224,7 @@
 			"START_DATE": "Date",
 			"PICK_DATE": "Pick a Date",
 			"DATE_TYPE": "All Date Types",
-			"TYPE": "Type",
+			"BILLING": "Billing",
 			"IMAGE_URL": "Image",
 			"ADD_DEPARTMENT": "Add Department",
 			"ADD_POSITION": "Add position",
@@ -289,6 +291,7 @@
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
+			"OWNER": "Owner",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -935,8 +938,9 @@
 			"NEW_PROJECT": "Add new project",
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
-			"TYPE": "Type",
+			"BILLING": "Billing",
 			"CURRENCY": "Currency",
+			"OWNER": "Owner",
 			"TEAMS": "Teams",
 			"ADD_NEW_CONTACT": "Add new contact",
 			"GENERAL_SETTINGS": "General Settings",

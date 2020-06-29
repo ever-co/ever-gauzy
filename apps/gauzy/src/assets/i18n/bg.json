@@ -110,6 +110,8 @@
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
 		"NO_RESULT": "No Result",
+		"CLIENT": "клиент",
+		"INTERNAL": "вътрешен",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -288,6 +290,7 @@
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
+			"PROJECT_TYPE": "Project Type",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -936,6 +939,7 @@
 			"END_DATE": "Крайна дата",
 			"TYPE": "Тип",
 			"CURRENCY": "Валута",
+			"PROJECT_TYPE": "Тип проект",
 			"TEAMS": "Отбори",
 			"ADD_NEW_CONTACT": "Add new contact",
 			"GENERAL_SETTINGS": "Главни Настройки",
