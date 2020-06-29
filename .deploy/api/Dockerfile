@@ -23,6 +23,7 @@ ENTRYPOINT [ "/entrypoint" ]
 WORKDIR /srv/gauzy
 USER node:node
 
+ARG NODE_OPTIONS="--max-old-space-size=2048"
 ENV DB_NAME postgres
 ENV API_PORT 3000
 ENV DB_PORT 5432

@@ -22,6 +22,7 @@ ENTRYPOINT [ "/entrypoint" ]
 WORKDIR /srv/gauzy
 USER node:node
 
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV API_PORT 3000
 
 COPY --from=dependencies /srv/gauzy .
