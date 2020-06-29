@@ -54,7 +54,9 @@ export class EditOrganizationContactMutationComponent
 
 	ngOnInit() {
 		this._initializeForm();
-		this.allProjects = (this.projectsWithoutOrganizationContact || []).concat(
+		this.allProjects = (
+			this.projectsWithoutOrganizationContact || []
+		).concat(
 			this.organizationContact ? this.organizationContact.projects : []
 		);
 		if (this.organizationContact) {
@@ -83,21 +85,52 @@ export class EditOrganizationContactMutationComponent
 			return;
 		}
 		this.form = this.fb.group({
-			tags: [this.organizationContact ? (this.tags = this.organizationContact.tags) : ''],
-			name: [this.organizationContact ? this.organizationContact.name : '', Validators.required],
+			tags: [
+				this.organizationContact
+					? (this.tags = this.organizationContact.tags)
+					: ''
+			],
+			name: [
+				this.organizationContact ? this.organizationContact.name : '',
+				Validators.required
+			],
 			primaryEmail: [
-				this.organizationContact ? this.organizationContact.primaryEmail : '',
+				this.organizationContact
+					? this.organizationContact.primaryEmail
+					: '',
 				[Validators.required, Validators.email]
 			],
 			primaryPhone: [
-				this.organizationContact ? this.organizationContact.primaryPhone : '',
+				this.organizationContact
+					? this.organizationContact.primaryPhone
+					: '',
 				Validators.required
 			],
-			country: [this.organizationContact ? (this.organizationContact.contact ? this.organizationContact.contact.country : '') : ''],
-			city: [this.organizationContact ? (this.organizationContact.contact ? this.organizationContact.contact.city : '') : ''],
-			street: [this.organizationContact ? (this.organizationContact.contact ? this.organizationContact.contact.street : '') : ''],
+			country: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.country
+						: ''
+					: ''
+			],
+			city: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.city
+						: ''
+					: ''
+			],
+			street: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.street
+						: ''
+					: ''
+			],
 			selectProjects: [
-				this.organizationContact ? (this.organizationContact.projects || []).map((m) => m.id) : []
+				this.organizationContact
+					? (this.organizationContact.projects || []).map((m) => m.id)
+					: []
 			]
 		});
 	}
@@ -134,7 +167,9 @@ export class EditOrganizationContactMutationComponent
 		if (this.form.valid) {
 			this.addOrEditOrganizationContact.emit({
 				tags: this.tags,
-				id: this.organizationContact ? this.organizationContact.id : undefined,
+				id: this.organizationContact
+					? this.organizationContact.id
+					: undefined,
 				organizationId: this.organizationId,
 				name: this.form.value['name'],
 				primaryEmail: this.form.value['primaryEmail'],

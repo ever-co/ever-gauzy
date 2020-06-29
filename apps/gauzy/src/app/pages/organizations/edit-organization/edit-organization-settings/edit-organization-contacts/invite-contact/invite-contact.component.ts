@@ -39,7 +39,9 @@ export class InviteContactComponent extends TranslationBaseComponent
 		this.form = this.fb.group(
 			{
 				name: [
-					this.organizationContact ? this.organizationContact.name : '',
+					this.organizationContact
+						? this.organizationContact.name
+						: '',
 					Validators.required
 				],
 				primaryEmail: [

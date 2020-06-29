@@ -49,10 +49,12 @@ export class InviteAcceptOrganizationContactHandler
 		});
 
 		// 2. Create Organization for the contact
-		const contactOrg: IOrganization = await this.organizationService.create({
-			...contactOrganization,
-			tenant
-		});
+		const contactOrg: IOrganization = await this.organizationService.create(
+			{
+				...contactOrganization,
+				tenant
+			}
+		);
 
 		// 3. Create Role and Role Permissions for contact
 		const role = await this.roleService.create({
@@ -73,9 +75,12 @@ export class InviteAcceptOrganizationContactHandler
 		);
 
 		//4. Link newly created contact organization to organization contact invite
-		const { organizationContact } = await this.inviteService.findOne(inviteId, {
-			relations: ['contact']
-		});
+		const { organizationContact } = await this.inviteService.findOne(
+			inviteId,
+			{
+				relations: ['contact']
+			}
+		);
 
 		// TODO Make invite and contact as one to one, since an invite is not shared by multiple contacts
 		const organizationContactId = organizationContact[0].id;

@@ -131,7 +131,8 @@ export class EditOrganizationProjectsMutationComponent
 				id: this.project ? this.project.id : undefined,
 				organizationId: this.organization.id,
 				name: this.form.value['name'],
-				organizationContact: this.form.value['organizationContact'].organizationContactId,
+				organizationContact: this.form.value['organizationContact']
+					.organizationContactId,
 				type: this.form.value['type'],
 				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],
@@ -150,7 +151,9 @@ export class EditOrganizationProjectsMutationComponent
 		this.tags = ev;
 	}
 
-	addNewOrganizationContact = (name: string): Promise<OrganizationContact> => {
+	addNewOrganizationContact = (
+		name: string
+	): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(

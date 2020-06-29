@@ -46,7 +46,8 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId(
-		(organizationContact: OrganizationContact) => organizationContact.contact
+		(organizationContact: OrganizationContact) =>
+			organizationContact.contact
 	)
 	readonly contactId?: string;
 
@@ -81,7 +82,6 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	@ApiPropertyOptional({ type: String, isArray: true })
 	phones?: string[];
 
-
 	@ApiProperty({ type: String, enum: ContactOrganizationInviteStatus })
 	@IsEnum(ContactOrganizationInviteStatus)
 	@IsOptional()
@@ -99,7 +99,10 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	readonly contactOrganizationId?: string;
 
 	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
-	@OneToMany((type) => OrganizationProjects, (projects) => projects.organizationContact)
+	@OneToMany(
+		(type) => OrganizationProjects,
+		(projects) => projects.organizationContact
+	)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
 

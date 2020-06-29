@@ -51,10 +51,14 @@ export class OrganizationProjects extends Base
 	organizationId: string;
 
 	@ApiPropertyOptional({ type: OrganizationContact })
-	@ManyToOne((type) => OrganizationContact, (organizationContact) => organizationContact.projects, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
+	@ManyToOne(
+		(type) => OrganizationContact,
+		(organizationContact) => organizationContact.projects,
+		{
+			nullable: true,
+			onDelete: 'CASCADE'
+		}
+	)
 	@JoinColumn()
 	organizationContact?: OrganizationContact;
 

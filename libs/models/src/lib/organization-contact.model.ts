@@ -24,7 +24,9 @@ export interface OrganizationContact extends Contact, IBaseEntityWithMembers {
 	contact: Contact;
 }
 
-export interface OrganizationContactFindInput extends Contact, IBaseEntityModel {
+export interface OrganizationContactFindInput
+	extends Contact,
+		IBaseEntityModel {
 	name?: string;
 	organizationId?: string;
 	primaryEmail?: string;
@@ -32,7 +34,9 @@ export interface OrganizationContactFindInput extends Contact, IBaseEntityModel 
 	notes?: string;
 }
 
-export interface OrganizationContactCreateInput extends Contact, IBaseEntityModel {
+export interface OrganizationContactCreateInput
+	extends Contact,
+		IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	contactId?: string;

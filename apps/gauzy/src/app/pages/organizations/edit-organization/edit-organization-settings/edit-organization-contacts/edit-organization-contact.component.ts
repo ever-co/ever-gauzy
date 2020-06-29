@@ -80,18 +80,26 @@ export class EditOrganizationContactComponent extends TranslationBaseComponent
 		this.loadOrganizationContacts();
 	}
 
-	private async addOrEditOrganizationContact(organizationContact: OrganizationContactCreateInput) {
+	private async addOrEditOrganizationContact(
+		organizationContact: OrganizationContactCreateInput
+	) {
 		const contact = {
-			country :organizationContact.country,
-			city :organizationContact.city,
-			street :organizationContact.street,
+			country: organizationContact.country,
+			city: organizationContact.city,
+			street: organizationContact.street
 		};
 		const organizationContactData = {
 			...organizationContact,
 			contact
-		}
-		if (organizationContact.name && organizationContact.primaryEmail && organizationContact.primaryPhone) {
-			await this.organizationContactService.create(organizationContactData);
+		};
+		if (
+			organizationContact.name &&
+			organizationContact.primaryEmail &&
+			organizationContact.primaryPhone
+		) {
+			await this.organizationContactService.create(
+				organizationContactData
+			);
 
 			this.showAddCard = !this.showAddCard;
 			this.selectProjects = [];
@@ -136,10 +144,13 @@ export class EditOrganizationContactComponent extends TranslationBaseComponent
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
-		const res = await this.organizationProjectsService.getAll(['organizationContact'], {
-			organizationId: this.organizationId,
-			organizationContact: null
-		});
+		const res = await this.organizationProjectsService.getAll(
+			['organizationContact'],
+			{
+				organizationId: this.organizationId,
+				organizationContact: null
+			}
+		);
 
 		if (res) {
 			this.projectsWithoutOrganizationContact = res.items;

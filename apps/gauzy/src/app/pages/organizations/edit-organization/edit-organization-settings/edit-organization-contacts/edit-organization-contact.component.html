@@ -19,9 +19,13 @@
 			[employees]="employees"
 			[organizationId]="organizationId"
 			[organizationContact]="organizationContactToEdit"
-			[projectsWithoutOrganizationContact]="projectsWithoutOrganizationContact"
+			[projectsWithoutOrganizationContact]="
+				projectsWithoutOrganizationContact
+			"
 			(canceled)="cancel()"
-			(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
+			(addOrEditOrganizationContact)="
+				addOrEditOrganizationContact($event)
+			"
 		>
 		</ga-edit-organization-contact-mutation>
 	</nb-card-header>
@@ -78,19 +82,25 @@
 					<div class="info-meta">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate }}
 					</div>
-					<div class="info-value">{{ c.contact ? c.contact.country : "" }}</div>
+					<div class="info-value">
+						{{ c.contact ? c.contact.country : '' }}
+					</div>
 				</div>
 				<div class="info-line">
 					<div class="info-meta">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.CITY' | translate }}
 					</div>
-					<div class="info-value">{{ c.contact ? c.contact.city : "" }}</div>
+					<div class="info-value">
+						{{ c.contact ? c.contact.city : '' }}
+					</div>
 				</div>
 				<div class="info-line">
 					<div class="info-meta">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.STREET' | translate }}
 					</div>
-					<div class="info-value">{{ c.contact ? c.contact.street : "" }}</div>
+					<div class="info-value">
+						{{ c.contact ? c.contact.street : '' }}
+					</div>
 				</div>
 				<div class="info-line">
 					<div class="info-meta">

@@ -1,31 +1,31 @@
 .contact-list {
-	display: flex;
-	flex-wrap: wrap;
-	.member-card {
-		display: flex;
-		flex-wrap: wrap;
-		max-width: 340px;
-		width: 100%;
-	}
-	.contact-info {
-		padding: 0px 12px;
-		display: flex;
-		flex-direction: column;
-		.info-line {
-			display: flex;
-			flex-direction: row;
-			justify-content: space-between;
-			font-size: 0.7em;
-			color: darkgray;
-			.info-value {
-				display: flex;
-				justify-content: flex-end;
-				text-align: end;
-				.info-list-item:not(:last-child)::after {
-					content: ',';
-					margin-right: 5px;
-				}
-			}
-		}
-	}
+  display: flex;
+  flex-wrap: wrap;
+  .member-card {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 340px;
+    width: 100%;
+  }
+  .contact-info {
+    padding: 0px 12px;
+    display: flex;
+    flex-direction: column;
+    .info-line {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      font-size: 0.7em;
+      color: darkgray;
+      .info-value {
+        display: flex;
+        justify-content: flex-end;
+        text-align: end;
+        .info-list-item:not(:last-child)::after {
+          content: ',';
+          margin-right: 5px;
+        }
+      }
+    }
+  }
 }
