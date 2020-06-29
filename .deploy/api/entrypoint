@@ -6,5 +6,9 @@ if [ -z "$@" ]; then
   exit
 fi
 
+export port=${API_PORT:-3000}
+export DB_HOST=${DB_HOST:-db}
+export WAIT_HOSTS=$DB_HOST:$DB_PORT
+
 /wait
 exec "$@"
