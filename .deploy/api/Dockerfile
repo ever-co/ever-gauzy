@@ -24,6 +24,7 @@ WORKDIR /srv/gauzy
 USER node:node
 
 ENV DB_NAME postgres
+ENV API_PORT 3000
 ENV DB_PORT 5432
 
 COPY --from=dependencies /srv/gauzy .
@@ -56,6 +57,7 @@ EXPOSE 3000
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_ENV production
 ENV DB_NAME postgres
+ENV API_PORT 3000
 ENV DB_PORT 5432
 
 COPY wait /
