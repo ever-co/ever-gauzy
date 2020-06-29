@@ -55,6 +55,7 @@
 		"START_DATE": "תאריך התחלה",
 		"END_DATE": "תאריך סיום",
 		"CLIENT_NAME": "שם הלקוח",
+		"CONTACT_NAME": "Contact Name",
 		"NAME": "שם",
 		"VENDOR": "ספק",
 		"CATEGORY": "קטגוריה",
@@ -229,7 +230,7 @@
 			"ADD_CANDIDATE_QUALITY": "Add personal quality",
 			"ADD_TECHNOLOGY": "Add technology",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
-			"CLIENTS": "לקוחות",
+			"CONTACTS": "Contacts",
 			"START_DATE_PROJECT": "תאריך התחלת הפרויקט",
 			"END_DATE_PROJECT": "תאריך סיום של הפרויקט",
 			"TEAM_NAME": "Team Name",
@@ -654,14 +655,14 @@
 			"POSITION": "עמדה",
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:",
+			"EMPLOYEE_CONTACTS": "Employee's Contacts:",
 			"EMPLOYMENT_TYPE": "Employment Type",
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
 			"RATES": "Rates",
 			"PROJECTS": "פרויקטים",
-			"CLIENTS": "לקוחות",
+			"CONTACTS": "Contacts",
 			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
@@ -676,92 +677,62 @@
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"GOALS_PAGE": {
-		"HEADER": "כל היעדים עבור ",
-		"GOAL": "מטרה",
-		"GOALS_EMPTY": "עדיין לא יצרת יעדים. לחץ על הוסף חדש כדי ליצור אחת",
-		"ADD_NEW_KEY_RESULT": "הוסף תוצאת מפתח חדשה",
-		"ADD_NEW_OBJECTIVE": "הוסף יעד חדש",
-		"SESSION": "מוֹשָׁב",
-		"NO_DESCRIPTION": "אין תיאור",
-		"PROGRESS": "התקדמות",
-		"UPDATES": "עדכונים",
-		"UPDATE": "עדכון",
-		"COMMENTS": "הערות",
-		"KEY_RESULTS": "תוצאות מפתח",
+		"HEADER": "All Objectives for ",
+		"GOAL": "Goal",
+		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
+		"ADD_NEW_KEY_RESULT": "Add new key result",
+		"ADD_NEW_OBJECTIVE": "Add new Objective",
+		"SESSION": "Session",
+		"NO_DESCRIPTION": "No Description",
+		"PROGRESS": "Progress",
+		"UPDATES": "Updates",
+		"UPDATE": "Update",
+		"COMMENTS": "Comments",
+		"KEY_RESULTS": "Key Results",
 		"SETTINGS": {
-			"ADD_TIME_FRAME_TITLE": "הוסף מסגרת זמן",
-			"TIME_FRAME_PAGE_TITLE": "הגדר מסגרת זמן",
-			"PREDEFINED_TIME_FRAMES": "מסגרות זמן מוגדרות מראש"
+			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
+			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
+			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames"
 		},
 		"LEVELS": {
-			"ORGANIZATION": "אִרגוּן",
-			"TEAM": "קְבוּצָה",
-			"EMPLOYEE": "עוֹבֵד"
+			"ORGANIZATION": "Organization",
+			"TEAM": "Team",
+			"EMPLOYEE": "עובד"
 		},
 		"TIME_FRAME_STATUS": {
-			"ACTIVE": "פָּעִיל",
-			"INACTIVE": "לֹא פָּעִיל"
+			"ACTIVE": "פעיל",
+			"INACTIVE": "Inactive"
 		},
 		"FORM": {
 			"LABELS": {
-				"LEVEL": "רָמָה",
-				"OWNER": "בעלים",
-				"LEAD": "עופרת (לא חובה)",
-				"DEADLINE": "מועד אחרון",
-				"STATUS": "סטָטוּס"
+				"LEVEL": "Level",
+				"OWNER": "Owner",
+				"LEAD": "Lead (optional)",
+				"DEADLINE": "Deadline",
+				"STATUS": "עבודה"
 			},
 			"PLACEHOLDERS": {
-				"NAME": "שם אובייקטיבי. לְמָשָׁל. שפר את קידום אתרים באתר",
-				"DESCRIPTION": "תיאור אובייקטיבי.",
-				"LEVEL": "רמת יעד",
-				"TIME_FRAME_NAME": "שם מסגרת זמן למשל. 'Q4-2020'"
+				"NAME": "Objective Name. eg. Improve Website SEO",
+				"DESCRIPTION": "Objective Description.",
+				"LEVEL": "Goal Level",
+				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'"
 			},
 			"ERROR": {
-				"START_DATE_GREATER": "תאריך הסיום חייב להיות גדול מתאריך ההתחלה"
+				"START_DATE_GREATER": "End Date must be greater than Start Date"
 			}
 		},
 		"BUTTONS": {
-			"ADD_TIME_FRAME": "הוסף מסגרת זמן"
+			"ADD_TIME_FRAME": "Add Time Frame"
 		}
 	},
 	"KEY_RESULT_PAGE": {
-		"UPDATE_KEY_RESULT": "עדכן את תוצאת המפתח",
+		"UPDATE_KEY_RESULT": "Update Key Result",
 		"UPDATE": {
 			"STATUS": {
-				"ON_TRACK": "במעקב",
-				"NEEDS_ATTENTION": "זקוק לתשומת לב",
-				"OFF_TRACK": "מחוץ למסלול",
-				"NONE": "אף אחד"
-			}
-		},
-		"TYPE": {
-			"NUMBER": "מספר",
-			"TRUE_OR_FALSE": "אמת שקר",
-			"CURRENCY": "מַטְבֵּעַ",
-			"TASK": "מְשִׁימָה"
-		},
-		"DEADLINE": {
-			"NO_CUSTOM_DEADLINE": "אין תאריך יעד מותאם אישית",
-			"HARD_DEADLINE": "דדליין קשה",
-			"HARD_AND_SOFT_DEADLINE": "דדליין קשה וקשה"
-		},
-		"FORM": {
-			"LABELS": {
-				"KEY_RESULT_TYPE": "סוג תוצאת מפתח",
-				"INITIAL_VALUE": "ערך התחלתי",
-				"TARGET_VALUE": "ערך מטרה",
-				"OWNER": "בעלים",
-				"LEAD": "עופרת (לא חובה)",
-				"DEADLINE": "מועד אחרון",
-				"SOFT_DEADLINE": "דדליין רך",
-				"HARD_DEADLINE": "דדליין קשה",
-				"UPDATED_VALUE": "ערך מעודכן",
-				"MARK_COMPLETE": "סמן כשלם",
-				"STATUS": "סטָטוּס"
-			},
-			"PLACEHOLDERS": {
-				"NAME": "שם התוצאה העיקרית. לְמָשָׁל. הוסף מטא נתונים לשיפור קידום אתרים",
-				"DESCRIPTION": "תיאור קצר לתת קצת הקשר לגבי התוצאה העיקרית"
+				"ON_TRACK": "on track",
+				"NEEDS_ATTENTION": "needs attention",
+				"OFF_TRACK": "off track",
+				"NONE": "none"
 			}
 		},
 		"TYPE": {
@@ -926,7 +897,7 @@
 		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
 		"DEPARTMENTS": "מחלקות",
-		"CLIENTS": "לקוחות",
+		"CONTACTS": "Contacts",
 		"POSITIONS": "עמדות",
 		"VENDORS": "ספקים",
 		"EXPENSE_CATEGORIES": "Expense Categories",
@@ -938,7 +909,7 @@
 		"ROLES": "Roles",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EMPLOYMENT_TYPES": "Employment Types",
-		"INVITE_CLIENT": "Invite Client",
+		"INVITE_CONTACT": "Invite Contact",
 		"EMAIL_INVITE": "Email Invite",
 		"ADD_LEVEL_OF_EMPLOYEE": "Add level of employee",
 		"LEVEL_OF_EMPLOYEE": "Employee Levels",
@@ -949,6 +920,7 @@
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
+			"CONTACT": "Contact",
 			"NEW_CLIENT": "הוסף לקוח חדש",
 			"NAME": "שם",
 			"PRIMARY_EMAIL": "דוא\"ל עיקרי",
@@ -965,7 +937,7 @@
 			"TYPE": "סוג",
 			"CURRENCY": "מטבע",
 			"TEAMS": "Teams",
-			"ADD_NEW_CLIENT": "הוסף לקוח חדש",
+			"ADD_NEW_CONTACT": "Add new contact",
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
 			"BONUS": "בונוס",
@@ -1598,13 +1570,13 @@
 			"EDITED_CATEGORY": "Category has been edited",
 			"PIPELINE_CREATED": "Pipeline has been created",
 			"PIPELINE_UPDATED": "Pipeline has been updated",
-			"OBJECTIVE_ADDED": "המטרה נוספה",
-			"OBJECTIVE_DELETED": "המטרה נמחקה",
-			"OBJECTIVE_UPDATED": "המטרה עודכנה",
-			"KEY_RESULT_ADDED": "תוצאת המפתח נוספה",
-			"KEY_RESULT_DELETED": "תוצאת המפתח נמחקה",
-			"KEY_RESULT_UPDATED": "תוצאת המפתח עודכנה",
-			"TIME_FRAME_DELETED": "מסגרת הזמן נמחקה"
+			"OBJECTIVE_ADDED": "Objective added",
+			"OBJECTIVE_DELETED": "Objective deleted",
+			"OBJECTIVE_UPDATED": "Objective updated",
+			"KEY_RESULT_ADDED": "Key Result added",
+			"KEY_RESULT_DELETED": "Key Result deleted",
+			"KEY_RESULT_UPDATED": "Key Result upadated",
+			"TIME_FRAME_DELETED": "Time Frame deleted"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1712,6 +1684,14 @@
 				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
+			},
+			"EDIT_ORGANIZATIONS_CONTACTS": {
+				"ADD_CONTACT": "New contact {{ name }} successfully added!",
+				"REMOVE_CONTACT": "Contact {{ name }} successfully removed!",
+				"INVALID_CONTACT_DATA": "Please check the Name, Primary Email and Primary Phone of your contact",
+				"INVITE_CONTACT": "Invitation email sent to {{ name }}.",
+				"INVITE_CONTACT_ERROR": "Some error occurred while trying to invite contact.",
+				"EMAIL_EXISTS": "This contact email already exists as a user"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
 				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
