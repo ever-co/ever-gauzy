@@ -14,7 +14,7 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	async findOneByName(name: string): Promise<Tag> {
-		const query = await this.tagRepository
+		const query = this.tagRepository
 			.createQueryBuilder('tag')
 			.where('"tag"."name" = :name', {
 				name
