@@ -13,7 +13,7 @@ export class HelpCenterCreateHandler
 		command: HelpCenterCreateCommand
 	): Promise<HelpCenter[]> {
 		const { oldChildren } = command;
-		let parentGeneral: IHelpCenter;
+		// let parentGeneral: IHelpCenter;
 		const updateInput: IHelpCenter[] = await this.helpCenterService.getAllNodes();
 
 		// for (let i = 0; i < oldChildren.length; i++)
