@@ -70,7 +70,7 @@ export class EditCategoryComponent extends TranslationBaseComponent
 			this.form.patchValue({
 				name: '',
 				desc: '',
-				color: ''
+				color: '#000000'
 			});
 			this.parentId = this.base.id;
 		}
