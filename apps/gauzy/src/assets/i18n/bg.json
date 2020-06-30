@@ -291,7 +291,6 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
-			"PROJECT_TYPE": "Project Type",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -943,7 +942,6 @@
 			"BILLING": "Billing",
 			"CURRENCY": "Валута",
 			"OWNER": "Owner",
-			"PROJECT_TYPE": "Тип проект",
 			"TEAMS": "Отбори",
 			"ADD_NEW_CONTACT": "Add new contact",
 			"GENERAL_SETTINGS": "Главни Настройки",
