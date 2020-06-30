@@ -27,11 +27,13 @@ export class ActivityCreateHandler
 			});
 
 			return await this._activityService.create({
-				timeSlotId,
+				// TODO: add following fields:
+				// - timeSlotId - not sure how to map it to Activity entity, maybe `date`?
+				// - date - this should be a date when Activity happen
+				// - data - not sure how to map it to Activity entity
 				title,
 				duration,
-				type,
-				data
+				type
 			});
 		} catch (error) {
 			throw new BadRequestException('Cant create activity for time slot');
