@@ -269,6 +269,7 @@
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
 			"ADD_REMOVE_EMPLOYEE": "Добавить интервьюера",
+			"ADD_REMOVE_INTERVIEWER": "Выбрать интервьюера",
 			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
@@ -882,6 +883,7 @@
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
 			"CANDIDATE_RATING": "Рейтинг Кандидата",
 			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью",
+			"CRITERIONS_RATING": "Рейтинг критериев за интервью",
 			"NO_DATA": "Пока нет данных ",
 			"SELECT_INTERVIEW": "Выберите интервью"
 		},
