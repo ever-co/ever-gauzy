@@ -13,9 +13,8 @@ export class HelpCenterCreateHandler
 		command: HelpCenterCreateCommand
 	): Promise<HelpCenter[]> {
 		const { oldChildren } = command;
-		let parentGeneral: IHelpCenter;
+		// let parentGeneral: IHelpCenter;
 		const updateInput: IHelpCenter[] = await this.helpCenterService.getAllNodes();
-
 		// for (let i = 0; i < oldChildren.length; i++)
 		// console.log('bbbbbbb', oldChildren[i].index, oldChildren[i].id);
 		// for (let i = 0; i < newChildren.length; i++)
@@ -27,7 +26,7 @@ export class HelpCenterCreateHandler
 					node.index = oldChild.index;
 					// console.log('oldUP', node.id, node.index);
 				}
-				parentGeneral = oldChild.parent ? oldChild.parent : null;
+				// parentGeneral = oldChild.parent ? oldChild.parent : null;
 			}
 			// for (const newChild of newChildren) {
 			// 	if (
@@ -45,7 +44,6 @@ export class HelpCenterCreateHandler
 			// 		}
 			// }
 		}
-		console.log(parentGeneral);
 		return await this.helpCenterService.createBulk(updateInput);
 	}
 }

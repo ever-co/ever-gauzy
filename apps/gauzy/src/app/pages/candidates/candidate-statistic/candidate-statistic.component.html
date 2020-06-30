@@ -14,5 +14,10 @@
 			*ngIf="candidates"
 			[candidates]="candidates"
 		></ga-interviewer-assessment-chart>
+		<ga-criterions-rating-chart
+			*ngIf="candidates"
+			[candidates]="candidates"
+			[interviewList]="interviewList"
+		></ga-criterions-rating-chart>
 	</nb-card-body>
 </nb-card>

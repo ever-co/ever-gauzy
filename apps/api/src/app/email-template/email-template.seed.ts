@@ -16,9 +16,7 @@ export const createDefaultEmailTemplates = async (
 	connection: Connection
 ): Promise<any> => {
 	try {
-		const files = [];
-		const FOLDER_PATH = path.resolve(
-			'.',
+		const templatePath = [
 			'apps',
 			'api',
 			'src',
@@ -27,7 +25,13 @@ export const createDefaultEmailTemplates = async (
 			'seeds',
 			'data',
 			'default-email-templates'
-		);
+		];
+		const files = [];
+		let FOLDER_PATH = path.resolve('.', ...templatePath);
+
+		FOLDER_PATH = fs.existsSync(FOLDER_PATH)
+			? FOLDER_PATH
+			: path.resolve('.', ...templatePath.slice(2));
 
 		findInDir(FOLDER_PATH, files);
 		console.log(files);

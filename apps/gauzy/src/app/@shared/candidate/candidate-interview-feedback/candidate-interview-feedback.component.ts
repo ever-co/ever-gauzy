@@ -80,10 +80,10 @@ export class CandidateInterviewFeedbackComponent
 		});
 	}
 	private setRating(technologies: number[], qualities: number[]) {
-		this.technologiesList.map(
+		this.technologiesList.forEach(
 			(tech, index) => (tech.rating = technologies[index])
 		);
-		this.personalQualitiesList.map(
+		this.personalQualitiesList.forEach(
 			(qual, index) => (qual.rating = qualities[index])
 		);
 		const techSum =
@@ -160,8 +160,10 @@ export class CandidateInterviewFeedbackComponent
 					status: this.status
 				});
 				this.setStatus(this.status);
-				this.technologiesList.map((tech) => (tech.rating = null));
-				this.personalQualitiesList.map((qual) => (qual.rating = null));
+				this.technologiesList.forEach((tech) => (tech.rating = null));
+				this.personalQualitiesList.forEach(
+					(qual) => (qual.rating = null)
+				);
 				this.dialogRef.close();
 				this.form.reset();
 				this.toastrService.success(

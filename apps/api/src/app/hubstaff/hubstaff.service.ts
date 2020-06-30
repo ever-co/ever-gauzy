@@ -42,7 +42,9 @@ import {
 	TimeLogCreateCommand,
 	TimeSlotCreateCommand,
 	TimesheetGetCommand,
-	TimesheetCreateCommand
+	TimesheetCreateCommand,
+	ScreenshotCreateCommand,
+	ActivityCreateCommand
 } from '../timesheet/commands';
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
@@ -320,6 +322,38 @@ export class HubstaffService {
 		return await Promise.all(integrationMaps);
 	}
 
+	/*
+	 * Sync screenshot using timeslot
+	 */
+	async syncScreenshots({
+		integrationId,
+		projectId,
+		screenshots
+	}): Promise<IIntegrationMap[]> {
+		const integrationMaps = await screenshots.map(
+			async ({ id, time_slot, full_url, thumb_url, recorded_at }) => {
+				const gauzyScreenshot = await this.commandBus.execute(
+					new ScreenshotCreateCommand({
+						timeSlotId: time_slot,
+						fullUrl: full_url,
+						thumbUrl: thumb_url,
+						recordedAt: recorded_at,
+						timeSlot: time_slot
+					})
+				);
+
+				return await this._integrationMapService.create({
+					gauzyId: gauzyScreenshot.id,
+					integrationId,
+					sourceId: id,
+					entity: IntegrationEntity.SCREENSHOT
+				});
+			}
+		);
+
+		return await Promise.all(integrationMaps);
+	}
+
 	async syncTasks({
 		integrationId,
 		projectId,
@@ -578,7 +612,144 @@ export class HubstaffService {
 			})
 		);
 
-		return tasksMap.flat();
+		return tasksMap;
+	}
+
+	/*
+	 * Sync with database urls activities
+	 */
+	async syncUrlActivities({
+		integrationId,
+		projectId,
+		activities
+	}): Promise<IIntegrationMap[]> {
+		const integrationMaps = await activities.map(
+			async ({ id, site, time_slot, tracked, details }) => {
+				const gauzyActivity = await this.commandBus.execute(
+					new ActivityCreateCommand({
+						title: site,
+						duration: tracked,
+						type: 'url',
+						timeSlot: time_slot,
+						data: details
+					})
+				);
+
+				return await this._integrationMapService.create({
+					gauzyId: gauzyActivity.id,
+					integrationId,
+					sourceId: id,
+					entity: IntegrationEntity.ACTIVITY
+				});
+			}
+		);
+
+		return await Promise.all(integrationMaps);
+	}
+
+	/*
+	 * auto sync for urls activities for seperate project
+	 */
+	private async _handleUrlActivities(
+		projectsMap,
+		integrationId,
+		token,
+		organizationId,
+		dateRange
+	) {
+		try {
+			const start = moment(dateRange.start).format('YYYY-MM-DD');
+			const end = moment(dateRange.end).format('YYYY-MM-DD');
+			const pageLimit = 500;
+
+			const urlActivitiesMapped = await Promise.all(
+				projectsMap.map(async (project) => {
+					const { gauzyId, sourceId } = project;
+					const { urls } = await this.fetchIntegration(
+						`https://api.hubstaff.com/v2/projects/${sourceId}/url_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`,
+						token
+					);
+
+					return await this.syncUrlActivities({
+						integrationId,
+						projectId: gauzyId,
+						activities: urls
+					});
+				})
+			);
+			return urlActivitiesMapped;
+		} catch (error) {
+			throw new BadRequestException('Cannot sync url activities');
+		}
+	}
+
+	/*
+	 * Sync with database application activities
+	 */
+	async syncAppActivities({
+		integrationId,
+		projectId,
+		activities
+	}): Promise<IIntegrationMap[]> {
+		const integrationMaps = await activities.map(
+			async ({ id, name, time_slot, tracked, activations }) => {
+				const gauzyActivity = await this.commandBus.execute(
+					new ActivityCreateCommand({
+						title: name,
+						duration: tracked,
+						type: 'app',
+						data: activations,
+						timeSlot: time_slot
+					})
+				);
+
+				return await this._integrationMapService.create({
+					gauzyId: gauzyActivity.id,
+					integrationId,
+					sourceId: id,
+					entity: IntegrationEntity.ACTIVITY
+				});
+			}
+		);
+
+		return await Promise.all(integrationMaps);
+	}
+
+	/*
+	 * auto sync for application activities for seperate project
+	 */
+
+	private async _handleAppActivities(
+		projectsMap,
+		integrationId,
+		token,
+		organizationId,
+		dateRange
+	) {
+		try {
+			const start = moment(dateRange.start).format('YYYY-MM-DD');
+			const end = moment(dateRange.end).format('YYYY-MM-DD');
+			const pageLimit = 500;
+
+			const appActivitiesMapped = await Promise.all(
+				projectsMap.map(async (project) => {
+					const { gauzyId, sourceId } = project;
+					const { applications } = await this.fetchIntegration(
+						`https://api.hubstaff.com/v2/projects/${sourceId}/application_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`,
+						token
+					);
+
+					return await this.syncAppActivities({
+						integrationId,
+						projectId: gauzyId,
+						activities: applications
+					});
+				})
+			);
+			return appActivitiesMapped;
+		} catch (error) {
+			throw new BadRequestException('Cannot sync application activities');
+		}
 	}
 
 	private async _handleActivities(
@@ -629,6 +800,41 @@ export class HubstaffService {
 		return syncedActivities;
 	}
 
+	/**
+	 * Sync activities screenshots
+	 */
+	private async _handleScreenshots(
+		projectsMap,
+		integrationId,
+		token,
+		organizationId,
+		dateRange
+	) {
+		try {
+			const start = moment(dateRange.start).format('YYYY-MM-DD');
+			const end = moment(dateRange.end).format('YYYY-MM-DD');
+
+			const screenshotsMapped = await Promise.all(
+				projectsMap.map(async (project) => {
+					const { gauzyId } = project;
+					const { screenshots } = await this.fetchIntegration(
+						`https://api.hubstaff.com/v2/projects/${project.sourceId}/screenshots?time_slot[start]=${start}&time_slot[stop]=${end}`,
+						token
+					);
+
+					return await this.syncScreenshots({
+						integrationId,
+						projectId: gauzyId,
+						screenshots
+					});
+				})
+			);
+			return screenshotsMapped;
+		} catch (error) {
+			throw new BadRequestException('Cannot sync activities screenshots');
+		}
+	}
+
 	async autoSync({
 		integrationId,
 		entitiesToSync,
@@ -638,12 +844,11 @@ export class HubstaffService {
 		dateRange
 	}) {
 		// entities have depended entity. eg to fetch Task we need Project id or Org id, because our Task entity is related to Project, the relation here is same, we need project id to fetch Tasks
-
 		const integratedMaps = await Promise.all(
 			entitiesToSync.map(async (setting) => {
 				switch (setting.entity) {
 					case IntegrationEntity.PROJECT:
-						let tasks, activities;
+						let tasks, activities, screenshots;
 						const projectsMap = await this._handleProjects(
 							sourceId,
 							integrationId,
@@ -651,15 +856,22 @@ export class HubstaffService {
 							token
 						);
 						const taskSetting = setting.tiedEntities.find(
-							(setting) =>
-								setting.entity === IntegrationEntity.TASK
+							() => setting.entity === IntegrationEntity.TASK
 						);
 
 						const activitySetting = setting.tiedEntities.find(
-							(setting) =>
-								setting.entity === IntegrationEntity.ACTIVITY
+							() => setting.entity === IntegrationEntity.ACTIVITY
 						);
-						if (taskSetting.sync) {
+
+						const screenshotSetting = setting.tiedEntities.find(
+							(setting) =>
+								setting.entity === IntegrationEntity.SCREENSHOT
+						);
+
+						if (
+							typeof taskSetting == 'object' &&
+							taskSetting.sync
+						) {
 							tasks = await this._handleTasks(
 								projectsMap,
 								integrationId,
@@ -667,7 +879,10 @@ export class HubstaffService {
 							);
 						}
 
-						if (activitySetting.sync) {
+						if (
+							typeof activitySetting == 'object' &&
+							activitySetting.sync
+						) {
 							activities = await this._handleActivities(
 								projectsMap,
 								integrationId,
@@ -675,8 +890,37 @@ export class HubstaffService {
 								gauzyId,
 								dateRange
 							);
+
+							activities.application = await this._handleAppActivities(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+
+							activities.urls = await this._handleUrlActivities(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
 						}
-						return { tasks, projectsMap, activities };
+
+						if (
+							typeof screenshotSetting == 'object' &&
+							screenshotSetting.sync
+						) {
+							screenshots = await this._handleScreenshots(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+						}
+						return { tasks, projectsMap, activities, screenshots };
 					case IntegrationEntity.CLIENT:
 						const clients = await this._handleClients(
 							sourceId,

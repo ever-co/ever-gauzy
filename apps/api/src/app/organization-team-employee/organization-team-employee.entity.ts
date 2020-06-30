@@ -31,13 +31,9 @@ export class OrganizationTeamEmployee extends Base
 	)
 	public organizationTeam!: OrganizationTeam;
 
-	@ManyToOne(
-		(type) => Employee,
-		(employee) => employee.teams,
-		{
-			cascade: true
-		}
-	)
+	@ManyToOne((type) => Employee, (employee) => employee.teams, {
+		onDelete: 'CASCADE'
+	})
 	public employee!: Employee;
 
 	@ApiProperty({ type: String })

@@ -101,7 +101,11 @@
 				</div>
 			</div>
 			<div class="save-button">
-				<button status="success" nbButton>
+				<button
+					[disabled]="!selectedLang || !selectedIcon || form.invalid"
+					status="success"
+					nbButton
+				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</div>

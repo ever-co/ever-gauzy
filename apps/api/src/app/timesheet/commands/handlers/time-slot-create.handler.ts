@@ -3,6 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TimeSlotCreateCommand } from '..';
 import { TimeSlotService } from '../../time-slot/time-slot.service';
 import { BadRequestException } from '@nestjs/common';
+import * as moment from 'moment';
 
 @CommandHandler(TimeSlotCreateCommand)
 export class TimeSlotCreateHandler
@@ -21,14 +22,23 @@ export class TimeSlotCreateHandler
 				time_slot
 			} = input;
 
-			return await this._timeSlotService.create({
-				employeeId,
-				duration,
-				keyboard,
-				mouse,
-				overall,
-				startedAt: time_slot
+			let { record } = await this._timeSlotService.findOneOrFail({
+				where: {
+					employeeId: employeeId,
+					startedAt: moment(time_slot).format('YYYY-MM-DD HH:mm:ss')
+				}
 			});
+			if (!record) {
+				return await this._timeSlotService.create({
+					employeeId,
+					duration,
+					keyboard,
+					mouse,
+					overall,
+					startedAt: time_slot
+				});
+			}
+			return record;
 		} catch (error) {
 			throw new BadRequestException('Cant create time slot');
 		}

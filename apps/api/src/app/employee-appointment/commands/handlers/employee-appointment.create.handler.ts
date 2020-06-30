@@ -65,7 +65,7 @@ export class EmployeeAppointmentCreateHandler
 	) {
 		appointment.emails
 			.split(', ')
-			.map((email) =>
+			.forEach((email) =>
 				this.emailService.sendAppointmentMail(email, languageCode)
 			);
 	}

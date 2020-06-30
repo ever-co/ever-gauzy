@@ -56,8 +56,8 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 import { UpworkModule } from './upwork/upwork.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
-import { ProductCategoriesModule } from './product-category/product-category-module';
-import { ProductTypesModule } from './product-type/product-type-module';
+import { ProductCategoriesModule } from './product-category/product-category.module';
+import { ProductTypesModule } from './product-type/product-type.module';
 import { ProductModule } from './product/product.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
