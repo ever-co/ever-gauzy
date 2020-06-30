@@ -25,8 +25,15 @@ export const createDefaultExpenses = async (
 ): Promise<Expense[]> => {
 	const expensesFromFile = [];
 	let defaultExpenses: Expense[] = [];
-	const filePath =
-		'./apps/api/src/app/expense/expense-seed-data/expenses-data.csv';
+	let filePath = './src/app/expense/expense-seed-data/expenses-data.csv';
+
+	try {
+		filePath = fs.existsSync(filePath)
+			? filePath
+			: `./apps/api/${filePath.slice(2)}`;
+	} catch (error) {
+		console.error('Cannot find income data csv');
+	}
 
 	fs.createReadStream(filePath)
 		.pipe(csv())

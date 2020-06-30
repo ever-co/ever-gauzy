@@ -143,6 +143,24 @@ import {
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { Equipment } from '../../equipment/equipment.entity';
 import { Contact } from '../../contact/contact.entity';
+import { RequestApprovalTeam } from '../../request-approval-team/request-approval-team.entity';
+import { RequestApproval } from '../../request-approval/request-approval.entity';
+import { ApprovalPolicy } from '../../approval-policy/approval-policy.entity';
+import { RequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.entity';
+import { ProductTypeTranslation } from '../../product-type/product-type-translation.entity';
+import { ProductCategoryTranslation } from '../../product-category/product-category-translation.entity';
+import { Payment } from '../../payment/payment.entity';
+import { EventType } from '../../event-types/event-type.entity';
+import { CandidateInterviewers } from '../../candidate-interviewers/candidate-interviewers.entity';
+import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
+import { CandidateTechnologies } from '../../candidate-technologies/candidate-technologies.entity';
+import { CandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { CandidateCriterionsRating } from '../../candidate-criterions-rating/candidate-criterion-rating.entity';
+import { TimeSlotMinute } from '../../timesheet/time-slot-minute.entity';
+import { TimeLog } from '../../timesheet/time-log.entity';
+import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
+import { IntegrationType } from '../../integration/integration-type.entity';
+import { Integration } from '../../integration/integration.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -204,7 +222,25 @@ const allEntities = [
 	ProductVariantSettings,
 	ProductVariantPrice,
 	ProductOption,
-	Contact
+	Contact,
+	RequestApprovalTeam,
+	RequestApproval,
+	ApprovalPolicy,
+	RequestApprovalEmployee,
+	ProductTypeTranslation,
+	ProductCategoryTranslation,
+	Payment,
+	EventType,
+	CandidateInterviewers,
+	CandidateInterview,
+	CandidateTechnologies,
+	CandidatePersonalQualities,
+	CandidateCriterionsRating,
+	TimeSlotMinute,
+	TimeLog,
+	HelpCenterArticle,
+	IntegrationType,
+	Integration
 ];
 
 @Injectable()
@@ -523,7 +559,7 @@ export class SeedDataService {
 	async getEntities() {
 		const entities = [];
 		try {
-			(await (await this.connection).entityMetadatas).forEach((entity) =>
+			this.connection.entityMetadatas.forEach((entity) =>
 				entities.push({
 					name: entity.name,
 					tableName: entity.tableName
