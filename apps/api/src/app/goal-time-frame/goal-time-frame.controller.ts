@@ -89,7 +89,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		@Body() entity: GoalTimeFrame
 	): Promise<GoalTimeFrame> {
 		try {
-			return this.goalTimeFrameService.create({
+			return await this.goalTimeFrameService.create({
 				id,
 				...entity
 			});

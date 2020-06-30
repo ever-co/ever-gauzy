@@ -9,8 +9,7 @@ import { Store } from '../../@core/services/store.service';
 
 @Component({
 	selector: 'ngx-equipment-mutation',
-	templateUrl: './equipment-mutation.component.html',
-	styleUrls: ['./equipment-mutation.component.scss']
+	templateUrl: './equipment-mutation.component.html'
 })
 export class EquipmentMutationComponent extends TranslationBaseComponent
 	implements OnInit {

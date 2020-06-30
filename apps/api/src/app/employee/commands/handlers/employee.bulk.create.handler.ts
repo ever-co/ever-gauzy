@@ -33,7 +33,7 @@ export class EmployeeBulkCreateHandler
 		employees: Employee[],
 		languageCode: LanguagesEnum
 	) {
-		employees.map((employee) =>
+		employees.forEach((employee) =>
 			this.emailService.welcomeUser(
 				employee.user,
 				languageCode,

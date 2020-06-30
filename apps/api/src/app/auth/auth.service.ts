@@ -331,7 +331,7 @@ export class AuthService {
 					},
 					form: { access_token }
 				},
-				async (error: Error, res: Response, body: any) => {
+				async () => {
 					if (error) {
 						console.error(error);
 						throw error;
