@@ -24,7 +24,7 @@ export class Goal extends Base implements IGoal {
 	owner: Employee;
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee)
+	@ManyToOne((type) => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
 	lead?: Employee;

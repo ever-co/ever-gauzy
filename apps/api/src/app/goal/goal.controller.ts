@@ -8,7 +8,8 @@ import {
 	Put,
 	Param,
 	UseGuards,
-	Delete
+	Delete,
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GoalService } from './goal.service';
@@ -40,19 +41,11 @@ export class GoalController extends CrudController<Goal> {
 		description: 'Record not found'
 	})
 	@Get('all')
-	async getAll() {
+	async getAll(@Query('data') data: string) {
+		const { relations, findInput } = JSON.parse(data);
 		return this.goalService.findAll({
-			relations: [
-				'keyResults',
-				'keyResults.updates',
-				'keyResults.goal',
-				'owner',
-				'owner.user',
-				'lead',
-				'lead.user',
-				'keyResults.owner',
-				'keyResults.lead'
-			],
+			where: { ...findInput },
+			relations,
 			order: { createdAt: 'ASC' }
 		});
 	}
