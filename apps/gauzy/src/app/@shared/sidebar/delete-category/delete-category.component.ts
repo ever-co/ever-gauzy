@@ -1,8 +1,10 @@
-import { Component, OnDestroy } from '@angular/core';
+import { IHelpCenter } from '@gauzy/models';
+import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { HelpCenterService } from '../../../@core/services/help-center.service';
 
 @Component({
 	selector: 'ga-delete-category',
@@ -11,15 +13,22 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 })
 export class DeleteCategoryComponent extends TranslationBaseComponent
 	implements OnDestroy {
+	@Input() category: IHelpCenter;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteCategoryComponent>,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private helpCenterService: HelpCenterService
 	) {
 		super(translateService);
 	}
 
 	closeDialog() {
+		this.dialogRef.close();
+	}
+
+	async deleteCategory() {
+		await this.helpCenterService.deleteBulk(this.category.id);
 		this.dialogRef.close();
 	}
 

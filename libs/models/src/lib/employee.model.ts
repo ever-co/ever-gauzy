@@ -1,4 +1,10 @@
-import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
+import {
+	User,
+	Tag,
+	Skill,
+	OrganizationDepartment,
+	OrganizationPositions
+} from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
@@ -17,6 +23,8 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	orgId: string;
 	valueDate?: Date;
 	isActive: boolean;
+	short_description?: string;
+	description?: string;
 	teams?: OrganizationTeam[];
 	payPeriod?: string;
 	billRateValue?: number;
@@ -26,6 +34,7 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
 	tags: Tag[];
+	skills: Skill[];
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
@@ -41,6 +50,7 @@ export interface EmployeeFindInput extends IBaseEntityModel {
 	valueDate?: Date;
 	orgId?: string;
 	tags?: Tag[];
+	skills?: Skill[];
 }
 
 export interface EmployeeUpdateInput {
@@ -53,6 +63,8 @@ export interface EmployeeUpdateInput {
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
+	short_description?: string;
+	description?: string;
 }
 
 export interface EmployeeCreateInput {
@@ -64,7 +76,10 @@ export interface EmployeeCreateInput {
 	rejectDate?: Date;
 	members?: Employee[];
 	tags?: Tag[];
+	skills?: Skill[];
 	startedWorkOn?: any;
+	short_description?: string;
+	description?: string;
 }
 
 export enum PayPeriodEnum {
@@ -79,6 +94,7 @@ export interface EmployeeLevel {
 	level: string;
 	organizationId: string;
 	tag?: Tag[];
+	skills?: Skill[];
 }
 
 export interface EmployeeLevelInput {
@@ -86,4 +102,5 @@ export interface EmployeeLevelInput {
 	level: string;
 	organizationId: string;
 	tags?: Tag[];
+	skills?: Skill[];
 }

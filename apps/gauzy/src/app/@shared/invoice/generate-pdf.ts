@@ -1,14 +1,14 @@
 import {
 	Invoice,
 	Organization,
-	OrganizationClients,
+	OrganizationContact,
 	InvoiceTypeEnum
 } from '@gauzy/models';
 
 export async function generatePdf(
 	invoice: Invoice,
 	organization: Organization,
-	client: OrganizationClients,
+	organizationContact: OrganizationContact,
 	service?: any
 ) {
 	const body = [];
@@ -104,7 +104,7 @@ export async function generatePdf(
 					},
 					{
 						width: '50%',
-						text: `TO: ${client.name}`
+						text: `TO: ${organizationContact.name}`
 					}
 				]
 			},

@@ -14,6 +14,7 @@ import { ConfirmAppointmentComponent } from './confirm-appointment.component';
 import { ManageAppointmentModule } from '../../../pages/employees/appointment/manage-appointment/manage-appointment.module';
 import { EmployeesService } from '../../../@core/services';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
+import { AlertModalModule } from '../../../@shared/alert-modal/alert-modal.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -25,6 +26,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbSpinnerModule,
 		NbCardModule,
+		AlertModalModule,
+		NbButtonModule,
 		NbIconModule,
 		ConfirmAppointmentRoutingModule,
 		ManageAppointmentModule,

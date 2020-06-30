@@ -13,6 +13,14 @@
 				<mj-text font-size="20px" font-family="helvetica"
 					>You've received a new estimate!</mj-text
 				>
+				<mj-button
+					href="{{generatedUrl}}"
+					font-family="Helvetica"
+					background-color="#3366ff"
+					color="white"
+				>
+					View your estimates
+				</mj-button>
 				<mj-divider
 					border-color="#1B005D"
 					border-width="1px"

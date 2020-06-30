@@ -39,14 +39,14 @@ import { OrganizationDepartment } from '../organization-department/organization-
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { InvoiceService } from '../invoice/invoice.service';
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItemService } from '../invoice-item/invoice-item.service';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
@@ -90,7 +90,10 @@ import { OrganizationTeamEmployeeService } from '../organization-team-employee/o
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Equipment } from '../equipment/equipment.entity';
 import { EquipmentService } from '../equipment/equipment.service';
-
+import { EstimateEmailService } from '../estimate-email/estimate-email.service';
+import { EstimateEmail } from '../estimate-email/estimate-email.entity';
+import { Contact } from '../contact/contact.entity';
+import { ContactService } from '../contact/contact.service';
 @Module({
 	imports: [
 		CqrsModule,
@@ -113,7 +116,7 @@ import { EquipmentService } from '../equipment/equipment.service';
 			OrganizationDepartment,
 			OrganizationProjects,
 			Role,
-			OrganizationClients,
+			OrganizationContact,
 			Invoice,
 			InvoiceItem,
 			EmployeeLevel,
@@ -137,7 +140,9 @@ import { EquipmentService } from '../equipment/equipment.service';
 			TimeSlotMinute,
 			AppointmentEmployees,
 			ApprovalPolicy,
-			Candidate
+			Candidate,
+			EstimateEmail,
+			Contact
 		])
 	],
 	controllers: [ExportAllController],
@@ -161,7 +166,7 @@ import { EquipmentService } from '../equipment/equipment.service';
 		InvoiceService,
 		InvoiceItemService,
 		EmployeeLevelService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
@@ -184,7 +189,9 @@ import { EquipmentService } from '../equipment/equipment.service';
 		TimeSlotService,
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
-		CandidateService
+		CandidateService,
+		EstimateEmailService,
+		ContactService
 	],
 	exports: [
 		ExportAllService,
@@ -206,7 +213,7 @@ import { EquipmentService } from '../equipment/equipment.service';
 		InvoiceService,
 		InvoiceItemService,
 		EmployeeLevelService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
@@ -229,7 +236,9 @@ import { EquipmentService } from '../equipment/equipment.service';
 		TimeSlotService,
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
-		CandidateService
+		CandidateService,
+		EstimateEmailService,
+		ContactService
 	]
 })
 export class ExportAllModule {}

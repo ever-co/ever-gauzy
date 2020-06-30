@@ -14,7 +14,7 @@ import {
 } from '@angular/forms';
 import {
 	Invite,
-	IOrganizationClientRegistrationInput,
+	IOrganizationContactRegistrationInput,
 	ITenant,
 	OrganizationCreateInput,
 	Tag
@@ -36,7 +36,7 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 	invitation: Invite;
 
 	@Output()
-	submitForm = new EventEmitter<IOrganizationClientRegistrationInput>();
+	submitForm = new EventEmitter<IOrganizationContactRegistrationInput>();
 
 	//Fields for the form
 	form: FormGroup;
@@ -161,7 +161,7 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 					tags: this.tags
 				},
 				password: this.password.value,
-				clientOrganization: this.organizationCreateInput
+				contactOrganization: this.organizationCreateInput
 			});
 		}
 	}

@@ -22,7 +22,7 @@ export * from './lib/user-organization.model';
 export * from './lib/employee-settings.model';
 export * from './lib/employee-statistics.model';
 export * from './lib/organization-department.model';
-export * from './lib/organization-clients.model';
+export * from './lib/organization-contact.model';
 export * from './lib/organization-positions.model';
 export * from './lib/organization-projects.model';
 export * from './lib/organization-vendors.model';
@@ -73,9 +73,11 @@ export * from './lib/payment.model';
 export * from './lib/goals.model';
 export * from './lib/request-approval-team.model';
 export * from './lib/goal-settings.model';
+export * from './lib/estimate-email.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
 
 export * from './lib/pipeline.model';
 export * from './lib/stage.model';
+export * from './lib/contact.model';

@@ -27,6 +27,7 @@ import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+import { Skill } from '../skills/skill.entity';
 
 @Entity('employee')
 export class Employee extends TenantLocationBase implements IEmployee {
@@ -35,6 +36,12 @@ export class Employee extends TenantLocationBase implements IEmployee {
 		name: 'tag_employee'
 	})
 	tags: Tag[];
+
+	@ManyToMany((type) => Skill, (skill) => skill.employee)
+	@JoinTable({
+		name: 'skill_employee'
+	})
+	skills: Skill[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -77,6 +84,16 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	@ApiPropertyOptional({ type: Boolean, default: true })
 	@Column({ nullable: true, default: true })
 	isActive: boolean;
+
+	@ApiPropertyOptional({ type: String, maxLength: 200 })
+	@IsOptional()
+	@Column({ length: 200, nullable: true })
+	short_description?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	description?: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

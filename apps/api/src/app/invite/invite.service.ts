@@ -4,11 +4,11 @@ import {
 	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
 	OrganizationProjects as IOrganizationProjects,
-	OrganizationClients as IOrganizationClients,
+	OrganizationContact as IOrganizationContact,
 	OrganizationDepartment as IOrganizationDepartment,
 	Role as IOrganizationRole,
 	User,
-	ICreateOrganizationClientInviteInput,
+	ICreateOrganizationContactInviteInput,
 	RolesEnum,
 	LanguagesEnum
 } from '@gauzy/models';
@@ -19,7 +19,7 @@ import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Invite } from './invite.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { Organization } from '../organization/organization.entity';
 import { EmailService } from '../email/email.service';
@@ -36,9 +36,9 @@ export class InviteService extends CrudService<Invite> {
 			OrganizationProjects
 		>,
 
-		@InjectRepository(OrganizationClients)
-		private readonly organizationClientsRepository: Repository<
-			OrganizationClients
+		@InjectRepository(OrganizationContact)
+		private readonly organizationContactRepository: Repository<
+			OrganizationContact
 		>,
 
 		@InjectRepository(OrganizationDepartment)
@@ -102,7 +102,7 @@ export class InviteService extends CrudService<Invite> {
 			emailIds,
 			roleId,
 			projectIds,
-			clientIds,
+			organizationContactIds,
 			departmentIds,
 			organizationId,
 			invitedById
@@ -116,8 +116,8 @@ export class InviteService extends CrudService<Invite> {
 			departmentIds || []
 		);
 
-		const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
-			clientIds || []
+		const organizationContacts: IOrganizationContact[] = await this.organizationContactRepository.findByIds(
+			organizationContactIds || []
 		);
 
 		const organization: Organization = await this.organizationRepository.findOne(
@@ -172,7 +172,7 @@ export class InviteService extends CrudService<Invite> {
 			invite.expireDate = expireDate;
 			invite.projects = projects;
 			invite.departments = departments;
-			invite.clients = clients;
+			invite.organizationContact = organizationContacts;
 
 			invites.push(invite);
 		}
@@ -199,7 +199,7 @@ export class InviteService extends CrudService<Invite> {
 				this.emailService.inviteEmployee({
 					email: item.email,
 					registerUrl,
-					clients,
+					organizationContacts,
 					departments,
 					originUrl,
 					organization: organization,
@@ -212,21 +212,21 @@ export class InviteService extends CrudService<Invite> {
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 
-	async createOrganizationClientInvite(
-		inviteInput: ICreateOrganizationClientInviteInput
+	async createOrganizationContactInvite(
+		inviteInput: ICreateOrganizationContactInviteInput
 	): Promise<Invite> {
 		const {
 			emailId,
 			roleId,
-			clientId,
+			organizationContactId,
 			organizationId,
 			invitedById,
 			originalUrl,
 			languageCode
 		} = inviteInput;
 
-		const client: IOrganizationClients = await this.organizationClientsRepository.findOne(
-			clientId
+		const organizationContact: IOrganizationContact = await this.organizationContactRepository.findOne(
+			organizationContactId
 		);
 
 		const organization: Organization = await this.organizationRepository.findOne(
@@ -250,12 +250,12 @@ export class InviteService extends CrudService<Invite> {
 		invite.invitedById = invitedById;
 		invite.status = InviteStatusEnum.INVITED;
 		invite.expireDate = expireDate;
-		invite.clients = [client];
+		invite.organizationContact = [organizationContact];
 
 		const createdInvite = await this.repository.save(invite);
 
-		this.emailService.inviteOrganizationClient(
-			client,
+		this.emailService.inviteOrganizationContact(
+			organizationContact,
 			inviterUser,
 			organization,
 			createdInvite,

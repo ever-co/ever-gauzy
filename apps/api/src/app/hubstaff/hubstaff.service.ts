@@ -27,7 +27,7 @@ import {
 } from './hubstaff-entity-settings';
 import { OrganizationCreateCommand } from '../organization/commands';
 import { CommandBus } from '@nestjs/cqrs';
-import { OrganizationClientsCreateCommand } from '../organization-clients/commands/organization-clients-create.commant';
+import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.commant';
 import { TaskCreateCommand } from '../tasks/commands';
 import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
 import { DeepPartial } from 'typeorm';
@@ -247,7 +247,7 @@ export class HubstaffService {
 						name,
 						organizationId: orgId,
 						public: true,
-						type: 'RATE',
+						billing: 'RATE',
 						currency: 'BGN'
 					}
 				);
@@ -301,7 +301,7 @@ export class HubstaffService {
 		const integrationMaps = await clients.map(
 			async ({ name, id, emails }) => {
 				const gauzyClient = await this.commandBus.execute(
-					new OrganizationClientsCreateCommand({
+					new OrganizationContactCreateCommand({
 						name,
 						organizationId,
 						primaryEmail: emails[0]

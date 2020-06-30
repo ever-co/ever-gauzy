@@ -26,7 +26,7 @@ import { UserOrganization } from '../user-organization/user-organization.entity'
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 import { EmployeeRecurringExpense } from '../employee-recurring-expense/employee-recurring-expense.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
@@ -97,7 +97,9 @@ import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
+import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
+import { Contact } from '../contact/contact.entity';
 
 const entities = [
 	Invite,
@@ -111,7 +113,7 @@ const entities = [
 	EmployeeSetting,
 	UserOrganization,
 	OrganizationDepartment,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationPositions,
 	OrganizationProjects,
 	OrganizationVendor,
@@ -190,7 +192,9 @@ const entities = [
 	Pipeline,
 	Payment,
 	Stage,
-	Payment
+	Payment,
+	EstimateEmail,
+	Contact
 ];
 
 @Module({

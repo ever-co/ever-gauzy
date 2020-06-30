@@ -13,7 +13,7 @@ import {
 	IUpworkApiConfig,
 	IIntegrationMap,
 	CurrenciesEnum,
-	ProjectTypeEnum,
+	ProjectBillingEnum,
 	TimeLogType,
 	IntegrationEntity
 } from '@gauzy/models';
@@ -242,7 +242,7 @@ export class UpworkService {
 							name,
 							organizationId,
 							public: true,
-							type: ProjectTypeEnum.RATE,
+							billing: ProjectBillingEnum.RATE,
 							currency: CurrenciesEnum.BGN
 						})
 					);

@@ -22,7 +22,7 @@ import {
 	OrganizationProjects as IOrganizationProjects,
 	CurrenciesEnum
 } from '@gauzy/models';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Employee } from '../employee/employee.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
@@ -50,13 +50,17 @@ export class OrganizationProjects extends Base
 	@Column()
 	organizationId: string;
 
-	@ApiPropertyOptional({ type: OrganizationClients })
-	@ManyToOne((type) => OrganizationClients, (client) => client.projects, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
+	@ApiPropertyOptional({ type: OrganizationContact })
+	@ManyToOne(
+		(type) => OrganizationContact,
+		(organizationContact) => organizationContact.projects,
+		{
+			nullable: true,
+			onDelete: 'CASCADE'
+		}
+	)
 	@JoinColumn()
-	client?: OrganizationClients;
+	organizationContact?: OrganizationContact;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -74,7 +78,7 @@ export class OrganizationProjects extends Base
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	type: string;
+	billing: string;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
@@ -100,4 +104,10 @@ export class OrganizationProjects extends Base
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ nullable: true })
+	owner: string;
 }

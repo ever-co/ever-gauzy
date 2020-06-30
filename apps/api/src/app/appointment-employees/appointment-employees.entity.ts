@@ -23,9 +23,9 @@ export class AppointmentEmployees extends Base
 	@ApiProperty({ type: EmployeeAppointment })
 	@ManyToOne(
 		(type) => EmployeeAppointment,
-		(employeeAppointment) => employeeAppointment.invitees,
+		(employeeAppointment) => employeeAppointment,
 		{ onDelete: 'SET NULL' }
 	)
 	@JoinColumn()
-	employeeAppointment?: EmployeeAppointment;
+	employeeAppointment: EmployeeAppointment;
 }
