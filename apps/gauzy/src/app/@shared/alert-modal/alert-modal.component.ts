@@ -9,8 +9,7 @@ export interface AlertOptions {
 
 @Component({
 	selector: 'ga-alert-modal',
-	templateUrl: './alert-modal.component.html',
-	styleUrls: ['./alert-modal.component.scss']
+	templateUrl: './alert-modal.component.html'
 })
 export class AlertModalComponent implements OnInit {
 	alertOptions: AlertOptions;

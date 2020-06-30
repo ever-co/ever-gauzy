@@ -68,7 +68,7 @@ export const createRandomIncomes = async (
 	(tenants || []).forEach((tenant) => {
 		const employees = tenantEmployeeMap.get(tenant);
 
-		(employees || []).map((employee) => {
+		(employees || []).forEach((employee) => {
 			for (let index = 0; index < 5; index++) {
 				const income = new Income();
 
