@@ -45,7 +45,6 @@ export class HelpCenterCreateHandler
 			// 		}
 			// }
 		}
-		console.log(parentGeneral);
 		return await this.helpCenterService.createBulk(updateInput);
 	}
 }
