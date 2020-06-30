@@ -7,23 +7,16 @@
 import { Environment } from './model';
 import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
 import { ElectronService } from 'ngx-electron';
-
-let API_BASE_URL = 'http://localhost:3000';
-
-// https://github.com/electron/electron/issues/2288#issuecomment-337858978
-if ( /electron\//i.test( navigator.userAgent ) ) {
-  try {
-    const el: ElectronService = new ElectronService()
-    let variableGlobal = el.remote.getGlobal('variableGlobal')
-    API_BASE_URL = variableGlobal.API_BASE_URL
-  } catch(e) {
-  }
-}
-
+let API_BASE_URL = '';
+try {
+	const el: ElectronService = new ElectronService();
+	let variableGlobal = el.remote.getGlobal('variableGlobal');
+	API_BASE_URL = variableGlobal.API_BASE_URL;
+} catch (e) {}
 export const environment: Environment = {
 	production: false,
 
-	API_BASE_URL,
+	API_BASE_URL: API_BASE_URL ? API_BASE_URL : 'http://localhost:3000',
 	COMPANY_NAME: 'Ever Co. LTD',
 	COMPANY_SITE: 'Gauzy',
 	COMPANY_LINK: 'https://ever.co/',
