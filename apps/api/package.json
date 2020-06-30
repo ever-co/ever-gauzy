@@ -61,6 +61,7 @@
 		"reflect-metadata": "^0.1.13",
 		"request": "^2.88.2",
 		"rxjs": "^6.5.2",
+		"rimraf": "^3.0.2",
 		"sharp": "^0.25.2",
 		"supertest": "^4.0.2",
 		"swagger-ui-express": "^4.1.4",

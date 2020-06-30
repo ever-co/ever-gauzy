@@ -166,6 +166,13 @@ export interface TimeSlot extends IBaseEntityModel {
 	tags?: Tag[];
 }
 
+export interface ITimeSlotTimeLogs extends IBaseEntityModel {
+	timeLogs: TimeLog[];
+	timeSlots: TimeSlot[];
+	timeLogId: string;
+	timeSlotId: string;
+}
+
 export interface ITimeSlotMinute extends IBaseEntityModel {
 	timeSlot?: TimeSlot;
 	keyboard?: number;

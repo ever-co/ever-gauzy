@@ -17,7 +17,6 @@ import { IsNumber, IsDateString } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import * as moment from 'moment';
 import { Screenshot } from './screenshot.entity';
-import { Activity } from './activity.entity';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 import { TimeLog } from './time-log.entity';
 
@@ -35,7 +34,7 @@ export class TimeSlot extends Base implements ITimeSlot {
 	readonly employeeId: string;
 
 	@ApiProperty({ type: Screenshot })
-	@OneToMany((type) => Screenshot, (screenshot) => screenshot.timeSlot)
+	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
 	@JoinColumn()
 	screenshots?: Screenshot[];
 
@@ -46,16 +45,13 @@ export class TimeSlot extends Base implements ITimeSlot {
 
 	@ApiProperty({ type: TimeSlotMinute })
 	@OneToMany(
-		(type) => TimeSlotMinute,
+		() => TimeSlotMinute,
 		(timeSlotMinute) => timeSlotMinute.timeSlot
 	)
 	@JoinColumn()
 	timeSlotMinutes?: TimeSlotMinute[];
 
 	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots)
-	@JoinTable({
-		name: 'time_slot_time_logs'
-	})
 	timeLogs?: TimeLog[];
 
 	@ApiProperty({ type: Number })
