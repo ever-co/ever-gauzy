@@ -36,4 +36,14 @@ export class HelpCenterArticleService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	deleteBulkByCategoryId(id: string): Promise<any> {
+		const data = JSON.stringify({ id });
+		return this.http
+			.delete('/api/help-center-article/deleteBulkByCategoryId', {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
 }

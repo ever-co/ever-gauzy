@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -eux
+
+if [ -z "$@" ]; then
+  "$0" yarn nx serve api
+  exit
+fi
+
+export host=${host-0.0.0.0}
+export port=${API_PORT:-3000}
+export DB_HOST=${DB_HOST:-db}
+export WAIT_HOSTS=$DB_HOST:$DB_PORT
+
+/wait
+exec "$@"

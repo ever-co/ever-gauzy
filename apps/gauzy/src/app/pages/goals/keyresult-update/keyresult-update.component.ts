@@ -84,7 +84,7 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 		try {
 			const update: KeyResultUpdates = {
 				keyResultId: this.keyResult.id,
-				owner: this.keyResult.owner,
+				owner: this.keyResult.owner.id,
 				update: this.keyResult.update,
 				progress: this.keyResult.progress,
 				status: this.keyResult.status

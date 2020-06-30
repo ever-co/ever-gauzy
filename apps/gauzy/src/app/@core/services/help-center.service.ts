@@ -52,9 +52,12 @@ export class HelpCenterService {
 			.pipe(first())
 			.toPromise();
 	}
-	deleteBulk(id: string): Promise<any> {
+	deleteBulkByBaseId(id: string): Promise<any> {
+		const data = JSON.stringify({ id });
 		return this.http
-			.delete(`/api/help-center/deleterBulk/${id}`)
+			.delete('/api/help-center/deleteBulkByBaseId', {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
