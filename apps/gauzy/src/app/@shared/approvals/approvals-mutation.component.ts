@@ -19,8 +19,7 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 
 @Component({
 	selector: 'ngx-approval-mutation',
-	templateUrl: './approvals-mutation.component.html',
-	styleUrls: ['./approvals-mutation.component.scss']
+	templateUrl: './approvals-mutation.component.html'
 })
 export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

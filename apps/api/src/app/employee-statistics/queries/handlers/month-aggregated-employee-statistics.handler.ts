@@ -82,7 +82,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			input.valueDate,
 			input.months
 		);
-		incomes.map((income) => {
+		incomes.forEach((income) => {
 			const key = `${income.valueDate.getMonth()}-${income.valueDate.getFullYear()}`;
 			const amount = Number(income.amount);
 
@@ -136,7 +136,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			input.months
 		);
 
-		expenses.map((expense) => {
+		expenses.forEach((expense) => {
 			const key = `${expense.valueDate.getMonth()}-${expense.valueDate.getFullYear()}`;
 			const amount = Number(expense.amount);
 			if (statisticsMap.has(key)) {
@@ -190,7 +190,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		 * OR
 		 * till the input date
 		 */
-		employeeRecurringExpenses.map((expense) => {
+		employeeRecurringExpenses.forEach((expense) => {
 			// Find start date based on input date and X months.
 			const inputStartDate = subMonths(
 				startOfMonth(input.valueDate),

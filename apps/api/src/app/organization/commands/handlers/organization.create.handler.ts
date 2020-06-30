@@ -47,7 +47,7 @@ export class OrganizationCreateHandler
 		);
 
 		// 4. Take each super admin user and add him/her to created organization
-		superAdminUsers.forEach((user) => {
+		superAdminUsers.forEach(() => {
 			const userOrganization = new UserOrganization();
 			userOrganization.organizationId = createdOrganization.id;
 			userOrganization.userId = user.id;
