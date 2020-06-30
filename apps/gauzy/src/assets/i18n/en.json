@@ -535,7 +535,9 @@
 			"SETTINGS_UPDATED": "Updated settings for integration",
 			"SYNCED_ENTITIES": "Auto synced entities",
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
-			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+			"DATE_RANGE_PLACEHOLDER": "Choose date between",
+			"CLIENT_ID": "Hubstaff Client ID",
+			"CLIENT_SECRET": "Hubstaff Client Secret"
 		},
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "Activities",
