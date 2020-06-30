@@ -15,7 +15,6 @@ export class HelpCenterCreateHandler
 		const { oldChildren } = command;
 		// let parentGeneral: IHelpCenter;
 		const updateInput: IHelpCenter[] = await this.helpCenterService.getAllNodes();
-
 		// for (let i = 0; i < oldChildren.length; i++)
 		// console.log('bbbbbbb', oldChildren[i].index, oldChildren[i].id);
 		// for (let i = 0; i < newChildren.length; i++)
