@@ -7,7 +7,6 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import * as rimraf from 'rimraf';
 import * as path from 'path';
-import { OrganizationClients } from '../../organization-clients/organization-clients.entity';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
 
@@ -18,10 +17,10 @@ export const createRandomTimesheet = async (connection: Connection) => {
 		.createQueryBuilder()
 		.getMany();
 
-	const users = await connection
-		.getRepository(OrganizationClients)
-		.createQueryBuilder()
-		.getMany();
+	// const users = await connection
+	// 	.getRepository(OrganizationClients)
+	// 	.createQueryBuilder()
+	// 	.getMany();
 
 	for (let index = 0; index < 2; index++) {
 		const date = moment().subtract(index, 'week').toDate();
@@ -58,7 +57,7 @@ export const createRandomTimesheet = async (connection: Connection) => {
 
 				const timesheet = new Timesheet();
 				timesheet.employee = employee;
-				timesheet.approvedBy = faker.random.arrayElement(users);
+				timesheet.approvedBy = null;
 				timesheet.startedAt = startedAt;
 				timesheet.stoppedAt = stoppedAt;
 				timesheet.duration = 0;

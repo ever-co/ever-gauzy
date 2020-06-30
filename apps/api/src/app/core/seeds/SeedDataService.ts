@@ -146,6 +146,7 @@ import { Contact } from '../../contact/contact.entity';
 import { createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
 import { createRandomTask } from '../../tasks/task.seed';
 import { createRandomOrganizationProjects } from '../../organization-projects/organization-projects.seed';
+import { Contact } from '../../contact/contact.entity';
 
 const allEntities = [
 	TimeOffPolicy,
