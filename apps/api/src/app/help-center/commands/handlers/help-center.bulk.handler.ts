@@ -27,7 +27,7 @@ export class HelpCenterCreateHandler
 					node.index = oldChild.index;
 					// console.log('oldUP', node.id, node.index);
 				}
-				parentGeneral = oldChild.parent ? oldChild.parent : null;
+				// parentGeneral = oldChild.parent ? oldChild.parent : null;
 			}
 			// for (const newChild of newChildren) {
 			// 	if (
