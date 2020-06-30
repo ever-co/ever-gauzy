@@ -94,7 +94,7 @@ export interface EmployeeLevel {
 	level: string;
 	organizationId: string;
 	tag?: Tag[];
-	skill?: Skill[];
+	skills?: Skill[];
 }
 
 export interface EmployeeLevelInput {
