@@ -24,6 +24,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	employees: Employee[];
 	data: Goal;
 	timeFrames: GoalTimeFrame[] = [];
+	orgId: string;
 	goalLevelEnum = GoalLevelEnum;
 	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
@@ -40,8 +41,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		this.objectiveForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			owner: ['', Validators.required],
-			lead: [''],
+			owner: [null, Validators.required],
+			lead: [null],
 			level: ['', Validators.required],
 			deadline: ['', Validators.required]
 		});
@@ -56,14 +57,19 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		if (!!this.data) {
 			this.objectiveForm.patchValue(this.data);
 			this.objectiveForm.patchValue({
-				lead: this.data.lead.id,
+				lead: !!this.data.lead ? this.data.lead.id : null,
 				owner: this.data.owner.id
 			});
 		}
 	}
 
 	async getTimeFrames() {
-		await this.goalSettingService.getAllTimeFrames().then((res) => {
+		const findObj = {
+			organization: {
+				id: this.orgId
+			}
+		};
+		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
 			if (res) {
 				this.timeFrames = res.items.filter(
 					(timeframe) =>

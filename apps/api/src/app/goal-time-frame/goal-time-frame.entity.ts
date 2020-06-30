@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { Base } from '../core/entities/base';
 import {
 	GoalTimeFrame as IGoalTimeFrame,
@@ -6,6 +6,7 @@ import {
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('goal_time_frame')
 export class GoalTimeFrame extends Base implements IGoalTimeFrame {
@@ -25,4 +26,7 @@ export class GoalTimeFrame extends Base implements IGoalTimeFrame {
 	@ApiProperty({ type: Date })
 	@Column()
 	endDate: Date;
+
+	@ManyToOne((type) => Organization, (organization) => organization.id)
+	organization: Organization;
 }

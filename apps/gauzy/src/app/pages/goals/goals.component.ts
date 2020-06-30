@@ -72,16 +72,16 @@ export class GoalsComponent extends TranslationBaseComponent
 	async ngOnInit() {
 		await this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization) => {
+			.subscribe(async (organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
+					await this.store.selectedEmployee$
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((emp) => {
+							this.employee = emp;
+							this.loadPage();
+						});
 				}
-			});
-		await this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((emp) => {
-				this.employee = emp;
-				this.loadPage();
 			});
 	}
 
@@ -91,14 +91,34 @@ export class GoalsComponent extends TranslationBaseComponent
 			: { name: 'new' };
 		this.loading = false;
 		this.organizationName = name;
-		this.goalService.getAllGoals().then((goals) => {
-			this.noGoals = goals.items.length > 0 ? false : true;
-			this.goals = goals.items;
-			this.allGoals = goals.items;
-			if (!!this.selectedFilter && this.selectedFilter !== 'all') {
-				this.filterGoals(this.selectedFilter);
+		const findObj = {
+			organization: {
+				id: this.selectedOrganizationId
 			}
-		});
+		};
+		this.goalService
+			.getAllGoals(
+				[
+					'keyResults',
+					'keyResults.updates',
+					'keyResults.goal',
+					'owner',
+					'owner.user',
+					'lead',
+					'lead.user',
+					'keyResults.owner',
+					'keyResults.lead'
+				],
+				findObj
+			)
+			.then((goals) => {
+				this.noGoals = goals.items.length > 0 ? false : true;
+				this.goals = goals.items;
+				this.allGoals = goals.items;
+				if (!!this.selectedFilter && this.selectedFilter !== 'all') {
+					this.filterGoals(this.selectedFilter);
+				}
+			});
 	}
 
 	async addKeyResult(index, keyResult) {
@@ -179,7 +199,8 @@ export class GoalsComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EditObjectiveComponent, {
 			hasScroll: true,
 			context: {
-				data: goal
+				data: goal,
+				orgId: this.selectedOrganizationId
 			}
 		});
 

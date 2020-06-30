@@ -72,7 +72,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				hardDeadline: this.data.hardDeadline
 					? new Date(this.data.hardDeadline)
 					: null,
-				lead: this.data.lead.id,
+				lead: !!this.data.lead ? this.data.lead.id : null,
 				owner: this.data.owner.id
 			});
 		}

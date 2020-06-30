@@ -1,5 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from './employee.model';
+import { Employee, EmployeeFindInput } from './employee.model';
+import { OrganizationFindInput } from './organization.model';
 
 export interface Goal extends IBaseEntityModel {
 	name: string;
@@ -42,8 +43,9 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 	status: string;
 }
 
-export interface GetKeyResultOptions {
-	goalId?: string;
+export interface GoalFindInput extends IBaseEntityModel {
+	employee?: EmployeeFindInput;
+	organization?: OrganizationFindInput;
 }
 
 export enum KeyResultTypeEnum {
