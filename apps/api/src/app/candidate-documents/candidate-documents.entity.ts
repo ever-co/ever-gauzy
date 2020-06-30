@@ -18,6 +18,9 @@ export class CandidateDocument extends Base implements ICandidateDocument {
 	@Column({ nullable: true })
 	documentUrl: string;
 
-	@ManyToOne((type) => Candidate, (candidate) => candidate.documents)
+	@ManyToOne((type) => Candidate, (candidate) => candidate.documents, {
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
 	candidate: ICandidate;
 }
