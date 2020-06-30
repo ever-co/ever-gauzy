@@ -523,7 +523,7 @@ export class SeedDataService {
 	async getEntities() {
 		const entities = [];
 		try {
-			(await (await this.connection).entityMetadatas).forEach((entity) =>
+			this.connection.entityMetadatas.forEach((entity) =>
 				entities.push({
 					name: entity.name,
 					tableName: entity.tableName
@@ -542,7 +542,7 @@ export class SeedDataService {
 	async cleanAll(entities) {
 		try {
 			for (const entity of entities) {
-				const repository = await getRepository(entity.name);
+				const repository = getRepository(entity.name);
 				await repository.query(`DELETE FROM "${entity.tableName}";`);
 			}
 		} catch (error) {
