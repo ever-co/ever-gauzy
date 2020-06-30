@@ -331,10 +331,10 @@ export class AuthService {
 					},
 					form: { access_token }
 				},
-				async () => {
-					if (error) {
-						console.error(error);
-						throw error;
+				async (innerError: Error) => {
+					if (innerError) {
+						console.error(innerError);
+						throw innerError;
 					} else if (body.error) {
 						console.error(body.error);
 						throw body.error;
