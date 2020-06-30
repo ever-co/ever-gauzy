@@ -16,6 +16,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { Goal } from '../goal/goal.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('key_result')
 export class KeyResult extends Base implements IKeyResult {
@@ -51,14 +52,16 @@ export class KeyResult extends Base implements IKeyResult {
 	@Column()
 	progress: number;
 
-	@ApiProperty({ type: String })
-	@Column()
-	owner: string;
+	@ApiProperty({ type: Employee })
+	@ManyToOne((type) => Employee)
+	@JoinColumn()
+	owner: Employee;
 
-	@ApiProperty({ type: String })
-	@Column()
+	@ApiProperty({ type: Employee })
+	@ManyToOne((type) => Employee, { nullable: true })
+	@JoinColumn()
 	@IsOptional()
-	lead: string;
+	lead?: Employee;
 
 	@ApiProperty({ type: String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)

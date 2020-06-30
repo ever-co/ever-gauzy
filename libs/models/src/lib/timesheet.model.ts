@@ -190,20 +190,32 @@ export interface TimeSlotMinute extends IBaseEntityModel {
 }
 
 export interface ICreateActivityInput {
-	employeeId: string;
-	projectId: string;
+	employeeId?: string;
+	projectId?: string;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
 	overall?: number;
-	startedAt: Date;
-	stoppedAt: Date;
+	startedAt?: Date;
+	stoppedAt?: Date;
+	timeSlotId?: string;
+	timeSlot: string;
+	type: string;
 	title: string;
+	data?: string;
 }
 
 export enum ActivityType {
 	URL = 'URL',
 	APP = 'APP'
+}
+
+export interface ICreateScreenshotInput {
+	timeSlotId?: string;
+	timeSlot: string;
+	fullUrl: string;
+	thumbUrl?: string;
+	recordedAt: Date;
 }
 
 export interface Screenshot extends IBaseEntityModel {

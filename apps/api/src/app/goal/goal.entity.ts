@@ -3,12 +3,12 @@ import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
+import { Base } from '../core/entities/base';
 
 @Entity('goal')
-export class Goal extends TenantBase implements IGoal {
+export class Goal extends Base implements IGoal {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -19,14 +19,15 @@ export class Goal extends TenantBase implements IGoal {
 	description?: string;
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: false, onDelete: 'CASCADE' })
+	@ManyToOne((type) => Employee)
 	@JoinColumn()
-	owner: string;
+	owner: Employee;
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: false, onDelete: 'CASCADE' })
+	@ManyToOne((type) => Employee, { nullable: true })
 	@JoinColumn()
-	lead: string;
+	@IsOptional()
+	lead?: Employee;
 
 	@ApiProperty({ type: String })
 	@Column()
@@ -42,11 +43,11 @@ export class Goal extends TenantBase implements IGoal {
 	progress: number;
 
 	@ApiProperty({ type: String })
-	@Column()
+	@Column({ nullable: true })
 	organizationId: string;
 
 	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization: Organization;
+	organization?: Organization;
 
 	@ApiProperty({ type: KeyResult })
 	@OneToMany((type) => KeyResult, (keyResult) => keyResult.goal)
