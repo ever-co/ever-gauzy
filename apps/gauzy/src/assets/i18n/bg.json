@@ -269,6 +269,7 @@
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_EMPLOYEE": "Add Interviewer",
+			"ADD_REMOVE_INTERVIEWER": "Select interviewer",
 			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
@@ -291,7 +292,6 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
-			"PROJECT_TYPE": "Project Type",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -883,6 +883,7 @@
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
 			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
+			"CRITERIONS_RATING": "Criterions rating per interview",
 			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview"
 		},
@@ -943,7 +944,6 @@
 			"BILLING": "Billing",
 			"CURRENCY": "Валута",
 			"OWNER": "Owner",
-			"PROJECT_TYPE": "Тип проект",
 			"TEAMS": "Отбори",
 			"ADD_NEW_CONTACT": "Add new contact",
 			"GENERAL_SETTINGS": "Главни Настройки",
