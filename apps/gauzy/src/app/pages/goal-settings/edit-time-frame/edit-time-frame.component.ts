@@ -17,6 +17,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-time-frame',
@@ -37,7 +38,8 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 		private fb: FormBuilder,
 		private goalSettingsService: GoalSettingsService,
 		private dateService: NbDateService<Date>,
-		readonly translate: TranslateService
+		readonly translate: TranslateService,
+		private store: Store
 	) {
 		super(translate);
 	}
@@ -70,6 +72,7 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 					});
 				}
 			});
+
 		this.generateTimeFrames();
 	}
 
@@ -112,17 +115,19 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 	}
 
 	async saveTimeFrame() {
+		const data = {
+			...this.timeFrameForm.value,
+			organization: this.store.selectedOrganization.id
+		};
 		if (this.type === 'add') {
-			await this.goalSettingsService
-				.createTimeFrame(this.timeFrameForm.value)
-				.then((res) => {
-					if (res) {
-						this.closeDialog(res);
-					}
-				});
+			await this.goalSettingsService.createTimeFrame(data).then((res) => {
+				if (res) {
+					this.closeDialog(res);
+				}
+			});
 		} else {
 			await this.goalSettingsService
-				.update(this.timeFrame.id, this.timeFrameForm.value)
+				.update(this.timeFrame.id, data)
 				.then((res) => {
 					if (res) {
 						this.closeDialog(res);

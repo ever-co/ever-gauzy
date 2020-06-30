@@ -1,10 +1,12 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Employee, EmployeeFindInput } from './employee.model';
+import { OrganizationFindInput } from './organization.model';
 
 export interface Goal extends IBaseEntityModel {
 	name: string;
 	description?: string;
-	owner: string;
-	lead: string;
+	owner: Employee;
+	lead?: Employee;
 	deadline: string;
 	level: string;
 	progress: number;
@@ -21,8 +23,8 @@ export interface KeyResult extends IBaseEntityModel {
 	initialValue?: number;
 	update: number;
 	progress: number;
-	owner: string;
-	lead?: string;
+	owner: Employee;
+	lead?: Employee;
 	deadline: string;
 	hardDeadline?: Date;
 	softDeadline?: Date;
@@ -41,8 +43,9 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 	status: string;
 }
 
-export interface GetKeyResultOptions {
-	goalId?: string;
+export interface GoalFindInput extends IBaseEntityModel {
+	employee?: EmployeeFindInput;
+	organization?: OrganizationFindInput;
 }
 
 export enum KeyResultTypeEnum {
