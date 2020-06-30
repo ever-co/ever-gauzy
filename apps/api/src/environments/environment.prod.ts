@@ -77,6 +77,13 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.GoogleClientSecret || 'fakesecret'
 	},
 
+	githunConfig: {
+		clientId: process.env.GithubClientId || 'fakeclientId',
+		clientSecret: process.env.GithubClientSecret || 'fakesecret',
+		code: process.env.GithubCode || 'fakecode',
+		state: '{github}'
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',

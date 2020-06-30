@@ -83,6 +83,14 @@ export const environment: IEnvironment = {
 			process.env.GoogleClientSecret || 'liU5ihpwoqnsmXJNxNjFp1yP'
 	},
 
+	githunConfig: {
+		clientId: '',
+		clientSecret: '',
+		code: '',
+		redirectUri: '',
+		state: ''
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',

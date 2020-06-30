@@ -14,6 +14,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { UserOrganization } from '../user-organization/user-organization.entity';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { Organization } from '../organization/organization.entity';
+import { GithubAuthGuard } from './guard/github-auth-guard';
 
 @Module({
 	imports: [
@@ -30,7 +31,8 @@ import { Organization } from '../organization/organization.entity';
 		...CommandHandlers,
 		GoogleStrategy,
 		FacebookStrategy,
-		JwtStrategy
+		JwtStrategy,
+		GithubAuthGuard
 	],
 	exports: [AuthService, UserService]
 })
