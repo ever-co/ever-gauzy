@@ -26,6 +26,7 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { Employee } from '../employee/employee.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
+import { Task } from '../tasks/task.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends Base
@@ -61,6 +62,11 @@ export class OrganizationProjects extends Base
 	)
 	@JoinColumn()
 	organizationContact?: OrganizationContact;
+
+	@ApiProperty({ type: Task })
+	@OneToMany((type) => Task, (task) => task.project)
+	@JoinColumn()
+	tasks?: Task[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

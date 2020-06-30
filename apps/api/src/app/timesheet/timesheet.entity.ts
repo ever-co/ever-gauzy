@@ -22,7 +22,7 @@ export class Timesheet extends Base implements ITimesheet {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timesheet: Timesheet) => timesheet.employee)
 	@Column()
-	readonly employeeId: string;
+	readonly employeeId?: string;
 
 	@ApiProperty({ type: OrganizationContact })
 	@ManyToOne(() => OrganizationContact, { nullable: true })

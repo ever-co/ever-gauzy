@@ -58,6 +58,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	@Input() hasDateRangeFilter = true;
 	@Input() hasEmployeeFilter = true;
+	@Input() multipleEmployeSelect = true;
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;

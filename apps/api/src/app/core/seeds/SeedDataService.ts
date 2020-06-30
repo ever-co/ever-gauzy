@@ -3,7 +3,7 @@ import { CandidateExperience } from './../../candidate-experience/candidate-expe
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpService } from '@nestjs/common';
 import {
 	Connection,
 	createConnection,
@@ -143,6 +143,11 @@ import {
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { Equipment } from '../../equipment/equipment.entity';
 import { Contact } from '../../contact/contact.entity';
+
+import { createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
+import { createRandomTask } from '../../tasks/task.seed';
+import { createRandomOrganizationProjects } from '../../organization-projects/organization-projects.seed';
+
 import { RequestApprovalTeam } from '../../request-approval-team/request-approval-team.entity';
 import { RequestApproval } from '../../request-approval/request-approval.entity';
 import { ApprovalPolicy } from '../../approval-policy/approval-policy.entity';
@@ -247,7 +252,7 @@ const allEntities = [
 export class SeedDataService {
 	connection: Connection;
 	log = console.log;
-
+	organizations: Organization[];
 	constructor() {}
 
 	async createConnection() {
@@ -341,6 +346,8 @@ export class SeedDataService {
 			this.connection,
 			tenant
 		);
+
+		this.organizations = defaultOrganizations;
 
 		const superAdminUsers = await createDefaultSuperAdminUsers(
 			this.connection,
@@ -551,6 +558,13 @@ export class SeedDataService {
 
 		await createSkills(this.connection);
 		await createLanguages(this.connection);
+
+		await createRandomOrganizationProjects(
+			this.connection,
+			this.organizations
+		);
+		await createRandomTask(this.connection);
+		await createRandomTimesheet(this.connection);
 	}
 
 	/**
@@ -579,7 +593,9 @@ export class SeedDataService {
 		try {
 			for (const entity of entities) {
 				const repository = getRepository(entity.name);
-				await repository.query(`DELETE FROM "${entity.tableName}";`);
+				await repository.query(
+					`TRUNCATE  "${entity.tableName}" RESTART IDENTITY CASCADE;`
+				);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

@@ -94,6 +94,10 @@ import { EstimateEmailService } from '../estimate-email/estimate-email.service';
 import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { Contact } from '../contact/contact.entity';
 import { ContactService } from '../contact/contact.service';
+import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { RequestApproval } from '../request-approval/request-approval.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+
 @Module({
 	imports: [
 		CqrsModule,
@@ -124,6 +128,9 @@ import { ContactService } from '../contact/contact.service';
 			OrganizationPositions,
 			OrganizationRecurringExpense,
 			OrganizationTeam,
+			RequestApproval,
+			RequestApprovalEmployee,
+			RequestApprovalTeam,
 			OrganizationTeamEmployee,
 			OrganizationVendor,
 			Proposal,
