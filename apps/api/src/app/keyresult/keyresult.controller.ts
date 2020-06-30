@@ -53,7 +53,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	async getAll(@Param('id') findInput: string) {
 		return this.keyResultService.findAll({
 			where: { id: findInput },
-			relations: ['updates', 'goal']
+			relations: ['updates', 'goal', 'lead', 'owner']
 		});
 	}
 

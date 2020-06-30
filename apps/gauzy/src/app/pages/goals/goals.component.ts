@@ -161,7 +161,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.goals = this.allGoals.filter((goal) =>
 					this.employee.id == null
 						? goal.level.toLowerCase() === selection
-						: goal.owner === this.employee.id
+						: goal.owner.id === this.employee.id
 				);
 			} else {
 				this.goals = this.allGoals.filter(
@@ -264,7 +264,7 @@ export class GoalsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				keyResult: selectedkeyResult,
-				owner: this.goals[index].owner
+				owner: this.goals[index].owner.id
 			}
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();

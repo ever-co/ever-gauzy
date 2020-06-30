@@ -42,7 +42,17 @@ export class GoalController extends CrudController<Goal> {
 	@Get('all')
 	async getAll() {
 		return this.goalService.findAll({
-			relations: ['keyResults', 'keyResults.updates', 'keyResults.goal'],
+			relations: [
+				'keyResults',
+				'keyResults.updates',
+				'keyResults.goal',
+				'owner',
+				'owner.user',
+				'lead',
+				'lead.user',
+				'keyResults.owner',
+				'keyResults.lead'
+			],
 			order: { createdAt: 'ASC' }
 		});
 	}

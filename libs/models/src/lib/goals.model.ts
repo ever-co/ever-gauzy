@@ -1,10 +1,11 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Employee } from './employee.model';
 
 export interface Goal extends IBaseEntityModel {
 	name: string;
 	description?: string;
-	owner: string;
-	lead: string;
+	owner: Employee;
+	lead?: Employee;
 	deadline: string;
 	level: string;
 	progress: number;
@@ -21,8 +22,8 @@ export interface KeyResult extends IBaseEntityModel {
 	initialValue?: number;
 	update: number;
 	progress: number;
-	owner: string;
-	lead?: string;
+	owner: Employee;
+	lead?: Employee;
 	deadline: string;
 	hardDeadline?: Date;
 	softDeadline?: Date;

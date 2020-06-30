@@ -55,6 +55,10 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			});
 		if (!!this.data) {
 			this.objectiveForm.patchValue(this.data);
+			this.objectiveForm.patchValue({
+				lead: this.data.lead.id,
+				owner: this.data.owner.id
+			});
 		}
 	}
 
