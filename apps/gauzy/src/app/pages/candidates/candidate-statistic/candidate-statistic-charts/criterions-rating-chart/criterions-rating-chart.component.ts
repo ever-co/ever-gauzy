@@ -84,7 +84,7 @@ export class CriterionsRatingChartComponent implements OnInit, OnDestroy {
 					interviewer.employeeId,
 					['user']
 				);
-				if (res) {
+				if (result) {
 					interviewer.employeeName = result.user.name;
 					interviewer.employeeImageUrl = result.user.imageUrl;
 					this.currentEmployee.push(result);
