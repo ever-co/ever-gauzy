@@ -7,9 +7,6 @@ import { Candidate } from '@gauzy/models';
 @Component({
 	selector: 'ga-candidate-rating-chart',
 	template: `
-		<h6>
-			{{ 'CANDIDATES_PAGE.STATISTIC.CANDIDATE_RATING' | translate }}
-		</h6>
 		<chart
 			style="height: 400px; width: 100%;"
 			type="bar"
