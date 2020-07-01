@@ -6,13 +6,15 @@ import {
 	Goal,
 	GoalTimeFrame,
 	GoalLevelEnum,
-	TimeFrameStatusEnum
+	TimeFrameStatusEnum,
+	RolesEnum
 } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { EditTimeFrameComponent } from '../../goal-settings/edit-time-frame/edit-time-frame.component';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-objective',
@@ -26,6 +28,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	timeFrames: GoalTimeFrame[] = [];
 	orgId: string;
 	goalLevelEnum = GoalLevelEnum;
+	hideOrg = false;
 	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
 
@@ -34,7 +37,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		private fb: FormBuilder,
 		private employeeService: EmployeesService,
 		private goalSettingService: GoalSettingsService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private store: Store
 	) {}
 
 	async ngOnInit() {
@@ -60,6 +64,13 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				lead: !!this.data.lead ? this.data.lead.id : null,
 				owner: this.data.owner.id
 			});
+		}
+		if (
+			this.store.user.role.name !== RolesEnum.SUPER_ADMIN &&
+			this.store.user.role.name !== RolesEnum.MANAGER &&
+			this.store.user.role.name !== RolesEnum.ADMIN
+		) {
+			this.hideOrg = true;
 		}
 	}
 

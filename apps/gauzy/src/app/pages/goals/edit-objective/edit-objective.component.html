@@ -52,6 +52,16 @@
 				<nb-option
 					*ngFor="let level of goalLevelEnum | keyvalue"
 					[value]="level.value"
+					[attr.disabled]="
+						!hideOrg
+							? false
+							: objectiveForm.value.level ===
+							  goalLevelEnum.ORGANIZATION
+							? true
+							: level.value === goalLevelEnum.ORGANIZATION
+							? true
+							: false
+					"
 					>{{
 						'GOALS_PAGE.LEVELS.' + level.key | translate
 					}}</nb-option
@@ -123,7 +133,14 @@
 		</button>
 		<button
 			nbButton
-			[disabled]="!objectiveForm.valid"
+			[disabled]="
+				!objectiveForm.valid || !hideOrg
+					? false
+					: this.objectiveForm.value.level ===
+					  goalLevelEnum.ORGANIZATION
+					? true
+					: false
+			"
 			status="success"
 			(click)="saveObjective()"
 		>

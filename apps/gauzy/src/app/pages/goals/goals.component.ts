@@ -89,7 +89,6 @@ export class GoalsComponent extends TranslationBaseComponent
 		const { name } = this.store.selectedOrganization
 			? this.store.selectedOrganization
 			: { name: 'new' };
-		this.loading = false;
 		this.organizationName = name;
 		const findObj = {
 			organization: {
@@ -118,6 +117,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				if (!!this.selectedFilter && this.selectedFilter !== 'all') {
 					this.filterGoals(this.selectedFilter);
 				}
+				this.loading = false;
 			});
 	}
 
