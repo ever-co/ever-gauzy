@@ -113,6 +113,14 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.FiverrClientSecret || 'FiverrClientSecret'
 	},
 
+	keycloakConfig: {
+		realm: process.env.KeycloakRealm || 'fakeKeycloakRealm',
+		clientId: process.env.KeycloakClientId || 'fakeKeycloakClientId',
+		secret: process.env.KeycloakSecret || 'fakeKeycloakSecret',
+		authServerUrl: process.env.KeycloakAuthServerURL || 'fakeKeycloakAuthServerURL',
+		cookieKey: process.env.KeycloakCookieKey || 'KeycloakCookieKey'
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',

@@ -15,7 +15,7 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
             clientSecret: env.microsoftConfig.clientSecret,
             scope: ['profile', 'offline_access'],
             passReqToCallback: true,
-            secretOrKey: env.microsoftConfig.jwtSecret,
+            secretOrKey: env.JWT_SECRET,
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
         });
     }

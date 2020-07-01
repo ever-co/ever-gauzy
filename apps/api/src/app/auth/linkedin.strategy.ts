@@ -15,7 +15,7 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
             callbackURL: `${env.host}:${env.port}/api/auth/linkedin/callback`,
             scope: ['r_emailaddress', 'r_liteprofile'],
             passReqToCallback: true,
-            secretOrKey: env.linkedinConfig.jwtSecret,
+            secretOrKey: env.JWT_SECRET,
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
         });
     }
