@@ -5,7 +5,7 @@ import {
 	TimeLogFilters,
 	Timesheet,
 	TimesheetStatus,
-	IGetTimesheetInput
+	IGetTimeSheetInput
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import {
@@ -102,7 +102,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { startDate, endDate } = this.logRequest;
-		const request: IGetTimesheetInput = {
+		const request: IGetTimeSheetInput = {
 			organizationId: this.organization.id,
 			...this.logRequest,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),

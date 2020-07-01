@@ -31,6 +31,7 @@ export interface Env {
 export interface IEnvironment {
 	port: number | string;
 	host: string;
+	baseUrl: string;
 
 	production: boolean;
 	envName: string;

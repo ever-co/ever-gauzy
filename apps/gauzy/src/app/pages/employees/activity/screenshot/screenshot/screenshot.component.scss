@@ -7,7 +7,7 @@
   .activity {
     .image-contaer {
       background: rgba($color: #000000, $alpha: 0.1);
-      min-height: 200px;
+      min-height: 130px;
       position: relative;
 
       .no-image {
@@ -24,8 +24,11 @@
 
       img {
         width: 100%;
-        max-height: 200px;
-        object-fit: contain;
+        height: 130px;
+        object-fit: cover;
+        &.default-image {
+          object-fit: contain;
+        }
       }
     }
   }

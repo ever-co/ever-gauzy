@@ -50,6 +50,7 @@ export const environment: IEnvironment = {
 	// TODO: port & host used in FB / Google Auth, but we probably should detect that some other way instead of have it as env settings!
 	port: process.env.port || 3000,
 	host: process.env.host || 'http://localhost',
+	baseUrl: 'http://localhost:3000',
 
 	production: true,
 	envName: 'prod',
