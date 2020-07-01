@@ -1,3 +1,4 @@
+import { CrudService } from '../core';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,10 +9,9 @@ import { LanguagesEnum } from '@gauzy/models';
 import { sign } from 'jsonwebtoken';
 import { environment as env } from '@env-api/environment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 
 @Injectable()
-export class InvoiceService extends TenantAwareCrudService<Invoice> {
+export class InvoiceService extends CrudService<Invoice> {
 	constructor(
 		@InjectRepository(Invoice)
 		private readonly invoiceRepository: Repository<Invoice>,
