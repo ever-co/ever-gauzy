@@ -14,7 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import {
 	IUpdateTimesheetStatusInput,
-	IGetTimeSheetInput,
+	IGetTimesheetInput,
 	ISubmitTimesheetInput
 } from '@gauzy/models';
 
@@ -39,7 +39,7 @@ export class TimeSheetController extends CrudController<Timesheet> {
 	@Get('/')
 	// @UseGuards(OrganizationPermissionGuard)
 	// @Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
-	async get(@Query() entity: IGetTimeSheetInput): Promise<any> {
+	async get(@Query() entity: IGetTimesheetInput): Promise<any> {
 		return this.timeSheetService.getTimeSheets(entity);
 	}
 

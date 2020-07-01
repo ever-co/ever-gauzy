@@ -182,7 +182,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 			}),
 			type: this.productTypes.find((p) => {
 				return p.id === this.form.get('productTypeId').value;
-			})
+			}),
+			tenant: this.store.user.tenant
 		};
 
 		if (this.inventoryItem) {

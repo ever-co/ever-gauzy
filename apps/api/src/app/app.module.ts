@@ -103,7 +103,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 @Module({
 	imports: [
 		ServeStaticModule.forRoot({
-			rootPath: path.join(__dirname, '..', 'public'),
+			rootPath: path.resolve(process.cwd(), 'apps', 'api', 'public'),
 			serveRoot: '/public/'
 		}),
 		RouterModule.forRoutes([

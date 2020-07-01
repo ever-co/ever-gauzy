@@ -18,10 +18,10 @@ import {
 	IsOptional,
 	IsEnum
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import {
 	OrganizationContact as IOrganizationContact,
-	ContactOrganizationInviteStatus
+	ContactOrganizationInviteStatus,
+	ContactType
 } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
@@ -29,6 +29,7 @@ import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 import { Contact } from '../contact/contact.entity';
+import { Base } from '../core/entities/base';
 
 @Entity('organization_contact')
 export class OrganizationContact extends Base implements IOrganizationContact {
@@ -122,4 +123,10 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 		name: 'organization_contact_employee'
 	})
 	members?: Employee[];
+
+	@ApiProperty({ type: String, enum: ContactType })
+	@IsEnum(ContactType)
+	@IsOptional()
+	@Column({ nullable: true })
+	contactType: string;
 }
