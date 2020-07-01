@@ -51,7 +51,7 @@ export interface IEnvironment {
 
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
-	githunConfig: IGithubConfig;
+	githubConfig: IGithubConfig;
 	microsoftConfig: IMicrosoftConfig;
 	linkedinConfig: ILinkedinConfig;
 	twitterConfig: ITwitterConfig;

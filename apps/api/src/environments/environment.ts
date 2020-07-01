@@ -50,10 +50,9 @@ switch (dbType) {
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
 
 export const environment: IEnvironment = {
-	// TODO: port & host used in FB / Google Auth, but we probably should detect that some other way instead of have it as env settings!
 	port: process.env.port || 3000,
 	host: process.env.host || 'http://localhost',
-	baseUrl: 'http://localhost:3000',
+	baseUrl: process.env.BASE_URL || 'http://localhost:3000',
 
 	production: false,
 	envName: 'dev',
@@ -84,7 +83,7 @@ export const environment: IEnvironment = {
 			process.env.GoogleClientSecret || 'liU5ihpwoqnsmXJNxNjFp1yP'
 	},
 
-	githunConfig: {
+	githubConfig: {
 		clientId: process.env.GithubClientId || 'fakeclientId',
 		clientSecret: process.env.GithubClientSecret || 'fakesecret',
 		code: process.env.GithubCode || 'fakecode',
@@ -487,9 +486,13 @@ export const environment: IEnvironment = {
 			]
 		}
 	],
+
 	sentry: {
-		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+		dns:
+			process.env.SENTRY ||
+			'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
 	},
+
 	randomSeedConfig: {
 		tenants: 5,
 		organizationsPerTenant: 2,
@@ -502,7 +505,7 @@ export const environment: IEnvironment = {
 
 	upworkConfig: {
 		callbackUrl:
-			process.env.UWPROK_CALLBACK_URL ||
+			process.env.UPWORK_CALLBACK_URL ||
 			'http://localhost:4200/#/pages/integrations/upwork'
 	}
 };

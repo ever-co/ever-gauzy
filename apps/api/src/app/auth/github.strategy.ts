@@ -9,9 +9,9 @@ import { AuthService } from './auth.service';
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 	constructor(private readonly _authService: AuthService) {
 		super({
-			clientID: env.githunConfig.clientId,
+			clientID: env.githubConfig.clientId,
 			callbackURL: `${env.host}:${env.port}/api/auth/github/callback`,
-			clientSecret: env.githunConfig.clientSecret,
+			clientSecret: env.githubConfig.clientSecret,
 			scope: ['profile', 'email'],
 			passReqToCallback: true
 		});
