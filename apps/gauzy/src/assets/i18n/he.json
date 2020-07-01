@@ -1093,10 +1093,14 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "עבודה",
 		"HEADER": "Approval Request",
+		"EMPLOYEES": "Employees",
+		"TEAMS": "Teams",
 		"APPROVAL_POLICY": "Approval Policy",
 		"CHOOSE_POLICIES": "Choose policies/s",
 		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
-		"ADD_APPROVAL_REQUEST": "Add Request Approval"
+		"ADD_APPROVAL_REQUEST": "Add Request Approval",
+		"APPROVAL_REQUEST_SAVED": "Request Approval Saved",
+		"APPROVAL_REQUEST_DELETED": "Request Approval Deleted"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
