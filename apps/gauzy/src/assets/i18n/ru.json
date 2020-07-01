@@ -885,7 +885,8 @@
 			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью",
 			"CRITERIONS_RATING": "Рейтинг критериев за интервью",
 			"NO_DATA": "Пока нет данных ",
-			"SELECT_INTERVIEW": "Выберите интервью"
+			"SELECT_INTERVIEW": "Выберите интервью",
+			"SELECT_INTERVIEW_INTERVIEWER": "Выберите интервью и интервьюера"
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
