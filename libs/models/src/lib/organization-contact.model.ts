@@ -9,6 +9,7 @@ import { Contact } from './contact.model';
 
 export interface OrganizationContact extends Contact, IBaseEntityWithMembers {
 	name: string;
+	contactType: string;
 	organizationId: string;
 	primaryEmail: string;
 	emailAddresses?: string[];
@@ -68,4 +69,10 @@ export enum ContactOrganizationInviteStatus {
 	NOT_INVITED = 'NOT_INVITED',
 	INVITED = 'INVITED',
 	ACCEPTED = 'ACCEPTED'
+}
+
+export enum ContactType {
+	CLIENT = 'CLIENT',
+	CUSTOMER = 'CUSTOMER',
+	LEAD = 'LEAD'
 }

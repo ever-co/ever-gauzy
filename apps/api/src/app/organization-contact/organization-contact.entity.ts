@@ -21,7 +21,8 @@ import {
 import { Base } from '../core/entities/base';
 import {
 	OrganizationContact as IOrganizationContact,
-	ContactOrganizationInviteStatus
+	ContactOrganizationInviteStatus,
+	ContactType
 } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
@@ -122,4 +123,10 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 		name: 'organization_contact_employee'
 	})
 	members?: Employee[];
+
+	@ApiProperty({ type: String, enum: ContactType })
+	@IsEnum(ContactType)
+	@IsOptional()
+	@Column({ nullable: true })
+	contactType: string;
 }
