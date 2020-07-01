@@ -86,9 +86,15 @@ export const environment: IEnvironment = {
 
 	microsoftConfig: {
 		clientId: process.env.MicrosoftClientId || 'fakeClientId',
-		clientSecret: process.env.MicrosoftConfig || 'fakeClientSecret',
+		clientSecret: process.env.MicrosoftClientSecret || 'fakeClientSecret',
 		identityMetadata: 'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
 		jwtSecret: process.env.MicrosoftJwtSecret || 'fakeJwtSecret',
+	},
+
+	linkedinConfig: {
+		clientId: process.env.LinkedinClientId || 'fakeLinkedinClientId',
+		clientSecret: process.env.LinkedinClientSecret || 'fakeLinkedinClientSecret',
+		jwtSecret: process.env.LinkedinJwtSecret || 'fakeJwtSecret',
 	},
 
 	defaultOrganizations: [

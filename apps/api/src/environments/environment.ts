@@ -97,6 +97,12 @@ export const environment: IEnvironment = {
 		jwtSecret: process.env.MicrosoftJwtSecret || 'fakeJwtSecret',
 	},
 
+	linkedinConfig: {
+		clientId: process.env.LinkedinClientId || 'fakeLinkedinClientId',
+		clientSecret: process.env.LinkedinClientSecret || 'fakeLinkedinClientSecret',
+		jwtSecret: process.env.LinkedinJwtSecret || 'fakeJwtSecret',
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',

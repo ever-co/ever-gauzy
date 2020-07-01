@@ -16,6 +16,7 @@ import { IGoogleConfig } from './IGoogleConfig';
 import { IUpworkConfig } from './IUpworkConfig';
 import { IGithubConfig } from './IGithubConfig';
 import { IMicrosoftConfig } from './IMicrosoftConfig';
+import { ILinkedinConfig } from './ILinkedinIConfig';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -48,6 +49,7 @@ export interface IEnvironment {
 	googleConfig: IGoogleConfig;
 	githunConfig: IGithubConfig;
 	microsoftConfig: IMicrosoftConfig;
+	linkedinConfig: ILinkedinConfig;
 
 	defaultAdmins: IDefaultUser[];
 	defaultSuperAdmins: IDefaultUser[];

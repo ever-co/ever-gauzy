@@ -17,6 +17,8 @@ import { Organization } from '../organization/organization.entity';
 import { GithubAuthGuard } from './guard/github-auth-guard';
 import { MicrosoftAuthGuard } from './guard/microsoft-auth-guard';
 import { MicrosoftStrategy } from './microsoft.strategy';
+import { LinkedinStrategy } from './linkedin.strategy';
+import { LinkedinAuthGuard } from './guard/linkedin-auth-guard';
 
 @Module({
 	imports: [
@@ -36,7 +38,9 @@ import { MicrosoftStrategy } from './microsoft.strategy';
 		JwtStrategy,
 		GithubAuthGuard,
 		MicrosoftAuthGuard,
-		MicrosoftStrategy
+		MicrosoftStrategy,
+		LinkedinStrategy,
+		LinkedinAuthGuard
 	],
 	exports: [AuthService, UserService]
 })
