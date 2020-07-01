@@ -62,7 +62,7 @@ export class EmployeeController extends CrudController<Employee> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
-			return this.employeeService.create({
+			return await this.employeeService.create({
 				id,
 				...entity
 			});
@@ -186,7 +186,7 @@ export class EmployeeController extends CrudController<Employee> {
 
 		input
 			.filter((entity) => !entity.user.imageUrl)
-			.map(
+			.forEach(
 				(entity) =>
 					(entity.user.imageUrl = getUserDummyImage(entity.user))
 			);

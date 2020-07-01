@@ -67,7 +67,7 @@ export class UpworkTransactionService {
 		return new Promise((resolve, reject) => {
 			csvReader.on('end', async () => {
 				fse.removeSync(dirPath);
-				const transactions = await results
+				const transactions = results
 					.filter(
 						(result) =>
 							result.Type === IncomeTypeEnum.HOURLY ||

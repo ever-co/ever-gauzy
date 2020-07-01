@@ -132,7 +132,7 @@ export class EmployeeStatisticsHistoryQueryHandler
 		]);
 
 		// 2. Filter recurring expenses based on input data and N Months and populate EmployeeStatisticsHistory
-		employeeRecurringExpenses.map((expense) => {
+		employeeRecurringExpenses.forEach((expense) => {
 			// Find start date based on input date and X months.
 			const inputStartDate = subMonths(
 				startOfMonth(input.valueDate),

@@ -53,7 +53,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	async getAll(@Param('id') findInput: string) {
 		return this.keyResultService.findAll({
 			where: { id: findInput },
-			relations: ['updates', 'goal']
+			relations: ['updates', 'goal', 'lead', 'owner']
 		});
 	}
 
@@ -80,7 +80,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
-			return this.keyResultService.create({
+			return await this.keyResultService.create({
 				id,
 				...entity
 			});

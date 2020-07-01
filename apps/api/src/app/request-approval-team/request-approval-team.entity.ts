@@ -22,7 +22,7 @@ export class RequestApprovalTeam extends Base implements IRequestApprovalTeam {
 	@IsString()
 	@IsNotEmpty()
 	@Column()
-	public organizationTeamId!: string;
+	public teamId!: string;
 
 	@ManyToOne(
 		(type) => RequestApproval,
@@ -33,13 +33,9 @@ export class RequestApprovalTeam extends Base implements IRequestApprovalTeam {
 	)
 	public requestApproval!: RequestApproval;
 
-	@ManyToOne(
-		(type) => OrganizationTeam,
-		(organizationTeam) => organizationTeam.requestApprovals,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
+	@ManyToOne((type) => OrganizationTeam, (team) => team.requestApprovals, {
+		onDelete: 'CASCADE'
+	})
 	public team!: OrganizationTeam;
 
 	@ApiProperty({ type: Number })

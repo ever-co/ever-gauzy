@@ -67,7 +67,7 @@ export class EditBaseComponent extends TranslationBaseComponent
 			this.form.patchValue({
 				name: '',
 				desc: '',
-				color: 'black'
+				color: '#000000'
 			});
 	}
 

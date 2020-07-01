@@ -15,6 +15,9 @@ import {
 import { Employee } from '../employee/employee.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { RequestContext } from '../core/context';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { OrganizationTeamService } from '../organization-team/organization-team.service';
 
 @Injectable()
 export class RequestApprovalService extends CrudService<RequestApproval> {
@@ -22,7 +25,12 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly employeeRepository: Repository<Employee>,
+		private readonly organizationTeamService: OrganizationTeamService,
+		@InjectRepository(OrganizationTeam)
+		private readonly organizationTeamRepository: Repository<
+			OrganizationTeam
+		>
 	) {
 		super(requestApprovalRepository);
 	}
@@ -55,31 +63,74 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 	}
 
 	async findRequestApprovalsByEmployeeId(
-		filter: FindManyOptions<Employee>
+		id: string,
+		relations: string[]
 	): Promise<IPagination<IRequestApproval>> {
-		const total = await this.employeeRepository.count(filter);
+		try {
+			const result = await this.requestApprovalRepository.find({
+				where: {
+					createdBy: id
+				}
+			});
 
-		const items = await this.employeeRepository.find(filter);
+			const employeeTeam = await this.organizationTeamService.getMyOrgTeams(
+				{
+					relations: ['members']
+				},
+				id
+			);
 
-		for (const requests of items) {
-			if (
-				requests &&
-				requests.requestApprovals &&
-				requests.requestApprovals.length > 0
-			) {
-				for (const request of requests.requestApprovals) {
-					const emp = await this.requestApprovalRepository.findOne(
-						request.requestApprovalId,
+			let requestApproval = [];
+
+			if (employeeTeam.items && employeeTeam.items.length > 0) {
+				for (const team of employeeTeam.items) {
+					const organizationTeam = await this.organizationTeamRepository.findOne(
+						team.id,
 						{
-							relations: ['approvalPolicy']
+							relations: ['requestApprovals']
 						}
 					);
-					request.requestApproval = emp;
+					requestApproval = [
+						...requestApproval,
+						...organizationTeam.requestApprovals
+					];
 				}
 			}
-		}
 
-		return { items, total };
+			const employee = await this.employeeRepository.findOne(id, {
+				relations
+			});
+
+			if (
+				employee &&
+				employee.requestApprovals &&
+				employee.requestApprovals.length > 0
+			) {
+				// requestApproval.concat(employee.requestApprovals);
+				requestApproval = [
+					...requestApproval,
+					...employee.requestApprovals
+				];
+			}
+
+			for (const request of requestApproval) {
+				const emp = await this.requestApprovalRepository.findOne(
+					request.requestApprovalId,
+					{
+						relations: [
+							'approvalPolicy',
+							'employeeApprovals',
+							'teamApprovals'
+						]
+					}
+				);
+				result.push(emp);
+			}
+
+			return { items: result, total: result.length };
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	async createRequestApproval(
@@ -95,10 +146,14 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.createdBy = RequestContext.currentUser().id;
 
 			const employees = await this.employeeRepository.findByIds(
-				entity.requestApprovalEmployees,
+				entity.employeeApprovals,
 				{
 					relations: ['user']
 				}
+			);
+
+			const teams = await this.organizationTeamRepository.findByIds(
+				entity.teams
 			);
 
 			const requestApprovalEmployees: RequestApprovalEmployee[] = [];
@@ -110,7 +165,17 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 				requestApprovalEmployees.push(raEmployees);
 			});
 
+			const requestApprovalTeams: RequestApprovalTeam[] = [];
+			teams.forEach((team) => {
+				const raTeam = new RequestApprovalTeam();
+				raTeam.teamId = team.id;
+				raTeam.team = team;
+				raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
+				requestApprovalTeams.push(raTeam);
+			});
+
 			requestApproval.employeeApprovals = requestApprovalEmployees;
+			requestApproval.teamApprovals = requestApprovalTeams;
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err) {
 			throw new BadRequestException(err);
@@ -131,16 +196,27 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.min_count = entity.min_count;
 			requestApproval.type = entity.type;
 			const employees = await this.employeeRepository.findByIds(
-				entity.requestApprovalEmployees,
+				entity.employeeApprovals,
 				{
 					relations: ['user']
 				}
+			);
+
+			const teams = await this.organizationTeamRepository.findByIds(
+				entity.teams
 			);
 
 			await this.repository
 				.createQueryBuilder()
 				.delete()
 				.from(RequestApprovalEmployee)
+				.where('requestApprovalId = :id', { id: id })
+				.execute();
+
+			await this.repository
+				.createQueryBuilder()
+				.delete()
+				.from(RequestApprovalTeam)
 				.where('requestApprovalId = :id', { id: id })
 				.execute();
 
@@ -153,7 +229,17 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 				requestApprovalEmployees.push(raEmployees);
 			});
 
+			const requestApprovalTeams: RequestApprovalTeam[] = [];
+			teams.forEach((team) => {
+				const raTeam = new RequestApprovalTeam();
+				raTeam.teamId = team.id;
+				raTeam.team = team;
+				raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
+				requestApprovalTeams.push(raTeam);
+			});
+
 			requestApproval.employeeApprovals = requestApprovalEmployees;
+			requestApproval.teamApprovals = requestApprovalTeams;
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
@@ -170,7 +256,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			const requestApproval = await this.requestApprovalRepository.findOne(
 				id,
 				{
-					relations: ['employeeApprovals']
+					relations: ['employeeApprovals', 'teamApprovals']
 				}
 			);
 

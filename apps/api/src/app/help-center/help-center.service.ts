@@ -16,20 +16,20 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	async createBulk(updateInput: IHelpCenter[]) {
 		return await this.repository.save(updateInput);
 	}
+	async deleteBulkByBaseId(ids: string[]) {
+		return await this.repository.delete(ids);
+	}
+	async getCategoriesByBaseId(baseId: string): Promise<HelpCenter[]> {
+		return await this.repository
+			.createQueryBuilder('knowledge_base')
+			.where('knowledge_base.parentId = :baseId', {
+				baseId
+			})
+			.getMany();
+	}
 	async getAllNodes(): Promise<HelpCenter[]> {
 		return await this.repository
 			.createQueryBuilder('knowledge_base')
 			.getMany();
 	}
-	// TODO
-	// async getInterviewersByInterviewId(
-	// 	interviewId: string
-	// ): Promise<CandidateInterviewers[]> {
-	// 	return await this.repository
-	// 		.createQueryBuilder('candidate_interviewers')
-	// 		.where('candidate_interviewers.interviewId = :interviewId', {
-	// 			interviewId
-	// 		})
-	// 		.getMany();
-	// }
 }

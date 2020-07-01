@@ -82,7 +82,7 @@ export class TimeSheetService extends CrudService<Timesheet> {
 	}
 
 	async getTimeSheets(request: IGetTimeSheetInput) {
-		let employeeId: string;
+		let employeeId: string | string[];
 		const startDate = moment(request.startDate).format(
 			'YYYY-MM-DD HH:mm:ss'
 		);

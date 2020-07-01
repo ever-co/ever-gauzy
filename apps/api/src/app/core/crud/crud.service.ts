@@ -112,7 +112,7 @@ export abstract class CrudService<T extends Base> implements ICrudService<T> {
 		...options: any[]
 	): Promise<DeleteResult> {
 		try {
-			return this.repository.delete(criteria);
+			return await this.repository.delete(criteria);
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}

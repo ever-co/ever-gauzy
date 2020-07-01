@@ -10,7 +10,8 @@ export class CandidateSelectComponent {
 	@Input() placeholder: string;
 	@Input() disabledIds: string[];
 	@Input() allCandidates: Candidate[];
-
+	@Input() isAllMembers = false;
+	@Input() disabled = false;
 	@Output() selectedChange = new EventEmitter();
 	constructor() {}
 

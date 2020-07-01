@@ -1,5 +1,5 @@
 import { IHelpCenterArticle } from '@gauzy/models';
-import { Component, OnDestroy, Input } from '@angular/core';
+import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,13 +18,19 @@ export class DeleteArticleComponent extends TranslationBaseComponent
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteArticleComponent>,
 		readonly translateService: TranslateService,
-		private helpCenterArticleService: HelpCenterArticleService
+		private helpCenterArticleService: HelpCenterArticleService,
+		private errorHandler: ErrorHandler
 	) {
 		super(translateService);
 	}
 
 	async delete() {
-		await this.helpCenterArticleService.delete(`${this.article.id}`);
+		try {
+			await this.helpCenterArticleService.delete(`${this.article.id}`);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+
 		this.dialogRef.close(this.article);
 	}
 
