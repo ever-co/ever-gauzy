@@ -1,31 +1,30 @@
 nb-list {
-    height: fit-content;
-    max-height: 116px;
-    border: 1px solid #edf1f7;
-    margin-top: 10px;
-    transform-origin: top center;
-    transform: scaleY(0);
-    transition: transform 0.1s ease-in;
+  height: fit-content;
+  max-height: 116px;
+  border: 1px solid #edf1f7;
+  margin-top: 10px;
+  transform-origin: top center;
+  transform: scaleY(0);
+  transition: transform 0.1s ease-in;
 
-    nb-list-item {
-        line-height: 10px;
-        padding: 0.4rem 0.5rem !important;
-        line-height: 1.25rem !important;
+  nb-list-item {
+    padding: 0.4rem 0.5rem !important;
+    line-height: 1.25rem !important;
 
-        div {
-            height: 100%;
+    div {
+      height: 100%;
 
-            nb-icon {
-                cursor: pointer;
-            }
-        }
+      nb-icon {
+        cursor: pointer;
+      }
     }
+  }
 }
 
 .form-group input {
-    width: 100%;
+  width: 100%;
 }
 
 .department-list-active {
-    transform: scaleY(1);
+  transform: scaleY(1);
 }

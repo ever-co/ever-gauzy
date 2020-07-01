@@ -18,8 +18,7 @@ export interface SelectedProductVariant {
 
 @Component({
 	selector: 'ngx-variant-table',
-	templateUrl: './variant-table.component.html',
-	styleUrls: ['./variant-table.component.scss']
+	templateUrl: './variant-table.component.html'
 })
 export class VariantTableComponent extends TranslationBaseComponent
 	implements OnInit {

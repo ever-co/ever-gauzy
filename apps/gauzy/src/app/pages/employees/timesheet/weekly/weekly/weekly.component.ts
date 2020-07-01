@@ -19,6 +19,7 @@ import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.component';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { resetStores } from '@datorama/akita';
 
 interface WeeklyDayData {
 	project?: OrganizationProjects;
@@ -127,24 +128,24 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			.then((logs: TimeLog[]) => {
 				this.weekData = _.chain(logs)
 					.groupBy('projectId')
-					.map((logs: TimeLog[], _projectId) => {
-						const byDate = _.chain(logs)
+					.map((innerLogs: TimeLog[], _projectId) => {
+						const byDate = _.chain(innerLogs)
 							.groupBy((log) =>
 								moment(log.startedAt).format('YYYY-MM-DD')
 							)
-							.mapObject((logs: TimeLog[]) => {
-								const sum = logs.reduce(
+							.mapObject((res: TimeLog[]) => {
+								const sum = res.reduce(
 									(iteratee: any, log: any) => {
 										return iteratee + log.duration;
 									},
 									0
 								);
-								return { sum, logs };
+								return { sum, res };
 							})
 							.value();
 
 						const project =
-							logs.length > 0 ? logs[0].project : null;
+							innerLogs.length > 0 ? innerLogs[0].project : null;
 						const dates: any = {};
 						this.weekDayList.forEach((date) => {
 							dates[date] = byDate[date] || 0;

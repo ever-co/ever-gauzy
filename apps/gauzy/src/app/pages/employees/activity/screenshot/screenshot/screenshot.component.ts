@@ -117,7 +117,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 								(timeSlot) =>
 									moment(timeSlot.localStartedAt).format('mm')
 							);
-							const timeSlots = [
+							timeSlots = [
 								'00',
 								'10',
 								'20',

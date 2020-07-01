@@ -83,7 +83,7 @@ export const createRandomTimeLogs = async (
 				});
 
 				await Promise.all(screenshotsPromise).then((data) => {
-					data.map((row) => {
+					data.forEach((row) => {
 						screenshots = screenshots.concat(row);
 					});
 				});

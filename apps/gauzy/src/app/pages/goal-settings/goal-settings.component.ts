@@ -13,8 +13,7 @@ import { Store } from '../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-goal-settings',
-	templateUrl: './goal-settings.component.html',
-	styleUrls: ['./goal-settings.component.scss']
+	templateUrl: './goal-settings.component.html'
 })
 export class GoalSettingsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

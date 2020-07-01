@@ -15,8 +15,7 @@ import * as moment from 'moment';
 
 @Component({
 	selector: 'ngx-app',
-	templateUrl: './app.component.html',
-	styleUrls: ['./app.component.scss']
+	templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit, OnDestroy {
 	loading: boolean;

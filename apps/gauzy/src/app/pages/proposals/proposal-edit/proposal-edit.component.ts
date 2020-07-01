@@ -11,8 +11,7 @@ import { Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-proposal-edit',
-	templateUrl: './proposal-edit.component.html',
-	styleUrls: ['./proposal-edit.component.scss']
+	templateUrl: './proposal-edit.component.html'
 })
 export class ProposalEditComponent extends TranslationBaseComponent
 	implements OnInit {

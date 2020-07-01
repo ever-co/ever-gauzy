@@ -25,8 +25,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
 	selector: 'ngx-edit-time-log-modal',
-	templateUrl: './edit-time-log-modal.component.html',
-	styleUrls: ['./edit-time-log-modal.component.scss']
+	templateUrl: './edit-time-log-modal.component.html'
 })
 export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;

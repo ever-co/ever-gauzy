@@ -8,8 +8,7 @@ import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-sto
 
 @Component({
 	selector: 'ngx-upwork',
-	templateUrl: './upwork.component.html',
-	styleUrls: ['./upwork.component.scss']
+	templateUrl: './upwork.component.html'
 })
 export class UpworkComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

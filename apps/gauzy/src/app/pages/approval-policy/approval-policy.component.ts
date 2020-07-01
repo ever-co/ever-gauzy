@@ -19,8 +19,7 @@ export interface SelectedApprovalPolicy {
 
 @Component({
 	selector: 'ngx-approval-policy',
-	templateUrl: './approval-policy.component.html',
-	styleUrls: ['./approval-policy.component.scss']
+	templateUrl: './approval-policy.component.html'
 })
 export class ApprovalPolicyComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

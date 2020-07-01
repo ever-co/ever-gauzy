@@ -3,8 +3,7 @@ import { OrganizationTeam, Employee, Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-organization-teams-mutation',
-	templateUrl: './edit-organization-teams-mutation.component.html',
-	styleUrls: ['./edit-organization-teams-mutation.component.scss']
+	templateUrl: './edit-organization-teams-mutation.component.html'
 })
 export class EditOrganizationTeamsMutationComponent implements OnInit {
 	@Input()
