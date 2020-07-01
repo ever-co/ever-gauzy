@@ -17,14 +17,6 @@ const AppsNames: string[] = [
 	'Mail',
 	'Terminal'
 ];
-const Uls: string[] = [
-	'localhost',
-	'google.com',
-	'github.com',
-	'akveo.github.io',
-	'stackblitz.com',
-	'stackoverflow.com'
-];
 
 export const createRandomActivities = async (connection: Connection) => {
 	const activities: Activity[] = [];
@@ -39,9 +31,13 @@ export const createRandomActivities = async (connection: Connection) => {
 
 	const appNames: string[] = _.shuffle(AppsNames);
 
-	for (let day = 0; day < 30; day++) {
+	for (let day = 0; day < 15; day++) {
 		const date = moment().subtract(day, 'day').toDate();
-		for (let i = 0; i < faker.random.number(appNames.length); i++) {
+		for (
+			let i = 0;
+			i < faker.random.number({ min: 5, max: appNames.length });
+			i++
+		) {
 			const appName = appNames[i];
 			const project = faker.random.arrayElement(projects);
 			const task = faker.random.arrayElement(project.tasks);
@@ -58,9 +54,8 @@ export const createRandomActivities = async (connection: Connection) => {
 			activities.push(activity);
 		}
 
-		const urls: string[] = _.shuffle(Uls);
-		for (let i = 0; i < faker.random.number(urls.length); i++) {
-			const url = urls[i];
+		for (let i = 0; i < faker.random.number({ min: 10, max: 30 }); i++) {
+			const url = faker.internet.domainName();
 			const project = faker.random.arrayElement(projects);
 			const task = faker.random.arrayElement(project.tasks);
 

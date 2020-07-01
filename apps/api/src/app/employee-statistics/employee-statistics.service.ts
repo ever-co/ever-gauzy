@@ -45,7 +45,7 @@ export class EmployeeStatisticsService {
 		findInput?: EmployeeStatisticsFindInput
 	): Promise<EmployeeStatistics> {
 		const mappedEmployeeIncome = (
-			await this.incomeService.findAll(
+			await this.incomeService.findAllIncomes(
 				{
 					where: {
 						employee: {
@@ -65,7 +65,7 @@ export class EmployeeStatisticsService {
 		});
 
 		const mappedEmployeeExpenses = (
-			await this.expenseService.findAll(
+			await this.expenseService.findAllExpenses(
 				{
 					where: {
 						employee: {

@@ -7,7 +7,7 @@ import {
 	Unique,
 	AfterLoad,
 	OneToMany,
-	ManyToMany,
+	ManyToMany
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeSlot as ITimeSlot } from '@gauzy/models';
