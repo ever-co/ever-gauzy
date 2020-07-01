@@ -1,7 +1,7 @@
 import { GenericEmploymentTypes } from '@gauzy/models';
 import { Connection } from 'typeorm';
-import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
-import { Organization } from './organization.entity';
+import { OrganizationEmploymentType } from './organization-employment-type.entity';
+import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { environment as env } from '@env-api/environment';
 import { Tenant } from '../tenant/tenant.entity';

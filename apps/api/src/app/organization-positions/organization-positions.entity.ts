@@ -1,9 +1,17 @@
-import { Column, Entity, Index, ManyToMany, JoinTable } from 'typeorm';
+import {
+	Column,
+	Entity,
+	Index,
+	ManyToMany,
+	JoinTable,
+	ManyToOne
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { OrganizationPositions as IOrganizationPositions } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('organization_position')
 export class OrganizationPositions extends Base
@@ -27,4 +35,7 @@ export class OrganizationPositions extends Base
 	@IsNotEmpty()
 	@Column()
 	organizationId: string;
+
+	@ManyToOne((type) => Organization, (organization) => organization.id)
+	organization?: Organization;
 }

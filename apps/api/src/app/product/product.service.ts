@@ -1,12 +1,13 @@
 import { Repository } from 'typeorm';
-import { CrudService, IPagination } from '../core';
+import { IPagination } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
 import { IProductCreateInput } from '@gauzy/models';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 
 @Injectable()
-export class ProductService extends CrudService<Product> {
+export class ProductService extends TenantAwareCrudService<Product> {
 	constructor(
 		@InjectRepository(Product)
 		private readonly productRepository: Repository<Product>

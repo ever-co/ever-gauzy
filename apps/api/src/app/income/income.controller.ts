@@ -60,7 +60,7 @@ export class IncomeController extends CrudController<Income> {
 			user: { id: RequestContext.currentUser().id }
 		});
 
-		return this.incomeService.findAll(
+		return this.incomeService.findAllIncomes(
 			{ where: { ...findInput, employeeId: employee.id }, relations },
 			filterDate
 		);
@@ -83,7 +83,7 @@ export class IncomeController extends CrudController<Income> {
 		@Query('data') data: string
 	): Promise<IPagination<Income>> {
 		const { relations, findInput, filterDate } = JSON.parse(data);
-		return this.incomeService.findAll(
+		return this.incomeService.findAllIncomes(
 			{ where: findInput, relations },
 			filterDate
 		);
