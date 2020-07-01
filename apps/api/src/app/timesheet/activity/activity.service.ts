@@ -5,11 +5,7 @@ import { CrudService } from '../../core/crud/crud.service';
 import { Activity } from '../activity.entity';
 import * as moment from 'moment';
 import { RequestContext } from '../../core/context';
-import {
-	PermissionsEnum,
-	IGetActivitiesInput,
-	ActivityType
-} from '@gauzy/models';
+import { PermissionsEnum, IGetActivitiesInput } from '@gauzy/models';
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {

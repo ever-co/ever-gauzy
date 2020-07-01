@@ -11,7 +11,6 @@ import {
 } from '@gauzy/models';
 import { debounceTime } from 'rxjs/operators';
 import { toUTC } from 'libs/utils';
-import * as _ from 'underscore';
 import { ActivityService } from 'apps/gauzy/src/app/@shared/timesheet/activity.service';
 import { ActivatedRoute } from '@angular/router';
 
