@@ -63,6 +63,9 @@
 	},
 	"dependencies": {
 		"sqlite3": "https://github.com/mapbox/node-sqlite3/tarball/master",
-		"electron-store": "^5.2.0"
+		"electron-store": "^5.2.0",
+		"node-notifier": "^7.0.1",
+		"moment": "^2.25.3",
+		"knex": "^0.21.1"
 	}
 }
