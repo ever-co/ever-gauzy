@@ -19,6 +19,8 @@ export class DeleteBaseComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
+	deleteBase() {}
+
 	closeDialog() {
 		this.dialogRef.close();
 	}
