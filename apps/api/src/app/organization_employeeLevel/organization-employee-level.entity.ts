@@ -29,5 +29,5 @@ export class EmployeeLevel extends Base {
 	organizationId: string;
 
 	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization: Organization;
+	organization?: Organization;
 }

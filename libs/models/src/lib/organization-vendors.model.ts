@@ -1,10 +1,12 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tag } from '..';
+import { ITenant } from './tenant.model';
 
 export interface IOrganizationVendor extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	tags?: Tag[];
+	tenant: ITenant;
 }
 
 export interface IOrganizationVendorFindInput extends IBaseEntityModel {

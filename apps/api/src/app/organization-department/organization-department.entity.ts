@@ -48,5 +48,5 @@ export class OrganizationDepartment extends TenantBase
 	members?: Employee[];
 
 	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization: Organization;
+	organization?: Organization;
 }

@@ -35,5 +35,5 @@ export class OrganizationEmploymentType extends Base
 	members?: Employee[];
 
 	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization: Organization;
+	organization?: Organization;
 }
