@@ -5,13 +5,14 @@ import { Subject } from 'rxjs';
 import {
 	Organization,
 	TimeLogFilters,
-	IGetActivitiesInput
+	IGetActivitiesInput,
+	Activity,
+	ActivityType
 } from '@gauzy/models';
 import { debounceTime } from 'rxjs/operators';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { toUTC } from 'libs/utils';
-import * as _ from 'underscore';
-import * as moment from 'moment';
+import { ActivityService } from 'apps/gauzy/src/app/@shared/timesheet/activity.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ngx-app',
@@ -20,17 +21,26 @@ import * as moment from 'moment';
 })
 export class AppComponent implements OnInit, OnDestroy {
 	loading: boolean;
-	apps: any[];
+	apps: Activity[];
 	request: any;
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
+	type: 'apps' | 'urls';
 
 	constructor(
 		private store: Store,
-		private timesheetService: TimesheetService
+		private activatedRoute: ActivatedRoute,
+		private activityService: ActivityService
 	) {}
 
 	ngOnInit(): void {
+		this.activatedRoute.params.subscribe((params) => {
+			if (params.type) {
+				this.type = params.type;
+				this.updateLogs$.next();
+			}
+		});
+
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: Organization) => {
@@ -43,6 +53,18 @@ export class AppComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.getLogs();
 			});
+	}
+
+	prgressStatus(value) {
+		if (value <= 25) {
+			return 'danger';
+		} else if (value <= 50) {
+			return 'warning';
+		} else if (value <= 75) {
+			return 'info';
+		} else {
+			return 'success';
+		}
 	}
 
 	async filtersChange($event: TimeLogFilters) {
@@ -63,23 +85,14 @@ export class AppComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
-			relations: ['screenshots', 'timeLogs']
+			type: this.type === 'apps' ? ActivityType.APP : ActivityType.URL
 		};
 
 		this.loading = true;
-		this.timesheetService
-			.getTimeSlots(request)
+		this.activityService
+			.getActivites(request)
 			.then((activities) => {
-				this.apps = _.chain(activities)
-					.groupBy((timeSlot) =>
-						moment(timeSlot.localStartedAt).format('HH')
-					)
-
-					.values()
-					.sortBy(({ startTime }) =>
-						moment(startTime, 'HH:mm').toDate().getTime()
-					)
-					.value();
+				this.apps = activities;
 			})
 			.finally(() => (this.loading = false));
 	}

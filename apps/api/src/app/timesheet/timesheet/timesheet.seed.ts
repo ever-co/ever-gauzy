@@ -90,8 +90,10 @@ export const createRandomTimesheet = async (connection: Connection) => {
 			resolve();
 		});
 	});
-	await createRandomTimeLogs(connection, createdTimesheets);
-	await createRandomActivities(connection);
 
+	await Promise.all([
+		createRandomTimeLogs(connection, createdTimesheets),
+		createRandomActivities(connection)
+	]);
 	return createdTimesheets;
 };
