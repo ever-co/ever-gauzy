@@ -186,9 +186,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			// this.deletedNode.emit();
 			this.toastrSuccess('DELETED');
-			this.loadMenu();
+			await this.loadMenu();
 			this.tree.treeModel.update();
 		}
 	}

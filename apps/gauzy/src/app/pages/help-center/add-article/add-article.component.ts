@@ -14,7 +14,7 @@ import { HelpCenterArticleService } from '../../../@core/services/help-center-ar
 })
 export class AddArticleComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@Input() article: IHelpCenterArticle;
+	@Input() article?: IHelpCenterArticle;
 	@Input() editType: string;
 	@Input() length: number;
 	@Input() id: string;

@@ -14,7 +14,7 @@ import { HelpCenterService } from '../../../@core/services/help-center.service';
 })
 export class EditBaseComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@Input() base: IHelpCenter;
+	@Input() base?: IHelpCenter;
 	@Input() editType: string;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
@@ -49,19 +49,19 @@ export class EditBaseComponent extends TranslationBaseComponent
 			color: [''],
 			desc: ['', Validators.required]
 		});
-		this.loadFormData(this.base);
+		this.loadFormData();
 	}
 
 	toggleStatus(event: boolean) {
 		this.isToggled = event;
 	}
 
-	loadFormData(base) {
+	loadFormData() {
 		if (this.editType === 'edit')
 			this.form.patchValue({
-				name: base.name,
-				desc: base.description,
-				color: base.color
+				name: this.base.name,
+				desc: this.base.description,
+				color: this.base.color
 			});
 		if (this.editType === 'add')
 			this.form.patchValue({
