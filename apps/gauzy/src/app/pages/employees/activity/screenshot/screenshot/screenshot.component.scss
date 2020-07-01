@@ -29,4 +29,11 @@
       }
     }
   }
+  ::ng-deep {
+    .progress-value {
+      span {
+        display: none;
+      }
+    }
+  }
 }
