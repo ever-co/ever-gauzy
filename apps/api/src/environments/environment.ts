@@ -108,6 +108,11 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.TwitterClientSecret || 'fakeTwitterClientSecret'
 	},
 
+	fiverrConfig: {
+		clientId: process.env.FiverrClientId || 'fakeFiverrClientId',
+		clientSecret: process.env.FiverrClientSecret || 'FiverrClientSecret'
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',
