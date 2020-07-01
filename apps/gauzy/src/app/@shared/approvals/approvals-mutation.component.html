@@ -17,7 +17,7 @@
 	<nb-card-body class="body">
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="col-sm-6 mb-3">
+				<div class="col-12 mb-3">
 					<label for="name" class="label">
 						{{
 							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
@@ -40,32 +40,6 @@
 							'status-success':
 								form.controls['name'].valid &&
 								form.controls['name'].dirty
-						}"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<label for="type" class="label">
-						{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_TYPE'
-								| translate
-						}}
-					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="type"
-						fullWidth
-						placeholder="{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_TYPE'
-								| translate
-						}}"
-						[ngClass]="{
-							'status-danger':
-								form.controls['type'].invalid &&
-								form.controls['type'].dirty,
-							'status-success':
-								form.controls['type'].valid &&
-								form.controls['type'].dirty
 						}"
 					/>
 				</div>
@@ -116,25 +90,14 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12 mb-3">
-					<nb-radio-group
-						(valueChange)="onParticipantsChange($event)"
-						[value]="participants"
-					>
-						<nb-radio [value]="'employees'">Employees </nb-radio>
-						<nb-radio [value]="'teams'">Teams </nb-radio>
-					</nb-radio-group>
-				</div>
-			</div>
-			<div class="row">
-				<div
-					class="col-sm-12 mb-3"
-					*ngIf="participants === 'employees'"
-				>
+				<div class="col-sm-6 mb-3">
+					<label for="employees" class="label">
+						{{ 'APPROVAL_REQUEST_PAGE.EMPLOYEES' | translate }}
+					</label>
 					<nb-select
 						formControlName="employees"
 						multiple
-						[selected]="selectedEmployees"
+						[(ngModel)]="selectedEmployees"
 						(selectedChange)="onEmployeesSelected($event)"
 						fullWidth
 						placeholder="{{
@@ -157,11 +120,14 @@
 						>
 					</nb-select>
 				</div>
-				<div class="col-sm-12 mb-3" *ngIf="participants === 'teams'">
+				<div class="col-sm-6 mb-3">
+					<label for="teams" class="label">
+						{{ 'APPROVAL_REQUEST_PAGE.TEAMS' | translate }}
+					</label>
 					<nb-select
 						formControlName="teams"
 						multiple
-						[selected]="selectedTeams"
+						[(ngModel)]="selectedTeams"
 						(selectedChange)="onTeamsSelected($event)"
 						fullWidth
 						placeholder="{{

@@ -856,13 +856,11 @@ export class HubstaffService {
 							token
 						);
 						const taskSetting = setting.tiedEntities.find(
-							(setting) =>
-								setting.entity === IntegrationEntity.TASK
+							() => setting.entity === IntegrationEntity.TASK
 						);
 
 						const activitySetting = setting.tiedEntities.find(
-							(setting) =>
-								setting.entity === IntegrationEntity.ACTIVITY
+							() => setting.entity === IntegrationEntity.ACTIVITY
 						);
 
 						const screenshotSetting = setting.tiedEntities.find(

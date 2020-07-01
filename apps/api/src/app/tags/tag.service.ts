@@ -92,7 +92,6 @@ export class TagService extends CrudService<Tag> {
 			arrayIndex < allTagsInOrg.length;
 			arrayIndex++
 		) {
-			tagWithCounter = [];
 			tagWithCounter = {
 				...tagCounterAllRelations[arrayIndex],
 				counter:

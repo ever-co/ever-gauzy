@@ -3,7 +3,7 @@ import { RequestApproval, OrganizationTeam } from '..';
 
 export interface RequestApprovalTeam extends IBaseEntityModel {
 	requestApprovalId: string;
-	organizationTeamId: string;
+	teamId: string;
 	status: number;
 	requestApproval: RequestApproval;
 	team: OrganizationTeam;
