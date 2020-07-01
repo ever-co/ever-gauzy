@@ -23,20 +23,12 @@ const routes: Routes = [
 					)
 			},
 			{
-				path: 'apps',
+				path: ':type',
 				data: {
 					title: 'ACTIVITY.APPS'
 				},
 				loadChildren: () =>
 					import('./app/app.module').then((m) => m.AppModule)
-			},
-			{
-				path: 'urls',
-				data: {
-					title: 'ACTIVITY.URLS'
-				},
-				loadChildren: () =>
-					import('./url/url.module').then((m) => m.UrlModule)
 			}
 		]
 	}
