@@ -62,7 +62,7 @@ export class CandidateController extends CrudController<Candidate> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
-			return this.candidateService.create({
+			return await this.candidateService.create({
 				id,
 				...entity
 			});
@@ -154,7 +154,7 @@ export class CandidateController extends CrudController<Candidate> {
 		 */
 		input
 			.filter((entity) => !entity.user.imageUrl)
-			.map(
+			.forEach(
 				(entity) =>
 					(entity.user.imageUrl = getUserDummyImage(entity.user))
 			);

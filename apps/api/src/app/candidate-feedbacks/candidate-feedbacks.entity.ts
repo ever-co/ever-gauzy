@@ -64,6 +64,9 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 	)
 	interview: ICandidateInterview;
 
-	@ManyToOne((type) => Candidate, (candidate) => candidate.feedbacks)
+	@ManyToOne((type) => Candidate, (candidate) => candidate.feedbacks, {
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
 	candidate: ICandidate;
 }

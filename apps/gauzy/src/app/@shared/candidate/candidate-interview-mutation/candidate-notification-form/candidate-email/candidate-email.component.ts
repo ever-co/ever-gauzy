@@ -52,7 +52,7 @@ export class CandidateEmailComponent implements OnInit {
 		this.getDate(this.templateData.startTime, this.templateData.endTime);
 
 		const res = [];
-		this.employees.map((employee) => {
+		this.employees.forEach((employee) => {
 			res.push(employee.user.firstName + ' ' + employee.user.lastName);
 		});
 		this.employeeList = res.join(', ');

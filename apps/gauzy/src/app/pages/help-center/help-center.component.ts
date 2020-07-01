@@ -31,9 +31,15 @@ export class HelpCenterComponent extends TranslationBaseComponent
 
 	clickedNode(clickedNode: IHelpCenter) {
 		this.categoryId = clickedNode.id;
-		if (clickedNode.flag === 'category')
-			this.categoryName = clickedNode.name;
+		this.categoryName =
+			clickedNode.flag === 'category' ? clickedNode.name : '';
 		this.loadArticles(this.categoryId);
+	}
+
+	deletedNode() {
+		this.categoryId = '';
+		this.categoryName = '';
+		this.loadArticles('id');
 	}
 
 	async loadArticles(id) {

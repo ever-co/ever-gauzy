@@ -51,9 +51,9 @@ export class Pipeline extends Base implements IPipeline {
 		const pipelineId = this.id ? { pipelineId: this.id } : {};
 		let index = 0;
 
-		this.stages?.forEach((stage) =>
-			Object.assign(stage, pipelineId, { index: ++index })
-		);
+		this.stages?.forEach((stage) => {
+			Object.assign(stage, pipelineId, { index: ++index });
+		});
 	}
 
 	@AfterLoad()
@@ -61,9 +61,7 @@ export class Pipeline extends Base implements IPipeline {
 	@AfterUpdate()
 	public __after_fetch(): void {
 		if (this.stages) {
-			this.stages = this.stages.sort(
-				({ index: a }, { index: b }) => a - b
-			);
+			this.stages.sort(({ index: a }, { index: b }) => a - b);
 		}
 	}
 }

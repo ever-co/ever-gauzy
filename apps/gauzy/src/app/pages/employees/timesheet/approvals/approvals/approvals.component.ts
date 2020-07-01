@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	IDateRange,
-	IGetTimeLogInput,
 	Organization,
 	TimeLogFilters,
 	Timesheet,
-	TimesheetStatus
+	TimesheetStatus,
+	IGetTimeSheetInput
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import {
@@ -102,7 +102,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { startDate, endDate } = this.logRequest;
-		const request: IGetTimeLogInput = {
+		const request: IGetTimeSheetInput = {
 			organizationId: this.organization.id,
 			...this.logRequest,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),

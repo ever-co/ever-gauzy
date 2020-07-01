@@ -113,7 +113,7 @@ export const createHelpCenter = async (
 ): Promise<IHelpCenter[]> => {
 	for (const node of helpCenterMenuList) {
 		const helpCenter: HelpCenter = { ...node, tenant, organization: org };
-		helpCenter.children.map((child: HelpCenter) => {
+		helpCenter.children.forEach((child: HelpCenter) => {
 			child.organization = org;
 			child.tenant = tenant;
 		});
