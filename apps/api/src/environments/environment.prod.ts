@@ -84,6 +84,13 @@ export const environment: IEnvironment = {
 		state: '{github}'
 	},
 
+	microsoftConfig: {
+		clientId: process.env.MicrosoftClientId || 'fakeClientId',
+		clientSecret: process.env.MicrosoftConfig || 'fakeClientSecret',
+		identityMetadata: 'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
+		jwtSecret: process.env.MicrosoftJwtSecret || 'fakeJwtSecret',
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',

@@ -15,6 +15,7 @@ import { IFacebookConfig } from './IFacebookConfig';
 import { IGoogleConfig } from './IGoogleConfig';
 import { IUpworkConfig } from './IUpworkConfig';
 import { IGithubConfig } from './IGithubConfig';
+import { IMicrosoftConfig } from './IMicrosoftConfig';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -46,6 +47,7 @@ export interface IEnvironment {
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
 	githunConfig: IGithubConfig;
+	microsoftConfig: IMicrosoftConfig;
 
 	defaultAdmins: IDefaultUser[];
 	defaultSuperAdmins: IDefaultUser[];

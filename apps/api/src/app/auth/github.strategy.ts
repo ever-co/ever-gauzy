@@ -5,7 +5,6 @@ import { environment as env } from '@env-api/environment';
 import passport from 'passport';
 import { AuthService } from './auth.service';
 
-
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     
