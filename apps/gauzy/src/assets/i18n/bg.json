@@ -55,6 +55,7 @@
 		"START_DATE": "Начална дата",
 		"END_DATE": "Крайна дата",
 		"CLIENT_NAME": "Клиентско име",
+		"CONTACT_NAME": "Contact Name",
 		"NAME": "Име",
 		"VENDOR": "Доставчик",
 		"CATEGORY": "Категория",
@@ -109,6 +110,8 @@
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
 		"NO_RESULT": "No Result",
+		"CLIENT": "Клиент",
+		"INTERNAL": "Internal",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -201,7 +204,7 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
-			"DESCRIPTION_OPTIONAL": "Описание (незадължително)",
+			"DESCRIPTION_OPTIONAL": "Description (optional)",
 			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
 			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
@@ -220,7 +223,7 @@
 			"START_DATE": "Дата",
 			"PICK_DATE": "Изберете дата",
 			"DATE_TYPE": "Всички типове дати",
-			"TYPE": "Тип",
+			"BILLING": "Billing",
 			"IMAGE_URL": "Снимка",
 			"ADD_DEPARTMENT": "Добави Отдел",
 			"ADD_POSITION": "Добави позиция",
@@ -229,7 +232,7 @@
 			"ADD_CANDIDATE_QUALITY": "Add personal quality",
 			"ADD_TECHNOLOGY": "Add technology",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
-			"CLIENTS": "Клиенти",
+			"CONTACTS": "Contacts",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
 			"END_DATE_PROJECT": "Край на проекта (опция)",
 			"TEAM_NAME": "Име на отбора",
@@ -266,6 +269,7 @@
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_EMPLOYEE": "Add Interviewer",
+			"ADD_REMOVE_INTERVIEWER": "Select interviewer",
 			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
@@ -287,6 +291,7 @@
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
+			"OWNER": "Owner",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -530,7 +535,9 @@
 			"SETTINGS_UPDATED": "Updated settings for integration",
 			"SYNCED_ENTITIES": "Auto synced entities",
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
-			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+			"DATE_RANGE_PLACEHOLDER": "Choose date between",
+			"CLIENT_ID": "Hubstaff Client ID",
+			"CLIENT_SECRET": "Hubstaff Client Secret"
 		},
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "Activities",
@@ -654,14 +661,14 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
-			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
+			"EMPLOYEE_CONTACTS": "Employee's Contacts:",
 			"EMPLOYMENT_TYPE": "Employment Type",
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Локация",
 			"RATES": "Rates",
 			"PROJECTS": "Проекти",
-			"CLIENTS": "Клиенти",
+			"CONTACTS": "Contacts",
 			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
@@ -676,12 +683,16 @@
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"GOALS_PAGE": {
-		"HEADER": "Всички цели за ",
-		"GOAL": "Цел",
-		"GOALS_EMPTY": "Все още не сте създали цели. Кликнете върху Добавяне на ново, за да го създадете",
-		"ADD_NEW_KEY_RESULT": "Добавете нов ключов резултат",
-		"ADD_NEW_OBJECTIVE": "Добавете нова цел",
-		"SESSI	"UPDATE": "Update",
+		"HEADER": "All Objectives for ",
+		"GOAL": "Goal",
+		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
+		"ADD_NEW_KEY_RESULT": "Add new key result",
+		"ADD_NEW_OBJECTIVE": "Add new Objective",
+		"SESSION": "Session",
+		"NO_DESCRIPTION": "No Description",
+		"PROGRESS": "Progress",
+		"UPDATES": "Updates",
+		"UPDATE": "Update",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"SETTINGS": {
@@ -690,47 +701,34 @@
 			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames"
 		},
 		"LEVELS": {
-			"ORGON": "Сесия",
-		"NO_DESCRIPTION": "Няма описание",
-		"PROGRESS": "прогрес",
-		"UPDATES": "Актуализациите",
-		"UPDATE": "Актуализация",
-		"COMMENTS": "Коментари",
-		"KEY_RESULTS": "Основни резултати",
-		"SETTINGS": {
-			"ADD_TIME_FRAME_TITLE": "Добавете времева рамка",
-			"TIME_FRAME_PAGE_TITLE": "Задайте времева рамка",
-			"PREDEFINED_TIME_FRAMES": "Предварително определени рамки за времето"
-		},
-		"LEVELS": {
-			"ORGANIZATION": "организация",
-			"TEAM": "екип",
+			"ORGANIZATION": "Organization",
+			"TEAM": "Team",
 			"EMPLOYEE": "Служител"
 		},
 		"TIME_FRAME_STATUS": {
 			"ACTIVE": "Активен",
-			"INACTIVE": "неактивен"
+			"INACTIVE": "Inactive"
 		},
 		"FORM": {
 			"LABELS": {
-				"LEVEL": "ниво",
-				"OWNER": "собственик",
-				"LEAD": "Олово (незадължително)",
-				"DEADLINE": "Краен срок",
+				"LEVEL": "Level",
+				"OWNER": "Owner",
+				"LEAD": "Lead (optional)",
+				"DEADLINE": "Deadline",
 				"STATUS": "Статус"
 			},
 			"PLACEHOLDERS": {
-				"NAME": "Име на целта. напр. Подобрете SEO сайта",
-				"DESCRIPTION": "Описание на целта.",
-				"LEVEL": "Целево ниво",
-				"TIME_FRAME_NAME": "Име на времевата рамка, напр. 'Q4-2020'"
+				"NAME": "Objective Name. eg. Improve Website SEO",
+				"DESCRIPTION": "Objective Description.",
+				"LEVEL": "Goal Level",
+				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'"
 			},
 			"ERROR": {
-				"START_DATE_GREATER": "Крайната дата трябва да е по-голяма от началната"
+				"START_DATE_GREATER": "End Date must be greater than Start Date"
 			}
 		},
 		"BUTTONS": {
-			"ADD_TIME_FRAME": "Добавете времева рамка"
+			"ADD_TIME_FRAME": "Add Time Frame"
 		}
 	},
 	"KEY_RESULT_PAGE": {
@@ -744,33 +742,33 @@
 			}
 		},
 		"TYPE": {
-			"NUMBER": "номер",
-			"TRUE_OR_FALSE": "Вярно/фалшив",
+			"NUMBER": "Number",
+			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "Валута",
-			"TASK": "задача"
+			"TASK": "Задача"
 		},
 		"DEADLINE": {
-			"NO_CUSTOM_DEADLINE": "Няма персонализиран краен срок",
-			"HARD_DEADLINE": "Труден срок",
-			"HARD_AND_SOFT_DEADLINE": "Твърд и мек срок"
+			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
+			"HARD_DEADLINE": "Hard Deadline",
+			"HARD_AND_SOFT_DEADLINE": "Hard and Soft Deadline"
 		},
 		"FORM": {
 			"LABELS": {
-				"KEY_RESULT_TYPE": "Тип резултат на ключовете",
-				"INITIAL_VALUE": "Начална стойност",
-				"TARGET_VALUE": "Целева стойност",
-				"OWNER": "собственик",
-				"LEAD": "Олово (незадължително)",
-				"DEADLINE": "Краен срок",
-				"SOFT_DEADLINE": "Мек срок",
-				"HARD_DEADLINE": "Труден срок",
-				"UPDATED_VALUE": "Актуализирана стойност",
-				"MARK_COMPLETE": "Отбележете като завършена",
+				"KEY_RESULT_TYPE": "Key Result Type",
+				"INITIAL_VALUE": "Initial value",
+				"TARGET_VALUE": "Target value",
+				"OWNER": "Owner",
+				"LEAD": "Lead (optional)",
+				"DEADLINE": "Deadline",
+				"SOFT_DEADLINE": "Soft Deadline",
+				"HARD_DEADLINE": "Hard Deadline",
+				"UPDATED_VALUE": "Updated Value",
+				"MARK_COMPLETE": "Mark as Complete",
 				"STATUS": "Статус"
 			},
 			"PLACEHOLDERS": {
-				"NAME": "Име на ключовия резултат напр. Добавете метаданни, за да подобрите SEO",
-				"DESCRIPTION": "Кратко описание, което да даде някакъв контекст за ключовия резултат"
+				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
+				"DESCRIPTION": "A short desciption to give some context about the Key Result"
 			}
 		}
 	},
@@ -885,6 +883,7 @@
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
 			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
+			"CRITERIONS_RATING": "Criterions rating per interview",
 			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview"
 		},
@@ -905,7 +904,7 @@
 		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
-		"CLIENTS": "Клиенти",
+		"CONTACTS": "Contacts",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Доставчици",
 		"EXPENSE_CATEGORIES": "Expense Categories",
@@ -917,7 +916,7 @@
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Задължителни разходи в организацията",
 		"EMPLOYMENT_TYPES": "Employment Types",
-		"INVITE_CLIENT": "Invite Client",
+		"INVITE_CONTACT": "Invite Contact",
 		"EMAIL_INVITE": "Email Invite",
 		"ADD_LEVEL_OF_EMPLOYEE": "Add level of employee",
 		"LEVEL_OF_EMPLOYEE": "Employee Levels",
@@ -928,6 +927,7 @@
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
+			"CONTACT": "Contact",
 			"NEW_CLIENT": "Добавяне на нов клиент",
 			"NAME": "Име",
 			"PRIMARY_EMAIL": "Основна Е-поща",
@@ -941,10 +941,11 @@
 			"NEW_PROJECT": "Добавяне на нов проект",
 			"START_DATE": "Начална дата",
 			"END_DATE": "Крайна дата",
-			"TYPE": "Тип",
+			"BILLING": "Billing",
 			"CURRENCY": "Валута",
+			"OWNER": "Owner",
 			"TEAMS": "Отбори",
-			"ADD_NEW_CLIENT": "Добавяне на нов клиент",
+			"ADD_NEW_CONTACT": "Add new contact",
 			"GENERAL_SETTINGS": "Главни Настройки",
 			"DESIGN": "Дизайн",
 			"BONUS": "Бонус",
@@ -1092,10 +1093,14 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Approval Request",
+		"EMPLOYEES": "Служители",
+		"TEAMS": "Отбори",
 		"APPROVAL_POLICY": "Approval Policy",
 		"CHOOSE_POLICIES": "Choose policies/s",
 		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
-		"ADD_APPROVAL_REQUEST": "Add Request Approval"
+		"ADD_APPROVAL_REQUEST": "Add Request Approval",
+		"APPROVAL_REQUEST_SAVED": "Request Approval Saved",
+		"APPROVAL_REQUEST_DELETED": "Request Approval Deleted"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
@@ -1500,8 +1505,35 @@
 	},
 	"HELP_PAGE": {
 		"HELP": "Помощ",
-		"KNOWLEDGE_BASES": "Knowledge bases",
-		"CHOSE_ICON": "Chose icon to set"
+		"KNOWLEDGE_BASE": "Knowledge base",
+		"CHOSE_ICON": "Chose icon to set",
+		"CREATE_AT": "create at",
+		"WRITTEN_BY": "written by",
+		"EMPLOYEES": "служители",
+		"ONLY_FOR_EMPLOYEES": "Only for employees",
+		"DRAFT": "draft",
+		"ADD_ARTICLE": "Add article",
+		"CHOOSE_ANY_CATEGORY": "Choose any category",
+		"ARTICLES": "articles",
+		"REMOVE_ARTICLE": "Remove Article",
+		"ARE_YOU_SURE": "Are you sure? This cannot be undone.",
+		"DESCRIPTION": "Description",
+		"ARTICLE_TEXT": "Article text",
+		"EDIT_ARTICLE": "Edit Article",
+		"MANAGE_CATEGORY": "Manage Category",
+		"ADD_CATEGORY": "Add Category",
+		"LANGUAGE": "Език (Language)",
+		"PUBLISH_STATUS": "Publish Status",
+		"PRIVATE_STATUS": "Private Status",
+		"COLOR": "Color",
+		"NAME_CATEGORY": "Name of the category",
+		"NAME_ARTICLE": "Name of the Article",
+		"DESCRI": "Description",
+		"ADD_BASE": "Add Knowledge Base",
+		"MANAGE_BASE": "Manage Knowledge Base",
+		"NAME_OF_THE_BASE": "Name of the base",
+		"REMOVE_CATEGORY": "Remove Category",
+		"REMOVE_BASE": "Remove Base"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "За нас"
@@ -1691,6 +1723,14 @@
 				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
+			},
+			"EDIT_ORGANIZATIONS_CONTACTS": {
+				"ADD_CONTACT": "New contact {{ name }} successfully added!",
+				"REMOVE_CONTACT": "Contact {{ name }} successfully removed!",
+				"INVALID_CONTACT_DATA": "Please check the Name, Primary Email and Primary Phone of your contact",
+				"INVITE_CONTACT": "Invitation email sent to {{ name }}.",
+				"INVITE_CONTACT_ERROR": "Some error occurred while trying to invite contact.",
+				"EMAIL_EXISTS": "This contact email already exists as a user"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
 				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",

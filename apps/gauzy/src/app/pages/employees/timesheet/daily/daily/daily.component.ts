@@ -95,7 +95,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 	async filtersChange($event: TimeLogFilters) {
 		this.logRequest = $event;
-		this.selectedDate = this.logRequest.startDate;
+		this.selectedDate = new Date(this.logRequest.startDate);
 		this.updateLogs$.next();
 	}
 	async getLogs() {

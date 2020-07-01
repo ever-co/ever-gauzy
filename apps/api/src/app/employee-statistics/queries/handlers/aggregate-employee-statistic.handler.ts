@@ -61,7 +61,7 @@ export class AggregateOrganizationQueryHandler
 
 		const employeeMap: Map<string, EmployeeStatisticSum> = new Map();
 
-		employees.map((employee) => {
+		employees.forEach((employee) => {
 			// Hide user hash
 			employee.user.hash = '';
 			employeeMap.set(employee.id, {
@@ -120,7 +120,7 @@ export class AggregateOrganizationQueryHandler
 			searchInput.valueDate,
 			searchInput.months
 		);
-		incomes.map((income) => {
+		incomes.forEach((income) => {
 			const stat = employeeMap.get(income.employeeId);
 			const amount = Number(income.amount);
 			stat.income = Number((stat.income + amount).toFixed(2));
@@ -142,7 +142,7 @@ export class AggregateOrganizationQueryHandler
 			searchInput.valueDate,
 			searchInput.months
 		);
-		expenses.map((expense) => {
+		expenses.forEach((expense) => {
 			const stat = employeeMap.get(expense.employeeId);
 			const amount = Number(expense.amount);
 			stat.expense = Number((amount + stat.expense).toFixed(2));
@@ -169,7 +169,7 @@ export class AggregateOrganizationQueryHandler
 		 * OR
 		 * till the input date
 		 */
-		employeeRecurringExpenses.map((expense) => {
+		employeeRecurringExpenses.forEach((expense) => {
 			// Find start date based on input date and X months.
 			const inputStartDate = subMonths(
 				startOfMonth(searchInput.valueDate),

@@ -39,14 +39,14 @@ import { OrganizationDepartment } from '../organization-department/organization-
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { InvoiceService } from '../invoice/invoice.service';
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItemService } from '../invoice-item/invoice-item.service';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
@@ -94,6 +94,10 @@ import { EstimateEmailService } from '../estimate-email/estimate-email.service';
 import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { Contact } from '../contact/contact.entity';
 import { ContactService } from '../contact/contact.service';
+import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { RequestApproval } from '../request-approval/request-approval.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+
 @Module({
 	imports: [
 		CqrsModule,
@@ -116,7 +120,7 @@ import { ContactService } from '../contact/contact.service';
 			OrganizationDepartment,
 			OrganizationProjects,
 			Role,
-			OrganizationClients,
+			OrganizationContact,
 			Invoice,
 			InvoiceItem,
 			EmployeeLevel,
@@ -124,6 +128,9 @@ import { ContactService } from '../contact/contact.service';
 			OrganizationPositions,
 			OrganizationRecurringExpense,
 			OrganizationTeam,
+			RequestApproval,
+			RequestApprovalEmployee,
+			RequestApprovalTeam,
 			OrganizationTeamEmployee,
 			OrganizationVendor,
 			Proposal,
@@ -166,7 +173,7 @@ import { ContactService } from '../contact/contact.service';
 		InvoiceService,
 		InvoiceItemService,
 		EmployeeLevelService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
@@ -213,7 +220,7 @@ import { ContactService } from '../contact/contact.service';
 		InvoiceService,
 		InvoiceItemService,
 		EmployeeLevelService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,

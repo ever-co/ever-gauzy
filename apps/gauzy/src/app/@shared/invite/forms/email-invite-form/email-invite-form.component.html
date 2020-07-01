@@ -116,7 +116,7 @@
 						nbButton
 						ghost
 						size="tiny"
-						(click)="selectAllClients()"
+						(click)="selectAllOrganizationContacts()"
 					>
 						{{ 'BUTTONS.SELECT_ALL' | translate }}
 					</button>
@@ -127,13 +127,13 @@
 					[hideSelected]="true"
 					multiple="true"
 					bindLabel="name"
-					formControlName="clients"
-					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+					formControlName="organizationContacts"
+					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
 				>
 					<ng-option
-						*ngFor="let client of organizationClients"
-						value="{{ client.id }}"
-						>{{ client.name }}</ng-option
+						*ngFor="let contact of organizationContact"
+						value="{{ contact.id }}"
+						>{{ contact.name }}</ng-option
 					>
 				</ng-select>
 			</div>

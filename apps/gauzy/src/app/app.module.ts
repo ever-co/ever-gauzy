@@ -50,6 +50,7 @@ import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import { LanguageInterceptor } from './@core/language.interceptor';
 import { NgxElectronModule } from 'ngx-electron';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 
 export const cloudinary = {
@@ -140,7 +141,8 @@ if (environment.SENTRY_DNS && environment.production) {
 			provide: ErrorHandler,
 			useClass: SentryErrorHandler
 		},
-		AppModuleGuard
+		AppModuleGuard,
+		ColorPickerService
 	]
 })
 export class AppModule {}

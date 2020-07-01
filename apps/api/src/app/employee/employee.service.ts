@@ -39,7 +39,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		forMonth: Date,
 		withUser: boolean
 	): Promise<{ total: number; items: Employee[] }> {
-		let query = await this.repository
+		let query = this.repository
 			.createQueryBuilder('employee')
 			.where('"employee"."organizationId" = :organizationId', {
 				organizationId

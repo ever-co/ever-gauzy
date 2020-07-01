@@ -14,9 +14,9 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding: 10px;
+  padding: 1rem;
   margin-bottom: 2px;
-  height: 55px;
+  height: 70px;
   background-color: #fafafa;
 }
 
@@ -36,6 +36,14 @@
 
 .create-at {
   margin-left: 100px;
+  display: flex;
+  flex-direction: row;
+}
+
+.icon {
+  font-size: 16px;
+  margin-right: 0.1rem;
+  margin-top: 0.1rem;
 }
 
 .articles {
@@ -74,6 +82,18 @@
   font-size: 14px;
   font-weight: 600;
   width: 55px;
+  text-align: center;
+}
+
+.privacy {
+  padding-top: 0.1rem;
+  color: #fff;
+  background-color: blueviolet;
+  margin-left: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  width: 90px;
   text-align: center;
 }
 

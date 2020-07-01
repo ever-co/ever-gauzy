@@ -8,7 +8,8 @@ import {
 	HttpCode,
 	Delete,
 	Param,
-	Put
+	Put,
+	Query
 } from '@nestjs/common';
 import { CrudController } from '../core';
 import { GoalTimeFrame } from './goal-time-frame.entity';
@@ -45,8 +46,9 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		description: 'No Time Frame found'
 	})
 	@Get('all')
-	async getAll() {
-		return this.goalTimeFrameService.findAll();
+	async getAll(@Query('data') data: string) {
+		const { findInput } = JSON.parse(data);
+		return this.goalTimeFrameService.findAll({ where: { ...findInput } });
 	}
 
 	@ApiOperation({ summary: 'Find Goal Time Frames with name' })
@@ -89,7 +91,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		@Body() entity: GoalTimeFrame
 	): Promise<GoalTimeFrame> {
 		try {
-			return this.goalTimeFrameService.create({
+			return await this.goalTimeFrameService.create({
 				id,
 				...entity
 			});

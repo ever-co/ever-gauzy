@@ -83,6 +83,8 @@ import { InterviewPanelComponent } from './manage-candidate-interviews/interview
 import { InterviewCriterionsComponent } from './manage-candidate-interviews/interview-criterions/interview-criterions.component';
 import { CandidateTechnologiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-technologies/candidate-technologies.component';
 import { CandidatePersonalQualitiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
+import { CriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/criterions-rating-chart/criterions-rating-chart.component';
+import { CandidateSelectModule } from '../../@shared/candidate/candidate-select/candidate-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -114,6 +116,7 @@ const COMPONENTS = [
 	InterviewCalendarComponent,
 	InterviewPanelComponent,
 	CandidateRatingChartComponent,
+	CriterionsRatingChartComponent,
 	InterviewerAssessmentChartComponent,
 	InterviewCriterionsComponent,
 	CandidateTechnologiesComponent,
@@ -145,6 +148,7 @@ const COMPONENTS = [
 		NbCheckboxModule,
 		FileUploaderModule,
 		NbTabsetModule,
+		CandidateSelectModule,
 		NbRadioModule,
 		NbActionsModule,
 		NbAccordionModule,

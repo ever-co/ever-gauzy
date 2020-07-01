@@ -1,7 +1,7 @@
-// import { CandidateInterviewersEmployeeBulkDeleteHandler } from './candidate-interviewers.employee.bulk.delete.handler';
 import { HelpCenterCreateHandler } from './help-center.bulk.handler';
+import { KnowledgeBaseBulkDeleteHandler } from './help-center-base.bulk.handler';
 
 export const CommandHandlers = [
-	// 	CandidateInterviewersEmployeeBulkDeleteHandler,
-	HelpCenterCreateHandler
+	HelpCenterCreateHandler,
+	KnowledgeBaseBulkDeleteHandler
 ];

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { GoalTimeFrame } from '@gauzy/models';
+import { GoalTimeFrame, GoalFindInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { throwError } from 'rxjs';
 import { catchError, tap, first } from 'rxjs/operators';
@@ -32,9 +32,14 @@ export class GoalSettingsService {
 			.toPromise();
 	}
 
-	getAllTimeFrames(): Promise<IGoalTimeFrameResponse> {
+	getAllTimeFrames(
+		findInput: GoalFindInput
+	): Promise<IGoalTimeFrameResponse> {
+		const data = JSON.stringify({ findInput });
 		return this._http
-			.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}/all`)
+			.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}/all`, {
+				params: { data }
+			})
 			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
@@ -61,7 +66,11 @@ export class GoalSettingsService {
 	update(id: string, goalTimeFrame: GoalTimeFrame): Promise<GoalTimeFrame> {
 		return this._http
 			.put<GoalTimeFrame>(`${this.TIME_FRAME_URL}/${id}`, goalTimeFrame)
-			.pipe(first())
+			.pipe(
+				tap(() =>
+					this.toastrService.primary('Time Frame Updated', 'Success')
+				)
+			)
 			.toPromise();
 	}
 }

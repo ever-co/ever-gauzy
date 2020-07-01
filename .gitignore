@@ -38,3 +38,5 @@ testem.log
 .DS_Store
 Thumbs.db
 /apps/api/src/app/integrations/upwork/csv
+
+.env

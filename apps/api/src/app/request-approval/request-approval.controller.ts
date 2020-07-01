@@ -77,12 +77,10 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	): Promise<IPagination<IRequestApproval>> {
 		const { relations } = JSON.parse(data);
 
-		return this.requestApprovalService.findRequestApprovalsByEmployeeId({
-			where: {
-				id
-			},
+		return this.requestApprovalService.findRequestApprovalsByEmployeeId(
+			id,
 			relations
-		});
+		);
 	}
 
 	@ApiOperation({ summary: 'create a request approval.' })

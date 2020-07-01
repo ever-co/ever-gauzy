@@ -10,18 +10,26 @@ export class HelpCenterArticle extends Base implements IHelpCenterArticle {
 	name: string;
 
 	@ApiProperty({ type: String })
-	@Column({ nullable: true })
-	description?: string;
+	@Column()
+	description: string;
 
 	@ApiProperty({ type: String })
-	@Column({ nullable: true })
-	data?: string;
+	@Column()
+	data: string;
 
 	@ApiProperty({ type: String })
 	@Column()
 	categoryId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: Boolean })
 	@Column()
-	draft: string;
+	draft: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@Column()
+	privacy: boolean;
+
+	@ApiProperty({ type: Number })
+	@Column()
+	index: number;
 }

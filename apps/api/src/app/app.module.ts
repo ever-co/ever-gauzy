@@ -25,7 +25,7 @@ import { EmployeeStatisticsModule } from './employee-statistics/employee-statist
 import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
 import { OrganizationRecurringExpenseModule } from './organization-recurring-expense/organization-recurring-expense.module';
 import { EmployeeRecurringExpenseModule } from './employee-recurring-expense/employee-recurring-expense.module';
-import { OrganizationClientsModule } from './organization-clients/organization-clients.module';
+import { OrganizationContactModule } from './organization-contact/organization-contact.module';
 import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
 import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
@@ -56,8 +56,8 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 import { UpworkModule } from './upwork/upwork.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
-import { ProductCategoriesModule } from './product-category/product-category-module';
-import { ProductTypesModule } from './product-type/product-type-module';
+import { ProductCategoriesModule } from './product-category/product-category.module';
+import { ProductTypesModule } from './product-type/product-type.module';
 import { ProductModule } from './product/product.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
@@ -98,9 +98,14 @@ import { HelpCenterArticleModule } from './help-center-article/help-center-artic
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 import { EstimateEmail } from './estimate-email/estimate-email.entity';
 import { EstimateEmailModule } from './estimate-email/estimate-email.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
 	imports: [
+		ServeStaticModule.forRoot({
+			rootPath: path.join(__dirname, '..', 'public'),
+			serveRoot: '/public/'
+		}),
 		RouterModule.forRoutes([
 			{
 				path: '',
@@ -192,8 +197,8 @@ import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 						module: OrganizationDepartmentModule
 					},
 					{
-						path: '/organization-clients',
-						module: OrganizationClientsModule
+						path: '/organization-contact',
+						module: OrganizationContactModule
 					},
 					{
 						path: '/organization-positions',
@@ -419,7 +424,7 @@ import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 		UserOrganizationModule,
 		OrganizationDepartmentModule,
 		OrganizationRecurringExpenseModule,
-		OrganizationClientsModule,
+		OrganizationContactModule,
 		OrganizationPositionsModule,
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,

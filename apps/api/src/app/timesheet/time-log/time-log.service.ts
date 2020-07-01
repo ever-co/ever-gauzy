@@ -294,6 +294,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}));
 		await this.timeSlotService.bulkCreate(timeSlots);
 
+		this.timeLogDBHelper.find(newTimeLog.id).sync('timeSlots', timeSlots);
+
 		return newTimeLog;
 	}
 

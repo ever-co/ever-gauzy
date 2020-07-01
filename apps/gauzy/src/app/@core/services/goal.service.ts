@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Goal } from '@gauzy/models';
+import { Goal, GoalFindInput } from '@gauzy/models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';
@@ -34,9 +34,13 @@ export class GoalService {
 			.toPromise();
 	}
 
-	getAllGoals(): Promise<IGoalResponse> {
+	getAllGoals(
+		relations?: string[],
+		findInput?: GoalFindInput
+	): Promise<IGoalResponse> {
+		const data = JSON.stringify({ relations, findInput });
 		return this._http
-			.get<IGoalResponse>(`${this.API_URL}/all`)
+			.get<IGoalResponse>(`${this.API_URL}/all`, { params: { data } })
 			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}

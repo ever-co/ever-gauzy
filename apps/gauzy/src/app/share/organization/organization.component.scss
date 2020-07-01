@@ -24,6 +24,7 @@
       h4.org-name {
         padding-top: 20px;
       }
+
       img.org-image {
         object-fit: cover;
         object-position: center;
@@ -74,6 +75,7 @@
           left: calc(50% - 68px / 2);
         }
       }
+
       button.save_image {
         top: 125px;
         position: absolute;
@@ -86,6 +88,7 @@
 
     .org-head-right-sec {
       border-left: 1px solid lightgray;
+
       .org-banner {
         color: #617083;
         margin: 5px 0;
@@ -230,16 +233,19 @@ p,
   display: block;
   margin-bottom: 35px;
   color: #617083;
+
   a {
     color: #55a8fd;
     text-decoration: none;
     background-color: transparent;
   }
+
   .avatar {
     position: relative;
     float: left;
     margin: 0 13px 0 0;
     width: 50px;
+
     img {
       display: block;
       width: 50px;
@@ -249,6 +255,7 @@ p,
       box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
     }
   }
+
   .avatar:before {
     width: 58px;
     height: 58px;
@@ -259,14 +266,17 @@ p,
     border: 2px solid transparent;
     border-radius: 50%;
   }
+
   .name {
     font-size: 16px;
     font-weight: 500;
     color: #3c495a;
   }
+
   .margin-right-10 {
     margin-right: 10px;
   }
+
   .label {
     font-size: 12px;
     display: inline;
@@ -279,46 +289,57 @@ p,
     vertical-align: baseline;
     border-radius: 0.25em;
   }
+
   .label-hourly {
     background-color: #56d48f;
   }
+
   .pay-rate {
     float: right;
     color: #3c495a;
     font-size: 16px;
     font-weight: 500;
   }
+
   .speciality {
     color: #7f92a9;
     margin-top: 10px;
   }
+
   .works-at {
     margin-top: 10px;
     display: inline-block;
     margin-right: 10px;
   }
+
   .text-success {
     color: #56d48f;
   }
+
   .profil-bio {
     line-height: 24px;
   }
+
   .push-bottom-10 {
     margin-top: 10px;
   }
+
   .push-bottom-20 {
     margin-top: 20px;
   }
+
   .list-inline {
     padding-left: 0;
     list-style: none;
     margin-left: -5px;
   }
+
   .list-inline > li {
     display: inline-block;
     padding-right: 5px;
     padding-left: 5px;
   }
+
   .tag {
     border-radius: 25px;
     border: 1px solid #ced9ee;
@@ -327,6 +348,7 @@ p,
     padding: 6px 12px 5px;
     font-size: 12px;
   }
+
   .tag.tag-sm {
     font-weight: normal;
     font-size: 12px;

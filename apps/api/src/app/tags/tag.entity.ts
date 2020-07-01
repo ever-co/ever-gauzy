@@ -1,5 +1,5 @@
 import { Base } from '../core/entities/base';
-import { Entity, Column, ManyToOne, ManyToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, ManyToMany, Unique } from 'typeorm';
 import { Tag as ITag } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from '../organization/organization.entity';
@@ -21,11 +21,12 @@ import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Product } from '../product/product.entity';
 import { Payment } from '../payment/payment.entity';
 
 @Entity('tag')
+@Unique(['name'])
 export class Tag extends Base implements ITag {
 	@ApiProperty({ type: String })
 	@Column()
@@ -120,10 +121,10 @@ export class Tag extends Base implements ITag {
 	organizationDepartment?: OrganizationDepartment[];
 
 	@ManyToMany(
-		(type) => OrganizationClients,
-		(organizationClient) => organizationClient.tags
+		(type) => OrganizationContact,
+		(organizationContact) => organizationContact.tags
 	)
-	organizationClient?: OrganizationClients[];
+	organizationContact?: OrganizationContact[];
 
 	@ManyToMany((type) => Product, (product) => product.tags)
 	product?: Product[];

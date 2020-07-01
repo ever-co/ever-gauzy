@@ -1,5 +1,12 @@
 import { IHelpCenter } from '@gauzy/models';
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import {
+	Component,
+	ViewChild,
+	OnInit,
+	OnDestroy,
+	Output,
+	EventEmitter
+} from '@angular/core';
 import { TreeComponent, ITreeOptions } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -13,9 +20,7 @@ import {
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { AddBaseComponent } from './add-base/add-base.component';
 import { EditBaseComponent } from './edit-base/edit-base.component';
-import { AddCategoryComponent } from './add-category/add-category.component';
 import { EditCategoryComponent } from './edit-category/edit-category.component';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
@@ -28,6 +33,8 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 })
 export class SidebarComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	@Output() clickedNode = new EventEmitter<IHelpCenter>();
+	@Output() deletedNode = new EventEmitter<any>();
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogService: NbDialogService,
@@ -47,7 +54,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	options: ITreeOptions = {
 		allowDrag: true,
 		allowDrop: (el, { parent, index }) => {
-			if (parent.data.flag === 'article') {
+			if (parent.data.flag === 'category') {
 				return false;
 			} else {
 				return true;
@@ -80,18 +87,35 @@ export class SidebarComponent extends TranslationBaseComponent
 
 	setClasses(node) {
 		const classes = {
-			blue: node.data.color === 'blue',
 			child: node.data.flag === 'category',
 			parent: node.data.flag === 'base'
 		};
 		return classes;
 	}
 
+	async addNode() {
+		const chosenType = 'add';
+		const dialog = this.dialogService.open(EditBaseComponent, {
+			context: {
+				base: null,
+				editType: chosenType
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('CREATED_BASE');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
+	}
+
 	async editBase() {
+		const chosenType = 'edit';
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		const dialog = this.dialogService.open(EditBaseComponent, {
 			context: {
-				base: someNode.data
+				base: someNode.data,
+				editType: chosenType
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -103,10 +127,13 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	async addCategory() {
+		const chosenType = 'add';
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		const dialog = this.dialogService.open(AddCategoryComponent, {
+		const dialog = this.dialogService.open(EditCategoryComponent, {
 			context: {
-				base: someNode.data
+				category: null,
+				base: someNode.data,
+				editType: chosenType
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -118,10 +145,14 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	async editCategory(node) {
+		const chosenType = 'edit';
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		this.isChosenNode = true;
 		const dialog = this.dialogService.open(EditCategoryComponent, {
 			context: {
-				category: node
+				base: someNode.data,
+				category: node,
+				editType: chosenType
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -132,8 +163,19 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 	}
 
-	deleteCategory() {
-		this.dialogService.open(DeleteCategoryComponent);
+	async deleteCategory(node) {
+		const dialog = this.dialogService.open(DeleteCategoryComponent, {
+			context: {
+				category: node
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.deletedNode.emit();
+			this.toastrSuccess('DELETED');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
 	}
 
 	// async updateIndexes(
@@ -173,18 +215,9 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.tree.treeModel.update();
 	}
 
-	async addNode() {
-		const dialog = this.dialogService.open(AddBaseComponent);
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			this.toastrSuccess('CREATED_BASE');
-			this.loadMenu();
-			this.tree.treeModel.update();
-		}
-	}
-
 	onNodeClicked(node: any) {
 		this.nodeId = node.id.toString();
+		this.clickedNode.emit(node);
 		this.isChosenNode = true;
 	}
 
@@ -209,9 +242,13 @@ export class SidebarComponent extends TranslationBaseComponent
 			someNode.data.privacy === 'eye-outline'
 				? 'eye-off-outline'
 				: 'eye-outline';
-		await this.helpService.update(someNode.data.id, {
-			privacy: `${someNode.data.privacy}`
-		});
+		try {
+			await this.helpService.update(someNode.data.id, {
+				privacy: `${someNode.data.privacy}`
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 		this.tree.treeModel.update();
 	}
 

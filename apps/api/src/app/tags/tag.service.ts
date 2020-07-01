@@ -14,7 +14,7 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	async findOneByName(name: string): Promise<Tag> {
-		const query = await this.tagRepository
+		const query = this.tagRepository
 			.createQueryBuilder('tag')
 			.where('"tag"."name" = :name', {
 				name
@@ -92,7 +92,6 @@ export class TagService extends CrudService<Tag> {
 			arrayIndex < allTagsInOrg.length;
 			arrayIndex++
 		) {
-			tagWithCounter = [];
 			tagWithCounter = {
 				...tagCounterAllRelations[arrayIndex],
 				counter:
@@ -118,7 +117,7 @@ export class TagService extends CrudService<Tag> {
 					tagCounterAllRelations[arrayIndex].employeeLevel.length +
 					tagCounterAllRelations[arrayIndex].organizationDepartment
 						.length +
-					tagCounterAllRelations[arrayIndex].organizationClient
+					tagCounterAllRelations[arrayIndex].organizationContact
 						.length +
 					tagCounterAllRelations[arrayIndex].product.length +
 					tagCounterAllRelations[arrayIndex].payment.length

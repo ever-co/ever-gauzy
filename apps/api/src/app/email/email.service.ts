@@ -1,6 +1,6 @@
 import { environment } from '@env-api/environment';
 import {
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationProjects,
 	LanguagesEnum
@@ -35,7 +35,7 @@ export interface InviteEmployeeModel {
 	languageCode: LanguagesEnum;
 	invitedBy: User;
 	projects?: OrganizationProjects[];
-	clients?: OrganizationClients[];
+	organizationContacts?: OrganizationContact[];
 	departments?: OrganizationDepartment[];
 	originUrl?: string;
 }
@@ -158,8 +158,8 @@ export class EmailService extends CrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	inviteOrganizationClient(
-		organizationClient: OrganizationClients,
+	inviteOrganizationContact(
+		organizationContact: OrganizationContact,
 		inviterUser: User,
 		organization: Organization,
 		invite: Invite,
@@ -169,13 +169,13 @@ export class EmailService extends CrudService<IEmail> {
 		const sendOptions = {
 			template: 'invite-organization-client',
 			message: {
-				to: `${organizationClient.primaryEmail}`
+				to: `${organizationContact.primaryEmail}`
 			},
 			locals: {
 				locale: languageCode,
-				name: organizationClient.name,
+				name: organizationContact.name,
 				host: originUrl || environment.host,
-				id: organizationClient.id,
+				id: organizationContact.id,
 				inviterName: inviterUser
 					? (inviterUser.firstName || '') +
 					  (inviterUser.lastName || '')
@@ -184,7 +184,7 @@ export class EmailService extends CrudService<IEmail> {
 				organizationId: organization.id,
 				generatedUrl:
 					originUrl +
-					`#/auth/accept-client-invite?email=${organizationClient.primaryEmail}&token=${invite.token}`
+					`#/auth/accept-client-invite?email=${organizationContact.primaryEmail}&token=${invite.token}`
 			}
 		};
 
@@ -193,7 +193,7 @@ export class EmailService extends CrudService<IEmail> {
 			.then((res) => {
 				this.createEmailRecord({
 					templateName: sendOptions.template,
-					email: organizationClient.primaryEmail,
+					email: organizationContact.primaryEmail,
 					languageCode,
 					message: res.originalMessage,
 					organization

@@ -12,6 +12,12 @@
 				(click)="submitForm()"
 				nbButton
 				status="success"
+				[disabled]="!form.valid"
+				[attr.aria-invalid]="
+					form.controls.name.invalid && form.controls.name.touched
+						? true
+						: null
+				"
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
@@ -35,31 +41,34 @@
 				/>
 			</div>
 			<div class="form-group col-4">
-				<label for="clients" class="label">{{
-					'FORM.PLACEHOLDERS.CLIENTS' | translate
+				<label for="organizationContacts" class="label">{{
+					'FORM.PLACEHOLDERS.CONTACTS' | translate
 				}}</label>
 				<ng-select
-					[addTag]="addNewClient"
-					[items]="clients"
+					[addTag]="addNewOrganizationContact"
+					[items]="organizationContacts"
 					bindLabel="name"
 					[searchable]="true"
-					formControlName="client"
-					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+					formControlName="organizationContact"
+					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
 				>
 				</ng-select>
 			</div>
 			<div class="form-group col-4">
-				<label for="type" class="label">{{
-					'FORM.PLACEHOLDERS.TYPE' | translate
+				<label for="billing" class="label">{{
+					'FORM.PLACEHOLDERS.BILLING' | translate
 				}}</label>
 				<nb-select
 					fullWidth
-					placeholder="{{ 'FORM.PLACEHOLDERS.TYPE' | translate }}"
-					formControlName="type"
-					id="type"
+					placeholder="{{ 'FORM.PLACEHOLDERS.BILLING' | translate }}"
+					formControlName="billing"
+					id="billing"
 				>
-					<nb-option *ngFor="let type of types" [value]="type">
-						{{ 'SM_TABLE.' + type | translate }}
+					<nb-option
+						*ngFor="let billing of billings"
+						[value]="billing"
+					>
+						{{ 'SM_TABLE.' + billing | translate }}
 					</nb-option>
 				</nb-select>
 			</div>
@@ -130,6 +139,23 @@
 				>
 				</ga-tags-color-input>
 			</div>
+			<div class="form-group col-4">
+				<label for="owner" class="label">{{
+					'FORM.PLACEHOLDERS.OWNER' | translate
+				}}</label>
+				<nb-select
+					fullWidth
+					placeholder="{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}"
+					formControlName="owner"
+					id="owner"
+					(selectedChange)="changeProjectOwner($event)"
+				>
+					<nb-option *ngFor="let owner of owners" [value]="owner"
+						>{{ 'SM_TABLE.' + owner | translate }}
+					</nb-option>
+				</nb-select>
+			</div>
+
 			<!-- <div class="form-group col-12">
 				<input type="checkbox"  formControlName="Private" checked="Private">Private?
 			</div> -->

@@ -21,12 +21,13 @@ import {
 	OrganizationProjects as IOrganizationProjects,
 	CurrenciesEnum
 } from '@gauzy/models';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Employee } from '../employee/employee.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { Organization } from '../organization/organization.entity';
+import { Task } from '../tasks/task.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends TenantBase
@@ -51,13 +52,22 @@ export class OrganizationProjects extends TenantBase
 	@Column()
 	organizationId: string;
 
-	@ApiPropertyOptional({ type: OrganizationClients })
-	@ManyToOne((type) => OrganizationClients, (client) => client.projects, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
+	@ApiPropertyOptional({ type: OrganizationContact })
+	@ManyToOne(
+		(type) => OrganizationContact,
+		(organizationContact) => organizationContact.projects,
+		{
+			nullable: true,
+			onDelete: 'CASCADE'
+		}
+	)
 	@JoinColumn()
-	client?: OrganizationClients;
+	organizationContact?: OrganizationContact;
+
+	@ApiProperty({ type: Task })
+	@OneToMany((type) => Task, (task) => task.project)
+	@JoinColumn()
+	tasks?: Task[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -75,7 +85,7 @@ export class OrganizationProjects extends TenantBase
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	type: string;
+	billing: string;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
@@ -103,5 +113,11 @@ export class OrganizationProjects extends TenantBase
 	invoiceItems?: InvoiceItem[];
 
 	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization: Organization;
+	organization?: Organization;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ nullable: true })
+	owner: string;
 }

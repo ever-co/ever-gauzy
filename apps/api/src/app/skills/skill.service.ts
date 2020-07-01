@@ -14,7 +14,7 @@ export class SkillService extends CrudService<Skill> {
 	}
 
 	async findOneByName(name: string): Promise<Skill> {
-		const query = await this.repository
+		const query = this.repository
 			.createQueryBuilder('skill')
 			.where('"skill"."name" = :name', {
 				name
