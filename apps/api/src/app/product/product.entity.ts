@@ -1,4 +1,3 @@
-import { Base } from '../core/entities/base';
 import {
 	Entity,
 	Column,
@@ -18,9 +17,10 @@ import { IsString, IsOptional } from 'class-validator';
 import { ProductOption } from '../product-option/product-option.entity';
 import { Tag } from '../tags/tag.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('product')
-export class Product extends Base implements IProduct {
+export class Product extends TenantBase implements IProduct {
 	@ManyToMany((type) => Tag, (tag) => tag.product)
 	@JoinTable({
 		name: 'tag_product'

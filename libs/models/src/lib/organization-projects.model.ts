@@ -9,6 +9,7 @@ import {
 import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 import { Tag } from './tag-entity.model';
 import { Task } from './task-entity.model';
+import { ITenant } from './tenant.model';
 
 export interface OrganizationProjects extends IBaseEntityWithMembers {
 	name: string;
@@ -23,6 +24,7 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	tags: Tag[];
 	owner: string;
 	tasks?: Task[];
+	tenant: ITenant;
 }
 
 export interface OrganizationProjectsFindInput extends IBaseEntityModel {

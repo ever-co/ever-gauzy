@@ -937,6 +937,7 @@
 			"CITY": "City",
 			"STREET": "Street",
 			"PROJECTS": "Projects",
+			"CONTACT_TYPE": "Contact Type",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
 			"NEW_PROJECT": "Add new project",
@@ -1094,10 +1095,14 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "Status",
 		"HEADER": "Approval Request",
+		"EMPLOYEES": "Employees",
+		"TEAMS": "Teams",
 		"APPROVAL_POLICY": "Approval Policy",
 		"CHOOSE_POLICIES": "Choose policies/s",
 		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
-		"ADD_APPROVAL_REQUEST": "Add Request Approval"
+		"ADD_APPROVAL_REQUEST": "Add Request Approval",
+		"APPROVAL_REQUEST_SAVED": "Request Approval Saved",
+		"APPROVAL_REQUEST_DELETED": "Request Approval Deleted"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
@@ -1589,6 +1594,7 @@
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
 			"CANDIDATE_PROFILE_UPDATE": "{{name}} profile updated.",
 			"NAME_REQUIRED": "Name is required!",
+			"CONTACT_TYPE_REQUIRED": "Contact Type is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",

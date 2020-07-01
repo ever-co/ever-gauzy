@@ -50,6 +50,14 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		if (this.requestApproval) {
+			this.selectedTeams = this.requestApproval.teamApprovals.map(
+				(team) => team.teamId
+			);
+			this.selectedEmployees = this.requestApproval.employeeApprovals.map(
+				(emp) => emp.employeeId
+			);
+		}
 		this.initializeForm();
 		this.loadSelectedOrganization();
 		this.loadEmployees();
@@ -113,33 +121,82 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	async initializeForm() {
 		this.form = this.fb.group({
 			name: [
-				this.requestApproval ? this.requestApproval.name : '',
+				this.requestApproval && this.requestApproval.name
+					? this.requestApproval.name
+					: '',
 				Validators.required
 			],
 			employees: [
-				this.requestApproval
-					? this.requestApproval.employees.map((emp) => emp.id)
+				this.requestApproval &&
+				this.requestApproval.employeeApprovals &&
+				this.requestApproval.employeeApprovals.length > 0
+					? this.requestApproval.employeeApprovals.map(
+							(emp) => emp.id
+					  )
 					: []
 			],
 			teams: [
-				this.requestApproval
-					? this.requestApproval.teams.map((team) => team.id)
+				this.requestApproval &&
+				this.requestApproval.teamApprovals &&
+				this.requestApproval.teamApprovals.length > 0
+					? this.requestApproval.teamApprovals.map((team) => team.id)
 					: []
 			],
-			type: [this.requestApproval ? this.requestApproval.type : ''],
-			min_count: [
-				this.requestApproval ? this.requestApproval.min_count : ''
-			],
-			approvalPolicyId: [
-				this.requestApproval
-					? this.requestApproval.approvalPolicyId
+			type: [
+				this.requestApproval && this.requestApproval.type
+					? this.requestApproval.type
 					: ''
 			],
-			id: [this.requestApproval ? this.requestApproval.id : null]
+			min_count: [
+				this.requestApproval && this.requestApproval.min_count
+					? this.requestApproval.min_count
+					: '',
+				Validators.required
+			],
+			approvalPolicyId: [
+				this.requestApproval && this.requestApproval.approvalPolicyId
+					? this.requestApproval.approvalPolicyId
+					: '',
+				Validators.required
+			],
+			id: [
+				this.requestApproval && this.requestApproval.id
+					? this.requestApproval.id
+					: null
+			]
 		});
 	}
 
 	async closeDialog(requestApproval?: RequestApproval) {
+		const members: any[] = [];
+		const listEmployees: any[] = [];
+		if (requestApproval) {
+			if (requestApproval.teams) {
+				this.teams.forEach((i) => {
+					requestApproval.teams.forEach((e: any) => {
+						if (e === i.id) {
+							i.members.forEach((id) => {
+								members.push(id.employeeId);
+							});
+						}
+					});
+				});
+			}
+			if (requestApproval.employees) {
+				requestApproval.employees.forEach((e) => {
+					if (!members.includes(e)) {
+						listEmployees.push(e);
+					}
+				});
+			}
+			requestApproval.employees = listEmployees;
+			requestApproval.type = 1;
+			this.approvalPolicies.forEach((e) => {
+				if (e.id === requestApproval.approvalPolicyId) {
+					requestApproval.type = e.type;
+				}
+			});
+		}
 		this.dialogRef.close(requestApproval);
 	}
 
@@ -147,7 +204,7 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 		if (!this.form.get('id').value) {
 			delete this.form.value['id'];
 		}
-		this.closeDialog();
+		this.closeDialog(this.form.value);
 	}
 
 	onMembersSelected(members: string[]) {
