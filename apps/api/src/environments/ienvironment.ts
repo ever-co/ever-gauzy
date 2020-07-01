@@ -17,6 +17,7 @@ import { IUpworkConfig } from './IUpworkConfig';
 import { IGithubConfig } from './IGithubConfig';
 import { IMicrosoftConfig } from './IMicrosoftConfig';
 import { ILinkedinConfig } from './ILinkedinIConfig';
+import { ITwitterConfig } from './ITwitterConfig';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -50,6 +51,7 @@ export interface IEnvironment {
 	githunConfig: IGithubConfig;
 	microsoftConfig: IMicrosoftConfig;
 	linkedinConfig: ILinkedinConfig;
+	twitterConfig: ITwitterConfig;
 
 	defaultAdmins: IDefaultUser[];
 	defaultSuperAdmins: IDefaultUser[];

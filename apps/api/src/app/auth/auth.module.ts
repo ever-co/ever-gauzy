@@ -19,6 +19,7 @@ import { MicrosoftAuthGuard } from './guard/microsoft-auth-guard';
 import { MicrosoftStrategy } from './microsoft.strategy';
 import { LinkedinStrategy } from './linkedin.strategy';
 import { LinkedinAuthGuard } from './guard/linkedin-auth-guard';
+import { TwitterAuthGuard } from './guard/twitter-auth-guard';
 
 @Module({
 	imports: [
@@ -40,7 +41,8 @@ import { LinkedinAuthGuard } from './guard/linkedin-auth-guard';
 		MicrosoftAuthGuard,
 		MicrosoftStrategy,
 		LinkedinStrategy,
-		LinkedinAuthGuard
+		LinkedinAuthGuard,
+		TwitterAuthGuard
 	],
 	exports: [AuthService, UserService]
 })

@@ -97,6 +97,11 @@ export const environment: IEnvironment = {
 		jwtSecret: process.env.LinkedinJwtSecret || 'fakeJwtSecret',
 	},
 
+	twitterConfig: {
+		clientId: process.env.TwitterClientId || 'fakeTwitterClientId',
+		clientSecret: process.env.TwitterClientSecret || 'fakeTwitterClientSecret'
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',
