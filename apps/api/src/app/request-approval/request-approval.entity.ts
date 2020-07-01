@@ -61,7 +61,7 @@ export class RequestApproval extends Base implements IRequestApproval {
 	employeeApprovals?: RequestApprovalEmployee[];
 
 	@OneToMany(
-		(type) => RequestApprovalEmployee,
+		(type) => RequestApprovalTeam,
 		(teamApprovals) => teamApprovals.requestApproval,
 		{
 			cascade: true

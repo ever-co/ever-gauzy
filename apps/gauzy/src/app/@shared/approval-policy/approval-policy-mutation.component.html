@@ -59,6 +59,7 @@
 							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE'
 								| translate
 						}}"
+						[ngClass]="{ 'in-valid': !isHasType }"
 					>
 						<nb-option
 							*ngFor="let item of typeItems"
