@@ -76,14 +76,14 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		const { employeeId, startDate, endDate } = this.request;
+		const { employeeIds, startDate, endDate } = this.request;
 
 		const request: IGetTimeSlotInput = {
 			organizationId: this.organization.id,
 			...this.request,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeId ? { employeeId } : {}),
+			...(employeeIds ? { employeeIds } : {}),
 			relations: ['screenshots', 'timeLogs']
 		};
 

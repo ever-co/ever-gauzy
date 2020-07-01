@@ -80,8 +80,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.nbMenuService.onItemClick().subscribe((elem) => {
 			if (elem.item.title === 'Edit Knowledge Base') this.editBase();
 			if (elem.item.title === 'Add Category') this.addCategory();
-			if (elem.item.title === 'Delete Base')
-				this.dialogService.open(DeleteBaseComponent);
+			if (elem.item.title === 'Delete Base') this.deleteBase();
 		});
 	}
 
@@ -174,6 +173,21 @@ export class SidebarComponent extends TranslationBaseComponent
 			this.deletedNode.emit();
 			this.toastrSuccess('DELETED');
 			this.loadMenu();
+			this.tree.treeModel.update();
+		}
+	}
+
+	async deleteBase() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		const dialog = this.dialogService.open(DeleteBaseComponent, {
+			context: {
+				base: someNode
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('DELETED');
+			await this.loadMenu();
 			this.tree.treeModel.update();
 		}
 	}

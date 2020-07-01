@@ -1,6 +1,3 @@
-<h6 class="title">
-	{{ 'CANDIDATES_PAGE.STATISTIC.CRITERIONS_RATING' | translate }}
-</h6>
 <div class="selectors">
 	<nb-select
 		placeholder="Select an interview"
@@ -35,12 +32,21 @@
 	</div>
 </div>
 
-<div *ngIf="!currentInterview" class="no-data">
+<div *ngIf="rating.length === 0" class="no-data">
 	<nb-icon icon="info-outline" class="no-data-icon"></nb-icon>
 	<span class="no-data-text">{{
 		'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
 	}}</span>
 	<span class="no-data-text">
-		{{ 'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW' | translate }}
+		{{
+			'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW_INTERVIEWER' | translate
+		}}
 	</span>
 </div>
+<chart
+	*ngIf="rating.length > 0"
+	style="height: 400px; width: 100%;"
+	type="bar"
+	[data]="data"
+	[options]="options"
+></chart>

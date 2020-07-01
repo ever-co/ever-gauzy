@@ -131,6 +131,12 @@ export class EditOrganizationContactMutationComponent
 				this.organizationContact
 					? (this.organizationContact.projects || []).map((m) => m.id)
 					: []
+			],
+			contactType: [
+				this.organizationContact
+					? this.organizationContact.contactType
+					: '',
+				Validators.required
 			]
 		});
 	}
@@ -178,6 +184,7 @@ export class EditOrganizationContactMutationComponent
 				city: this.form.value['city'],
 				street: this.form.value['street'],
 				projects: this.form.value['selectProjects'].projectId,
+				contactType: this.form.value['contactType'].$ngOptionLabel,
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e)
@@ -192,6 +199,7 @@ export class EditOrganizationContactMutationComponent
 				country: '',
 				city: '',
 				street: '',
+				contactType: '',
 				selectProjects: []
 			});
 		}

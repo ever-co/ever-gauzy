@@ -50,6 +50,7 @@ export const environment: IEnvironment = {
 	// TODO: port & host used in FB / Google Auth, but we probably should detect that some other way instead of have it as env settings!
 	port: process.env.port || 3000,
 	host: process.env.host || 'http://localhost',
+	baseUrl: 'http://localhost:3000',
 
 	production: true,
 	envName: 'prod',
@@ -75,6 +76,48 @@ export const environment: IEnvironment = {
 	googleConfig: {
 		clientId: process.env.GoogleClientId || 'fakeclientid',
 		clientSecret: process.env.GoogleClientSecret || 'fakesecret'
+	},
+
+	githunConfig: {
+		clientId: process.env.GithubClientId || 'fakeclientId',
+		clientSecret: process.env.GithubClientSecret || 'fakesecret',
+		code: process.env.GithubCode || 'fakecode',
+		state: '{github}'
+	},
+
+	microsoftConfig: {
+		clientId: process.env.MicrosoftClientId || 'fakeClientId',
+		clientSecret: process.env.MicrosoftClientSecret || 'fakeClientSecret',
+		identityMetadata:
+			'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
+		jwtSecret: process.env.MicrosoftJwtSecret || 'fakeJwtSecret'
+	},
+
+	linkedinConfig: {
+		clientId: process.env.LinkedinClientId || 'fakeLinkedinClientId',
+		clientSecret:
+			process.env.LinkedinClientSecret || 'fakeLinkedinClientSecret',
+		jwtSecret: process.env.LinkedinJwtSecret || 'fakeJwtSecret'
+	},
+
+	twitterConfig: {
+		clientId: process.env.TwitterClientId || 'fakeTwitterClientId',
+		clientSecret:
+			process.env.TwitterClientSecret || 'fakeTwitterClientSecret'
+	},
+
+	fiverrConfig: {
+		clientId: process.env.FiverrClientId || 'fakeFiverrClientId',
+		clientSecret: process.env.FiverrClientSecret || 'FiverrClientSecret'
+	},
+
+	keycloakConfig: {
+		realm: process.env.KeycloakRealm || 'fakeKeycloakRealm',
+		clientId: process.env.KeycloakClientId || 'fakeKeycloakClientId',
+		secret: process.env.KeycloakSecret || 'fakeKeycloakSecret',
+		authServerUrl:
+			process.env.KeycloakAuthServerURL || 'fakeKeycloakAuthServerURL',
+		cookieKey: process.env.KeycloakCookieKey || 'KeycloakCookieKey'
 	},
 
 	defaultOrganizations: [
