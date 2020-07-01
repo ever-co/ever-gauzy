@@ -286,4 +286,5 @@ export interface IGetTimeSlotInput extends TimeLogFilters {
 
 export interface IGetActivitiesInput extends TimeLogFilters {
 	relations?: string[];
+	type?: string[];
 }
