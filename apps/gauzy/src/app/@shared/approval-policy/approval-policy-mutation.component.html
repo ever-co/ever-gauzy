@@ -50,33 +50,7 @@
 								| translate
 						}}
 					</label>
-					<!-- <input
-          nbInput
-          type="text"
-          formControlName="type"
-          fullWidth
-          placeholder="{{
-            'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE' | translate
-          }}"
-          [ngClass]="{
-            'status-danger':
-              form.controls['type'].invalid &&
-              form.controls['type'].dirty,
-            'status-success':
-              form.controls['type'].valid &&
-              form.controls['type'].dirty
-          }"
-        /> -->
-					<!-- <ng-select
-            [items]="typeItems"
-            nbInput
-            bindLabel="type"
-            formControlName="type"
-            placeholder="{{
-              'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE' | translate
-            }}"
-          >
-        </ng-select> -->
+
 					<nb-select
 						class="d-block"
 						[selected]="selectedApprovalPolicy"
@@ -85,6 +59,7 @@
 							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE'
 								| translate
 						}}"
+						[ngClass]="{ 'in-valid': !isHasType }"
 					>
 						<nb-option
 							*ngFor="let item of typeItems"

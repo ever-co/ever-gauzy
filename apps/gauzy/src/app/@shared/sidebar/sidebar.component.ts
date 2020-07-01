@@ -34,6 +34,7 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 export class SidebarComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Output() clickedNode = new EventEmitter<IHelpCenter>();
+	@Output() deletedNode = new EventEmitter<any>();
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogService: NbDialogService,
@@ -162,12 +163,19 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 	}
 
-	deleteCategory(node) {
-		this.dialogService.open(DeleteCategoryComponent, {
+	async deleteCategory(node) {
+		const dialog = this.dialogService.open(DeleteCategoryComponent, {
 			context: {
 				category: node
 			}
 		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.deletedNode.emit();
+			this.toastrSuccess('DELETED');
+			this.loadMenu();
+			this.tree.treeModel.update();
+		}
 	}
 
 	// async updateIndexes(
@@ -234,9 +242,13 @@ export class SidebarComponent extends TranslationBaseComponent
 			someNode.data.privacy === 'eye-outline'
 				? 'eye-off-outline'
 				: 'eye-outline';
-		await this.helpService.update(someNode.data.id, {
-			privacy: `${someNode.data.privacy}`
-		});
+		try {
+			await this.helpService.update(someNode.data.id, {
+				privacy: `${someNode.data.privacy}`
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 		this.tree.treeModel.update();
 	}
 

@@ -1,5 +1,8 @@
 <div class="global">
-	<ga-sidebar (clickedNode)="clickedNode($event)"></ga-sidebar>
+	<ga-sidebar
+		(clickedNode)="clickedNode($event)"
+		(deletedNode)="deletedNode()"
+	></ga-sidebar>
 	<div class="main">
 		<nb-card class="header">
 			<div class="header-article">

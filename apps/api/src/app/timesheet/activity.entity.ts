@@ -1,4 +1,11 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
+import {
+	Entity,
+	Column,
+	RelationId,
+	ManyToOne,
+	JoinColumn,
+	CreateDateColumn
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Activity as IActivity, ActivityType } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
@@ -10,29 +17,51 @@ import {
 	IsDateString
 } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
+import { Employee } from '../employee/employee.entity';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { Task } from '../tasks/task.entity';
 
 @Entity('activity')
 export class Activity extends Base implements IActivity {
-	@ApiProperty({ type: TimeSlot })
-	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
+	@ApiProperty({ type: Employee })
+	@ManyToOne(() => Employee)
 	@JoinColumn()
-	timeSlot: TimeSlot;
+	employee: Employee;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((activity: Activity) => activity.timeSlot)
+	@RelationId((timeSlot: TimeSlot) => timeSlot.employee)
 	@Column()
-	readonly timeSlotId: string;
+	readonly employeeId: string;
+
+	@ApiProperty({ type: OrganizationProjects })
+	@ManyToOne(() => OrganizationProjects, { nullable: true })
+	@JoinColumn()
+	project?: OrganizationProjects;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((activity: Activity) => activity.project)
+	@Column({ nullable: true })
+	readonly projectId?: string;
+
+	@ApiProperty({ type: Task })
+	@ManyToOne(() => Task, { nullable: true })
+	@JoinColumn()
+	task?: Task;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((activity: Activity) => activity.task)
+	@Column({ nullable: true })
+	readonly taskId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ default: 0 })
 	title: string;
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ default: 0 })
-	data?: string;
+	@ApiProperty({ type: 'date' })
+	@IsDateString()
+	@CreateDateColumn({ type: 'date' })
+	date: Date;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

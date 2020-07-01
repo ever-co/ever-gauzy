@@ -19,8 +19,7 @@ export interface SelectedApprovalPolicy {
 
 @Component({
 	selector: 'ngx-approval-policy-mutation',
-	templateUrl: './approval-policy-mutation.component.html',
-	styleUrls: ['./approval-policy-mutation.component.scss']
+	templateUrl: './approval-policy-mutation.component.html'
 })
 export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -30,6 +29,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	organizationId: string;
 	tenantId: string;
 	selectedApprovalPolicy: string;
+	isHasType = true;
 	typeItems: SelectedApprovalPolicy[] = [
 		{
 			name: 'Business Trip',
@@ -88,6 +88,11 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	}
 
 	async saveApprovalPolicy() {
+		if (!this.selectedApprovalPolicy) {
+			this.isHasType = false;
+			return;
+		}
+
 		const apprPolicy: ApprovalPolicyCreateInput = {
 			name: this.form.value['name'],
 			type: parseInt(this.selectedApprovalPolicy, 10),
@@ -105,5 +110,8 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 
 	onApprovalPolicySelected(selection: string) {
 		this.selectedApprovalPolicy = selection;
+		if (this.selectedApprovalPolicy) {
+			this.isHasType = true;
+		}
 	}
 }

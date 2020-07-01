@@ -134,7 +134,7 @@ export class TaskController extends CrudController<Task> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
-			return this.taskService.create({
+			return await this.taskService.create({
 				id,
 				...entity
 			});

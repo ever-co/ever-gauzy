@@ -354,7 +354,7 @@ export class ExportAllService implements OnDestroy {
 
 	async exportTables() {
 		return new Promise(async (resolve, reject) => {
-			for (const [i, value] of this.services.entries()) {
+			for (const [i] of this.services.entries()) {
 				await this.getAsCsv(i);
 			}
 			resolve();

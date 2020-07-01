@@ -8,6 +8,7 @@ import {
 	UseGuards,
 	Get,
 	Query,
+	Delete,
 	Param
 } from '@nestjs/common';
 import { CrudController, IPagination } from '../core';
@@ -18,8 +19,10 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { ParseJsonPipe } from '../shared';
 import { CommandBus } from '@nestjs/cqrs';
-import { HelpCenterCreateCommand } from './commands';
-import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands/help-center.menu.bulk.delete.command';
+import {
+	HelpCenterCreateCommand,
+	KnowledgeBaseBulkDeleteCommand
+} from './commands';
 
 @ApiTags('knowledge_base')
 @UseGuards(AuthGuard('jwt'))
@@ -88,22 +91,43 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		);
 	}
 
-	@ApiOperation({ summary: 'Update indexes in Bulk' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Indexes have been successfully updated.'
+	@ApiOperation({
+		summary: 'Find Categories By Base Id.'
 	})
 	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		status: HttpStatus.OK,
+		description: 'Found base categories',
+		type: HelpCenter
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
-	@Post('deleteBulk/:id')
-	async deleteBulk(@Param('id') id: string): Promise<any> {
-		return this.commandBus.execute(
-			new KnowledgeBaseCategoryBulkDeleteCommand(id)
-		);
+	@Get(':baseId')
+	async findByBaseId(@Param('baseId') baseId: string): Promise<HelpCenter[]> {
+		return this.helpCenterService.getCategoriesByBaseId(baseId);
+	}
+
+	@ApiOperation({
+		summary: 'Delete Categories By Base Id.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found base categories',
+		type: HelpCenter
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	// @Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
+	@Delete('deleteBulkByBaseId')
+	async deleteBulkByBaseId(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { id = null } = data;
+		return this.commandBus.execute(new KnowledgeBaseBulkDeleteCommand(id));
 	}
 }

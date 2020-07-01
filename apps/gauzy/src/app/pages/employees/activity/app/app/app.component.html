@@ -1,1 +1,20 @@
-<p>app works!</p>
+<div class="filters row mb-3">
+	<div class="col">
+		<ngx-filters
+			[multipleEmployeSelect]="false"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
+	</div>
+</div>
+<div
+	class="screenshot-container"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
+	<div class="row" *ngFor="let app of apps; let i = index">
+		<div class="col-sm-4"></div>
+		<div class="col-sm-6"></div>
+		<div class="col-sm-2"></div>
+	</div>
+</div>
