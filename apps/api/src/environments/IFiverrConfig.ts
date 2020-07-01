@@ -1,4 +1,4 @@
 export interface IFiverrConfig {
-    clientId: string;
+	clientId: string;
 	clientSecret: string;
 }

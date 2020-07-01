@@ -7,18 +7,17 @@ import { AuthService } from './auth.service';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
-    
-    constructor(private readonly _authService: AuthService) {
-        super({
-            clientID: env.githunConfig.clientId,
-            callbackURL: `${env.host}:${env.port}/api/auth/github/callback`,
-            clientSecret: env.githunConfig.clientSecret,
-            scope: ['profile', 'email'],
-            passReqToCallback: true,
-        });
-    }
-    
-    async validate(
+	constructor(private readonly _authService: AuthService) {
+		super({
+			clientID: env.githunConfig.clientId,
+			callbackURL: `${env.host}:${env.port}/api/auth/github/callback`,
+			clientSecret: env.githunConfig.clientSecret,
+			scope: ['profile', 'email'],
+			passReqToCallback: true
+		});
+	}
+
+	async validate(
 		request: any,
 		accessToken: string,
 		refreshToken: string,
@@ -29,20 +28,18 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 		passport['_strategies'].session.role_name = '';
 		const { emails, username } = profile;
 		try {
-            try {
-                const {
-                    success,
-                    authData
-                } = await this._authService.validateOAuthLoginEmail(
-                    emails
-                );
+			try {
+				const {
+					success,
+					authData
+				} = await this._authService.validateOAuthLoginEmail(emails);
 
-                const user = { success, authData };
+				const user = { success, authData };
 
-                done(null, user);
-            } catch (err) {
-                done(err, false);
-            }
+				done(null, user);
+			} catch (err) {
+				done(err, false);
+			}
 		} catch (err) {
 			done(err, false);
 		}

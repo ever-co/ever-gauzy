@@ -73,6 +73,7 @@ body {
   @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 300px) {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top));
   }
+
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
     background: nb-theme(background-basic-color-1);
     color: nb-theme(text-basic-color);
@@ -99,12 +100,13 @@ body {
     color: nb-theme(text-primary-active-color);
     background: nb-theme(background-basic-color-3);
   }
+
   .ng-value-container .ng-input input {
     background-color: nb-theme(background-basic-color-1);
     color: nb-theme(text-basic-color);
   }
+
   .ng-dropdown-panel {
-    box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
     border-bottom-left-radius: nb-theme(border-radius);
     border-bottom-right-radius: nb-theme(border-radius);
     box-shadow: nb-theme(shadow);
@@ -114,22 +116,11 @@ body {
     border-style: solid;
   }
 
-  tr {
-    background-color: nb-theme(background-basic-color-1) !important;
-  }
   .ng-select .ng-select-container {
     background-color: nb-theme(background-basic-color-1) !important;
     color: nb-theme(text-basic-color) !important;
   }
 
-  // .nb-theme-default .ng-dropdown-panel .ng-dropdown-panel-items .ng-option .ng-option-selected{
-  //   background-color: nb-theme(background-basic-color-2) !important;
-  // }
-
-  // .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-  //   background-color: nb-theme(background-basic-color-1) !important;
-  //   color: nb-theme(text-basic-color) !important;
-  // }
   .setting-block {
     background-color: nb-theme(background-basic-color-2) !important;
     color: nb-theme(text-basic-color) !important;

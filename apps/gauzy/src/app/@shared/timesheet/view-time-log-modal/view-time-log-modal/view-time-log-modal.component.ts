@@ -12,8 +12,7 @@ import { TimesheetService } from '../../timesheet.service';
 
 @Component({
 	selector: 'ngx-view-time-log-modal',
-	templateUrl: './view-time-log-modal.component.html',
-	styleUrls: ['./view-time-log-modal.component.scss']
+	templateUrl: './view-time-log-modal.component.html'
 })
 export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;

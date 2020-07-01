@@ -32,8 +32,7 @@ export interface SelectedInvoice {
 
 @Component({
 	selector: 'ngx-invoices',
-	templateUrl: './invoices.component.html',
-	styleUrls: ['./invoices.component.scss']
+	templateUrl: './invoices.component.html'
 })
 export class InvoicesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

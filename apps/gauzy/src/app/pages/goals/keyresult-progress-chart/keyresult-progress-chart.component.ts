@@ -143,7 +143,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 
 		const update = [];
 		update.push({ x: labelsData[0], y: keyResult.initialValue });
-		const sortedUpdates = updates.sort((a, b) => a.x - b.x);
+		const sortedUpdates = [...updates].sort((a, b) => a.x - b.x);
 		sortedUpdates.forEach((val, index) => {
 			if (index === 0) {
 				update.push(val);

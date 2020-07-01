@@ -94,19 +94,22 @@ export const environment: IEnvironment = {
 	microsoftConfig: {
 		clientId: process.env.MicrosoftClientId || 'fakeClientId',
 		clientSecret: process.env.MicrosoftConfig || 'fakeClientSecret',
-		identityMetadata: 'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
-		jwtSecret: process.env.MicrosoftJwtSecret || 'fakeJwtSecret',
+		identityMetadata:
+			'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
+		jwtSecret: process.env.MicrosoftJwtSecret || 'fakeJwtSecret'
 	},
 
 	linkedinConfig: {
 		clientId: process.env.LinkedinClientId || 'fakeLinkedinClientId',
-		clientSecret: process.env.LinkedinClientSecret || 'fakeLinkedinClientSecret',
-		jwtSecret: process.env.LinkedinJwtSecret || 'fakeJwtSecret',
+		clientSecret:
+			process.env.LinkedinClientSecret || 'fakeLinkedinClientSecret',
+		jwtSecret: process.env.LinkedinJwtSecret || 'fakeJwtSecret'
 	},
 
 	twitterConfig: {
 		clientId: process.env.TwitterClientId || 'fakeTwitterClientId',
-		clientSecret: process.env.TwitterClientSecret || 'fakeTwitterClientSecret'
+		clientSecret:
+			process.env.TwitterClientSecret || 'fakeTwitterClientSecret'
 	},
 
 	fiverrConfig: {
@@ -118,7 +121,8 @@ export const environment: IEnvironment = {
 		realm: process.env.KeycloakRealm || 'fakeKeycloakRealm',
 		clientId: process.env.KeycloakClientId || 'fakeKeycloakClientId',
 		secret: process.env.KeycloakSecret || 'fakeKeycloakSecret',
-		authServerUrl: process.env.KeycloakAuthServerURL || 'fakeKeycloakAuthServerURL',
+		authServerUrl:
+			process.env.KeycloakAuthServerURL || 'fakeKeycloakAuthServerURL',
 		cookieKey: process.env.KeycloakCookieKey || 'KeycloakCookieKey'
 	},
 

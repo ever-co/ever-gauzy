@@ -95,7 +95,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	}
 
 	async requestDaysOff() {
-		const result = await this.dialogService
+		await this.dialogService
 			.open(TimeOffRequestMutationComponent)
 			.onClose.pipe(first())
 			.toPromise();

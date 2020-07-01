@@ -39,8 +39,7 @@ interface SelectedRowModel {
 
 @Component({
 	selector: 'ga-proposals',
-	templateUrl: './proposals.component.html',
-	styleUrls: ['./proposals.component.scss']
+	templateUrl: './proposals.component.html'
 })
 export class ProposalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -326,7 +325,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.countAccepted = 0;
 
 		try {
-			const proposalVM: ProposalViewModel[] = items
+			const proposalVM: ProposalViewModel[] = [...items]
 				.sort(
 					(a, b) =>
 						new Date(b.valueDate).getTime() -
@@ -389,7 +388,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 				value: this.totalProposals
 			};
 		} catch (error) {
-			this.toastrService.danger(error.message || error.message, 'Error');
+			this.toastrService.danger(error.message, 'Error');
 		}
 	}
 

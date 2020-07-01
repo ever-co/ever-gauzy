@@ -72,33 +72,39 @@ export class EmployeeStackedBarChartComponent
 					datasets: [
 						{
 							label: this.selectedDate
-								? `Expenses: ${Math.round(
-										+this.expenseStatistics *
-											this.proportion *
-											100
-								  ) / 100}`
+								? `Expenses: ${
+										Math.round(
+											+this.expenseStatistics *
+												this.proportion *
+												100
+										) / 100
+								  }`
 								: 'Expenses',
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
 							label: this.selectedDate
-								? `Bonus: ${Math.round(
-										+this.bonusStatistics *
-											this.proportion *
-											100
-								  ) / 100}`
+								? `Bonus: ${
+										Math.round(
+											+this.bonusStatistics *
+												this.proportion *
+												100
+										) / 100
+								  }`
 								: 'Bonus',
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						},
 						{
 							label: this.selectedDate
-								? `Profit: ${Math.round(
-										+this.profitStatistics *
-											this.proportion *
-											100
-								  ) / 100}`
+								? `Profit: ${
+										Math.round(
+											+this.profitStatistics *
+												this.proportion *
+												100
+										) / 100
+								  }`
 								: 'Profit',
 							backgroundColor: profitColors,
 							data: this.profitStatistics
@@ -151,7 +157,7 @@ export class EmployeeStackedBarChartComponent
 								enabled: true,
 								mode: 'dataset',
 								callbacks: {
-									label: function(tooltipItem, data) {
+									label: function (tooltipItem, data) {
 										const label =
 											data.datasets[
 												tooltipItem.datasetIndex
@@ -179,7 +185,7 @@ export class EmployeeStackedBarChartComponent
 
 		this.noData = !(this.employeeStatistics || []).length;
 
-		(this.employeeStatistics || []).map((stat) => {
+		(this.employeeStatistics || []).forEach((stat) => {
 			const labelValue = `${monthNames[stat.month]} '${stat.year
 				.toString(10)
 				.substring(2)}`;
