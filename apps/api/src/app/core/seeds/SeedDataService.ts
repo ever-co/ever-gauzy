@@ -3,7 +3,7 @@ import { CandidateExperience } from './../../candidate-experience/candidate-expe
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Injectable, HttpService } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
 	Connection,
 	createConnection,
