@@ -69,11 +69,11 @@ export const createRandomExpenses = async (
 	tenants: Tenant[],
 	tenantEmployeeMap: Map<Tenant, Employee[]>,
 	organizationVendorsMap: Map<Organization, OrganizationVendor[]>,
-	categories: ExpenseCategory[]
+	categoriesMap: Map<Organization, ExpenseCategory[]>
 ): Promise<void> => {
 	const currencies = Object.values(CurrenciesEnum);
 
-	if (!categories) {
+	if (!categoriesMap) {
 		return;
 	}
 
@@ -94,6 +94,7 @@ export const createRandomExpenses = async (
 			const organizationVendors = organizationVendorsMap.get(
 				employee.organization
 			);
+			const categories = categoriesMap.get(employee.organization);
 
 			for (let index = 0; index < 5; index++) {
 				const expense = new Expense();

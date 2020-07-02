@@ -4,7 +4,7 @@ import { Tag } from '..';
 export interface IOrganizationExpenseCategory extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
-	tags: Tag[];
+	tags?: Tag[];
 }
 
 export interface IOrganizationExpenseCategoryFindInput
@@ -16,14 +16,14 @@ export interface IOrganizationExpenseCategoryFindInput
 export interface IOrganizationExpenseCategoryCreateInput {
 	name: string;
 	organizationId: string;
-	tags: Tag[];
+	tags?: Tag[];
 }
 
 export enum OrganizationExpenseCategoryEnum {
-	UPWORK = 'Upwork',
-	MICROSOFT = 'Microsoft',
-	BENEFIT_SYSTEMS = 'Benefit Systems',
-	UDEMY = 'Udemy',
-	GOOGLE = 'Google',
-	CO_SHARE = 'CoShare'
+	SOFTWARE = 'Software',
+	EMPLOYEES_BENEFITS = 'Employees Benefits',
+	COURSES = 'Courses',
+	SUBSCRIPTIONS = 'Subscriptions',
+	RENT = 'Rent',
+	SERVICE_FEE = 'Service Fee'
 }
