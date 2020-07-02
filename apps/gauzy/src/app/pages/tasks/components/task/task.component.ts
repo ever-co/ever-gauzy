@@ -24,10 +24,13 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
+import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { ComponentLayoutStyleEnum } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-task',
-	templateUrl: './task.component.html'
+	templateUrl: './task.component.html',
+	styleUrls: ['task.component.scss']
 })
 export class TaskComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -44,7 +47,9 @@ export class TaskComponent extends TranslationBaseComponent
 	selectedTask: Task;
 	tags: Tag[];
 	view: string;
+	viewComponentName: ComponentEnum;
 	teams;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -81,25 +86,36 @@ export class TaskComponent extends TranslationBaseComponent
 		if (pathName.indexOf('tasks/me') !== -1) {
 			this._myTaskStore.fetchTasks();
 			this.view = 'my-tasks';
+			this.viewComponentName = ComponentEnum.MY_TASKS;
 		} else if (pathName.indexOf('tasks/team') !== -1) {
 			this.view = 'team-tasks';
+			this.viewComponentName = ComponentEnum.TEAM_TASKS;
 			this._teamTaskStore.fetchTasks();
 			// load teams for the select box of teams column
 			this.loadTeams();
-			this._organizationsStore.selectedEmployee$.subscribe(
-				(selectedEmployee: SelectedEmployee) => {
+			this._organizationsStore.selectedEmployee$
+				.pipe(takeUntil(this._ngDestroy$))
+				.subscribe((selectedEmployee: SelectedEmployee) => {
 					if (selectedEmployee) {
 						this.loadTeams(selectedEmployee.id);
 						this.storeInstance.fetchTasks(selectedEmployee.id);
 					}
-				}
-			);
-			this._organizationsStore.selectedOrganization$.subscribe((data) => {
-				this.loadTeams();
-			});
+				});
+			this._organizationsStore.selectedOrganization$
+				.pipe(takeUntil(this._ngDestroy$))
+				.subscribe((data) => {
+					this.loadTeams();
+				});
 		} else {
 			this.view = 'tasks';
+			this.viewComponentName = ComponentEnum.ALL_TASKS;
 		}
+		this._organizationsStore
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(
+				(componentLayout) => (this.dataLayoutStyle = componentLayout)
+			);
 	}
 
 	private _applyTranslationOnSmartTable() {
@@ -239,7 +255,13 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editTaskDIalog() {
+	async editTaskDialog(selectedItem?: Task) {
+		if (selectedItem) {
+			this.selectTask({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(TaskDialogComponent, {
@@ -282,7 +304,11 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 	}
 
-	async duplicateTaskDIalog() {
+	async duplicateTaskDialog(selectedItem?: Task) {
+		this.selectTask({
+			isSelected: true,
+			data: selectedItem
+		});
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(TaskDialogComponent, {
@@ -325,7 +351,11 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 	}
 
-	async deleteTask() {
+	async deleteTask(selectedItem?: Task) {
+		this.selectTask({
+			isSelected: true,
+			data: selectedItem
+		});
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
@@ -339,7 +369,9 @@ export class TaskComponent extends TranslationBaseComponent
 
 	selectTask({ isSelected, data }) {
 		const selectedTask = isSelected ? data : null;
-		this.tasksTable.grid.dataSet.willSelect = false;
+		if (this.tasksTable) {
+			this.tasksTable.grid.dataSet.willSelect = false;
+		}
 		this.disableButton = !isSelected;
 		this.selectedTask = selectedTask;
 	}
@@ -360,7 +392,6 @@ export class TaskComponent extends TranslationBaseComponent
 			).items.filter((org) => {
 				return org.organizationId === organizationId;
 			});
-			console.log('test', this.teams);
 			this._loadTableSettings();
 		}
 	}

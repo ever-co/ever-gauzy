@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LanguagesEnum, User } from '@gauzy/models';
+import { LanguagesEnum, User, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { UsersService } from '../../../@core/services';
 
@@ -36,12 +36,14 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 			name: 'SETTINGS_MENU.CORPORATE'
 		}
 	];
+	componentLayouts = Object.keys(ComponentLayoutStyleEnum);
 
 	languages = [];
 	languagesEnum = {};
 
 	currentTheme = 'default';
 	currentLang: string = LanguagesEnum.ENGLISH;
+	currentLayout: string = ComponentLayoutStyleEnum.TABLE;
 
 	supportedLanguages = [];
 	currentUser: User;
@@ -80,8 +82,16 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 					this.currentLang = this.currentUser.preferredLanguage;
 				}
 				this.switchLanguage();
+				if (
+					user.preferredComponentLayout &&
+					user.preferredComponentLayout !== this.currentLayout
+				) {
+					this.currentLayout = user.preferredComponentLayout;
+				}
+				this.switchComponentLayout();
 			}
 		});
+
 		this.store.preferredLanguage$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((preferredLanguage) => {
@@ -89,8 +99,17 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 					preferredLanguage &&
 					preferredLanguage !== this.currentLang
 				) {
+					console.log('yaha se?');
 					this.currentLang = preferredLanguage;
 					this.switchLanguage();
+				}
+			});
+
+		this.store.preferredComponentLayout$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((preferredLayout) => {
+				if (preferredLayout && preferredLayout !== this.currentLayout) {
+					this.currentLayout = preferredLayout;
 				}
 			});
 	}
@@ -121,7 +140,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		const updatedUserData = {
 			preferredLanguage: this.store.preferredLanguage
 		};
-		this.updateUserLanguage(updatedUserData);
+		this.updateUser(updatedUserData);
 
 		if (this.supportedLanguages.length) {
 			this.translate.use(
@@ -132,7 +151,20 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private async updateUserLanguage(updatedUserData: any) {
+	switchComponentLayout(selectedStyle?: ComponentLayoutStyleEnum) {
+		this.store.preferredComponentLayout =
+			selectedStyle || this.currentLayout;
+
+		this.updateUser({
+			preferredComponentLayout: selectedStyle || this.currentLayout
+		});
+	}
+
+	resetLayoutForAllComponents() {
+		this.store.componentLayout = [];
+	}
+
+	private async updateUser(updatedUserData: any) {
 		try {
 			await this.userService.update(this.currentUser.id, updatedUserData);
 		} catch (error) {}
