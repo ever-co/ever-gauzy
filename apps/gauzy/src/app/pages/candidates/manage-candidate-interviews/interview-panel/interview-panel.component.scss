@@ -1,3 +1,25 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  width: 100%;
+  border: none;
+  padding: 0;
+
+  &-filter {
+    padding-bottom: 1rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+  }
+}
+
+.select {
+  width: 15rem;
+}
+
 .header {
   display: flex;
   flex-direction: row;
@@ -24,6 +46,20 @@
       border-radius: 10px;
     }
   }
+}
+
+.center-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.start-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .body {

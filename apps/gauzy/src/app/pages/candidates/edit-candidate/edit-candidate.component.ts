@@ -67,11 +67,13 @@ export class EditCandidateComponent extends TranslationBaseComponent
 			});
 	}
 	private async loadInterview() {
-		const res = await this.candidateInterviewService.findByCandidateId(
-			this.selectedCandidate.id
+		const interviews = await this.candidateInterviewService.getAll(
+			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
+			{ candidateId: this.selectedCandidate.id }
 		);
-		if (res) {
-			this.interviewList = res;
+
+		if (interviews) {
+			this.interviewList = interviews.items;
 		}
 	}
 	async interviewInfo() {
