@@ -99,6 +99,8 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			.open(TimeOffRequestMutationComponent)
 			.onClose.pipe(first())
 			.toPromise();
+
+		console.log(result);
 	}
 
 	addHolidays() {}

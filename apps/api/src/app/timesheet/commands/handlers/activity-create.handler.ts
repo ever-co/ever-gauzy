@@ -16,7 +16,7 @@ export class ActivityCreateHandler
 	public async execute(command: ActivityCreateCommand): Promise<any> {
 		try {
 			const { input } = command;
-			const { title, duration, type, data, timeSlot } = input;
+			const { title, duration, type, timeSlot } = input;
 
 			const {
 				record: timeSlotId
@@ -25,6 +25,8 @@ export class ActivityCreateHandler
 					startedAt: moment(timeSlot).format('YYYY-MM-DD HH:mm:ss')
 				}
 			});
+
+			console.log(timeSlotId);
 
 			return await this._activityService.create({
 				// TODO: add following fields:
