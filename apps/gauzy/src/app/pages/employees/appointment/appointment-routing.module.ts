@@ -10,6 +10,10 @@ const routes: Routes = [
 	{
 		path: 'manage/:employeeId',
 		component: ManageAppointmentComponent
+	},
+	{
+		path: 'manage/:employeeId/:appointmentId',
+		component: ManageAppointmentComponent
 	}
 ];
 

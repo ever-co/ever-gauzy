@@ -45,6 +45,7 @@ export interface IEmployeeAppointmentCreateInput {
 }
 
 export interface IEmployeeAppointmentUpdateInput {
+	employeeId?: string;
 	description?: string;
 	location?: string;
 	agenda?: string;
@@ -57,4 +58,5 @@ export interface IEmployeeAppointmentUpdateInput {
 	breakStartTime?: Date;
 	organizationId?: string;
 	status?: string;
+	invitees?: AppointmentEmployees[];
 }

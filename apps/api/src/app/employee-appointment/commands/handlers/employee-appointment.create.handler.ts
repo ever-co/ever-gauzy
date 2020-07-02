@@ -43,7 +43,6 @@ export class EmployeeAppointmentCreateHandler
 		appointment.breakTimeInMins = employeeAppointmentInput.breakTimeInMins;
 		appointment.bufferTimeStart = employeeAppointmentInput.bufferTimeStart;
 		appointment.emails = employeeAppointmentInput.emails;
-		appointment.invitees = employeeAppointmentInput.invitees;
 		appointment.startDateTime = employeeAppointmentInput.startDateTime;
 		appointment.endDateTime = employeeAppointmentInput.endDateTime;
 		appointment.location = employeeAppointmentInput.location;

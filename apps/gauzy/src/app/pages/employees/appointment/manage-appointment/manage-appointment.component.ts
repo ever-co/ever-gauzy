@@ -20,10 +20,11 @@ import { Employee, EmployeeAppointment } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../../@core/services';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { AppointmentEmployeesService } from 'apps/gauzy/src/app/@core/services/appointment-employees.service';
 import * as moment from 'moment';
 import { Store } from '../../../../@core/services/store.service';
+import { AlertModalComponent } from 'apps/gauzy/src/app/@shared/alert-modal/alert-modal.component';
 
 @Component({
 	selector: 'ga-manage-appointment',
@@ -45,11 +46,13 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	@Output() cancel = new EventEmitter<string>();
 
 	selectedEmployeeIds: string[];
+	selectedEmployeeAppointmentIds: string[];
 	emailAddresses: any[] = [];
 	_selectedOrganizationId: string;
 	emails: any;
 	start: Date;
 	end: Date;
+	editMode: Boolean;
 
 	@Input('selectedRange')
 	selectedRange: { start: Date; end: Date };
@@ -59,6 +62,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		private router: Router,
 		private fb: FormBuilder,
 		private store: Store,
+		private dialogService: NbDialogService,
 		private employeeService: EmployeesService,
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private appointmentEmployeesService: AppointmentEmployeesService,
@@ -87,8 +91,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				}
 			});
 
-		// this._parseParams();
-		this._initializeForm();
+		this._parseParams();
 		this._loadEmployees();
 	}
 
@@ -179,8 +182,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (params) => {
-				const id = params.id;
+				const id = params.appointmentId;
 				if (id) {
+					this.editMode = true;
 					const appointment = await this.employeeAppointmentService
 						.getById(id)
 						.pipe(first())
@@ -194,74 +198,123 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 					this.selectedEmployeeIds = selectedEmployees.map(
 						(o) => o.employeeId
 					);
-					this.selectedRange = {
-						start: new Date(appointment.startDateTime),
-						end: new Date(appointment.endDateTime)
-					};
-					this.start = this.selectedRange.start;
-					this.end = this.selectedRange.end;
+					this.selectedEmployeeAppointmentIds = selectedEmployees.map(
+						(o) => o.id
+					);
+					this.start = new Date(appointment.startDateTime);
+					this.end = new Date(appointment.endDateTime);
 					this.employeeAppointment = appointment;
 				}
 				this._initializeForm();
 			});
 	}
 
-	async onSaveRequest() {
-		const employeeAppointmentRequest = {
-			emails:
-				this.emails.value &&
-				this.emails.value.map((email) => email.emailAddress).join(', '),
-			agenda: this.form.get('agenda').value,
-			location: this.form.get('location').value,
-			description: this.form.get('description').value,
-			startDateTime: this.form.get('selectedRange').value.start,
-			endDateTime: this.form.get('selectedRange').value.end,
-			bufferTimeStart: this.form.get('bufferTimeStart').value,
-			bufferTimeEnd: this.form.get('bufferTimeEnd').value,
-			bufferTimeInMins: this.form.get('bufferTimeInMins').value,
-			breakTimeInMins: this.form.get('breakTimeInMins').value,
-			breakStartTime: new Date(
-				moment(this.form.get('selectedRange').value.start).format(
-					'YYYY-MM-DD'
-				) +
-					' ' +
-					this.form.get('breakStartTime').value
-			),
-			employeeId: this.employee
-				? this.employee.id
-				: this.store.selectedEmployee
-				? this.store.selectedEmployee.id
-				: null,
-			organizationId: this._selectedOrganizationId
-		};
-
-		if (!this.employeeAppointment) {
-			this.employeeAppointment = await this.employeeAppointmentService.create(
-				employeeAppointmentRequest
-			);
-
-			if (this.selectedEmployeeIds) {
-				for (let e of this.selectedEmployeeIds) {
-					await this.appointmentEmployeesService.add({
-						employeeId: e,
-						appointmentId: this.employeeAppointment.id,
-						employeeAppointment: this.employeeAppointment
-					});
+	async cancelAppointment() {
+		try {
+			const dialog = this.dialogService.open(AlertModalComponent, {
+				context: {
+					alertOptions: {
+						title: 'Cancel Appointment',
+						message: 'Are you sure? This action is irreversible.',
+						status: 'danger'
+					}
+				}
+			});
+			const response = await dialog.onClose.pipe(first()).toPromise();
+			if (!!response) {
+				if (response === 'yes') {
+					await this.employeeAppointmentService.update(
+						this.employeeAppointment.id,
+						{
+							status: 'Cancelled'
+						}
+					);
+					this.toastrService.success(
+						this.getTranslation('APPOINTMENTS_PAGE.CANCEL_SUCCESS'),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+					history.back();
 				}
 			}
-		} else {
-			this.employeeAppointment = await this.employeeAppointmentService.update(
-				this.employeeAppointment.id,
-				employeeAppointmentRequest
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation('APPOINTMENTS_PAGE.CANCEL_FAIL'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
+	}
 
-		this.toastrService.primary(this.getTranslation('TOASTR.TITLE.SUCCESS'));
-		this.employee
-			? this.router.navigate([
-					`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`
-			  ])
-			: this.router.navigate(['/pages/employees/appointments']);
+	async onSaveRequest() {
+		try {
+			const employeeAppointmentRequest = {
+				emails:
+					this.emails.value &&
+					this.emails.value
+						.map((email) => email.emailAddress)
+						.join(', '),
+				agenda: this.form.get('agenda').value,
+				location: this.form.get('location').value,
+				description: this.form.get('description').value,
+				startDateTime: this.form.get('selectedRange').value.start,
+				endDateTime: this.form.get('selectedRange').value.end,
+				bufferTimeStart: this.form.get('bufferTimeStart').value,
+				bufferTimeEnd: this.form.get('bufferTimeEnd').value,
+				bufferTimeInMins: this.form.get('bufferTimeInMins').value,
+				breakTimeInMins: this.form.get('breakTimeInMins').value,
+				breakStartTime: new Date(
+					moment(this.form.get('selectedRange').value.start).format(
+						'YYYY-MM-DD'
+					) +
+						' ' +
+						this.form.get('breakStartTime').value
+				),
+				employeeId: this.employee
+					? this.employee.id
+					: this.store.selectedEmployee
+					? this.store.selectedEmployee.id
+					: null,
+				organizationId: this._selectedOrganizationId
+			};
+
+			if (!this.employeeAppointment) {
+				this.employeeAppointment = await this.employeeAppointmentService.create(
+					employeeAppointmentRequest
+				);
+			} else {
+				await this.employeeAppointmentService.update(
+					this.employeeAppointment.id,
+					employeeAppointmentRequest
+				);
+
+				// Removing all previously selected employee ids
+				for (let id of this.selectedEmployeeAppointmentIds) {
+					await this.appointmentEmployeesService.delete(id);
+				}
+			}
+
+			for (let e of this.selectedEmployeeIds) {
+				await this.appointmentEmployeesService.add({
+					employeeId: e,
+					appointmentId: this.employeeAppointment.id,
+					employeeAppointment: this.employeeAppointment
+				});
+			}
+
+			this.toastrService.success(
+				this.getTranslation('APPOINTMENTS_PAGE.SAVE_SUCCESS'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.employee
+				? this.router.navigate([
+						`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`
+				  ])
+				: this.router.navigate(['/pages/employees/appointments']);
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation('APPOINTMENTS_PAGE.SAVE_FAILED'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
 	}
 
 	onMembersSelected(ev) {
