@@ -140,7 +140,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 									},
 									0
 								);
-								return { sum, res };
+								return { sum, logs: res };
 							})
 							.value();
 
@@ -153,6 +153,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 						return { project, dates };
 					})
 					.value();
+
+				console.log(this.weekData);
 			})
 			.finally(() => (this.loading = false));
 	}

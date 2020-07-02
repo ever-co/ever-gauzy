@@ -1,0 +1,66 @@
+<div class="gallery-inner" [@fadeInOut]>
+	<!-- <div class="back-drop" [@fadeInOut] (click)="close()"></div> -->
+
+	<div class="gallery-content">
+		<div class="gallery-header">
+			<mat-toolbar>
+				<mat-toolbar-row>
+					<!-- <div> <h3>Second Line </h3> <span>Second Line</span></div> -->
+					<span class="toolbar-spacer"></span>
+					<a
+						href="{{ item?.file_urls?.full }}"
+						download="{{ item?.description }}.{{ item?.type }}"
+						mat-icon-button
+					>
+						<mat-icon>file_download</mat-icon>
+					</a>
+					<div class="boom-box" *ngIf="type == 'image'">
+						<button mat-icon-button (click)="zoomOut()">
+							<mat-icon>zoom_out</mat-icon>
+						</button>
+						<span class="counter">{{ zoom }} %</span>
+						<button mat-icon-button (click)="zoomIn()">
+							<mat-icon>zoom_in</mat-icon>
+						</button>
+					</div>
+					<!-- <button mat-icon-button> <mat-icon>forward</mat-icon></button> -->
+					<button mat-icon-button (click)="close()">
+						<mat-icon>close</mat-icon>
+					</button>
+				</mat-toolbar-row>
+			</mat-toolbar>
+		</div>
+		<div #middelPart class="middel-part">
+			<div class="left-button">
+				<button class="nav-button" mat-mini-fab (click)="prev()">
+					<mat-icon>keyboard_arrow_left</mat-icon>
+				</button>
+			</div>
+			<div class="media-viewer">
+				<img
+					#imageMedia
+					(load)="initData()"
+					[src]="item?.file_urls?.full"
+				/>
+			</div>
+			<div class="right-button">
+				<button class="nav-button" mat-mini-fab (click)="next()">
+					<mat-icon>keyboard_arrow_right</mat-icon>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<div class="gallery-footer">
+		<div class="thumb-items custom-scroll">
+			<div
+				class="thumb-item-{{ index }} thumb-item"
+				*ngFor="let item of thumb_items; let index = index"
+				[ngClass]="index == active_index ? 'active' : ''"
+				(click)="setFocus(index)"
+			>
+				<img *ngIf="item.media" [src]="item.media" />
+			</div>
+		</div>
+	</div>
+</div>

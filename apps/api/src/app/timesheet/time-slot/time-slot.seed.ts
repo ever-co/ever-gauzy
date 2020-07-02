@@ -2,7 +2,7 @@ import * as faker from 'faker';
 import * as moment from 'moment';
 import { TimeSlot } from '../time-slot.entity';
 
-export async function createTimeSlots(start, end) {
+export function createTimeSlots(start, end) {
 	const timeSlots: TimeSlot[] = generateRange(start, end).map((timeSlot) => {
 		const keyboard = faker.random.number(100);
 		const mouse = faker.random.number(100);
