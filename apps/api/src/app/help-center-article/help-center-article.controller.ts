@@ -8,13 +8,18 @@ import {
 	Body,
 	UseGuards,
 	Get,
-	Param
+	Param,
+	Delete,
+	Query
 } from '@nestjs/common';
 import { CrudController } from '../core';
+import { ParseJsonPipe } from '../shared';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { HelpCenterArticleService } from './help-center-article.service';
+import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
+import { CommandBus } from '@nestjs/cqrs';
 
 @ApiTags('knowledge_base_article')
 @UseGuards(AuthGuard('jwt'))
@@ -22,7 +27,10 @@ import { HelpCenterArticleService } from './help-center-article.service';
 export class HelpCenterArticleController extends CrudController<
 	HelpCenterArticle
 > {
-	constructor(private readonly helpCenterService: HelpCenterArticleService) {
+	constructor(
+		private readonly helpCenterService: HelpCenterArticleService,
+		private readonly commandBus: CommandBus
+	) {
 		super(helpCenterService);
 	}
 
@@ -59,5 +67,29 @@ export class HelpCenterArticleController extends CrudController<
 		@Param('categoryId') categoryId: string
 	): Promise<HelpCenterArticle[]> {
 		return this.helpCenterService.getArticlesByCategoryId(categoryId);
+	}
+
+	@ApiOperation({
+		summary: 'Delete Articles By Category Id.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found category articles',
+		type: HelpCenterArticle
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	// @Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
+	@Delete('deleteBulkByCategoryId')
+	async deleteBulkByCategoryId(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { id = null } = data;
+		return this.commandBus.execute(
+			new KnowledgeBaseCategoryBulkDeleteCommand(id)
+		);
 	}
 }

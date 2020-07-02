@@ -12,7 +12,9 @@ export const createOrganizationVendors = async (
 	organizations.forEach((organization) => {
 		const vendors = Object.values(OrganizationVendorEnum).map((name) => ({
 			name,
-			organizationId: organization.id
+			organizationId: organization.id,
+			organization,
+			tenant: organization.tenant
 		}));
 
 		defaultOrganizationVendors = [
@@ -44,7 +46,9 @@ export const createRandomOrganizationVendors = async (
 			const vendors = Object.values(OrganizationVendorEnum).map(
 				(name) => ({
 					name,
-					organizationId: organization.id
+					organization,
+					organizationId: organization.id,
+					tenant: organization.tenant
 				})
 			);
 

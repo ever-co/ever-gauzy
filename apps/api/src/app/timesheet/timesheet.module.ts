@@ -20,10 +20,12 @@ import { CommandHandlers } from './commands/handlers';
 import { TimeSheetController } from './timesheet/timesheet.controller';
 import { TimeSlotController } from './time-slot/time-slot.controller';
 import { ScreenshotController } from './screenshot/screenshot.controller';
+import { ActivityController } from './activity/activity.controller';
 
 @Module({
 	controllers: [
 		TimerController,
+		ActivityController,
 		TimeLogController,
 		TimeSlotController,
 		ScreenshotController,

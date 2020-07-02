@@ -47,19 +47,19 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async getTimeLogs(request: IGetTimeLogInput) {
-		let employeeId: string | string[];
+		let employeeIds: string[];
 
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			if (request.employeeId) {
-				employeeId = request.employeeId;
+			if (request.employeeIds) {
+				employeeIds = request.employeeIds;
 			}
 		} else {
 			const user = RequestContext.currentUser();
-			employeeId = user.employeeId;
+			employeeIds = [user.employeeId];
 		}
 
 		const logs = await this.timeLogRepository.find({
@@ -103,16 +103,10 @@ export class TimeLogService extends CrudService<TimeLog> {
 						endDate
 					});
 				}
-				if (employeeId) {
-					if (employeeId instanceof Array) {
-						qb.andWhere('"employeeId" IN (:...employeeId)', {
-							employeeId: employeeId
-						});
-					} else {
-						qb.andWhere('"employeeId" = :employeeId', {
-							employeeId
-						});
-					}
+				if (employeeIds) {
+					qb.andWhere('"employeeId" IN (:...employeeId)', {
+						employeeId: employeeIds
+					});
 				}
 				if (request.organizationId) {
 					qb.andWhere(
@@ -293,6 +287,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 			overall: 0
 		}));
 		await this.timeSlotService.bulkCreate(timeSlots);
+
+		this.timeLogDBHelper.find(newTimeLog.id).sync('timeSlots', timeSlots);
 
 		return newTimeLog;
 	}

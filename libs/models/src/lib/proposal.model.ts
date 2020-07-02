@@ -2,6 +2,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { Tag } from '..';
+import { ITenant } from './tenant.model';
 
 export interface Proposal extends IBaseEntityModel {
 	employeeId?: string;
@@ -14,6 +15,7 @@ export interface Proposal extends IBaseEntityModel {
 	proposalContent?: string;
 	status?: string;
 	tags?: Tag[];
+	tenant: ITenant;
 }
 
 export interface ProposalCreateInput {

@@ -63,8 +63,9 @@
 						name="employeeId"
 						[label]="false"
 						[placeholder]="'TIMESHEET.ALL_EMPLOYEE' | translate"
-						[(ngModel)]="filters.employeeId"
+						[(ngModel)]="filters.employeeIds"
 						[allEmployees]="employees"
+						[multiple]="multipleEmployeSelect"
 						(selectedChange)="triggerFilterChange()"
 					>
 					</ga-employee-multi-select>

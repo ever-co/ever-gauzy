@@ -13,7 +13,8 @@ import {
 	TimeLogSourceEnum,
 	Organization,
 	PermissionsEnum,
-	OrganizationPermissionsEnum
+	OrganizationPermissionsEnum,
+	Employee
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
@@ -37,7 +38,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	@Input() dateRange: 'day' | 'week' | 'month' = 'day';
 	private _filters: TimeLogFilters = {
-		employeeId: [],
+		employeeIds: [],
 		source: [],
 		logType: []
 	};
@@ -58,6 +59,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	@Input() hasDateRangeFilter = true;
 	@Input() hasEmployeeFilter = true;
+	@Input() multipleEmployeSelect = true;
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
@@ -73,7 +75,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	};
 	private date: Date;
 	organization: Organization;
-	employees: any;
+	employees: Employee[];
 	public get selectedDate(): Date {
 		return this.date;
 	}
@@ -117,6 +119,10 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			Object.keys(this.filters).forEach((key) =>
 				this.filters[key] === undefined ? delete this.filters[key] : {}
 			);
+
+			if (!this.multipleEmployeSelect) {
+				this.filters.employeeIds = [];
+			}
 			this.filtersChange.emit(this.filters);
 		});
 

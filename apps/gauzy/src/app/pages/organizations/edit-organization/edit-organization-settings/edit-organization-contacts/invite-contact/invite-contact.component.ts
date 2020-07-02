@@ -10,7 +10,8 @@ import { InviteService } from '../../../../../../@core/services/invite.service';
 
 @Component({
 	selector: 'ga-invite-contact',
-	templateUrl: './invite-contact.component.html'
+	templateUrl: './invite-contact.component.html',
+	styleUrls: ['./invite-contact.component.scss']
 })
 export class InviteContactComponent extends TranslationBaseComponent
 	implements OnInit {

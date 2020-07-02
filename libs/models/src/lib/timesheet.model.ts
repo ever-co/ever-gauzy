@@ -65,12 +65,12 @@ export interface ISubmitTimesheetInput {
 	status: 'submit' | 'unsubmit';
 }
 
-export interface IGetTimeSheetInput {
+export interface IGetTimesheetInput {
 	startDate?: string;
 	endDate?: string;
 	projectId?: string[];
 	clientId?: string[];
-	employeeId?: string;
+	employeeIds?: string[];
 	organizationId?: string;
 }
 
@@ -138,9 +138,10 @@ export enum TimeLogSourceEnum {
 
 export interface TimeLogFilters {
 	organizationId?: string;
-	startDate?: Date;
-	endDate?: Date;
-	employeeId?: string[];
+	startDate?: Date | string;
+	endDate?: Date | string;
+	projectIds?: string[];
+	employeeIds?: string[];
 	logType?: TimeLogType[];
 	source?: TimeLogSourceEnum[];
 	activityLevel?: {
@@ -153,7 +154,6 @@ export interface TimeSlot extends IBaseEntityModel {
 	[x: string]: any;
 	employee: Employee;
 	screenshots?: Screenshot[];
-	activities?: Activity[];
 	timeLogs?: TimeLog[];
 	timeSlotMinutes?: TimeSlotMinute[];
 	project?: OrganizationProjects;
@@ -166,6 +166,13 @@ export interface TimeSlot extends IBaseEntityModel {
 	tags?: Tag[];
 }
 
+export interface ITimeSlotTimeLogs extends IBaseEntityModel {
+	timeLogs: TimeLog[];
+	timeSlots: TimeSlot[];
+	timeLogId: string;
+	timeSlotId: string;
+}
+
 export interface ITimeSlotMinute extends IBaseEntityModel {
 	timeSlot?: TimeSlot;
 	keyboard?: number;
@@ -174,9 +181,14 @@ export interface ITimeSlotMinute extends IBaseEntityModel {
 }
 
 export interface Activity extends IBaseEntityModel {
-	timeSlot?: TimeSlot;
 	title: string;
-	data?: string;
+	employee?: Employee;
+	employeeId?: string;
+	project?: OrganizationProjects;
+	projectId?: string;
+	task?: Task;
+	taskId?: string;
+	date: Date;
 	duration?: number;
 	type?: string;
 }
@@ -190,20 +202,32 @@ export interface TimeSlotMinute extends IBaseEntityModel {
 }
 
 export interface ICreateActivityInput {
-	employeeId: string;
-	projectId: string;
+	employeeId?: string;
+	projectId?: string;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
 	overall?: number;
-	startedAt: Date;
-	stoppedAt: Date;
+	startedAt?: Date;
+	stoppedAt?: Date;
+	timeSlotId?: string;
+	timeSlot: string;
+	type: string;
 	title: string;
+	data?: string;
 }
 
 export enum ActivityType {
 	URL = 'URL',
 	APP = 'APP'
+}
+
+export interface ICreateScreenshotInput {
+	timeSlotId?: string;
+	timeSlot: string;
+	fullUrl: string;
+	thumbUrl?: string;
+	recordedAt: Date;
 }
 
 export interface Screenshot extends IBaseEntityModel {
@@ -243,25 +267,8 @@ export interface IManualTimeInput {
 	isBillable?: boolean;
 }
 
-export interface IGetTimesheetInput {
-	startDate?: string;
-	endDate?: string;
-	projectId?: string[];
-	clientId?: string[];
-	employeeId?: string | string[];
-}
-
-export interface IGetTimeLogInput {
+export interface IGetTimeLogInput extends TimeLogFilters {
 	timesheetId?: string;
-	startDate?: string;
-	endDate?: string;
-	projectId?: string[];
-	clientId?: string[];
-	employeeId?: string | string[];
-	source?: TimeLogSourceEnum | TimeLogSourceEnum[];
-	logType?: TimeLogType | TimeLogType[];
-	activityLevel?: { start: number; end: number };
-	organizationId?: string;
 }
 
 export interface IGetTimeLogConflictInput {
@@ -273,16 +280,11 @@ export interface IGetTimeLogConflictInput {
 	relations?: string[];
 }
 
-export interface IGetTimeSlotInput {
-	timesheetId?: string;
-	startDate?: string;
-	endDate?: string;
-	projectId?: string[];
-	clientId?: string[];
-	employeeId?: string | string[];
-	source?: TimeLogSourceEnum | TimeLogSourceEnum[];
-	logType?: TimeLogType | TimeLogType[];
-	activityLevel?: { start: number; end: number };
-	organizationId?: string;
+export interface IGetTimeSlotInput extends TimeLogFilters {
 	relations?: string[];
+}
+
+export interface IGetActivitiesInput extends TimeLogFilters {
+	relations?: string[];
+	type?: string[];
 }

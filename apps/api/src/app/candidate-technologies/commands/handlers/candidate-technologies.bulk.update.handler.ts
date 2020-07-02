@@ -14,7 +14,7 @@ export class CandidateTechnologiesBulkUpdateHandler
 	): Promise<any> {
 		const { technologies } = command;
 		// TO DO
-		technologies.map((item) =>
+		technologies.forEach((item) =>
 			this.candidateTechnologiesService.update(item.id, { ...item })
 		);
 		return;

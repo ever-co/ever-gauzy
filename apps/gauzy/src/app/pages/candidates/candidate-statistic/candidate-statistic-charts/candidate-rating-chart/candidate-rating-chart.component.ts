@@ -7,9 +7,6 @@ import { Candidate } from '@gauzy/models';
 @Component({
 	selector: 'ga-candidate-rating-chart',
 	template: `
-		<h6>
-			{{ 'CANDIDATES_PAGE.STATISTIC.CANDIDATE_RATING' | translate }}
-		</h6>
 		<chart
 			style="height: 400px; width: 100%;"
 			type="bar"
@@ -39,7 +36,7 @@ export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				(this.data = {
+				this.data = {
 					labels: this.labels,
 					datasets: [
 						{
@@ -49,25 +46,26 @@ export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 							backgroundColor: this.backgroundColor
 						}
 					]
-				}),
-					(this.options = {
-						responsive: true,
-						maintainAspectRatio: false,
-						elements: {
-							rectangle: {
-								borderWidth: 2
-							}
-						},
-						scales: {
-							yAxes: [
-								{
-									ticks: {
-										beginAtZero: true
-									}
-								}
-							]
+				};
+
+				this.options = {
+					responsive: true,
+					maintainAspectRatio: false,
+					elements: {
+						rectangle: {
+							borderWidth: 2
 						}
-					});
+					},
+					scales: {
+						yAxes: [
+							{
+								ticks: {
+									beginAtZero: true
+								}
+							}
+						]
+					}
+				};
 			});
 	}
 

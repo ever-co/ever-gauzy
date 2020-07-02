@@ -34,7 +34,7 @@ export class UserMutationComponent implements OnInit {
 
 	async add() {
 		try {
-			const organization = await this.store.selectedOrganization;
+			const organization = this.store.selectedOrganization;
 			const user = await this.userBasicInfo.registerUser(
 				RolesEnum.VIEWER, //TODO: take role from the form.
 				organization.id,

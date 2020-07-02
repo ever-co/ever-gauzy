@@ -52,7 +52,7 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 				['employees'],
 				findObj
 			);
-			items.map((item) => this.policies.push(item));
+			items.forEach((item) => this.policies.push(item));
 			this.policy = this.policies[items.length - 1];
 		}
 	}

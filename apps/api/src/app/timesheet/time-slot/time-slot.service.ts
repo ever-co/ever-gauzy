@@ -17,19 +17,19 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async getTimeSlots(request: IGetTimeSlotInput) {
-		let employeeId: string | string[];
+		let employeeIds: string[];
 
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			if (request.employeeId) {
-				employeeId = request.employeeId;
+			if (request.employeeIds) {
+				employeeIds = request.employeeIds;
 			}
 		} else {
 			const user = RequestContext.currentUser();
-			employeeId = user.employeeId;
+			employeeIds = [user.employeeId];
 		}
 
 		const logs = await this.timeSlotRepository.find({
@@ -64,22 +64,13 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 						}
 					);
 				}
-				if (employeeId) {
-					if (employeeId instanceof Array) {
-						qb.andWhere(
-							`"${qb.alias}"."employeeId" IN (:...employeeId)`,
-							{
-								employeeId: employeeId
-							}
-						);
-					} else {
-						qb.andWhere(
-							`"${qb.alias}"."employeeId" = :employeeId`,
-							{
-								employeeId
-							}
-						);
-					}
+				if (employeeIds) {
+					qb.andWhere(
+						`"${qb.alias}"."employeeId" IN (:...employeeId)`,
+						{
+							employeeId: employeeIds
+						}
+					);
 				}
 				if (request.organizationId) {
 					qb.andWhere(

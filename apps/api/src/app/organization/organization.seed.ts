@@ -16,7 +16,7 @@ export const createDefaultOrganizations = async (
 ): Promise<Organization[]> => {
 	const defaultOrganizations: Organization[] = [];
 
-	env.defaultOrganizations.map((organiziation) => {
+	env.defaultOrganizations.forEach((organiziation) => {
 		const defaultOrganization: Organization = new Organization();
 
 		const {

@@ -46,7 +46,9 @@ export class TimeLog extends Base implements ITimeLog {
 	@Column({ nullable: true })
 	readonly timesheetId?: string;
 
-	@ManyToMany(() => TimeSlot, (timeSlots) => timeSlots.timeLogs)
+	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
+		cascade: true
+	})
 	@JoinTable({
 		name: 'time_slot_time_logs'
 	})

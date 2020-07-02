@@ -200,7 +200,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 				team.members = team.members.filter((member) => !member.role);
 			});
 
-			this.teams = teams.sort(
+			this.teams = [...teams].sort(
 				(a, b) => b.members.length - a.members.length
 			);
 		}

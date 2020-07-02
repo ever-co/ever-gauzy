@@ -55,7 +55,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		this.loadOrganizationData();
 	}
 
-	loadOrganizationData() {
+	async loadOrganizationData() {
 		if (!this.selectedOrganizationId) {
 			this.toastrService.warning(
 				this.getTranslation('TOASTR.MESSAGE.PROJECT_LOAD'),
@@ -65,9 +65,9 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		}
 
 		try {
-			this.loadProjects();
-			this.loadOrganizationContacts();
-			this.loadDepartments();
+			await this.loadProjects();
+			await this.loadOrganizationContacts();
+			await this.loadDepartments();
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,

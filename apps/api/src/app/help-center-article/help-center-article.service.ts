@@ -25,4 +25,7 @@ export class HelpCenterArticleService extends CrudService<HelpCenterArticle> {
 			})
 			.getMany();
 	}
+	async deleteBulkByCategoryId(ids: string[]) {
+		return await this.repository.delete(ids);
+	}
 }

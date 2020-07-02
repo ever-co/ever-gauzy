@@ -17,7 +17,6 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import {
 	OrganizationProjects as IOrganizationProjects,
 	CurrenciesEnum
@@ -26,9 +25,12 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { Employee } from '../employee/employee.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
+import { TenantBase } from '../core/entities/tenant-base';
+import { Organization } from '../organization/organization.entity';
+import { Task } from '../tasks/task.entity';
 
 @Entity('organization_project')
-export class OrganizationProjects extends Base
+export class OrganizationProjects extends TenantBase
 	implements IOrganizationProjects {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationProject)
@@ -61,6 +63,11 @@ export class OrganizationProjects extends Base
 	)
 	@JoinColumn()
 	organizationContact?: OrganizationContact;
+
+	@ApiProperty({ type: Task })
+	@OneToMany((type) => Task, (task) => task.project)
+	@JoinColumn()
+	tasks?: Task[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -104,6 +111,9 @@ export class OrganizationProjects extends Base
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	@ManyToOne((type) => Organization, (organization) => organization.id)
+	organization?: Organization;
 
 	@ApiProperty({ type: String })
 	@IsString()

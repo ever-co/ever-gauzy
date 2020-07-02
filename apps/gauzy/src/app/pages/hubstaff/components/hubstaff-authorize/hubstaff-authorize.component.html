@@ -9,7 +9,9 @@
 			*ngIf="!hubStaffAppCode; else clientFormVar"
 		>
 			<div class="form-group">
-				<label for="client_id" class="label">Hubstaff Client ID</label>
+				<label for="client_id" class="label">{{
+					'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate
+				}}</label>
 				<input
 					fullWidth
 					id="client_id"
@@ -31,9 +33,9 @@
 		<ng-template #clientFormVar>
 			<form [formGroup]="clientSecretForm" (ngSubmit)="addIntegration()">
 				<div class="form-group">
-					<label for="client_secret" class="label"
-						>Hubstaff Client Secret</label
-					>
+					<label for="client_secret" class="label">{{
+						'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_SECRET' | translate
+					}}</label>
 					<input
 						fullWidth
 						id="client_secret"
@@ -56,19 +58,5 @@
 				</button>
 			</form>
 		</ng-template>
-		<!-- 
-			<nb-step label="Organizations">
-				<ng2-smart-table
-					[settings]="settingsSmartTable"
-					[source]="organizations"
-					(userRowSelect)="selectOrganization($event)"
-					style="cursor: pointer;"
-				>
-				</ng2-smart-table>
-				<div class="hint">
-					<nb-icon icon="info-outline"></nb-icon>
-					Select Organization and proccedd to sync data.
-				</div>
-			</nb-step> -->
 	</nb-card-body>
 </nb-card>

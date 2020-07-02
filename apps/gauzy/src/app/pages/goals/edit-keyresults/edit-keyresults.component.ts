@@ -18,8 +18,7 @@ import {
 
 @Component({
 	selector: 'ga-edit-keyresults',
-	templateUrl: './edit-keyresults.component.html',
-	styleUrls: ['./edit-keyresults.component.scss']
+	templateUrl: './edit-keyresults.component.html'
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: Employee[];
@@ -47,8 +46,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			type: [this.keyResultTypeEnum.NUMBER, Validators.required],
 			targetValue: [1],
 			initialValue: [0],
-			owner: ['', Validators.required],
-			lead: [''],
+			owner: [null, Validators.required],
+			lead: [null],
 			deadline: [
 				this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE,
 				Validators.required
@@ -71,7 +70,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					: null,
 				hardDeadline: this.data.hardDeadline
 					? new Date(this.data.hardDeadline)
-					: null
+					: null,
+				lead: !!this.data.lead ? this.data.lead.id : null,
+				owner: this.data.owner.id
 			});
 		}
 	}

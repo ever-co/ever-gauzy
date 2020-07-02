@@ -9,24 +9,26 @@ import { first, takeUntil } from 'rxjs/operators';
 import { GoalSettingsService } from '../../@core/services/goal-settings.service';
 import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-goal-settings',
-	templateUrl: './goal-settings.component.html',
-	styleUrls: ['./goal-settings.component.scss']
+	templateUrl: './goal-settings.component.html'
 })
 export class GoalSettingsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	smartTableData = new LocalDataSource();
 	smartTableSettings: object;
 	selectedTimeFrame: any = null;
+	selectedOrganizationId: string;
 	@ViewChild('timeFrameTable') timeFrameTable;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private goalSettingService: GoalSettingsService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -34,7 +36,14 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	async ngOnInit() {
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
-		this._loadTableData();
+		await this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (organization) => {
+				if (organization) {
+					this.selectedOrganizationId = organization.id;
+					await this._loadTableData();
+				}
+			});
 	}
 
 	selectTimeFrame(ev: {
@@ -51,7 +60,12 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	}
 
 	private async _loadTableData() {
-		await this.goalSettingService.getAllTimeFrames().then((res) => {
+		const findObj = {
+			organization: {
+				id: this.selectedOrganizationId
+			}
+		};
+		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
 			this.smartTableData.load(res.items);
 			if (this.timeFrameTable) {
 				this.timeFrameTable.grid.dataSet.willSelect = 'false';

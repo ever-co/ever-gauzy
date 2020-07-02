@@ -65,7 +65,7 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				(this.data = {
+				this.data = {
 					labels: this.labels,
 					datasets: [
 						{
@@ -75,25 +75,26 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 							data: this.rating
 						}
 					]
-				}),
-					(this.options = {
-						responsive: true,
-						maintainAspectRatio: false,
-						elements: {
-							rectangle: {
-								borderWidth: 2
-							}
-						},
-						scales: {
-							yAxes: [
-								{
-									ticks: {
-										beginAtZero: true
-									}
-								}
-							]
+				};
+
+				this.options = {
+					responsive: true,
+					maintainAspectRatio: false,
+					elements: {
+						rectangle: {
+							borderWidth: 2
 						}
-					});
+					},
+					scales: {
+						yAxes: [
+							{
+								ticks: {
+									beginAtZero: true
+								}
+							}
+						]
+					}
+				};
 			});
 	}
 

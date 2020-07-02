@@ -25,8 +25,15 @@ export const createDefaultExpenses = async (
 ): Promise<Expense[]> => {
 	const expensesFromFile = [];
 	let defaultExpenses: Expense[] = [];
-	const filePath =
-		'./apps/api/src/app/expense/expense-seed-data/expenses-data.csv';
+	let filePath = './src/app/expense/expense-seed-data/expenses-data.csv';
+
+	try {
+		filePath = fs.existsSync(filePath)
+			? filePath
+			: `./apps/api/${filePath.slice(2)}`;
+	} catch (error) {
+		console.error('Cannot find income data csv');
+	}
 
 	fs.createReadStream(filePath)
 		.pipe(csv())
@@ -48,6 +55,7 @@ export const createDefaultExpenses = async (
 
 				expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
+				expense.tenant = defaultData.org.tenant;
 				expense.amount = Math.abs(seedExpense.amount);
 				expense.vendor = foundVendor;
 				expense.category = foundCategory;
@@ -105,6 +113,7 @@ export const createRandomExpenses = async (
 				});
 
 				expense.organization = employee.organization;
+				expense.tenant = tenant;
 				expense.employee = employee;
 				expense.amount = faker.random.number({ min: 10, max: 999 });
 				expense.vendor =

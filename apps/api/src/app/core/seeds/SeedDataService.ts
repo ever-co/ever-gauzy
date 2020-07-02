@@ -3,7 +3,7 @@ import { CandidateExperience } from './../../candidate-experience/candidate-expe
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpService } from '@nestjs/common';
 import {
 	Connection,
 	createConnection,
@@ -66,7 +66,7 @@ import { createDefaultEmailTemplates } from '../../email-template/email-template
 import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
-} from '../../organization/employment-types.seed';
+} from '../../organization-employment-type/organization-employment-type.seed';
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
@@ -147,6 +147,29 @@ import {
 import { Equipment } from '../../equipment/equipment.entity';
 import { Contact } from '../../contact/contact.entity';
 
+import { createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
+import { createRandomTask } from '../../tasks/task.seed';
+import { createRandomOrganizationProjects } from '../../organization-projects/organization-projects.seed';
+
+import { RequestApprovalTeam } from '../../request-approval-team/request-approval-team.entity';
+import { RequestApproval } from '../../request-approval/request-approval.entity';
+import { ApprovalPolicy } from '../../approval-policy/approval-policy.entity';
+import { RequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.entity';
+import { ProductTypeTranslation } from '../../product-type/product-type-translation.entity';
+import { ProductCategoryTranslation } from '../../product-category/product-category-translation.entity';
+import { Payment } from '../../payment/payment.entity';
+import { EventType } from '../../event-types/event-type.entity';
+import { CandidateInterviewers } from '../../candidate-interviewers/candidate-interviewers.entity';
+import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
+import { CandidateTechnologies } from '../../candidate-technologies/candidate-technologies.entity';
+import { CandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { CandidateCriterionsRating } from '../../candidate-criterions-rating/candidate-criterion-rating.entity';
+import { TimeSlotMinute } from '../../timesheet/time-slot-minute.entity';
+import { TimeLog } from '../../timesheet/time-log.entity';
+import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
+import { IntegrationType } from '../../integration/integration-type.entity';
+import { Integration } from '../../integration/integration.entity';
+
 const allEntities = [
 	TimeOffPolicy,
 	Proposal,
@@ -207,14 +230,32 @@ const allEntities = [
 	ProductVariantSettings,
 	ProductVariantPrice,
 	ProductOption,
-	Contact
+	Contact,
+	RequestApprovalTeam,
+	RequestApproval,
+	ApprovalPolicy,
+	RequestApprovalEmployee,
+	ProductTypeTranslation,
+	ProductCategoryTranslation,
+	Payment,
+	EventType,
+	CandidateInterviewers,
+	CandidateInterview,
+	CandidateTechnologies,
+	CandidatePersonalQualities,
+	CandidateCriterionsRating,
+	TimeSlotMinute,
+	TimeLog,
+	HelpCenterArticle,
+	IntegrationType,
+	Integration
 ];
 
 @Injectable()
 export class SeedDataService {
 	connection: Connection;
 	log = console.log;
-
+	organizations: Organization[];
 	constructor() {}
 
 	async createConnection() {
@@ -308,6 +349,8 @@ export class SeedDataService {
 			tenant
 		);
 
+		this.organizations = defaultOrganizations;
+
 		const superAdminUsers = await createDefaultSuperAdminUsers(
 			this.connection,
 			roles,
@@ -329,7 +372,7 @@ export class SeedDataService {
 
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
 
-		await createDefaultProducts(this.connection);
+		await createDefaultProducts(this.connection, tenant);
 
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,
@@ -527,6 +570,13 @@ export class SeedDataService {
 
 		await createSkills(this.connection);
 		await createLanguages(this.connection);
+
+		await createRandomOrganizationProjects(
+			this.connection,
+			this.organizations
+		);
+		await createRandomTask(this.connection);
+		await createRandomTimesheet(this.connection);
 	}
 
 	/**
@@ -535,7 +585,7 @@ export class SeedDataService {
 	async getEntities() {
 		const entities = [];
 		try {
-			(await (await this.connection).entityMetadatas).forEach((entity) =>
+			this.connection.entityMetadatas.forEach((entity) =>
 				entities.push({
 					name: entity.name,
 					tableName: entity.tableName
@@ -554,8 +604,10 @@ export class SeedDataService {
 	async cleanAll(entities) {
 		try {
 			for (const entity of entities) {
-				const repository = await getRepository(entity.name);
-				await repository.query(`DELETE FROM "${entity.tableName}";`);
+				const repository = getRepository(entity.name);
+				await repository.query(
+					`TRUNCATE  "${entity.tableName}" RESTART IDENTITY CASCADE;`
+				);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

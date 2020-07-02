@@ -2,16 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
 import { Proposal } from './proposal.entity';
-import { CrudService } from '../core/crud/crud.service';
 import { IPagination } from '../core';
 import {
 	ProposalCreateInput as IProposalCreateInput,
 	Proposal as IProposal
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 
 @Injectable()
-export class ProposalService extends CrudService<Proposal> {
+export class ProposalService extends TenantAwareCrudService<Proposal> {
 	constructor(
 		@InjectRepository(Proposal)
 		private readonly proposalRepository: Repository<Proposal>,

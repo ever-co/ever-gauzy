@@ -6,7 +6,7 @@ import { Timesheet } from '../timesheet.entity';
 import * as moment from 'moment';
 import {
 	IUpdateTimesheetStatusInput,
-	IGetTimeSheetInput,
+	IGetTimesheetInput,
 	ISubmitTimesheetInput,
 	TimesheetStatus,
 	PermissionsEnum
@@ -81,8 +81,8 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		return timesheet;
 	}
 
-	async getTimeSheets(request: IGetTimeSheetInput) {
-		let employeeId: string;
+	async getTimeSheets(request: IGetTimesheetInput) {
+		let employeeIds: string[];
 		const startDate = moment(request.startDate).format(
 			'YYYY-MM-DD HH:mm:ss'
 		);
@@ -93,12 +93,12 @@ export class TimeSheetService extends CrudService<Timesheet> {
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			if (request.employeeId) {
-				employeeId = request.employeeId;
+			if (request.employeeIds) {
+				employeeIds = request.employeeIds;
 			}
 		} else {
 			const user = RequestContext.currentUser();
-			employeeId = user.employeeId;
+			employeeIds = [user.employeeId];
 		}
 
 		const timesheet = await this.timeSheetRepository.find({
@@ -118,19 +118,13 @@ export class TimeSheetService extends CrudService<Timesheet> {
 			where: (qb) => {
 				qb.where({
 					startedAt: Between(startDate, endDate),
-					deletedAt: null,
-					...(employeeId ? { employeeId } : {})
+					...(employeeIds ? { employeeIds: In(employeeIds) } : {})
 				});
 				qb.andWhere('"startedAt" Between :startDate AND :endDate', {
 					startDate,
 					endDate
 				});
 				qb.andWhere('"deletedAt" IS NULL');
-				if (request.employeeId) {
-					qb.andWhere('"employeeId" = :employeeId', {
-						employeeId: request.employeeId
-					});
-				}
 				if (request.organizationId) {
 					qb.andWhere(
 						'"employee"."organizationId" = :organizationId',

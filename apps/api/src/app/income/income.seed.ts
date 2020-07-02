@@ -15,8 +15,15 @@ export const createDefaultIncomes = async (
 ): Promise<Income[]> => {
 	const incomeFromFile = [];
 	let defaultIncomes = [];
-	const filePath =
-		'./apps/api/src/app/income/income-seed-data/income-data.csv';
+	let filePath = './src/app/income/income-seed-data/income-data.csv';
+
+	try {
+		filePath = fs.existsSync(filePath)
+			? filePath
+			: `./apps/api/${filePath.slice(2)}`;
+	} catch (error) {
+		console.error('Cannot find income data csv');
+	}
 
 	fs.createReadStream(filePath)
 		.pipe(csv())
@@ -31,6 +38,7 @@ export const createDefaultIncomes = async (
 				income.employee = foundEmployee;
 				income.clientName = seedIncome.clientName;
 				income.organization = defaultData.org;
+				income.tenant = defaultData.org.tenant;
 				income.amount = seedIncome.amount;
 				income.clientId = faker.random
 					.number({ min: 10, max: 9999 })
@@ -68,7 +76,7 @@ export const createRandomIncomes = async (
 	(tenants || []).forEach((tenant) => {
 		const employees = tenantEmployeeMap.get(tenant);
 
-		(employees || []).map((employee) => {
+		(employees || []).forEach((employee) => {
 			for (let index = 0; index < 5; index++) {
 				const income = new Income();
 
@@ -78,6 +86,7 @@ export const createRandomIncomes = async (
 				});
 
 				income.organization = employee.organization;
+				income.tenant = tenant;
 				income.employee = employee;
 				income.clientName = clientsArray[currentIndex];
 				income.amount = faker.random.number({ min: 10, max: 9999 });

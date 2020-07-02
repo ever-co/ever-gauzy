@@ -28,7 +28,7 @@ export class GoalDetailsComponent implements OnInit {
 
 	async ngOnInit() {
 		const employee = await this.employeeService.getEmployeeById(
-			this.goal.owner,
+			this.goal.owner.id,
 			['user']
 		);
 		this.src = employee.user.imageUrl;

@@ -4,8 +4,7 @@ import { ApprovalPolicyTypesEnum } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-request-approval-status',
-	templateUrl: './approval-policy-status.component.html',
-	styleUrls: ['./approval-policy-status.component.scss']
+	templateUrl: './approval-policy-status.component.html'
 })
 export class ApprovalPolicyStatusComponent implements ViewCell, OnInit {
 	@Input()

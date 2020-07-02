@@ -754,9 +754,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	refreshMenuItem(item, withOrganizationShortcuts, forceTranslate) {
-		if (!item.data.translated) {
-			item.title = this.getTranslation(item.data.translationKey);
-		} else if (forceTranslate) {
+		if (!item.data.translated || forceTranslate) {
 			item.title = this.getTranslation(item.data.translationKey);
 		}
 

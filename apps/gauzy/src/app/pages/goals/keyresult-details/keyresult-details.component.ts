@@ -46,7 +46,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		);
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;
-		this.updates = this.keyResult.updates.sort(
+		this.updates = [...this.keyResult.updates].sort(
 			(a, b) =>
 				new Date(b.createdAt).getTime() -
 				new Date(a.createdAt).getTime()
@@ -75,7 +75,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			.findKeyResult(this.keyResult.id)
 			.then((keyResult) => {
 				this.keyResult = keyResult.items[0];
-				this.updates = keyResult.items[0].updates.sort(
+				this.updates = [...keyResult.items[0].updates].sort(
 					(a, b) =>
 						new Date(b.createdAt).getTime() -
 						new Date(a.createdAt).getTime()

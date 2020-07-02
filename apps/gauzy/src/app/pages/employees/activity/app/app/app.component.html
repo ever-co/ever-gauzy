@@ -1,1 +1,39 @@
-<p>app works!</p>
+<div class="filters row mb-3">
+	<div class="col">
+		<ngx-filters
+			[multipleEmployeSelect]="false"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
+	</div>
+</div>
+<div
+	class="screenshot-container py-3"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
+	<div
+		class="mt-2 pt-2 border-bottom-1"
+		*ngFor="let app of apps; let i = index"
+	>
+		<div class="row">
+			<div class="col-sm-3 py-2">{{ app.title }}</div>
+			<div class="col-sm py-2">
+				<nb-progress-bar
+					class="mb-1"
+					[value]="app.duration"
+					[status]="prgressStatus(app.duration)"
+					[displayValue]="true"
+					size="tiny"
+				></nb-progress-bar>
+			</div>
+			<div class="col-sm-auto py-2">
+				{{ app.duration }}
+			</div>
+		</div>
+	</div>
+
+	<div class="text-center" *ngIf="!loading && apps?.length == 0">
+		No activites
+	</div>
+</div>

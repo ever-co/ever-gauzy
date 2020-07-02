@@ -27,8 +27,7 @@ import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.co
 
 @Component({
 	selector: 'ngx-task',
-	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.scss']
+	templateUrl: './task.component.html'
 })
 export class TaskComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

@@ -62,7 +62,6 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 			.toPromise();
 
 		if (filters) {
-			debugger;
 			this._getSelectedOrganizationEmails(
 				this._selectedOrganization.id,
 				filters
@@ -83,12 +82,12 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _getSelectedOrganizationEmails(
+	private async _getSelectedOrganizationEmails(
 		organizationId: string,
 		filters?: any
 	) {
 		try {
-			this.emailService
+			await this.emailService
 				.getAll(['emailTemplate', 'user'], {
 					organizationId,
 					...filters

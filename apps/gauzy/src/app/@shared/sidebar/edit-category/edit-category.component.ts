@@ -23,7 +23,7 @@ export class EditCategoryComponent extends TranslationBaseComponent
 	) {
 		super(translateService);
 	}
-	@Input() category: IHelpCenter;
+	@Input() category?: IHelpCenter;
 	@Input() base: IHelpCenter;
 	@Input() editType: string;
 	public selectedLang: string;
@@ -52,25 +52,25 @@ export class EditCategoryComponent extends TranslationBaseComponent
 			color: [''],
 			desc: ['', Validators.required]
 		});
-		this.loadFormData(this.category);
+		this.loadFormData();
 	}
 
 	toggleStatus(event: boolean) {
 		this.isToggled = event;
 	}
 
-	loadFormData(category) {
+	loadFormData() {
 		if (this.editType === 'edit')
 			this.form.patchValue({
-				name: category.name,
-				desc: category.description,
-				color: category.color
+				name: this.category.name,
+				desc: this.category.description,
+				color: this.category.color
 			});
 		if (this.editType === 'add') {
 			this.form.patchValue({
 				name: '',
 				desc: '',
-				color: ''
+				color: '#000000'
 			});
 			this.parentId = this.base.id;
 		}

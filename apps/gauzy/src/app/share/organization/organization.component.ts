@@ -6,12 +6,12 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { EmployeesService } from '../../@core/services';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	IGetTimeLogInput,
 	Organization,
 	OrganizationAwards,
 	OrganizationLanguages,
 	PermissionsEnum,
-	Timesheet
+	Timesheet,
+	IGetTimesheetInput
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -171,7 +171,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getEmployees() {
-		let employees = await this.employeesService
+		const employees = await this.employeesService
 			.getAll(['user'], {
 				organization: {
 					id: this.organization.id
@@ -186,23 +186,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async getEmployeeBonuses() {
-		let employeeBonuses = await this.incomeService.getAll(
-			['employee', 'employee.user'],
-			{
-				organization: {
-					id: this.organization.id
-				},
-				isBonus: true
-			}
-		);
-		this.employee_bonuses = employeeBonuses.items.filter(
-			(item) => !!item.employee.anonymousBonus
-		);
-	}
-
 	private async getTimeSheets() {
-		const request: IGetTimeLogInput = {
+		const request: IGetTimesheetInput = {
 			organizationId: this.organization.id
 		};
 		this.loading = true;
@@ -213,7 +198,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getEmployeeStatistics() {
-		let statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
+		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 			{
 				organizationId: this.organization.id,
 				filterDate: new Date()

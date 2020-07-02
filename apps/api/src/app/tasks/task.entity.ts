@@ -9,7 +9,7 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { Task as ITask } from '@gauzy/models';
+import { Task as ITask, TaskStatusEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
@@ -25,17 +25,17 @@ export class Task extends Base implements ITask {
 	@JoinTable({
 		name: 'tag_task'
 	})
-	tags: Tag[];
+	tags?: Tag[];
 
 	@ApiProperty({ type: String })
 	@Column()
 	title: string;
 
 	@ApiProperty({ type: String })
-	@Column()
+	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: String, enum: TaskStatusEnum })
 	@Column()
 	status?: string;
 
@@ -55,7 +55,7 @@ export class Task extends Base implements ITask {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	project: OrganizationProjects;
+	project?: OrganizationProjects;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((task: Task) => task.project)
@@ -72,7 +72,7 @@ export class Task extends Base implements ITask {
 	@JoinTable({
 		name: 'task_team'
 	})
-	teams: OrganizationTeam[];
+	teams?: OrganizationTeam[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.task)

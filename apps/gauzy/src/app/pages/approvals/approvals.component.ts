@@ -13,6 +13,7 @@ import { Store } from '../../@core/services/store.service';
 import { RequestApprovalStatusComponent } from './table-components/request-approval-status/request-approval-status.component';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
+import { RequestApprovalTypeComponent } from './table-components/request-approval-type/request-approval-type.component';
 
 export interface IApprovalsData {
 	icon: string;
@@ -70,6 +71,10 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
+					this.loadSettings();
+				} else {
+					this.selectedEmployeeId = undefined;
+					this.loadSettings();
 				}
 			});
 
@@ -100,6 +105,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedRequestApproval = null;
+		this.disableButton = true;
 		let items = [];
 		if (this.selectedEmployeeId) {
 			items = (
@@ -112,7 +118,8 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			items = (
 				await this.approvalRequestService.getAll([
 					'approvalPolicy',
-					'employeeApprovals'
+					'employeeApprovals',
+					'teamApprovals'
 				])
 			).items;
 		}
@@ -134,7 +141,8 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_TYPE'
 					),
-					type: 'string',
+					type: 'custom',
+					renderComponent: RequestApprovalTypeComponent,
 					filter: false
 				},
 				min_count: {
@@ -170,62 +178,40 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		});
 	}
 
-	// private initListApprovals() {
-	//   this.listApprovals = [
-	//     {
-	//       icon: 'paper-plane-outline',
-	//       title: 'Business Trip'
-	//     },
-	//     {
-	//       icon: 'paper-plane-outline',
-	//       title: 'Borrow Items'
-	//     },
-	//     {
-	//       icon: 'paper-plane-outline',
-	//       title: 'General Approval'
-	//     },
-	//     {
-	//       icon: 'paper-plane-outline',
-	//       title: 'Contract Approval'
-	//     },
-	//     {
-	//       icon: 'paper-plane-outline',
-	//       title: 'Payment Application'
-	//     },
-	//     {
-	//       icon: 'paper-plane-outline',
-	//       title: 'Car Rental Application'
-	//     },
-	//     {
-	//       icon: 'paper-plane-outline',
-	//       title: 'Job Referral Award'
-	//     },
-	//     {
-	//       icon: 'paper-plane-outline',
-	//       title: 'Procurement'
-	//     }
-	//   ]
-	// }
-
 	manageAppropvalPolicy() {
 		this.router.navigate(['/pages/organization/approval-policy']);
 	}
 
-	async save() {
-		const dialog = this.dialogService.open(
-			RequestApprovalMutationComponent,
-			{
+	async save(isCreate: boolean) {
+		let dialog;
+		if (!isCreate) {
+			dialog = this.dialogService.open(RequestApprovalMutationComponent, {
 				context: {
 					requestApproval: this.selectedRequestApproval
 				}
-			}
-		);
+			});
+		} else {
+			dialog = this.dialogService.open(RequestApprovalMutationComponent);
+		}
 		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
 
 		this.selectedRequestApproval = null;
 		this.disableButton = true;
 
-		if (requestApproval) {
+		const params = {
+			name: requestApproval.name,
+			type: Number(requestApproval.type),
+			approvalPolicyId: requestApproval.approvalPolicyId,
+			employeeApprovals: requestApproval.employees,
+			teams: requestApproval.teams,
+			min_count: requestApproval.min_count,
+			id: undefined
+		};
+		if (requestApproval.id) {
+			params.id = requestApproval.id;
+		}
+		const isSuccess = await this.approvalRequestService.save(params);
+		if (isSuccess) {
 			this.toastrService.primary(
 				this.getTranslation(
 					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_SAVED'
@@ -237,7 +223,20 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete() {}
+	async delete() {
+		const isSuccess = await this.approvalRequestService.delete(
+			this.selectedRequestApproval.id
+		);
+		if (isSuccess) {
+			this.toastrService.primary(
+				this.getTranslation(
+					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_DELETED'
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+		}
+		this.loadSettings();
+	}
 
 	ngOnDestroy() {
 		this.ngDestroy$.next();

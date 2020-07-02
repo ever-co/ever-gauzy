@@ -2,11 +2,13 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 import { Employee } from './employee.model';
 import { Tag } from './tag-entity.model';
+import { ITenant } from './tenant.model';
 
 export interface OrganizationDepartment extends IBaseEntityWithMembers {
 	name: string;
 	organizationId: string;
 	tags: Tag[];
+	tenant: ITenant;
 }
 
 export interface OrganizationDepartmentFindInput extends IBaseEntityModel {
