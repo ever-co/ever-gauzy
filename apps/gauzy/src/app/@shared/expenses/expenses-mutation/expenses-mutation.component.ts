@@ -35,6 +35,8 @@ import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-c
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
+import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 
 @Component({
 	selector: 'ga-expenses-mutation',
@@ -54,7 +56,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	expenseTypes = Object.values(ExpenseTypesEnum);
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
-	expenseCategories$: Observable<IExpenseCategory[]>;
+	expenseCategories: IOrganizationExpenseCategory[];
 	vendors: IOrganizationVendor[];
 	clients: { clientName: string; clientId: string }[] = [];
 	projects: { projectName: string; projectId: string }[] = [];
@@ -82,7 +84,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		private store: Store,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
+		private readonly expenseCategoriesStore: OrganizationExpenseCategoriesService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService
@@ -103,7 +105,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async getDefaultData() {
-		this.expenseCategories$ = this.expenseCategoriesStore.expenseCategories$;
+		this.organizationId = this.store.selectedOrganization.id;
+		const { items: category } = await this.expenseCategoriesStore.getAll({
+			organizationId: this.organizationId
+		});
+		this.expenseCategories = category;
 		this.organizationId = this.store.selectedOrganization.id;
 		const { items: vendors } = await this.organizationVendorsService.getAll(
 			{
@@ -152,13 +158,18 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		);
 	}
 
-	addNewCategory = async (name: string): Promise<IExpenseCategory> => {
+	addNewCategory = async (
+		name: string
+	): Promise<IOrganizationExpenseCategory> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			return await this.expenseCategoriesStore.create(name).toPromise();
+			return await this.expenseCategoriesStore.create({
+				name,
+				organizationId: this.organizationId
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
