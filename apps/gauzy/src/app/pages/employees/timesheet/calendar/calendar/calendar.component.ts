@@ -34,8 +34,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
 	selector: 'ngx-calendar',
-	templateUrl: './calendar.component.html',
-	styleUrls: ['./calendar.component.scss']
+	templateUrl: './calendar.component.html'
 })
 export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;

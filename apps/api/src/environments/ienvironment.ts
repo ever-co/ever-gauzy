@@ -14,6 +14,12 @@ import {
 import { IFacebookConfig } from './IFacebookConfig';
 import { IGoogleConfig } from './IGoogleConfig';
 import { IUpworkConfig } from './IUpworkConfig';
+import { IGithubConfig } from './IGithubConfig';
+import { IMicrosoftConfig } from './IMicrosoftConfig';
+import { ILinkedinConfig } from './ILinkedinIConfig';
+import { ITwitterConfig } from './ITwitterConfig';
+import { IFiverrConfig } from './IFiverrConfig';
+import { IKeycloakConfig } from './IKeycloakConfig';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -31,6 +37,7 @@ export interface Env {
 export interface IEnvironment {
 	port: number | string;
 	host: string;
+	baseUrl: string;
 
 	production: boolean;
 	envName: string;
@@ -44,6 +51,12 @@ export interface IEnvironment {
 
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
+	githubConfig: IGithubConfig;
+	microsoftConfig: IMicrosoftConfig;
+	linkedinConfig: ILinkedinConfig;
+	twitterConfig: ITwitterConfig;
+	fiverrConfig: IFiverrConfig;
+	keycloakConfig: IKeycloakConfig;
 
 	defaultAdmins: IDefaultUser[];
 	defaultSuperAdmins: IDefaultUser[];

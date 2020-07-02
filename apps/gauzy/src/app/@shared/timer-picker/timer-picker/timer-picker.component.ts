@@ -13,7 +13,6 @@ import { Organization } from '@gauzy/models';
 @Component({
 	selector: 'ga-timer-picker',
 	templateUrl: './timer-picker.component.html',
-	styleUrls: ['./timer-picker.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,

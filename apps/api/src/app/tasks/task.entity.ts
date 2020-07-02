@@ -32,7 +32,7 @@ export class Task extends Base implements ITask {
 	title: string;
 
 	@ApiProperty({ type: String })
-	@Column()
+	@Column({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: String, enum: TaskStatusEnum })

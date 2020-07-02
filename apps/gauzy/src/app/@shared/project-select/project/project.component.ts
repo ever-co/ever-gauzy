@@ -6,7 +6,6 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 @Component({
 	selector: 'ga-project-selector',
 	templateUrl: './project.component.html',
-	styleUrls: ['./project.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,

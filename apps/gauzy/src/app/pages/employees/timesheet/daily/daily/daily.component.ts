@@ -26,8 +26,7 @@ import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/
 
 @Component({
 	selector: 'ngx-daily',
-	templateUrl: './daily.component.html',
-	styleUrls: ['./daily.component.scss']
+	templateUrl: './daily.component.html'
 })
 export class DailyComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
@@ -103,14 +102,14 @@ export class DailyComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		const { employeeId, startDate, endDate } = this.logRequest;
+		const { employeeIds, startDate, endDate } = this.logRequest;
 
 		const request: IGetTimeLogInput = {
 			organizationId: this.organization.id,
 			...this.logRequest,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeId ? { employeeId } : {})
+			...(employeeIds ? { employeeIds } : {})
 		};
 
 		// this.router.navigate([], {

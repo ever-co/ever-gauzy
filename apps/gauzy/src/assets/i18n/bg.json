@@ -885,7 +885,8 @@
 			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
 			"CRITERIONS_RATING": "Criterions rating per interview",
 			"NO_DATA": "No data yet ",
-			"SELECT_INTERVIEW": "Select an interview"
+			"SELECT_INTERVIEW": "Select an interview",
+			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer"
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Candidates criterions",
@@ -936,6 +937,7 @@
 			"CITY": "Град",
 			"STREET": "Улица",
 			"PROJECTS": "Проекти",
+			"CONTACT_TYPE": "Contact Type",
 			"DEPARTMENT_NAME": "Име на отдела",
 			"POSITION_NAME": "Название на позиция",
 			"NEW_PROJECT": "Добавяне на нов проект",
@@ -1093,8 +1095,8 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Approval Request",
-		"EMPLOYEES": "Employees",
-		"TEAMS": "Teams",
+		"EMPLOYEES": "Служители",
+		"TEAMS": "Отбори",
 		"APPROVAL_POLICY": "Approval Policy",
 		"CHOOSE_POLICIES": "Choose policies/s",
 		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
@@ -1592,6 +1594,7 @@
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
 			"CANDIDATE_PROFILE_UPDATE": "{{name}} profile updated.",
 			"NAME_REQUIRED": "Name is required!",
+			"CONTACT_TYPE_REQUIRED": "Contact Type is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",

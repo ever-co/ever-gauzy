@@ -3,12 +3,12 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { Country, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { OrganizationEditStore } from '../../../../@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
 import { OrganizationsService } from '../../../../@core/services/organizations.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 
 export enum ListsInputType {
 	DEPARTMENTS = 'DEPARTMENTS',
@@ -87,10 +87,10 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('departments')
 			},
 			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.CLIENTS'),
+				title: this.getTranslation('ORGANIZATIONS_PAGE.CONTACTS'),
 				icon: 'briefcase-outline',
 				responsive: true,
-				route: this.getRoute('clients')
+				route: this.getRoute('contacts')
 			},
 			{
 				title: this.getTranslation(

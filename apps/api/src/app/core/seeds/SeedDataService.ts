@@ -66,7 +66,7 @@ import { createDefaultEmailTemplates } from '../../email-template/email-template
 import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
-} from '../../organization/employment-types.seed';
+} from '../../organization-employment-type/organization-employment-type.seed';
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
@@ -366,7 +366,7 @@ export class SeedDataService {
 
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
 
-		await createDefaultProducts(this.connection);
+		await createDefaultProducts(this.connection, tenant);
 
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,

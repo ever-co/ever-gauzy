@@ -17,8 +17,7 @@ export interface SelectedEquipmentSharing {
 }
 
 @Component({
-	templateUrl: './equipment-sharing.component.html',
-	styleUrls: ['./equipment-sharing.component.scss']
+	templateUrl: './equipment-sharing.component.html'
 })
 export class EquipmentSharingComponent extends TranslationBaseComponent
 	implements OnInit {

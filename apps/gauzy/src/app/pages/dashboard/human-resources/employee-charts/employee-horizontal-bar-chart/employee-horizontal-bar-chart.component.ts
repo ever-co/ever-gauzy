@@ -142,7 +142,7 @@ export class EmployeeHorizontalBarChartComponent
 								enabled: true,
 								mode: 'dataset',
 								callbacks: {
-									label: function(tooltipItem, data) {
+									label: function (tooltipItem, data) {
 										const label =
 											data.datasets[
 												tooltipItem.datasetIndex
@@ -169,7 +169,7 @@ export class EmployeeHorizontalBarChartComponent
 
 		this.noData = !(this.employeeStatistics || []).length;
 
-		(this.employeeStatistics || []).map((stat) => {
+		(this.employeeStatistics || []).forEach((stat) => {
 			const labelValue = `${monthNames[stat.month]} '${stat.year
 				.toString(10)
 				.substring(2)}`;

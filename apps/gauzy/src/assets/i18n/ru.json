@@ -885,7 +885,8 @@
 			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью",
 			"CRITERIONS_RATING": "Рейтинг критериев за интервью",
 			"NO_DATA": "Пока нет данных ",
-			"SELECT_INTERVIEW": "Выберите интервью"
+			"SELECT_INTERVIEW": "Выберите интервью",
+			"SELECT_INTERVIEW_INTERVIEWER": "Выберите интервью и интервьюера"
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
@@ -936,6 +937,7 @@
 			"CITY": "Город",
 			"STREET": "Улица",
 			"PROJECTS": "Проекты",
+			"CONTACT_TYPE": "Тип контакта",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
 			"NEW_PROJECT": "Добавить новый проект",
@@ -1093,14 +1095,14 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Политика одобрения",
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Запрос на утверждение",
-		"EMPLOYEES": "Employees",
-		"TEAMS": "Teams",
+		"EMPLOYEES": "Сотрудники",
+		"TEAMS": "Команды",
 		"APPROVAL_POLICY": "Политика одобрения",
 		"CHOOSE_POLICIES": "Выбрать политики/с",
 		"EDIT_APPROVAL_REQUEST": "Редактировать подтверждение запроса",
 		"ADD_APPROVAL_REQUEST": "Добавить подтверждение запроса",
-		"APPROVAL_REQUEST_SAVED": "Request Approval Saved",
-		"APPROVAL_REQUEST_DELETED": "Request Approval Deleted"
+		"APPROVAL_REQUEST_SAVED": "Утверждение запроса сохранено",
+		"APPROVAL_REQUEST_DELETED": "Утверждение запроса удалено"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Редактировать политику утверждения",
@@ -1592,6 +1594,7 @@
 			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
 			"CANDIDATE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
 			"NAME_REQUIRED": "Требуется имя!",
+			"CONTACT_TYPE_REQUIRED": "Требуется тип контакта!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
 			"PHONE_REQUIRED": "Требуется указать телефон!",

@@ -44,10 +44,10 @@ export class DeleteCategoryComponent extends TranslationBaseComponent
 		const result = await this.helpCenterArticleService.findByCategoryId(id);
 		if (result) {
 			let hasArticles = false;
-			result.map((article) => {
-				article.categoryId === this.category.id
-					? (hasArticles = true)
-					: null;
+			result.forEach((article) => {
+				if (article.categoryId === this.category.id) {
+					hasArticles = true;
+				}
 			});
 			if (hasArticles)
 				try {
