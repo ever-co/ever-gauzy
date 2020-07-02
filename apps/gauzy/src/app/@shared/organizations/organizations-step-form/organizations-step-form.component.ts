@@ -72,8 +72,8 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 				'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
 				Validators.required
 			],
-			currency: [, Validators.required],
-			name: [, Validators.required],
+			currency: ['', Validators.required],
+			name: ['', Validators.required],
 			officialName: [],
 			taxId: [],
 			tags: []

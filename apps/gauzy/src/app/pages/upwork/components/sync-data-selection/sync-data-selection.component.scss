@@ -1,7 +1,3 @@
-.sync-data-selection {
-  // width: 400px;
-}
-
 .datepicker {
   margin-bottom: 15px;
   display: flex;
@@ -10,14 +6,11 @@
 .employee-selector {
   align-self: flex-end;
   margin-right: 20px;
+  flex: 1;
 }
 
 .only-contracts {
   align-self: flex-end;
-}
-
-.employee-selector {
-  flex: 1;
 }
 
 .datepicker-wrapper {

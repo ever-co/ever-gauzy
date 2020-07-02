@@ -1,20 +1,24 @@
 // Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
 
-import {
-	app,
-	BrowserWindow,
-	ipcMain,
-	screen,
-	Tray,
-	Menu,
-	nativeImage
-} from 'electron';
+import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 import * as url from 'url';
 const Store = require('electron-store');
+import { ipcMainHandler } from './libs/ipc';
+import TrayIcon from './libs/tray-icon';
+import DataModel from './local-data/local-table';
+const knex = require('knex')({
+	client: 'sqlite3',
+	connection: {
+		filename: `${app.getPath('userData')}/metrix.sqlite`
+	}
+});
+const dataModel = new DataModel();
+dataModel.createNewTable(knex);
 
+console.log('path', app.getPath('userData'));
 const store = new Store();
 
 let serve: boolean;
@@ -46,7 +50,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	// to hide title bar, uncomment:
 	// titleBarStyle: 'hidden',
 	webPreferences: {
-		devTools: debugMode,
+		devTools: true,
 		nodeIntegration: debugMode,
 		webSecurity: false
 	}
@@ -123,6 +127,7 @@ function createWindow() {
 	}
 }
 
+/* create second window */
 function createSetupWindow(value) {
 	mainWindowSettings.width = 800;
 	mainWindowSettings.height = 600;
@@ -171,52 +176,10 @@ function startServer(value) {
 			win2.hide();
 		}
 		createWindow();
-		systemTrayMenu();
+		tray = new TrayIcon(win2, knex);
 	}, 5000);
 
 	return true;
-}
-
-function systemTrayMenu() {
-	const iconPath = path.join(
-		__dirname,
-		'assets',
-		'images',
-		'logos',
-		'icon.png'
-	);
-	const trayIcon = nativeImage.createFromPath(iconPath);
-	trayIcon.resize({ width: 16, height: 16 });
-	tray = new Tray(trayIcon);
-	console.log(tray);
-	const contextMenu = Menu.buildFromTemplate([
-		{
-			label: 'Start Tracking Time',
-			click() {
-				console.log('event click');
-				win2.webContents.send('start_tracking');
-			}
-		},
-		{
-			label: 'Stop Tracking Time',
-			click() {
-				win2.webContents.send('stop_tracking_time');
-			}
-		},
-		{
-			label: 'Setting',
-			click() {
-				win2.webContents.send('open_setting_page');
-			}
-		},
-		{
-			label: 'quit',
-			click() {
-				app.quit();
-			}
-		}
-	]);
-	tray.setContextMenu(contextMenu);
 }
 
 try {
@@ -230,7 +193,6 @@ try {
 	app.on('ready', () => {
 		try {
 			const configs: any = store.get('configs');
-			console.log('config', configs);
 			if (configs.isSetup) {
 				global.variableGlobal = {
 					API_BASE_URL: configs.serverUrl
@@ -246,16 +208,7 @@ try {
 			createSetupWindow(false);
 		}
 
-		ipcMain.on('go', (event, arg) => {
-			global.variableGlobal = {
-				API_BASE_URL: arg.serverUrl
-					? arg.serverUrl
-					: arg.port
-					? `http://localhost:${arg.port}`
-					: 'http://localhost:3000'
-			};
-			startServer(arg);
-		});
+		ipcMainHandler(store, startServer, knex);
 	});
 
 	app.on('window-all-closed', quit);

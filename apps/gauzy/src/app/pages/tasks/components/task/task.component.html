@@ -4,18 +4,25 @@
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 >
-	<nb-card-header>
-		<h4>
-			<ng-container *ngIf="isTasksPage()">
-				{{ 'TASKS_PAGE.HEADER' | translate }}
-			</ng-container>
-			<ng-container *ngIf="isMyTasksPage()">
-				{{ 'TASKS_PAGE.MY_TASK_HEADER' | translate }}
-			</ng-container>
-			<ng-container *ngIf="isTeamTaskPage()">
-				{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
-			</ng-container>
-		</h4>
+	<nb-card-header class="header-selector-wrapper">
+		<div>
+			<h4>
+				<ng-container *ngIf="isTasksPage()">
+					{{ 'TASKS_PAGE.HEADER' | translate }}
+				</ng-container>
+				<ng-container *ngIf="isMyTasksPage()">
+					{{ 'TASKS_PAGE.MY_TASK_HEADER' | translate }}
+				</ng-container>
+				<ng-container *ngIf="isTeamTaskPage()">
+					{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
+				</ng-container>
+			</h4>
+		</div>
+		<div>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
@@ -28,36 +35,9 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<button
-				nbButton
-				status="info"
-				(click)="duplicateTaskDIalog()"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.DUPLICATE' | translate }}
-			</button>
-			<button
-				nbButton
-				status="info"
-				(click)="editTaskDIalog()"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="danger"
-				(click)="deleteTask()"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 		<ng-container *ngIf="isTasksPage()">
 			<ng2-smart-table
@@ -66,8 +46,15 @@
 				(userRowSelect)="selectTask($event)"
 				style="cursor: pointer;"
 				#tasksTable
+				*ngIf="dataLayoutStyle === 'TABLE'"
 			>
 			</ng2-smart-table>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="tasks$ | async"
+				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+				[buttonTemplate]="actionButtons"
+			></ga-card-grid>
 		</ng-container>
 		<ng-container *ngIf="isMyTasksPage()">
 			<ng2-smart-table
@@ -76,8 +63,15 @@
 				(userRowSelect)="selectTask($event)"
 				style="cursor: pointer;"
 				#tasksTable
+				*ngIf="dataLayoutStyle === 'TABLE'"
 			>
 			</ng2-smart-table>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="myTasks$ | async"
+				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+				[buttonTemplate]="actionButtons"
+			></ga-card-grid>
 		</ng-container>
 		<ng-container *ngIf="isTeamTaskPage()">
 			<ng2-smart-table
@@ -86,8 +80,55 @@
 				(userRowSelect)="selectTask($event)"
 				style="cursor: pointer;"
 				#tasksTable
+				*ngIf="dataLayoutStyle === 'TABLE'"
 			>
 			</ng2-smart-table>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="teamTasks$ | async"
+				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+				[buttonTemplate]="actionButtons"
+			></ga-card-grid>
 		</ng-container>
 	</nb-card-body>
 </nb-card>
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		(click)="duplicateTaskDialog(selectedItem)"
+		[disabled]="!selectedItem && disableButton"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.DUPLICATE' | translate }}
+	</button>
+	<button
+		nbButton
+		status="info"
+		(click)="editTaskDialog(selectedItem)"
+		[disabled]="!selectedItem && disableButton"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		nbButton
+		status="danger"
+		(click)="deleteTask(selectedItem)"
+		[disabled]="!selectedItem && disableButton"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

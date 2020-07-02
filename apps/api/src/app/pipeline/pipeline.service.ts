@@ -35,7 +35,8 @@ export class PipelineService extends CrudService<Pipeline> {
 			...partialEntity,
 			id: onePipeline.id
 		} as any);
-		const updatedStages = pipeline.stages?.filter(({ id }) => id) || [];
+		const updatedStages =
+			pipeline.stages?.filter((stage) => stage.id) || [];
 		const deletedStages = await manager
 			.find(Stage, {
 				where: {
@@ -44,9 +45,13 @@ export class PipelineService extends CrudService<Pipeline> {
 				select: ['id']
 			})
 			.then((stages) => {
-				const requestStageIds = updatedStages.map(({ id }) => id);
+				const requestStageIds = updatedStages.map(
+					(updatedStage) => updatedStage.id
+				);
 
-				return stages.filter(({ id }) => !requestStageIds.includes(id));
+				return stages.filter(
+					(stage) => !requestStageIds.includes(stage.id)
+				);
 			});
 		const createdStages =
 			pipeline.stages?.filter(

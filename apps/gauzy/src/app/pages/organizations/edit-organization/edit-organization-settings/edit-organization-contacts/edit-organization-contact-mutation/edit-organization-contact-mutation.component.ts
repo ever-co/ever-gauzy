@@ -133,7 +133,9 @@ export class EditOrganizationContactMutationComponent
 					: []
 			],
 			contactType: [
-				this.organizationContact ? this.organizationContact.contactType : '',
+				this.organizationContact
+					? this.organizationContact.contactType
+					: '',
 				Validators.required
 			]
 		});

@@ -18,8 +18,7 @@ import {
 
 @Component({
 	selector: 'ga-edit-keyresults',
-	templateUrl: './edit-keyresults.component.html',
-	styleUrls: ['./edit-keyresults.component.scss']
+	templateUrl: './edit-keyresults.component.html'
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: Employee[];

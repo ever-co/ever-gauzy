@@ -32,8 +32,7 @@ interface InviteViewModel {
 
 @Component({
 	selector: 'ga-invites',
-	templateUrl: './invites.component.html',
-	styleUrls: ['./invites.component.scss']
+	templateUrl: './invites.component.html'
 })
 export class InvitesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -164,9 +163,9 @@ export class InvitesComponent extends TranslationBaseComponent
 				email: invite.email,
 				expireDate: moment(invite.expireDate).fromNow(),
 				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
-				fullName: `${(invite.invitedBy && invite.invitedBy.firstName) ||
-					''} ${(invite.invitedBy && invite.invitedBy.lastName) ||
-					''}`,
+				fullName: `${
+					(invite.invitedBy && invite.invitedBy.firstName) || ''
+				} ${(invite.invitedBy && invite.invitedBy.lastName) || ''}`,
 				roleName: invite.role
 					? this.getTranslation(`USERS_PAGE.ROLE.${invite.role.name}`)
 					: '',

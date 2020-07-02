@@ -49,6 +49,7 @@ import {
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
 import { TenantService } from '../tenant/tenant.service';
+import { Settings } from 'http2';
 
 @Injectable()
 export class HubstaffService {
@@ -864,8 +865,7 @@ export class HubstaffService {
 						);
 
 						const screenshotSetting = setting.tiedEntities.find(
-							(setting) =>
-								setting.entity === IntegrationEntity.SCREENSHOT
+							(res) => res.entity === IntegrationEntity.SCREENSHOT
 						);
 
 						if (

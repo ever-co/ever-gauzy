@@ -3,13 +3,13 @@ import {
 	KeyResultUpdates as IKeyResultUpdate,
 	KeyResultUpdateStatusEnum
 } from '@gauzy/models';
-import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('key_result_update')
-export class KeyResultUpdate extends Base implements IKeyResultUpdate {
+export class KeyResultUpdate extends TenantBase implements IKeyResultUpdate {
 	@ApiProperty({ type: Number })
 	@Column()
 	update: number;

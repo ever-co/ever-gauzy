@@ -6,6 +6,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { NbThemeModule } from '@nebular/theme';
 import { SetupModule } from './pages/setup/setup.module';
 import { NgxElectronModule } from 'ngx-electron';
+import { AppService } from './app.service';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -15,9 +17,10 @@ import { NgxElectronModule } from 'ngx-electron';
 		AppRoutingModule,
 		NbThemeModule.forRoot({ name: 'default' }),
 		SetupModule,
-		NgxElectronModule
+		NgxElectronModule,
+		HttpClientModule
 	],
-	providers: [],
+	providers: [AppService, HttpClientModule],
 	bootstrap: [AppComponent]
 })
 export class AppModule {}
