@@ -21,16 +21,14 @@ export const createGoals = async (
 	organizations.forEach((organization) => {
 		for (let i = 0; i < faker.random.number({ min: 4, max: 7 }); i++) {
 			const goal = new Goal();
-			(goal.name = `${faker.random.arrayElement(nameType)}-${
-				faker.random.arrayElement(goalTimeFrames).name
-			}`),
+			(goal.name = `${faker.random.arrayElement(nameType)}-Objective`),
 				(goal.progress = 0),
 				(goal.level = goal.name.split('-', 1)[0]);
 			goal.owner = faker.random.arrayElement(employees);
 			goal.lead = faker.random.arrayElement(employees);
 			goal.tenant = tenant;
 			goal.description = ' ';
-			goal.deadline = goal.name.split('-', 1)[1];
+			goal.deadline = faker.random.arrayElement(goalTimeFrames).name;
 			goal.organization = organization;
 			defaultGoals.push(goal);
 		}
