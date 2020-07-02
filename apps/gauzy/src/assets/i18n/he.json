@@ -883,7 +883,11 @@
 			"CALENDAR": "Calendar",
 			"INTERVIEWS": "Interviews",
 			"MANAGE_INTERVIEWS": "Manage Interviews",
-			"CRITERIONS": "Criterions"
+			"CRITERIONS": "Criterions",
+			"DATE": "תאריך",
+			"SORT_BY": "Sort by",
+			"CANDIDATE_NAME": "Candidate's name",
+			"RATING": "Rating"
 		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
