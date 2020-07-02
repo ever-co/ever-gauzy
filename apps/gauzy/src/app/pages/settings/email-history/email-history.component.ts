@@ -19,9 +19,9 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 	private _selectedOrganization: Organization;
 
 	loading = true;
-
 	emails: Email[];
 	selectedEmail: Email;
+	filteredCount;
 
 	get selectedEmailHTML() {
 		return this.sanitizer.bypassSecurityTrustHtml(
@@ -60,14 +60,13 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 			})
 			.onClose.pipe(first())
 			.toPromise();
-
 		if (filters) {
-			debugger;
 			this._getSelectedOrganizationEmails(
 				this._selectedOrganization.id,
 				filters
 			);
 		}
+		this.filteredCount = Object.keys(filters).length;
 	}
 
 	getEmailLanguageFullName(languageCode: 'en' | 'bg' | 'he' | 'ru') {
