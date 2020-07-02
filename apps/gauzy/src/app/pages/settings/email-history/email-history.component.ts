@@ -60,9 +60,13 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 			})
 			.onClose.pipe(first())
 			.toPromise();
+<<<<<<< HEAD
 		if (filters == null) {
 			this.filteredCount = 0;
 		} else {
+=======
+		if (filters) {
+>>>>>>> 8081802532d99947b3f1ff7e5543516a10cd7763
 			this._getSelectedOrganizationEmails(
 				this._selectedOrganization.id,
 				filters
