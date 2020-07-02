@@ -11,7 +11,8 @@ import {
 	lastDayOfQuarter,
 	addDays,
 	startOfYear,
-	endOfYear
+	endOfYear,
+	lastDayOfYear
 } from 'date-fns';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -98,8 +99,13 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 	generateTimeFrames() {
 		const today = new Date();
 		let date = today;
+		let year = getYear(today);
 		// Add Quarters
-		while (getYear(date) === getYear(today)) {
+		if (getQuarter(date) > 2) {
+			year = getYear(addDays(lastDayOfYear(today), 1));
+		}
+
+		while (getYear(date) <= year) {
 			this.predefinedTimeFrames.push({
 				name: `Q${getQuarter(date)}-${getYear(date)}`,
 				start: new Date(startOfQuarter(date)),
@@ -112,6 +118,13 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 			start: new Date(startOfYear(today)),
 			end: new Date(endOfYear(today))
 		});
+		if (year > getYear(today)) {
+			this.predefinedTimeFrames.push({
+				name: `Annual-${year}`,
+				start: new Date(startOfYear(addDays(lastDayOfYear(today), 1))),
+				end: new Date(endOfYear(addDays(lastDayOfYear(today), 1)))
+			});
+		}
 	}
 
 	async saveTimeFrame() {

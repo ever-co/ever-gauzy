@@ -166,6 +166,8 @@ import { TimeLog } from '../../timesheet/time-log.entity';
 import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
 import { IntegrationType } from '../../integration/integration-type.entity';
 import { Integration } from '../../integration/integration.entity';
+import { createTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
+import { createGoals } from '../../goal/goal.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -368,6 +370,8 @@ export class SeedDataService {
 
 		await createDefaultProducts(this.connection, tenant);
 
+		await createTimeFrames(this.connection, tenant, defaultOrganizations);
+
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,
 			defaultOrganizations
@@ -437,6 +441,13 @@ export class SeedDataService {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees
 		});
+
+		await createGoals(
+			this.connection,
+			tenant,
+			defaultOrganizations,
+			defaultEmployees
+		);
 
 		await createDefaultApprovalPolicyForOrg(this.connection, {
 			orgs: defaultOrganizations
