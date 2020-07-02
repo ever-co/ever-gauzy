@@ -522,7 +522,13 @@
 		"ENGLISH": "English",
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
-		"RUSSIAN": "Russian"
+		"RUSSIAN": "Russian",
+		"PREFERRED_LAYOUT": "Layout",
+		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
+		"RESET_LAYOUT": "Reset Layout",
+		"RESET_LAYOUT_TOOLTIP": "Reset layout to default for all pages",
+		"TABLE": "Table",
+		"CARDS_GRID": "Cards Grid"
 	},
 	"INTEGRATIONS": {
 		"AVALIABLE_INTEGRATIONS": "Avaliable integrations",
