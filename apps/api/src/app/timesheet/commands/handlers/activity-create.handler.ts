@@ -18,9 +18,7 @@ export class ActivityCreateHandler
 			const { input } = command;
 			const { title, duration, type, timeSlot } = input;
 
-			const {
-				record: timeSlotId
-			} = await this._timeSlotService.findOneOrFail({
+			await this._timeSlotService.findOneOrFail({
 				where: {
 					startedAt: moment(timeSlot).format('YYYY-MM-DD HH:mm:ss')
 				}

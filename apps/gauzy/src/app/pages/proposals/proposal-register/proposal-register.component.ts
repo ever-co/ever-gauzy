@@ -104,7 +104,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 					this.getTranslation(
 						'NOTES.PROPOSALS.REGISTER_PROPOSAL_ERROR',
 						{
-							error: error.message || error.message
+							error: error.message
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.ERROR')

@@ -19,6 +19,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	interviewList: ICandidateInterview[];
 	candidates: Candidate[];
 	averageRating: number;
+	allInterviews: ICandidateInterview[];
 	constructor(
 		readonly translateService: TranslateService,
 		private candidateInterviewService: CandidateInterviewService,
@@ -31,6 +32,29 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	async ngOnInit() {
 		this.loadInterviews();
 	}
+	onSortSelected(value: string) {
+		switch (value) {
+			case 'date':
+				this.interviewList.sort(function (a, b) {
+					const dateA = new Date(a.startTime),
+						dateB = new Date(b.startTime);
+					return dateB > dateA ? -1 : dateB < dateA ? 1 : 0;
+				});
+				break;
+			case 'name':
+				this.interviewList.sort(function (a, b) {
+					const nameA = a.candidate.user.name.toLowerCase(),
+						nameB = b.candidate.user.name.toLowerCase();
+					return nameB > nameA ? -1 : nameB < nameA ? 1 : 0;
+				});
+				break;
+			case 'rating':
+				this.interviewList.sort((a, b) => b.rating - a.rating);
+				break;
+			default:
+				return this.interviewList;
+		}
+	}
 	async loadInterviews() {
 		const interviews = await this.candidateInterviewService.getAll([
 			'feedbacks',
@@ -41,6 +65,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		]);
 		if (interviews) {
 			this.interviewList = interviews.items;
+			this.allInterviews = interviews.items;
 			this.candidatesService
 				.getAll(['user'])
 				.pipe(takeUntil(this._ngDestroy$))
@@ -64,6 +89,8 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 							});
 							interview.rating =
 								fbSum / interview.feedbacks.length;
+						} else {
+							interview.rating = 0;
 						}
 					});
 				});
@@ -84,6 +111,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			interview.employees = employees;
 		}
 	}
+
 	goToCandidate(id: string) {
 		this.router.navigate([
 			`/pages/employees/candidates/edit/${id}/profile/interview`

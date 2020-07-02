@@ -16,8 +16,12 @@
   justify-content: space-between;
   padding: 1rem;
   margin-bottom: 2px;
-  height: 70px;
+  height: auto;
   background-color: #fafafa;
+}
+
+.base-button {
+  max-height: 40px;
 }
 
 .cards {
@@ -74,26 +78,25 @@
 }
 
 .draft {
-  padding-top: 0.1rem;
+  padding: 0 0.2rem;
   color: #fff;
   background-color: #aaaeb3;
   margin-left: 10px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
-  width: 55px;
+  width: auto;
   text-align: center;
 }
-
 .privacy {
-  padding-top: 0.1rem;
+  padding: 0 0.2rem;
   color: #fff;
   background-color: blueviolet;
   margin-left: 10px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
-  width: 90px;
+  width: auto;
   text-align: center;
 }
 

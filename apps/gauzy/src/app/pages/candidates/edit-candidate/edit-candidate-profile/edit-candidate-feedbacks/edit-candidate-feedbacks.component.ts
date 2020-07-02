@@ -122,12 +122,12 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.technologiesList = this.currentInterview.technologies;
 			this.personalQualitiesList = this.currentInterview.personalQualities;
 			feedback.criterionsRating.forEach((item) => {
-				this.technologiesList.map((tech) =>
+				this.technologiesList.forEach((tech) =>
 					tech.id === item.technologyId
 						? (tech.rating = item.rating)
 						: null
 				);
-				this.personalQualitiesList.map((qual) =>
+				this.personalQualitiesList.forEach((qual) =>
 					qual.id === item.personalQualityId
 						? (qual.rating = item.rating)
 						: null
@@ -165,10 +165,10 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		});
 	}
 	private setRating(technologies: number[], qualities: number[]) {
-		this.technologiesList.map(
+		this.technologiesList.forEach(
 			(tech, index) => (tech.rating = technologies[index])
 		);
-		this.personalQualitiesList.map(
+		this.personalQualitiesList.forEach(
 			(qual, index) => (qual.rating = qualities[index])
 		);
 		const techSum =

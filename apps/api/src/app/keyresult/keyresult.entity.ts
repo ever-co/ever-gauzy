@@ -11,15 +11,15 @@ import {
 	KeyResultTypeEnum,
 	KeyResultDeadlineEnum
 } from '@gauzy/models';
-import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { Goal } from '../goal/goal.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { Employee } from '../employee/employee.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('key_result')
-export class KeyResult extends Base implements IKeyResult {
+export class KeyResult extends TenantBase implements IKeyResult {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

@@ -327,16 +327,16 @@ export class AppointmentComponent extends TranslationBaseComponent
 		if (foundDateSpecificSlot)
 			return this.calendarComponent.getApi().refetchEvents();
 
-		for (const slot of this.recurringSlots) {
-			const startDay = moment(slot.startTime).day();
+		for (const innerSlot of this.recurringSlots) {
+			const startDay = moment(innerSlot.startTime).day();
 			if (startDay !== day) continue;
 
-			const startHours = moment(slot.startTime).hours();
-			const startMinutes = moment(slot.startTime).minutes();
+			const startHours = moment(innerSlot.startTime).hours();
+			const startMinutes = moment(innerSlot.startTime).minutes();
 
-			const endDay = moment(slot.endTime).day();
-			const endHours = moment(slot.endTime).hours();
-			const endMinutes = moment(slot.endTime).minutes();
+			const endDay = moment(innerSlot.endTime).day();
+			const endHours = moment(innerSlot.endTime).hours();
+			const endMinutes = moment(innerSlot.endTime).minutes();
 
 			const eventStartDate = moment(date)
 				.set('hours', startHours)
@@ -346,10 +346,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 				.set('hours', endHours)
 				.set('minutes', endMinutes);
 
-			slot.startTime = new Date(eventStartDate.format());
-			slot.endTime = new Date(eventEndDate.format());
+			innerSlot.startTime = new Date(eventStartDate.format());
+			innerSlot.endTime = new Date(eventEndDate.format());
 
-			this.getAvailabilitySlots(slot);
+			this.getAvailabilitySlots(innerSlot);
 		}
 		this.calendarComponent.getApi().refetchEvents();
 	}

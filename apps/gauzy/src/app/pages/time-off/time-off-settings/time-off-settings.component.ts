@@ -37,8 +37,7 @@ interface SelectedRowModel {
 
 @Component({
 	selector: 'ga-time-off-settings',
-	templateUrl: './time-off-settings.component.html',
-	styleUrls: ['./time-off-settings.component.scss']
+	templateUrl: './time-off-settings.component.html'
 })
 export class TimeOffSettingsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

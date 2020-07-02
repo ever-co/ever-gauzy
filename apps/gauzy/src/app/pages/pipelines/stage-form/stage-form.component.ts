@@ -31,9 +31,9 @@ export class StageFormComponent implements OnInit {
 
 	public ngOnInit(): void {
 		this.control = this.controlContainer.control as FormArray;
-		this.stages?.forEach(({ id, name, description }) =>
-			this.pushNewStage({ id, name, description })
-		);
+		this.stages?.forEach(({ id, name, description }) => {
+			this.pushNewStage({ id, name, description });
+		});
 	}
 
 	public reorder(event: CdkDragDrop<FormGroup>) {

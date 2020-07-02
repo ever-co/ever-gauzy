@@ -5,7 +5,6 @@ import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-share',
-	styleUrls: ['share.component.scss'],
 	template: `
 		<ngx-one-column-layout>
 			<router-outlet></router-outlet>

@@ -522,7 +522,13 @@
 		"ENGLISH": "English",
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
-		"RUSSIAN": "Russian"
+		"RUSSIAN": "Russian",
+		"PREFERRED_LAYOUT": "Layout",
+		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
+		"RESET_LAYOUT": "Reset Layout",
+		"RESET_LAYOUT_TOOLTIP": "Reset layout to default for all pages",
+		"TABLE": "Table",
+		"CARDS_GRID": "Cards Grid"
 	},
 	"INTEGRATIONS": {
 		"AVALIABLE_INTEGRATIONS": "Avaliable integrations",
@@ -877,7 +883,11 @@
 			"CALENDAR": "Calendar",
 			"INTERVIEWS": "Interviews",
 			"MANAGE_INTERVIEWS": "Manage Interviews",
-			"CRITERIONS": "Criterions"
+			"CRITERIONS": "Criterions",
+			"DATE": "תאריך",
+			"SORT_BY": "Sort by",
+			"CANDIDATE_NAME": "Candidate's name",
+			"RATING": "Rating"
 		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
@@ -885,7 +895,8 @@
 			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
 			"CRITERIONS_RATING": "Criterions rating per interview",
 			"NO_DATA": "No data yet ",
-			"SELECT_INTERVIEW": "Select an interview"
+			"SELECT_INTERVIEW": "Select an interview",
+			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer"
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Candidates criterions",

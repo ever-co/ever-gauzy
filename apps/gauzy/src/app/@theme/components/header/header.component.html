@@ -60,9 +60,6 @@
 			></ga-organization-selector>
 		</nb-action>
 
-		<!-- <nb-action *nbIsGranted="['view', 'user']">
-      <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.picture"></nb-user>
-	</nb-action> -->
 		<nb-action
 			icon="options-2-outline"
 			class="toggle-layout"
@@ -74,12 +71,6 @@
 			class="toggle-layout"
 			[nbContextMenu]="supportContextMenu"
 		></nb-action>
-
-		<!-- <nb-action
-			icon="clock-outline"
-			class="toggle-layout"
-			[nbPopover]="timerCard"
-		></nb-action> -->
 
 		<nb-action
 			*ngIf="user?.employee?.id"
@@ -113,12 +104,6 @@
 			class="toggle-layout"
 			(click)="toggleSettings()"
 		></nb-action>
-
-		<!-- <nb-action class="control-item" icon="bell-outline"></nb-action>
-    <nb-action class="control-item" icon="email-outline"></nb-action>
-    <nb-action class="control-item">
-      <nb-search type="rotate-layout"></nb-search>
-    </nb-action> -->
 	</nb-actions>
 </div>
 

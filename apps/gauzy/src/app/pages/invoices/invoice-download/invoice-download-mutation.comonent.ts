@@ -13,8 +13,7 @@ import { generatePdf } from '../../../@shared/invoice/generate-pdf';
 
 @Component({
 	selector: 'ga-invoice-send',
-	templateUrl: './invoice-download-mutation.component.html',
-	styleUrls: ['./invoice-download-mutation.component.scss']
+	templateUrl: './invoice-download-mutation.component.html'
 })
 export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 	invoice: Invoice;

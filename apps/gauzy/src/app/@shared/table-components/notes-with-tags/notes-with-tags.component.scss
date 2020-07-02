@@ -1,11 +1,14 @@
 .color {
-	position: static;
-	margin-top: 5px;
-	margin-right: 5px;
-	display: inline-block;
+  position: static;
+  margin-top: 5px;
+  margin-right: 5px;
+  display: inline-block;
 }
 .tags {
-	display: flex;
-	width: 200px;
-	flex-wrap: wrap;
+  display: flex;
+  width: 200px;
+  flex-wrap: wrap;
+}
+.tags-right {
+  justify-content: flex-end;
 }

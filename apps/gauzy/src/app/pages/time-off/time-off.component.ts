@@ -95,12 +95,12 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	}
 
 	async requestDaysOff() {
-		const result = await this.dialogService
+		const data = await this.dialogService
 			.open(TimeOffRequestMutationComponent)
 			.onClose.pipe(first())
 			.toPromise();
 
-		console.log(result);
+		console.log(data);
 	}
 
 	addHolidays() {}

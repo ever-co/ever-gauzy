@@ -1,0 +1,26 @@
+[
+	{
+		"name": "Annual-2020",
+		"status": "Active",
+		"startDate": "2019-12-31T18:30:00.000Z",
+		"endDate": "2020-12-31T18:29:59.999Z"
+	},
+	{
+		"name": "Q3-2020",
+		"status": "Active",
+		"startDate": "2020-06-30T18:30:00.000Z",
+		"endDate": "2020-09-30T18:29:59.999Z"
+	},
+	{
+		"name": "Q4-2020",
+		"status": "Active",
+		"startDate": "2020-09-30T18:30:00.000Z",
+		"endDate": "2020-12-31T18:29:59.999Z"
+	},
+	{
+		"name": "Annual-2021",
+		"status": "Active",
+		"startDate": "2020-12-31T18:30:00.000Z",
+		"endDate": "2021-12-31T18:29:59.999Z"
+	}
+]
