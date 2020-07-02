@@ -29,7 +29,7 @@ import { OrganizationVendorsService } from '../../../@core/services/organization
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
-import { Subject, Observable } from 'rxjs';
+import { Subject } from 'rxjs';
 
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
