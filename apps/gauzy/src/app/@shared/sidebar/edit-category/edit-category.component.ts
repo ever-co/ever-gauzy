@@ -26,6 +26,7 @@ export class EditCategoryComponent extends TranslationBaseComponent
 	@Input() category?: IHelpCenter;
 	@Input() base: IHelpCenter;
 	@Input() editType: string;
+	@Input() organizationId: string;
 	public selectedLang: string;
 	public isToggled = false;
 	public selectedIcon: string;
@@ -100,6 +101,7 @@ export class EditCategoryComponent extends TranslationBaseComponent
 				icon: `${this.selectedIcon}`,
 				flag: 'category',
 				index: 0,
+				organizationId: this.organizationId,
 				description: `${this.form.value.desc}`,
 				language: `${this.selectedLang}`,
 				color: `${this.color}`,

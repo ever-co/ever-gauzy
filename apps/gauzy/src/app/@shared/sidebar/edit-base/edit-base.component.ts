@@ -16,6 +16,7 @@ export class EditBaseComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() base?: IHelpCenter;
 	@Input() editType: string;
+	@Input() organizationId: string;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		protected dialogRef: NbDialogRef<EditBaseComponent>,
@@ -72,6 +73,7 @@ export class EditBaseComponent extends TranslationBaseComponent
 	}
 
 	async submit() {
+		console.log(this.organizationId);
 		if (this.editType === 'edit')
 			this.base = await this.helpCenterService.update(this.base.id, {
 				name: `${this.form.value.name}`,
@@ -90,6 +92,7 @@ export class EditBaseComponent extends TranslationBaseComponent
 				icon: `${this.selectedIcon}`,
 				flag: 'base',
 				index: 0,
+				organizationId: this.organizationId,
 				description: `${this.form.value.desc}`,
 				language: `${this.selectedLang}`,
 				color: `${this.color}`,

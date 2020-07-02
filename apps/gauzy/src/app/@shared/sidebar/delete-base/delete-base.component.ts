@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { IHelpCenter } from '@gauzy/models';
-// import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
+import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
 import { HelpCenterService } from '../../../@core/services/help-center.service';
 
 @Component({
@@ -19,7 +19,7 @@ export class DeleteBaseComponent extends TranslationBaseComponent
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteBaseComponent>,
 		readonly translateService: TranslateService,
-		// private helpCenterArticleService: HelpCenterArticleService,
+		private helpCenterArticleService: HelpCenterArticleService,
 		private helpCenterService: HelpCenterService,
 		private errorHandler: ErrorHandler
 	) {
@@ -29,6 +29,7 @@ export class DeleteBaseComponent extends TranslationBaseComponent
 	async deleteBase() {
 		const result = await this.helpCenterService.findByBaseId(this.base.id);
 		if (result.length !== 0) {
+			result.forEach((category) => this.deleteArticles(category.id));
 			try {
 				await this.helpCenterService.deleteBulkByBaseId(this.base.id);
 			} catch (error) {
@@ -43,7 +44,23 @@ export class DeleteBaseComponent extends TranslationBaseComponent
 		this.dialogRef.close(this.base);
 	}
 
-	// async deleteArticles() {}
+	async deleteArticles(id) {
+		const result = await this.helpCenterArticleService.findByCategoryId(id);
+		if (result) {
+			let hasArticles = false;
+			result.forEach((article) => {
+				if (article.categoryId === id) hasArticles = true;
+			});
+			if (hasArticles)
+				try {
+					await this.helpCenterArticleService.deleteBulkByCategoryId(
+						id
+					);
+				} catch (error) {
+					this.errorHandler.handleError(error);
+				}
+		}
+	}
 
 	closeDialog() {
 		this.dialogRef.close();

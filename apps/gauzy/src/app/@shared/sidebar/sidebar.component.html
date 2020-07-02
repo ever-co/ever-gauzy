@@ -20,6 +20,9 @@
 					[options]="options"
 					(moveNode)="onMoveNode($event)"
 				>
+					<ng-template #loadingTemplate
+						>Loading, please hold....</ng-template
+					>
 					<ng-template
 						#treeNodeTemplate
 						let-node
