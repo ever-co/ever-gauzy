@@ -67,8 +67,9 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 				this._selectedOrganization.id,
 				filters
 			);
+			this.filteredCount = Object.keys(filters).length;
 		}
-		this.filteredCount = Object.keys(filters).length;
+		
 	}
 
 	getEmailLanguageFullName(languageCode: 'en' | 'bg' | 'he' | 'ru') {
