@@ -522,7 +522,13 @@
 		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
-		"RUSSIAN": "Русский"
+		"RUSSIAN": "Русский",
+		"PREFERRED_LAYOUT": "Макет",
+		"PREFERRED_LAYOUT_TOOLTIP": "Это будет устанавливать макет по умолчанию и не изменять макет на каждой странице, если вы уже изменили его один раз.",
+		"RESET_LAYOUT": "Сбросить макет",
+		"RESET_LAYOUT_TOOLTIP": "Сбросить макет по умолчанию для всех страниц",
+		"TABLE": "Таблица",
+		"CARDS_GRID": "Сетка карт"
 	},
 	"INTEGRATIONS": {
 		"AVALIABLE_INTEGRATIONS": "Доступная интеграция",
