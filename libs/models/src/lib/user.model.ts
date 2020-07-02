@@ -26,6 +26,7 @@ export interface User extends IBaseEntityModel {
 	preferredLanguage?: string;
 	payments?: Payment[];
 	paymentsId?: string;
+	preferredComponentLayout?: string;
 }
 
 export interface UserFindInput extends IBaseEntityModel {
@@ -61,6 +62,7 @@ export interface UserCreateInput {
 	imageUrl?: string;
 	tags?: Tag[];
 	preferredLanguage?: LanguagesEnum;
+	preferredComponentLayout?: ComponentLayoutStyleEnum;
 }
 
 export interface UserUpdateInput {
@@ -73,6 +75,7 @@ export interface UserUpdateInput {
 	hash?: string;
 	imageUrl?: string;
 	preferredLanguage?: LanguagesEnum;
+	preferredComponentLayout?: ComponentLayoutStyleEnum;
 }
 
 export enum LanguagesEnum {
@@ -80,4 +83,9 @@ export enum LanguagesEnum {
 	BULGARIAN = 'bg',
 	HEBREW = 'he',
 	RUSSIAN = 'ru'
+}
+
+export enum ComponentLayoutStyleEnum {
+	CARDS_GRID = 'CARDS_GRID',
+	TABLE = 'TABLE'
 }

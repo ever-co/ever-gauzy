@@ -28,6 +28,7 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task-dialog.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -58,6 +59,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDialogModule.forChild(),
 		Ng2SmartTableModule,
 		UserFormsModule,
+		CardGridModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

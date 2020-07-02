@@ -122,7 +122,7 @@ export class SetupComponent implements OnInit {
 			};
 		}
 
-		this.electronService.ipcRenderer.send('go', data);
+		this.electronService.ipcRenderer.send('start_server', data);
 	}
 
 	inputFocus(event) {

@@ -5,10 +5,10 @@ import { IsOptional, IsEnum } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
 import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
-import { Base } from '../core/entities/base';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('goal')
-export class Goal extends Base implements IGoal {
+export class Goal extends TenantBase implements IGoal {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
