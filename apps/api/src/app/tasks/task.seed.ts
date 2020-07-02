@@ -24,10 +24,13 @@ export const createRandomTask = async (connection: Connection) => {
 		.createQueryBuilder()
 		.getMany();
 
+	console.log(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
 	const issues: any[] = await httpService
 		.get(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`)
 		.toPromise()
 		.then((resp) => resp.data);
+
+	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
 
 	let labels = [];
 	issues.forEach(async (issue) => {

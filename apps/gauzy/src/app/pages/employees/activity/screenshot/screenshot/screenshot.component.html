@@ -1,6 +1,9 @@
 <div class="filters row mb-3">
 	<div class="col">
-		<ngx-filters (filtersChange)="filtersChange($event)"></ngx-filters>
+		<ngx-filters
+			(filtersChange)="filtersChange($event)"
+			[multipleEmployeSelect]="false"
+		></ngx-filters>
 	</div>
 </div>
 <div

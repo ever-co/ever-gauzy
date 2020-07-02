@@ -85,6 +85,7 @@ export interface TimeLog extends IBaseEntityModel {
 	task?: Task;
 	timeSlots?: TimeSlot[];
 	project?: OrganizationProjects;
+	source?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
 	logType: string;
@@ -191,6 +192,7 @@ export interface Activity extends IBaseEntityModel {
 	date: Date;
 	duration?: number;
 	type?: string;
+	source?: string;
 }
 
 export interface TimeSlotMinute extends IBaseEntityModel {
