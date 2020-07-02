@@ -8,8 +8,7 @@ import { CandidatesService } from '../../../@core/services/candidates.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
-import { first, takeUntil } from 'rxjs/operators';
-import { CandidateStore } from '../../../@core/services/candidate-store.service';
+import { first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 @Component({
 	selector: 'ga-candidate-interview-info',
