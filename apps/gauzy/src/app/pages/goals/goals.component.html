@@ -50,6 +50,21 @@
 			<nb-accordion-item>
 				<nb-accordion-item-header
 					>{{ goal.name }}
+					<span class="ml-auto float-right col-md-4 text-center"
+						><nb-progress-bar
+							class="ml-4"
+							[value]="goal.progress"
+							[status]="
+								goal.progress < 50
+									? 'warning'
+									: goal.progress < 75
+									? 'info'
+									: 'success'
+							"
+							size="small"
+							>{{ goal.progress }}%
+						</nb-progress-bar></span
+					>
 					<nb-actions
 						class="ml-auto mr-3 mt-1 float-right"
 						size="small"
@@ -79,6 +94,21 @@
 							(click)="addKeyResult(index, keyResult)"
 						></nb-action>
 					</nb-actions>
+					<span class="ml-auto float-right col-md-4 text-center"
+						><nb-progress-bar
+							class="ml-3"
+							[value]="keyResult.progress"
+							[status]="
+								keyResult.progress < 50
+									? 'warning'
+									: keyResult.progress < 75
+									? 'info'
+									: 'success'
+							"
+							size="small"
+							>{{ keyResult.progress }}%
+						</nb-progress-bar></span
+					>
 				</nb-accordion-item-body>
 				<nb-accordion-item-body>
 					<nb-actions size="medium">
