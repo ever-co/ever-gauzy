@@ -66,6 +66,10 @@ export class HelpCenter extends TenantBase implements IHelpCenter {
 	@Column({ nullable: true })
 	parentId?: string;
 
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
+	organizationId?: string;
+
 	@ManyToOne((type) => Organization, (organization) => organization.id)
 	organization: Organization;
 }
