@@ -1,3 +1,4 @@
 export const environment = {
-	production: true
+	production: true,
+	AWHost: 'http://localhost:5600'
 };
