@@ -1,0 +1,31 @@
+.card-layout {
+  display: flex;
+  flex-wrap: wrap;
+  .card-item {
+    display: flex;
+    flex-direction: column;
+    margin-right: 10px;
+    width: 350px;
+    .info-line {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      font-size: 0.7em;
+      color: darkgray;
+      .info-meta {
+        margin-right: 10px;
+      }
+      .info-value {
+        display: flex;
+        justify-content: flex-end;
+        text-align: end;
+        color: black;
+        font-size: 1em;
+      }
+    }
+  }
+  .card-footer {
+    justify-content: space-around;
+    display: flex;
+  }
+}
