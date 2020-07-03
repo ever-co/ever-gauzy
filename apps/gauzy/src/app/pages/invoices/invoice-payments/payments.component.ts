@@ -10,6 +10,10 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PaymentService } from '../../../@core/services/payment.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
+import { InvoicePaymentOverdueComponent } from '../table-components/invoice-payment-overdue.component';
+import * as pdfMake from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { generatePdf } from '../../../@shared/payment/generate-pdf';
 
 export interface SelectedPayment {
 	data: Payment;
@@ -36,7 +40,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 
 	invoiceId: string;
 	invoice: Invoice;
-	invoiceItems: InvoiceItem[];
+	payments: Payment[];
 	totalPaid = 0;
 	barWidth = 0;
 	settingsSmartTable: object;
@@ -65,10 +69,10 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
 			'invoiceItems',
 			'tags',
-			'fromOrganization'
+			'fromOrganization',
+			'toClient'
 		]);
 		this.invoice = invoice;
-		this.invoiceItems = this.invoice.invoiceItems;
 	}
 
 	async calculateTotalPaid() {
@@ -145,6 +149,30 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 		this.disableButton = true;
 	}
 
+	async download() {
+		const tableData = await this.smartTableSource.getAll();
+		if (!tableData.length) {
+			this.toastrService.danger(
+				this.getTranslation(
+					'INVOICES_PAGE.PAYMENTS.NO_PAYMENTS_RECORDED'
+				),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			return;
+		}
+		pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+		const docDefinition = await generatePdf(
+			this.invoice,
+			this.payments,
+			this.invoice.fromOrganization,
+			this.invoice.toClient,
+			this.totalPaid
+		);
+
+		pdfMake.createPdf(docDefinition).download(`Payment.pdf`);
+	}
+
 	async selectPayment($event: SelectedPayment) {
 		if ($event.isSelected) {
 			this.selectedPayment = $event.data;
@@ -188,6 +216,11 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				note: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.NOTE'),
 					type: 'text'
+				},
+				overdue: {
+					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
+					type: 'custom',
+					renderComponent: InvoicePaymentOverdueComponent
 				}
 			}
 		};
@@ -198,6 +231,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 			['invoice', 'recordedBy'],
 			{ invoiceId: this.invoiceId }
 		);
+		this.payments = items;
 		this.smartTableSource.load(items);
 		await this.calculateTotalPaid();
 	}

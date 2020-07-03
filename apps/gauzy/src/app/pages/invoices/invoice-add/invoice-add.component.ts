@@ -321,44 +321,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				return;
 			}
 
-			if (tableData[0].hasOwnProperty('selectedEmployee')) {
-				for (const invoiceItem of tableData) {
-					if (!invoiceItem.selectedEmployee) {
-						this.toastrService.danger(
-							this.getTranslation(
-								'INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE_VALUE'
-							),
-							this.getTranslation('TOASTR.TITLE.WARNING')
-						);
-						return;
-					}
-				}
-			} else if (tableData[0].hasOwnProperty('project')) {
-				for (const invoiceItem of tableData) {
-					if (!invoiceItem.project) {
-						this.toastrService.danger(
-							this.getTranslation(
-								'INVOICES_PAGE.INVOICE_ITEM.PROJECT_VALUE'
-							),
-							this.getTranslation('TOASTR.TITLE.WARNING')
-						);
-						return;
-					}
-				}
-			} else if (tableData[0].hasOwnProperty('task')) {
-				for (const invoiceItem of tableData) {
-					if (!invoiceItem.task) {
-						this.toastrService.danger(
-							this.getTranslation(
-								'INVOICES_PAGE.INVOICE_ITEM.TASK_VALUE'
-							),
-							this.getTranslation('TOASTR.TITLE.WARNING')
-						);
-						return;
-					}
-				}
-			}
-
 			const invoice = await this.invoicesService.getAll([], {
 				invoiceNumber: invoiceData.invoiceNumber
 			});
@@ -547,66 +509,74 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		const fakeData = [];
 		let fakePrice = 10;
 		let fakeQuantity = 5;
-		if (this.invoiceType === InvoiceTypeEnum.BY_EMPLOYEE_HOURS) {
-			if (this.selectedEmployeeIds.length) {
-				for (const employeeId of this.selectedEmployeeIds) {
-					const data = {
-						description: 'Desc',
-						price: fakePrice,
-						quantity: fakeQuantity,
-						selectedItem: employeeId,
-						totalValue: fakePrice * fakeQuantity
-					};
-					fakeData.push(data);
-					fakePrice++;
-					fakeQuantity++;
+
+		switch (this.selectedInvoiceType) {
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+				if (this.selectedEmployeeIds.length) {
+					for (const employeeId of this.selectedEmployeeIds) {
+						const data = {
+							description: 'Desc',
+							price: fakePrice,
+							quantity: fakeQuantity,
+							selectedItem: employeeId,
+							totalValue: fakePrice * fakeQuantity
+						};
+						fakeData.push(data);
+						fakePrice++;
+						fakeQuantity++;
+					}
 				}
-			}
-		} else if (this.invoiceType === InvoiceTypeEnum.BY_PROJECT_HOURS) {
-			if (this.selectedProjects.length) {
-				for (const project of this.selectedProjects) {
-					const data = {
-						description: 'Desc',
-						price: fakePrice,
-						quantity: fakeQuantity,
-						selectedItem: project.id,
-						totalValue: fakePrice * fakeQuantity
-					};
-					fakeData.push(data);
-					fakePrice++;
-					fakeQuantity++;
+				break;
+			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+				if (this.selectedProjects.length) {
+					for (const project of this.selectedProjects) {
+						const data = {
+							description: 'Desc',
+							price: fakePrice,
+							quantity: fakeQuantity,
+							selectedItem: project.id,
+							totalValue: fakePrice * fakeQuantity
+						};
+						fakeData.push(data);
+						fakePrice++;
+						fakeQuantity++;
+					}
 				}
-			}
-		} else if (this.invoiceType === InvoiceTypeEnum.BY_TASK_HOURS) {
-			if (this.selectedTasks.length) {
-				for (const task of this.selectedTasks) {
-					const data = {
-						description: 'Desc',
-						price: fakePrice,
-						quantity: fakeQuantity,
-						selectedItem: task.id,
-						totalValue: fakePrice * fakeQuantity
-					};
-					fakeData.push(data);
-					fakePrice++;
-					fakeQuantity++;
+				break;
+			case InvoiceTypeEnum.BY_TASK_HOURS:
+				if (this.selectedTasks.length) {
+					for (const task of this.selectedTasks) {
+						const data = {
+							description: 'Desc',
+							price: fakePrice,
+							quantity: fakeQuantity,
+							selectedItem: task.id,
+							totalValue: fakePrice * fakeQuantity
+						};
+						fakeData.push(data);
+						fakePrice++;
+						fakeQuantity++;
+					}
 				}
-			}
-		} else if (this.invoiceType === InvoiceTypeEnum.BY_PRODUCTS) {
-			if (this.selectedProducts.length) {
-				for (const product of this.selectedProducts) {
-					const data = {
-						description: 'Desc',
-						price: fakePrice,
-						quantity: fakeQuantity,
-						selectedItem: product.id,
-						totalValue: fakePrice * fakeQuantity
-					};
-					fakeData.push(data);
-					fakePrice++;
-					fakeQuantity++;
+				break;
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				if (this.selectedProducts.length) {
+					for (const product of this.selectedProducts) {
+						const data = {
+							description: 'Desc',
+							price: fakePrice,
+							quantity: fakeQuantity,
+							selectedItem: product.id,
+							totalValue: fakePrice * fakeQuantity
+						};
+						fakeData.push(data);
+						fakePrice++;
+						fakeQuantity++;
+					}
 				}
-			}
+				break;
+			default:
+				break;
 		}
 
 		if (fakeData.length) {

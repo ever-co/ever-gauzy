@@ -70,6 +70,11 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 
 	async addPayment() {
 		const paymentData = this.form.value;
+		const overdue = this.compareDate(
+			paymentData.paymentDate,
+			this.invoice.dueDate
+		);
+
 		await this.paymentService.add({
 			amount: paymentData.amount,
 			paymentDate: paymentData.paymentDate,
@@ -80,7 +85,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 			organization: this.invoice.fromOrganization,
 			organizationId: this.invoice.organizationId,
 			recordedBy: this.store.user,
-			userId: this.store.userId
+			userId: this.store.userId,
+			overdue: overdue
 		});
 
 		this.toastrService.primary(
@@ -104,6 +110,19 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 		this.dialogRef.close();
+	}
+
+	compareDate(date1: any, date2: any) {
+		const d1 = new Date(date1);
+		const d2 = new Date(date2);
+
+		const same = d1.getTime() === d2.getTime();
+
+		if (same) {
+			return false;
+		}
+
+		return d1 > d2;
 	}
 
 	cancel() {

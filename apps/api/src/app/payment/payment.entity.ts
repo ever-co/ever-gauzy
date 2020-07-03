@@ -15,7 +15,8 @@ import {
 	IsString,
 	IsOptional,
 	IsDate,
-	IsNumber
+	IsNumber,
+	IsBoolean
 } from 'class-validator';
 import { Tenant } from '../tenant/tenant.entity';
 import { Tag } from '../tags/tag.entity';
@@ -88,6 +89,11 @@ export class Payment extends Base implements IPayment {
 	@IsEnum(CurrenciesEnum)
 	@Column()
 	currency?: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	overdue?: boolean;
 
 	@ApiProperty({ type: Tenant })
 	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
