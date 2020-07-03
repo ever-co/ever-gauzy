@@ -1866,6 +1866,12 @@
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment",
+		"EDIT_APPOINTMENT": "Edit Appointment",
+		"SAVE_SUCCESS": "Appointment saved successfully",
+		"SAVE_FAILED": "Failed to save appointment",
+		"CANCEL_APPOINTMENT": "Cancel Appointment",
+		"CANCEL_FAIL": "Failed to cancel appointment",
+		"CANCEL_SUCCESS": "Appointment cancelled successfully",
 		"DURATION_ERROR": "Selected Duration is not valid"
 	},
 	"EVENT_TYPE_PAGE": {

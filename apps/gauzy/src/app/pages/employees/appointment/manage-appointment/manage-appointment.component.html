@@ -1,6 +1,13 @@
 <nb-card>
 	<nb-card-header>
-		<h4>{{ 'APPOINTMENTS_PAGE.ADD_APPOINTMENT' | translate }}</h4>
+		<h4>
+			{{
+				(editMode
+					? 'APPOINTMENTS_PAGE.EDIT_APPOINTMENT'
+					: 'APPOINTMENTS_PAGE.ADD_APPOINTMENT'
+				) | translate
+			}}
+		</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<ngx-back-navigation class="d-block"></ngx-back-navigation>
@@ -218,6 +225,15 @@
 	<nb-card-footer>
 		<button status="success" nbButton (click)="onSaveRequest()">
 			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+		<button
+			*ngIf="editMode"
+			style="margin-left: 10px;"
+			status="warning"
+			nbButton
+			(click)="cancelAppointment()"
+		>
+			{{ 'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
