@@ -21,14 +21,18 @@ export const createGoals = async (
 	organizations.forEach((organization) => {
 		for (let i = 0; i < faker.random.number({ min: 4, max: 7 }); i++) {
 			const goal = new Goal();
-			(goal.name = `${faker.random.arrayElement(nameType)}-Objective`),
-				(goal.progress = 0),
-				(goal.level = goal.name.split('-', 1)[0]);
+			goal.name = `${faker.random.arrayElement(nameType)}- Objective -${
+				faker.random.arrayElement(goalTimeFrames).name
+			}`;
+			goal.progress = 0;
+			goal.level = goal.name.split('-', 1)[0];
 			goal.owner = faker.random.arrayElement(employees);
 			goal.lead = faker.random.arrayElement(employees);
 			goal.tenant = tenant;
 			goal.description = ' ';
-			goal.deadline = faker.random.arrayElement(goalTimeFrames).name;
+			goal.deadline = `${goal.name.split('-', 4)[2]}-${
+				goal.name.split('-', 4)[3]
+			}`;
 			goal.organization = organization;
 			defaultGoals.push(goal);
 		}
@@ -37,6 +41,30 @@ export const createGoals = async (
 	await insertGoals(connection, defaultGoals);
 
 	return defaultGoals;
+};
+
+export const updateGoalProgress = async (
+	connection: Connection
+): Promise<Goal[]> => {
+	const goals: Goal[] = await connection.manager.find(Goal, {
+		relations: ['keyResults']
+	});
+	goals.forEach(async (goal) => {
+		const totalCount = goal.keyResults.length;
+		const progressTotal = goal.keyResults.reduce(
+			(a, b) => a + b.progress,
+			0
+		);
+		const goalProgress = Math.round(progressTotal / totalCount);
+		await connection.manager.update(
+			Goal,
+			{ id: goal.id },
+			{
+				progress: goalProgress
+			}
+		);
+	});
+	return goals;
 };
 
 const insertGoals = async (connection: Connection, defaultGoals: Goal[]) => {

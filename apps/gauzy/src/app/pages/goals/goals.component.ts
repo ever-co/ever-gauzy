@@ -86,6 +86,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	private async loadPage() {
+		this.loading = true;
 		const { name } = this.store.selectedOrganization
 			? this.store.selectedOrganization
 			: { name: 'new' };
@@ -171,10 +172,11 @@ export class GoalsComponent extends TranslationBaseComponent
 
 	calculateGoalProgress(totalCount, keyResults) {
 		const progressTotal = keyResults.reduce((a, b) => a + b.progress, 0);
-		return Math.round((progressTotal / totalCount) * 100);
+		return Math.round(progressTotal / totalCount);
 	}
 
 	filterGoals(selection) {
+		this.loading = true;
 		this.selectedFilter = selection;
 		if (selection !== 'all') {
 			if (selection === 'employee' && !!this.employee) {
@@ -193,6 +195,7 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 		this.noGoals = this.goals.length > 0 ? false : true;
 		this.popover.hide();
+		this.loading = false;
 	}
 
 	async createObjective(goal, index) {
@@ -297,7 +300,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				);
 				this.loadPage();
 			} else {
-				const keyResNumber = this.goals[index].keyResults.length * 100;
+				const keyResNumber = this.goals[index].keyResults.length;
 				this.goals[index].progress = this.calculateGoalProgress(
 					keyResNumber,
 					this.goals[index].keyResults
@@ -335,7 +338,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				selectedKeyResult.id,
 				keyResultData
 			);
-			const keyResNumber = this.goals[index].keyResults.length * 100;
+			const keyResNumber = this.goals[index].keyResults.length;
 			this.goals[index].progress = this.calculateGoalProgress(
 				keyResNumber,
 				this.goals[index].keyResults

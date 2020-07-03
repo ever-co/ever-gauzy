@@ -13,7 +13,7 @@ import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { isFuture, isToday } from 'date-fns';
+import { isFuture, isToday, compareDesc } from 'date-fns';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -46,10 +46,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		);
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;
-		this.updates = [...this.keyResult.updates].sort(
-			(a, b) =>
-				new Date(b.createdAt).getTime() -
-				new Date(a.createdAt).getTime()
+		this.updates = [...this.keyResult.updates].sort((a, b) =>
+			compareDesc(new Date(a.createdAt), new Date(b.createdAt))
 		);
 		// prevent keyresult updates after deadline
 		if (
