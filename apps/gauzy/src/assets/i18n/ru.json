@@ -1501,11 +1501,23 @@
 			"NOTE": "Примечание",
 			"PAYMENT_ADD": "Платёж добавлен",
 			"PAYMENT_EDIT": "Оплата изменена",
-			"PAYMENT_DELETE": "Платёж удален"
+			"PAYMENT_DELETE": "Платёж удален",
+			"STATUS": "Статус",
+			"ON_TIME": "По времени",
+			"OVERDUE": "Просрочено",
+			"NO_PAYMENTS_RECORDED": "Платежей нет"
 		}
 	},
 	"PAYMENTS_PAGE": {
-		"HEADER": "Платежи"
+		"HEADER": "Платежи",
+		"CLIENT": "Kлиент",
+		"AMOUNT": "Количество",
+		"PAYMENT_DATE": "Дата оплаты",
+		"RECORDED_BY": "Записано",
+		"NOTE": "Примечание",
+		"STATUS": "Статус",
+		"ON_TIME": "По времени",
+		"OVERDUE": "Просрочено"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
