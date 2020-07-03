@@ -43,6 +43,30 @@ export const createGoals = async (
 	return defaultGoals;
 };
 
+export const updateGoalProgress = async (
+	connection: Connection
+): Promise<Goal[]> => {
+	const goals: Goal[] = await connection.manager.find(Goal, {
+		relations: ['keyResults']
+	});
+	goals.forEach(async (goal) => {
+		const totalCount = goal.keyResults.length;
+		const progressTotal = goal.keyResults.reduce(
+			(a, b) => a + b.progress,
+			0
+		);
+		const goalProgress = Math.round(progressTotal / totalCount);
+		await connection.manager.update(
+			Goal,
+			{ id: goal.id },
+			{
+				progress: goalProgress
+			}
+		);
+	});
+	return goals;
+};
+
 const insertGoals = async (connection: Connection, defaultGoals: Goal[]) => {
 	await connection
 		.createQueryBuilder()
