@@ -1502,11 +1502,23 @@
 			"NOTE": "Note",
 			"PAYMENT_ADD": "Payment Added",
 			"PAYMENT_EDIT": "Payment Edited",
-			"PAYMENT_DELETE": "Payment Deleted"
+			"PAYMENT_DELETE": "Payment Deleted",
+			"STATUS": "Status",
+			"ON_TIME": "On time",
+			"OVERDUE": "Overdue",
+			"NO_PAYMENTS_RECORDED": "No payments recorded"
 		}
 	},
 	"PAYMENTS_PAGE": {
-		"HEADER": "Payments"
+		"HEADER": "Payments",
+		"CLIENT": "Client",
+		"AMOUNT": "Amount",
+		"PAYMENT_DATE": "Payment Date",
+		"RECORDED_BY": "Recorded By",
+		"NOTE": "Note",
+		"STATUS": "Status",
+		"ON_TIME": "On time",
+		"OVERDUE": "Overdue"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",

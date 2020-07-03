@@ -14,57 +14,55 @@ export async function generatePdf(
 	const body = [];
 
 	for (const item of invoice.invoiceItems) {
-		if (item.employeeId) {
-			const employee = await service.getEmployeeById(item.employeeId, [
-				'user'
-			]);
-			const currentItem = [
-				`${employee.user.firstName} ${employee.user.lastName}`,
-				`${item.description}`,
-				`${item.quantity}`,
-				`${item.price}`,
-				`${item.totalValue}`
-			];
-			body.push(currentItem);
-		} else if (item.projectId) {
-			const project = await service.getById(item.projectId);
-			const currentItem = [
-				`${project.name}`,
-				`${item.description}`,
-				`${item.quantity}`,
-				`${item.price}`,
-				`${item.totalValue}`
-			];
-			body.push(currentItem);
-		} else if (item.taskId) {
-			const task = await service.getById(item.taskId);
-			const currentItem = [
-				`${task.title}`,
-				`${item.description}`,
-				`${item.quantity}`,
-				`${item.price}`,
-				`${item.totalValue}`
-			];
-			body.push(currentItem);
-		} else if (item.productId) {
-			const product = await service.getById(item.productId);
-			const currentItem = [
-				`${product.name}`,
-				`${item.description}`,
-				`${item.quantity}`,
-				`${item.price}`,
-				`${item.totalValue}`
-			];
-			body.push(currentItem);
-		} else {
-			const currentItem = [
-				`${item.description}`,
-				`${item.quantity}`,
-				`${item.price}`,
-				`${item.totalValue}`
-			];
-			body.push(currentItem);
+		let currentItem = [];
+		switch (invoice.invoiceType) {
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+				const employee = await service.getEmployeeById(
+					item.employeeId,
+					['user']
+				);
+				currentItem = [
+					`${employee.user.firstName} ${employee.user.lastName}`,
+					`${item.description}`,
+					`${item.quantity}`,
+					`${item.price}`,
+					`${item.totalValue}`
+				];
+				break;
+			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+				const project = await service.getById(item.projectId);
+				currentItem = [
+					`${project.name}`,
+					`${item.description}`,
+					`${item.quantity}`,
+					`${item.price}`,
+					`${item.totalValue}`
+				];
+				break;
+			case InvoiceTypeEnum.BY_TASK_HOURS:
+				const task = await service.getById(item.taskId);
+				currentItem = [
+					`${task.title}`,
+					`${item.description}`,
+					`${item.quantity}`,
+					`${item.price}`,
+					`${item.totalValue}`
+				];
+				break;
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				const product = await service.getById(item.productId);
+				currentItem = [
+					`${product.name}`,
+					`${item.description}`,
+					`${item.quantity}`,
+					`${item.price}`,
+					`${item.totalValue}`
+				];
+				break;
+			default:
+				break;
 		}
+		body.push(currentItem);
 	}
 
 	let widths;

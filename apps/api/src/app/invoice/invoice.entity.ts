@@ -87,17 +87,17 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true, type: 'numeric' })
 	totalValue?: number;
 
-	@ApiProperty({ type: Boolean })
+	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	sentStatus?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isEstimate?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isAccepted?: boolean;
