@@ -883,7 +883,11 @@
 			"CALENDAR": "Календарь",
 			"INTERVIEWS": "Интервью",
 			"MANAGE_INTERVIEWS": "Управление интервью",
-			"CRITERIONS": "Критерии"
+			"CRITERIONS": "Критерии",
+			"DATE": "Дата",
+			"SORT_BY": "Сортировать по",
+			"CANDIDATE_NAME": "Имя Кандидата",
+			"RATING": "Рейтинг"
 		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",

@@ -7,14 +7,14 @@ import {
 	UserUpdateInput
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { UsersService } from 'apps/gauzy/src/app/@core/services';
+import { CandidatesService } from '../../../../@core/services/candidates.service';
+import { CandidateStore } from '../../../../@core/services/candidate-store.service';
+import { UsersService } from '../../../../@core/services';
 import { NbToastrService } from '@nebular/theme';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-edit-candidate-profile',
@@ -223,7 +223,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	private async _loadCandidateData() {
 		const { id } = this.routeParams;
 		const { items } = await this.candidatesService
-			.getAll(['user', 'tags'], { id })
+			.getAll(['user', 'tags', 'contact'], { id })
 			.pipe(first())
 			.toPromise();
 

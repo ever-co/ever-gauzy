@@ -119,16 +119,19 @@
 					</nb-select>
 				</div>
 				<div class="col-sm-6">
-					<ng-select
-						[items]="expenseCategories$ | async"
-						[searchable]="true"
-						[addTag]="addNewCategory"
-						bindLabel="name"
-						[searchable]="false"
-						formControlName="category"
-						placeholder="{{ 'POP_UPS.ALL_CATEGORIES' | translate }}"
-					>
-					</ng-select>
+					<div class="form-group">
+						<ng-select
+							[items]="expenseCategories"
+							[searchable]="true"
+							[addTag]="addNewCategory"
+							bindLabel="name"
+							formControlName="category"
+							placeholder="{{
+								'POP_UPS.ALL_CATEGORIES' | translate
+							}}"
+						>
+						</ng-select>
+					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">

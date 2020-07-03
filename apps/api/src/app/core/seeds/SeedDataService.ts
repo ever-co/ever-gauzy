@@ -3,7 +3,7 @@ import { CandidateExperience } from './../../candidate-experience/candidate-expe
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Injectable, HttpService } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
 	Connection,
 	createConnection,
@@ -72,7 +72,10 @@ import { createEmployeeLevels } from '../../organization_employeeLevel/organizat
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
 import { createDefaultApprovalPolicyForOrg } from '../../approval-policy/approval-policy.seed';
-import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
+import {
+	createExpenseCategories,
+	createRandomExpenseCategories
+} from '../../expense-categories/expense-categories.seed';
 import {
 	createOrganizationVendors,
 	createRandomOrganizationVendors
@@ -166,6 +169,8 @@ import { TimeLog } from '../../timesheet/time-log.entity';
 import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
 import { IntegrationType } from '../../integration/integration-type.entity';
 import { Integration } from '../../integration/integration.entity';
+import { createTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
+import { createGoals } from '../../goal/goal.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -310,15 +315,14 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-			const categories = await createExpenseCategories(this.connection);
 
 			await createCountries(this.connection);
 
 			await createDefaultEmailTemplates(this.connection);
 
-			await this.seedDefaultData(categories);
+			await this.seedDefaultData();
 
-			await this.seedRandomData(categories);
+			await this.seedRandomData();
 
 			this.log(
 				chalk.green(
@@ -333,7 +337,7 @@ export class SeedDataService {
 	/**
 	 * Populate default data from env files
 	 */
-	async seedDefaultData(categories: ExpenseCategory[]) {
+	async seedDefaultData() {
 		//Platform level data
 		const tenant = await createDefaultTenants(this.connection);
 
@@ -356,6 +360,10 @@ export class SeedDataService {
 		);
 
 		//Organization level inserts which need connection, tenant, role, organizations
+		const categories = await createExpenseCategories(
+			this.connection,
+			defaultOrganizations
+		);
 
 		await createEmployeeLevels(this.connection, defaultOrganizations);
 
@@ -367,6 +375,8 @@ export class SeedDataService {
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
 
 		await createDefaultProducts(this.connection, tenant);
+
+		await createTimeFrames(this.connection, tenant, defaultOrganizations);
 
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,
@@ -438,6 +448,13 @@ export class SeedDataService {
 			employees: defaultEmployees
 		});
 
+		await createGoals(
+			this.connection,
+			tenant,
+			defaultOrganizations,
+			defaultEmployees
+		);
+
 		await createDefaultApprovalPolicyForOrg(this.connection, {
 			orgs: defaultOrganizations
 		});
@@ -451,7 +468,7 @@ export class SeedDataService {
 	/**
 	 * Populate database with random generated data
 	 */
-	async seedRandomData(categories: ExpenseCategory[]) {
+	async seedRandomData() {
 		if (!env.randomSeedConfig) {
 			this.log(
 				chalk.red(
@@ -542,12 +559,18 @@ export class SeedDataService {
 			tenantOrganizationsMap
 		);
 
+		const categoriesMap = await createRandomExpenseCategories(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
+
 		await createRandomExpenses(
 			this.connection,
 			tenants,
 			tenantEmployeeMap,
 			organizationVendorsMap,
-			categories
+			categoriesMap
 		);
 
 		await seedRandomEmploymentTypes(

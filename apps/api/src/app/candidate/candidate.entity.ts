@@ -25,7 +25,6 @@ import {
 	RelationId,
 	OneToMany
 } from 'typeorm';
-import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
@@ -37,14 +36,25 @@ import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { TenantBase } from '../core/entities/tenant-base';
+import { Contact } from '../contact/contact.entity';
 
 @Entity('candidate')
-export class Candidate extends TenantLocationBase implements ICandidate {
+export class Candidate extends TenantBase implements ICandidate {
 	@ManyToMany((type) => Tag, (tag) => tag.candidate)
 	@JoinTable({
 		name: 'tag_candidate'
 	})
 	tags: Tag[];
+
+	@ApiProperty({ type: Contact })
+	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
+	@JoinColumn()
+	contact: Contact;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((candidate: Candidate) => candidate.contact)
+	readonly contactId?: string;
 
 	@OneToMany(
 		(type) => CandidateEducation,
