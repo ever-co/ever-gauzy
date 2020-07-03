@@ -87,12 +87,12 @@ export const createKeyResults = async (
 
 const insertKeyResults = async (
 	connection: Connection,
-	defaultkeyResult: KeyResult[]
+	defaultkeyResults: KeyResult[]
 ) => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(KeyResult)
-		.values(defaultkeyResult)
+		.values(defaultkeyResults)
 		.execute();
 };

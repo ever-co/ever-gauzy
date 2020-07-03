@@ -43,7 +43,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 						start = new Date(res.items[0].startDate);
 						end = new Date(res.items[0].endDate);
 					} else {
-						start = new Date(keyResult.createdAt);
+						start = new Date(res.items[0].startDate);
 						end = new Date(
 							keyResult.hardDeadline
 								? keyResult.hardDeadline
