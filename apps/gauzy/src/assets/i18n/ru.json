@@ -1865,6 +1865,12 @@
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Добавить Назначение",
+		"EDIT_APPOINTMENT": "Редактировать Назначение",
+		"SAVE_SUCCESS": "Назначение успешно сохранено",
+		"SAVE_FAILED": "Не удалось сохранить прием",
+		"CANCEL_APPOINTMENT": "Отменить назначение",
+		"CANCEL_FAIL": "Не удалось отменить прием",
+		"CANCEL_SUCCESS": "Назначение успешно отменено",
 		"DURATION_ERROR": "Выбранная длительность недопустима"
 	},
 	"EVENT_TYPE_PAGE": {
