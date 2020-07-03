@@ -16,13 +16,15 @@ export class ScreenshotCreateHandler
 	public async execute(command: ScreenshotCreateCommand): Promise<any> {
 		try {
 			const { input } = command;
-			const { fullUrl, thumbUrl, recordedAt, timeSlot } = input;
+			const { fullUrl, thumbUrl, recordedAt, activityTimestamp } = input;
 
 			const {
-				record: findTimeSlot
+				record: timeSlot
 			} = await this._timeSlotService.findOneOrFail({
 				where: {
-					startedAt: moment(timeSlot).format('YYYY-MM-DD HH:mm:ss')
+					startedAt: moment(activityTimestamp).format(
+						'YYYY-MM-DD HH:mm:ss'
+					)
 				}
 			});
 
@@ -30,13 +32,13 @@ export class ScreenshotCreateHandler
 				record: screenshot
 			} = await this._screenshotService.findOneOrFail({
 				where: {
-					timeSlotId: findTimeSlot
+					timeSlotId: timeSlot
 				}
 			});
 
 			if (!screenshot) {
 				return await this._screenshotService.create({
-					timeSlotId: findTimeSlot,
+					timeSlotId: timeSlot,
 					fullUrl,
 					thumbUrl,
 					recordedAt
