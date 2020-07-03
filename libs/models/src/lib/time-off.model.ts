@@ -38,10 +38,11 @@ export interface TimeOffPolicyFindInput extends IBaseEntityModel {
 }
 
 export interface TimeOff extends IBaseEntityModel {
-	employee?: Employee;
+	holidayName?: string;
+	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
-	policy?: string;
+	policy?: TimeOffPolicy;
 	start?: Date;
 	end?: Date;
 	requestDate?: Date;
@@ -49,10 +50,11 @@ export interface TimeOff extends IBaseEntityModel {
 }
 
 export interface TimeOffFindInput extends IBaseEntityModel {
-	employee?: Employee;
+	holidayName?: string;
+	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
-	policy?: string;
+	policy?: TimeOffPolicy;
 	start?: Date;
 	end?: Date;
 	requestDate?: Date;
@@ -60,10 +62,11 @@ export interface TimeOffFindInput extends IBaseEntityModel {
 }
 
 export interface TimeOffUpdateInput {
-	employee?: Employee;
+	holidayName?: string;
+	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
-	policy?: string;
+	policy?: TimeOffPolicy;
 	start?: Date;
 	end?: Date;
 	requestDate?: Date;
@@ -71,10 +74,11 @@ export interface TimeOffUpdateInput {
 }
 
 export interface TimeOffCreateInput {
-	employee?: Employee;
+	holidayName?: string;
+	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
-	policy?: string;
+	policy?: TimeOffPolicy;
 	start?: Date;
 	end?: Date;
 	requestDate?: Date;
