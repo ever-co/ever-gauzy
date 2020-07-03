@@ -21,7 +21,7 @@ import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutati
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
-import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
+import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
 
@@ -259,7 +259,6 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (org) => {
 				if (org) {
-					// this.selectedInvoice = null;
 					const { items } = await this.invoicesService.getAll(
 						[
 							'invoiceItems',

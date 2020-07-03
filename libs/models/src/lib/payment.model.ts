@@ -18,6 +18,7 @@ export interface Payment extends IBaseEntityModel {
 	paymentDate?: Date;
 	amount?: number;
 	currency?: string;
+	overdue?: boolean;
 }
 
 export interface PaymentUpdateInput {

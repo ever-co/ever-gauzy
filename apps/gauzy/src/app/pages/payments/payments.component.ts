@@ -8,6 +8,7 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Payment } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
+import { InvoicePaymentOverdueComponent } from '../invoices/table-components/invoice-payment-overdue.component';
 
 export interface SelectedPayment {
 	data: Payment;
@@ -69,7 +70,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 								.toString()
 								.slice(0, 10),
 							recordedBy: item.recordedBy,
-							note: item.note
+							note: item.note,
+							overdue: item.overdue
 						};
 						allData.push(data);
 					}
@@ -88,27 +90,32 @@ export class PaymentsComponent extends TranslationBaseComponent
 					filter: false
 				},
 				clientName: {
-					title: 'Client',
+					title: this.getTranslation('PAYMENTS_PAGE.CLIENT'),
 					type: 'text'
 				},
 				amount: {
-					title: 'Amount',
+					title: this.getTranslation('PAYMENTS_PAGE.AMOUNT'),
 					type: 'text',
 					filter: false
 				},
 				paymentDate: {
-					title: 'Payment Date',
+					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
 					type: 'text'
 				},
 				recordedBy: {
-					title: 'Recorded By',
+					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
 					type: 'text',
 					filter: false
 				},
 				note: {
-					title: 'Note',
+					title: this.getTranslation('PAYMENTS_PAGE.NOTE'),
 					type: 'text',
 					filter: false
+				},
+				overdue: {
+					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
+					type: 'custom',
+					renderComponent: InvoicePaymentOverdueComponent
 				}
 			}
 		};
