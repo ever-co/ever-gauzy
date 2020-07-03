@@ -24,8 +24,6 @@ export class ActivityCreateHandler
 				}
 			});
 
-			console.log(timeSlotId);
-
 			return await this._activityService.create({
 				// TODO: add following fields:
 				// - timeSlotId - not sure how to map it to Activity entity, maybe `date`?
