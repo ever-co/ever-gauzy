@@ -55,6 +55,7 @@ export const createDefaultExpenses = async (
 
 				expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
+				expense.tenant = defaultData.org.tenant;
 				expense.amount = Math.abs(seedExpense.amount);
 				expense.vendor = foundVendor;
 				expense.category = foundCategory;
@@ -76,11 +77,11 @@ export const createRandomExpenses = async (
 	tenants: Tenant[],
 	tenantEmployeeMap: Map<Tenant, Employee[]>,
 	organizationVendorsMap: Map<Organization, OrganizationVendor[]>,
-	categories: ExpenseCategory[]
+	categoriesMap: Map<Organization, ExpenseCategory[]>
 ): Promise<void> => {
 	const currencies = Object.values(CurrenciesEnum);
 
-	if (!categories) {
+	if (!categoriesMap) {
 		return;
 	}
 
@@ -101,6 +102,7 @@ export const createRandomExpenses = async (
 			const organizationVendors = organizationVendorsMap.get(
 				employee.organization
 			);
+			const categories = categoriesMap.get(employee.organization);
 
 			for (let index = 0; index < 5; index++) {
 				const expense = new Expense();
@@ -111,6 +113,7 @@ export const createRandomExpenses = async (
 				});
 
 				expense.organization = employee.organization;
+				expense.tenant = tenant;
 				expense.employee = employee;
 				expense.amount = faker.random.number({ min: 10, max: 999 });
 				expense.vendor =

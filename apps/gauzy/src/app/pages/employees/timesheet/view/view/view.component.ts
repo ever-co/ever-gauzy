@@ -18,8 +18,7 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 
 @Component({
 	selector: 'ngx-view',
-	templateUrl: './view.component.html',
-	styleUrls: ['./view.component.scss']
+	templateUrl: './view.component.html'
 })
 export class ViewComponent implements OnInit, OnDestroy {
 	logRequest: {

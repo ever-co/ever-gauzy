@@ -7,8 +7,7 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 
 @Component({
 	selector: 'ga-invoice-send',
-	templateUrl: './invoice-send-mutation.component.html',
-	styleUrls: ['./invoice-send-mutation.component.scss']
+	templateUrl: './invoice-send-mutation.component.html'
 })
 export class InvoiceSendMutationComponent extends TranslationBaseComponent
 	implements OnInit {

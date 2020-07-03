@@ -1,5 +1,4 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
 	GoalTimeFrame as IGoalTimeFrame,
 	TimeFrameStatusEnum
@@ -7,9 +6,10 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('goal_time_frame')
-export class GoalTimeFrame extends Base implements IGoalTimeFrame {
+export class GoalTimeFrame extends TenantBase implements IGoalTimeFrame {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

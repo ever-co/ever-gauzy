@@ -65,12 +65,12 @@ export interface ISubmitTimesheetInput {
 	status: 'submit' | 'unsubmit';
 }
 
-export interface IGetTimeSheetInput {
+export interface IGetTimesheetInput {
 	startDate?: string;
 	endDate?: string;
 	projectId?: string[];
 	clientId?: string[];
-	employeeId?: string | string[];
+	employeeIds?: string[];
 	organizationId?: string;
 }
 
@@ -140,8 +140,8 @@ export interface TimeLogFilters {
 	organizationId?: string;
 	startDate?: Date | string;
 	endDate?: Date | string;
-	projectId?: string[];
-	employeeId?: string[];
+	projectIds?: string[];
+	employeeIds?: string[];
 	logType?: TimeLogType[];
 	source?: TimeLogSourceEnum[];
 	activityLevel?: {
@@ -267,14 +267,6 @@ export interface IManualTimeInput {
 	isBillable?: boolean;
 }
 
-export interface IGetTimesheetInput {
-	startDate?: string;
-	endDate?: string;
-	projectId?: string[];
-	clientId?: string[];
-	employeeId?: string | string[];
-}
-
 export interface IGetTimeLogInput extends TimeLogFilters {
 	timesheetId?: string;
 }
@@ -294,4 +286,5 @@ export interface IGetTimeSlotInput extends TimeLogFilters {
 
 export interface IGetActivitiesInput extends TimeLogFilters {
 	relations?: string[];
+	type?: string[];
 }

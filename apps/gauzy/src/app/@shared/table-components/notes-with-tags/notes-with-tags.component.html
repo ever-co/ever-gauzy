@@ -9,7 +9,7 @@
 	<div *ngIf="rowData.jobTitle">{{ rowData.jobTitle }}</div>
 	<div *ngIf="rowData.name">{{ rowData.name }}</div>
 	<div *ngIf="rowData.level">{{ rowData.level }}</div>
-	<div class="tags">
+	<div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}">
 		<nb-badge
 			*ngFor="let tag of rowData?.tags"
 			class="color"

@@ -18,8 +18,7 @@ export interface SelectedInvoice {
 
 @Component({
 	selector: 'ga-invoices-received',
-	templateUrl: './invoices-received.component.html',
-	styleUrls: ['./invoices-received.component.scss']
+	templateUrl: './invoices-received.component.html'
 })
 export class InvoicesReceivedComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

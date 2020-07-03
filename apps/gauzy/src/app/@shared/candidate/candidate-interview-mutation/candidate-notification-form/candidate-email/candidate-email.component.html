@@ -23,7 +23,7 @@
 	<nb-card-body class="editor">
 		<form [formGroup]="form" *ngIf="form">
 			<ckeditor
-				[formControl]="form.controls['text']"
+				formControlName="text"
 				(change)="onChange($event)"
 				[config]="{
 					width: '100%',

@@ -149,7 +149,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			startedWorkOn: [
 				employee.startedWorkOn !== null
 					? new Date(employee.startedWorkOn)
-					: '' || ''
+					: ''
 			]
 		});
 

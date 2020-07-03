@@ -140,7 +140,8 @@ export class EditOrganizationProjectsMutationComponent
 				id: this.project ? this.project.id : undefined,
 				organizationId: this.organization.id,
 				name: this.form.value['name'],
-				organizationContact: this.form.value['organizationContact'].organizationContactId,
+				organizationContact: this.form.value['organizationContact']
+					.organizationContactId,
 				billing: this.form.value['billing'],
 				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],

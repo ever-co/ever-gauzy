@@ -4,8 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-	selector: 'ngx-share',
-	styleUrls: ['share.component.scss'],
+	selector: 'ngx-share',	
 	template: `
 		<ngx-one-column-layout>
 			<router-outlet></router-outlet>

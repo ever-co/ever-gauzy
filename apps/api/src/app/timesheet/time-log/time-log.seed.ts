@@ -83,7 +83,7 @@ export const createRandomTimeLogs = async (
 				});
 
 				await Promise.all(screenshotsPromise).then((data) => {
-					data.map((row) => {
+					data.forEach((row) => {
 						screenshots = screenshots.concat(row);
 					});
 				});
@@ -118,7 +118,10 @@ export const createRandomTimeLogs = async (
 function dateRanges(start: Date, stop: Date) {
 	const range = [];
 	const startedAt = faker.date.between(start, stop);
-	const stoppedAt = faker.date.between(startedAt, stop);
+	const stoppedAt = faker.date.between(
+		startedAt,
+		moment(startedAt).add(2, 'hours').toDate()
+	);
 	range.push({ startedAt, stoppedAt });
 	return range;
 }

@@ -5,6 +5,7 @@ import {
 } from './translation.model';
 import { Organization } from './organization.model';
 import { Tag } from './tag-entity.model';
+import { ITenant } from './tenant.model';
 
 export interface Product extends IBaseEntityModel {
 	name: string;
@@ -32,6 +33,7 @@ export interface IProductCreateInput {
 	tags?: Tag[];
 	optionCreateInputs?: ProductOption[];
 	optionDeleteInputs?: ProductOption[];
+	tenant: ITenant;
 }
 
 export interface ProductFindInput {

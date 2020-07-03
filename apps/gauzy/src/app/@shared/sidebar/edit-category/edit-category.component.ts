@@ -23,9 +23,10 @@ export class EditCategoryComponent extends TranslationBaseComponent
 	) {
 		super(translateService);
 	}
-	@Input() category: IHelpCenter;
+	@Input() category?: IHelpCenter;
 	@Input() base: IHelpCenter;
 	@Input() editType: string;
+	@Input() organizationId: string;
 	public selectedLang: string;
 	public isToggled = false;
 	public selectedIcon: string;
@@ -52,19 +53,19 @@ export class EditCategoryComponent extends TranslationBaseComponent
 			color: [''],
 			desc: ['', Validators.required]
 		});
-		this.loadFormData(this.category);
+		this.loadFormData();
 	}
 
 	toggleStatus(event: boolean) {
 		this.isToggled = event;
 	}
 
-	loadFormData(category) {
+	loadFormData() {
 		if (this.editType === 'edit')
 			this.form.patchValue({
-				name: category.name,
-				desc: category.description,
-				color: category.color
+				name: this.category.name,
+				desc: this.category.description,
+				color: this.category.color
 			});
 		if (this.editType === 'add') {
 			this.form.patchValue({
@@ -100,6 +101,7 @@ export class EditCategoryComponent extends TranslationBaseComponent
 				icon: `${this.selectedIcon}`,
 				flag: 'category',
 				index: 0,
+				organizationId: this.organizationId,
 				description: `${this.form.value.desc}`,
 				language: `${this.selectedLang}`,
 				color: `${this.color}`,

@@ -24,10 +24,6 @@
 					><b>{{ successRate }}</b>
 				</span>
 			</div>
-			<!-- <ngx-proposals-pie-chart
-				*ngIf="chartData.length"
-				[values]="chartData"
-			></ngx-proposals-pie-chart> -->
 		</nb-card>
 
 		<div class="mb-3" *ngIf="hasEditPermission">
@@ -88,7 +84,7 @@
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
 			(userRowSelect)="selectProposal($event)"
-			style="cursor: pointer"
+			style="cursor: pointer;"
 			#proposalsTable
 		>
 		</ng2-smart-table>

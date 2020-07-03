@@ -11,7 +11,7 @@ import {
 	OrganizationLanguages,
 	PermissionsEnum,
 	Timesheet,
-	IGetTimeSheetInput
+	IGetTimesheetInput
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -171,7 +171,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getEmployees() {
-		let employees = await this.employeesService
+		const employees = await this.employeesService
 			.getAll(['user'], {
 				organization: {
 					id: this.organization.id
@@ -187,7 +187,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getTimeSheets() {
-		const request: IGetTimeSheetInput = {
+		const request: IGetTimesheetInput = {
 			organizationId: this.organization.id
 		};
 		this.loading = true;
@@ -198,7 +198,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getEmployeeStatistics() {
-		let statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
+		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 			{
 				organizationId: this.organization.id,
 				filterDate: new Date()

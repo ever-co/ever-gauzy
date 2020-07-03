@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { EquipmentSharing } from './equipment-sharing.model';
 import { Tag } from './tag-entity.model';
+import { ITenant } from './tenant.model';
 
 export interface Equipment extends IBaseEntityModel {
 	name: string;
@@ -13,4 +14,5 @@ export interface Equipment extends IBaseEntityModel {
 	autoApproveShare: boolean;
 	equipmentSharings: EquipmentSharing[];
 	tags: Tag[];
+	tenant: ITenant;
 }

@@ -17,8 +17,7 @@ export interface SelectedPayment {
 
 @Component({
 	selector: 'ngx-payments',
-	templateUrl: './payments.component.html',
-	styleUrls: ['./payments.component.scss']
+	templateUrl: './payments.component.html'
 })
 export class PaymentsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

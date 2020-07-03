@@ -28,6 +28,9 @@
 		"electron-updater": "~4.2.0"
 	},
 	"dependencies": {
-		"electron-store": "^5.2.0"
+		"electron-store": "^5.2.0",
+		"knex": "^0.21.1",
+		"moment": "^2.25.3",
+		"node-notifier": "^7.0.1"
 	}
 }

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository, FindManyOptions, Between } from 'typeorm';
 import { Expense } from './expense.entity';
-import { CrudService } from '../core/crud/crud.service';
 import { IPagination } from '../core';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 @Injectable()
-export class ExpenseService extends CrudService<Expense> {
+export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
 		@InjectRepository(Expense)
 		private readonly expenseRepository: Repository<Expense>
@@ -14,26 +15,32 @@ export class ExpenseService extends CrudService<Expense> {
 		super(expenseRepository);
 	}
 
-	public async findAll(
+	public async findAllExpenses(
 		filter?: FindManyOptions<Expense>,
 		filterDate?: string
 	): Promise<IPagination<Expense>> {
-		const total = await this.repository.count(filter);
-		let items = await this.repository.find(filter);
-
 		if (filterDate) {
 			const dateObject = new Date(filterDate);
-
-			const month = dateObject.getMonth() + 1;
-			const year = dateObject.getFullYear();
-
-			items = items.filter((i) => {
-				const currentItemMonth = i.valueDate.getMonth() + 1;
-				const currentItemYear = i.valueDate.getFullYear();
-				return currentItemMonth === month && currentItemYear === year;
-			});
+			return filter
+				? await this.findAll({
+						where: {
+							valueDate: Between(
+								startOfMonth(dateObject),
+								endOfMonth(dateObject)
+							),
+							...(filter.where as Object)
+						},
+						relations: filter.relations
+				  })
+				: await this.findAll({
+						where: {
+							valueDate: Between(
+								startOfMonth(dateObject),
+								endOfMonth(dateObject)
+							)
+						}
+				  });
 		}
-
-		return { items, total };
+		return await this.findAll(filter || {});
 	}
 }
