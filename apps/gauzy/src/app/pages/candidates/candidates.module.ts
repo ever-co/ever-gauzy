@@ -85,6 +85,7 @@ import { CandidateTechnologiesComponent } from './manage-candidate-interviews/in
 import { CandidatePersonalQualitiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
 import { CriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/criterions-rating-chart/criterions-rating-chart.component';
 import { CandidateSelectModule } from '../../@shared/candidate/candidate-select/candidate-select.module';
+import { CandidateCriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-criterions-rating-chart /candidate-criterions-rating-chart.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -117,6 +118,7 @@ const COMPONENTS = [
 	InterviewPanelComponent,
 	CandidateRatingChartComponent,
 	CriterionsRatingChartComponent,
+	CandidateCriterionsRatingChartComponent,
 	InterviewerAssessmentChartComponent,
 	InterviewCriterionsComponent,
 	CandidateTechnologiesComponent,

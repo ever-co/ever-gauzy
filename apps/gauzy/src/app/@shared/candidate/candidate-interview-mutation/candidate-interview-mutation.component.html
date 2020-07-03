@@ -53,6 +53,7 @@
 				<div class="text-right">
 					<button
 						status="success"
+						class="btn"
 						[disabled]="candidateInterviewForm.form.invalid"
 						nbButton
 						nbStepperNext
@@ -81,6 +82,7 @@
 
 				<div class="button-container">
 					<button
+						class="btn"
 						status="primary"
 						(click)="previous()"
 						nbButton
@@ -97,7 +99,7 @@
 								| translate
 						}}
 					</button>
-					<button status="success" nbButton nbStepperNext>
+					<button class="btn" status="success" nbButton nbStepperNext>
 						{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
 								| translate
@@ -122,6 +124,7 @@
 
 				<div class="button-container">
 					<button
+						class="btn"
 						status="primary"
 						(click)="previous()"
 						nbButton
@@ -133,6 +136,7 @@
 						}}
 					</button>
 					<button
+						class="btn"
 						status="success"
 						nbButton
 						nbStepperSave

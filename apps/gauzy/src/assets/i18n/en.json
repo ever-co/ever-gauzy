@@ -891,13 +891,15 @@
 			"RATING": "Rating"
 		},
 		"STATISTIC": {
-			"CANDIDATE_STATISTICS": "Candidate statistics",
-			"CANDIDATE_RATING": "Candidate rating",
-			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
-			"CRITERIONS_RATING": "Criterions rating per interview",
+			"CANDIDATE_STATISTICS": "Candidates statistic",
+			"CANDIDATE_RATING": "Candidate's rating",
+			"INTERVIEWER_ASSESSMENT": "Candidate's rating per interview",
+			"CRITERIONS_RATING": "Criterion's rating per interview",
+			"CANDIDATE_CRITERIONS_RATING": "Candidate's criterions rating",
 			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview",
-			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer"
+			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer",
+			"SELECT_CANDIDATE": "Select a candidate"
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Candidates criterions",
