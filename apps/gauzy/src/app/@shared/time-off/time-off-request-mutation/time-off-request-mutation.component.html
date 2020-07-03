@@ -5,7 +5,7 @@
 	</nb-card-header>
 
 	<nb-card-body>
-		<form [formGroup]="form">
+		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="form-group col-6">
 					<label class="label">Employee</label>
@@ -24,14 +24,6 @@
 						(selectedChange)="onPolicySelected($event)"
 						fullWidth
 						placeholder="Seletc Time-off Policy"
-						[ngClass]="{
-							'status-danger':
-								form.controls['policy'].invalid &&
-								form.controls['policy'].dirty,
-							'status-success':
-								form.controls['policy'].valid &&
-								form.controls['policy'].dirty
-						}"
 					>
 						<nb-option
 							*ngFor="let policy of policies"

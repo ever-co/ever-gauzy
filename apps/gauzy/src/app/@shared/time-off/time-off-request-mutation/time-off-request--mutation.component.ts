@@ -11,7 +11,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 	templateUrl: './time-off-request-mutation.component.html',
 	styleUrls: ['../time-off-mutation.components.scss']
 })
-export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
+export class TimeOffRequestMutationComponent implements OnInit {
 	constructor(
 		protected dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
 		private fb: FormBuilder,
@@ -24,7 +24,7 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 	employeeSelector: EmployeeSelectorComponent;
 	form: FormGroup;
 	policies: TimeOffPolicy[] = [];
-	employees: Employee[];
+	employeesArr: Employee[] = [];
 	selectedEmployee: any;
 	organizationId: string;
 	policy: TimeOffPolicy;
@@ -34,11 +34,23 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 	invalidInterval: boolean;
 
 	ngOnInit() {
-		this.getFormData();
-		this.initializeForm();
+		this._initializeForm();
 	}
 
-	async getFormData() {
+	private async _initializeForm() {
+		await this._getFormData();
+
+		this.form = this.fb.group({
+			description: [''],
+			start: ['', Validators.required],
+			end: ['', Validators.required],
+			policy: [this.policy, Validators.required],
+			requestDate: [new Date()],
+			status: ['']
+		});
+	}
+
+	private async _getFormData() {
 		this.organizationId = this.store.selectedOrganization.id;
 
 		if (this.organizationId) {
@@ -57,23 +69,13 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private async initializeForm() {
-		this.form = this.fb.group({
-			description: [''],
-			start: ['', Validators.required],
-			end: ['', Validators.required],
-			policy: [this.policy, Validators.required],
-			requestDate: [new Date()]
-		});
-	}
-
 	onPolicySelected(policy: TimeOffPolicy) {
 		this.policy = policy;
 	}
 
 	addRequest() {
 		this.selectedEmployee = this.employeeSelector.selectedEmployee;
-		const { start, end } = this.form.value;
+		const { start, end, policy } = this.form.value;
 
 		if (start >= end) {
 			this.invalidInterval = true;
@@ -83,14 +85,25 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 			);
 		}
 
+		if (policy.requiresApproval) {
+			this.form.value.status = 'Requested';
+		} else {
+			this.form.value.status = 'Approved';
+		}
+
 		if (
 			this.form.valid &&
 			this.selectedEmployee.id &&
 			!this.invalidInterval
 		) {
+			this.employeesArr.push(this.selectedEmployee);
+
 			this.dialogRef.close(
 				Object.assign(
-					{ employee: this.selectedEmployee },
+					{
+						employees: this.employeesArr,
+						organizationId: this.organizationId
+					},
 					this.form.value
 				)
 			);
@@ -102,6 +115,4 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 	close() {
 		this.dialogRef.close();
 	}
-
-	ngOnDestroy() {}
 }

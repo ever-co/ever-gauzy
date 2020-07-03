@@ -99,6 +99,7 @@ import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 import { EstimateEmail } from './estimate-email/estimate-email.entity';
 import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { TimeOffRequestModule } from './time-off-request/time-off-request.module';
 
 @Module({
 	imports: [
@@ -255,6 +256,10 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 					{
 						path: '/estimate-email',
 						module: EstimateEmailModule
+					},
+					{
+						path: 'time-off-request',
+						module: TimeOffRequestModule
 					},
 					{
 						path: 'time-off-policy',
