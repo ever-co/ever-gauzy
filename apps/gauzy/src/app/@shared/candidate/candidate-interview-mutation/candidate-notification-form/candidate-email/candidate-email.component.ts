@@ -20,6 +20,7 @@ export class CandidateEmailComponent implements OnInit {
 	emailText: string;
 	candidateNameTemplate: string;
 	textTemplate: string;
+
 	constructor(
 		protected candidatesService: CandidatesService,
 		private readonly fb: FormBuilder
@@ -34,6 +35,7 @@ export class CandidateEmailComponent implements OnInit {
 				: this.textTemplate + this.candidateNameTemplate
 		});
 	}
+
 	loadFormData() {
 		this.form = this.fb.group({
 			text: [this.emailText]

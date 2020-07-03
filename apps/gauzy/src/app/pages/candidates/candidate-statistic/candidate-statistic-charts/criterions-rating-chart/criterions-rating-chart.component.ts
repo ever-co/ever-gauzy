@@ -187,8 +187,8 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 		for (let i = 0; i < feedback.criterionsRating.length; i++) {
 			const color =
 				i % 2 === 0
-					? 'rgba(153, 102, 255, 0.2)'
-					: 'rgba(255, 159, 64, 0.2)';
+					? 'rgba(255, 206, 86, 0.2)'
+					: 'rgba(255, 99, 132, 0.2)';
 			this.backgroundColor.push(color);
 		}
 	}
