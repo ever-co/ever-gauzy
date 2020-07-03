@@ -40,32 +40,30 @@
 						{{ interview?.candidate?.user?.name }}
 					</strong>
 				</div>
-				<div class="header-large-block start-column">
-					<div class="center-column">
-						<strong>
-							{{ interview?.title }}
+				<div class="header-large-block">
+					<strong>
+						{{ interview?.title }}
+					</strong>
+				</div>
+				<div class="header-large-block">
+					<div class="start-column">
+						<strong
+							>{{ interview?.startTime | date: 'shortDate' }}
 						</strong>
-						<ga-star-rating-output
-							nbTooltip=" Average interview rating"
-							nbTooltipPlacement="right"
-							[rate]="
-								interview?.rating ? interview?.rating : null
-							"
-						>
-						</ga-star-rating-output>
+						<span>
+							{{ interview?.startTime | date: 'shortTime' }}-{{
+								interview?.endTime | date: 'shortTime'
+							}}
+						</span>
 					</div>
 				</div>
-				<div class="header-small-block">
-					<strong
-						>{{ interview?.startTime | date: 'shortDate' }}
-					</strong>
-				</div>
-				<div class="header-large-block pl-5">
-					<strong
-						>{{ interview?.startTime | date: 'shortTime' }}-{{
-							interview?.endTime | date: 'shortTime'
-						}}
-					</strong>
+				<div class="header-medium-block">
+					<ga-star-rating-output
+						nbTooltip=" Average interview rating"
+						nbTooltipPlacement="left"
+						[rate]="interview?.rating ? interview?.rating : null"
+					>
+					</ga-star-rating-output>
 				</div>
 
 				<div class="header-large-block">
@@ -84,8 +82,8 @@
 				</div>
 			</nb-accordion-item-header>
 			<nb-accordion-item-body class="body">
-				<div class="body-block">
-					<span class="body-block-update">
+				<div class="body-block-update">
+					<span>
 						updated: {{ interview?.updatedAt | date: 'short' }}
 					</span>
 				</div>
