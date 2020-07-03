@@ -16,7 +16,6 @@ import {
 	RelationId,
 	OneToMany
 } from 'typeorm';
-import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
@@ -28,14 +27,25 @@ import { User } from '../user/user.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { Skill } from '../skills/skill.entity';
+import { Contact } from '../contact/contact.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('employee')
-export class Employee extends TenantLocationBase implements IEmployee {
+export class Employee extends TenantBase implements IEmployee {
 	@ManyToMany((type) => Tag, (tag) => tag.employee)
 	@JoinTable({
 		name: 'tag_employee'
 	})
 	tags: Tag[];
+
+	@ApiProperty({ type: Contact })
+	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
+	@JoinColumn()
+	contact: Contact;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((employee: Employee) => employee.contact)
+	readonly contactId?: string;
 
 	@ManyToMany((type) => Skill, (skill) => skill.employee)
 	@JoinTable({

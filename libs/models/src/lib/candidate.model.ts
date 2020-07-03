@@ -3,14 +3,14 @@ import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Location as ILocation } from './location.model';
 import { UserFindInput, User } from './user.model';
 import { OrganizationTeam } from './organization-team-model';
 import {
 	ITenant,
 	OrganizationDepartment,
 	OrganizationPositions,
-	Tag
+	Tag,
+	Contact as IContact
 } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { IExperience } from './candidate-experience.model';
@@ -18,7 +18,7 @@ import { ISkill } from './candidate-skill.model';
 import { IEducation } from './candidate-education.model';
 import { ICandidateDocument } from './candidate-document.model';
 
-export interface Candidate extends IBaseEntityModel, ILocation {
+export interface Candidate extends IBaseEntityModel, IContact {
 	user: User;
 	userId: string;
 	organization: Organization;
@@ -48,6 +48,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	rating?: number;
 	isArchived?: boolean;
 	interview?: ICandidateInterview[];
+	contact: IContact;
 }
 
 export enum CandidateStatus {

@@ -5,12 +5,12 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { Employee, EmployeeUpdateInput, UserUpdateInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { EmployeeStore } from '../../../../@core/services/employee-store.service';
+import { EmployeesService } from '../../../../@core/services/employees.service';
+import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
+import { Store } from '../../../../@core/services/store.service';
+import { UsersService } from '../../../../@core/services/users.service';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 
@@ -203,7 +203,8 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 					'organizationPosition',
 					'organizationEmploymentTypes',
 					'tags',
-					'skills'
+					'skills',
+					'contact'
 				],
 				{ id }
 			)
