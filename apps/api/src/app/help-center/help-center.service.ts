@@ -13,7 +13,7 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	) {
 		super(HelpCenterRepository);
 	}
-	async createBulk(updateInput: IHelpCenter[]) {
+	async updateBulk(updateInput: IHelpCenter[]) {
 		return await this.repository.save(updateInput);
 	}
 	async deleteBulkByBaseId(ids: string[]) {

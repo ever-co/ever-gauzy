@@ -26,12 +26,12 @@ export class HelpCenterService {
 			.toPromise();
 	}
 
-	createBulk(
+	updateBulk(
 		oldChildren: IHelpCenter[],
 		newChildren: IHelpCenter[]
 	): Promise<IHelpCenter[]> {
 		return this.http
-			.post<IHelpCenter[]>('/api/help-center/createBulk', {
+			.post<IHelpCenter[]>('/api/help-center/updateBulk', {
 				oldChildren,
 				newChildren
 			})

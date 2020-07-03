@@ -73,7 +73,6 @@ export class EditBaseComponent extends TranslationBaseComponent
 	}
 
 	async submit() {
-		console.log(this.organizationId);
 		if (this.editType === 'edit')
 			this.base = await this.helpCenterService.update(this.base.id, {
 				name: `${this.form.value.name}`,
