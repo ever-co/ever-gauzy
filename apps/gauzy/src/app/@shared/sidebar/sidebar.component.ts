@@ -55,6 +55,11 @@ export class SidebarComponent extends TranslationBaseComponent
 	selectedOrganizationId: string;
 	settingsContextMenu: NbMenuItem[];
 	options: ITreeOptions = {
+		getChildren: async (node: IHelpCenter) => {
+			const res = await this.helpService.findByBaseId(node.id);
+			return res;
+		},
+		hasChildrenField: 'children',
 		allowDrag: true,
 		allowDrop: (el, { parent, index }) => {
 			if (parent.data.flag === 'category') {
@@ -62,7 +67,8 @@ export class SidebarComponent extends TranslationBaseComponent
 			} else {
 				return true;
 			}
-		}
+		},
+		childrenField: 'children'
 	};
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
@@ -208,21 +214,18 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 	}
 
-	// async updateIndexes(
-	// 	oldChildren: IHelpCenter[],
-	// 	newChildren: IHelpCenter[]
-	// ) {
-	// 	try {
-	// 		await this.helpService.createBulk(oldChildren, newChildren);
-	// 	} catch (error) {
-	// 		this.errorHandler.handleError(error);
-	// 	}
-	// }
+	async updateIndexes(
+		oldChildren: IHelpCenter[],
+		newChildren: IHelpCenter[]
+	) {
+		try {
+			await this.helpService.updateBulk(oldChildren, newChildren);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
 	async onMoveNode($event) {
-		// this.updateIndexes(
-		// 	$event.from.parent.children,
-		// 	$event.to.parent.children
-		// );
 		for (const node of this.tempNodes) {
 			if (node.id === $event.node.id) {
 				if (!$event.to.parent.virtual) {
@@ -236,6 +239,10 @@ export class SidebarComponent extends TranslationBaseComponent
 				}
 			}
 		}
+		this.updateIndexes(
+			$event.from.parent.children,
+			$event.to.parent.children
+		);
 		await this.loadMenu();
 		this.tree.treeModel.update();
 	}
