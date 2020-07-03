@@ -67,24 +67,25 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 					}
 				});
 			});
-			this.getCriterionsRating(criterionsRating, uniqCriterionsRating);
+			// this.getCriterionsRating(criterionsRating, uniqCriterionsRating);
 			this.currLabels = this.getCriterionsName(currInterviews);
 			this.loadChart();
 		}
 	}
-	getCriterionsRating(data, uniqArr) {
-		//TO DO
-		uniqArr.forEach((uniq) => {
-			let filteredTech = [];
-			let filteredQual = [];
-			filteredTech = data.filter(
-				(x) => x.technologyId && x.technologyId === uniq
-			);
-			filteredQual = data.filter(
-				(x) => x.personalQualityId && x.personalQualityId === uniq
-			);
-		});
-	}
+	//TO DO
+	// getCriterionsRating(data, uniqArr) {
+
+	// uniqArr.forEach((uniq) => {
+	// 	let filteredTech = [];
+	// 	let filteredQual = [];
+	// filteredTech = data.filter(
+	// 	(x) => x.technologyId && x.technologyId === uniq
+	// );
+	// filteredQual = data.filter(
+	// 	(x) => x.personalQualityId && x.personalQualityId === uniq
+	// );
+	// });
+	// }
 	getCriterionsName(currInterviews: ICandidateInterview[]) {
 		const resName = [];
 		const resId = [];
