@@ -892,11 +892,13 @@
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
 			"CANDIDATE_RATING": "Рейтинг Кандидата",
-			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью",
-			"CRITERIONS_RATING": "Рейтинг критериев за интервью",
+			"INTERVIEWER_ASSESSMENT": "Рейтинг Кандидата за интервью",
+			"CRITERIONS_RATING": "Рейтинг критерия за интервью",
+			"CANDIDATE_CRITERIONS_RATING": "Рейтинг критерия кандидата",
 			"NO_DATA": "Пока нет данных ",
 			"SELECT_INTERVIEW": "Выберите интервью",
-			"SELECT_INTERVIEW_INTERVIEWER": "Выберите интервью и интервьюера"
+			"SELECT_INTERVIEW_INTERVIEWER": "Выберите интервью и интервьюера",
+			"SELECT_CANDIDATE": "Выберите кандидата"
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
