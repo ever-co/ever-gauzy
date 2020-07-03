@@ -100,6 +100,7 @@ import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { Contact } from '../contact/contact.entity';
+import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
 
 const entities = [
 	Invite,
@@ -127,6 +128,7 @@ const entities = [
 	Country,
 	Email,
 	TimeOffPolicy,
+	TimeOffRequest,
 	RolePermissions,
 	Tenant,
 	EmailTemplate,

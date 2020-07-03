@@ -54,4 +54,11 @@ export class TimeOffService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	createRequest(timeOffRequest) {
+		return this.http
+			.post('/api/time-off-request', timeOffRequest)
+			.pipe(first())
+			.toPromise();
+	}
 }

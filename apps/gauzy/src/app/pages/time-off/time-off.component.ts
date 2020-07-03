@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { StatusTypesEnum, PermissionsEnum } from '@gauzy/models';
+import { StatusTypesEnum, PermissionsEnum, TimeOff } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request--mutation.component';
+import { TimeOffService } from '../../@core/services/time-off.service';
 
 @Component({
 	selector: 'ngx-time-off',
@@ -16,11 +17,13 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	constructor(
 		private router: Router,
 		private dialogService: NbDialogService,
+		private timeOffService: TimeOffService,
 		private store: Store
 	) {}
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
+	timeOffRequest: TimeOff;
 	selectedDate: Date;
 	selectedEmployeeId: string;
 	selectedStatus = 'All';
@@ -28,6 +31,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	loading = false;
 	displayHolidays = true;
 	hasEditPermission = false;
+
 	ngOnInit() {
 		this.store.userRolePermissions$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -95,12 +99,14 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	}
 
 	async requestDaysOff() {
-		const data = await this.dialogService
+		this.timeOffRequest = await this.dialogService
 			.open(TimeOffRequestMutationComponent)
 			.onClose.pipe(first())
 			.toPromise();
 
-		console.log(data);
+		console.log(this.timeOffRequest);
+
+		await this.timeOffService.createRequest(this.timeOffRequest);
 	}
 
 	addHolidays() {}
