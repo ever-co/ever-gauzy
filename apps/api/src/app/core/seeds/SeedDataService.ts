@@ -168,6 +168,7 @@ import { IntegrationType } from '../../integration/integration-type.entity';
 import { Integration } from '../../integration/integration.entity';
 import { createTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
 import { createGoals } from '../../goal/goal.seed';
+import { createKeyResults } from '../../keyresult/keyresult.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -442,11 +443,18 @@ export class SeedDataService {
 			employees: defaultEmployees
 		});
 
-		await createGoals(
+		const goals = await createGoals(
 			this.connection,
 			tenant,
 			defaultOrganizations,
 			defaultEmployees
+		);
+
+		await createKeyResults(
+			this.connection,
+			tenant,
+			defaultEmployees,
+			goals
 		);
 
 		await createDefaultApprovalPolicyForOrg(this.connection, {
