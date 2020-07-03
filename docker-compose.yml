@@ -123,7 +123,7 @@ services:
             - .env
         restart: on-failure
         depends_on:
-            - db:${DB_HOST:-db}
+            - db
         links:
             - db:${DB_HOST:-db}
         volumes:
@@ -141,7 +141,8 @@ services:
         build:
             context: .
             dockerfile: .deploy/webapp/Dockerfile
-            args: API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
+            args:
+                API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
         environment:
             NODE_ENV: ${NODE_ENV:-development}
         env_file:
