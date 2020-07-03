@@ -45,9 +45,7 @@ export class DeleteCategoryComponent extends TranslationBaseComponent
 		if (result) {
 			let hasArticles = false;
 			result.forEach((article) => {
-				if (article.categoryId === this.category.id) {
-					hasArticles = true;
-				}
+				if (article.categoryId === this.category.id) hasArticles = true;
 			});
 			if (hasArticles)
 				try {

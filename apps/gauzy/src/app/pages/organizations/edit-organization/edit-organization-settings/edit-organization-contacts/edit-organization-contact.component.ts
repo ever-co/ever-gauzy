@@ -86,7 +86,7 @@ export class EditOrganizationContactComponent extends TranslationBaseComponent
 		const contact = {
 			country: organizationContact.country,
 			city: organizationContact.city,
-			street: organizationContact.street
+			address: organizationContact.address
 		};
 		const organizationContactData = {
 			...organizationContact,

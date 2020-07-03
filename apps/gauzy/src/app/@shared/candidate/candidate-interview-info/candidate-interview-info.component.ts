@@ -9,6 +9,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
 import { first } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 @Component({
 	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
@@ -19,6 +20,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	@Input() interviewId: any; //from calendar
 	@Input() interviewList: ICandidateInterview[]; //from profile
 	@Input() selectedCandidate: Candidate; //from profile
+	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
 	interviewerNames = [];
 	currentInterview: ICandidateInterview;
@@ -63,21 +65,29 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	}
 	async ngOnInit() {
 		if (this.interviewId) {
-			const res = await this.candidateInterviewService.findById(
-				this.interviewId
-			);
-			if (res) {
-				this.interviewList = [];
-				this.interviewList.push(res);
-
+			const interviews = await this.candidateInterviewService.getAll([
+				'interviewers',
+				'technologies',
+				'personalQualities',
+				'feedbacks'
+			]);
+			if (interviews) {
+				this.interviewList = interviews.items;
+				this.currentInterview = this.interviewList.find(
+					(item) => item.id === this.interviewId
+				);
 				const candidate = await this.candidatesService.getCandidateById(
-					res.candidateId,
+					this.currentInterview.candidateId,
 					['user']
 				);
-				this.selectedCandidate = candidate;
+				if (candidate) {
+					this.selectedCandidate = candidate;
+				}
 			}
+		} else {
+			this.currentInterview = this.interviewList[0];
 		}
-		this.currentInterview = this.interviewList[0];
+
 		this.loadData();
 	}
 	loadData() {

@@ -72,7 +72,10 @@ import { createEmployeeLevels } from '../../organization_employeeLevel/organizat
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
 import { createDefaultApprovalPolicyForOrg } from '../../approval-policy/approval-policy.seed';
-import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
+import {
+	createExpenseCategories,
+	createRandomExpenseCategories
+} from '../../expense-categories/expense-categories.seed';
 import {
 	createOrganizationVendors,
 	createRandomOrganizationVendors
@@ -314,15 +317,14 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-			const categories = await createExpenseCategories(this.connection);
 
 			await createCountries(this.connection);
 
 			await createDefaultEmailTemplates(this.connection);
 
-			await this.seedDefaultData(categories);
+			await this.seedDefaultData();
 
-			await this.seedRandomData(categories);
+			await this.seedRandomData();
 
 			this.log(
 				chalk.green(
@@ -337,7 +339,7 @@ export class SeedDataService {
 	/**
 	 * Populate default data from env files
 	 */
-	async seedDefaultData(categories: ExpenseCategory[]) {
+	async seedDefaultData() {
 		//Platform level data
 		const tenant = await createDefaultTenants(this.connection);
 
@@ -360,6 +362,10 @@ export class SeedDataService {
 		);
 
 		//Organization level inserts which need connection, tenant, role, organizations
+		const categories = await createExpenseCategories(
+			this.connection,
+			defaultOrganizations
+		);
 
 		await createEmployeeLevels(this.connection, defaultOrganizations);
 
@@ -475,7 +481,7 @@ export class SeedDataService {
 	/**
 	 * Populate database with random generated data
 	 */
-	async seedRandomData(categories: ExpenseCategory[]) {
+	async seedRandomData() {
 		if (!env.randomSeedConfig) {
 			this.log(
 				chalk.red(
@@ -566,12 +572,18 @@ export class SeedDataService {
 			tenantOrganizationsMap
 		);
 
+		const categoriesMap = await createRandomExpenseCategories(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
+
 		await createRandomExpenses(
 			this.connection,
 			tenants,
 			tenantEmployeeMap,
 			organizationVendorsMap,
-			categories
+			categoriesMap
 		);
 
 		await seedRandomEmploymentTypes(

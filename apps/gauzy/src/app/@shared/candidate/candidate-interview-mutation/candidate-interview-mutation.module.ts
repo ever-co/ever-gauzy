@@ -28,7 +28,7 @@ import { CandidateCriterionsFormComponent } from './candidate-criterions-form/ca
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
-
+import { CKEditorModule } from 'ng2-ckeditor';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -45,6 +45,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCheckboxModule,
 		NbCardModule,
 		NbInputModule,
+		CKEditorModule,
 		NbButtonModule,
 		NbRadioModule,
 		NbIconModule,

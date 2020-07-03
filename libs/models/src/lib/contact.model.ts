@@ -5,10 +5,11 @@ export interface Contact {
 	firstName?: string;
 	lastname?: string;
 	country?: string;
-	street?: string;
 	city?: string;
-	zipCode?: number;
-	state?: string;
+	address?: string;
+	address2?: string;
+	postcode?: number;
+	regionCode?: string;
 }
 
 export interface ContactFindInput extends IBaseEntityModel {
@@ -16,10 +17,11 @@ export interface ContactFindInput extends IBaseEntityModel {
 	firstName?: string;
 	lastname?: string;
 	country?: string;
-	street?: string;
 	city?: string;
-	zipCode?: number;
-	state?: string;
+	address?: string;
+	address2?: string;
+	postcode?: number;
+	regionCode?: string;
 }
 
 export interface ContactCreateInput extends IBaseEntityModel {
@@ -27,8 +29,9 @@ export interface ContactCreateInput extends IBaseEntityModel {
 	firstName?: string;
 	lastname?: string;
 	country?: string;
-	street?: string;
 	city?: string;
-	zipCode?: number;
-	state?: string;
+	address?: string;
+	address2?: string;
+	postcode?: number;
+	regionCode?: string;
 }
