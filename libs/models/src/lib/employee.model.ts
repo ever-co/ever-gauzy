@@ -9,8 +9,8 @@ import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeam } from './organization-team-model';
-import { Contact as IContact, ContactFindInput } from './contact.model';
-import { ITenant, ContactCreateInput as IContactCreateInput } from '@gauzy/models';
+import { Contact as IContact } from './contact.model';
+import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { RequestApprovalEmployee } from './request-approval-employee.model';
 
