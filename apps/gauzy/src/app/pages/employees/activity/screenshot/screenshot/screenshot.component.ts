@@ -33,6 +33,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	selectedIds: {};
 	updateLogs$: Subject<any> = new Subject();
 	organization: any;
+	screenshotsUrls: string[] = [];
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -81,13 +82,14 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		const request: IGetTimeSlotInput = {
 			organizationId: this.organization.id,
 			...this.request,
-			startDate: toUTC(startDate).format('YYYY-MM-DD'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD'),
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 			...(employeeIds ? { employeeIds } : {}),
 			relations: ['screenshots', 'timeLogs']
 		};
 
 		this.loading = true;
+		this.screenshotsUrls = [];
 		this.timesheetService
 			.getTimeSlots(request)
 			.then((timeSlots) => {
@@ -105,6 +107,11 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						timeSlot.localStoppedAt = toLocal(
 							timeSlot.stoppedAt
 						).toDate();
+						this.screenshotsUrls = this.screenshotsUrls.concat(
+							timeSlot.screenshots.map(
+								(screenshot) => screenshot.fullUrl
+							)
+						);
 						return timeSlot;
 					})
 					.groupBy((timeSlot) =>

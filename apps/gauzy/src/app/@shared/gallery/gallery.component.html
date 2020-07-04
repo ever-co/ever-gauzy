@@ -1,65 +1,49 @@
 <div class="gallery-inner" [@fadeInOut]>
-	<!-- <div class="back-drop" [@fadeInOut] (click)="close()"></div> -->
-
-	<div class="gallery-content">
-		<div class="gallery-header">
-			<mat-toolbar>
-				<mat-toolbar-row>
-					<!-- <div> <h3>Second Line </h3> <span>Second Line</span></div> -->
-					<span class="toolbar-spacer"></span>
-					<a
-						href="{{ item?.file_urls?.full }}"
-						download="{{ item?.description }}.{{ item?.type }}"
-						mat-icon-button
-					>
-						<mat-icon>file_download</mat-icon>
-					</a>
-					<div class="boom-box" *ngIf="type == 'image'">
-						<button mat-icon-button (click)="zoomOut()">
-							<mat-icon>zoom_out</mat-icon>
-						</button>
-						<span class="counter">{{ zoom }} %</span>
-						<button mat-icon-button (click)="zoomIn()">
-							<mat-icon>zoom_in</mat-icon>
-						</button>
-					</div>
-					<!-- <button mat-icon-button> <mat-icon>forward</mat-icon></button> -->
-					<button mat-icon-button (click)="close()">
-						<mat-icon>close</mat-icon>
-					</button>
-				</mat-toolbar-row>
-			</mat-toolbar>
-		</div>
-		<div #middelPart class="middel-part">
-			<div class="left-button">
-				<button class="nav-button" mat-mini-fab (click)="prev()">
-					<mat-icon>keyboard_arrow_left</mat-icon>
-				</button>
-			</div>
-			<div class="media-viewer">
-				<img
-					#imageMedia
-					(load)="initData()"
-					[src]="item?.file_urls?.full"
-				/>
-			</div>
-			<div class="right-button">
-				<button class="nav-button" mat-mini-fab (click)="next()">
-					<mat-icon>keyboard_arrow_right</mat-icon>
-				</button>
-			</div>
+	<div class="gallery-header d-flex p-2">
+		<span class="spacer"></span>
+		<div class="ml-auto">
+			<a [href]="item" target="_blank" download nbButton>
+				<nb-icon icon="download-outline"></nb-icon>
+			</a>
+			<button class="ml-2" nbButton (click)="close()">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
 		</div>
 	</div>
-
-	<div class="gallery-footer">
-		<div class="thumb-items custom-scroll">
-			<div
-				class="thumb-item-{{ index }} thumb-item"
-				*ngFor="let item of thumb_items; let index = index"
-				[ngClass]="index == active_index ? 'active' : ''"
-				(click)="setFocus(index)"
+	<div class="gallery-content">
+		<div class="left-button">
+			<button
+				class="nav-button"
+				nbButton
+				status="primary"
+				(click)="prev()"
 			>
-				<img *ngIf="item.media" [src]="item.media" />
+				<nb-icon icon="arrow-left"></nb-icon>
+			</button>
+		</div>
+		<div class="media-viewer">
+			<img #imageMedia [src]="item" />
+		</div>
+		<div class="right-button">
+			<button
+				class="nav-button"
+				nbButton
+				status="primary"
+				(click)="next()"
+			>
+				<nb-icon icon="arrow-right"></nb-icon>
+			</button>
+		</div>
+	</div>
+	<div class="gallery-footer">
+		<div class="thumb-items custom-scroll" #customScroll>
+			<div
+				class="thumb-item"
+				*ngFor="let thumb of items; let index = index"
+				[ngClass]="{ 'thumb-item-active': item == thumb }"
+				(click)="setFocus(thumb)"
+			>
+				<img *ngIf="thumb" [src]="thumb" />
 			</div>
 		</div>
 	</div>
