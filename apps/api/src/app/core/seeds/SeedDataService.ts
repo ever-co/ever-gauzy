@@ -169,10 +169,16 @@ import { TimeLog } from '../../timesheet/time-log.entity';
 import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
 import { IntegrationType } from '../../integration/integration-type.entity';
 import { Integration } from '../../integration/integration.entity';
-import { createTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
-import { createGoals, updateGoalProgress } from '../../goal/goal.seed';
-import { createKeyResults } from '../../keyresult/keyresult.seed';
-import { createKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
+import { createDefaultTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
+import {
+	createDefaultGoals,
+	updateDefaultGoalProgress
+} from '../../goal/goal.seed';
+import {
+	createDefaultKeyResults,
+	updateDefaultKeyResultProgress
+} from '../../keyresult/keyresult.seed';
+import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -378,7 +384,11 @@ export class SeedDataService {
 
 		await createDefaultProducts(this.connection, tenant);
 
-		await createTimeFrames(this.connection, tenant, defaultOrganizations);
+		await createDefaultTimeFrames(
+			this.connection,
+			tenant,
+			defaultOrganizations
+		);
 
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,
@@ -450,23 +460,29 @@ export class SeedDataService {
 			employees: defaultEmployees
 		});
 
-		const goals = await createGoals(
+		const goals = await createDefaultGoals(
 			this.connection,
 			tenant,
 			defaultOrganizations,
 			defaultEmployees
 		);
 
-		const keyResults = await createKeyResults(
+		const keyResults = await createDefaultKeyResults(
 			this.connection,
 			tenant,
 			defaultEmployees,
 			goals
 		);
 
-		await createKeyResultUpdates(this.connection, tenant, keyResults);
+		await createDefaultKeyResultUpdates(
+			this.connection,
+			tenant,
+			keyResults
+		);
 
-		await updateGoalProgress(this.connection);
+		await updateDefaultKeyResultProgress(this.connection);
+
+		await updateDefaultGoalProgress(this.connection);
 
 		await createDefaultApprovalPolicyForOrg(this.connection, {
 			orgs: defaultOrganizations
