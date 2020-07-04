@@ -49,9 +49,7 @@ COPY --chown=node:node --from=development /srv/gauzy .
 ARG NODE_OPTIONS="--max-old-space-size=2048"
 RUN yarn build:api:prod
 
-#
 # production
-#
 FROM node:alpine AS production
 
 COPY wait /
