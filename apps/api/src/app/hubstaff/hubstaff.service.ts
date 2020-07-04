@@ -708,7 +708,7 @@ export class HubstaffService {
 
 					while (stillRecordsAvailable) {
 						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/url_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
-						if (nextPageStartId && stillRecordsAvailable) {
+						if (nextPageStartId) {
 							url += `&page_start_id=${nextPageStartId}`;
 						}
 
@@ -820,7 +820,7 @@ export class HubstaffService {
 
 					while (stillRecordsAvailable) {
 						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/application_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
-						if (nextPageStartId && stillRecordsAvailable) {
+						if (nextPageStartId) {
 							url += `&page_start_id=${nextPageStartId}`;
 						}
 
@@ -939,7 +939,7 @@ export class HubstaffService {
 
 					while (stillRecordsAvailable) {
 						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/screenshots?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
-						if (nextPageStartId && stillRecordsAvailable) {
+						if (nextPageStartId) {
 							url += `&page_start_id=${nextPageStartId}`;
 						}
 
