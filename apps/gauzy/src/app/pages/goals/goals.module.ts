@@ -20,7 +20,8 @@ import {
 	NbToggleModule,
 	NbContextMenuModule,
 	NbListModule,
-	NbPopoverModule
+	NbPopoverModule,
+	NbAlertModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -73,6 +74,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbListModule,
 		SharedModule,
 		NbPopoverModule,
+		NbAlertModule,
 		ChartModule,
 		GoalSettingsModule,
 		NbDialogModule.forChild(),

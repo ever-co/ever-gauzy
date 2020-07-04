@@ -13,7 +13,7 @@ import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { isFuture, isToday, compareDesc } from 'date-fns';
+import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -27,6 +27,9 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	updates: KeyResultUpdates[];
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
 	isUpdatable = true;
+	startDate: Date;
+	today = new Date();
+	endDate: Date;
 	private _ngDestroy$ = new Subject<void>();
 	ownerName: string;
 	@ViewChild(KeyResultProgressChartComponent)
@@ -50,22 +53,26 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			compareDesc(new Date(a.createdAt), new Date(b.createdAt))
 		);
 		// prevent keyresult updates after deadline
-		if (
-			this.keyResult.deadline ===
-			this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
-		) {
-			this.goalSettingsService
-				.getTimeFrameByName(this.keyResult.goal.deadline)
-				.then((res) => {
+		this.goalSettingsService
+			.getTimeFrameByName(this.keyResult.goal.deadline)
+			.then((res) => {
+				const timeFrame = res.items[0];
+				this.startDate = new Date(timeFrame.startDate);
+				if (
+					this.keyResult.deadline ===
+					this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+				) {
+					this.endDate = new Date(timeFrame.endDate);
 					this.isUpdatable =
-						isFuture(new Date(res.items[0].endDate)) ||
-						isToday(new Date(res.items[0].endDate));
-				});
-		} else {
-			this.isUpdatable =
-				isFuture(new Date(this.keyResult.hardDeadline)) ||
-				isToday(new Date(this.keyResult.hardDeadline));
-		}
+						(isFuture(this.endDate) || isToday(this.endDate)) &&
+						isPast(this.startDate);
+				} else {
+					this.endDate = new Date(this.keyResult.hardDeadline);
+					this.isUpdatable =
+						(isFuture(this.endDate) || isToday(this.endDate)) &&
+						isPast(this.startDate);
+				}
+			});
 	}
 
 	async loadModal() {
