@@ -4,7 +4,7 @@ import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import * as moment from 'moment';
 
-export const createTimeFrames = async (
+export const createDefaultTimeFrames = async (
 	connection: Connection,
 	tenant: Tenant,
 	organizations: Organization[]
@@ -35,12 +35,12 @@ export const createTimeFrames = async (
 		}
 	});
 
-	await insertTimeFrames(connection, defaultTimeFrames);
+	await insertDefaultTimeFrames(connection, defaultTimeFrames);
 
 	return defaultTimeFrames;
 };
 
-const insertTimeFrames = async (
+const insertDefaultTimeFrames = async (
 	connection: Connection,
 	defaultTimeFrames: GoalTimeFrame[]
 ) => {

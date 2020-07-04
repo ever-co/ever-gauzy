@@ -7,7 +7,7 @@ import { KeyResultUpdateStatusEnum, KeyResultTypeEnum } from '@gauzy/models';
 import * as moment from 'moment';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 
-export const createKeyResultUpdates = async (
+export const createDefaultKeyResultUpdates = async (
 	connection: Connection,
 	tenant: Tenant,
 	keyResults: KeyResult[]
@@ -43,7 +43,11 @@ export const createKeyResultUpdates = async (
 
 				keyResultUpdate.createdAt = faker.date.between(
 					startDate,
-					moment().toDate()
+					!keyResult.hardDeadline
+						? moment().toDate()
+						: moment(keyResult.hardDeadline).isBefore(moment())
+						? keyResult.hardDeadline
+						: moment().toDate()
 				);
 
 				if (keyResult.type !== KeyResultTypeEnum.TRUE_OR_FALSE) {
@@ -60,24 +64,14 @@ export const createKeyResultUpdates = async (
 				}
 
 				defaultKeyResultUpdates.push(keyResultUpdate);
-				if (i === numberOfUpdates - 1) {
-					await connection.manager.update(
-						KeyResult,
-						{ id: keyResult.id },
-						{
-							progress: keyResultUpdate.progress,
-							update: keyResultUpdate.update
-						}
-					);
-				}
 			}
 		}
 	});
-	await insertKeyResultUpdates(connection, defaultKeyResultUpdates);
+	await insertDefaultKeyResultUpdates(connection, defaultKeyResultUpdates);
 	return defaultKeyResultUpdates;
 };
 
-const insertKeyResultUpdates = async (
+const insertDefaultKeyResultUpdates = async (
 	connection: Connection,
 	defaultKeyResultUpdates: KeyResultUpdate[]
 ) => {
