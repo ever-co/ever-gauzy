@@ -6,7 +6,7 @@ import * as faker from 'faker';
 import { Employee } from '../employee/employee.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 
-export const createGoals = async (
+export const createDefaultGoals = async (
 	connection: Connection,
 	tenant: Tenant,
 	organizations: Organization[],
@@ -38,12 +38,12 @@ export const createGoals = async (
 		}
 	});
 
-	await insertGoals(connection, defaultGoals);
+	await insertDefaultGoals(connection, defaultGoals);
 
 	return defaultGoals;
 };
 
-export const updateGoalProgress = async (
+export const updateDefaultGoalProgress = async (
 	connection: Connection
 ): Promise<Goal[]> => {
 	const goals: Goal[] = await connection.manager.find(Goal, {
@@ -67,7 +67,10 @@ export const updateGoalProgress = async (
 	return goals;
 };
 
-const insertGoals = async (connection: Connection, defaultGoals: Goal[]) => {
+const insertDefaultGoals = async (
+	connection: Connection,
+	defaultGoals: Goal[]
+) => {
 	await connection
 		.createQueryBuilder()
 		.insert()
