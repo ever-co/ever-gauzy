@@ -28,10 +28,6 @@ WORKDIR /srv/gauzy
 
 ENTRYPOINT [ "/entrypoint" ]
 
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-
-ENV API_PORT 3000
-
 COPY --chown=node:node --from=dependencies /wait /entrypoint /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
@@ -46,7 +42,7 @@ RUN mkdir dist
 COPY --chown=node:node --from=development /srv/gauzy .
 
 ARG NODE_OPTIONS="--max-old-space-size=2048"
-ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
+ENV NODE_ENV production
 
 RUN yarn build:prod
 
@@ -58,17 +54,17 @@ RUN chmod +x /wait
 
 USER nginx:nginx
 
-COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint /
-
 WORKDIR /srv/gauzy
 
-EXPOSE ${PORT:-4200}
-CMD [ "nginx", "-g", "daemon off;" ]
-ENTRYPOINT [ "/entrypoint" ]
+COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint /
+COPY --chown=nginx:nginx .deploy/webapp/nginx.conf /etc/nginx
+COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
 
+ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_ENV production
 ENV API_PORT 3000
 
-COPY --chown=nginx:nginx .deploy/webapp/nginx.conf /etc/nginx
-COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
+EXPOSE ${PORT:-4200}
+CMD [ "nginx", "-g", "daemon off;" ]
+ENTRYPOINT [ "/entrypoint" ]
