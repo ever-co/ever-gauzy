@@ -56,11 +56,11 @@ FROM nginx:alpine AS production
 COPY wait /
 RUN chmod +x /wait
 
-USER node:node
+USER nginx:nginx
+
+COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint /
 
 WORKDIR /srv/gauzy
-
-COPY --from=dependencies /wait /entrypoint /
 
 EXPOSE ${PORT:-4200}
 CMD [ "nginx", "-g", "daemon off;" ]
@@ -70,5 +70,5 @@ ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_ENV production
 ENV API_PORT 3000
 
-COPY .deploy/webapp/nginx.conf /etc/nginx
-COPY --from=build /srv/gauzy/dist/apps/gauzy .
+COPY --chown=nginx:nginx .deploy/webapp/nginx.conf /etc/nginx
+COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
