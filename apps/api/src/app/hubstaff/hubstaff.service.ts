@@ -49,8 +49,6 @@ import {
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
 import { TenantService } from '../tenant/tenant.service';
-import { Settings } from 'http2';
-import { TaskService } from '../tasks/task.service';
 
 @Injectable()
 export class HubstaffService {
@@ -330,16 +328,33 @@ export class HubstaffService {
 	async syncScreenshots({
 		integrationId,
 		projectId,
-		screenshots
+		screenshots,
+		token,
+		organizationId
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await screenshots.map(
-			async ({ id, time_slot, full_url, thumb_url, recorded_at }) => {
+			async ({
+				id,
+				time_slot,
+				full_url,
+				thumb_url,
+				recorded_at,
+				user_id
+			}) => {
+				const employee = await this._getEmployeeByHubstaffUserId(
+					user_id,
+					token,
+					integrationId,
+					organizationId
+				);
+
 				const gauzyScreenshot = await this.commandBus.execute(
 					new ScreenshotCreateCommand({
 						fullUrl: full_url,
 						thumbUrl: thumb_url,
 						recordedAt: recorded_at,
-						activityTimestamp: time_slot
+						activityTimestamp: time_slot,
+						employeeId: employee.gauzyId
 					})
 				);
 
@@ -910,7 +925,7 @@ export class HubstaffService {
 		try {
 			const start = moment(dateRange.start).format('YYYY-MM-DD');
 			const end = moment(dateRange.end).format('YYYY-MM-DD');
-			const pageLimit = 10;
+			const pageLimit = 500;
 
 			const screenshotsMapped = await Promise.all(
 				projectsMap.map(async (project) => {
@@ -955,7 +970,9 @@ export class HubstaffService {
 					return await this.syncScreenshots({
 						integrationId,
 						projectId: gauzyId,
-						screenshots
+						screenshots,
+						token,
+						organizationId
 					});
 				})
 			);
@@ -1037,18 +1054,18 @@ export class HubstaffService {
 							);
 						}
 
-						// if (
-						// 	typeof screenshotSetting == 'object' &&
-						// 	screenshotSetting.sync
-						// ) {
-						screenshots = await this._handleScreenshots(
-							projectsMap,
-							integrationId,
-							token,
-							gauzyId,
-							dateRange
-						);
-						// }
+						if (
+							typeof screenshotSetting == 'object' &&
+							screenshotSetting.sync
+						) {
+							screenshots = await this._handleScreenshots(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+						}
 						return { tasks, projectsMap, activities, screenshots };
 					case IntegrationEntity.CLIENT:
 						const clients = await this._handleClients(

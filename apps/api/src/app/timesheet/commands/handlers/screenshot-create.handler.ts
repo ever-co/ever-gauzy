@@ -16,9 +16,15 @@ export class ScreenshotCreateHandler
 	public async execute(command: ScreenshotCreateCommand): Promise<any> {
 		try {
 			const { input } = command;
-			const { fullUrl, thumbUrl, recordedAt, activityTimestamp } = input;
-
 			const {
+				fullUrl,
+				thumbUrl,
+				recordedAt,
+				activityTimestamp,
+				employeeId
+			} = input;
+
+			let {
 				record: timeSlot
 			} = await this._timeSlotService.findOneOrFail({
 				where: {
@@ -27,6 +33,18 @@ export class ScreenshotCreateHandler
 					)
 				}
 			});
+
+			//if timeslot not found for this screenshot then create new timeslot
+			if (!timeSlot) {
+				timeSlot = await this._timeSlotService.create({
+					employeeId,
+					duration: 0,
+					keyboard: 0,
+					mouse: 0,
+					overall: 0,
+					startedAt: activityTimestamp
+				});
+			}
 
 			const {
 				record: screenshot

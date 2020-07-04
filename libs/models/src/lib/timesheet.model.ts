@@ -223,6 +223,7 @@ export enum ActivityType {
 
 export interface ICreateScreenshotInput {
 	activityTimestamp: string;
+	employeeId?: string;
 	fullUrl: string;
 	thumbUrl?: string;
 	recordedAt: Date;
