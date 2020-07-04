@@ -232,6 +232,7 @@ export interface ICreateScreenshotInput {
 }
 
 export interface Screenshot extends IBaseEntityModel {
+	[x: string]: any;
 	timeSlot: TimeSlot;
 	fullUrl: string;
 	thumbUrl?: string;
