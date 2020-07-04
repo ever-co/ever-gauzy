@@ -43,7 +43,9 @@ export const createDefaultKeyResultUpdates = async (
 
 				keyResultUpdate.createdAt = faker.date.between(
 					startDate,
-					!!keyResult.hardDeadline
+					!keyResult.hardDeadline
+						? moment().toDate()
+						: moment(keyResult.hardDeadline).isBefore(moment())
 						? keyResult.hardDeadline
 						: moment().toDate()
 				);
