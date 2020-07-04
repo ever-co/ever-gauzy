@@ -748,8 +748,8 @@
 			}
 		},
 		"MESSAGE": {
-			"TIME_FRAME_ENDED": "אינך יכול לעדכן את תוצאת המפתח הזו כעת. מסגרת הזמן לתוצאה מרכזית זו הסתיימה {{ date }}",
-			"TIME_FRAME_NOT_STARTED": "אינך יכול לעדכן את תוצאת המפתח הזו כעת. מסגרת הזמן לתוצאה מרכזית זו מתחילה בתאריך {{ date }}. אז תוכל לעדכן אותו"
+			"TIME_FRAME_ENDED": "You can't update this key result now. The Time Frame for this key result has ended on {{ date }}",
+			"TIME_FRAME_NOT_STARTED": "You can't update this key result now. The Time Frame for this key result starts on {{ date }}. Then you'll be able to update it"
 		},
 		"TYPE": {
 			"NUMBER": "Number",
