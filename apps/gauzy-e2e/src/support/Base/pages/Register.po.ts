@@ -1,6 +1,5 @@
 import { clickButton, enterInput, verifyElementIsVisible } from '../utils/util';
 import { RegisterPage } from '../pageobjects/RegisterPageObject';
-import { RegisterPageData } from '../pagedata/RegisterPageData';
 
 export const clickRegisterLink = () => {
 	clickButton(RegisterPage.registerLinkCss);
