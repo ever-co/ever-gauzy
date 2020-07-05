@@ -46,7 +46,7 @@
 		"currency.js": "^1.2.2",
 		"faker": "^4.1.0",
 		"fastify-swagger": "^2.5.1",
-		"helmet": "^3.20.1",
+		"helmet": "^3.23.3",
 		"mjml": "^4.6.2",
 		"moment": "^2.25.2",
 		"nest-router": "^1.0.9",
@@ -74,7 +74,7 @@
 	"devDependencies": {
 		"@nestjs/schematics": "^7.0.0",
 		"@nestjs/testing": "^7.0.6",
-		"@types/helmet": "^0.0.44",
+		"@types/helmet": "^0.0.47",
 		"@types/nodemailer": "^6.4.0",
 		"@types/passport": "^1.0.3",
 		"@types/passport-jwt": "^3.0.3",
