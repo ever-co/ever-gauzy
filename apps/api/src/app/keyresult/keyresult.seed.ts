@@ -6,8 +6,10 @@ import * as moment from 'moment';
 import { KeyResult } from './keyresult.entity';
 import { KeyResultDeadlineEnum, KeyResultTypeEnum } from '@gauzy/models';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
+import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
+import { compareAsc } from 'date-fns';
 
-export const createKeyResults = async (
+export const createDefaultKeyResults = async (
 	connection: Connection,
 	tenant: Tenant,
 	employees: Employee[],
@@ -80,12 +82,37 @@ export const createKeyResults = async (
 		}
 	});
 
-	await insertKeyResults(connection, defaultKeyResults);
+	await insertDefaultKeyResults(connection, defaultKeyResults);
 
 	return defaultKeyResults;
 };
 
-const insertKeyResults = async (
+export const updateDefaultKeyResultProgress = async (
+	connection: Connection
+): Promise<KeyResult[]> => {
+	const keyResults: KeyResult[] = await connection.manager.find(KeyResult, {
+		relations: ['updates']
+	});
+	keyResults.forEach(async (keyResult) => {
+		const sortedUpdates: KeyResultUpdate[] = keyResult.updates.sort(
+			(a, b) => {
+				return compareAsc(new Date(a.createdAt), new Date(b.createdAt));
+			}
+		);
+		const recentUpdate = sortedUpdates[sortedUpdates.length - 1];
+		await connection.manager.update(
+			KeyResult,
+			{ id: keyResult.id },
+			{
+				progress: recentUpdate.progress,
+				update: recentUpdate.update
+			}
+		);
+	});
+	return keyResults;
+};
+
+const insertDefaultKeyResults = async (
 	connection: Connection,
 	defaultkeyResults: KeyResult[]
 ) => {

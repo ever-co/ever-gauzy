@@ -211,7 +211,6 @@ export interface ICreateActivityInput {
 	startedAt?: Date;
 	stoppedAt?: Date;
 	timeSlotId?: string;
-	timeSlot: string;
 	type: string;
 	title: string;
 	data?: string;
@@ -223,8 +222,8 @@ export enum ActivityType {
 }
 
 export interface ICreateScreenshotInput {
-	timeSlotId?: string;
-	timeSlot: string;
+	activityTimestamp: string;
+	employeeId?: string;
 	fullUrl: string;
 	thumbUrl?: string;
 	recordedAt: Date;

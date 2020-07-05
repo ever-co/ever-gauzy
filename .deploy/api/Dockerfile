@@ -28,11 +28,6 @@ WORKDIR /srv/gauzy
 
 ENTRYPOINT [ "/entrypoint" ]
 
-ARG NODE_OPTIONS="--max-old-space-size=2048"
-ENV DB_NAME postgres
-ENV API_PORT 3000
-ENV DB_PORT 5432
-
 COPY --chown=node:node --from=dependencies /wait /entrypoint /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
@@ -47,6 +42,8 @@ RUN mkdir dist
 COPY --chown=node:node --from=development /srv/gauzy .
 
 ARG NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_ENV production
+
 RUN yarn build:api:prod
 
 # production
@@ -60,10 +57,9 @@ USER node:node
 WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint /
-
-EXPOSE ${API_PORT:-3000}
-CMD [ "node", "main.js" ]
-ENTRYPOINT [ "/entrypoint" ]
+COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates
+COPY --chown=node:node --from=dependencies /srv/gauzy .
+COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_ENV production
@@ -71,6 +67,6 @@ ENV DB_NAME postgres
 ENV API_PORT 3000
 ENV DB_PORT 5432
 
-COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates
-COPY --chown=node:node --from=dependencies /srv/gauzy .
-COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
+EXPOSE ${API_PORT:-3000}
+CMD [ "node", "main.js" ]
+ENTRYPOINT [ "/entrypoint" ]

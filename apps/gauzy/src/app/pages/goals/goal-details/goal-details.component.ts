@@ -75,7 +75,7 @@ export class GoalDetailsComponent implements OnInit {
 				selectedKeyResult.id,
 				keyResultData
 			);
-			const keyResNumber = this.goal.keyResults.length * 100;
+			const keyResNumber = this.goal.keyResults.length;
 			this.goal.progress = this.calculateGoalProgress(
 				keyResNumber,
 				this.goal.keyResults
@@ -88,7 +88,7 @@ export class GoalDetailsComponent implements OnInit {
 			(a: number, b: KeyResult) => a + b.progress,
 			0
 		);
-		return (progressTotal / totalCount) * 100;
+		return Math.round(progressTotal / totalCount);
 	}
 
 	closeDialog() {

@@ -49,7 +49,6 @@ import {
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
 import { TenantService } from '../tenant/tenant.service';
-import { Settings } from 'http2';
 
 @Injectable()
 export class HubstaffService {
@@ -329,17 +328,33 @@ export class HubstaffService {
 	async syncScreenshots({
 		integrationId,
 		projectId,
-		screenshots
+		screenshots,
+		token,
+		organizationId
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await screenshots.map(
-			async ({ id, time_slot, full_url, thumb_url, recorded_at }) => {
+			async ({
+				id,
+				time_slot,
+				full_url,
+				thumb_url,
+				recorded_at,
+				user_id
+			}) => {
+				const employee = await this._getEmployeeByHubstaffUserId(
+					user_id,
+					token,
+					integrationId,
+					organizationId
+				);
+
 				const gauzyScreenshot = await this.commandBus.execute(
 					new ScreenshotCreateCommand({
-						timeSlotId: time_slot,
 						fullUrl: full_url,
 						thumbUrl: thumb_url,
 						recordedAt: recorded_at,
-						timeSlot: time_slot
+						activityTimestamp: time_slot,
+						employeeId: employee.gauzyId
 					})
 				);
 
@@ -622,17 +637,35 @@ export class HubstaffService {
 	async syncUrlActivities({
 		integrationId,
 		projectId,
-		activities
+		activities,
+		token,
+		organizationId
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await activities.map(
-			async ({ id, site, time_slot, tracked, details }) => {
+			async ({
+				id,
+				site,
+				time_slot,
+				tracked,
+				details,
+				date,
+				user_id
+			}) => {
+				const employee = await this._getEmployeeByHubstaffUserId(
+					user_id,
+					token,
+					integrationId,
+					organizationId
+				);
+
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
 						title: site,
 						duration: tracked,
-						type: 'url',
-						timeSlot: time_slot,
-						data: details
+						type: 'URL',
+						date,
+						projectId,
+						employeeId: employee.gauzyId
 					})
 				);
 
@@ -666,15 +699,48 @@ export class HubstaffService {
 			const urlActivitiesMapped = await Promise.all(
 				projectsMap.map(async (project) => {
 					const { gauzyId, sourceId } = project;
-					const { urls } = await this.fetchIntegration(
-						`https://api.hubstaff.com/v2/projects/${sourceId}/url_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`,
-						token
-					);
+					const syncedActivities = {
+						urlActivities: []
+					};
 
+					let stillRecordsAvailable = true;
+					let nextPageStartId = null;
+
+					while (stillRecordsAvailable) {
+						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/url_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
+						if (nextPageStartId) {
+							url += `&page_start_id=${nextPageStartId}`;
+						}
+
+						const {
+							urls,
+							pagination = {}
+						} = await this.fetchIntegration(url, token);
+
+						if (
+							pagination &&
+							pagination.hasOwnProperty('next_page_start_id')
+						) {
+							let { next_page_start_id } = pagination;
+							nextPageStartId = next_page_start_id;
+							stillRecordsAvailable = true;
+						} else {
+							nextPageStartId = null;
+							stillRecordsAvailable = false;
+						}
+						syncedActivities.urlActivities.push(urls);
+					}
+
+					const activities = [].concat.apply(
+						[],
+						syncedActivities.urlActivities
+					);
 					return await this.syncUrlActivities({
 						integrationId,
 						projectId: gauzyId,
-						activities: urls
+						activities,
+						token,
+						organizationId
 					});
 				})
 			);
@@ -690,17 +756,27 @@ export class HubstaffService {
 	async syncAppActivities({
 		integrationId,
 		projectId,
-		activities
+		activities,
+		token,
+		organizationId
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await activities.map(
-			async ({ id, name, time_slot, tracked, activations }) => {
+			async ({ id, name, tracked, date, user_id, task_id }) => {
+				const employee = await this._getEmployeeByHubstaffUserId(
+					user_id,
+					token,
+					integrationId,
+					organizationId
+				);
+
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
 						title: name,
 						duration: tracked,
-						type: 'app',
-						data: activations,
-						timeSlot: time_slot
+						type: 'APP',
+						date,
+						projectId,
+						employeeId: employee.gauzyId
 					})
 				);
 
@@ -735,15 +811,50 @@ export class HubstaffService {
 			const appActivitiesMapped = await Promise.all(
 				projectsMap.map(async (project) => {
 					const { gauzyId, sourceId } = project;
-					const { applications } = await this.fetchIntegration(
-						`https://api.hubstaff.com/v2/projects/${sourceId}/application_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`,
-						token
-					);
+					const syncedActivities = {
+						applicationActivities: []
+					};
 
+					let stillRecordsAvailable = true;
+					let nextPageStartId = null;
+
+					while (stillRecordsAvailable) {
+						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/application_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
+						if (nextPageStartId) {
+							url += `&page_start_id=${nextPageStartId}`;
+						}
+
+						const {
+							applications,
+							pagination = {}
+						} = await this.fetchIntegration(url, token);
+
+						if (
+							pagination &&
+							pagination.hasOwnProperty('next_page_start_id')
+						) {
+							let { next_page_start_id } = pagination;
+							nextPageStartId = next_page_start_id;
+							stillRecordsAvailable = true;
+						} else {
+							nextPageStartId = null;
+							stillRecordsAvailable = false;
+						}
+						syncedActivities.applicationActivities.push(
+							applications
+						);
+					}
+
+					const activities = [].concat.apply(
+						[],
+						syncedActivities.applicationActivities
+					);
 					return await this.syncAppActivities({
 						integrationId,
 						projectId: gauzyId,
-						activities: applications
+						activities,
+						token,
+						organizationId
 					});
 				})
 			);
@@ -814,19 +925,54 @@ export class HubstaffService {
 		try {
 			const start = moment(dateRange.start).format('YYYY-MM-DD');
 			const end = moment(dateRange.end).format('YYYY-MM-DD');
+			const pageLimit = 500;
 
 			const screenshotsMapped = await Promise.all(
 				projectsMap.map(async (project) => {
-					const { gauzyId } = project;
-					const { screenshots } = await this.fetchIntegration(
-						`https://api.hubstaff.com/v2/projects/${project.sourceId}/screenshots?time_slot[start]=${start}&time_slot[stop]=${end}`,
-						token
-					);
+					const { gauzyId, sourceId } = project;
+					const syncedActivities = {
+						screenshots: []
+					};
 
+					let stillRecordsAvailable = true;
+					let nextPageStartId = null;
+
+					while (stillRecordsAvailable) {
+						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/screenshots?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
+						if (nextPageStartId) {
+							url += `&page_start_id=${nextPageStartId}`;
+						}
+
+						const {
+							screenshots,
+							pagination = {}
+						} = await this.fetchIntegration(url, token);
+
+						if (
+							pagination &&
+							pagination.hasOwnProperty('next_page_start_id')
+						) {
+							let { next_page_start_id } = pagination;
+							nextPageStartId = next_page_start_id;
+							stillRecordsAvailable = true;
+						} else {
+							nextPageStartId = null;
+							stillRecordsAvailable = false;
+						}
+
+						syncedActivities.screenshots.push(screenshots);
+					}
+
+					const screenshots = [].concat.apply(
+						[],
+						syncedActivities.screenshots
+					);
 					return await this.syncScreenshots({
 						integrationId,
 						projectId: gauzyId,
-						screenshots
+						screenshots,
+						token,
+						organizationId
 					});
 				})
 			);
@@ -857,11 +1003,11 @@ export class HubstaffService {
 							token
 						);
 						const taskSetting = setting.tiedEntities.find(
-							() => setting.entity === IntegrationEntity.TASK
+							(res) => res.entity === IntegrationEntity.TASK
 						);
 
 						const activitySetting = setting.tiedEntities.find(
-							() => setting.entity === IntegrationEntity.ACTIVITY
+							(res) => res.entity === IntegrationEntity.ACTIVITY
 						);
 
 						const screenshotSetting = setting.tiedEntities.find(
