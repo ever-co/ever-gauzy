@@ -1,13 +1,15 @@
 # devependecies
 FROM node:alpine AS dependencies
 
-RUN apk update \
-    && apk add --no-cache g++ git make python
+RUN apk --update add bash && \
+    apk add --no-cache dos2unix g++ git make python
 
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint /
 RUN chmod +x /wait /entrypoint
+
+RUN dos2unix /entrypoint
 
 USER node:node
 
@@ -25,8 +27,6 @@ FROM node:alpine AS development
 USER node:node
 
 WORKDIR /srv/gauzy
-
-ENTRYPOINT [ "/entrypoint" ]
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
