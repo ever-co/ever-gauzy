@@ -5,7 +5,9 @@ import {
 	JoinColumn,
 	ManyToMany,
 	JoinTable,
-	OneToMany
+	OneToMany,
+	ManyToOne,
+	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -29,17 +31,27 @@ import {
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
 import { Invoice } from '../invoice/invoice.entity';
-import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { Payment } from '../payment/payment.entity';
+import { Contact } from '../contact/contact.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization')
-export class Organization extends TenantLocationBase implements IOrganization {
+export class Organization extends TenantBase implements IOrganization {
 	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_organizations'
 	})
 	tags: Tag[];
+
+	@ApiProperty({ type: Contact })
+	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
+	@JoinColumn()
+	contact: Contact;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((organization: Organization) => organization.contact)
+	readonly contactId?: string;
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
 	@OneToMany((type) => Invoice, (invoices) => invoices.fromOrganization)

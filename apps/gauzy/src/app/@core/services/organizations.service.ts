@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import {
 	Organization,
 	OrganizationSelectInput,
-	OrganizationCreateInput
+	OrganizationCreateInput,
+	OrganizationFindInput
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -35,7 +36,7 @@ export class OrganizationsService {
 
 	getAll(
 		relations?: string[],
-		findInput?: Organization
+		findInput?: OrganizationFindInput
 	): Promise<{ items: Organization[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http

@@ -1,6 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Location as ILocation } from './location.model';
 import { ITenant, Tag, Skill } from '@gauzy/models';
+import { Contact as IContact } from './contact.model';
 
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'allowManualTime',
@@ -9,7 +9,7 @@ export enum OrganizationPermissionsEnum {
 	ALLOW_FUTURE_DATE = 'futureDateAllowed'
 }
 
-export interface Organization extends IBaseEntityModel, ILocation {
+export interface Organization extends IBaseEntityModel, IContact {
 	name: string;
 	profile_link: string;
 	valueDate?: Date;
@@ -56,6 +56,7 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	requireClient?: boolean;
 	timeFormat?: 12 | 24;
 	registrationDate?: Date;
+	contact: IContact;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -69,7 +70,7 @@ export interface OrganizationFindInput extends IBaseEntityModel {
 	tags?: Tag[];
 }
 
-export interface OrganizationCreateInput extends ILocation {
+export interface OrganizationCreateInput extends IContact {
 	name: string;
 	profile_link: string;
 	valueDate?: Date;
