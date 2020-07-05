@@ -49,16 +49,15 @@ RUN yarn build:prod
 # production
 FROM nginx:alpine AS production
 
-COPY wait /
-RUN chmod +x /wait
-
-USER nginx:nginx
+# USER nginx:nginx
 
 WORKDIR /srv/gauzy
 
-COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint /
+COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint ./
 COPY --chown=nginx:nginx .deploy/webapp/nginx.conf /etc/nginx
 COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
+
+RUN chmod +x wait
 
 ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 ENV NODE_OPTIONS="--max-old-space-size=2048"
@@ -67,4 +66,4 @@ ENV API_PORT 3000
 
 EXPOSE ${PORT:-4200}
 CMD [ "nginx", "-g", "daemon off;" ]
-ENTRYPOINT [ "/entrypoint" ]
+ENTRYPOINT [ "./entrypoint" ]

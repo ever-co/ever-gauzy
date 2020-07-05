@@ -119,6 +119,7 @@ services:
             dockerfile: .deploy/api/Dockerfile
         environment:
             NODE_ENV: ${NODE_ENV:-development}
+            DB_HOST: db
         env_file:
             - .env
         restart: on-failure
@@ -127,7 +128,7 @@ services:
         links:
             - db:${DB_HOST:-db}
         volumes:
-            - .:/srv/gauzy
+            # - .:/srv/gauzy
             - webapp_node_modules:/srv/gauzy/node_modules
             - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
@@ -155,7 +156,7 @@ services:
             - db
             - api
         volumes:
-            - .:/srv/gauzy
+            # - .:/srv/gauzy
             - webapp_node_modules:/srv/gauzy/node_modules
         ports:
             - 4200:${HOST:-4200}

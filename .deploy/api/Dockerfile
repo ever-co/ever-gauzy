@@ -4,9 +4,9 @@ FROM node:alpine AS dependencies
 RUN apk update \
     && apk add --no-cache g++ git make python
 
-RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
+RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
-COPY wait .deploy/webapp/entrypoint /
+COPY wait .deploy/api/entrypoint /
 RUN chmod +x /wait /entrypoint
 
 USER node:node
@@ -49,17 +49,15 @@ RUN yarn build:api:prod
 # production
 FROM node:alpine AS production
 
-COPY wait /
-RUN chmod +x /wait
-
-USER node:node
-
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait /entrypoint /
+COPY --chown=node:node --from=dependencies /wait ./wait
+COPY --chown=node:node --from=dependencies /entrypoint .
 COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates
-COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
+
+RUN chown node:node wait && chmod +x wait && chown -R node:node apps/
+USER node:node
 
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_ENV production
@@ -69,4 +67,4 @@ ENV DB_PORT 5432
 
 EXPOSE ${API_PORT:-3000}
 CMD [ "node", "main.js" ]
-ENTRYPOINT [ "/entrypoint" ]
+ENTRYPOINT [ "./entrypoint" ]
