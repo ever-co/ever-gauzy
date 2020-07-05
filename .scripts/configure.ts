@@ -48,7 +48,7 @@ export const environment: Environment = {
   CLOUDINARY_API_KEY: '256868982483961',
   GOOGLE_AUTH_LINK: 'http://localhost:3000/api/auth/google',
   FACEBOOK_AUTH_LINK: 'http://localhost:3000/api/auth/facebook',
-  LINKEDIN_AUTH_LINK: '#',
+  LINKEDIN_AUTH_LINK: 'http://localhost:3000/api/auth/linkedin',
   NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
   SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
   HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff'
