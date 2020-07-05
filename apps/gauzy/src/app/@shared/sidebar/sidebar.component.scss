@@ -75,6 +75,17 @@
   min-width: 240px;
 }
 
+.parentin {
+  min-width: 233px;
+  margin-left: -10px;
+}
+
+.childout {
+  margin-left: 3px;
+  min-width: 240px;
+  background-color: #fafafa;
+}
+
 ::ng-deep {
   .toggle-children-wrapper {
     .toggle-children {
@@ -91,10 +102,6 @@
 
   .node-content-wrapper-focused {
     background: #fff;
-  }
-
-  .node-content-wrapper {
-    margin-bottom: -4px;
   }
 
   .node-content-wrapper-active,

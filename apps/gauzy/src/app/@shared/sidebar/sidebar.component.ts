@@ -18,13 +18,14 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { EditBaseComponent } from './edit-base/edit-base.component';
 import { EditCategoryComponent } from './edit-category/edit-category.component';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
 import { HelpCenterService } from '../../@core/services/help-center.service';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -42,7 +43,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		private helpService: HelpCenterService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
-		private nbMenuService: NbMenuService
+		private nbMenuService: NbMenuService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -50,8 +52,14 @@ export class SidebarComponent extends TranslationBaseComponent
 	public nodeId = '';
 	public isChosenNode = false;
 	public nodes: IHelpCenter[] = [];
+	selectedOrganizationId: string;
 	settingsContextMenu: NbMenuItem[];
 	options: ITreeOptions = {
+		getChildren: async (node: IHelpCenter) => {
+			const res = await this.helpService.findByBaseId(node.id);
+			return res;
+		},
+		hasChildrenField: 'children',
 		allowDrag: true,
 		allowDrop: (el, { parent, index }) => {
 			if (parent.data.flag === 'category') {
@@ -59,13 +67,20 @@ export class SidebarComponent extends TranslationBaseComponent
 			} else {
 				return true;
 			}
-		}
+		},
+		childrenField: 'children'
 	};
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
 	ngOnInit() {
 		this.loadMenu();
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) this.selectedOrganizationId = organization.id;
+			});
+
 		this.settingsContextMenu = [
 			{
 				title: 'Add Category'
@@ -80,15 +95,17 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.nbMenuService.onItemClick().subscribe((elem) => {
 			if (elem.item.title === 'Edit Knowledge Base') this.editBase();
 			if (elem.item.title === 'Add Category') this.addCategory();
-			if (elem.item.title === 'Delete Base')
-				this.dialogService.open(DeleteBaseComponent);
+			if (elem.item.title === 'Delete Base') this.deleteBase();
 		});
 	}
 
 	setClasses(node) {
 		const classes = {
-			child: node.data.flag === 'category',
-			parent: node.data.flag === 'base'
+			child: node.data.flag === 'category' && node.data.parentId !== null,
+			childout:
+				node.data.flag === 'category' && node.data.parentId === null,
+			parent: node.data.flag === 'base' && node.data.parentId === null,
+			parentin: node.data.flag === 'base' && node.data.parentId !== null
 		};
 		return classes;
 	}
@@ -98,7 +115,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EditBaseComponent, {
 			context: {
 				base: null,
-				editType: chosenType
+				editType: chosenType,
+				organizationId: this.selectedOrganizationId
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -115,7 +133,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EditBaseComponent, {
 			context: {
 				base: someNode.data,
-				editType: chosenType
+				editType: chosenType,
+				organizationId: this.selectedOrganizationId
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -133,7 +152,8 @@ export class SidebarComponent extends TranslationBaseComponent
 			context: {
 				category: null,
 				base: someNode.data,
-				editType: chosenType
+				editType: chosenType,
+				organizationId: this.selectedOrganizationId
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -152,7 +172,8 @@ export class SidebarComponent extends TranslationBaseComponent
 			context: {
 				base: someNode.data,
 				category: node,
-				editType: chosenType
+				editType: chosenType,
+				organizationId: this.selectedOrganizationId
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -178,40 +199,51 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 	}
 
-	// async updateIndexes(
-	// 	oldChildren: IHelpCenter[],
-	// 	newChildren: IHelpCenter[]
-	// ) {
-	// 	try {
-	// 		await this.helpService.createBulk(oldChildren, newChildren);
-	// 	} catch (error) {
-	// 		this.errorHandler.handleError(error);
-	// 	}
-	// }
+	async deleteBase() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		const dialog = this.dialogService.open(DeleteBaseComponent, {
+			context: {
+				base: someNode
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('DELETED');
+			await this.loadMenu();
+			this.tree.treeModel.update();
+		}
+	}
+
+	async updateIndexes(
+		oldChildren: IHelpCenter[],
+		newChildren: IHelpCenter[]
+	) {
+		try {
+			await this.helpService.updateBulk(oldChildren, newChildren);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
 	async onMoveNode($event) {
-		// this.updateIndexes(
-		// 	$event.from.parent.children,
-		// 	$event.to.parent.children
-		// );
 		for (const node of this.tempNodes) {
 			if (node.id === $event.node.id) {
-				// if (!$event.to.parent.virtual) {
-				// 	await this.helpService.update(node.id, {
-				// 		parent: $event.to.parent
-				// 	});
-				// } else {
-				// 	await this.helpService.update(node.id, {
-				// 		parent: null
-				// 	});
-				// }
-				if (node.children.length !== 0) {
-					this.toastrSuccess('MOVED_CATEGORY');
+				if (!$event.to.parent.virtual) {
+					await this.helpService.update(node.id, {
+						parent: $event.to.parent
+					});
 				} else {
-					this.toastrSuccess('MOVED_ARTICLE');
+					await this.helpService.update(node.id, {
+						parent: null
+					});
 				}
 			}
 		}
-		// this.loadMenu();
+		this.updateIndexes(
+			$event.from.parent.children,
+			$event.to.parent.children
+		);
+		await this.loadMenu();
 		this.tree.treeModel.update();
 	}
 
@@ -278,7 +310,11 @@ export class SidebarComponent extends TranslationBaseComponent
 	// }
 
 	async loadMenu() {
-		const result = await this.helpService.getAll(['parent', 'children']);
+		const result = await this.helpService.getAll([
+			'parent',
+			'children',
+			'organization'
+		]);
 		if (result) {
 			this.tempNodes = result.items;
 			this.nodes = this.tempNodes.filter((item) => item.parent === null);

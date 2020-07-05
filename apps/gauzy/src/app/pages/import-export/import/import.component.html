@@ -26,13 +26,13 @@
 
 	<div class="row">
 		<div class="col-md-3">
-			<h3 style="color:#3366ff" *ngIf="uploader.queue.length == 0">
+			<h3 style="color: #3366ff;" *ngIf="uploader.queue.length == 0">
 				{{ 'MENU.IMPORT_EXPORT.SELECT_FILE' | translate }}
 			</h3>
 
 			<div
 				ng2FileDrop
-				style="height:30%"
+				style="height: 30%;"
 				[ngClass]="{ 'nv-file-over': hasBaseDropZoneOver }"
 				(onFileDrop)="dropFile($event)"
 				(fileOver)="fileOverBase($event)"
@@ -45,7 +45,7 @@
 			<br />
 			<input
 				#fileInput
-				style="display:none"
+				style="display: none;"
 				type="file"
 				accept="application/zip"
 				ng2FileSelect
@@ -76,11 +76,11 @@
 			<br /><br /><br />
 		</div>
 
-		<div class="col-md-9" style="margin-bottom: 40px">
+		<div class="col-md-9" style="margin-bottom: 40px;">
 			<table class="table">
 				<thead>
 					<tr>
-						<th width="50%">
+						<th class="half-width">
 							{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}
 						</th>
 						<th>{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</th>
@@ -94,7 +94,10 @@
 						<td>
 							<strong>{{ item?.file?.name }}</strong>
 						</td>
-						<td *ngIf="uploader.options.isHTML5" nowrap>
+						<td
+							*ngIf="uploader.options.isHTML5"
+							style="white-space: nowrap;"
+						>
 							{{ item?.file?.size / 1024 / 1024 | number: '.2' }}
 							MB
 						</td>
@@ -168,7 +171,7 @@
 
 			<div>
 				<div>
-					<span style="display:block">{{
+					<span style="display: block;">{{
 						'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate
 					}}</span
 					><br />
@@ -191,7 +194,7 @@
 					<span>{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}</span>
 				</button>
 				<button
-					style="margin-left:1%"
+					style="margin-left: 1%;"
 					type="button"
 					class="btn btn-warning btn-s"
 					(click)="uploader.cancelAll()"
@@ -200,7 +203,7 @@
 					<span>{{ 'MENU.IMPORT_EXPORT.CANCEL' | translate }}</span>
 				</button>
 				<button
-					style="margin-left:1%"
+					style="margin-left: 1%;"
 					type="button"
 					class="btn btn-danger btn-s"
 					(click)="uploader.clearQueue()"

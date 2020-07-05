@@ -43,7 +43,6 @@ export * from './lib/skill-entity.model';
 export * from './lib/recurring-expense.model';
 export * from './lib/organization-employment-type.model';
 export * from './lib/equipment.model';
-export * from './lib/location.model';
 export * from './lib/task-entity.model';
 export * from './lib/timesheet.model';
 export * from './lib/expense-category.model';

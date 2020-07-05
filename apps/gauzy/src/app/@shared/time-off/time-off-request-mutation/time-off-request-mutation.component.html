@@ -5,29 +5,92 @@
 	</nb-card-header>
 
 	<nb-card-body>
-		<form class="row">
-			<div class="form-group col-6">
-				<ga-employee-selector
-					#employeeSelector
-					fullWidth
-					[skipGlobalChange]="true"
-					class="employees"
-				>
-				</ga-employee-selector>
-			</div>
-			<div class="form-group col-6">
-				<nb-select
-					[selected]="policy"
-					(selectedChange)="onPolicySelected($event)"
-					fullWidth
-					placeholder="Seletc Time-off Policy"
-				>
-					<nb-option
-						*ngFor="let policy of policies"
-						[value]="policy"
-						>{{ policy.name }}</nb-option
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="form-group col-6">
+					<label class="label">Employee</label>
+					<ga-employee-selector
+						#employeeSelector
+						fullWidth
+						[skipGlobalChange]="true"
+						class="employees"
 					>
-				</nb-select>
+					</ga-employee-selector>
+				</div>
+				<div class="form-group col-6">
+					<label class="label">Policy</label>
+					<nb-select
+						formControlName="policy"
+						(selectedChange)="onPolicySelected($event)"
+						fullWidth
+						placeholder="Seletc Time-off Policy"
+					>
+						<nb-option
+							*ngFor="let policy of policies"
+							[value]="policy"
+							>{{ policy.name }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-6">
+					<label class="label" for="start">From</label>
+					<input
+						formControlName="start"
+						nbInput
+						fullWidth
+						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						[nbDatepicker]="startDate"
+						[ngClass]="{
+							'status-danger':
+								form.controls['start'].invalid &&
+								form.controls['start'].dirty,
+							'status-success':
+								form.controls['start'].valid &&
+								form.controls['start'].dirty
+						}"
+					/>
+					<nb-datepicker #startDate></nb-datepicker>
+				</div>
+				<div class="form-group col-6">
+					<label class="label" for="end">To</label>
+					<input
+						formControlName="end"
+						nbInput
+						fullWidth
+						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						[nbDatepicker]="endDate"
+						[ngClass]="{
+							'status-danger':
+								form.controls['end'].invalid &&
+								form.controls['end'].touched &&
+								form.controls['end'].dirty,
+							'status-success':
+								form.controls['end'].valid &&
+								form.controls['end'].dirty
+						}"
+					/>
+					<nb-datepicker #endDate></nb-datepicker>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="form-group col-12">
+					<div class="form-group">
+						<label class="label" for="description"
+							>Description</label
+						>
+						<textarea
+							fullWidth
+							id="addressInput"
+							type="text-area"
+							nbInput
+							formControlName="description"
+							placeholder="Add a description"
+						></textarea>
+					</div>
+				</div>
 			</div>
 		</form>
 	</nb-card-body>

@@ -107,7 +107,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		this.calendarOptions = {
 			eventClick: (event) => {
 				let eventObject = event.event;
-				eventObject.extendedProps['type'] !== 'BookedSlot' &&
+				if (eventObject.extendedProps['type'] !== 'BookedSlot') {
 					this.router.navigate(
 						[
 							this.appointmentFormURL ||
@@ -121,6 +121,40 @@ export class AppointmentComponent extends TranslationBaseComponent
 							}
 						}
 					);
+				} else {
+					const config = {
+						dateStart: eventObject.start,
+						dateEnd: eventObject.end
+					};
+					const prevSlot = this.calendarEvents.find(
+						(o) =>
+							new Date(o.end.toString()).getTime() ===
+							eventObject.start.getTime()
+					);
+					const nextSlot = this.calendarEvents.find(
+						(o) =>
+							new Date(o.start.toString()).getTime() ===
+							eventObject.end.getTime()
+					);
+
+					if (
+						prevSlot &&
+						prevSlot.extendedProps['type'] !== 'BookedSlot'
+					) {
+						config.dateStart = new Date(prevSlot.start.toString());
+						config.dateEnd = new Date(nextSlot.end.toString());
+					}
+
+					this.router.navigate(
+						[
+							this.getManageRoute(
+								this._selectedEmployeeId,
+								eventObject.extendedProps['id']
+							)
+						],
+						{ state: config }
+					);
+				}
 			},
 			events: this.getEvents.bind(this),
 			initialView: 'timeGridWeek',
@@ -227,8 +261,11 @@ export class AppointmentComponent extends TranslationBaseComponent
 		callback(this.calendarEvents);
 	}
 
-	getManageRoute(employeeId: string = '') {
-		return `/pages/employees/appointments/manage/${employeeId}`;
+	getManageRoute(employeeId: string = '', appointmentId: string = '') {
+		return (
+			`/pages/employees/appointments/manage/${employeeId}` +
+			(appointmentId ? `/${appointmentId}` : '')
+		);
 	}
 
 	private async _fetchAvailableSlots(employeeId: string) {
@@ -290,16 +327,16 @@ export class AppointmentComponent extends TranslationBaseComponent
 		if (foundDateSpecificSlot)
 			return this.calendarComponent.getApi().refetchEvents();
 
-		for (const slot of this.recurringSlots) {
-			const startDay = moment(slot.startTime).day();
+		for (const innerSlot of this.recurringSlots) {
+			const startDay = moment(innerSlot.startTime).day();
 			if (startDay !== day) continue;
 
-			const startHours = moment(slot.startTime).hours();
-			const startMinutes = moment(slot.startTime).minutes();
+			const startHours = moment(innerSlot.startTime).hours();
+			const startMinutes = moment(innerSlot.startTime).minutes();
 
-			const endDay = moment(slot.endTime).day();
-			const endHours = moment(slot.endTime).hours();
-			const endMinutes = moment(slot.endTime).minutes();
+			const endDay = moment(innerSlot.endTime).day();
+			const endHours = moment(innerSlot.endTime).hours();
+			const endMinutes = moment(innerSlot.endTime).minutes();
 
 			const eventStartDate = moment(date)
 				.set('hours', startHours)
@@ -309,10 +346,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 				.set('hours', endHours)
 				.set('minutes', endMinutes);
 
-			slot.startTime = new Date(eventStartDate.format());
-			slot.endTime = new Date(eventEndDate.format());
+			innerSlot.startTime = new Date(eventStartDate.format());
+			innerSlot.endTime = new Date(eventEndDate.format());
 
-			this.getAvailabilitySlots(slot);
+			this.getAvailabilitySlots(innerSlot);
 		}
 		this.calendarComponent.getApi().refetchEvents();
 	}

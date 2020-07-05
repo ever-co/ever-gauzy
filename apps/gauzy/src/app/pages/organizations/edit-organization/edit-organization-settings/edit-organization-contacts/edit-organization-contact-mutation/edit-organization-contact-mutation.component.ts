@@ -120,10 +120,10 @@ export class EditOrganizationContactMutationComponent
 						: ''
 					: ''
 			],
-			street: [
+			address: [
 				this.organizationContact
 					? this.organizationContact.contact
-						? this.organizationContact.contact.street
+						? this.organizationContact.contact.address
 						: ''
 					: ''
 			],
@@ -133,7 +133,9 @@ export class EditOrganizationContactMutationComponent
 					: []
 			],
 			contactType: [
-				this.organizationContact ? this.organizationContact.contactType : '',
+				this.organizationContact
+					? this.organizationContact.contactType
+					: '',
 				Validators.required
 			]
 		});
@@ -180,7 +182,7 @@ export class EditOrganizationContactMutationComponent
 				primaryPhone: this.form.value['primaryPhone'],
 				country: this.form.value['country'],
 				city: this.form.value['city'],
-				street: this.form.value['street'],
+				address: this.form.value['address'],
 				projects: this.form.value['selectProjects'].projectId,
 				contactType: this.form.value['contactType'].$ngOptionLabel,
 				members: (this.members || this.selectedEmployeeIds || [])
@@ -196,7 +198,7 @@ export class EditOrganizationContactMutationComponent
 				primaryPhone: '',
 				country: '',
 				city: '',
-				street: '',
+				address: '',
 				contactType: '',
 				selectProjects: []
 			});

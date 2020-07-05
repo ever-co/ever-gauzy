@@ -3,11 +3,11 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { Country, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { CountryService } from 'apps/gauzy/src/app/@core/services/country.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { CountryService } from '../../../../../@core/services/country.service';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -19,7 +19,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
-	organization: Organization;
+	selectedOrganization: Organization;
 	countries: Country[];
 	form: FormGroup;
 
@@ -38,22 +38,35 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 		this.organizationEditStore.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
-				this.organization = organization;
-				if (this.organization) {
-					this._initializeForm(this.organization);
+				this.selectedOrganization = organization;
+				if (this.selectedOrganization) {
+					this._initializeForm(this.selectedOrganization);
 				}
 			});
+		this._loadOrganizationData();
 	}
 
 	async updateOrganizationSettings() {
+		const contact = {
+			country: this.form.value.country,
+			city: this.form.value.city,
+			address: this.form.value.address,
+			address2: this.form.value.address2,
+			postcode: this.form.value.postcode
+		};
+		const contactData = {
+			...this.form.value,
+			contact
+		};
 		this.organizationService.update(
-			this.organization.id,
-			this.form.getRawValue()
+			this.selectedOrganization.id,
+			contactData
 		);
 		this.toastrService.primary(
-			this.organization.name + ' organization location updated.',
+			this.selectedOrganization.name + ' organization location updated.',
 			'Success'
 		);
+		this._loadOrganizationData();
 		this.goBack();
 	}
 
@@ -71,12 +84,26 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 
 		//Initialize form
 		this.form = this.fb.group({
-			country: [organization.country],
-			city: [organization.city],
-			postcode: [organization.postcode],
-			address: [organization.address],
-			address2: [organization.address2]
+			country: [organization.contact ? organization.contact.country : ''],
+			city: [organization.contact ? organization.contact.city : ''],
+			postcode: [
+				organization.contact ? organization.contact.postcode : ''
+			],
+			address: [organization.contact ? organization.contact.address : ''],
+			address2: [
+				organization.contact ? organization.contact.address2 : ''
+			]
 		});
+	}
+
+	private async _loadOrganizationData() {
+		const id = this.selectedOrganization.id;
+		const { items } = await this.organizationService.getAll(['contact'], {
+			id
+		});
+
+		this.selectedOrganization = items[0];
+		this.organizationEditStore.selectedOrganization = this.selectedOrganization;
 	}
 
 	private async loadCountries() {

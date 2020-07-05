@@ -319,7 +319,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 				//check if end date is after period in use
 				//
 				//find nearest period in use and get start date
-				const followingPeriods = this.periodsUnderUse
+				const followingPeriods = [...this.periodsUnderUse]
 					.sort((a, b) => a.startDate - b.startDate)
 					.filter((period) => {
 						return period.startDate > this.shareStartDay.value;

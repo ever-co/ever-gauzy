@@ -36,7 +36,7 @@ export const createRandomTask = async (connection: Connection) => {
 
 	const tags: Tag[] = await findOrCreateTags(connection, labels);
 
-	issues.map((issue) => {
+	issues.forEach((issue) => {
 		let status = TaskStatusEnum.TODO;
 		if (issue.state === 'open') {
 			status = TaskStatusEnum.IN_PROGRESS;

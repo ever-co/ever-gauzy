@@ -146,11 +146,11 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 			if (this.viewPrivateProjects) {
 				this.projects = res.items;
 			} else {
-				res.items.filter((item) => {
+				res.items.forEach((item) => {
 					if (item.public) {
 						canView.push(item);
 					} else {
-						item.members.filter((member) => {
+						item.members.forEach((member) => {
 							if (member.id === this.store.userId) {
 								canView.push(item);
 							}

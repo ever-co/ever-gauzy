@@ -26,12 +26,12 @@ export class HelpCenterService {
 			.toPromise();
 	}
 
-	createBulk(
+	updateBulk(
 		oldChildren: IHelpCenter[],
 		newChildren: IHelpCenter[]
 	): Promise<IHelpCenter[]> {
 		return this.http
-			.post<IHelpCenter[]>('/api/help-center/createBulk', {
+			.post<IHelpCenter[]>('/api/help-center/updateBulk', {
 				oldChildren,
 				newChildren
 			})
@@ -52,6 +52,14 @@ export class HelpCenterService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	findByBaseId(parentId: string): Promise<IHelpCenter[]> {
+		return this.http
+			.get<IHelpCenter[]>(`/api/help-center/${parentId}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	deleteBulkByBaseId(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
 		return this.http

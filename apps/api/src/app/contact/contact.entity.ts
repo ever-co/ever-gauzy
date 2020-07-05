@@ -34,23 +34,30 @@ export class Contact extends Base implements IContact {
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
-	street?: string;
+	city?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
-	city?: string;
+	address?: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	address2?: string;
 
 	@ApiPropertyOptional({ type: Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true })
-	zipCode?: number;
+	postcode?: number;
 
-	@ApiPropertyOptional({ type: String })
-	@IsString()
+	@ApiProperty({ type: String })
+	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
-	state?: string;
+	regionCode?: string;
+
 }

@@ -4,7 +4,13 @@
 	}}</nb-card-header>
 	<nb-card-body *ngIf="form">
 		<div class="form-group">
-			<button class="mr-2" (click)="submitForm()" nbButton status="success" [disabled]="!form.valid">
+			<button
+				class="mr-2"
+				(click)="submitForm()"
+				nbButton
+				status="success"
+				[disabled]="!form.valid"
+			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 			<button (click)="cancel()" nbButton status="danger">
@@ -16,19 +22,34 @@
 				<label class="label">{{
 					'ORGANIZATIONS_PAGE.EDIT.NAME' | translate
 				}}</label>
-				<input id="name" type="text" #name nbInput fullWidth formControlName="name" placeholder="{{
+				<input
+					id="name"
+					type="text"
+					#name
+					nbInput
+					fullWidth
+					formControlName="name"
+					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.NAME' | translate
-					}}" [status]="form.controls.name.touched
+					}}"
+					[status]="
+						form.controls.name.touched
 							? form.controls.name.value == 0
 								? 'danger'
 								: 'basic'
-							: 'basic' " 
-							[attr.aria-invalid]="form.controls.name.invalid && form.controls.name.touched
-							? true
-							: null" />
-				<ng-container *ngIf="
+							: 'basic'
+					"
+					[attr.aria-invalid]="
 						form.controls.name.invalid && form.controls.name.touched
-					">
+							? true
+							: null
+					"
+				/>
+				<ng-container
+					*ngIf="
+						form.controls.name.invalid && form.controls.name.touched
+					"
+				>
 					<p class="caption status-danger">
 						{{ 'TOASTR.MESSAGE.NAME_REQUIRED' | translate }}
 					</p>
@@ -38,28 +59,47 @@
 				<label class="label">{{
 					'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
 				}}</label>
-				<input id="email" autofocus pattern=".+@.+\..+" type="email" #email nbInput fullWidth
-					formControlName="primaryEmail" placeholder="{{
+				<input
+					id="email"
+					autofocus
+					pattern=".+@.+\..+"
+					type="email"
+					#email
+					nbInput
+					fullWidth
+					formControlName="primaryEmail"
+					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
-					}}" [status]="
+					}}"
+					[status]="
 						form.controls.primaryEmail.dirty &&
 						form.controls.primaryEmail.invalid
 							? 'danger'
 							: 'basic'
-					" [attr.aria-invalid]="
+					"
+					[attr.aria-invalid]="
 						form.controls.primaryEmail.invalid &&
 						form.controls.primaryEmail.touched
 							? true
 							: null
-					" />
-				<ng-container *ngIf="
+					"
+				/>
+				<ng-container
+					*ngIf="
 						form.controls.primaryEmail.invalid &&
 						form.controls.primaryEmail.touched
-					">
-					<p class="caption status-danger" *ngIf="form.controls.primaryEmail.errors?.required">
+					"
+				>
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryEmail.errors?.required"
+					>
 						{{ 'TOASTR.MESSAGE.EMAIL_REQUIRED' | translate }}
 					</p>
-					<p class="caption status-danger" *ngIf="form.controls.primaryEmail.errors?.pattern">
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryEmail.errors?.pattern"
+					>
 						{{ 'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL' | translate }}
 					</p>
 				</ng-container>
@@ -68,29 +108,46 @@
 				<label class="label">{{
 					'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
 				}}</label>
-				<input pattern="[0-9]{0,30}" type="text" #phone nbInput fullWidth formControlName="primaryPhone"
+				<input
+					pattern="[0-9]{0,30}"
+					type="text"
+					#phone
+					nbInput
+					fullWidth
+					formControlName="primaryPhone"
 					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
-					}}" [status]="
+					}}"
+					[status]="
 						form.controls.primaryPhone.dirty
 							? form.controls.primaryPhone.invalid
 								? 'danger'
 								: 'basic'
 							: 'basic'
-					" [attr.aria-invalid]="
+					"
+					[attr.aria-invalid]="
 						form.controls.primaryPhone.invalid &&
 						form.controls.primaryPhone.touched
 							? true
 							: null
-					" />
-				<ng-container *ngIf="
+					"
+				/>
+				<ng-container
+					*ngIf="
 						form.controls.primaryPhone.invalid &&
 						form.controls.primaryPhone.touched
-					">
-					<p class="caption status-danger" *ngIf="form.controls.primaryPhone.errors?.required">
+					"
+				>
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryPhone.errors?.required"
+					>
 						{{ 'TOASTR.MESSAGE.PHONE_REQUIRED' | translate }}
 					</p>
-					<p class="caption status-danger" *ngIf="form.controls.primaryPhone.errors?.pattern">
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryPhone.errors?.pattern"
+					>
 						{{
 							'TOASTR.MESSAGE.PHONE_CONTAINS_ONLY_NUMBERS'
 								| translate
@@ -102,58 +159,114 @@
 				<label class="label">{{
 					'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate
 				}}</label>
-				<input type="text" #country nbInput fullWidth formControlName="country" placeholder="{{
+				<input
+					type="text"
+					#country
+					nbInput
+					fullWidth
+					formControlName="country"
+					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate
-					}}" />
+					}}"
+				/>
 			</div>
 			<div class="form-group col-4">
 				<label class="label">{{
 					'ORGANIZATIONS_PAGE.EDIT.CITY' | translate
 				}}</label>
-				<input type="text" #city nbInput fullWidth formControlName="city" placeholder="{{
+				<input
+					type="text"
+					#city
+					nbInput
+					fullWidth
+					formControlName="city"
+					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.CITY' | translate
-					}}" />
+					}}"
+				/>
 			</div>
 			<div class="form-group col-4">
 				<label class="label">{{
 					'ORGANIZATIONS_PAGE.EDIT.STREET' | translate
 				}}</label>
-				<input #street type="text" nbInput fullWidth formControlName="street" placeholder="{{
+				<input
+					#address
+					type="text"
+					nbInput
+					fullWidth
+					formControlName="address"
+					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.STREET' | translate
-					}}" />
+					}}"
+				/>
 			</div>
 			<div class="form-group col-4">
 				<label class="label">{{
 					'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
 				}}</label>
-				<ng-select [addTag]="addNewProject" [items]="projects" bindLabel="name" [searchable]="true"
-					formControlName="selectProjects" placeholder="{{
+				<ng-select
+					[addTag]="addNewProject"
+					[items]="projects"
+					bindLabel="name"
+					[searchable]="true"
+					formControlName="selectProjects"
+					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
-					}}">
+					}}"
+				>
 				</ng-select>
 			</div>
 			<div class="form-group col-4">
-				<ga-employee-multi-select [selectedEmployeeIds]="selectedEmployeeIds" [allEmployees]="employees"
-					(selectedChange)="onMembersSelected($event)">
+				<ga-employee-multi-select
+					[selectedEmployeeIds]="selectedEmployeeIds"
+					[allEmployees]="employees"
+					(selectedChange)="onMembersSelected($event)"
+				>
 				</ga-employee-multi-select>
 			</div>
 			<div class="form-group col-4">
-				<ga-tags-color-input [selectedTags]="tags" (selectedTagsEvent)="selectedTagsEvent($event)"
-					[isOrgLevel]="true">
+				<ga-tags-color-input
+					[selectedTags]="tags"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+					[isOrgLevel]="true"
+				>
 				</ga-tags-color-input>
 			</div>
 			<div class="form-group col-4">
-				<label class="label">{{'ORGANIZATIONS_PAGE.EDIT.CONTACT_TYPE' | translate}}</label>
-				<ng-select formControlName="contactType" [clearable]="false" [searchable]="false" 
-					placeholder="{{'ORGANIZATIONS_PAGE.EDIT.CONTACT_TYPE' | translate}}" 
-					[status]="form.controls.contactType.touched ? form.controls.contactType.value == 0 ? 'danger' : 'basic' : 'basic' " 
-					[attr.aria-invalid]="form.controls.contactType.invalid && form.controls.contactType.touched ? true : null"
-					>
-					<ng-option>{{'Client'}}</ng-option>
-					<ng-option>{{'Customer'}}</ng-option>
-					<ng-option>{{'Lead'}}</ng-option>
+				<label class="label">{{
+					'ORGANIZATIONS_PAGE.EDIT.CONTACT_TYPE' | translate
+				}}</label>
+				<ng-select
+					formControlName="contactType"
+					[clearable]="false"
+					[searchable]="false"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.CONTACT_TYPE' | translate
+					}}"
+					[status]="
+						form.controls.contactType.touched
+							? form.controls.contactType.value == 0
+								? 'danger'
+								: 'basic'
+							: 'basic'
+					"
+					[attr.aria-invalid]="
+						form.controls.contactType.invalid &&
+						form.controls.contactType.touched
+							? true
+							: null
+					"
+				>
+					<ng-option>{{ 'Client' }}</ng-option>
+					<ng-option>{{ 'Customer' }}</ng-option>
+					<ng-option>{{ 'Lead' }}</ng-option>
 				</ng-select>
-				<ng-container *ngIf="form.controls.contactType.invalid && form.controls.contactType.touched">
+				<ng-container
+					*ngIf="
+						form.controls.contactType.invalid &&
+						form.controls.contactType.touched
+					"
+				>
 					<p class="caption status-danger">
 						{{ 'TOASTR.MESSAGE.CONTACT_TYPE_REQUIRED' | translate }}
 					</p>

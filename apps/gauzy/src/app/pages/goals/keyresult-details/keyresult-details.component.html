@@ -1,4 +1,4 @@
-<nb-card size="giant" class="min-width-1000">
+<nb-card size="giant" class="minmax-width-70vw">
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ keyResult.name }}</h4>
@@ -52,7 +52,7 @@
 						<div class="col-md-6 font-weight-bold">
 							{{ 'GOALS_PAGE.GOAL' | translate }}
 						</div>
-						<div class="col-md-6">{{ keyResult.goal.name }} %</div>
+						<div class="col-md-6">{{ keyResult.goal.name }}</div>
 					</div>
 				</div>
 			</div>
@@ -68,6 +68,26 @@
 					>
 						{{ 'BUTTONS.ADD_NEW' | translate }}
 					</button>
+				</div>
+				<div class="mt-2" *ngIf="!isUpdatable">
+					<nb-alert
+						*ngIf="endDate.getTime() < today.getTime()"
+						status="warning"
+					>
+						{{
+							'KEY_RESULT_PAGE.MESSAGE.TIME_FRAME_ENDED'
+								| translate: { date: endDate | date }
+						}}
+					</nb-alert>
+					<nb-alert
+						*ngIf="startDate.getTime() > today.getTime()"
+						status="warning"
+					>
+						{{
+							'KEY_RESULT_PAGE.MESSAGE.TIME_FRAME_NOT_STARTED'
+								| translate: { date: startDate | date }
+						}}
+					</nb-alert>
 				</div>
 				<div
 					class="section mt-2 overflow-scroll"

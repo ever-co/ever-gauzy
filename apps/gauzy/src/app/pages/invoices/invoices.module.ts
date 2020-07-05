@@ -47,7 +47,7 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceViewInnerComponent } from './invoice-view/inner-component/invoice-view-inner.component';
-import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
+import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { EstimatesComponent } from './invoice-estimates/invoice-estimates.component';
 import { EstimateAddComponent } from './invoice-estimates/estimate-add/estimate-add.component';
 import { EstimateEditComponent } from './invoice-estimates/estimate-edit/estimate-edit.component';
@@ -59,6 +59,7 @@ import { PaymentMutationComponent } from './invoice-payments/payment-mutation/pa
 import { TasksStoreService } from '../../@core/services/tasks-store.service';
 import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
 import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
+import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -132,7 +133,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
 		InvoiceSentStatusComponent,
-		EstimateAcceptedComponent
+		EstimateAcceptedComponent,
+		InvoicePaymentOverdueComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -157,7 +159,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
 		InvoiceSentStatusComponent,
-		EstimateAcceptedComponent
+		EstimateAcceptedComponent,
+		InvoicePaymentOverdueComponent
 	]
 })
 export class InvoicesModule {}

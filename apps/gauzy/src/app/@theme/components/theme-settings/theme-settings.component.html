@@ -30,3 +30,41 @@
 		</nb-select>
 	</div>
 </div>
+
+<div class="theme-settings">
+	<h6
+		class="title-uppercase"
+		nbTooltip="{{ 'SETTINGS_MENU.PREFERRED_LAYOUT_TOOLTIP' | translate }}"
+	>
+		{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}
+		<nb-icon icon="question-mark-circle-outline"></nb-icon>
+	</h6>
+
+	<div class="settings-row theme-button">
+		<nb-select
+			placeholder="{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}"
+			(selectedChange)="switchComponentLayout($event)"
+			[(selected)]="currentLayout"
+			status="primary"
+		>
+			<nb-option
+				*ngFor="let componentLayout of componentLayouts"
+				[value]="componentLayout"
+			>
+				{{ 'SETTINGS_MENU.' + componentLayout | translate }}</nb-option
+			>
+		</nb-select>
+	</div>
+</div>
+
+<div class="theme-settings">
+	<button
+		nbTooltip="{{ 'SETTINGS_MENU.RESET_LAYOUT_TOOLTIP' | translate }}"
+		status="danger"
+		nbButton
+		size="tiny"
+		(click)="resetLayoutForAllComponents()"
+	>
+		{{ 'SETTINGS_MENU.RESET_LAYOUT' | translate }}
+	</button>
+</div>

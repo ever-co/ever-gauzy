@@ -19,10 +19,8 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { ParseJsonPipe } from '../shared';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-	HelpCenterCreateCommand,
-	KnowledgeBaseBulkDeleteCommand
-} from './commands';
+import { KnowledgeBaseBulkDeleteCommand } from './commands';
+import { HelpCenterUpdateCommand } from './commands/help-center.bulk.command';
 
 @ApiTags('knowledge_base')
 @UseGuards(AuthGuard('jwt'))
@@ -83,11 +81,11 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
-	@Post('createBulk')
-	async createBulk(@Body() input: any): Promise<IHelpCenter[]> {
+	@Post('updateBulk')
+	async updateBulk(@Body() input: any): Promise<IHelpCenter[]> {
 		const { oldChildren = [], newChildren = [] } = input;
 		return this.commandBus.execute(
-			new HelpCenterCreateCommand(oldChildren, newChildren)
+			new HelpCenterUpdateCommand(oldChildren, newChildren)
 		);
 	}
 

@@ -6,14 +6,13 @@ import { AuthService } from './auth.service';
 
 @Injectable()
 export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
-    
-    constructor(private readonly _authService: AuthService) {
+	constructor(private readonly _authService: AuthService) {
 		super({
-            realm: env.keycloakConfig.realm,
-            clientID: env.keycloakConfig.clientId,
-            clientSecret: env.keycloakConfig.secret,
-            authServerUrl: env.keycloakConfig.authServerUrl,
-            cookieKey: env.keycloakConfig.cookieKey
+			realm: env.keycloakConfig.realm,
+			clientID: env.keycloakConfig.clientId,
+			clientSecret: env.keycloakConfig.secret,
+			authServerUrl: env.keycloakConfig.authServerUrl,
+			cookieKey: env.keycloakConfig.cookieKey
 		});
 	}
 

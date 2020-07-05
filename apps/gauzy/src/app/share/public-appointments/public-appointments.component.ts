@@ -12,7 +12,7 @@ import { EventTypeService } from '../../@core/services/event-type.service';
 @Component({
 	selector: 'ga-public-appointments',
 	templateUrl: './public-appointments.component.html',
-	styleUrls: ['./public-appointments.component.scss'],
+	styleUrls: ['./public-appointments.component.scss']
 })
 export class PublicAppointmentsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -53,13 +53,13 @@ export class PublicAppointmentsComponent extends TranslationBaseComponent
 			['employee', 'employee.user', 'tags'],
 			{
 				employee: {
-					id: this.employee.id,
-				},
+					id: this.employee.id
+				}
 			}
 		);
 
-		let eventTypesOrder = ['Minute(s)', 'Hour(s)', 'Day(s)'];
-		this.eventTypes = items.sort((a, b) => {
+		const eventTypesOrder = ['Minute(s)', 'Hour(s)', 'Day(s)'];
+		this.eventTypes = [...items].sort((a, b) => {
 			if (a.duration > b.duration && a.durationUnit === b.durationUnit) {
 				return 1;
 			} else if (a.durationUnit !== b.durationUnit) {

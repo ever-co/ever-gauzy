@@ -1,7 +1,27 @@
 <h5>
 	{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWS' | translate }}
 </h5>
-<nb-card-body>
+<nb-card-body class="card">
+	<div class="card-filter">
+		<nb-select
+			class="select"
+			placeholder="{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.SORT_BY' | translate
+			}}"
+			(selectedChange)="onSortSelected($event)"
+		>
+			<nb-option value="date">{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE' | translate
+			}}</nb-option>
+			<nb-option value="name">{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CANDIDATE_NAME' | translate
+			}}</nb-option>
+			<nb-option value="rating">{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING' | translate
+			}}</nb-option>
+		</nb-select>
+	</div>
+
 	<nb-accordion>
 		<nb-accordion-item
 			*ngFor="let interview of interviewList; let i = index"
@@ -25,17 +45,25 @@
 						{{ interview?.title }}
 					</strong>
 				</div>
-				<div class="header-small-block">
-					<strong
-						>{{ interview?.startTime | date: 'shortDate' }}
-					</strong>
+				<div class="header-large-block">
+					<div class="start-column">
+						<strong
+							>{{ interview?.startTime | date: 'shortDate' }}
+						</strong>
+						<span>
+							{{ interview?.startTime | date: 'shortTime' }}-{{
+								interview?.endTime | date: 'shortTime'
+							}}
+						</span>
+					</div>
 				</div>
-				<div class="header-large-block pl-5">
-					<strong
-						>{{ interview?.startTime | date: 'shortTime' }}-{{
-							interview?.endTime | date: 'shortTime'
-						}}
-					</strong>
+				<div class="header-medium-block">
+					<ga-star-rating-output
+						nbTooltip=" Average interview rating"
+						nbTooltipPlacement="left"
+						[rate]="interview?.rating ? interview?.rating : null"
+					>
+					</ga-star-rating-output>
 				</div>
 
 				<div class="header-large-block">
@@ -54,15 +82,8 @@
 				</div>
 			</nb-accordion-item-header>
 			<nb-accordion-item-body class="body">
-				<div class="body-block">
-					<ga-star-rating-output
-						nbTooltip=" Average interview rating"
-						nbTooltipPlacement="right"
-						[rate]="interview?.rating ? interview?.rating : null"
-						class="ml-2"
-					>
-					</ga-star-rating-output>
-					<span class="body-block-update">
+				<div class="body-block-update">
+					<span>
 						updated: {{ interview?.updatedAt | date: 'short' }}
 					</span>
 				</div>

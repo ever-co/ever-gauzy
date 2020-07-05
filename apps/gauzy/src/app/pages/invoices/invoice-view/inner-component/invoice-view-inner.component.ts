@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Invoice, Employee } from '@gauzy/models';
+import { Invoice, Employee, InvoiceTypeEnum } from '@gauzy/models';
 
 import { EmployeesService } from '../../../../@core/services/employees.service';
 import { Subject } from 'rxjs';
@@ -98,67 +98,51 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 		const items = [];
 		let data;
 		for (const item of this.invoice.invoiceItems) {
-			if (item.employeeId) {
-				const employee = await this.employeeService.getEmployeeById(
-					item.employeeId,
-					['user'],
-					false
-				);
-				data = {
-					description: item.description,
-					quantity: item.quantity,
-					price: item.price,
-					totalValue: +item.totalValue,
-					name: `${employee.user.firstName} ${employee.user.lastName}`,
-					currency: this.invoice.currency
-				};
-			} else if (item.projectId) {
-				const project = await this.projectService.getById(
-					item.projectId
-				);
-				data = {
-					description: item.description,
-					quantity: item.quantity,
-					price: item.price,
-					totalValue: +item.totalValue,
-					id: item.id,
-					name: project.name,
-					currency: this.invoice.currency
-				};
-			} else if (item.taskId) {
-				const task = await this.taskService.getById(item.taskId);
-				data = {
-					description: item.description,
-					quantity: item.quantity,
-					price: item.price,
-					totalValue: +item.totalValue,
-					id: item.id,
-					name: task.title,
-					currency: this.invoice.currency
-				};
-			} else if (item.productId) {
-				const product = await this.productService.getById(
-					item.productId
-				);
-				data = {
-					description: item.description,
-					quantity: item.quantity,
-					price: item.price,
-					totalValue: +item.totalValue,
-					id: item.id,
-					name: product.name,
-					currency: this.invoice.currency
-				};
-			} else {
-				delete this.settingsSmartTable['columns']['name'];
-				data = {
-					description: item.description,
-					quantity: item.quantity,
-					price: item.price,
-					totalValue: +item.totalValue,
-					id: item.id,
-					currency: this.invoice.currency
-				};
+			data = {
+				description: item.description,
+				quantity: item.quantity,
+				price: item.price,
+				totalValue: +item.totalValue,
+				currency: this.invoice.currency
+			};
+			switch (this.invoice.invoiceType) {
+				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+					const employee = await this.employeeService.getEmployeeById(
+						item.employeeId,
+						['user'],
+						false
+					);
+					data[
+						'name'
+					] = `${employee.user.firstName} ${employee.user.lastName}`;
+					break;
+				case InvoiceTypeEnum.BY_PROJECT_HOURS:
+					const project = await this.projectService.getById(
+						item.projectId
+					);
+					data['name'] = project.name;
+					break;
+				case InvoiceTypeEnum.BY_TASK_HOURS:
+					const task = await this.taskService.getById(item.taskId);
+					data['name'] = task.title;
+					break;
+				case InvoiceTypeEnum.BY_PRODUCTS:
+					const product = await this.productService.getById(
+						item.productId
+					);
+					data['name'] = product.name;
+					break;
+				default:
+					delete this.settingsSmartTable['columns']['name'];
+					data = {
+						description: item.description,
+						quantity: item.quantity,
+						price: item.price,
+						totalValue: +item.totalValue,
+						id: item.id,
+						currency: this.invoice.currency
+					};
+					break;
 			}
 			items.push(data);
 		}

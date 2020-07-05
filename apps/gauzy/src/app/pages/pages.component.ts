@@ -24,6 +24,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	adminMenu: NbMenuItem[];
 	private _ngDestroy$ = new Subject<void>();
 	isAdmin: boolean;
+	isEmployee: boolean;
 	_selectedOrganization: Organization;
 
 	MENU_ITEMS: NbMenuItem[] = [
@@ -224,6 +225,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'My Tasks',
 					icon: 'person-outline',
 					link: '/pages/tasks/me',
+					hidden: !this.isEmployee,
 					data: {
 						translated: false,
 						translationKey: 'MENU.MY_TASKS'
@@ -709,6 +711,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 
 	async ngOnInit() {
 		await this.checkForAdmin();
+		await this.checkForEmployee();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -754,9 +757,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	refreshMenuItem(item, withOrganizationShortcuts, forceTranslate) {
-		if (!item.data.translated) {
-			item.title = this.getTranslation(item.data.translationKey);
-		} else if (forceTranslate) {
+		if (!item.data.translated || forceTranslate) {
 			item.title = this.getTranslation(item.data.translationKey);
 		}
 
@@ -795,6 +796,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 	async checkForAdmin() {
 		this.isAdmin = await this.authService
 			.hasRole([RolesEnum.ADMIN])
+			.pipe(first())
+			.pipe(takeUntil(this._ngDestroy$))
+			.toPromise();
+	}
+
+	async checkForEmployee() {
+		this.isEmployee = await this.authService
+			.hasRole([RolesEnum.EMPLOYEE])
 			.pipe(first())
 			.pipe(takeUntil(this._ngDestroy$))
 			.toPromise();

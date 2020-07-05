@@ -12,6 +12,13 @@ import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
+import {
+	ComponentEnum,
+	SYSTEM_DEFAULT_LAYOUT
+} from '../constants/layout.constants';
+import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { map } from 'rxjs/operators';
+import { merge, Subject } from 'rxjs';
 
 export interface AppState {
 	user: User;
@@ -27,6 +34,8 @@ export interface PersistState {
 	userId: string;
 	serverConnection: string;
 	preferredLanguage: LanguagesEnum;
+	preferredComponentLayout: ComponentLayoutStyleEnum;
+	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
 }
 
 export function createInitialAppState(): AppState {
@@ -41,12 +50,14 @@ export function createInitialPersistState(): PersistState {
 	const userId = localStorage.getItem('_userId') || null;
 	const serverConnection = localStorage.getItem('serverConnection') || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
+	const componentLayout = localStorage.getItem('componentLayout') || [];
 
 	return {
 		token,
 		userId,
 		serverConnection,
-		preferredLanguage
+		preferredLanguage,
+		componentLayout
 	} as PersistState;
 }
 
@@ -57,6 +68,7 @@ export class AppStore extends AkitaStore<AppState> {
 		super(createInitialAppState());
 	}
 }
+
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'persist' })
 export class PersistStore extends AkitaStore<PersistState> {
@@ -64,6 +76,7 @@ export class PersistStore extends AkitaStore<PersistState> {
 		super(createInitialPersistState());
 	}
 }
+
 @Injectable({ providedIn: 'root' })
 export class AppQuery extends Query<AppState> {
 	constructor(protected store: AppStore) {
@@ -101,6 +114,54 @@ export class Store {
 	preferredLanguage$ = this.persistQuery.select(
 		(state) => state.preferredLanguage
 	);
+	preferredComponentLayout$ = this.persistQuery.select(
+		(state) => state.preferredComponentLayout
+	);
+	componentLayoutMap$ = this.persistQuery
+		.select((state) => state.componentLayout)
+		.pipe(map((componentLayout) => new Map(componentLayout)));
+
+	subject = new Subject<ComponentEnum>();
+
+	/**
+	 * Observe any change to the component layout.
+	 * Returns the layout for the component given in the params in the following order of preference
+	 * 1. If overridden at component level, return that.
+	 * Else
+	 * 2. If preferred layout set, then return that
+	 * Else
+	 * 3. Return the system default layout
+	 */
+	componentLayout$(component: ComponentEnum) {
+		return merge(
+			this.persistQuery
+				.select((state) => state.preferredComponentLayout)
+				.pipe(
+					map((preferredLayout) => {
+						const dataLayout = this.getLayoutForComponent(
+							component
+						);
+						return (
+							dataLayout ||
+							preferredLayout ||
+							SYSTEM_DEFAULT_LAYOUT
+						);
+					})
+				),
+			this.persistQuery
+				.select((state) => state.componentLayout)
+				.pipe(
+					map((componentLayout) => {
+						const componentMap = new Map(componentLayout);
+						return (
+							componentMap.get(component) ||
+							this.preferredComponentLayout ||
+							SYSTEM_DEFAULT_LAYOUT
+						);
+					})
+				)
+		);
+	}
 
 	get selectedOrganization(): Organization {
 		const { selectedOrganization } = this.appQuery.getValue();
@@ -249,6 +310,17 @@ export class Store {
 		});
 	}
 
+	get preferredComponentLayout(): any | null {
+		const { preferredComponentLayout } = this.persistQuery.getValue();
+		return preferredComponentLayout;
+	}
+
+	set preferredComponentLayout(preferredComponentLayout) {
+		this.persistStore.update({
+			preferredComponentLayout: preferredComponentLayout
+		});
+	}
+
 	clear() {
 		this.appStore.reset();
 		this.persistStore.reset();
@@ -259,6 +331,7 @@ export class Store {
 		this.ngxRolesService.flushRoles();
 		this.ngxRolesService.addRole(user.role.name, () => true);
 	}
+
 	loadPermissions() {
 		const { selectedOrganization } = this.appQuery.getValue();
 		let permissions = [];
@@ -279,5 +352,36 @@ export class Store {
 
 		this.permissionsService.flushPermissions();
 		this.permissionsService.loadPermissions(permissions);
+	}
+
+	getLayoutForComponent(
+		componentName: ComponentEnum
+	): ComponentLayoutStyleEnum {
+		const { componentLayout } = this.persistQuery.getValue();
+		const componentLayoutMap = new Map(componentLayout);
+		return componentLayoutMap.get(
+			componentName
+		) as ComponentLayoutStyleEnum;
+	}
+
+	setLayoutForComponent(
+		componentName: ComponentEnum,
+		style: ComponentLayoutStyleEnum
+	) {
+		const { componentLayout } = this.persistQuery.getValue();
+		const componentLayoutMap = new Map(componentLayout);
+		componentLayoutMap.set(componentName, style);
+		const componentLayoutArray = Array.from(
+			componentLayoutMap.entries()
+		) as any;
+		this.persistStore.update({
+			componentLayout: componentLayoutArray
+		});
+	}
+
+	set componentLayout(componentLayout: any[]) {
+		this.persistStore.update({
+			componentLayout
+		});
 	}
 }

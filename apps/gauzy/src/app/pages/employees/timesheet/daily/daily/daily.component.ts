@@ -26,8 +26,7 @@ import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/
 
 @Component({
 	selector: 'ngx-daily',
-	templateUrl: './daily.component.html',
-	styleUrls: ['./daily.component.scss']
+	templateUrl: './daily.component.html'
 })
 export class DailyComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
