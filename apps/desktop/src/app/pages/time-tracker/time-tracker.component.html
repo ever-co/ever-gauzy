@@ -1,0 +1,98 @@
+<nb-layout>
+	<nb-layout-column class="">
+		<div class="row full-height">
+			<div class="col-4 full-height no-padding">
+				<nb-card class="full-height">
+					<nb-card-body>
+						<div class="row">
+							<div class="col-3">
+								<nb-icon
+									class="start-button"
+									icon="play-circle"
+									*ngIf="!start"
+									(click)="toggleStart()"
+								>
+								</nb-icon>
+								<nb-icon
+									class="start-button"
+									icon="stop-circle-outline"
+									*ngIf="start"
+									(click)="toggleStart()"
+								>
+								</nb-icon>
+							</div>
+							<div class="col-6 timer-box">
+								<div class="timer-container">
+									{{ timeRun.hours }}: {{ timeRun.minute }}:{{
+										timeRun.second
+									}}
+								</div>
+							</div>
+							<div class="col-12">
+								<div class="row">
+									<div class="col-11 center-text">
+										<h5>
+											Ever Co
+										</h5>
+									</div>
+									<div class="col-11 center-text">
+										<h6>Total Worked Today 00:00</h6>
+									</div>
+								</div>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-8 full-height no-padding">
+				<nb-card class="full-height">
+					<nb-card-body>
+						<div class="row">
+							<div class="col-12">
+								<h5>TASK</h5>
+							</div>
+							<div class="col-12">
+								<h6>Electron APP</h6>
+							</div>
+							<div class="col-12 form-group">
+								<nb-select
+									placeholder="Project"
+									[(ngModel)]="projectSelect"
+									(ngModelChange)="setProject($event)"
+								>
+									<nb-option
+										[value]="project.id"
+										*ngFor="let project of projects"
+										>{{ project.name }}</nb-option
+									>
+								</nb-select>
+							</div>
+							<div class="col-12 form-group">
+								<nb-select
+									placeholder="Task"
+									[(ngModel)]="taskSelect"
+									(ngModelChange)="setTask($event)"
+								>
+									<nb-option
+										[value]="task.id"
+										*ngFor="let task of tasks"
+										>{{ task.title }}</nb-option
+									>
+								</nb-select>
+							</div>
+							<div class="col-12">
+								<p>Work ON:</p>
+								<input
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+								/>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	</nb-layout-column>
+</nb-layout>
