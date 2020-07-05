@@ -1,1 +1,0 @@
-2019/12/22 13:34:29 [error] 6#6: *1 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 172.18.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://172.18.0.8:4200/", host: "localhost:8080"
