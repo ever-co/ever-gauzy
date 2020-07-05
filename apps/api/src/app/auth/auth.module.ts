@@ -18,7 +18,6 @@ import { GithubAuthGuard } from './guard/github-auth-guard';
 import { MicrosoftAuthGuard } from './guard/microsoft-auth-guard';
 import { MicrosoftStrategy } from './microsoft.strategy';
 import { LinkedinStrategy } from './linkedin.strategy';
-import { LinkedinAuthGuard } from './guard/linkedin-auth-guard';
 import { TwitterAuthGuard } from './guard/twitter-auth-guard';
 import { KeycloakAuthGuard } from './guard/keycloak-auth-guard';
 
@@ -42,7 +41,6 @@ import { KeycloakAuthGuard } from './guard/keycloak-auth-guard';
 		MicrosoftAuthGuard,
 		MicrosoftStrategy,
 		LinkedinStrategy,
-		LinkedinAuthGuard,
 		TwitterAuthGuard,
 		KeycloakAuthGuard
 	],

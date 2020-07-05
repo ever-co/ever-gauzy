@@ -128,6 +128,27 @@ export class AuthController {
 		}
 	}
 
+	@Get('linkedin')
+	@UseGuards(AuthGuard('linkedin'))
+	linkedinLogin() {}
+
+	@Get('linkedin/callback')
+	@UseGuards(AuthGuard('linkedin'))
+	linkedinLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:4200/#/auth/register`);
+		}
+	}
+
 	@Get('facebook')
 	async requestFacebookRedirectUrl(@Res() res) {
 		const {

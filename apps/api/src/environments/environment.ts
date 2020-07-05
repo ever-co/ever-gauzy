@@ -99,10 +99,8 @@ export const environment: IEnvironment = {
 	},
 
 	linkedinConfig: {
-		clientId: process.env.LinkedinClientId || 'fakeLinkedinClientId',
-		clientSecret:
-			process.env.LinkedinClientSecret || 'fakeLinkedinClientSecret',
-		jwtSecret: process.env.LinkedinJwtSecret || 'fakeJwtSecret'
+		clientId: process.env.LinkedinClientId || '868niuxf55ut6t',
+		clientSecret: process.env.LinkedinClientSecret || 'KzBdgxV7ly0fPNUS'
 	},
 
 	twitterConfig: {
