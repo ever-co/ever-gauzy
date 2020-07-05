@@ -127,8 +127,7 @@ services:
             - db
         links:
             - db:${DB_HOST:-db}
-        volumes:
-            # - .:/srv/gauzy
+        volumes:            
             - webapp_node_modules:/srv/gauzy/node_modules
             - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
@@ -155,8 +154,7 @@ services:
         depends_on:
             - db
             - api
-        volumes:
-            # - .:/srv/gauzy
+        volumes:            
             - webapp_node_modules:/srv/gauzy/node_modules
         ports:
             - 4200:${HOST:-4200}
