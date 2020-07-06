@@ -58,6 +58,7 @@ export const environment: IEnvironment = {
 		LOG_LEVEL: 'debug'
 	},
 
+	EXPRESS_SESSION_SECRET: 'gauzy',
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 	JWT_SECRET: 'secretKey',
 

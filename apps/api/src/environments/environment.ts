@@ -61,6 +61,7 @@ export const environment: IEnvironment = {
 		LOG_LEVEL: 'debug'
 	},
 
+	EXPRESS_SESSION_SECRET: 'gauzy',
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 	JWT_SECRET: 'secretKey',
 
@@ -76,7 +77,7 @@ export const environment: IEnvironment = {
 	},
 
 	googleConfig: {
-		clientId:	process.env.GoogleClientId,
+		clientId: process.env.GoogleClientId,
 		clientSecret: process.env.GoogleClientSecret
 	},
 
@@ -88,7 +89,8 @@ export const environment: IEnvironment = {
 	microsoftConfig: {
 		clientId: process.env.MicrosoftClientId,
 		clientSecret: process.env.MicrosoftConfig,
-		identityMetadata: 'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
+		identityMetadata:
+			'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
 		jwtSecret: process.env.MicrosoftJwtSecret
 	},
 
@@ -99,7 +101,7 @@ export const environment: IEnvironment = {
 
 	twitterConfig: {
 		clientId: process.env.TwitterClientId,
-		clientSecret: process.env.TwitterClientSecret
+		clientSecret:	process.env.TwitterClientSecret
 	},
 
 	fiverrConfig: {

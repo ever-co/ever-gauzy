@@ -199,4 +199,25 @@ export class AuthController {
 			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
+
+	@Get('twitter')
+	@UseGuards(AuthGuard('twitter'))
+	twitterLogin() {}
+
+	@Get('twitter/callback')
+	@UseGuards(AuthGuard('twitter'))
+	twitterLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
 }

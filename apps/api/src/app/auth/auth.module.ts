@@ -19,7 +19,7 @@ import { MicrosoftStrategy } from './microsoft.strategy';
 import { LinkedinStrategy } from './linkedin.strategy';
 import { KeycloakAuthGuard } from './guard/keycloak-auth-guard';
 import { GithubStrategy } from './github.strategy';
-import { TwitterAuthGuard } from './guard/twitter-auth-guard';
+import { TwitterStrategy } from './twitter.strategy';
 
 @Module({
 	imports: [
@@ -41,7 +41,7 @@ import { TwitterAuthGuard } from './guard/twitter-auth-guard';
 		MicrosoftStrategy,
 		LinkedinStrategy,
 		GithubStrategy,
-		TwitterAuthGuard,
+		TwitterStrategy,
 		KeycloakAuthGuard
 	],
 	exports: [AuthService, UserService]
