@@ -1869,7 +1869,12 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
 		"APPS": "Apps Activity",
-		"URLS": "Urls Activity"
+		"URLS": "Urls Activity",
+		"NO_ACTIVITES": "No activites",
+		"NO_ACTIVITY": "No Activity",
+		"VIEW_SCREEN": "View Screen",
+		"VIEW_INFO": "View Info",
+		"NO_SCREENSHOTS": "No Screenshots"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

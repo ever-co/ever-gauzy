@@ -1869,7 +1869,12 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "Скриншот",
 		"APPS": "Активность приложений",
-		"URLS": "Активность ссылок"
+		"URLS": "Активность ссылок",
+		"NO_ACTIVITES": "No activites",
+		"NO_ACTIVITY": "Нет активности",
+		"VIEW_SCREEN": "Экран",
+		"VIEW_INFO": "Просмотр информации",
+		"NO_SCREENSHOTS": "Нет скриншотов"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
