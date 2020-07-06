@@ -446,6 +446,7 @@ import { TimeOffRequestModule } from './time-off-request/time-off-request.module
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
+		TimeOffRequestModule,
 		ApprovalPolicyModule,
 		RequestApprovalModule,
 		RolePermissionsModule,
