@@ -28,6 +28,7 @@ export const createRandomOrganizationProjects = async (
 		project.tags = [tag];
 		project.name = name;
 		project.organizationId = defaultOrganizations[0].id;
+		project.tenant = defaultOrganizations[0].tenant;
 		projects.push(project);
 	});
 	await connection.manager.save(projects);

@@ -22,6 +22,7 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 
 	emails: Email[];
 	selectedEmail: Email;
+	filteredCount;
 
 	get selectedEmailHTML() {
 		return this.sanitizer.bypassSecurityTrustHtml(
@@ -66,6 +67,7 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 				this._selectedOrganization.id,
 				filters
 			);
+			this.filteredCount = Object.keys(filters).length;
 		}
 	}
 

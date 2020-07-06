@@ -9,8 +9,8 @@ import { environment as env } from '@env-api/environment';
 export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 	constructor(private readonly _authService: AuthService) {
 		super({
-			clientID: env.twitterConfig.clientId,
-			clientSecret: env.twitterConfig.clientSecret,
+			clientID: env.twitterConfig.clientId || 'disabled',
+			clientSecret: env.twitterConfig.clientSecret || 'disabled',
 			callbackURL: `${env.host}:${env.port}/api/auth/twitter/callback`,
 			scope: ['profile', 'manage_pages'],
 			passReqToCallback: true
@@ -24,9 +24,8 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 		profile,
 		done: Function
 	) {
-		const role = passport['_strategies'].session.role_name;
 		passport['_strategies'].session.role_name = '';
-		const { emails, username } = profile;
+		const { emails } = profile;
 		try {
 			try {
 				const {

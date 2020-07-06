@@ -1,16 +1,26 @@
 <nb-card>
 	<nb-card-header>
-		<button
-			(click)="openFiltersDialog()"
-			nbButton
-			status="primary"
-			size="small"
-		>
-			<nb-icon icon="plus-outline"></nb-icon>
-			Add Filter
-		</button>
-
-		<!-- here should have *ngFor filters with X appearing onmouseover -->
+		<div class="filter">
+			<button
+				(click)="openFiltersDialog()"
+				nbButton
+				status="primary"
+				size="small"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+				Add Filter
+				<span>
+					<nb-badge
+						*ngIf="this.filteredCount"
+						status="danger"
+						text="{{ this.filteredCount }}"
+						position="center"
+						class="filterCount"
+					>
+					</nb-badge>
+				</span>
+			</button>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="content-container">

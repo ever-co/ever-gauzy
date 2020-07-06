@@ -8,9 +8,9 @@ import { AuthService } from './auth.service';
 export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
 	constructor(private readonly _authService: AuthService) {
 		super({
+			clientID: env.keycloakConfig.clientId || 'disabled',
+			clientSecret: env.keycloakConfig.secret || 'disabled',
 			realm: env.keycloakConfig.realm,
-			clientID: env.keycloakConfig.clientId,
-			clientSecret: env.keycloakConfig.secret,
 			authServerUrl: env.keycloakConfig.authServerUrl,
 			cookieKey: env.keycloakConfig.cookieKey
 		});

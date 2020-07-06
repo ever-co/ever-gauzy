@@ -9,9 +9,9 @@ import passport from 'passport';
 export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
 	constructor(private readonly _authService: AuthService) {
 		super({
-			clientID: env.microsoftConfig.clientId,
+			clientID: env.microsoftConfig.clientId || 'disabled',
+			clientSecret: env.microsoftConfig.clientSecret || 'disabled',
 			callbackURL: `${env.host}:${env.port}/api/auth/microsoft/callback`,
-			clientSecret: env.microsoftConfig.clientSecret,
 			scope: ['profile', 'offline_access'],
 			passReqToCallback: true,
 			secretOrKey: env.JWT_SECRET,
@@ -26,9 +26,8 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
 		profile,
 		done: Function
 	) {
-		const role = passport['_strategies'].session.role_name;
 		passport['_strategies'].session.role_name = '';
-		const { emails, username } = profile;
+		const { emails } = profile;
 		try {
 			try {
 				const {
