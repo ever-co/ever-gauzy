@@ -57,6 +57,7 @@
 		"passport-facebook-token": "^3.3.0",
 		"passport-google-oauth20": "^2.0.0",
 		"passport-linkedin-oauth2": "^2.0.0",
+		"passport-github2": "^0.1.12",
 		"passport-jwt": "^4.0.0",
 		"pg": "^8.0.3",
 		"pm2": "^4.2.3",

@@ -78,10 +78,10 @@ export const environment: IEnvironment = {
 	},
 
 	githubConfig: {
-		clientId: process.env.GithubClientId || 'fakeclientId',
-		clientSecret: process.env.GithubClientSecret || 'fakesecret',
-		code: process.env.GithubCode || 'fakecode',
-		state: '{github}'
+		clientId: process.env.GithubClientId || '38720dd80a1a6973bc09',
+		clientSecret:
+			process.env.GithubClientSecret ||
+			'4dbd2d460ef1754c525eb03cbf823d2e5695e16b'
 	},
 
 	microsoftConfig: {

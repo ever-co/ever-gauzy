@@ -149,6 +149,27 @@ export class AuthController {
 		}
 	}
 
+	@Get('github')
+	@UseGuards(AuthGuard('github'))
+	githubLogin() {}
+
+	@Get('github/callback')
+	@UseGuards(AuthGuard('github'))
+	githubLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:4200/#/auth/register`);
+		}
+	}
+
 	@Get('facebook')
 	async requestFacebookRedirectUrl(@Res() res) {
 		const {
