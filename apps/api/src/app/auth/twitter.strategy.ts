@@ -9,8 +9,8 @@ import { Strategy } from 'passport-twitter';
 export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 	constructor(private readonly _authService: AuthService) {
 		super({
-			consumerKey: env.twitterConfig.clientId,
-			consumerSecret: env.twitterConfig.clientSecret,
+			consumerKey: env.twitterConfig.clientId || 'disabled',
+			consumerSecret: env.twitterConfig.clientSecret || 'disabled',
 			callbackURL: `${env.host}:${env.port}/api/auth/twitter/callback`,
 			passReqToCallback: true,
 			includeEmail: true,
