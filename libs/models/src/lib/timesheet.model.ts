@@ -125,7 +125,9 @@ export interface ITimeSlotCreateInput {
 
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
-	MANUAL = 'MANUAL'
+	MANUAL = 'MANUAL',
+	IDEAL = 'IDEAL',
+	RESUMED = 'RESUMED'
 }
 
 export enum TimeLogSourceEnum {

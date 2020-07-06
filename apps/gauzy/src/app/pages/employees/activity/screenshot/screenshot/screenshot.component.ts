@@ -3,7 +3,8 @@ import {
 	TimeLogFilters,
 	Organization,
 	TimeSlot,
-	IGetTimeSlotInput
+	IGetTimeSlotInput,
+	TimeLog
 } from '@gauzy/models';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { debounceTime } from 'rxjs/operators';
@@ -13,6 +14,9 @@ import { toUTC, toLocal } from 'libs/utils';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import { NbDialogService } from '@nebular/theme';
+import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 export interface ScreenshotMap {
 	startTime: string;
@@ -30,13 +34,16 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	loading: boolean;
 	timeSlots: ScreenshotMap[];
 	checkAllCheckbox: any;
-	selectedIds: {};
+	selectedIds: any = {};
 	updateLogs$: Subject<any> = new Subject();
 	organization: any;
-	screenshotsUrls: string[] = [];
+	screenshotsUrls: { thumbUrl: string; fullUrl: string }[] = [];
+	selectedIdsCount = 0;
+	allSelected = false;
 
 	constructor(
 		private timesheetService: TimesheetService,
+		private nbDialogService: NbDialogService,
 		private store: Store
 	) {}
 
@@ -108,9 +115,10 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 							timeSlot.stoppedAt
 						).toDate();
 						this.screenshotsUrls = this.screenshotsUrls.concat(
-							timeSlot.screenshots.map(
-								(screenshot) => screenshot.fullUrl
-							)
+							timeSlot.screenshots.map((screenshot) => ({
+								thumbUrl: screenshot.thumbUrl,
+								fullUrl: screenshot.fullUrl
+							}))
 						);
 						return timeSlot;
 					})
@@ -147,6 +155,64 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 					.value();
 			})
 			.finally(() => (this.loading = false));
+	}
+
+	viewInfo(timeSlot) {
+		if (timeSlot.timeLogs.length > 0) {
+			const findOptions = {
+				relations: ['employee', 'employee.user', 'project', 'task']
+			};
+			this.timesheetService
+				.getTimeLog(timeSlot.timeLogs[0].id, findOptions)
+				.then((timeLog: TimeLog) => {
+					this.nbDialogService.open(ViewTimeLogModalComponent, {
+						context: { timeLog },
+						dialogClass: 'view-log-dialog'
+					});
+				});
+		}
+	}
+
+	toggleSelect(slotId?: string) {
+		if (slotId) {
+			this.selectedIds[slotId] = !this.selectedIds[slotId];
+		}
+
+		this.selectedIdsCount = Object.values(this.selectedIds).filter(
+			(val) => val === true
+		).length;
+		this.allSelected =
+			this.selectedIdsCount === Object.values(this.selectedIds).length;
+	}
+
+	toggleAllSelecte() {
+		for (const key in this.selectedIds) {
+			if (this.selectedIds.hasOwnProperty(key)) {
+				this.selectedIds[key] = !this.allSelected;
+			}
+		}
+		this.toggleSelect();
+		//this.allSelected = !this.allSelected;
+	}
+
+	deleteSlot(timeSlot) {
+		this.nbDialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((type) => {
+				if (type === 'ok') {
+				}
+			});
+	}
+
+	deleteSlots() {
+		this.nbDialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((type) => {
+				if (type === 'ok') {
+				}
+			});
 	}
 
 	ngOnDestroy(): void {}

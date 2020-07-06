@@ -70,6 +70,14 @@
 					</ga-employee-multi-select>
 				</div>
 			</ng-template>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasProjectFilter">
+				<ga-project-selector
+					name="projectId"
+					[(ngModel)]="filters.projectIds"
+					(ngModelChange)="triggerFilterChange()"
+					[multiple]="true"
+				></ga-project-selector>
+			</div>
 			<div class="col-auto ml-auto pr-1" *ngIf="hasSourceFilter">
 				<nb-select
 					multiple

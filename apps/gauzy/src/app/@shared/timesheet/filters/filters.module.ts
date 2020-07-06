@@ -13,6 +13,7 @@ import {
 import { Ng5SliderModule } from 'ng5-slider';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
+import { ProjectSelectModule } from '../../project-select/project-select.module';
 
 @NgModule({
 	declarations: [FiltersComponent],
@@ -28,7 +29,8 @@ import { SharedModule } from '../../shared.module';
 		NbDatepickerModule,
 		NbIconModule,
 		Ng5SliderModule,
-		TranslateModule
+		TranslateModule,
+		ProjectSelectModule
 	]
 })
 export class FiltersModule {}

@@ -1,17 +1,14 @@
 import {
-	EventEmitter,
 	Component,
 	OnInit,
 	ElementRef,
 	Input,
-	Output,
 	ViewChild,
 	OnDestroy
 } from '@angular/core';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
-
-declare let $: any;
+import { GalleryItem } from './gallery.directive';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -32,8 +29,8 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	animations: [fadeInOutAnimation]
 })
 export class GalleryComponent implements OnInit, OnDestroy {
-	private _items: string[] = [];
-	private _item: string;
+	private _items: GalleryItem[] = [];
+	private _item: GalleryItem;
 	active_index: any;
 
 	@ViewChild('customScroll', { static: true }) customScroll: ElementRef<
@@ -41,20 +38,20 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	>;
 
 	@Input()
-	public get item(): string {
+	public get item(): GalleryItem {
 		return this._item;
 	}
-	public set item(value: string) {
+	public set item(value: GalleryItem) {
 		this._item = value;
 		this.setFocus(value);
 	}
 
 	@Input()
-	set items(items: string[]) {
+	set items(items: GalleryItem[]) {
 		this._items = items || [];
 		// this.setFocus(items[0]);
 	}
-	get items(): string[] {
+	get items(): GalleryItem[] {
 		return this._items;
 	}
 
@@ -66,7 +63,8 @@ export class GalleryComponent implements OnInit, OnDestroy {
 		this.dialogRef.close();
 	}
 
-	next() {
+	next($event) {
+		$event.stopPropagation();
 		this.active_index = Math.min(
 			this.active_index + 1,
 			this.items.length - 1
@@ -75,7 +73,8 @@ export class GalleryComponent implements OnInit, OnDestroy {
 		this.updateActiveIndex();
 	}
 
-	prev() {
+	prev($event) {
+		$event.stopPropagation();
 		this.active_index = Math.max(this.active_index - 1, 0);
 		this.item = this.items[this.active_index];
 		this.updateActiveIndex();
