@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { StatusTypesEnum, PermissionsEnum, TimeOff } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request--mutation.component';
+import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request-mutation.component';
 import { TimeOffService } from '../../@core/services/time-off.service';
 
 @Component({
@@ -18,6 +18,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private dialogService: NbDialogService,
 		private timeOffService: TimeOffService,
+		private toastrService: NbToastrService,
 		private store: Store
 	) {}
 
@@ -100,16 +101,32 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 
 	async requestDaysOff() {
 		this.timeOffRequest = await this.dialogService
-			.open(TimeOffRequestMutationComponent)
+			.open(TimeOffRequestMutationComponent, {
+				context: { type: 'request' }
+			})
 			.onClose.pipe(first())
 			.toPromise();
 
-		console.log(this.timeOffRequest);
-
-		await this.timeOffService.createRequest(this.timeOffRequest);
+		this._createRecord();
 	}
 
-	addHolidays() {}
+	async addHolidays() {
+		this.timeOffRequest = await this.dialogService
+			.open(TimeOffRequestMutationComponent, {
+				context: { type: 'holiday' }
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		this._createRecord();
+	}
+
+	private async _createRecord() {
+		if (this.timeOffRequest) {
+			await this.timeOffService.createRequest(this.timeOffRequest);
+			this.toastrService.success(`Time off record ${this.timeOffRequest.description} successfully created!`, 'Success')
+		}
+	}
 
 	changeDisplayHolidays(checked: boolean) {
 		this.displayHolidays = checked;
