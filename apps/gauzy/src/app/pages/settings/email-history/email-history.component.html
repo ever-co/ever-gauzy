@@ -9,8 +9,17 @@
 			>
 				<nb-icon icon="plus-outline"></nb-icon>
 				Add Filter
+				<span>
+					<nb-badge
+						*ngIf="this.filteredCount"
+						status="danger"
+						text="{{ this.filteredCount }}"
+						position="center"
+						class="filterCount"
+					>
+					</nb-badge>
+				</span>
 			</button>
-			<span>{{ this.filteredCount | json }}</span>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
