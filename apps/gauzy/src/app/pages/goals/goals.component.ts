@@ -19,6 +19,7 @@ import { GoalService } from '../../@core/services/goal.service';
 import { KeyResultService } from '../../@core/services/keyresult.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
+import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 
 @Component({
 	selector: 'ga-goals',
@@ -123,6 +124,18 @@ export class GoalsComponent extends TranslationBaseComponent
 				}
 				this.loading = false;
 			});
+	}
+
+	async openKeyResultParameters(keyResult) {
+		const dialog = this.dialogService.open(KeyResultParametersComponent, {
+			context: {
+				data: keyResult
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			console.log(response);
+		}
 	}
 
 	createTimeFrameGroups(goals) {

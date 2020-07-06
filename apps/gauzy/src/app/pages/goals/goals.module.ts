@@ -21,7 +21,8 @@ import {
 	NbContextMenuModule,
 	NbListModule,
 	NbPopoverModule,
-	NbAlertModule
+	NbAlertModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -38,6 +39,7 @@ import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.co
 import { KeyResultProgressChartComponent } from './keyresult-progress-chart/keyresult-progress-chart.component';
 import { ChartModule } from 'angular2-chartjs';
 import { GoalSettingsModule } from '../goal-settings/goal-settings.module';
+import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -51,7 +53,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		GoalDetailsComponent,
 		KeyResultDetailsComponent,
 		KeyResultUpdateComponent,
-		KeyResultProgressChartComponent
+		KeyResultProgressChartComponent,
+		KeyResultParametersComponent
 	],
 	imports: [
 		CommonModule,
@@ -75,6 +78,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		SharedModule,
 		NbPopoverModule,
 		NbAlertModule,
+		NbTooltipModule,
 		ChartModule,
 		GoalSettingsModule,
 		NbDialogModule.forChild(),

@@ -29,6 +29,7 @@ export interface KeyResult extends IBaseEntityModel {
 	hardDeadline?: Date;
 	softDeadline?: Date;
 	status?: string;
+	weight?: string;
 	goalId?: string;
 	goal?: Goal;
 	updates?: Array<KeyResultUpdates>;
@@ -41,6 +42,12 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 	progress: number;
 	update: number;
 	status: string;
+}
+
+export enum KeyResultWeightEnum {
+	DEFAULT = '1',
+	INCREASE_BY_2X = '2',
+	INCREASE_BY_50 = '50'
 }
 
 export interface GoalFindInput extends IBaseEntityModel {

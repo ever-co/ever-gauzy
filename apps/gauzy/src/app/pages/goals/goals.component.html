@@ -38,7 +38,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row tex-center p-5" *ngIf="noGoals == true">
+		<div class="row text-center p-5" *ngIf="noGoals == true">
 			<p>
 				{{ 'GOALS_PAGE.GOALS_EMPTY' | translate }}
 			</p>
@@ -69,15 +69,17 @@
 							</nb-progress-bar></span
 						>
 						<nb-actions
-							class="ml-auto mr-3 mt-1 float-right"
+							class="ml-auto ml-3 mt-1 float-right"
 							size="small"
 						>
 							<nb-action
+								nbTooltip="Objective Details"
 								icon="eye"
 								(click)="openGoalDetials(goal)"
 							></nb-action>
 							<nb-action
 								icon="edit"
+								nbTooltip="Edit Objective"
 								(click)="createObjective(goal, index)"
 							></nb-action>
 						</nb-actions>
@@ -89,12 +91,19 @@
 						{{ keyResult.name }}
 						<nb-actions class="ml-auto float-right" size="small">
 							<nb-action
+								nbTooltip="Key Result Details"
 								icon="eye"
 								(click)="openKeyResultDetails(index, keyResult)"
 							></nb-action>
 							<nb-action
+								nbTooltip="Edit Key Result"
 								icon="edit"
 								(click)="addKeyResult(index, keyResult)"
+							></nb-action>
+							<nb-action
+								nbTooltip="Edit Weight/Type"
+								icon="percent"
+								(click)="openKeyResultParameters(keyResult)"
 							></nb-action>
 						</nb-actions>
 						<span class="ml-auto float-right col-md-4 text-center"
