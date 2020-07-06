@@ -66,55 +66,50 @@ export const environment: IEnvironment = {
 	facebookConfig: {
 		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
 		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
-		clientId: process.env.FacebookClientId || 'fakeclientid',
-		clientSecret: process.env.FacebookClientSecret || 'fakesecret',
+		clientId: process.env.FacebookClientId,
+		clientSecret: process.env.FacebookClientSecret,
 		oauthRedirectUri: `${process.env.host}:${process.env.port}/api/auth/facebook/callback`,
 		state: '{fbstate}'
 	},
 
 	googleConfig: {
-		clientId: process.env.GoogleClientId || 'fakeclientid',
-		clientSecret: process.env.GoogleClientSecret || 'fakesecret'
+		clientId: process.env.GoogleClientId,
+		clientSecret: process.env.GoogleClientSecret
 	},
 
 	githubConfig: {
-		clientId: process.env.GithubClientId || 'fakeclientId',
-		clientSecret: process.env.GithubClientSecret || 'fakesecret',
-		code: process.env.GithubCode || 'fakecode',
-		state: '{github}'
+		clientId: process.env.GithubClientId,
+		clientSecret:	process.env.GithubClientSecret
 	},
 
 	microsoftConfig: {
-		clientId: process.env.MicrosoftClientId || 'fakeClientId',
-		clientSecret: process.env.MicrosoftClientSecret || 'fakeClientSecret',
-		identityMetadata:
-			'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
-		jwtSecret: process.env.MicrosoftJwtSecret || 'fakeJwtSecret'
+		clientId: process.env.MicrosoftClientId,
+		clientSecret: process.env.MicrosoftClientSecret,
+		identityMetadata: 'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
+		jwtSecret: process.env.MicrosoftJwtSecret
 	},
 
 	linkedinConfig: {
-		clientId: process.env.LinkedinClientId || '868niuxf55ut6t',
-		clientSecret: process.env.LinkedinClientSecret || 'KzBdgxV7ly0fPNUS'
+		clientId: process.env.LinkedinClientId,
+		clientSecret: process.env.LinkedinClientSecret'
 	},
 
 	twitterConfig: {
-		clientId: process.env.TwitterClientId || 'fakeTwitterClientId',
-		clientSecret:
-			process.env.TwitterClientSecret || 'fakeTwitterClientSecret'
+		clientId: process.env.TwitterClientId,
+		clientSecret: process.env.TwitterClientSecret
 	},
 
 	fiverrConfig: {
-		clientId: process.env.FiverrClientId || 'fakeFiverrClientId',
-		clientSecret: process.env.FiverrClientSecret || 'FiverrClientSecret'
+		clientId: process.env.FiverrClientId,
+		clientSecret: process.env.FiverrClientSecret
 	},
 
 	keycloakConfig: {
-		realm: process.env.KeycloakRealm || 'fakeKeycloakRealm',
-		clientId: process.env.KeycloakClientId || 'fakeKeycloakClientId',
-		secret: process.env.KeycloakSecret || 'fakeKeycloakSecret',
-		authServerUrl:
-			process.env.KeycloakAuthServerURL || 'fakeKeycloakAuthServerURL',
-		cookieKey: process.env.KeycloakCookieKey || 'KeycloakCookieKey'
+		realm: process.env.KeycloakRealm,
+		clientId: process.env.KeycloakClientId,
+		secret: process.env.KeycloakSecret,
+		authServerUrl: process.env.KeycloakAuthServerURL,
+		cookieKey: process.env.KeycloakCookieKey
 	},
 
 	defaultOrganizations: [

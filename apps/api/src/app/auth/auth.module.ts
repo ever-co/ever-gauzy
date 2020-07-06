@@ -14,12 +14,12 @@ import { JwtStrategy } from './jwt.strategy';
 import { UserOrganization } from '../user-organization/user-organization.entity';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { Organization } from '../organization/organization.entity';
-import { GithubAuthGuard } from './guard/github-auth-guard';
 import { MicrosoftAuthGuard } from './guard/microsoft-auth-guard';
 import { MicrosoftStrategy } from './microsoft.strategy';
 import { LinkedinStrategy } from './linkedin.strategy';
-import { TwitterAuthGuard } from './guard/twitter-auth-guard';
 import { KeycloakAuthGuard } from './guard/keycloak-auth-guard';
+import { GithubStrategy } from './github.strategy';
+import { TwitterAuthGuard } from './guard/twitter-auth-guard';
 
 @Module({
 	imports: [
@@ -37,10 +37,10 @@ import { KeycloakAuthGuard } from './guard/keycloak-auth-guard';
 		GoogleStrategy,
 		FacebookStrategy,
 		JwtStrategy,
-		GithubAuthGuard,
 		MicrosoftAuthGuard,
 		MicrosoftStrategy,
 		LinkedinStrategy,
+		GithubStrategy,
 		TwitterAuthGuard,
 		KeycloakAuthGuard
 	],
