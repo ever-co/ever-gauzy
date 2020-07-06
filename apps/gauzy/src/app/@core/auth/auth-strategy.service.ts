@@ -8,6 +8,7 @@ import { User, Tag, ITenant } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
+import { ElectronService } from 'ngx-electron';
 // tslint:disable-next-line: nx-enforce-module-boundaries
 
 @Injectable()
@@ -64,7 +65,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		private route: ActivatedRoute,
 		private router: Router,
 		private authService: AuthService,
-		private store: Store
+		private store: Store,
+		private electronService: ElectronService
 	) {
 		super();
 	}
@@ -110,7 +112,16 @@ export class AuthStrategy extends NbAuthStrategy {
 
 				this.store.userId = user.id;
 				this.store.token = token;
-
+				if (this.electronService.isElectronApp) {
+					try {
+						console.log('is electron app');
+						this.electronService.ipcRenderer.send('auth_success', {
+							token: token,
+							userId: user.id,
+							employeeId: user.employee ? user.employee.id : null
+						});
+					} catch (error) {}
+				}
 				return new NbAuthResult(
 					true,
 					res,
@@ -164,16 +175,10 @@ export class AuthStrategy extends NbAuthStrategy {
 		const registerInput = {
 			user: {
 				firstName: fullName
-					? fullName
-							.split(' ')
-							.slice(0, -1)
-							.join(' ')
+					? fullName.split(' ').slice(0, -1).join(' ')
 					: null,
 				lastName: fullName
-					? fullName
-							.split(' ')
-							.slice(-1)
-							.join(' ')
+					? fullName.split(' ').slice(-1).join(' ')
 					: null,
 				email,
 				tenant,
