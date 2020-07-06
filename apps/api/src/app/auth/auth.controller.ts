@@ -121,10 +121,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 
@@ -142,10 +142,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 
@@ -163,10 +163,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 
@@ -193,10 +193,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 }
