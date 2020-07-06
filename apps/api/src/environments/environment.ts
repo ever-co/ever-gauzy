@@ -100,9 +100,8 @@ export const environment: IEnvironment = {
 	},
 
 	twitterConfig: {
-		clientId: process.env.TwitterClientId || 'fakeTwitterClientId',
-		clientSecret:
-			process.env.TwitterClientSecret || 'fakeTwitterClientSecret'
+		clientId: process.env.TwitterClientId,
+		clientSecret:	process.env.TwitterClientSecret
 	},
 
 	fiverrConfig: {
