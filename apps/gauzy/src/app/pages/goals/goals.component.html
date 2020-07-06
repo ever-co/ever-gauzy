@@ -43,87 +43,91 @@
 				{{ 'GOALS_PAGE.GOALS_EMPTY' | translate }}
 			</p>
 		</div>
-		<nb-accordion
-			class="mb-3"
-			*ngFor="let goal of goals; let index = index"
-		>
-			<nb-accordion-item>
-				<nb-accordion-item-header
-					>{{ goal.name }}
-					<span class="ml-auto float-right col-md-4 text-center"
-						><nb-progress-bar
-							class="ml-4"
-							[value]="goal.progress"
-							[status]="
-								goal.progress < 50
-									? 'warning'
-									: goal.progress < 75
-									? 'info'
-									: 'success'
-							"
+		<div *ngFor="let timeFrame of goalTimeFrames">
+			<h6>{{ timeFrame }}</h6>
+			<nb-accordion
+				[hidden]="goal.deadline != timeFrame"
+				class="my-3"
+				*ngFor="let goal of goals; let index = index"
+			>
+				<nb-accordion-item [expanded]="true">
+					<nb-accordion-item-header
+						>{{ goal.name }}
+						<span class="ml-auto float-right col-md-4 text-center"
+							><nb-progress-bar
+								class="ml-4"
+								[value]="goal.progress"
+								[status]="
+									goal.progress < 50
+										? 'warning'
+										: goal.progress < 75
+										? 'info'
+										: 'success'
+								"
+								size="small"
+								>{{ goal.progress }}%
+							</nb-progress-bar></span
+						>
+						<nb-actions
+							class="ml-auto mr-3 mt-1 float-right"
 							size="small"
-							>{{ goal.progress }}%
-						</nb-progress-bar></span
+						>
+							<nb-action
+								icon="eye"
+								(click)="openGoalDetials(goal)"
+							></nb-action>
+							<nb-action
+								icon="edit"
+								(click)="createObjective(goal, index)"
+							></nb-action>
+						</nb-actions>
+					</nb-accordion-item-header>
+					<nb-accordion-item-body
+						class="ml-4"
+						*ngFor="let keyResult of goal.keyResults"
 					>
-					<nb-actions
-						class="ml-auto mr-3 mt-1 float-right"
-						size="small"
-					>
-						<nb-action
-							icon="eye"
-							(click)="openGoalDetials(goal)"
-						></nb-action>
-						<nb-action
-							icon="edit"
-							(click)="createObjective(goal, index)"
-						></nb-action>
-					</nb-actions>
-				</nb-accordion-item-header>
-				<nb-accordion-item-body
-					class="ml-4"
-					*ngFor="let keyResult of goal.keyResults"
-				>
-					{{ keyResult.name }}
-					<nb-actions class="ml-auto float-right" size="small">
-						<nb-action
-							icon="eye"
-							(click)="openKeyResultDetails(index, keyResult)"
-						></nb-action>
-						<nb-action
-							icon="edit"
-							(click)="addKeyResult(index, keyResult)"
-						></nb-action>
-					</nb-actions>
-					<span class="ml-auto float-right col-md-4 text-center"
-						><nb-progress-bar
-							class="ml-3"
-							[value]="keyResult.progress"
-							[status]="
-								keyResult.progress < 50
-									? 'warning'
-									: keyResult.progress < 75
-									? 'info'
-									: 'success'
-							"
-							size="small"
-							>{{ keyResult.progress }}%
-						</nb-progress-bar></span
-					>
-				</nb-accordion-item-body>
-				<nb-accordion-item-body>
-					<nb-actions size="medium">
-						<nb-action
-							icon="plus-circle"
-							status="primary"
-							title="Add new key result"
-							(click)="addKeyResult(index, null)"
-						></nb-action>
-						<nb-action>{{
-							'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate
-						}}</nb-action>
-					</nb-actions>
-				</nb-accordion-item-body>
-			</nb-accordion-item>
-		</nb-accordion>
+						{{ keyResult.name }}
+						<nb-actions class="ml-auto float-right" size="small">
+							<nb-action
+								icon="eye"
+								(click)="openKeyResultDetails(index, keyResult)"
+							></nb-action>
+							<nb-action
+								icon="edit"
+								(click)="addKeyResult(index, keyResult)"
+							></nb-action>
+						</nb-actions>
+						<span class="ml-auto float-right col-md-4 text-center"
+							><nb-progress-bar
+								class="ml-3"
+								[value]="keyResult.progress"
+								[status]="
+									keyResult.progress < 50
+										? 'warning'
+										: keyResult.progress < 75
+										? 'info'
+										: 'success'
+								"
+								size="small"
+								>{{ keyResult.progress }}%
+							</nb-progress-bar></span
+						>
+					</nb-accordion-item-body>
+					<nb-accordion-item-body>
+						<nb-actions size="medium">
+							<nb-action
+								icon="plus-circle"
+								status="primary"
+								title="Add new key result"
+								(click)="addKeyResult(index, null)"
+							></nb-action>
+							<nb-action>{{
+								'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate
+							}}</nb-action>
+						</nb-actions>
+					</nb-accordion-item-body>
+				</nb-accordion-item>
+			</nb-accordion>
+		</div>
 	</nb-card-body>
 </nb-card>
