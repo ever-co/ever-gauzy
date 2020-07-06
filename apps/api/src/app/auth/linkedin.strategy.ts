@@ -9,8 +9,8 @@ import { Strategy } from 'passport-linkedin-oauth2';
 export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 	constructor(private readonly _authService: AuthService) {
 		super({
-			clientID: env.linkedinConfig.clientId,
-			clientSecret: env.linkedinConfig.clientSecret,
+			clientID: env.linkedinConfig.clientId || 'disabled',
+			clientSecret: env.linkedinConfig.clientSecret || 'disabled',
 			callbackURL: `${env.host}:${env.port}/api/auth/linkedin/callback`,
 			scope: ['r_liteprofile', 'r_emailaddress'],
 			passReqToCallback: true,
