@@ -1288,6 +1288,7 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Project",
+		"TASKS_CREATOR": "Created By",
 		"TASK_MEMBERS": "Employees",
 		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Teams",
