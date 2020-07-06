@@ -79,19 +79,20 @@ export const environment: IEnvironment = {
 
 	githubConfig: {
 		clientId: process.env.GithubClientId,
-		clientSecret:	process.env.GithubClientSecret
+		clientSecret: process.env.GithubClientSecret
 	},
 
 	microsoftConfig: {
 		clientId: process.env.MicrosoftClientId,
 		clientSecret: process.env.MicrosoftClientSecret,
-		identityMetadata: 'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
+		identityMetadata:
+			'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
 		jwtSecret: process.env.MicrosoftJwtSecret
 	},
 
 	linkedinConfig: {
 		clientId: process.env.LinkedinClientId,
-		clientSecret: process.env.LinkedinClientSecret'
+		clientSecret: process.env.LinkedinClientSecret
 	},
 
 	twitterConfig: {
