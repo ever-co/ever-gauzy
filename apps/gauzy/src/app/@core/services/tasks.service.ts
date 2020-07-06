@@ -13,7 +13,7 @@ interface ITaskResponse {
 }
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class TasksService extends TranslationBaseComponent {
 	private readonly API_URL = '/api/tasks';
@@ -28,12 +28,19 @@ export class TasksService extends TranslationBaseComponent {
 
 	getAllTasks(findInput: GetTaskOptions = {}): Observable<ITaskResponse> {
 		const data = JSON.stringify({
-			relations: ['project', 'tags', 'members', 'members.user', 'teams'],
-			findInput,
+			relations: [
+				'project',
+				'tags',
+				'members',
+				'members.user',
+				'teams',
+				'creator'
+			],
+			findInput
 		});
 		return this._http
 			.get<ITaskResponse>(this.API_URL, {
-				params: { data },
+				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}
@@ -51,11 +58,11 @@ export class TasksService extends TranslationBaseComponent {
 		const data = JSON.stringify({
 			relations: ['project', 'tags', 'members', 'members.user', 'teams'],
 			findInput,
-			employeeId,
+			employeeId
 		});
 		return this._http
 			.get<ITaskResponse>(`${this.API_URL}/team`, {
-				params: { data },
+				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}

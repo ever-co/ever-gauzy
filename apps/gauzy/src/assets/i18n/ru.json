@@ -1281,6 +1281,7 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
+		"TASKS_CREATOR": "Создано",
 		"TASK_MEMBERS": "Сотрудники",
 		"TASK_ASSIGNED_TO": "Назначено",
 		"TASK_TEAMS": "Команды",

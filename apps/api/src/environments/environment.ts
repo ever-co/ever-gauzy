@@ -136,6 +136,8 @@ export const environment: IEnvironment = {
 		{
 			email: 'admin@ever.co',
 			password: 'admin',
+			firstName: 'Admin',
+			lastName: 'Super',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
 			preferredLanguage: LanguagesEnum.ENGLISH
 		}
@@ -145,6 +147,8 @@ export const environment: IEnvironment = {
 		{
 			email: 'local.admin@ever.co',
 			password: 'admin',
+			firstName: 'Admin',
+			lastName: 'Local',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
 			preferredLanguage: LanguagesEnum.ENGLISH
 		}

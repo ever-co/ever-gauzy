@@ -1281,6 +1281,7 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "פרויקטים",
+		"TASKS_CREATOR": "Created By",
 		"TASK_MEMBERS": "עובדים",
 		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Teams",
