@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Observable, pipe } from 'rxjs';
 import { environment } from '../environments/environment';
@@ -11,7 +11,6 @@ export class AppService {
 	constructor(private http: HttpClient) {}
 
 	startTime(id): Promise<any> {
-		console.log('http service hit by start');
 		const defaultValue: any = [
 			{
 				timestamp: new Date(),
@@ -53,10 +52,219 @@ export class AppService {
 			.toPromise();
 	}
 
-	collectevents(start, end): Promise<any> {
+	collectevents(tpURL, tp, start, end): Promise<any> {
+		switch (tp) {
+			case 'aw':
+				return this.collectFromAW(tpURL, start, end);
+			default:
+				return this.collectFromAW(tpURL, start, end);
+		}
+	}
+
+	collectAfk(tpURL, tp, start, end): Promise<any> {
+		switch (tp) {
+			case 'aw':
+				return this.collectAfkFromAW(tpURL, start, end);
+			default:
+				return this.collectAfkFromAW(tpURL, start, end);
+		}
+	}
+
+	pushActivityCollectionToGauzy(gauzyAPI) {
+		return true;
+	}
+
+	collectFromAW(tpURL, start, end) {
 		return this.http
 			.get(
-				`${this.AW_HOST}/api/0/buckets/aw-watcher-window_btr.local/events?start=${start}&end=${end}&limit=-1`
+				`${tpURL}/api/0/buckets/aw-watcher-window_btr.local/events?start=${start}&end=${end}&limit=-1`
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	collectAfkFromAW(tpURL, start, end) {
+		return this.http
+			.get(
+				`${tpURL}/api/0/buckets/aw-watcher-afk_btr.local/events?limit=1`
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	pushTotimeslot(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.post(
+				`http://localhost:3000/api/timesheet/time-slot`,
+				{
+					employeeId: values.employeeId,
+					duration: values.duration,
+					keyboard: 0,
+					mouse: 0,
+					overall: 0,
+					startedAt: values.startedAt
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	pushTotimesheet(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.post(
+				`http://localhost:3000/api/timesheet`,
+				{
+					employeeId: values.employeeId,
+					duration: values.duration,
+					keyboard: 0,
+					mouse: 0,
+					overall: 0,
+					startedAt: values.startedAt,
+					isBilled: false,
+					status: 'PENDING',
+					stoppedAt: values.stoppedAt
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	updateToTimeSheet(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.put(
+				`http://localhost:3000/api/timesheet/${values.timeSheetId}`,
+				{
+					duration: values.duration,
+					keyboard: values.keyboard,
+					mouse: values.mouse,
+					overall: values.overall,
+					stoppedAt: values.stoppedAt
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	updateToTimeSlot(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.put(
+				`http://localhost:3000/api/timesheet/time-slot/${values.timeSlotId}`,
+				{
+					duration: values.duration,
+					keyboard: values.keyboard,
+					mouse: values.mouse,
+					overall: values.overall
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	pushToActivity(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.post(
+				`http://localhost:3000/api/timesheet/activity`,
+				{
+					employeeId: values.employeeId,
+					projectId: values.projectId,
+					taskId: values.taskId,
+					title: values.title,
+					date: values.date,
+					duration: values.duration,
+					type: values.type
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	updateToActivity(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.put(
+				`http://localhost:3000/api/timesheet/activity/${values.activityId}`,
+				{
+					duration: values.duration
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	setTimeLog(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.post(
+				`http://localhost:3000/api/timesheet/time-log`,
+				{
+					employeeId: values.employeeId,
+					timesheetId: values.timesheetId,
+					projectId: values.projectId,
+					taskId: values.taskId,
+					startedAt: values.startedAt,
+					stoppedAt: values.stoppedAt,
+					isBillable: true,
+					logType: 'TRACKED',
+					source: 'DESKTOP'
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	updateTimeLog(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.put(
+				`http://localhost:3000/api/timesheet/time-log/${values.timeLogId}`,
+				{
+					stoppedAt: values.stoppedAt
+				},
+				{
+					headers: headers
+				}
 			)
 			.pipe()
 			.toPromise();

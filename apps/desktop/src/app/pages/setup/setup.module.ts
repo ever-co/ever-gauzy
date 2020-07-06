@@ -8,7 +8,8 @@ import {
 	NbSelectModule,
 	NbInputModule,
 	NbButtonModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 @NgModule({
@@ -22,7 +23,8 @@ import { FormsModule } from '@angular/forms';
 		NbInputModule,
 		NbButtonModule,
 		FormsModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		NbCheckboxModule
 	],
 	exports: [SetupComponent]
 })

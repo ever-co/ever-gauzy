@@ -1,6 +1,6 @@
 <nb-layout center>
 	<nb-layout-column>
-		<nb-card size="medium">
+		<nb-card size="medium" class="full-height">
 			<nb-card-body>
 				<div class="row mb3">
 					<div class="col-12 form-group">
@@ -46,6 +46,18 @@
 										>{{ db.name }}</nb-option
 									>
 								</nb-select>
+							</div>
+							<div class="col-12 form-group">
+								<div class="row">
+									<div class="col-4">
+										<nb-checkbox (click)="setAW()"
+											>Activiwatch</nb-checkbox
+										>
+									</div>
+									<div class="col-4">
+										<nb-checkbox>Wakatime</nb-checkbox>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -182,21 +194,25 @@
 						</div>
 						<div></div>
 					</div>
-					<div class="col-12 form-group">
-						<button
-							[nbSpinner]="loading"
-							nbSpinnerStatus="info"
-							(click)="saveConfiguration()"
-							nbButton
-							fullWidth
-							status="primary"
-							[disabled]="
-								(!isLiveServer || !isLocalServer) &&
-								(!selectedDatabase || !selectedServer)
-							"
-						>
-							Save
-						</button>
+					<div class="col-12 form-group btn-save">
+						<div class="row">
+							<div class="col-3">
+								<button
+									class="btn-width"
+									[nbSpinner]="loading"
+									nbSpinnerStatus="info"
+									(click)="saveConfiguration()"
+									nbButton
+									status="primary"
+									[disabled]="
+										(!isLiveServer || !isLocalServer) &&
+										(!selectedDatabase || !selectedServer)
+									"
+								>
+									Save
+								</button>
+							</div>
+						</div>
 					</div>
 				</div>
 			</nb-card-body>
