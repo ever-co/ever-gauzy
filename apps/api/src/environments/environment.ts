@@ -137,7 +137,7 @@ export const environment: IEnvironment = {
 			email: 'admin@ever.co',
 			password: 'admin',
 			firstName: 'Admin',
-			lastName: '',
+			lastName: 'Super',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
 			preferredLanguage: LanguagesEnum.ENGLISH
 		}
