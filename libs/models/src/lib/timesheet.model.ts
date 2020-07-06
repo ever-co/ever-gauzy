@@ -85,6 +85,7 @@ export interface TimeLog extends IBaseEntityModel {
 	task?: Task;
 	timeSlots?: TimeSlot[];
 	project?: OrganizationProjects;
+	source?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
 	logType: string;
@@ -124,7 +125,9 @@ export interface ITimeSlotCreateInput {
 
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
-	MANUAL = 'MANUAL'
+	MANUAL = 'MANUAL',
+	IDEAL = 'IDEAL',
+	RESUMED = 'RESUMED'
 }
 
 export enum TimeLogSourceEnum {
@@ -191,6 +194,7 @@ export interface Activity extends IBaseEntityModel {
 	date: Date;
 	duration?: number;
 	type?: string;
+	source?: string;
 }
 
 export interface TimeSlotMinute extends IBaseEntityModel {
@@ -230,6 +234,7 @@ export interface ICreateScreenshotInput {
 }
 
 export interface Screenshot extends IBaseEntityModel {
+	[x: string]: any;
 	timeSlot: TimeSlot;
 	fullUrl: string;
 	thumbUrl?: string;

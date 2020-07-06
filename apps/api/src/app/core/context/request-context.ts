@@ -82,12 +82,16 @@ export class RequestContext {
 					id: string;
 					permissions: PermissionsEnum[];
 				};
-				const found = permissions.filter(
-					(value) => findPermissions.indexOf(value) >= 0
-				);
+				if (permissions) {
+					const found = permissions.filter(
+						(value) => findPermissions.indexOf(value) >= 0
+					);
 
-				if (found.length === findPermissions.length) {
-					return true;
+					if (found.length === findPermissions.length) {
+						return true;
+					}
+				} else {
+					return false;
 				}
 			}
 		}
