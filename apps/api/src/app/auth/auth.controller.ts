@@ -214,10 +214,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:{env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:{env.port}/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 }
