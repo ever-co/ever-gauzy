@@ -35,21 +35,91 @@
 								class="activity"
 								*ngIf="timeSlot; else noActivity"
 							>
-								<div class="image-contaer">
+								<div
+									class="image-contaer"
+									[ngClass]="{
+										'select-mode': selectedIdsCount > 0
+									}"
+									(click)="toggleSelect(timeSlot.id)"
+								>
 									<ng-template
 										[ngIf]="
 											timeSlot?.screenshots?.length > 0
 										"
 										[ngIfElse]="noImageEl"
 									>
-										<a
-											ngx-gallery
-											[item]="
-												timeSlot.screenshots[0]?.fullUrl
-											"
-											[items]="screenshotsUrls"
-										>
+										<div class="hover">
+											<div
+												class="actions d-flex align-items-center w-100"
+											>
+												<nb-checkbox
+													[(ngModel)]="
+														selectedIds[timeSlot.id]
+													"
+													(click)="
+														$event.stopPropagation()
+													"
+													(ngModelChange)="
+														toggleSelect()
+													"
+												></nb-checkbox>
+												<button
+													class="ml-auto select-hidden"
+													status="danger"
+													nbButton
+													size="tiny"
+													(click)="
+														$event.stopPropagation();
+														deleteSlot(timeSlot)
+													"
+												>
+													<nb-icon
+														icon="trash-2-outline"
+													></nb-icon>
+												</button>
+											</div>
+											<div
+												class="view-button select-hidden"
+											>
+												<button
+													class="mr-1"
+													nbButton
+													size="small"
+													status="primary"
+													(click)="
+														$event.stopPropagation()
+													"
+													ngxGallery
+													[item]="
+														timeSlot.screenshots[0]
+															?.fullUrl
+													"
+													[items]="screenshotsUrls"
+												>
+													{{
+														'ACTIVITY.VIEW_SCREEN'
+															| translate
+													}}
+												</button>
+												<button
+													nbButton
+													size="small"
+													status="secondary"
+													(click)="
+														$event.stopPropagation();
+														viewInfo(timeSlot)
+													"
+												>
+													{{
+														'ACTIVITY.VIEW_INFO'
+															| translate
+													}}
+												</button>
+											</div>
+										</div>
+										<a class="curser-pointer">
 											<img
+												draggable="false"
 												[src]="
 													timeSlot.screenshots[0]
 														?.fullUrl
@@ -60,7 +130,10 @@
 									<ng-template #noImageEl>
 										<img draggable="false" />
 										<span class="no-image p-3">
-											No screenshot
+											{{
+												'ACTIVITY.NO_SCREENSHOTS'
+													| translate
+											}}
 										</span>
 									</ng-template>
 								</div>
@@ -97,7 +170,7 @@
 							</div>
 							<ng-template #noActivity>
 								<div class="no-activity p-3 text-center">
-									No Activity
+									{{ 'ACTIVITY.NO_ACTIVITY' | translate }}
 								</div>
 							</ng-template>
 						</div>
@@ -108,7 +181,34 @@
 	</ng-template>
 	<ng-template #notFound>
 		<div class="py-5 text-center">
-			<h6>No screenshots</h6>
+			<h6>{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}</h6>
 		</div>
 	</ng-template>
+</div>
+<div class="selecte-items-action" *ngIf="selectedIdsCount > 0">
+	<div class="card p-4 w-100">
+		<div class="row align-items-center">
+			<div class="col">{{ this.selectedIdsCount }} Screen selected</div>
+			<div class="col-auto">
+				<button
+					class="ml-auto mr-2 select-hidden"
+					status="info"
+					nbButton
+					size="small"
+					(click)="toggleAllSelecte()"
+				>
+					{{ this.allSelected ? 'Unselect All' : 'Select All' }}
+				</button>
+				<button
+					class="ml-auto select-hidden"
+					status="danger"
+					nbButton
+					size="small"
+					(click)="deleteSlots()"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</div>
+		</div>
+	</div>
 </div>

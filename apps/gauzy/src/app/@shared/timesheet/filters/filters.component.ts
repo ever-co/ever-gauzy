@@ -40,7 +40,8 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	private _filters: TimeLogFilters = {
 		employeeIds: [],
 		source: [],
-		logType: []
+		logType: [],
+		projectIds: []
 	};
 	futureDateAllowed: boolean;
 
@@ -57,6 +58,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	}
 	@Output() filtersChange: EventEmitter<TimeLogFilters> = new EventEmitter();
 
+	@Input() hasProjectFilter = true;
 	@Input() hasDateRangeFilter = true;
 	@Input() hasEmployeeFilter = true;
 	@Input() multipleEmployeSelect = true;

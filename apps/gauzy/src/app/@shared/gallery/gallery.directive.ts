@@ -10,8 +10,13 @@ import {
 import { GalleryComponent } from './gallery.component';
 import { NbDialogService } from '@nebular/theme';
 
+export interface GalleryItem {
+	thumbUrl: string;
+	fullUrl: string;
+}
+
 @Directive({
-	selector: '[ngx-gallery]'
+	selector: '[ngxGallery]'
 })
 export class GalleryDirective implements OnDestroy, OnInit {
 	disableClick = false;
@@ -20,7 +25,7 @@ export class GalleryDirective implements OnDestroy, OnInit {
 
 	@Input() item: string;
 
-	@Input() items: string[];
+	@Input() items: GalleryItem[];
 
 	@Input() set disabled(value: any) {
 		this.disableClick = value || false;
@@ -42,10 +47,12 @@ export class GalleryDirective implements OnDestroy, OnInit {
 			return;
 		}
 
+		const item = this.items.find((obj) => obj.fullUrl === this.item);
+
 		this.nbDialogService.open(GalleryComponent, {
 			context: {
 				items: this.items,
-				item: this.item
+				item: item
 			},
 			dialogClass: 'fullscreen'
 		});

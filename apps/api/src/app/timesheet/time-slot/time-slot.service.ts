@@ -78,6 +78,13 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 						{ organizationId: request.organizationId }
 					);
 				}
+
+				if (request.projectIds) {
+					qb.andWhere('"timeLog"."projectId" IN (:...projectIds)', {
+						projectIds: request.projectIds
+					});
+				}
+
 				if (request.activityLevel) {
 					qb.andWhere(
 						`"${qb.alias}"."overall" BETWEEN :start AND :end`,
@@ -86,22 +93,22 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 				}
 				if (request.source) {
 					if (request.source instanceof Array) {
-						qb.andWhere('"timeLog.source" IN (:...source)', {
+						qb.andWhere('"timeLog"."source" IN (:...source)', {
 							source: request.source
 						});
 					} else {
-						qb.andWhere('"timeLog.source" = :source', {
+						qb.andWhere('"timeLog"."source" = :source', {
 							source: request.source
 						});
 					}
 				}
 				if (request.logType) {
 					if (request.logType instanceof Array) {
-						qb.andWhere('"timeLog.logType" IN (:...logType)', {
+						qb.andWhere('"timeLog"."logType" IN (:...logType)', {
 							logType: request.logType
 						});
 					} else {
-						qb.andWhere('"timeLog.logType" = :logType', {
+						qb.andWhere('"timeLog"."logType" = :logType', {
 							logType: request.logType
 						});
 					}
