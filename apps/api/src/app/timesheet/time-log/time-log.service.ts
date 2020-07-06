@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, QueryBuilder, SelectQueryBuilder } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	TimeLogType,
@@ -82,7 +82,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			order: {
 				startedAt: 'ASC'
 			},
-			where: (qb) => {
+			where: (qb: SelectQueryBuilder<TimeLog>) => {
 				qb.where({
 					deletedAt: null
 				});
@@ -114,6 +114,14 @@ export class TimeLogService extends CrudService<TimeLog> {
 						{ organizationId: request.organizationId }
 					);
 				}
+
+				if (request.projectIds) {
+					qb.andWhere(
+						`"${qb.alias}"."projectId" IN (:...projectIds)`,
+						{ projectIds: request.projectIds }
+					);
+				}
+
 				if (request.activityLevel) {
 					// qb.andWhere('"overall" BETWEEN :start AND :end', request.activityLevel);
 				}
