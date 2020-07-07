@@ -14,6 +14,8 @@ import { EmployeeService } from '../employee/employee.service';
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { UpworkController } from './upwork.controller';
 import { UpworkService } from './upwork.service';
+import { IntegrationMap } from '../integration-map/integration-map.entity';
+import { IntegrationMapService } from '../integration-map/integration-map.service';
 
 @Module({
 	imports: [
@@ -22,7 +24,8 @@ import { UpworkService } from './upwork.service';
 			Employee,
 			OrganizationVendor,
 			OrganizationContact,
-			ExpenseCategory
+			ExpenseCategory,
+			IntegrationMap
 		]),
 		CqrsModule
 	],
@@ -34,7 +37,8 @@ import { UpworkService } from './upwork.service';
 		EmployeeService,
 		OrganizationVendorsService,
 		OrganizationContactService,
-		ExpenseCategoriesService
+		ExpenseCategoriesService,
+		IntegrationMapService
 	]
 })
 export class UpworkModule {}
