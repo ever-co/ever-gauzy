@@ -4,7 +4,7 @@
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
-			(click)="closeDialog()"
+			(click)="closeDialog(null)"
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
@@ -16,25 +16,51 @@
 					Progress %</nb-alert
 				>
 				<form [formGroup]="weightForm">
-					<label for="key-result-weight" class="label mt-3">
-						{{ 'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT' | translate }}
-					</label>
-					<nb-select
-						id="key-result-weight"
-						fullWidth
-						formControlName="weight"
-					>
-						<nb-option
-							*ngFor="
-								let weight of keyResultWeightEnum | keyvalue
-							"
-							[value]="weight.value"
-							>{{
-								'KEY_RESULT_PAGE.WEIGHT.' + weight.key
-									| translate
-							}}</nb-option
+					<div class="row mt-2">
+						<div class="col-md-6">
+							<label for="key-result-weight" class="label mt-3">
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT'
+										| translate
+								}}
+							</label>
+							<nb-select
+								id="key-result-weight"
+								fullWidth
+								formControlName="weight"
+							>
+								<nb-option
+									*ngFor="
+										let weight of keyResultWeightEnum
+											| keyvalue
+									"
+									[value]="weight.value"
+									>{{
+										'KEY_RESULT_PAGE.WEIGHT.' + weight.key
+											| translate
+									}}</nb-option
+								>
+							</nb-select>
+						</div>
+						<div
+							class="col-md-6 d-flex flex-column justify-content-around"
 						>
-					</nb-select>
+							<!-- <p></p> -->
+							<label
+								for="goal-progress-comparison"
+								class="label mt-3"
+							>
+								{{ keyResultWeight }}% of Objective's Progress
+							</label>
+							<nb-progress-bar
+								id="goal-progress-comparison"
+								[value]="keyResultWeight"
+								status="primary"
+								size="small"
+								>{{ keyResultWeight }}%
+							</nb-progress-bar>
+						</div>
+					</div>
 				</form>
 			</nb-tab>
 			<nb-tab tabTitle="Type">
@@ -135,7 +161,7 @@
 		</nb-tabset>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-3" nbButton (click)="closeDialog()">
+		<button class="mr-3" nbButton (click)="closeDialog(null)">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button nbButton status="success" (click)="updateKeyResult()">
