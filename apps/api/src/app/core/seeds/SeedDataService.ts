@@ -184,7 +184,7 @@ import {
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
 import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
 import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
-import { createTags } from '../../tags/tag.seed';
+import { createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -633,7 +633,13 @@ export class SeedDataService {
 
 		await createSkills(this.connection);
 		await createLanguages(this.connection);
-		const tags = await createTags(this.connection);
+		await createTags(this.connection);
+
+		const tags = await createRandomOrganizationTags(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
 
 		await createRandomOrganizationProjects(
 			this.connection,

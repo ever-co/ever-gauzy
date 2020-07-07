@@ -48,12 +48,16 @@ export const createRandomOrganizationProjects = async (
 			Math.floor(Math.random() * (maxProjectsPerOrganization - 5)) + 5;
 		const orgs = tenantOrganizationsMap.get(tenant);
 		orgs.forEach((org) => {
+			let orgTags: Tag[] = [];
+			orgTags = tags.filter((x) => (x.organization = org));
 			for (let i = 0; i < projectsPerOrganization; i++) {
 				const project = new OrganizationProjects();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
 				project.name = faker.company.companyName();
 				project.organizationId = org.id;
 				project.tenant = tenant;
+				project.startDate = faker.date.past(5);
+				project.endDate = faker.date.past(2);
 				projects.push(project);
 			}
 		});
