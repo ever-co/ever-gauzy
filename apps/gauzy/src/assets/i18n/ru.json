@@ -906,7 +906,7 @@
 			"CANDIDATE_RATING": "Рейтинг Кандидата",
 			"INTERVIEWER_ASSESSMENT": "Рейтинг Кандидата за интервью",
 			"CRITERIONS_RATING": "Рейтинг критерия за интервью",
-			"CANDIDATE_CRITERIONS_RATING": "Рейтинг критерия кандидата",
+			"CANDIDATE_CRITERIONS_RATING": "Рейтинг критерия из всех отзывов",
 			"NO_DATA": "Пока нет данных ",
 			"SELECT_INTERVIEW": "Выберите интервью",
 			"SELECT_INTERVIEW_INTERVIEWER": "Выберите интервью и интервьюера",
