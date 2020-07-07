@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { first } from 'rxjs/operators';
-import { Observable, pipe } from 'rxjs';
 import { environment } from '../environments/environment';
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -53,24 +52,14 @@ export class AppService {
 	}
 
 	collectevents(tpURL, tp, start, end): Promise<any> {
-		switch (tp) {
-			case 'aw':
-				return this.collectFromAW(tpURL, start, end);
-			default:
-				return this.collectFromAW(tpURL, start, end);
-		}
+		return this.collectFromAW(tpURL, start, end);
 	}
 
 	collectAfk(tpURL, tp, start, end): Promise<any> {
-		switch (tp) {
-			case 'aw':
-				return this.collectAfkFromAW(tpURL, start, end);
-			default:
-				return this.collectAfkFromAW(tpURL, start, end);
-		}
+		return this.collectAfkFromAW(tpURL, start, end);
 	}
 
-	pushActivityCollectionToGauzy(gauzyAPI) {
+	pushActivityCollectionToGauzy() {
 		return true;
 	}
 

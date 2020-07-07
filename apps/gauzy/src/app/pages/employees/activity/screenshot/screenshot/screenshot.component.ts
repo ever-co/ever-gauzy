@@ -29,7 +29,7 @@ export interface ScreenshotMap {
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss']
 })
-export class ScreenshotComponent implements OnInit, OnDestroy {
+export class ScreenshotComponent implements OnInit {
 	request: TimeLogFilters;
 	loading: boolean;
 	timeSlots: ScreenshotMap[];
@@ -198,22 +198,12 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	deleteSlot(timeSlot) {
 		this.nbDialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((type) => {
-				if (type === 'ok') {
-				}
-			});
+			.onClose.pipe(untilDestroyed(this));
 	}
 
 	deleteSlots() {
 		this.nbDialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(untilDestroyed(this))
-			.subscribe((type) => {
-				if (type === 'ok') {
-				}
-			});
 	}
-
-	ngOnDestroy(): void {}
 }

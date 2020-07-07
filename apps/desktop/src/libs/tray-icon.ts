@@ -86,7 +86,7 @@ export default class TrayIcon {
 				}
 			}
 		]);
-		const getTime = (menuItems) => {
+		const getTime = () => {
 			timerHandler.updateTime(win2, knex);
 		};
 		this.tray.setContextMenu(contextMenu);

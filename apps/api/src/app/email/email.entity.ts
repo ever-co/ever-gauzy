@@ -5,7 +5,6 @@ import {
 	Column,
 	Entity,
 	Index,
-	OneToOne,
 	JoinColumn,
 	ManyToOne
 } from 'typeorm';
