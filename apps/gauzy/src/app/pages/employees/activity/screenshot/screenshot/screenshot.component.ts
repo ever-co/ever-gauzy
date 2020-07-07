@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	TimeLogFilters,
 	Organization,
@@ -29,7 +29,7 @@ export interface ScreenshotMap {
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss']
 })
-export class ScreenshotComponent implements OnInit {
+export class ScreenshotComponent implements OnInit, OnDestroy {
 	request: TimeLogFilters;
 	loading: boolean;
 	timeSlots: ScreenshotMap[];
@@ -206,4 +206,6 @@ export class ScreenshotComponent implements OnInit {
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(untilDestroyed(this))
 	}
+
+	ngOnDestroy(): void {}
 }
