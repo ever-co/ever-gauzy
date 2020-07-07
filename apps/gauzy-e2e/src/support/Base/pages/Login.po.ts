@@ -26,7 +26,7 @@ export const enterPassword = (data) => {
 export const clickLoginButton = () => {
 	clickButton(LoginPage.loginButton);
 };
-export const verfyLoginText = () => {
+export const verifyLoginText = () => {
 	verifyElementIsVisible(LoginPage.loginHeadingCss);
 };
 
