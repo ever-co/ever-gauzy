@@ -149,7 +149,10 @@ import { Contact } from '../../contact/contact.entity';
 
 import { createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
 import { createRandomTask } from '../../tasks/task.seed';
-import { createRandomOrganizationProjects } from '../../organization-projects/organization-projects.seed';
+import {
+	createDefaultOrganizationProjects,
+	createRandomOrganizationProjects
+} from '../../organization-projects/organization-projects.seed';
 
 import { RequestApprovalTeam } from '../../request-approval-team/request-approval-team.entity';
 import { RequestApproval } from '../../request-approval/request-approval.entity';
@@ -181,6 +184,7 @@ import {
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
 import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
 import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
+import { createTags } from '../../tags/tag.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -383,6 +387,11 @@ export class SeedDataService {
 		);
 
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
+
+		await createDefaultOrganizationProjects(
+			this.connection,
+			defaultOrganizations
+		);
 
 		await createDefaultProducts(this.connection, tenant);
 
@@ -624,10 +633,14 @@ export class SeedDataService {
 
 		await createSkills(this.connection);
 		await createLanguages(this.connection);
+		const tags = await createTags(this.connection);
 
 		await createRandomOrganizationProjects(
 			this.connection,
-			this.organizations
+			tenants,
+			tenantOrganizationsMap,
+			tags,
+			env.randomSeedConfig.projectsPerOrganization || 10
 		);
 		await createRandomTask(this.connection);
 		await createRandomTimesheet(this.connection);
