@@ -54,5 +54,14 @@
 				</button>
 			</div>
 		</div>
+		<ng2-smart-table
+			class="time-off-table"
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectRecord($event)"
+			#employeesTable
+		>
+		</ng2-smart-table>
 	</nb-card-body>
 </nb-card>

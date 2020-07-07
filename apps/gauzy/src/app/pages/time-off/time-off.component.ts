@@ -1,12 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Subject } from 'rxjs';
 import { StatusTypesEnum, PermissionsEnum, TimeOff } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request-mutation.component';
 import { TimeOffService } from '../../@core/services/time-off.service';
+import { LocalDataSource } from 'ng2-smart-table';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ngx-time-off',
@@ -22,20 +23,21 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 		private store: Store
 	) {}
 
-	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
 	timeOffRequest: TimeOff;
 	selectedDate: Date;
 	selectedEmployeeId: string;
 	selectedStatus = 'All';
 	timeOffStatuses = Object.keys(StatusTypesEnum);
+	settingsSmartTable: object;
+	sourceSmartTable = new LocalDataSource();
 	loading = false;
 	displayHolidays = true;
 	hasEditPermission = false;
 
 	ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.POLICY_EDIT
@@ -43,7 +45,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			});
 
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
 
@@ -57,7 +59,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			});
 
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
@@ -71,7 +73,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			});
 
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
@@ -99,32 +101,42 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 		this.router.navigate(['/pages/employees/time-off/settings']);
 	}
 
-	async requestDaysOff() {
-		this.timeOffRequest = await this.dialogService
+	selectRecord(event: Event) {
+		console.log(event);
+	}
+
+	requestDaysOff() {
+		this.dialogService
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: 'request' }
 			})
 			.onClose.pipe(first())
-			.toPromise();
-
-		this._createRecord();
+			.subscribe((res) => {
+				this.timeOffRequest = res;
+				this._createRecord();
+			});
 	}
 
-	async addHolidays() {
-		this.timeOffRequest = await this.dialogService
+	addHolidays() {
+		this.dialogService
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: 'holiday' }
 			})
 			.onClose.pipe(first())
-			.toPromise();
-
-		this._createRecord();
+			.subscribe((res) => {
+				this.timeOffRequest = res;
+				this._createRecord();
+			});
 	}
 
-	private async _createRecord() {
+	private _createRecord() {
 		if (this.timeOffRequest) {
-			await this.timeOffService.createRequest(this.timeOffRequest);
-			this.toastrService.success(`Time off record ${this.timeOffRequest.description} successfully created!`, 'Success')
+			this.timeOffService.createRequest(this.timeOffRequest).pipe(first()).subscribe(() => {
+				this.toastrService.success(
+					`Time off record ${this.timeOffRequest.description} successfully created!`,
+					'Success'
+				);
+			}, () => this.toastrService.danger('Unable to create Time off record'))
 		}
 	}
 
@@ -132,8 +144,5 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 		this.displayHolidays = checked;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }
