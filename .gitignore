@@ -40,3 +40,4 @@ Thumbs.db
 /apps/api/src/app/integrations/upwork/csv
 
 .env
+/.deploy/nginx/log
