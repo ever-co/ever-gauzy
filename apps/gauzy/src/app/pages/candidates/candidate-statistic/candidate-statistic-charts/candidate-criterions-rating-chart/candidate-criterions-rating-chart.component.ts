@@ -55,12 +55,46 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 				});
 			});
 			this.currRating = [];
-			this.currRating.push(
-				...this.getCriterionsRating(criterionsRating, 'tech')
-			);
-			this.currRating.push(
-				...this.getCriterionsRating(criterionsRating, 'qual')
-			);
+			const arr1 = criterionsRating
+				.reduce((prev, curr) => {
+					const existing = prev.find(
+						(data) => data.technologyId === curr.technologyId
+					);
+					if (!existing) {
+						return [...prev, { ...curr, rating: [curr.rating] }];
+					}
+					existing.rating.push(curr.rating);
+					return [...prev];
+				}, [])
+				.map((data) => {
+					const rating =
+						data.rating.reduce((prev, curr) => prev + curr) /
+						data.rating.length;
+					return { ...data, rating };
+				})
+				.filter((item) => item.technologyId);
+
+			const arr2 = criterionsRating
+				.reduce((prev, curr) => {
+					const existing = prev.find(
+						(data) =>
+							data.personalQualityId === curr.personalQualityId
+					);
+					if (!existing) {
+						return [...prev, { ...curr, rating: [curr.rating] }];
+					}
+					existing.rating.push(curr.rating);
+					return [...prev];
+				}, [])
+				.map((data) => {
+					const rating =
+						data.rating.reduce((prev, curr) => prev + curr) /
+						data.rating.length;
+					return { ...data, rating };
+				})
+				.filter((item) => item.personalQualityId);
+
+			this.currRating = [...arr1, ...arr2];
 			this.currLabels = this.getCriterionsName(currInterviews);
 			this.labels = [];
 			this.rating = [];
@@ -79,48 +113,6 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 			this.loadChart();
 		}
 	}
-	getCriterionsRating(arrData, criterion: string) {
-		const arr = [...arrData];
-		let value: string;
-		criterion === 'tech'
-			? (value = 'technologyId')
-			: (value = 'personalQualityId');
-
-		arr.sort((a, b) => b[value] - a[value]);
-		const arrId = arr.filter((x) => x[value] !== null);
-		const arrResult = [];
-		let count = 2;
-		//TO DO
-		arrId.reduce((a, b) => {
-			if (a[value] === b[value]) {
-				b.rating += a.rating;
-				a[value] = null;
-				b.count = count++;
-			} else {
-				b.count = 1;
-				count = 2;
-			}
-			return b;
-		}, 0);
-
-		arrId.forEach((x) =>
-			x[value]
-				? criterion === 'tech'
-					? arrResult.push({
-							technologyId: x[value],
-							rating: x.rating / x.count,
-							personalQualityId: null
-					  })
-					: arrResult.push({
-							personalQualityId: x[value],
-							rating: x.rating / x.count,
-							technologyId: null
-					  })
-				: null
-		);
-		return arrResult;
-	}
-
 	getCriterionsName(currInterviews: ICandidateInterview[]) {
 		const resName = [];
 		const resId = [];
