@@ -42,7 +42,6 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 			const currInterviews = [];
 			this.feedbacks = res.items.filter((item) => item.interviewId);
 			const criterionsRating = [];
-			const uniqCriterionsRating = [];
 			this.feedbacks.forEach((feedback) => {
 				this.interviewList.forEach((interview) => {
 					if (interview.id === feedback.interviewId) {
@@ -53,39 +52,75 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 				});
 				feedback.criterionsRating.forEach((techEl) => {
 					criterionsRating.push(techEl);
+				});
+			});
+			this.currRating = [];
+			this.currRating.push(
+				...this.getCriterionsRating(criterionsRating, 'tech')
+			);
+			this.currRating.push(
+				...this.getCriterionsRating(criterionsRating, 'qual')
+			);
+			this.currLabels = this.getCriterionsName(currInterviews);
+			this.labels = [];
+			this.rating = [];
+			this.currLabels[1].forEach((labelId, index) => {
+				this.loadColor(this.currLabels[0]);
+				this.currRating.forEach((itemRating) => {
 					if (
-						techEl.technologyId &&
-						!uniqCriterionsRating.includes(techEl.technologyId)
+						itemRating.technologyId === labelId ||
+						itemRating.personalQualityId === labelId
 					) {
-						uniqCriterionsRating.push(techEl.technologyId);
-					}
-					if (
-						techEl.personalQualityId &&
-						!uniqCriterionsRating.includes(techEl.personalQualityId)
-					) {
-						uniqCriterionsRating.push(techEl.personalQualityId);
+						this.rating.push(itemRating.rating);
+						this.labels.push(this.currLabels[0][index]);
 					}
 				});
 			});
-			// this.getCriterionsRating(criterionsRating, uniqCriterionsRating);
-			this.currLabels = this.getCriterionsName(currInterviews);
 			this.loadChart();
 		}
 	}
-	//TO DO
-	// getCriterionsRating(data, uniqArr) {
+	getCriterionsRating(arrData, criterion: string) {
+		const arr = [...arrData];
+		let value: string;
+		criterion === 'tech'
+			? (value = 'technologyId')
+			: (value = 'personalQualityId');
 
-	// uniqArr.forEach((uniq) => {
-	// 	let filteredTech = [];
-	// 	let filteredQual = [];
-	// filteredTech = data.filter(
-	// 	(x) => x.technologyId && x.technologyId === uniq
-	// );
-	// filteredQual = data.filter(
-	// 	(x) => x.personalQualityId && x.personalQualityId === uniq
-	// );
-	// });
-	// }
+		arr.sort((a, b) => b[value] - a[value]);
+		const arrId = arr.filter((x) => x[value] !== null);
+		const arrResult = [];
+		let count = 2;
+		//TO DO
+		arrId.reduce((a, b) => {
+			if (a[value] === b[value]) {
+				b.rating += a.rating;
+				a[value] = null;
+				b.count = count++;
+			} else {
+				b.count = 1;
+				count = 2;
+			}
+			return b;
+		}, 0);
+
+		arrId.forEach((x) =>
+			x[value]
+				? criterion === 'tech'
+					? arrResult.push({
+							technologyId: x[value],
+							rating: x.rating / x.count,
+							personalQualityId: null
+					  })
+					: arrResult.push({
+							personalQualityId: x[value],
+							rating: x.rating / x.count,
+							technologyId: null
+					  })
+				: null
+		);
+		return arrResult;
+	}
+
 	getCriterionsName(currInterviews: ICandidateInterview[]) {
 		const resName = [];
 		const resId = [];
@@ -116,7 +151,7 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 					datasets: [
 						{
 							maxBarThickness: 150,
-							label: 'Criterion ratings from interviewer(s)',
+							label: `Criterion's rating from all feedbacks`,
 							backgroundColor: this.backgroundColor,
 							data: this.rating
 						}
@@ -143,12 +178,12 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 				};
 			});
 	}
-	loadColor(feedback: ICandidateFeedback) {
-		for (let i = 0; i < feedback.criterionsRating.length; i++) {
+	loadColor(labels: string[]) {
+		for (let i = 0; i < labels.length; i++) {
 			const color =
 				i % 2 === 0
-					? 'rgba(255, 206, 86, 0.2)'
-					: 'rgba(255, 99, 132, 0.2)';
+					? 'rgba(75, 192, 192, 0.2)'
+					: 'rgba(153, 102, 255, 0.2)';
 			this.backgroundColor.push(color);
 		}
 	}
