@@ -47,7 +47,7 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 export enum KeyResultWeightEnum {
 	DEFAULT = '1',
 	INCREASE_BY_2X = '2',
-	INCREASE_BY_50 = '50'
+	INCREASE_BY_4X = '4'
 }
 
 export interface GoalFindInput extends IBaseEntityModel {

@@ -121,7 +121,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this._getOrganizationEmployees();
 	}
 
-	private async _getPolicies() {
+	private _getPolicies() {
 		if (this.organizationId) {
 			const findObj: {} = {
 				organization: {
@@ -129,12 +129,13 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				}
 			};
 
-			const { items } = await this.timeOffService.getAllPolicies(
-				['employees'],
-				findObj
-			);
-			this.policies = items;
-			this.policy = this.policies[items.length - 1];
+			this.timeOffService
+				.getAllPolicies(['employees'], findObj)
+				.pipe(first())
+				.subscribe((res) => {
+					this.policies = res.items;
+					this.policy = this.policies[res.items.length - 1];
+				});
 		}
 	}
 

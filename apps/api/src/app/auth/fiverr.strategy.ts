@@ -17,15 +17,11 @@ export class FiverrStrategy extends PassportStrategy(Strategy, 'fiverr') {
 	}
 
 	async validate(
-		request: any,
-		accessToken: string,
-		refreshToken: string,
 		profile,
 		done: Function
 	) {
-		const role = passport['_strategies'].session.role_name;
 		passport['_strategies'].session.role_name = '';
-		const { emails, username } = profile;
+		const { emails } = profile;
 		try {
 			try {
 				const {
