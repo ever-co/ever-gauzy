@@ -84,6 +84,7 @@ import { EventType } from '../event-types/event-type.entity';
 import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
 import { ProductTypeTranslation } from '../product-type/product-type-translation.entity';
 import { HelpCenter } from '../help-center/help-center.entity';
+import { HelpCenterAuthor } from './../help-center-author/help-center-author.entity';
 import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
 import { Pipeline } from '../pipeline/pipeline.entity';
 import { Payment } from '../payment/payment.entity';
@@ -173,6 +174,7 @@ const entities = [
 	CandidateCriterionsRating,
 	HelpCenter,
 	HelpCenterArticle,
+	HelpCenterAuthor,
 	IntegrationSetting,
 	Integration,
 	IntegrationType,
