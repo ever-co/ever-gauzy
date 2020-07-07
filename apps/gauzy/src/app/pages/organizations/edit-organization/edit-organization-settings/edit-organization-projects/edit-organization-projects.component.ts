@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-org-projects',
@@ -42,7 +43,8 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 		private store: Store,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly employeesService: EmployeesService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -64,6 +66,15 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 				this.viewPrivateProjects = this.store.hasPermission(
 					PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 				);
+			});
+
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.showAddCard = !this.showAddCard;
+					this.loadProjects();
+				}
 			});
 	}
 
