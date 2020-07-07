@@ -40,7 +40,8 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	private _filters: TimeLogFilters = {
 		employeeIds: [],
 		source: [],
-		logType: []
+		logType: [],
+		projectIds: []
 	};
 	futureDateAllowed: boolean;
 
@@ -57,6 +58,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	}
 	@Output() filtersChange: EventEmitter<TimeLogFilters> = new EventEmitter();
 
+	@Input() hasProjectFilter = true;
 	@Input() hasDateRangeFilter = true;
 	@Input() hasEmployeeFilter = true;
 	@Input() multipleEmployeSelect = true;
@@ -85,6 +87,16 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		this.filters.endDate = moment(value).endOf(this.dateRange).toDate();
 
 		this.updateLogs$.next();
+	}
+
+	private _employeeIds: string | string[];
+	public get employeeIds(): string | string[] {
+		return this._employeeIds;
+	}
+	public set employeeIds(value: string | string[]) {
+		this._employeeIds = value;
+		this.filters.employeeIds = value instanceof Array ? value : [value];
+		this.triggerFilterChange();
 	}
 
 	constructor(
@@ -119,9 +131,8 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			Object.keys(this.filters).forEach((key) =>
 				this.filters[key] === undefined ? delete this.filters[key] : {}
 			);
-
-			if (!this.multipleEmployeSelect) {
-				this.filters.employeeIds = [];
+			if (this.filters.employeeIds.length === 0) {
+				return;
 			}
 			this.filtersChange.emit(this.filters);
 		});
@@ -151,10 +162,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			? false
 			: moment(this.selectedDate).isSameOrAfter(moment(), 'day');
 	}
+
 	isTodayDisabled() {
 		return moment(this.selectedDate).isSame(moment(), 'day');
 	}
-	async nextDay() {
+
+	nextDay() {
 		const date = moment(this.selectedDate).add(1, this.dateRange);
 		if (!this.futureDateAllowed && date.isAfter(this.today)) {
 			return;
@@ -162,7 +175,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		this.selectedDate = date.toDate();
 	}
 
-	async previousDay() {
+	previousDay() {
 		this.selectedDate = moment(this.selectedDate)
 			.subtract(1, this.dateRange)
 			.toDate();
@@ -176,6 +189,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		this.activityLevel = this.filters.activityLevel;
 		this.updateLogs$.next();
 	}
+
 	triggerFilterChange(): void {
 		this.updateLogs$.next();
 	}
@@ -187,6 +201,13 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			true
 		);
 		this.employees = items;
+
+		if (this.employees.length > 0) {
+			this.filters.employeeIds = [this.employees[0].id];
+			this._employeeIds = this.multipleEmployeSelect
+				? [this.employees[0].id]
+				: this.employees[0].id;
+		}
 	}
 
 	ngOnDestroy(): void {}

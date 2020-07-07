@@ -161,6 +161,11 @@ export class TaskComponent extends TranslationBaseComponent
 					type: 'string',
 					filter: false
 				},
+				creator: {
+					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
+					type: 'string',
+					filter: false
+				},
 				...this.getColumnsByPage(),
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
@@ -183,7 +188,7 @@ export class TaskComponent extends TranslationBaseComponent
 		};
 	}
 
-	getColumnsByPage() {
+	private getColumnsByPage() {
 		if (this.isTasksPage()) {
 			return {
 				employees: {

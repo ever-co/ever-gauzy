@@ -1,22 +1,75 @@
 <nb-card class="main">
 	<nb-card-header>
-		<h5>Request Days Off</h5>
+		<h5>{{ isHoliday ? 'Add Holiday' : 'Request Days Off' }}</h5>
 		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="form-group col-6">
-					<label class="label">Employee</label>
-					<ga-employee-selector
-						#employeeSelector
+				<div class="form-group col-6" *ngIf="isHoliday">
+					<label class="label">Holiday name</label>
+					<nb-select
+						formControlName="description"
+						(selectedChange)="onHolidaySelected($event)"
 						fullWidth
-						[skipGlobalChange]="true"
-						class="employees"
+						required
+						placeholder="Seletc Holiday name"
+						[ngClass]="{
+							'status-danger':
+								form.controls['start'].invalid &&
+								form.controls['start'].dirty,
+							'status-success':
+								form.controls['start'].valid &&
+								form.controls['start'].dirty
+						}"
 					>
-					</ga-employee-selector>
+						<nb-option
+							*ngFor="let holiday of holidays"
+							[value]="holiday"
+							>{{ holiday }}</nb-option
+						>
+					</nb-select>
 				</div>
+				<div class="form-group col-6" *ngIf="isHoliday; else isRequest">
+					<label class="label">Select Employees</label>
+					<nb-select
+						multiple
+						[selected]="employeesArr"
+						(selectedChange)="onEmployeesSelected($event)"
+						fullWidth
+						required
+						placeholder="Add or Remove Employees"
+					>
+						<nb-option
+							*ngFor="let employee of orgEmployees"
+							[value]="employee.id"
+						>
+							<img
+								src="{{ employee.user.imageUrl }}"
+								alt="Smiley face"
+								height="40"
+								width="40"
+								style="margin-right: 10px;"
+							/>
+							{{ employee.user.firstName }}
+							{{ employee.user.lastName }}</nb-option
+						>
+					</nb-select>
+				</div>
+				<ng-template #isRequest>
+					<div class="form-group col-6">
+						<label class="label">Employee</label>
+						<ga-employee-selector
+							#employeeSelector
+							fullWidth
+							required
+							[skipGlobalChange]="true"
+							class="employees"
+						>
+						</ga-employee-selector>
+					</div>
+				</ng-template>
 				<div class="form-group col-6">
 					<label class="label">Policy</label>
 					<nb-select
@@ -40,6 +93,7 @@
 						formControlName="start"
 						nbInput
 						fullWidth
+						required
 						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 						[nbDatepicker]="startDate"
 						[ngClass]="{
@@ -59,6 +113,7 @@
 						formControlName="end"
 						nbInput
 						fullWidth
+						required
 						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 						[nbDatepicker]="endDate"
 						[ngClass]="{
@@ -75,7 +130,7 @@
 				</div>
 			</div>
 
-			<div class="row">
+			<div class="row" *ngIf="!isHoliday">
 				<div class="form-group col-12">
 					<div class="form-group">
 						<label class="label" for="description"
@@ -98,8 +153,18 @@
 		<button (click)="close()" status="danger" class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="addRequest()" status="success" nbButton>
+		<button
+			*ngIf="isHoliday; else isRequest"
+			(click)="addHolidays()"
+			status="success"
+			nbButton
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
+		<ng-template #isRequest>
+			<button (click)="addRequest()" status="success" nbButton>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</ng-template>
 	</nb-card-footer>
 </nb-card>

@@ -121,10 +121,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 
@@ -142,10 +142,31 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
+
+	@Get('github')
+	@UseGuards(AuthGuard('github'))
+	githubLogin() {}
+
+	@Get('github/callback')
+	@UseGuards(AuthGuard('github'))
+	githubLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 
@@ -172,10 +193,31 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
+
+	@Get('twitter')
+	@UseGuards(AuthGuard('twitter'))
+	twitterLogin() {}
+
+	@Get('twitter/callback')
+	@UseGuards(AuthGuard('twitter'))
+	twitterLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 }

@@ -10,6 +10,7 @@ export default class DataModel {
 						table.bigInteger('timerId');
 						table.json('data');
 						table.timestamps('date');
+						table.string('activityId');
 					})
 					.then((res) => res);
 			}
@@ -24,6 +25,8 @@ export default class DataModel {
 						table.bigInteger('timerId');
 						table.json('data');
 						table.timestamps('date');
+						table.string('timeSlotId');
+						table.string('timeSheetId');
 					})
 					.then((res) => res);
 			}
@@ -38,6 +41,9 @@ export default class DataModel {
 						table.float('durations');
 						table.string('projectid');
 						table.string('userId');
+						table.string('timeSlotId');
+						table.string('timeSheetId');
+						table.string('timeLogId');
 					})
 					.then((res) => res);
 			}

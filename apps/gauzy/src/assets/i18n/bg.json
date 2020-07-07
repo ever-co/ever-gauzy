@@ -747,6 +747,11 @@
 				"NONE": "none"
 			}
 		},
+		"WEIGHT": {
+			"DEFAULT": "Default",
+			"INCREASE_BY_2X": "Increase 2X",
+			"INCREASE_BY_50": "Set to 50% of Objective progress"
+		},
 		"MESSAGE": {
 			"TIME_FRAME_ENDED": "You can't update this key result now. The Time Frame for this key result has ended on {{ date }}",
 			"TIME_FRAME_NOT_STARTED": "You can't update this key result now. The Time Frame for this key result starts on {{ date }}. Then you'll be able to update it"
@@ -774,7 +779,8 @@
 				"HARD_DEADLINE": "Hard Deadline",
 				"UPDATED_VALUE": "Updated Value",
 				"MARK_COMPLETE": "Mark as Complete",
-				"STATUS": "Статус"
+				"STATUS": "Статус",
+				"WEIGHT": "Weight"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
@@ -1281,6 +1287,7 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
+		"TASKS_CREATOR": "Created By",
 		"TASK_MEMBERS": "Служители",
 		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Отбори",
@@ -1869,7 +1876,12 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
 		"APPS": "Apps Activity",
-		"URLS": "Urls Activity"
+		"URLS": "Urls Activity",
+		"NO_ACTIVITES": "No activites",
+		"NO_ACTIVITY": "No Activity",
+		"VIEW_SCREEN": "View Screen",
+		"VIEW_INFO": "View Info",
+		"NO_SCREENSHOTS": "No Screenshots"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

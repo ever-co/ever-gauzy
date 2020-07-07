@@ -9,14 +9,16 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { Task as ITask, TaskStatusEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
+
+import { Task as ITask, TaskStatusEnum } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
-import { IsOptional } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { User } from '../user/user.entity';
 
 @Entity('task')
 export class Task extends Base implements ITask {
@@ -78,4 +80,17 @@ export class Task extends Base implements ITask {
 	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.task)
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	@ApiProperty({ type: User })
+	@ManyToOne((type) => User, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	creator?: User;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((task: Task) => task.creator)
+	@Column()
+	readonly creatorId?: string;
 }
