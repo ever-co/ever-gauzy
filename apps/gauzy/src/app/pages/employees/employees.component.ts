@@ -89,6 +89,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		this.store.userRolePermissions$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
+				console.log('emp page user------', this.store.userRolePermissions);
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_EMPLOYEES_EDIT
 				);
@@ -107,6 +108,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
+				console.log('emp page org-----', this.store.selectedOrganization);
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
