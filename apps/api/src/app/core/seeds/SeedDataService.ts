@@ -179,6 +179,7 @@ import {
 	updateDefaultKeyResultProgress
 } from '../../keyresult/keyresult.seed';
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
+import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -603,6 +604,12 @@ export class SeedDataService {
 		);
 
 		await seedRandomEmploymentTypes(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
+
+		await seedRandomOrganizationDepartments(
 			this.connection,
 			tenants,
 			tenantOrganizationsMap
