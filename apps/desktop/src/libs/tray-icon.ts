@@ -36,7 +36,7 @@ export default class TrayIcon {
 						notificationDesktop.startTimeNotification();
 						timerHandler.startTimer(win2, knex, win3);
 						const timeMenu = menuItem.menu.getMenuItemById('0');
-						getTime(menuItem);
+						getTime();
 						timeMenu.visible = true;
 						const stopMenu = menuItem.menu.getMenuItemById('2');
 						stopMenu.enabled = true;
