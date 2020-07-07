@@ -286,7 +286,8 @@ export const environment: IEnvironment = {
 		tenants: 5,
 		organizationsPerTenant: 10,
 		employeesPerOrganization: 10,
-		candidatesPerOrganization: 2
+		candidatesPerOrganization: 2,
+		projectsPerOrganization: 30
 	},
 
 	defaultHubstaffUserPass:

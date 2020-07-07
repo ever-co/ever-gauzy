@@ -30,6 +30,7 @@ export const seedRandomOrganizationDepartments = async (
 				const employmentDepartment = new OrganizationDepartment();
 				employmentDepartment.name = name;
 				employmentDepartment.organizationId = organizationId;
+				employmentDepartment.tenant = tenant;
 				return employmentDepartment;
 			});
 			departments = [...departments, ...organizationDepartments];

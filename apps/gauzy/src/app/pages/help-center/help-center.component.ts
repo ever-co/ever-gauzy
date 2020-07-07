@@ -1,3 +1,4 @@
+import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
 import { IHelpCenterArticle, IHelpCenter } from '@gauzy/models';
 import { Component, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -21,10 +22,13 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private helpCenterArticleService: HelpCenterArticleService,
-		private readonly toastrService: NbToastrService
+		private readonly toastrService: NbToastrService,
+		private sanitizer: DomSanitizer
 	) {
 		super(translateService);
 	}
+	public showData: boolean[] = [];
+	public dataArray: SafeHtml[] = [];
 	public nodes: IHelpCenterArticle[] = [];
 	public categoryName = '';
 	public categoryId = '';
@@ -36,6 +40,10 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		this.loadArticles(this.categoryId);
 	}
 
+	openArticle(i) {
+		this.showData[i] = !this.showData[i];
+	}
+
 	deletedNode() {
 		this.categoryId = '';
 		this.categoryName = '';
@@ -43,9 +51,17 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	}
 
 	async loadArticles(id) {
+		this.showData = [];
+		this.dataArray = [];
 		const result = await this.helpCenterArticleService.findByCategoryId(id);
 		if (result) {
 			this.nodes = result;
+			for (let i = 0; i < this.nodes.length; i++) {
+				this.showData.push(false);
+				this.dataArray.push(
+					this.sanitizer.bypassSecurityTrustHtml(this.nodes[i].data)
+				);
+			}
 		}
 	}
 

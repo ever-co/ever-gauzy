@@ -8,4 +8,11 @@ export interface IHelpCenterArticle extends IBaseEntityModel {
 	draft: boolean;
 	privacy: boolean;
 	categoryId: string;
+	authors?: IHelpCenterAuthor[];
+}
+
+export interface IHelpCenterAuthor extends IBaseEntityModel {	
+	articleId: string;
+	employeeId: string;
+	articles: IHelpCenterArticle[];
 }
