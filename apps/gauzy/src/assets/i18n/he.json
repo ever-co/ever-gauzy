@@ -750,7 +750,9 @@
 		"WEIGHT": {
 			"DEFAULT": "Default",
 			"INCREASE_BY_2X": "Increase 2X",
-			"INCREASE_BY_50": "Set to 50% of Objective progress"
+			"INCREASE_BY_4X": "Increase 4X",
+			"MESSAGE": "Weights can be used to increase or decrease the importance of a single Key Result when calculating overall Objective Progress %",
+			"OBJECTIVE_PROGRESS": "{{ weight }}% of Objective's Progress"
 		},
 		"MESSAGE": {
 			"TIME_FRAME_ENDED": "You can't update this key result now. The Time Frame for this key result has ended on {{ date }}",
@@ -1005,7 +1007,7 @@
 			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
 			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
 			"ORG_INCOMES_VIEW": "View All Incomes",
-			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
+			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals Register",
 			"ORG_PROPOSALS_VIEW": "View Proposals Page",
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
@@ -1034,7 +1036,7 @@
 			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
-			"INVOICES_EDIT": "Edit Invoices",
+			"INVOICES_EDIT": "Edit Invoices Add",
 			"EDIT_SALES_PIPELINES": "Edit Sales Pipelines",
 			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
 			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
@@ -1335,6 +1337,7 @@
 		"TEAM": "Team",
 		"TASK": "Задача",
 		"CLIENT": "לקוחות",
+		"CONTACT": "Contact",
 		"PROJECT": "פרויקטים",
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"CHAT": "Чат с нас",

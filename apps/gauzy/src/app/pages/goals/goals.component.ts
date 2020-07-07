@@ -126,15 +126,29 @@ export class GoalsComponent extends TranslationBaseComponent
 			});
 	}
 
-	async openKeyResultParameters(keyResult) {
+	async openKeyResultParameters(index, keyResult) {
 		const dialog = this.dialogService.open(KeyResultParametersComponent, {
 			context: {
-				data: keyResult
+				data: {
+					selectedKeyResult: keyResult,
+					allKeyResults: this.goals[index].keyResults
+				}
 			}
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			console.log(response);
+			this.goals[index].progress = this.calculateGoalProgress(
+				null,
+				this.goals[index].keyResults
+			);
+			const goalData = this.goals[index];
+			delete goalData.keyResults;
+			await this.goalService.update(this.goals[index].id, goalData);
+			this.toastrService.primary(
+				this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.loadPage();
 		}
 	}
 
@@ -203,8 +217,15 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	calculateGoalProgress(totalCount, keyResults) {
-		const progressTotal = keyResults.reduce((a, b) => a + b.progress, 0);
-		return Math.round(progressTotal / totalCount);
+		const progressTotal = keyResults.reduce(
+			(a, b) => a + b.progress * parseInt(b.weight, 10),
+			0
+		);
+		const weightTotal = keyResults.reduce(
+			(a, b) => a + parseInt(b.weight, 10),
+			0
+		);
+		return Math.round(progressTotal / weightTotal);
 	}
 
 	filterGoals(selection) {

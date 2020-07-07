@@ -16,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-org-teams',
@@ -42,7 +43,8 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -55,6 +57,14 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 					this.organizationId = organization.id;
 					this.loadTeams();
 					this.loadEmployees();
+				}
+			});
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.showAddCard = !this.showAddCard;
+					this.loadTeams();
 				}
 			});
 	}
