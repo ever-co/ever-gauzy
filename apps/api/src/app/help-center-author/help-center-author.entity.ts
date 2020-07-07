@@ -8,10 +8,6 @@ import { HelpCenterArticle } from '../help-center-article/help-center-article.en
 export class HelpCenterAuthor extends Base implements IHelpCenterAuthor {
 	@ApiProperty({ type: String })
 	@Column()
-	name: string;
-
-	@ApiProperty({ type: String })
-	@Column()
 	employeeId: string;
 
 	@ApiProperty({ type: String })
