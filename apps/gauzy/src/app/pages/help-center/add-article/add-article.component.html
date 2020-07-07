@@ -64,6 +64,14 @@
 					</div>
 				</div>
 			</div>
+			<div class="multi-select">
+				<ga-employee-multi-select
+					[allEmployees]="employees"
+					(selectedChange)="onMembersSelected($event)"
+					[selectedEmployeeIds]="employeeIds"
+				>
+				</ga-employee-multi-select>
+			</div>
 			<div class="edit-node-field">
 				<p class="label">{{ 'HELP_PAGE.ARTICLE_TEXT' | translate }}:</p>
 				<div class="ck-editor">
