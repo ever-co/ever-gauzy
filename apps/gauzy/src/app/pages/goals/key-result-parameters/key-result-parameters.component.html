@@ -10,11 +10,9 @@
 	<nb-card-body>
 		<nb-tabset>
 			<nb-tab tabTitle="Weight">
-				<nb-alert status="info"
-					>Weights can be used to increase or decrease the importance
-					of a single Key Result when calculating overall Objective
-					Progress %</nb-alert
-				>
+				<nb-alert status="info">{{
+					'KEY_RESULT_PAGE.WEIGHT.MESSAGE' | translate
+				}}</nb-alert>
 				<form [formGroup]="weightForm">
 					<div class="row mt-2">
 						<div class="col-md-6">
@@ -45,12 +43,14 @@
 						<div
 							class="col-md-6 d-flex flex-column justify-content-around"
 						>
-							<!-- <p></p> -->
 							<label
 								for="goal-progress-comparison"
 								class="label mt-3"
 							>
-								{{ keyResultWeight }}% of Objective's Progress
+								{{
+									'KEY_RESULT_PAGE.WEIGHT.OBJECTIVE_PROGRESS'
+										| translate: { weight: keyResultWeight }
+								}}
 							</label>
 							<nb-progress-bar
 								id="goal-progress-comparison"
