@@ -33,9 +33,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionE = false;
 	hasPermissionI = false;
 	hasPermissionP = false;
+	hasPermissionIn = false;
 	hasPermissionIEdit = false;
 	hasPermissionEEdit = false;
 	hasPermissionPEdit = false;
+	hasPermissionInEdit = false;
 
 	@Input() position = 'normal';
 	user: User;
@@ -188,6 +190,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				this.hasPermissionP = this.store.hasPermission(
 					PermissionsEnum.ORG_PROPOSALS_VIEW
 				);
+				this.hasPermissionIn = this.store.hasPermission(
+					PermissionsEnum.INVOICES_VIEW
+				);
+
 				this.hasPermissionEEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_EXPENSES_EDIT
 				);
@@ -196,6 +202,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				);
 				this.hasPermissionPEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_PROPOSALS_EDIT
+				);
+				this.hasPermissionInEdit = this.store.hasPermission(
+					PermissionsEnum.INVOICES_EDIT
 				);
 			});
 
@@ -223,19 +232,19 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.INVOICE'),
 				icon: 'archive-outline',
-				link: '#'
-				//hidden: this.hasEditPermission
+				link: 'pages/accounting/invoices/add',
+				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
 				icon: 'paper-plane-outline',
-				link: 'pages/proposals/register',
+				link: 'pages/sales/proposals/register',
 				hidden: !this.hasPermissionP || !this.hasPermissionPEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
 				icon: 'file-text-outline',
-				link: '#'
+				link: 'pages/integrations/upwork/contracts'
 			},
 			// TODO: divider
 			{
@@ -249,14 +258,14 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				link: 'pages/tasks/dashboard'
 			},
 			{
-				title: this.getTranslation('CONTEXT_MENU.CLIENT'),
+				title: this.getTranslation('CONTEXT_MENU.CONTACT'),
 				icon: 'person-done-outline',
-				link: '#'
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/contacts`
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
 				icon: 'color-palette-outline',
-				link: '#'
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/projects`
 			},
 			// TODO: divider
 			{
