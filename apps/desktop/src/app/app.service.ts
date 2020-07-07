@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { first } from 'rxjs/operators';
-import { Observable, pipe } from 'rxjs';
 import { environment } from '../environments/environment';
 @Injectable({
 	providedIn: 'root'
@@ -32,7 +30,6 @@ export class AppService {
 	}
 
 	stopTime(historyTime): Promise<any> {
-		console.log('stoped id', historyTime);
 		const defaultStopParams = [
 			{
 				timestamp: new Date(),
@@ -98,7 +95,7 @@ export class AppService {
 		});
 		return this.http
 			.post(
-				`http://localhost:3000/api/timesheet/time-slot`,
+				`${values.apiHost}/api/timesheet/time-slot`,
 				{
 					employeeId: values.employeeId,
 					duration: values.duration,
@@ -121,7 +118,7 @@ export class AppService {
 		});
 		return this.http
 			.post(
-				`http://localhost:3000/api/timesheet`,
+				`${values.apiHost}/api/timesheet`,
 				{
 					employeeId: values.employeeId,
 					duration: values.duration,
@@ -147,7 +144,7 @@ export class AppService {
 		});
 		return this.http
 			.put(
-				`http://localhost:3000/api/timesheet/${values.timeSheetId}`,
+				`${values.apiHost}/api/timesheet/${values.timeSheetId}`,
 				{
 					duration: values.duration,
 					keyboard: values.keyboard,
@@ -169,7 +166,7 @@ export class AppService {
 		});
 		return this.http
 			.put(
-				`http://localhost:3000/api/timesheet/time-slot/${values.timeSlotId}`,
+				`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}`,
 				{
 					duration: values.duration,
 					keyboard: values.keyboard,
@@ -190,7 +187,7 @@ export class AppService {
 		});
 		return this.http
 			.post(
-				`http://localhost:3000/api/timesheet/activity`,
+				`${values.apiHost}/api/timesheet/activity`,
 				{
 					employeeId: values.employeeId,
 					projectId: values.projectId,
@@ -214,7 +211,7 @@ export class AppService {
 		});
 		return this.http
 			.put(
-				`http://localhost:3000/api/timesheet/activity/${values.activityId}`,
+				`${values.apiHost}/api/timesheet/activity/${values.activityId}`,
 				{
 					duration: values.duration
 				},
@@ -232,7 +229,7 @@ export class AppService {
 		});
 		return this.http
 			.post(
-				`http://localhost:3000/api/timesheet/time-log`,
+				`${values.apiHost}/api/timesheet/time-log`,
 				{
 					employeeId: values.employeeId,
 					timesheetId: values.timesheetId,
@@ -258,7 +255,7 @@ export class AppService {
 		});
 		return this.http
 			.put(
-				`http://localhost:3000/api/timesheet/time-log/${values.timeLogId}`,
+				`${values.apiHost}/api/timesheet/time-log/${values.timeLogId}`,
 				{
 					stoppedAt: values.stoppedAt
 				},

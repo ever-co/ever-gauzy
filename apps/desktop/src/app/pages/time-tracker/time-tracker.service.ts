@@ -9,11 +9,7 @@ export class TimeTrackerService {
 	token = '';
 	userId = '';
 	employeeId = '';
-	constructor(private http: HttpClient) {
-		// this.token = localStorage.getItem('token');
-		// this.employeeId = localStorage.getItem('employeeId');
-		// this.userId = localStorage.getItem('userItem');
-	}
+	constructor(private http: HttpClient) {}
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -23,10 +19,9 @@ export class TimeTrackerService {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`
 		});
-		console.log(values.token);
 		return this.http
 			.get(
-				`http://localhost:3000/api/tasks/team?data={"employeeId": "${values.employeeId}"}`,
+				`${values.apiHost}/api/tasks/team?data={"employeeId": "${values.employeeId}"}`,
 				{
 					headers: headers
 				}
