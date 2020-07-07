@@ -4,37 +4,63 @@
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
-			(click)="closeDialog()"
+			(click)="closeDialog(null)"
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<nb-tabset>
 			<nb-tab tabTitle="Weight">
-				<nb-alert status="info"
-					>Weights can be used to increase or decrease the importance
-					of a single Key Result when calculating overall Objective
-					Progress %</nb-alert
-				>
+				<nb-alert status="info">{{
+					'KEY_RESULT_PAGE.WEIGHT.MESSAGE' | translate
+				}}</nb-alert>
 				<form [formGroup]="weightForm">
-					<label for="key-result-weight" class="label mt-3">
-						{{ 'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT' | translate }}
-					</label>
-					<nb-select
-						id="key-result-weight"
-						fullWidth
-						formControlName="weight"
-					>
-						<nb-option
-							*ngFor="
-								let weight of keyResultWeightEnum | keyvalue
-							"
-							[value]="weight.value"
-							>{{
-								'KEY_RESULT_PAGE.WEIGHT.' + weight.key
-									| translate
-							}}</nb-option
+					<div class="row mt-2">
+						<div class="col-md-6">
+							<label for="key-result-weight" class="label mt-3">
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT'
+										| translate
+								}}
+							</label>
+							<nb-select
+								id="key-result-weight"
+								fullWidth
+								formControlName="weight"
+							>
+								<nb-option
+									*ngFor="
+										let weight of keyResultWeightEnum
+											| keyvalue
+									"
+									[value]="weight.value"
+									>{{
+										'KEY_RESULT_PAGE.WEIGHT.' + weight.key
+											| translate
+									}}</nb-option
+								>
+							</nb-select>
+						</div>
+						<div
+							class="col-md-6 d-flex flex-column justify-content-around"
 						>
-					</nb-select>
+							<label
+								for="goal-progress-comparison"
+								class="label mt-3"
+							>
+								{{
+									'KEY_RESULT_PAGE.WEIGHT.OBJECTIVE_PROGRESS'
+										| translate: { weight: keyResultWeight }
+								}}
+							</label>
+							<nb-progress-bar
+								id="goal-progress-comparison"
+								[value]="keyResultWeight"
+								status="primary"
+								size="small"
+								>{{ keyResultWeight }}%
+							</nb-progress-bar>
+						</div>
+					</div>
 				</form>
 			</nb-tab>
 			<nb-tab tabTitle="Type">
@@ -135,7 +161,7 @@
 		</nb-tabset>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-3" nbButton (click)="closeDialog()">
+		<button class="mr-3" nbButton (click)="closeDialog(null)">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button nbButton status="success" (click)="updateKeyResult()">
