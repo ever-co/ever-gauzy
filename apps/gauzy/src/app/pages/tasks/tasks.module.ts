@@ -29,6 +29,7 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task-dialog.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { ChecklistModule } from '../../@shared/checklist/checklist.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -60,6 +61,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		UserFormsModule,
 		CardGridModule,
+		ChecklistModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

@@ -1,0 +1,49 @@
+<div class="row">
+	<form [formGroup]="formGroup">
+		<!-- list checklist with items -->
+		<ng-container *ngIf="checklist">
+			<div class="col-sm-12">
+				<div *ngFor="let checklistElement of checklist">
+					<span>{{ checklistElement.name }}</span>
+					<ul formArrayName="checklistFormArray">
+						<li
+							*ngFor="
+								let checklistItemFG of checklistFormArray[
+									'controls'
+								];
+								let i = index
+							"
+						>
+							<input
+								type="text"
+								[formControl]="
+									checklistItemFG.get('checklistItemName')
+								"
+							/>
+						</li>
+					</ul>
+					<span (click)="addChecklistItem()">add item</span>
+				</div>
+			</div>
+		</ng-container>
+		<!-- add checklist button -->
+		<div class="col-sm-12">
+			<ng-container *ngIf="!isTextBoxVisible">
+				<button (click)="showTextBox()">Add Checklist</button>
+			</ng-container>
+			<ng-container *ngIf="isTextBoxVisible">
+				<div class="col-sm-6">
+					<input
+						type="text"
+						[formControl]="formGroup.get('checklistName')"
+					/>
+				</div>
+				<div class="col-sm-6">
+					<button (click)="saveChecklist()">save</button>
+					<button (click)="cancel()">cancel</button>
+				</div>
+			</ng-container>
+		</div>
+		<button (click)="save()">save</button>
+	</form>
+</div>

@@ -74,6 +74,7 @@ export * from './lib/goals.model';
 export * from './lib/request-approval-team.model';
 export * from './lib/goal-settings.model';
 export * from './lib/estimate-email.model';
+export * from './lib/checklist.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
