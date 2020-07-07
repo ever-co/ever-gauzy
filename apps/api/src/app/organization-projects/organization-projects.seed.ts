@@ -1,6 +1,5 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import * as _ from 'underscore';
 import { Tag } from '../tags/tag.entity';
 import { OrganizationProjects } from './organization-projects.entity';
 import { Organization } from '@gauzy/models';
