@@ -750,7 +750,9 @@
 		"WEIGHT": {
 			"DEFAULT": "Default",
 			"INCREASE_BY_2X": "Increase 2X",
-			"INCREASE_BY_50": "Set to 50% of Objective progress"
+			"INCREASE_BY_4X": "Increase 4X",
+			"MESSAGE": "Weights can be used to increase or decrease the importance of a single Key Result when calculating overall Objective Progress %",
+			"OBJECTIVE_PROGRESS": "{{ weight }}% of Objective's Progress"
 		},
 		"MESSAGE": {
 			"TIME_FRAME_ENDED": "You can't update this key result now. The Time Frame for this key result has ended on {{ date }}",
