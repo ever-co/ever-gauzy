@@ -50,6 +50,18 @@
 			>
 		</div>
 	</nb-card-header>
+
+	<nb-card-body class="existedNames" *ngIf="existedQualNames?.length > 0">
+		<span>{{
+			'CANDIDATES_PAGE.CRITERIONS.ALREADY_EXISTED' | translate
+		}}</span>
+		<div class="existedNames-card">
+			<div class="existedName" *ngFor="let name of existedQualNames">
+				{{ name }}
+			</div>
+		</div>
+	</nb-card-body>
+
 	<nb-card-body class="qualities">
 		<div
 			class="qualities-card"

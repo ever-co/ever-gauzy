@@ -67,7 +67,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					header: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
 					),
-					selectedCandidate: this.selectedCandidate
+					selectedCandidate: this.selectedCandidate,
+					interviewList: this.interviewList
 				}
 			}
 		);
