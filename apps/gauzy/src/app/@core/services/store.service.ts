@@ -252,7 +252,6 @@ export class Store {
 
 	get userRolePermissions(): RolePermissions[] {
 		const { userRolePermissions } = this.appQuery.getValue();
-		console.log('userRolePermissions service', userRolePermissions);
 		return userRolePermissions;
 	}
 

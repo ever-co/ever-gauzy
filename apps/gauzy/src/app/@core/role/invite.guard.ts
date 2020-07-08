@@ -1,4 +1,4 @@
-import { Store } from '../../@core/services/store.service';
+import { Store } from './../services/store.service';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
 import { first } from 'rxjs/operators';
@@ -14,18 +14,20 @@ export class InviteGuard implements CanActivate {
 	) {}
 
 	async canActivate(route: ActivatedRouteSnapshot) {
-		const expectedPermissions: PermissionsEnum[] = route.data.expectedPermissions;
-		this.store.userRolePermissions$
-			.pipe(first())
-			.subscribe(() => {
-			this.hasPermission = expectedPermissions.some((permission) => this.store.hasPermission(permission));
+		const expectedPermissions: PermissionsEnum[] = 
+		route.data.expectedPermissions;
+		this.store.userRolePermissions$.pipe(first()).subscribe(() => {
+			this.hasPermission = expectedPermissions.some((permission) => 
+				this.store.hasPermission(permission)
+			);
 
 		});
 		this.store.selectedOrganization$
 			.pipe(first())
 			.subscribe((organization) => {
 				if (organization) {
-					this.organizationInvitesAllowed = organization.invitesAllowed;
+					this.organizationInvitesAllowed = 
+					organization.invitesAllowed;
 				}
 			});
 
