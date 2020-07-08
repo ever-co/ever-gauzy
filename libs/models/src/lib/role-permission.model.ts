@@ -67,7 +67,8 @@ export enum PermissionsEnum {
 	VIEW_ALL_EMAILS = 'VIEW_ALL_EMAILS',
 	ORG_HELP_CENTER_EDIT = 'ORG_HELP_CENTER_EDIT',
 	EDIT_SALES_PIPELINES = 'EDIT_SALES_PIPELINES',
-	CAN_APPROVE_TIMESHEET = 'CAN_APPROVE_TIMESHEET'
+	CAN_APPROVE_TIMESHEET = 'CAN_APPROVE_TIMESHEET',
+	VIEW_MY_TASK = 'VIEW_MY_TASK'
 }
 
 export const PermissionGroups = {
@@ -103,7 +104,8 @@ export const PermissionGroups = {
 		PermissionsEnum.VIEW_ALL_EMAILS,
 		PermissionsEnum.ORG_HELP_CENTER_EDIT,
 		PermissionsEnum.EDIT_SALES_PIPELINES,
-		PermissionsEnum.CAN_APPROVE_TIMESHEET
+		PermissionsEnum.CAN_APPROVE_TIMESHEET,
+		PermissionsEnum.VIEW_MY_TASK
 	],
 
 	//Readonly permissions, are only enabled for admin role

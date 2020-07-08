@@ -73,6 +73,7 @@ export class TaskController extends CrudController<Task> {
 				user: { id: RequestContext.currentUser().id }
 			}
 		});
+		console.log('employee', employee);
 		return this.taskService.getMyTasks(employee.id);
 	}
 
