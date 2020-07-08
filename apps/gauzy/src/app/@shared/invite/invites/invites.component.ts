@@ -69,7 +69,6 @@ export class InvitesComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
-				console.log('this.store.selectedOrganization1111111', this.store.selectedOrganization);
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
 					this.loadPage();
@@ -78,7 +77,6 @@ export class InvitesComponent extends TranslationBaseComponent
 		this.store.userRolePermissions$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				console.log('this.store.userRolePermissions1111111', this.store.userRolePermissions);
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
