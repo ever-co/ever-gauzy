@@ -51,7 +51,9 @@
 		"EMAIL": "Email"
 	},
 	"SM_TABLE": {
-		"DATE": "Date",
+    "DATE": "Date",
+    "TITLE": "Title",
+    "STAGE": "Stage",
 		"START_DATE": "Start Date",
 		"END_DATE": "End Date",
 		"CLIENT_NAME": "Client Name",
@@ -1961,9 +1963,22 @@
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
-		"HEADER_STAGES": "Stages",
-		"HEADER_FORM_EDIT": "Edit Pipeline",
-		"HEADER_FORM_CREATE": "Create Pipeline",
-		"RECORD_TYPE": "pipeline \"{{ name }}\""
-	}
+    "HEADER_STAGES": "Stages",
+    "VIEW_DEALS": "View Deals",
+    "HEADER_FORM_EDIT": "Edit Pipeline",
+    "HEADER_FORM_CREATE": "Create Pipeline",
+    "RECORD_TYPE": "pipeline \"{{ name }}\""
+  },
+  "PIPELINE_DEALS_PAGE": {
+    "HEADER": "Pipeline Deals",
+    "FILTER_BY_STAGE": "Filter by Stage",
+    "RECORD_TYPE": "stage \"{{ title }}\""
+  },
+  "PIPELINE_DEAL_EDIT_PAGE": {
+    "HEADER": "Edit Deal | Pipeline: {{ name }}"
+  },
+  "PIPELINE_DEAL_CREATE_PAGE": {
+    "HEADER": "Create Deal | Pipeline: {{ name }}",
+    "SELECT_STAGE": "Select Stage"
+  }
 }

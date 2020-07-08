@@ -100,6 +100,7 @@ import { EstimateEmail } from './estimate-email/estimate-email.entity';
 import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TimeOffRequestModule } from './time-off-request/time-off-request.module';
+import { DealModule } from './deal/deal.module';
 
 @Module({
 	imports: [
@@ -377,6 +378,10 @@ import { TimeOffRequestModule } from './time-off-request/time-off-request.module
 						path: '/pipelines',
 						module: PipelineModule
 					},
+          {
+            path: '/deals',
+            module: DealModule,
+          },
 					{
 						path: '/payments',
 						module: PaymentModule
@@ -468,6 +473,7 @@ import { TimeOffRequestModule } from './time-off-request/time-off-request.module
 		AvailabilitySlotsModule,
 		PipelineModule,
 		StageModule,
+    DealModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
