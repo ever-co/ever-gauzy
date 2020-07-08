@@ -42,7 +42,6 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 			const currInterviews = [];
 			this.feedbacks = res.items.filter((item) => item.interviewId);
 			const criterionsRating = [];
-			const uniqCriterionsRating = [];
 			this.feedbacks.forEach((feedback) => {
 				this.interviewList.forEach((interview) => {
 					if (interview.id === feedback.interviewId) {
@@ -53,39 +52,67 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 				});
 				feedback.criterionsRating.forEach((techEl) => {
 					criterionsRating.push(techEl);
-					if (
-						techEl.technologyId &&
-						!uniqCriterionsRating.includes(techEl.technologyId)
-					) {
-						uniqCriterionsRating.push(techEl.technologyId);
+				});
+			});
+			this.currRating = [];
+			const arr1 = criterionsRating
+				.reduce((prev, curr) => {
+					const existing = prev.find(
+						(data) => data.technologyId === curr.technologyId
+					);
+					if (!existing) {
+						return [...prev, { ...curr, rating: [curr.rating] }];
 					}
+					existing.rating.push(curr.rating);
+					return [...prev];
+				}, [])
+				.map((data) => {
+					const rating =
+						data.rating.reduce((prev, curr) => prev + curr) /
+						data.rating.length;
+					return { ...data, rating };
+				})
+				.filter((item) => item.technologyId);
+
+			const arr2 = criterionsRating
+				.reduce((prev, curr) => {
+					const existing = prev.find(
+						(data) =>
+							data.personalQualityId === curr.personalQualityId
+					);
+					if (!existing) {
+						return [...prev, { ...curr, rating: [curr.rating] }];
+					}
+					existing.rating.push(curr.rating);
+					return [...prev];
+				}, [])
+				.map((data) => {
+					const rating =
+						data.rating.reduce((prev, curr) => prev + curr) /
+						data.rating.length;
+					return { ...data, rating };
+				})
+				.filter((item) => item.personalQualityId);
+
+			this.currRating = [...arr1, ...arr2];
+			this.currLabels = this.getCriterionsName(currInterviews);
+			this.labels = [];
+			this.rating = [];
+			this.currLabels[1].forEach((labelId, index) => {
+				this.loadColor(this.currLabels[0]);
+				this.currRating.forEach((itemRating) => {
 					if (
-						techEl.personalQualityId &&
-						!uniqCriterionsRating.includes(techEl.personalQualityId)
+						itemRating.technologyId === labelId ||
+						itemRating.personalQualityId === labelId
 					) {
-						uniqCriterionsRating.push(techEl.personalQualityId);
+						this.rating.push(itemRating.rating);
+						this.labels.push(this.currLabels[0][index]);
 					}
 				});
 			});
-			// this.getCriterionsRating(criterionsRating, uniqCriterionsRating);
-			this.currLabels = this.getCriterionsName(currInterviews);
 			this.loadChart();
 		}
 	}
-	//TO DO
-	// getCriterionsRating(data, uniqArr) {
-
-	// uniqArr.forEach((uniq) => {
-	// 	let filteredTech = [];
-	// 	let filteredQual = [];
-	// filteredTech = data.filter(
-	// 	(x) => x.technologyId && x.technologyId === uniq
-	// );
-	// filteredQual = data.filter(
-	// 	(x) => x.personalQualityId && x.personalQualityId === uniq
-	// );
-	// });
-	// }
 	getCriterionsName(currInterviews: ICandidateInterview[]) {
 		const resName = [];
 		const resId = [];
@@ -116,7 +143,7 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 					datasets: [
 						{
 							maxBarThickness: 150,
-							label: 'Criterion ratings from interviewer(s)',
+							label: `Criterion's rating from all feedbacks`,
 							backgroundColor: this.backgroundColor,
 							data: this.rating
 						}
@@ -143,12 +170,12 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 				};
 			});
 	}
-	loadColor(feedback: ICandidateFeedback) {
-		for (let i = 0; i < feedback.criterionsRating.length; i++) {
+	loadColor(labels: string[]) {
+		for (let i = 0; i < labels.length; i++) {
 			const color =
 				i % 2 === 0
-					? 'rgba(255, 206, 86, 0.2)'
-					: 'rgba(255, 99, 132, 0.2)';
+					? 'rgba(75, 192, 192, 0.2)'
+					: 'rgba(153, 102, 255, 0.2)';
 			this.backgroundColor.push(color);
 		}
 	}

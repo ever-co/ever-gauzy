@@ -1,4 +1,4 @@
-import { IHelpCenterArticle } from '@gauzy/models';
+import { IHelpCenterArticle, Employee } from '@gauzy/models';
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -6,6 +6,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
+import { EmployeesService } from '../../../@core/services';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-add-article',
@@ -23,6 +25,7 @@ export class AddArticleComponent extends TranslationBaseComponent
 		protected dialogRef: NbDialogRef<AddArticleComponent>,
 		readonly translateService: TranslateService,
 		private readonly fb: FormBuilder,
+		private employeeService: EmployeesService,
 		private helpCenterArticleService: HelpCenterArticleService
 	) {
 		super(translateService);
@@ -31,22 +34,44 @@ export class AddArticleComponent extends TranslationBaseComponent
 	public data = {
 		name: '',
 		description: '',
-		data: ''
+		data: '',
+		valid: null
 	};
 	public selectedPrivacy = false;
 	public selectedStatus = false;
+	employees: Employee[];
+	selectedEmployeeIds = null;
+	employeeIds: string[] = [];
+
 	ngOnInit() {
 		this.form = this.fb.group({
 			name: ['', Validators.required],
 			desc: ['', Validators.required],
-			data: ['', Validators.required]
+			data: ['', Validators.required],
+			valid: [null, Validators.required]
 		});
+		this.employeeService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employees) => {
+				this.employees = employees.items;
+			});
+
 		if (this.editType === 'add') this.loadFormData(this.data);
 		if (this.editType === 'edit') {
 			this.loadFormData(this.article);
 			this.selectedPrivacy = this.article.privacy;
 			this.selectedStatus = this.article.draft;
+			// this.article.authors.forEach((author) => this.employeeIds.push(author));
 		}
+	}
+
+	onMembersSelected(event: string[]) {
+		this.selectedEmployeeIds = event;
+		const value = this.selectedEmployeeIds[0] ? true : null;
+		this.form.patchValue({
+			valid: value
+		});
 	}
 
 	toggleStatus(event: boolean) {
@@ -61,7 +86,8 @@ export class AddArticleComponent extends TranslationBaseComponent
 		this.form.patchValue({
 			name: data.name,
 			desc: data.description,
-			data: data.data
+			data: data.data,
+			valid: null
 		});
 	}
 

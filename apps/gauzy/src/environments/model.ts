@@ -15,6 +15,8 @@ export interface Environment {
 	GOOGLE_AUTH_LINK: string;
 	FACEBOOK_AUTH_LINK: string;
 	LINKEDIN_AUTH_LINK: string;
+	GITHUB_AUTH_LINK: string;
+	TWITTER_AUTH_LINK: string;
 	NO_INTERNET_LOGO: string;
 	SENTRY_DNS?: string;
 	HUBSTAFF_REDIRECT_URI?: string;

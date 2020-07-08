@@ -5,6 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app/app.component';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 import { NbSpinnerModule, NbProgressBarModule } from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -13,7 +14,8 @@ import { NbSpinnerModule, NbProgressBarModule } from '@nebular/theme';
 		AppRoutingModule,
 		FiltersModule,
 		NbSpinnerModule,
-		NbProgressBarModule
+		NbProgressBarModule,
+		TranslateModule
 	]
 })
 export class AppModule {}

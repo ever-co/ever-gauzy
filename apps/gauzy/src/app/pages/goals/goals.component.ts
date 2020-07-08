@@ -19,6 +19,7 @@ import { GoalService } from '../../@core/services/goal.service';
 import { KeyResultService } from '../../@core/services/keyresult.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
+import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 
 @Component({
 	selector: 'ga-goals',
@@ -34,6 +35,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	employee: SelectedEmployee;
 	employeeId: string;
 	selectedFilter: string;
+	goalTimeFrames: Array<string> = [];
 	filter = [
 		{
 			title: 'All Objectives',
@@ -117,9 +119,53 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.allGoals = goals.items;
 				if (!!this.selectedFilter && this.selectedFilter !== 'all') {
 					this.filterGoals(this.selectedFilter);
+				} else {
+					this.createTimeFrameGroups(this.goals);
 				}
 				this.loading = false;
 			});
+	}
+
+	async openKeyResultParameters(index, keyResult) {
+		const dialog = this.dialogService.open(KeyResultParametersComponent, {
+			context: {
+				data: {
+					selectedKeyResult: keyResult,
+					allKeyResults: this.goals[index].keyResults
+				}
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			this.goals[index].progress = this.calculateGoalProgress(
+				null,
+				this.goals[index].keyResults
+			);
+			const goalData = this.goals[index];
+			delete goalData.keyResults;
+			await this.goalService.update(this.goals[index].id, goalData);
+			this.toastrService.primary(
+				this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.loadPage();
+		}
+	}
+
+	createTimeFrameGroups(goals) {
+		this.goalTimeFrames = [];
+		goals.forEach((goal) => {
+			if (this.goalTimeFrames.length < 1) {
+				this.goalTimeFrames.push(goal.deadline);
+			} else if (
+				this.goalTimeFrames.findIndex(
+					(element) => element === goal.deadline
+				) === -1
+			) {
+				this.goalTimeFrames.push(goal.deadline);
+			}
+		});
+		this.goalTimeFrames.sort((a, b) => a.localeCompare(b));
 	}
 
 	async addKeyResult(index, keyResult) {
@@ -171,8 +217,15 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	calculateGoalProgress(totalCount, keyResults) {
-		const progressTotal = keyResults.reduce((a, b) => a + b.progress, 0);
-		return Math.round(progressTotal / totalCount);
+		const progressTotal = keyResults.reduce(
+			(a, b) => a + b.progress * parseInt(b.weight, 10),
+			0
+		);
+		const weightTotal = keyResults.reduce(
+			(a, b) => a + parseInt(b.weight, 10),
+			0
+		);
+		return Math.round(progressTotal / weightTotal);
 	}
 
 	filterGoals(selection) {
@@ -194,6 +247,11 @@ export class GoalsComponent extends TranslationBaseComponent
 			this.goals = this.allGoals;
 		}
 		this.noGoals = this.goals.length > 0 ? false : true;
+		if (this.goals.length > 0) {
+			this.createTimeFrameGroups(this.goals);
+		} else {
+			this.goalTimeFrames = [];
+		}
 		this.popover.hide();
 		this.loading = false;
 	}

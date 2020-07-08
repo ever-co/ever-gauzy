@@ -87,6 +87,15 @@ export class TimesheetService {
 			});
 	}
 
+	getTimeLog(id: string, findOptions) {
+		const params = toParams(findOptions);
+		return this.http
+			.get(`/api/timesheet/time-log/${id}`, { params })
+			.toPromise()
+			.then((data: TimeLog) => {
+				return data;
+			});
+	}
 	getTimeSlots(request?: IGetTimeSlotInput) {
 		const params = toParams(request);
 		return this.http

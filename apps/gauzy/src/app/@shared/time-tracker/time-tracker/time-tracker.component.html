@@ -112,7 +112,7 @@
 			[disabled]="running"
 			[(ngModel)]="projectId"
 			#projectInput="ngModel"
-			[required]="organization.requireProject"
+			[required]="organization?.requireProject"
 		></ga-project-selector>
 
 		<div
@@ -130,7 +130,7 @@
 			[disabled]="running"
 			[(ngModel)]="taskId"
 			#taskInput="ngModel"
-			[required]="organization.requireTask"
+			[required]="organization?.requireTask"
 		></ga-task-selector>
 
 		<div
@@ -149,7 +149,7 @@
 			name="description"
 			[(ngModel)]="description"
 			#descriptionInput="ngModel"
-			[required]="organization.requireDescription"
+			[required]="organization?.requireDescription"
 		></textarea>
 
 		<div

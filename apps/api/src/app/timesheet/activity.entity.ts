@@ -7,7 +7,11 @@ import {
 	CreateDateColumn
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Activity as IActivity, ActivityType } from '@gauzy/models';
+import {
+	Activity as IActivity,
+	ActivityType,
+	TimeLogSourceEnum
+} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,
@@ -74,6 +78,12 @@ export class Activity extends Base implements IActivity {
 	@IsOptional()
 	@Column({ nullable: true })
 	type?: string;
+
+	@ApiProperty({ type: String, enum: TimeLogSourceEnum })
+	@IsEnum(TimeLogSourceEnum)
+	@IsString()
+	@Column({ default: TimeLogSourceEnum.BROWSER })
+	source: string;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()

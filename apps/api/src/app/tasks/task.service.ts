@@ -18,6 +18,14 @@ export class TaskService extends CrudService<Task> {
 		super(taskRepository);
 	}
 
+	async createTask(task: Task) {
+		const user = RequestContext.currentUser();
+		return await this.repository.insert({
+			...task,
+			creatorId: user.id
+		});
+	}
+
 	async getMyTasks(employeeId) {
 		const total = await this.taskRepository
 			.createQueryBuilder('task')
@@ -26,6 +34,7 @@ export class TaskService extends CrudService<Task> {
 			.leftJoinAndSelect('task.members', 'members')
 			.leftJoinAndSelect('members.user', 'users')
 			.leftJoinAndSelect('task.teams', 'teams')
+			.leftJoinAndSelect('task.creator', 'users')
 			.where('"task_members"."employeeId" = :employeeId', { employeeId })
 			.getCount();
 		const items = await this.taskRepository
@@ -35,6 +44,7 @@ export class TaskService extends CrudService<Task> {
 			.leftJoinAndSelect('task.members', 'members')
 			.leftJoinAndSelect('members.user', 'users')
 			.leftJoinAndSelect('task.teams', 'teams')
+			.leftJoinAndSelect('task.creator', 'users')
 			.where((qb) => {
 				const subQuery = qb
 					.subQuery()
@@ -59,6 +69,7 @@ export class TaskService extends CrudService<Task> {
 				.leftJoinAndSelect('task.tags', 'tags')
 				.leftJoinAndSelect('task.members', 'members')
 				.leftJoinAndSelect('task.teams', 'teams')
+				.leftJoinAndSelect('task.creator', 'users')
 				.where((qb) => {
 					const subQuery = qb
 						.subQuery()
@@ -86,6 +97,7 @@ export class TaskService extends CrudService<Task> {
 				.leftJoinAndSelect('task.tags', 'tags')
 				.leftJoinAndSelect('task.members', 'members')
 				.leftJoinAndSelect('task.teams', 'teams')
+				.leftJoinAndSelect('task.creator', 'users')
 				.where((qb) => {
 					const subQuery = qb
 						.subQuery()

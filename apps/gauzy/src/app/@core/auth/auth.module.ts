@@ -30,6 +30,11 @@ const socialLinks = [
 		url: environment.FACEBOOK_AUTH_LINK,
 		target: '_blank',
 		icon: 'facebook-outline'
+	},
+	{
+		url: environment.GITHUB_AUTH_LINK,
+		target: '_blank',
+		icon: 'github-outline'
 	}
 ];
 

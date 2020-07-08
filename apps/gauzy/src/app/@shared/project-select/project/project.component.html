@@ -1,12 +1,28 @@
-<div (click)="$event.stopPropagation()">
-	<ng-select
-		[clearable]="true"
+<ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
+	<div (click)="$event.stopPropagation()">
+		<ng-select
+			[multiple]="multiple"
+			[clearable]="true"
+			[disabled]="disabled"
+			[items]="projects"
+			[(ngModel)]="projectId"
+			[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
+			bindValue="id"
+			bindLabel="name"
+		>
+		</ng-select>
+	</div>
+</ng-template>
+<ng-template #multipleSelect>
+	<nb-select
+		class="multiple-select"
 		[disabled]="disabled"
-		[items]="projects"
-		[(ngModel)]="projectId"
+		[multiple]="multiple"
 		[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
-		bindValue="id"
-		bindLabel="name"
+		[(selected)]="projectId"
 	>
-	</ng-select>
-</div>
+		<nb-option *ngFor="let project of projects" [value]="project.id">
+			{{ project.name }}
+		</nb-option>
+	</nb-select>
+</ng-template>

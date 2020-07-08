@@ -1,4 +1,4 @@
-import { clickButton, enterInput, verifyElementIsVisible } from '../utils/util';
+import { clickButton, enterInput } from '../utils/util';
 import { RegisterPage } from '../pageobjects/RegisterPageObject';
 
 export const clickRegisterLink = () => {
@@ -19,10 +19,6 @@ export const enterPassword = (data) => {
 
 export const enterConfirmPass = (data) => {
 	enterInput(RegisterPage.confirmPassFieldCss, data);
-};
-
-export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(RegisterPage.organisationNameFieldCss);
 };
 
 export const clickTermAndConditionCheckBox = () => {

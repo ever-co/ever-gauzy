@@ -9,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { catchError, tap, takeUntil, first } from 'rxjs/operators';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ngx-contracts',
@@ -28,7 +29,8 @@ export class ContractsComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private _ehs: ErrorHandlingService,
 		public translateService: TranslateService,
-		private _ds: NbDialogService
+		private _ds: NbDialogService,
+		private route: ActivatedRoute
 	) {
 		super(translateService);
 		this._loagContracts();
@@ -50,6 +52,14 @@ export class ContractsComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
+
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.manageEntitiesSync();
+				}
+			});
 	}
 
 	loadSettingsSmartTable() {

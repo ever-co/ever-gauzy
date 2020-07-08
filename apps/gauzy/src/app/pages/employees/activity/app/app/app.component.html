@@ -1,6 +1,7 @@
 <div class="filters row mb-3">
 	<div class="col">
 		<ngx-filters
+			[hasLogTypeFilter]="false"
 			[multipleEmployeSelect]="false"
 			(filtersChange)="filtersChange($event)"
 		></ngx-filters>
@@ -32,8 +33,7 @@
 			</div>
 		</div>
 	</div>
-
-	<div class="text-center" *ngIf="!loading && apps?.length == 0">
-		No activites
+	<div class="py-5 text-center" *ngIf="!loading && apps?.length == 0">
+		<h6>{{ 'ACTIVITY.NO_ACTIVITES' | translate }}</h6>
 	</div>
 </div>

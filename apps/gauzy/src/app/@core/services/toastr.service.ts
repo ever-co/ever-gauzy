@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -18,9 +16,9 @@ export class ToastrService {
 		title: string = 'TOASTR.TITLE.SUCCESS',
 		translationParams: Object = {}
 	) {
-		let displayMesage: string = '';
+		let displayMesage = '';
 
-		if (message && message.message && typeof message.message == 'string') {
+		if (message && message.message && typeof message.message === 'string') {
 			displayMesage = message.message;
 		} else {
 			displayMesage = message;
@@ -37,15 +35,15 @@ export class ToastrService {
 		title: string = 'TOASTR.TITLE.ERROR',
 		translationParams: Object = {}
 	) {
-		let displayMesage: string = '';
+		let displayMesage = '';
 
 		if (
 			error.error &&
 			error.error.message &&
-			typeof error.error.message == 'string'
+			typeof error.error.message === 'string'
 		) {
 			displayMesage = error.error.message;
-		} else if (error.message && typeof error.message == 'string') {
+		} else if (error.message && typeof error.message === 'string') {
 			displayMesage = error.message;
 		} else {
 			displayMesage = error;

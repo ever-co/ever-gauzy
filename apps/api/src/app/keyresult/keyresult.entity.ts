@@ -83,6 +83,11 @@ export class KeyResult extends TenantBase implements IKeyResult {
 	@IsOptional()
 	status?: string;
 
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
+	@IsOptional()
+	weight?: string;
+
 	@ApiProperty({ type: Goal })
 	@ManyToOne((type) => Goal, (goal) => goal.keyResults, {
 		onDelete: 'CASCADE'

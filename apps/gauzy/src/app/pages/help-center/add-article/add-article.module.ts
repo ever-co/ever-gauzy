@@ -1,3 +1,4 @@
+import { EmployeeMultiSelectModule } from './../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { ThemeModule, HttpLoaderFactory } from '../../../@theme/theme.module';
@@ -27,6 +28,7 @@ import { HelpCenterArticleService } from '../../../@core/services/help-center-ar
 		NbToggleModule,
 		FormsModule,
 		ReactiveFormsModule,
+		EmployeeMultiSelectModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

@@ -3,10 +3,11 @@ import * as path from 'path';
 const Store = require('electron-store');
 import NotificationDesktop from './notifier';
 import TimerHandler from './timer';
+import { LocalStore } from './getSetStore';
 
 export default class TrayIcon {
 	tray: Tray;
-	constructor(win2, knex) {
+	constructor(win2, knex, win3) {
 		const timerHandler = new TimerHandler();
 		const store = new Store();
 		const notificationDesktop = new NotificationDesktop();
@@ -31,14 +32,22 @@ export default class TrayIcon {
 				id: '1',
 				label: 'Start Tracking Time',
 				click(menuItem) {
-					notificationDesktop.startTimeNotification();
-					timerHandler.startTimer(win2, knex);
-					const timeMenu = menuItem.menu.getMenuItemById('0');
-					getTime(menuItem);
-					timeMenu.visible = true;
-					const stopMenu = menuItem.menu.getMenuItemById('2');
-					stopMenu.enabled = true;
-					menuItem.enabled = false;
+					const projectSelect = store.get('project');
+					if (projectSelect && projectSelect.projectId) {
+						notificationDesktop.startTimeNotification();
+						timerHandler.startTimer(win2, knex, win3);
+						const timeMenu = menuItem.menu.getMenuItemById('0');
+						getTime();
+						timeMenu.visible = true;
+						const stopMenu = menuItem.menu.getMenuItemById('2');
+						stopMenu.enabled = true;
+						menuItem.enabled = false;
+					} else {
+						const auth = store.get('auth');
+						auth.apiHost = LocalStore.getServerUrl();
+						win3.webContents.send('timer_tracker_show', auth);
+						win3.show();
+					}
 				}
 			},
 			{
@@ -56,21 +65,32 @@ export default class TrayIcon {
 			},
 			{
 				id: '3',
+				label: 'Open Time Tracker',
+				enabled: true,
+				click(menuItem) {
+					const auth = store.get('auth');
+					auth.apiHost = LocalStore.getServerUrl();
+					win3.webContents.send('timer_tracker_show', auth);
+					win3.show();
+				}
+			},
+			{
+				id: '4',
 				label: 'Setting',
 				click() {
 					win2.webContents.send('open_setting_page');
 				}
 			},
 			{
-				id: '4',
+				id: '5',
 				label: 'quit',
 				click() {
 					app.quit();
 				}
 			}
 		]);
-		const getTime = (menuItems) => {
-			timerHandler.updateTime(menuItems, this.tray);
+		const getTime = () => {
+			timerHandler.updateTime(win2, knex);
 		};
 		this.tray.setContextMenu(contextMenu);
 		console.log(this.tray);

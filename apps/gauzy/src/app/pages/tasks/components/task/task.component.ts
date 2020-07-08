@@ -18,7 +18,12 @@ import { TaskTeamsComponent } from 'apps/gauzy/src/app/@shared/table-components/
 import { MyTasksStoreService } from 'apps/gauzy/src/app/@core/services/my-tasks-store.service';
 import { AssignedToComponent } from 'apps/gauzy/src/app/@shared/table-components/assigned-to/assigned-to.component';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
-import { Router, NavigationEnd, RouterEvent } from '@angular/router';
+import {
+	Router,
+	NavigationEnd,
+	RouterEvent,
+	ActivatedRoute
+} from '@angular/router';
 import { TeamTasksStoreService } from 'apps/gauzy/src/app/@core/services/team-tasks-store.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
@@ -59,6 +64,7 @@ export class TaskComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private readonly router: Router,
 		private _organizationsStore: Store,
+		private route: ActivatedRoute,
 		private organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translateService);
@@ -77,6 +83,14 @@ export class TaskComponent extends TranslationBaseComponent
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
+				}
+			});
+
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.createTaskDialog();
 				}
 			});
 	}
@@ -147,6 +161,11 @@ export class TaskComponent extends TranslationBaseComponent
 					type: 'string',
 					filter: false
 				},
+				creator: {
+					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
+					type: 'string',
+					filter: false
+				},
 				...this.getColumnsByPage(),
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
@@ -169,7 +188,7 @@ export class TaskComponent extends TranslationBaseComponent
 		};
 	}
 
-	getColumnsByPage() {
+	private getColumnsByPage() {
 		if (this.isTasksPage()) {
 			return {
 				employees: {

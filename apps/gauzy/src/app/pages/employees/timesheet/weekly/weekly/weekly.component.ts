@@ -19,7 +19,6 @@ import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.component';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { resetStores } from '@datorama/akita';
 
 interface WeeklyDayData {
 	project?: OrganizationProjects;
@@ -140,7 +139,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 									},
 									0
 								);
-								return { sum, res };
+								return { sum, logs: res };
 							})
 							.value();
 
@@ -153,6 +152,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 						return { project, dates };
 					})
 					.value();
+
+				console.log(this.weekData);
 			})
 			.finally(() => (this.loading = false));
 	}

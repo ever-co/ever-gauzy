@@ -24,12 +24,16 @@ import { TimeLogService } from './time-log.service';
 import { Permissions } from '../../shared/decorators/permissions';
 import { OrganizationPermissionGuard } from '../../shared/guards/auth/organization-permission.guard';
 import { RequestContext } from '../../core/context';
+import { CrudController } from '../../core';
+import { FindOneOptions } from 'typeorm';
 
 @ApiTags('TimeLog')
 @UseGuards(AuthGuard('jwt'))
 @Controller('time-log')
-export class TimeLogController {
-	constructor(private readonly timeLogService: TimeLogService) {}
+export class TimeLogController extends CrudController<TimeLog> {
+	constructor(private readonly timeLogService: TimeLogService) {
+		super(timeLogService);
+	}
 
 	@ApiOperation({ summary: 'Get Timer Logs' })
 	@ApiResponse({
@@ -40,6 +44,23 @@ export class TimeLogController {
 	@Get('/')
 	async getLogs(@Query() entity: IGetTimeLogInput): Promise<TimeLog[]> {
 		return this.timeLogService.getTimeLogs(entity);
+	}
+
+	@ApiOperation({ summary: 'Find Timer Log by id' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get(':id')
+	async findOne(
+		@Param('id') id: string,
+		@Query() options: FindOneOptions
+	): Promise<TimeLog> {
+		return this.timeLogService.findOne(id, options);
 	}
 
 	@ApiOperation({ summary: 'Get Timer Logs Conflict' })

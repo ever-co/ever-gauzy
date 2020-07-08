@@ -38,7 +38,6 @@ export interface TimeOffPolicyFindInput extends IBaseEntityModel {
 }
 
 export interface TimeOff extends IBaseEntityModel {
-	holidayName?: string;
 	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
@@ -50,7 +49,6 @@ export interface TimeOff extends IBaseEntityModel {
 }
 
 export interface TimeOffFindInput extends IBaseEntityModel {
-	holidayName?: string;
 	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
@@ -62,7 +60,6 @@ export interface TimeOffFindInput extends IBaseEntityModel {
 }
 
 export interface TimeOffUpdateInput {
-	holidayName?: string;
 	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
@@ -74,7 +71,6 @@ export interface TimeOffUpdateInput {
 }
 
 export interface TimeOffCreateInput {
-	holidayName?: string;
 	employees?: Employee[];
 	organizationId?: string;
 	description?: string;

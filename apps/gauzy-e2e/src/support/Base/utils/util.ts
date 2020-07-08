@@ -46,3 +46,7 @@ export const urlChanged = () => {
 export const verifyElementIsVisible = (loc) => {
 	cy.get(loc, { timeout: 40000 }).should('be.visible');
 };
+
+export const clickButtonByIndex = (loc, index) => {
+	cy.get(loc, { timeout: 60000 }).eq(index).click();
+};

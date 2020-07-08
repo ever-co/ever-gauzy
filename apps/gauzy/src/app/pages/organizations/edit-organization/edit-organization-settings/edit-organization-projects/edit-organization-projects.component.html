@@ -2,7 +2,7 @@
 	<nb-card-header>
 		<button
 			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
+			(click)="showAddCard = !showAddCard; loadProjects()"
 			nbButton
 			status="success"
 		>

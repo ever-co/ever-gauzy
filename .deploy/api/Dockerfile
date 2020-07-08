@@ -53,6 +53,7 @@ WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait ./wait
 COPY --chown=node:node --from=dependencies /entrypoint .
+COPY --chown=node:node --from=dependencies /srv/gauzy/node_modules ./node_modules/
 COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 

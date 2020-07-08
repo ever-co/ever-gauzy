@@ -749,6 +749,13 @@
 				"NONE": "none"
 			}
 		},
+		"WEIGHT": {
+			"DEFAULT": "Default",
+			"INCREASE_BY_2X": "Increase 2X",
+			"INCREASE_BY_4X": "Increase 4X",
+			"MESSAGE": "Weights can be used to increase or decrease the importance of a single Key Result when calculating overall Objective Progress %",
+			"OBJECTIVE_PROGRESS": "{{ weight }}% of Objective's Progress"
+		},
 		"MESSAGE": {
 			"TIME_FRAME_ENDED": "You can't update this key result now. The Time Frame for this key result has ended on {{ date }}",
 			"TIME_FRAME_NOT_STARTED": "You can't update this key result now. The Time Frame for this key result starts on {{ date }}. Then you'll be able to update it"
@@ -776,7 +783,8 @@
 				"HARD_DEADLINE": "Hard Deadline",
 				"UPDATED_VALUE": "Updated Value",
 				"MARK_COMPLETE": "Mark as Complete",
-				"STATUS": "Status"
+				"STATUS": "Status",
+				"WEIGHT": "Weight"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
@@ -900,7 +908,7 @@
 			"CANDIDATE_RATING": "Candidate's rating",
 			"INTERVIEWER_ASSESSMENT": "Candidate's rating per interview",
 			"CRITERIONS_RATING": "Criterion's rating per interview",
-			"CANDIDATE_CRITERIONS_RATING": "Candidate's criterions rating",
+			"CANDIDATE_CRITERIONS_RATING": "Criterion's rating from all feedbacks",
 			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview",
 			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer",
@@ -1001,7 +1009,7 @@
 			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
 			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
 			"ORG_INCOMES_VIEW": "View All Incomes",
-			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
+			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals Register",
 			"ORG_PROPOSALS_VIEW": "View Proposals Page",
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
@@ -1030,7 +1038,7 @@
 			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
-			"INVOICES_EDIT": "Edit Invoices",
+			"INVOICES_EDIT": "Edit Invoices Add",
 			"EDIT_SALES_PIPELINES": "Edit Sales Pipelines",
 			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
 			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
@@ -1283,6 +1291,7 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Project",
+		"TASKS_CREATOR": "Created By",
 		"TASK_MEMBERS": "Employees",
 		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Teams",
@@ -1330,6 +1339,7 @@
 		"TEAM": "Team",
 		"TASK": "Task",
 		"CLIENT": "Client",
+		"CONTACT": "Contact",
 		"PROJECT": "Project",
 		"ADD_EMPLOYEE": "Add Employee",
 		"CHAT": "Support Chat",
@@ -1539,7 +1549,7 @@
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
-		"CREATE_AT": "create at",
+		"CREATED_AT": "created at",
 		"WRITTEN_BY": "written by",
 		"EMPLOYEES": "employees",
 		"ONLY_FOR_EMPLOYEES": "Only for employees",
@@ -1871,7 +1881,12 @@
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
 		"APPS": "Apps Activity",
-		"URLS": "Urls Activity"
+		"URLS": "Urls Activity",
+		"NO_ACTIVITES": "No activites",
+		"NO_ACTIVITY": "No Activity",
+		"VIEW_SCREEN": "View Screen",
+		"VIEW_INFO": "View Info",
+		"NO_SCREENSHOTS": "No Screenshots"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

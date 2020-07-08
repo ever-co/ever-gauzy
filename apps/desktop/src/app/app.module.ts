@@ -8,6 +8,7 @@ import { SetupModule } from './pages/setup/setup.module';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
 import { HttpClientModule } from '@angular/common/http';
+import { TimeTrackerModule } from './pages/time-tracker/time-tracker.module';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -17,6 +18,7 @@ import { HttpClientModule } from '@angular/common/http';
 		AppRoutingModule,
 		NbThemeModule.forRoot({ name: 'default' }),
 		SetupModule,
+		TimeTrackerModule,
 		NgxElectronModule,
 		HttpClientModule
 	],

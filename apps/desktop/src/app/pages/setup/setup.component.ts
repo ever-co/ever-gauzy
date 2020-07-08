@@ -11,6 +11,8 @@ export class SetupComponent implements OnInit {
 	defaultToggle: Boolean = false;
 	isDefauValue: Boolean = false;
 	loading: Boolean = false;
+	aw: Boolean = false;
+	awAPI: String = 'http://localhost:5600';
 	serverOption: any = [
 		{
 			id: 'local',
@@ -108,7 +110,9 @@ export class SetupComponent implements OnInit {
 			db: this.selectedDatabase,
 			serverUrl: this.isLiveServer
 				? this.setup.serverUrl || this.defaultValue.serverUrl
-				: null
+				: null,
+			aw: this.aw,
+			awAPI: this.awAPI
 		};
 		if (this.selectedDatabase && this.isLocalServer) {
 			data = {
@@ -145,6 +149,10 @@ export class SetupComponent implements OnInit {
 		} else {
 			this.setup = {};
 		}
+	}
+
+	setAW() {
+		this.aw = !this.aw;
 	}
 
 	ngOnInit(): void {}

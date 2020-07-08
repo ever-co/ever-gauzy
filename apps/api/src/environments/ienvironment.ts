@@ -44,6 +44,7 @@ export interface IEnvironment {
 
 	env?: Env;
 
+	EXPRESS_SESSION_SECRET: string;
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS?: number;
 	JWT_SECRET?: string;
 
@@ -80,6 +81,7 @@ export interface IEnvironment {
 		organizationsPerTenant: number; //No of random organizations seeded will be (organizationsPerTenant * tenants)
 		employeesPerOrganization: number; //No of random employees seeded will be (employeesPerOrganization * organizationsPerTenant * tenants)
 		candidatesPerOrganization: number; //No of random employees seeded will be (candidatesPerOrganization * organizationsPerTenant * tenants)
+		projectsPerOrganization: number; // No of random projects seeded will be  (projectsPerOrganization * organizationsPerTenant * tenants)
 	};
 
 	sentry?: {

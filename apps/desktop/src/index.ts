@@ -27,6 +27,7 @@ serve = args.some((val) => val === '--serve');
 
 let win: BrowserWindow = null;
 let win2: BrowserWindow = null;
+let win3: BrowserWindow = null;
 let tray = null;
 
 const getFromEnv = parseInt(process.env.ELECTRON_IS_DEV, 10) === 1;
@@ -51,7 +52,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	// titleBarStyle: 'hidden',
 	webPreferences: {
 		devTools: true,
-		nodeIntegration: debugMode,
+		nodeIntegration: true,
 		webSecurity: false
 	}
 };
@@ -74,7 +75,6 @@ function initMainListener() {
 function createWindow() {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
 	mainWindowSettings.frame = true;
-	mainWindowSettings.webPreferences.nodeIntegration = true;
 	if (debugMode) {
 		process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
@@ -132,7 +132,6 @@ function createSetupWindow(value) {
 	mainWindowSettings.width = 800;
 	mainWindowSettings.height = 600;
 	mainWindowSettings.frame = false;
-	mainWindowSettings.webPreferences.nodeIntegration = true;
 	win2 = new BrowserWindow(mainWindowSettings);
 	const launchPath = url.format({
 		pathname: path.join(__dirname, 'ui/index.html'),
@@ -141,8 +140,22 @@ function createSetupWindow(value) {
 	});
 	win2.loadURL(launchPath);
 	if (value) {
-		win2.hide();
+		// win2.hide();
 	}
+}
+
+function timeTrackerWindow() {
+	mainWindowSettings.width = 900;
+	mainWindowSettings.height = 600;
+	win3 = new BrowserWindow(mainWindowSettings);
+	const launchPath = url.format({
+		pathname: path.join(__dirname, 'ui/index.html'),
+		protocol: 'file:',
+		slashes: true,
+		hash: '/time-tracker'
+	});
+	win3.loadURL(launchPath);
+	win3.hide();
 }
 
 function startServer(value) {
@@ -176,7 +189,7 @@ function startServer(value) {
 			win2.hide();
 		}
 		createWindow();
-		tray = new TrayIcon(win2, knex);
+		tray = new TrayIcon(win2, knex, win3);
 	}, 5000);
 
 	return true;
@@ -192,6 +205,7 @@ try {
 	// More details at https://github.com/electron/electron/issues/15947
 	app.on('ready', () => {
 		try {
+			timeTrackerWindow();
 			const configs: any = store.get('configs');
 			if (configs.isSetup) {
 				global.variableGlobal = {
@@ -208,7 +222,7 @@ try {
 			createSetupWindow(false);
 		}
 
-		ipcMainHandler(store, startServer, knex);
+		ipcMainHandler(store, startServer, knex, win2, win3);
 	});
 
 	app.on('window-all-closed', quit);

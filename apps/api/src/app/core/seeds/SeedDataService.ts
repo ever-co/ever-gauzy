@@ -149,7 +149,10 @@ import { Contact } from '../../contact/contact.entity';
 
 import { createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
 import { createRandomTask } from '../../tasks/task.seed';
-import { createRandomOrganizationProjects } from '../../organization-projects/organization-projects.seed';
+import {
+	createDefaultOrganizationProjects,
+	createRandomOrganizationProjects
+} from '../../organization-projects/organization-projects.seed';
 
 import { RequestApprovalTeam } from '../../request-approval-team/request-approval-team.entity';
 import { RequestApproval } from '../../request-approval/request-approval.entity';
@@ -179,6 +182,9 @@ import {
 	updateDefaultKeyResultProgress
 } from '../../keyresult/keyresult.seed';
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
+import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
+import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
+import { createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -381,6 +387,11 @@ export class SeedDataService {
 		);
 
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
+
+		await createDefaultOrganizationProjects(
+			this.connection,
+			defaultOrganizations
+		);
 
 		await createDefaultProducts(this.connection, tenant);
 
@@ -608,12 +619,34 @@ export class SeedDataService {
 			tenantOrganizationsMap
 		);
 
+		await seedRandomOrganizationDepartments(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
+
+		await seedRandomOrganizationPosition(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
+
 		await createSkills(this.connection);
 		await createLanguages(this.connection);
+		await createTags(this.connection);
+
+		const tags = await createRandomOrganizationTags(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
 
 		await createRandomOrganizationProjects(
 			this.connection,
-			this.organizations
+			tenants,
+			tenantOrganizationsMap,
+			tags,
+			env.randomSeedConfig.projectsPerOrganization || 10
 		);
 		await createRandomTask(this.connection);
 		await createRandomTimesheet(this.connection);

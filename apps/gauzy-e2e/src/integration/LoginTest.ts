@@ -10,7 +10,7 @@ describe('Login Test', () => {
 	});
 
 	it('Should able to login with default credentials', () => {
-		loginPage.verfyLoginText();
+		loginPage.verifyLoginText();
 		loginPage.clearEmailField();
 		loginPage.enterEmail(LoginPageData.email);
 		loginPage.clearPasswordField();
@@ -22,6 +22,6 @@ describe('Login Test', () => {
 	it('Should able to logout', () => {
 		dashboradPage.clickUserName();
 		logoutPage.clickLogoutButton();
-		loginPage.verfyLoginText();
+		loginPage.verifyLoginText();
 	});
 });

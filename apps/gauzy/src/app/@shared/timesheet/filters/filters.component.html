@@ -63,14 +63,21 @@
 						name="employeeId"
 						[label]="false"
 						[placeholder]="'TIMESHEET.ALL_EMPLOYEE' | translate"
-						[(ngModel)]="filters.employeeIds"
+						[(ngModel)]="employeeIds"
 						[allEmployees]="employees"
 						[multiple]="multipleEmployeSelect"
-						(selectedChange)="triggerFilterChange()"
 					>
 					</ga-employee-multi-select>
 				</div>
 			</ng-template>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasProjectFilter">
+				<ga-project-selector
+					name="projectId"
+					[(ngModel)]="filters.projectIds"
+					(ngModelChange)="triggerFilterChange()"
+					[multiple]="true"
+				></ga-project-selector>
+			</div>
 			<div class="col-auto ml-auto pr-1" *ngIf="hasSourceFilter">
 				<nb-select
 					multiple

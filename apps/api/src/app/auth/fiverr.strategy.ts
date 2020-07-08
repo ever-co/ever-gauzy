@@ -9,23 +9,19 @@ import { AuthService } from './auth.service';
 export class FiverrStrategy extends PassportStrategy(Strategy, 'fiverr') {
 	constructor(private readonly _authService: AuthService) {
 		super({
-			clientID: env.fiverrConfig.clientId,
+			clientID: env.fiverrConfig.clientId || 'disabled',
+			clientSecret: env.fiverrConfig.clientSecret || 'disabled',
 			callbackURL: `${env.host}:${env.port}/api/auth/fiverr/callback`,
-			clientSecret: env.fiverrConfig.clientSecret,
 			passReqToCallback: true
 		});
 	}
 
 	async validate(
-		request: any,
-		accessToken: string,
-		refreshToken: string,
 		profile,
 		done: Function
 	) {
-		const role = passport['_strategies'].session.role_name;
 		passport['_strategies'].session.role_name = '';
-		const { emails, username } = profile;
+		const { emails } = profile;
 		try {
 			try {
 				const {

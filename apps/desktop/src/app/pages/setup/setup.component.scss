@@ -1,3 +1,20 @@
 .button-at-bottom {
   bottom: 0;
 }
+
+.full-height {
+  height: 80% !important;
+}
+
+.btn-save {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
+.btn-width {
+  width: 200px;
+  position: absolute;
+  bottom: 10px;
+  right: -600px;
+}

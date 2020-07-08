@@ -1,9 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { NbToastrService } from '@nebular/theme';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { Subject, Subscription } from 'rxjs';
-import { Params } from '@angular/router';
+import { Subject } from 'rxjs';
 import { Employee } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';

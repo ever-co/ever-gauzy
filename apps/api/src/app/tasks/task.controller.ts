@@ -109,7 +109,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
 	async createTask(@Body() entity: Task): Promise<any> {
-		return this.taskService.create(entity);
+		return this.taskService.createTask(entity);
 	}
 
 	@ApiOperation({ summary: 'Update an existing task' })

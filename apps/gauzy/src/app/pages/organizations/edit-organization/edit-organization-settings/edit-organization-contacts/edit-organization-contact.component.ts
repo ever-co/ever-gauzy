@@ -15,6 +15,7 @@ import { TranslationBaseComponent } from '../../../../../@shared/language-base/t
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-org-contact',
@@ -46,7 +47,8 @@ export class EditOrganizationContactComponent extends TranslationBaseComponent
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -60,6 +62,14 @@ export class EditOrganizationContactComponent extends TranslationBaseComponent
 					this.loadOrganizationContacts();
 					this.loadProjectsWithoutOrganizationContacts();
 					this.loadEmployees();
+				}
+			});
+
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.add();
 				}
 			});
 	}

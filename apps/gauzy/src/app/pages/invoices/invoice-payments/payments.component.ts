@@ -3,7 +3,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { Invoice, InvoiceItem, Payment } from '@gauzy/models';
+import { Invoice, Payment } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';

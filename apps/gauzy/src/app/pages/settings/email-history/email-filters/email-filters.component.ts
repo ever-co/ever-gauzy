@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { EmailTemplateService } from 'apps/gauzy/src/app/@core/services/email-template.service';
-import { EmailTemplate } from '@gauzy/models';
+import { EmailTemplate, Email } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
@@ -54,8 +54,8 @@ export class EmailFiltersComponent implements OnInit {
 		});
 	}
 
-	cancel() {
-		this.dialogRef.close();
+	cancel(emails: Email[] = []) {
+		this.dialogRef.close(emails);
 	}
 
 	private _toTitleCase(str: string) {

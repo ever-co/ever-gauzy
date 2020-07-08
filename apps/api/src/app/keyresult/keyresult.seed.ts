@@ -4,7 +4,11 @@ import { Employee } from '../employee/employee.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
 import { KeyResult } from './keyresult.entity';
-import { KeyResultDeadlineEnum, KeyResultTypeEnum } from '@gauzy/models';
+import {
+	KeyResultDeadlineEnum,
+	KeyResultTypeEnum,
+	KeyResultWeightEnum
+} from '@gauzy/models';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { compareAsc } from 'date-fns';
@@ -78,6 +82,11 @@ export const createDefaultKeyResults = async (
 			keyResult.update = keyResult.initialValue;
 			keyResult.status = 'none';
 			keyResult.description = ' ';
+			keyResult.weight = faker.random.arrayElement([
+				KeyResultWeightEnum.DEFAULT,
+				KeyResultWeightEnum.INCREASE_BY_2X,
+				KeyResultWeightEnum.INCREASE_BY_4X
+			]);
 			defaultKeyResults.push(keyResult);
 		}
 	});
