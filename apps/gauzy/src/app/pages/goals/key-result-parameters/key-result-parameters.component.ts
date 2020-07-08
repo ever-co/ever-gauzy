@@ -50,11 +50,11 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 				JSON.stringify(this.data.allKeyResults)
 			);
 			let weightSum = this.data.allKeyResults.reduce(
-				(a, b) => a + parseInt(b.weight, 10),
+				(a, b) => a + +b.weight,
 				0
 			);
 			this.keyResultWeight = Math.round(
-				parseInt(this.weightForm.value.weight, 10) * (100 / weightSum)
+				+this.weightForm.value.weight * (100 / weightSum)
 			);
 			this.weightForm.controls['weight'].valueChanges
 				.pipe(takeUntil(this._ngDestroy$))
@@ -63,12 +63,9 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 						(element) =>
 							element.id === this.data.selectedKeyResult.id
 					).weight = weight;
-					weightSum = allKeyResult.reduce(
-						(a, b) => a + parseInt(b.weight, 10),
-						0
-					);
+					weightSum = allKeyResult.reduce((a, b) => a + +b.weight, 0);
 					this.keyResultWeight = Math.round(
-						parseInt(weight, 10) * (100 / weightSum)
+						+weight * (100 / weightSum)
 					);
 				});
 		}

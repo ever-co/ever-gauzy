@@ -51,13 +51,10 @@ export const updateDefaultGoalProgress = async (
 	});
 	goals.forEach(async (goal) => {
 		const progressTotal = goal.keyResults.reduce(
-			(a, b) => a + b.progress * parseInt(b.weight, 10),
+			(a, b) => a + b.progress * +b.weight,
 			0
 		);
-		const weightTotal = goal.keyResults.reduce(
-			(a, b) => a + parseInt(b.weight, 10),
-			0
-		);
+		const weightTotal = goal.keyResults.reduce((a, b) => a + +b.weight, 0);
 		const goalProgress = Math.round(progressTotal / weightTotal);
 		await connection.manager.update(
 			Goal,

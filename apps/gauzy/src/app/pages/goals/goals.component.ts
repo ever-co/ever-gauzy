@@ -138,7 +138,6 @@ export class GoalsComponent extends TranslationBaseComponent
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			this.goals[index].progress = this.calculateGoalProgress(
-				null,
 				this.goals[index].keyResults
 			);
 			const goalData = this.goals[index];
@@ -216,7 +215,7 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	calculateGoalProgress(totalCount, keyResults) {
+	calculateGoalProgress(keyResults) {
 		const progressTotal = keyResults.reduce(
 			(a, b) => a + b.progress * parseInt(b.weight, 10),
 			0
@@ -358,9 +357,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				);
 				this.loadPage();
 			} else {
-				const keyResNumber = this.goals[index].keyResults.length;
 				this.goals[index].progress = this.calculateGoalProgress(
-					keyResNumber,
 					this.goals[index].keyResults
 				);
 				const goalData = this.goals[index];
@@ -396,9 +393,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				selectedKeyResult.id,
 				keyResultData
 			);
-			const keyResNumber = this.goals[index].keyResults.length;
 			this.goals[index].progress = this.calculateGoalProgress(
-				keyResNumber,
 				this.goals[index].keyResults
 			);
 			await this.goalService.update(

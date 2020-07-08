@@ -12,7 +12,7 @@
 			<ngx-avatar class="ml-3" size="sm" [src]="src" [name]="ownerName">
 			</ngx-avatar>
 			<p class="mt-3 ml-3">
-				Deadline:
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}:
 				<span class="font-weight-bold">{{ endDate | date }}</span>
 			</p>
 		</div>
@@ -131,16 +131,16 @@
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
-		<button nbButton status="success" (click)="closeDialog()">
-			{{ 'BUTTONS.SAVE' | translate }}
+		<button status="danger" nbButton (click)="deleteKeyResult()">
+			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 		<button
 			class="float-right"
-			status="danger"
 			nbButton
-			(click)="deleteKeyResult()"
+			status="success"
+			(click)="closeDialog()"
 		>
-			{{ 'BUTTONS.DELETE' | translate }}
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
