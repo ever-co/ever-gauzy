@@ -1,4 +1,4 @@
-<nb-card size="large" class="max-width-500">
+<nb-card size="large" class="max-width-30vw">
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ 'KEY_RESULT_PAGE.UPDATE_KEY_RESULT' | translate }}</h4>
@@ -11,7 +11,12 @@
 	</nb-card-header>
 	<nb-card-body>
 		<h6>{{ keyResult.name }}</h6>
-		<div *ngIf="keyResult.type == 'Number'">
+		<div
+			*ngIf="
+				keyResult.type == keyResultTypeEnum.NUMBER ||
+				keyResult.type == keyResultTypeEnum.CURRENCY
+			"
+		>
 			<div class="row p-2">
 				<div class="col-md-6">
 					<p>
