@@ -1,0 +1,28 @@
+.import_export_wrapper {
+  // display: flex;
+  // //justify-content: flex-end;
+  // //flex: 2.7;
+  // height: 100%;
+  text-align: right;
+}
+.button-import {
+  background: #2ce69b !important;
+  color: #fff !important;
+  border-color: #2ce69b !important;
+}
+.button-export {
+  background: #6569df !important;
+  color: #fff !important;
+  border-color: #6569df !important;
+}
+.button-template {
+  color: #000 !important;
+  border-color: #dee6ff !important;
+}
+.button-wrapper {
+  border: none;
+}
+
+nb-layout-column {
+  min-width: none !important;
+}

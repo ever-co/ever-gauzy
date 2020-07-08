@@ -119,6 +119,10 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'organization_team'
 		},
 		{
+			service: this.organizationTeamEmployeeService,
+			nameFile: 'organization_team_employee'
+		},
+		{
 			service: this.organizationVendorsService,
 			nameFile: 'organization_vendor'
 		},

@@ -1,1 +1,16 @@
-<router-outlet></router-outlet>
+<nb-layout>
+	<nb-layout-column style="flex: 0.3;">
+		<nb-card>
+			<nb-menu [items]="MENU_ITEMS"> </nb-menu>
+		</nb-card>
+	</nb-layout-column>
+	<nb-layout-column>
+		<nb-card>
+			<nb-card-body>
+				<router-outlet></router-outlet>
+				<span class="info-text">{{''}} </span>
+			</nb-card-body>
+		</nb-card>
+	</nb-layout-column>
+	<nb-layout> <!-- <router-outlet></router-outlet> --> </nb-layout></nb-layout
+>

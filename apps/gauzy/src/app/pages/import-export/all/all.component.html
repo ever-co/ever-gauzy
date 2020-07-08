@@ -1,0 +1,85 @@
+<nb-layout>
+	<nb-layout-column style="background-color: #fff !important; padding: 0;">
+		<nb-layout style="padding: 0; margin: 0;">
+			<nb-layout-column
+				style="
+					background-color: #fff !important;
+					flex: 1;
+					padding: 0 !important;
+					margin: 0;
+				"
+			>
+				<nb-card class="button-wrapper" size="large">
+					<nb-card-body style="padding: 0;">
+						<img
+							src="../../../../assets/images/others/Import-Export-stickers.jpg"
+							style="vertical-align: top;"
+						/>
+					</nb-card-body>
+				</nb-card>
+			</nb-layout-column>
+
+			<nb-layout-column
+				style="
+					background-color: #fff !important;
+					padding: 0;
+					margin: 0;
+				"
+				><div>
+					<h6 style="font-size: 80%;">Import & Export</h6>
+					<p style="font-size: 80%; word-break: break-word;">
+						Here you can find data of all your previous imports of
+						all data. Find out when they joined and their current
+						status. Nothing goes missing arround here.
+					</p>
+				</div>
+				<!-- <textarea cols="50">kdfioujdfoiudfiodfuoiufiof</textarea> -->
+			</nb-layout-column>
+		</nb-layout>
+	</nb-layout-column>
+	<nb-layout-column style="background-color: #fff !important; padding: 0;">
+		<nb-card class="button-wrapper">
+			<nb-card-body class="import_export_wrapper">
+				<!-- <div> -->
+				<!-- <div class="import_export_wrapper"> -->
+				<button
+					class="button-template"
+					nbButton
+					outline
+					status="primary"
+					size="tiny"
+					(click)="onDownloadTemplates()"
+				>
+					<nb-icon icon="file-text-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
+				</button>
+				<button
+					style="margin-left: 1%;"
+					class="button-import"
+					nbButton
+					outline
+					status="primary"
+					size="tiny"
+					(click)="onDownloadAll()"
+				>
+					<nb-icon icon="arrow-circle-up-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
+				</button>
+				<button
+					style="margin-left: 1%;"
+					class="button-export"
+					nbButton
+					outline
+					status="primary"
+					size="tiny"
+					(click)="onDownloadAll()"
+				>
+					<nb-icon icon="arrow-circle-down-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+				</button>
+				<!-- </div> -->
+				<!-- </div> -->
+			</nb-card-body>
+		</nb-card>
+	</nb-layout-column>
+</nb-layout>

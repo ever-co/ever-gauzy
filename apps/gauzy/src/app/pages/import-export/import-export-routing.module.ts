@@ -8,9 +8,9 @@ const routes: Routes = [
 		component: ImportExportComponent,
 		children: [
 			{
-				path: 'export',
+				path: 'all',
 				loadChildren: () =>
-					import('./export/export.module').then((m) => m.ExportModule)
+					import('./all/all.module').then((m) => m.AllModule)
 			},
 			{
 				path: 'import',
