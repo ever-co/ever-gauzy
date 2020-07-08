@@ -51,8 +51,10 @@
       <nb-select [(selected)]="stageId"
                  (selectedChange)="filterDealsByStage()"
                  [placeholder]="'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate">
-        <nb-option>{{ 'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate }}</nb-option>
-        <nb-option *ngFor="let stage of pipeline?.stages" [value]="stage.id">
+        <nb-option [value]="''" style="white-space: nowrap">
+          {{ 'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate }}
+        </nb-option>
+        <nb-option *ngFor="let stage of pipeline?.stages" [value]="stage.id" style="white-space: nowrap">
           {{ stage.name }}
         </nb-option>
       </nb-select>
