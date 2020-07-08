@@ -1,4 +1,4 @@
-<nb-card size="giant" class="min-width-80vw">
+<nb-card size="giant" class="min-width-60vw">
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ goal.name }}</h4>
@@ -58,7 +58,9 @@
 	<nb-card-body>
 		<nb-tabset fullWidth>
 			<nb-tab tabTitle="{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}">
-				<nb-card *ngFor="let keyResult of goal.keyResults">
+				<nb-card
+					*ngFor="let keyResult of goal.keyResults; let i = index"
+				>
 					<nb-card-header>
 						<div class="row">
 							<div class="col-md-8">
@@ -84,7 +86,7 @@
 							<div class="col-md-2">
 								<nb-actions>
 									<nb-action
-										(click)="keyResultUpdate(keyResult)"
+										(click)="keyResultDetails(i, keyResult)"
 										icon="eye"
 									></nb-action>
 								</nb-actions>
@@ -96,12 +98,6 @@
 			<nb-tab tabTitle="{{ 'GOALS_PAGE.UPDATES' | translate }}">
 				<nb-card>
 					<nb-card-header>
-						<div class="main-header">
-							<h6>{{ 'GOALS_PAGE.UPDATES' | translate }}</h6>
-							<button nbButton status="primary">
-								{{ 'BUTTONS.ADD_NEW' | translate }}
-							</button>
-						</div>
 						<div
 							class="section mt-2 overflow-scroll"
 							*ngIf="!!this.updates"
