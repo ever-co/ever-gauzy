@@ -1057,7 +1057,8 @@
 				"ADMINISTRATION": "Administration"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
-			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
+			"VIEW_MY_TASK": "View My Tasks"
 		}
 	},
 	"PUBLIC_PAGE": {
