@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository } from 'typeorm';
 import { TimeOffRequest } from './time-off-request.entity';
 import { CrudService } from '../core/crud/crud.service';
 import { TimeOffCreateInput as ITimeOffCreateInput } from '@gauzy/models';
