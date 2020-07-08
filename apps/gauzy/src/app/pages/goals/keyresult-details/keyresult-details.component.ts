@@ -49,7 +49,6 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			this.keyResult.owner.id,
 			['user']
 		);
-		console.log(employee);
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;
 		this.updates = [...this.keyResult.updates].sort((a, b) =>
@@ -78,8 +77,6 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				await this.store.user$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((user) => {
-						console.log(user);
-						console.log(this.keyResult);
 						if (
 							user.role.name !== RolesEnum.SUPER_ADMIN &&
 							user.role.name !== RolesEnum.ADMIN &&
