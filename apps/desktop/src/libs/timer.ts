@@ -1,7 +1,7 @@
 import moment from 'moment';
 import { Tray } from 'electron';
 import { TimerData } from '../local-data/timer';
-const Store = require('electron-store');
+import { LocalStore } from './getSetStore';
 export default class Timerhandler {
 	timeRecordMinute = 0;
 	timeRecordHours = 0;
@@ -11,12 +11,12 @@ export default class Timerhandler {
 	intevalTimer = null;
 	intervalUpdateTime = null;
 	lastTimer: any;
-	store = new Store();
 	configs: any;
 
 	async startTimer(win2, knex, win3) {
-		const ProjectInfo = this.store.get('project');
-		const auth = this.store.get('auth');
+		this.configs = LocalStore.getStore('configs');
+		const ProjectInfo = LocalStore.getStore('project');
+		const auth = LocalStore.getStore('auth');
 		this.timeStart = moment();
 		this.lastTimer = await TimerData.createTimer(knex, {
 			day: moment().format('YYYY-MM-DD'),
@@ -34,7 +34,8 @@ export default class Timerhandler {
 			mouse: 0,
 			overall: 0,
 			startedAt: this.timeStart.utc().format(),
-			timerId: this.lastTimer[0]
+			timerId: this.lastTimer[0],
+			apiHost: LocalStore.getServerUrl()
 		});
 		win2.webContents.send('set_time_sheet', {
 			token: auth.token,
@@ -47,10 +48,10 @@ export default class Timerhandler {
 			timerId: this.lastTimer[0],
 			stoppedAt: this.timeStart.utc().format(),
 			projectId: ProjectInfo.projectId,
-			taskId: ProjectInfo.taskId
+			taskId: ProjectInfo.taskId,
+			apiHost: LocalStore.getServerUrl()
 		});
 
-		this.configs = this.store.get('configs');
 		this.intevalTimer = setInterval(() => {
 			const now = moment();
 			TimerData.updateDurationOfTimer(knex, {
@@ -95,8 +96,8 @@ export default class Timerhandler {
 	}
 
 	updateTime(win2, knex) {
-		const auth = this.store.get('auth');
-		const projectInfo = this.store.get('project');
+		const auth = LocalStore.getStore('auth');
+		const projectInfo = LocalStore.getStore('project');
 		this.intervalUpdateTime = setInterval(() => {
 			this.getSetActivity(knex, win2, auth, projectInfo);
 		}, 60 * 1000);
@@ -112,7 +113,8 @@ export default class Timerhandler {
 					overall: afk && afk.length > 0 ? afk[0].durations : 0,
 					timeSlotId: timerD[0].timeSlotId,
 					token: auth.token,
-					timerId: this.lastTimer[0]
+					timerId: this.lastTimer[0],
+					apiHost: LocalStore.getServerUrl()
 				});
 
 				win2.webContents.send('update_time_sheet', {
@@ -124,7 +126,8 @@ export default class Timerhandler {
 					token: auth.token,
 					timerId: this.lastTimer[0],
 					timeLogId: timerD[0].timeLogId,
-					stoppedAt: moment().utc().format()
+					stoppedAt: moment().utc().format(),
+					apiHost: LocalStore.getServerUrl()
 				});
 			});
 		});
@@ -138,7 +141,8 @@ export default class Timerhandler {
 					win2.webContents.send('update_to_activity', {
 						duration: Math.floor(item.durations),
 						activityId: item.activityId,
-						token: auth.token
+						token: auth.token,
+						apiHost: LocalStore.getServerUrl()
 					});
 				} else {
 					win2.webContents.send('set_activity', {
@@ -150,7 +154,8 @@ export default class Timerhandler {
 						duration: Math.floor(item.durations),
 						type: 'app',
 						eventId: item.eventId,
-						token: auth.token
+						token: auth.token,
+						apiHost: LocalStore.getServerUrl()
 					});
 				}
 			});

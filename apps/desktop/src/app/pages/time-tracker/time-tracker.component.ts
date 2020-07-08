@@ -104,7 +104,6 @@ export class TimeTrackerComponent implements OnInit {
 
 	getTask(arg) {
 		this.timeTrackerService.getTasks(arg).then((res: any) => {
-			console.log('task list', res);
 			this.organization = res.items;
 			this.getProjects(this.organization);
 		});
