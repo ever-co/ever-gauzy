@@ -110,8 +110,8 @@
 	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
 		<div class="col-sm-12">
 			<div class="form-group">
-				<label for="clientsSelect" class="label label-with-select"
-					>{{ 'FORM.LABELS.CLIENTS_OPTIONAL' | translate }}
+				<label for="contactsSelect" class="label label-with-select"
+					>{{ 'FORM.LABELS.CONTACTS_OPTIONAL' | translate }}
 					<button
 						nbButton
 						ghost
@@ -122,7 +122,7 @@
 					</button>
 				</label>
 				<ng-select
-					id="clientsSelect"
+					id="contactsSelect"
 					class="adjust-height"
 					[hideSelected]="true"
 					multiple="true"
