@@ -386,7 +386,6 @@ export class UpworkService {
 					forDate
 				});
 
-				console.log(wd, 'wd');
 				const cells = wd.data.cells;
 				const sourceId = wd.data.contract.record_id;
 
