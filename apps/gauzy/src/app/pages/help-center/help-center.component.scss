@@ -15,7 +15,7 @@
   flex-direction: row;
   justify-content: space-between;
   padding: 1rem;
-  margin-bottom: 2px;
+  margin-bottom: 0.5rem;
   height: auto;
   background-color: #fafafa;
 }
@@ -26,7 +26,7 @@
 
 .cards {
   padding: 0.5rem 0.5rem 0 1rem;
-  margin-bottom: 10px;
+  margin-bottom: 0.5rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -46,9 +46,9 @@
 }
 
 .icon {
-  font-size: 16px;
+  font-size: 13px;
   margin-right: 0.1rem;
-  margin-top: 0.1rem;
+  margin-top: 0.3rem;
 }
 
 .articles {
@@ -58,6 +58,7 @@
 }
 
 .header-article {
+  margin-top: 0.5rem;
   display: flex;
   flex-direction: row;
 }
@@ -74,7 +75,7 @@
 .row-name {
   display: flex;
   flex-direction: row;
-  margin-right: 10px;
+  margin-top: 0.5rem;
 }
 
 .draft {
@@ -88,6 +89,7 @@
   width: auto;
   text-align: center;
 }
+
 .privacy {
   padding: 0 0.4rem;
   color: #fff;
@@ -102,7 +104,7 @@
 
 .name {
   font-weight: 600;
-  font-size: 18px;
+  font-size: 16px;
   padding-bottom: 0.1rem;
 }
 

@@ -6,14 +6,14 @@
 	<div class="main">
 		<nb-card class="header">
 			<div class="header-article">
-				<h5 *ngIf="!categoryName">
+				<h6 *ngIf="!categoryName">
 					{{ 'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate }}
-				</h5>
-				<h5 *ngIf="categoryName">{{ categoryName }}</h5>
-				<h5 class="articles">
+				</h6>
+				<h6 *ngIf="categoryName">{{ categoryName }}</h6>
+				<h6 class="articles">
 					{{ this.nodes.length }}
 					{{ 'HELP_PAGE.ARTICLES' | translate }}
-				</h5>
+				</h6>
 			</div>
 			<button
 				[disabled]="!categoryName"
