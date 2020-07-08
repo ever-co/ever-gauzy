@@ -44,6 +44,7 @@ export class CandidateInterviewMutationComponent
 	@Input() isCalendar: boolean;
 	@Input() selectedRangeCalendar: IDateRange;
 	@Input() header: string;
+	@Input() interviewList: ICandidateInterview[];
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 	@ViewChild('candidateCriterionsForm')
@@ -61,6 +62,7 @@ export class CandidateInterviewMutationComponent
 	candidates: Candidate[] = [];
 	selectedInterviewers: string[];
 	criterionsId = null;
+	isTitleExist = false;
 	emptyInterview = {
 		title: '',
 		interviewers: null,
@@ -91,6 +93,11 @@ export class CandidateInterviewMutationComponent
 			.pipe(first())
 			.toPromise();
 		this.candidates = items;
+	}
+
+	titleExist() {
+		//TO DO
+		//this.isTitleExist = true;
 	}
 
 	async ngAfterViewInit() {

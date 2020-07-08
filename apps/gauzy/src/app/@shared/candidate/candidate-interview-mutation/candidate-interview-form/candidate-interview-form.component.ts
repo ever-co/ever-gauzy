@@ -3,12 +3,19 @@ import {
 	OnInit,
 	OnDestroy,
 	ChangeDetectorRef,
-	Input
+	Input,
+	Output,
+	EventEmitter
 } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
+import {
+	Employee,
+	IDateRange,
+	ICandidateInterviewers,
+	ICandidateInterview
+} from '@gauzy/models';
 import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
@@ -21,12 +28,17 @@ import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/ca
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	@Input() interviewers: ICandidateInterviewers[];
 	@Input() isCalendar: boolean;
+	@Input() interviewList: ICandidateInterview[];
+	@Output() titleExist = new EventEmitter<any>();
+
 	yesterday = new Date();
 	form: any;
 	employees: Employee[];
 	employeeIds: string[];
 	isMeeting: boolean;
+	interviewNames: string[];
 	selectedEmployeeIds = null;
+	isTitleExisted: boolean;
 	selectedRange: IDateRange = { start: null, end: null };
 	private _ngDestroy$ = new Subject<void>();
 
@@ -40,12 +52,25 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.yesterday.setDate(this.yesterday.getDate() - 1);
 		this.loadFormData();
+		this.form.valueChanges.subscribe((item) => {
+			this.interviewNames.forEach((el) => {
+				this.isTitleExisted =
+					el === item.title.toLocaleLowerCase() ? true : false;
+				if (this.isTitleExisted) {
+					this.titleExist.emit();
+				}
+			});
+		});
 		this.employeeService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;
 			});
+		this.interviewNames = [];
+		this.interviewList.forEach((tech) => {
+			this.interviewNames.push(tech.title.toLocaleLowerCase());
+		});
 
 		//if editing
 		this.employeeIds = this.interviewers
