@@ -72,8 +72,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
-				keyResult: selectedKeyResult,
-				owner: this.goal.owner.id
+				keyResult: selectedKeyResult
 			}
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();

@@ -23,7 +23,6 @@ import { Store } from '../../../@core/services/store.service';
 	styleUrls: ['./keyresult-details.component.scss']
 })
 export class KeyResultDetailsComponent implements OnInit, OnDestroy {
-	owner: string;
 	src: string;
 	keyResult: KeyResult;
 	updates: KeyResultUpdates[];
@@ -47,9 +46,10 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 
 	async ngOnInit() {
 		const employee = await this.employeeService.getEmployeeById(
-			this.owner,
+			this.keyResult.owner.id,
 			['user']
 		);
+		console.log(employee);
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;
 		this.updates = [...this.keyResult.updates].sort((a, b) =>
@@ -58,7 +58,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		// prevent keyresult updates after deadline
 		this.goalSettingsService
 			.getTimeFrameByName(this.keyResult.goal.deadline)
-			.then((res) => {
+			.then(async (res) => {
 				const timeFrame = res.items[0];
 				this.startDate = new Date(timeFrame.startDate);
 				if (
@@ -75,14 +75,18 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 						(isFuture(this.endDate) || isToday(this.endDate)) &&
 						isPast(this.startDate);
 				}
-				this.store.user$
+				await this.store.user$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((user) => {
+						console.log(user);
+						console.log(this.keyResult);
 						if (
 							user.role.name !== RolesEnum.SUPER_ADMIN &&
 							user.role.name !== RolesEnum.ADMIN &&
-							user.id !== this.keyResult.owner.id &&
-							user.id !== this.keyResult.lead?.id
+							user.employee.id !== this.keyResult.owner.id &&
+							!!this.keyResult.lead.id
+								? user.employee.id !== this.keyResult.lead.id
+								: false
 						) {
 							this.isUpdatable = false;
 						}
