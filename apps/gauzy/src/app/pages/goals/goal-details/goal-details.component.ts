@@ -7,13 +7,18 @@ import { first } from 'rxjs/operators';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { GoalService } from '../../../@core/services/goal.service';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
+import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-details.component';
+import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-goal-details',
 	templateUrl: './goal-details.component.html',
 	styleUrls: ['./goal-details.component.scss']
 })
-export class GoalDetailsComponent implements OnInit {
+export class GoalDetailsComponent extends TranslationBaseComponent
+	implements OnInit {
 	goal: Goal;
 	src: string;
 	ownerName: string;
@@ -23,8 +28,12 @@ export class GoalDetailsComponent implements OnInit {
 		private employeeService: EmployeesService,
 		private dialogService: NbDialogService,
 		private keyResultService: KeyResultService,
-		private goalService: GoalService
-	) {}
+		private goalService: GoalService,
+		private toastrService: ToastrService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	async ngOnInit() {
 		const employee = await this.employeeService.getEmployeeById(
@@ -59,6 +68,30 @@ export class GoalDetailsComponent implements OnInit {
 		}
 	}
 
+	async keyResultDetails(index, selectedKeyResult) {
+		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
+			hasScroll: true,
+			context: {
+				keyResult: selectedKeyResult
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			if (response === 'deleted') {
+				this.goal.keyResults.splice(index, 1);
+				this.toastrService.danger(
+					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_DELETED'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			} else {
+				this.goal.keyResults[index] = response;
+				this.goal.progress = this.calculateGoalProgress(
+					this.goal.keyResults
+				);
+			}
+		}
+	}
+
 	async keyResultUpdate(selectedKeyResult) {
 		const dialog = this.dialogService.open(KeyResultUpdateComponent, {
 			hasScroll: true,
@@ -75,20 +108,19 @@ export class GoalDetailsComponent implements OnInit {
 				selectedKeyResult.id,
 				keyResultData
 			);
-			const keyResNumber = this.goal.keyResults.length;
 			this.goal.progress = this.calculateGoalProgress(
-				keyResNumber,
 				this.goal.keyResults
 			);
 		}
 	}
 
-	calculateGoalProgress(totalCount, keyResults) {
+	calculateGoalProgress(keyResults) {
 		const progressTotal = keyResults.reduce(
-			(a: number, b: KeyResult) => a + b.progress,
+			(a: number, b: KeyResult) => a + b.progress * +b.weight,
 			0
 		);
-		return Math.round(progressTotal / totalCount);
+		const weightTotal = keyResults.reduce((a, b) => a + +b.weight, 0);
+		return Math.round(progressTotal / weightTotal);
 	}
 
 	closeDialog() {

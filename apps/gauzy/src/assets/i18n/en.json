@@ -51,9 +51,9 @@
 		"EMAIL": "Email"
 	},
 	"SM_TABLE": {
-    "DATE": "Date",
-    "TITLE": "Title",
-    "STAGE": "Stage",
+		"DATE": "Date",
+		"TITLE": "Title",
+		"STAGE": "Stage",
 		"START_DATE": "Start Date",
 		"END_DATE": "End Date",
 		"CLIENT_NAME": "Client Name",
@@ -106,6 +106,7 @@
 		"INVITED_BY": "Invited By",
 		"EXPIRE_DATE": "Expires",
 		"CLIENTS": "Clients",
+		"CONTACTS": "Contacts",
 		"DEPARTMENTS": "Departments",
 		"DESCRIPTION": "Description",
 		"APPLIED": "Applied",
@@ -160,7 +161,7 @@
 			"ROLE": "Role",
 			"EMAILS": "Email Addresses",
 			"PROJECTS_OPTIONAL": "Projects (Optional)",
-			"CLIENTS_OPTIONAL": "Clients (Optional)",
+			"CONTACTS_OPTIONAL": "Contacts (Optional)",
 			"DEPARTMENTS_OPTIONAL": "Departments (Optional)",
 			"PROJECTS": "Projects",
 			"ADD_NEW_DEPARTMENT": "Add New Department",
@@ -866,7 +867,8 @@
 				"INTERVIEWERS": "interviewer(s)",
 				"HIRE": "Hire",
 				"POSTPONE": "Postpone",
-				"REJECT": "Reject"
+				"REJECT": "Reject",
+				"INTERVIEW_TITLE_EXIST": "An interview with such name already exists"
 			}
 		},
 		"INTERVIEW_INFO_MODAL": {
@@ -919,6 +921,8 @@
 			"CANDIDATE_CRITERIONS": "Candidates criterions",
 			"RATE_CANDIDATE_BY_CRITERIONS": "Rate candidate by criterions",
 			"TECHNOLOGY_STACK": "Technology Stack",
+			"ALREADY_EXISTED": "Already existed",
+			"TOASTR_ALREADY_EXIST": "A criterion with such name already exists",
 			"PERSONAL_QUALITIES": "Personal Qualities",
 			"CHOOSE_CRITERIONS": "Choose criterions for candidate",
 			"TECHNOLOGY_PLACEHOLDER": "If you want to add criteria from the technology stack, you need to create them",
@@ -1055,7 +1059,8 @@
 				"ADMINISTRATION": "Administration"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
-			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
+			"VIEW_MY_TASK": "View My Tasks"
 		}
 	},
 	"PUBLIC_PAGE": {
@@ -1550,7 +1555,7 @@
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
-		"CREATE_AT": "create at",
+		"CREATED_AT": "created at",
 		"WRITTEN_BY": "written by",
 		"EMPLOYEES": "employees",
 		"ONLY_FOR_EMPLOYEES": "Only for employees",
@@ -1963,22 +1968,22 @@
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
-    "HEADER_STAGES": "Stages",
-    "VIEW_DEALS": "View Deals",
-    "HEADER_FORM_EDIT": "Edit Pipeline",
-    "HEADER_FORM_CREATE": "Create Pipeline",
-    "RECORD_TYPE": "pipeline \"{{ name }}\""
-  },
-  "PIPELINE_DEALS_PAGE": {
-    "HEADER": "Pipeline Deals",
-    "FILTER_BY_STAGE": "Filter by Stage",
-    "RECORD_TYPE": "stage \"{{ title }}\""
-  },
-  "PIPELINE_DEAL_EDIT_PAGE": {
-    "HEADER": "Edit Deal | Pipeline: {{ name }}"
-  },
-  "PIPELINE_DEAL_CREATE_PAGE": {
-    "HEADER": "Create Deal | Pipeline: {{ name }}",
-    "SELECT_STAGE": "Select Stage"
-  }
+		"HEADER_STAGES": "Stages",
+		"VIEW_DEALS": "View Deals",
+		"HEADER_FORM_EDIT": "Edit Pipeline",
+		"HEADER_FORM_CREATE": "Create Pipeline",
+		"RECORD_TYPE": "pipeline \"{{ name }}\""
+	},
+	"PIPELINE_DEALS_PAGE": {
+		"HEADER": "Pipeline Deals",
+		"FILTER_BY_STAGE": "Filter by Stage",
+		"RECORD_TYPE": "stage \"{{ title }}\""
+	},
+	"PIPELINE_DEAL_EDIT_PAGE": {
+		"HEADER": "Edit Deal | Pipeline: {{ name }}"
+	},
+	"PIPELINE_DEAL_CREATE_PAGE": {
+		"HEADER": "Create Deal | Pipeline: {{ name }}",
+		"SELECT_STAGE": "Select Stage"
+	}
 }

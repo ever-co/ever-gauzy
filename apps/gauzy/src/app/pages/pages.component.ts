@@ -225,10 +225,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'My Tasks',
 					icon: 'person-outline',
 					link: '/pages/tasks/me',
-					hidden: !this.isEmployee,
 					data: {
 						translated: false,
-						translationKey: 'MENU.MY_TASKS'
+						translationKey: 'MENU.MY_TASKS',
+						permissionKeys: [PermissionsEnum.VIEW_MY_TASK]
 					}
 				},
 				{

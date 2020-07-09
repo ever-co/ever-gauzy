@@ -52,7 +52,8 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 		} else if (this.keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
 			this.hideStatus = true;
 			this.keyResultUpdateForm.patchValue({
-				newValueBoolean: this.keyResult.update === 1 ? true : false
+				newValueBoolean: this.keyResult.update === 1 ? true : false,
+				newStatus: KeyResultUpdateStatusEnum.ON_TRACK
 			});
 		}
 	}

@@ -19,6 +19,8 @@ export class CandidatePersonalQualitiesComponent
 	personalQualitiesList: ICandidatePersonalQualities[];
 	form: FormGroup;
 	editId = null;
+	existedQualNames: string[];
+	qualityNames: string[] = [];
 	constructor(
 		private fb: FormBuilder,
 		private readonly toastrService: NbToastrService,
@@ -47,6 +49,18 @@ export class CandidatePersonalQualitiesComponent
 				name: ['', Validators.required]
 			})
 		);
+		this.form.valueChanges.subscribe((item) => {
+			this.existedQualNames = [];
+			const enteredName = item.qualities[0].name;
+			this.personalQualitiesList.forEach((el) => {
+				if (
+					enteredName !== '' &&
+					el.name.toLocaleLowerCase().includes(enteredName)
+				) {
+					this.existedQualNames.push(el.name);
+				}
+			});
+		});
 	}
 
 	private async loadQualities() {
@@ -55,6 +69,10 @@ export class CandidatePersonalQualitiesComponent
 			this.personalQualitiesList = res.items.filter(
 				(item) => !item.interviewId
 			);
+			this.qualityNames = [];
+			this.personalQualitiesList.forEach((tech) => {
+				this.qualityNames.push(tech.name.toLocaleLowerCase());
+			});
 		}
 	}
 	async save() {
@@ -70,27 +88,48 @@ export class CandidatePersonalQualitiesComponent
 	}
 
 	async update(formValue: ICandidatePersonalQualities) {
-		try {
-			await this.candidatePersonalQualitiesService.update(this.editId, {
-				...formValue
-			});
-			this.editId = null;
-			this.toastrSuccess('UPDATED');
-			this.loadQualities();
-		} catch (error) {
-			this.toastrError(error);
+		if (!this.qualityNames.includes(formValue.name.toLocaleLowerCase())) {
+			try {
+				await this.candidatePersonalQualitiesService.update(
+					this.editId,
+					{
+						...formValue
+					}
+				);
+				this.editId = null;
+				this.toastrSuccess('UPDATED');
+				this.loadQualities();
+			} catch (error) {
+				this.toastrError(error);
+			}
+		} else {
+			this.toastrService.danger(
+				this.getTranslation(
+					'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
+				),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
 		}
 	}
 
 	async create(formValue: ICandidatePersonalQualities) {
-		try {
-			await this.candidatePersonalQualitiesService.create({
-				...formValue
-			});
-			this.toastrSuccess('CREATED');
-			this.loadQualities();
-		} catch (error) {
-			this.toastrError(error);
+		if (!this.qualityNames.includes(formValue.name.toLocaleLowerCase())) {
+			try {
+				await this.candidatePersonalQualitiesService.create({
+					...formValue
+				});
+				this.toastrSuccess('CREATED');
+				this.loadQualities();
+			} catch (error) {
+				this.toastrError(error);
+			}
+		} else {
+			this.toastrService.danger(
+				this.getTranslation(
+					'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
+				),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
 		}
 	}
 

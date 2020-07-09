@@ -4,16 +4,18 @@ import { EmployeesService } from '../../../@core/services';
 import {
 	KeyResult,
 	KeyResultUpdates,
-	KeyResultDeadlineEnum
+	KeyResultDeadlineEnum,
+	RolesEnum
 } from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -21,7 +23,6 @@ import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
 	styleUrls: ['./keyresult-details.component.scss']
 })
 export class KeyResultDetailsComponent implements OnInit, OnDestroy {
-	owner: string;
 	src: string;
 	keyResult: KeyResult;
 	updates: KeyResultUpdates[];
@@ -39,12 +40,13 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		private employeeService: EmployeesService,
 		private dialogService: NbDialogService,
 		private keyResultService: KeyResultService,
-		private goalSettingsService: GoalSettingsService
+		private goalSettingsService: GoalSettingsService,
+		private store: Store
 	) {}
 
 	async ngOnInit() {
 		const employee = await this.employeeService.getEmployeeById(
-			this.owner,
+			this.keyResult.owner.id,
 			['user']
 		);
 		this.src = employee.user.imageUrl;
@@ -55,7 +57,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		// prevent keyresult updates after deadline
 		this.goalSettingsService
 			.getTimeFrameByName(this.keyResult.goal.deadline)
-			.then((res) => {
+			.then(async (res) => {
 				const timeFrame = res.items[0];
 				this.startDate = new Date(timeFrame.startDate);
 				if (
@@ -72,6 +74,20 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 						(isFuture(this.endDate) || isToday(this.endDate)) &&
 						isPast(this.startDate);
 				}
+				await this.store.user$
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe((user) => {
+						if (
+							user.role.name !== RolesEnum.SUPER_ADMIN &&
+							user.role.name !== RolesEnum.ADMIN &&
+							user.employee.id !== this.keyResult.owner.id &&
+							!!this.keyResult.lead.id
+								? user.employee.id !== this.keyResult.lead.id
+								: false
+						) {
+							this.isUpdatable = false;
+						}
+					});
 			});
 	}
 

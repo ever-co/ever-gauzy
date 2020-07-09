@@ -69,12 +69,9 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 
 	private async loadProjects() {
 		const organizationId = this._organizationsStore.selectedOrganization.id;
-		const { items } = await this.organizationProjectsService.getAll(
-			['client'],
-			{
-				organizationId
-			}
-		);
+		const { items } = await this.organizationProjectsService.getAll([], {
+			organizationId
+		});
 
 		if (items) this.projects = items;
 	}

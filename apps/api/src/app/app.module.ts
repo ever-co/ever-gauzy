@@ -101,6 +101,7 @@ import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TimeOffRequestModule } from './time-off-request/time-off-request.module';
 import { DealModule } from './deal/deal.module';
+import { HelpCenterAuthorModule } from './help-center-author/help-center-author.module';
 
 @Module({
 	imports: [
@@ -170,6 +171,10 @@ import { DealModule } from './deal/deal.module';
 					{
 						path: '/help-center-article',
 						module: HelpCenterArticleModule
+					},
+					{
+						path: '/help-center-author',
+						module: HelpCenterAuthorModule
 					},
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
@@ -378,10 +383,10 @@ import { DealModule } from './deal/deal.module';
 						path: '/pipelines',
 						module: PipelineModule
 					},
-          {
-            path: '/deals',
-            module: DealModule,
-          },
+					{
+						path: '/deals',
+						module: DealModule
+					},
 					{
 						path: '/payments',
 						module: PaymentModule
@@ -473,7 +478,7 @@ import { DealModule } from './deal/deal.module';
 		AvailabilitySlotsModule,
 		PipelineModule,
 		StageModule,
-    DealModule,
+		DealModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
@@ -488,6 +493,7 @@ import { DealModule } from './deal/deal.module';
 			  ]
 			: []),
 		HelpCenterModule,
+		HelpCenterAuthorModule,
 		EquipmentModule,
 		EquipmentSharingModule,
 		TaskModule,

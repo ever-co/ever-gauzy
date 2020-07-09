@@ -20,4 +20,40 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 
 		return await this.timeOfRequestRepository.save(request);
 	}
+
+	async getAllTimeOffRequests(relations, findInput?, filterDate?) {
+		const allRequests = await this.timeOfRequestRepository.find({
+			where: findInput['organziationId'],
+			relations
+		});
+		let items = [];
+		const total = await this.timeOfRequestRepository.count();
+
+		if (findInput['employeeId']) {
+			allRequests.forEach((request) => {
+				request.employees.forEach((e) => {
+					if (e.id === findInput['employeeId']) {
+						items.push(request);
+					}
+				});
+			});
+		} else {
+			items = allRequests;
+		}
+
+		if (filterDate) {
+			const dateObject = new Date(filterDate);
+
+			const month = dateObject.getMonth() + 1;
+			const year = dateObject.getFullYear();
+
+			items = [...items].filter((i) => {
+				const currentItemMonth = i.start.getMonth() + 1;
+				const currentItemYear = i.start.getFullYear();
+				return currentItemMonth === month && currentItemYear === year;
+			});
+		}
+
+		return { items, total };
+	}
 }

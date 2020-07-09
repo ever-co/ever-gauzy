@@ -1,4 +1,10 @@
-.max-width-500 {
-  max-width: 600px;
-  min-width: 500px;
+.max-width-30vw {
+  max-width: 30vw;
+  min-width: 30vw;
+}
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }

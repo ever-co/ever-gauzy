@@ -30,6 +30,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
 }
 
 .user-info {
@@ -66,7 +67,6 @@
 }
 
 .edit-icon {
-  margin-top: 27px;
   font-size: 24px;
   display: none;
 }
@@ -78,7 +78,7 @@
 }
 
 .draft {
-  padding: 0 0.2rem;
+  padding: 0 0.4rem;
   color: #fff;
   background-color: #aaaeb3;
   margin-left: 10px;
@@ -89,7 +89,7 @@
   text-align: center;
 }
 .privacy {
-  padding: 0 0.2rem;
+  padding: 0 0.4rem;
   color: #fff;
   background-color: blueviolet;
   margin-left: 10px;
@@ -104,4 +104,12 @@
   font-weight: 600;
   font-size: 18px;
   padding-bottom: 0.1rem;
+}
+
+.data {
+  padding-bottom: 0.5rem;
+}
+
+.main-article {
+  width: 90%;
 }

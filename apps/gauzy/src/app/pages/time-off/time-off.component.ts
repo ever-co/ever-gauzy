@@ -8,6 +8,8 @@ import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off
 import { TimeOffService } from '../../@core/services/time-off.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { DatePipe } from '@angular/common';
 
 @Component({
 	selector: 'ngx-time-off',
@@ -23,14 +25,15 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 		private store: Store
 	) {}
 
+	settingsSmartTable: object;
+	sourceSmartTable = new LocalDataSource();
+
 	private _selectedOrganizationId: string;
 	timeOffRequest: TimeOff;
 	selectedDate: Date;
 	selectedEmployeeId: string;
 	selectedStatus = 'All';
 	timeOffStatuses = Object.keys(StatusTypesEnum);
-	settingsSmartTable: object;
-	sourceSmartTable = new LocalDataSource();
 	loading = false;
 	displayHolidays = true;
 	hasEditPermission = false;
@@ -53,7 +56,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 					this._loadTableData();
 				} else {
 					if (this._selectedOrganizationId) {
-						this._loadTableData(null, this._selectedOrganizationId);
+						this._loadTableData(this._selectedOrganizationId);
 					}
 				}
 			});
@@ -67,7 +70,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				} else {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
-						this._loadTableData(null, this._selectedOrganizationId);
+						this._loadTableData(this._selectedOrganizationId);
 					}
 				}
 			});
@@ -78,24 +81,84 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				if (org) {
 					this._selectedOrganizationId = org.id;
 					if (this.loading) {
-						this._loadTableData(
-							this.store.selectedEmployee
-								? this.store.selectedEmployee.id
-								: null,
-							this.store.selectedEmployee &&
-								this.store.selectedEmployee.id
-								? null
-								: this._selectedOrganizationId
-						);
+						this._loadTableData(this._selectedOrganizationId);
 					}
 				}
 			});
+
+		this._loadSmartTableSettings();
+		this._loadTableData();
 	}
 
-	private _loadTableData(
-		employeeId = this.selectedEmployeeId,
-		orgId?: string
-	) {}
+	private _loadSmartTableSettings() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				fullName: {
+					title: 'Employee',
+					type: 'custom',
+					renderComponent: PictureNameTagsComponent,
+					class: 'align-row'
+				},
+				description: {
+					title: 'Description',
+					type: 'string',
+					class: 'text-center'
+				},
+				policy: {
+					title: 'Policy',
+					type: 'string',
+					class: 'text-center'
+				},
+				start: {
+					title: 'Start',
+					type: 'date',
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					class: 'text-center'
+				},
+				end: {
+					title: 'End',
+					type: 'date',
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					class: 'text-center'
+				},
+				requestDate: {
+					title: 'Request Date',
+					type: 'date',
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					class: 'text-center'
+				},
+				status: {
+					title: 'Status',
+					type: 'string',
+					class: 'text-center'
+				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
+			}
+		};
+	}
+
+	private _loadTableData(orgId?: string) {
+		this.timeOffService
+			.getAllTimeOffRecords(
+				['employees', 'employees.user', 'policy'],
+				{
+					organizationId: orgId,
+					employeeId: this.selectedEmployeeId || null
+				},
+				this.selectedDate || null
+			)
+			.pipe(first())
+			.subscribe((res) => {
+				this.sourceSmartTable.load(res.items);
+			});
+	}
 
 	openTimeOffSettings() {
 		this.router.navigate(['/pages/employees/time-off/settings']);
@@ -131,12 +194,21 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 
 	private _createRecord() {
 		if (this.timeOffRequest) {
-			this.timeOffService.createRequest(this.timeOffRequest).pipe(first()).subscribe(() => {
-				this.toastrService.success(
-					`Time off record ${this.timeOffRequest.description} successfully created!`,
-					'Success'
+			this.timeOffService
+				.createRequest(this.timeOffRequest)
+				.pipe(first())
+				.subscribe(
+					() => {
+						this.toastrService.success(
+							`Time off record ${this.timeOffRequest.description} successfully created!`,
+							'Success'
+						);
+					},
+					() =>
+						this.toastrService.danger(
+							'Unable to create Time off record'
+						)
 				);
-			}, () => this.toastrService.danger('Unable to create Time off record'))
 		}
 	}
 

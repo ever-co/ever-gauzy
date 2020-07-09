@@ -230,7 +230,7 @@ export interface ICreateScreenshotInput {
 	employeeId?: string;
 	fullUrl: string;
 	thumbUrl?: string;
-	recordedAt: Date;
+	recordedAt: Date | string;
 }
 
 export interface Screenshot extends IBaseEntityModel {

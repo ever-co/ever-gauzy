@@ -75,7 +75,7 @@ const routes: Routes = [
 				]
 			},
 			{
-				path: 'clients',
+				path: 'contacts',
 				loadChildren: () =>
 					import('./work-in-progress/work-in-progress.module').then(
 						(m) => m.WorkInProgressModule

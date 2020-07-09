@@ -3,7 +3,7 @@
 		<h4>{{ 'TIME_OFF_PAGE.HEADER' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row">
+		<div class="row mb-3">
 			<button
 				nbButton
 				status="primary"
@@ -60,7 +60,7 @@
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
 			(userRowSelect)="selectRecord($event)"
-			#employeesTable
+			#timeOffTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>

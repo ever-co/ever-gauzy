@@ -45,7 +45,9 @@
 				</div>
 
 				<ga-candidate-interview-form
+					[interviewList]="interviewList"
 					#candidateInterviewForm
+					(titleExist)="titleExist()"
 					[isCalendar]="isCalendar"
 					[interviewers]="editData?.interviewers"
 				></ga-candidate-interview-form>
