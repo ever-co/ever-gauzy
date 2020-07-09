@@ -17,11 +17,12 @@ if (userAgent.indexOf(' electron/') > -1) {
 		const el: ElectronService = new ElectronService();
 		const variableGlobal = el.remote.getGlobal('variableGlobal');
 		API_BASE_URL = variableGlobal.API_BASE_URL;
-	} catch (e) {}
+	} catch(e) {
+	}
 }
 
 export const environment: Environment = {
-	production: false,
+  production:  false,
 
 	API_BASE_URL: API_BASE_URL,
 	COMPANY_NAME: 'Ever Co. LTD',
@@ -47,15 +48,15 @@ export const environment: Environment = {
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
-	cloud_name: environment.CLOUDINARY_CLOUD_NAME,
-	api_key: environment.CLOUDINARY_API_KEY
+  cloud_name: environment.CLOUDINARY_CLOUD_NAME,
+  api_key: environment.CLOUDINARY_API_KEY
 };
 
 /*
- * For easier debugging in development mode, you can import the following file
- * to ignore zone related error stack frames such as 'zone.run', 'zoneDelegate.invokeTask'.
- *
- * This import should be commented out in production mode because it will have a negative impact
- * on performance if an error is thrown.
- */
+* For easier debugging in development mode, you can import the following file
+* to ignore zone related error stack frames such as 'zone.run', 'zoneDelegate.invokeTask'.
+*
+* This import should be commented out in production mode because it will have a negative impact
+* on performance if an error is thrown.
+*/
 // import 'zone.js/dist/zone-error';  // Included with Angular CLI.
