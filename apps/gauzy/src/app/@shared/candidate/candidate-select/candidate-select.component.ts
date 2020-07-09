@@ -12,6 +12,7 @@ export class CandidateSelectComponent {
 	@Input() allCandidates: Candidate[];
 	@Input() isAllMembers = false;
 	@Input() disabled = false;
+	@Input() isPlaceholderSelected = false;
 	@Output() selectedChange = new EventEmitter();
 	constructor() {}
 

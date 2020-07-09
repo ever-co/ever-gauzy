@@ -10,12 +10,7 @@ import {
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import {
-	Employee,
-	IDateRange,
-	ICandidateInterviewers,
-	ICandidateInterview
-} from '@gauzy/models';
+import { Employee, IDateRange, ICandidateInterview } from '@gauzy/models';
 import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
@@ -26,7 +21,7 @@ import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/ca
 	styleUrls: ['candidate-interview-form.component.scss']
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
-	@Input() interviewers: ICandidateInterviewers[];
+	@Input() editData: ICandidateInterview;
 	@Input() isCalendar: boolean;
 	@Input() interviewList: ICandidateInterview[];
 	@Output() titleExist = new EventEmitter<any>();
@@ -53,13 +48,24 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 		this.yesterday.setDate(this.yesterday.getDate() - 1);
 		this.loadFormData();
 		this.form.valueChanges.subscribe((item) => {
-			this.interviewNames.forEach((el) => {
-				this.isTitleExisted =
-					el === item.title.toLocaleLowerCase() ? true : false;
-				if (this.isTitleExisted) {
-					this.titleExist.emit();
+			for (let i = 0; i < this.interviewNames.length; i++) {
+				if (this.interviewNames[i] === item.title.toLocaleLowerCase()) {
+					if (
+						this.editData &&
+						this.editData.title === this.form.get('title').value
+					) {
+						this.isTitleExisted = false;
+						this.titleExist.emit(false);
+						break;
+					}
+					this.isTitleExisted = true;
+					this.titleExist.emit(true);
+					break;
+				} else {
+					this.isTitleExisted = false;
+					this.titleExist.emit(false);
 				}
-			});
+			}
 		});
 		this.employeeService
 			.getAll(['user'])
@@ -68,14 +74,15 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 				this.employees = employees.items;
 			});
 		this.interviewNames = [];
-		this.interviewList.forEach((tech) => {
-			this.interviewNames.push(tech.title.toLocaleLowerCase());
+		this.interviewList.forEach((interview) => {
+			this.interviewNames.push(interview.title.toLocaleLowerCase());
 		});
-
 		//if editing
-		this.employeeIds = this.interviewers
-			? this.interviewers.map((item) => item.employeeId)
-			: [];
+		if (this.editData) {
+			this.employeeIds = this.editData.interviewers
+				? this.editData.interviewers.map((item) => item.employeeId)
+				: [];
+		}
 	}
 	async findTime() {
 		const dialog = this.dialogService.open(CandidateCalendarInfoComponent);

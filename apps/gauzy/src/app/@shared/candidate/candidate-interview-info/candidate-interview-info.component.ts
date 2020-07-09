@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
 import { ICandidateInterview, Candidate } from '@gauzy/models';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
@@ -16,9 +16,9 @@ import { Subject } from 'rxjs';
 	styleUrls: ['./candidate-interview-info.component.scss']
 })
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	@Input() interviewId: any; //from calendar
-	@Input() interviewList: ICandidateInterview[]; //from profile
+	@Input() interviewList: ICandidateInterview[];
 	@Input() selectedCandidate: Candidate; //from profile
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
@@ -53,7 +53,8 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 					),
 					editData: this.currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: this.currentInterview.id
+					interviewId: this.currentInterview.id,
+					interviewList: this.interviewList
 				}
 			}
 		);
@@ -76,6 +77,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 				this.currentInterview = this.interviewList.find(
 					(item) => item.id === this.interviewId
 				);
+				this.interviewList = [];
 				const candidate = await this.candidatesService.getCandidateById(
 					this.currentInterview.candidateId,
 					['user']
@@ -184,5 +186,9 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	}
 	closeDialog() {
 		this.dialogRef.close();
+	}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

@@ -114,6 +114,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				this.toastrSuccess('CREATED');
 				this.loadInterview();
 			}
+			this.loadInterview();
 		}
 	}
 
@@ -130,7 +131,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					),
 					editData: currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: id
+					interviewId: id,
+					interviewList: this.interviewList
 				}
 			}
 		);

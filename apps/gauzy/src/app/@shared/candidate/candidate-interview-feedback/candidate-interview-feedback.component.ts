@@ -205,9 +205,8 @@ export class CandidateInterviewFeedbackComponent
 		}
 	}
 	private loadCriterions() {
-		this.technologiesList = this.currentInterview.technologies;
 		this.personalQualitiesList = this.currentInterview.personalQualities;
-
+		this.technologiesList = this.currentInterview.technologies;
 		const technologyRating = this.form.get('technologies') as FormArray;
 		this.technologiesList.forEach((item) => {
 			technologyRating.push(this.fb.control(item.rating));
