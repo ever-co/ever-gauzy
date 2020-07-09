@@ -50,7 +50,10 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 		this.form.valueChanges.subscribe((item) => {
 			for (let i = 0; i < this.interviewNames.length; i++) {
 				if (this.interviewNames[i] === item.title.toLocaleLowerCase()) {
-					if (this.editData.title === this.form.get('title').value) {
+					if (
+						this.editData &&
+						this.editData.title === this.form.get('title').value
+					) {
 						this.isTitleExisted = false;
 						this.titleExist.emit(false);
 						break;
@@ -75,9 +78,11 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			this.interviewNames.push(interview.title.toLocaleLowerCase());
 		});
 		//if editing
-		this.employeeIds = this.editData.interviewers
-			? this.editData.interviewers.map((item) => item.employeeId)
-			: [];
+		if (this.editData) {
+			this.employeeIds = this.editData.interviewers
+				? this.editData.interviewers.map((item) => item.employeeId)
+				: [];
+		}
 	}
 	async findTime() {
 		const dialog = this.dialogService.open(CandidateCalendarInfoComponent);

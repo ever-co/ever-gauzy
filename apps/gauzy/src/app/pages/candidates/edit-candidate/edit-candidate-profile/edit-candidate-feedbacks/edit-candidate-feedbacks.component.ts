@@ -361,7 +361,12 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	cancel() {
 		this.showAddCard = !this.showAddCard;
+		this.form.controls.feedbacks.reset();
 		this.form.reset();
+		this.status = null;
+		this.feedbackInterviewer = null;
+		this.feedbackInterviewId = null;
+		this.interviewers = [];
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;

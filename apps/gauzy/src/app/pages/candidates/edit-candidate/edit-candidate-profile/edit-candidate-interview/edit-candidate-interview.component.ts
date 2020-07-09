@@ -114,6 +114,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				this.toastrSuccess('CREATED');
 				this.loadInterview();
 			}
+			this.loadInterview();
 		}
 	}
 
