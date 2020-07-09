@@ -326,4 +326,9 @@ export class Organization extends TenantBase implements IOrganization {
 	})
 	@JoinColumn()
 	payments?: Payment[];
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	separateInvoiceItemTaxAndDiscount?: boolean;
 }
