@@ -77,7 +77,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 		]);
 		if (res) {
 			this.interviewList = res.items;
-			console.log(this.interviewList);
 			this.calendarOptions = {
 				eventClick: (event) => {
 					const id = event.event._def.extendedProps.id;

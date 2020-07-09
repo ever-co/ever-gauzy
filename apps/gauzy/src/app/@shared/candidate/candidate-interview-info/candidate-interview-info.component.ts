@@ -18,6 +18,7 @@ import { Subject } from 'rxjs';
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() interviewId: any; //from calendar
+	@Input() interviewList: ICandidateInterview[];
 	@Input() selectedCandidate: Candidate; //from profile
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
@@ -26,7 +27,6 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	nameList: string;
 	timeUpdate: string;
 	isNextBtn = true;
-	interviewList: ICandidateInterview[];
 	index = 1;
 	isPreviousBtn = false;
 	interviewers = [];
