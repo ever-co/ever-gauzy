@@ -222,6 +222,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Settings',
+					icon: 'settings',
+					link: '/pages/tasks/settings',
+					data: {
+						translated: false,
+						translationKey: 'MENU.TASKS_SETTINGS'
+					}
+				},
+				{
 					title: 'My Tasks',
 					icon: 'person-outline',
 					link: '/pages/tasks/me',

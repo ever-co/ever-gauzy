@@ -29,6 +29,7 @@ export const createDefaultOrganizationProjects = async (
 		project.name = name;
 		project.organizationId = defaultOrganizations[0].id;
 		project.tenant = defaultOrganizations[0].tenant;
+		// TODO: this seed creates default projects without tenantId.
 		projects.push(project);
 	});
 	await connection.manager.save(projects);

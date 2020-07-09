@@ -15,7 +15,10 @@ import {
 	NbSelectModule,
 	NbBadgeModule,
 	NbDatepickerModule,
-	NbRadioModule
+	NbRadioModule,
+	NbAccordionModule,
+	NbListModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -29,6 +32,9 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task-dialog.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { TaskSettingsComponent } from './components/task-settings/task-settings.component';
+import { ProjectViewComponent } from './components/task-settings/project-view/project-view.component';
+import { TasksSprintSettingsViewComponent } from './components/task-settings/project-view/tasks-sprint-settings-view/tasks-sprint-settings-view.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -38,7 +44,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TaskComponent,
 		TaskDialogComponent,
 		MyTaskDialogComponent,
-		TeamTaskDialogComponent
+		TeamTaskDialogComponent,
+		TaskSettingsComponent,
+		ProjectViewComponent,
+		TasksSprintSettingsViewComponent
 	],
 	imports: [
 		NbBadgeModule,
@@ -50,13 +59,16 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NgSelectModule,
 		NbRadioModule,
+		NbAccordionModule,
 		NbIconModule,
 		FormsModule,
 		ReactiveFormsModule,
 		TasksRoutingModule,
 		NbInputModule,
 		NbSelectModule,
+		NbTabsetModule,
 		NbDialogModule.forChild(),
+		NbListModule,
 		Ng2SmartTableModule,
 		UserFormsModule,
 		CardGridModule,
