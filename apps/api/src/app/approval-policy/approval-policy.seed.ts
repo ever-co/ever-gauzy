@@ -1,6 +1,8 @@
 import { Connection } from 'typeorm';
 import { Organization, ApprovalPolicyTypesEnum } from '@gauzy/models';
 import { ApprovalPolicy } from './approval-policy.entity';
+import { Tenant } from '../tenant/tenant.entity';
+import * as faker from 'faker';
 
 export const createDefaultApprovalPolicyForOrg = async (
 	connection: Connection,
@@ -33,4 +35,46 @@ const insertDefaultPolicy = async (
 		.into(ApprovalPolicy)
 		.values(defaultPolicy)
 		.execute();
+};
+
+export const createRandomApprovalPolicyForOrg = async (
+	connection: Connection,
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>
+): Promise<ApprovalPolicy[]> => {
+	let policies: ApprovalPolicy[] = [];
+	let policyArray = [
+		'Trade Policy',
+		'Union Budget',
+		'Definition, Licensing Policies and Registration',
+		'State Government Industrial Policies',
+		'Reservation Policy',
+		'National Policies',
+		'International Policies'
+	];
+	for (const tenant of tenants) {
+		const orgs = tenantOrganizationsMap.get(tenant);
+		orgs.forEach((org) => {
+			policyArray.forEach((name) => {
+				let policy = new ApprovalPolicy();
+				policy.description = name;
+				policy.name = name;
+				policy.tenant = tenant;
+				policy.organization = org;
+				policy.type = faker.random.number({
+					min: 1,
+					max: 3
+				});
+				policies.push(policy);
+			});
+		});
+	}
+	await connection
+		.createQueryBuilder()
+		.insert()
+		.into(ApprovalPolicy)
+		.values(policies)
+		.execute();
+
+	return policies;
 };

@@ -22,18 +22,21 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 	}
 
 	async getAllTimeOffRequests(relations, findInput?, filterDate?) {
-		const allRequests = await this.timeOfRequestRepository.find({ where: findInput['organziationId'], relations });
+		const allRequests = await this.timeOfRequestRepository.find({
+			where: findInput['organziationId'],
+			relations
+		});
 		let items = [];
 		const total = await this.timeOfRequestRepository.count();
 
 		if (findInput['employeeId']) {
-			allRequests.forEach(request => {
-				request.employees.forEach(e => {
+			allRequests.forEach((request) => {
+				request.employees.forEach((e) => {
 					if (e.id === findInput['employeeId']) {
-						items.push(request)
+						items.push(request);
 					}
-				})
-			})
+				});
+			});
 		} else {
 			items = allRequests;
 		}
