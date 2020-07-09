@@ -105,7 +105,6 @@ export class ContractsComponent extends TranslationBaseComponent
 	}
 
 	selectContracts({ isSelected, selected }) {
-		const selectedContracts = isSelected ? selected : null;
 		this.contractsTable.grid.dataSet.willSelect = false;
 		this.selectedContracts = selected;
 	}

@@ -91,8 +91,13 @@ export class UpworkStoreService {
 		if (!entitiesToSync.length) {
 			return;
 		}
+
 		const integrationId = this._selectedIntegrationId$.getValue();
 		const { id: organizationId } = this._os.selectedOrganization;
+		//map contract provider to get authorize info
+		const { provider__reference: providerId } = contracts.find(
+			(contract: IEngagement) => true
+		);
 
 		return this._us.syncContractsRelatedData({
 			integrationId,
@@ -100,7 +105,8 @@ export class UpworkStoreService {
 			contracts,
 			entitiesToSync,
 			config,
-			employeeId: this.employeeId
+			employeeId: this.employeeId,
+			providerId
 		});
 	}
 
