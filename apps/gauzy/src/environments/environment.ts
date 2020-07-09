@@ -17,43 +17,44 @@ if (userAgent.indexOf(' electron/') > -1) {
 		const el: ElectronService = new ElectronService();
 		const variableGlobal = el.remote.getGlobal('variableGlobal');
 		API_BASE_URL = variableGlobal.API_BASE_URL;
-	} catch (e) {}
+	} catch(e) {
+	}
 }
 
 export const environment: Environment = {
-	production: false,
+  production:  false,
 
-	API_BASE_URL: API_BASE_URL,
-	COMPANY_NAME: 'Ever Co. LTD',
-	COMPANY_SITE: 'Gauzy',
-	COMPANY_LINK: 'https://ever.co/',
-	COMPANY_SITE_LINK: 'https://gauzy.co',
-	COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
-	COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/gauzyplatform',
-	COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
-	COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
-	CLOUDINARY_CLOUD_NAME: 'dv6ezkfxg',
-	CLOUDINARY_API_KEY: '256868982483961',
-	GOOGLE_AUTH_LINK: 'http://localhost:3000/api/auth/google',
-	FACEBOOK_AUTH_LINK: 'http://localhost:3000/api/auth/facebook',
-	LINKEDIN_AUTH_LINK: 'http://localhost:3000/api/auth/linkedin',
-	GITHUB_AUTH_LINK: 'http://localhost:3000/api/auth/github',
-	TWITTER_AUTH_LINK: 'http://localhost:3000/api/auth/twitter',
-	NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
-	SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
-	HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff'
+  API_BASE_URL: API_BASE_URL,
+  COMPANY_NAME: 'Ever Co. LTD',
+  COMPANY_SITE: 'Gauzy',
+  COMPANY_LINK: 'https://ever.co/',
+  COMPANY_SITE_LINK: 'https://gauzy.co',
+  COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
+  COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/gauzyplatform',
+  COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
+  COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
+  CLOUDINARY_CLOUD_NAME: 'dv6ezkfxg',
+  CLOUDINARY_API_KEY: '256868982483961',
+  GOOGLE_AUTH_LINK: 'http://localhost:3000/api/auth/google',
+  FACEBOOK_AUTH_LINK: 'http://localhost:3000/api/auth/facebook',
+  LINKEDIN_AUTH_LINK: 'http://localhost:3000/api/auth/linkedin',
+  GITHUB_AUTH_LINK: 'http://localhost:3000/api/auth/github',
+  TWITTER_AUTH_LINK: 'http://localhost:3000/api/auth/twitter',
+  NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
+  SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
+  HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff'
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
-	cloud_name: environment.CLOUDINARY_CLOUD_NAME,
-	api_key: environment.CLOUDINARY_API_KEY
+  cloud_name: environment.CLOUDINARY_CLOUD_NAME,
+  api_key: environment.CLOUDINARY_API_KEY
 };
 
 /*
- * For easier debugging in development mode, you can import the following file
- * to ignore zone related error stack frames such as 'zone.run', 'zoneDelegate.invokeTask'.
- *
- * This import should be commented out in production mode because it will have a negative impact
- * on performance if an error is thrown.
- */
+* For easier debugging in development mode, you can import the following file
+* to ignore zone related error stack frames such as 'zone.run', 'zoneDelegate.invokeTask'.
+*
+* This import should be commented out in production mode because it will have a negative impact
+* on performance if an error is thrown.
+*/
 // import 'zone.js/dist/zone-error';  // Included with Angular CLI.

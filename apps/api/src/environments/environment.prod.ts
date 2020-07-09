@@ -287,7 +287,10 @@ export const environment: IEnvironment = {
 		organizationsPerTenant: 10,
 		employeesPerOrganization: 10,
 		candidatesPerOrganization: 2,
-		projectsPerOrganization: 30
+		projectsPerOrganization: 30,
+		emailsPerOrganization: 30,
+		invitePerOrganization: 30,
+		requestApprovalPerOrganization: 20
 	},
 
 	defaultHubstaffUserPass:
