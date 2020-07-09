@@ -101,7 +101,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 			x.forEach((item, index) => (sumArr[index] += item))
 		);
 		const result = [];
-		sumArr.forEach((x) => result.push(x / ratings.length));
+		sumArr.forEach((x) => result.push((x / ratings.length).toFixed(2)));
 		return result;
 	}
 

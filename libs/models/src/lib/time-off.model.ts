@@ -50,6 +50,7 @@ export interface TimeOff extends IBaseEntityModel {
 
 export interface TimeOffFindInput extends IBaseEntityModel {
 	employees?: Employee[];
+	employeeId?: string;
 	organizationId?: string;
 	description?: string;
 	policy?: TimeOffPolicy;

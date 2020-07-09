@@ -14,19 +14,20 @@ export class InviteGuard implements CanActivate {
 	) {}
 
 	async canActivate(route: ActivatedRouteSnapshot) {
-		const expectedPermissions: PermissionsEnum[] =
-			route.data.expectedPermissions;
+		const expectedPermissions: PermissionsEnum[] = 
+		route.data.expectedPermissions;
 		this.store.userRolePermissions$.pipe(first()).subscribe(() => {
-			this.hasPermission = expectedPermissions.some((permission) =>
+			this.hasPermission = expectedPermissions.some((permission) => 
 				this.store.hasPermission(permission)
 			);
+
 		});
 		this.store.selectedOrganization$
 			.pipe(first())
 			.subscribe((organization) => {
 				if (organization) {
-					this.organizationInvitesAllowed =
-						organization.invitesAllowed;
+					this.organizationInvitesAllowed = 
+					organization.invitesAllowed;
 				}
 			});
 

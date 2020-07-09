@@ -104,6 +104,7 @@
 		"INVITED_BY": "Приглашен",
 		"EXPIRE_DATE": "Истекает",
 		"CLIENTS": "Клиенты",
+		"CONTACTS": "Контакты",
 		"DEPARTMENTS": "Департаменты",
 		"DESCRIPTION": "Описание",
 		"APPLIED": "Применяется",
@@ -157,7 +158,7 @@
 			"ROLE": "Роль",
 			"EMAILS": "Адреса E-mail",
 			"PROJECTS_OPTIONAL": "Проекты (необязательно)",
-			"CLIENTS_OPTIONAL": "Клиенты (необязательно)",
+			"CONTACTS_OPTIONAL": "Контакты (необязательно)",
 			"DEPARTMENTS_OPTIONAL": "Отделы (необязательно)",
 			"PROJECTS": "Проекты",
 			"ADD_NEW_DEPARTMENT": "Добавить новый отдел",
@@ -863,7 +864,8 @@
 				"INTERVIEWERS": "интервьюер(ы)",
 				"HIRE": "Нанять",
 				"POSTPONE": "Отложить",
-				"REJECT": "Отклонить"
+				"REJECT": "Отклонить",
+				"INTERVIEW_TITLE_EXIST": "Интервью с таким именем уже существует"
 			}
 		},
 		"INTERVIEW_INFO_MODAL": {
@@ -916,6 +918,8 @@
 			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
 			"RATE_CANDIDATE_BY_CRITERIONS": "Оценить кандидата по критериям",
 			"TECHNOLOGY_STACK": "Стек технологий",
+			"ALREADY_EXISTED": "Уже существует",
+			"TOASTR_ALREADY_EXIST": "Критерий с таким именем уже существует",
 			"PERSONAL_QUALITIES": "Личные качества",
 			"CHOOSE_CRITERIONS": "Выберите критерии для кандидата",
 			"TECHNOLOGY_PLACEHOLDER": "Если вы хотите добавить критерии из стека технологий, их нужно создать",
@@ -1052,7 +1056,8 @@
 				"ADMINISTRATION": "Администрация"
 			},
 			"ONLY_ADMIN": "Эти разрешения доступны только для чтения и включены только для администратора",
-			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:"
+			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:",
+			"VIEW_MY_TASK": "Мои задачи"
 		}
 	},
 	"PUBLIC_PAGE": {

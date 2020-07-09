@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {TimeOffPolicy, TimeOffPolicyCreateInput, TimeOffPolicyFindInput, TimeOffPolicyUpdateInput, TimeOffCreateInput, TimeOff} from '@gauzy/models';
+import {TimeOffPolicy, TimeOffPolicyCreateInput, TimeOffPolicyFindInput, TimeOffPolicyUpdateInput, TimeOffCreateInput, TimeOff, TimeOffFindInput} from '@gauzy/models';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root'})
@@ -13,7 +13,7 @@ export class TimeOffService {
 
 	getAllPolicies(relations?: string[], findInput?: TimeOffPolicyFindInput): Observable<{ items: TimeOffPolicy[], total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-
+		
 		return this.http.get<{ items: TimeOffPolicy[], total: number }> (`/api/time-off-policy`, {params: { data } });
 	}
 
@@ -23,6 +23,12 @@ export class TimeOffService {
 
 	deletePolicy(id: string): Observable<TimeOffPolicy> {
 		return this.http.delete(`/api/time-off-policy/${id}`);
+	}
+
+	getAllTimeOffRecords(relations?: string[], findInput?: TimeOffFindInput, filterDate?: Date): Observable<{ items: TimeOff[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput, filterDate });
+
+		return this.http.get<{ items: TimeOff[]; total: number }>('/api/time-off-request', { params: { data } })
 	}
 
 	createRequest(timeOffRequest: TimeOffCreateInput): Observable<TimeOff> {
