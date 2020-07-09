@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ɵConsole } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { StatusTypesEnum, PermissionsEnum, TimeOff } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
@@ -32,9 +32,12 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	timeOffRequest: TimeOff;
 	selectedDate: Date;
 	selectedEmployeeId: string;
-	selectedStatus = 'All';
+	selectedStatus = 'ALL';
+	selectedTimeOffRecord: TimeOff;
+	tableData: any;
 	timeOffStatuses = Object.keys(StatusTypesEnum);
 	loading = false;
+	isRecordSelected = false;
 	displayHolidays = true;
 	hasEditPermission = false;
 
@@ -113,19 +116,25 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				start: {
 					title: 'Start',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				end: {
 					title: 'End',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				requestDate: {
 					title: 'Request Date',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				status: {
@@ -147,23 +156,58 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				['employees', 'employees.user', 'policy'],
 				{
 					organizationId: orgId,
-					employeeId: this.selectedEmployeeId || null
+					employeeId: this.selectedEmployeeId || ''
 				},
 				this.selectedDate || null
 			)
 			.pipe(first())
 			.subscribe((res) => {
-				this.sourceSmartTable.load(res.items);
-			});
+				this.tableData = res.items
+				this.sourceSmartTable.load(this.tableData);
+			}, () => this.toastrService.danger('Unable to load time off records'));
+	}
+
+	detectStatusChange(status: string) {
+		let filteredData: TimeOff[];
+
+		switch (status) {
+			case 'REQUESTED':
+				filteredData = [...this.tableData].filter((record: TimeOff) => record.status === 'Requested');
+				this.isRecordSelected = false;
+				this.sourceSmartTable.load(filteredData);
+				break;
+			case 'APPROVED':
+				filteredData = [...this.tableData].filter((record: TimeOff) => record.status === 'Approved');
+				this.isRecordSelected = false;
+				this.sourceSmartTable.load(filteredData);
+				break;
+			case 'DENIED':
+				filteredData = [...this.tableData].filter((record: TimeOff) => record.status === 'Denied');
+				this.isRecordSelected = false;
+				this.sourceSmartTable.load(filteredData);
+				break;
+			default:
+				this.isRecordSelected = false;
+				this.sourceSmartTable.load(this.tableData);
+				break;
+		}
 	}
 
 	openTimeOffSettings() {
 		this.router.navigate(['/pages/employees/time-off/settings']);
 	}
 
-	selectRecord(event: Event) {
-		console.log(event);
+	selectRecord(selected) {
+		this.isRecordSelected = true;
+
+		this.selectedTimeOffRecord = selected;
 	}
+
+	approveDaysOff() {}
+
+	denyDaysOff() {}
+
+	deleteRequest() {}
 
 	requestDaysOff() {
 		this.dialogService
@@ -195,16 +239,23 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				.createRequest(this.timeOffRequest)
 				.pipe(first())
 				.subscribe(() => {
-					this.toastrService.success(
-						`Time off record ${this.timeOffRequest.description} successfully created!`,
-						'Success'
-					);
-				}, () => this.toastrService.danger('Unable to create Time off record'));
+					this.toastrService.success(`Time off record ${this.timeOffRequest.description} successfully created!`);
+					this._loadTableData();
+				}, () => this.toastrService.danger('Unable to create Time off record')
+				);
 		}
 	}
 
 	changeDisplayHolidays(checked: boolean) {
 		this.displayHolidays = checked;
+		this.isRecordSelected = false;
+
+		if (this.displayHolidays) {
+			this.sourceSmartTable.load(this.tableData);
+		} else {
+			const filteredData = [...this.tableData].filter((record: TimeOff) => !record.isHoliday);
+			this.sourceSmartTable.load(filteredData);
+		}
 	}
 
 	ngOnDestroy(): void {}
