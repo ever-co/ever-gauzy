@@ -15,7 +15,8 @@ import {
 	CurrenciesEnum,
 	ProjectBillingEnum,
 	TimeLogType,
-	IntegrationEntity
+	IntegrationEntity,
+	RolesEnum
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -30,6 +31,8 @@ import { arrayToObject } from '../core';
 import { Engagements } from 'upwork-api/lib/routers/hr/engagements.js';
 import { Workdiary } from 'upwork-api/lib/routers/workdiary.js';
 import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
+import { Auth } from 'upwork-api/lib/routers/auth.js';
+import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
 import {
 	TimesheetGetCommand,
@@ -40,7 +43,12 @@ import {
 } from '../timesheet/commands';
 import * as moment from 'moment';
 import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
+import { EmployeeGetCommand } from '../employee/commands/employee.get.command';
+import { EmployeeCreateCommand } from '../employee/commands';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
+import { UserService } from '../user/user.service';
+import { OrganizationService } from '../organization/organization.service';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class UpworkService {
@@ -48,6 +56,9 @@ export class UpworkService {
 
 	constructor(
 		private _integrationMapService: IntegrationMapService,
+		private _userService: UserService,
+		private _roleService: RoleService,
+		private _organizationService: OrganizationService,
 		private commandBus: CommandBus
 	) {}
 
@@ -386,7 +397,6 @@ export class UpworkService {
 					forDate
 				});
 
-				console.log(wd, 'wd');
 				const cells = wd.data.cells;
 				const sourceId = wd.data.contract.record_id;
 
@@ -458,13 +468,25 @@ export class UpworkService {
 		contracts,
 		employeeId,
 		config,
-		entitiesToSync
+		entitiesToSync,
+		providerId
 	}) {
 		const syncedContracts = await this.syncContracts({
 			contracts,
 			integrationId,
 			organizationId
 		});
+
+		if (!employeeId) {
+			const employee = await this._getUpworkGauzyEmployee(
+				providerId,
+				integrationId,
+				organizationId,
+				config
+			);
+			employeeId = employee.gauzyId;
+		}
+
 		return await Promise.all(
 			entitiesToSync.map(async (entity) => {
 				switch (entity.key) {
@@ -553,5 +575,115 @@ export class UpworkService {
 		);
 
 		return await Promise.all(integrationMaps);
+	}
+
+	private async _getUpworkAuthenticatedUser(config: IUpworkApiConfig) {
+		const api = new UpworkApi(config);
+		const users = new Users(api);
+
+		return new Promise((resolve, reject) => {
+			api.setAccessToken(config.accessToken, config.accessSecret, () => {
+				users.getMyInfo((err, data) =>
+					err ? reject(err) : resolve(data)
+				);
+			});
+		});
+	}
+
+	private async _getUpworkUserInfo(config: IUpworkApiConfig) {
+		const api = new UpworkApi(config);
+		const auth = new Auth(api);
+
+		return new Promise((resolve, reject) => {
+			api.setAccessToken(config.accessToken, config.accessSecret, () => {
+				auth.getUserInfo((err, data) =>
+					err ? reject(err) : resolve(data)
+				);
+			});
+		});
+	}
+
+	private async _handleEmployee({ integrationId, organizationId, config }) {
+		let promises = [];
+		promises.push(this._getUpworkAuthenticatedUser(config));
+		promises.push(this._getUpworkUserInfo(config));
+
+		return Promise.all(promises).then(async (results: any[]) => {
+			const { user } = results[0];
+			let { info } = results[1];
+			user['info'] = info;
+
+			return await this.syncEmployee({
+				integrationId,
+				user,
+				organizationId
+			});
+		});
+	}
+
+	private async _getUpworkGauzyEmployee(
+		providerId,
+		integrationId,
+		organizationId,
+		config
+	) {
+		let { record } = await this._integrationMapService.findOneOrFail({
+			where: {
+				sourceId: providerId,
+				entity: IntegrationEntity.EMPLOYEE
+			}
+		});
+
+		return record
+			? record
+			: await this._handleEmployee({
+					integrationId,
+					organizationId,
+					config
+			  });
+	}
+
+	async syncEmployee({ integrationId, user, organizationId }) {
+		const { reference: userId, email } = user;
+		let { record } = await this._userService.findOneOrFail({
+			where: { email: email }
+		});
+		let employee;
+		if (record) {
+			employee = await this.commandBus.execute(
+				new EmployeeGetCommand({ where: { userId: record.id } })
+			);
+		} else {
+			const [role, organization] = await Promise.all([
+				await this._roleService.findOne({
+					where: { name: RolesEnum.EMPLOYEE }
+				}),
+				await this._organizationService.findOne({
+					where: { id: organizationId }
+				})
+			]);
+
+			const { first_name: firstName, last_name: lastName } = user;
+			employee = await this.commandBus.execute(
+				new EmployeeCreateCommand({
+					user: {
+						email,
+						firstName,
+						lastName,
+						role,
+						tags: null,
+						tenant: null
+					},
+					password: environment.defaultHubstaffUserPass,
+					organization
+				})
+			);
+		}
+		return await this._integrationMapService.create({
+			gauzyId: employee.id,
+			integrationId,
+			sourceId: userId,
+			entity: IntegrationEntity.EMPLOYEE
+		});
 	}
 }

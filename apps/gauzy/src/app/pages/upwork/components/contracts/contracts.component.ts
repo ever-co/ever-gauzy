@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
 import { IEngagement } from '@gauzy/models';
 import { Observable, of, EMPTY, Subject } from 'rxjs';
@@ -14,7 +15,8 @@ import { ActivatedRoute } from '@angular/router';
 @Component({
 	selector: 'ngx-contracts',
 	templateUrl: './contracts.component.html',
-	styleUrls: ['./contracts.component.scss']
+	styleUrls: ['./contracts.component.scss'],
+	providers: [TitleCasePipe]
 })
 export class ContractsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -22,7 +24,7 @@ export class ContractsComponent extends TranslationBaseComponent
 	private _ngDestroy$: Subject<void> = new Subject();
 	contracts$: Observable<IEngagement[]> = this._us.contracts$;
 	smartTableSettings;
-	selectedContracts: IEngagement[];
+	selectedContracts: IEngagement[] = [];
 
 	constructor(
 		private _us: UpworkStoreService,
@@ -30,7 +32,8 @@ export class ContractsComponent extends TranslationBaseComponent
 		private _ehs: ErrorHandlingService,
 		public translateService: TranslateService,
 		private _ds: NbDialogService,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private titlecasePipe: TitleCasePipe
 	) {
 		super(translateService);
 		this._loagContracts();
@@ -92,16 +95,18 @@ export class ContractsComponent extends TranslationBaseComponent
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'string'
+					type: 'string',
+					valuePrepareFunction: (data: string) => {
+						return this.titlecasePipe.transform(data);
+					}
 				}
 			}
 		};
 	}
 
 	selectContracts({ isSelected, selected }) {
-		const selectedContracts = isSelected ? selected : null;
 		this.contractsTable.grid.dataSet.willSelect = false;
-		this.selectedContracts = selectedContracts;
+		this.selectedContracts = selected;
 	}
 
 	async manageEntitiesSync() {
