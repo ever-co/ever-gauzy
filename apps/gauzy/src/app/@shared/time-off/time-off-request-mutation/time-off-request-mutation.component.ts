@@ -39,7 +39,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	status: string;
 	holidayName: string;
 	invalidInterval: boolean;
-	isHoliday: boolean;
+	isHoliday = false;
 	holidays = ['Christmas', 'Easter'];
 	description = '';
 
@@ -86,7 +86,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				Object.assign(
 					{
 						employees: this.employeesArr,
-						organizationId: this.organizationId
+						organizationId: this.organizationId,
+						isHoliday: this.isHoliday
 					},
 					this.form.value
 				)
