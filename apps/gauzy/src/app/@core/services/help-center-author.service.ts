@@ -38,4 +38,11 @@ export class HelpCenterAuthorService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	findAll(): Promise<IHelpCenterAuthor[]> {
+		return this.http
+			.get<IHelpCenterAuthor[]>(`/api/help-center-author`, {})
+			.pipe(first())
+			.toPromise();
+	}
 }

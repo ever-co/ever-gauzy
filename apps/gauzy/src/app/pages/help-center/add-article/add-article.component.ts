@@ -43,6 +43,7 @@ export class AddArticleComponent extends TranslationBaseComponent
 	};
 	public selectedPrivacy = false;
 	public selectedStatus = false;
+	public membersChanged = false;
 	employees: Employee[];
 	authors: IHelpCenterAuthor[];
 	selectedEmployeeIds = null;
@@ -68,11 +69,11 @@ export class AddArticleComponent extends TranslationBaseComponent
 			this.selectedPrivacy = this.article.privacy;
 			this.selectedStatus = this.article.draft;
 			this.loadAuthors(this.article.id);
-			// this.article.authors.forEach((author) => this.employeeIds.push(author));
 		}
 	}
 
 	onMembersSelected(event: string[]) {
+		this.membersChanged = true;
 		this.selectedEmployeeIds = event;
 		const value = this.selectedEmployeeIds[0] ? true : null;
 		this.form.patchValue({
@@ -88,6 +89,9 @@ export class AddArticleComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
+		this.employeeIds = this.authors
+			? this.authors.map((item) => item.employeeId)
+			: [];
 	}
 
 	toggleStatus(event: boolean) {
@@ -103,7 +107,7 @@ export class AddArticleComponent extends TranslationBaseComponent
 			name: data.name,
 			desc: data.description,
 			data: data.data,
-			valid: null
+			valid: this.editType === 'add' ? data.valid : data.name
 		});
 	}
 
@@ -122,20 +126,23 @@ export class AddArticleComponent extends TranslationBaseComponent
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}
-		// this.addAuthors(this.article.id, this.selectedEmployeeIds);
-		try {
-			this.article = await this.helpCenterArticleService.update(
-				`${this.article.id}`,
-				{
-					name: `${this.form.value.name}`,
-					description: `${this.form.value.desc}`,
-					data: `${this.form.value.data}`,
-					draft: this.selectedStatus,
-					privacy: this.selectedPrivacy
-				}
-			);
-		} catch (error) {
-			this.errorHandler.handleError(error);
+		if (this.membersChanged) {
+			if (this.editType === 'edit') this.deleteAuthors(this.article.id);
+			this.addAuthors(this.article.id, this.selectedEmployeeIds);
+			try {
+				this.article = await this.helpCenterArticleService.update(
+					`${this.article.id}`,
+					{
+						name: `${this.form.value.name}`,
+						description: `${this.form.value.desc}`,
+						data: `${this.form.value.data}`,
+						draft: this.selectedStatus,
+						privacy: this.selectedPrivacy
+					}
+				);
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
 		}
 		this.dialogRef.close(this.article);
 	}
@@ -146,6 +153,14 @@ export class AddArticleComponent extends TranslationBaseComponent
 				articleId,
 				employeeIds
 			);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
+	async deleteAuthors(articleId: string) {
+		try {
+			await this.helpCenterAuthorService.deleteBulkByArticleId(articleId);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}

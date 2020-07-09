@@ -1,5 +1,9 @@
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
-import { IHelpCenterArticle, IHelpCenter } from '@gauzy/models';
+import {
+	IHelpCenterArticle,
+	IHelpCenter,
+	IHelpCenterAuthor
+} from '@gauzy/models';
 import { Component, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,6 +13,8 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { DeleteArticleComponent } from './delete-article/delete-article.component';
 import { HelpCenterArticleService } from '../../@core/services/help-center-article.service';
 import { first } from 'rxjs/operators';
+import { HelpCenterAuthorService } from '../../@core/services/help-center-author.service';
+// import { EmployeesService } from '../../@core/services';
 
 @Component({
 	selector: 'ga-help-center',
@@ -23,6 +29,8 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private helpCenterArticleService: HelpCenterArticleService,
 		private readonly toastrService: NbToastrService,
+		private helpCenterAuthorService: HelpCenterAuthorService,
+		// private employeeService: EmployeesService,
 		private sanitizer: DomSanitizer
 	) {
 		super(translateService);
@@ -32,6 +40,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	public nodes: IHelpCenterArticle[] = [];
 	public categoryName = '';
 	public categoryId = '';
+	public authors: IHelpCenterAuthor[] = [];
 
 	clickedNode(clickedNode: IHelpCenter) {
 		this.categoryId = clickedNode.id;
@@ -63,7 +72,34 @@ export class HelpCenterComponent extends TranslationBaseComponent
 				);
 			}
 		}
+		//TODO getAll
+		const res = await this.helpCenterAuthorService.findAll();
+		if (res) {
+			this.authors = res;
+		}
+
+		// this.loadEmployee();
 	}
+
+	// async loadEmployee() {
+	// 	for (const article of this.nodes) {
+	// 		console.log(this.authors, 'av78t78o78r');
+	// 		const employees = [];
+	// 		for (const author of this.authors) {
+	// 			console.log(author);
+	// 			const res = await this.employeeService.getEmployeeById(
+	// 				author.employeeId,
+	// 				['user']
+	// 			);
+	// 			if (res) {
+	// 				employees.push(res);
+	// 			}
+	// 		}
+	// 		console.log(employees, 'emp');
+	// 		article.employees = employees;
+	// 	}
+	// 	console.log(this.nodes, 'article');
+	// }
 
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
@@ -114,7 +150,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('EDITED');
+			this.toastrSuccess('UPDATED');
 			this.loadArticles(this.categoryId);
 		}
 	}

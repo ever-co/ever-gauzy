@@ -16,9 +16,11 @@ import { HelpCenterAuthor } from './help-center-author.entity';
 import { HelpCenterAuthorService } from './help-center-author.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { ParseJsonPipe } from '../shared';
-import { KnowledgeBaseCategoryBulkDeleteCommand } from '../help-center-article/commands';
 import { CommandBus } from '@nestjs/cqrs';
-import { ArticleAuthorsBulkCreateCommand } from './commands';
+import {
+	ArticleAuthorsBulkCreateCommand,
+	KnowledgeBaseArticleBulkDeleteCommand
+} from './commands';
 
 @ApiTags('knowledge_base_author')
 @UseGuards(AuthGuard('jwt'))
@@ -90,7 +92,7 @@ export class HelpCenterAuthorController extends CrudController<
 	): Promise<any> {
 		const { id = null } = data;
 		return this.commandBus.execute(
-			new KnowledgeBaseCategoryBulkDeleteCommand(id)
+			new KnowledgeBaseArticleBulkDeleteCommand(id)
 		);
 	}
 }
