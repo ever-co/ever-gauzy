@@ -52,6 +52,8 @@
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
+		"TITLE": "Заголовок",
+		"STAGE": "Этап",
 		"START_DATE": "Дата начала",
 		"END_DATE": "Дата окончания",
 		"CLIENT_NAME": "Имя клиента",
@@ -1966,8 +1968,21 @@
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",
 		"HEADER_STAGES": "Этапы",
+		"VIEW_DEALS": "Просмотр сделок",
 		"HEADER_FORM_EDIT": "Изменить конвейер",
 		"HEADER_FORM_CREATE": "Создать конвейер",
 		"RECORD_TYPE": "конвейер \"{{ name }}\""
+	},
+	"PIPELINE_DEALS_PAGE": {
+		"HEADER": "Сделки Трубопровода",
+		"FILTER_BY_STAGE": "Фильтр по этапу",
+		"RECORD_TYPE": "этап \"{{ title }}\""
+	},
+	"PIPELINE_DEAL_EDIT_PAGE": {
+		"HEADER": "Редактировать сделку | Пипеллинн: {{ name }}"
+	},
+	"PIPELINE_DEAL_CREATE_PAGE": {
+		"HEADER": "Создать сделку | Пипеллинг: {{ name }}",
+		"SELECT_STAGE": "Выбрать этап"
 	}
 }
