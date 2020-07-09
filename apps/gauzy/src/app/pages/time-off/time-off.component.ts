@@ -113,19 +113,22 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				start: {
 					title: 'Start',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				end: {
 					title: 'End',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				requestDate: {
 					title: 'Request Date',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				status: {
@@ -194,12 +197,18 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			this.timeOffService
 				.createRequest(this.timeOffRequest)
 				.pipe(first())
-				.subscribe(() => {
-					this.toastrService.success(
-						`Time off record ${this.timeOffRequest.description} successfully created!`,
-						'Success'
-					);
-				}, () => this.toastrService.danger('Unable to create Time off record'));
+				.subscribe(
+					() => {
+						this.toastrService.success(
+							`Time off record ${this.timeOffRequest.description} successfully created!`,
+							'Success'
+						);
+					},
+					() =>
+						this.toastrService.danger(
+							'Unable to create Time off record'
+						)
+				);
 		}
 	}
 

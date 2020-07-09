@@ -102,6 +102,7 @@ import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { Contact } from '../contact/contact.entity';
 import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
+import { Deal } from '../deal/deal.entity';
 
 const entities = [
 	Invite,
@@ -196,6 +197,7 @@ const entities = [
 	Pipeline,
 	Payment,
 	Stage,
+	Deal,
 	Payment,
 	EstimateEmail,
 	Contact

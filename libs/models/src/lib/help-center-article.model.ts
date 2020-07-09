@@ -11,7 +11,7 @@ export interface IHelpCenterArticle extends IBaseEntityModel {
 	authors?: IHelpCenterAuthor[];
 }
 
-export interface IHelpCenterAuthor extends IBaseEntityModel {	
+export interface IHelpCenterAuthor extends IBaseEntityModel {
 	articleId: string;
 	employeeId: string;
 	articles: IHelpCenterArticle[];
