@@ -186,6 +186,7 @@ import { seedRandomOrganizationDepartments } from '../../organization-department
 import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
 import { createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
 import { createRandomEmailSent } from '../../email/email.seed';
+import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -624,6 +625,14 @@ export class SeedDataService {
 			this.connection,
 			tenants,
 			tenantOrganizationsMap
+		);
+
+		await createRandomEmployeeInviteSent(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			tenantSuperAdminsMap,
+			env.randomSeedConfig.invitePerOrganization || 20
 		);
 
 		await seedRandomOrganizationPosition(

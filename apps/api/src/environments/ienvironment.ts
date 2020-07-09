@@ -83,6 +83,7 @@ export interface IEnvironment {
 		candidatesPerOrganization: number; //No of random employees seeded will be (candidatesPerOrganization * organizationsPerTenant * tenants)
 		projectsPerOrganization: number; // No of random projects seeded will be  (projectsPerOrganization * organizationsPerTenant * tenants)
 		emailsPerOrganization: number; // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
+		invitePerOrganization: number; // No of random emails seeded will be  (invitePerOrganization * organizationsPerTenant * tenants)
 	};
 
 	sentry?: {
