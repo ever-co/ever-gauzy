@@ -2,6 +2,7 @@
 	<nb-card-header class="d-flex">
 		<h3>
 			{{ 'INVOICES_PAGE.PAYMENTS.HEADER' | translate }}
+			{{ invoice ? invoice.invoiceNumber : '' }}
 		</h3>
 	</nb-card-header>
 	<nb-card-body class="body">
@@ -18,6 +19,10 @@
 							? invoice.totalValue + ' ' + invoice.currency
 							: ''
 					}}
+				</div>
+				<div>
+					{{ 'INVOICES_PAGE.PAYMENTS.LEFT_TO_PAY' | translate }}:
+					{{ invoice ? leftToPay + ' ' + invoice.currency : '' }}
 				</div>
 			</div>
 			<div class="total-paid-label">

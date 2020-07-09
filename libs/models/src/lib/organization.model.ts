@@ -57,6 +57,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	timeFormat?: 12 | 24;
 	registrationDate?: Date;
 	contact: IContact;
+	separateInvoiceItemTaxAndDiscount?: boolean;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {

@@ -208,8 +208,15 @@ export class EditOrganizationOtherSettingsComponent
 			requireProject: [this.organization.requireProject],
 			requireTask: [this.organization.requireTask],
 			requireClient: [this.organization.requireClient],
-			timeFormat: [this.organization.timeFormat || 12]
+			timeFormat: [this.organization.timeFormat || 12],
+			separateInvoiceItemTaxAndDiscount: [
+				this.organization.separateInvoiceItemTaxAndDiscount
+			]
 		});
+	}
+
+	toggleSeparateTaxing($event) {
+		this.organization.separateInvoiceItemTaxAndDiscount = $event;
 	}
 
 	toggleExpiry(checked) {
