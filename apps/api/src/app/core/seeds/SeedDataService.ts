@@ -185,6 +185,7 @@ import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-
 import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
 import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
 import { createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
+import { createRandomEmailSent } from '../../email/email.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -648,6 +649,14 @@ export class SeedDataService {
 			tags,
 			env.randomSeedConfig.projectsPerOrganization || 10
 		);
+
+		await createRandomEmailSent(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			env.randomSeedConfig.emailsPerOrganization || 20
+		);
+
 		await createRandomTask(this.connection);
 		await createRandomTimesheet(this.connection);
 	}
