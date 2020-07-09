@@ -53,3 +53,15 @@
 .button {
   height: 40px;
 }
+
+.nameValidParent {
+  position: relative;
+
+  .nameValid {
+    position: absolute;
+    top: 66px;
+    left: 0px;
+    font-size: 11px;
+    color: #ff3d71;
+  }
+}

@@ -5,7 +5,9 @@ import { takeUntil } from 'rxjs/operators';
 import {
 	Candidate,
 	ICandidateInterview,
-	ICandidateFeedback
+	ICandidateFeedback,
+	ICandidateTechnologies,
+	ICandidatePersonalQualities
 } from '@gauzy/models';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 
@@ -23,8 +25,6 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 	data: any;
 	options: any;
 	backgroundColor: string[] = [];
-	currLabels = [];
-	currRating = [];
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private themeService: NbThemeService,
@@ -42,70 +42,70 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 			const currInterviews = [];
 			this.feedbacks = res.items.filter((item) => item.interviewId);
 			const criterionsRating = [];
-			const uniqCriterionsRating = [];
 			this.feedbacks.forEach((feedback) => {
 				this.interviewList.forEach((interview) => {
-					if (interview.id === feedback.interviewId) {
-						if (!currInterviews.includes(interview)) {
-							currInterviews.push(interview);
-						}
+					if (
+						interview.id === feedback.interviewId &&
+						!currInterviews.includes(interview)
+					) {
+						currInterviews.push(interview);
 					}
 				});
-				feedback.criterionsRating.forEach((techEl) => {
-					criterionsRating.push(techEl);
-					if (
-						techEl.technologyId &&
-						!uniqCriterionsRating.includes(techEl.technologyId)
-					) {
-						uniqCriterionsRating.push(techEl.technologyId);
-					}
-					if (
-						techEl.personalQualityId &&
-						!uniqCriterionsRating.includes(techEl.personalQualityId)
-					) {
-						uniqCriterionsRating.push(techEl.personalQualityId);
-					}
+				feedback.criterionsRating.forEach((criterionEl) => {
+					currInterviews.forEach((interview) => {
+						interview.personalQualities.forEach(
+							(pq: ICandidatePersonalQualities) => {
+								if (pq.id === criterionEl.personalQualityId) {
+									criterionsRating.push({
+										name: pq.name,
+										rating: criterionEl.rating
+									});
+								}
+							}
+						);
+						interview.technologies.forEach(
+							(t: ICandidateTechnologies) => {
+								if (t.id === criterionEl.technologyId) {
+									criterionsRating.push({
+										name: t.name,
+										rating: criterionEl.rating
+									});
+								}
+							}
+						);
+					});
 				});
 			});
-			// this.getCriterionsRating(criterionsRating, uniqCriterionsRating);
-			this.currLabels = this.getCriterionsName(currInterviews);
+			this.labels = [];
+			this.rating = [];
+			this.rating = this.getCriterionsRating(criterionsRating).map(
+				(x) => x.rating
+			);
+			this.labels = this.getCriterionsRating(criterionsRating).map(
+				(x) => x.name
+			);
 			this.loadChart();
 		}
 	}
-	//TO DO
-	// getCriterionsRating(data, uniqArr) {
-
-	// uniqArr.forEach((uniq) => {
-	// 	let filteredTech = [];
-	// 	let filteredQual = [];
-	// filteredTech = data.filter(
-	// 	(x) => x.technologyId && x.technologyId === uniq
-	// );
-	// filteredQual = data.filter(
-	// 	(x) => x.personalQualityId && x.personalQualityId === uniq
-	// );
-	// });
-	// }
-	getCriterionsName(currInterviews: ICandidateInterview[]) {
-		const resName = [];
-		const resId = [];
-		currInterviews.forEach((item) => {
-			item.technologies.forEach((tech) => {
-				if (!resName.includes(tech.name)) {
-					resName.push(tech.name);
-					resId.push(tech.id);
+	getCriterionsRating(criterionsRating) {
+		return criterionsRating
+			.reduce((prev, curr) => {
+				const existing = prev.find((data) => data.name === curr.name);
+				if (!existing) {
+					return [...prev, { ...curr, rating: [curr.rating] }];
 				}
+				existing.rating.push(curr.rating);
+				return [...prev];
+			}, [])
+			.map((data) => {
+				this.loadColor(data.rating);
+				const rating = (
+					data.rating.reduce((prev, curr) => prev + curr) /
+					data.rating.length
+				).toFixed(2);
+				return { ...data, rating };
 			});
-			item.personalQualities.forEach((qual) => {
-				if (!resName.includes(qual.name)) {
-					resName.push(qual.name);
-					resId.push(qual.id);
-				}
-			});
-		});
-		return [resName, resId];
 	}
-
 	private loadChart() {
 		this.themeService
 			.getJsTheme()
@@ -116,7 +116,7 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 					datasets: [
 						{
 							maxBarThickness: 150,
-							label: 'Criterion ratings from interviewer(s)',
+							label: `Criterion's rating from all feedbacks`,
 							backgroundColor: this.backgroundColor,
 							data: this.rating
 						}
@@ -143,12 +143,12 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 				};
 			});
 	}
-	loadColor(feedback: ICandidateFeedback) {
-		for (let i = 0; i < feedback.criterionsRating.length; i++) {
+	loadColor(data: string[]) {
+		for (let i = 0; i < data.length; i++) {
 			const color =
 				i % 2 === 0
-					? 'rgba(255, 206, 86, 0.2)'
-					: 'rgba(255, 99, 132, 0.2)';
+					? 'rgba(75, 192, 192, 0.2)'
+					: 'rgba(153, 102, 255, 0.2)';
 			this.backgroundColor.push(color);
 		}
 	}

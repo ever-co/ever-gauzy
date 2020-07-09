@@ -1,32 +1,12 @@
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToMany,
-	JoinTable,
-	OneToMany,
-	ManyToOne,
-	RelationId
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import {
-	IsNotEmpty,
-	IsString,
-	IsDate,
-	IsOptional,
-	IsEnum,
-	IsNumber,
-	Min,
-	Max,
-	IsBoolean
-} from 'class-validator';
-import {
-	Organization as IOrganization,
-	CurrenciesEnum,
-	DefaultValueDateTypeEnum,
-	WeekDaysEnum,
-	BonusTypeEnum
+  BonusTypeEnum,
+  CurrenciesEnum,
+  DefaultValueDateTypeEnum,
+  Organization as IOrganization,
+  WeekDaysEnum,
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';

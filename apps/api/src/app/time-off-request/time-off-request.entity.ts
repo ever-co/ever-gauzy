@@ -4,13 +4,12 @@ import {
 	JoinColumn,
 	ManyToMany,
 	JoinTable,
-	OneToOne,
 	ManyToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeOff as ITimeOffRequest, StatusTypesEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, IsDate } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsDate, IsBoolean } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
 
@@ -59,4 +58,9 @@ export class TimeOffRequest extends Base implements ITimeOffRequest {
 	@IsEnum(StatusTypesEnum)
 	@Column({ nullable: false })
 	status?: string;
+	
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column()
+	isHoliday?: boolean;
 }

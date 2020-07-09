@@ -101,7 +101,7 @@ export const environment: IEnvironment = {
 
 	twitterConfig: {
 		clientId: process.env.TwitterClientId,
-		clientSecret:	process.env.TwitterClientSecret
+		clientSecret: process.env.TwitterClientSecret
 	},
 
 	fiverrConfig: {
@@ -493,7 +493,11 @@ export const environment: IEnvironment = {
 		tenants: 5,
 		organizationsPerTenant: 2,
 		employeesPerOrganization: 5,
-		candidatesPerOrganization: 2
+		candidatesPerOrganization: 2,
+		projectsPerOrganization: 30,
+		emailsPerOrganization: 30,
+		invitePerOrganization: 30,
+		requestApprovalPerOrganization: 20
 	},
 
 	defaultHubstaffUserPass:

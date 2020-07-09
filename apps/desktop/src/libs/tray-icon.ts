@@ -3,6 +3,7 @@ import * as path from 'path';
 const Store = require('electron-store');
 import NotificationDesktop from './notifier';
 import TimerHandler from './timer';
+import { LocalStore } from './getSetStore';
 
 export default class TrayIcon {
 	tray: Tray;
@@ -36,13 +37,14 @@ export default class TrayIcon {
 						notificationDesktop.startTimeNotification();
 						timerHandler.startTimer(win2, knex, win3);
 						const timeMenu = menuItem.menu.getMenuItemById('0');
-						getTime(menuItem);
+						getTime();
 						timeMenu.visible = true;
 						const stopMenu = menuItem.menu.getMenuItemById('2');
 						stopMenu.enabled = true;
 						menuItem.enabled = false;
 					} else {
 						const auth = store.get('auth');
+						auth.apiHost = LocalStore.getServerUrl();
 						win3.webContents.send('timer_tracker_show', auth);
 						win3.show();
 					}
@@ -67,6 +69,7 @@ export default class TrayIcon {
 				enabled: true,
 				click(menuItem) {
 					const auth = store.get('auth');
+					auth.apiHost = LocalStore.getServerUrl();
 					win3.webContents.send('timer_tracker_show', auth);
 					win3.show();
 				}
@@ -86,7 +89,7 @@ export default class TrayIcon {
 				}
 			}
 		]);
-		const getTime = (menuItems) => {
+		const getTime = () => {
 			timerHandler.updateTime(win2, knex);
 		};
 		this.tray.setContextMenu(contextMenu);

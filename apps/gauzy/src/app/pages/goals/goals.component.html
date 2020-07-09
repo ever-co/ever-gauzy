@@ -1,5 +1,5 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
+	<nb-card-header *ngIf="!loading">
 		<div class="main-header">
 			<h4>
 				{{ 'GOALS_PAGE.HEADER' | translate }} {{ organizationName }}
@@ -103,7 +103,9 @@
 							<nb-action
 								nbTooltip="Edit Weight/Type"
 								icon="percent"
-								(click)="openKeyResultParameters(keyResult)"
+								(click)="
+									openKeyResultParameters(index, keyResult)
+								"
 							></nb-action>
 						</nb-actions>
 						<span class="ml-auto float-right col-md-4 text-center"

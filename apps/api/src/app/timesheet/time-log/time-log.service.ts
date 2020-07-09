@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, QueryBuilder, SelectQueryBuilder } from 'typeorm';
+import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	TimeLogType,

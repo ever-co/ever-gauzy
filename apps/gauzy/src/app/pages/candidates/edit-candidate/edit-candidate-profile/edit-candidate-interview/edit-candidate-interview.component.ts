@@ -67,7 +67,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					header: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
 					),
-					selectedCandidate: this.selectedCandidate
+					selectedCandidate: this.selectedCandidate,
+					interviewList: this.interviewList
 				}
 			}
 		);
@@ -113,6 +114,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				this.toastrSuccess('CREATED');
 				this.loadInterview();
 			}
+			this.loadInterview();
 		}
 	}
 
@@ -129,7 +131,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					),
 					editData: currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: id
+					interviewId: id,
+					interviewList: this.interviewList
 				}
 			}
 		);

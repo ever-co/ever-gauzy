@@ -30,9 +30,11 @@
 			class="cards"
 			*ngFor="let article of this.nodes; let i = index"
 		>
-			<div>
+			<div class="main-article" (click)="openArticle(i)">
 				<div class="row-name">
-					<p class="name">{{ article.name }}</p>
+					<p class="name">
+						{{ article.name }}
+					</p>
 					<p class="draft" *ngIf="article.draft === true">
 						{{ 'HELP_PAGE.DRAFT' | translate }}
 					</p>
@@ -41,6 +43,11 @@
 					</p>
 				</div>
 				<p>{{ article.description }}</p>
+				<div
+					class="data"
+					*ngIf="showData[i]"
+					[innerHtml]="dataArray[i]"
+				></div>
 				<div class="user-info">
 					<p>
 						{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
@@ -48,7 +55,7 @@
 					<div class="create-at">
 						<nb-icon class="icon" icon="clock-outline"></nb-icon>
 						<p>
-							{{ 'HELP_PAGE.CREATE_AT' | translate }}:
+							{{ 'HELP_PAGE.CREATED_AT' | translate }}:
 							{{ article.createdAt | date: 'short' }}
 						</p>
 					</div>

@@ -52,6 +52,8 @@
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
+		"TITLE": "Заголовок",
+		"STAGE": "Этап",
 		"START_DATE": "Дата начала",
 		"END_DATE": "Дата окончания",
 		"CLIENT_NAME": "Имя клиента",
@@ -104,6 +106,7 @@
 		"INVITED_BY": "Приглашен",
 		"EXPIRE_DATE": "Истекает",
 		"CLIENTS": "Клиенты",
+		"CONTACTS": "Контакты",
 		"DEPARTMENTS": "Департаменты",
 		"DESCRIPTION": "Описание",
 		"APPLIED": "Применяется",
@@ -157,7 +160,7 @@
 			"ROLE": "Роль",
 			"EMAILS": "Адреса E-mail",
 			"PROJECTS_OPTIONAL": "Проекты (необязательно)",
-			"CLIENTS_OPTIONAL": "Клиенты (необязательно)",
+			"CONTACTS_OPTIONAL": "Контакты (необязательно)",
 			"DEPARTMENTS_OPTIONAL": "Отделы (необязательно)",
 			"PROJECTS": "Проекты",
 			"ADD_NEW_DEPARTMENT": "Добавить новый отдел",
@@ -750,7 +753,9 @@
 		"WEIGHT": {
 			"DEFAULT": "По умолчанию",
 			"INCREASE_BY_2X": "Увеличить 2X",
-			"INCREASE_BY_50": "Установить 50% от прогресса цели"
+			"INCREASE_BY_4X": "Увеличить 4X",
+			"MESSAGE": "Вес может использоваться для увеличения или уменьшения значения одного ключевого результата при расчете общего прогресса в достижении цели %",
+			"OBJECTIVE_PROGRESS": "{{ weight }}% прогресса цели"
 		},
 		"MESSAGE": {
 			"TIME_FRAME_ENDED": "Вы не можете обновить результат этого ключа сейчас. Время, отведенное для этого ключа закончилось {{ date }}",
@@ -861,7 +866,8 @@
 				"INTERVIEWERS": "интервьюер(ы)",
 				"HIRE": "Нанять",
 				"POSTPONE": "Отложить",
-				"REJECT": "Отклонить"
+				"REJECT": "Отклонить",
+				"INTERVIEW_TITLE_EXIST": "Интервью с таким именем уже существует"
 			}
 		},
 		"INTERVIEW_INFO_MODAL": {
@@ -904,7 +910,7 @@
 			"CANDIDATE_RATING": "Рейтинг Кандидата",
 			"INTERVIEWER_ASSESSMENT": "Рейтинг Кандидата за интервью",
 			"CRITERIONS_RATING": "Рейтинг критерия за интервью",
-			"CANDIDATE_CRITERIONS_RATING": "Рейтинг критерия кандидата",
+			"CANDIDATE_CRITERIONS_RATING": "Рейтинг критерия из всех отзывов",
 			"NO_DATA": "Пока нет данных ",
 			"SELECT_INTERVIEW": "Выберите интервью",
 			"SELECT_INTERVIEW_INTERVIEWER": "Выберите интервью и интервьюера",
@@ -914,6 +920,8 @@
 			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
 			"RATE_CANDIDATE_BY_CRITERIONS": "Оценить кандидата по критериям",
 			"TECHNOLOGY_STACK": "Стек технологий",
+			"ALREADY_EXISTED": "Уже существует",
+			"TOASTR_ALREADY_EXIST": "Критерий с таким именем уже существует",
 			"PERSONAL_QUALITIES": "Личные качества",
 			"CHOOSE_CRITERIONS": "Выберите критерии для кандидата",
 			"TECHNOLOGY_PLACEHOLDER": "Если вы хотите добавить критерии из стека технологий, их нужно создать",
@@ -1005,7 +1013,7 @@
 			"ORG_EXPENSES_EDIT": "Создание/Редактирование/Удаление расходов",
 			"ORG_INCOMES_EDIT": "Создание/Изменить/Удалить доходы",
 			"ORG_INCOMES_VIEW": "Посмотреть все доходы",
-			"ORG_PROPOSALS_EDIT": "Создание/Изменить/Удалить предложения",
+			"ORG_PROPOSALS_EDIT": "Создание/редактирование/удаление предложений регистра",
 			"ORG_PROPOSALS_VIEW": "Показать страницу предложений",
 			"ORG_TIME_OFF_VIEW": "Показать время на странице",
 			"ORG_EMPLOYEES_VIEW": "Сотрудники организации",
@@ -1034,7 +1042,7 @@
 			"TIMESHEET_EDIT_TIME": "Изменить время в расписании",
 			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"INVOICES_VIEW": "Просмотр счетов",
-			"INVOICES_EDIT": "Редактировать счета",
+			"INVOICES_EDIT": "Редактировать Счета Добавить",
 			"EDIT_SALES_PIPELINES": "Редактировать Трубопровод продаж",
 			"APPROVALS_POLICY_EDIT": "Редактировать политику одобрения",
 			"APPROVALS_POLICY_VIEW": "Просмотр политики одобрения",
@@ -1050,7 +1058,8 @@
 				"ADMINISTRATION": "Администрация"
 			},
 			"ONLY_ADMIN": "Эти разрешения доступны только для чтения и включены только для администратора",
-			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:"
+			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:",
+			"VIEW_MY_TASK": "Мои задачи"
 		}
 	},
 	"PUBLIC_PAGE": {
@@ -1335,6 +1344,7 @@
 		"TEAM": "Команда",
 		"TASK": "Задача",
 		"CLIENT": "Kлиент",
+		"CONTACT": "Контакт",
 		"PROJECT": "Проект",
 		"ADD_EMPLOYEE": "Добавить сотрудника",
 		"CHAT": "Чат поддержки",
@@ -1544,7 +1554,7 @@
 		"HELP": "Помогите",
 		"KNOWLEDGE_BASE": "База знаний",
 		"CHOSE_ICON": "Выберите значок для установки",
-		"CREATE_AT": "создать в",
+		"CREATED_AT": "создано в",
 		"WRITTEN_BY": "написано",
 		"EMPLOYEES": "сотрудники",
 		"ONLY_FOR_EMPLOYEES": "Только для сотрудников",
@@ -1958,8 +1968,21 @@
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",
 		"HEADER_STAGES": "Этапы",
+		"VIEW_DEALS": "Просмотр сделок",
 		"HEADER_FORM_EDIT": "Изменить конвейер",
 		"HEADER_FORM_CREATE": "Создать конвейер",
 		"RECORD_TYPE": "конвейер \"{{ name }}\""
+	},
+	"PIPELINE_DEALS_PAGE": {
+		"HEADER": "Сделки Трубопровода",
+		"FILTER_BY_STAGE": "Фильтр по этапу",
+		"RECORD_TYPE": "этап \"{{ title }}\""
+	},
+	"PIPELINE_DEAL_EDIT_PAGE": {
+		"HEADER": "Редактировать сделку | Пипеллинн: {{ name }}"
+	},
+	"PIPELINE_DEAL_CREATE_PAGE": {
+		"HEADER": "Создать сделку | Пипеллинг: {{ name }}",
+		"SELECT_STAGE": "Выбрать этап"
 	}
 }

@@ -52,6 +52,8 @@
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
+		"TITLE": "Title",
+		"STAGE": "Stage",
 		"START_DATE": "Start Date",
 		"END_DATE": "End Date",
 		"CLIENT_NAME": "Client Name",
@@ -104,6 +106,7 @@
 		"INVITED_BY": "Invited By",
 		"EXPIRE_DATE": "Expires",
 		"CLIENTS": "Clients",
+		"CONTACTS": "Contacts",
 		"DEPARTMENTS": "Departments",
 		"DESCRIPTION": "Description",
 		"APPLIED": "Applied",
@@ -158,7 +161,7 @@
 			"ROLE": "Role",
 			"EMAILS": "Email Addresses",
 			"PROJECTS_OPTIONAL": "Projects (Optional)",
-			"CLIENTS_OPTIONAL": "Clients (Optional)",
+			"CONTACTS_OPTIONAL": "Contacts (Optional)",
 			"DEPARTMENTS_OPTIONAL": "Departments (Optional)",
 			"PROJECTS": "Projects",
 			"ADD_NEW_DEPARTMENT": "Add New Department",
@@ -751,7 +754,9 @@
 		"WEIGHT": {
 			"DEFAULT": "Default",
 			"INCREASE_BY_2X": "Increase 2X",
-			"INCREASE_BY_50": "Set to 50% of Objective progress"
+			"INCREASE_BY_4X": "Increase 4X",
+			"MESSAGE": "Weights can be used to increase or decrease the importance of a single Key Result when calculating overall Objective Progress %",
+			"OBJECTIVE_PROGRESS": "{{ weight }}% of Objective's Progress"
 		},
 		"MESSAGE": {
 			"TIME_FRAME_ENDED": "You can't update this key result now. The Time Frame for this key result has ended on {{ date }}",
@@ -862,7 +867,8 @@
 				"INTERVIEWERS": "interviewer(s)",
 				"HIRE": "Hire",
 				"POSTPONE": "Postpone",
-				"REJECT": "Reject"
+				"REJECT": "Reject",
+				"INTERVIEW_TITLE_EXIST": "An interview with such name already exists"
 			}
 		},
 		"INTERVIEW_INFO_MODAL": {
@@ -905,7 +911,7 @@
 			"CANDIDATE_RATING": "Candidate's rating",
 			"INTERVIEWER_ASSESSMENT": "Candidate's rating per interview",
 			"CRITERIONS_RATING": "Criterion's rating per interview",
-			"CANDIDATE_CRITERIONS_RATING": "Candidate's criterions rating",
+			"CANDIDATE_CRITERIONS_RATING": "Criterion's rating from all feedbacks",
 			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview",
 			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer",
@@ -915,6 +921,8 @@
 			"CANDIDATE_CRITERIONS": "Candidates criterions",
 			"RATE_CANDIDATE_BY_CRITERIONS": "Rate candidate by criterions",
 			"TECHNOLOGY_STACK": "Technology Stack",
+			"ALREADY_EXISTED": "Already existed",
+			"TOASTR_ALREADY_EXIST": "A criterion with such name already exists",
 			"PERSONAL_QUALITIES": "Personal Qualities",
 			"CHOOSE_CRITERIONS": "Choose criterions for candidate",
 			"TECHNOLOGY_PLACEHOLDER": "If you want to add criteria from the technology stack, you need to create them",
@@ -1006,7 +1014,7 @@
 			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
 			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
 			"ORG_INCOMES_VIEW": "View All Incomes",
-			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
+			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals Register",
 			"ORG_PROPOSALS_VIEW": "View Proposals Page",
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
@@ -1035,7 +1043,7 @@
 			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
-			"INVOICES_EDIT": "Edit Invoices",
+			"INVOICES_EDIT": "Edit Invoices Add",
 			"EDIT_SALES_PIPELINES": "Edit Sales Pipelines",
 			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
 			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
@@ -1051,7 +1059,8 @@
 				"ADMINISTRATION": "Administration"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
-			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
+			"VIEW_MY_TASK": "View My Tasks"
 		}
 	},
 	"PUBLIC_PAGE": {
@@ -1336,6 +1345,7 @@
 		"TEAM": "Team",
 		"TASK": "Task",
 		"CLIENT": "Client",
+		"CONTACT": "Contact",
 		"PROJECT": "Project",
 		"ADD_EMPLOYEE": "Add Employee",
 		"CHAT": "Support Chat",
@@ -1546,7 +1556,7 @@
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
-		"CREATE_AT": "create at",
+		"CREATED_AT": "created at",
 		"WRITTEN_BY": "written by",
 		"EMPLOYEES": "employees",
 		"ONLY_FOR_EMPLOYEES": "Only for employees",
@@ -1960,8 +1970,21 @@
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
 		"HEADER_STAGES": "Stages",
+		"VIEW_DEALS": "View Deals",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
 		"HEADER_FORM_CREATE": "Create Pipeline",
 		"RECORD_TYPE": "pipeline \"{{ name }}\""
+	},
+	"PIPELINE_DEALS_PAGE": {
+		"HEADER": "Pipeline Deals",
+		"FILTER_BY_STAGE": "Filter by Stage",
+		"RECORD_TYPE": "stage \"{{ title }}\""
+	},
+	"PIPELINE_DEAL_EDIT_PAGE": {
+		"HEADER": "Edit Deal | Pipeline: {{ name }}"
+	},
+	"PIPELINE_DEAL_CREATE_PAGE": {
+		"HEADER": "Create Deal | Pipeline: {{ name }}",
+		"SELECT_STAGE": "Select Stage"
 	}
 }

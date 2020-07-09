@@ -8,8 +8,8 @@ import {
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { RolePermissionsService } from 'apps/gauzy/src/app/@core/services/role-permissions.service';
-import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
+import { RolePermissionsService } from '../../../@core/services/role-permissions.service';
+import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';

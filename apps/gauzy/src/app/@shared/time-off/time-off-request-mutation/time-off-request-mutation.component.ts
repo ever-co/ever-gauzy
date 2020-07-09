@@ -39,7 +39,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	status: string;
 	holidayName: string;
 	invalidInterval: boolean;
-	isHoliday: boolean;
+	isHoliday = false;
 	holidays = ['Christmas', 'Easter'];
 	description = '';
 
@@ -86,7 +86,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				Object.assign(
 					{
 						employees: this.employeesArr,
-						organizationId: this.organizationId
+						organizationId: this.organizationId,
+						isHoliday: this.isHoliday
 					},
 					this.form.value
 				)
@@ -121,7 +122,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this._getOrganizationEmployees();
 	}
 
-	private async _getPolicies() {
+	private _getPolicies() {
 		if (this.organizationId) {
 			const findObj: {} = {
 				organization: {
@@ -129,12 +130,13 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				}
 			};
 
-			const { items } = await this.timeOffService.getAllPolicies(
-				['employees'],
-				findObj
-			);
-			this.policies = items;
-			this.policy = this.policies[items.length - 1];
+			this.timeOffService
+				.getAllPolicies(['employees'], findObj)
+				.pipe(first())
+				.subscribe((res) => {
+					this.policies = res.items;
+					this.policy = this.policies[res.items.length - 1];
+				});
 		}
 	}
 

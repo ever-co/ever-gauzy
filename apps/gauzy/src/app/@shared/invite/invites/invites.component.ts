@@ -137,7 +137,13 @@ export class InvitesComponent extends TranslationBaseComponent
 
 		try {
 			const { items } = await this.inviteService.getAll(
-				['projects', 'invitedBy', 'role', 'clients', 'departments'],
+				[
+					'projects',
+					'invitedBy',
+					'role',
+					'organizationContact',
+					'departments'
+				],
 				{
 					organizationId: this.selectedOrganizationId
 				}
@@ -175,8 +181,8 @@ export class InvitesComponent extends TranslationBaseComponent
 				projectNames: (invite.projects || []).map(
 					(project) => project.name
 				),
-				clientNames: (invite.clients || []).map(
-					(client) => client.name
+				clientNames: (invite.organizationContact || []).map(
+					(organizationContact) => organizationContact.name
 				),
 				departmentNames: (invite.departments || []).map(
 					(department) => department.name
@@ -215,8 +221,8 @@ export class InvitesComponent extends TranslationBaseComponent
 					renderComponent: ProjectNamesComponent,
 					filter: false
 				},
-				clients: {
-					title: this.getTranslation('SM_TABLE.CLIENTS'),
+				contact: {
+					title: this.getTranslation('SM_TABLE.CONTACTS'),
 					type: 'custom',
 					renderComponent: ClientNamesComponent,
 					filter: false
@@ -252,12 +258,12 @@ export class InvitesComponent extends TranslationBaseComponent
 
 		if (this.invitationType === InvitationTypeEnum.USER) {
 			delete settingsSmartTable['columns']['projects'];
-			delete settingsSmartTable['columns']['clients'];
+			delete settingsSmartTable['columns']['contact'];
 			delete settingsSmartTable['columns']['departments'];
 		}
 		if (this.invitationType === InvitationTypeEnum.CANDIDATE) {
 			delete settingsSmartTable['columns']['projects'];
-			delete settingsSmartTable['columns']['clients'];
+			delete settingsSmartTable['columns']['contact'];
 			delete settingsSmartTable['columns']['roleName'];
 		}
 

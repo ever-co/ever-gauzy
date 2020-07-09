@@ -19,7 +19,6 @@ import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.component';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { resetStores } from '@datorama/akita';
 
 interface WeeklyDayData {
 	project?: OrganizationProjects;

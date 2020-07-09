@@ -2,7 +2,7 @@
 	<div class="mb-3 mt-3">
 		<button
 			nbButton
-			[disabled]="!selectedContracts"
+			[disabled]="!selectedContracts.length"
 			(click)="manageEntitiesSync()"
 			status="primary"
 		>

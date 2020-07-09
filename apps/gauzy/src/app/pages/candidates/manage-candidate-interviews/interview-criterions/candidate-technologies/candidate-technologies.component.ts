@@ -16,6 +16,8 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	technologiesList: ICandidateTechnologies[];
+	existedTechNames: string[];
+	technologyNames: string[] = [];
 	form: FormGroup;
 	editId = null;
 	constructor(
@@ -45,6 +47,18 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 				name: ['', Validators.required]
 			})
 		);
+		this.form.valueChanges.subscribe((item) => {
+			this.existedTechNames = [];
+			const enteredName = item.technologies[0].name;
+			this.technologiesList.forEach((el) => {
+				if (
+					enteredName !== '' &&
+					el.name.toLocaleLowerCase().includes(enteredName)
+				) {
+					this.existedTechNames.push(el.name);
+				}
+			});
+		});
 	}
 
 	private async loadTechnologies() {
@@ -53,6 +67,10 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 			this.technologiesList = res.items.filter(
 				(item) => !item.interviewId
 			);
+			this.technologyNames = [];
+			this.technologiesList.forEach((tech) => {
+				this.technologyNames.push(tech.name.toLocaleLowerCase());
+			});
 		}
 	}
 	async save() {
@@ -68,27 +86,49 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 	}
 
 	async update(formValue: ICandidateTechnologies) {
-		try {
-			await this.candidateTechnologiesService.update(this.editId, {
-				...formValue
-			});
-			this.editId = null;
-			this.toastrSuccess('UPDATED');
-			this.loadTechnologies();
-		} catch (error) {
-			this.toastrError(error);
+		if (
+			!this.technologyNames.includes(formValue.name.toLocaleLowerCase())
+		) {
+			try {
+				await this.candidateTechnologiesService.update(this.editId, {
+					...formValue
+				});
+				this.editId = null;
+				this.toastrSuccess('UPDATED');
+				this.loadTechnologies();
+			} catch (error) {
+				this.toastrError(error);
+			}
+		} else {
+			this.toastrService.danger(
+				this.getTranslation(
+					'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
+				),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
 		}
 	}
 
 	async create(formValue: ICandidateTechnologies) {
-		try {
-			await this.candidateTechnologiesService.create({
-				...formValue
-			});
-			this.toastrSuccess('CREATED');
-			this.loadTechnologies();
-		} catch (error) {
-			this.toastrError(error);
+		if (
+			!this.technologyNames.includes(formValue.name.toLocaleLowerCase())
+		) {
+			try {
+				await this.candidateTechnologiesService.create({
+					...formValue
+				});
+				this.toastrSuccess('CREATED');
+				this.loadTechnologies();
+			} catch (error) {
+				this.toastrError(error);
+			}
+		} else {
+			this.toastrService.danger(
+				this.getTranslation(
+					'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
+				),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
 		}
 	}
 

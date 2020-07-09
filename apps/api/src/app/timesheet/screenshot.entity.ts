@@ -1,17 +1,9 @@
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn,
-	AfterLoad
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Screenshot as IScreenshot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
-import { environment } from '@env-api/environment';
 
 @Entity('screenshot')
 export class Screenshot extends Base implements IScreenshot {
@@ -46,10 +38,4 @@ export class Screenshot extends Base implements IScreenshot {
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
-
-	@AfterLoad()
-	afterLoad?() {
-		this.fullUrl = environment.baseUrl + '/' + this.fullUrl;
-		this.thumbUrl = environment.baseUrl + '/' + this.thumbUrl;
-	}
 }

@@ -84,6 +84,7 @@ import { EventType } from '../event-types/event-type.entity';
 import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
 import { ProductTypeTranslation } from '../product-type/product-type-translation.entity';
 import { HelpCenter } from '../help-center/help-center.entity';
+import { HelpCenterAuthor } from './../help-center-author/help-center-author.entity';
 import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
 import { Pipeline } from '../pipeline/pipeline.entity';
 import { Payment } from '../payment/payment.entity';
@@ -101,6 +102,7 @@ import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { Contact } from '../contact/contact.entity';
 import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
+import { Deal } from '../deal/deal.entity';
 
 const entities = [
 	Invite,
@@ -173,6 +175,7 @@ const entities = [
 	CandidateCriterionsRating,
 	HelpCenter,
 	HelpCenterArticle,
+	HelpCenterAuthor,
 	IntegrationSetting,
 	Integration,
 	IntegrationType,
@@ -194,6 +197,7 @@ const entities = [
 	Pipeline,
 	Payment,
 	Stage,
+	Deal,
 	Payment,
 	EstimateEmail,
 	Contact

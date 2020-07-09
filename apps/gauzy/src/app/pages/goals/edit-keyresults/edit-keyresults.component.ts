@@ -13,7 +13,8 @@ import {
 	Employee,
 	KeyResult,
 	KeyResultTypeEnum,
-	KeyResultDeadlineEnum
+	KeyResultDeadlineEnum,
+	KeyResultWeightEnum
 } from '@gauzy/models';
 
 @Component({
@@ -156,7 +157,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				...this.keyResultsForm.value,
 				update: this.keyResultsForm.value.initialValue,
 				status: 'none',
-				progress: 0
+				progress: 0,
+				weight: KeyResultWeightEnum.DEFAULT
 			});
 		}
 	}
