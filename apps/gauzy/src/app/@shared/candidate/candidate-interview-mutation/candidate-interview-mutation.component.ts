@@ -63,6 +63,7 @@ export class CandidateInterviewMutationComponent
 	selectedInterviewers: string[];
 	criterionsId = null;
 	isTitleExist = false;
+	interviewNames: string[];
 	emptyInterview = {
 		title: '',
 		interviewers: null,
@@ -88,6 +89,12 @@ export class CandidateInterviewMutationComponent
 	) {}
 
 	async ngOnInit() {
+		if (this.interviewList.length > 0) {
+			this.interviewNames = [];
+			this.interviewList.forEach((interview) => {
+				this.interviewNames.push(interview.title.toLocaleLowerCase());
+			});
+		}
 		const { items } = await this.candidatesService
 			.getAll(['user'])
 			.pipe(first())
@@ -95,9 +102,8 @@ export class CandidateInterviewMutationComponent
 		this.candidates = items;
 	}
 
-	titleExist() {
-		//TO DO
-		//this.isTitleExist = true;
+	titleExist(value: boolean) {
+		this.isTitleExist = value;
 	}
 
 	async ngAfterViewInit() {

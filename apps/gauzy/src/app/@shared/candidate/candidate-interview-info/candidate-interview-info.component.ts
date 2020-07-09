@@ -53,7 +53,8 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 					),
 					editData: this.currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: this.currentInterview.id
+					interviewId: this.currentInterview.id,
+					interviewList: this.interviewList
 				}
 			}
 		);
