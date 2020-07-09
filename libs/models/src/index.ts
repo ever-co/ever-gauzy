@@ -79,4 +79,5 @@ export { BaseEntityModel } from './lib/base-entity.model';
 
 export * from './lib/pipeline.model';
 export * from './lib/stage.model';
+export * from './lib/deal.model';
 export * from './lib/contact.model';
