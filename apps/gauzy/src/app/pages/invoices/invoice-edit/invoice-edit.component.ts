@@ -360,7 +360,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		};
 		if (this.organization.separateInvoiceItemTaxAndDiscount) {
 			this.settingsSmartTable['columns']['applyTax'] = {
-				title: 'Apply tax',
+				title: this.getTranslation('INVOICES_PAGE.APPLY_TAX'),
 				editor: {
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
@@ -369,14 +369,14 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				width: '10%',
 				valuePrepareFunction: (cell) => {
 					if (cell) {
-						return 'Applied';
+						return this.getTranslation('INVOICES_PAGE.APPLIED');
 					} else {
-						return ' Not applied';
+						return this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 					}
 				}
 			};
 			this.settingsSmartTable['columns']['applyDiscount'] = {
-				title: 'Apply discount',
+				title: this.getTranslation('INVOICES_PAGE.APPLY_DISCOUNT'),
 				editor: {
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
@@ -385,9 +385,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				width: '10%',
 				valuePrepareFunction: (cell) => {
 					if (cell) {
-						return 'Applied';
+						return this.getTranslation('INVOICES_PAGE.APPLIED');
 					} else {
-						return ' Not applied';
+						return this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 					}
 				}
 			};

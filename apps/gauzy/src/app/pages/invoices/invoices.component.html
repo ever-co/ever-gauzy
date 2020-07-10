@@ -64,6 +64,17 @@
 				{{ 'BUTTONS.EMAIL' | translate }}
 			</button>
 			<button
+				*ngIf="isEstimate"
+				nbButton
+				status="info"
+				(click)="convert()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="swap"> </nb-icon>
+				{{ 'BUTTONS.CONVERT_TO_INVOICE' | translate }}
+			</button>
+			<button
 				nbButton
 				status="danger"
 				(click)="delete()"

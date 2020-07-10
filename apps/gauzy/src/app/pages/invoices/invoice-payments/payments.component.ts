@@ -14,6 +14,7 @@ import { InvoicePaymentOverdueComponent } from '../table-components/invoice-paym
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/payment/generate-pdf';
+import { MethodCall } from '@angular/compiler';
 
 export interface SelectedPayment {
 	data: Payment;
@@ -222,6 +223,12 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				},
 				note: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.NOTE'),
+					type: 'text'
+				},
+				paymentMethod: {
+					title: this.getTranslation(
+						'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
+					),
 					type: 'text'
 				},
 				overdue: {

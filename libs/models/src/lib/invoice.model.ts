@@ -54,6 +54,7 @@ export interface InvoiceUpdateInput {
 	tags?: Tag[];
 	sentStatus?: boolean;
 	isAccepted?: boolean;
+	isEstimate?: boolean;
 }
 
 export interface InvoiceFindInput {
