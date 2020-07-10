@@ -103,6 +103,7 @@ import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { Contact } from '../contact/contact.entity';
 import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
 import { Deal } from '../deal/deal.entity';
+import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 
 const entities = [
 	Invite,
@@ -200,7 +201,8 @@ const entities = [
 	Deal,
 	Payment,
 	EstimateEmail,
-	Contact
+	Contact,
+	OrganizationSprint
 ];
 
 @Module({

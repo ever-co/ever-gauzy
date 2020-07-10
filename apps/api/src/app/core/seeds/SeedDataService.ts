@@ -191,6 +191,7 @@ import { createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
 import { createRandomEmailSent } from '../../email/email.seed';
 import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
+import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -219,6 +220,7 @@ const allEntities = [
 	OrganizationProjects,
 	OrganizationAwards,
 	OrganizationLanguages,
+	OrganizationSprint,
 	Task,
 	Screenshot,
 	Activity,
