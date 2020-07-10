@@ -8,6 +8,7 @@ import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.
 import { takeUntil } from 'rxjs/operators';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { Router } from '@angular/router';
+import { FormControl } from '@angular/forms';
 @Component({
 	selector: 'ga-interview-panel',
 	templateUrl: './interview-panel.component.html',
@@ -19,7 +20,9 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	interviewList: ICandidateInterview[];
 	candidates: Candidate[];
 	averageRating: number;
+	interviewTitles: string[];
 	allInterviews: ICandidateInterview[];
+	search: FormControl = new FormControl();
 	constructor(
 		readonly translateService: TranslateService,
 		private candidateInterviewService: CandidateInterviewService,
@@ -31,6 +34,17 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	}
 	async ngOnInit() {
 		this.loadInterviews();
+		this.search.valueChanges.subscribe((item) => {
+			// this.searchByInterviewTitle(item);
+		});
+	}
+	searchByInterviewTitle(value: string) {
+		this.interviewTitles = [];
+		this.interviewList.forEach((el) => {
+			if (value !== '' && el.title.toLocaleLowerCase().includes(value)) {
+				this.interviewList.push(el);
+			}
+		});
 	}
 	onSortSelected(value: string) {
 		switch (value) {
@@ -65,6 +79,10 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		]);
 		if (interviews) {
 			this.interviewList = interviews.items;
+			this.interviewTitles = [];
+			this.interviewList.forEach((interview) => {
+				this.interviewTitles.push(interview.title.toLocaleLowerCase());
+			});
 			this.allInterviews = interviews.items;
 			this.candidatesService
 				.getAll(['user'])

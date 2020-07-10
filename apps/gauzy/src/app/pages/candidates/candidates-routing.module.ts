@@ -19,6 +19,9 @@ import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-pro
 import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/edit-candidate-feedbacks.component';
 import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
 import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
+import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
+import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
+import { InterviewCriterionsComponent } from './manage-candidate-interviews/interview-criterions/interview-criterions.component';
 
 const routes: Routes = [
 	{
@@ -97,7 +100,26 @@ const routes: Routes = [
 	},
 	{
 		path: 'interviews',
-		component: ManageCandidateInterviewsComponent
+		component: ManageCandidateInterviewsComponent,
+		children: [
+			{
+				path: '',
+				redirectTo: 'calendar',
+				pathMatch: 'full'
+			},
+			{
+				path: 'calendar',
+				component: InterviewCalendarComponent
+			},
+			{
+				path: 'interview_panel',
+				component: InterviewPanelComponent
+			},
+			{
+				path: 'criterion',
+				component: InterviewCriterionsComponent
+			}
+		]
 	},
 	{
 		path: 'statistic',

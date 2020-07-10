@@ -9,26 +9,6 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-tabset>
-			<nb-tab
-				tabTitle="{{
-					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CALENDAR' | translate
-				}}"
-				><ga-interview-calendar></ga-interview-calendar>
-			</nb-tab>
-			<nb-tab
-				tabTitle="{{
-					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWS' | translate
-				}}"
-				><ga-interview-panel></ga-interview-panel>
-			</nb-tab>
-
-			<nb-tab
-				tabTitle="{{
-					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS' | translate
-				}}"
-				><ga-interview-criterions></ga-interview-criterions>
-			</nb-tab>
-		</nb-tabset>
+		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
 	</nb-card-body>
 </nb-card>
