@@ -34,7 +34,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	selectedEmployeeId: string;
 	selectedStatus = 'ALL';
 	selectedTimeOffRecord: TimeOff;
-	tableData: any;
+	tableData = [];
 	timeOffStatuses = Object.keys(StatusTypesEnum);
 	loading = false;
 	isRecordSelected = false;
@@ -162,7 +162,28 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			)
 			.pipe(first())
 			.subscribe((res) => {
-				this.tableData = res.items
+				this.tableData = [];
+				
+				res.items.forEach((result: TimeOff) => {
+					let employeeName: string;
+					let employeeImage: string;
+
+					if (result.employees.length !== 1) {
+						employeeName = 'Multiple employees';
+						employeeImage = 'assets/images/avatars/people-outline.svg'
+					} else {
+						employeeName = `${result.employees[0].user.firstName} ${result.employees[0].user.lastName}`;
+						employeeImage = result.employees[0]?.user?.imageUrl;
+					}
+
+					this.tableData.push({
+						...result,
+						fullName: employeeName,
+						imageUrl: employeeImage,
+						policy: result.policy.name
+					})
+				})
+
 				this.sourceSmartTable.load(this.tableData);
 			}, () => this.toastrService.danger('Unable to load time off records'));
 	}
