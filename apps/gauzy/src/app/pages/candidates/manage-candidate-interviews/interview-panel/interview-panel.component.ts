@@ -5,7 +5,7 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { ICandidateInterview, Candidate } from '@gauzy/models';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { Router } from '@angular/router';
 import { FormControl } from '@angular/forms';
@@ -20,8 +20,8 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	interviewList: ICandidateInterview[];
 	candidates: Candidate[];
 	averageRating: number;
-	interviewTitles: string[];
 	allInterviews: ICandidateInterview[];
+	interviewTitle: ICandidateInterview[];
 	search: FormControl = new FormControl();
 	constructor(
 		readonly translateService: TranslateService,
@@ -35,17 +35,19 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	async ngOnInit() {
 		this.loadInterviews();
 		this.search.valueChanges.subscribe((item) => {
-			// this.searchByInterviewTitle(item);
+			this.interviewTitle = [];
+			this.interviewList.forEach((el) => {
+				if (
+					item !== '' &&
+					el.title.toLocaleLowerCase().includes(item)
+				) {
+					this.interviewTitle.push(el);
+				}
+			});
+			console.log(this.interviewTitle);
 		});
 	}
-	searchByInterviewTitle(value: string) {
-		this.interviewTitles = [];
-		this.interviewList.forEach((el) => {
-			if (value !== '' && el.title.toLocaleLowerCase().includes(value)) {
-				this.interviewList.push(el);
-			}
-		});
-	}
+
 	onSortSelected(value: string) {
 		switch (value) {
 			case 'date':
@@ -79,10 +81,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		]);
 		if (interviews) {
 			this.interviewList = interviews.items;
-			this.interviewTitles = [];
-			this.interviewList.forEach((interview) => {
-				this.interviewTitles.push(interview.title.toLocaleLowerCase());
-			});
 			this.allInterviews = interviews.items;
 			this.candidatesService
 				.getAll(['user'])
@@ -90,12 +88,12 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				.subscribe((candidates) => {
 					this.candidates = candidates.items;
 					this.interviewList.forEach((interview) => {
+						this.loadEmployee(interview);
 						this.candidates.forEach((item) => {
 							if (item.id === interview.candidateId) {
 								interview.candidate = item;
 							}
 						});
-						this.loadEmployee(this.interviewList);
 
 						if (interview.feedbacks.length > 0) {
 							const res: number[] = [];
@@ -114,20 +112,21 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				});
 		}
 	}
-	async loadEmployee(list: ICandidateInterview[]) {
-		for (const interview of list) {
-			const employees = [];
-			for (const interviewer of interview.interviewers) {
-				const res = await this.employeesService.getEmployeeById(
-					interviewer.employeeId,
-					['user']
-				);
-				if (res) {
-					employees.push(res);
+	async loadEmployee(interview: ICandidateInterview) {
+		const employees = [];
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		const employeeList = items;
+		interview.interviewers.forEach((interviewer) => {
+			employeeList.forEach((employee) => {
+				if (interviewer.employeeId === employee.id) {
+					employees.push(employee);
 				}
-			}
-			interview.employees = employees;
-		}
+			});
+		});
+		interview.employees = employees;
 	}
 
 	goToCandidate(id: string) {
