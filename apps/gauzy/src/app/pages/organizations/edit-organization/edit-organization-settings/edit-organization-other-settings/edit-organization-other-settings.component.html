@@ -269,6 +269,25 @@
 						</div>
 					</div>
 				</div>
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<label class="label">
+								Tax And Discount Invoice Items Separately
+							</label>
+							<nb-toggle
+								class="d-block"
+								formControlName="separateInvoiceItemTaxAndDiscount"
+								status="primary"
+								labelPosition="start"
+								(checkedChange)="toggleSeparateTaxing($event)"
+							>
+								Allow taxing and discounting of invoice items
+								separately
+							</nb-toggle>
+						</div>
+					</div>
+				</div>
 			</div>
 		</nb-card-body>
 	</nb-card>

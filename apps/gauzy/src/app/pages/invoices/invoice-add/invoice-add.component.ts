@@ -35,6 +35,7 @@ import { EmployeesService } from '../../../@core/services';
 import { ProductService } from '../../../@core/services/product.service';
 import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
+import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -131,10 +132,15 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				0,
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
+			tax2: [
+				0,
+				Validators.compose([Validators.required, Validators.min(0)])
+			],
 			terms: [''],
 			client: ['', Validators.required],
 			discountType: ['', Validators.required],
 			taxType: ['', Validators.required],
+			tax2Type: ['', Validators.required],
 			invoiceType: [''],
 			project: [''],
 			task: [''],
@@ -171,8 +177,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE'
 					),
-					filter: false,
-					width: '25%',
+					width: '13%',
 					editor: {
 						type: 'custom',
 						component: InvoiceEmployeesSelectorComponent
@@ -190,7 +195,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.PROJECT'
 					),
-					filter: false,
+					width: '13%',
 					editor: {
 						type: 'custom',
 						component: InvoiceProjectsSelectorComponent
@@ -208,7 +213,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.TASK'
 					),
-					filter: false,
+					width: '13%',
 					editor: {
 						type: 'custom',
 						component: InvoiceTasksSelectorComponent
@@ -224,7 +229,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.PRODUCT'
 					),
-					filter: false,
+					width: '13%',
 					editor: {
 						type: 'custom',
 						component: InvoiceProductsSelectorComponent
@@ -252,6 +257,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				),
 				type: 'text',
 				filter: false,
+				width: '13%',
 				valuePrepareFunction: (cell, row) => {
 					return `${this.currency.value} ${cell}`;
 				}
@@ -261,7 +267,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					'INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'
 				),
 				type: 'text',
-				filter: false
+				filter: false,
+				width: '13%'
 			};
 		} else if (
 			this.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
@@ -271,6 +278,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
 				type: 'text',
 				filter: false,
+				width: '13%',
 				valuePrepareFunction: (cell, row) => {
 					return `${this.currency.value} ${cell}`;
 				}
@@ -280,6 +288,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					'INVOICES_PAGE.INVOICE_ITEM.QUANTITY'
 				),
 				type: 'text',
+				width: '13%',
 				filter: false
 			};
 		}
@@ -287,7 +296,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			title: this.getTranslation(
 				'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
 			),
-			type: 'text'
+			type: 'text',
+			width: '13%'
 		};
 		this.settingsSmartTable['columns']['price'] = price;
 		this.settingsSmartTable['columns']['quantity'] = quantity;
@@ -301,8 +311,43 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			valuePrepareFunction: (cell, row) => {
 				return `${this.currency.value} ${row.quantity * row.price}`;
 			},
-			filter: false
+			filter: false,
+			width: '13%'
 		};
+		if (this.organization.separateInvoiceItemTaxAndDiscount) {
+			this.settingsSmartTable['columns']['applyTax'] = {
+				title: 'Apply tax',
+				editor: {
+					type: 'custom',
+					component: InvoiceApplyTaxDiscountComponent
+				},
+				filter: false,
+				width: '10%',
+				valuePrepareFunction: (cell) => {
+					if (cell) {
+						return 'Applied';
+					} else {
+						return ' Not applied';
+					}
+				}
+			};
+			this.settingsSmartTable['columns']['applyDiscount'] = {
+				title: 'Apply discount',
+				editor: {
+					type: 'custom',
+					component: InvoiceApplyTaxDiscountComponent
+				},
+				filter: false,
+				width: '10%',
+				valuePrepareFunction: (cell) => {
+					if (cell) {
+						return 'Applied';
+					} else {
+						return ' Not applied';
+					}
+				}
+			};
+		}
 	}
 
 	async addInvoice() {
@@ -343,7 +388,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				discountValue: invoiceData.discountValue,
 				discountType: invoiceData.discountType,
 				tax: invoiceData.tax,
+				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
+				tax2Type: invoiceData.tax2Type,
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
@@ -363,7 +410,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					price: invoiceItem.price,
 					quantity: invoiceItem.quantity,
 					totalValue: invoiceItem.totalValue,
-					invoiceId: createdInvoice.id
+					invoiceId: createdInvoice.id,
+					applyTax: invoiceItem.applyTax,
+					applyDiscount: invoiceItem.applyDiscount
 				};
 				switch (this.selectedInvoiceType) {
 					case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -519,7 +568,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 							price: fakePrice,
 							quantity: fakeQuantity,
 							selectedItem: employeeId,
-							totalValue: fakePrice * fakeQuantity
+							totalValue: fakePrice * fakeQuantity,
+							applyTax: true,
+							applyDiscount: true
 						};
 						fakeData.push(data);
 						fakePrice++;
@@ -535,7 +586,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 							price: fakePrice,
 							quantity: fakeQuantity,
 							selectedItem: project.id,
-							totalValue: fakePrice * fakeQuantity
+							totalValue: fakePrice * fakeQuantity,
+							applyTax: true,
+							applyDiscount: true
 						};
 						fakeData.push(data);
 						fakePrice++;
@@ -551,7 +604,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 							price: fakePrice,
 							quantity: fakeQuantity,
 							selectedItem: task.id,
-							totalValue: fakePrice * fakeQuantity
+							totalValue: fakePrice * fakeQuantity,
+							applyTax: true,
+							applyDiscount: true
 						};
 						fakeData.push(data);
 						fakePrice++;
@@ -567,7 +622,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 							price: fakePrice,
 							quantity: fakeQuantity,
 							selectedItem: product.id,
-							totalValue: fakePrice * fakeQuantity
+							totalValue: fakePrice * fakeQuantity,
+							applyTax: true,
+							applyDiscount: true
 						};
 						fakeData.push(data);
 						fakePrice++;
@@ -625,7 +682,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.selectedEmployeeIds = event;
 	}
 
-	calculateTotal() {
+	async calculateTotal() {
 		const discountValue =
 			this.form.value.discountValue && this.form.value.discountValue > 0
 				? this.form.value.discountValue
@@ -634,31 +691,56 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			this.form.value.tax && this.form.value.tax > 0
 				? this.form.value.tax
 				: 0;
+		const tax2 =
+			this.form.value.tax2 && this.form.value.tax2 > 0
+				? this.form.value.tax2
+				: 0;
 
 		let totalDiscount = 0;
 		let totalTax = 0;
 
-		switch (this.form.value.discountType) {
-			case DiscountTaxTypeEnum.PERCENT:
-				totalDiscount = this.subtotal * (discountValue / 100);
-				break;
-			case DiscountTaxTypeEnum.FLAT_VALUE:
-				totalDiscount = discountValue;
-				break;
-			default:
-				totalDiscount = 0;
-				break;
-		}
-		switch (this.form.value.taxType) {
-			case DiscountTaxTypeEnum.PERCENT:
-				totalTax = this.subtotal * (tax / 100);
-				break;
-			case DiscountTaxTypeEnum.FLAT_VALUE:
-				totalTax = tax;
-				break;
-			default:
-				totalTax = 0;
-				break;
+		const tableData = await this.smartTableSource.getAll();
+
+		for (const item of tableData) {
+			if (item.applyTax) {
+				switch (this.form.value.taxType) {
+					case DiscountTaxTypeEnum.PERCENT:
+						totalTax += item.totalValue * (tax / 100);
+						break;
+					case DiscountTaxTypeEnum.FLAT_VALUE:
+						totalTax += tax;
+						break;
+					default:
+						totalTax = 0;
+						break;
+				}
+				switch (this.form.value.tax2Type) {
+					case DiscountTaxTypeEnum.PERCENT:
+						totalTax += item.totalValue * (tax2 / 100);
+						break;
+					case DiscountTaxTypeEnum.FLAT_VALUE:
+						totalTax += tax2;
+						break;
+					default:
+						totalTax = 0;
+						break;
+				}
+			}
+
+			if (item.applyDiscount) {
+				switch (this.form.value.discountType) {
+					case DiscountTaxTypeEnum.PERCENT:
+						totalDiscount +=
+							item.totalValue * (discountValue / 100);
+						break;
+					case DiscountTaxTypeEnum.FLAT_VALUE:
+						totalDiscount += discountValue;
+						break;
+					default:
+						totalDiscount = 0;
+						break;
+				}
+			}
 		}
 
 		this.total = this.subtotal - totalDiscount + totalTax;
@@ -673,21 +755,23 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.smartTableSource.load(tableData);
 	}
 
-	onCreateConfirm(event) {
+	async onCreateConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
 			!isNaN(event.newData.price) &&
 			event.newData.quantity &&
 			event.newData.price &&
 			event.newData.description &&
-			event.newData.selectedItem
+			(event.newData.selectedItem ||
+				this.selectedInvoiceType ===
+					InvoiceTypeEnum.DETAILS_INVOICE_ITEMS)
 		) {
 			const newData = event.newData;
 			const itemTotal = +event.newData.quantity * +event.newData.price;
 			newData.totalValue = itemTotal;
 			this.subtotal += itemTotal;
-			this.calculateTotal();
-			event.confirm.resolve(newData);
+			await event.confirm.resolve(newData);
+			await this.calculateTotal();
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
@@ -697,14 +781,16 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		}
 	}
 
-	onEditConfirm(event) {
+	async onEditConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
 			!isNaN(event.newData.price) &&
 			event.newData.quantity &&
 			event.newData.price &&
 			event.newData.description &&
-			event.newData.selectedItem
+			(event.newData.selectedItem ||
+				this.selectedInvoiceType ===
+					InvoiceTypeEnum.DETAILS_INVOICE_ITEMS)
 		) {
 			const newData = event.newData;
 			const oldValue = +event.data.quantity * +event.data.price;
@@ -715,8 +801,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			} else if (oldValue > newValue) {
 				this.subtotal -= oldValue - newValue;
 			}
-			this.calculateTotal();
-			event.confirm.resolve(newData);
+			await event.confirm.resolve(newData);
+			await this.calculateTotal();
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
@@ -726,10 +812,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		}
 	}
 
-	onDeleteConfirm(event) {
+	async onDeleteConfirm(event) {
 		this.subtotal -= +event.data.quantity * +event.data.price;
-		this.calculateTotal();
-		event.confirm.resolve(event.data);
+		await event.confirm.resolve(event.data);
+		await this.calculateTotal();
 	}
 
 	compareDate(date1: Date, date2: Date): boolean {

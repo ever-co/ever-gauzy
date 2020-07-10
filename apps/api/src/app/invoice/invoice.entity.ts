@@ -75,6 +75,11 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true, type: 'numeric' })
 	tax: number;
 
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@Column({ nullable: true, type: 'numeric' })
+	tax2: number;
+
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
@@ -111,6 +116,11 @@ export class Invoice extends Base implements IInvoice {
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })
 	taxType: string;
+
+	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@IsEnum(DiscountTaxTypeEnum)
+	@Column({ nullable: true })
+	tax2Type: string;
 
 	@ApiPropertyOptional({ type: String, enum: InvoiceTypeEnum })
 	@IsEnum(InvoiceTypeEnum)

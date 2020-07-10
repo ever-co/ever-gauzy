@@ -1511,7 +1511,7 @@
 			"ACCEPTED_STATUS": "Accepted Status"
 		},
 		"PAYMENTS": {
-			"HEADER": "Payments",
+			"HEADER": "Payments for Invoice",
 			"TOTAL_VALUE": "Total Invoice Value",
 			"RECORD_PAYMENT": "Record Payment",
 			"EDIT_PAYMENT": "Edit Payment",
@@ -1528,7 +1528,8 @@
 			"STATUS": "Status",
 			"ON_TIME": "On time",
 			"OVERDUE": "Overdue",
-			"NO_PAYMENTS_RECORDED": "No payments recorded"
+			"NO_PAYMENTS_RECORDED": "No payments recorded",
+			"LEFT_TO_PAY": "Left to pay"
 		}
 	},
 	"PAYMENTS_PAGE": {
