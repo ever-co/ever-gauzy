@@ -1,6 +1,8 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee, EmployeeFindInput } from './employee.model';
 import { OrganizationFindInput } from './organization.model';
+import { OrganizationProjects } from './organization-projects.model';
+import { Task } from './task-entity.model';
 
 export interface Goal extends IBaseEntityModel {
 	name: string;
@@ -32,6 +34,10 @@ export interface KeyResult extends IBaseEntityModel {
 	weight?: string;
 	goalId?: string;
 	goal?: Goal;
+	project?: OrganizationProjects;
+	projectId?: string;
+	task?: Task;
+	taskId?: string;
 	updates?: Array<KeyResultUpdates>;
 }
 
