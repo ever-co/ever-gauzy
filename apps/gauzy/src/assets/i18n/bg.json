@@ -49,7 +49,12 @@
 		"KNOWLEDGE_BASES": "Knowledge bases",
 		"SELECT": "Select",
 		"EMAIL": "Eлектронна поща",
-		"CONVERT_TO_INVOICE": "Convert to invoice"
+		"CONVERT_TO_INVOICE": "Convert to invoice",
+		"SPRINT": {
+			"CREATE": "Create Sprint",
+			"EDIT": "Редактиране",
+			"DELETE": "Изтрий"
+		}
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -493,6 +498,7 @@
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"TASKS": "Tasks",
+		"TASKS_SETTINGS": "Настройки",
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
 		"RECURRING_INVOICES": "Invoices Recurring",
