@@ -785,7 +785,9 @@
 				"UPDATED_VALUE": "Updated Value",
 				"MARK_COMPLETE": "Mark as Complete",
 				"STATUS": "Статус",
-				"WEIGHT": "Weight"
+				"WEIGHT": "Weight",
+				"SELECT_PROJECT": "Select Project",
+				"SELECT_TASK": "Select Task"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
