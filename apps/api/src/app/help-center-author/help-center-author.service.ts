@@ -29,4 +29,9 @@ export class HelpCenterAuthorService extends CrudService<HelpCenterAuthor> {
 	async deleteBulkByArticleId(ids: string[]) {
 		return await this.repository.delete(ids);
 	}
+	async getAll(): Promise<IHelpCenterAuthor[]> {
+		return await this.repository
+			.createQueryBuilder('knowledge_base_author')
+			.getMany();
+	}
 }

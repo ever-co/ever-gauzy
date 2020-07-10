@@ -1,4 +1,3 @@
-// import { HelpCenterArticleService } from './../../../../../api/src/app/help-center-article/help-center-article.service';
 import { AddArticleModule } from './add-article/add-article.module';
 import { SidebarModule } from './../../@shared/sidebar/sidebar.module';
 import { HttpClient } from '@angular/common/http';
@@ -10,9 +9,11 @@ import {
 	NbCardModule,
 	NbButtonModule,
 	NbInputModule,
-	NbIconModule
+	NbIconModule,
+	NbTooltipModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HelpCenterComponent } from './help-center.component';
 import { HelpCenterRoutingModule } from './help-center-routing.module';
@@ -33,6 +34,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
+		NbTooltipModule,
+		ReactiveFormsModule,
+		EmployeeMultiSelectModule,
 		SidebarModule,
 		TranslateModule.forChild({
 			loader: {

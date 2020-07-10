@@ -10,7 +10,7 @@ import {
 	Post,
 	Body
 } from '@nestjs/common';
-import { CrudController } from '../core';
+import { CrudController, IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import { HelpCenterAuthor } from './help-center-author.entity';
 import { HelpCenterAuthorService } from './help-center-author.service';
@@ -52,6 +52,28 @@ export class HelpCenterAuthorController extends CrudController<
 		@Param('articleId') articleId: string
 	): Promise<HelpCenterAuthor[]> {
 		return this.helpCenterAuthorService.findByArticleId(articleId);
+	}
+
+	@ApiOperation({
+		summary: 'Find all authors.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found authors',
+		type: HelpCenterAuthor
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async getAll(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<HelpCenterAuthor>> {
+		const { relations = [] } = data;
+		return this.helpCenterAuthorService.findAll({
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create authors in Bulk' })

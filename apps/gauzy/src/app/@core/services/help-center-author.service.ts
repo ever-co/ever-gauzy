@@ -39,9 +39,15 @@ export class HelpCenterAuthorService {
 			.toPromise();
 	}
 
-	findAll(): Promise<IHelpCenterAuthor[]> {
+	getAll(relations?: string[]): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ relations });
 		return this.http
-			.get<IHelpCenterAuthor[]>(`/api/help-center-author`, {})
+			.get<{ items: IHelpCenterAuthor[]; total: number }>(
+				`/api/help-center-author`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}

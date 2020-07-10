@@ -12,13 +12,4 @@ export class HelpCenterAuthor extends Base implements IHelpCenterAuthor {
 	@ApiProperty({ type: String })
 	@Column()
 	articleId: string;
-
-	// @ManyToMany(
-	// 	(type) => HelpCenterArticle,
-	// 	(helpCenterArticle) => helpCenterArticle.authors
-	// )
-	// @JoinTable({
-	// 	name: 'knowledge_base_article'
-	// })
-	// articles: IHelpCenterArticle[];
 }

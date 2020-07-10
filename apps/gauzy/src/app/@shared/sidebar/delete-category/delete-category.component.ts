@@ -6,6 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { HelpCenterService } from '../../../@core/services/help-center.service';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
+import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
 
 @Component({
 	selector: 'ga-delete-category',
@@ -19,6 +20,7 @@ export class DeleteCategoryComponent extends TranslationBaseComponent
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteCategoryComponent>,
 		readonly translateService: TranslateService,
+		private helpCenterAuthorService: HelpCenterAuthorService,
 		private helpCenterArticleService: HelpCenterArticleService,
 		private helpCenterService: HelpCenterService,
 		private errorHandler: ErrorHandler
@@ -44,8 +46,17 @@ export class DeleteCategoryComponent extends TranslationBaseComponent
 		const result = await this.helpCenterArticleService.findByCategoryId(id);
 		if (result) {
 			let hasArticles = false;
-			result.forEach((article) => {
-				if (article.categoryId === this.category.id) hasArticles = true;
+			result.forEach(async (article) => {
+				if (article.categoryId === this.category.id) {
+					hasArticles = true;
+					try {
+						await this.helpCenterAuthorService.deleteBulkByArticleId(
+							article.id
+						);
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
 			});
 			if (hasArticles)
 				try {

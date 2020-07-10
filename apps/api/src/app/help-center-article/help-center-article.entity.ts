@@ -32,13 +32,4 @@ export class HelpCenterArticle extends Base implements IHelpCenterArticle {
 	@ApiProperty({ type: Number })
 	@Column()
 	index: number;
-
-	// @ManyToMany(
-	// 	(type) => HelpCenterAuthor,
-	// 	(helpCenterAuthor) => helpCenterAuthor.articles
-	// )
-	// @JoinTable({
-	// 	name: 'knowledge_base_author'
-	// })
-	// authors?: IHelpCenterAuthor[];
 }
