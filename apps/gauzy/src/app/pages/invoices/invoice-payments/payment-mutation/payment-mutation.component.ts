@@ -1,7 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Invoice, CurrenciesEnum, Payment } from '@gauzy/models';
+import {
+	Invoice,
+	CurrenciesEnum,
+	Payment,
+	PaymentMethodEnum
+} from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { PaymentService } from '../../../../@core/services/payment.service';
@@ -29,6 +34,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	payment: Payment;
 	form: FormGroup;
 	currencies = Object.values(CurrenciesEnum);
+	paymentMethods = Object.values(PaymentMethodEnum);
 	get currency() {
 		return this.form.get('currency');
 	}
@@ -38,7 +44,6 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		if (this.currency && !this.currency.value) {
 			this.currency.setValue(this.invoice.currency);
 		}
-		this.form.get('currency').disable();
 	}
 
 	initializeForm() {
@@ -53,7 +58,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 					new Date(this.payment.paymentDate),
 					Validators.required
 				],
-				note: [this.payment.note, Validators.required]
+				note: [this.payment.note, Validators.required],
+				paymentMethod: [this.payment.paymentMethod, Validators.required]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -63,7 +69,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 				],
 				currency: ['', Validators.required],
 				paymentDate: ['', Validators.required],
-				note: ['', Validators.required]
+				note: ['', Validators.required],
+				paymentMethod: ['', Validators.required]
 			});
 		}
 	}
@@ -86,7 +93,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 			organizationId: this.invoice.organizationId,
 			recordedBy: this.store.user,
 			userId: this.store.userId,
-			overdue: overdue
+			overdue: overdue,
+			paymentMethod: paymentData.paymentMethod
 		});
 
 		this.toastrService.primary(

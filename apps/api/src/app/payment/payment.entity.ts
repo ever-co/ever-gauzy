@@ -8,7 +8,11 @@ import {
 	ManyToMany
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Payment as IPayment, CurrenciesEnum } from '@gauzy/models';
+import {
+	Payment as IPayment,
+	CurrenciesEnum,
+	PaymentMethodEnum
+} from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsEnum,
@@ -89,6 +93,11 @@ export class Payment extends Base implements IPayment {
 	@IsEnum(CurrenciesEnum)
 	@Column()
 	currency?: string;
+
+	@ApiPropertyOptional({ type: String, enum: PaymentMethodEnum })
+	@IsEnum(PaymentMethodEnum)
+	@Column()
+	paymentMethod?: string;
 
 	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()

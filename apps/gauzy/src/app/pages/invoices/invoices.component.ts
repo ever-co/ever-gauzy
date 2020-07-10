@@ -201,6 +201,17 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
+	async convert() {
+		await this.invoicesService.update(this.selectedInvoice.id, {
+			isEstimate: false
+		});
+		this.toastrService.primary(
+			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+		await this.loadSettings();
+	}
+
 	async delete() {
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)

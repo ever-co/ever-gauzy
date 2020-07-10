@@ -224,6 +224,12 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.NOTE'),
 					type: 'text'
 				},
+				paymentMethod: {
+					title: this.getTranslation(
+						'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
+					),
+					type: 'text'
+				},
 				overdue: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
 					type: 'custom',

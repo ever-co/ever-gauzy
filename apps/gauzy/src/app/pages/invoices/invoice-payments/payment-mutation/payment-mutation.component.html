@@ -34,6 +34,31 @@
 						<nb-datepicker #paymentDatePicker></nb-datepicker>
 					</div>
 				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputPaymentDate" class="label">
+							{{
+								'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
+									| translate
+							}}
+						</label>
+						<nb-select
+							class="d-block"
+							formControlName="paymentMethod"
+							placeholder="{{
+								'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
+									| translate
+							}}"
+							fullWidth
+						>
+							<nb-option
+								*ngFor="let paymentMethod of paymentMethods"
+								value="{{ paymentMethod }}"
+								>{{ paymentMethod }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-6">

@@ -117,12 +117,12 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	initializeForm() {
 		this.createInvoiceNumber();
 		this.form = this.fb.group({
-			invoiceDate: ['', Validators.required],
+			invoiceDate: [new Date(), Validators.required],
 			invoiceNumber: [
 				this.formInvoiceNumber,
 				Validators.compose([Validators.required, Validators.min(1)])
 			],
-			dueDate: ['', Validators.required],
+			dueDate: [this.getNextMonth(), Validators.required],
 			currency: ['', Validators.required],
 			discountValue: [
 				0,
@@ -316,7 +316,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		};
 		if (this.organization.separateInvoiceItemTaxAndDiscount) {
 			this.settingsSmartTable['columns']['applyTax'] = {
-				title: 'Apply tax',
+				title: this.getTranslation('INVOICES_PAGE.APPLY_TAX'),
 				editor: {
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
@@ -325,14 +325,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				width: '10%',
 				valuePrepareFunction: (cell) => {
 					if (cell) {
-						return 'Applied';
+						return this.getTranslation('INVOICES_PAGE.APPLIED');
 					} else {
-						return ' Not applied';
+						return this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 					}
 				}
 			};
 			this.settingsSmartTable['columns']['applyDiscount'] = {
-				title: 'Apply discount',
+				title: this.getTranslation('INVOICES_PAGE.APPLY_DISCOUNT'),
 				editor: {
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
@@ -341,9 +341,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				width: '10%',
 				valuePrepareFunction: (cell) => {
 					if (cell) {
-						return 'Applied';
+						return this.getTranslation('INVOICES_PAGE.APPLIED');
 					} else {
-						return ' Not applied';
+						return this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 					}
 				}
 			};
@@ -867,6 +867,16 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	}
 	selectedTagsEvent(currentTagSelection: Tag[]) {
 		this.tags = currentTagSelection;
+	}
+
+	getNextMonth() {
+		const date = new Date();
+		const d = date.getDate();
+		date.setMonth(date.getMonth() + 1);
+		if (date.getDate() !== d) {
+			date.setDate(0);
+		}
+		return date;
 	}
 
 	ngOnDestroy() {
