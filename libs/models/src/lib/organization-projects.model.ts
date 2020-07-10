@@ -10,6 +10,7 @@ import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-m
 import { Tag } from './tag-entity.model';
 import { Task } from './task-entity.model';
 import { ITenant } from './tenant.model';
+import { OrganizationSprint } from '@gauzy/models';
 
 export interface OrganizationProjects extends IBaseEntityWithMembers {
 	name: string;
@@ -25,6 +26,7 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	owner: string;
 	tasks?: Task[];
 	tenant: ITenant;
+	organizationSprints?: OrganizationSprint[];
 }
 
 export interface OrganizationProjectsFindInput extends IBaseEntityModel {

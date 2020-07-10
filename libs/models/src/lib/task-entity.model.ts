@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationProjects, Tag, InvoiceItem } from '..';
+import { OrganizationProjects, Tag, InvoiceItem, OrganizationSprint } from '..';
 import { Employee } from './employee.model';
 import { OrganizationTeam } from './organization-team-model';
 
@@ -15,6 +15,7 @@ export interface Task extends IBaseEntityModel {
 	members?: Employee[];
 	invoiceItems?: InvoiceItem[];
 	teams?: OrganizationTeam[];
+	organizationSprint?: OrganizationSprint;
 }
 
 export interface GetTaskOptions {

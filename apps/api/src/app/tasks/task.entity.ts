@@ -19,6 +19,7 @@ import { Tag } from '../tags/tag.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { User } from '../user/user.entity';
+import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 
 @Entity('task')
 export class Task extends Base implements ITask {
@@ -93,4 +94,12 @@ export class Task extends Base implements ITask {
 	@RelationId((task: Task) => task.creator)
 	@Column()
 	readonly creatorId?: string;
+
+	@ApiProperty({ type: OrganizationSprint })
+	@ManyToOne((type) => OrganizationSprint, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	organizationSprint?: OrganizationSprint;
 }
