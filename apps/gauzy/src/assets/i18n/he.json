@@ -48,7 +48,8 @@
 		"MAKE_PUBLIC": "make public",
 		"KNOWLEDGE_BASES": "Knowledge bases",
 		"SELECT": "Select",
-		"EMAIL": "דוא\"ל"
+		"EMAIL": "דוא\"ל",
+		"CONVERT_TO_INVOICE": "Convert to invoice"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -1398,6 +1399,7 @@
 		"ESTIMATE_DATE": "Estimate Date",
 		"TOTAL_VALUE": "Total Value",
 		"PAID_STATUS": "Paid Status",
+		"TAX_2": "Tax 2",
 		"INVOICES_ADD_INVOICE": "Invoice Added",
 		"INVOICES_ADD_ESTIMATE": "Estimated Added",
 		"INVOICES_EDIT_INVOICE": "Invoice Edited",
@@ -1440,6 +1442,10 @@
 		"RECEIVED_ESTIMATES": "Received Estimates",
 		"SEND_INVOICE": "Invoice Sent",
 		"SEND_ESTIMATE": "Estimate Sent",
+		"APPLY_TAX": "Apply Tax",
+		"APPLY_DISCOUNT": "Apply Discount",
+		"APPLIED": "Applied",
+		"NOT_APPLIED": "Not Applied",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -1508,7 +1514,8 @@
 			"REJECT": "Reject",
 			"ACCEPTED": "Accepted",
 			"REJECTED": "Rejected",
-			"ACCEPTED_STATUS": "Accepted Status"
+			"ACCEPTED_STATUS": "Accepted Status",
+			"ESTIMATE_CONVERT": "Estimate Converted"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments for Invoice",
@@ -1529,7 +1536,8 @@
 			"ON_TIME": "On time",
 			"OVERDUE": "Overdue",
 			"NO_PAYMENTS_RECORDED": "No payments recorded",
-			"LEFT_TO_PAY": "Left to pay"
+			"LEFT_TO_PAY": "Left to pay",
+			"PAYMENT_METHOD": "Payment Method"
 		}
 	},
 	"PAYMENTS_PAGE": {
