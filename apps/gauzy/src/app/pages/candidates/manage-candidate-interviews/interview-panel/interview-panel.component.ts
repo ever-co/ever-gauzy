@@ -44,7 +44,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 					this.interviewTitle.push(el);
 				}
 			});
-			console.log(this.interviewTitle);
 		});
 	}
 

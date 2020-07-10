@@ -146,13 +146,13 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	async loadEmployee() {
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		const employeeList = items;
 		for (const interview of this.interviewList) {
 			const employees = [];
-			const { items } = await this.employeesService
-				.getAll(['user'])
-				.pipe(first())
-				.toPromise();
-			const employeeList = items;
 			interview.interviewers.forEach((interviewer) => {
 				employeeList.forEach((employee) => {
 					if (interviewer.employeeId === employee.id) {
