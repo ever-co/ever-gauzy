@@ -83,7 +83,8 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 					this.dialogService.open(CandidateInterviewInfoComponent, {
 						context: {
 							interviewId: id,
-							interviewList: this.interviewList
+							interviewList: this.interviewList,
+							isSlider: false
 						}
 					});
 				},

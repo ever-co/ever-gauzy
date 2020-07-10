@@ -29,7 +29,9 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 	options: any;
 	currentInterview: ICandidateInterview;
 	backgroundColor: string[] = [];
+	isResetSelect: boolean;
 	private _ngDestroy$ = new Subject<void>();
+
 	constructor(
 		private themeService: NbThemeService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
@@ -37,6 +39,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 	) {}
 
 	async onMembersSelected(id: string) {
+		this.isResetSelect = false;
 		const ratings = [];
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer', 'criterionsRating'],
@@ -44,6 +47,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 				candidateId: this.currentInterview.candidateId
 			}
 		);
+
 		if (res) {
 			this.feedbacks = res.items.filter(
 				(item) =>
@@ -113,6 +117,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 				? (this.currentInterview = interviewItem)
 				: null
 		);
+		this.isResetSelect = true;
 		this.currentEmployee = [];
 		const allIds = [];
 		const allFbIds = [];
