@@ -4,8 +4,8 @@
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 >
-	<nb-card-header class="header-selector-wrapper">
-		<div>
+	<nb-card-header class="tasks-component__header">
+		<div class="tasks-component__title">
 			<h4>
 				<ng-container *ngIf="isTasksPage()">
 					{{ 'TASKS_PAGE.HEADER' | translate }}
@@ -18,7 +18,11 @@
 				</ng-container>
 			</h4>
 		</div>
-		<div>
+		<div class="tasks-component__settings">
+			<button nbButton class="tasks-component__setup-btn">
+				<nb-icon icon="settings" (click)="openTasksSettings()">
+				</nb-icon>
+			</button>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>

@@ -1,0 +1,24 @@
+<div class="row settings">
+	<div class="col-6 settings__name">
+		<span>List Type:</span>
+	</div>
+	<div class="col-6 settings__value">
+		<nb-select
+			placeholder="Select list type"
+			[(ngModel)]="selectedProjectTaskListType"
+			(ngModelChange)="setListType($event)"
+			[(selected)]="selectedProjectTaskListType"
+		>
+			<nb-option
+				*ngFor="let listType of projectTaskListType"
+				[value]="listType"
+			>
+				{{ listType }}
+			</nb-option>
+		</nb-select>
+	</div>
+</div>
+<hr />
+<ng-container *ngIf="selectedProjectTaskListType === taskListTypes.Sprint">
+	<ngx-tasks-sprint-settings-view></ngx-tasks-sprint-settings-view>
+</ng-container>

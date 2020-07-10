@@ -1,0 +1,95 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>{{ sprintAction }} Sprint</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="dialogRef.close()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form">
+			<div class="sprint">
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="form-group">
+							<label class="label">Name</label>
+							<input
+								fullWidth
+								status="basic"
+								autocomplete="off"
+								class="sprint__name"
+								formControlName="name"
+								type="text"
+								nbInput
+								placeholder="Add sprint name"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-5">
+						<div class="form-group">
+							<label class="label">Start date</label>
+							<input
+								nbInput
+								class="sprint__start-date"
+								placeholder="Sprint start date"
+								[nbDatepicker]="startDate"
+								formControlName="startDate"
+							/>
+							<nb-datepicker #startDate></nb-datepicker>
+						</div>
+					</div>
+					<div class="col-sm-5">
+						<div class="form-group">
+							<label class="label">End date</label>
+							<input
+								nbInput
+								class="sprint__end-date"
+								placeholder="Sprint end date"
+								[nbDatepicker]="endDate"
+								formControlName="endDate"
+							/>
+							<nb-datepicker #endDate></nb-datepicker>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="form-group">
+							<label class="label">Goal</label>
+							<textarea
+								formControlName="goal"
+								nbInput
+								fullWidth
+								class="sprint__goal"
+								placeholder="Sprint goal"
+							></textarea>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="danger"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			(click)="save()"
+			[disabled]="form.invalid"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
