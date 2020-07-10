@@ -39,14 +39,15 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	@Input() employee: Employee;
 	@Input() employeeAppointment: EmployeeAppointment;
 	@Input() disabled: boolean;
+	@Input() appointmentID: string;
 	@Input() allowedDuration: number;
 	@Input() hidePrivateFields: boolean = false;
 
 	@Output() save = new EventEmitter<EmployeeAppointment>();
 	@Output() cancel = new EventEmitter<string>();
 
-	selectedEmployeeIds: string[];
-	selectedEmployeeAppointmentIds: string[];
+	selectedEmployeeIds: string[] = [];
+	selectedEmployeeAppointmentIds: string[] = [];
 	emailAddresses: any[] = [];
 	_selectedOrganizationId: string;
 	emails: any;
@@ -112,7 +113,11 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	private _initializeForm() {
 		this.form = this.fb.group({
 			emails: [
-				'',
+				this.employeeAppointment && this.employeeAppointment.emails
+					? this.employeeAppointment.emails
+							.split(', ')
+							.map((o) => ({ emailAddress: o }))
+					: '',
 				Validators.compose([
 					Validators.required,
 					this.EmailListValidator
@@ -182,7 +187,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (params) => {
-				const id = params.appointmentId;
+				const id = params.appointmentId || this.appointmentID;
 				if (id) {
 					this.editMode = true;
 					const appointment = await this.employeeAppointmentService
@@ -203,6 +208,12 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 					);
 					this.start = new Date(appointment.startDateTime);
 					this.end = new Date(appointment.endDateTime);
+					if (!this.selectedRange.start) {
+						this.selectedRange = {
+							start: this.start,
+							end: this.end
+						};
+					}
 					this.employeeAppointment = appointment;
 				}
 				this._initializeForm();
@@ -318,7 +329,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	}
 
 	onMembersSelected(ev) {
-		this.selectedEmployeeIds = ev;
+		this.selectedEmployeeIds = ev || [];
 	}
 
 	ngOnDestroy() {

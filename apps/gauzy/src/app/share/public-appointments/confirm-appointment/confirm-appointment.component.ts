@@ -21,6 +21,7 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent
 	appointment: EmployeeAppointment;
 	participants: string;
 	duration: string;
+	editLink: string;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -41,6 +42,10 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent
 				const employeeId = params.id;
 				if (employeeId && appointmentId) {
 					this.loadAppointment(appointmentId, employeeId);
+					const token = await this.employeeAppointmentService.signAppointmentId(
+						appointmentId
+					);
+					this.editLink = `/share/employee/edit-appointment?token=${token}`;
 					this.loading = false;
 				} else {
 					this.router.navigate(['/share/404']);

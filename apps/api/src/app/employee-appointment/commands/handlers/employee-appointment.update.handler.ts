@@ -26,28 +26,44 @@ export class EmployeeAppointmentUpdateHandler
 					employeeAppointmentUpdateRequest.employeeId
 			  )
 			: null;
-		const organization = await this.organizationService.findOne(
-			employeeAppointmentUpdateRequest.organizationId
-		);
+		const organization = employeeAppointmentUpdateRequest.organizationId
+			? await this.organizationService.findOne(
+					employeeAppointmentUpdateRequest.organizationId
+			  )
+			: null;
 
-		appointment.employee = employee;
-		appointment.organization = organization;
-		appointment.agenda = employeeAppointmentUpdateRequest.agenda;
-		appointment.description = employeeAppointmentUpdateRequest.description;
-		appointment.bufferTimeEnd =
-			employeeAppointmentUpdateRequest.bufferTimeEnd;
-		appointment.bufferTimeInMins =
-			employeeAppointmentUpdateRequest.bufferTimeInMins;
-		appointment.breakStartTime =
-			employeeAppointmentUpdateRequest.breakStartTime;
-		appointment.breakTimeInMins =
-			employeeAppointmentUpdateRequest.breakTimeInMins;
-		appointment.bufferTimeStart =
-			employeeAppointmentUpdateRequest.bufferTimeStart;
-		appointment.startDateTime =
-			employeeAppointmentUpdateRequest.startDateTime;
-		appointment.endDateTime = employeeAppointmentUpdateRequest.endDateTime;
-		appointment.location = employeeAppointmentUpdateRequest.location;
+		employee && (appointment.employee = employee);
+		organization && (appointment.organization = organization);
+		employeeAppointmentUpdateRequest.agenda &&
+			(appointment.agenda = employeeAppointmentUpdateRequest.agenda);
+		employeeAppointmentUpdateRequest.description &&
+			(appointment.description =
+				employeeAppointmentUpdateRequest.description);
+		employeeAppointmentUpdateRequest.bufferTimeEnd &&
+			(appointment.bufferTimeEnd =
+				employeeAppointmentUpdateRequest.bufferTimeEnd);
+		employeeAppointmentUpdateRequest.bufferTimeInMins &&
+			(appointment.bufferTimeInMins =
+				employeeAppointmentUpdateRequest.bufferTimeInMins);
+		employeeAppointmentUpdateRequest.breakStartTime &&
+			(appointment.breakStartTime =
+				employeeAppointmentUpdateRequest.breakStartTime);
+		employeeAppointmentUpdateRequest.breakTimeInMins &&
+			(appointment.breakTimeInMins =
+				employeeAppointmentUpdateRequest.breakTimeInMins);
+		employeeAppointmentUpdateRequest.bufferTimeStart &&
+			(appointment.bufferTimeStart =
+				employeeAppointmentUpdateRequest.bufferTimeStart);
+		employeeAppointmentUpdateRequest.startDateTime &&
+			(appointment.startDateTime =
+				employeeAppointmentUpdateRequest.startDateTime);
+		employeeAppointmentUpdateRequest.endDateTime &&
+			(appointment.endDateTime =
+				employeeAppointmentUpdateRequest.endDateTime);
+		employeeAppointmentUpdateRequest.location &&
+			(appointment.location = employeeAppointmentUpdateRequest.location);
+		employeeAppointmentUpdateRequest.status &&
+			(appointment.status = employeeAppointmentUpdateRequest.status);
 
 		const updatedAppointment = await this.employeeAppointmentService.update(
 			id,

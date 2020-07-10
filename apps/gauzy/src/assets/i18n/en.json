@@ -1947,6 +1947,7 @@
 		"DETAILS": "Booking Details",
 		"PARTICIPANTS": "Participant Emails",
 		"HOST": "Host",
+		"RESCHEDULE": "Reschedule Appointment",
 		"CANCEL": "Cancel Appointment",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
