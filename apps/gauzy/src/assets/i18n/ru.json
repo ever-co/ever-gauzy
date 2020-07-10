@@ -48,7 +48,8 @@
 		"MAKE_PUBLIC": "сделать публичным",
 		"KNOWLEDGE_BASES": "Базы знаний",
 		"SELECT": "Выбрать",
-		"EMAIL": "Эл. адрес"
+		"EMAIL": "Эл. адрес",
+		"CONVERT_TO_INVOICE": "Преобразовать в счет"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -1398,6 +1399,7 @@
 		"ESTIMATE_DATE": "Предполагаемая дата",
 		"TOTAL_VALUE": "Общая стоимость",
 		"PAID_STATUS": "Оплаченный статус",
+		"TAX_2": "Налог 2",
 		"INVOICES_ADD_INVOICE": "Счет добавлен",
 		"INVOICES_ADD_ESTIMATE": "Приблизительно Добавлено",
 		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
@@ -1440,6 +1442,10 @@
 		"RECEIVED_ESTIMATES": "Полученные оценки",
 		"SEND_INVOICE": "Счет отправлен",
 		"SEND_ESTIMATE": "Послано",
+		"APPLY_TAX": "Применить налог",
+		"APPLY_DISCOUNT": "Применить скидку",
+		"APPLIED": "Применяется",
+		"NOT_APPLIED": "Не применено",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -1508,7 +1514,8 @@
 			"REJECT": "Отклонить",
 			"ACCEPTED": "Принято",
 			"REJECTED": "Отклонено",
-			"ACCEPTED_STATUS": "Статус принят"
+			"ACCEPTED_STATUS": "Статус принят",
+			"ESTIMATE_CONVERT": "Расчет конвертированных"
 		},
 		"PAYMENTS": {
 			"HEADER": "Платежи за счет",
@@ -1529,7 +1536,8 @@
 			"ON_TIME": "По времени",
 			"OVERDUE": "Просрочено",
 			"NO_PAYMENTS_RECORDED": "Платежей нет",
-			"LEFT_TO_PAY": "Слева для оплаты"
+			"LEFT_TO_PAY": "Слева для оплаты",
+			"PAYMENT_METHOD": "Способ оплаты"
 		}
 	},
 	"PAYMENTS_PAGE": {
