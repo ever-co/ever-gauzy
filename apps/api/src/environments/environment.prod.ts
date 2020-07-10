@@ -85,10 +85,9 @@ export const environment: IEnvironment = {
 
 	microsoftConfig: {
 		clientId: process.env.MicrosoftClientId,
-		clientSecret: process.env.MicrosoftClientSecret,
-		identityMetadata:
-			'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
-		jwtSecret: process.env.MicrosoftJwtSecret
+		clientSecret: process.env.MicrosoftConfig,
+		resource: process.env.MicrosoftResource,
+		tenant: process.env.MicrosoftTenant
 	},
 
 	linkedinConfig: {
