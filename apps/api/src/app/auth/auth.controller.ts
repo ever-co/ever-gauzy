@@ -220,4 +220,25 @@ export class AuthController {
 			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
+
+	@Get('microsoft')
+	@UseGuards(AuthGuard('microsoft'))
+	microsoftLogin() {}
+
+	@Get('microsoft/callback')
+	@UseGuards(AuthGuard('microsoft'))
+	microsoftLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
 }
