@@ -126,4 +126,37 @@ export class EmployeeAppointmentController extends CrudController<
 	): Promise<EmployeeAppointment> {
 		return this.employeeAppointmentService.findOne(id);
 	}
+
+	@ApiOperation({ summary: 'Sign appointment id payload' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Token generated',
+		type: String
+	})
+	@ApiResponse({
+		status: HttpStatus.EXPECTATION_FAILED,
+		description: 'Token generation failure'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('/sign/:id')
+	async signAppointment(@Param('id') id: string): Promise<String> {
+		return await this.employeeAppointmentService.signAppointmentId(id);
+	}
+
+	@ApiOperation({ summary: 'Verify token' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Token verified',
+		type: String
+	})
+	@ApiResponse({
+		status: HttpStatus.EXPECTATION_FAILED,
+		description: 'Token verification failure'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('/decode/:token')
+	async decodeToken(@Param('token') token: string): Promise<string> {
+		const decoded = this.employeeAppointmentService.decode(token);
+		return decoded['appointmentId'];
+	}
 }

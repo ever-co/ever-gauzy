@@ -28,6 +28,22 @@ export class EmployeeAppointmentService {
 		);
 	}
 
+	decodeToken(token: string): Promise<string> {
+		return this.http
+			.get(this.EMPLOYEE_APPOINTMENT_URL + '/decode/' + token, {
+				responseType: 'text'
+			})
+			.toPromise();
+	}
+
+	signAppointmentId(id: string): Promise<string> {
+		return this.http
+			.get(this.EMPLOYEE_APPOINTMENT_URL + '/sign/' + id, {
+				responseType: 'text'
+			})
+			.toPromise();
+	}
+
 	getById(id: string = ''): Observable<EmployeeAppointment> {
 		return this.http.get<EmployeeAppointment>(
 			this.EMPLOYEE_APPOINTMENT_URL + '/' + id

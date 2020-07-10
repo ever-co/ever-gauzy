@@ -1,0 +1,8 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<ga-manage-appointment
+		*ngIf="appointmentID"
+		[hidePrivateFields]="true"
+		[disabled]="true"
+		[appointmentID]="appointmentID"
+	></ga-manage-appointment>
+</nb-card>

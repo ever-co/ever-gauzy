@@ -13,7 +13,7 @@ import { EmployeesService } from '../../../@core/services';
 export class AppointmentFormComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	loading: boolean;
+	loading: boolean = true;
 	selectedRange: { start: Date; end: Date };
 	selectedEventType: IEventType;
 	allowedDuration: Number;
@@ -53,6 +53,8 @@ export class AppointmentFormComponent extends TranslationBaseComponent
 								  'Hour(s)'
 								? this.selectedEventType.duration * 60
 								: this.selectedEventType.duration * 1;
+
+						this.loading = false;
 					} else {
 						history.go(-1);
 					}

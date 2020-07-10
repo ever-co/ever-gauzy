@@ -62,6 +62,14 @@
 				<span>{{ 'PUBLIC_APPOINTMENTS.EMAIL_SENT' | translate }} </span>
 			</div>
 		</nb-card>
+		<nb-card *ngIf="editLink">
+			<div class="p-3" style="overflow-wrap: break-word;">
+				<strong
+					>{{ 'PUBLIC_APPOINTMENTS.RESCHEDULE' | translate }}:
+				</strong>
+				<a href> {{ editLink }} </a>
+			</div>
+		</nb-card>
 		<nb-card *ngIf="appointment.status">
 			<div class="p-3">
 				<span style="color: red;"
