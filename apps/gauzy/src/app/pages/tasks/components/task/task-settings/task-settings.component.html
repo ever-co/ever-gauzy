@@ -6,7 +6,6 @@
 		class="task-settings__projects"
 		*ngIf="projects$ | async as projects"
 	>
-		<!-- <div class="organization-projects"> -->
 		<ng-container *ngIf="projects.length">
 			<nb-accordion>
 				<nb-accordion-item
@@ -28,6 +27,5 @@
 		<ng-template #singleProjectView>
 			<p>No projects still created.</p>
 		</ng-template>
-		<!-- </div> -->
 	</nb-card-body>
 </nb-card>

@@ -24,9 +24,5 @@ export class ProjectViewComponent implements OnInit {
 
 	ngOnInit(): void {}
 
-	setListType(evt): void {
-		console.log(evt);
-		console.log(this.selectedProjectTaskListType);
-		console.log(this.taskListTypes.Sprint);
-	}
+	setListType(evt: ProjectTaskListType): void {}
 }

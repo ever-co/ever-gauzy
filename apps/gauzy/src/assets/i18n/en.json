@@ -49,7 +49,12 @@
 		"KNOWLEDGE_BASES": "Knowledge bases",
 		"SELECT": "Select",
 		"EMAIL": "Email",
-		"CONVERT_TO_INVOICE": "Convert to invoice"
+		"CONVERT_TO_INVOICE": "Convert to invoice",
+		"SPRINT": {
+			"CREATE": "Create Sprint",
+			"EDIT": "Edit",
+			"DELETE": "Delete"
+		}
 	},
 	"SM_TABLE": {
 		"DATE": "Date",

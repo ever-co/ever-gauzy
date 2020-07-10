@@ -1,0 +1,51 @@
+<div class="sprints">
+	<div class="sprints__settings">
+		<nb-card>
+			<nb-card-header>Sprints Settings</nb-card-header>
+			<nb-card-body>
+				<nb-tabset>
+					<nb-tab
+						*ngIf="sprints$ | async as sprints"
+						tabTitle="Sprints"
+						[badgeText]="sprints.length"
+						badgePosition="top right"
+						badgeStatus="success"
+					>
+						<nb-list>
+							<nb-list-item>
+								<ngx-items-actions
+									[config]="actionsConfig$ | async"
+								></ngx-items-actions>
+							</nb-list-item>
+							<nb-list-item
+								*ngFor="let sprint of sprints; let i = index"
+								[ngClass]="{
+									'selected-sprint':
+										selectedSprint?.id === sprint.id
+								}"
+							>
+								<div
+									class="d-flex justify-content-between sprints__item"
+									(click)="selectSprint(sprint)"
+								>
+									<span>{{ sprint.name }}</span>
+									<span>{{ sprint.goal }}</span>
+									<span>{{
+										moment(sprint.startDate).format(
+											'DD-MM-YYYY'
+										)
+									}}</span>
+									<span>{{
+										moment(sprint.endDate).format(
+											'DD-MM-YYYY'
+										)
+									}}</span>
+								</div>
+							</nb-list-item>
+						</nb-list>
+					</nb-tab>
+				</nb-tabset>
+			</nb-card-body>
+		</nb-card>
+	</div>
+</div>
