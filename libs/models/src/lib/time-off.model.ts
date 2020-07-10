@@ -55,15 +55,7 @@ export interface TimeOffFindInput extends IBaseEntityModel {
 }
 
 export interface TimeOffUpdateInput {
-	employees?: Employee[];
-	organizationId?: string;
-	description?: string;
-	policy?: TimeOffPolicy;
-	start?: Date;
-	end?: Date;
-	requestDate?: Date;
 	status?: string;
-	isHoliday?: boolean;
 }
 
 export interface TimeOffCreateInput {

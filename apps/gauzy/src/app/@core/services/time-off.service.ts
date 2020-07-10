@@ -7,7 +7,8 @@ import {
 	TimeOffPolicyUpdateInput,
 	TimeOffCreateInput,
 	TimeOff,
-	TimeOffFindInput
+	TimeOffFindInput,
+	TimeOffUpdateInput
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 
@@ -47,6 +48,10 @@ export class TimeOffService {
 		return this.http.delete(`/api/time-off-policy/${id}`);
 	}
 
+	createRequest(timeOffRequest: TimeOffCreateInput): Observable<TimeOff> {
+		return this.http.post('/api/time-off-request', timeOffRequest);
+	}
+
 	getAllTimeOffRecords(
 		relations?: string[],
 		findInput?: TimeOffFindInput,
@@ -60,7 +65,11 @@ export class TimeOffService {
 		);
 	}
 
-	createRequest(timeOffRequest: TimeOffCreateInput): Observable<TimeOff> {
-		return this.http.post('/api/time-off-request', timeOffRequest);
+	updateRequestStatus(id: string, request: TimeOffUpdateInput): Observable<TimeOff> {
+		return this.http.put(`/api/time-off-request/${id}`, request);
+	}
+
+	deleteDaysOffRequest(id: string): Observable<TimeOff> {
+		return this.http.delete(`/api/time-off-request/${id}`);
 	}
 }

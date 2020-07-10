@@ -197,17 +197,50 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 		this.router.navigate(['/pages/employees/time-off/settings']);
 	}
 
-	selectRecord(selected) {
+	selectRecord(selectedRow) {
 		this.isRecordSelected = true;
 
-		this.selectedTimeOffRecord = selected;
+		this.selectedTimeOffRecord = selectedRow.data;
 	}
 
-	approveDaysOff() {}
+	approveDaysOff() {
+		if (this.selectedTimeOffRecord.status !== 'Approved') {
+			const requestId = this.selectedTimeOffRecord.id
+			this.selectedTimeOffRecord.status = 'Approved';
+			this.timeOffService.updateRequestStatus(requestId, { status: this.selectedTimeOffRecord.status })
+				.pipe(first())
+				.subscribe(() => {
+					this.toastrService.success('You successfully set the days off request status to approved', 'Days off request approved');
+					this._loadTableData();
+				}, () => this.toastrService.danger('Unable to set days off request status.'))
+		} else {
+			this.toastrService.info('The days off request status is already set to approved', 'No changes')
+		}
+	}
 
-	denyDaysOff() {}
+	denyDaysOff() {
+		if (this.selectedTimeOffRecord.status !== 'Denied') {
+			const requestId = this.selectedTimeOffRecord.id
+			this.selectedTimeOffRecord.status = 'Denied';
+			this.timeOffService.updateRequestStatus(requestId, { status: this.selectedTimeOffRecord.status })
+				.pipe(first())
+				.subscribe(() => {
+					this.toastrService.success('You successfully set the days off request status to denied', 'Days off request denied');
+					this._loadTableData();
+				}, () => this.toastrService.danger('Unable to set days off request status.'))
+		} else {
+			this.toastrService.info('The days off request status is already set to denied', 'No changes')
+		}
+	}
 
-	deleteRequest() {}
+	deleteRequest() {
+		this.timeOffService.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
+			.pipe(first())
+			.subscribe(() => {
+				this.toastrService.success('Days off request successfully deleted', 'Days off record deleted');
+				this._loadTableData();
+			}, () => this.toastrService.warning('Unable to delete Days off request'));
+	}
 
 	requestDaysOff() {
 		this.dialogService
