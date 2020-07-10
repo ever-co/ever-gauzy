@@ -3,7 +3,6 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { IEventType, Employee } from '@gauzy/models';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 
 @Component({
