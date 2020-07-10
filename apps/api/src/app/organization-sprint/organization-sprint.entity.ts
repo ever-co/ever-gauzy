@@ -1,11 +1,4 @@
-import {
-	Entity,
-	Column,
-	OneToMany,
-	JoinColumn,
-	ManyToOne,
-	RelationId
-} from 'typeorm';
+import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
 import {
 	OrganizationSprint as IOrganizationSprint,
 	SprintStartDayEnum
