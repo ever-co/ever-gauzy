@@ -1,12 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { TimeOffRequest } from './time-off-request.entity';
@@ -46,7 +38,7 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 		description: 'The new time off request / holiday record created'
 	})
 	@UseGuards(PermissionGuard)
-	@Post('')
+	@Post()
 	async createOrganizationTeam(
 		@Body() entity: ITimeOffCreateInput,
 		...options: any[]
