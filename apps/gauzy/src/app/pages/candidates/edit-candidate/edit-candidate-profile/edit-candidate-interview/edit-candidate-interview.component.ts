@@ -33,6 +33,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
 	form: FormGroup;
+	showPastCheckbox: boolean;
 	constructor(
 		private dialogService: NbDialogService,
 		translate: TranslateService,
@@ -87,6 +88,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 
 		if (res) {
 			this.interviewList = res.items;
+			this.showPastCheckbox =
+				this.interviewList.length > 0 ? true : false;
 			this.loadEmployee();
 		}
 	}
@@ -114,7 +117,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				this.toastrSuccess('CREATED');
 				this.loadInterview();
 			}
-			this.loadInterview();
 		}
 	}
 
@@ -180,11 +182,20 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		}
 	}
 	async removeInterview(id: string) {
+		const currentInterview = this.interviewList.find(
+			(item) => item.id === id
+		);
 		try {
-			await this.candidateTechnologiesService.deleteBulkByInterviewId(id);
-			await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(
-				id
-			);
+			if (currentInterview.personalQualities.length > 0) {
+				await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(
+					id
+				);
+			}
+			if (currentInterview.technologies.length > 0) {
+				await this.candidateTechnologiesService.deleteBulkByInterviewId(
+					id
+				);
+			}
 			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
 			await this.candidateInterviewService.delete(id);
 			this.toastrSuccess('DELETED');
