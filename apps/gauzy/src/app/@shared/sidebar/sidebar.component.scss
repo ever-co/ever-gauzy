@@ -24,7 +24,7 @@
 }
 
 .text {
-  font-size: 1.1rem;
+  padding: 0 0.3rem;
 }
 
 .add-icon-field {
@@ -46,15 +46,21 @@
 }
 
 .base {
+  box-shadow: 0 1.5px 6px 0 rgba(44, 51, 73, 0.1);
+  border-radius: 0.25rem;
   padding: 10px;
-  border: 1px #e4e9f2 solid;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 }
 
+.icons {
+  font-size: 1.1rem;
+}
+
 .edit-icons {
   display: none;
+  font-size: 1.1rem;
 }
 
 .base:hover .edit-icons {
@@ -93,9 +99,9 @@
       top: 11px;
       left: 210px;
       border: solid black;
-      border-width: 0 3px 3px 0;
+      border-width: 0 2px 2px 0;
       display: inline-block;
-      padding: 3px;
+      width: 8px;
       background-image: none;
     }
   }

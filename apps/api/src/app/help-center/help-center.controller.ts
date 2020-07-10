@@ -120,7 +120,6 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	// @Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	@Delete('deleteBulkByBaseId')
 	async deleteBulkByBaseId(
 		@Query('data', ParseJsonPipe) data: any

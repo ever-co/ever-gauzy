@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
+import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
 
 @Component({
 	selector: 'ga-article-category',
@@ -18,6 +19,7 @@ export class DeleteArticleComponent extends TranslationBaseComponent
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteArticleComponent>,
 		readonly translateService: TranslateService,
+		private helpCenterAuthorService: HelpCenterAuthorService,
 		private helpCenterArticleService: HelpCenterArticleService,
 		private errorHandler: ErrorHandler
 	) {
@@ -30,7 +32,13 @@ export class DeleteArticleComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
-
+		try {
+			await this.helpCenterAuthorService.deleteBulkByArticleId(
+				this.article.id
+			);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 		this.dialogRef.close(this.article);
 	}
 

@@ -4,31 +4,58 @@
 		(deletedNode)="deletedNode()"
 	></ga-sidebar>
 	<div class="main">
-		<nb-card class="header">
-			<div class="header-article">
-				<h5 *ngIf="!categoryName">
-					{{ 'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate }}
-				</h5>
-				<h5 *ngIf="categoryName">{{ categoryName }}</h5>
-				<h5 class="articles">
-					{{ this.nodes.length }}
-					{{ 'HELP_PAGE.ARTICLES' | translate }}
-				</h5>
+		<nb-card class="head">
+			<div class="header">
+				<div class="header-article">
+					<h6 *ngIf="!categoryName">
+						{{ 'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate }}
+					</h6>
+					<h6 *ngIf="categoryName">{{ categoryName }}</h6>
+					<h6 class="articles">
+						{{ this.articleList.length }}
+						{{ 'HELP_PAGE.ARTICLES' | translate }}
+					</h6>
+				</div>
+				<button
+					[disabled]="!categoryName"
+					status="success"
+					class="base-button"
+					(click)="addNode()"
+					nbButton
+				>
+					{{ 'HELP_PAGE.ADD_ARTICLE' | translate }}
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				</button>
 			</div>
-			<button
-				[disabled]="!categoryName"
-				status="success"
-				class="base-button"
-				(click)="addNode()"
-				nbButton
-			>
-				{{ 'HELP_PAGE.ADD_ARTICLE' | translate }}
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-			</button>
+			<div *ngIf="categoryName" class="search-bar">
+				<div class="column">
+					<p class="label">Search by name</p>
+					<input
+						class="search-input"
+						[formControl]="search"
+						placeholder="Search"
+						type="text"
+						size="24"
+						maxlength="18"
+						nbInput
+					/>
+				</div>
+				<div class="column">
+					<p class="label">Filter by author</p>
+					<ga-employee-multi-select
+						[multiple]="false"
+						[label]="false"
+						[allEmployees]="employees"
+						(selectedChange)="onEmployeeSelected($event)"
+						[selectedEmployeeIds]="selectedEmployeeIds"
+					>
+					</ga-employee-multi-select>
+				</div>
+			</div>
 		</nb-card>
 		<nb-card
 			class="cards"
-			*ngFor="let article of this.nodes; let i = index"
+			*ngFor="let article of this.articleList; let i = index"
 		>
 			<div class="main-article" (click)="openArticle(i)">
 				<div class="row-name">
@@ -52,6 +79,20 @@
 					<p>
 						{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
 					</p>
+					<div class="image-wrap">
+						<span
+							*ngFor="let employee of article.employees"
+							nbTooltip=" {{ employee?.user?.firstName }}
+				{{ employee?.user?.lastName }}"
+							nbTooltipPlacement="top"
+						>
+							<img
+								class="author-image-small"
+								[src]="employee?.user?.imageUrl"
+								alt="employee Avatar"
+							/>
+						</span>
+					</div>
 					<div class="create-at">
 						<nb-icon class="icon" icon="clock-outline"></nb-icon>
 						<p>

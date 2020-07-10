@@ -1,4 +1,4 @@
-import { IHelpCenterArticle, Employee } from '@gauzy/models';
+import { IHelpCenterArticle, Employee, IHelpCenterAuthor } from '@gauzy/models';
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -8,6 +8,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
 
 @Component({
 	selector: 'ga-add-article',
@@ -25,7 +27,9 @@ export class AddArticleComponent extends TranslationBaseComponent
 		protected dialogRef: NbDialogRef<AddArticleComponent>,
 		readonly translateService: TranslateService,
 		private readonly fb: FormBuilder,
+		private errorHandler: ErrorHandlingService,
 		private employeeService: EmployeesService,
+		private helpCenterAuthorService: HelpCenterAuthorService,
 		private helpCenterArticleService: HelpCenterArticleService
 	) {
 		super(translateService);
@@ -39,7 +43,9 @@ export class AddArticleComponent extends TranslationBaseComponent
 	};
 	public selectedPrivacy = false;
 	public selectedStatus = false;
+	public membersChanged = false;
 	employees: Employee[];
+	authors: IHelpCenterAuthor[];
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];
 
@@ -62,16 +68,30 @@ export class AddArticleComponent extends TranslationBaseComponent
 			this.loadFormData(this.article);
 			this.selectedPrivacy = this.article.privacy;
 			this.selectedStatus = this.article.draft;
-			// this.article.authors.forEach((author) => this.employeeIds.push(author));
+			this.loadAuthors(this.article.id);
 		}
 	}
 
 	onMembersSelected(event: string[]) {
+		this.membersChanged = true;
 		this.selectedEmployeeIds = event;
 		const value = this.selectedEmployeeIds[0] ? true : null;
 		this.form.patchValue({
 			valid: value
 		});
+	}
+
+	async loadAuthors(id) {
+		try {
+			this.authors = await this.helpCenterAuthorService.findByArticleId(
+				id
+			);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+		this.employeeIds = this.authors
+			? this.authors.map((item) => item.employeeId)
+			: [];
 	}
 
 	toggleStatus(event: boolean) {
@@ -87,34 +107,63 @@ export class AddArticleComponent extends TranslationBaseComponent
 			name: data.name,
 			desc: data.description,
 			data: data.data,
-			valid: null
+			valid: this.editType === 'add' ? data.valid : data.name
 		});
 	}
 
 	async submit() {
 		if (this.editType === 'add')
-			this.article = await this.helpCenterArticleService.create({
-				name: `${this.form.value.name}`,
-				description: `${this.form.value.desc}`,
-				data: `${this.form.value.data}`,
-				draft: this.selectedStatus,
-				privacy: this.selectedPrivacy,
-				index: this.length,
-				categoryId: this.id
-			});
-		if (this.editType === 'edit') {
-			this.article = await this.helpCenterArticleService.update(
-				`${this.article.id}`,
-				{
-					name: `${this.form.value.name}`,
-					description: `${this.form.value.desc}`,
-					data: `${this.form.value.data}`,
-					draft: this.selectedStatus,
-					privacy: this.selectedPrivacy
-				}
-			);
+			try {
+				this.article = await this.helpCenterArticleService.create({
+					name: '',
+					description: '',
+					data: '',
+					draft: false,
+					privacy: false,
+					index: this.length,
+					categoryId: this.id
+				});
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
+		if (this.membersChanged) {
+			if (this.editType === 'edit') this.deleteAuthors(this.article.id);
+			this.addAuthors(this.article.id, this.selectedEmployeeIds);
+			try {
+				this.article = await this.helpCenterArticleService.update(
+					`${this.article.id}`,
+					{
+						name: `${this.form.value.name}`,
+						description: `${this.form.value.desc}`,
+						data: `${this.form.value.data}`,
+						draft: this.selectedStatus,
+						privacy: this.selectedPrivacy
+					}
+				);
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
 		}
 		this.dialogRef.close(this.article);
+	}
+
+	async addAuthors(articleId: string, employeeIds: string[]) {
+		try {
+			await this.helpCenterAuthorService.createBulk(
+				articleId,
+				employeeIds
+			);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
+	async deleteAuthors(articleId: string) {
+		try {
+			await this.helpCenterAuthorService.deleteBulkByArticleId(articleId);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 	}
 
 	closeDialog() {

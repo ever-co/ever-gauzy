@@ -1,8 +1,7 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
-import { IHelpCenterArticle, IHelpCenterAuthor } from '@gauzy/models';
-import { HelpCenterAuthor } from '../help-center-author/help-center-author.entity';
+import { IHelpCenterArticle } from '@gauzy/models';
 
 @Entity('knowledge_base_article')
 export class HelpCenterArticle extends Base implements IHelpCenterArticle {
@@ -33,13 +32,4 @@ export class HelpCenterArticle extends Base implements IHelpCenterArticle {
 	@ApiProperty({ type: Number })
 	@Column()
 	index: number;
-
-	@ManyToMany(
-		(type) => HelpCenterAuthor,
-		(helpCenterAuthor) => helpCenterAuthor.articles
-	)
-	@JoinTable({
-		name: 'help_center_author'
-	})
-	authors?: IHelpCenterAuthor[];
 }
