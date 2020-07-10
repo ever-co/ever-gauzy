@@ -49,7 +49,12 @@
 		"KNOWLEDGE_BASES": "Базы знаний",
 		"SELECT": "Выбрать",
 		"EMAIL": "Эл. адрес",
-		"CONVERT_TO_INVOICE": "Преобразовать в счет"
+		"CONVERT_TO_INVOICE": "Преобразовать в счет",
+		"SPRINT": {
+			"CREATE": "Создать спринт",
+			"EDIT": "Редактировать",
+			"DELETE": "Удалить"
+		}
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -493,6 +498,7 @@
 		"EQUIPMENT": "Оборудование",
 		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
 		"TASKS": "Задачи",
+		"TASKS_SETTINGS": "Настройки",
 		"INVOICES": "Счета",
 		"ORGANIZATION": "Организация",
 		"RECURRING_INVOICES": "Повторяющиеся счета",
