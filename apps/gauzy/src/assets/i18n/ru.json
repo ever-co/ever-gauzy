@@ -1509,7 +1509,7 @@
 			"ACCEPTED_STATUS": "Статус принят"
 		},
 		"PAYMENTS": {
-			"HEADER": "Платежи",
+			"HEADER": "Платежи за счет",
 			"TOTAL_VALUE": "Общая стоимость счета",
 			"RECORD_PAYMENT": "Запись Оплата",
 			"EDIT_PAYMENT": "Редактировать платеж",
@@ -1526,7 +1526,8 @@
 			"STATUS": "Статус",
 			"ON_TIME": "По времени",
 			"OVERDUE": "Просрочено",
-			"NO_PAYMENTS_RECORDED": "Платежей нет"
+			"NO_PAYMENTS_RECORDED": "Платежей нет",
+			"LEFT_TO_PAY": "Слева для оплаты"
 		}
 	},
 	"PAYMENTS_PAGE": {

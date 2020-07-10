@@ -15,6 +15,8 @@ export interface Invoice extends IBaseEntityModel {
 	paid: boolean;
 	tax: number;
 	taxType: string;
+	tax2: number;
+	tax2Type: string;
 	terms?: string;
 	totalValue?: number;
 	clientId?: string;
@@ -40,7 +42,9 @@ export interface InvoiceUpdateInput {
 	discountType?: string;
 	paid?: boolean;
 	tax?: number;
+	tax2?: number;
 	taxType?: string;
+	tax2Type?: string;
 	terms?: string;
 	totalValue?: number;
 	clientId?: string;

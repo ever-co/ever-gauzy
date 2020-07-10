@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { ITenant, Tag, Skill } from '@gauzy/models';
+import { ITenant, Tag, Skill, OrganizationSprint } from '@gauzy/models';
 import { Contact as IContact } from './contact.model';
 
 export enum OrganizationPermissionsEnum {
@@ -57,6 +57,8 @@ export interface Organization extends IBaseEntityModel, IContact {
 	timeFormat?: 12 | 24;
 	registrationDate?: Date;
 	contact: IContact;
+	separateInvoiceItemTaxAndDiscount?: boolean;
+	organizationSprints?: OrganizationSprint[];
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {

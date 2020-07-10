@@ -47,16 +47,18 @@
 				<ga-candidate-interview-form
 					[interviewList]="interviewList"
 					#candidateInterviewForm
-					(titleExist)="titleExist()"
+					(titleExist)="titleExist($event)"
 					[isCalendar]="isCalendar"
-					[interviewers]="editData?.interviewers"
+					[editData]="editData"
 				></ga-candidate-interview-form>
 
 				<div class="text-right">
 					<button
 						status="success"
 						class="btn"
-						[disabled]="candidateInterviewForm.form.invalid"
+						[disabled]="
+							candidateInterviewForm.form.invalid || isTitleExist
+						"
 						nbButton
 						nbStepperNext
 						(click)="next()"

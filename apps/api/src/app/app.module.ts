@@ -102,6 +102,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { TimeOffRequestModule } from './time-off-request/time-off-request.module';
 import { DealModule } from './deal/deal.module';
 import { HelpCenterAuthorModule } from './help-center-author/help-center-author.module';
+import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
 
 @Module({
 	imports: [
@@ -238,6 +239,10 @@ import { HelpCenterAuthorModule } from './help-center-author/help-center-author.
 					{
 						path: '/organization-team',
 						module: OrganizationTeamModule
+					},
+					{
+						path: '/organization-sprint',
+						module: OrganizationSprintModule
 					},
 					{
 						path: '/proposal',
@@ -445,6 +450,7 @@ import { HelpCenterAuthorModule } from './help-center-author/help-center-author.
 		OrganizationVendorsModule,
 		OrganizationAwardsModule,
 		OrganizationLanguagesModule,
+		OrganizationSprintModule,
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
