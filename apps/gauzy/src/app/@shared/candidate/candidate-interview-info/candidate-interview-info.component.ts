@@ -19,6 +19,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() interviewId: any; //from calendar
 	@Input() interviewList: ICandidateInterview[];
+	@Input() isSlider: boolean;
 	@Input() selectedCandidate: Candidate; //from profile
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
@@ -77,7 +78,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 				this.currentInterview = this.interviewList.find(
 					(item) => item.id === this.interviewId
 				);
-				this.interviewList = [];
+
 				const candidate = await this.candidatesService.getCandidateById(
 					this.currentInterview.candidateId,
 					['user']

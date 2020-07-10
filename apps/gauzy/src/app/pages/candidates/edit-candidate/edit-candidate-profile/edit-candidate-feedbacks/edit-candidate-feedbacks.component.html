@@ -190,10 +190,22 @@
 									</div>
 								</div>
 								<div class="add-card-wrap">
-									<label for="description" class="label">{{
-										'FORM.LABELS.FEEDBACK_DESCRIPTION'
-											| translate
-									}}</label>
+									<div class="label-wrap">
+										<label
+											for="description"
+											class="label"
+											>{{
+												'FORM.LABELS.FEEDBACK_DESCRIPTION'
+													| translate
+											}}</label
+										>
+										<ga-star-rating-input
+											*ngIf="!feedbackInterviewId"
+											formControlName="rating"
+											class="stars-optional"
+										></ga-star-rating-input>
+									</div>
+
 									<textarea
 										id="description"
 										class="description"

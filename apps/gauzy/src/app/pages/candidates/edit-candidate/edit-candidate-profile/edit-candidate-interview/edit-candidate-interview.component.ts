@@ -33,6 +33,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
 	form: FormGroup;
+	showPastCheckbox: boolean;
 	constructor(
 		private dialogService: NbDialogService,
 		translate: TranslateService,
@@ -87,6 +88,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 
 		if (res) {
 			this.interviewList = res.items;
+			this.showPastCheckbox =
+				this.interviewList.length > 0 ? true : false;
 			this.loadEmployee();
 		}
 	}
@@ -114,7 +117,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				this.toastrSuccess('CREATED');
 				this.loadInterview();
 			}
-			this.loadInterview();
 		}
 	}
 
@@ -144,17 +146,20 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	async loadEmployee() {
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		const employeeList = items;
 		for (const interview of this.interviewList) {
 			const employees = [];
-			for (const interviewer of interview.interviewers) {
-				const res = await this.employeesService.getEmployeeById(
-					interviewer.employeeId,
-					['user']
-				);
-				if (res) {
-					employees.push(res);
-				}
-			}
+			interview.interviewers.forEach((interviewer) => {
+				employeeList.forEach((employee) => {
+					if (interviewer.employeeId === employee.id) {
+						employees.push(employee);
+					}
+				});
+			});
 			interview.employees = employees;
 		}
 	}
@@ -180,11 +185,20 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		}
 	}
 	async removeInterview(id: string) {
+		const currentInterview = this.interviewList.find(
+			(item) => item.id === id
+		);
 		try {
-			await this.candidateTechnologiesService.deleteBulkByInterviewId(id);
-			await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(
-				id
-			);
+			if (currentInterview.personalQualities.length > 0) {
+				await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(
+					id
+				);
+			}
+			if (currentInterview.technologies.length > 0) {
+				await this.candidateTechnologiesService.deleteBulkByInterviewId(
+					id
+				);
+			}
 			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
 			await this.candidateInterviewService.delete(id);
 			this.toastrSuccess('DELETED');

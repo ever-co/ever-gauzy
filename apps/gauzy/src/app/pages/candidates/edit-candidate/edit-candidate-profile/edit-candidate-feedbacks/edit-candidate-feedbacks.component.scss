@@ -175,6 +175,17 @@
   text-align: center;
 }
 
+.label-wrap {
+  flex-direction: row;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.stars-optional {
+  margin: 0 0 0.5rem 1rem;
+}
+
 .stars-output {
   padding-left: 1rem;
 }

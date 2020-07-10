@@ -1,13 +1,11 @@
 <nb-select
+	[formControl]="select"
 	[selected]="selectedCandidateId"
 	(selectedChange)="onMembersSelected($event)"
 	[disabled]="disabled"
 	fullWidth
 	placeholder="{{ placeholder }} "
 >
-	<nb-option *ngIf="isPlaceholderSelected" value="null" disabled hidden>
-		{{ placeholder }}
-	</nb-option>
 	<nb-option *ngIf="isAllMembers" value="all">
 		<ngx-avatar
 			size="sm"
