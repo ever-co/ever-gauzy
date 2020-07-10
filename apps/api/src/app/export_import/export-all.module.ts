@@ -97,6 +97,8 @@ import { ContactService } from '../contact/contact.service';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
+import { OrganizationSprintService } from '../organization-sprint/organization-sprint.service';
 
 @Module({
 	imports: [
@@ -149,7 +151,8 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 			ApprovalPolicy,
 			Candidate,
 			EstimateEmail,
-			Contact
+			Contact,
+			OrganizationSprint
 		])
 	],
 	controllers: [ExportAllController],
@@ -198,7 +201,8 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 		ApprovalPolicyService,
 		CandidateService,
 		EstimateEmailService,
-		ContactService
+		ContactService,
+		OrganizationSprintService
 	],
 	exports: [
 		ExportAllService,
@@ -245,7 +249,8 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 		ApprovalPolicyService,
 		CandidateService,
 		EstimateEmailService,
-		ContactService
+		ContactService,
+		OrganizationSprintService
 	]
 })
 export class ExportAllModule {}

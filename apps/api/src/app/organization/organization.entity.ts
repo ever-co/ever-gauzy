@@ -1,12 +1,32 @@
-import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, RelationId } from 'typeorm';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import {
-  BonusTypeEnum,
-  CurrenciesEnum,
-  DefaultValueDateTypeEnum,
-  Organization as IOrganization,
-  WeekDaysEnum,
+	Column,
+	Entity,
+	Index,
+	JoinColumn,
+	JoinTable,
+	ManyToMany,
+	ManyToOne,
+	OneToMany,
+	RelationId
+} from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	IsBoolean,
+	IsDate,
+	IsEnum,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	Max,
+	Min
+} from 'class-validator';
+import {
+	BonusTypeEnum,
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	Organization as IOrganization,
+	WeekDaysEnum
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
@@ -14,6 +34,7 @@ import { Invoice } from '../invoice/invoice.entity';
 import { Payment } from '../payment/payment.entity';
 import { Contact } from '../contact/contact.entity';
 import { TenantBase } from '../core/entities/tenant-base';
+import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 
 @Entity('organization')
 export class Organization extends TenantBase implements IOrganization {
@@ -311,4 +332,9 @@ export class Organization extends TenantBase implements IOrganization {
 	@IsBoolean()
 	@Column({ nullable: true })
 	separateInvoiceItemTaxAndDiscount?: boolean;
+
+	@ApiPropertyOptional({ type: OrganizationSprint, isArray: true })
+	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.organization)
+	@JoinColumn()
+	organizationSprints?: OrganizationSprint[];
 }
