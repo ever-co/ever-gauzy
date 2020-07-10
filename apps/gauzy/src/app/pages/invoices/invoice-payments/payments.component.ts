@@ -14,7 +14,6 @@ import { InvoicePaymentOverdueComponent } from '../table-components/invoice-paym
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/payment/generate-pdf';
-import { MethodCall } from '@angular/compiler';
 
 export interface SelectedPayment {
 	data: Payment;
