@@ -65,7 +65,10 @@ export class TimeOffService {
 		);
 	}
 
-	updateRequestStatus(id: string, request: TimeOffUpdateInput): Observable<TimeOff> {
+	updateRequestStatus(
+		id: string,
+		request: TimeOffUpdateInput
+	): Observable<TimeOff> {
 		return this.http.put(`/api/time-off-request/${id}`, request);
 	}
 

@@ -1,47 +1,62 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <nb-card>
-    <nb-card-header>
-      <h4>
-        {{ (id ? 'PIPELINE_DEAL_EDIT_PAGE.HEADER' : 'PIPELINE_DEAL_CREATE_PAGE.HEADER') | translate:pipeline }}
-      </h4>
-    </nb-card-header>
-    <nb-card-body>
-      <nb-form-field>
-        <label>
-          <span nbprefix>
-            {{ 'SM_TABLE.TITLE' | translate }}
-          </span>
-          <input nbInput
-                 fullWidth
-                 type="text"
-                 formControlName="title">
-        </label>
-      </nb-form-field>
-      <nb-form-field>
-        <label>
-          <span nbprefix>
-            {{ 'PIPELINE_DEAL_CREATE_PAGE.SELECT_STAGE' | translate }}
-          </span>
-          <nb-select
-            fullWidth
-            formControlName="stageId">
-            <nb-option *ngFor="let stage of pipeline?.stages" [value]="stage.id">
-              {{ stage.name }}
-            </nb-option>
-          </nb-select>
-        </label>
-      </nb-form-field>
-    </nb-card-body>
-    <nb-card-footer class="text-right">
-      <button nbButton
-              type="submit"
-              [disabled]="form.invalid || form.disabled"
-              [status]="id ? 'info' : 'primary'">
-        <nb-icon pack="eva" [icon]="id ? 'edit-outline' : 'plus-circle-outline'"></nb-icon>
-        <span>
-          {{ (id ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE') | translate }}
-        </span>
-      </button>
-    </nb-card-footer>
-  </nb-card>
+	<nb-card>
+		<nb-card-header>
+			<h4>
+				{{
+					(id
+						? 'PIPELINE_DEAL_EDIT_PAGE.HEADER'
+						: 'PIPELINE_DEAL_CREATE_PAGE.HEADER'
+					) | translate: pipeline
+				}}
+			</h4>
+		</nb-card-header>
+		<nb-card-body>
+			<nb-form-field>
+				<label>
+					<span nbprefix>
+						{{ 'SM_TABLE.TITLE' | translate }}
+					</span>
+					<input
+						nbInput
+						fullWidth
+						type="text"
+						formControlName="title"
+					/>
+				</label>
+			</nb-form-field>
+			<nb-form-field>
+				<label>
+					<span nbprefix>
+						{{
+							'PIPELINE_DEAL_CREATE_PAGE.SELECT_STAGE' | translate
+						}}
+					</span>
+					<nb-select fullWidth formControlName="stageId">
+						<nb-option
+							*ngFor="let stage of pipeline?.stages"
+							[value]="stage.id"
+						>
+							{{ stage.name }}
+						</nb-option>
+					</nb-select>
+				</label>
+			</nb-form-field>
+		</nb-card-body>
+		<nb-card-footer class="text-right">
+			<button
+				nbButton
+				type="submit"
+				[disabled]="form.invalid || form.disabled"
+				[status]="id ? 'info' : 'primary'"
+			>
+				<nb-icon
+					pack="eva"
+					[icon]="id ? 'edit-outline' : 'plus-circle-outline'"
+				></nb-icon>
+				<span>
+					{{ (id ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE') | translate }}
+				</span>
+			</button>
+		</nb-card-footer>
+	</nb-card>
 </form>

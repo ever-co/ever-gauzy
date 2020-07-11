@@ -1136,6 +1136,9 @@
 		"APPROVAL_REQUEST_MIN_COUNT": "Min Count",
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "Status",
+		"APPROVAL_REQUEST_ACTIONS": "Actions",
+		"APPROVAL": "Approval",
+		"REFUSE": "Refuse",
 		"HEADER": "Approval Request",
 		"EMPLOYEES": "Employees",
 		"TEAMS": "Teams",
@@ -1144,7 +1147,9 @@
 		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
 		"ADD_APPROVAL_REQUEST": "Add Request Approval",
 		"APPROVAL_REQUEST_SAVED": "Request Approval Saved",
-		"APPROVAL_REQUEST_DELETED": "Request Approval Deleted"
+		"APPROVAL_REQUEST_DELETED": "Request Approval Deleted",
+		"APPROVAL_SUCCESS": "Approval Success",
+		"REFUSE_SUCCESS": "Refuse Success"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",

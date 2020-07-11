@@ -1,4 +1,12 @@
-import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
+import {
+	Controller,
+	UseGuards,
+	HttpStatus,
+	Post,
+	Body,
+	Get,
+	Query
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { TimeOffRequest } from './time-off-request.entity';

@@ -6,22 +6,10 @@ import { AuthModule } from '../auth/auth.module';
 import { DealController } from './deal.controller';
 import { DealService } from './deal.service';
 
-@Module( {
-  imports: [
-    TypeOrmModule.forFeature( [ Deal ] ),
-    StageModule,
-    AuthModule,
-  ],
-  controllers: [
-    DealController,
-  ],
-  providers: [
-    DealService,
-  ],
-  exports: [
-    DealService,
-  ],
-} )
-export class DealModule
-{
-}
+@Module({
+	imports: [TypeOrmModule.forFeature([Deal]), StageModule, AuthModule],
+	controllers: [DealController],
+	providers: [DealService],
+	exports: [DealService]
+})
+export class DealModule {}

@@ -20,6 +20,9 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
+import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
+import { TimeSlot } from '../timesheet/time-slot.entity';
+import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 
 @Module({
 	imports: [
@@ -31,7 +34,9 @@ import { RoleService } from '../role/role.service';
 			ExpenseCategory,
 			IntegrationMap,
 			Organization,
-			Role
+			Role,
+			TimeSlot,
+			TimeSlotMinute
 		]),
 		CqrsModule
 	],
@@ -46,7 +51,8 @@ import { RoleService } from '../role/role.service';
 		ExpenseCategoriesService,
 		IntegrationMapService,
 		OrganizationService,
-		RoleService
+		RoleService,
+		TimeSlotService
 	]
 })
 export class UpworkModule {}

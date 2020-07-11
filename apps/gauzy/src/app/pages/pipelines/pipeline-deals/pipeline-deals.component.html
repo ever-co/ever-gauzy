@@ -1,69 +1,77 @@
 <nb-card>
-  <nb-card-header>
-    <h4>
-      <span>
-        {{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }}
-      </span>
-      |
-      <span>
-        {{ pipeline?.name }}
-      </span>
-    </h4>
-  </nb-card-header>
-  <nb-card-body>
-    <div class="btn-container mb-3">
-      <button
-        [routerLink]="[  './create' ]"
-        status="success"
-        type="button"
-        class="mr-2"
-        nbButton
-      >
-        <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
-        <span>
-          {{ 'BUTTONS.ADD' | translate }}
-        </span>
-      </button>
-      <button
-        *ngIf="deal"
-        [routerLink]="[ './', deal.id, 'edit' ]"
-        status="info"
-        class="mr-2"
-        nbButton
-      >
-        <nb-icon icon="edit-outline" pack="eva"></nb-icon>
-        <span>
-          {{ 'BUTTONS.EDIT' | translate }}
-        </span>
-      </button>
-      <button
-        *ngIf="deal"
-        (click)="deleteDeal()"
-        style="cursor: pointer;"
-        status="danger"
-        type="button"
-        class="mr-2"
-        nbButton
-      >
-        <nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
-        <span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
-      </button>
-      <nb-select [(selected)]="stageId"
-                 (selectedChange)="filterDealsByStage()"
-                 [placeholder]="'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate">
-        <nb-option [value]="''" style="white-space: nowrap">
-          {{ 'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate }}
-        </nb-option>
-        <nb-option *ngFor="let stage of pipeline?.stages" [value]="stage.id" style="white-space: nowrap">
-          {{ stage.name }}
-        </nb-option>
-      </nb-select>
-    </div>
+	<nb-card-header>
+		<h4>
+			<span>
+				{{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }}
+			</span>
+			|
+			<span>
+				{{ pipeline?.name }}
+			</span>
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="btn-container mb-3">
+			<button
+				[routerLink]="['./create']"
+				status="success"
+				type="button"
+				class="mr-2"
+				nbButton
+			>
+				<nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
+				<span>
+					{{ 'BUTTONS.ADD' | translate }}
+				</span>
+			</button>
+			<button
+				*ngIf="deal"
+				[routerLink]="['./', deal.id, 'edit']"
+				status="info"
+				class="mr-2"
+				nbButton
+			>
+				<nb-icon icon="edit-outline" pack="eva"></nb-icon>
+				<span>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</span>
+			</button>
+			<button
+				*ngIf="deal"
+				(click)="deleteDeal()"
+				style="cursor: pointer;"
+				status="danger"
+				type="button"
+				class="mr-2"
+				nbButton
+			>
+				<nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
+				<span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
+			</button>
+			<nb-select
+				[(selected)]="stageId"
+				(selectedChange)="filterDealsByStage()"
+				[placeholder]="
+					'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate
+				"
+			>
+				<nb-option [value]="''" style="white-space: nowrap;">
+					{{ 'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate }}
+				</nb-option>
+				<nb-option
+					*ngFor="let stage of pipeline?.stages"
+					[value]="stage.id"
+					style="white-space: nowrap;"
+				>
+					{{ stage.name }}
+				</nb-option>
+			</nb-select>
+		</div>
 
-    <ng2-smart-table
-      (rowSelect)="deal = $event.data"
-      [settings]="smartTableSettings"
-      [source]="deals"
-    ></ng2-smart-table>
-  </nb-card-body>
+		<ng2-smart-table
+			(rowSelect)="deal = $event.data"
+			[settings]="smartTableSettings"
+			[source]="deals"
+		></ng2-smart-table>
+	</nb-card-body>
 </nb-card>

@@ -5,13 +5,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 @Injectable()
-export class DealService extends CrudService<Deal>
-{
-  public constructor(
-    @InjectRepository( Deal )
-      dealRepository: Repository<Deal> )
-  {
-    super( dealRepository );
-  }
-
+export class DealService extends CrudService<Deal> {
+	public constructor(
+		@InjectRepository(Deal)
+		dealRepository: Repository<Deal>
+	) {
+		super(dealRepository);
+	}
 }
