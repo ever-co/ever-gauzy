@@ -588,7 +588,7 @@ export class UpworkService {
 					}
 				);
 
-				return await {
+				return {
 					integratedTimeSlotActivities
 				};
 			})
