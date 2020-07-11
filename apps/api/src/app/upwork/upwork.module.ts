@@ -22,6 +22,7 @@ import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeSlot } from '../timesheet/time-slot.entity';
+import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 
 @Module({
 	imports: [
@@ -34,7 +35,8 @@ import { TimeSlot } from '../timesheet/time-slot.entity';
 			IntegrationMap,
 			Organization,
 			Role,
-			TimeSlot
+			TimeSlot,
+			TimeSlotMinute
 		]),
 		CqrsModule
 	],

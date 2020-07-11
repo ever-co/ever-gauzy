@@ -6,12 +6,15 @@ import { TimeSlot } from '../time-slot.entity';
 import * as moment from 'moment';
 import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
+import { TimeSlotMinute } from '../time-slot-minute.entity';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>
+		private readonly timeSlotRepository: Repository<TimeSlot>,
+		@InjectRepository(TimeSlotMinute)
+		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>
 	) {
 		super(timeSlotRepository);
 	}
@@ -198,5 +201,17 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			mStart = tempEnd.clone();
 		}
 		return slots;
+	}
+
+	/*
+	 *create time slot minute activity for spacific timeslot
+	 */
+	async createTimeSlotMinute({ keyboard, mouse, datetime, timeSlot }) {
+		return await this.timeSlotMinuteRepository.save({
+			keyboard,
+			mouse,
+			datetime,
+			timeSlot
+		});
 	}
 }

@@ -39,7 +39,8 @@ import {
 	TimesheetCreateCommand,
 	TimeLogCreateCommand,
 	TimeSlotCreateCommand,
-	ScreenshotCreateCommand
+	ScreenshotCreateCommand,
+	TimeSlotMinuteCreateCommand
 } from '../timesheet/commands';
 import * as moment from 'moment';
 import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
@@ -49,7 +50,6 @@ import { IntegrationMapService } from '../integration-map/integration-map.servic
 import { UserService } from '../user/user.service';
 import { OrganizationService } from '../organization/organization.service';
 import { RoleService } from '../role/role.service';
-import { TimeSlotMinuteCreateCommand } from '../timesheet/commands/time-slot-minute-create.command ';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 
 @Injectable()
@@ -438,7 +438,6 @@ export class UpworkService {
 					{
 						contractId: sourceId,
 						employeeId,
-						integrationId,
 						config,
 						timeSlots: cells
 					}
@@ -518,13 +517,10 @@ export class UpworkService {
 		);
 	}
 
-	async syncTimeSlotsActivity({
-		contractId,
-		employeeId,
-		integrationId,
-		timeSlot,
-		timeSlotActivity
-	}) {
+	/*
+	 * Get timeslot minute activities
+	 */
+	async syncTimeSlotsActivity({ employeeId, timeSlot, timeSlotActivity }) {
 		try {
 			const { minutes } = timeSlotActivity;
 			const { cell_time } = timeSlot;
@@ -543,20 +539,18 @@ export class UpworkService {
 					});
 
 					const { time, mouse, keyboard } = minute;
-					// const gauzyTimeSlotMinute = await this.commandBus.execute(
-					// 	new TimeSlotMinuteCreateCommand({
-					// 		mouse,
-					// 		keyboard,
-					// 		datetime: new Date(
-					// 			moment
-					// 				.unix(time)
-					// 				.format('YYYY-MM-DD HH:mm:ss')
-					// 		),
-					// 		timeSlot
-					// 	})
-					// );
+					const gauzyTimeSlotMinute = await this.commandBus.execute(
+						new TimeSlotMinuteCreateCommand({
+							mouse,
+							keyboard,
+							datetime: new Date(
+								moment.unix(time).format('YYYY-MM-DD HH:mm:ss')
+							),
+							timeSlot
+						})
+					);
 
-					return await timeSlot;
+					return gauzyTimeSlotMinute;
 				})
 			);
 
@@ -574,7 +568,6 @@ export class UpworkService {
 	async getTimeSlotActivitiesByContractId({
 		contractId,
 		employeeId,
-		integrationId,
 		config,
 		timeSlots
 	}) {
@@ -589,9 +582,7 @@ export class UpworkService {
 				);
 				const integratedTimeSlotActivities = await this.syncTimeSlotsActivity(
 					{
-						contractId,
 						employeeId,
-						integrationId,
 						timeSlot: timeslot,
 						timeSlotActivity
 					}
