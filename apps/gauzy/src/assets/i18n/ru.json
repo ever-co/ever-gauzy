@@ -1135,9 +1135,9 @@
 		"APPROVAL_REQUEST_MIN_COUNT": "Минимальное количество",
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Политика одобрения",
 		"APPROVAL_REQUEST_STATUS": "Статус",
-		"APPROVAL_REQUEST_ACTIONS": "Actions",
-		"APPROVAL": "Approval",
-		"REFUSE": "Refuse",
+		"APPROVAL_REQUEST_ACTIONS": "Действия",
+		"APPROVAL": "Одобрение",
+		"REFUSE": "Отклонить",
 		"HEADER": "Запрос на утверждение",
 		"EMPLOYEES": "Сотрудники",
 		"TEAMS": "Команды",
@@ -1147,8 +1147,8 @@
 		"ADD_APPROVAL_REQUEST": "Добавить подтверждение запроса",
 		"APPROVAL_REQUEST_SAVED": "Утверждение запроса сохранено",
 		"APPROVAL_REQUEST_DELETED": "Утверждение запроса удалено",
-		"APPROVAL_SUCCESS": "Approval Success",
-		"REFUSE_SUCCESS": "Refuse Success"
+		"APPROVAL_SUCCESS": "Успешное утверждение",
+		"REFUSE_SUCCESS": "Успешно отказано"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Редактировать политику утверждения",
