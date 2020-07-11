@@ -14,6 +14,7 @@ import { RequestApprovalStatusComponent } from './table-components/request-appro
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
 import { RequestApprovalTypeComponent } from './table-components/request-approval-type/request-approval-type.component';
+import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 
 export interface IApprovalsData {
 	icon: string;
@@ -167,9 +168,50 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					type: 'custom',
 					renderComponent: RequestApprovalStatusComponent,
 					filter: false
+				},
+				actions: {
+					title: this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_ACTIONS'
+					),
+					type: 'custom',
+					renderComponent: RequestApprovalActionComponent,
+					onComponentInitFunction: (instance) => {
+						instance.updateResult.subscribe((params) => {
+							this.handleEvent(params);
+						});
+					},
+					filter: false
 				}
 			}
 		};
+	}
+
+	async handleEvent(params: any) {
+		if (params.isApproval) {
+			const request = await this.approvalRequestService.approvalRequestByAdmin(
+				params.data.id
+			);
+			if (request) {
+				this.toastrService.primary(
+					this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.APPROVAL_SUCCESS'
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
+			this.loadSettings();
+		} else {
+			const request = await this.approvalRequestService.refuseRequestByAdmin(
+				params.data.id
+			);
+			if (request) {
+				this.toastrService.primary(
+					this.getTranslation('APPROVAL_REQUEST_PAGE.REFUSE_SUCCESS'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
+			this.loadSettings();
+		}
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -177,6 +219,43 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			this.loadSmartTable();
 		});
 	}
+
+	// private initListApprovals() {
+	//   this.listApprovals = [
+	//     {
+	//       icon: 'paper-plane-outline',
+	//       title: 'Business Trip'
+	//     },
+	//     {
+	//       icon: 'paper-plane-outline',
+	//       title: 'Borrow Items'
+	//     },
+	//     {
+	//       icon: 'paper-plane-outline',
+	//       title: 'General Approval'
+	//     },
+	//     {
+	//       icon: 'paper-plane-outline',
+	//       title: 'Contract Approval'
+	//     },
+	//     {
+	//       icon: 'paper-plane-outline',
+	//       title: 'Payment Application'
+	//     },
+	//     {
+	//       icon: 'paper-plane-outline',
+	//       title: 'Car Rental Application'
+	//     },
+	//     {
+	//       icon: 'paper-plane-outline',
+	//       title: 'Job Referral Award'
+	//     },
+	//     {
+	//       icon: 'paper-plane-outline',
+	//       title: 'Procurement'
+	//     }
+	//   ]
+	// }
 
 	manageAppropvalPolicy() {
 		this.router.navigate(['/pages/organization/approval-policy']);
@@ -197,13 +276,12 @@ export class ApprovalsComponent extends TranslationBaseComponent
 
 		this.selectedRequestApproval = null;
 		this.disableButton = true;
-
 		const params = {
 			name: requestApproval.name,
 			type: Number(requestApproval.type),
 			approvalPolicyId: requestApproval.approvalPolicyId,
-			employeeApprovals: requestApproval.employees,
-			teams: requestApproval.teams,
+			employeeApprovals: requestApproval.employees || [],
+			teams: requestApproval.teams || [],
 			min_count: requestApproval.min_count,
 			id: undefined
 		};

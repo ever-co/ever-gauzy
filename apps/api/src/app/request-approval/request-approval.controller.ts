@@ -5,7 +5,8 @@ import {
 	RequestApproval as IRequestApproval,
 	PermissionsEnum,
 	RequestApprovalCreateInput as IRequestApprovalCreateInput,
-	RequestApprovalStatusTypesEnum
+	RequestApprovalStatusTypesEnum,
+	RolesEnum
 } from '@gauzy/models';
 import {
 	Query,
@@ -23,6 +24,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../shared/decorators/roles';
 
 @ApiTags('request-approval')
 @UseGuards(AuthGuard('jwt'))
@@ -114,12 +116,13 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('approval/:id')
 	async employeeApprovalRequestApproval(
 		@Param('id') id: string
 	): Promise<RequestApproval> {
-		return this.requestApprovalService.updateStatusRequestApproval(
+		return this.requestApprovalService.updateStatusRequestApprovalByAdmin(
 			id,
 			RequestApprovalStatusTypesEnum.APPROVED
 		);
@@ -137,12 +140,13 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
+	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('refuse/:id')
 	async employeeRefuseRequestApproval(
 		@Param('id') id: string
 	): Promise<RequestApproval> {
-		return this.requestApprovalService.updateStatusRequestApproval(
+		return this.requestApprovalService.updateStatusRequestApprovalByAdmin(
 			id,
 			RequestApprovalStatusTypesEnum.REFUSED
 		);
@@ -162,7 +166,7 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put(':id')
-	async updateRequestApproval(
+	async updateRequestApprovalByAdmin(
 		@Param('id') id: string,
 		@Body() entity: IRequestApprovalCreateInput
 	): Promise<RequestApproval> {
