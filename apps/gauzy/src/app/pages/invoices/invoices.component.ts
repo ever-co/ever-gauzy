@@ -9,10 +9,11 @@ import {
 	PermissionsEnum,
 	Tag,
 	Organization,
-	InvoiceTypeEnum
+	InvoiceTypeEnum,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
-import { Router } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
@@ -24,15 +25,12 @@ import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mut
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
-
-export interface SelectedInvoice {
-	data: Invoice;
-	isSelected: false;
-}
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	selector: 'ngx-invoices',
-	templateUrl: './invoices.component.html'
+	templateUrl: './invoices.component.html',
+	styleUrls: ['invoices.component.scss']
 })
 export class InvoicesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -46,6 +44,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 	invoices: Invoice[];
 	tags: Tag[];
 	organization: Organization;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -63,6 +63,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit() {
@@ -79,6 +80,23 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.ESTIMATES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	add() {
@@ -89,7 +107,14 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	edit() {
+	edit(selectedItem?: Invoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
 		if (this.isEstimate) {
 			this.router.navigate([
 				`/pages/accounting/invoices/estimates/edit/${this.selectedInvoice.id}`
@@ -101,7 +126,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async duplicate() {
+	async duplicate(selectedItem?: Invoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber();
 		const createdInvoice = await this.invoicesService.add({
 			invoiceNumber: +invoiceNumber['max'] + 1,
@@ -170,7 +201,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	download() {
+	download(selectedItem?: Invoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService.open(InvoiceDownloadMutationComponent, {
 			context: {
 				invoice: this.selectedInvoice,
@@ -179,7 +216,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 		});
 	}
 
-	async send() {
+	async send(selectedItem?: Invoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		if (this.selectedInvoice.toClient.contactOrganizationId) {
 			this.dialogService
 				.open(InvoiceSendMutationComponent, {
@@ -199,7 +242,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async delete() {
+	async delete(selectedItem?: Invoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
@@ -240,7 +289,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 		]);
 	}
 
-	email() {
+	email(selectedItem?: Invoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(InvoiceEmailMutationComponent, {
 				context: {
@@ -279,14 +334,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 			});
 	}
 
-	async selectInvoice($event: SelectedInvoice) {
-		if ($event.isSelected) {
-			this.selectedInvoice = $event.data;
-			this.disableButton = false;
+	async selectInvoice({ isSelected, data }) {
+		const selectedInvoice = isSelected ? data : null;
+		if (this.invoicesTable) {
 			this.invoicesTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedInvoice = selectedInvoice;
 	}
 
 	loadSmartTable() {

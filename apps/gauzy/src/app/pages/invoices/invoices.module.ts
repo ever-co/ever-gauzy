@@ -60,6 +60,7 @@ import { TasksStoreService } from '../../@core/services/tasks-store.service';
 import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
 import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -75,6 +76,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbButtonModule,
 		Ng2SmartTableModule,
+		CardGridModule,
 		FormsModule,
 		NbBadgeModule,
 		ReactiveFormsModule,
