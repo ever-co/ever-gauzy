@@ -16,6 +16,7 @@ import {
 	KeyResultDeadlineEnum,
 	KeyResultWeightEnum
 } from '@gauzy/models';
+import { TasksService } from '../../../@core/services/tasks.service';
 
 @Component({
 	selector: 'ga-edit-keyresults',
@@ -34,7 +35,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
 		public fb: FormBuilder,
-		private employeeService: EmployeesService
+		private employeeService: EmployeesService,
+		private taskService: TasksService
 	) {}
 
 	ngOnInit() {
@@ -53,6 +55,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				this.keyResultDeadlineEnum.NO_CUSTOM_DEADLINE,
 				Validators.required
 			],
+			projectId: [null],
+			taskId: [null],
 			softDeadline: [null],
 			hardDeadline: [null]
 		});
@@ -76,6 +80,27 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				owner: this.data.owner.id
 			});
 		}
+	}
+
+	taskTypeValidators() {
+		if (
+			this.keyResultsForm.get('type').value ===
+			this.keyResultTypeEnum.TASK
+		) {
+			this.keyResultsForm.controls['projectId'].setValidators([
+				Validators.required
+			]);
+			this.keyResultsForm.controls['taskId'].setValidators([
+				Validators.required
+			]);
+		} else {
+			this.keyResultsForm.controls['projectId'].clearValidators();
+			this.keyResultsForm.patchValue({ projectId: undefined });
+			this.keyResultsForm.controls['taskId'].clearValidators();
+			this.keyResultsForm.patchValue({ taskId: undefined });
+		}
+		this.keyResultsForm.controls['projectId'].updateValueAndValidity();
+		this.keyResultsForm.controls['taskId'].updateValueAndValidity();
 	}
 
 	deadlineValidators() {
@@ -135,12 +160,27 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	saveKeyResult() {
+	async saveKeyResult() {
+		if (this.keyResultsForm.value.type === this.keyResultTypeEnum.TASK) {
+			await this.taskService
+				.getById(this.keyResultsForm.value.taskId)
+				.then((task) => {
+					if (!!task.dueDate) {
+						this.keyResultsForm.patchValue({
+							deadline: KeyResultDeadlineEnum.HARD_DEADLINE,
+							hardDeadline: task.dueDate
+						});
+					}
+				});
+		}
 		if (!!this.data) {
 			this.keyResultsForm.patchValue({
 				targetValue:
 					this.keyResultsForm.value.type ===
 					this.keyResultTypeEnum.TRUE_OR_FALSE
+						? 1
+						: this.keyResultsForm.value.type ===
+						  this.keyResultTypeEnum.TASK
 						? 1
 						: this.keyResultsForm.value.targetValue
 			});

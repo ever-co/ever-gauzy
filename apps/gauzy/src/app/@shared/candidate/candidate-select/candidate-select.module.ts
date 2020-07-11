@@ -1,3 +1,4 @@
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { NbSelectModule } from '@nebular/theme';
@@ -16,6 +17,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		ThemeModule,
 		NbSelectModule,
 		SharedModule,
+		FormsModule,
+		ReactiveFormsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

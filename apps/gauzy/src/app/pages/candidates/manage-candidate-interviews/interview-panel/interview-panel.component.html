@@ -3,6 +3,16 @@
 </h5>
 <nb-card-body class="card">
 	<div class="card-filter">
+		<input
+			nbInput
+			type="text"
+			[formControl]="search"
+			class="search"
+			placeholder="{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.SEARCH_BY_INTERVIEW'
+					| translate
+			}}"
+		/>
 		<nb-select
 			class="select"
 			placeholder="{{

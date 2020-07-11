@@ -48,10 +48,18 @@
 		"MAKE_PUBLIC": "сделать публичным",
 		"KNOWLEDGE_BASES": "Базы знаний",
 		"SELECT": "Выбрать",
-		"EMAIL": "Эл. адрес"
+		"EMAIL": "Эл. адрес",
+		"CONVERT_TO_INVOICE": "Преобразовать в счет",
+		"SPRINT": {
+			"CREATE": "Создать спринт",
+			"EDIT": "Редактировать",
+			"DELETE": "Удалить"
+		}
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
+		"TITLE": "Заголовок",
+		"STAGE": "Этап",
 		"START_DATE": "Дата начала",
 		"END_DATE": "Дата окончания",
 		"CLIENT_NAME": "Имя клиента",
@@ -490,6 +498,7 @@
 		"EQUIPMENT": "Оборудование",
 		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
 		"TASKS": "Задачи",
+		"TASKS_SETTINGS": "Настройки",
 		"INVOICES": "Счета",
 		"ORGANIZATION": "Организация",
 		"RECURRING_INVOICES": "Повторяющиеся счета",
@@ -783,7 +792,9 @@
 				"UPDATED_VALUE": "Значение обновлено",
 				"MARK_COMPLETE": "Отметить как завершенное",
 				"STATUS": "Статус",
-				"WEIGHT": "Вес"
+				"WEIGHT": "Вес",
+				"SELECT_PROJECT": "Выбрать проект",
+				"SELECT_TASK": "Выберите задачу"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Имя результата ключа. Например. Добавить метаданные для улучшения SEO",
@@ -900,6 +911,7 @@
 			"CRITERIONS": "Критерии",
 			"DATE": "Дата",
 			"SORT_BY": "Сортировать по",
+			"SEARCH_BY_INTERVIEW": "Поиск по названию интервью",
 			"CANDIDATE_NAME": "Имя Кандидата",
 			"RATING": "Рейтинг"
 		},
@@ -1394,6 +1406,7 @@
 		"ESTIMATE_DATE": "Предполагаемая дата",
 		"TOTAL_VALUE": "Общая стоимость",
 		"PAID_STATUS": "Оплаченный статус",
+		"TAX_2": "Налог 2",
 		"INVOICES_ADD_INVOICE": "Счет добавлен",
 		"INVOICES_ADD_ESTIMATE": "Приблизительно Добавлено",
 		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
@@ -1436,6 +1449,10 @@
 		"RECEIVED_ESTIMATES": "Полученные оценки",
 		"SEND_INVOICE": "Счет отправлен",
 		"SEND_ESTIMATE": "Послано",
+		"APPLY_TAX": "Применить налог",
+		"APPLY_DISCOUNT": "Применить скидку",
+		"APPLIED": "Применяется",
+		"NOT_APPLIED": "Не применено",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -1504,10 +1521,11 @@
 			"REJECT": "Отклонить",
 			"ACCEPTED": "Принято",
 			"REJECTED": "Отклонено",
-			"ACCEPTED_STATUS": "Статус принят"
+			"ACCEPTED_STATUS": "Статус принят",
+			"ESTIMATE_CONVERT": "Расчет конвертированных"
 		},
 		"PAYMENTS": {
-			"HEADER": "Платежи",
+			"HEADER": "Платежи за счет",
 			"TOTAL_VALUE": "Общая стоимость счета",
 			"RECORD_PAYMENT": "Запись Оплата",
 			"EDIT_PAYMENT": "Редактировать платеж",
@@ -1524,7 +1542,9 @@
 			"STATUS": "Статус",
 			"ON_TIME": "По времени",
 			"OVERDUE": "Просрочено",
-			"NO_PAYMENTS_RECORDED": "Платежей нет"
+			"NO_PAYMENTS_RECORDED": "Платежей нет",
+			"LEFT_TO_PAY": "Слева для оплаты",
+			"PAYMENT_METHOD": "Способ оплаты"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -1932,6 +1952,7 @@
 		"DETAILS": "Детали бронирования",
 		"PARTICIPANTS": "Email участника",
 		"HOST": "Хост",
+		"RESCHEDULE": "Перенос назначения",
 		"CANCEL": "Отменить назначение",
 		"EXPIRED_OR_CANCELLED": "**Срок действия контракта истёк или был отменен.",
 		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания."
@@ -1966,8 +1987,21 @@
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",
 		"HEADER_STAGES": "Этапы",
+		"VIEW_DEALS": "Просмотр сделок",
 		"HEADER_FORM_EDIT": "Изменить конвейер",
 		"HEADER_FORM_CREATE": "Создать конвейер",
 		"RECORD_TYPE": "конвейер \"{{ name }}\""
+	},
+	"PIPELINE_DEALS_PAGE": {
+		"HEADER": "Сделки Трубопровода",
+		"FILTER_BY_STAGE": "Фильтр по этапу",
+		"RECORD_TYPE": "этап \"{{ title }}\""
+	},
+	"PIPELINE_DEAL_EDIT_PAGE": {
+		"HEADER": "Редактировать сделку | Пипеллинн: {{ name }}"
+	},
+	"PIPELINE_DEAL_CREATE_PAGE": {
+		"HEADER": "Создать сделку | Пипеллинг: {{ name }}",
+		"SELECT_STAGE": "Выбрать этап"
 	}
 }

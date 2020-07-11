@@ -22,6 +22,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Deal } from '../deal/deal.entity';
 
 @Controller()
 @ApiTags('Pipeline')
@@ -46,6 +47,18 @@ export class PipelineController extends CrudController<Pipeline> {
 			relations,
 			where
 		});
+	}
+
+	@ApiOperation({ summary: 'find deals' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records'
+	})
+	@Get(':id/deals')
+	public async findDeals(
+		@Param('id') id: string
+	): Promise<IPagination<Deal>> {
+		return this.pipelineService.findDeals(id);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

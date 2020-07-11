@@ -18,7 +18,7 @@
 
 	<div class="card">
 		<nb-icon
-			*ngIf="interviewList?.length > 1"
+			*ngIf="isSlider"
 			icon="arrow-ios-back"
 			class="arrow-icon"
 			(click)="previous()"
@@ -135,14 +135,14 @@
 		</div>
 
 		<nb-icon
-			*ngIf="interviewList?.length > 1"
+			*ngIf="isSlider"
 			icon="arrow-ios-forward"
 			class="arrow-icon"
 			(click)="next()"
 			[ngClass]="{ disable: !isNextBtn, show: isNextBtn }"
 		></nb-icon>
 	</div>
-	<div class="pages" *ngIf="interviewList?.length > 1">
+	<div class="pages" *ngIf="isSlider">
 		<div class="interview-text">
 			{{ index }}
 			{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.OF' | translate }}

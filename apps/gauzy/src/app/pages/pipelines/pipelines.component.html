@@ -40,6 +40,19 @@
 				<nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
 				<span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
 			</button>
+			<a
+				[routerLink]="['./', pipeline.id, 'deals']"
+				*ngIf="pipeline"
+				status="basic"
+				type="button"
+				class="mr-2"
+				nbButton
+			>
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				<span>
+					{{ 'PIPELINES_PAGE.VIEW_DEALS' | translate }}
+				</span>
+			</a>
 			<input
 				[placeholder]="'FORM.FILTER' | translate"
 				(ngModelChange)="filterPipelines()"

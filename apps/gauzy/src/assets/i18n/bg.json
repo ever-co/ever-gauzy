@@ -48,10 +48,18 @@
 		"MAKE_PUBLIC": "make public",
 		"KNOWLEDGE_BASES": "Knowledge bases",
 		"SELECT": "Select",
-		"EMAIL": "Eлектронна поща"
+		"EMAIL": "Eлектронна поща",
+		"CONVERT_TO_INVOICE": "Convert to invoice",
+		"SPRINT": {
+			"CREATE": "Create Sprint",
+			"EDIT": "Редактиране",
+			"DELETE": "Изтрий"
+		}
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
+		"TITLE": "Title",
+		"STAGE": "Stage",
 		"START_DATE": "Начална дата",
 		"END_DATE": "Крайна дата",
 		"CLIENT_NAME": "Клиентско име",
@@ -490,6 +498,7 @@
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"TASKS": "Tasks",
+		"TASKS_SETTINGS": "Настройки",
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
 		"RECURRING_INVOICES": "Invoices Recurring",
@@ -783,7 +792,9 @@
 				"UPDATED_VALUE": "Updated Value",
 				"MARK_COMPLETE": "Mark as Complete",
 				"STATUS": "Статус",
-				"WEIGHT": "Weight"
+				"WEIGHT": "Weight",
+				"SELECT_PROJECT": "Select Project",
+				"SELECT_TASK": "Select Task"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
@@ -900,6 +911,7 @@
 			"CRITERIONS": "Criterions",
 			"DATE": "Дата",
 			"SORT_BY": "Sort by",
+			"SEARCH_BY_INTERVIEW": "Search by interview title",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating"
 		},
@@ -1394,6 +1406,7 @@
 		"ESTIMATE_DATE": "Estimate Date",
 		"TOTAL_VALUE": "Total Value",
 		"PAID_STATUS": "Paid Status",
+		"TAX_2": "Tax 2",
 		"INVOICES_ADD_INVOICE": "Invoice Added",
 		"INVOICES_ADD_ESTIMATE": "Estimated Added",
 		"INVOICES_EDIT_INVOICE": "Invoice Edited",
@@ -1436,6 +1449,10 @@
 		"RECEIVED_ESTIMATES": "Received Estimates",
 		"SEND_INVOICE": "Invoice Sent",
 		"SEND_ESTIMATE": "Estimate Sent",
+		"APPLY_TAX": "Apply Tax",
+		"APPLY_DISCOUNT": "Apply Discount",
+		"APPLIED": "Applied",
+		"NOT_APPLIED": "Not Applied",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -1504,10 +1521,11 @@
 			"REJECT": "Reject",
 			"ACCEPTED": "Прието",
 			"REJECTED": "Rejected",
-			"ACCEPTED_STATUS": "Accepted Status"
+			"ACCEPTED_STATUS": "Accepted Status",
+			"ESTIMATE_CONVERT": "Estimate Converted"
 		},
 		"PAYMENTS": {
-			"HEADER": "Payments",
+			"HEADER": "Payments for Invoice",
 			"TOTAL_VALUE": "Total Invoice Value",
 			"RECORD_PAYMENT": "Record Payment",
 			"EDIT_PAYMENT": "Edit Payment",
@@ -1524,7 +1542,9 @@
 			"STATUS": "Статус",
 			"ON_TIME": "On time",
 			"OVERDUE": "Overdue",
-			"NO_PAYMENTS_RECORDED": "No payments recorded"
+			"NO_PAYMENTS_RECORDED": "No payments recorded",
+			"LEFT_TO_PAY": "Left to pay",
+			"PAYMENT_METHOD": "Payment Method"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -1932,6 +1952,7 @@
 		"DETAILS": "Booking Details",
 		"PARTICIPANTS": "Participant Emails",
 		"HOST": "Host",
+		"RESCHEDULE": "Reschedule Appointment",
 		"CANCEL": "Cancel Appointment",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
@@ -1966,8 +1987,21 @@
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
 		"HEADER_STAGES": "Stages",
+		"VIEW_DEALS": "View Deals",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
 		"HEADER_FORM_CREATE": "Create Pipeline",
 		"RECORD_TYPE": "pipeline \"{{ name }}\""
+	},
+	"PIPELINE_DEALS_PAGE": {
+		"HEADER": "Pipeline Deals",
+		"FILTER_BY_STAGE": "Filter by Stage",
+		"RECORD_TYPE": "stage \"{{ title }}\""
+	},
+	"PIPELINE_DEAL_EDIT_PAGE": {
+		"HEADER": "Edit Deal | Pipeline: {{ name }}"
+	},
+	"PIPELINE_DEAL_CREATE_PAGE": {
+		"HEADER": "Create Deal | Pipeline: {{ name }}",
+		"SELECT_STAGE": "Select Stage"
 	}
 }

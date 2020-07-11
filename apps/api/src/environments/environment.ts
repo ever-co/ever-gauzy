@@ -89,9 +89,8 @@ export const environment: IEnvironment = {
 	microsoftConfig: {
 		clientId: process.env.MicrosoftClientId,
 		clientSecret: process.env.MicrosoftConfig,
-		identityMetadata:
-			'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/v2.0/.well-known/openid-configuration',
-		jwtSecret: process.env.MicrosoftJwtSecret
+		resource: process.env.MicrosoftResource,
+		tenant: process.env.MicrosoftTenant
 	},
 
 	linkedinConfig: {
@@ -494,7 +493,10 @@ export const environment: IEnvironment = {
 		organizationsPerTenant: 2,
 		employeesPerOrganization: 5,
 		candidatesPerOrganization: 2,
-		projectsPerOrganization: 30
+		projectsPerOrganization: 30,
+		emailsPerOrganization: 30,
+		invitePerOrganization: 30,
+		requestApprovalPerOrganization: 20
 	},
 
 	defaultHubstaffUserPass:

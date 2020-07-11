@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ɵConsole } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { StatusTypesEnum, PermissionsEnum, TimeOff } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
@@ -32,9 +32,12 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	timeOffRequest: TimeOff;
 	selectedDate: Date;
 	selectedEmployeeId: string;
-	selectedStatus = 'All';
+	selectedStatus = 'ALL';
+	selectedTimeOffRecord: TimeOff;
+	tableData = [];
 	timeOffStatuses = Object.keys(StatusTypesEnum);
 	loading = false;
+	isRecordSelected = false;
 	displayHolidays = true;
 	hasEditPermission = false;
 
@@ -113,19 +116,25 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				start: {
 					title: 'Start',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				end: {
 					title: 'End',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				requestDate: {
 					title: 'Request Date',
 					type: 'date',
-					valuePrepareFunction: (date) => new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
 					class: 'text-center'
 				},
 				status: {
@@ -147,22 +156,162 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				['employees', 'employees.user', 'policy'],
 				{
 					organizationId: orgId,
-					employeeId: this.selectedEmployeeId || null
+					employeeId: this.selectedEmployeeId || ''
 				},
 				this.selectedDate || null
 			)
 			.pipe(first())
-			.subscribe((res) => {
-				this.sourceSmartTable.load(res.items);
-			});
+			.subscribe(
+				(res) => {
+					this.tableData = [];
+
+					res.items.forEach((result: TimeOff) => {
+						let employeeName: string;
+						let employeeImage: string;
+
+						if (result.employees.length !== 1) {
+							employeeName = 'Multiple employees';
+							employeeImage =
+								'assets/images/avatars/people-outline.svg';
+						} else {
+							employeeName = `${result.employees[0].user.firstName} ${result.employees[0].user.lastName}`;
+							employeeImage = result.employees[0]?.user?.imageUrl;
+						}
+
+						this.tableData.push({
+							...result,
+							fullName: employeeName,
+							imageUrl: employeeImage,
+							policy: result.policy.name
+						});
+					});
+
+					this.sourceSmartTable.load(this.tableData);
+				},
+				() =>
+					this.toastrService.danger('Unable to load time off records')
+			);
+	}
+
+	detectStatusChange(status: string) {
+		let filteredData: TimeOff[];
+
+		switch (status) {
+			case 'REQUESTED':
+				filteredData = [...this.tableData].filter(
+					(record: TimeOff) => record.status === 'Requested'
+				);
+				this.isRecordSelected = false;
+				this.sourceSmartTable.load(filteredData);
+				break;
+			case 'APPROVED':
+				filteredData = [...this.tableData].filter(
+					(record: TimeOff) => record.status === 'Approved'
+				);
+				this.isRecordSelected = false;
+				this.sourceSmartTable.load(filteredData);
+				break;
+			case 'DENIED':
+				filteredData = [...this.tableData].filter(
+					(record: TimeOff) => record.status === 'Denied'
+				);
+				this.isRecordSelected = false;
+				this.sourceSmartTable.load(filteredData);
+				break;
+			default:
+				this.isRecordSelected = false;
+				this.sourceSmartTable.load(this.tableData);
+				break;
+		}
 	}
 
 	openTimeOffSettings() {
 		this.router.navigate(['/pages/employees/time-off/settings']);
 	}
 
-	selectRecord(event: Event) {
-		console.log(event);
+	selectRecord(selectedRow) {
+		this.isRecordSelected = true;
+
+		this.selectedTimeOffRecord = selectedRow.data;
+	}
+
+	approveDaysOff() {
+		if (this.selectedTimeOffRecord.status !== 'Approved') {
+			const requestId = this.selectedTimeOffRecord.id;
+			this.selectedTimeOffRecord.status = 'Approved';
+			this.timeOffService
+				.updateRequestStatus(requestId, {
+					status: this.selectedTimeOffRecord.status
+				})
+				.pipe(first())
+				.subscribe(
+					() => {
+						this.toastrService.success(
+							'You successfully set the days off request status to approved',
+							'Days off request approved'
+						);
+						this._loadTableData();
+					},
+					() =>
+						this.toastrService.danger(
+							'Unable to set days off request status.'
+						)
+				);
+		} else {
+			this.toastrService.info(
+				'The days off request status is already set to approved',
+				'No changes'
+			);
+		}
+	}
+
+	denyDaysOff() {
+		if (this.selectedTimeOffRecord.status !== 'Denied') {
+			const requestId = this.selectedTimeOffRecord.id;
+			this.selectedTimeOffRecord.status = 'Denied';
+			this.timeOffService
+				.updateRequestStatus(requestId, {
+					status: this.selectedTimeOffRecord.status
+				})
+				.pipe(first())
+				.subscribe(
+					() => {
+						this.toastrService.success(
+							'You successfully set the days off request status to denied',
+							'Days off request denied'
+						);
+						this._loadTableData();
+					},
+					() =>
+						this.toastrService.danger(
+							'Unable to set days off request status.'
+						)
+				);
+		} else {
+			this.toastrService.info(
+				'The days off request status is already set to denied',
+				'No changes'
+			);
+		}
+	}
+
+	deleteRequest() {
+		this.timeOffService
+			.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
+			.pipe(first())
+			.subscribe(
+				() => {
+					this.toastrService.success(
+						'Days off request successfully deleted',
+						'Days off record deleted'
+					);
+					this._loadTableData();
+				},
+				() =>
+					this.toastrService.warning(
+						'Unable to delete Days off request'
+					)
+			);
 	}
 
 	requestDaysOff() {
@@ -194,17 +343,33 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			this.timeOffService
 				.createRequest(this.timeOffRequest)
 				.pipe(first())
-				.subscribe(() => {
-					this.toastrService.success(
-						`Time off record ${this.timeOffRequest.description} successfully created!`,
-						'Success'
-					);
-				}, () => this.toastrService.danger('Unable to create Time off record'));
+				.subscribe(
+					() => {
+						this.toastrService.success(
+							`Time off record ${this.timeOffRequest.description} successfully created!`
+						);
+						this._loadTableData();
+					},
+					() =>
+						this.toastrService.danger(
+							'Unable to create Time off record'
+						)
+				);
 		}
 	}
 
 	changeDisplayHolidays(checked: boolean) {
 		this.displayHolidays = checked;
+		this.isRecordSelected = false;
+
+		if (this.displayHolidays) {
+			this.sourceSmartTable.load(this.tableData);
+		} else {
+			const filteredData = [...this.tableData].filter(
+				(record: TimeOff) => !record.isHoliday
+			);
+			this.sourceSmartTable.load(filteredData);
+		}
 	}
 
 	ngOnDestroy(): void {}

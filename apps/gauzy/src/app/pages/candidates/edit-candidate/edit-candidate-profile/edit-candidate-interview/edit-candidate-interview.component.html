@@ -5,7 +5,7 @@
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body *ngIf="showPastCheckbox">
 		<nb-checkbox
 			(checkedChange)="changeHidePastInterviews($event)"
 			status="primary"
@@ -14,7 +14,7 @@
 				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIDE_PAST' | translate
 			}}</nb-checkbox
 		>
-		<div *ngIf="interviewList?.length">
+		<div *ngIf="interviewList?.length > 0">
 			<div class="ml-3 mb-4">
 				<strong>{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWS'

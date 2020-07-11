@@ -77,6 +77,6 @@ export const createRandomOrganizationTags = async (
 			});
 			tags = [...tags, ...organizationTags];
 		});
-		return await connection.manager.save(tags);
 	}
+	return await connection.manager.save(tags);
 };

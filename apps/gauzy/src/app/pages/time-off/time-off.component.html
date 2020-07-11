@@ -23,6 +23,7 @@
 				<nb-radio-group
 					class="align-center"
 					[(ngModel)]="selectedStatus"
+					(ngModelChange)="detectStatusChange($event)"
 				>
 					<nb-radio
 						*ngFor="let status of timeOffStatuses"
@@ -52,6 +53,50 @@
 					></nb-icon>
 					{{ 'TIME_OFF_PAGE.TIME_OFF_SETTINGS' | translate }}
 				</button>
+
+				<div class="actions-container" *ngIf="isRecordSelected">
+					<button
+						(click)="approveDaysOff()"
+						nbButton
+						status="success"
+						class="ml-4"
+					>
+						<nb-icon
+							class="mx-2"
+							icon="checkmark-circle-outline"
+							nbTooltip="Approve Days off Request"
+							nbTooltipTrigger="hover"
+						></nb-icon>
+					</button>
+
+					<button
+						(click)="denyDaysOff()"
+						nbButton
+						status="warning"
+						class="ml-4"
+					>
+						<nb-icon
+							class="mx-2"
+							icon="close-outline"
+							nbTooltip="Deny Days off Request"
+							nbTooltipTrigger="hover"
+						></nb-icon>
+					</button>
+
+					<button
+						(click)="deleteRequest()"
+						nbButton
+						status="danger"
+						class="ml-4"
+					>
+						<nb-icon
+							class="mx-2"
+							icon="trash-2-outline"
+							nbTooltip="Delete Days off Request"
+							nbTooltipTrigger="hover"
+						></nb-icon>
+					</button>
+				</div>
 			</div>
 		</div>
 		<ng2-smart-table

@@ -427,6 +427,10 @@ export class TaskComponent extends TranslationBaseComponent
 		return this.view === 'team-tasks';
 	}
 
+	openTasksSettings(): void {
+		this.router.navigate(['/pages/tasks/settings']);
+	}
+
 	/**
 	 * return store instace as per page
 	 */

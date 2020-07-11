@@ -42,6 +42,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 	invoice: Invoice;
 	payments: Payment[];
 	totalPaid = 0;
+	leftToPay = 0;
 	barWidth = 0;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
@@ -102,6 +103,12 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 					paid: false
 				});
 			}
+		}
+
+		this.leftToPay = this.invoice.totalValue - this.totalPaid;
+
+		if (this.leftToPay < 0) {
+			this.leftToPay = 0;
 		}
 	}
 
@@ -215,6 +222,12 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				},
 				note: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.NOTE'),
+					type: 'text'
+				},
+				paymentMethod: {
+					title: this.getTranslation(
+						'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
+					),
 					type: 'text'
 				},
 				overdue: {

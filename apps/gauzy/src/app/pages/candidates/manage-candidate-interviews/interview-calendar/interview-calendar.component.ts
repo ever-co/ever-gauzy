@@ -9,7 +9,12 @@ import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { first, takeUntil } from 'rxjs/operators';
-import { Candidate, Employee, IDateRange } from '@gauzy/models';
+import {
+	Candidate,
+	Employee,
+	IDateRange,
+	ICandidateInterview
+} from '@gauzy/models';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
@@ -39,6 +44,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 	candidates: Candidate[] = [];
 	employees: Employee[] = [];
 	calendarEvents: EventInput[] = [];
+	interviewList: ICandidateInterview[];
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
@@ -66,42 +72,46 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 		this.loadInterviews();
 	}
 	async loadInterviews() {
-		this.calendarOptions = {
-			eventClick: (event) => {
-				const id = event.event._def.extendedProps.id;
-				this.dialogService.open(CandidateInterviewInfoComponent, {
-					context: {
-						interviewId: id
-					}
-				});
-			},
-			initialView: 'timeGridWeek',
-			headerToolbar: {
-				left: 'prev,next today',
-				center: 'title',
-				right: 'dayGridMonth,timeGridWeek,timeGridDay'
-			},
-			themeSystem: 'bootstrap',
-			plugins: [
-				dayGridPlugin,
-				timeGrigPlugin,
-				interactionPlugin,
-				bootstrapPlugin
-			],
-			weekends: true,
-			height: 'auto',
-			selectable: true,
-			selectAllow: ({ start, end }) =>
-				moment(start).isSame(moment(end), 'day'),
-			select: this.handleEventSelect.bind(this),
-			dateClick: this.handleDateClick.bind(this),
-			eventMouseEnter: this.handleEventMouseEnter.bind(this),
-			eventMouseLeave: this.handleEventMouseLeave.bind(this)
-		};
 		const res = await this.candidateInterviewService.getAll([
 			'interviewers'
 		]);
 		if (res) {
+			this.interviewList = res.items;
+			this.calendarOptions = {
+				eventClick: (event) => {
+					const id = event.event._def.extendedProps.id;
+					this.dialogService.open(CandidateInterviewInfoComponent, {
+						context: {
+							interviewId: id,
+							interviewList: this.interviewList,
+							isSlider: false
+						}
+					});
+				},
+				initialView: 'timeGridWeek',
+				headerToolbar: {
+					left: 'prev,next today',
+					center: 'title',
+					right: 'dayGridMonth,timeGridWeek,timeGridDay'
+				},
+				themeSystem: 'bootstrap',
+				plugins: [
+					dayGridPlugin,
+					timeGrigPlugin,
+					interactionPlugin,
+					bootstrapPlugin
+				],
+				weekends: true,
+				height: 'auto',
+				selectable: true,
+				selectAllow: ({ start, end }) =>
+					moment(start).isSame(moment(end), 'day'),
+				select: this.handleEventSelect.bind(this),
+				dateClick: this.handleDateClick.bind(this),
+				eventMouseEnter: this.handleEventMouseEnter.bind(this),
+				eventMouseLeave: this.handleEventMouseLeave.bind(this)
+			};
+
 			this.calendarEvents = [];
 			for (const interview of res.items) {
 				this.calendarEvents.push({
@@ -195,7 +205,8 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
 					),
 					isCalendar: true,
-					selectedRangeCalendar: selectedRange
+					selectedRangeCalendar: selectedRange,
+					interviewList: this.interviewList
 				}
 			}
 		);

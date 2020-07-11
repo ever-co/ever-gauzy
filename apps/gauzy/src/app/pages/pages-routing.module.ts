@@ -93,25 +93,6 @@ const routes: Routes = [
 				children: [
 					{
 						path: '',
-						redirectTo: 'dashboard',
-						pathMatch: 'full'
-					},
-					{
-						path: 'dashboard',
-						loadChildren: () =>
-							import('./tasks/tasks.module').then(
-								(m) => m.TasksModule
-							)
-					},
-					{
-						path: 'me',
-						loadChildren: () =>
-							import('./tasks/tasks.module').then(
-								(m) => m.TasksModule
-							)
-					},
-					{
-						path: 'team',
 						loadChildren: () =>
 							import('./tasks/tasks.module').then(
 								(m) => m.TasksModule

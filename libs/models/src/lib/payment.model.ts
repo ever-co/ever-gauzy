@@ -19,6 +19,7 @@ export interface Payment extends IBaseEntityModel {
 	amount?: number;
 	currency?: string;
 	overdue?: boolean;
+	paymentMethod?: string;
 }
 
 export interface PaymentUpdateInput {
@@ -31,4 +32,13 @@ export interface PaymentUpdateInput {
 export interface PaymentFindInput {
 	invoiceId?: string;
 	organizationId?: string;
+}
+
+export enum PaymentMethodEnum {
+	BANK_TRANSFER = 'Bank transfer',
+	CASH = 'Cash',
+	CHEQUE = 'Cheque',
+	CREDIT_CARD = 'Credit card',
+	DEBIT = 'Debit',
+	ONLINE = 'Online'
 }

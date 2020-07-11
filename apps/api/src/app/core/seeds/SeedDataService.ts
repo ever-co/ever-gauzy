@@ -71,7 +71,10 @@ import { OrganizationEmploymentType } from '../../organization-employment-type/o
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
-import { createDefaultApprovalPolicyForOrg } from '../../approval-policy/approval-policy.seed';
+import {
+	createDefaultApprovalPolicyForOrg,
+	createRandomApprovalPolicyForOrg
+} from '../../approval-policy/approval-policy.seed';
 import {
 	createExpenseCategories,
 	createRandomExpenseCategories
@@ -185,6 +188,10 @@ import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-
 import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
 import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
 import { createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
+import { createRandomEmailSent } from '../../email/email.seed';
+import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
+import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
+import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -213,6 +220,7 @@ const allEntities = [
 	OrganizationProjects,
 	OrganizationAwards,
 	OrganizationLanguages,
+	OrganizationSprint,
 	Task,
 	Screenshot,
 	Activity,
@@ -625,10 +633,31 @@ export class SeedDataService {
 			tenantOrganizationsMap
 		);
 
+		await createRandomEmployeeInviteSent(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			tenantSuperAdminsMap,
+			env.randomSeedConfig.invitePerOrganization || 20
+		);
+
 		await seedRandomOrganizationPosition(
 			this.connection,
 			tenants,
 			tenantOrganizationsMap
+		);
+
+		await createRandomApprovalPolicyForOrg(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
+
+		await createRandomRequestApproval(
+			this.connection,
+			tenants,
+			tenantEmployeeMap,
+			env.randomSeedConfig.requestApprovalPerOrganization || 10
 		);
 
 		await createSkills(this.connection);
@@ -648,6 +677,14 @@ export class SeedDataService {
 			tags,
 			env.randomSeedConfig.projectsPerOrganization || 10
 		);
+
+		await createRandomEmailSent(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			env.randomSeedConfig.emailsPerOrganization || 20
+		);
+
 		await createRandomTask(this.connection);
 		await createRandomTimesheet(this.connection);
 	}

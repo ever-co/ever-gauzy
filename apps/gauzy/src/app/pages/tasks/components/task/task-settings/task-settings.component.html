@@ -1,0 +1,31 @@
+<nb-card class="task-settings">
+	<nb-card-header class="task-settings__title">
+		<p>Available projects</p>
+	</nb-card-header>
+	<nb-card-body
+		class="task-settings__projects"
+		*ngIf="projects$ | async as projects"
+	>
+		<ng-container *ngIf="projects.length">
+			<nb-accordion>
+				<nb-accordion-item
+					#item
+					class="project"
+					*ngFor="let project of projects"
+				>
+					<nb-accordion-item-header class="project__title">
+						{{ project.name }}
+					</nb-accordion-item-header>
+					<nb-accordion-item-body class="project__settings">
+						<ngx-project-view
+							[project]="project"
+						></ngx-project-view>
+					</nb-accordion-item-body>
+				</nb-accordion-item>
+			</nb-accordion>
+		</ng-container>
+		<ng-template #singleProjectView>
+			<p>No projects still created.</p>
+		</ng-template>
+	</nb-card-body>
+</nb-card>

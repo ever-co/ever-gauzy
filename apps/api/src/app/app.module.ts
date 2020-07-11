@@ -100,7 +100,9 @@ import { EstimateEmail } from './estimate-email/estimate-email.entity';
 import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TimeOffRequestModule } from './time-off-request/time-off-request.module';
+import { DealModule } from './deal/deal.module';
 import { HelpCenterAuthorModule } from './help-center-author/help-center-author.module';
+import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
 
 @Module({
 	imports: [
@@ -237,6 +239,10 @@ import { HelpCenterAuthorModule } from './help-center-author/help-center-author.
 					{
 						path: '/organization-team',
 						module: OrganizationTeamModule
+					},
+					{
+						path: '/organization-sprint',
+						module: OrganizationSprintModule
 					},
 					{
 						path: '/proposal',
@@ -383,6 +389,10 @@ import { HelpCenterAuthorModule } from './help-center-author/help-center-author.
 						module: PipelineModule
 					},
 					{
+						path: '/deals',
+						module: DealModule
+					},
+					{
 						path: '/payments',
 						module: PaymentModule
 					},
@@ -440,6 +450,7 @@ import { HelpCenterAuthorModule } from './help-center-author/help-center-author.
 		OrganizationVendorsModule,
 		OrganizationAwardsModule,
 		OrganizationLanguagesModule,
+		OrganizationSprintModule,
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
@@ -473,6 +484,7 @@ import { HelpCenterAuthorModule } from './help-center-author/help-center-author.
 		AvailabilitySlotsModule,
 		PipelineModule,
 		StageModule,
+		DealModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({

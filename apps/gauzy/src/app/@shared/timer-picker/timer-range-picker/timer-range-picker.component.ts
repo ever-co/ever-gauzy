@@ -4,6 +4,7 @@ import {
 	forwardRef,
 	Input,
 	ViewChild,
+	ChangeDetectorRef,
 	AfterViewInit
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
@@ -82,7 +83,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	maxSlotEndTime: string;
 	minSlotEndTime: string;
 
-	constructor() {}
+	constructor(private cd: ChangeDetectorRef) {}
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
@@ -142,6 +143,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 					start: isNaN(start.getTime()) ? null : start,
 					end: isNaN(start.getTime()) ? null : end
 				};
+				this.cd.detectChanges();
 			});
 	}
 

@@ -1,19 +1,23 @@
 nb-radio-group {
-	display: flex;
-	flex-direction: row;
-	margin: 0em 5em 0 5em;
+  display: flex;
+  flex-direction: row;
+  margin: 0em 5em 0 5em;
 }
 
 .edit-icon {
-	margin-left: 30px;
-	position: relative;
-	width: 36px;
+  margin-left: 30px;
+  position: relative;
+  width: 36px;
 
-	svg {
-		position: absolute;
-	}
+  svg {
+    position: absolute;
+  }
 
-	nb-icon {
-		position: absolute;
-	}
+  nb-icon {
+    position: absolute;
+  }
+}
+
+.actions-container {
+  justify-content: flex-end;
 }

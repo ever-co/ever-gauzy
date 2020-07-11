@@ -17,6 +17,8 @@ import { Goal } from '../goal/goal.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { Employee } from '../employee/employee.entity';
 import { TenantBase } from '../core/entities/tenant-base';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { Task } from '../tasks/task.entity';
 
 @Entity('key_result')
 export class KeyResult extends TenantBase implements IKeyResult {
@@ -62,6 +64,28 @@ export class KeyResult extends TenantBase implements IKeyResult {
 	@JoinColumn()
 	@IsOptional()
 	lead?: Employee;
+
+	@ApiProperty({ type: OrganizationProjects })
+	@ManyToOne((type) => OrganizationProjects, { nullable: true })
+	@JoinColumn({ name: 'projectId' })
+	@IsOptional()
+	project?: OrganizationProjects;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((keyResult: KeyResult) => keyResult.project)
+	@Column({ nullable: true })
+	readonly projectId?: string;
+
+	@ApiProperty({ type: Task })
+	@ManyToOne((type) => Task, { nullable: true })
+	@JoinColumn({ name: 'taskId' })
+	@IsOptional()
+	task?: Task;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((keyResult: KeyResult) => keyResult.task)
+	@Column({ nullable: true })
+	readonly taskId?: string;
 
 	@ApiProperty({ type: String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)

@@ -1,4 +1,10 @@
-<nb-card size="giant" class="minmax-width-70vw">
+<nb-card
+	size="giant"
+	class="minmax-width-70vw"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ keyResult.name }}</h4>
@@ -18,7 +24,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row">
+		<div class="row" *ngIf="!loading">
 			<div class="col-md-6">
 				<div class="row">
 					<div class="col-md-12">

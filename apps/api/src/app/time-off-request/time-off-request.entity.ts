@@ -9,13 +9,18 @@ import {
 import { Base } from '../core/entities/base';
 import { TimeOff as ITimeOffRequest, StatusTypesEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, IsDate } from 'class-validator';
+import {
+	IsString,
+	IsEnum,
+	IsOptional,
+	IsDate,
+	IsBoolean
+} from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
 
 @Entity('time_off_request')
 export class TimeOffRequest extends Base implements ITimeOffRequest {
-
 	@ManyToMany((type) => Employee, { cascade: true })
 	@JoinTable({
 		name: 'time_off_request_employee'
@@ -35,7 +40,10 @@ export class TimeOffRequest extends Base implements ITimeOffRequest {
 
 	@ApiProperty({ type: TimeOffPolicy })
 	@IsOptional()
-	@ManyToOne((type) => TimeOffPolicy, { nullable: false, onDelete: 'CASCADE' })
+	@ManyToOne((type) => TimeOffPolicy, {
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	policy?: TimeOffPolicy;
 
@@ -58,4 +66,9 @@ export class TimeOffRequest extends Base implements ITimeOffRequest {
 	@IsEnum(StatusTypesEnum)
 	@Column({ nullable: false })
 	status?: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column()
+	isHoliday?: boolean;
 }

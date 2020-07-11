@@ -39,6 +39,7 @@ export const environment: Environment = {
 	LINKEDIN_AUTH_LINK: 'http://localhost:3000/api/auth/linkedin',
 	GITHUB_AUTH_LINK: 'http://localhost:3000/api/auth/github',
 	TWITTER_AUTH_LINK: 'http://localhost:3000/api/auth/twitter',
+	MICROSOFT_AUTH_LINK: 'http://localhost:3000/api/auth/microsoft',
 	NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
 	SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
 	HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff'

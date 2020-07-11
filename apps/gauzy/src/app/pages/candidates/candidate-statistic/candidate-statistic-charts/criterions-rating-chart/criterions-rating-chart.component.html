@@ -19,6 +19,7 @@
 
 	<div class="select-interviewer">
 		<ga-candidate-select
+			[reset]="isResetSelect"
 			[disabled]="currentInterview ? false : true"
 			[isAllMembers]="true"
 			[disabledIds]="disabledIds"

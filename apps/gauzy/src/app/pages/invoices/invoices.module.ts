@@ -12,7 +12,8 @@ import {
 	NbTooltipModule,
 	NbDatepickerModule,
 	NbRadioModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -61,6 +62,7 @@ import { EstimateAcceptedComponent } from './table-components/estimate-accepted.
 import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-apply-tax-discount.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -92,6 +94,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		UserFormsModule,
 		NbDatepickerModule,
 		NgSelectModule,
+		NbToggleModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -136,7 +139,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		PaymentMutationComponent,
 		InvoiceSentStatusComponent,
 		EstimateAcceptedComponent,
-		InvoicePaymentOverdueComponent
+		InvoicePaymentOverdueComponent,
+		InvoiceApplyTaxDiscountComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -162,7 +166,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		PaymentMutationComponent,
 		InvoiceSentStatusComponent,
 		EstimateAcceptedComponent,
-		InvoicePaymentOverdueComponent
+		InvoicePaymentOverdueComponent,
+		InvoiceApplyTaxDiscountComponent
 	]
 })
 export class InvoicesModule {}

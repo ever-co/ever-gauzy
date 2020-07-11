@@ -139,6 +139,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 
 					if (
 						prevSlot &&
+						nextSlot &&
+						nextSlot.extendedProps['type'] !== 'BookedSlot' &&
 						prevSlot.extendedProps['type'] !== 'BookedSlot'
 					) {
 						config.dateStart = new Date(prevSlot.start.toString());

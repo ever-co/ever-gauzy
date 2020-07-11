@@ -6,6 +6,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { IHelpCenter } from '@gauzy/models';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
 import { HelpCenterService } from '../../../@core/services/help-center.service';
+import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
 
 @Component({
 	selector: 'ga-delete-base',
@@ -19,6 +20,7 @@ export class DeleteBaseComponent extends TranslationBaseComponent
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteBaseComponent>,
 		readonly translateService: TranslateService,
+		private helpCenterAuthorService: HelpCenterAuthorService,
 		private helpCenterArticleService: HelpCenterArticleService,
 		private helpCenterService: HelpCenterService,
 		private errorHandler: ErrorHandler
@@ -48,8 +50,17 @@ export class DeleteBaseComponent extends TranslationBaseComponent
 		const result = await this.helpCenterArticleService.findByCategoryId(id);
 		if (result) {
 			let hasArticles = false;
-			result.forEach((article) => {
-				if (article.categoryId === id) hasArticles = true;
+			result.forEach(async (article) => {
+				if (article.categoryId === id) {
+					hasArticles = true;
+					try {
+						await this.helpCenterAuthorService.deleteBulkByArticleId(
+							article.id
+						);
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
 			});
 			if (hasArticles)
 				try {

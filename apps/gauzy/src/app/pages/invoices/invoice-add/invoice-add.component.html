@@ -262,6 +262,44 @@
 				</div>
 			</div>
 			<div class="row">
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label for="inputTax" class="label">Tax 2</label>
+						<input
+							nbInput
+							placeholder="Tax 2"
+							type="number"
+							formControlName="tax2"
+							id="inputTax"
+							(ngModelChange)="calculateTotal()"
+							fullWidth
+						/>
+					</div>
+				</div>
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label for="inputTaxType" class="label">{{
+							'INVOICES_PAGE.TAX_TYPE' | translate
+						}}</label>
+						<nb-select
+							formControlName="tax2Type"
+							placeholder="{{
+								'INVOICES_PAGE.TAX_TYPE' | translate
+							}}"
+							(ngModelChange)="calculateTotal()"
+							fullWidth
+						>
+							<nb-option value="Percent">
+								{{ 'INVOICES_PAGE.PERCENT' | translate }}
+							</nb-option>
+							<nb-option value="Flat">
+								{{ 'INVOICES_PAGE.FLAT' | translate }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label for="inputTerms" class="label">{{
@@ -501,6 +539,7 @@
 							*ngIf="!isEstimate"
 							(click)="generateTable()"
 							status="success"
+							[disabled]="!invoiceType"
 							nbButton
 						>
 							{{

@@ -4,6 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { IEmployeeAppointmentCreateInput } from '@gauzy/models';
+import { environment as env } from '@env-api/environment';
+import { sign, decode } from 'jsonwebtoken';
 
 @Injectable()
 export class EmployeeAppointmentService extends CrudService<
@@ -33,5 +35,19 @@ export class EmployeeAppointmentService extends CrudService<
 		return await this.employeeAppointmentRepository.save(
 			employeeAppointmentRequest
 		);
+	}
+
+	async signAppointmentId(id: string) {
+		return await sign(
+			{
+				appointmentId: id
+			},
+			env.JWT_SECRET,
+			{}
+		);
+	}
+
+	decode(token: string) {
+		return decode(token);
 	}
 }

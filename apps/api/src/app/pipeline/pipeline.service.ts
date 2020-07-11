@@ -13,14 +13,33 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Stage } from '../stage/stage.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Injectable } from '@nestjs/common';
+import { Deal } from '../deal/deal.entity';
 
 @Injectable()
 export class PipelineService extends CrudService<Pipeline> {
 	public constructor(
+		@InjectRepository(Deal)
+		protected dealRepository: Repository<Deal>,
 		@InjectRepository(Pipeline)
 		protected pipelineRepository: Repository<Pipeline>
 	) {
 		super(pipelineRepository);
+	}
+
+	public async findDeals(pipelineId: string) {
+		const items: Deal[] = await this.dealRepository
+			.createQueryBuilder('deal')
+			.leftJoin('deal.stage', 'stage')
+			.where('stage.pipelineId = :pipelineId', { pipelineId })
+			.groupBy('stage.id')
+			// FIX: error: column "deal.id" must appear in the GROUP BY clause or be used in an aggregate function
+			.addGroupBy('deal.id')
+			// END_FIX
+			.orderBy('stage.index', 'ASC')
+			.getMany();
+		const { length: total } = items;
+
+		return { items, total };
 	}
 
 	@Transaction()

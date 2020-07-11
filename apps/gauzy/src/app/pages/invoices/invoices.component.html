@@ -106,6 +106,18 @@
 		{{ 'BUTTONS.SEND' | translate }}
 	</button>
 	<button
+		*ngIf="isEstimate"
+		nbButton
+		status="info"
+		(click)="convert(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="swap"> </nb-icon>
+		{{ 'BUTTONS.CONVERT_TO_INVOICE' | translate }}
+	</button>
+	<button
 		nbButton
 		status="info"
 		(click)="email(selectedItem)"

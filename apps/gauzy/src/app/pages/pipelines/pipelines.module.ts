@@ -19,15 +19,29 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageFormComponent } from './stage-form/stage-form.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
+import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
+import { DealsService } from '../../@core/services/deals.service';
+import { PipelineDealExcerptComponent } from './pipeline-deals/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 
 @NgModule({
 	declarations: [
+		PipelineDealExcerptComponent,
+		PipelineDealFormComponent,
+		PipelineDealsComponent,
 		PipelineFormComponent,
 		PipelinesComponent,
 		StageFormComponent
 	],
-	exports: [PipelineFormComponent, PipelinesComponent, StageFormComponent],
-	providers: [PipelinesService],
+	exports: [
+		PipelineDealExcerptComponent,
+		PipelineDealFormComponent,
+		PipelineDealsComponent,
+		PipelineFormComponent,
+		PipelinesComponent,
+		StageFormComponent
+	],
+	providers: [PipelinesService, DealsService],
 	imports: [
 		NbDialogModule.forChild(),
 		ReactiveFormsModule,

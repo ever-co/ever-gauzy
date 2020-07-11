@@ -35,13 +35,19 @@ export class PipelinesComponent extends TranslationBaseComponent
 			}
 		}
 	};
+
 	public pipelines = new LocalDataSource([] as Pipeline[]);
+
 	public CAN_EDIT_SALES_PIPELINES = false;
+
 	public organizationId: string;
+
 	public pipeline: Pipeline;
+
 	public name: string;
 
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
+
 	private permissionSubscription: Subscription;
 
 	public constructor(
@@ -73,9 +79,6 @@ export class PipelinesComponent extends TranslationBaseComponent
 				this.CAN_EDIT_SALES_PIPELINES = this.store.hasPermission(
 					PermissionsEnum.EDIT_SALES_PIPELINES
 				);
-				console.log({
-					CAN_EDIT_SALES_PIPELINES: this.CAN_EDIT_SALES_PIPELINES
-				});
 			}
 		);
 

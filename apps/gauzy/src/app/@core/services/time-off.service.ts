@@ -1,23 +1,46 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {TimeOffPolicy, TimeOffPolicyCreateInput, TimeOffPolicyFindInput, TimeOffPolicyUpdateInput, TimeOffCreateInput, TimeOff, TimeOffFindInput} from '@gauzy/models';
+import {
+	TimeOffPolicy,
+	TimeOffPolicyCreateInput,
+	TimeOffPolicyFindInput,
+	TimeOffPolicyUpdateInput,
+	TimeOffCreateInput,
+	TimeOff,
+	TimeOffFindInput,
+	TimeOffUpdateInput
+} from '@gauzy/models';
 import { Observable } from 'rxjs';
 
-@Injectable({ providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class TimeOffService {
 	constructor(private http: HttpClient) {}
 
-	createPolicy(createInput: TimeOffPolicyCreateInput): Observable<TimeOffPolicy> {
-		return this.http.post<TimeOffPolicy>('/api/time-off-policy/create', createInput);
+	createPolicy(
+		createInput: TimeOffPolicyCreateInput
+	): Observable<TimeOffPolicy> {
+		return this.http.post<TimeOffPolicy>(
+			'/api/time-off-policy/create',
+			createInput
+		);
 	}
 
-	getAllPolicies(relations?: string[], findInput?: TimeOffPolicyFindInput): Observable<{ items: TimeOffPolicy[], total: number }> {
+	getAllPolicies(
+		relations?: string[],
+		findInput?: TimeOffPolicyFindInput
+	): Observable<{ items: TimeOffPolicy[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		
-		return this.http.get<{ items: TimeOffPolicy[], total: number }> (`/api/time-off-policy`, {params: { data } });
+
+		return this.http.get<{ items: TimeOffPolicy[]; total: number }>(
+			`/api/time-off-policy`,
+			{ params: { data } }
+		);
 	}
 
-	updatePolicy(id: string, updateInput: TimeOffPolicyUpdateInput): Observable<TimeOffPolicy> {
+	updatePolicy(
+		id: string,
+		updateInput: TimeOffPolicyUpdateInput
+	): Observable<TimeOffPolicy> {
 		return this.http.put(`/api/time-off-policy/${id}`, updateInput);
 	}
 
@@ -25,13 +48,31 @@ export class TimeOffService {
 		return this.http.delete(`/api/time-off-policy/${id}`);
 	}
 
-	getAllTimeOffRecords(relations?: string[], findInput?: TimeOffFindInput, filterDate?: Date): Observable<{ items: TimeOff[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput, filterDate });
-
-		return this.http.get<{ items: TimeOff[]; total: number }>('/api/time-off-request', { params: { data } })
-	}
-
 	createRequest(timeOffRequest: TimeOffCreateInput): Observable<TimeOff> {
 		return this.http.post('/api/time-off-request', timeOffRequest);
+	}
+
+	getAllTimeOffRecords(
+		relations?: string[],
+		findInput?: TimeOffFindInput,
+		filterDate?: Date
+	): Observable<{ items: TimeOff[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput, filterDate });
+
+		return this.http.get<{ items: TimeOff[]; total: number }>(
+			'/api/time-off-request',
+			{ params: { data } }
+		);
+	}
+
+	updateRequestStatus(
+		id: string,
+		request: TimeOffUpdateInput
+	): Observable<TimeOff> {
+		return this.http.put(`/api/time-off-request/${id}`, request);
+	}
+
+	deleteDaysOffRequest(id: string): Observable<TimeOff> {
+		return this.http.delete(`/api/time-off-request/${id}`);
 	}
 }

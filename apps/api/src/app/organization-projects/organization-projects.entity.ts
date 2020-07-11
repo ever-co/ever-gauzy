@@ -28,6 +28,7 @@ import { Tag } from '../tags/tag.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { Organization } from '../organization/organization.entity';
 import { Task } from '../tasks/task.entity';
+import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends TenantBase
@@ -120,4 +121,9 @@ export class OrganizationProjects extends TenantBase
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	owner: string;
+
+	@ApiPropertyOptional({ type: OrganizationSprint })
+	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.project)
+	@JoinColumn()
+	organizationSprints?: OrganizationSprint[];
 }

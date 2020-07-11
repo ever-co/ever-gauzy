@@ -142,7 +142,9 @@ export class InvoicesComponent extends TranslationBaseComponent
 			discountValue: this.selectedInvoice.discountValue,
 			discountType: this.selectedInvoice.discountType,
 			tax: this.selectedInvoice.tax,
+			tax2: this.selectedInvoice.tax2,
 			taxType: this.selectedInvoice.taxType,
+			tax2Type: this.selectedInvoice.tax2Type,
 			terms: this.selectedInvoice.terms,
 			paid: this.selectedInvoice.paid,
 			totalValue: this.selectedInvoice.totalValue,
@@ -240,6 +242,23 @@ export class InvoicesComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.WARNING')
 			);
 		}
+	}
+
+	async convert(selectedItem?: Invoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		await this.invoicesService.update(this.selectedInvoice.id, {
+			isEstimate: false
+		});
+		this.toastrService.primary(
+			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+		await this.loadSettings();
 	}
 
 	async delete(selectedItem?: Invoice) {

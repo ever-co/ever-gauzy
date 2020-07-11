@@ -1,4 +1,5 @@
 <nb-select
+	[formControl]="select"
 	[selected]="selectedCandidateId"
 	(selectedChange)="onMembersSelected($event)"
 	[disabled]="disabled"

@@ -74,9 +74,12 @@ export class TaskDialogComponent extends TranslationBaseComponent
 
 	private async loadProjects() {
 		const organizationId = this._organizationsStore.selectedOrganization.id;
-		const { items } = await this.organizationProjectsService.getAll([], {
-			organizationId
-		});
+		const { items } = await this.organizationProjectsService.getAll(
+			['organization'],
+			{
+				organizationId
+			}
+		);
 
 		if (items) this.projects = items;
 	}

@@ -137,7 +137,13 @@ export class InvitesComponent extends TranslationBaseComponent
 
 		try {
 			const { items } = await this.inviteService.getAll(
-				['projects', 'invitedBy', 'role', 'organizationContact', 'departments'],
+				[
+					'projects',
+					'invitedBy',
+					'role',
+					'organizationContact',
+					'departments'
+				],
 				{
 					organizationId: this.selectedOrganizationId
 				}

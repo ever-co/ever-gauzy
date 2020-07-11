@@ -2,7 +2,7 @@ import { Base } from '../core/entities/base';
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import { InvoiceItem as IInvoiceItem } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsString, IsOptional } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
 import { Invoice } from '../invoice/invoice.entity';
 import { Task } from '../tasks/task.entity';
 import { Employee } from '../employee/employee.entity';
@@ -67,27 +67,19 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	productId?: string;
 
 	@ApiPropertyOptional({ type: Invoice })
-	@ManyToOne(
-		(type) => Invoice,
-		(invoice) => invoice.invoiceItems,
-		{ onDelete: 'SET NULL' }
-	)
+	@ManyToOne((type) => Invoice, (invoice) => invoice.invoiceItems, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invoice?: Invoice;
 
 	@ApiPropertyOptional({ type: Task })
-	@ManyToOne(
-		(type) => Task,
-		(task) => task.invoiceItems
-	)
+	@ManyToOne((type) => Task, (task) => task.invoiceItems)
 	@JoinColumn()
 	task?: Task;
 
 	@ApiPropertyOptional({ type: Employee })
-	@ManyToOne(
-		(type) => Employee,
-		(employee) => employee.invoiceItems
-	)
+	@ManyToOne((type) => Employee, (employee) => employee.invoiceItems)
 	@JoinColumn()
 	employee?: Employee;
 
@@ -100,10 +92,17 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	project?: OrganizationProjects;
 
 	@ApiPropertyOptional({ type: Product })
-	@ManyToOne(
-		(type) => Product,
-		(product) => product.invoiceItems
-	)
+	@ManyToOne((type) => Product, (product) => product.invoiceItems)
 	@JoinColumn()
 	product?: Product;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	applyTax?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	applyDiscount?: boolean;
 }
