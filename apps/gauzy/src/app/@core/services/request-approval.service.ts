@@ -68,4 +68,24 @@ export class RequestApprovalService {
 				.toPromise();
 		}
 	}
+
+	approvalRequestByAdmin(id: string): Promise<RequestApproval> {
+		return this.http
+			.put<RequestApproval>(
+				`${this.REQUETS_APPROVAL_URL}/approval/${id}`,
+				null
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	refuseRequestByAdmin(id: string): Promise<RequestApproval> {
+		return this.http
+			.put<RequestApproval>(
+				`${this.REQUETS_APPROVAL_URL}/refuse/${id}`,
+				null
+			)
+			.pipe(first())
+			.toPromise();
+	}
 }
