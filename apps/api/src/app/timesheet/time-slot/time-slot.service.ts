@@ -207,11 +207,22 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	 *create time slot minute activity for spacific timeslot
 	 */
 	async createTimeSlotMinute({ keyboard, mouse, datetime, timeSlot }) {
-		return await this.timeSlotMinuteRepository.save({
-			keyboard,
-			mouse,
-			datetime,
-			timeSlot
+		const timeMinute = await this.timeSlotMinuteRepository.findOne({
+			where: {
+				timeSlot: timeSlot,
+				datetime
+			}
 		});
+
+		if (!timeMinute) {
+			return await this.timeSlotMinuteRepository.save({
+				keyboard,
+				mouse,
+				datetime,
+				timeSlot
+			});
+		}
+
+		return timeMinute;
 	}
 }
