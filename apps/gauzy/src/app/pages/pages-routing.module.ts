@@ -97,7 +97,7 @@ const routes: Routes = [
 							import('./tasks/tasks.module').then(
 								(m) => m.TasksModule
 							)
-					}			
+					}
 				]
 			},
 			{

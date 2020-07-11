@@ -23,6 +23,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -46,6 +47,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		UserFormsModule,
 		IncomeMutationModule,
 		TableComponentsModule,
+		CardGridModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

@@ -1,23 +1,28 @@
-import { BaseEntityModel, Organization, Stage, StageCreateInput } from '@gauzy/models';
+import {
+	BaseEntityModel,
+	Organization,
+	Stage,
+	StageCreateInput
+} from '@gauzy/models';
 
-export interface Pipeline extends BaseEntityModel, PipelineCreateInput
-{
-  organization: Organization;
+export interface Pipeline extends BaseEntityModel, PipelineCreateInput {
+	organization: Organization;
 
-  description: string;
+	description: string;
 
-  stages: Stage[];
+	stages: Stage[];
 }
 
-export type PipelineFindInput = Partial<Pick<Pipeline, 'id' | 'organizationId'>>
+export type PipelineFindInput = Partial<
+	Pick<Pipeline, 'id' | 'organizationId'>
+>;
 
-export interface PipelineCreateInput
-{
-  stages?: StageCreateInput[];
+export interface PipelineCreateInput {
+	stages?: StageCreateInput[];
 
-  organizationId: string;
+	organizationId: string;
 
-  description?: string;
+	description?: string;
 
-  name: string;
+	name: string;
 }

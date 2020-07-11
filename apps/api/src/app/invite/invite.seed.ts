@@ -20,11 +20,9 @@ export const createRandomEmployeeInviteSent = async (
 	let invitationStatus = Object.values(InviteStatusEnum);
 
 	for (const tenant of tenants) {
-		const role = await connection
-			.getRepository(Role)
-			.find({
-				where: [{ tenant: tenant }, { name: RolesEnum.EMPLOYEE }]
-			});
+		const role = await connection.getRepository(Role).find({
+			where: [{ tenant: tenant }, { name: RolesEnum.EMPLOYEE }]
+		});
 		const orgs = tenantOrganizationsMap.get(tenant);
 		const admins = tenantSuperAdminMap.get(tenant);
 		orgs.forEach((org) => {
