@@ -39,6 +39,7 @@ Gauzy Platform includes multiple ERP/CRM features, usually available in the _acc
 -   Roles / Permissions
 -   Multi-currency
 -   Multi-language
+-   Dark / Light / Corporate and other Themes
 
 So, while initially the primary purpose of Gauzy Platform was to allow transparent and fair accounting, profits sharing and bonuses calculation, today you can also use Gauzy software as the modern and intelligent platform to run your **Outsourcing/Freelance Agency or Studio business** in a completely new, open way.
 
