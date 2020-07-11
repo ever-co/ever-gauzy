@@ -10,22 +10,35 @@ Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fa
 Gauzy Platform includes multiple ERP/CRM features, usually available in the _accounting_, _human resources_, _invoicing_, _time management_ and _project management_ software:
 
 -   Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
+-   Contacts Management (Clients / Customers / Leads / etc.)
 -   Employees Management (register of company employees / contractors, rates of employees, etc.)
--   Employees Onboarding (WIP)
--   Income / Expenses Management
+-   Employees Onboarding / Candidates Interviews
+-   Time Management / Time Tracking / Activity Tracking / Timesheets
+-   Schedules / Appointments / Events
+-   Project Management / Tasks
+-   Goals / KPI / Objectives / Key Results
+-   Sales Pipelines
 -   Proposals
--   Sales Pipelines (WIP)
--   Multiple Organizations Management
+-   Accounting / Invoicing / Estimates
+-   Billing
+-   Payments
+-   Income / Expenses Management
+-   Time Off Management / Holidays / Approvals
+-   Inventory
+-   Equipment / Sharing
 -   Organization Departments and Teams
 -   Organization Clients and Vendors
--   Days Off Management
--   Equipment Sharing (WIP)
--   Project Management (WIP)
--   Invoicing (WIP)
--   Billing (WIP)
--   Payments (WIP)
--   Time Management/Tracking (WIP)
+-   Help Center / Knowledge Base
+-   Multiple Organizations Management
+-   Tags / Labels
+-   Reports
+-   Organization and Employee Public Pages
+-   Integrations (Upwork, HubStaff, etc.)
+-   Email History / Email Templates
+-   Data Import / Export
+-   Roles / Permissions
 -   Multi-currency
+-   Multi-language
 
 So, while initially the primary purpose of Gauzy Platform was to allow transparent and fair accounting, profits sharing and bonuses calculation, today you can also use Gauzy software as the modern and intelligent platform to run your **Outsourcing/Freelance Agency or Studio business** in a completely new, open way.
 
