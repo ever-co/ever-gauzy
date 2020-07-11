@@ -17,11 +17,10 @@ export class ProductOption extends Base implements IProductOption {
 	@Column()
 	code: string;
 
-	@ManyToOne(
-		() => Product,
-		(product) => product.options,
-		{ onUpdate: 'CASCADE', onDelete: 'CASCADE' }
-	)
+	@ManyToOne(() => Product, (product) => product.options, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	product: Product;
 }

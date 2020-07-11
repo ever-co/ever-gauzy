@@ -11,7 +11,7 @@ import { AppointmentComponent } from '../../../pages/employees/appointment/appoi
 
 @Component({
 	templateUrl: './create-appointment.component.html',
-	styleUrls: ['../public-appointments.component.scss'],
+	styleUrls: ['../public-appointments.component.scss']
 })
 export class CreateAppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

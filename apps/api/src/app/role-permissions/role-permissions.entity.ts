@@ -29,9 +29,6 @@ export class RolePermissions extends TenantBase implements IRolePermissions {
 	@Column({ nullable: true, default: false })
 	enabled: boolean;
 
-	@ManyToOne(
-		(type) => Role,
-		(role) => role.rolePermissions
-	)
+	@ManyToOne((type) => Role, (role) => role.rolePermissions)
 	role!: Role;
 }

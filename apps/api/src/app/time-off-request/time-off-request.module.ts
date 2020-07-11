@@ -9,7 +9,14 @@ import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([TimeOffRequest, Employee, User, TimeOffPolicy])],
+	imports: [
+		TypeOrmModule.forFeature([
+			TimeOffRequest,
+			Employee,
+			User,
+			TimeOffPolicy
+		])
+	],
 	controllers: [TimeOffRequestControler],
 	providers: [TimeOffRequestService, UserService],
 	exports: [TypeOrmModule]

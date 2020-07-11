@@ -21,11 +21,7 @@ import * as moment from 'moment';
 const TODAY = new Date();
 
 const DEFAULT_DATE_RANGE = {
-	start: new Date(
-		moment()
-			.subtract(7, 'days')
-			.format('YYYY-MM-DD')
-	),
+	start: new Date(moment().subtract(7, 'days').format('YYYY-MM-DD')),
 	end: TODAY
 };
 
@@ -197,9 +193,7 @@ export class HubstaffService {
 	}
 
 	private _setEndDate(start) {
-		const end = moment(start)
-			.add(7, 'days')
-			.toDate();
+		const end = moment(start).add(7, 'days').toDate();
 		return end > TODAY ? TODAY : end;
 	}
 

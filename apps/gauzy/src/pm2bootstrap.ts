@@ -9,7 +9,7 @@ const instances = process.env.WEB_CONCURRENCY || 1;
 const maxMemory = process.env.WEB_MEMORY || 4096;
 const port = process.env.port || 4250;
 
-pm2.connect(function() {
+pm2.connect(function () {
 	pm2.start(
 		{
 			script: './apps/gauzy/app.js',
@@ -26,13 +26,13 @@ pm2.connect(function() {
 			},
 			post_update: ['yarn install'] // Commands to execute once we do a pull from Keymetrics
 		},
-		function() {
+		function () {
 			pm2.dump(console.error);
 			// Display logs in standard output
-			pm2.launchBus(function(err, bus) {
+			pm2.launchBus(function (err, bus) {
 				console.log('[PM2] Log streaming started');
 
-				bus.on('log:out', function(packet) {
+				bus.on('log:out', function (packet) {
 					console.log(
 						'[App:%s] %s',
 						packet.process.name,
@@ -40,7 +40,7 @@ pm2.connect(function() {
 					);
 				});
 
-				bus.on('log:err', function(packet) {
+				bus.on('log:err', function (packet) {
 					console.error(
 						'[App:%s][Err] %s',
 						packet.process.name,

@@ -3,7 +3,7 @@ import { ViewCell } from 'ng2-smart-table';
 
 @Component({
 	selector: 'ngx-assigned-to',
-	templateUrl: './assigned-to.component.html',
+	templateUrl: './assigned-to.component.html'
 })
 export class AssignedToComponent implements ViewCell {
 	@Input()

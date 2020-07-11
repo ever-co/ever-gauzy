@@ -8,6 +8,6 @@ export const timeOff: TimeOff[] = [
 		),
 		end: new Date(
 			moment().hour(0).minute(0).second(0).subtract(1, 'days').format()
-		),
-	},
+		)
+	}
 ];

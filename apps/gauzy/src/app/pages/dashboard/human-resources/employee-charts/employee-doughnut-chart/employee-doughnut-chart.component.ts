@@ -142,7 +142,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 					tooltips: {
 						enabled: true,
 						callbacks: {
-							label: function(tooltipItem, data) {
+							label: function (tooltipItem, data) {
 								return data.labels[tooltipItem.index] || '';
 							}
 						}

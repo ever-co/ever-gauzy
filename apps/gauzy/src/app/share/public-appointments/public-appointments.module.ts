@@ -27,13 +27,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	declarations: [PublicAppointmentsComponent],
 	entryComponents: [PublicAppointmentsComponent],
 	exports: [PublicAppointmentsComponent],
-	providers: [EventTypeService],
+	providers: [EventTypeService]
 })
 export class PublicAppointmentsModule {}

@@ -2,9 +2,7 @@ import { Component } from '@angular/core';
 import * as moment from 'moment';
 
 @Component({
-	template: `
-		{{ transformSeconds() }}
-	`
+	template: ` {{ transformSeconds() }} `
 })
 export class TaskEstimateComponent {
 	value: any;

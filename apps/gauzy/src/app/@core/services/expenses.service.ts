@@ -80,9 +80,6 @@ export class ExpensesService {
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/expense/${id}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.delete(`/api/expense/${id}`).pipe(first()).toPromise();
 	}
 }

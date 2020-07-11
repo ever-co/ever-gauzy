@@ -114,9 +114,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	}
 
 	previousMonth(date: string) {
-		return moment(date)
-			.subtract({ months: 1 })
-			.format('MMM, YYYY');
+		return moment(date).subtract({ months: 1 }).format('MMM, YYYY');
 	}
 
 	month(date: string) {

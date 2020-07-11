@@ -15,9 +15,7 @@ export class SettingsDialogComponent implements OnInit {
 	expandOptions: boolean = false;
 	maxDate: Date = new Date();
 	minDate: Date = new Date(
-		moment()
-			.subtract(6, 'months')
-			.format('YYYY-MM-DD')
+		moment().subtract(6, 'months').format('YYYY-MM-DD')
 	);
 	defaultRange$;
 	dispayDate: any;

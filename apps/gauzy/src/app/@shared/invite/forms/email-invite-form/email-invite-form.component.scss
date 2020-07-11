@@ -1,65 +1,65 @@
 @import 'themes';
 
 @include nb-install-component {
-	.remove-icon {
-		div {
-			cursor: pointer;
-		}
+  .remove-icon {
+    div {
+      cursor: pointer;
+    }
 
-		padding-left: 7px;
-		padding-right: 7px;
-		padding-top: 2px;
-	}
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-top: 2px;
+  }
 
-	.adjust-height {
-		::ng-deep .ng-select-container {
-			height: auto;
-		}
-	}
+  .adjust-height {
+    ::ng-deep .ng-select-container {
+      height: auto;
+    }
+  }
 
-	.item-invalid {
-		::ng-deep .ng-select-container {
-			border: 1px solid;
-			border-color: nb-theme(color-danger-default);
-		}
-	}
+  .item-invalid {
+    ::ng-deep .ng-select-container {
+      border: 1px solid;
+      border-color: nb-theme(color-danger-default);
+    }
+  }
 
-	.item-valid {
-		::ng-deep .ng-select-container {
-			border: 1px solid;
-			border-color: nb-theme(color-success-default);
-		}
-	}
+  .item-valid {
+    ::ng-deep .ng-select-container {
+      border: 1px solid;
+      border-color: nb-theme(color-success-default);
+    }
+  }
 
-	.label-with-select {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
+  .label-with-select {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-	// Remove drop down arrow from email select
-	#emailsSelect {
-		::ng-deep {
-			.ng-clear-wrapper {
-				width: 20px;
-			}
-			.ng-arrow-wrapper {
-				display: none;
-			}
-		}
-	}
+  // Remove drop down arrow from email select
+  #emailsSelect {
+    ::ng-deep {
+      .ng-clear-wrapper {
+        width: 20px;
+      }
+      .ng-arrow-wrapper {
+        display: none;
+      }
+    }
+  }
 
-	.employee-padding {
-		margin-bottom: 50px;
-	}
-	.notes {
-		text-indent: 1em;
-		p {
-			margin: 5px 0 0 2px;
-			color: #eac72d;
-			font-size: 0.75rem;
-			font-weight: 300;
-			line-height: initial;
-		}
-	}
+  .employee-padding {
+    margin-bottom: 50px;
+  }
+  .notes {
+    text-indent: 1em;
+    p {
+      margin: 5px 0 0 2px;
+      color: #eac72d;
+      font-size: 0.75rem;
+      font-weight: 300;
+      line-height: initial;
+    }
+  }
 }

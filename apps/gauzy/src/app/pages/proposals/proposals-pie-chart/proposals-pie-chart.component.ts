@@ -3,9 +3,7 @@ import { NbThemeService } from '@nebular/theme';
 
 @Component({
 	selector: 'ngx-proposals-pie-chart',
-	template: `
-		<chart [options]="options" class="echart"></chart>
-	`,
+	template: ` <chart [options]="options" class="echart"></chart> `,
 	styleUrls: ['./proposals-pie-chart.component.scss']
 })
 export class ProposalsPieChartComponent implements AfterViewInit, OnDestroy {

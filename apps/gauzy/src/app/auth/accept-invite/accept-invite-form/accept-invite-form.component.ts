@@ -139,16 +139,10 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 			this.submitForm.emit({
 				user: {
 					firstName: this.fullName.value
-						? this.fullName.value
-								.split(' ')
-								.slice(0, -1)
-								.join(' ')
+						? this.fullName.value.split(' ').slice(0, -1).join(' ')
 						: null,
 					lastName: this.fullName.value
-						? this.fullName.value
-								.split(' ')
-								.slice(-1)
-								.join(' ')
+						? this.fullName.value.split(' ').slice(-1).join(' ')
 						: null,
 					email: this.invitation.email,
 					role: this.invitation.role,

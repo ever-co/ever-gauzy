@@ -26,13 +26,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	declarations: [AppointmentFormComponent],
 	entryComponents: [AppointmentFormComponent],
 	exports: [AppointmentFormComponent],
-	providers: [],
+	providers: []
 })
 export class AppointmentFormModule {}

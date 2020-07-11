@@ -16,10 +16,7 @@ export class FiverrStrategy extends PassportStrategy(Strategy, 'fiverr') {
 		});
 	}
 
-	async validate(
-		profile,
-		done: Function
-	) {
+	async validate(profile, done: Function) {
 		passport['_strategies'].session.role_name = '';
 		const { emails } = profile;
 		try {

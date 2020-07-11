@@ -71,8 +71,8 @@ import { getContrastColor } from 'libs/utils';
 				height: 100%;
 				max-width: 70px;
 			}
-		`,
-	],
+		`
+	]
 })
 export class PictureNameTagsComponent implements ViewCell {
 	@Input()

@@ -33,7 +33,9 @@ export interface OrganizationContactFindInput extends IBaseEntityModel {
 	notes?: string;
 }
 
-export interface OrganizationContactCreateInput extends IContact, IBaseEntityModel {
+export interface OrganizationContactCreateInput
+	extends IContact,
+		IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	contactId?: string;

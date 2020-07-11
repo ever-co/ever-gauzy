@@ -49,8 +49,8 @@ import { NbDialogRef } from '@nebular/theme';
 				align-items: center;
 				width: 300px;
 			}
-		`,
-	],
+		`
+	]
 })
 export class CandidateActionConfirmationComponent {
 	recordType: string;

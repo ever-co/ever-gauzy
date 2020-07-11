@@ -29,10 +29,7 @@ export class SkillsService {
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/skills/${id}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.delete(`/api/skills/${id}`).pipe(first()).toPromise();
 	}
 
 	update(id: string, updateInput: Skill) {

@@ -34,13 +34,9 @@ export class RequestApprovalEmployee extends Base
 	)
 	public requestApproval!: RequestApproval;
 
-	@ManyToOne(
-		(type) => Employee,
-		(employee) => employee.requestApprovals,
-		{
-			cascade: true
-		}
-	)
+	@ManyToOne((type) => Employee, (employee) => employee.requestApprovals, {
+		cascade: true
+	})
 	public employee!: Employee;
 
 	@ApiProperty({ type: Number })

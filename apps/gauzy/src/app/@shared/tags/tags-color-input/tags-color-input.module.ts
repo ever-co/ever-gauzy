@@ -20,12 +20,12 @@ import { TagsService } from '../../../@core/services/tags.service';
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	exports: [TagsColorInputComponent],
 	declarations: [TagsColorInputComponent],
-	providers: [TagsService],
+	providers: [TagsService]
 })
 export class TagsColorInputModule {}

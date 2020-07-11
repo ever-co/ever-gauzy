@@ -59,5 +59,4 @@ export class Contact extends Base implements IContact {
 	@IsOptional()
 	@Column({ nullable: true })
 	regionCode?: string;
-
 }

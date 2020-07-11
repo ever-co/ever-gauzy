@@ -4,7 +4,7 @@ import { getContrastColor } from 'libs/utils';
 @Component({
 	selector: 'ngx-tags-color',
 	templateUrl: './tags-color.component.html',
-	styleUrls: ['./tags-color.component.scss'],
+	styleUrls: ['./tags-color.component.scss']
 })
 export class TagsColorComponent implements ViewCell {
 	@Input()

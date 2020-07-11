@@ -7,7 +7,7 @@ import {
 	NbIconModule,
 	NbButtonModule,
 	NbCardModule,
-	NbTabsetModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
@@ -30,12 +30,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	exports: [CandidateInterviewInfoComponent],
 	declarations: [CandidateInterviewInfoComponent],
-	entryComponents: [CandidateInterviewInfoComponent],
+	entryComponents: [CandidateInterviewInfoComponent]
 })
 export class CandidateInterviewInfoModule {}
