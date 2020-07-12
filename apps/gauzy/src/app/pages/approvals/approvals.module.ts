@@ -23,6 +23,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
+import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -55,7 +56,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [ApprovalsComponent],
+	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	entryComponents: [],
 	providers: [RequestApprovalService]
 })

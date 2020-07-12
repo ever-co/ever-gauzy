@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import * as UpworkApi from 'upwork-api';
 import { environment } from '@env-api/environment';
@@ -39,7 +39,8 @@ import {
 	TimesheetCreateCommand,
 	TimeLogCreateCommand,
 	TimeSlotCreateCommand,
-	ScreenshotCreateCommand
+	ScreenshotCreateCommand,
+	TimeSlotMinuteCreateCommand
 } from '../timesheet/commands';
 import * as moment from 'moment';
 import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
@@ -49,6 +50,7 @@ import { IntegrationMapService } from '../integration-map/integration-map.servic
 import { UserService } from '../user/user.service';
 import { OrganizationService } from '../organization/organization.service';
 import { RoleService } from '../role/role.service';
+import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 
 @Injectable()
 export class UpworkService {
@@ -59,6 +61,7 @@ export class UpworkService {
 		private _userService: UserService,
 		private _roleService: RoleService,
 		private _organizationService: OrganizationService,
+		private _timeSlotService: TimeSlotService,
 		private commandBus: CommandBus
 	) {}
 
@@ -428,15 +431,23 @@ export class UpworkService {
 				const integratedTimeSlots = await this.syncTimeSlots(
 					timeSlotsDto
 				);
-
 				const integratedScreenshots = await this.syncSnapshots(
 					timeSlotsDto
+				);
+				const timeSlotsActivities = await this.getTimeSlotActivitiesByContractId(
+					{
+						contractId: sourceId,
+						employeeId,
+						config,
+						timeSlots: cells
+					}
 				);
 
 				return {
 					integratedTimeLog,
 					integratedTimeSlots,
-					integratedScreenshots
+					integratedScreenshots,
+					timeSlotsActivities
 				};
 			})
 		);
@@ -506,27 +517,104 @@ export class UpworkService {
 		);
 	}
 
+	/*
+	 * Get timeslot minute activities
+	 */
+	async syncTimeSlotsActivity({ employeeId, timeSlot, timeSlotActivity }) {
+		try {
+			const { minutes } = timeSlotActivity;
+			const { cell_time } = timeSlot;
+
+			const integratedTimeSlotsMinutes = await Promise.all(
+				minutes.map(async (minute) => {
+					const {
+						record: timeSlot
+					} = await this._timeSlotService.findOneOrFail({
+						where: {
+							employeeId: employeeId,
+							startedAt: moment
+								.unix(cell_time)
+								.format('YYYY-MM-DD HH:mm:ss')
+						}
+					});
+
+					const { time, mouse, keyboard } = minute;
+					const gauzyTimeSlotMinute = await this.commandBus.execute(
+						new TimeSlotMinuteCreateCommand({
+							mouse,
+							keyboard,
+							datetime: new Date(
+								moment.unix(time).format('YYYY-MM-DD HH:mm:ss')
+							),
+							timeSlot
+						})
+					);
+
+					return gauzyTimeSlotMinute;
+				})
+			);
+
+			return integratedTimeSlotsMinutes;
+		} catch (error) {
+			throw new BadRequestException(
+				'Cannot sync timeslot every minute activity'
+			);
+		}
+	}
+
+	/*
+	 * Get snapshots/timeslot minutes activites
+	 */
+	async getTimeSlotActivitiesByContractId({
+		contractId,
+		employeeId,
+		config,
+		timeSlots
+	}) {
+		const timeSlotActivities = await Promise.all(
+			timeSlots.map(async (timeslot) => {
+				const {
+					snapshot: timeSlotActivity
+				} = await this.getSnapshotByContractId(
+					config,
+					contractId,
+					timeslot
+				);
+				const integratedTimeSlotActivities = await this.syncTimeSlotsActivity(
+					{
+						employeeId,
+						timeSlot: timeslot,
+						timeSlotActivity
+					}
+				);
+
+				return {
+					integratedTimeSlotActivities
+				};
+			})
+		);
+
+		return timeSlotActivities;
+	}
+
 	/**
 	 * Get snapshots for given contractId and Unix time
 	 */
 	async getSnapshotByContractId(
-		getWorkDiaryDto: IGetWorkDiaryDto
+		config: IUpworkApiConfig,
+		contractId,
+		timeSlot
 	): Promise<any> {
-		const api = new UpworkApi(getWorkDiaryDto.config);
+		const api = new UpworkApi(config);
 		const snapshots = new Snapshot(api);
+		const { snapshot_time: snapshotTime } = timeSlot;
 
 		return new Promise((resolve, reject) => {
-			api.setAccessToken(
-				getWorkDiaryDto.config.accessToken,
-				getWorkDiaryDto.config.accessSecret,
-				() => {
-					snapshots.getByContract(
-						getWorkDiaryDto.contractId,
-						moment(getWorkDiaryDto.forDate).unix(),
-						(err, data) => (err ? reject(err) : resolve(data))
-					);
-				}
-			);
+			api.setAccessToken(config.accessToken, config.accessSecret, () => {
+				snapshots.getByContract(contractId, snapshotTime, (err, data) =>
+					err ? reject(err) : resolve(data)
+				);
+			});
 		});
 	}
 

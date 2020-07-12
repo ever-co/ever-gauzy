@@ -1,0 +1,75 @@
+<nb-card class="add-criterion-card">
+	<nb-card-header>
+		<h6>
+			{{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate }}
+		</h6>
+		<div class="row m-0 mt-2">
+			<form class="col-8 pl-0" [formGroup]="form" *ngIf="form">
+				<div formArrayName="qualities">
+					<div
+						*ngFor="
+							let quality of form.controls.qualities?.controls;
+							let i = index
+						"
+					>
+						<div [formGroupName]="i">
+							<input
+								formControlName="name"
+								class="col-12"
+								nbInput
+								type="text"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_CANDIDATE_QUALITY'
+										| translate
+								}}"
+								fullWidth
+							/>
+						</div>
+					</div>
+				</div>
+			</form>
+			<span class="col-2 pl-2 pr-1"
+				><button
+					class="w-100"
+					nbButton
+					status="success"
+					(click)="save()"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button></span
+			>
+			<span class="col-2 pl-1 pr-0"
+				><button
+					class="w-100"
+					(click)="cancel()"
+					nbButton
+					status="danger"
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button></span
+			>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="qualities">
+		<div
+			class="qualities-card"
+			*ngFor="let quality of personalQualitiesList; let i = index"
+		>
+			<div class="quality">
+				<p class="quality-text">{{ quality.name }}</p>
+				<div class="quality-buttons">
+					<nb-icon
+						class="quality-buttons-icons pl-1"
+						icon="edit"
+						(click)="edit(i, quality.id)"
+					></nb-icon
+					><nb-icon
+						class="quality-buttons-icons pl-1"
+						icon="close"
+						(click)="remove(quality.id)"
+					></nb-icon>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

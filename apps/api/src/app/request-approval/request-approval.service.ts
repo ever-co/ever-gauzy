@@ -3,7 +3,8 @@ import { RequestApproval } from './request-approval.entity';
 import {
 	Injectable,
 	BadRequestException,
-	NotFoundException
+	NotFoundException,
+	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository } from 'typeorm';
@@ -246,7 +247,37 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		}
 	}
 
-	async updateStatusRequestApproval(
+	async updateStatusRequestApprovalByAdmin(
+		id: string,
+		status: number
+	): Promise<RequestApproval> {
+		try {
+			const requestApproval = await this.requestApprovalRepository.findOne(
+				id
+			);
+
+			if (!requestApproval) {
+				throw new NotFoundException('Request Approval not found');
+			}
+
+			if (
+				requestApproval.status ===
+					RequestApprovalStatusTypesEnum.APPROVED ||
+				requestApproval.status ===
+					RequestApprovalStatusTypesEnum.REFUSED
+			) {
+				throw new ConflictException('Request Approval is Conflict');
+			}
+
+			requestApproval.status = status;
+
+			return this.requestApprovalRepository.save(requestApproval);
+		} catch (err /*: WriteError*/) {
+			throw err;
+		}
+	}
+
+	async updateStatusRequestApprovalByEmployeeOrTeam(
 		id: string,
 		status: number
 	): Promise<RequestApproval> {
@@ -262,6 +293,15 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 
 			if (!requestApproval) {
 				throw new NotFoundException('Request Approval not found');
+			}
+
+			if (
+				requestApproval.status ===
+					RequestApprovalStatusTypesEnum.APPROVED ||
+				requestApproval.status ===
+					RequestApprovalStatusTypesEnum.REFUSED
+			) {
+				throw new ConflictException('Request Approval is Conflict');
 			}
 
 			if (
