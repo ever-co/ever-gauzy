@@ -105,10 +105,10 @@
 	>
 		<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
 		<span *ngIf="proposalStatus == 'ACCEPTED'">{{
-			'BUTTONS.SENT' | translate
+			'BUTTONS.MARK_AS_SENT' | translate
 		}}</span>
 		<span *ngIf="proposalStatus == 'SENT'">{{
-			'BUTTONS.ACCEPTED' | translate
+			'BUTTONS.MARK_AS_ACCEPTED' | translate
 		}}</span>
 	</button>
 </ng-template>

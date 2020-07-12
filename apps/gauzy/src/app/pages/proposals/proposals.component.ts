@@ -68,7 +68,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 	smartTableSettings: object;
 	selectedEmployeeId = '';
 	selectedDate: Date;
-	proposals: Proposal[];
+	proposals: ProposalViewModel[];
 	smartTableSource = new LocalDataSource();
 	viewComponentName: ComponentEnum;
 	selectedProposal: ProposalViewModel;
@@ -300,7 +300,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			noDataMessage: 'No data',
 			columns: {
 				valueDate: {
-					title: this.getTranslation('SM_TABLE.PROPOSAL_REGISTERED'),
+					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '25%',
 					renderComponent: DateViewComponent,
@@ -312,8 +312,8 @@ export class ProposalsComponent extends TranslationBaseComponent
 					width: '25%',
 					renderComponent: NotesWithTagsComponent
 				},
-				jobPostLink: {
-					title: this.getTranslation('SM_TABLE.VIEW_JOB_POST'),
+				jobPostUrl: {
+					title: this.getTranslation('SM_TABLE.JOB_POST_URL'),
 					type: 'html',
 					filter: false
 				},
@@ -432,7 +432,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 				this.successRate = '0 %';
 			}
 
-			this.proposals = items;
+			this.proposals = proposalVM;
 			this.smartTableSource.load(proposalVM);
 			this.showTable = true;
 
