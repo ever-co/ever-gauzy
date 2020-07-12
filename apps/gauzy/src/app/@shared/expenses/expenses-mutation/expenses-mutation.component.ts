@@ -343,9 +343,12 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async loadProjects() {
-		const res = await this.organizationProjectsService.getAll(['client'], {
-			organizationId: this.organizationId
-		});
+		const res = await this.organizationProjectsService.getAll(
+			['organizationContact'],
+			{
+				organizationId: this.organizationId
+			}
+		);
 
 		if (res) {
 			res.items.forEach((project) => {

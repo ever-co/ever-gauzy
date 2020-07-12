@@ -1,6 +1,13 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
-		<h4>{{ 'EXPENSES_PAGE.EXPENSES' | translate }}</h4>
+	<nb-card-header class="header-selector-wrapper">
+		<div>
+			<h4>{{ 'EXPENSES_PAGE.EXPENSES' | translate }}</h4>
+		</div>
+		<div>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div *ngIf="hasEditPermission" class="mb-3">
@@ -13,49 +20,13 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-
-			<button
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="
-					selectedExpense ? !selectedExpense.isSelected : true
-				"
-				(click)="openEditExpenseDialog()"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-
-			<button
-				nbButton
-				status="primary"
-				class="mr-2"
-				[disabled]="
-					selectedExpense ? !selectedExpense.isSelected : true
-				"
-				(click)="openDuplicateExpenseDialog()"
-			>
-				<nb-icon class="mr-1" icon="copy-outline"></nb-icon
-				>{{ 'BUTTONS.DUPLICATE' | translate }}
-			</button>
-
-			<button
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="
-					selectedExpense ? !selectedExpense.isSelected : true
-				"
-				(click)="deleteExpense()"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"></nb-icon
-				>{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 
 		<ng2-smart-table
-			*ngIf="canShowTable()"
+			*ngIf="canShowTable() && dataLayoutStyle === 'TABLE'"
 			class="income-table"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
@@ -64,5 +35,52 @@
 			#expensesTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="smartTableSettings"
+			[source]="expenses"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="openEditExpenseDialog(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+		>{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+
+	<button
+		nbButton
+		status="primary"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="openDuplicateExpenseDialog(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="copy-outline"></nb-icon
+		>{{ 'BUTTONS.DUPLICATE' | translate }}
+	</button>
+
+	<button
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="deleteExpense(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+		>{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

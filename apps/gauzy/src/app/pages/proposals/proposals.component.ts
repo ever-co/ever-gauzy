@@ -2,10 +2,15 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
-import { Proposal, PermissionsEnum, Tag } from '@gauzy/models';
+import {
+	Proposal,
+	PermissionsEnum,
+	Tag,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
-import { Router } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
@@ -15,6 +20,7 @@ import { ActionConfirmationComponent } from '../../@shared/user/forms/action-con
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 export interface ProposalViewModel {
 	id: string;
@@ -39,7 +45,8 @@ interface SelectedRowModel {
 
 @Component({
 	selector: 'ga-proposals',
-	templateUrl: './proposals.component.html'
+	templateUrl: './proposals.component.html',
+	styleUrls: ['./proposals.component.scss']
 })
 export class ProposalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -53,6 +60,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	private _ngDestroy$ = new Subject<void>();
@@ -60,10 +68,10 @@ export class ProposalsComponent extends TranslationBaseComponent
 	smartTableSettings: object;
 	selectedEmployeeId = '';
 	selectedDate: Date;
-
+	proposals: Proposal[];
 	smartTableSource = new LocalDataSource();
-
-	selectedProposal: SelectedRowModel;
+	viewComponentName: ComponentEnum;
+	selectedProposal: ProposalViewModel;
 	proposalStatus: string;
 	showTable: boolean;
 	employeeName: string;
@@ -73,7 +81,8 @@ export class ProposalsComponent extends TranslationBaseComponent
 	chartData: { value: number; name: string }[] = [];
 	loading = true;
 	hasEditPermission = false;
-
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	disableButton = true;
 	private _selectedOrganizationId: string;
 
 	@ViewChild('proposalsTable') proposalsTable;
@@ -127,6 +136,24 @@ export class ProposalsComponent extends TranslationBaseComponent
 
 				this.loading = false;
 			});
+
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.PROPOSALS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	canShowTable() {
@@ -140,13 +167,25 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/sales/proposals/register']);
 	}
 
-	details() {
+	details(selectedItem?: Proposal) {
+		if (selectedItem) {
+			this.selectProposal({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
-			`/pages/sales/proposals/details/${this.selectedProposal.data.id}`
+			`/pages/sales/proposals/details/${this.selectedProposal.id}`
 		]);
 	}
 
-	delete() {
+	delete(selectedItem?: Proposal) {
+		if (selectedItem) {
+			this.selectProposal({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -158,7 +197,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.proposalsService.delete(
-							this.selectedProposal.data.id
+							this.selectedProposal.id
 						);
 
 						this.toastrService.primary(
@@ -176,7 +215,13 @@ export class ProposalsComponent extends TranslationBaseComponent
 			});
 	}
 
-	switchToAccepted() {
+	switchToAccepted(selectedItem?: Proposal) {
+		if (selectedItem) {
+			this.selectProposal({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(ActionConfirmationComponent, {
 				context: {
@@ -188,7 +233,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.proposalsService.update(
-							this.selectedProposal.data.id,
+							this.selectedProposal.id,
 							{
 								status: 'ACCEPTED'
 							}
@@ -209,7 +254,13 @@ export class ProposalsComponent extends TranslationBaseComponent
 			});
 	}
 
-	switchToSent() {
+	switchToSent(selectedItem?: Proposal) {
+		if (selectedItem) {
+			this.selectProposal({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(ActionConfirmationComponent, {
 				context: {
@@ -221,7 +272,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.proposalsService.update(
-							this.selectedProposal.data.id,
+							this.selectedProposal.id,
 							{
 								status: 'SENT'
 							}
@@ -289,10 +340,17 @@ export class ProposalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectProposal(ev: SelectedRowModel) {
-		this.selectedProposal = ev;
-		this.store.selectedProposal = this.selectedProposal.data;
-		this.proposalStatus = this.selectedProposal.data.status;
+	selectProposal({ isSelected, data }) {
+		const selectedProposal = isSelected ? data : null;
+		if (this.proposalsTable) {
+			this.proposalsTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedProposal = selectedProposal;
+		this.store.selectedProposal = this.selectedProposal;
+		if (this.selectedProposal) {
+			this.proposalStatus = this.selectedProposal.status;
+		}
 	}
 
 	private async _loadTableData(orgId?: string) {
@@ -374,8 +432,8 @@ export class ProposalsComponent extends TranslationBaseComponent
 				this.successRate = '0 %';
 			}
 
+			this.proposals = items;
 			this.smartTableSource.load(proposalVM);
-
 			this.showTable = true;
 
 			this.chartData[0] = {
