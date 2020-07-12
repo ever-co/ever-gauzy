@@ -1,6 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { PermissionsEnum, Pipeline } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	Pipeline,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { AppStore, Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -8,14 +12,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AuthService } from '../../@core/services/auth.service';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 
 @Component({
 	templateUrl: './pipelines.component.html',
-	selector: 'ga-pipelines'
+	selector: 'ga-pipelines',
+	styleUrls: ['./pipelines.component.scss']
 })
 export class PipelinesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -37,28 +44,27 @@ export class PipelinesComponent extends TranslationBaseComponent
 	};
 
 	public pipelines = new LocalDataSource([] as Pipeline[]);
-
 	public CAN_EDIT_SALES_PIPELINES = false;
-
 	public organizationId: string;
-
 	public pipeline: Pipeline;
-
 	public name: string;
-
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
-
 	private permissionSubscription: Subscription;
+	viewComponentName: ComponentEnum;
+	private _ngDestroy$ = new Subject<void>();
+	pipelineData: Pipeline[];
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	public constructor(
 		private usersOrganizationsService: UsersOrganizationsService,
 		private pipelinesService: PipelinesService,
 		private nbToastrService: NbToastrService,
 		private dialogService: NbDialogService,
-		translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private authService: AuthService,
 		private appStore: AppStore,
-		private store: Store
+		private store: Store,
+		private router: Router
 	) {
 		super(translateService);
 		this.$akitaPreUpdate = appStore.akitaPreUpdate;
@@ -71,6 +77,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 
 			return this.$akitaPreUpdate(previous, next);
 		};
+		this.setView();
 	}
 
 	public ngOnInit(): void {
@@ -88,6 +95,24 @@ export class PipelinesComponent extends TranslationBaseComponent
 				await this.updatePipelines();
 			});
 		}
+
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.PROPOSALS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	public ngOnDestroy(): void {
@@ -102,6 +127,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 		await this.pipelinesService
 			.find(['stages'], { organizationId })
 			.then(({ items }) => {
+				this.pipelineData = items;
 				this.pipelines.load(items);
 				this.filterPipelines();
 			});

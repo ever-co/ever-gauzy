@@ -225,7 +225,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				data: selectedItem
 			});
 		}
-		if (this.selectedInvoice.toClient.contactOrganizationId) {
+		if (this.selectedInvoice.clientId) {
 			this.dialogService
 				.open(InvoiceSendMutationComponent, {
 					context: {

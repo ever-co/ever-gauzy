@@ -30,7 +30,7 @@ export class ProposalDetailsComponent implements OnInit {
 		}
 
 		this.jobPostLink = this.sanitizer.bypassSecurityTrustHtml(
-			this.proposal.jobPostLink
+			this.proposal.jobPostUrl
 		);
 
 		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(

@@ -23,6 +23,8 @@ import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.componen
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
 import { DealsService } from '../../@core/services/deals.service';
 import { PipelineDealExcerptComponent } from './pipeline-deals/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { ThemeModule } from '../../@theme/theme.module';
 
 @NgModule({
 	declarations: [
@@ -57,7 +59,9 @@ import { PipelineDealExcerptComponent } from './pipeline-deals/pipeline-deal-exc
 		CommonModule,
 		NbCardModule,
 		NbIconModule,
-		FormsModule
+		FormsModule,
+		CardGridModule,
+		ThemeModule
 	]
 })
 export class PipelinesModule {}
