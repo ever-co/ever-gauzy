@@ -202,12 +202,25 @@ export class AppointmentComponent extends TranslationBaseComponent
 				if (employee && employee.id) {
 					this._selectedEmployeeId = employee.id;
 					this.renderAppointmentsAndSlots(this._selectedEmployeeId);
+				} else {
+					this._selectedEmployeeId = null;
+					this.calendarEvents = [];
+					this.calendarComponent.getApi() &&
+						this.calendarComponent.getApi().refetchEvents();
 				}
 			});
 
 		if (this.employee && this.employee.id) {
 			this.renderAppointmentsAndSlots(this.employee.id);
 		}
+	}
+
+	bookPublicAppointment() {
+		this._selectedEmployeeId
+			? this.router.navigate([
+					`/share/employee/${this._selectedEmployeeId}`
+			  ])
+			: this.router.navigate(['/share/employee']);
 	}
 
 	renderAppointmentsAndSlots(employeeId: string) {

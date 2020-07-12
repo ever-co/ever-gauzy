@@ -29,6 +29,13 @@ const routes: Routes = [
 					).then((m) => m.EditAppointmentModule)
 			},
 			{
+				path: 'employee',
+				loadChildren: () =>
+					import(
+						'./public-appointments/pick-employee/pick-employee.module'
+					).then((m) => m.PickEmployeeModule)
+			},
+			{
 				path: 'employee/:id',
 				loadChildren: () =>
 					import(
