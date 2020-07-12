@@ -45,8 +45,7 @@ interface SelectedRowModel {
 
 @Component({
 	selector: 'ga-proposals',
-	templateUrl: './proposals.component.html',
-	styleUrls: ['./proposals.component.scss']
+	templateUrl: './proposals.component.html'	
 })
 export class ProposalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
