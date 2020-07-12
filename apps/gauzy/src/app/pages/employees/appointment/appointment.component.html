@@ -2,6 +2,14 @@
 	<nb-card-header *ngIf="showHeader">
 		<div class="main-header">
 			<h4>{{ 'MENU.APPOINTMENTS' | translate }}</h4>
+			<button
+				style="float: right;"
+				status="success"
+				nbButton
+				(click)="bookPublicAppointment()"
+			>
+				{{ 'BUTTONS.PUBLIC_APPOINTMENT_BOOK' | translate }}
+			</button>
 		</div>
 	</nb-card-header>
 	<nb-card-body>

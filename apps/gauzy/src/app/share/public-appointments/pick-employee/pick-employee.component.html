@@ -1,0 +1,35 @@
+<nb-card>
+	<nb-card-header>
+		<h4>
+			{{ 'APPOINTMENTS_PAGE.SELECT_EMPLOYEE' | translate }}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="col-9">
+			<div style="height: 300px;" class="form-group" *ngIf="!loading">
+				<label for="description" class="label"
+					>{{ 'APPOINTMENTS_PAGE.EMPLOYEE' | translate }}
+				</label>
+				<div class="center-div">
+					<ga-employee-selector
+						class="col-6"
+						style="width: 100%;"
+						#employeeSelector
+						[skipGlobalChange]="true"
+						class="employees"
+					>
+					</ga-employee-selector>
+					<span class="col-1"></span>
+					<button
+						class="col-3"
+						(click)="bookAppointment()"
+						status="success"
+						nbButton
+					>
+						{{ 'PUBLIC_APPOINTMENTS.BOOK_APPOINTMENT' | translate }}
+					</button>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>
