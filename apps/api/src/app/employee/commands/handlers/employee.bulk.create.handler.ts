@@ -33,7 +33,7 @@ export class EmployeeBulkCreateHandler
 			)
 		);
 
-		Promise.all(usersWithOrganizations);
+		await Promise.all(usersWithOrganizations);
 
 		this._sendWelcomeEmail(createdEmployees, languageCode);
 
