@@ -52,6 +52,7 @@
 		"SELECT": "Select",
 		"EMAIL": "Eлектронна поща",
 		"CONVERT_TO_INVOICE": "Convert to invoice",
+		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "Редактиране",
@@ -1934,7 +1935,9 @@
 		"CANCEL_APPOINTMENT": "Cancel Appointment",
 		"CANCEL_FAIL": "Failed to cancel appointment",
 		"CANCEL_SUCCESS": "Appointment cancelled successfully",
-		"DURATION_ERROR": "Selected Duration is not valid"
+		"DURATION_ERROR": "Selected Duration is not valid",
+		"SELECT_EMPLOYEE": "Select Employee",
+		"EMPLOYEE": "Служител"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",
@@ -1949,6 +1952,7 @@
 		"RECURRING_AVAILABILITY": "Recurring Availability"
 	},
 	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENT": "Book Appointment",
 		"BOOK_APPOINTMENTS": "Book an appointment",
 		"SELECT_EVENT_TYPES": "Please select an event type",
 		"PICK_DATETIME": "Pick a date and time",
@@ -1961,6 +1965,7 @@
 		"HOST": "Host",
 		"RESCHEDULE": "Reschedule Appointment",
 		"CANCEL": "Cancel Appointment",
+		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
 	},
