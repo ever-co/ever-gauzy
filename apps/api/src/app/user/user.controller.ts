@@ -121,6 +121,7 @@ export class UserController extends CrudController<User> {
 			relations
 		});
 	}
+
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

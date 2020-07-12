@@ -13,7 +13,8 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	Req
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
@@ -27,6 +28,8 @@ import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { ParseJsonPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
+import { ITryRequest } from '../core/crud/try-request';
+import { Request } from 'express';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -136,10 +139,35 @@ export class EmployeeController extends CrudController<Employee> {
 				relations
 			});
 		} else {
-			return this.employeeService.findWithoutTennant(id, {
+			return this.employeeService.findWithoutTenant(id, {
 				relations
 			});
 		}
+	}
+
+	@ApiOperation({ summary: 'Find employee by user id in the same tenant.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee in the same tenant',
+		type: Employee
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/user/:userId')
+	async findByUserId(
+		@Param('userId') userId: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<ITryRequest> {
+		const { relations = [] } = data;
+
+		return this.employeeService.findOneOrFail({
+			where: {
+				userId
+			},
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -157,9 +185,17 @@ export class EmployeeController extends CrudController<Employee> {
 	@Post('/create')
 	async create(
 		@Body() entity: IEmployeeCreateInput,
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<Employee> {
-		return this.commandBus.execute(new EmployeeCreateCommand(entity));
+		if (!entity.user.imageUrl) {
+			entity.user.imageUrl = getUserDummyImage(entity.user);
+		}
+		entity.originalUrl = request.get('Origin');
+		return this.commandBus.execute(
+			new EmployeeCreateCommand(entity, languageCode)
+		);
 	}
 
 	@ApiOperation({ summary: 'Create records in Bulk' })

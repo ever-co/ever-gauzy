@@ -44,6 +44,26 @@ export class EmployeesService {
 			.toPromise();
 	}
 
+	getEmployeeByUserId(
+		userId: string,
+		relations?: string[],
+		useTenant?: boolean
+	): Promise<{
+		success: boolean;
+		result: Employee;
+	}> {
+		const data = JSON.stringify({ relations, useTenant });
+		return this.http
+			.get<{
+				success: boolean;
+				result: Employee;
+			}>(`/api/employee/user/${userId}`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
 	getEmployeeById(id: string, relations?: string[], useTenant?: boolean) {
 		const data = JSON.stringify({ relations, useTenant });
 		return this.http

@@ -4,6 +4,7 @@ import { Employee, EmployeeCreateInput, LanguagesEnum } from '@gauzy/models';
 import { EmployeeBulkCreateCommand } from '../employee.bulk.create.command';
 import { AuthService } from '../../../auth/auth.service';
 import { EmailService } from '../../../email';
+import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 
 @CommandHandler(EmployeeBulkCreateCommand)
 export class EmployeeBulkCreateHandler
@@ -11,7 +12,8 @@ export class EmployeeBulkCreateHandler
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly authService: AuthService,
-		private readonly emailService: EmailService
+		private readonly emailService: EmailService,
+		private readonly userOrganizationService: UserOrganizationService
 	) {}
 
 	public async execute(
@@ -23,6 +25,15 @@ export class EmployeeBulkCreateHandler
 		const createdEmployees = await this.employeeService.createBulk(
 			inputWithHash
 		);
+
+		const usersWithOrganizations = createdEmployees.map((employee) =>
+			this.userOrganizationService.addUserToOrganization(
+				employee.user,
+				employee.orgId
+			)
+		);
+
+		Promise.all(usersWithOrganizations);
 
 		this._sendWelcomeEmail(createdEmployees, languageCode);
 
