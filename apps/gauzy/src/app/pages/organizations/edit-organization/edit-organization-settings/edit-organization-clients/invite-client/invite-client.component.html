@@ -1,0 +1,143 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<h5>{{ 'ORGANIZATIONS_PAGE.INVITE_CLIENT' | translate }}</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="form-group col-12">
+					<label for="emailsSelect" class="label">{{
+						'SM_TABLE.CLIENT_NAME' | translate
+					}}</label>
+					<input
+						type="text"
+						#name
+						nbInput
+						fullWidth
+						formControlName="name"
+						placeholder="{{ 'SM_TABLE.CLIENT_NAME' | translate }}"
+						[status]="
+							form.controls.name.touched
+								? form.controls.name.value == 0
+									? 'danger'
+									: 'basic'
+								: 'basic'
+						"
+						[attr.aria-invalid]="
+							form.controls.name.invalid &&
+							form.controls.name.touched
+								? true
+								: null
+						"
+					/>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-12">
+					<label for="emailsSelect" class="label">{{
+						'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
+					}}</label>
+					<input
+						pattern="[0-9]{0,30}"
+						type="text"
+						#phone
+						nbInput
+						fullWidth
+						formControlName="primaryPhone"
+						placeholder="{{
+							'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
+						}}"
+						[status]="
+							form.controls.primaryPhone.dirty
+								? form.controls.primaryPhone.invalid
+									? 'danger'
+									: 'basic'
+								: 'basic'
+						"
+						[attr.aria-invalid]="
+							form.controls.primaryPhone.invalid &&
+							form.controls.primaryPhone.touched
+								? true
+								: null
+						"
+					/>
+					<ng-container
+						*ngIf="
+							form.controls.primaryPhone.invalid &&
+							form.controls.primaryPhone.touched
+						"
+					>
+						<p
+							class="caption status-danger"
+							*ngIf="form.controls.primaryPhone.errors?.required"
+						>
+							{{ 'TOASTR.MESSAGE.PHONE_REQUIRED' | translate }}
+						</p>
+						<p
+							class="caption status-danger"
+							*ngIf="form.controls.primaryPhone.errors?.pattern"
+						>
+							{{
+								'TOASTR.MESSAGE.PHONE_CONTAINS_ONLY_NUMBERS'
+									| translate
+							}}
+						</p>
+					</ng-container>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-12">
+					<label for="emailsSelect" class="label">{{
+						'FORM.LABELS.EMAIL_INVITATION' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="emailInput"
+						type="text"
+						nbInput
+						formControlName="primaryEmail"
+						placeholder="{{ 'SM_TABLE.EMAIL' | translate }}"
+						[status]="
+							form.controls.primaryEmail.dirty &&
+							form.controls.primaryEmail.invalid
+								? 'danger'
+								: 'basic'
+						"
+					/>
+					<ng-container
+						*ngIf="
+							form.controls.primaryEmail.errors &&
+							form.controls.primaryEmail.errors.exists
+						"
+					>
+						<p class="caption status-danger">
+							{{
+								'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.EMAIL_EXISTS'
+									| translate
+							}}
+						</p>
+					</ng-container>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button class="mr-2" status="danger" (click)="closeDialog()" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			class="mr-2"
+			status="success"
+			[disabled]="form.invalid"
+			(click)="inviteClient()"
+			nbButton
+		>
+			{{ 'ORGANIZATIONS_PAGE.EMAIL_INVITE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

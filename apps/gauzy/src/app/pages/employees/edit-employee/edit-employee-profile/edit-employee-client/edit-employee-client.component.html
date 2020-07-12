@@ -1,0 +1,10 @@
+<ga-edit-employee-membership
+	[selectedEmployee]="selectedEmployee"
+	[organizationEntities]="organizationClients"
+	[employeeEntities]="employeeClients"
+	placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+	title="{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYEE_CLIENTS' | translate }}"
+	(entitiesAdded)="submitForm($event, false)"
+	(entitiesRemoved)="submitForm($event, true)"
+>
+</ga-edit-employee-membership>
