@@ -299,6 +299,16 @@
 		</div>
 	</div>
 
+	<div class="row" *ngIf="enableEmployee()">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<nb-checkbox formControlName="createEmployee">{{
+					'FORM.LABELS.ENABLE_EMPLOYEE_FEATURES' | translate
+				}}</nb-checkbox>
+			</div>
+		</div>
+	</div>
+
 	<div class="form-group row" [hidden]="imageUrl.invalid">
 		<div class="col-sm-12">
 			<div class="row preview-img" [hidden]="!showImageMeta">

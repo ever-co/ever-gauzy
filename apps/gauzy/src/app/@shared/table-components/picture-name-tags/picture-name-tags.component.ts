@@ -1,15 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 import { getContrastColor } from 'libs/utils';
+import { ViewCell } from 'ng2-smart-table';
 
 @Component({
 	selector: 'ga-picture-name-tags',
 	template: `
-		<div
-			*ngIf="rowData.imageUrl"
-			style="display: flex; align-items: center;"
-		>
-			<div class="image-container">
+		<div style="display: flex; align-items: center;">
+			<div *ngIf="rowData.imageUrl" class="image-container">
 				<img [src]="rowData.imageUrl" />
 			</div>
 			<div
@@ -19,18 +16,7 @@ import { getContrastColor } from 'libs/utils';
 			>
 				{{ rowData.fullName }}
 			</div>
-			<div class="d-block" style="margin-left:15px;">
-				{{ rowData.name }}
-			</div>
-		</div>
-		<div
-			*ngIf="rowData.name && !rowData.imageUrl"
-			style="display: flex; align-items: center;"
-		>
-			<div *ngIf="rowData.fullName" class="d-block">
-				{{ rowData.fullName }}
-			</div>
-			<div class="d-block">
+			<div *ngIf="rowData.name" class="d-block" style="margin-left:15px;">
 				{{ rowData.name }}
 			</div>
 		</div>
@@ -71,8 +57,8 @@ import { getContrastColor } from 'libs/utils';
 				height: 100%;
 				max-width: 70px;
 			}
-		`,
-	],
+		`
+	]
 })
 export class PictureNameTagsComponent implements ViewCell {
 	@Input()

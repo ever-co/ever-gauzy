@@ -217,7 +217,9 @@
 			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
 			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
-			"SHORT_DESCRIPTION": "Short Description"
+			"SHORT_DESCRIPTION": "Short Description",
+			"ENABLE_EMPLOYEE_FEATURES": "Enable Employee Features",
+			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -1068,8 +1070,7 @@
 				"ADMINISTRATION": "Administration"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
-			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
-			"VIEW_MY_TASK": "View My Tasks"
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
 		}
 	},
 	"PUBLIC_PAGE": {
