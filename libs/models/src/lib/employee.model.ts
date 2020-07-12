@@ -81,6 +81,7 @@ export interface EmployeeCreateInput {
 	startedWorkOn?: any;
 	short_description?: string;
 	description?: string;
+	originalUrl?: string;
 }
 
 export enum PayPeriodEnum {

@@ -8,6 +8,16 @@ import { filter, first, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../@core/services/auth.service';
 import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
+import { EmployeesService } from '../@core/services';
+
+interface GaMenuItem extends NbMenuItem {
+	data: {
+		translationKey: string; //Translation key for the title, mandatory for all items
+		permissionKeys?: PermissionsEnum[]; //Check permissions and hide item if any given permission is not present
+		withOrganizationShortcuts?: boolean; //Declare if the sidebar item has organization level shortcuts
+		hide?: () => boolean; //Hide the menu item if this returns true
+	};
+}
 
 @Component({
 	selector: 'ngx-pages',
@@ -20,14 +30,14 @@ import { SelectorService } from '../@core/utils/selector.service';
 	`
 })
 export class PagesComponent implements OnInit, OnDestroy {
-	basicMenu: NbMenuItem[];
-	adminMenu: NbMenuItem[];
+	basicMenu: GaMenuItem[];
+	adminMenu: GaMenuItem[];
 	private _ngDestroy$ = new Subject<void>();
 	isAdmin: boolean;
 	isEmployee: boolean;
 	_selectedOrganization: Organization;
 
-	MENU_ITEMS: NbMenuItem[] = [
+	MENU_ITEMS: GaMenuItem[] = [
 		{
 			title: 'Dashboard',
 			icon: 'home-outline',
@@ -35,7 +45,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			pathMatch: 'prefix',
 			home: true,
 			data: {
-				translated: false,
 				translationKey: 'MENU.DASHBOARD'
 			}
 		},
@@ -43,7 +52,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Accounting',
 			icon: 'credit-card-outline',
 			data: {
-				translated: false,
 				translationKey: 'MENU.ACCOUNTING'
 			},
 			children: [
@@ -52,7 +60,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'file-outline',
 					link: '/pages/accounting/invoices/estimates',
 					data: {
-						translated: false,
 						translationKey: 'MENU.ESTIMATES'
 					}
 				},
@@ -61,7 +68,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'archive-outline',
 					link: '/pages/accounting/invoices/received-estimates',
 					data: {
-						translated: false,
 						translationKey: 'MENU.ESTIMATES_RECEIVED'
 					}
 				},
@@ -70,7 +76,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'file-text-outline',
 					link: '/pages/accounting/invoices',
 					data: {
-						translated: false,
 						permissionKeys: [
 							PermissionsEnum.ALL_ORG_VIEW,
 							PermissionsEnum.INVOICES_VIEW
@@ -83,7 +88,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'flip-outline',
 					link: '/pages/accounting/recurring-invoices',
 					data: {
-						translated: false,
 						permissionKeys: [PermissionsEnum.INVOICES_VIEW],
 						translationKey: 'MENU.RECURRING_INVOICES'
 					}
@@ -93,7 +97,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'archive',
 					link: '/pages/accounting/invoices/received-invoices',
 					data: {
-						translated: false,
 						translationKey: 'MENU.INVOICES_RECEIVED'
 					}
 				},
@@ -102,7 +105,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'plus-circle-outline',
 					link: '/pages/accounting/income',
 					data: {
-						translated: false,
 						translationKey: 'MENU.INCOME',
 						permissionKeys: [PermissionsEnum.ORG_INCOMES_VIEW]
 					}
@@ -112,7 +114,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'minus-circle-outline',
 					link: '/pages/accounting/expenses',
 					data: {
-						translated: false,
 						translationKey: 'MENU.EXPENSES',
 						permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
 					}
@@ -122,7 +123,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'clipboard-outline',
 					link: '/pages/accounting/payments',
 					data: {
-						translated: false,
 						translationKey: 'MENU.PAYMENTS'
 					}
 				}
@@ -133,7 +133,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			icon: 'trending-up-outline',
 			link: '/pages/sales',
 			data: {
-				translated: false,
 				translationKey: 'MENU.SALES',
 				permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
 			},
@@ -142,9 +141,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Proposals',
 					icon: 'paper-plane-outline',
 					link: '/pages/sales/proposals',
-					hidden: false,
 					data: {
-						translated: false,
 						translationKey: 'MENU.PROPOSALS',
 						permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
 					}
@@ -154,7 +151,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'file-outline',
 					link: '/pages/sales/invoices/estimates',
 					data: {
-						translated: false,
 						translationKey: 'MENU.ESTIMATES'
 					}
 				},
@@ -163,7 +159,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'file-text-outline',
 					link: '/pages/sales/invoices',
 					data: {
-						translated: false,
 						permissionKeys: [
 							PermissionsEnum.ALL_ORG_VIEW,
 							PermissionsEnum.INVOICES_VIEW
@@ -176,7 +171,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'flip-outline',
 					link: '/pages/sales/recurring-invoices',
 					data: {
-						translated: false,
 						permissionKeys: [PermissionsEnum.INVOICES_VIEW],
 						translationKey: 'MENU.RECURRING_INVOICES'
 					}
@@ -186,7 +180,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'clipboard-outline',
 					link: '/pages/sales/payments',
 					data: {
-						translated: false,
 						translationKey: 'MENU.PAYMENTS'
 					}
 				},
@@ -194,9 +187,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Pipelines',
 					icon: 'funnel-outline',
 					link: '/pages/sales/pipelines',
-					hidden: false,
 					data: {
-						translated: false,
 						translationKey: 'MENU.PIPELINES',
 						permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
 					}
@@ -208,7 +199,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			icon: 'browser-outline',
 			link: '/pages/tasks',
 			data: {
-				translated: false,
 				translationKey: 'MENU.TASKS'
 			},
 			children: [
@@ -217,7 +207,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'list-outline',
 					link: '/pages/tasks/dashboard',
 					data: {
-						translated: false,
 						translationKey: 'MENU.DASHBOARD'
 					}
 				},
@@ -226,9 +215,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'person-outline',
 					link: '/pages/tasks/me',
 					data: {
-						translated: false,
 						translationKey: 'MENU.MY_TASKS',
-						permissionKeys: [PermissionsEnum.VIEW_MY_TASK]
+						hide: () => !this.isEmployee
 					}
 				},
 				{
@@ -236,7 +224,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'people-outline',
 					link: '/pages/tasks/team',
 					data: {
-						translated: false,
 						translationKey: 'MENU.TEAM_TASKS'
 					}
 				}
@@ -246,7 +233,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Employees',
 			icon: 'people-outline',
 			data: {
-				translated: false,
 				translationKey: 'MENU.EMPLOYEES',
 				permissionKeys: [
 					PermissionsEnum.ORG_EMPLOYEES_VIEW,
@@ -259,7 +245,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'list-outline',
 					link: '/pages/employees',
 					data: {
-						translated: false,
 						translationKey: 'MENU.MANAGE'
 					}
 				},
@@ -268,7 +253,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'trending-up-outline',
 					link: '/pages/employees/activity',
 					data: {
-						translated: false,
 						translationKey: 'MENU.ACTIVITY'
 					}
 				},
@@ -277,7 +261,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'clock-outline',
 					link: '/pages/employees/timesheets',
 					data: {
-						translated: false,
 						translationKey: 'MENU.TIMESHEETS'
 					}
 				},
@@ -286,7 +269,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'calendar-outline',
 					link: '/pages/employees/schedules',
 					data: {
-						translated: false,
 						translationKey: 'MENU.SCHEDULES'
 					}
 				},
@@ -296,7 +278,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/employees/appointments',
 					pathMatch: 'prefix',
 					data: {
-						translated: false,
 						translationKey: 'MENU.APPOINTMENTS'
 					}
 				},
@@ -306,7 +287,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/employees/event-types',
 					pathMatch: 'prefix',
 					data: {
-						translated: false,
 						translationKey: 'MENU.EVENT_TYPES'
 					}
 				},
@@ -315,7 +295,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'flip-2-outline',
 					link: '/pages/employees/approvals',
 					data: {
-						translated: false,
 						translationKey: 'MENU.APPROVALS'
 					}
 				},
@@ -324,7 +303,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'eye-off-2-outline',
 					link: '/pages/employees/time-off',
 					data: {
-						translated: false,
 						translationKey: 'MENU.TIME_OFF',
 						permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW]
 					}
@@ -334,7 +312,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'person-done-outline',
 					link: '/pages/employees/candidates',
 					data: {
-						translated: false,
 						translationKey: 'MENU.CANDIDATES'
 					}
 				}
@@ -344,7 +321,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Organization',
 			icon: 'globe-2-outline',
 			data: {
-				translated: false,
 				translationKey: 'MENU.ORGANIZATION',
 				withOrganizationShortcuts: true
 			},
@@ -353,7 +329,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Manage',
 					icon: 'globe-2-outline',
 					data: {
-						translated: false,
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
@@ -366,7 +341,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'shopping-bag-outline',
 					link: '/pages/organization/equipment',
 					data: {
-						translated: false,
 						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
 						translationKey: 'MENU.EQUIPMENT'
 					}
@@ -376,7 +350,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'grid-outline',
 					link: '/pages/organization/inventory',
 					data: {
-						translated: false,
 						// permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
 						translationKey: 'MENU.INVENTORY'
 					}
@@ -386,7 +359,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'pricetags-outline',
 					link: '/pages/organization/tags',
 					data: {
-						translated: false,
 						translationKey: 'MENU.TAGS'
 						//   permissionKeys: [],
 					}
@@ -396,7 +368,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'book-open-outline',
 					link: `/pages/organizations/`,
 					data: {
-						translated: false,
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
@@ -409,7 +380,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'car-outline',
 					link: `/pages/organizations/`,
 					data: {
-						translated: false,
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
@@ -422,7 +392,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'book-outline',
 					link: `/pages/organizations/`,
 					data: {
-						translated: false,
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
@@ -435,7 +404,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'award-outline',
 					link: `/pages/organizations/`,
 					data: {
-						translated: false,
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
@@ -448,7 +416,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'briefcase-outline',
 					link: `/pages/organizations/`,
 					data: {
-						translated: false,
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
@@ -461,7 +428,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'people-outline',
 					link: `/pages/organizations/`,
 					data: {
-						translated: false,
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
@@ -474,7 +440,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'question-mark-circle-outline',
 					link: '/pages/organization/help-center',
 					data: {
-						translated: false,
 						translationKey: 'MENU.HELP_CENTER'
 					}
 				}
@@ -484,7 +449,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Goals',
 			icon: 'flag-outline',
 			data: {
-				translated: false,
 				translationKey: 'MENU.GOALS'
 			},
 			children: [
@@ -493,7 +457,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/goals',
 					icon: 'list-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.MANAGE'
 					}
 				},
@@ -502,7 +465,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/goals/reports',
 					icon: 'file-text-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.REPORTS'
 					}
 				},
@@ -511,7 +473,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/goals/settings',
 					icon: 'settings-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.SETTINGS'
 					}
 				}
@@ -522,7 +483,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			icon: 'file-text-outline',
 			link: '/pages/reports',
 			data: {
-				translated: false,
 				translationKey: 'MENU.REPORTS'
 			},
 			children: [
@@ -531,7 +491,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/reports/time',
 					icon: 'clock-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.TIME_REPORTS'
 					}
 				},
@@ -540,7 +499,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/reports/accounting',
 					icon: 'credit-card-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.ACCOUNTING_REPORTS'
 					}
 				}
@@ -550,7 +508,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Admin',
 			group: true,
 			data: {
-				translated: false,
 				permissionKeys: [
 					PermissionsEnum.ORG_EMPLOYEES_VIEW,
 					PermissionsEnum.ORG_USERS_VIEW,
@@ -565,7 +522,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			icon: 'people-outline',
 			link: '/pages/users',
 			data: {
-				translated: false,
 				permissionKeys: [PermissionsEnum.ORG_USERS_VIEW],
 				translationKey: 'MENU.USERS'
 			}
@@ -575,7 +531,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			icon: 'globe-outline',
 			link: '/pages/organizations',
 			data: {
-				translated: false,
 				permissionKeys: [
 					PermissionsEnum.ALL_ORG_VIEW,
 					PermissionsEnum.ORG_EXPENSES_EDIT
@@ -589,7 +544,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/integrations',
 			pathMatch: 'prefix',
 			data: {
-				translated: false,
 				translationKey: 'MENU.INTEGRATIONS'
 			}
 		},
@@ -597,7 +551,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Settings',
 			icon: 'settings-outline',
 			data: {
-				translated: false,
 				translationKey: 'MENU.SETTINGS'
 			},
 			children: [
@@ -606,7 +559,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'edit-outline',
 					link: '/pages/settings/general',
 					data: {
-						translated: false,
 						translationKey: 'MENU.GENERAL'
 					}
 				},
@@ -615,7 +567,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'email-outline',
 					link: '/pages/settings/email-history',
 					data: {
-						translated: false,
 						translationKey: 'MENU.EMAIL_HISTORY'
 						// permissionKeys: [
 						// 	PermissionsEnum.VIEW_ALL_EMAILS
@@ -627,7 +578,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'email-outline',
 					link: '/pages/settings/email-templates',
 					data: {
-						translated: false,
 						translationKey: 'MENU.EMAIL_TEMPLATES'
 					}
 				},
@@ -635,7 +585,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Import/Export',
 					icon: 'flip-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
 					},
 					children: [
@@ -644,7 +593,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 							icon: 'download-outline',
 							link: '/pages/settings/import-export/export',
 							data: {
-								translated: false,
 								translationKey: 'MENU.IMPORT_EXPORT.EXPORT'
 							}
 						},
@@ -653,7 +601,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 							icon: 'upload-outline',
 							link: '/pages/settings/import-export/import',
 							data: {
-								translated: false,
 								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'
 							}
 						}
@@ -663,7 +610,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Payment Gateways',
 					icon: 'credit-card-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.PAYMENT_GATEWAYS'
 					}
 				},
@@ -671,7 +617,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Custom SMTP',
 					icon: 'at-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.CUSTOM_SMTP'
 					}
 				},
@@ -680,7 +625,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/settings/roles',
 					icon: 'award-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.ROLES',
 						permissionKeys: [
 							PermissionsEnum.CHANGE_ROLES_PERMISSIONS
@@ -692,7 +636,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/settings/danger-zone',
 					icon: 'alert-triangle-outline',
 					data: {
-						translated: false,
 						translationKey: 'MENU.DANGER_ZONE'
 					}
 				}
@@ -703,6 +646,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private authService: AuthService,
+		private employeeService: EmployeesService,
 		private translate: TranslateService,
 		private store: Store,
 		private selectorService: SelectorService,
@@ -748,20 +692,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 		forceTranslate: boolean = false
 	) {
 		this.menu.forEach((item) => {
-			this.refreshMenuItem(
-				item,
-				withOrganizationShortcuts,
-				forceTranslate
-			);
+			this.refreshMenuItem(item, withOrganizationShortcuts);
 		});
 	}
 
-	refreshMenuItem(item, withOrganizationShortcuts, forceTranslate) {
-		if (!item.data.translated || forceTranslate) {
-			item.title = this.getTranslation(item.data.translationKey);
+	refreshMenuItem(item, withOrganizationShortcuts) {
+		item.title = this.getTranslation(item.data.translationKey);
+
+		if (item.data.hide) {
+			item.hidden = item.data.hide();
 		}
 
-		if (item.data.permissionKeys) {
+		if (!item.hidden && item.data.permissionKeys) {
 			const anyPermission = item.data.permissionKeys.reduce(
 				(permission, key) => {
 					return this.store.hasPermission(key) || permission;
@@ -784,11 +726,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 
 		if (item.children) {
 			item.children.forEach((childItem) => {
-				this.refreshMenuItem(
-					childItem,
-					withOrganizationShortcuts,
-					forceTranslate
-				);
+				this.refreshMenuItem(childItem, withOrganizationShortcuts);
 			});
 		}
 	}
@@ -802,11 +740,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	async checkForEmployee() {
-		this.isEmployee = await this.authService
-			.hasRole([RolesEnum.EMPLOYEE])
-			.pipe(first())
-			.pipe(takeUntil(this._ngDestroy$))
-			.toPromise();
+		this.isEmployee = (
+			await this.employeeService.getEmployeeByUserId(this.store.userId)
+		).success;
 	}
 
 	getTranslation(prefix: string) {

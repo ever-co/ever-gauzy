@@ -10,6 +10,7 @@ import {
 	NbButtonModule,
 	NbSelectModule,
 	NbBadgeModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -42,36 +43,37 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NgSelectModule,
 		NbBadgeModule,
+		NbCheckboxModule,
 		TagsColorInputModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	exports: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent,
 		ArchiveConfirmationComponent,
-		CandidateActionConfirmationComponent,
+		CandidateActionConfirmationComponent
 	],
 	declarations: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent,
 		ArchiveConfirmationComponent,
-		CandidateActionConfirmationComponent,
+		CandidateActionConfirmationComponent
 	],
 	entryComponents: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent,
 		ArchiveConfirmationComponent,
-		CandidateActionConfirmationComponent,
+		CandidateActionConfirmationComponent
 	],
-	providers: [AuthService, RoleService, IncomeService, TagsService],
+	providers: [AuthService, RoleService, IncomeService, TagsService]
 })
 export class UserFormsModule {}
