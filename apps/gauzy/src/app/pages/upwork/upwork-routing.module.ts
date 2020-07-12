@@ -4,6 +4,7 @@ import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { TransactionsComponent } from './components/transactions/transactions.component';
 import { ContractsComponent } from './components/contracts/contracts.component';
+import { ReportsComponent } from './components/reports/reports.component';
 
 const routes: Routes = [
 	{
@@ -25,7 +26,7 @@ const routes: Routes = [
 			},
 			{
 				path: 'reports',
-				component: TransactionsComponent
+				component: ReportsComponent
 			},
 			{
 				path: 'transactions',

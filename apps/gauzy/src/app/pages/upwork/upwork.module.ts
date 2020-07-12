@@ -26,6 +26,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
+import { ReportsComponent } from './components/reports/reports.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -36,7 +37,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		UpworkAuthorizeComponent,
 		TransactionsComponent,
 		ContractsComponent,
-		SyncDataSelectionComponent
+		SyncDataSelectionComponent,
+		ReportsComponent
 	],
 	imports: [
 		CommonModule,
