@@ -13,8 +13,9 @@ export class MockSprint implements OrganizationSprint {
 
 	private rand(value: number = 20): string {
 		return `${Math.floor(Math.random() * value) + 1}`;
-	}
-	constructor(name?, goal?, length?, organization?, tenant?,organizationId?) {
+  }
+
+	constructor(name?, goal?, length?, organization?, tenant?, organizationId?) {
 		this.id = this.rand();
 		(this.name = name || `Sprint ${this.rand()}`);
 		(this.goal = goal || this.rand());
@@ -70,7 +71,7 @@ export class SprintStoreService {
 
 	createSprint(createdSprint: OrganizationSprint): void {
 		const sprints = [...this.sprints, createdSprint];
-		this._sprints$.next(sprints);
+		this._sprints$.next(sprints as OrganizationSprint[]);
 	}
 
 	updateSprint(editedSprint: OrganizationSprint): void {
@@ -82,7 +83,7 @@ export class SprintStoreService {
 		this.clearSelectedSprint();
 	}
 
-	deleteSprint(): void {
+	deleteSprint(id: string): void {
 		if (!this.isSprintSelected()) return;
 		const sprints = [...this.sprints];
 		const newState = sprints.filter((t) => t.id !== this.selectedSprint.id);

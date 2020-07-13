@@ -11,22 +11,57 @@
 						badgePosition="top right"
 						badgeStatus="success"
 					>
-						<nb-list>
-							<nb-list-item>
-								<ngx-items-actions
-									[config]="actionsConfig$ | async"
-								></ngx-items-actions>
-							</nb-list-item>
-							<nb-list-item
-								*ngFor="let sprint of sprints; let i = index"
-								[ngClass]="{
-									'selected-sprint':
-										selectedSprint?.id === sprint.id
-								}"
+						<ga-editable-grid
+							[itemTmpl]="item"
+							[items]="sprints"
+							[addDialogTmpl]="editDialog"
+							[editDialogTmpl]="editDialog"
+							[deleteDialogTmpl]="deleteDialog"
+							(dialogData)="sprintAction($event)"
+						>
+							<ng-template
+								#editDialog
+								let-sprint
+								let-dialogRef="dialogRef"
 							>
+								<ngx-sprint-dialog
+									[sprintData]="sprint"
+									[dialogRef]="dialogRef"
+								></ngx-sprint-dialog>
+							</ng-template>
+							<ng-template
+								#deleteDialog
+								let-sprint
+								let-dialogRef="dialogRef"
+							>
+								<nb-card>
+									<nb-card-header
+										>Delete Sprint</nb-card-header
+									>
+									<nb-card-body
+										>Are you shure you want delete sprint:
+										{{ sprint.name }}?</nb-card-body
+									>
+									<nb-card-footer>
+										<button
+											nbButton
+											(click)="dialogRef.close()"
+										>
+											No
+										</button>
+										<button
+											nbButton
+											(click)="dialogRef.close(true)"
+										>
+											Yes
+										</button>
+									</nb-card-footer>
+								</nb-card>
+							</ng-template>
+
+							<ng-template #item let-sprint>
 								<div
 									class="d-flex justify-content-between sprints__item"
-									(click)="selectSprint(sprint)"
 								>
 									<span>{{ sprint.name }}</span>
 									<span>{{ sprint.goal }}</span>
@@ -41,8 +76,8 @@
 										)
 									}}</span>
 								</div>
-							</nb-list-item>
-						</nb-list>
+							</ng-template>
+						</ga-editable-grid>
 					</nb-tab>
 				</nb-tabset>
 			</nb-card-body>

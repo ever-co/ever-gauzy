@@ -1,11 +1,7 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>{{ sprintAction }} Sprint</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="dialogRef.close()"
-		></nb-icon>
+		<h5>{{ action }} Sprint</h5>
+		<nb-icon class="ml-auto mt-1 close" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
@@ -75,12 +71,7 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button
-			(click)="dialogRef.close()"
-			status="danger"
-			class="mr-3"
-			nbButton
-		>
+		<button status="danger" class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

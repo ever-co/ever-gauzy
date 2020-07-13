@@ -1,5 +1,4 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { OrganizationSprint } from '@gauzy/models';
 
@@ -9,14 +8,13 @@ import { OrganizationSprint } from '@gauzy/models';
 	styleUrls: ['./sprint-dialog.component.css']
 })
 export class SprintDialogComponent implements OnInit {
-	@Input() sprintAction: 'create' | 'edit';
-	@Input() sprintData: OrganizationSprint;
+	@Input() action: 'create' | 'edit';
+	@Input() test: any;
+	@Input() sprintData?: OrganizationSprint;
+	@Input() dialogRef?: any;
 	form: FormGroup;
 
-	constructor(
-		public dialogRef: NbDialogRef<SprintDialogComponent>,
-		private fb: FormBuilder
-	) {}
+	constructor(private fb: FormBuilder) {}
 
 	ngOnInit(): void {
 		this.initForm();
