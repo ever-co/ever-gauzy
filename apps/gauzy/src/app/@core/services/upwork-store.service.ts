@@ -16,6 +16,16 @@ const contractSettings = {
 				max: new Date(),
 				selectedDate: new Date()
 			}
+		},
+		{
+			name: 'Reports',
+			key: 'reports',
+			relatedTo: [],
+			sync: true,
+			datePicker: {
+				max: new Date(),
+				selectedDate: new Date()
+			}
 		}
 	],
 	onlyContracts: false
@@ -94,10 +104,12 @@ export class UpworkStoreService {
 
 		const integrationId = this._selectedIntegrationId$.getValue();
 		const { id: organizationId } = this._os.selectedOrganization;
+
 		//map contract provider to get authorize info
-		const { provider__reference: providerId } = contracts.find(
-			(contract: IEngagement) => true
-		);
+		const {
+			provider__reference: providerRefernceId,
+			provider__id: providerId
+		} = contracts.find((contract: IEngagement) => true);
 
 		return this._us.syncContractsRelatedData({
 			integrationId,
@@ -106,7 +118,8 @@ export class UpworkStoreService {
 			entitiesToSync,
 			config,
 			employeeId: this.employeeId,
-			providerId
+			providerId,
+			providerRefernceId
 		});
 	}
 
