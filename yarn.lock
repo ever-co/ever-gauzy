@@ -5310,6 +5310,13 @@ angular2-chartjs@^0.5.1:
   dependencies:
     chart.js "^2.3.0"
 
+angular2-draggable@^2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/angular2-draggable/-/angular2-draggable-2.3.2.tgz#54ca569a6b3aa9ca1a8a4d663d3eee3024c48af3"
+  integrity sha512-rw2O/icgVang8uSVIU7nmm59f1DceSAUQkOuSGYnKbv/h8EbhJ9099sCjh/I5LymZBza1XPKeFZofIvhekdE+A==
+  dependencies:
+    tslib "^1.9.0"
+
 angular2-toaster@^8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/angular2-toaster/-/angular2-toaster-8.0.0.tgz#9f5df2c9df00b96475cd179c4b4e4fad5a6dc7ac"

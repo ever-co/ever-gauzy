@@ -75,8 +75,8 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	@ViewChild('dateModel') dateModel: NgModel;
 	@ViewChild('startTimeModel') startTimeModel: NgModel;
 	@ViewChild('endTimeModel') endTimeModel: NgModel;
-	endTime: string;
-	startTime: string;
+	endTime = '23:59';
+	startTime = '00:00';
 	date: Date;
 	maxSlotStartTime: string;
 	minSlotStartTime: string;
@@ -210,6 +210,8 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		this.minSlotEndTime = moment(time, 'HH:mm')
 			.add(this.allowedDuration || 10, 'minutes')
 			.format('HH:mm');
+
+		console.log('minSlotEndTime', this.minSlotEndTime);
 	}
 
 	writeValue(value: IDateRange) {

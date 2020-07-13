@@ -169,6 +169,7 @@
 		"@swimlane/ngx-charts": "^12.0.1",
 		"angular-tree-component": "^8.5.6",
 		"angular2-chartjs": "^0.5.1",
+		"angular2-draggable": "^2.3.2",
 		"angular2-toaster": "^8.0.0",
 		"archiver": "^3.1.1",
 		"bcrypt": "^4.0.1",
@@ -275,6 +276,7 @@
 		"@nstudio/angular": "9.0.3",
 		"@nstudio/electron": "9.0.3",
 		"@nstudio/electron-angular": "9.0.3",
+		"@nstudio/web": "9.0.3",
 		"@nstudio/web-angular": "9.0.3",
 		"@nstudio/xplat": "^9.0.3",
 		"@semantic-release/changelog": "^3.0.4",
@@ -347,8 +349,7 @@
 		"tslint-config-prettier": "^1.18.0",
 		"tslint-language-service": "^0.9.9",
 		"typescript": "~3.8.3",
-		"webpack-bundle-analyzer": "^3.8.0",
-		"@nstudio/web": "9.0.3"
+		"webpack-bundle-analyzer": "^3.8.0"
 	},
 	"engines": {
 		"node": ">=10.15.0",

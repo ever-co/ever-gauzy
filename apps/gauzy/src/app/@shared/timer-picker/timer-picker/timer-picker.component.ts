@@ -32,7 +32,7 @@ export class TimerPickerComponent implements OnInit {
 	@Input() disabled = false;
 	@Input()
 	public get min(): string {
-		return this._min;
+		return this._min || '00:00';
 	}
 	public set min(value: string) {
 		this._min = value;
@@ -40,7 +40,7 @@ export class TimerPickerComponent implements OnInit {
 	}
 	@Input()
 	public get max(): string {
-		return this._max;
+		return this._max || '23:59';
 	}
 	public set max(value: string) {
 		this._max = value;
@@ -80,7 +80,7 @@ export class TimerPickerComponent implements OnInit {
 
 			slotTime = slotTime.add(interval, 'minutes');
 		}
-
+		console.log({ endTime, slotTime, min: this.min, max: this.max });
 		this.timeSlots = times;
 	}
 

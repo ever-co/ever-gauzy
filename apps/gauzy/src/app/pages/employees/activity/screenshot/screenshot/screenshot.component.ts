@@ -198,13 +198,30 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	deleteSlot(timeSlot) {
 		this.nbDialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.pipe(untilDestroyed(this));
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((type) => {
+				if (type === 'ok') {
+					this.timesheetService
+						.deleteTimeSlots([timeSlot.id])
+						.then(() => {});
+				}
+			});
 	}
 
 	deleteSlots() {
 		this.nbDialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(untilDestroyed(this))
+			.subscribe((type) => {
+				if (type === 'ok') {
+					const ids = _.chain(this.selectedIds)
+						.pick((value, key) => value)
+						.keys()
+						.values()
+						.value();
+					this.timesheetService.deleteTimeSlots(ids).then(() => {});
+				}
+			});
 	}
 
 	ngOnDestroy(): void {}

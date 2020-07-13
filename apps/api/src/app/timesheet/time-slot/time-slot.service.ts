@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Between } from 'typeorm';
+import { Repository, SelectQueryBuilder, Between, In } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { TimeSlot } from '../time-slot.entity';
 import * as moment from 'moment';
 import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
+import { TimeLogService } from '../time-log/time-log.service';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
@@ -14,7 +15,8 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
 		@InjectRepository(TimeSlotMinute)
-		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>
+		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
+		private readonly timeLogService: TimeLogService
 	) {
 		super(timeSlotRepository);
 	}
@@ -150,9 +152,18 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	rangeDelete(employeeId: string, start: Date, stop: Date) {
+		const mStart = moment(start);
+		mStart.set(
+			'minute',
+			mStart.get('minute') - (mStart.get('minute') % 10)
+		);
+
+		const mEnd = moment(stop);
+		mEnd.set('minute', mEnd.get('minute') + (mEnd.get('minute') % 10));
+
 		return this.timeSlotRepository.delete({
 			employeeId: employeeId,
-			startedAt: Between(start, stop)
+			startedAt: Between(mStart.toDate(), mEnd.toDate())
 		});
 	}
 
@@ -224,5 +235,33 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		}
 
 		return timeMinute;
+	}
+	async deleteTimeSlot(ids: string[]) {
+		const timeSlots = await this.timeSlotRepository.find({
+			where: { id: In(ids) },
+			relations: ['timeLogs']
+		});
+		console.log({ timeSlots });
+		let promises = [];
+		timeSlots.forEach((timeSlot) => {
+			if (timeSlot.timeLogs.length > 0) {
+				const deleteSlotPromise = timeSlot.timeLogs.map(
+					async (timeLog) => {
+						await this.timeLogService.deleteTimeSpan(
+							{
+								start: timeSlot.startedAt,
+								end: timeSlot.stoppedAt
+							},
+							timeLog
+						);
+						return;
+					}
+				);
+				promises = promises.concat(deleteSlotPromise);
+			}
+		});
+		await Promise.all(promises);
+		await this.timeSlotRepository.delete({ id: In(ids) });
+		return true;
 	}
 }
