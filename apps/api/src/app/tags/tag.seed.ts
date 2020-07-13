@@ -34,6 +34,36 @@ const tagOrganizationsNames = [
 	'Demo'
 ];
 
+const defaultTags = [
+  'Todo',
+  'In Process',
+  'Under Review QA',
+  'Done'
+];
+
+export const createDefaultTags = async (
+  connection: Connection,
+  tenant: Tenant,
+  organizations: Organization[]): Promise<Tag[]> => {
+  let tags: Tag[] = [];
+
+  organizations.forEach((org) => {
+    const organizationTags: Tag[] = Object.values(
+      defaultTags
+    ).map((name) => {
+      const orgTags = new Tag();
+      orgTags.name = org.name + " -" + name;
+      orgTags.description = '';
+      orgTags.color = faker.commerce.color();
+      orgTags.organization = org;
+      orgTags.tenant = tenant;
+      return orgTags;
+    });
+    tags = [...tags, ...organizationTags];
+  });
+  return await connection.manager.save(tags);
+};
+
 export const createTags = async (connection: Connection): Promise<Tag[]> => {
 	const tags: Tag[] = [];
 	for (const name of tagGlobalNames) {

@@ -187,7 +187,7 @@ import {
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
 import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
 import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
-import { createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
+import { createDefaultTags, createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
 import { createRandomEmailSent } from '../../email/email.seed';
 import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
@@ -408,6 +408,13 @@ export class SeedDataService {
 			tenant,
 			defaultOrganizations
 		);
+
+    await createDefaultTags(
+      this.connection,
+      tenant,
+      defaultOrganizations
+    );
+
 
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,
