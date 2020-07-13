@@ -5,7 +5,7 @@ import { ITenant } from './tenant.model';
 
 export interface OrganizationSprint extends IBaseEntityModel {
 	name: string;
-	organization: Organization;
+	organizationId: string;
 	goal?: string;
 	length: number; // Duration of Sprint. Default value - 7 (days)
 	startDate?: Date;
@@ -15,6 +15,7 @@ export interface OrganizationSprint extends IBaseEntityModel {
 	isActive?: boolean;
 	tasks?: Task[];
 	tenant: ITenant;
+	organization?: Organization
 }
 
 export enum SprintStartDayEnum {
@@ -25,4 +26,16 @@ export enum SprintStartDayEnum {
 	THURSDAY = 5,
 	FRIDAY = 6,
 	SATURDAY = 7
+}
+
+export interface OrganizationSprintUpdateInput {
+  name: string;
+  goal?: string;
+  length: number;
+  startDate?: Date;
+  endDate?: Date;
+  dayStart?: number;
+  project?: OrganizationProjects;
+  isActive?: boolean;
+  tasks?: Task[];
 }

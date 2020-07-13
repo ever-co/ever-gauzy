@@ -12,7 +12,11 @@ const tagGlobalNames = [
 	'TODO',
 	'In Process',
 	'Verified',
-	'Third Party API'
+	'Third Party API',
+	'Killer',
+	'Idiot',
+	'Super',
+	'WIP'
 ];
 
 const tagOrganizationsNames = [
@@ -31,12 +35,37 @@ const tagOrganizationsNames = [
 	'Local',
 	'QC',
 	'Production',
-	'Demo'
+	'Crap',
+	'WTF'
 ];
+
+export const createDefaultTags = async (
+	connection: Connection,
+	tenant: Tenant,
+	organizations: Organization[]
+): Promise<Tag[]> => {
+	let tags: Tag[] = [];
+
+	organizations.forEach((org) => {
+		const organizationTags: Tag[] = Object.values(tagGlobalNames).map(
+			(name) => {
+				const orgTags = new Tag();
+				orgTags.name = org.name + ' -' + name;
+				orgTags.description = '';
+				orgTags.color = faker.commerce.color();
+				orgTags.organization = org;
+				orgTags.tenant = tenant;
+				return orgTags;
+			}
+		);
+		tags = [...tags, ...organizationTags];
+	});
+	return await connection.manager.save(tags);
+};
 
 export const createTags = async (connection: Connection): Promise<Tag[]> => {
 	const tags: Tag[] = [];
-	for (const name of tagGlobalNames) {
+	for (const name of tagOrganizationsNames) {
 		const tag = new Tag();
 		tag.name = name;
 		tag.description = '';
@@ -64,17 +93,17 @@ export const createRandomOrganizationTags = async (
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		organizations.forEach((org) => {
-			const organizationTags: Tag[] = Object.values(
-				tagOrganizationsNames
-			).map((name) => {
-				const orgTags = new Tag();
-				orgTags.name = name + '-' + org.name;
-				orgTags.description = '';
-				orgTags.color = faker.commerce.color();
-				orgTags.organization = org;
-				orgTags.tenant = tenant;
-				return orgTags;
-			});
+			const organizationTags: Tag[] = Object.values(tagGlobalNames).map(
+				(name) => {
+					const orgTags = new Tag();
+					orgTags.name = name + '-' + org.name;
+					orgTags.description = '';
+					orgTags.color = faker.commerce.color();
+					orgTags.organization = org;
+					orgTags.tenant = tenant;
+					return orgTags;
+				}
+			);
 			tags = [...tags, ...organizationTags];
 		});
 	}

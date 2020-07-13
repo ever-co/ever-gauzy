@@ -7,19 +7,21 @@ export class MockSprint implements OrganizationSprint {
 	name: string;
 	goal: string;
 	organization: Organization;
+	organizationId: string;
 	tenant: ITenant;
 	length: number;
 
 	private rand(value: number = 20): string {
 		return `${Math.floor(Math.random() * value) + 1}`;
 	}
-	constructor(name?, goal?, length?, organization?, tenant?) {
+	constructor(name?, goal?, length?, organization?, tenant?,organizationId?) {
 		this.id = this.rand();
-		(this.name = name || `Sprint ${this.rand()}`),
-			(this.goal = goal || this.rand());
+		(this.name = name || `Sprint ${this.rand()}`);
+		(this.goal = goal || this.rand());
 		this.length = length || 14;
 		this.organization = organization || ({} as Organization);
 		this.tenant = tenant || { name: 'TenantName' };
+    this.organizationId = organizationId || organization.id || "";
 	}
 }
 
