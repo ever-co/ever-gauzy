@@ -89,7 +89,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 						(isFuture(this.endDate) || isToday(this.endDate)) &&
 						isPast(this.startDate);
 				}
-				await this.store.user$
+				this.store.user$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((user) => {
 						if (
