@@ -2,8 +2,6 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { OrganizationProjects, Task } from '@gauzy/models';
 import { Organization } from '../../../../apps/api/src/app/organization/organization.entity';
 import { ITenant } from './tenant.model';
-import { Employee } from './employee.model';
-import { Tag } from './tag-entity.model';
 
 export interface OrganizationSprint extends IBaseEntityModel {
 	name: string;
