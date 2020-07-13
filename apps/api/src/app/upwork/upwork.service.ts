@@ -33,6 +33,7 @@ import { Workdiary } from 'upwork-api/lib/routers/workdiary.js';
 import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
 import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
+import { Time } from 'upwork-api/lib/routers/reports/time.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
 import {
 	TimesheetGetCommand,
@@ -480,6 +481,7 @@ export class UpworkService {
 		employeeId,
 		config,
 		entitiesToSync,
+		providerRefernceId,
 		providerId
 	}) {
 		const syncedContracts = await this.syncContracts({
@@ -490,7 +492,7 @@ export class UpworkService {
 
 		if (!employeeId) {
 			const employee = await this._getUpworkGauzyEmployee(
-				providerId,
+				providerRefernceId,
 				integrationId,
 				organizationId,
 				config
@@ -508,6 +510,16 @@ export class UpworkService {
 							syncedContracts,
 							config,
 							employeeId,
+							entity.datePicker.selectedDate
+						);
+					case 'reports':
+						return await this.syncReports(
+							organizationId,
+							integrationId,
+							config,
+							employeeId,
+							providerRefernceId,
+							providerId,
 							entity.datePicker.selectedDate
 						);
 					default:
@@ -710,14 +722,14 @@ export class UpworkService {
 	}
 
 	private async _getUpworkGauzyEmployee(
-		providerId,
+		providerRefernceId,
 		integrationId,
 		organizationId,
 		config
 	) {
 		let { record } = await this._integrationMapService.findOneOrFail({
 			where: {
-				sourceId: providerId,
+				sourceId: providerRefernceId,
 				entity: IntegrationEntity.EMPLOYEE
 			}
 		});
@@ -772,6 +784,95 @@ export class UpworkService {
 			integrationId,
 			sourceId: userId,
 			entity: IntegrationEntity.EMPLOYEE
+		});
+	}
+
+	async syncReports(
+		organizationId,
+		integrationId,
+		config,
+		employeeId,
+		providerRefernceId,
+		providerId,
+		forDate
+	) {
+		let promises = [];
+		promises.push(this._getFreelanceLimitedReports(config, providerId));
+		promises.push(await this._getFreelanceFullReports(config, providerId));
+
+		const reports = await Promise.all(promises);
+		return reports;
+	}
+
+	private async _getFreelanceLimitedReports(
+		config: IUpworkApiConfig,
+		providerId
+	) {
+		const api = new UpworkApi(config);
+		const reports = new Time(api);
+
+		const freelancerId = providerId;
+
+		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
+
+		const select = `SELECT 
+							worked_on, 
+							company_name, 
+							assignment_name, 
+							assignment_team_id, 
+							hours, 
+							task, 
+							memo 
+						WHERE worked_on > '${startOfMonth}' AND 
+						worked_on <= '${endOfMonth}'`;
+
+		return new Promise((resolve, reject) => {
+			api.setAccessToken(config.accessToken, config.accessSecret, () => {
+				reports.getByFreelancerLimited(
+					freelancerId,
+					{
+						tq: select
+					},
+					(err, data) => (err ? reject(err) : resolve(data))
+				);
+			});
+		});
+	}
+
+	private async _getFreelanceFullReports(
+		config: IUpworkApiConfig,
+		providerId
+	) {
+		const api = new UpworkApi(config);
+		const reports = new Time(api);
+
+		const freelancerId = providerId;
+
+		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
+
+		const select = `SELECT 
+							worked_on, 
+							company_name, 
+							assignment_name, 
+							assignment_team_id, 
+							hours, 
+							task, 
+							memo 
+						WHERE worked_on > '${startOfMonth}' AND 
+						worked_on <= '${endOfMonth}'`;
+
+		return new Promise((resolve, reject) => {
+			api.setAccessToken(config.accessToken, config.accessSecret, () => {
+				reports.getByFreelancerFull(
+					freelancerId,
+					{
+						tq: select
+					},
+					(err, data) => (err ? reject(err) : resolve(data))
+				);
+			});
 		});
 	}
 }

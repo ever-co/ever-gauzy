@@ -10,6 +10,8 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DatePipe } from '@angular/common';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TimeOffStatusComponent } from './table-components/time-off-status.component';
 
 @Component({
 	selector: 'ngx-time-off',
@@ -139,8 +141,11 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				},
 				status: {
 					title: 'Status',
-					type: 'string',
-					class: 'text-center'
+					type: 'custom',
+					class: 'text-center',
+					width: '200px',
+					renderComponent: TimeOffStatusComponent,
+					filter: false
 				}
 			},
 			pager: {
@@ -161,36 +166,31 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				this.selectedDate || null
 			)
 			.pipe(first())
-			.subscribe(
-				(res) => {
-					this.tableData = [];
+			.subscribe((res) => {
+				this.tableData = [];
+				res.items.forEach((result: TimeOff) => {
+					let employeeName: string;
+					let employeeImage: string;
 
-					res.items.forEach((result: TimeOff) => {
-						let employeeName: string;
-						let employeeImage: string;
+					if (result.employees.length !== 1) {
+						employeeName = 'Multiple employees';
+						employeeImage =
+							'assets/images/avatars/people-outline.svg';
+					} else {
+						employeeName = `${result.employees[0].user.firstName} ${result.employees[0].user.lastName}`;
+						employeeImage = result.employees[0].user.imageUrl;
+					}
 
-						if (result.employees.length !== 1) {
-							employeeName = 'Multiple employees';
-							employeeImage =
-								'assets/images/avatars/people-outline.svg';
-						} else {
-							employeeName = `${result.employees[0].user.firstName} ${result.employees[0].user.lastName}`;
-							employeeImage = result.employees[0]?.user?.imageUrl;
-						}
-
-						this.tableData.push({
-							...result,
-							fullName: employeeName,
-							imageUrl: employeeImage,
-							policy: result.policy.name
-						});
+					this.tableData.push({
+						...result,
+						fullName: employeeName,
+						imageUrl: employeeImage,
+						policy: result.policy.name
 					});
+				});
 
-					this.sourceSmartTable.load(this.tableData);
-				},
-				() =>
-					this.toastrService.danger('Unable to load time off records')
-			);
+				this.sourceSmartTable.load(this.tableData);
+			}, () => this.toastrService.danger('Unable to load time off records'));
 	}
 
 	detectStatusChange(status: string) {
@@ -244,24 +244,15 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 					status: this.selectedTimeOffRecord.status
 				})
 				.pipe(first())
-				.subscribe(
-					() => {
-						this.toastrService.success(
-							'You successfully set the days off request status to approved',
-							'Days off request approved'
-						);
-						this._loadTableData();
-					},
-					() =>
-						this.toastrService.danger(
-							'Unable to set days off request status.'
-						)
-				);
+				.subscribe(() => {
+					this.toastrService.success(
+						'You successfully set the days off request status to approved',
+						'Days off request approved'
+					);
+					this._loadTableData();
+				}, () => this.toastrService.danger('Unable to set days off request status.'));
 		} else {
-			this.toastrService.info(
-				'The days off request status is already set to approved',
-				'No changes'
-			);
+			this.toastrService.info('The days off request status is already set to approved','No changes');
 		}
 	}
 
@@ -274,19 +265,13 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 					status: this.selectedTimeOffRecord.status
 				})
 				.pipe(first())
-				.subscribe(
-					() => {
-						this.toastrService.success(
-							'You successfully set the days off request status to denied',
-							'Days off request denied'
-						);
-						this._loadTableData();
-					},
-					() =>
-						this.toastrService.danger(
-							'Unable to set days off request status.'
-						)
-				);
+				.subscribe(() => {
+					this.toastrService.success(
+						'You successfully set the days off request status to denied',
+						'Days off request denied'
+					);
+					this._loadTableData();
+				}, () => this.toastrService.danger('Unable to set days off request status.'));
 		} else {
 			this.toastrService.info(
 				'The days off request status is already set to denied',
@@ -296,22 +281,25 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	}
 
 	deleteRequest() {
-		this.timeOffService
-			.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
-			.pipe(first())
-			.subscribe(
-				() => {
-					this.toastrService.success(
-						'Days off request successfully deleted',
-						'Days off record deleted'
-					);
-					this._loadTableData();
-				},
-				() =>
-					this.toastrService.warning(
-						'Unable to delete Days off request'
-					)
-			);
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: { recordType: 'Time off request' }
+			})
+			.onClose.pipe(first())
+			.subscribe((result) => {
+				if (result) {
+					this.timeOffService
+						.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
+						.pipe(first())
+						.subscribe(() => {
+							this.toastrService.success(
+								'Days off request successfully deleted',
+								'Days off record deleted'
+							);
+							this._loadTableData();
+						}, () => this.toastrService.warning('Unable to delete Days off request'));
+				}
+			});
 	}
 
 	requestDaysOff() {
