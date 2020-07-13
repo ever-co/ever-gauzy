@@ -70,7 +70,7 @@ import {
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
-import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
+import { createDefaultTimeOffPolicy, createRandomTimeOffPolicies } from '../../time-off-policy/time-off-policy.seed';
 import {
 	createDefaultApprovalPolicyForOrg,
 	createRandomApprovalPolicyForOrg
@@ -192,6 +192,7 @@ import { createRandomEmailSent } from '../../email/email.seed';
 import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
+import { createRandomEmployeeTimeOff } from '../../time-off-request/time-off-request.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -614,6 +615,12 @@ export class SeedDataService {
 			tenantOrganizationsMap
 		);
 
+    await createRandomTimeOffPolicies(
+      this.connection,
+      tenants,
+      tenantOrganizationsMap
+    );
+
 		const categoriesMap = await createRandomExpenseCategories(
 			this.connection,
 			tenants,
@@ -684,6 +691,14 @@ export class SeedDataService {
 			tags,
 			env.randomSeedConfig.projectsPerOrganization || 10
 		);
+
+		await createRandomEmployeeTimeOff(
+      this.connection,
+      tenants,
+      tenantOrganizationsMap,
+      tenantEmployeeMap,
+      env.randomSeedConfig.employeeTimeOffPerOrganization || 10
+    )
 
 		await createRandomEmailSent(
 			this.connection,
