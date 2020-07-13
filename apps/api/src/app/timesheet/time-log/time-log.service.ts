@@ -62,8 +62,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 			employeeIds = [user.employeeId];
 		}
 
-		console.log({ employeeIds });
-
 		const logs = await this.timeLogRepository.find({
 			join: {
 				alias: 'time_logs',
@@ -426,7 +424,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		if (!moment(start).isBefore(moment(end))) {
 			return false;
 		}
-		if (organization.futurleDateAllowed) {
+		if (organization.futureDateAllowed) {
 			return true;
 		}
 		return moment(end).isSameOrBefore(moment());

@@ -12,90 +12,91 @@ import { User } from '../user/user.entity';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
-export const createRandomTask = async (connection: Connection) => {
-  const httpService = new HttpService();
+export const createRandomTask = async (
+	connection: Connection,
+	projects: OrganizationProjects[]
+) => {
+	const httpService = new HttpService();
 
-  const tasks: Task[] = [];
+	const tasks: Task[] = [];
 
-  const teams = await connection
-    .getRepository(OrganizationTeam)
-    .createQueryBuilder()
-    .getMany();
+	const teams = await connection
+		.getRepository(OrganizationTeam)
+		.createQueryBuilder()
+		.getMany();
 
-  const projects = await connection
-    .getRepository(OrganizationProjects)
-    .createQueryBuilder()
-    .getMany();
+	const users = await connection
+		.getRepository(User)
+		.createQueryBuilder()
+		.getMany();
 
-  const users = await connection
-    .getRepository(User)
-    .createQueryBuilder()
-    .getMany();
+	console.log(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
+	const issues: any[] = await httpService
+		.get(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`)
+		.toPromise()
+		.then((resp) => resp.data);
 
-  console.log(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
-  const issues: any[] = await httpService
-    .get(`${GITHUB_API_URL}/repos/ever-co/gauzy/issues`)
-    .toPromise()
-    .then((resp) => resp.data);
+	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
 
-  console.log(`Done ${GITHUB_API_URL}/repos/ever-co/gauzy/issues`);
+	let labels = [];
+	issues.forEach(async (issue) => {
+		labels = labels.concat(issue.labels);
+	});
 
-  let labels = [];
-  issues.forEach(async (issue) => {
-    labels = labels.concat(issue.labels);
-  });
+	labels = _.uniq(labels, (label) => label.name);
+	const tags: Tag[] = await findOrCreateTags(connection, labels);
 
-  const tags: Tag[] = await findOrCreateTags(connection, labels);
+	issues.forEach((issue) => {
+		let status = TaskStatusEnum.TODO;
+		if (issue.state === 'open') {
+			status = TaskStatusEnum.IN_PROGRESS;
+		}
 
-  issues.forEach((issue) => {
-    let status = TaskStatusEnum.TODO;
-    if (issue.state === 'open') {
-      status = TaskStatusEnum.IN_PROGRESS;
-    }
+		const task = new Task();
 
-    const task = new Task();
+		task.tags = _.filter(
+			tags,
+			(tag: Tag) =>
+				!!issue.labels.find((label: any) => label.name === tag.name)
+		);
 
-    task.tags = _.where(tags, (tag: Tag) =>
-      _.filter(issue.labels, (label: any) => label.title === tag.name)
-    );
+		task.title = issue.title;
+		task.description = issue.body;
+		task.status = status;
+		task.estimate = null;
+		task.dueDate = null;
+		task.project = faker.random.arrayElement(projects);
+		task.teams = [faker.random.arrayElement(teams)];
+		task.creator = faker.random.arrayElement(users);
 
-    task.title = issue.title;
-    task.description = issue.body;
-    task.status = status;
-    task.estimate = null;
-    task.dueDate = null;
-    task.project = faker.random.arrayElement(projects);
-    task.teams = [faker.random.arrayElement(teams)];
-    task.creator = faker.random.arrayElement(users);
-
-    tasks.push(task);
-  });
-  await connection.manager.save(tasks);
+		tasks.push(task);
+	});
+	await connection.manager.save(tasks);
 };
 
 export async function findOrCreateTags(connection: Connection, labels) {
-  if (labels.length === 0) {
-    return [];
-  }
-  const tags: Tag[] = labels.map((label) => ({
-    name: label.name,
-    description: label.description,
-    color: label.color
-    // organization
-    // tenant
-  }));
-  await connection
-    .getRepository(Tag)
-    .createQueryBuilder()
-    .insert()
-    .values(tags)
-    .onConflict('("name") DO NOTHING')
-    .returning('*')
-    .execute();
+	if (labels.length === 0) {
+		return [];
+	}
+	const tags: Tag[] = labels.map((label) => ({
+		name: label.name,
+		description: label.description,
+		color: label.color
+		// organization
+		// tenant
+	}));
+	await connection
+		.getRepository(Tag)
+		.createQueryBuilder()
+		.insert()
+		.values(tags)
+		.onConflict('("name") DO NOTHING')
+		.returning('*')
+		.execute();
 
-  const insertedTags = await connection
-    .getRepository(Tag)
-    .createQueryBuilder()
-    .getMany();
-  return insertedTags;
+	const insertedTags = await connection
+		.getRepository(Tag)
+		.createQueryBuilder()
+		.getMany();
+	return insertedTags;
 }

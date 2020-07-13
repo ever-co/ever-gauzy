@@ -132,18 +132,16 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	toggle($event) {
-		console.log({ $event }, this.isOpen);
+	toggle() {
 		if (!this.isOpen) {
-			this.show($event);
+			this.show();
 		} else {
 			this.hide();
 		}
 	}
 
-	show($event) {
+	show() {
 		this.isOpen = true;
-		console.log(this.isOpen);
 	}
 
 	hide() {

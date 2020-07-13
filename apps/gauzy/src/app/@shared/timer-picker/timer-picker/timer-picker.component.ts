@@ -22,7 +22,7 @@ import { Organization } from '@gauzy/models';
 	]
 })
 export class TimerPickerComponent implements OnInit {
-	private _max: string = '23:59';
+	private _max: string = '23:00';
 	private _min: string = '00:00';
 	timeSlots: { value: string; label: string }[] = [];
 	organization: Organization;
@@ -32,7 +32,7 @@ export class TimerPickerComponent implements OnInit {
 	@Input() disabled = false;
 	@Input()
 	public get min(): string {
-		return this._min || '00:00';
+		return this._min;
 	}
 	public set min(value: string) {
 		this._min = value;
@@ -40,7 +40,7 @@ export class TimerPickerComponent implements OnInit {
 	}
 	@Input()
 	public get max(): string {
-		return this._max || '23:59';
+		return this._max;
 	}
 	public set max(value: string) {
 		this._max = value;
@@ -80,7 +80,6 @@ export class TimerPickerComponent implements OnInit {
 
 			slotTime = slotTime.add(interval, 'minutes');
 		}
-		console.log({ endTime, slotTime, min: this.min, max: this.max });
 		this.timeSlots = times;
 	}
 
