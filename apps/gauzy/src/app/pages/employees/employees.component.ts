@@ -1,6 +1,15 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { InvitationTypeEnum, PermissionsEnum } from '@gauzy/models';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
+import {
+	InvitationTypeEnum,
+	PermissionsEnum,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -22,6 +31,7 @@ import { EmployeeBonusComponent } from './table-components/employee-bonus/employ
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -41,10 +51,12 @@ export class EmployeesComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedEmployee: EmployeeViewModel;
+	employeeData: EmployeeViewModel[];
 	selectedOrganizationId: string;
-
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private _ngDestroy$ = new Subject<void>();
-
 	incomeStatistics: number[];
 	expenseStatistics: number[];
 	profitStatistics: number[];
@@ -83,6 +95,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		private employeeStatisticsService: EmployeeStatisticsService
 	) {
 		super(translate);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -124,6 +137,23 @@ export class EmployeesComponent extends TranslationBaseComponent
 				if (params.get('openAddDialog')) {
 					this.add();
 				}
+			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EMPLOYEES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
 			});
 	}
 
@@ -180,18 +210,16 @@ export class EmployeesComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectEmployeeTmp(ev: {
-		data: EmployeeViewModel;
-		isSelected: boolean;
-		selected: EmployeeViewModel[];
-		source: LocalDataSource;
-	}) {
-		if (ev.isSelected) {
-			this.selectedEmployee = ev.data;
+	selectEmployeeTmp({ isSelected, data }) {
+		const selectedEmployee = isSelected ? data : null;
+		if (this.employeesTable) {
+			this.employeesTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedEmployee = selectedEmployee;
+		if (this.selectedEmployee) {
 			const checkName = this.selectedEmployee.fullName.trim();
 			this.employeeName = checkName ? checkName : 'Employee';
-		} else {
-			this.selectedEmployee = null;
 		}
 	}
 
@@ -217,7 +245,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 		}
 	}
 
-	edit() {
+	edit(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
 			'/pages/employees/edit/' + this.selectedEmployee.id
 		]);
@@ -239,7 +273,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 
-	async delete() {
+	async delete(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -270,7 +310,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 			});
 	}
 
-	async endWork() {
+	async endWork(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 			context: {
 				endWorkValue: this.selectedEmployee.endWork,
@@ -298,7 +344,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async backToWork() {
+	async backToWork(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 			context: {
 				backToWork: true,
@@ -378,6 +430,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		} else {
 			employeesVm = result;
 		}
+		this.employeeData = employeesVm;
 		this.sourceSmartTable.load(employeesVm);
 
 		if (this.employeesTable) {

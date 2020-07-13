@@ -8,6 +8,8 @@ import { PaymentsRoutingModule } from './payments-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { PaymentService } from '../../@core/services/payment.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { ThemeModule } from '../../@theme/theme.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -24,7 +26,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbCardModule,
 		PaymentsRoutingModule,
-		Ng2SmartTableModule
+		Ng2SmartTableModule,
+		CardGridModule,
+		ThemeModule
 	],
 	providers: [PaymentService, OrganizationContactService],
 	entryComponents: [PaymentsComponent],
