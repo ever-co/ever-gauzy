@@ -40,15 +40,12 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	async ngOnInit() {
 		this.loadInterviews();
 		this.search.valueChanges.subscribe((item) => {
-			this.interviewTitle = [];
-			this.interviewList.forEach((el) => {
-				if (
-					item !== '' &&
-					el.title.toLocaleLowerCase().includes(item)
-				) {
-					this.interviewTitle.push(el);
-				}
-			});
+			this.interviewList = this.allInterviews.filter(
+				(interview) =>
+					interview.title
+						.toLocaleLowerCase()
+						.indexOf(item.toLocaleLowerCase()) !== -1
+			);
 		});
 	}
 

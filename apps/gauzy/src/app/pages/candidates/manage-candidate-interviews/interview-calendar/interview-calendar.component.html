@@ -14,18 +14,11 @@
 		>
 		</ga-employee-multi-select>
 		<ga-candidate-multi-select
-			class="multi-select"
+			class="multi-select ml-4"
 			[allCandidates]="candidates"
 			(selectedChange)="onCandidateSelected($event)"
 		>
 		</ga-candidate-multi-select>
-		<button nbButton status="primary" (click)="add()">
-			<nb-icon icon="plus-outline"></nb-icon>
-			{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
-					| translate
-			}}
-		</button>
 	</div>
 </div>
 <nb-card-body>

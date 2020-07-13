@@ -14,10 +14,7 @@ import {
 	ICandidateInterviewers
 } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
-import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
-import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { DeleteInterviewComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 
 @Component({
@@ -42,10 +39,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		private readonly candidateInterviewService: CandidateInterviewService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
-		private candidateInterviewersService: CandidateInterviewersService,
-		private toastrService: NbToastrService,
-		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
+		private toastrService: NbToastrService
 	) {
 		super(translate);
 	}
@@ -206,15 +200,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		this.toastrService.success(
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
-	}
-
-	private toastrError(error) {
-		this.toastrService.danger(
-			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
-			}),
-			this.getTranslation('TOASTR.TITLE.ERROR')
 		);
 	}
 	ngOnDestroy() {
