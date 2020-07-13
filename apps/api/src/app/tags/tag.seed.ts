@@ -47,7 +47,7 @@ export const createDefaultTags = async (
 	let tags: Tag[] = [];
 
 	organizations.forEach((org) => {
-		const organizationTags: Tag[] = Object.values(defaultTags).map(
+		const organizationTags: Tag[] = Object.values(tagGlobalNames).map(
 			(name) => {
 				const orgTags = new Tag();
 				orgTags.name = org.name + ' -' + name;

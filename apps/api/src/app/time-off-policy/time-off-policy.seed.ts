@@ -39,28 +39,41 @@ const insertDefaultPolicy = async (
 		.execute();
 };
 
-export const createRandomTimeOffPolicies = async(
-  connection: Connection,
-  tenants: Tenant[],
-  tenantOrganizationsMap: Map<Tenant, Organization[]>
-):Promise<ITimeOfPolicy>=>{
-  let policies : TimeOffPolicy[]=[];
-  const policyArray = ["Policy 1", "Policy 2", "Policy 3", "Policy 4", "Policy 5", "Policy 6", "Policy 7", "Policy 8", "Policy 9", "Policy 10"];
+export const createRandomTimeOffPolicies = async (
+	connection: Connection,
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>
+): Promise<TimeOffPolicy[]> => {
+	let policies: TimeOffPolicy[] = [];
+	const policyArray = [
+		'Policy 1',
+		'Policy 2',
+		'Policy 3',
+		'Policy 4',
+		'Policy 5',
+		'Policy 6',
+		'Policy 7',
+		'Policy 8',
+		'Policy 9',
+		'Policy 10'
+	];
 
-  (tenants || []).forEach((tenant) => {
-    const organizations = tenantOrganizationsMap.get(tenant);
-    (organizations || []).forEach((organization) => {
-      policyArray.forEach(name=>{
-        let policy = new TimeOffPolicy();
-        policy.name = name;
-        policy.organization = organization;
-        policy.paid = faker.random.arrayElement([true,false]);
-        policy.requiresApproval = faker.random.arrayElement([true,false]);
-        policies.push(policy);
-      });
-    });
-  });
+	(tenants || []).forEach((tenant) => {
+		const organizations = tenantOrganizationsMap.get(tenant);
+		(organizations || []).forEach((organization) => {
+			policyArray.forEach((name) => {
+				let policy = new TimeOffPolicy();
+				policy.name = name;
+				policy.organization = organization;
+				policy.paid = faker.random.arrayElement([true, false]);
+				policy.requiresApproval = faker.random.arrayElement([
+					true,
+					false
+				]);
+				policies.push(policy);
+			});
+		});
+	});
 
-  await connection.manager.save(policies);
-
+	return await connection.manager.save(policies);
 };
