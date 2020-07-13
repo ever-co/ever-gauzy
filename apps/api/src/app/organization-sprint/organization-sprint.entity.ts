@@ -26,10 +26,11 @@ export class OrganizationSprint extends TenantBase
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
+	@ApiProperty({ type: String })
+  @IsString()
+  @IsNotEmpty()
+  @Column()
+  organizationId: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -76,4 +77,7 @@ export class OrganizationSprint extends TenantBase
 	@OneToMany((type) => Task, (task) => task.organizationSprint)
 	@JoinColumn()
 	tasks?: Task[];
+
+  @ManyToOne((type) => Organization, (organization) => organization.id)
+  organization?: Organization;
 }
