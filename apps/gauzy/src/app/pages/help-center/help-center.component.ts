@@ -13,7 +13,7 @@ import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { DeleteArticleComponent } from './delete-article/delete-article.component';
 import { HelpCenterArticleService } from '../../@core/services/help-center-article.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, takeUntil, filter } from 'rxjs/operators';
 import { HelpCenterAuthorService } from '../../@core/services/help-center-author.service';
 import { EmployeesService } from '../../@core/services';
 import { FormControl } from '@angular/forms';
@@ -41,11 +41,13 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	public dataArray: SafeHtml[] = [];
 	public employees: Employee[] = [];
 	public articleList: IHelpCenterArticle[] = [];
-	public selectedEmployeeIds = null;
+	public isResetSelect = false;
+	public filteredArticles: IHelpCenterArticle[] = [];
 	public search: FormControl = new FormControl();
 	public categoryName = '';
 	public categoryId = '';
 	public authors: IHelpCenterAuthor[] = [];
+	filterParams = { name: '', authorId: '' };
 
 	ngOnInit() {
 		this.employeeService
@@ -54,7 +56,9 @@ export class HelpCenterComponent extends TranslationBaseComponent
 			.subscribe((employees) => {
 				this.employees = employees.items;
 			});
-		this.search.valueChanges.subscribe((item) => console.log(item));
+		this.search.valueChanges.subscribe((item) => {
+			this.filterByName(item);
+		});
 	}
 
 	clickedNode(clickedNode: IHelpCenter) {
@@ -89,36 +93,65 @@ export class HelpCenterComponent extends TranslationBaseComponent
 				);
 			}
 		}
-
+		this.filteredArticles = this.articleList;
 		const res = await this.helpCenterAuthorService.getAll();
 		if (res) {
 			this.authors = res.items;
-		}
-
-		this.loadEmployee();
-	}
-
-	async loadEmployee() {
-		for (const article of this.articleList) {
-			const employeesList = [];
-			for (const author of this.authors) {
-				const res = await this.employeeService.getEmployeeById(
-					author.employeeId,
-					['user']
-				);
-				if (
-					res &&
-					author.employeeId === res.id &&
-					author.articleId === article.id
-				)
-					employeesList.push(res);
+			for (const article of this.articleList) {
+				const employeesList = [];
+				this.authors.forEach((author) => {
+					this.employees.forEach((employee) => {
+						if (
+							employee.id === author.employeeId &&
+							author.articleId === article.id
+						)
+							employeesList.push(employee);
+					});
+				});
+				article.employees = employeesList;
 			}
-			article.employees = employeesList;
 		}
 	}
 
-	onEmployeeSelected(event: string[]) {
-		this.selectedEmployeeIds = event;
+	filterByName(item: string) {
+		this.filterParams.name = item;
+		this.isResetSelect = false;
+		this.filterArticles();
+	}
+
+	onEmployeeSelected(authorId: string) {
+		this.filterParams.authorId = authorId;
+		this.isResetSelect = false;
+		this.filterArticles();
+	}
+
+	filterArticles() {
+		if (this.filterParams.name) {
+			this.filteredArticles = this.articleList.filter((article) =>
+				article.name
+					.toLocaleLowerCase()
+					.includes(this.filterParams.name.toLocaleLowerCase())
+			);
+		} else {
+			this.filteredArticles = this.articleList;
+		}
+		const res = [];
+		if (this.filterParams.authorId)
+			this.articleList.forEach((article) => {
+				article.employees.forEach((employee) => {
+					if (employee.id === this.filterParams.authorId)
+						res.push(article);
+				});
+				this.filteredArticles = res;
+			});
+	}
+
+	clearFilters() {
+		this.search.reset();
+		this.isResetSelect = true;
+		this.filterParams.name = '';
+		this.filterParams.authorId = '';
+		this.filteredArticles = this.articleList;
 	}
 
 	private toastrSuccess(text: string) {
