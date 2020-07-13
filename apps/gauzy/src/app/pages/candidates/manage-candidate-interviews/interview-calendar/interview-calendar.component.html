@@ -1,35 +1,33 @@
-<nb-card-header>
-	<div class="main-header">
-		<h5>
+<div class="main-header">
+	<h5>
+		{{
+			'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULED_INTERVIEWS'
+				| translate
+		}}
+	</h5>
+	<div class="buttons">
+		<ga-employee-multi-select
+			class="multi-select"
+			[allEmployees]="employees"
+			[label]="false"
+			(selectedChange)="onEmployeeSelected($event)"
+		>
+		</ga-employee-multi-select>
+		<ga-candidate-multi-select
+			class="multi-select"
+			[allCandidates]="candidates"
+			(selectedChange)="onCandidateSelected($event)"
+		>
+		</ga-candidate-multi-select>
+		<button nbButton status="primary" (click)="add()">
+			<nb-icon icon="plus-outline"></nb-icon>
 			{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULED_INTERVIEWS'
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
 					| translate
 			}}
-		</h5>
-		<div class="buttons">
-			<ga-employee-multi-select
-				class="multi-select"
-				[allEmployees]="employees"
-				[label]="false"
-				(selectedChange)="onEmployeeSelected($event)"
-			>
-			</ga-employee-multi-select>
-			<ga-candidate-multi-select
-				class="multi-select"
-				[allCandidates]="candidates"
-				(selectedChange)="onCandidateSelected($event)"
-			>
-			</ga-candidate-multi-select>
-			<button nbButton status="primary" (click)="add()">
-				<nb-icon icon="plus-outline"></nb-icon>
-				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
-						| translate
-				}}
-			</button>
-		</div>
+		</button>
 	</div>
-</nb-card-header>
+</div>
 <nb-card-body>
 	<full-calendar
 		*ngIf="calendarOptions"

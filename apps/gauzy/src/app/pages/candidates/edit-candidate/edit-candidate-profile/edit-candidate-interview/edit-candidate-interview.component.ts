@@ -18,6 +18,7 @@ import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
+import { DeleteInterviewComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -184,27 +185,20 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			this.loadInterview();
 		}
 	}
+
 	async removeInterview(id: string) {
 		const currentInterview = this.interviewList.find(
 			(item) => item.id === id
 		);
-		try {
-			if (currentInterview.personalQualities.length > 0) {
-				await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(
-					id
-				);
+		const dialog = this.dialogService.open(DeleteInterviewComponent, {
+			context: {
+				interview: currentInterview
 			}
-			if (currentInterview.technologies.length > 0) {
-				await this.candidateTechnologiesService.deleteBulkByInterviewId(
-					id
-				);
-			}
-			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
-			await this.candidateInterviewService.delete(id);
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
 			this.toastrSuccess('DELETED');
 			this.loadInterview();
-		} catch (error) {
-			this.toastrError(error);
 		}
 	}
 

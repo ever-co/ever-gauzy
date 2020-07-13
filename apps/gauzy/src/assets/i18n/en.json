@@ -873,6 +873,8 @@
 				"SAVE": "Save",
 				"CREATE_CRITERIONS": "Create criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
+				"DELETE_INTERVIEW": "Delete interview",
+				"DELETE_ARE_YOU_SURE": "Are you sure you want to delete this interview?",
 				"SUMMARY": "Summary",
 				"DETAILS": "Send interview details to",
 				"NOTIFY_CANDIDATE": "Notify candidate",
