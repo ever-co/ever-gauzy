@@ -65,7 +65,7 @@ export const createDefaultTags = async (
 
 export const createTags = async (connection: Connection): Promise<Tag[]> => {
 	const tags: Tag[] = [];
-	for (const name of tagGlobalNames) {
+	for (const name of tagOrganizationsNames) {
 		const tag = new Tag();
 		tag.name = name;
 		tag.description = '';
