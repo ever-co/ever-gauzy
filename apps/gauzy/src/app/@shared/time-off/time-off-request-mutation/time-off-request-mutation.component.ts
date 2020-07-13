@@ -140,19 +140,17 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		}
 	}
 
-	private async _getOrganizationEmployees() {
+	private _getOrganizationEmployees() {
 		if (!this.organizationId) {
 			return;
 		}
 
-		const { items } = await this.employeesService
+		this.employeesService
 			.getAll(['user', 'tags'], {
 				organization: { id: this.organizationId }
 			})
 			.pipe(first())
-			.toPromise();
-
-		this.orgEmployees = items;
+			.subscribe((res) => this.orgEmployees = res.items)
 	}
 
 	onPolicySelected(policy: TimeOffPolicy) {
