@@ -2,6 +2,8 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { OrganizationProjects, Task } from '@gauzy/models';
 import { Organization } from '../../../../apps/api/src/app/organization/organization.entity';
 import { ITenant } from './tenant.model';
+import { Employee } from './employee.model';
+import { Tag } from './tag-entity.model';
 
 export interface OrganizationSprint extends IBaseEntityModel {
 	name: string;
@@ -26,4 +28,16 @@ export enum SprintStartDayEnum {
 	THURSDAY = 5,
 	FRIDAY = 6,
 	SATURDAY = 7
+}
+
+export interface OrganizationSprintUpdateInput {
+  name: string;
+  goal?: string;
+  length: number;
+  startDate?: Date;
+  endDate?: Date;
+  dayStart?: number;
+  project?: OrganizationProjects;
+  isActive?: boolean;
+  tasks?: Task[];
 }
