@@ -63,7 +63,11 @@ export class OrganizationSprint extends TenantBase
 	@ApiProperty({ type: OrganizationProjects })
 	@ManyToOne(
 		(type) => OrganizationProjects,
-		(project) => project.organizationSprints
+		(project) => project.organizationSprints,
+    {
+      nullable: true,
+      onDelete: 'CASCADE'
+    }
 	)
 	@JoinColumn()
 	project?: OrganizationProjects;

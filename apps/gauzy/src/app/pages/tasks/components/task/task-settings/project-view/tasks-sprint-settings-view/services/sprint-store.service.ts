@@ -7,6 +7,7 @@ export class MockSprint implements OrganizationSprint {
 	name: string;
 	goal: string;
 	organization: Organization;
+	organizationId: string;
 	tenant: ITenant;
 	length: number;
 
@@ -19,6 +20,7 @@ export class MockSprint implements OrganizationSprint {
 			(this.goal = goal || this.rand());
 		this.length = length || 14;
 		this.organization = organization || ({} as Organization);
+		this.organizationId = organization.id || ({} as Organization);
 		this.tenant = tenant || { name: 'TenantName' };
 	}
 }
