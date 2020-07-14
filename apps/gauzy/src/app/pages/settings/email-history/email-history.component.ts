@@ -21,8 +21,12 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 	loading = true;
 
 	emails: Email[];
+
 	selectedEmail: Email;
-	filteredCount;
+
+	filteredCount: Number;
+
+	filters = [];
 
 	get selectedEmailHTML() {
 		return this.sanitizer.bypassSecurityTrustHtml(
@@ -57,7 +61,7 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 	async openFiltersDialog() {
 		const filters = await this.dialogService
 			.open(EmailFiltersComponent, {
-				context: {}
+				context: { filters: this.filters }
 			})
 			.onClose.pipe(first())
 			.toPromise();
@@ -67,7 +71,14 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 				this._selectedOrganization.id,
 				filters
 			);
-			this.filteredCount = Object.keys(filters).length;
+
+			const getCount = function (obj) {
+				return Object.values(obj).filter(
+					(value) => typeof value !== 'undefined'
+				);
+			};
+			this.filters = filters;
+			this.filteredCount = getCount(filters).length;
 		}
 	}
 
