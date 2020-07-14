@@ -26,7 +26,7 @@ import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Subject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
 import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
@@ -36,6 +36,7 @@ import { ProductService } from '../../../@core/services/product.service';
 import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
+import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -98,7 +99,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private tasksStore: TasksStoreService,
 		private errorHandler: ErrorHandlingService,
 		private employeeService: EmployeesService,
-		private productService: ProductService
+		private productService: ProductService,
+		private dialogService: NbDialogService
 	) {
 		super(translateService);
 		this.observableTasks = this.tasksStore.tasks$;
@@ -151,6 +153,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	loadSmartTable() {
 		this.settingsSmartTable = {
+			pager: {
+				display: true,
+				perPage: 5
+			},
 			add: {
 				addButtonContent: '<i class="nb-plus"></i>',
 				createButtonContent: '<i class="nb-checkmark"></i>',
@@ -350,7 +356,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		}
 	}
 
-	async addInvoice() {
+	async addInvoice(status: string, sendTo?: string) {
 		const tableData = await this.smartTableSource.getAll();
 		if (tableData.length) {
 			const invoiceData = this.form.value;
@@ -401,7 +407,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				invoiceType: this.selectedInvoiceType,
 				tags: this.tags,
 				isEstimate: this.isEstimate,
-				sentStatus: false
+				status: status,
+				sentTo: sendTo
 			});
 
 			for (const invoiceItem of tableData) {
@@ -445,6 +452,127 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 				this.router.navigate(['/pages/accounting/invoices']);
+			}
+		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+		}
+	}
+
+	async sendToClient() {
+		if (this.form.value.client.contactOrganizationId) {
+			await this.addInvoice(
+				'Sent',
+				this.form.value.client.contactOrganizationId
+			);
+		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+		}
+	}
+
+	async sendViaEmail() {
+		const tableData = await this.smartTableSource.getAll();
+		if (tableData.length) {
+			const invoiceData = this.form.value;
+			if (
+				!invoiceData.invoiceDate ||
+				!invoiceData.dueDate ||
+				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
+			) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			}
+
+			const invoiceExists = await this.invoicesService.getAll([], {
+				invoiceNumber: invoiceData.invoiceNumber
+			});
+
+			if (invoiceExists.items.length) {
+				this.toastrService.danger(
+					this.getTranslation(
+						'INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'
+					),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			}
+
+			const invoice = {
+				invoiceNumber: invoiceData.invoiceNumber,
+				invoiceDate: invoiceData.invoiceDate,
+				dueDate: invoiceData.dueDate,
+				currency: this.currency.value,
+				discountValue: invoiceData.discountValue,
+				discountType: invoiceData.discountType,
+				tax: invoiceData.tax,
+				tax2: invoiceData.tax2,
+				taxType: invoiceData.taxType,
+				tax2Type: invoiceData.tax2Type,
+				terms: invoiceData.terms,
+				paid: false,
+				totalValue: +this.total.toFixed(2),
+				toClient: invoiceData.client,
+				clientId: invoiceData.client.id,
+				fromOrganization: this.organization,
+				organizationId: this.organization.id,
+				invoiceType: this.selectedInvoiceType,
+				tags: this.tags,
+				isEstimate: this.isEstimate,
+				invoiceItems: []
+			};
+
+			const invoiceItems = [];
+
+			for (const invoiceItem of tableData) {
+				const itemToAdd = {
+					description: invoiceItem.description,
+					price: invoiceItem.price,
+					quantity: invoiceItem.quantity,
+					totalValue: invoiceItem.totalValue,
+					applyTax: invoiceItem.applyTax,
+					applyDiscount: invoiceItem.applyDiscount
+				};
+				switch (this.selectedInvoiceType) {
+					case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+						itemToAdd['employeeId'] = invoiceItem.selectedItem;
+						break;
+					case InvoiceTypeEnum.BY_PROJECT_HOURS:
+						itemToAdd['projectId'] = invoiceItem.selectedItem;
+						break;
+					case InvoiceTypeEnum.BY_TASK_HOURS:
+						itemToAdd['taskId'] = invoiceItem.selectedItem;
+						break;
+					case InvoiceTypeEnum.BY_PRODUCTS:
+						itemToAdd['productId'] = invoiceItem.selectedItem;
+						break;
+					default:
+						break;
+				}
+				invoiceItems.push(itemToAdd);
+			}
+
+			invoice.invoiceItems = invoiceItems;
+
+			const result = await this.dialogService
+				.open(InvoiceEmailMutationComponent, {
+					context: {
+						invoice: invoice,
+						isEstimate: this.isEstimate
+					}
+				})
+				.onClose.pipe(first())
+				.toPromise();
+
+			if (result) {
+				await this.addInvoice('Sent');
 			}
 		} else {
 			this.toastrService.danger(
