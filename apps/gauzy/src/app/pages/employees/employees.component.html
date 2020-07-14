@@ -85,12 +85,55 @@
 			#employeesTable
 		>
 		</ng2-smart-table>
-		<ga-card-grid
-			[settings]="settingsSmartTable"
-			[source]="employeeData"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+
+		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<li class="flex-item" *ngFor="let x of employeeData">
+				<div class="fullName">
+					<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
+					<span>{{ x.fullName }}</span>
+				</div>
+				<div class="email">
+					<span class="info-value">{{ x.email }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Income (Average)</span>
+					<span class="info-value">{{ x.averageIncome }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Expenses (Average)</span>
+					<span class="info-value">{{ x.averageExpenses }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Bonus (Average)</span>
+					<span class="info-value">{{ x.averageBonus }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta"
+						>Bonus ({{ month }} {{ year }})</span
+					>
+					<span class="info-value">{{ x.bonus }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Work Status</span>
+					<div class="badge-success info-value">
+						{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
+					</div>
+				</div>
+
+				<nb-card-footer class="card-footer">
+					<ng-container
+						*ngTemplateOutlet="
+							actionButtons;
+							context: {
+								buttonSize: 'tiny',
+								selectedItem: x
+							}
+						"
+					>
+					</ng-container>
+				</nb-card-footer>
+			</li>
+		</ul>
 	</nb-card-body>
 </nb-card>
 <ng-template
