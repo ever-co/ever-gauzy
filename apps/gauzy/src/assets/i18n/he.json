@@ -53,6 +53,9 @@
 		"EMAIL": "דוא\"ל",
 		"CONVERT_TO_INVOICE": "Convert to invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
+		"SAVE_AS_DRAFT": "Save as Draft",
+		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
+		"SAVE_AND_SEND_EMAIL": "Save and send via email",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "ערוך",
@@ -1510,6 +1513,7 @@
 		"APPLY_DISCOUNT": "Apply Discount",
 		"APPLIED": "Applied",
 		"NOT_APPLIED": "Not Applied",
+		"STATUS": "עבודה",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
