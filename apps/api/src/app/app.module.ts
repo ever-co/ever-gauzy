@@ -103,6 +103,7 @@ import { TimeOffRequestModule } from './time-off-request/time-off-request.module
 import { DealModule } from './deal/deal.module';
 import { HelpCenterAuthorModule } from './help-center-author/help-center-author.module';
 import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
+import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
 
 @Module({
 	imports: [
@@ -405,6 +406,10 @@ import { OrganizationSprintModule } from './organization-sprint/organization-spr
 						module: GoalTimeFrameModule
 					},
 					{
+						path: '/goal-kpi',
+						module: GoalKpiModule
+					},
+					{
 						path: '/key-results',
 						module: KeyResultModule
 					},
@@ -528,7 +533,8 @@ import { OrganizationSprintModule } from './organization-sprint/organization-spr
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
-		})
+		}),
+		GoalKpiModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

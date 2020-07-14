@@ -104,6 +104,7 @@ import { Contact } from '../contact/contact.entity';
 import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
 import { Deal } from '../deal/deal.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
+import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 
 const entities = [
 	Invite,
@@ -147,6 +148,7 @@ const entities = [
 	Task,
 	Goal,
 	GoalTimeFrame,
+	GoalKPI,
 	KeyResult,
 	KeyResultUpdate,
 	TimeSlot,
