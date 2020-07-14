@@ -1601,12 +1601,12 @@
 		"COLOR": "Цвет",
 		"NAME_CATEGORY": "Название категории",
 		"NAME_ARTICLE": "Название статьи",
-		"DESCRI": "Описание",
 		"ADD_BASE": "Добавить базу знаний",
 		"MANAGE_BASE": "Управление базой знаний",
 		"NAME_OF_THE_BASE": "Название базы",
 		"REMOVE_CATEGORY": "Удалить категорию",
-		"REMOVE_BASE": "Удалить базу"
+		"REMOVE_BASE": "Удалить базу",
+		"CLEAR": "Очистить"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"

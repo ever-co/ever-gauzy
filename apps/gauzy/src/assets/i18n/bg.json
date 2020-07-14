@@ -1601,12 +1601,12 @@
 		"COLOR": "Color",
 		"NAME_CATEGORY": "Name of the category",
 		"NAME_ARTICLE": "Name of the Article",
-		"DESCRI": "Description",
 		"ADD_BASE": "Add Knowledge Base",
 		"MANAGE_BASE": "Manage Knowledge Base",
 		"NAME_OF_THE_BASE": "Name of the base",
 		"REMOVE_CATEGORY": "Remove Category",
-		"REMOVE_BASE": "Remove Base"
+		"REMOVE_BASE": "Remove Base",
+		"CLEAR": "Clear"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "За нас"
