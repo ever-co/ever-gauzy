@@ -142,15 +142,18 @@ export class CandidateInterviewMutationComponent
 	}
 
 	async getEmployees(employeeIds: string[]) {
-		try {
-			for (const id of employeeIds) {
-				this.employees.push(
-					await this.employeesService.getEmployeeById(id, ['user'])
-				);
-			}
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		const employeeList = items;
+		employeeIds.forEach((id) => {
+			employeeList.forEach((item) => {
+				if (id === item.id) {
+					this.employees.push(item);
+				}
+			});
+		});
 	}
 
 	async save() {

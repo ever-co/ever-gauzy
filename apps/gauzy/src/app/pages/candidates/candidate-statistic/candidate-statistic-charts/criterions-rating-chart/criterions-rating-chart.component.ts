@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import {
 	Candidate,
 	ICandidateInterview,
@@ -121,6 +121,11 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 		this.currentEmployee = [];
 		const allIds = [];
 		const allFbIds = [];
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		const employeeList = items;
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer', 'criterionsRating'],
 			{
@@ -137,15 +142,13 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 			});
 			for (const interviewer of this.currentInterview.interviewers) {
 				allIds.push(interviewer.employeeId);
-				const employee = await this.employeesService.getEmployeeById(
-					interviewer.employeeId,
-					['user']
-				);
-				if (employee) {
-					interviewer.employeeName = employee.user.name;
-					interviewer.employeeImageUrl = employee.user.imageUrl;
-					this.currentEmployee.push(employee);
-				}
+				employeeList.forEach((item) => {
+					if (interviewer.employeeId === item.id) {
+						interviewer.employeeName = item.user.name;
+						interviewer.employeeImageUrl = item.user.imageUrl;
+						this.currentEmployee.push(item);
+					}
+				});
 			}
 			this.disabledIds = allIds.filter((x) => !allFbIds.includes(x));
 			this.loadChart();

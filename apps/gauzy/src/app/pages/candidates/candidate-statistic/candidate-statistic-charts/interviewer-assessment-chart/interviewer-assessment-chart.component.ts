@@ -1,8 +1,8 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { Candidate, ICandidateInterview } from '@gauzy/models';
+import { takeUntil, first } from 'rxjs/operators';
+import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -23,6 +23,7 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 	currentInterview: ICandidateInterview;
 	backgroundColor: string[] = [];
 	private _ngDestroy$ = new Subject<void>();
+	employeeList: Employee[];
 	constructor(
 		private themeService: NbThemeService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
@@ -49,14 +50,12 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 				(item) => item.interviewId && item.interviewId === interview.id
 			);
 			for (const item of feedbacks) {
-				this.rating.push(item.rating);
-				const employee = await this.employeesService.getEmployeeById(
-					item.interviewer.employeeId,
-					['user']
-				);
-				if (employee) {
-					this.labels.push(employee.user.name);
-				}
+				this.rating.push(parseFloat((+item.rating).toFixed(2)));
+				this.employeeList.forEach((employee) => {
+					if (item.interviewer.employeeId === employee.id) {
+						this.labels.push(employee.user.name);
+					}
+				});
 			}
 			this.loadChart();
 		}
@@ -100,6 +99,11 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 	}
 
 	async loadData() {
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		this.employeeList = items;
 		for (let i = 0; i < this.candidates.length; i++) {
 			const interview = await this.candidateInterviewService.findByCandidateId(
 				this.candidates[i].id

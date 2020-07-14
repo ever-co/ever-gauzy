@@ -80,17 +80,20 @@
 
   &-block {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
-    margin: 0.6rem 0;
+    align-items: flex-start;
+    margin: 0 0 0.6rem 0;
 
     &-content {
       display: flex;
       flex-direction: row;
       justify-content: flex-start;
       align-items: center;
-      width: 49%;
+
+      &-text {
+        width: 100%;
+      }
     }
   }
   &-block-criterion {

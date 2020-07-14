@@ -72,7 +72,7 @@ export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 	async loadData() {
 		for (let i = 0; i < this.candidates.length; i++) {
 			this.labels.push(this.candidates[i].user.name);
-			this.rating.push(this.candidates[i].rating);
+			this.rating.push(parseFloat(this.candidates[i].rating.toFixed(2)));
 
 			const color =
 				i % 2 === 0
