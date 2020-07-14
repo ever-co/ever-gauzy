@@ -716,6 +716,7 @@
 		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа",
 		"ADD_NEW_OBJECTIVE": "Добавить новую цель",
 		"SESSION": "Сессия",
+		"GOAL_SETTINGS": "Настройки цели",
 		"NO_DESCRIPTION": "Нет описания",
 		"PROGRESS": "Прогресс",
 		"UPDATES": "Обновления",
@@ -725,7 +726,8 @@
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Добавить временной кадр",
 			"TIME_FRAME_PAGE_TITLE": "Установить время",
-			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров"
+			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров",
+			"ADD_KPI": "Добавить KPI"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Организация",
@@ -736,19 +738,31 @@
 			"ACTIVE": "Активный",
 			"INACTIVE": "Неактивный"
 		},
+		"KPI_OPERATOR": {
+			"GREATER_THAN_EQUAL_TO": "Больше или равно",
+			"LESSER_THAN_EQUAL_TO": "Меньше или равно"
+		},
+		"KPI_METRIC": {
+			"NUMBER": "Номер",
+			"PERCENTAGE": "Процент"
+		},
 		"FORM": {
 			"LABELS": {
 				"LEVEL": "Уровень",
 				"OWNER": "Владелец",
 				"LEAD": "Ведущий (опционально)",
 				"DEADLINE": "Срок сдачи",
-				"STATUS": "Статус"
+				"STATUS": "Статус",
+				"KPI_SHOULD_BE": "Этот КПП должен быть",
+				"CURRENT_VALUE": "Текущее значение"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Объективное имя. Например: Улучшение SEO сайта",
 				"DESCRIPTION": "Описание цели.",
 				"LEVEL": "Уровень цели",
-				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'"
+				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'",
+				"KPI_DESCRIPTION": "Короткий описание, чтобы дать некоторый контекст о КПП",
+				"KPI_NAME": "Название KPI. Например. Поддержка страниц - 200/день"
 			},
 			"ERROR": {
 				"START_DATE_GREATER": "Дата окончания должна быть больше, чем дата начала"
@@ -1641,7 +1655,9 @@
 		"NAME_OF_THE_BASE": "Название базы",
 		"REMOVE_CATEGORY": "Удалить категорию",
 		"REMOVE_BASE": "Удалить базу",
-		"CLEAR": "Очистить"
+		"CLEAR": "Очистить",
+		"SEARCH_BY_NAME": "Поиск по названию",
+		"FILTER_BY_AUTHOR": "Фильтр по автору"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
