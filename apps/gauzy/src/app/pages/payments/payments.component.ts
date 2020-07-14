@@ -6,9 +6,11 @@ import { PaymentService } from '../../@core/services/payment.service';
 import { Store } from '../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Payment } from '@gauzy/models';
+import { Payment, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { InvoicePaymentOverdueComponent } from '../invoices/table-components/invoice-payment-overdue.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
 export interface SelectedPayment {
 	data: Payment;
@@ -17,7 +19,8 @@ export interface SelectedPayment {
 
 @Component({
 	selector: 'ngx-payments',
-	templateUrl: './payments.component.html'
+	templateUrl: './payments.component.html',
+	styleUrls: ['./payments.component.scss']
 })
 export class PaymentsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -25,21 +28,43 @@ export class PaymentsComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private paymentService: PaymentService,
 		private store: Store,
-		private organizationContactService: OrganizationContactService
+		private organizationContactService: OrganizationContactService,
+		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	selectedPayment: Payment;
 	payments: Payment[];
+	paymentsData: Payment[];
 	private _ngDestroy$ = new Subject<void>();
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	ngOnInit() {
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.PAYMENTS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	async loadSettings() {
@@ -74,6 +99,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 						};
 						allData.push(data);
 					}
+					this.paymentsData = allData;
 					this.smartTableSource.load(allData);
 				}
 			});

@@ -117,13 +117,16 @@
 		"CONTACTS": "Contacts",
 		"DEPARTMENTS": "Departments",
 		"DESCRIPTION": "Description",
+		"POLICY": "Policy",
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
 		"NO_RESULT": "No Result",
 		"CLIENT": "Client",
 		"INTERNAL": "Internal",
-
+		"START": "Start", 
+		"END" : "End", 
+		"REQUEST_DATE" : "Request Date",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -141,6 +144,9 @@
 			"NAME": "Name",
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
+			"FROM": "From",
+			"TO": "To",
+			"EMPLOYEE": "Employee",
 			"START_DATE": "Date when started work",
 			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Image URL (optional)",
@@ -887,6 +893,8 @@
 				"SAVE": "Save",
 				"CREATE_CRITERIONS": "Create criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
+				"DELETE_INTERVIEW": "Delete interview",
+				"DELETE_ARE_YOU_SURE": "Are you sure you want to delete this interview?",
 				"SUMMARY": "Summary",
 				"DETAILS": "Send interview details to",
 				"NOTIFY_CANDIDATE": "Notify candidate",
@@ -928,9 +936,10 @@
 			"INTERVIEWS": "Interviews",
 			"MANAGE_INTERVIEWS": "Manage Interviews",
 			"CRITERIONS": "Criterions",
+			"DEFAULT": "Default list",
 			"DATE": "Date",
 			"SORT_BY": "Sort by",
-			"SEARCH_BY_INTERVIEW": "Search by interview title",
+			"SEARCH_BY_INTERVIEW": "Search by interview's title",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating"
 		},
@@ -1181,20 +1190,45 @@
 		"REQUEST_DAYS_OFF": "Request Days Off",
 		"ADD_HOLIDAYS": "Add Holidays",
 		"DISPLAY_HOLIDAYS": "Display Holidays",
+		"HOLIDAY_NAME": "Holiday name",
+		"SELECT_EMPLOYEES": "Select Employees",
 		"TIME_OFF_SETTINGS": "Time Off Settings",
+		"SELECT_HOLIDAY_NAME": "Select Holiday name", 
+		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees", 
+		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy", 
+		"ADD_A_DESCRIPTION": "Add a description",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
 			"DENIED": "Denied",
 			"ALL": "All"
 		},
+		"ACTIONS": {
+			"APPROVE_DAYS_OFF_REQUEST": "Approve Days off Request", 
+			"DENY_DAYS_OFF_REQUEST": "Deny Days off Request", 
+			"DELETE_DAYS_OFF_REQUEST": "Delete Days off Request"
+		},
 		"POLICY": {
 			"HEADER": "Time Off Policy",
+			"POLICY": "Policy",
 			"ADD_POLICY": "Add Policy",
 			"EDIT_POLICY": "Edit Policy",
 			"NAME": "Name",
 			"REQUIRES_APPROVAL": "Requires Approval",
 			"PAID": "Paid"
+		},
+		"NOTIFICATIONS": {
+			"NO_CHANGES": "No changes",
+			"STATUS_SET_APPROVED": "You successfully set the days off request status to approved.",
+			"ERR_SET_STATUS": "Unable to set days off request status.",
+			"APPROVED_NO_CHANGES": "The days off request status is already set to approved",
+			"RECORD_CREATED": "Time off record {{this.timeOffRequest.description}} successfully created!",
+			"REQUEST_DENIED": "You successfully set the days off request status to denied",
+			"DENIED_NO_CHANGES": "The days off request status is already set to denied",
+			"REQUEST_DELETED": "Days off request successfully deleted",
+			"ERR_LOAD_RECORDS": "Unable to load time off records",
+			"ERR_DELETE_REQUEST": "Unable to delete Days off request",
+			"ERR_CREATE_RECORD": "Unable to create Time off record"
 		}
 	},
 	"TAGS_PAGE": {
@@ -1616,12 +1650,12 @@
 		"COLOR": "Color",
 		"NAME_CATEGORY": "Name of the category",
 		"NAME_ARTICLE": "Name of the Article",
-		"DESCRI": "Description",
 		"ADD_BASE": "Add Knowledge Base",
 		"MANAGE_BASE": "Manage Knowledge Base",
 		"NAME_OF_THE_BASE": "Name of the base",
 		"REMOVE_CATEGORY": "Remove Category",
-		"REMOVE_BASE": "Remove Base"
+		"REMOVE_BASE": "Remove Base",
+		"CLEAR": "Clear"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "About"

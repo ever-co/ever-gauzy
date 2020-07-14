@@ -6,9 +6,10 @@
   width: 100%;
   border: none;
   padding: 0;
+  margin-top: 2rem;
 
   &-filter {
-    padding-bottom: 1rem;
+    padding-bottom: 1.5rem;
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
@@ -82,6 +83,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    margin: 0.6rem 0;
 
     &-content {
       display: flex;
@@ -91,6 +93,23 @@
       width: 49%;
     }
   }
+  &-block-criterion {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+
+    &-card {
+      border: 1px #e4e9f2 solid;
+      margin: 0.2rem;
+      padding: 0.4rem;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
   &-block-update {
     color: #8f9bb3;
     font-size: 12px;
@@ -98,5 +117,20 @@
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
+
+    .icons {
+      font-size: 1.15rem;
+      cursor: pointer !important;
+    }
+
+    .enabled {
+      pointer-events: visible;
+      color: #222b45 !important;
+    }
+
+    .disabled {
+      color: rgba(143, 155, 179, 0.48) !important;
+      pointer-events: none;
+    }
   }
 }

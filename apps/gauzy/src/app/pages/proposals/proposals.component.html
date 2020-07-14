@@ -91,7 +91,7 @@
 	</button>
 
 	<button
-		*ngIf="proposalStatus"
+		*ngIf="proposalStatus && dataLayoutStyle === 'TABLE'"
 		nbButton
 		(click)="
 			proposalStatus == 'SENT'

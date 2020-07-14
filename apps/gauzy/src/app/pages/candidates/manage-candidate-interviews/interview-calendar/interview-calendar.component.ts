@@ -32,7 +32,6 @@ import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/
 export class InterviewCalendarComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;

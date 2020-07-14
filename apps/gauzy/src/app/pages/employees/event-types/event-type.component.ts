@@ -1,8 +1,13 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { IEventType, Tag } from '@gauzy/models';
-import { ActivatedRoute } from '@angular/router';
+import { IEventType, Tag, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -13,6 +18,7 @@ import { EventTypeService } from '../../../@core/services/event-type.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { ComponentEnum } from '../../../@core/constants/layout.constants';
 
 export interface EventTypeViewModel {
 	title: string;
@@ -25,28 +31,25 @@ export interface EventTypeViewModel {
 	durationUnit: string;
 	tags: Tag[];
 }
-
-interface SelectedRowModel {
-	data: EventTypeViewModel;
-	isSelected: boolean;
-	selected: EventTypeViewModel[];
-	source: LocalDataSource;
-}
-
 @Component({
-	templateUrl: './event-type.component.html'
+	templateUrl: './event-type.component.html',
+	styleUrls: ['event-type.component.scss']
 })
 export class EventTypeComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
-	selectedEventType: SelectedRowModel;
+	selectedEventType: EventTypeViewModel;
+	eventTypeData;
 	showTable: boolean;
 	selectedEmployeeId: string;
 	employeeName: string;
 	_selectedOrganizationId: string;
 	tags?: Tag[];
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	@ViewChild('eventTypesTable') eventTypesTable;
 
@@ -94,15 +97,14 @@ export class EventTypeComponent extends TranslationBaseComponent
 		private eventTypeService: EventTypeService,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
-
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employee) => {
@@ -150,6 +152,27 @@ export class EventTypeComponent extends TranslationBaseComponent
 				if (params.get('openAddDialog')) {
 					this.openAddEventTypeDialog();
 				}
+			});
+
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EVENT_TYPES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
 			});
 	}
 
@@ -215,6 +238,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 						)
 				)
 			);
+			this.eventTypeData = eventTypeVM;
 			this.sourceSmartTable.load(eventTypeVM);
 			this.showTable = true;
 		} catch (error) {
@@ -241,6 +265,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 			description: formData.description,
 			duration: formData.duration,
 			durationUnit: formData.durationUnit,
+			employee: formData.employee,
 			isActive: formData.isActive,
 			tags: this.tags
 		};
@@ -297,11 +322,17 @@ export class EventTypeComponent extends TranslationBaseComponent
 		return this.showTable;
 	}
 
-	openEditEventTypeDialog() {
+	openEditEventTypeDialog(selectedItem?: EventTypeViewModel) {
+		if (selectedItem) {
+			this.selectEventType({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(EventTypeMutationComponent, {
 				context: {
-					eventType: this.selectedEventType.data
+					eventType: this.selectedEventType
 				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
@@ -352,11 +383,22 @@ export class EventTypeComponent extends TranslationBaseComponent
 			});
 	}
 
-	selectEventType(ev) {
-		this.selectedEventType = ev;
+	selectEventType({ isSelected, data }) {
+		const selectedEventType = isSelected ? data : null;
+		if (this.eventTypesTable) {
+			this.eventTypesTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedEventType = selectedEventType;
 	}
 
-	async deleteEventType() {
+	async deleteEventType(selectedItem?: EventTypeViewModel) {
+		if (selectedItem) {
+			this.selectEventType({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -370,7 +412,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.eventTypeService.delete(
-							this.selectedEventType.data.id
+							this.selectedEventType.id
 						);
 
 						this.toastrService.primary(

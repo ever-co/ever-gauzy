@@ -3,9 +3,6 @@ import { Component } from '@angular/core';
 @Component({
 	selector: 'ga-interview-criterions',
 	template: `
-		<h5 id="criterions">
-			{{ 'CANDIDATES_PAGE.CRITERIONS.CANDIDATE_CRITERIONS' | translate }}
-		</h5>
 		<div class="add-criterion">
 			<ga-candidate-technologies
 				class="add-criterion-card"
