@@ -60,6 +60,7 @@ import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/emplo
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { SkillsService } from '../../@core/services/skills.service';
 import { CKEditorModule } from 'ng2-ckeditor';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -127,7 +128,8 @@ const COMPONENTS = [
 		SkillsInputModule,
 		EmployeeLocationModule,
 		EmployeeRatesModule,
-		CKEditorModule
+		CKEditorModule,
+		CardGridModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

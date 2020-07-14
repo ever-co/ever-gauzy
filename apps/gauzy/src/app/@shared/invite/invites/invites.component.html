@@ -1,9 +1,16 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
-		<h4>
-			{{ 'INVITE_PAGE.' + invitationType + '.MANAGE' | translate }}
-			{{ organizationName }}
-		</h4>
+	<nb-card-header class="header-selector-wrapper">
+		<div>
+			<h4>
+				{{ 'INVITE_PAGE.' + invitationType + '.MANAGE' | translate }}
+				{{ organizationName }}
+			</h4>
+		</div>
+		<div>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<ngx-back-navigation class="d-block"></ngx-back-navigation>
@@ -12,41 +19,12 @@
 				<nb-icon class="mr-1" icon="email-outline"></nb-icon
 				>{{ 'BUTTONS.INVITE' | translate }}
 			</button>
-
-			<button
-				nbButton
-				[disabled]="!selectedInvite"
-				status="success"
-				(click)="copyToClipboard()"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="link-2-outline"></nb-icon
-				>{{ 'BUTTONS.COPY_LINK' | translate }}
-			</button>
-
-			<button
-				nbButton
-				[disabled]="!selectedInvite"
-				status="warning"
-				(click)="resendInvite()"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="flip-2-outline"></nb-icon
-				>{{ 'BUTTONS.RESEND' | translate }}
-			</button>
-
-			<button
-				nbButton
-				[disabled]="!selectedInvite"
-				status="danger"
-				(click)="deleteInvite()"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-				>{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 		<ng2-smart-table
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			class="employees-table"
 			style="cursor: pointer;"
 			[settings]="settingsSmartTable"
@@ -55,5 +33,52 @@
 			#employeesTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			[settings]="settingsSmartTable"
+			[source]="manageInvites"
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		[disabled]="!selectedItem && disableButton"
+		status="success"
+		(click)="copyToClipboard(selectedItem)"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="link-2-outline"></nb-icon
+		>{{ 'BUTTONS.COPY_LINK' | translate }}
+	</button>
+
+	<button
+		nbButton
+		[disabled]="!selectedItem && disableButton"
+		status="warning"
+		(click)="resendInvite(selectedItem)"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="flip-2-outline"></nb-icon
+		>{{ 'BUTTONS.RESEND' | translate }}
+	</button>
+
+	<button
+		nbButton
+		[disabled]="!selectedItem && disableButton"
+		status="danger"
+		(click)="deleteInvite(selectedItem)"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+		>{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

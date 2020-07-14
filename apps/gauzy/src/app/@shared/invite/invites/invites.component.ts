@@ -1,5 +1,10 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { InvitationTypeEnum, RolesEnum, PermissionsEnum } from '@gauzy/models';
+import {
+	InvitationTypeEnum,
+	RolesEnum,
+	PermissionsEnum,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -15,6 +20,8 @@ import { ResendConfirmationComponent } from './resend-confirmation/resend-confir
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { ComponentEnum } from '../../../@core/constants/layout.constants';
+import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 
 interface InviteViewModel {
 	email: string;
@@ -32,23 +39,24 @@ interface InviteViewModel {
 
 @Component({
 	selector: 'ga-invites',
-	templateUrl: './invites.component.html'
+	templateUrl: './invites.component.html',
+	styleUrls: ['invites.component.scss']
 })
 export class InvitesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input()
 	invitationType: InvitationTypeEnum;
-
 	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedInvite: InviteViewModel;
 	selectedOrganizationId: string;
-
+	viewComponentName: ComponentEnum;
+	disableButton = true;
 	private _ngDestroy$ = new Subject<void>();
-
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	invitedName = 'Employee / User';
-
+	manageInvites: InviteViewModel[];
 	loading = true;
 
 	hasInviteEditPermission = false;
@@ -60,9 +68,11 @@ export class InvitesComponent extends TranslationBaseComponent
 		private store: Store,
 		private toastrService: NbToastrService,
 		private translate: TranslateService,
-		private inviteService: InviteService
+		private inviteService: InviteService,
+		private router: Router
 	) {
 		super(translate);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -81,23 +91,38 @@ export class InvitesComponent extends TranslationBaseComponent
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 	}
 
-	selectEmployeeTmp(ev: {
-		data: InviteViewModel;
-		isSelected: boolean;
-		selected: InviteViewModel[];
-		source: LocalDataSource;
-	}) {
-		if (ev.isSelected) {
-			this.selectedInvite = ev.data;
+	setView() {
+		this.viewComponentName = ComponentEnum.MANAGE_INVITES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+
+	selectEmployeeTmp({ isSelected, data }) {
+		const selectedInvite = isSelected ? data : null;
+		if (this.employeesTable) {
+			this.employeesTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedInvite = selectedInvite;
+		if (this.selectedInvite) {
 			const checkName = this.selectedInvite.fullName.trim();
 			this.invitedName = checkName ? checkName : 'Employee / User';
-		} else {
-			this.selectedInvite = null;
 		}
 	}
 
@@ -115,7 +140,13 @@ export class InvitesComponent extends TranslationBaseComponent
 		this.loadPage();
 	}
 
-	copyToClipboard() {
+	copyToClipboard(selectedItem?: InviteViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const textField = document.createElement('textarea');
 		textField.innerText =
 			location.origin + '/#/' + this.selectedInvite.inviteUrl;
@@ -191,7 +222,7 @@ export class InvitesComponent extends TranslationBaseComponent
 				inviteUrl: `auth/accept-invite?email=${invite.email}&token=${invite.token}`
 			});
 		}
-
+		this.manageInvites = invitesVm;
 		this.sourceSmartTable.load(invitesVm);
 
 		if (this.employeesTable) {
@@ -270,7 +301,13 @@ export class InvitesComponent extends TranslationBaseComponent
 		this.settingsSmartTable = settingsSmartTable;
 	}
 
-	async deleteInvite() {
+	async deleteInvite(selectedItem?: InviteViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -304,7 +341,13 @@ export class InvitesComponent extends TranslationBaseComponent
 			});
 	}
 
-	async resendInvite() {
+	async resendInvite(selectedItem?: InviteViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(ResendConfirmationComponent, {
 				context: {
