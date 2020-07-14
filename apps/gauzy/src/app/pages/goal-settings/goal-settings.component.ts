@@ -10,6 +10,7 @@ import { GoalSettingsService } from '../../@core/services/goal-settings.service'
 import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 import { Store } from '../../@core/services/store.service';
+import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 
 @Component({
 	selector: 'ga-goal-settings',
@@ -20,8 +21,10 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	smartTableData = new LocalDataSource();
 	smartTableSettings: object;
 	selectedTimeFrame: any = null;
+	selectedKPI: any = null;
+	selectedTab = 'Set Time Frame';
 	selectedOrganizationId: string;
-	@ViewChild('timeFrameTable') timeFrameTable;
+	@ViewChild('smartTable') smartTable;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		readonly translateService: TranslateService,
@@ -34,78 +37,129 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
-		this._loadTableSettings();
+		this._loadTableSettings(null);
 		this._applyTranslationOnSmartTable();
 		await this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
-					await this._loadTableData();
+					await this._loadTableData(null);
 				}
 			});
 	}
 
-	selectTimeFrame(ev: {
+	tabChange(e) {
+		this.selectedTab = e.tabTitle;
+		this._loadTableSettings(e.tabTitle);
+		this._applyTranslationOnSmartTable();
+		this._loadTableData(e.tabTitle);
+	}
+
+	selectRow(ev: {
 		data: any;
 		isSelected: boolean;
 		selected: any[];
 		source: LocalDataSource;
 	}) {
 		if (ev.isSelected) {
-			this.selectedTimeFrame = ev.data;
+			this.selectedTab === 'KPI'
+				? (this.selectedKPI = ev.data)
+				: (this.selectedTimeFrame = ev.data);
 		} else {
-			this.selectedTimeFrame = null;
+			this.selectedTab === 'KPI'
+				? (this.selectedKPI = null)
+				: (this.selectedTimeFrame = null);
 		}
 	}
 
-	private async _loadTableData() {
+	private async _loadTableData(tab) {
+		this.smartTableData.empty();
 		const findObj = {
 			organization: {
 				id: this.selectedOrganizationId
 			}
 		};
-		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
-			this.smartTableData.load(res.items);
-			if (this.timeFrameTable) {
-				this.timeFrameTable.grid.dataSet.willSelect = 'false';
-			}
-		});
+		if (tab === 'KPI') {
+			await this.goalSettingService.getAllKPI(findObj).then((res) => {
+				this.smartTableData.load(res.items);
+				if (this.smartTable) {
+					this.smartTable.grid.dataSet.willSelect = 'false';
+				}
+			});
+		} else {
+			await this.goalSettingService
+				.getAllTimeFrames(findObj)
+				.then((res) => {
+					this.smartTableData.load(res.items);
+					if (this.smartTable) {
+						this.smartTable.grid.dataSet.willSelect = 'false';
+					}
+				});
+		}
 	}
 
-	private _loadTableSettings() {
-		this.smartTableSettings = {
-			actions: false,
-			columns: {
-				name: {
-					title: this.getTranslation('SM_TABLE.NAME'),
-					type: 'string'
-				},
-				status: {
-					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'string',
-					filter: false
-				},
-				startDate: {
-					title: this.getTranslation('SM_TABLE.START_DATE'),
-					type: 'custom',
-					filter: false,
-					renderComponent: DateViewComponent
-				},
-				endDate: {
-					title: this.getTranslation('SM_TABLE.END_DATE'),
-					type: 'custom',
-					filter: false,
-					renderComponent: DateViewComponent
+	private _loadTableSettings(tab) {
+		if (tab === 'KPI') {
+			this.smartTableSettings = {
+				actions: false,
+				columns: {
+					name: {
+						title: this.getTranslation('SM_TABLE.NAME'),
+						type: 'string'
+					},
+					currentValue: {
+						title: 'Current value',
+						type: 'number',
+						filter: false
+					},
+					targetValue: {
+						title: 'Target value',
+						type: 'number',
+						filter: false
+					},
+					updatedAt: {
+						title: 'Last Updated',
+						type: 'custom',
+						filter: false,
+						renderComponent: DateViewComponent
+					}
 				}
-			}
-		};
+			};
+		} else {
+			this.smartTableSettings = {
+				actions: false,
+				columns: {
+					name: {
+						title: this.getTranslation('SM_TABLE.NAME'),
+						type: 'string'
+					},
+					status: {
+						title: this.getTranslation('SM_TABLE.STATUS'),
+						type: 'string',
+						filter: false
+					},
+					startDate: {
+						title: this.getTranslation('SM_TABLE.START_DATE'),
+						type: 'custom',
+						filter: false,
+						renderComponent: DateViewComponent
+					},
+					endDate: {
+						title: this.getTranslation('SM_TABLE.END_DATE'),
+						type: 'custom',
+						filter: false,
+						renderComponent: DateViewComponent
+					}
+				}
+			};
+		}
 	}
 
 	async editTimeFrame(source) {
 		if (source === 'add') {
 			this.selectedTimeFrame = null;
-			this.timeFrameTable.grid.dataSet.willSelect = 'false';
+			this.smartTable.grid.dataSet.willSelect = 'false';
 		}
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
 			context: {
@@ -116,8 +170,26 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			this._loadTableSettings();
-			await this._loadTableData();
+			this._loadTableSettings(null);
+			await this._loadTableData(null);
+		}
+	}
+
+	async editKPI(source) {
+		if (source === 'add') {
+			this.selectedKPI = null;
+			this.smartTable.grid.dataSet.willSelect = 'false';
+		}
+		const kpiDialog = this.dialogService.open(EditKpiComponent, {
+			context: {
+				selectedKPI: this.selectedKPI,
+				type: source
+			}
+		});
+		const response = kpiDialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			this._loadTableSettings('KPI');
+			await this._loadTableData('KPI');
 		}
 	}
 
@@ -135,7 +207,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		if (!!response) {
 			if (response === 'yes') {
 				await this.goalSettingService
-					.delete(this.selectedTimeFrame.id)
+					.deleteTimeFrame(this.selectedTimeFrame.id)
 					.then(async (res) => {
 						if (res) {
 							this.toastrService.danger(
@@ -144,8 +216,37 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 								),
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
-							this._loadTableSettings();
-							await this._loadTableData();
+							this._loadTableSettings(null);
+							await this._loadTableData(null);
+						}
+					});
+			}
+		}
+	}
+
+	async deleteKPI() {
+		const dialog = this.dialogService.open(AlertModalComponent, {
+			context: {
+				alertOptions: {
+					title: 'Delete KPI',
+					message: 'Are you sure? This action is irreversible.',
+					status: 'danger'
+				}
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			if (response === 'yes') {
+				await this.goalSettingService
+					.deleteKPI(this.selectedKPI.id)
+					.then(async (res) => {
+						if (res) {
+							this.toastrService.danger(
+								'KPI Deleted',
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
+							);
+							this._loadTableSettings('KPI');
+							await this._loadTableData('KPI');
 						}
 					});
 			}
@@ -156,7 +257,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		this.translateService.onLangChange
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				this._loadTableSettings();
+				this._loadTableSettings(null);
 			});
 	}
 
