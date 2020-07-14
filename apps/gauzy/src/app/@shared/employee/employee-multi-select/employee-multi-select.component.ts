@@ -7,7 +7,7 @@ import {
 	forwardRef
 } from '@angular/core';
 import { Employee } from '@gauzy/models';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 
 @Component({
 	selector: 'ga-employee-multi-select',
@@ -28,6 +28,13 @@ export class EmployeeSelectComponent implements OnInit {
 	@Input() label = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
 	@Input() disabled = false;
 	@Input() placeholder = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
+	select: FormControl = new FormControl();
+	@Input()
+	public set reset(value: boolean | null) {
+		if (value) {
+			this.select.reset();
+		}
+	}
 
 	employees: Employee[];
 	private _allEmployees: Employee[];
