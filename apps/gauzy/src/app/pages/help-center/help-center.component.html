@@ -34,9 +34,8 @@
 						class="search-input"
 						[formControl]="search"
 						placeholder="Search"
+						value="inputValue"
 						type="text"
-						size="24"
-						maxlength="18"
 						nbInput
 					/>
 				</div>
@@ -47,15 +46,23 @@
 						[label]="false"
 						[allEmployees]="employees"
 						(selectedChange)="onEmployeeSelected($event)"
-						[selectedEmployeeIds]="selectedEmployeeIds"
+						[reset]="isResetSelect"
 					>
 					</ga-employee-multi-select>
 				</div>
+				<button
+					status="danger"
+					class="clear-button"
+					(click)="clearFilters()"
+					nbButton
+				>
+					{{ 'HELP_PAGE.CLEAR' | translate }}
+				</button>
 			</div>
 		</nb-card>
 		<nb-card
 			class="cards"
-			*ngFor="let article of this.articleList; let i = index"
+			*ngFor="let article of this.filteredArticles; let i = index"
 		>
 			<div class="main-article" (click)="openArticle(i)">
 				<div class="row-name">

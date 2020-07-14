@@ -1,6 +1,3 @@
-<h5>
-	{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWS' | translate }}
-</h5>
 <nb-card-body class="card">
 	<div class="card-filter">
 		<input
@@ -96,6 +93,24 @@
 					<span>
 						updated: {{ interview?.updatedAt | date: 'short' }}
 					</span>
+					<nb-icon
+						(click)="editInterview(interview.id)"
+						icon="edit"
+						class="icons ml-3"
+						[ngClass]="{
+							enabled: !isPastInterview(interview),
+							disabled: isPastInterview(interview)
+						}"
+					></nb-icon>
+					<nb-icon
+						(click)="removeInterview(interview.id)"
+						icon="close"
+						class="icons ml-2"
+						[ngClass]="{
+							enabled: !isPastInterview(interview),
+							disabled: isPastInterview(interview)
+						}"
+					></nb-icon>
 				</div>
 				<div class="body-block">
 					<div *ngIf="interview?.location" class="body-block-content">
@@ -105,6 +120,20 @@
 					<div class="body-block-content" *ngIf="interview?.note">
 						<nb-icon icon="info-outline"></nb-icon>
 						<span class="ml-2">{{ interview?.note }}</span>
+					</div>
+				</div>
+				<div class="body-block-criterion">
+					<div
+						*ngFor="let tech of interview?.technologies"
+						class="body-block-criterion-card"
+					>
+						{{ tech.name }}
+					</div>
+					<div
+						*ngFor="let qual of interview?.personalQualities"
+						class="body-block-criterion-card"
+					>
+						{{ qual.name }}
 					</div>
 				</div>
 			</nb-accordion-item-body>

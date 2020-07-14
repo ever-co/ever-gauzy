@@ -23,6 +23,7 @@ import { EventTypeService } from '../../../@core/services/event-type.service';
 import { UserFormsModule } from '../../../@shared/user/forms/user-forms.module';
 import { TagsColorInputModule } from '../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
+import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -46,6 +47,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSpinnerModule,
 		EventTypeMutationModule,
 		UserFormsModule,
+		CardGridModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

@@ -103,7 +103,7 @@ export const updateDefaultKeyResultProgress = async (
 		relations: ['updates']
 	});
 	keyResults.forEach(async (keyResult) => {
-		const sortedUpdates: KeyResultUpdate[] = keyResult.updates.sort(
+		const sortedUpdates: KeyResultUpdate[] = [...keyResult.updates].sort(
 			(a, b) => {
 				return compareAsc(new Date(a.createdAt), new Date(b.createdAt));
 			}
