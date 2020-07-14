@@ -433,13 +433,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 	async deleteTimeSpan(newTime: IDateRange, timeLog: TimeLog) {
 		const { start, end } = newTime;
 
-		console.log({
-			start,
-			end,
-			startedAt: timeLog.startedAt,
-			stoppedAt: timeLog.stoppedAt
-		});
-
 		if (
 			moment(timeLog.startedAt).isBetween(
 				moment(start),

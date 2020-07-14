@@ -8,6 +8,7 @@ import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
 import { TimeLogService } from '../time-log/time-log.service';
+import { generateTimeSlots } from './utils';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
@@ -151,67 +152,31 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			.execute();
 	}
 
-	rangeDelete(employeeId: string, start: Date, stop: Date) {
+	async rangeDelete(employeeId: string, start: Date, stop: Date) {
 		const mStart = moment(start);
 		mStart.set(
 			'minute',
 			mStart.get('minute') - (mStart.get('minute') % 10)
 		);
+		mStart.set('second', 0);
+		mStart.set('millisecond', 0);
 
 		const mEnd = moment(stop);
-		mEnd.set('minute', mEnd.get('minute') + (mEnd.get('minute') % 10));
+		mEnd.set('minute', mEnd.get('minute') + (mEnd.get('minute') % 10) - 1);
+		mEnd.set('second', 59);
+		mEnd.set('millisecond', 0);
 
-		return this.timeSlotRepository.delete({
+		const deleteResult = await this.timeSlotRepository.delete({
 			employeeId: employeeId,
 			startedAt: Between(mStart.toDate(), mEnd.toDate())
 		});
+
+		console.log(deleteResult);
+		return deleteResult;
 	}
 
 	generateTimeSlots(start: Date, end: Date) {
-		let mStart = moment(start);
-		const mEnd = moment(end);
-		const slots = [];
-		while (mStart.isBefore(mEnd)) {
-			let tempEnd: moment.Moment;
-			let duration = 0;
-
-			/* Check start time is Rounded 10 minutes slot I.E 10:20, false if 10:14 */
-			if (mStart.get('minute') % 10 === 0) {
-				tempEnd = mStart.clone().add(10, 'minute');
-				if (tempEnd.isBefore(mEnd)) {
-					duration = tempEnd.diff(mStart, 'seconds');
-				} else {
-					duration = mEnd.diff(mStart, 'seconds');
-				}
-			} else {
-				/* Calculate duearion for without round time IE. 10:14-10:20 */
-				const tempStart = mStart
-					.clone()
-					.set(
-						'minute',
-						mStart.get('minute') - (mStart.minutes() % 10)
-					);
-
-				/* Added 10 min for next slot */
-				tempEnd = tempStart.clone().add(10, 'minute');
-
-				if (mEnd.isBefore(tempEnd)) {
-					duration = mEnd.diff(mStart, 'seconds');
-				} else {
-					duration = tempEnd.diff(mStart, 'seconds');
-				}
-				mStart = tempStart;
-			}
-
-			slots.push({
-				startedAt: mStart.toDate(),
-				stoppedAt: tempEnd.toDate(),
-				duration: Math.abs(duration)
-			});
-
-			mStart = tempEnd.clone();
-		}
-		return slots;
+		return generateTimeSlots(start, end);
 	}
 
 	/*
@@ -241,12 +206,17 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			where: { id: In(ids) },
 			relations: ['timeLogs']
 		});
-		console.log({ timeSlots });
+
 		let promises = [];
 		timeSlots.forEach((timeSlot) => {
 			if (timeSlot.timeLogs.length > 0) {
 				const deleteSlotPromise = timeSlot.timeLogs.map(
 					async (timeLog) => {
+						console.log({
+							start: timeSlot.startedAt,
+							end: timeSlot.stoppedAt
+						});
+
 						await this.timeLogService.deleteTimeSpan(
 							{
 								start: timeSlot.startedAt,

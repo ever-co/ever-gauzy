@@ -40,6 +40,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	screenshotsUrls: { thumbUrl: string; fullUrl: string }[] = [];
 	selectedIdsCount = 0;
 	allSelected = false;
+	orignalTimeSlots: TimeSlot[];
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -100,59 +101,8 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		this.timesheetService
 			.getTimeSlots(request)
 			.then((timeSlots) => {
-				this.selectedIds = {};
-				if (this.checkAllCheckbox) {
-					this.checkAllCheckbox.checked = false;
-					this.checkAllCheckbox.indeterminate = false;
-				}
-				this.timeSlots = _.chain(timeSlots)
-					.map((timeSlot) => {
-						this.selectedIds[timeSlot.id] = false;
-						timeSlot.localStartedAt = toLocal(
-							timeSlot.startedAt
-						).toDate();
-						timeSlot.localStoppedAt = toLocal(
-							timeSlot.stoppedAt
-						).toDate();
-						this.screenshotsUrls = this.screenshotsUrls.concat(
-							timeSlot.screenshots.map((screenshot) => ({
-								thumbUrl: screenshot.thumbUrl,
-								fullUrl: screenshot.fullUrl
-							}))
-						);
-						return timeSlot;
-					})
-					.groupBy((timeSlot) =>
-						moment(timeSlot.localStartedAt).format('HH')
-					)
-					.mapObject(
-						(hourTimeSlots: TimeSlot[], hour): ScreenshotMap => {
-							const byMinutes = _.indexBy(
-								hourTimeSlots,
-								(timeSlot) =>
-									moment(timeSlot.localStartedAt).format('mm')
-							);
-							timeSlots = [
-								'00',
-								'10',
-								'20',
-								'30',
-								'40',
-								'50'
-							].map((key) => byMinutes[key] || null);
-							const time = moment()
-								.set('hour', hour)
-								.set('minute', 0);
-							const startTime = time.format('HH:mm');
-							const endTime = time.add(1, 'hour').format('HH:mm');
-							return { startTime, endTime, timeSlots };
-						}
-					)
-					.values()
-					.sortBy(({ startTime }) =>
-						moment(startTime, 'HH:mm').toDate().getTime()
-					)
-					.value();
+				this.orignalTimeSlots = timeSlots;
+				this.timeSlots = this.groupTimeSlots(timeSlots);
 			})
 			.finally(() => (this.loading = false));
 	}
@@ -178,11 +128,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			this.selectedIds[slotId] = !this.selectedIds[slotId];
 		}
 
-		this.selectedIdsCount = Object.values(this.selectedIds).filter(
-			(val) => val === true
-		).length;
-		this.allSelected =
-			this.selectedIdsCount === Object.values(this.selectedIds).length;
+		this.updateSelections();
 	}
 
 	toggleAllSelecte() {
@@ -191,8 +137,15 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 				this.selectedIds[key] = !this.allSelected;
 			}
 		}
-		this.toggleSelect();
-		//this.allSelected = !this.allSelected;
+		this.updateSelections();
+	}
+
+	updateSelections() {
+		this.selectedIdsCount = Object.values(this.selectedIds).filter(
+			(val) => val === true
+		).length;
+		this.allSelected =
+			this.selectedIdsCount === Object.values(this.selectedIds).length;
 	}
 
 	deleteSlot(timeSlot) {
@@ -203,7 +156,15 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 				if (type === 'ok') {
 					this.timesheetService
 						.deleteTimeSlots([timeSlot.id])
-						.then(() => {});
+						.then(() => {
+							this.orignalTimeSlots = this.orignalTimeSlots.filter(
+								(orignalTimeSlot) =>
+									timeSlot.id !== orignalTimeSlot.id
+							);
+							this.timeSlots = this.groupTimeSlots(
+								this.orignalTimeSlots
+							);
+						});
 				}
 			});
 	}
@@ -219,10 +180,61 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						.keys()
 						.values()
 						.value();
-					this.timesheetService.deleteTimeSlots(ids).then(() => {});
+					this.timesheetService.deleteTimeSlots(ids).then(() => {
+						this.orignalTimeSlots = this.orignalTimeSlots.filter(
+							(orignalTimeSlot) =>
+								ids.indexOf(orignalTimeSlot.id) === -1
+						);
+						this.timeSlots = this.groupTimeSlots(
+							this.orignalTimeSlots
+						);
+					});
 				}
 			});
 	}
 
 	ngOnDestroy(): void {}
+
+	private groupTimeSlots(timeSlots: TimeSlot[]) {
+		this.selectedIds = {};
+		if (this.checkAllCheckbox) {
+			this.checkAllCheckbox.checked = false;
+			this.checkAllCheckbox.indeterminate = false;
+		}
+		const groupTimeSlots = _.chain(timeSlots)
+			.map((timeSlot) => {
+				this.selectedIds[timeSlot.id] = false;
+				timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
+				timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
+				this.screenshotsUrls = this.screenshotsUrls.concat(
+					timeSlot.screenshots.map((screenshot) => ({
+						thumbUrl: screenshot.thumbUrl,
+						fullUrl: screenshot.fullUrl
+					}))
+				);
+				return timeSlot;
+			})
+			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))
+			.mapObject(
+				(hourTimeSlots: TimeSlot[], hour): ScreenshotMap => {
+					const byMinutes = _.indexBy(hourTimeSlots, (timeSlot) =>
+						moment(timeSlot.localStartedAt).format('mm')
+					);
+					timeSlots = ['00', '10', '20', '30', '40', '50'].map(
+						(key) => byMinutes[key] || null
+					);
+					const time = moment().set('hour', hour).set('minute', 0);
+					const startTime = time.format('HH:mm');
+					const endTime = time.add(1, 'hour').format('HH:mm');
+					return { startTime, endTime, timeSlots };
+				}
+			)
+			.values()
+			.sortBy(({ startTime }) =>
+				moment(startTime, 'HH:mm').toDate().getTime()
+			)
+			.value();
+		this.updateSelections();
+		return groupTimeSlots;
+	}
 }
