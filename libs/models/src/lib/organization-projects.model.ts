@@ -27,6 +27,12 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	tasks?: Task[];
 	tenant: ITenant;
 	organizationSprints?: OrganizationSprint[];
+  taskListType:string;
+}
+
+export enum TaskListTypeEnum {
+  GRID = 'GRID',
+  SPRINT = 'SPRINT'
 }
 
 export interface OrganizationProjectsFindInput extends IBaseEntityModel {
