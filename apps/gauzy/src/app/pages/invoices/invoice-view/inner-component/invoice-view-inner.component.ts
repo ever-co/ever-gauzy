@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Invoice, Employee, InvoiceTypeEnum } from '@gauzy/models';
-
 import { EmployeesService } from '../../../../@core/services/employees.service';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
@@ -50,6 +49,9 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 		this.settingsSmartTable = {
 			actions: false,
 			hideSubHeader: true,
+			pager: {
+				display: false
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('INVOICES_PAGE.NAME'),

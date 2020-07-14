@@ -92,10 +92,11 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true, type: 'numeric' })
 	totalValue?: number;
 
-	@ApiPropertyOptional({ type: Boolean })
-	@IsBoolean()
-	@Column({ nullable: true })
-	sentStatus?: boolean;
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column()
+	status?: string;
 
 	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()
