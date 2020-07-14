@@ -32,6 +32,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewersNumber: number;
 	form: FormGroup;
 	showPastCheckbox: boolean;
+	loading: boolean;
 	constructor(
 		private dialogService: NbDialogService,
 		translate: TranslateService,
@@ -76,6 +77,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	private async loadInterview() {
+		this.loading = true;
 		const res = await this.candidateInterviewService.getAll(
 			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
 			{ candidateId: this.candidateId }
@@ -156,6 +158,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				});
 			});
 			interview.employees = employees;
+			this.loading = false;
 		}
 	}
 	isPastInterview(interview: ICandidateInterview) {

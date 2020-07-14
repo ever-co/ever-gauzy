@@ -9,7 +9,6 @@ import {
 	ICandidateFeedback
 } from '@gauzy/models';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 
 @Component({
 	selector: 'ga-criterions-rating-chart',
@@ -25,6 +24,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 	feedbacks: ICandidateFeedback[];
 	@Input() candidates: Candidate[];
 	@Input() interviewList: ICandidateInterview[];
+	@Input() employeeList: Employee[];
 	data: any;
 	options: any;
 	currentInterview: ICandidateInterview;
@@ -34,8 +34,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 
 	constructor(
 		private themeService: NbThemeService,
-		private candidateFeedbacksService: CandidateFeedbacksService,
-		private employeesService: EmployeesService
+		private candidateFeedbacksService: CandidateFeedbacksService
 	) {}
 
 	async onMembersSelected(id: string) {
@@ -137,14 +136,14 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 			});
 			for (const interviewer of this.currentInterview.interviewers) {
 				allIds.push(interviewer.employeeId);
-				const employee = await this.employeesService.getEmployeeById(
-					interviewer.employeeId,
-					['user']
-				);
-				if (employee) {
-					interviewer.employeeName = employee.user.name;
-					interviewer.employeeImageUrl = employee.user.imageUrl;
-					this.currentEmployee.push(employee);
+				if (this.employeeList) {
+					this.employeeList.forEach((item) => {
+						if (interviewer.employeeId === item.id) {
+							interviewer.employeeName = item.user.name;
+							interviewer.employeeImageUrl = item.user.imageUrl;
+							this.currentEmployee.push(item);
+						}
+					});
 				}
 			}
 			this.disabledIds = allIds.filter((x) => !allFbIds.includes(x));

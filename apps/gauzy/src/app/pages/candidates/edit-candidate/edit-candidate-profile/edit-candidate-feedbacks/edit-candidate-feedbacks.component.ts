@@ -5,7 +5,7 @@ import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 import {
 	ICandidateFeedback,
@@ -50,6 +50,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	qualRating = null;
 	techRating = null;
 	isCancel = false;
+	loading: boolean;
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -92,6 +93,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 
 	private async loadFeedbacks(interviewId?: string) {
+		this.loading = true;
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer', 'criterionsRating'],
 			{ candidateId: this.candidateId }
@@ -187,22 +189,25 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		return res;
 	}
 	async loadInterviews(feedbackList: ICandidateFeedback[]) {
-		for (const item of feedbackList) {
-			if (item.interviewId) {
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		const employeeList = items;
+		for (const feedback of feedbackList) {
+			if (feedback.interviewId) {
 				const res = await this.candidateInterviewService.findById(
-					item.interviewId
+					feedback.interviewId
 				);
 				if (res) {
-					item.interviewTitle = res.title;
-					const result = await this.employeesService.getEmployeeById(
-						item.interviewer.employeeId,
-						['user']
-					);
-					if (result) {
-						item.interviewer.employeeImageUrl =
-							result.user.imageUrl;
-						item.interviewer.employeeName = result.user.name;
-					}
+					feedback.interviewTitle = res.title;
+					employeeList.forEach((item) => {
+						if (feedback.interviewer.employeeId === item.id) {
+							feedback.interviewer.employeeImageUrl =
+								item.user.imageUrl;
+							feedback.interviewer.employeeName = item.user.name;
+						}
+					});
 					this.allInterviews.push(res); //for filter
 				}
 			}
@@ -211,6 +216,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.allInterviews = this.allInterviews.filter(
 			(obj) => !uniq[obj.id] && (uniq[obj.id] = true)
 		);
+		this.loading = false;
 	}
 
 	async editFeedback(index: number, id: string) {

@@ -80,6 +80,7 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS'),
 				this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`)
 			);
+			this.loadInterviews();
 		}
 	}
 	async loadInterviews() {

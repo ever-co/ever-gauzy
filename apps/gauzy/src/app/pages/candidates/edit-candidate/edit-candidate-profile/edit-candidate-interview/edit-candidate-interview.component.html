@@ -21,82 +21,88 @@
 						| translate
 				}}</strong>
 			</div>
-			<nb-card
-				*ngFor="let interview of interviewList; let i = index"
-				class="ribbon-wrap"
+			<div
+				[nbSpinner]="loading"
+				nbSpinnerSize="giant"
+				nbSpinnerStatus="primary"
 			>
-				<div *ngIf="isPastInterview(interview)" class="ribbon">
-					<span>Past</span>
-				</div>
-				<nb-card-body class="interviews-card">
-					<div class="interviews-line">
-						<div>
-							<nb-icon icon="calendar-outline"></nb-icon>
-							<strong> {{ interview?.title }} </strong>
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
-									| translate
-							}}
-							<strong
+				<nb-card
+					*ngFor="let interview of interviewList; let i = index"
+					class="ribbon-wrap"
+				>
+					<div *ngIf="isPastInterview(interview)" class="ribbon">
+						<span>Past</span>
+					</div>
+					<nb-card-body class="interviews-card">
+						<div class="interviews-line">
+							<div>
+								<nb-icon icon="calendar-outline"></nb-icon>
+								<strong> {{ interview?.title }} </strong>
+								{{
+									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
+										| translate
+								}}
+								<strong
+									>{{
+										interview?.startTime | date: 'fullDate'
+									}} </strong
 								>{{
-									interview?.startTime | date: 'fullDate'
-								}} </strong
-							>{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
-									| translate
-							}}
-							<strong>{{
-								interview?.startTime | date: 'shortTime'
-							}}</strong
-							>-
-							<strong>{{
-								interview?.endTime | date: 'shortTime'
-							}}</strong>
-						</div>
-						<div class="image-wrap">
-							<span
-								*ngFor="let employee of interview.employees"
-								nbTooltip=" {{ employee?.user?.firstName }}
+									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
+										| translate
+								}}
+								<strong>{{
+									interview?.startTime | date: 'shortTime'
+								}}</strong
+								>-
+								<strong>{{
+									interview?.endTime | date: 'shortTime'
+								}}</strong>
+							</div>
+							<div class="image-wrap">
+								<span
+									*ngFor="let employee of interview.employees"
+									nbTooltip=" {{ employee?.user?.firstName }}
 					{{ employee?.user?.lastName }}"
-								nbTooltipPlacement="top"
-							>
-								<img
-									class="candidate-image-small"
-									[src]="employee?.user?.imageUrl"
-									alt="employee Avatar"
-								/>
-							</span>
+									nbTooltipPlacement="top"
+								>
+									<img
+										class="candidate-image-small"
+										[src]="employee?.user?.imageUrl"
+										alt="employee Avatar"
+									/>
+								</span>
+							</div>
 						</div>
-					</div>
-					<div class="float-right icon-wrap">
-						<nb-icon
-							(click)="addInterviewFeedback(interview.id)"
-							[ngClass]="{
-								icons: isPastInterview(interview),
-								disabled: !isPastInterview(interview)
-							}"
-							icon="message-square-outline"
-						></nb-icon>
+						<div class="float-right icon-wrap">
+							<nb-icon
+								(click)="addInterviewFeedback(interview.id)"
+								[ngClass]="{
+									icons: isPastInterview(interview),
+									disabled: !isPastInterview(interview)
+								}"
+								icon="message-square-outline"
+							></nb-icon>
 
-						<nb-icon
-							(click)="editInterview(interview.id)"
-							[ngClass]="{
-								icons: !isPastInterview(interview),
-								disabled: isPastInterview(interview)
-							}"
-							icon="edit"
-						></nb-icon>
-						<nb-icon
-							(click)="removeInterview(interview.id)"
-							[ngClass]="{
-								icons: !isPastInterview(interview),
-								disabled: isPastInterview(interview)
-							}"
-							icon="close"
-						></nb-icon>
-					</div>
-				</nb-card-body>
-			</nb-card>
+							<nb-icon
+								(click)="editInterview(interview.id)"
+								[ngClass]="{
+									icons: !isPastInterview(interview),
+									disabled: isPastInterview(interview)
+								}"
+								icon="edit"
+							></nb-icon>
+							<nb-icon
+								(click)="removeInterview(interview.id)"
+								[ngClass]="{
+									icons: !isPastInterview(interview),
+									disabled: isPastInterview(interview)
+								}"
+								icon="close"
+							></nb-icon>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
 		</div>
 	</nb-card-body>
 </nb-card>
