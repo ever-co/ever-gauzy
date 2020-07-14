@@ -140,7 +140,7 @@ function createSetupWindow(value) {
 	});
 	win2.loadURL(launchPath);
 	if (value) {
-		// win2.hide();
+		win2.hide();
 	}
 }
 
