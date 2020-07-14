@@ -70,6 +70,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 			});
 		this.loadInterviews();
 	}
+
 	async loadInterviews() {
 		const res = await this.candidateInterviewService.getAll([
 			'interviewers'

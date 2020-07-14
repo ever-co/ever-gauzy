@@ -1,11 +1,10 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 
 @Component({
 	selector: 'ga-interviewer-assessment-chart',
@@ -18,17 +17,17 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 	interviews = [];
 	@Input() candidates: Candidate[];
 	@Input() interviewList: Candidate[];
+	@Input() employeeList: Employee[];
 	data: any;
 	options: any;
 	currentInterview: ICandidateInterview;
 	backgroundColor: string[] = [];
 	private _ngDestroy$ = new Subject<void>();
-	employeeList: Employee[];
+
 	constructor(
 		private themeService: NbThemeService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
-		private candidateInterviewService: CandidateInterviewService,
-		private employeesService: EmployeesService
+		private candidateInterviewService: CandidateInterviewService
 	) {}
 
 	ngOnInit() {
@@ -99,11 +98,6 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 	}
 
 	async loadData() {
-		const { items } = await this.employeesService
-			.getAll(['user'])
-			.pipe(first())
-			.toPromise();
-		this.employeeList = items;
 		for (let i = 0; i < this.candidates.length; i++) {
 			const interview = await this.candidateInterviewService.findByCandidateId(
 				this.candidates[i].id

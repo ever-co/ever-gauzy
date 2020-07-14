@@ -20,6 +20,7 @@
 					<ga-candidate-rating-chart
 						*ngIf="candidates"
 						[candidates]="candidates"
+						[employeeList]="employeeList"
 					></ga-candidate-rating-chart>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
@@ -38,6 +39,7 @@
 						*ngIf="candidates"
 						[interviewList]="interviewList"
 						[candidates]="candidates"
+						[employeeList]="employeeList"
 					></ga-interviewer-assessment-chart>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
