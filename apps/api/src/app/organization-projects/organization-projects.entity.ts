@@ -18,8 +18,8 @@ import {
 	IsBoolean
 } from 'class-validator';
 import {
-	OrganizationProjects as IOrganizationProjects,
-	CurrenciesEnum
+  OrganizationProjects as IOrganizationProjects,
+  CurrenciesEnum, TaskListTypeEnum
 } from '@gauzy/models';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Employee } from '../employee/employee.entity';
@@ -126,4 +126,9 @@ export class OrganizationProjects extends TenantBase
 	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.project)
 	@JoinColumn()
 	organizationSprints?: OrganizationSprint[];
+
+  @ApiProperty({ type: String, enum: TaskListTypeEnum })
+  @IsEnum(TaskListTypeEnum)
+  @Column({ default: TaskListTypeEnum.GRID })
+  taskListType: string;
 }
