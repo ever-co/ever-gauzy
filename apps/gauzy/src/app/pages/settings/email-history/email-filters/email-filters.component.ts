@@ -28,8 +28,7 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 
 	organizationId: string;
 
-	filters = [];
-
+	filters: { email: string; emailTemplateId: string };
 	ngOnInit() {
 		this._getAllEmailTemplates();
 		this._getEmails();
