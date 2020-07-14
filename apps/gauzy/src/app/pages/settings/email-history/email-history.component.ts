@@ -5,7 +5,7 @@ import { EmailService } from '../../../@core/services/email.service';
 import { Email, Organization } from '@gauzy/models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '../../../@core/services/store.service';
-import { takeUntil, first, count } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { EmailFiltersComponent } from './email-filters/email-filters.component';
 
 @Component({
