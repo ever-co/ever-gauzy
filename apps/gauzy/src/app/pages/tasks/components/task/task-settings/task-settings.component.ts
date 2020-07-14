@@ -3,9 +3,10 @@ import { Task, OrganizationProjects } from '@gauzy/models';
 
 import { uniqWith, isEqual } from 'lodash';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap, switchMap, filter } from 'rxjs/operators';
 
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ngx-task-settings',
@@ -15,8 +16,12 @@ import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store
 export class TaskSettingsComponent {
 	tasks$: Observable<Task[]>;
 	projects$: Observable<OrganizationProjects[]>;
+	project$: Observable<OrganizationProjects>;
 
-	constructor(private _store: TasksStoreService) {
+	constructor(
+		private _store: TasksStoreService,
+		private route: ActivatedRoute
+	) {
 		this.tasks$ = this._store.tasks$;
 		this.projects$ = this.tasks$.pipe(
 			map((tasks: Task[]) => {
@@ -25,6 +30,28 @@ export class TaskSettingsComponent {
 					isEqual
 				);
 			})
+		);
+
+		this.project$ = this.route.params.pipe(
+			switchMap(({ id: currentProjectId }: { id: string }) =>
+				this.tasks$.pipe(
+					tap((tasks: Task[]) => console.log(1, tasks)),
+					map((tasks: Task[]) => {
+						const projectTasks = tasks.filter(
+							({ projectId }: Task) =>
+								projectId === currentProjectId
+						);
+						if (!!projectTasks && !!projectTasks.length) {
+							return {
+								...projectTasks[0].project,
+								tasks: projectTasks
+							};
+						}
+						return null;
+					}),
+					tap(console.log)
+				)
+			)
 		);
 	}
 }

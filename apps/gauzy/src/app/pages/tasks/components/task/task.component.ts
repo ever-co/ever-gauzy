@@ -3,8 +3,8 @@ import { FormGroup } from '@angular/forms';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TaskDialogComponent } from '../task-dialog/task-dialog.component';
-import { first, takeUntil } from 'rxjs/operators';
-import { Task, Tag } from '@gauzy/models';
+import { first, takeUntil, map, tap } from 'rxjs/operators';
+import { Task, Tag, OrganizationProjects } from '@gauzy/models';
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 import { Observable, Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -32,6 +32,8 @@ import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.co
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { ComponentLayoutStyleEnum } from '@gauzy/models';
 
+declare const window;
+
 @Component({
 	selector: 'ngx-task',
 	templateUrl: './task.component.html',
@@ -46,6 +48,8 @@ export class TaskComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
+	projects$: Observable<OrganizationProjects[]>;
+	availableTasks$: Observable<Task[]>;
 	tasks$: Observable<Task[]>;
 	myTasks$: Observable<Task[]>;
 	teamTasks$: Observable<Task[]>;
@@ -55,6 +59,8 @@ export class TaskComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	teams;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+
+	selectedProject: OrganizationProjects = null;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -77,6 +83,7 @@ export class TaskComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.storeInstance.fetchTasks();
 		this._loadTableSettings();
+		this.initProjectFilter();
 		this._applyTranslationOnSmartTable();
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
@@ -95,12 +102,49 @@ export class TaskComponent extends TranslationBaseComponent
 			});
 	}
 
+	initProjectFilter(): void {
+		this.projects$ = this.availableTasks$.pipe(
+			map((tasks: Task[]): OrganizationProjects[] =>
+				tasks.map((task: Task): OrganizationProjects => task.project)
+			)
+		);
+	}
+
+	selectProject(project: OrganizationProjects | null): void {
+		if (!project) {
+			this.initTasks();
+			return;
+		}
+		this.availableTasks$ = this.availableTasks$.pipe(
+			map((tasks: Task[]) =>
+				tasks.filter(
+					(task: Task) => task.projectId === this.selectedProject.id
+				)
+			)
+		);
+	}
+
+	private initTasks(): void {
+		const pathName = window.location.href;
+		if (pathName.indexOf('tasks/me') !== -1) {
+			this.availableTasks$ = this.myTasks$;
+			return;
+		}
+		if (pathName.indexOf('tasks/team') !== -1) {
+			this.availableTasks$ = this.teamTasks$;
+			return;
+		}
+		this.availableTasks$ = this.tasks$;
+	}
+
 	setView() {
+		this.initTasks();
 		const pathName = window.location.href;
 		if (pathName.indexOf('tasks/me') !== -1) {
 			this._myTaskStore.fetchTasks();
 			this.view = 'my-tasks';
 			this.viewComponentName = ComponentEnum.MY_TASKS;
+			// this.availableTasks$ = this.myTasks$;
 		} else if (pathName.indexOf('tasks/team') !== -1) {
 			this.view = 'team-tasks';
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
@@ -120,9 +164,11 @@ export class TaskComponent extends TranslationBaseComponent
 				.subscribe((data) => {
 					this.loadTeams();
 				});
+			// this.availableTasks$ = this.teamTasks$;
 		} else {
 			this.view = 'tasks';
 			this.viewComponentName = ComponentEnum.ALL_TASKS;
+			// this.availableTasks$ = this.tasks$;
 		}
 		this._organizationsStore
 			.componentLayout$(this.viewComponentName)
@@ -428,7 +474,10 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	openTasksSettings(): void {
-		this.router.navigate(['/pages/tasks/settings']);
+		this.router.navigate(
+			['/pages/tasks/settings', this.selectedProject.id],
+			{ state: this.selectedProject }
+		);
 	}
 
 	/**

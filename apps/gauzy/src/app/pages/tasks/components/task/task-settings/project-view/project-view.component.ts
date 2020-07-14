@@ -1,9 +1,14 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { OrganizationProjects } from '@gauzy/models';
 
-export enum ProjectTaskListType {
+export enum TaskViewModeType {
 	Grid = 'grid',
 	Sprint = 'sprint'
+}
+
+export interface TaskViewMode {
+	type: TaskViewModeType;
+	name: TaskViewModeType;
 }
 
 @Component({
@@ -13,16 +18,18 @@ export enum ProjectTaskListType {
 })
 export class ProjectViewComponent implements OnInit {
 	@Input() project: OrganizationProjects;
-	taskListTypes: typeof ProjectTaskListType = ProjectTaskListType;
-	projectTaskListType: ProjectTaskListType[] = [
-		ProjectTaskListType.Grid,
-		ProjectTaskListType.Sprint
+	taskViewModeType: typeof TaskViewModeType = TaskViewModeType;
+	taskViewModeList: TaskViewMode[] = [
+		{ type: TaskViewModeType.Grid, name: TaskViewModeType.Grid },
+		{ type: TaskViewModeType.Sprint, name: TaskViewModeType.Sprint }
 	];
-	selectedProjectTaskListType: ProjectTaskListType = ProjectTaskListType.Grid;
+	selectedTaskViewMode: TaskViewMode = this.taskViewModeList[0];
 
 	constructor() {}
 
 	ngOnInit(): void {}
 
-	setListType(evt: ProjectTaskListType): void {}
+	setTaskViewMode(evt: TaskViewMode): void {
+		this.selectedTaskViewMode = evt;
+	}
 }

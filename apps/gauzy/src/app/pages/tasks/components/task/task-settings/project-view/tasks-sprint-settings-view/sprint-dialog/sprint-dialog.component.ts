@@ -9,7 +9,6 @@ import { OrganizationSprint } from '@gauzy/models';
 })
 export class SprintDialogComponent implements OnInit {
 	@Input() action: 'create' | 'edit';
-	@Input() test: any;
 	@Input() sprintData?: OrganizationSprint;
 	@Input() dialogRef?: any;
 	form: FormGroup;

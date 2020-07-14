@@ -163,7 +163,7 @@
 		"@nebular/eva-icons": "^5.0.0",
 		"@nebular/security": "^5.0.0",
 		"@nebular/theme": "^5.0.0",
-		"@ng-select/ng-select": "^3.7.3",
+		"@ng-select/ng-select": "4.0.4",
 		"@ngx-translate/core": "^11.0.1",
 		"@ngx-translate/http-loader": "^4.0.0",
 		"@sentry/browser": "^5.14.0",

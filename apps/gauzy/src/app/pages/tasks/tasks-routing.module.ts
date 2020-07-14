@@ -17,7 +17,7 @@ const routes: Routes = [
 		component: TaskComponent
 	},
 	{
-		path: 'settings',
+		path: 'settings/:id',
 		component: TaskSettingsComponent
 	}
 ];

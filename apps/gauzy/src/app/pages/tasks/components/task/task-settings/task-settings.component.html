@@ -1,17 +1,24 @@
-<nb-card class="task-settings">
+<nb-card class="h-100 task-settings" *ngIf="project$ | async as project">
 	<nb-card-header class="task-settings__title">
-		<p>Available projects</p>
+		<p>{{ project.name }}</p>
 	</nb-card-header>
 	<nb-card-body
 		class="task-settings__projects"
-		*ngIf="projects$ | async as projects"
+		*ngIf="project$ | async as project"
 	>
-		<ng-container *ngIf="projects.length">
-			<nb-accordion>
+		<ngx-project-view [project]="project"></ngx-project-view>
+		<!-- <ng-container *ngIf="!!project">
+			<nb-card>
+				<nb-card-header>{{ project.name }}</nb-card-header>
+				<nb-card-body>{{ project.id }}</nb-card-body>
+				<nb-card-footer>{{ project.tasks }}</nb-card-footer>
+			</nb-card>
+			<ngx-project-view [project]="project$ | async"></ngx-project-view> -->
+		<!-- <nb-accordion>
 				<nb-accordion-item
 					#item
 					class="project"
-					*ngFor="let project of projects"
+          *ngFor="let project of projects"
 				>
 					<nb-accordion-item-header class="project__title">
 						{{ project.name }}
@@ -22,10 +29,10 @@
 						></ngx-project-view>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-			</nb-accordion>
-		</ng-container>
-		<ng-template #singleProjectView>
+			</nb-accordion> -->
+		<!-- </ng-container> -->
+		<!-- <ng-template #singleProjectView>
 			<p>No projects still created.</p>
-		</ng-template>
+		</ng-template> -->
 	</nb-card-body>
 </nb-card>
