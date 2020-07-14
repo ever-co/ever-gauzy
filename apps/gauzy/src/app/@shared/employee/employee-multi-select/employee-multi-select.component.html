@@ -1,6 +1,7 @@
 <label class="label" *ngIf="label">{{ label | translate }}</label>
 
 <nb-select
+	[formControl]="select"
 	[multiple]="multiple"
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth

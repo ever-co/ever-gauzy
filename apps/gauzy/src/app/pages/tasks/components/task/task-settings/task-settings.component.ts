@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Task, OrganizationProjects } from '@gauzy/models';
 
 import { uniqWith, isEqual } from 'lodash';

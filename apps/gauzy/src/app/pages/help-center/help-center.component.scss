@@ -37,7 +37,7 @@
 }
 
 .user-info {
-  padding: 0 2rem 1rem 0;
+  padding: 0 0.5rem 0.5rem 0;
   display: flex;
   flex-direction: row;
 }
@@ -129,9 +129,9 @@
 }
 
 .author-image-small {
-  max-width: 35px;
-  max-height: 35px;
-  border-radius: 13px;
+  max-width: 30px;
+  max-height: 30px;
+  border-radius: 50%;
   margin: 4px;
 }
 
@@ -139,6 +139,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: flex-end;
 }
 
 .column {
@@ -148,6 +149,10 @@
   margin: 1rem;
 }
 
-.multi-select {
-  width: 20rem;
+.clear-button {
+  margin: 0 1rem 1rem 1rem;
+}
+
+.search-input {
+  max-width: 100% !important;
 }

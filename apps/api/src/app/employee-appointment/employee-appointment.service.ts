@@ -37,8 +37,8 @@ export class EmployeeAppointmentService extends CrudService<
 		);
 	}
 
-	async signAppointmentId(id: string) {
-		return await sign(
+	signAppointmentId(id: string) {
+		return sign(
 			{
 				appointmentId: id
 			},
