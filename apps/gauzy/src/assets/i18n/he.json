@@ -872,6 +872,8 @@
 				"SAVE": "לשמור",
 				"CREATE_CRITERIONS": "Create criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
+				"DELETE_INTERVIEW": "Delete interview",
+				"DELETE_ARE_YOU_SURE": "Are you sure you want to delete this interview?",
 				"SUMMARY": "Summary",
 				"DETAILS": "Send interview details to",
 				"NOTIFY_CANDIDATE": "Notify candidate",
@@ -913,9 +915,10 @@
 			"INTERVIEWS": "Interviews",
 			"MANAGE_INTERVIEWS": "Manage Interviews",
 			"CRITERIONS": "Criterions",
+			"DEFAULT": "Default list",
 			"DATE": "תאריך",
 			"SORT_BY": "Sort by",
-			"SEARCH_BY_INTERVIEW": "Search by interview title",
+			"SEARCH_BY_INTERVIEW": "Search by interview's title",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating"
 		},
@@ -1601,12 +1604,12 @@
 		"COLOR": "Color",
 		"NAME_CATEGORY": "Name of the category",
 		"NAME_ARTICLE": "Name of the Article",
-		"DESCRI": "Description",
 		"ADD_BASE": "Add Knowledge Base",
 		"MANAGE_BASE": "Manage Knowledge Base",
 		"NAME_OF_THE_BASE": "Name of the base",
 		"REMOVE_CATEGORY": "Remove Category",
-		"REMOVE_BASE": "Remove Base"
+		"REMOVE_BASE": "Remove Base",
+		"CLEAR": "Clear"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "עלינו"

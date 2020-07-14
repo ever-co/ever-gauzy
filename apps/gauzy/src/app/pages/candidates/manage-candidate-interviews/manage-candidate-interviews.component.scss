@@ -1,16 +1,6 @@
-.main-header {
+.header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.multi-select {
-  width: 16rem;
-}
-
-.buttons {
-  width: 45rem;
-  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
 }

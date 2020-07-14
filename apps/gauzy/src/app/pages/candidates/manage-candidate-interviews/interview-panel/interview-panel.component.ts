@@ -9,6 +9,9 @@ import { takeUntil, first } from 'rxjs/operators';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { Router } from '@angular/router';
 import { FormControl } from '@angular/forms';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
+import { DeleteInterviewComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 @Component({
 	selector: 'ga-interview-panel',
 	templateUrl: './interview-panel.component.html',
@@ -24,7 +27,9 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	interviewTitle: ICandidateInterview[];
 	search: FormControl = new FormControl();
 	constructor(
+		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
+		private toastrService: NbToastrService,
 		private candidateInterviewService: CandidateInterviewService,
 		private candidatesService: CandidatesService,
 		private employeesService: EmployeesService,
@@ -35,15 +40,12 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	async ngOnInit() {
 		this.loadInterviews();
 		this.search.valueChanges.subscribe((item) => {
-			this.interviewTitle = [];
-			this.interviewList.forEach((el) => {
-				if (
-					item !== '' &&
-					el.title.toLocaleLowerCase().includes(item)
-				) {
-					this.interviewTitle.push(el);
-				}
-			});
+			this.interviewList = this.allInterviews.filter(
+				(interview) =>
+					interview.title
+						.toLocaleLowerCase()
+						.indexOf(item.toLocaleLowerCase()) !== -1
+			);
 		});
 	}
 
@@ -127,11 +129,63 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		});
 		interview.employees = employees;
 	}
-
+	async editInterview(id: string) {
+		const currentInterview = this.interviewList.find(
+			(item) => item.id === id
+		);
+		const dialog = this.dialogService.open(
+			CandidateInterviewMutationComponent,
+			{
+				context: {
+					header: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
+					),
+					editData: currentInterview,
+					selectedCandidate: currentInterview.candidate,
+					interviewId: id,
+					interviewList: this.interviewList
+				}
+			}
+		);
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('UPDATED');
+			this.loadInterviews();
+		}
+	}
+	async removeInterview(id: string) {
+		const currentInterview = this.interviewList.find(
+			(item) => item.id === id
+		);
+		const dialog = this.dialogService.open(DeleteInterviewComponent, {
+			context: {
+				interview: currentInterview
+			}
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('DELETED');
+			this.loadInterviews();
+		}
+	}
+	isPastInterview(interview: ICandidateInterview) {
+		const now = new Date().getTime();
+		if (new Date(interview.startTime).getTime() > now) {
+			return false;
+		} else {
+			return true;
+		}
+	}
 	goToCandidate(id: string) {
 		this.router.navigate([
 			`/pages/employees/candidates/edit/${id}/profile/interview`
 		]);
+	}
+	private toastrSuccess(text: string) {
+		this.toastrService.success(
+			this.getTranslation('TOASTR.TITLE.SUCCESS'),
+			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
+		);
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

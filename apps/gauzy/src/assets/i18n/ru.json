@@ -872,6 +872,8 @@
 				"SAVE": "Сохранить",
 				"CREATE_CRITERIONS": "Создать критерии",
 				"EMAIL_NOTIFICATION": "Уведомление по e-mail",
+				"DELETE_INTERVIEW": "Удалить интервью",
+				"DELETE_ARE_YOU_SURE": "Вы уверены, что хотите удалить этот интервью?",
 				"SUMMARY": "Summary",
 				"DETAILS": "Отправить данные интервью",
 				"NOTIFY_CANDIDATE": "Уведомлять кандидата",
@@ -913,9 +915,10 @@
 			"INTERVIEWS": "Интервью",
 			"MANAGE_INTERVIEWS": "Управление интервью",
 			"CRITERIONS": "Критерии",
+			"DEFAULT": "Список по умолчанию",
 			"DATE": "Дата",
 			"SORT_BY": "Сортировать по",
-			"SEARCH_BY_INTERVIEW": "Поиск по названию интервью",
+			"SEARCH_BY_INTERVIEW": "Поиск по названию интервьюа",
 			"CANDIDATE_NAME": "Имя Кандидата",
 			"RATING": "Рейтинг"
 		},
@@ -1601,12 +1604,12 @@
 		"COLOR": "Цвет",
 		"NAME_CATEGORY": "Название категории",
 		"NAME_ARTICLE": "Название статьи",
-		"DESCRI": "Описание",
 		"ADD_BASE": "Добавить базу знаний",
 		"MANAGE_BASE": "Управление базой знаний",
 		"NAME_OF_THE_BASE": "Название базы",
 		"REMOVE_CATEGORY": "Удалить категорию",
-		"REMOVE_BASE": "Удалить базу"
+		"REMOVE_BASE": "Удалить базу",
+		"CLEAR": "Очистить"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
