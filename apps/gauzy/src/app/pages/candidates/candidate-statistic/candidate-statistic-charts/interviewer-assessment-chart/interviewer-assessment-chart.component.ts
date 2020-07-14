@@ -17,6 +17,7 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 	rating: number[] = [];
 	interviews = [];
 	@Input() candidates: Candidate[];
+	@Input() interviewList: Candidate[];
 	data: any;
 	options: any;
 	currentInterview: ICandidateInterview;
@@ -100,11 +101,10 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 
 	async loadData() {
 		for (let i = 0; i < this.candidates.length; i++) {
-			const interviews = await this.candidateInterviewService.findByCandidateId(
+			const interview = await this.candidateInterviewService.findByCandidateId(
 				this.candidates[i].id
 			);
-			this.candidates[i].interview = interviews ? interviews : null;
-
+			this.candidates[i].interview = interview ? interview : null;
 			const color =
 				i % 2 === 0
 					? 'rgba(153, 102, 255, 0.2)'
