@@ -59,7 +59,6 @@ export class SidebarComponent extends TranslationBaseComponent
 			const res = await this.helpService.findByBaseId(node.id);
 			return res;
 		},
-		hasChildrenField: 'children',
 		allowDrag: true,
 		allowDrop: (el, { parent, index }) => {
 			if (parent.data.flag === 'category') {
@@ -283,31 +282,6 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 		this.tree.treeModel.update();
 	}
-
-	// nextArticle() {
-	// 	for (const node of this.tempNodes)
-	// 		if (node.id === this.nodeId.toString()) {
-	// 			const childNodes = this.tempNodes.filter(
-	// 				(item) =>
-	// 					((item.parent &&
-	// 						node.parent &&
-	// 						item.parent.id === node.parent.id) ||
-	// 						(item.parent === null && node.parent === null)) &&
-	// 					item.flag === 'article'
-	// 			);
-	// 			childNodes.forEach((child) => {
-	// 				if (child.index === node.index + 1) {
-	// 					this.nodeId = child.id;
-	// 					this.articleName = child.name;
-	// 					this.articleDesc = child.description;
-	// 					this.articleData = this.sanitizer.bypassSecurityTrustHtml(
-	// 						`${child.data}`
-	// 					);
-	// 					this.loadFormData(child);
-	// 				}
-	// 			});
-	// 		}
-	// }
 
 	async loadMenu() {
 		const result = await this.helpService.getAll([
