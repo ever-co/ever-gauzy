@@ -497,7 +497,9 @@ export const environment: IEnvironment = {
 		emailsPerOrganization: 30,
 		invitePerOrganization: 30,
 		requestApprovalPerOrganization: 20,
-    employeeTimeOffPerOrganization:10
+    employeeTimeOffPerOrganization:10,
+    equipmentPerTenant:20,
+    equipmentSharingPerTenant:20
 	},
 
 	defaultHubstaffUserPass:

@@ -86,6 +86,8 @@ export interface IEnvironment {
 		invitePerOrganization: number; // No of random invite User seeded will be  (invitePerOrganization * organizationsPerTenant * tenants)
 		requestApprovalPerOrganization: number; // No of random request to approve seeded will be  (requestApprovalPerOrganization * organizationsPerTenant * tenants)
     employeeTimeOffPerOrganization: number; // No of timeoff request to approve seeded will be  (employeeTimeOffPerOrganization * organizationsPerTenant * tenants)
+    equipmentPerTenant: number; // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
+    equipmentSharingPerTenant: number; // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
 	};
 
 	sentry?: {
