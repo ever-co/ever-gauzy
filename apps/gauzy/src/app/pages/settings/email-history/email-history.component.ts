@@ -26,7 +26,7 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 
 	filteredCount: Number;
 
-	filters: { email: string; emailTemplateId: string };
+	filters = [];
 
 	get selectedEmailHTML() {
 		return this.sanitizer.bypassSecurityTrustHtml(
