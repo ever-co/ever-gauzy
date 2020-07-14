@@ -27,6 +27,7 @@ import { ResendConfirmationComponent } from './resend-confirmation/resend-confir
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 import { SharedModule } from '../../shared.module';
+import { CardGridModule } from '../../card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -67,7 +68,8 @@ const COMPONENTS = [
 		}),
 		NbSpinnerModule,
 		InviteMutationModule,
-		UserFormsModule
+		UserFormsModule,
+		CardGridModule
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS],

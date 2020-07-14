@@ -3,7 +3,7 @@ import { OrganizationPositions } from './organization-positions.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 
-let OrganizationPositionArray = ([] = [
+const organizationPositionArray = [
 	'Web Software Developer',
 	'CEO',
 	'Team Lead',
@@ -16,7 +16,7 @@ let OrganizationPositionArray = ([] = [
 	'Associate Engineer',
 	'Project Manager',
 	'Tester'
-]);
+];
 
 export const seedRandomOrganizationPosition = async (
 	connection: Connection,
@@ -28,9 +28,7 @@ export const seedRandomOrganizationPosition = async (
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		organizations.forEach(({ id: organizationId }) => {
-			const organizationPositions: OrganizationPositions[] = Object.values(
-				OrganizationPositionArray
-			).map((name) => {
+			const organizationPositions: OrganizationPositions[] = organizationPositionArray.map((name) => {
 				const employmentPosition = new OrganizationPositions();
 				employmentPosition.name = name;
 				employmentPosition.organizationId = organizationId;
