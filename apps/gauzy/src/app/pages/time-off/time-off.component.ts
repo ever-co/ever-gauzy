@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, ɵConsole } from '@angular/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NbDialogService } from '@nebular/theme';
 import { StatusTypesEnum, PermissionsEnum, TimeOff } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { first } from 'rxjs/operators';
@@ -355,7 +355,7 @@ export class TimeOffComponent extends TranslationBaseComponent implements OnInit
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
+		this.translate.onLangChange.subscribe(() => {
 			this._loadSmartTableSettings();
 		});
 	}
