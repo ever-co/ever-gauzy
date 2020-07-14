@@ -16,7 +16,7 @@ export interface KPI extends IBaseEntityModel {
 	metric: string;
 	currentValue: number;
 	targetValue: number;
-	lead: Employee;
+	lead?: Employee;
 	operator: string;
 }
 
