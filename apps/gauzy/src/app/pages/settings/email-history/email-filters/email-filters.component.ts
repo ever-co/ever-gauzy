@@ -1,5 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { EmailTemplateService } from 'apps/gauzy/src/app/@core/services/email-template.service';
 import { EmailTemplate, Email } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
@@ -12,7 +11,6 @@ import { EmailService } from 'apps/gauzy/src/app/@core/services/email.service';
 })
 export class EmailFiltersComponent implements OnInit, OnDestroy {
 	constructor(
-		private store: Store,
 		private emailTemplateService: EmailTemplateService,
 		private dialogRef: NbDialogRef<EmailFiltersComponent>,
 		private emailService: EmailService
