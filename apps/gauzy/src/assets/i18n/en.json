@@ -1641,7 +1641,9 @@
 		"NAME_OF_THE_BASE": "Name of the base",
 		"REMOVE_CATEGORY": "Remove Category",
 		"REMOVE_BASE": "Remove Base",
-		"CLEAR": "Clear"
+		"CLEAR": "Clear",
+		"SEARCH_BY_NAME": "Search by name",
+		"FILTER_BY_AUTHOR": "Filter by author"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "About"

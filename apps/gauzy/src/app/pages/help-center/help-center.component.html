@@ -28,8 +28,10 @@
 				</button>
 			</div>
 			<div *ngIf="categoryName" class="search-bar">
-				<div class="column">
-					<p class="label">Search by name</p>
+				<div class="column-first">
+					<p class="label">
+						{{ 'HELP_PAGE.SEARCH_BY_NAME' | translate }}
+					</p>
 					<input
 						class="search-input"
 						[formControl]="search"
@@ -39,8 +41,10 @@
 						nbInput
 					/>
 				</div>
-				<div class="column">
-					<p class="label">Filter by author</p>
+				<div class="column-second">
+					<p class="label">
+						{{ 'HELP_PAGE.FILTER_BY_AUTHOR' | translate }}
+					</p>
 					<ga-employee-multi-select
 						[multiple]="false"
 						[label]="false"
@@ -60,67 +64,76 @@
 				</button>
 			</div>
 		</nb-card>
-		<nb-card
-			class="cards"
-			*ngFor="let article of this.filteredArticles; let i = index"
+		<div
+			[nbSpinner]="loading"
+			nbSpinnerStatus="primary"
+			nbSpinnerSize="giant"
 		>
-			<div class="main-article" (click)="openArticle(i)">
-				<div class="row-name">
-					<p class="name">
-						{{ article.name }}
-					</p>
-					<p class="draft" *ngIf="article.draft === true">
-						{{ 'HELP_PAGE.DRAFT' | translate }}
-					</p>
-					<p class="privacy" *ngIf="article.privacy === true">
-						{{ 'HELP_PAGE.EMPLOYEES' | translate }}
-					</p>
-				</div>
-				<p>{{ article.description }}</p>
-				<div
-					class="data"
-					*ngIf="showData[i]"
-					[innerHtml]="dataArray[i]"
-				></div>
-				<div class="user-info">
-					<p>
-						{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
-					</p>
-					<div class="image-wrap">
-						<span
-							*ngFor="let employee of article.employees"
-							nbTooltip=" {{ employee?.user?.firstName }}
-				{{ employee?.user?.lastName }}"
-							nbTooltipPlacement="top"
-						>
-							<img
-								class="author-image-small"
-								[src]="employee?.user?.imageUrl"
-								alt="employee Avatar"
-							/>
-						</span>
-					</div>
-					<div class="create-at">
-						<nb-icon class="icon" icon="clock-outline"></nb-icon>
-						<p>
-							{{ 'HELP_PAGE.CREATED_AT' | translate }}:
-							{{ article.createdAt | date: 'short' }}
+			<nb-card
+				class="cards"
+				*ngFor="let article of this.filteredArticles; let i = index"
+			>
+				<div class="main-article" (click)="openArticle(i)">
+					<div class="row-name">
+						<p class="name">
+							{{ article.name }}
+						</p>
+						<p class="draft" *ngIf="article.draft === true">
+							{{ 'HELP_PAGE.DRAFT' | translate }}
+						</p>
+						<p class="privacy" *ngIf="article.privacy === true">
+							{{ 'HELP_PAGE.EMPLOYEES' | translate }}
 						</p>
 					</div>
+					<p>{{ article.description }}</p>
+					<div
+						class="data"
+						*ngIf="showData[i]"
+						[innerHtml]="dataArray[i]"
+					></div>
+					<div class="user-info">
+						<p>
+							{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
+						</p>
+						<div class="image-wrap">
+							<span
+								*ngFor="let employee of article.employees"
+								nbTooltip=" {{ employee?.user?.firstName }}
+				{{ employee?.user?.lastName }}"
+								nbTooltipPlacement="top"
+							>
+								<img
+									class="author-image-small"
+									[src]="employee?.user?.imageUrl"
+									alt="employee Avatar"
+								/>
+							</span>
+						</div>
+						<div class="create-at">
+							<nb-icon
+								class="icon"
+								icon="clock-outline"
+							></nb-icon>
+							<p>
+								{{ 'HELP_PAGE.CREATED_AT' | translate }}:
+								{{ article.createdAt | date: 'short' }}
+							</p>
+						</div>
+					</div>
 				</div>
-			</div>
-			<div class="mr-3">
-				<nb-icon
-					class="edit-icon"
-					icon="edit-outline"
-					(click)="editNode(i)"
-				></nb-icon>
-				<nb-icon
-					class="edit-icon"
-					icon="trash-2-outline"
-					(click)="deleteNode(i)"
-				></nb-icon>
-			</div>
-		</nb-card>
+				<div class="mr-3">
+					<nb-icon
+						class="edit-icon"
+						icon="edit-outline"
+						(click)="editNode(i)"
+					></nb-icon>
+					<nb-icon
+						class="edit-icon"
+						icon="trash-2-outline"
+						(click)="deleteNode(i)"
+					></nb-icon>
+				</div>
+			</nb-card>
+		</div>
 	</div>
 </div>

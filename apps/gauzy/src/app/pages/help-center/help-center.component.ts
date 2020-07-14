@@ -48,6 +48,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	public categoryId = '';
 	public authors: IHelpCenterAuthor[] = [];
 	filterParams = { name: '', authorId: '' };
+	loading: boolean;
 
 	ngOnInit() {
 		this.employeeService
@@ -79,6 +80,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	}
 
 	async loadArticles(id) {
+		this.loading = true;
 		this.showData = [];
 		this.dataArray = [];
 		const result = await this.helpCenterArticleService.findByCategoryId(id);
@@ -110,6 +112,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 				});
 				article.employees = employeesList;
 			}
+			this.loading = false;
 		}
 	}
 
@@ -126,17 +129,16 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	}
 
 	filterArticles() {
-		if (this.filterParams.name) {
+		if (!this.filterParams.authorId && this.filterParams.name)
 			this.filteredArticles = this.articleList.filter((article) =>
 				article.name
 					.toLocaleLowerCase()
 					.includes(this.filterParams.name.toLocaleLowerCase())
 			);
-		} else {
+		if (!this.filterParams.authorId && !this.filterParams.name)
 			this.filteredArticles = this.articleList;
-		}
 		const res = [];
-		if (this.filterParams.authorId)
+		if (this.filterParams.authorId && !this.filterParams.name)
 			this.articleList.forEach((article) => {
 				article.employees.forEach((employee) => {
 					if (employee.id === this.filterParams.authorId)
@@ -144,6 +146,20 @@ export class HelpCenterComponent extends TranslationBaseComponent
 				});
 				this.filteredArticles = res;
 			});
+		if (this.filterParams.authorId && this.filterParams.name) {
+			this.filteredArticles = this.articleList.filter((article) =>
+				article.name
+					.toLocaleLowerCase()
+					.includes(this.filterParams.name.toLocaleLowerCase())
+			);
+			this.filteredArticles.forEach((article) => {
+				article.employees.forEach((employee) => {
+					if (employee.id === this.filterParams.authorId)
+						res.push(article);
+				});
+				this.filteredArticles = res;
+			});
+		}
 	}
 
 	clearFilters() {
