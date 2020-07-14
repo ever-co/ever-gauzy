@@ -53,6 +53,9 @@
 		"EMAIL": "Эл. адрес",
 		"CONVERT_TO_INVOICE": "Преобразовать в счет",
 		"PUBLIC_APPOINTMENT_BOOK": "Назначение в книге",
+		"SAVE_AS_DRAFT": "Сохранить как черновик",
+		"SAVE_AND_SEND_CLIENT": "Сохранить и отправить клиенту в gauzy",
+		"SAVE_AND_SEND_EMAIL": "Сохранить и отправить по электронной почте",
 		"SPRINT": {
 			"CREATE": "Создать спринт",
 			"EDIT": "Редактировать",
@@ -1510,6 +1513,7 @@
 		"APPLY_DISCOUNT": "Применить скидку",
 		"APPLIED": "Применяется",
 		"NOT_APPLIED": "Не применено",
+		"STATUS": "Статус",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
