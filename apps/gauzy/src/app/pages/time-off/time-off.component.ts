@@ -12,20 +12,26 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TimeOffStatusComponent } from './table-components/time-off-status.component';
+import { ToastrService } from '../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-time-off',
 	templateUrl: './time-off.component.html',
 	styleUrls: ['./time-off.component.scss']
 })
-export class TimeOffComponent implements OnInit, OnDestroy {
+export class TimeOffComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	constructor(
 		private router: Router,
 		private dialogService: NbDialogService,
 		private timeOffService: TimeOffService,
-		private toastrService: NbToastrService,
-		private store: Store
-	) {}
+		private toastrService: ToastrService,
+		private store: Store,
+		private translate: TranslateService
+	) { 
+		super(translate) 
+	}
 
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -98,25 +104,26 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				fullName: {
-					title: 'Employee',
+					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
 					class: 'align-row'
 				},
 				description: {
-					title: 'Description',
+					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'string',
 					class: 'text-center'
 				},
 				policy: {
-					title: 'Policy',
+					title: this.getTranslation('SM_TABLE.POLICY'),
 					type: 'string',
 					class: 'text-center'
 				},
 				start: {
-					title: 'Start',
+					title: this.getTranslation('SM_TABLE.START'),
 					type: 'date',
 					filter: false,
 					valuePrepareFunction: (date) =>
@@ -124,7 +131,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 					class: 'text-center'
 				},
 				end: {
-					title: 'End',
+					title: this.getTranslation('SM_TABLE.END'),
 					type: 'date',
 					filter: false,
 					valuePrepareFunction: (date) =>
@@ -132,7 +139,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 					class: 'text-center'
 				},
 				requestDate: {
-					title: 'Request Date',
+					title: this.getTranslation('SM_TABLE.REQUEST_DATE'),
 					type: 'date',
 					filter: false,
 					valuePrepareFunction: (date) =>
@@ -140,7 +147,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 					class: 'text-center'
 				},
 				status: {
-					title: 'Status',
+					title: this.getTranslation('SM_TABLE.REQUEST_DATE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
 					width: '200px',
@@ -190,7 +197,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				});
 
 				this.sourceSmartTable.load(this.tableData);
-			}, () => this.toastrService.danger('Unable to load time off records'));
+			}, () => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS'));
 	}
 
 	detectStatusChange(status: string) {
@@ -245,14 +252,13 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				})
 				.pipe(first())
 				.subscribe(() => {
-					this.toastrService.success(
-						'You successfully set the days off request status to approved',
-						'Days off request approved'
-					);
+					this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED');
 					this._loadTableData();
-				}, () => this.toastrService.danger('Unable to set days off request status.'));
+				}, () => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS'));
 		} else {
-			this.toastrService.info('The days off request status is already set to approved','No changes');
+			this.toastrService.success(
+				'TIME_OFF_PAGE.NOTIFICATIONS.APPROVED_NO_CHANGES', 
+				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES');
 		}
 	}
 
@@ -266,16 +272,13 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 				})
 				.pipe(first())
 				.subscribe(() => {
-					this.toastrService.success(
-						'You successfully set the days off request status to denied',
-						'Days off request denied'
-					);
+					this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED');
 					this._loadTableData();
-				}, () => this.toastrService.danger('Unable to set days off request status.'));
+				}, () => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS'));
 		} else {
-			this.toastrService.info(
-				'The days off request status is already set to denied',
-				'No changes'
+			this.toastrService.success(
+				'TIME_OFF_PAGE.NOTIFICATIONS.DENIED_NO_CHANGES',
+				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
 		}
 	}
@@ -292,12 +295,9 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 						.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
 						.pipe(first())
 						.subscribe(() => {
-							this.toastrService.success(
-								'Days off request successfully deleted',
-								'Days off record deleted'
-							);
+							this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DELETED');
 							this._loadTableData();
-						}, () => this.toastrService.warning('Unable to delete Days off request'));
+						}, () => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_DELETE_REQUEST'));
 				}
 			});
 	}
@@ -331,17 +331,11 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			this.timeOffService
 				.createRequest(this.timeOffRequest)
 				.pipe(first())
-				.subscribe(
-					() => {
-						this.toastrService.success(
-							`Time off record ${this.timeOffRequest.description} successfully created!`
-						);
-						this._loadTableData();
-					},
-					() =>
-						this.toastrService.danger(
-							'Unable to create Time off record'
-						)
+				.subscribe(() => {
+					this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED');
+					this._loadTableData();
+				}, () =>
+					this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_CREATE_RECORD')
 				);
 		}
 	}
@@ -358,6 +352,12 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 			);
 			this.sourceSmartTable.load(filteredData);
 		}
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this._loadSmartTableSettings();
+		});
 	}
 
 	ngOnDestroy(): void {}
