@@ -116,6 +116,12 @@ export const environment: IEnvironment = {
 		cookieKey: process.env.KeycloakCookieKey
 	},
 
+	auth0Config: {
+		clientID: process.env.Auth0ClientId,
+		clientSecret: process.env.Auth0ClientSecret,
+		domain: process.env.Auth0Domanin
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',
@@ -497,9 +503,9 @@ export const environment: IEnvironment = {
 		emailsPerOrganization: 30,
 		invitePerOrganization: 30,
 		requestApprovalPerOrganization: 20,
-    employeeTimeOffPerOrganization:10,
-    equipmentPerTenant:20,
-    equipmentSharingPerTenant:20
+		employeeTimeOffPerOrganization: 10,
+		equipmentPerTenant: 20,
+		equipmentSharingPerTenant: 20
 	},
 
 	defaultHubstaffUserPass:
