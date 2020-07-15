@@ -11,7 +11,8 @@ import {
 	Organization,
 	InvoiceTypeEnum,
 	ComponentLayoutStyleEnum,
-	InvoiceStatusTypesEnum
+	InvoiceStatusTypesEnum,
+	EstimateStatusTypesEnum
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -24,7 +25,6 @@ import { InvoicePaidComponent } from './table-components/invoice-paid.component'
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
-import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
@@ -46,7 +46,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 	organization: Organization;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	statusTypes = Object.values(InvoiceStatusTypesEnum);
+	invoiceStatusTypes = Object.values(InvoiceStatusTypesEnum);
+	estimateStatusTypes = Object.values(EstimateStatusTypesEnum);
 	status: string;
 
 	private _ngDestroy$ = new Subject<void>();
@@ -254,7 +255,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 			});
 		}
 		await this.invoicesService.update(this.selectedInvoice.id, {
-			isEstimate: false
+			isEstimate: false,
+			status: InvoiceStatusTypesEnum.DRAFT
 		});
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
@@ -407,16 +409,6 @@ export class InvoicesComponent extends TranslationBaseComponent
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
 				renderComponent: InvoicePaidComponent,
-				filter: false,
-				width: '25%'
-			};
-		} else {
-			this.settingsSmartTable['columns']['isAccepted'] = {
-				title: this.getTranslation(
-					'INVOICES_PAGE.ESTIMATES.ACCEPTED_STATUS'
-				),
-				type: 'custom',
-				renderComponent: EstimateAcceptedComponent,
 				filter: false,
 				width: '25%'
 			};

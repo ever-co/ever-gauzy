@@ -9,13 +9,32 @@
 			</h4>
 		</div>
 		<nb-select
+			*ngIf="!isEstimate"
 			class="invoice-status"
 			[disabled]="disableButton"
 			placeholder="Set Invoice Status"
 			[(selected)]="status"
 			(selectedChange)="selectStatus($event)"
 		>
-			<nb-option *ngFor="let status of statusTypes" [value]="status">
+			<nb-option
+				*ngFor="let status of invoiceStatusTypes"
+				[value]="status"
+			>
+				{{ status }}
+			</nb-option>
+		</nb-select>
+		<nb-select
+			*ngIf="isEstimate"
+			class="invoice-status"
+			[disabled]="disableButton"
+			placeholder="Set Estimate Status"
+			[(selected)]="status"
+			(selectedChange)="selectStatus($event)"
+		>
+			<nb-option
+				*ngFor="let status of estimateStatusTypes"
+				[value]="status"
+			>
 				{{ status }}
 			</nb-option>
 		</nb-select>
