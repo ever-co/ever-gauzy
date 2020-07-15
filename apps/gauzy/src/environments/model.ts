@@ -18,6 +18,7 @@ export interface Environment {
 	GITHUB_AUTH_LINK: string;
 	TWITTER_AUTH_LINK: string;
 	MICROSOFT_AUTH_LINK: string;
+	AUTH0_AUTH_LINK: string;
 	NO_INTERNET_LOGO: string;
 	SENTRY_DNS?: string;
 	HUBSTAFF_REDIRECT_URI?: string;

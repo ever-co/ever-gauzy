@@ -116,6 +116,12 @@ export const environment: IEnvironment = {
 		cookieKey: process.env.KeycloakCookieKey
 	},
 
+	auth0Config: {
+		clientID: process.env.Auth0ClientId,
+		clientSecret: process.env.Auth0ClientSecret,
+		domain: process.env.Auth0Domanin
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',

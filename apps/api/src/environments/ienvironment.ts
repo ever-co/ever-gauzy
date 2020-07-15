@@ -20,6 +20,7 @@ import { ILinkedinConfig } from './ILinkedinIConfig';
 import { ITwitterConfig } from './ITwitterConfig';
 import { IFiverrConfig } from './IFiverrConfig';
 import { IKeycloakConfig } from './IKeycloakConfig';
+import { IAuth0Config } from './IAuth0Config';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -58,6 +59,7 @@ export interface IEnvironment {
 	twitterConfig: ITwitterConfig;
 	fiverrConfig: IFiverrConfig;
 	keycloakConfig: IKeycloakConfig;
+	auth0Config: IAuth0Config;
 
 	defaultAdmins: IDefaultUser[];
 	defaultSuperAdmins: IDefaultUser[];
