@@ -16,6 +16,7 @@ import { takeUntil } from 'rxjs/operators';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
+import momentTimezonePlugin from '@fullcalendar/moment-timezone';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import {
 	EmployeeAppointment,
@@ -25,12 +26,14 @@ import {
 	IAvailabilitySlots
 } from '@gauzy/models';
 import * as moment from 'moment';
+import { NbDialogService } from '@nebular/theme';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
+import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
 
 @Component({
 	selector: 'ga-appointment-calendar',
@@ -63,6 +66,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 
+	selectedTimeZoneName = moment.tz.guess();
+	selectedTimeZoneOffset = moment.tz(this.selectedTimeZoneName).format('Z');
 	calendarOptions: OptionsInput;
 	allowedDuration: number;
 	calendarEvents: EventInput[] = [];
@@ -97,6 +102,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		private router: Router,
 		private store: Store,
 		private toastrService: NbToastrService,
+		private dialogService: NbDialogService,
 		private availabilitySlotsService: AvailabilitySlotsService,
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private appointmentEmployeesService: AppointmentEmployeesService,
@@ -117,14 +123,16 @@ export class AppointmentComponent extends TranslationBaseComponent
 							state: {
 								dateStart: eventObject.start,
 								dateEnd: eventObject.end,
-								selectedEventType: this.selectedEventType
+								selectedEventType: this.selectedEventType,
+								timezone: this.selectedTimeZoneName
 							}
 						}
 					);
 				} else {
 					const config = {
 						dateStart: eventObject.start,
-						dateEnd: eventObject.end
+						dateEnd: eventObject.end,
+						timezone: this.selectedTimeZoneName
 					};
 					const prevSlot = this.calendarEvents.find(
 						(o) =>
@@ -170,7 +178,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 				dayGridPlugin,
 				timeGrigPlugin,
 				interactionPlugin,
-				bootstrapPlugin
+				bootstrapPlugin,
+				momentTimezonePlugin
 			],
 			weekends: true,
 			height: 'auto',
@@ -575,6 +584,21 @@ export class AppointmentComponent extends TranslationBaseComponent
 				}
 			});
 		}
+	}
+
+	selectTimezone() {
+		this.dialogService
+			.open(TimezoneSelectorComponent)
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (data) => {
+				if (data) {
+					this.selectedTimeZoneName = data;
+					this.selectedTimeZoneOffset = moment.tz(data).format('Z');
+					this.calendarComponent
+						.getApi()
+						.setOption('timeZone', this.selectedTimeZoneName);
+				}
+			});
 	}
 
 	markUnavailability() {}

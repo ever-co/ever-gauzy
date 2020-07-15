@@ -1,6 +1,6 @@
 <nb-card>
-	<nb-card-header *ngIf="showHeader">
-		<div class="main-header">
+	<nb-card-header>
+		<div class="main-header" *ngIf="showHeader">
 			<h4>{{ 'MENU.APPOINTMENTS' | translate }}</h4>
 			<button
 				style="float: right;"
@@ -10,6 +10,15 @@
 			>
 				{{ 'BUTTONS.PUBLIC_APPOINTMENT_BOOK' | translate }}
 			</button>
+		</div>
+		<div class="block-info">
+			{{ 'PUBLIC_APPOINTMENTS.TIMEZONE' | translate }}
+			<strong>
+				{{ selectedTimeZoneName }} {{ selectedTimeZoneOffset }}
+			</strong>
+			<a style="cursor: pointer;" (click)="selectTimezone()">{{
+				'PUBLIC_APPOINTMENTS.CHANGE' | translate
+			}}</a>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
