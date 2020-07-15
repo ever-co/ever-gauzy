@@ -1519,6 +1519,7 @@
 		"APPLIED": "Применяется",
 		"NOT_APPLIED": "Не применено",
 		"STATUS": "Статус",
+		"SET_STATUS": "Установить статус",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
