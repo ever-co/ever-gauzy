@@ -1519,6 +1519,7 @@
 		"APPLIED": "Applied",
 		"NOT_APPLIED": "Not Applied",
 		"STATUS": "Статус",
+		"SET_STATUS": "Set Status",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
