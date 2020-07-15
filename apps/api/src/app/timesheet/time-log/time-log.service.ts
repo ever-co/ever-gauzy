@@ -163,6 +163,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			request.employeeId,
 			{ relations: ['organization'] }
 		);
+
 		const isDateAllow = this.allowDate(
 			request.startedAt,
 			request.stoppedAt,
@@ -186,7 +187,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			end: new Date(request.stoppedAt)
 		};
 		for (let index = 0; index < confict.length; index++) {
-			await this.updateConflict(times, confict[index]);
+			await this.deleteTimeSpan(times, confict[index]);
 		}
 
 		return this.dbInsert(request);
@@ -227,7 +228,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			end: new Date(request.stoppedAt)
 		};
 		for (let index = 0; index < confict.length; index++) {
-			await this.updateConflict(times, confict[index]);
+			await this.deleteTimeSpan(times, confict[index]);
 		}
 		this.dbUpdate(
 			{
@@ -429,11 +430,24 @@ export class TimeLogService extends CrudService<TimeLog> {
 		return moment(end).isSameOrBefore(moment());
 	}
 
-	private async updateConflict(newTime: IDateRange, timeLog: TimeLog) {
+	async deleteTimeSpan(newTime: IDateRange, timeLog: TimeLog) {
 		const { start, end } = newTime;
-		if (moment(timeLog.startedAt).isBetween(moment(start), moment(end))) {
+
+		if (
+			moment(timeLog.startedAt).isBetween(
+				moment(start),
+				moment(end),
+				null,
+				'[]'
+			)
+		) {
 			if (
-				moment(timeLog.stoppedAt).isBetween(moment(start), moment(end))
+				moment(timeLog.stoppedAt).isBetween(
+					moment(start),
+					moment(end),
+					null,
+					'[]'
+				)
 			) {
 				/* Delete time log because overlap entire time.
 				 * New Start time							New Stop time
@@ -441,6 +455,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				 * 		DB Start Time				DB Stop Time
 				 *  			|----------------------------|
 				 */
+				console.log('Delete time log because overlap entire time');
 				await this.dbDelete(timeLog.id);
 			} else {
 				/* Update start time
@@ -449,7 +464,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				 * 						DB Start Time							DB Stop Time
 				 *  							|---------------------------------------|
 				 */
-
+				console.log('Update start time');
 				const reamingDueration = moment(timeLog.stoppedAt).diff(
 					moment(end),
 					'seconds'
@@ -468,7 +483,12 @@ export class TimeLogService extends CrudService<TimeLog> {
 			}
 		} else {
 			if (
-				moment(timeLog.stoppedAt).isBetween(moment(start), moment(end))
+				moment(timeLog.stoppedAt).isBetween(
+					moment(start),
+					moment(end),
+					null,
+					'[]'
+				)
 			) {
 				/* Update stopped time
 				 * 			New Start time							New Stop time
@@ -476,6 +496,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				 * DB Start Time			DB Stop Time
 				 *  	|-----------------------|
 				 */
+				console.log('Update stopped time');
 				const reamingDueration = moment(end).diff(
 					moment(timeLog.startedAt),
 					'seconds'
@@ -500,6 +521,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				 * DB Start Time									DB Stop Time
 				 *  |--------------------------------------------------|
 				 */
+				console.log('Split database time in two entries');
 				await this.timeLogRepository.update(
 					{
 						id: timeLog.id

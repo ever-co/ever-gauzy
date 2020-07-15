@@ -96,10 +96,21 @@ export class TimesheetService {
 				return data;
 			});
 	}
+
 	getTimeSlots(request?: IGetTimeSlotInput) {
 		const params = toParams(request);
 		return this.http
 			.get('/api/timesheet/time-slot', { params })
+			.toPromise()
+			.then((data: TimeSlot[]) => {
+				return data;
+			});
+	}
+
+	deleteTimeSlots(ids?: string[]) {
+		const params = toParams({ ids });
+		return this.http
+			.delete('/api/timesheet/time-slot', { params })
 			.toPromise()
 			.then((data: TimeSlot[]) => {
 				return data;

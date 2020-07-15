@@ -105,6 +105,10 @@ export class TimerService {
 			});
 		} else {
 			const stoppedAt = new Date();
+			if (lastLog.startedAt === stoppedAt) {
+				await this.timeLogRepository.delete(lastLog.id);
+				return;
+			}
 			await this.timeLogRepository.update(lastLog.id, {
 				stoppedAt
 			});

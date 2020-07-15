@@ -283,6 +283,7 @@ export class SeedDataService {
 	connection: Connection;
 	log = console.log;
 	organizations: Organization[];
+	defaultProjects: OrganizationProjects[];
 	constructor() {}
 
 	async createConnection() {
@@ -399,7 +400,7 @@ export class SeedDataService {
 
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
 
-		await createDefaultOrganizationProjects(
+		this.defaultProjects = await createDefaultOrganizationProjects(
 			this.connection,
 			defaultOrganizations
 		);
@@ -728,8 +729,8 @@ export class SeedDataService {
 			env.randomSeedConfig.emailsPerOrganization || 20
 		);
 
-		await createRandomTask(this.connection);
-		await createRandomTimesheet(this.connection);
+		await createRandomTask(this.connection, this.defaultProjects);
+		await createRandomTimesheet(this.connection, this.defaultProjects);
 	}
 
 	/**

@@ -75,29 +75,11 @@
 		<nb-action
 			*ngIf="user?.employee?.id"
 			class="timer-action"
-			[nbPopover]="timerCard"
-			#timerPopover="nbPopover"
-			(click)="timerPopover.toggle()"
-			nbPopoverTrigger="noop"
+			(click)="timeTracker.toggle($event)"
 		>
 			<nb-icon class="mr-3" icon="clock-outline"></nb-icon>
 			{{ timerDuration }}
 		</nb-action>
-
-		<ng-template #timerCard>
-			<div class="timer-card">
-				<button
-					class="btn-close"
-					size="large"
-					nbButton
-					ghost
-					(click)="timerPopover.hide()"
-				>
-					<nb-icon icon="close-outline"></nb-icon>
-				</button>
-				<ngx-time-tracker></ngx-time-tracker>
-			</div>
-		</ng-template>
 
 		<nb-action
 			icon="settings-2-outline"
@@ -139,3 +121,4 @@
 		class="header-selector organization-selector"
 	></ga-organization-selector>
 </div>
+<ngx-time-tracker #timeTracker></ngx-time-tracker>

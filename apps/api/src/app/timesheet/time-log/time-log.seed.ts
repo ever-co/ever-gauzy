@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { Connection, In } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
 import { TimeLogSourceEnum, TimeLogType, TimeSlot } from '@gauzy/models';
@@ -13,7 +13,8 @@ import { Screenshot } from '../screenshot.entity';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,
-	timeSheets: Timesheet[]
+	timeSheets: Timesheet[],
+	defaultProjects: OrganizationProjects[]
 ) => {
 	const allEmployees = await connection
 		.getRepository(Employee)
@@ -22,8 +23,12 @@ export const createRandomTimeLogs = async (
 
 	let query = connection
 		.getRepository(OrganizationProjects)
-		.createQueryBuilder();
+		.createQueryBuilder()
+		.where({
+			id: In(_.pluck(defaultProjects, 'id'))
+		});
 	query = query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+
 	const projects = await query.getMany();
 
 	for (
@@ -38,11 +43,6 @@ export const createRandomTimeLogs = async (
 			.value();
 
 		const timesheet = timeSheets[timeSheetIndex];
-		const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
-			.shuffle()
-			.take(faker.random.number({ min: 2, max: 4 }))
-			.values()
-			.value();
 
 		let timeSlots: TimeSlot[] = [];
 		const timelogs: TimeLog[] = [];
@@ -55,6 +55,12 @@ export const createRandomTimeLogs = async (
 			employeeIndex++
 		) {
 			const employee = employees[employeeIndex];
+
+			const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
+				.shuffle()
+				.take(faker.random.number({ min: 2, max: 4 }))
+				.values()
+				.value();
 
 			for (let index = 0; index <= randomDays.length; index++) {
 				const day = randomDays[index];

@@ -1,4 +1,12 @@
-import { Controller, UseGuards, Get, Query, HttpStatus } from '@nestjs/common';
+import {
+	Controller,
+	UseGuards,
+	Get,
+	Query,
+	HttpStatus,
+	Delete,
+	Param
+} from '@nestjs/common';
 import { TimeSlot } from '../time-slot.entity';
 import { CrudController } from '../../core/crud/crud.controller';
 import { TimeSlotService } from './time-slot.service';
@@ -23,5 +31,16 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 	@Get('/')
 	async getAll(@Query() entity: IGetTimeSlotInput): Promise<TimeSlot[]> {
 		return this.timeSlotService.getTimeSlots(entity);
+	}
+
+	@ApiOperation({ summary: 'Delete TimeSlot' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Delete('/')
+	async deleteTimeSlot(@Query() { ids }) {
+		return this.timeSlotService.deleteTimeSlot(ids);
 	}
 }

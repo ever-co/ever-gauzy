@@ -46,6 +46,19 @@ export class TimeLogController extends CrudController<TimeLog> {
 		return this.timeLogService.getTimeLogs(entity);
 	}
 
+	@ApiOperation({ summary: 'Get Timer Logs Conflict' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/conflict')
+	async getConflict(
+		@Query() entity: IGetTimeLogConflictInput
+	): Promise<TimeLog[]> {
+		return this.timeLogService.checkConfictTime(entity);
+	}
+
 	@ApiOperation({ summary: 'Find Timer Log by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -61,19 +74,6 @@ export class TimeLogController extends CrudController<TimeLog> {
 		@Query() options: FindOneOptions
 	): Promise<TimeLog> {
 		return this.timeLogService.findOne(id, options);
-	}
-
-	@ApiOperation({ summary: 'Get Timer Logs Conflict' })
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@Get('/conflict')
-	async getConflict(
-		@Query() entity: IGetTimeLogConflictInput
-	): Promise<TimeLog[]> {
-		return this.timeLogService.checkConfictTime(entity);
 	}
 
 	@ApiOperation({ summary: 'Add manual time' })
