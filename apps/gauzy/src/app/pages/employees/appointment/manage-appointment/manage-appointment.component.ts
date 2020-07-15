@@ -42,10 +42,12 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	@Input() appointmentID: string;
 	@Input() allowedDuration: number;
 	@Input() hidePrivateFields: boolean = false;
+	@Input() timezone: string;
 
 	@Output() save = new EventEmitter<EmployeeAppointment>();
 	@Output() cancel = new EventEmitter<string>();
 
+	timezoneOffset: string;
 	selectedEmployeeIds: string[] = [];
 	selectedEmployeeAppointmentIds: string[] = [];
 	emailAddresses: any[] = [];
@@ -83,6 +85,11 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				end: history.state.dateEnd
 			};
 		}
+
+		this.timezone =
+			this.timezone || history.state.timezone || moment.tz.guess();
+		this.timezoneOffset = moment.tz(this.timezone).format('Z');
+		moment.tz.setDefault(this.timezone);
 
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))

@@ -16,6 +16,7 @@ import { EmployeeAppointmentService } from '../../../@core/services/employee-app
 import { SharedModule } from '../../../@shared/shared.module';
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
+import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -25,6 +26,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	imports: [
 		FullCalendarModule,
 		AppointmentRoutingModule,
+		TimezoneSelectorModule,
 		ThemeModule,
 		NbCardModule,
 		NbButtonModule,

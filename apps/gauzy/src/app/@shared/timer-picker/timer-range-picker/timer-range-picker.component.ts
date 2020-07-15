@@ -36,6 +36,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	@Input() disableEndPicker = false;
 	@Input() disableDatePicker = false;
 	@Input() fromEmployeeAppointment = false;
+	@Input() timezoneOffset: string;
 
 	@Input('maxDate')
 	public get maxDate(): Date {
@@ -106,6 +107,8 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 
 	ngAfterViewInit() {
+		this.timezoneOffset =
+			this.timezoneOffset || moment.tz(moment.tz.guess()).format('Z');
 		merge(
 			this.dateModel.valueChanges,
 			this.startTimeModel.valueChanges,
@@ -116,10 +119,14 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				const start = new Date(
 					moment(this.date).format('YYYY-MM-DD') +
 						' ' +
-						this.startTime
+						this.startTime +
+						this.timezoneOffset
 				);
 				const end = new Date(
-					moment(this.date).format('YYYY-MM-DD') + ' ' + this.endTime
+					moment(this.date).format('YYYY-MM-DD') +
+						' ' +
+						this.endTime +
+						this.timezoneOffset
 				);
 
 				if (
