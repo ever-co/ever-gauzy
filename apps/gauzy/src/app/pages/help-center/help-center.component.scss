@@ -142,10 +142,17 @@
   align-items: flex-end;
 }
 
-.column {
+.column-first {
   display: flex;
   flex-direction: column;
-  width: 44%;
+  width: 40%;
+  margin: 1rem;
+}
+
+.column-second {
+  display: flex;
+  flex-direction: column;
+  min-width: 24rem;
   margin: 1rem;
 }
 

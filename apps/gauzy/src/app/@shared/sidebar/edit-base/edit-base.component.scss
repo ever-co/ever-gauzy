@@ -59,3 +59,8 @@
 .select-color {
   margin: -10px 0 10px 0;
 }
+
+.nb-theme-default [nbInput].size-medium:not(.input-full-width) {
+  max-width: none !important;
+  width: none !important;
+}

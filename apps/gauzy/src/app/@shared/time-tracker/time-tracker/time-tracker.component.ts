@@ -1,14 +1,20 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
-import { TimeLogType, Organization, User, IDateRange } from '@gauzy/models';
+import {
+	TimeLogType,
+	Organization,
+	User,
+	IDateRange,
+	OrganizationPermissionsEnum
+} from '@gauzy/models';
 import * as moment from 'moment';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { toUTC } from 'libs/utils';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { Store } from '../../../@core/services/store.service';
 import { NgForm } from '@angular/forms';
 import { TimesheetService } from '../../timesheet/timesheet.service';
+import { untilDestroyed } from 'ngx-take-until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -16,7 +22,7 @@ import { TimesheetService } from '../../timesheet/timesheet.service';
 	styleUrls: ['./time-tracker.component.scss']
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+	isOpen = false;
 	employeesId: string;
 	time = '00:00:00';
 	current_time = '00:00:00';
@@ -25,23 +31,16 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	selectedRange: IDateRange = { start: null, end: null };
 	user: any = {};
 	organization: Organization;
+	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	allowFutureDate: boolean;
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
 		private timesheetService: TimesheetService,
 		private toastrService: ToastrService,
+		private ngxPermissionsService: NgxPermissionsService,
 		private store: Store
-	) {
-		this.store.selectedOrganization$.subscribe(
-			(organization: Organization) => {
-				this.organization = organization;
-			}
-		);
-
-		this.store.user$.subscribe((user: User) => {
-			this.user = user;
-		});
-	}
+	) {}
 
 	public get isBillable(): boolean {
 		return this.timeTrackerService.timerConfig.isBillable;
@@ -94,25 +93,62 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		console.log('ngOnInit', { moment });
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((organization: Organization) => {
+				this.organization = organization;
+			});
+
+		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: User) => {
+			this.user = user;
+		});
+
 		this.timeTrackerService.$dueration
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
 		this.timeTrackerService.$current_session_dueration
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
 		this.timeTrackerService.$running
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((isRunning) => {
 				this.running = isRunning;
 			});
+
+		this.ngxPermissionsService.permissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.ngxPermissionsService
+					.hasPermission(
+						OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
+					)
+					.then((hasPermission) => {
+						this.allowFutureDate = hasPermission;
+					});
+			});
 	}
 
-	toggle(f: NgForm) {
+	toggle() {
+		if (!this.isOpen) {
+			this.show();
+		} else {
+			this.hide();
+		}
+	}
+
+	show() {
+		this.isOpen = true;
+	}
+
+	hide() {
+		this.isOpen = false;
+	}
+
+	toggleTimer(f: NgForm) {
 		if (!this.running && !f.valid) {
 			f.resetForm();
 			return;

@@ -28,7 +28,7 @@ export interface Invoice extends IBaseEntityModel {
 	sentTo?: string;
 	tags?: Tag[];
 	isEstimate?: boolean;
-	sentStatus?: boolean;
+	status?: string;
 	payments?: Payment[];
 	isAccepted?: boolean;
 }
@@ -52,7 +52,7 @@ export interface InvoiceUpdateInput {
 	invoiceType?: string;
 	sentTo?: string;
 	tags?: Tag[];
-	sentStatus?: boolean;
+	status?: string;
 	isAccepted?: boolean;
 	isEstimate?: boolean;
 }
@@ -78,4 +78,12 @@ export enum InvoiceTypeEnum {
 export enum DiscountTaxTypeEnum {
 	PERCENT = 'Percent',
 	FLAT_VALUE = 'Flat'
+}
+
+export enum InvoiceStatusTypesEnum {
+	DRAFT = 'Draft',
+	SENT = 'Sent',
+	VIEWED = 'Viewed',
+	PAID = 'Paid',
+	VOID = 'Void'
 }

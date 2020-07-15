@@ -112,10 +112,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 			...(employeeIds ? { employeeIds } : {})
 		};
 
-		// this.router.navigate([], {
-		// 	queryParams: request,
-		// 	queryParamsHandling: 'merge'
-		// });
 		this.loading = true;
 		this.timeLogs = await this.timesheetService
 			.getTimeLogs(request)

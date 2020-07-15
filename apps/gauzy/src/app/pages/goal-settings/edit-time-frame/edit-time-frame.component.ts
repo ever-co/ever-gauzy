@@ -140,7 +140,7 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 			});
 		} else {
 			await this.goalSettingsService
-				.update(this.timeFrame.id, data)
+				.updateTimeFrame(this.timeFrame.id, data)
 				.then((res) => {
 					if (res) {
 						this.closeDialog(res);

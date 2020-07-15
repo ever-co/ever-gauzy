@@ -10,7 +10,8 @@ import {
 	NbButtonModule,
 	NbInputModule,
 	NbIconModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -35,6 +36,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbInputModule,
 		NbIconModule,
 		NbTooltipModule,
+		NbSpinnerModule,
 		ReactiveFormsModule,
 		EmployeeMultiSelectModule,
 		SidebarModule,

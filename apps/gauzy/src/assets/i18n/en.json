@@ -53,6 +53,9 @@
 		"EMAIL": "Email",
 		"CONVERT_TO_INVOICE": "Convert to invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
+		"SAVE_AS_DRAFT": "Save as Draft",
+		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
+		"SAVE_AND_SEND_EMAIL": "Save and send via email",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "Edit",
@@ -716,6 +719,7 @@
 		"ADD_NEW_KEY_RESULT": "Add new key result",
 		"ADD_NEW_OBJECTIVE": "Add new Objective",
 		"SESSION": "Session",
+		"GOAL_SETTINGS": "Goal Settings",
 		"NO_DESCRIPTION": "No Description",
 		"PROGRESS": "Progress",
 		"UPDATES": "Updates",
@@ -725,7 +729,8 @@
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
-			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames"
+			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames",
+			"ADD_KPI": "Add KPI"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organization",
@@ -736,19 +741,31 @@
 			"ACTIVE": "Active",
 			"INACTIVE": "Inactive"
 		},
+		"KPI_OPERATOR": {
+			"GREATER_THAN_EQUAL_TO": "Greater than or equal to",
+			"LESSER_THAN_EQUAL_TO": "Lesser than or equal to"
+		},
+		"KPI_METRIC": {
+			"NUMBER": "Number",
+			"PERCENTAGE": "Percentage"
+		},
 		"FORM": {
 			"LABELS": {
 				"LEVEL": "Level",
 				"OWNER": "Owner",
 				"LEAD": "Lead (optional)",
 				"DEADLINE": "Deadline",
-				"STATUS": "Status"
+				"STATUS": "Status",
+				"KPI_SHOULD_BE": "This KPI should be",
+				"CURRENT_VALUE": "Current Value"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Objective Name. eg. Improve Website SEO",
 				"DESCRIPTION": "Objective Description.",
 				"LEVEL": "Goal Level",
-				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'"
+				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'",
+				"KPI_DESCRIPTION": "A short descripton to give some context about the KPI",
+				"KPI_NAME": "KPI Title. eg. Maintain page views - 200/day"
 			},
 			"ERROR": {
 				"START_DATE_GREATER": "End Date must be greater than Start Date"
@@ -1500,6 +1517,7 @@
 		"APPLY_DISCOUNT": "Apply Discount",
 		"APPLIED": "Applied",
 		"NOT_APPLIED": "Not Applied",
+		"STATUS": "Status",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -1645,7 +1663,9 @@
 		"NAME_OF_THE_BASE": "Name of the base",
 		"REMOVE_CATEGORY": "Remove Category",
 		"REMOVE_BASE": "Remove Base",
-		"CLEAR": "Clear"
+		"CLEAR": "Clear",
+		"SEARCH_BY_NAME": "Search by name",
+		"FILTER_BY_AUTHOR": "Filter by author"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "About"

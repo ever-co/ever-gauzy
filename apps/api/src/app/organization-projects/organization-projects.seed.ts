@@ -23,16 +23,18 @@ export const createDefaultOrganizationProjects = async (
 	});
 	const projects: OrganizationProjects[] = [];
 
+	const organizations = faker.random.arrayElement(defaultOrganizations);
+
 	defaultProjects.forEach((name) => {
 		const project = new OrganizationProjects();
 		project.tags = [tag];
 		project.name = name;
-		project.organizationId = defaultOrganizations[0].id;
-		project.tenant = defaultOrganizations[0].tenant;
+		project.organizationId = organizations.id;
+		project.tenant = organizations.tenant;
 		// TODO: this seed creates default projects without tenantId.
 		projects.push(project);
 	});
-	await connection.manager.save(projects);
+	return await connection.manager.save(projects);
 };
 
 export const createRandomOrganizationProjects = async (

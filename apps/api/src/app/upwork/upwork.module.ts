@@ -23,6 +23,7 @@ import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeSlot } from '../timesheet/time-slot.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
+import { ExportAllModule } from '../export_import/export-all.module';
 
 @Module({
 	imports: [
@@ -38,7 +39,8 @@ import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 			TimeSlot,
 			TimeSlotMinute
 		]),
-		CqrsModule
+		CqrsModule,
+		ExportAllModule
 	],
 	controllers: [UpworkController],
 	providers: [

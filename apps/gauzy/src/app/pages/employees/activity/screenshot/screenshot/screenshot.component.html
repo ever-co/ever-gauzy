@@ -36,96 +36,93 @@
 								*ngIf="timeSlot; else noActivity"
 							>
 								<div
-									class="image-contaer"
+									class="image-contaer curser-pointer"
 									[ngClass]="{
 										'select-mode': selectedIdsCount > 0
 									}"
 									(click)="toggleSelect(timeSlot.id)"
 								>
+									<div class="hover">
+										<div
+											class="actions d-flex align-items-center w-100"
+										>
+											<nb-checkbox
+												[(ngModel)]="
+													selectedIds[timeSlot.id]
+												"
+												(click)="
+													$event.stopPropagation()
+												"
+												(ngModelChange)="toggleSelect()"
+											></nb-checkbox>
+											<button
+												class="ml-auto select-hidden"
+												status="danger"
+												nbButton
+												size="tiny"
+												(click)="
+													$event.stopPropagation();
+													deleteSlot(timeSlot)
+												"
+											>
+												<nb-icon
+													icon="trash-2-outline"
+												></nb-icon>
+											</button>
+										</div>
+										<div class="view-button select-hidden">
+											<button
+												class="mr-1"
+												nbButton
+												size="small"
+												status="primary"
+												(click)="
+													$event.stopPropagation()
+												"
+												ngxGallery
+												[item]="
+													timeSlot.screenshots[0]
+														?.fullUrl
+												"
+												[items]="screenshotsUrls"
+												*ngIf="
+													timeSlot?.screenshots
+														?.length > 0
+												"
+											>
+												{{
+													'ACTIVITY.VIEW_SCREEN'
+														| translate
+												}}
+											</button>
+											<button
+												nbButton
+												size="small"
+												status="secondary"
+												(click)="
+													$event.stopPropagation();
+													viewInfo(timeSlot)
+												"
+											>
+												{{
+													'ACTIVITY.VIEW_INFO'
+														| translate
+												}}
+											</button>
+										</div>
+									</div>
 									<ng-template
 										[ngIf]="
 											timeSlot?.screenshots?.length > 0
 										"
 										[ngIfElse]="noImageEl"
 									>
-										<div class="hover">
-											<div
-												class="actions d-flex align-items-center w-100"
-											>
-												<nb-checkbox
-													[(ngModel)]="
-														selectedIds[timeSlot.id]
-													"
-													(click)="
-														$event.stopPropagation()
-													"
-													(ngModelChange)="
-														toggleSelect()
-													"
-												></nb-checkbox>
-												<button
-													class="ml-auto select-hidden"
-													status="danger"
-													nbButton
-													size="tiny"
-													(click)="
-														$event.stopPropagation();
-														deleteSlot(timeSlot)
-													"
-												>
-													<nb-icon
-														icon="trash-2-outline"
-													></nb-icon>
-												</button>
-											</div>
-											<div
-												class="view-button select-hidden"
-											>
-												<button
-													class="mr-1"
-													nbButton
-													size="small"
-													status="primary"
-													(click)="
-														$event.stopPropagation()
-													"
-													ngxGallery
-													[item]="
-														timeSlot.screenshots[0]
-															?.fullUrl
-													"
-													[items]="screenshotsUrls"
-												>
-													{{
-														'ACTIVITY.VIEW_SCREEN'
-															| translate
-													}}
-												</button>
-												<button
-													nbButton
-													size="small"
-													status="secondary"
-													(click)="
-														$event.stopPropagation();
-														viewInfo(timeSlot)
-													"
-												>
-													{{
-														'ACTIVITY.VIEW_INFO'
-															| translate
-													}}
-												</button>
-											</div>
-										</div>
-										<a class="curser-pointer">
-											<img
-												draggable="false"
-												[src]="
-													timeSlot.screenshots[0]
-														?.fullUrl
-												"
-											/>
-										</a>
+										<img
+											draggable="false"
+											[src]="
+												timeSlot.screenshots[0]?.fullUrl
+											"
+										/>
 									</ng-template>
 									<ng-template #noImageEl>
 										<img draggable="false" />

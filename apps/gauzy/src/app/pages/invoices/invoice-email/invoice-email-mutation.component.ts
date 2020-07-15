@@ -1,7 +1,11 @@
 import { Component } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit } from '@angular/core';
-import { Invoice, InvoiceTypeEnum } from '@gauzy/models';
+import {
+	Invoice,
+	InvoiceTypeEnum,
+	InvoiceStatusTypesEnum
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
@@ -88,15 +92,17 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 			);
 		});
 
-		await this.invoiceService.update(this.invoice.id, {
-			sentStatus: true
-		});
+		if (this.invoice.id) {
+			await this.invoiceService.update(this.invoice.id, {
+				status: InvoiceStatusTypesEnum.SENT
+			});
+		}
 
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.EMAIL.EMAIL_SENT'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
-		this.dialogRef.close();
+		this.dialogRef.close('ok');
 	}
 
 	cancel() {

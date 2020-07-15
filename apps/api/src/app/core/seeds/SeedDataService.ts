@@ -193,6 +193,8 @@ import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import { createRandomEmployeeTimeOff } from '../../time-off-request/time-off-request.seed';
+import { createDefaultEquipments, createRandomEquipments } from '../../equipment/equipment.seed';
+import { createRandomEquipmentSharing } from '../../equipment-sharing/equipment-sharing.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -281,6 +283,7 @@ export class SeedDataService {
 	connection: Connection;
 	log = console.log;
 	organizations: Organization[];
+	defaultProjects: OrganizationProjects[];
 	constructor() {}
 
 	async createConnection() {
@@ -397,7 +400,7 @@ export class SeedDataService {
 
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
 
-		await createDefaultOrganizationProjects(
+		this.defaultProjects = await createDefaultOrganizationProjects(
 			this.connection,
 			defaultOrganizations
 		);
@@ -414,6 +417,11 @@ export class SeedDataService {
       this.connection,
       tenant,
       defaultOrganizations
+    );
+
+    await createDefaultEquipments(
+      this.connection,
+      tenant,
     );
 
 
@@ -635,6 +643,20 @@ export class SeedDataService {
 			categoriesMap
 		);
 
+
+		await createRandomEquipments(
+		  this.connection,
+      tenants,
+      env.randomSeedConfig.equipmentPerTenant || 20
+      );
+
+		await createRandomEquipmentSharing(
+		  this.connection,
+      tenants,
+      tenantEmployeeMap,
+      env.randomSeedConfig.equipmentSharingPerTenant || 20
+      );
+
 		await seedRandomEmploymentTypes(
 			this.connection,
 			tenants,
@@ -671,7 +693,7 @@ export class SeedDataService {
 			this.connection,
 			tenants,
 			tenantEmployeeMap,
-			env.randomSeedConfig.requestApprovalPerOrganization || 10
+			env.randomSeedConfig.requestApprovalPerOrganization || 20
 		);
 
 		await createSkills(this.connection);
@@ -697,7 +719,7 @@ export class SeedDataService {
       tenants,
       tenantOrganizationsMap,
       tenantEmployeeMap,
-      env.randomSeedConfig.employeeTimeOffPerOrganization || 10
+      env.randomSeedConfig.employeeTimeOffPerOrganization || 20
     )
 
 		await createRandomEmailSent(
@@ -707,8 +729,8 @@ export class SeedDataService {
 			env.randomSeedConfig.emailsPerOrganization || 20
 		);
 
-		await createRandomTask(this.connection);
-		await createRandomTimesheet(this.connection);
+		await createRandomTask(this.connection, this.defaultProjects);
+		await createRandomTimesheet(this.connection, this.defaultProjects);
 	}
 
 	/**

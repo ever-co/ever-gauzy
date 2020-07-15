@@ -347,13 +347,31 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
+			class="mr-3"
+			(click)="updateInvoice('Draft')"
 			status="success"
-			(click)="updateInvoice()"
-			*ngIf="hasInvoiceEditPermission"
 			[disabled]="form.invalid"
 			nbButton
 		>
-			{{ 'BUTTONS.SAVE' | translate }}
+			{{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
+		</button>
+		<button
+			class="mr-3"
+			(click)="sendToClient()"
+			status="success"
+			[disabled]="form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE_AND_SEND_CLIENT' | translate }}
+		</button>
+		<button
+			class="mr-3"
+			(click)="sendViaEmail()"
+			status="success"
+			[disabled]="form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE_AND_SEND_EMAIL' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

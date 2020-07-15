@@ -1,7 +1,6 @@
 import { app, Menu, nativeImage, Tray } from 'electron';
 import * as path from 'path';
 const Store = require('electron-store');
-import NotificationDesktop from './notifier';
 import TimerHandler from './timer';
 import { LocalStore } from './getSetStore';
 
@@ -10,7 +9,6 @@ export default class TrayIcon {
 	constructor(win2, knex, win3) {
 		const timerHandler = new TimerHandler();
 		const store = new Store();
-		const notificationDesktop = new NotificationDesktop();
 		const iconPath = path.join(
 			__dirname,
 			'..',
@@ -34,7 +32,6 @@ export default class TrayIcon {
 				click(menuItem) {
 					const projectSelect = store.get('project');
 					if (projectSelect && projectSelect.projectId) {
-						notificationDesktop.startTimeNotification();
 						timerHandler.startTimer(win2, knex, win3);
 						const timeMenu = menuItem.menu.getMenuItemById('0');
 						getTime();
@@ -60,7 +57,7 @@ export default class TrayIcon {
 					timeView.visible = false;
 					startMenu.enabled = true;
 					menuItem.enabled = false;
-					timerHandler.stopTime();
+					timerHandler.stopTime(win2, win3, knex);
 				}
 			},
 			{
@@ -68,9 +65,10 @@ export default class TrayIcon {
 				label: 'Open Time Tracker',
 				enabled: true,
 				click(menuItem) {
-					const auth = store.get('auth');
-					auth.apiHost = LocalStore.getServerUrl();
-					win3.webContents.send('timer_tracker_show', auth);
+					win3.webContents.send(
+						'timer_tracker_show',
+						LocalStore.beforeRequestParams()
+					);
 					win3.show();
 				}
 			},

@@ -8,6 +8,17 @@
 				{{ 'INVOICES_PAGE.ESTIMATES.HEADER' | translate }}
 			</h4>
 		</div>
+		<nb-select
+			class="invoice-status"
+			[disabled]="disableButton"
+			placeholder="Set Invoice Status"
+			[(selected)]="status"
+			(selectedChange)="selectStatus($event)"
+		>
+			<nb-option *ngFor="let status of statusTypes" [value]="status">
+				{{ status }}
+			</nb-option>
+		</nb-select>
 		<div>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"

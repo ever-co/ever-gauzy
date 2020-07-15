@@ -31,10 +31,13 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 	});
 
 	ipcMain.on('data_push_afk', (event, arg) => {
-		console.log('afk push', arg);
 		arg.afk.forEach((item) => {
 			const now = moment().utc();
-			const afkDuration = now.diff(moment(item.start).utc(), 'seconds');
+			const afkDuration = now.diff(moment(arg.start).utc(), 'seconds');
+			console.log('now time', now);
+			console.log('time start afk from aw', item.start);
+			console.log('duration from start afk to now', afkDuration);
+			console.log('afk duration from aw', item.duration);
 			if (afkDuration < item.duration) {
 				item.duration = afkDuration;
 			}
@@ -53,6 +56,13 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 		});
 	});
 
+	ipcMain.on('return_activity', (event, arg) => {
+		TimerData.updateWindowEventUpload(knex, {
+			eventId: arg.eventId,
+			activityId: arg.activityId
+		});
+	});
+
 	ipcMain.on('start_timer', (event, arg) => {
 		store.set({
 			project: {
@@ -65,7 +75,7 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 	});
 
 	ipcMain.on('stop_timer', (event, arg) => {
-		timerHandler.stopTime();
+		timerHandler.stopTime(win2, win3, knex);
 	});
 
 	ipcMain.on('auth_success', (event, arg) => {
@@ -81,18 +91,18 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 		});
 	});
 
-	ipcMain.on('return_activity', (event, arg) => {
-		TimerData.updateWindowEventUpload(knex, {
-			eventId: arg.eventId,
-			activityId: arg.activityId
-		});
-	});
-
 	ipcMain.on('return_time_sheet', (event, arg) => {
 		console.log('timesheet return', arg);
 		TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
 			timeSheetId: arg.timeSheetId,
+			timeLogId: arg.timeLogId
+		});
+	});
+
+	ipcMain.on('return_time_log', (event, arg) => {
+		TimerData.updateTimerUpload(knex, {
+			id: arg.timerId,
 			timeLogId: arg.timeLogId
 		});
 	});

@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { TimesheetStatus } from '@gauzy/models';
+import { TimesheetStatus, OrganizationProjects } from '@gauzy/models';
 import { Timesheet } from '../timesheet.entity';
 import { Employee } from '../../employee/employee.entity';
 import * as moment from 'moment';
@@ -10,7 +10,10 @@ import * as path from 'path';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
 
-export const createRandomTimesheet = async (connection: Connection) => {
+export const createRandomTimesheet = async (
+	connection: Connection,
+	defaultProjects: OrganizationProjects[]
+) => {
 	const timesheets: Timesheet[] = [];
 	const employees = await connection
 		.getRepository(Employee)
@@ -92,7 +95,7 @@ export const createRandomTimesheet = async (connection: Connection) => {
 	});
 
 	await Promise.all([
-		createRandomTimeLogs(connection, createdTimesheets),
+		createRandomTimeLogs(connection, createdTimesheets, defaultProjects),
 		createRandomActivities(connection)
 	]);
 	return createdTimesheets;
