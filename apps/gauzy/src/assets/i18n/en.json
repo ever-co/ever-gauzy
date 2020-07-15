@@ -127,9 +127,9 @@
 		"NO_RESULT": "No Result",
 		"CLIENT": "Client",
 		"INTERNAL": "Internal",
-		"START": "Start", 
-		"END" : "End", 
-		"REQUEST_DATE" : "Request Date",
+		"START": "Start",
+		"END": "End",
+		"REQUEST_DATE": "Request Date",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -753,7 +753,8 @@
 			"LABELS": {
 				"LEVEL": "Level",
 				"OWNER": "Owner",
-				"LEAD": "Lead (optional)",
+				"LEAD": "Lead",
+				"LEAD_OPTIONAL": "Lead (optional)",
 				"DEADLINE": "Deadline",
 				"STATUS": "Status",
 				"KPI_SHOULD_BE": "This KPI should be",
@@ -1196,9 +1197,9 @@
 		"HOLIDAY_NAME": "Holiday name",
 		"SELECT_EMPLOYEES": "Select Employees",
 		"TIME_OFF_SETTINGS": "Time Off Settings",
-		"SELECT_HOLIDAY_NAME": "Select Holiday name", 
-		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees", 
-		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy", 
+		"SELECT_HOLIDAY_NAME": "Select Holiday name",
+		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees",
+		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy",
 		"ADD_A_DESCRIPTION": "Add a description",
 		"STATUSES": {
 			"REQUESTED": "Requested",
@@ -1207,8 +1208,8 @@
 			"ALL": "All"
 		},
 		"ACTIONS": {
-			"APPROVE_DAYS_OFF_REQUEST": "Approve Days off Request", 
-			"DENY_DAYS_OFF_REQUEST": "Deny Days off Request", 
+			"APPROVE_DAYS_OFF_REQUEST": "Approve Days off Request",
+			"DENY_DAYS_OFF_REQUEST": "Deny Days off Request",
 			"DELETE_DAYS_OFF_REQUEST": "Delete Days off Request"
 		},
 		"POLICY": {

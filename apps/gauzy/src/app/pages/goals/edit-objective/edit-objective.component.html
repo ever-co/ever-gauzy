@@ -83,7 +83,7 @@
 			></ga-employee-multi-select>
 
 			<label for="objective-Lead" class="label mt-3">
-				{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}
+				{{ 'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate }}
 			</label>
 			<ga-employee-multi-select
 				[multiple]="false"
@@ -92,7 +92,9 @@
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'lead')"
 				id="key-result-Lead"
-				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}"
+				placeholder="{{
+					'GOALS_PAGE.FORM.LABELS.LEAD_ OPTIONAL' | translate
+				}}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
 
