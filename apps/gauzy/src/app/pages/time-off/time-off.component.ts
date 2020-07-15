@@ -147,7 +147,7 @@ export class TimeOffComponent extends TranslationBaseComponent implements OnInit
 					class: 'text-center'
 				},
 				status: {
-					title: this.getTranslation('SM_TABLE.REQUEST_DATE.STATUS'),
+					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
 					width: '200px',
