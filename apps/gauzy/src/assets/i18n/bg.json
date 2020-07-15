@@ -455,7 +455,8 @@
 		"CLIENTS_COUNT": "Clients Count",
 		"DETAILS": "Детайли",
 		"SKILLS": "Skills",
-		"PRIVACY": "Privacy"
+		"PRIVACY": "Privacy",
+		"SELECT_TIMEZONE": "Select Timezone"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -2026,6 +2027,8 @@
 		"HOST": "Host",
 		"RESCHEDULE": "Reschedule Appointment",
 		"CANCEL": "Cancel Appointment",
+		"TIMEZONE": "Your time zone:",
+		"CHANGE": "(Change)",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
