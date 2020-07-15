@@ -928,8 +928,10 @@
 			"DATE": "Date",
 			"SORT_BY": "Sort by",
 			"SEARCH_BY_INTERVIEW": "Search by interview's title",
+			"SEARCH_BY_CANDIDATE": "Search by candidate's name",
 			"CANDIDATE_NAME": "Candidate's name",
-			"RATING": "Rating"
+			"RATING": "Rating",
+			"RESET_FILTERS": "Reset filters"
 		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidates statistic",

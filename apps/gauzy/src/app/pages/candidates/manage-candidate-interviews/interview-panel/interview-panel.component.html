@@ -3,15 +3,35 @@
 		<input
 			nbInput
 			type="text"
-			[formControl]="search"
+			[formControl]="candidateSearch"
+			class="search"
+			placeholder="{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.SEARCH_BY_CANDIDATE'
+					| translate
+			}}"
+		/>
+		<input
+			nbInput
+			type="text"
+			[formControl]="interviewSearch"
 			class="search"
 			placeholder="{{
 				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.SEARCH_BY_INTERVIEW'
 					| translate
 			}}"
 		/>
+		<ga-employee-multi-select
+			class="select"
+			[multiple]="true"
+			[label]="false"
+			[allEmployees]="employeeList"
+			(selectedChange)="onEmployeeSelected($event)"
+			[reset]="isResetSelect"
+		>
+		</ga-employee-multi-select>
 		<nb-select
 			class="select"
+			[formControl]="sort"
 			placeholder="{{
 				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.SORT_BY' | translate
 			}}"
@@ -27,6 +47,14 @@
 				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING' | translate
 			}}</nb-option>
 		</nb-select>
+		<button
+			status="danger"
+			class="clear-button"
+			(click)="clearFilters()"
+			nbButton
+		>
+			{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RESET_FILTERS' | translate }}
+		</button>
 	</div>
 	<div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-accordion *ngIf="interviewList?.length > 0">
