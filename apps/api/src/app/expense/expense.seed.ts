@@ -104,7 +104,7 @@ export const createRandomExpenses = async (
 			);
 			const categories = categoriesMap.get(employee.organization);
 
-			for (let index = 0; index < 5; index++) {
+			for (let index = 0; index < 100; index++) {
 				const expense = new Expense();
 
 				const currentIndex = faker.random.number({
@@ -123,7 +123,7 @@ export const createRandomExpenses = async (
 				expense.category = categories[currentIndex % categories.length];
 				expense.currency =
 					currencies[(index % currencies.length) + 1 - 1];
-				expense.valueDate = faker.date.recent(15);
+				expense.valueDate = faker.date.recent(150);
 				expense.notes = notesArray[currentIndex];
 
 				randomExpenses.push(expense);

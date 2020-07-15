@@ -155,6 +155,14 @@ export const environment: IEnvironment = {
 
 	defaultEmployees: [
 		{
+			email: 'ruslan@ever.co',
+			password: '123456',
+			firstName: 'Ruslan',
+			lastName: 'Konviser',
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
 			email: 'alish@ever.co',
 			password: '123456',
 			firstName: 'Alish',
@@ -384,6 +392,17 @@ export const environment: IEnvironment = {
 			endWork: '2019-10-15',
 			employeeLevel: 'A',
 			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
+			email: 'yordan@ever.co',
+			password: '123456',
+			firstName: 'Yordan ',
+			lastName: 'Genovski',
+			imageUrl: 'assets/images/avatars/yordan.jpg',
+			startedWorkOn: '2018-08-01',
+			endWork: null,
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultCandidates: [
@@ -463,22 +482,28 @@ export const environment: IEnvironment = {
 				'tsvetelina@ever.co',
 				'everq@ever.co',
 				'julia@ever.co'
-			]
+			],
+			manager: ['ruslan@ever.co']
 		},
-		{
-			name: 'Candidates',
-			defaultMembers: ['john@ever.co']
-		},
-
 		{
 			name: 'Contractors',
 			defaultMembers: [
-				'rachit@ever.co',
 				'dimana@ever.co',
 				'deko898@hotmail.com',
 				'muiz@smooper.xyz',
 				'ckhandla94@gmail.com'
-			]
+			],
+			manager: ['ruslan@ever.co', 'rachit@ever.co']
+		},
+		{
+			name: 'Designers',
+			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
+			manager: []
+		},
+		{
+			name: 'QA',
+			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
+			manager: []
 		}
 	],
 
@@ -497,9 +522,10 @@ export const environment: IEnvironment = {
 		emailsPerOrganization: 30,
 		invitePerOrganization: 30,
 		requestApprovalPerOrganization: 20,
-    employeeTimeOffPerOrganization:10,
-    equipmentPerTenant:20,
-    equipmentSharingPerTenant:20
+		employeeTimeOffPerOrganization: 10,
+		equipmentPerTenant: 20,
+		equipmentSharingPerTenant: 20,
+		proposalsSharingPerOrganizations: 30
 	},
 
 	defaultHubstaffUserPass:
