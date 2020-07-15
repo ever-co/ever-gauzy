@@ -195,6 +195,7 @@ import { OrganizationSprint } from '../../organization-sprint/organization-sprin
 import { createRandomEmployeeTimeOff } from '../../time-off-request/time-off-request.seed';
 import { createDefaultEquipments, createRandomEquipments } from '../../equipment/equipment.seed';
 import { createRandomEquipmentSharing } from '../../equipment-sharing/equipment-sharing.seed';
+import { createRandomProposals } from '../../proposal/proposal.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -720,7 +721,15 @@ export class SeedDataService {
       tenantOrganizationsMap,
       tenantEmployeeMap,
       env.randomSeedConfig.employeeTimeOffPerOrganization || 20
-    )
+    );
+
+		await createRandomProposals(
+		  this.connection,
+      tenants,
+      tenantEmployeeMap,
+      tenantOrganizationsMap,
+      env.randomSeedConfig.proposalsSharingPerOrganizations || 30
+    );
 
 		await createRandomEmailSent(
 			this.connection,

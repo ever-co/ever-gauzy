@@ -292,7 +292,8 @@ export const environment: IEnvironment = {
 		requestApprovalPerOrganization: 20,
     employeeTimeOffPerOrganization:10,
     equipmentPerTenant:20,
-    equipmentSharingPerTenant:20
+    equipmentSharingPerTenant:20,
+    proposalsSharingPerOrganizations:30
 
 	},
 
