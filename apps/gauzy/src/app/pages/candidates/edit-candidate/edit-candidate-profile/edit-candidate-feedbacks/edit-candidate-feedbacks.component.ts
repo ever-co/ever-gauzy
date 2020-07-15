@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { takeUntil, first } from 'rxjs/operators';
@@ -20,6 +20,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateCriterionsRatingService } from 'apps/gauzy/src/app/@core/services/candidate-criterions-rating.service';
+import { DeleteFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
 
 @Component({
 	selector: 'ga-edit-candidate-feedbacks',
@@ -58,6 +59,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private employeesService: EmployeesService,
+		private dialogService: NbDialogService,
 		private candidateInterviewersService: CandidateInterviewersService,
 		private candidatesService: CandidatesService,
 		private candidateInterviewService: CandidateInterviewService,
@@ -227,15 +229,19 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.feedbacks.patchValue([this.currentFeedback]);
 		this.feedbackId = id;
-		this.status = this.currentFeedback.status;
-		this.feedbackInterviewer = this.currentFeedback.interviewer;
-		this.feedbackInterviewId = this.currentFeedback.interviewId;
-		this.interviewers = await this.candidateInterviewersService.findByInterviewId(
-			this.feedbackInterviewId
-		);
-		this.getStatusHire(this.feedbackInterviewId);
-		this.interviewersHire = this.interviewers ? this.interviewers : null;
-		this.averageRating = this.currentFeedback.rating;
+		if (this.currentFeedback.interviewId) {
+			this.status = this.currentFeedback.status;
+			this.feedbackInterviewer = this.currentFeedback.interviewer;
+			this.feedbackInterviewId = this.currentFeedback.interviewId;
+			this.interviewers = await this.candidateInterviewersService.findByInterviewId(
+				this.feedbackInterviewId
+			);
+			this.getStatusHire(this.feedbackInterviewId);
+			this.interviewersHire = this.interviewers
+				? this.interviewers
+				: null;
+			this.averageRating = this.currentFeedback.rating;
+		}
 	}
 
 	submitForm() {
@@ -324,16 +330,15 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		}
 	}
 	async removeFeedback(id: string) {
-		try {
-			const res = await this.candidateFeedbacksService.findById(id);
-			if (res && res.interviewId) {
-				await this.candidateCriterionsRatingService.deleteBulk(id);
+		const dialog = this.dialogService.open(DeleteFeedbackComponent, {
+			context: {
+				feedbackId: id
 			}
-			await this.candidateFeedbacksService.delete(id);
+		});
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
 			this.toastrSuccess('DELETED');
 			this.loadFeedbacks();
-		} catch (error) {
-			this.toastrError(error);
 		}
 	}
 	onInterviewSelected(value: any) {
