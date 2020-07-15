@@ -24,11 +24,11 @@ export class Goal extends TenantBase implements IGoal {
 	@JoinColumn()
 	ownerOrg?: Organization;
 
-	@ManyToOne((type) => OrganizationTeam, { cascade: ['update'] })
+	@ManyToOne((type) => OrganizationTeam)
 	@JoinColumn()
 	ownerTeam?: OrganizationTeam;
 
-	@ManyToOne((type) => Employee, { cascade: ['update'] })
+	@ManyToOne((type) => Employee)
 	@JoinColumn()
 	ownerEmployee?: Employee;
 

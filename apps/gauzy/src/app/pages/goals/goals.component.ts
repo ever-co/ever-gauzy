@@ -124,7 +124,6 @@ export class GoalsComponent extends TranslationBaseComponent
 				} else {
 					this.createTimeFrameGroups(this.goals);
 				}
-				console.log(this.allGoals);
 				this.loading = false;
 			});
 	}
