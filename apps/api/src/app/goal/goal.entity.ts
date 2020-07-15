@@ -6,6 +6,7 @@ import { KeyResult } from '../keyresult/keyresult.entity';
 import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { TenantBase } from '../core/entities/tenant-base';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
 
 @Entity('goal')
 export class Goal extends TenantBase implements IGoal {
@@ -18,10 +19,18 @@ export class Goal extends TenantBase implements IGoal {
 	@IsOptional()
 	description?: string;
 
-	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee)
+	@ApiProperty({ type: Organization })
+	@ManyToOne((type) => Organization)
 	@JoinColumn()
-	owner: Employee;
+	ownerOrg?: Organization;
+
+	@ManyToOne((type) => OrganizationTeam, { cascade: ['update'] })
+	@JoinColumn()
+	ownerTeam?: OrganizationTeam;
+
+	@ManyToOne((type) => Employee, { cascade: ['update'] })
+	@JoinColumn()
+	ownerEmployee?: Employee;
 
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true })

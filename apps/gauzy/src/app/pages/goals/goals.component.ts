@@ -104,8 +104,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					'keyResults',
 					'keyResults.updates',
 					'keyResults.goal',
-					'owner',
-					'owner.user',
+					'ownerEmployee',
+					'ownerEmployee.user',
+					'ownerOrg',
+					'ownerTeam',
 					'lead',
 					'lead.user',
 					'keyResults.owner',
@@ -122,6 +124,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				} else {
 					this.createTimeFrameGroups(this.goals);
 				}
+				console.log(this.allGoals);
 				this.loading = false;
 			});
 	}
@@ -235,7 +238,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.goals = this.allGoals.filter((goal) =>
 					this.employee.id == null
 						? goal.level.toLowerCase() === selection
-						: goal.owner.id === this.employee.id
+						: goal.ownerEmployee.id === this.employee.id
 				);
 			} else {
 				this.goals = this.allGoals.filter(
@@ -260,7 +263,8 @@ export class GoalsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				data: goal,
-				orgId: this.selectedOrganizationId
+				orgId: this.selectedOrganizationId,
+				orgName: this.organizationName
 			}
 		});
 

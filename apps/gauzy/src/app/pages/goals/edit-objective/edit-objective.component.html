@@ -1,6 +1,6 @@
-<nb-card size="large" class="max-width-1000">
+<nb-card size="large" class="max-width-40vw">
 	<nb-card-header>
-		Add Objective
+		{{ !!data ? 'Edit Objective' : 'Add Objective' }}
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -46,7 +46,10 @@
 				placeholder="{{
 					'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL' | translate
 				}}"
-				[(selected)]="objectiveForm.value.level"
+				[selected]="objectiveForm.value.level"
+				(selectedChange)="
+					$event === goalLevelEnum.TEAM ? getTeams() : null
+				"
 				fullWidth
 			>
 				<nb-option
@@ -72,6 +75,7 @@
 				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
 			</label>
 			<ga-employee-multi-select
+				*ngIf="objectiveForm.value.level === goalLevelEnum.EMPLOYEE"
 				[multiple]="false"
 				[allEmployees]="employees"
 				[selectedEmployeeIds]="objectiveForm.value.owner"
@@ -81,6 +85,26 @@
 				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
+			<nb-select
+				fullWidth
+				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
+				*ngIf="objectiveForm.value.level === goalLevelEnum.TEAM"
+				formControlName="owner"
+			>
+				<nb-option *ngFor="let team of teams" [value]="team.id">
+					{{ team.name }}
+				</nb-option>
+			</nb-select>
+			<nb-select
+				fullWidth
+				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
+				*ngIf="objectiveForm.value.level === goalLevelEnum.ORGANIZATION"
+				formControlName="owner"
+			>
+				<nb-option [value]="orgId">
+					{{ orgName }}
+				</nb-option>
+			</nb-select>
 
 			<label for="objective-Lead" class="label mt-3">
 				{{ 'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate }}
@@ -93,7 +117,7 @@
 				(selectedChange)="selectEmployee($event, 'lead')"
 				id="key-result-Lead"
 				placeholder="{{
-					'GOALS_PAGE.FORM.LABELS.LEAD_ OPTIONAL' | translate
+					'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate
 				}}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
