@@ -3,7 +3,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { Invoice, Payment } from '@gauzy/models';
+import { Invoice, Payment, InvoiceStatusTypesEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -122,6 +122,10 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 			.onClose.subscribe(async () => {
 				this.totalPaid = 0;
 				await this.loadSettings();
+				await this.updateInvoiceStatus(
+					+this.invoice.totalValue,
+					this.totalPaid
+				);
 			});
 	}
 
@@ -135,6 +139,10 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 			})
 			.onClose.subscribe(async () => {
 				await this.loadSettings();
+				await this.updateInvoiceStatus(
+					+this.invoice.totalValue,
+					this.totalPaid
+				);
 			});
 	}
 
@@ -146,7 +154,11 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
-			this.loadSettings();
+			await this.loadSettings();
+			await this.updateInvoiceStatus(
+				+this.invoice.totalValue,
+				this.totalPaid
+			);
 
 			this.toastrService.primary(
 				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),
@@ -247,6 +259,26 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 		this.payments = items;
 		this.smartTableSource.load(items);
 		await this.calculateTotalPaid();
+	}
+
+	async updateInvoiceStatus(totalValue: number, totalPaid: number) {
+		if (totalPaid <= 0) {
+			await this.invoicesService.update(this.invoice.id, {
+				status: InvoiceStatusTypesEnum.VIEWED
+			});
+		} else if (totalPaid < totalValue) {
+			await this.invoicesService.update(this.invoice.id, {
+				status: InvoiceStatusTypesEnum.PARTIALLY_PAID
+			});
+		} else if (totalPaid === totalValue) {
+			await this.invoicesService.update(this.invoice.id, {
+				status: InvoiceStatusTypesEnum.FULLY_PAID
+			});
+		} else {
+			await this.invoicesService.update(this.invoice.id, {
+				status: InvoiceStatusTypesEnum.OVERPAID
+			});
+		}
 	}
 
 	_applyTranslationOnSmartTable() {

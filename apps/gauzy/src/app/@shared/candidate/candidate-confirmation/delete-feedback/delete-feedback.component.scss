@@ -1,0 +1,35 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+
+  &-body {
+    min-width: 25rem;
+
+    &-header {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      border: none;
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+
+      &-icon {
+        font-size: 1.25rem;
+        &:hover {
+          cursor: pointer;
+        }
+      }
+    }
+
+    &-buttons {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+      margin: 2rem 0 0 0;
+    }
+  }
+}

@@ -5,6 +5,8 @@ import { Organization } from '../organization/organization.entity';
 import * as faker from 'faker';
 import { Employee } from '../employee/employee.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
+import { GoalLevelEnum } from '@gauzy/models';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
 
 export const createDefaultGoals = async (
 	connection: Connection,
@@ -17,6 +19,9 @@ export const createDefaultGoals = async (
 	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
 		GoalTimeFrame
 	);
+	const orgTeams: OrganizationTeam[] = await connection.manager.find(
+		OrganizationTeam
+	);
 
 	organizations.forEach((organization) => {
 		for (let i = 0; i < faker.random.number({ min: 4, max: 7 }); i++) {
@@ -26,7 +31,13 @@ export const createDefaultGoals = async (
 			}`;
 			goal.progress = 0;
 			goal.level = goal.name.split('-', 1)[0];
-			goal.owner = faker.random.arrayElement(employees);
+			if (goal.level === GoalLevelEnum.EMPLOYEE) {
+				goal.ownerEmployee = faker.random.arrayElement(employees);
+			} else if (goal.level === GoalLevelEnum.TEAM) {
+				goal.ownerTeam = faker.random.arrayElement(orgTeams);
+			} else if (goal.level === GoalLevelEnum.ORGANIZATION) {
+				goal.ownerOrg = organization;
+			}
 			goal.lead = faker.random.arrayElement(employees);
 			goal.tenant = tenant;
 			goal.description = ' ';

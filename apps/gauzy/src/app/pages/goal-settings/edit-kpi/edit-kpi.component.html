@@ -44,7 +44,7 @@
 			</nb-select>
 
 			<label for="key-result-Lead" class="label mt-3">
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}</label
+				{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}</label
 			>
 			<ga-employee-multi-select
 				[multiple]="false"
@@ -53,9 +53,7 @@
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'lead')"
 				id="key-result-Lead"
-				placeholder="{{
-					'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate
-				}}"
+				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
 
@@ -122,7 +120,12 @@
 		<button class="mr-3" nbButton (click)="closeDialog(null)">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button nbButton status="success" (click)="saveKeyResult()">
+		<button
+			[disabled]="kpiForm.invalid"
+			nbButton
+			status="success"
+			(click)="saveKeyResult()"
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

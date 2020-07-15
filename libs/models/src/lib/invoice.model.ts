@@ -84,6 +84,17 @@ export enum InvoiceStatusTypesEnum {
 	DRAFT = 'Draft',
 	SENT = 'Sent',
 	VIEWED = 'Viewed',
-	PAID = 'Paid',
+	FULLY_PAID = 'Fully Paid',
+	PARTIALLY_PAID = 'Partially Paid',
+	OVERPAID = 'Overpaid',
+	VOID = 'Void'
+}
+
+export enum EstimateStatusTypesEnum {
+	DRAFT = 'Draft',
+	SENT = 'Sent',
+	VIEWED = 'Viewed',
+	ACCEPTED = 'Accepted',
+	REJECTED = 'Rejected',
 	VOID = 'Void'
 }
