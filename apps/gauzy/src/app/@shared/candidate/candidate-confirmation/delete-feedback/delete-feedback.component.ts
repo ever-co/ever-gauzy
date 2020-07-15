@@ -1,4 +1,3 @@
-import { ICandidateInterview } from '@gauzy/models';
 import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -16,6 +15,7 @@ export class DeleteFeedbackComponent extends TranslationBaseComponent
 	implements OnDestroy {
 	@Input() feedbackId: string;
 	private _ngDestroy$ = new Subject<void>();
+
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteFeedbackComponent>,
 		readonly translateService: TranslateService,
