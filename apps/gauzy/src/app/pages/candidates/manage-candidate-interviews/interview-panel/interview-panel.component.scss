@@ -12,8 +12,9 @@
     padding-bottom: 1.5rem;
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
   }
 }
 
@@ -22,7 +23,6 @@
 }
 
 .search {
-  margin-right: 1rem;
   width: 15rem;
 }
 

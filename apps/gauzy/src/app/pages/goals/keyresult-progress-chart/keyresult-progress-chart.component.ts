@@ -19,6 +19,7 @@ import {
 export class KeyResultProgressChartComponent implements OnInit {
 	data: any;
 	options: any;
+	loading = true;
 	@Input() keyResult: KeyResult;
 	constructor(private goalSettingsService: GoalSettingsService) {}
 
@@ -158,6 +159,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 				update.push(val);
 			}
 		});
+		this.loading = false;
 		return update;
 	}
 

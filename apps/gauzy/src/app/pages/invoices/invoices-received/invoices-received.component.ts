@@ -9,7 +9,6 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { Invoice } from '@gauzy/models';
 import { Router } from '@angular/router';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
-import { EstimateAcceptedComponent } from '../table-components/estimate-accepted.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -121,16 +120,6 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
 				renderComponent: InvoicePaidComponent,
-				filter: false,
-				width: '33%'
-			};
-		} else {
-			this.settingsSmartTable['columns']['isAccepted'] = {
-				title: this.getTranslation(
-					'INVOICES_PAGE.ESTIMATES.ACCEPTED_STATUS'
-				),
-				type: 'custom',
-				renderComponent: EstimateAcceptedComponent,
 				filter: false,
 				width: '33%'
 			};

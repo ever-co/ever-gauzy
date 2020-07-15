@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
-import { ICandidateInterview, Candidate } from '@gauzy/models';
+import { ICandidateInterview, Candidate, Employee } from '@gauzy/models';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -23,9 +23,18 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	interviewList: ICandidateInterview[];
 	candidates: Candidate[];
 	averageRating: number;
+	employeeList: Employee[];
 	allInterviews: ICandidateInterview[];
 	interviewTitle: ICandidateInterview[];
-	search: FormControl = new FormControl();
+	interviewSearch: FormControl = new FormControl();
+	candidateSearch: FormControl = new FormControl();
+	sort: FormControl = new FormControl();
+	isResetSelect: boolean;
+	filterParams = {
+		name: '',
+		title: '',
+		employeeIds: null
+	};
 	loading: boolean;
 	constructor(
 		private dialogService: NbDialogService,
@@ -40,16 +49,96 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	}
 	async ngOnInit() {
 		this.loadInterviews();
-		this.search.valueChanges.subscribe((item) => {
+		this.interviewSearch.valueChanges.subscribe((item) => {
+			this.filterBySearch(item, 'title');
+		});
+		this.candidateSearch.valueChanges.subscribe((item) => {
+			this.filterBySearch(item, 'name');
+		});
+	}
+	filterBySearch(item: string, type: string) {
+		type === 'name'
+			? (this.filterParams.name = item)
+			: (this.filterParams.title = item);
+		this.isResetSelect = false;
+		this.filterInterviews();
+	}
+	onEmployeeSelected(employeeIds: string[]) {
+		this.filterParams.employeeIds = employeeIds;
+		this.isResetSelect = false;
+		this.filterInterviews();
+	}
+	filterInterviews() {
+		//TO DO
+		if (
+			!this.filterParams.name &&
+			!this.filterParams.title &&
+			!this.filterParams.employeeIds
+		)
+			this.interviewList = this.allInterviews;
+
+		if (
+			this.filterParams.name &&
+			!this.filterParams.title &&
+			!this.filterParams.employeeIds
+		)
+			this.interviewList = this.allInterviews.filter(
+				(interview) =>
+					interview.candidate.user.name
+						.toLocaleLowerCase()
+						.indexOf(this.filterParams.name.toLocaleLowerCase()) !==
+					-1
+			);
+
+		if (
+			!this.filterParams.name &&
+			this.filterParams.title &&
+			!this.filterParams.employeeIds
+		)
 			this.interviewList = this.allInterviews.filter(
 				(interview) =>
 					interview.title
 						.toLocaleLowerCase()
-						.indexOf(item.toLocaleLowerCase()) !== -1
+						.indexOf(
+							this.filterParams.title.toLocaleLowerCase()
+						) !== -1
 			);
-		});
+		if (
+			!this.filterParams.name &&
+			!this.filterParams.title &&
+			this.filterParams.employeeIds
+		) {
+			if (!this.filterParams.employeeIds[0]) {
+				this.interviewList = this.allInterviews;
+			} else {
+				const result = [];
+				this.allInterviews.forEach((interview) => {
+					interview.interviewers.forEach((interviewer) => {
+						this.filterParams.employeeIds.forEach(
+							(item: string) => {
+								if (
+									item === interviewer.employeeId &&
+									!result.includes(interview)
+								) {
+									result.push(interview);
+								}
+							}
+						);
+					});
+				});
+				this.interviewList = result;
+			}
+		}
 	}
-
+	clearFilters() {
+		this.candidateSearch.reset();
+		this.interviewSearch.reset();
+		// this.isResetSelect = true;
+		this.filterParams.name = '';
+		this.filterParams.title = '';
+		this.filterParams.employeeIds = null;
+		this.interviewList = this.allInterviews;
+	}
 	onSortSelected(value: string) {
 		switch (value) {
 			case 'date':
@@ -122,9 +211,9 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			.getAll(['user'])
 			.pipe(first())
 			.toPromise();
-		const employeeList = items;
+		this.employeeList = items;
 		interview.interviewers.forEach((interviewer) => {
-			employeeList.forEach((employee) => {
+			this.employeeList.forEach((employee) => {
 				if (interviewer.employeeId === employee.id) {
 					employees.push(employee);
 				}
