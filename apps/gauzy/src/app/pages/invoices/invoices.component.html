@@ -8,36 +8,6 @@
 				{{ 'INVOICES_PAGE.ESTIMATES.HEADER' | translate }}
 			</h4>
 		</div>
-		<nb-select
-			*ngIf="!isEstimate"
-			class="invoice-status"
-			[disabled]="disableButton"
-			placeholder="Set Invoice Status"
-			[(selected)]="status"
-			(selectedChange)="selectStatus($event)"
-		>
-			<nb-option
-				*ngFor="let status of invoiceStatusTypes"
-				[value]="status"
-			>
-				{{ status }}
-			</nb-option>
-		</nb-select>
-		<nb-select
-			*ngIf="isEstimate"
-			class="invoice-status"
-			[disabled]="disableButton"
-			placeholder="Set Estimate Status"
-			[(selected)]="status"
-			(selectedChange)="selectStatus($event)"
-		>
-			<nb-option
-				*ngFor="let status of estimateStatusTypes"
-				[value]="status"
-			>
-				{{ status }}
-			</nb-option>
-		</nb-select>
 		<div>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
@@ -45,11 +15,41 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3" *ngIf="hasInvoiceEditPermission">
+		<div class="mb-3 actions" *ngIf="hasInvoiceEditPermission">
 			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
+			<div class="mr-2">
+				<nb-select
+					*ngIf="!isEstimate"
+					[disabled]="disableButton"
+					placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+					[(selected)]="status"
+					(selectedChange)="selectStatus($event)"
+				>
+					<nb-option
+						*ngFor="let status of invoiceStatusTypes"
+						[value]="status"
+					>
+						{{ status }}
+					</nb-option>
+				</nb-select>
+				<nb-select
+					*ngIf="isEstimate"
+					[disabled]="disableButton"
+					placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+					[(selected)]="status"
+					(selectedChange)="selectStatus($event)"
+				>
+					<nb-option
+						*ngFor="let status of estimateStatusTypes"
+						[value]="status"
+					>
+						{{ status }}
+					</nb-option>
+				</nb-select>
+			</div>
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
