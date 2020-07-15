@@ -231,8 +231,7 @@
 			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
 			"SHORT_DESCRIPTION": "Short Description",
 			"ENABLE_EMPLOYEE_FEATURES": "Enable Employee Features",
-			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features",
-			"EMPLOYEE": "Employee"
+			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
