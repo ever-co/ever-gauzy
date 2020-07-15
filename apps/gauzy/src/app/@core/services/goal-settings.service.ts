@@ -111,9 +111,7 @@ export class GoalSettingsService {
 		return this._http
 			.put<KPI>(`${this.KPI_URL}/${id}`, kpiData)
 			.pipe(
-				tap(() =>
-					this.toastrService.primary('Time Frame Updated', 'Success')
-				)
+				tap(() => this.toastrService.primary('KPI Updated', 'Success'))
 			)
 			.toPromise();
 	}

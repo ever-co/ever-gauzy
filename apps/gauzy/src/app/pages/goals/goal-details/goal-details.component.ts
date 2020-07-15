@@ -36,12 +36,20 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
-		const employee = await this.employeeService.getEmployeeById(
-			this.goal.owner.id,
-			['user']
-		);
-		this.src = employee.user.imageUrl;
-		this.ownerName = employee.user.name;
+		if (!!this.goal.ownerEmployee) {
+			const employee = await this.employeeService.getEmployeeById(
+				this.goal.ownerEmployee.id,
+				['user']
+			);
+			this.src = employee.user.imageUrl;
+			this.ownerName = employee.user.name;
+		} else if (!!this.goal.ownerOrg) {
+			this.ownerName = this.goal.ownerOrg.name;
+			this.src = this.goal.ownerOrg.imageUrl;
+		} else {
+			this.ownerName = this.goal.ownerTeam.name;
+		}
+
 		this.goal.keyResults.forEach((keyResult) => {
 			this.updates.push(...keyResult.updates);
 		});

@@ -753,7 +753,8 @@
 			"LABELS": {
 				"LEVEL": "Level",
 				"OWNER": "Owner",
-				"LEAD": "Lead (optional)",
+				"LEAD": "Lead",
+				"LEAD_OPTIONAL": "Lead (optional)",
 				"DEADLINE": "Deadline",
 				"STATUS": "Status",
 				"KPI_SHOULD_BE": "This KPI should be",

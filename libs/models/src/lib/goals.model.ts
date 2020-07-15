@@ -1,13 +1,16 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee, EmployeeFindInput } from './employee.model';
-import { OrganizationFindInput } from './organization.model';
+import { OrganizationFindInput, Organization } from './organization.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Task } from './task-entity.model';
+import { OrganizationTeam } from './organization-team-model';
 
 export interface Goal extends IBaseEntityModel {
 	name: string;
 	description?: string;
-	owner: Employee;
+	ownerOrg?: Organization;
+	ownerTeam?: OrganizationTeam;
+	ownerEmployee?: Employee;
 	lead?: Employee;
 	deadline: string;
 	level: string;
