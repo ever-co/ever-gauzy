@@ -841,11 +841,9 @@ export class UpworkService {
 				return ele;
 			});
 
-			const contracts = [];
-
 			const incomeMapped = await Promise.all(
 				rows.map(async (row) => {
-					const { assignment_ref: contractId, hours } = row;
+					// const { assignment_ref: contractId, hours } = row;
 
 					// const engagement = await this._getContractByContractId(
 					// 	config,
