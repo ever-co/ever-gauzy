@@ -14,11 +14,9 @@ export class AppComponent {
 		private appService: AppService
 	) {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) => {
-			console.log('aw', arg);
 			appService
 				.collectevents(arg.tpURL, arg.tp, arg.start, arg.end)
 				.then((res) => {
-					console.log('result', res);
 					event.sender.send('data_push_activity', {
 						timerId: arg.timerId,
 						windowEvent: res
@@ -32,6 +30,7 @@ export class AppComponent {
 				.then((res) => {
 					event.sender.send('data_push_afk', {
 						timerId: arg.timerId,
+						start: arg.start,
 						afk: res
 					});
 				});
@@ -81,7 +80,6 @@ export class AppComponent {
 		);
 
 		this.electronService.ipcRenderer.on('set_activity', (event, arg) => {
-			console.log('addd activity');
 			appService.pushToActivity(arg).then((res: any) => {
 				event.sender.send('return_activity', {
 					activityId: res.id,
@@ -93,8 +91,24 @@ export class AppComponent {
 		this.electronService.ipcRenderer.on(
 			'update_to_activity',
 			(event, arg) => {
-				console.log('update aCtivity');
 				appService.updateToActivity(arg);
+			}
+		);
+
+		this.electronService.ipcRenderer.on('set_time_log', (event, arg) => {
+			appService.setTimeLog(arg).then((res: any) => {
+				event.sender.send('return_time_log', {
+					timerId: arg.timerId,
+					timeLogId: res.id
+				});
+			});
+		});
+
+		this.electronService.ipcRenderer.on(
+			'update_time_log_stop',
+			(event, arg) => {
+				console.log('time log stop');
+				appService.updateTimeLog(arg);
 			}
 		);
 	}

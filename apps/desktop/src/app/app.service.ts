@@ -248,6 +248,7 @@ export class AppService {
 			.put(
 				`${values.apiHost}/api/timesheet/time-log/${values.timeLogId}`,
 				{
+					startedAt: values.startedAt,
 					stoppedAt: values.stoppedAt
 				},
 				{

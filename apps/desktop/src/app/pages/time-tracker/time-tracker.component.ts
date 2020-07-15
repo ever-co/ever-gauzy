@@ -32,8 +32,8 @@ export class TimeTrackerComponent implements OnInit {
 	organization: any = {};
 	projectSelect = '';
 	taskSelect = '';
+	errors: any = {};
 
-	auth: any = {};
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -46,7 +46,6 @@ export class TimeTrackerComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'timer_tracker_show',
 			(event, arg) => {
-				this.auth = arg;
 				this.getTask(arg);
 			}
 		);
@@ -87,10 +86,14 @@ export class TimeTrackerComponent implements OnInit {
 	}
 
 	startTime() {
-		this.electronService.ipcRenderer.send('start_timer', {
-			projectId: this.projectSelect,
-			taskId: this.taskSelect
-		});
+		if (!this.projectSelect) this.errors.project = true;
+		if (!this.taskSelect) this.errors.task = true;
+		if (!this.errors.task && !this.errors.project) {
+			this.electronService.ipcRenderer.send('start_timer', {
+				projectId: this.projectSelect,
+				taskId: this.taskSelect
+			});
+		}
 	}
 
 	stopTimer() {
@@ -103,9 +106,14 @@ export class TimeTrackerComponent implements OnInit {
 	}
 
 	getTask(arg) {
+		console.log(arg);
 		this.timeTrackerService.getTasks(arg).then((res: any) => {
 			this.organization = res.items;
 			this.getProjects(this.organization);
+			if (arg.projectId && arg.taskId) {
+				this.projectSelect = arg.projectId;
+				this.taskSelect = arg.taskId;
+			}
 		});
 	}
 
