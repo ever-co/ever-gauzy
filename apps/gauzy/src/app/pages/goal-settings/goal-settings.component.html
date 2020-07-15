@@ -1,46 +1,87 @@
 <nb-card>
 	<nb-card-header>
-		<h4>{{ 'GOALS_PAGE.SETTINGS.TIME_FRAME_PAGE_TITLE' | translate }}</h4>
+		<h4>{{ 'GOALS_PAGE.GOAL_SETTINGS' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
-			<button
-				nbButton
-				status="success"
-				(click)="editTimeFrame('add')"
-				class="mr-2"
+		<nb-tabset (changeTab)="tabChange($event)">
+			<nb-tab
+				tabTitle="{{
+					'GOALS_PAGE.SETTINGS.TIME_FRAME_PAGE_TITLE' | translate
+				}}"
 			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<button
-				nbButton
-				status="info"
-				(click)="editTimeFrame('edit')"
-				class="mr-2"
-				[disabled]="!selectedTimeFrame"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="danger"
-				(click)="deleteTimeFrame()"
-				class="mr-2"
-				[disabled]="!selectedTimeFrame"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
-		</div>
+				<div class="mb-3">
+					<button
+						nbButton
+						status="success"
+						(click)="editTimeFrame('add')"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+						>{{ 'BUTTONS.ADD' | translate }}
+					</button>
+					<button
+						nbButton
+						status="info"
+						(click)="editTimeFrame('edit')"
+						class="mr-2"
+						[disabled]="!selectedTimeFrame"
+					>
+						<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+						{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+					<button
+						nbButton
+						status="danger"
+						(click)="deleteTimeFrame()"
+						class="mr-2"
+						[disabled]="!selectedTimeFrame"
+					>
+						<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+						{{ 'BUTTONS.DELETE' | translate }}
+					</button>
+				</div>
+			</nb-tab>
+			<nb-tab tabTitle="KPI">
+				<div class="mb-3">
+					<button
+						nbButton
+						status="success"
+						(click)="editKPI('add')"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+						>{{ 'BUTTONS.ADD' | translate }}
+					</button>
+					<button
+						nbButton
+						status="info"
+						(click)="editKPI('edit')"
+						class="mr-2"
+						[disabled]="!selectedKPI"
+					>
+						<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+						{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+					<button
+						nbButton
+						status="danger"
+						(click)="deleteKPI()"
+						class="mr-2"
+						[disabled]="!selectedKPI"
+					>
+						<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+						{{ 'BUTTONS.DELETE' | translate }}
+					</button>
+				</div>
+			</nb-tab>
+		</nb-tabset>
 		<ng-container>
 			<ng2-smart-table
 				[settings]="smartTableSettings"
 				[source]="smartTableData"
-				(userRowSelect)="selectTimeFrame($event)"
+				(userRowSelect)="selectRow($event)"
 				style="cursor: pointer;"
-				#timeFrameTable
+				#smartTable
 			>
 			</ng2-smart-table>
 		</ng-container>

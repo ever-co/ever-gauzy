@@ -26,6 +26,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	allInterviews: ICandidateInterview[];
 	interviewTitle: ICandidateInterview[];
 	search: FormControl = new FormControl();
+	loading: boolean;
 	constructor(
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
@@ -73,6 +74,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		}
 	}
 	async loadInterviews() {
+		this.loading = true;
 		const interviews = await this.candidateInterviewService.getAll([
 			'feedbacks',
 			'interviewers',
@@ -110,6 +112,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 							interview.rating = 0;
 						}
 					});
+					this.loading = false;
 				});
 		}
 	}

@@ -29,7 +29,7 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		private candidateInterviewService: CandidateInterviewService
 	) {}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.loadData();
 	}
 	async loadData() {
@@ -132,7 +132,6 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		}
 		return isOverflowing;
 	}
-	handleDisableCursor() {}
 	closeDialog() {
 		this.dialogRef.close();
 	}

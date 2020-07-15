@@ -10,7 +10,8 @@ import {
 	Tag,
 	Organization,
 	InvoiceTypeEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	InvoiceStatusTypesEnum
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -23,7 +24,6 @@ import { InvoicePaidComponent } from './table-components/invoice-paid.component'
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
-import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 
@@ -46,6 +46,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 	organization: Organization;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	statusTypes = Object.values(InvoiceStatusTypesEnum);
+	status: string;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -225,7 +227,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				data: selectedItem
 			});
 		}
-		if (this.selectedInvoice.clientId) {
+		if (this.selectedInvoice.toClient.contactOrganizationId) {
 			this.dialogService
 				.open(InvoiceSendMutationComponent, {
 					context: {
@@ -354,6 +356,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	async selectInvoice({ isSelected, data }) {
+		this.status = null;
 		const selectedInvoice = isSelected ? data : null;
 		if (this.invoicesTable) {
 			this.invoicesTable.grid.dataSet.willSelect = false;
@@ -364,6 +367,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	loadSmartTable() {
 		this.settingsSmartTable = {
+			pager: {
+				display: true,
+				perPage: 10
+			},
 			actions: false,
 			columns: {
 				invoiceNumber: {
@@ -386,10 +393,9 @@ export class InvoicesComponent extends TranslationBaseComponent
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
 					}
 				},
-				sentStatus: {
-					title: 'Sent Status',
-					type: 'custom',
-					renderComponent: InvoiceSentStatusComponent,
+				status: {
+					title: this.getTranslation('INVOICES_PAGE.STATUS'),
+					type: 'text',
 					filter: false,
 					width: '25%'
 				}
@@ -415,6 +421,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 				width: '25%'
 			};
 		}
+	}
+
+	async selectStatus($event) {
+		await this.invoicesService.update(this.selectedInvoice.id, {
+			status: $event
+		});
+		await this.smartTableSource.update(this.selectedInvoice, {
+			...this.selectedInvoice,
+			status: $event
+		});
 	}
 
 	_applyTranslationOnSmartTable() {

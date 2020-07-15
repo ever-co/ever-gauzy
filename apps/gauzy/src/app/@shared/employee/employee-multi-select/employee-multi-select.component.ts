@@ -62,9 +62,12 @@ export class EmployeeSelectComponent implements OnInit {
 
 	set employeeId(val: string[] | string) {
 		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
-		this.val = val;
-		this.onChange(val);
-		this.onTouched(val);
+		console.log({ val });
+		if (val) {
+			this.val = val;
+			this.onChange(val);
+			this.onTouched(val);
+		}
 	}
 	get employeeId(): string[] | string {
 		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){

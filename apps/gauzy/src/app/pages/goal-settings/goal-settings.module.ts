@@ -11,7 +11,8 @@ import {
 	NbDatepickerModule,
 	NbInputModule,
 	NbDialogModule,
-	NbListModule
+	NbListModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -20,13 +21,19 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '../../@shared/shared.module';
+import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
+import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 @NgModule({
-	declarations: [GoalSettingsComponent, EditTimeFrameComponent],
+	declarations: [
+		GoalSettingsComponent,
+		EditTimeFrameComponent,
+		EditKpiComponent
+	],
 	imports: [
 		CommonModule,
 		NbCardModule,
@@ -40,7 +47,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		GoalSettingsRoutingModule,
 		NbListModule,
+		EmployeeMultiSelectModule,
 		SharedModule,
+		NbTabsetModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

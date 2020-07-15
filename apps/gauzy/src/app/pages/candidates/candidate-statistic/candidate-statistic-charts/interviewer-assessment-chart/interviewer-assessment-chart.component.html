@@ -15,7 +15,7 @@
 		</nb-option>
 	</nb-option-group>
 </nb-select>
-<div *ngIf="!currentInterview" class="no-data">
+<div *ngIf="rating?.length === 0" class="no-data">
 	<nb-icon icon="info-outline" class="no-data-icon"></nb-icon>
 	<span class="no-data-text">{{
 		'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
@@ -25,7 +25,7 @@
 	</span>
 </div>
 <chart
-	*ngIf="currentInterview"
+	*ngIf="rating?.length > 0"
 	style="height: 400px; width: 100%;"
 	type="bar"
 	[data]="data"

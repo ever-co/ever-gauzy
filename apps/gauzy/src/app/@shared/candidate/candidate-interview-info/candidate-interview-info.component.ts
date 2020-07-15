@@ -99,22 +99,27 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	}
 
 	async getData(id: string) {
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		const employeeList = items;
 		this.interviewerNames = [];
 		this.interviewers = await this.candidateInterviewersService.findByInterviewId(
 			id
 		);
 		if (this.interviewers) {
 			for (const interviewer of this.interviewers) {
-				const employee = await this.employeesService.getEmployeeById(
-					interviewer.employeeId,
-					['user']
-				);
-				if (employee) {
-					this.interviewerNames.push(
-						employee.user.firstName + ' ' + employee.user.lastName
-					);
-					this.nameList = this.interviewerNames.join(', ');
-				}
+				employeeList.forEach((employee) => {
+					if (interviewer.employeeId === employee.id) {
+						this.interviewerNames.push(
+							employee.user.firstName +
+								' ' +
+								employee.user.lastName
+						);
+						this.nameList = this.interviewerNames.join(', ');
+					}
+				});
 			}
 		}
 	}

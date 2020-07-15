@@ -1,7 +1,7 @@
 import { Notification, nativeImage } from 'electron';
 import * as path from 'path';
 export default class NotificationDesktop {
-	startTimeNotification() {
+	startTimeNotification(isStart) {
 		const iconPath = path.join(
 			__dirname,
 			'..',
@@ -14,7 +14,7 @@ export default class NotificationDesktop {
 		iconNativePath.resize({ width: 16, height: 16 });
 		const notification = new Notification({
 			title: 'Gauzy',
-			body: 'Time Track Started',
+			body: isStart ? 'Time Tracking Started' : 'Time Tracking Stopped',
 			icon: iconNativePath,
 			closeButtonText: 'Close'
 		});

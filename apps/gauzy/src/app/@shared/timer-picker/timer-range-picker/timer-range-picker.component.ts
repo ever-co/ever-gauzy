@@ -184,6 +184,8 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 			this.maxSlotEndTime = '23:59';
 		}
 
+		console.log('this.startTime', this.startTime);
+
 		this.updateEndTimeSlot(this.startTime);
 	}
 

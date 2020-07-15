@@ -2,6 +2,7 @@ import moment from 'moment';
 import { Tray } from 'electron';
 import { TimerData } from '../local-data/timer';
 import { LocalStore } from './getSetStore';
+import NotificationDesktop from './notifier';
 export default class Timerhandler {
 	timeRecordMinute = 0;
 	timeRecordHours = 0;
@@ -12,11 +13,12 @@ export default class Timerhandler {
 	intervalUpdateTime = null;
 	lastTimer: any;
 	configs: any;
+	notificationDesktop = new NotificationDesktop();
 
 	async startTimer(win2, knex, win3) {
+		this.notificationDesktop.startTimeNotification(true);
 		this.configs = LocalStore.getStore('configs');
 		const ProjectInfo = LocalStore.getStore('project');
-		const auth = LocalStore.getStore('auth');
 		this.timeStart = moment();
 		this.lastTimer = await TimerData.createTimer(knex, {
 			day: moment().format('YYYY-MM-DD'),
@@ -26,30 +28,14 @@ export default class Timerhandler {
 			projectid: ProjectInfo.projectId,
 			userId: ProjectInfo.taskId
 		});
-		win2.webContents.send('set_time_slot', {
-			token: auth.token,
-			employeeId: auth.employeeId,
-			duration: 0,
-			keyboard: 0,
-			mouse: 0,
-			overall: 0,
-			startedAt: this.timeStart.utc().format(),
+
+		const started = this.timeStart.toDate();
+		const stopped = moment(started).add(10, 'seconds').utc().format();
+		win2.webContents.send('set_time_log', {
+			...LocalStore.beforeRequestParams(),
 			timerId: this.lastTimer[0],
-			apiHost: LocalStore.getServerUrl()
-		});
-		win2.webContents.send('set_time_sheet', {
-			token: auth.token,
-			employeeId: auth.employeeId,
-			duration: 0,
-			keyboard: 0,
-			mouse: 0,
-			overall: 0,
 			startedAt: this.timeStart.utc().format(),
-			timerId: this.lastTimer[0],
-			stoppedAt: this.timeStart.utc().format(),
-			projectId: ProjectInfo.projectId,
-			taskId: ProjectInfo.taskId,
-			apiHost: LocalStore.getServerUrl()
+			stoppedAt: stopped
 		});
 
 		this.intevalTimer = setInterval(() => {
@@ -83,8 +69,6 @@ export default class Timerhandler {
 				minute: this.timeRecordMinute,
 				hours: this.timeRecordHours
 			});
-
-			this.getSetTimeSlot(win2, knex, auth);
 		}, 1000);
 	}
 
@@ -96,44 +80,40 @@ export default class Timerhandler {
 	}
 
 	updateTime(win2, knex) {
-		const auth = LocalStore.getStore('auth');
-		const projectInfo = LocalStore.getStore('project');
 		this.intervalUpdateTime = setInterval(() => {
-			this.getSetActivity(knex, win2, auth, projectInfo);
-		}, 60 * 1000);
+			this.getSetActivity(knex, win2);
+			this.getSetTimeSlot(win2, knex);
+		}, 60 * 1000 * 5);
 	}
 
-	getSetTimeSlot(win2, knex, auth) {
+	getSetTimeSlot(win2, knex) {
 		TimerData.getTimer(knex, this.lastTimer[0]).then((timerD) => {
 			TimerData.getAfk(knex, this.lastTimer[0]).then((afk) => {
-				win2.webContents.send('update_time_slot', {
+				win2.webContents.send('set_time_slot', {
+					...LocalStore.beforeRequestParams(),
 					duration: this.timeRecordSecond,
 					keyboard: afk && afk.length > 0 ? afk[0].durations : 0,
 					mouse: afk && afk.length > 0 ? afk[0].durations : 0,
 					overall: afk && afk.length > 0 ? afk[0].durations : 0,
-					timeSlotId: timerD[0].timeSlotId,
-					token: auth.token,
-					timerId: this.lastTimer[0],
-					apiHost: LocalStore.getServerUrl()
+					startedAt: this.timeStart.utc().format(),
+					timerId: this.lastTimer[0]
 				});
 
-				win2.webContents.send('update_time_sheet', {
-					duration: this.timeRecordSecond,
-					keyboard: afk && afk.length > 0 ? afk[0].durations : 0,
-					mouse: afk && afk.length > 0 ? afk[0].durations : 0,
-					overall: afk && afk.length > 0 ? afk[0].durations : 0,
-					timeSheetId: timerD[0].timeSheetId,
-					token: auth.token,
-					timerId: this.lastTimer[0],
-					timeLogId: timerD[0].timeLogId,
-					stoppedAt: moment().utc().format(),
-					apiHost: LocalStore.getServerUrl()
-				});
+				// win2.webContents.send('update_time_slot', {
+				// 	duration: this.timeRecordSecond,
+				// 	keyboard: afk && afk.length > 0 ? afk[0].durations : 0,
+				// 	mouse: afk && afk.length > 0 ? afk[0].durations : 0,
+				// 	overall: afk && afk.length > 0 ? afk[0].durations : 0,
+				// 	timeSlotId: timerD[0].timeSlotId,
+				// 	token: auth.token,
+				// 	timerId: this.lastTimer[0],
+				// 	apiHost: LocalStore.getServerUrl()
+				// });
 			});
 		});
 	}
 
-	getSetActivity(knex, win2, auth, projectInfo) {
+	getSetActivity(knex, win2) {
 		TimerData.getWindowEvent(knex, this.lastTimer[0]).then((events) => {
 			console.log('result of acti', events);
 			events.map((item) => {
@@ -141,28 +121,33 @@ export default class Timerhandler {
 					win2.webContents.send('update_to_activity', {
 						duration: Math.floor(item.durations),
 						activityId: item.activityId,
-						token: auth.token,
-						apiHost: LocalStore.getServerUrl()
+						...LocalStore.beforeRequestParams()
 					});
 				} else {
 					win2.webContents.send('set_activity', {
-						employeeId: auth.employeeId,
-						projectId: projectInfo.projectId,
-						taskId: projectInfo.taskId,
+						...LocalStore.beforeRequestParams(),
 						title: JSON.parse(item.data).app,
 						date: moment().format('YYY-MM-DD'),
 						duration: Math.floor(item.durations),
 						type: 'app',
-						eventId: item.eventId,
-						token: auth.token,
-						apiHost: LocalStore.getServerUrl()
+						eventId: item.eventId
 					});
 				}
 			});
 		});
 	}
 
-	stopTime() {
+	stopTime(win2, win3, knex) {
+		this.notificationDesktop.startTimeNotification(false);
+		TimerData.getTimer(knex, this.lastTimer[0]).then((logTime) => {
+			console.log('time stop log', logTime);
+			win2.webContents.send('update_time_log_stop', {
+				...LocalStore.beforeRequestParams(),
+				startedAt: this.timeStart.utc().format(),
+				stoppedAt: moment().utc().format(),
+				timeLogId: logTime[0].timeLogId
+			});
+		});
 		clearInterval(this.intevalTimer);
 		clearInterval(this.intervalUpdateTime);
 	}

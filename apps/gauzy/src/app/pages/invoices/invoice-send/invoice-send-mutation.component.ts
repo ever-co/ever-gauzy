@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Invoice, Tag } from '@gauzy/models';
+import { Invoice, Tag, InvoiceStatusTypesEnum } from '@gauzy/models';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 
 @Component({
@@ -37,8 +37,8 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 
 	async send() {
 		await this.invoicesService.update(this.invoice.id, {
-			sentTo: this.invoice.clientId,
-			sentStatus: true
+			sentTo: this.invoice.toClient.contactOrganizationId,
+			status: InvoiceStatusTypesEnum.SENT
 		});
 		this.dialogRef.close();
 

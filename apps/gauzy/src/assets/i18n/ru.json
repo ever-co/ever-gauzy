@@ -53,6 +53,9 @@
 		"EMAIL": "Эл. адрес",
 		"CONVERT_TO_INVOICE": "Преобразовать в счет",
 		"PUBLIC_APPOINTMENT_BOOK": "Назначение в книге",
+		"SAVE_AS_DRAFT": "Сохранить как черновик",
+		"SAVE_AND_SEND_CLIENT": "Сохранить и отправить клиенту в gauzy",
+		"SAVE_AND_SEND_EMAIL": "Сохранить и отправить по электронной почте",
 		"SPRINT": {
 			"CREATE": "Создать спринт",
 			"EDIT": "Редактировать",
@@ -117,12 +120,16 @@
 		"CONTACTS": "Контакты",
 		"DEPARTMENTS": "Департаменты",
 		"DESCRIPTION": "Описание",
+		"POLICY": "Политика",
 		"APPLIED": "Применяется",
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
 		"NO_RESULT": "Нет результатов",
 		"CLIENT": "Kлиент",
 		"INTERNAL": "Внутренний",
+		"START": "Начать",
+		"END": "Конец",
+		"REQUEST_DATE": "Дата запроса",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "Русский (Соединенные Штаты)",
@@ -140,6 +147,9 @@
 			"NAME": "Имя",
 			"FIRST_NAME": "Имя (необязательно)",
 			"LAST_NAME": "Фамилия (необязательно)",
+			"FROM": "От",
+			"TO": "Кому",
+			"EMPLOYEE": "Сотрудник",
 			"START_DATE": "Дата начала работы",
 			"APPLIED_DATE_LABEL": "Дата применения",
 			"IMAGE_URL": "URL изображения (необязательно)",
@@ -709,6 +719,7 @@
 		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа",
 		"ADD_NEW_OBJECTIVE": "Добавить новую цель",
 		"SESSION": "Сессия",
+		"GOAL_SETTINGS": "Настройки цели",
 		"NO_DESCRIPTION": "Нет описания",
 		"PROGRESS": "Прогресс",
 		"UPDATES": "Обновления",
@@ -718,7 +729,8 @@
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Добавить временной кадр",
 			"TIME_FRAME_PAGE_TITLE": "Установить время",
-			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров"
+			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров",
+			"ADD_KPI": "Добавить KPI"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Организация",
@@ -729,19 +741,31 @@
 			"ACTIVE": "Активный",
 			"INACTIVE": "Неактивный"
 		},
+		"KPI_OPERATOR": {
+			"GREATER_THAN_EQUAL_TO": "Больше или равно",
+			"LESSER_THAN_EQUAL_TO": "Меньше или равно"
+		},
+		"KPI_METRIC": {
+			"NUMBER": "Номер",
+			"PERCENTAGE": "Процент"
+		},
 		"FORM": {
 			"LABELS": {
 				"LEVEL": "Уровень",
 				"OWNER": "Владелец",
 				"LEAD": "Ведущий (опционально)",
 				"DEADLINE": "Срок сдачи",
-				"STATUS": "Статус"
+				"STATUS": "Статус",
+				"KPI_SHOULD_BE": "Этот КПП должен быть",
+				"CURRENT_VALUE": "Текущее значение"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Объективное имя. Например: Улучшение SEO сайта",
 				"DESCRIPTION": "Описание цели.",
 				"LEVEL": "Уровень цели",
-				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'"
+				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'",
+				"KPI_DESCRIPTION": "Короткий описание, чтобы дать некоторый контекст о КПП",
+				"KPI_NAME": "Название KPI. Например. Поддержка страниц - 200/день"
 			},
 			"ERROR": {
 				"START_DATE_GREATER": "Дата окончания должна быть больше, чем дата начала"
@@ -1169,20 +1193,45 @@
 		"REQUEST_DAYS_OFF": "Запросить выходные",
 		"ADD_HOLIDAYS": "Добавить выходные",
 		"DISPLAY_HOLIDAYS": "Показать Праздники",
+		"HOLIDAY_NAME": "Название выходного дня",
+		"SELECT_EMPLOYEES": "Выберите сотрудников",
 		"TIME_OFF_SETTINGS": "Настройки таймера",
+		"SELECT_HOLIDAY_NAME": "Выберите название праздника",
+		"ADD_OR_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+		"SELECT_TIME_OFF_POLICY": "Временная политика Seletc",
+		"ADD_A_DESCRIPTION": "Добавить описание",
 		"STATUSES": {
 			"REQUESTED": "Запрошено",
 			"APPROVED": "Одобрено",
 			"DENIED": "Отказано",
 			"ALL": "Все"
 		},
+		"ACTIONS": {
+			"APPROVE_DAYS_OFF_REQUEST": "Одобрить запрос на скидку дней",
+			"DENY_DAYS_OFF_REQUEST": "Отклонить запрос на выходные дни",
+			"DELETE_DAYS_OFF_REQUEST": "Удалить запрос со скидкой дней"
+		},
 		"POLICY": {
 			"HEADER": "Время выкл. политики",
+			"POLICY": "Политика",
 			"ADD_POLICY": "Добавить Политику",
 			"EDIT_POLICY": "Изменить политику",
 			"NAME": "Имя",
 			"REQUIRES_APPROVAL": "Требует одобрения",
 			"PAID": "Оплачено"
+		},
+		"NOTIFICATIONS": {
+			"NO_CHANGES": "Нет изменений",
+			"STATUS_SET_APPROVED": "Вы успешно установили одобренный статус запроса на выходные дни.",
+			"ERR_SET_STATUS": "Не удалось установить статус запроса на выходные дни.",
+			"APPROVED_NO_CHANGES": "Статус запроса на отключение дней уже установлен на одобрение",
+			"RECORD_CREATED": "Запись об отключении {{this.timeOffRequest.description}} успешно создана!",
+			"REQUEST_DENIED": "Отказано в статусе запроса на отключение дней",
+			"DENIED_NO_CHANGES": "Статус запроса на выходные дни уже установлен в \"Запрещено\"",
+			"REQUEST_DELETED": "Запрос на отключение дней успешно удален",
+			"ERR_LOAD_RECORDS": "Не удается загрузить записи",
+			"ERR_DELETE_REQUEST": "Не удается удалить запрос на отключение дней",
+			"ERR_CREATE_RECORD": "Невозможно создать запись"
 		}
 	},
 	"TAGS_PAGE": {
@@ -1464,6 +1513,7 @@
 		"APPLY_DISCOUNT": "Применить скидку",
 		"APPLIED": "Применяется",
 		"NOT_APPLIED": "Не применено",
+		"STATUS": "Статус",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -1609,7 +1659,9 @@
 		"NAME_OF_THE_BASE": "Название базы",
 		"REMOVE_CATEGORY": "Удалить категорию",
 		"REMOVE_BASE": "Удалить базу",
-		"CLEAR": "Очистить"
+		"CLEAR": "Очистить",
+		"SEARCH_BY_NAME": "Поиск по названию",
+		"FILTER_BY_AUTHOR": "Фильтр по автору"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
