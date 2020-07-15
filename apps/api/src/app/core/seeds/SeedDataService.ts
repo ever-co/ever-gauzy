@@ -70,7 +70,10 @@ import {
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
-import { createDefaultTimeOffPolicy, createRandomTimeOffPolicies } from '../../time-off-policy/time-off-policy.seed';
+import {
+	createDefaultTimeOffPolicy,
+	createRandomTimeOffPolicies
+} from '../../time-off-policy/time-off-policy.seed';
 import {
 	createDefaultApprovalPolicyForOrg,
 	createRandomApprovalPolicyForOrg
@@ -187,13 +190,20 @@ import {
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
 import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
 import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
-import { createDefaultTags, createRandomOrganizationTags, createTags } from '../../tags/tag.seed';
+import {
+	createDefaultTags,
+	createRandomOrganizationTags,
+	createTags
+} from '../../tags/tag.seed';
 import { createRandomEmailSent } from '../../email/email.seed';
 import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import { createRandomEmployeeTimeOff } from '../../time-off-request/time-off-request.seed';
-import { createDefaultEquipments, createRandomEquipments } from '../../equipment/equipment.seed';
+import {
+	createDefaultEquipments,
+	createRandomEquipments
+} from '../../equipment/equipment.seed';
 import { createRandomEquipmentSharing } from '../../equipment-sharing/equipment-sharing.seed';
 import { createRandomProposals } from '../../proposal/proposal.seed';
 
@@ -414,17 +424,9 @@ export class SeedDataService {
 			defaultOrganizations
 		);
 
-    await createDefaultTags(
-      this.connection,
-      tenant,
-      defaultOrganizations
-    );
+		await createDefaultTags(this.connection, tenant, defaultOrganizations);
 
-    await createDefaultEquipments(
-      this.connection,
-      tenant,
-    );
-
+		await createDefaultEquipments(this.connection, tenant);
 
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,
@@ -469,7 +471,8 @@ export class SeedDataService {
 		await createDefaultTeams(
 			this.connection,
 			defaultOrganizations[0],
-			defaultEmployees
+			defaultEmployees,
+			roles
 		);
 		await createCandidateDocuments(this.connection, defaultCandidates);
 		await createCandidateFeedbacks(this.connection, defaultCandidates);
@@ -624,11 +627,11 @@ export class SeedDataService {
 			tenantOrganizationsMap
 		);
 
-    await createRandomTimeOffPolicies(
-      this.connection,
-      tenants,
-      tenantOrganizationsMap
-    );
+		await createRandomTimeOffPolicies(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
 
 		const categoriesMap = await createRandomExpenseCategories(
 			this.connection,
@@ -644,19 +647,18 @@ export class SeedDataService {
 			categoriesMap
 		);
 
-
 		await createRandomEquipments(
-		  this.connection,
-      tenants,
-      env.randomSeedConfig.equipmentPerTenant || 20
-      );
+			this.connection,
+			tenants,
+			env.randomSeedConfig.equipmentPerTenant || 20
+		);
 
 		await createRandomEquipmentSharing(
-		  this.connection,
-      tenants,
-      tenantEmployeeMap,
-      env.randomSeedConfig.equipmentSharingPerTenant || 20
-      );
+			this.connection,
+			tenants,
+			tenantEmployeeMap,
+			env.randomSeedConfig.equipmentSharingPerTenant || 20
+		);
 
 		await seedRandomEmploymentTypes(
 			this.connection,
@@ -716,20 +718,20 @@ export class SeedDataService {
 		);
 
 		await createRandomEmployeeTimeOff(
-      this.connection,
-      tenants,
-      tenantOrganizationsMap,
-      tenantEmployeeMap,
-      env.randomSeedConfig.employeeTimeOffPerOrganization || 20
-    );
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			tenantEmployeeMap,
+			env.randomSeedConfig.employeeTimeOffPerOrganization || 20
+		);
 
 		await createRandomProposals(
-		  this.connection,
-      tenants,
-      tenantEmployeeMap,
-      tenantOrganizationsMap,
-      env.randomSeedConfig.proposalsSharingPerOrganizations || 30
-    );
+			this.connection,
+			tenants,
+			tenantEmployeeMap,
+			tenantOrganizationsMap,
+			env.randomSeedConfig.proposalsSharingPerOrganizations || 30
+		);
 
 		await createRandomEmailSent(
 			this.connection,

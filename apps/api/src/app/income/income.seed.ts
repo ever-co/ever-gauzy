@@ -77,7 +77,7 @@ export const createRandomIncomes = async (
 		const employees = tenantEmployeeMap.get(tenant);
 
 		(employees || []).forEach((employee) => {
-			for (let index = 0; index < 5; index++) {
+			for (let index = 0; index < 100; index++) {
 				const income = new Income();
 
 				const currentIndex = faker.random.number({
@@ -95,7 +95,7 @@ export const createRandomIncomes = async (
 					.toString();
 				income.currency =
 					employee.organization.currency || currencies[0];
-				income.valueDate = faker.date.recent(15);
+				income.valueDate = faker.date.recent(150);
 				income.notes = notesArray[currentIndex];
 
 				randomIncomes.push(income);
