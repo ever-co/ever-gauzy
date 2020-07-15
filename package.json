@@ -187,6 +187,7 @@
 		"d3": "4.13.0",
 		"d3-selection-multi": "1.0.1",
 		"date-fns": "~2.0.1",
+		"date-holidays": "^1.6.1",
 		"detect-passive-events": "^1.0.4",
 		"echarts": "^4.2.1",
 		"email-templates": "^7.0.5",
