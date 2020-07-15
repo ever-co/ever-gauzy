@@ -1,10 +1,11 @@
-<ng-template #dialog let-data let-ref="dialogRef">
-	<ng-container *ngIf="currentAction !== 'add' && currentAction !== 'edit'">
+<ng-template #dialog let-data let-action="currentAction" let-ref="dialogRef">
+	<ng-container *ngIf="currentAction === 'create'">
 		<ng-template
 			*ngTemplateOutlet="
 				addDialogTmpl;
 				context: {
 					$implicit: selectedItem,
+					action: currentAction,
 					dialogRef: ref
 				}
 			"
@@ -18,6 +19,7 @@
 				editDialogTmpl;
 				context: {
 					$implicit: selectedItem,
+					action: currentAction,
 					dialogRef: ref
 				}
 			"
@@ -31,6 +33,7 @@
 				deleteDialogTmpl;
 				context: {
 					$implicit: selectedItem,
+					action: currentAction,
 					dialogRef: ref
 				}
 			"
@@ -51,7 +54,7 @@
 					size="medium"
 				>
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-					{{ 'BUTTONS.SPRINT.CREATE' | translate }}
+					{{ 'BUTTONS.CREATE' | translate }}
 				</button>
 				<button
 					nbButton
@@ -62,7 +65,7 @@
 					size="medium"
 				>
 					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.SPRINT.EDIT' | translate }}
+					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 				<button
 					nbButton
@@ -73,15 +76,15 @@
 					size="medium"
 				>
 					<nb-icon class="mr-1" icon="trash"></nb-icon>
-					{{ 'BUTTONS.SPRINT.DELETE' | translate }}
+					{{ 'BUTTONS.DELETE' | translate }}
 				</button>
 			</div>
 		</nb-card-header>
 		<nb-list>
 			<nb-list-item
 				*ngFor="let item of items"
-				[class.selected-item]="selectedItem?.id === item.id"
-				(click)="selectItem(item)"
+				[class.selected-item]="selectedItem?.id === item?.id"
+				(click)="toggleItemSelection(item)"
 			>
 				<ng-container
 					*ngTemplateOutlet="itemTmpl; context: { $implicit: item }"

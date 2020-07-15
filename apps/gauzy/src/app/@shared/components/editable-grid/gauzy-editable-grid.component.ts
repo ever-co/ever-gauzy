@@ -17,7 +17,7 @@ import {
 	NbDialogRef
 } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { takeUntil, take, tap } from 'rxjs/operators';
+import { takeUntil, take, tap, filter } from 'rxjs/operators';
 
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
@@ -38,10 +38,6 @@ export class GauzyEditableGridComponent<T extends { id: string | number }>
 	@Input() editDialogTmpl: TemplateRef<any>;
 	@Input() deleteDialogTmpl: TemplateRef<any>;
 
-	@Input() dialogTmpl: TemplateRef<{
-		$implicit: any;
-		itemAction: ItemActionType;
-	}>;
 	@Output() dialogData: EventEmitter<any> = new EventEmitter();
 	selectedItem: T;
 	currentAction: ItemActionType = null;
@@ -57,22 +53,32 @@ export class GauzyEditableGridComponent<T extends { id: string | number }>
 
 	ngOnInit(): void {}
 
-	selectItem(item: T): void {
-		this.selectedItem = item;
+	toggleItemSelection(item: T): void {
+		if (!this.selectedItem) {
+			this.selectedItem = item;
+			return;
+		}
+		this.selectedItem = null;
 	}
 
 	openDialog(itemAction: ItemActionType, template: TemplateRef<any>): void {
 		this.currentAction = itemAction;
 		this.dialogService
-			.open(template, {
-				context: {
-					action: itemAction
-				}
-			})
+			.open(
+				template
+				// {
+				//   context: {
+				//     action: itemAction
+				//   }
+				// }
+			)
 			.onClose.pipe(
-				tap((data: Partial<T>) => {
+				tap(() => {
 					this.selectedItem = null;
-					this.currentAction = itemAction;
+				}),
+				filter(Boolean),
+				tap((data: Partial<T>) => {
+					// this.currentAction = itemAction;
 					this.dialogData.emit({
 						actionType: itemAction,
 						data

@@ -2,6 +2,11 @@ import { Component, OnInit, Input } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { OrganizationSprint } from '@gauzy/models';
 
+const DEFAULTS = {
+	name: 'Sprint',
+	length: 7
+};
+
 @Component({
 	selector: 'ngx-sprint-dialog',
 	templateUrl: './sprint-dialog.component.html',
@@ -12,6 +17,7 @@ export class SprintDialogComponent implements OnInit {
 	@Input() sprintData?: OrganizationSprint;
 	@Input() dialogRef?: any;
 	form: FormGroup;
+	private defaults = DEFAULTS;
 
 	constructor(private fb: FormBuilder) {}
 
@@ -21,8 +27,15 @@ export class SprintDialogComponent implements OnInit {
 
 	initForm(): void {
 		this.form = this.fb.group({
-			name: [this.sprintData?.name || null, Validators.required],
+			name: [
+				this.sprintData?.name || this.defaults.name,
+				Validators.required
+			],
 			goal: [this.sprintData?.goal || null],
+			length: [
+				this.sprintData?.length || this.defaults.length,
+				Validators.required
+			],
 			startDate: [this.sprintData?.startDate || null],
 			endDate: [this.sprintData?.endDate || null]
 		});
@@ -30,7 +43,10 @@ export class SprintDialogComponent implements OnInit {
 
 	save(): void {
 		if (this.form.valid) {
-			this.dialogRef.close(this.form.value);
+			this.dialogRef.close({
+				...this.sprintData,
+				...this.form.value
+			});
 		}
 	}
 

@@ -1,27 +1,34 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 
 import * as moment from 'moment';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
 
 import { OrganizationSprint, OrganizationProjects } from '@gauzy/models';
-import { SprintStoreService } from './services/sprint-store.service';
+import { SprintStoreService } from '../../../../../../../@core/services/organization-sprint-store.service';
 import { ItemActionType } from 'apps/gauzy/src/app/@shared/components/editable-grid/gauzy-editable-grid.component';
-import { SprintService } from 'apps/gauzy/src/app/@core/services/organization-sprint.service';
 
 @Component({
 	selector: 'ngx-tasks-sprint-settings-view',
 	templateUrl: './tasks-sprint-settings-view.component.html',
 	styleUrls: ['./tasks-sprint-settings-view.component.css']
 })
-export class TasksSprintSettingsViewComponent {
+export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 	@Input() project: OrganizationProjects;
-	sprints$: Observable<OrganizationSprint[]> = this.store.sprints$;
+	sprints$: Observable<OrganizationSprint[]> = this.store.sprints$.pipe(
+		map((sprints: OrganizationSprint[]): OrganizationSprint[] =>
+			sprints.filter(
+				(sprint: OrganizationSprint) =>
+					sprint.projectId === this.project.id
+			)
+		)
+	);
 	moment: any = moment;
+	private _onDestroy$: Subject<void> = new Subject<void>();
 
-	constructor(
-		private store: SprintStoreService,
-		private sprintService: SprintService
-	) {}
+	constructor(private store: SprintStoreService) {}
+
+	ngOnInit(): void {}
 
 	sprintAction({
 		actionType,
@@ -37,16 +44,30 @@ export class TasksSprintSettingsViewComponent {
 					organizationId: this.project.organizationId,
 					projectId: this.project.id
 				};
-				this.sprintService.createSprint(createSprintInput).subscribe();
+				this.store
+					.createSprint(createSprintInput)
+					.pipe(takeUntil(this._onDestroy$))
+					.subscribe();
 				break;
 
 			case 'edit':
-				this.store.updateSprint(data);
+				this.store
+					.updateSprint(data)
+					.pipe(takeUntil(this._onDestroy$))
+					.subscribe();
 				break;
 
 			case 'delete':
-				this.store.deleteSprint(data.id);
+				this.store
+					.deleteSprint(data.id)
+					.pipe(takeUntil(this._onDestroy$))
+					.subscribe();
 				break;
 		}
+	}
+
+	ngOnDestroy(): void {
+		this._onDestroy$.next();
+		this._onDestroy$.complete();
 	}
 }

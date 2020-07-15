@@ -31,6 +31,7 @@ import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/se
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { TaskListTypeEnum } from '@gauzy/models';
 
 declare const window;
 
@@ -61,6 +62,7 @@ export class TaskComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	selectedProject: OrganizationProjects = null;
+	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -115,6 +117,8 @@ export class TaskComponent extends TranslationBaseComponent
 			this.initTasks();
 			return;
 		}
+		this.viewMode = project.taskListType as TaskListTypeEnum;
+		console.log(project.taskListType);
 		this.availableTasks$ = this.availableTasks$.pipe(
 			map((tasks: Task[]) =>
 				tasks.filter(

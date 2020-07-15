@@ -2,10 +2,7 @@
 	<nb-card-header class="task-settings__title">
 		<p>{{ project.name }}</p>
 	</nb-card-header>
-	<nb-card-body
-		class="task-settings__projects"
-		*ngIf="project$ | async as project"
-	>
+	<nb-card-body class="task-settings__projects">
 		<ngx-project-view [project]="project"></ngx-project-view>
 		<!-- <ng-container *ngIf="!!project">
 			<nb-card>

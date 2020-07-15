@@ -5,7 +5,8 @@
 	<div class="col-6 settings__value">
 		<ng-select
 			[items]="taskViewModeList"
-			bindValue="type"
+			bindLabel="type"
+			binValue="name"
 			(change)="setTaskViewMode($event)"
 			[(ngModel)]="selectedTaskViewMode"
 			placeholder="Task View Mode"
@@ -22,7 +23,7 @@
 	</div>
 </div>
 <hr />
-<ng-container *ngIf="selectedTaskViewMode.type === taskViewModeType.Sprint">
+<ng-container *ngIf="selectedTaskViewMode.type === taskViewModeType.SPRINT">
 	<ngx-tasks-sprint-settings-view
 		[project]="project"
 	></ngx-tasks-sprint-settings-view>

@@ -2,84 +2,67 @@
 	<div class="sprints__settings">
 		<nb-card>
 			<nb-card-header>Sprints Settings</nb-card-header>
-			<nb-card-body>
-				<nb-tabset>
-					<nb-tab
-						*ngIf="sprints$ | async as sprints"
-						tabTitle="Sprints"
-						[badgeText]="sprints.length"
-						badgePosition="top right"
-						badgeStatus="success"
+			<nb-card-body *ngIf="sprints$ | async as sprints">
+				<ga-editable-grid
+					[itemTmpl]="item"
+					[items]="sprints"
+					[addDialogTmpl]="editDialog"
+					[editDialogTmpl]="editDialog"
+					[deleteDialogTmpl]="deleteDialog"
+					(dialogData)="sprintAction($event)"
+				>
+					<ng-template
+						#editDialog
+						let-sprint
+						let-action="action"
+						let-dialogRef="dialogRef"
 					>
-						<ga-editable-grid
-							[itemTmpl]="item"
-							[items]="sprints"
-							[addDialogTmpl]="editDialog"
-							[editDialogTmpl]="editDialog"
-							[deleteDialogTmpl]="deleteDialog"
-							(dialogData)="sprintAction($event)"
-						>
-							<ng-template
-								#editDialog
-								let-sprint
-								let-dialogRef="dialogRef"
+						<ngx-sprint-dialog
+							[action]="action"
+							[sprintData]="sprint"
+							[dialogRef]="dialogRef"
+						></ngx-sprint-dialog>
+					</ng-template>
+					<ng-template
+						#deleteDialog
+						let-sprint
+						let-dialogRef="dialogRef"
+					>
+						<nb-card>
+							<nb-card-header>Delete Sprint</nb-card-header>
+							<nb-card-body
+								>Are you shure you want delete sprint:
+								{{ sprint.name }}?</nb-card-body
 							>
-								<ngx-sprint-dialog
-									[sprintData]="sprint"
-									[dialogRef]="dialogRef"
-								></ngx-sprint-dialog>
-							</ng-template>
-							<ng-template
-								#deleteDialog
-								let-sprint
-								let-dialogRef="dialogRef"
-							>
-								<nb-card>
-									<nb-card-header
-										>Delete Sprint</nb-card-header
-									>
-									<nb-card-body
-										>Are you shure you want delete sprint:
-										{{ sprint.name }}?</nb-card-body
-									>
-									<nb-card-footer>
-										<button
-											nbButton
-											(click)="dialogRef.close()"
-										>
-											No
-										</button>
-										<button
-											nbButton
-											(click)="dialogRef.close(true)"
-										>
-											Yes
-										</button>
-									</nb-card-footer>
-								</nb-card>
-							</ng-template>
-
-							<ng-template #item let-sprint>
-								<div
-									class="d-flex justify-content-between sprints__item"
+							<nb-card-footer>
+								<button nbButton (click)="dialogRef.close()">
+									No
+								</button>
+								<button
+									nbButton
+									(click)="dialogRef.close(sprint)"
 								>
-									<span>{{ sprint.name }}</span>
-									<span>{{ sprint.goal }}</span>
-									<span>{{
-										moment(sprint.startDate).format(
-											'DD-MM-YYYY'
-										)
-									}}</span>
-									<span>{{
-										moment(sprint.endDate).format(
-											'DD-MM-YYYY'
-										)
-									}}</span>
-								</div>
-							</ng-template>
-						</ga-editable-grid>
-					</nb-tab>
-				</nb-tabset>
+									Yes
+								</button>
+							</nb-card-footer>
+						</nb-card>
+					</ng-template>
+
+					<ng-template #item let-sprint>
+						<div
+							class="d-flex justify-content-between px-2 sprints__item"
+						>
+							<span>{{ sprint.name }}</span>
+							<span>{{ sprint.goal || 'No goal setts' }}</span>
+							<span *ngIf="!!sprint.startDate">{{
+								moment(sprint.startDate).format('DD-MM-YYYY')
+							}}</span>
+							<span *ngIf="!!sprint.startDate">{{
+								moment(sprint.endDate).format('DD-MM-YYYY')
+							}}</span>
+						</div>
+					</ng-template>
+				</ga-editable-grid>
 			</nb-card-body>
 		</nb-card>
 	</div>

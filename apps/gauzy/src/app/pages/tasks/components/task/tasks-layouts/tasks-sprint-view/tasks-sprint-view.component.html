@@ -1,0 +1,26 @@
+<!-- <div class="sprints" cdkDropListGroup> -->
+<div class="sprints">
+	<nb-accordion multi>
+		<nb-accordion-item
+			[expanded]="true"
+			*ngFor="let sprint of sprints$ | async as sprints"
+		>
+			<nb-accordion-item-header>
+				{{ sprint.name }}
+			</nb-accordion-item-header>
+			<nb-accordion-item-body
+				class="tasks"
+				id="{{ sprint.id }}"
+				cdkDropList
+				[cdkDropListData]="sprint.tasks"
+				[cdkDropListConnectedTo]="sprintIds"
+				(cdkDropListDropped)="drop($event)"
+			>
+				<ga-sprint-task
+					*ngFor="let task of sprint.tasks"
+					[task]="task"
+				></ga-sprint-task>
+			</nb-accordion-item-body>
+		</nb-accordion-item>
+	</nb-accordion>
+</div>

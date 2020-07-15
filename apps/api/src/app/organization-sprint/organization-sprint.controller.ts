@@ -51,6 +51,7 @@ export class OrganizationSprintController extends CrudController<
 		@Query('data') data: string,
 		@Request() req
 	): Promise<IPagination<OrganizationSprint>> {
+		console.log(data);
 		const { relations, findInput } = JSON.parse(data);
 		return this.organizationSprintService.findAll({
 			where: findInput,

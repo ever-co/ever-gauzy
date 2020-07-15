@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbToastrService } from '@nebular/theme';
 import { Observable, throwError } from 'rxjs';
-import { Task, GetTaskOptions, OrganizationSprint } from '@gauzy/models';
+import { Task, OrganizationSprint, GetSprintsOptions } from '@gauzy/models';
 import { tap, catchError, first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -26,20 +26,21 @@ export class SprintService extends TranslationBaseComponent {
 		super(translateService);
 	}
 
-	getAllSprints(findInput: GetTaskOptions = {}): Observable<ITaskResponse> {
+	getAllSprints(findInput: GetSprintsOptions = {}): Observable<any> {
 		const data = JSON.stringify({
 			relations: [
-				'project',
-				'tags',
-				'members',
-				'members.user',
-				'teams',
-				'creator'
+				'tasks'
+				// 'project',
+				// 'tags',
+				// 'members',
+				// 'members.user',
+				// 'teams',
+				// 'creator'
 			],
 			findInput
 		});
 		return this._http
-			.get<ITaskResponse>(this.API_URL, {
+			.get<any>(this.API_URL, {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)));
@@ -54,10 +55,9 @@ export class SprintService extends TranslationBaseComponent {
 
 	createSprint(sprint: OrganizationSprint): Observable<OrganizationSprint> {
 		return this._http.post<OrganizationSprint>(this.API_URL, sprint).pipe(
-			tap((response: any) => {
-				console.log(response);
+			tap(() => {
 				this.toastrService.primary(
-					this.getTranslation('TASKS_PAGE.TASK_ADDED'),
+					this.getTranslation('SPRINTS_PAGE.SPRINT_ADDED'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 			}),
@@ -65,23 +65,25 @@ export class SprintService extends TranslationBaseComponent {
 		);
 	}
 
-	editSprint(task: Task): Observable<Task> {
-		return this._http.put<Task>(`${this.API_URL}/${task.id}`, task).pipe(
-			tap(() =>
-				this.toastrService.primary(
-					this.getTranslation('TASKS_PAGE.TASK_UPDATED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				)
-			),
-			catchError((error) => this.errorHandler(error))
-		);
+	editSprint(sprint: OrganizationSprint): Observable<OrganizationSprint> {
+		return this._http
+			.put<OrganizationSprint>(`${this.API_URL}/${sprint.id}`, sprint)
+			.pipe(
+				tap(() =>
+					this.toastrService.primary(
+						this.getTranslation('SPRINTS_PAGE.SPRINT_UPDATED'),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					)
+				),
+				catchError((error) => this.errorHandler(error))
+			);
 	}
 
 	deleteSprint(id: string): Observable<void> {
 		return this._http.delete<void>(`${this.API_URL}/${id}`).pipe(
 			tap(() =>
 				this.toastrService.primary(
-					this.getTranslation('TASKS_PAGE.TASK_DELETED'),
+					this.getTranslation('SPRINTS_PAGE.SPRINT_DELETED'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				)
 			),
@@ -89,7 +91,7 @@ export class SprintService extends TranslationBaseComponent {
 		);
 	}
 
-	errorHandler(error: HttpErrorResponse) {
+	private errorHandler(error: HttpErrorResponse) {
 		this.toastrService.danger(
 			error.message,
 			this.getTranslation('TOASTR.TITLE.ERROR')

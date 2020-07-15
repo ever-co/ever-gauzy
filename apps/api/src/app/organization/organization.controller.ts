@@ -107,10 +107,10 @@ export class OrganizationController extends CrudController<Organization> {
 		);
 	}
 
-	@ApiOperation({ summary: 'Create new Organization' })
+	@ApiOperation({ summary: 'Create new Sprint' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The Organization has been successfully created.'
+		description: 'The Sprint has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -126,6 +126,7 @@ export class OrganizationController extends CrudController<Organization> {
 	): Promise<Organization> {
 		return this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
+
 	@Put(':id')
 	async update(
 		@Param('id') id: string,

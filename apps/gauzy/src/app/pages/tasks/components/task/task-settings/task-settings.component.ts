@@ -23,19 +23,18 @@ export class TaskSettingsComponent {
 		private route: ActivatedRoute
 	) {
 		this.tasks$ = this._store.tasks$;
-		this.projects$ = this.tasks$.pipe(
-			map((tasks: Task[]) => {
-				return uniqWith(
-					tasks.map((task: Task) => task.project),
-					isEqual
-				);
-			})
-		);
+		// this.projects$ = this.tasks$.pipe(
+		// 	map((tasks: Task[]) => {
+		// 		return uniqWith(
+		// 			tasks.map((task: Task) => task.project),
+		// 			isEqual
+		// 		);
+		// 	})
+		// );
 
 		this.project$ = this.route.params.pipe(
 			switchMap(({ id: currentProjectId }: { id: string }) =>
 				this.tasks$.pipe(
-					tap((tasks: Task[]) => console.log(1, tasks)),
 					map((tasks: Task[]) => {
 						const projectTasks = tasks.filter(
 							({ projectId }: Task) =>
@@ -48,8 +47,7 @@ export class TaskSettingsComponent {
 							};
 						}
 						return null;
-					}),
-					tap(console.log)
+					})
 				)
 			)
 		);
