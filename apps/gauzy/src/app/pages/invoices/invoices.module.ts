@@ -58,8 +58,6 @@ import { InvoicePaymentsComponent } from './invoice-payments/payments.component'
 import { PaymentService } from '../../@core/services/payment.service';
 import { PaymentMutationComponent } from './invoice-payments/payment-mutation/payment-mutation.component';
 import { TasksStoreService } from '../../@core/services/tasks-store.service';
-import { EstimateAcceptedComponent } from './table-components/estimate-accepted.component';
-import { InvoiceSentStatusComponent } from './table-components/invoice-sent-status.component';
 import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-apply-tax-discount.component';
@@ -137,8 +135,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoiceSentStatusComponent,
-		EstimateAcceptedComponent,
 		InvoicePaymentOverdueComponent,
 		InvoiceApplyTaxDiscountComponent
 	],
@@ -164,8 +160,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoiceSentStatusComponent,
-		EstimateAcceptedComponent,
 		InvoicePaymentOverdueComponent,
 		InvoiceApplyTaxDiscountComponent
 	]
