@@ -14,6 +14,8 @@ We acknowledge and are grateful to these developers for their contributions to o
 
 - [ngx-starter-kit](https://github.com/xmlking/ngx-starter-kit), Angular NestJS Starter Kit, released under [MIT](https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE), `Copyright (c) 2018 Sumanth Chinthagunta`
 
+- [date-holidays](https://github.com/commenthol/date-holidays), which allows us to get world-wide holidays in gregorian calender. Copyright (c) 2016 - commenthol ([ISC License](http://opensource.org/licenses/ISC)). Note: The data contained in library `holidays.json` and `./data/countries/*.yaml` is available under [CC BY-SA 3.0](http://creativecommons.org/licenses/by-sa/3.0/) as the majority of data obtained relies on wikipedia articles. The required attribution can be found inside the files `./data/countries/*.yaml` of the library.
+
 ## Fonts
 
 - https://fonts.google.com/specimen/Crimson+Text ([OFL web license](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL_web))

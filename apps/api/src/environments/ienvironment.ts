@@ -76,6 +76,7 @@ export interface IEnvironment {
 	defaultTeams?: {
 		name: string;
 		defaultMembers: string[];
+		manager: string[];
 	}[];
 
 	randomSeedConfig?: {
@@ -90,6 +91,7 @@ export interface IEnvironment {
 		employeeTimeOffPerOrganization: number; // No of timeoff request to approve seeded will be  (employeeTimeOffPerOrganization * organizationsPerTenant * tenants)
 		equipmentPerTenant: number; // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
 		equipmentSharingPerTenant: number; // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
+		proposalsSharingPerOrganizations: number; // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
 	};
 
 	sentry?: {
