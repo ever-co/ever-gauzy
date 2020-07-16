@@ -82,12 +82,13 @@
 							</div>
 							<div class="col-12">
 								<p>Work ON:</p>
-								<input
-									type="text"
+								<textarea
 									nbInput
 									fullWidth
+									placeholder="Note"
 									status="basic"
-								/>
+									[(ngModel)]="note"
+								></textarea>
 							</div>
 						</div>
 					</nb-card-body>
