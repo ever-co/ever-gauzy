@@ -9,7 +9,6 @@ import {
 	DiscountTaxTypeEnum,
 	InvoiceTypeEnum
 } from '@gauzy/models';
-import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 export const createRandomInvoice = async (
 	connection: Connection,
