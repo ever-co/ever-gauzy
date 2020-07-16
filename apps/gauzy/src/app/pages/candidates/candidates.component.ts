@@ -1,5 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { PermissionsEnum, InvitationTypeEnum } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	InvitationTypeEnum,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -11,7 +15,12 @@ import { CandidatesService } from '../../@core/services/candidates.service';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { NbToastrService, NbDialogService, NbMenuItem } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { Router, ActivatedRoute } from '@angular/router';
+import {
+	Router,
+	ActivatedRoute,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
@@ -19,6 +28,7 @@ import { CandidateSourceService } from '../../@core/services/candidate-source.se
 import { CandidateFeedbacksService } from '../../@core/services/candidate-feedbacks.service';
 import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation/candidate-action-confirmation.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -37,20 +47,20 @@ export class CandidatesComponent extends TranslationBaseComponent
 	sourceSmartTable = new LocalDataSource();
 	selectedCandidate: CandidateViewModel;
 	selectedOrganizationId: string;
-
 	private _ngDestroy$ = new Subject<void>();
-
 	candidateName = 'Candidate';
-
 	candidateSource: string;
 	candidateRating: number;
-
 	includeArchived = false;
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	candidateData: CandidateViewModel[];
 
 	@ViewChild('candidatesTable') candidatesTable;
 	supportContextMenu: NbMenuItem[];
@@ -68,6 +78,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		private candidateFeedbacksService: CandidateFeedbacksService
 	) {
 		super(translate);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -106,6 +117,14 @@ export class CandidatesComponent extends TranslationBaseComponent
 					this.add();
 				}
 			});
+
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 		this.supportContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.MANAGE_INTERVIEWS'),
@@ -125,18 +144,26 @@ export class CandidatesComponent extends TranslationBaseComponent
 		];
 	}
 
-	selectCandidateTmp(ev: {
-		data: CandidateViewModel;
-		isSelected: boolean;
-		selected: CandidateViewModel[];
-		source: LocalDataSource;
-	}) {
-		if (ev.isSelected) {
-			this.selectedCandidate = ev.data;
+	setView() {
+		this.viewComponentName = ComponentEnum.CANDIDATES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+
+	selectCandidateTmp({ isSelected, data }) {
+		const selectedCandidate = isSelected ? data : null;
+		if (this.candidatesTable) {
+			this.candidatesTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedCandidate = selectedCandidate;
+		if (this.selectedCandidate) {
 			const checkName = this.selectedCandidate.fullName.trim();
 			this.candidateName = checkName ? checkName : 'Candidate';
-		} else {
-			this.selectedCandidate = null;
 		}
 	}
 	async add() {
@@ -161,12 +188,24 @@ export class CandidatesComponent extends TranslationBaseComponent
 			this.loadPage();
 		}
 	}
-	edit() {
+	edit(selectedItem?: CandidateViewModel) {
+		if (selectedItem) {
+			this.selectCandidateTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
 		]);
 	}
-	async archive() {
+	async archive(selectedItem?: CandidateViewModel) {
+		if (selectedItem) {
+			this.selectCandidateTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(ArchiveConfirmationComponent, {
 				context: {
@@ -275,6 +314,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		} else {
 			candidatesVm = result;
 		}
+		this.candidateData = candidatesVm;
 		this.sourceSmartTable.load(candidatesVm);
 
 		if (this.candidatesTable) {
@@ -328,7 +368,13 @@ export class CandidatesComponent extends TranslationBaseComponent
 		this.includeArchived = checked;
 		this.loadPage();
 	}
-	async reject() {
+	async reject(selectedItem?: CandidateViewModel) {
+		if (selectedItem) {
+			this.selectCandidateTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(CandidateActionConfirmationComponent, {
 				context: {
@@ -356,7 +402,13 @@ export class CandidatesComponent extends TranslationBaseComponent
 				}
 			});
 	}
-	async hire() {
+	async hire(selectedItem?: CandidateViewModel) {
+		if (selectedItem) {
+			this.selectCandidateTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(CandidateActionConfirmationComponent, {
 				context: {

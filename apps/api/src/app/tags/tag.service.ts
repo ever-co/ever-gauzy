@@ -78,7 +78,7 @@ export class TagService extends CrudService<Tag> {
 				'tag.organizationDepartment',
 				'organizationDepartment'
 			)
-			.leftJoinAndSelect('tag.organizationClient', 'organizationClient')
+			.leftJoinAndSelect('tag.organizationContact', 'organizationContact')
 			.leftJoinAndSelect('tag.product', 'product')
 			.leftJoinAndSelect('tag.payment', 'payment')
 			.where('tag.id IN (:...id)', { id: allTagsIds })

@@ -80,6 +80,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
+	month;
+	year;
 
 	@ViewChild('employeesTable') employeesTable;
 
@@ -444,10 +446,10 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 	private _loadSmartTableSettings() {
 		const dateNow = new Date();
-		const month =
+		this.month =
 			monthNames[dateNow.getMonth() - 1] ||
 			monthNames[monthNames.length - 1];
-		const year = monthNames[dateNow.getMonth() - 1]
+		this.year = monthNames[dateNow.getMonth() - 1]
 			? dateNow.getFullYear()
 			: dateNow.getFullYear() - 1;
 
@@ -487,9 +489,9 @@ export class EmployeesComponent extends TranslationBaseComponent
 					renderComponent: EmployeeAverageBonusComponent
 				},
 				bonus: {
-					title: `${this.getTranslation(
-						'SM_TABLE.BONUS'
-					)} (${month} ${year})`,
+					title: `${this.getTranslation('SM_TABLE.BONUS')} (${
+						this.month
+					} ${this.year})`,
 					type: 'custom',
 					filter: false,
 					class: 'text-center',

@@ -2,9 +2,22 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }}</h4>
-			<button nbButton status="primary" (click)="manageAppropvalPolicy()">
-				{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
-			</button>
+			<div class="header-selector-wrapper">
+				<div style="margin-right: 9px;">
+					<button
+						nbButton
+						status="primary"
+						(click)="manageAppropvalPolicy()"
+					>
+						{{
+							'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate
+						}}
+					</button>
+				</div>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -13,29 +26,13 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<button
-				(click)="save(false)"
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="delete()"
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 
 		<ng2-smart-table
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			class="tags-table"
 			(userRowSelect)="selectRequestApproval($event)"
 			[settings]="settingsSmartTable"
@@ -44,5 +41,39 @@
 			#requestApprovalTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			[settings]="settingsSmartTable"
+			[source]="requestApprovalData"
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="save(false, selectedItem)"
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		(click)="delete(selectedItem)"
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

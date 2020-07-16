@@ -11,6 +11,8 @@
   justify-content: space-between;
 }
 
+/* Card grid */
+
 .flex-container {
   display: flex;
   flex-flow: row wrap;
@@ -76,8 +78,29 @@
   display: flex;
 }
 
+/* work status */
+
 .badge-success {
   text-align: center;
   padding: 5px;
   background-color: #00d68f;
+}
+
+.badge-danger {
+  text-align: center;
+  padding: 5px;
+  background-color: #ff3d71;
+  margin-bottom: 20px;
+}
+
+.badge-success {
+  text-align: center;
+  padding: 5px;
+  background-color: #00d68f;
+}
+
+.badge-disabled {
+  text-align: center;
+  padding: 5px;
+  background-color: #ccc;
 }
