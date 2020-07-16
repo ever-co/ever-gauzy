@@ -1307,7 +1307,12 @@
 			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
 			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
 			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
-		}
+		},
+		"ACTIONS": "Actions",
+		"APPROVE": "Approve",
+		"REFUSE": "Refuse",
+		"APPROVAL_SUCCESS": "Request Approval Success",
+		"REFUSE_SUCCESS": "Request Refuse Success"
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Inventory",
