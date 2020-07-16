@@ -134,7 +134,7 @@ export class TagsComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
 					type: 'custom',
-					width: '20%',
+					width: '30%',
 					class: 'text-center',
 					renderComponent: TagsColorComponent
 				},
@@ -146,6 +146,7 @@ export class TagsComponent extends TranslationBaseComponent
 				counter: {
 					title: this.getTranslation('Counter'),
 					type: 'string',
+					width: '25%',
 					filter: false
 				}
 			}

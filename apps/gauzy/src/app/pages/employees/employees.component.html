@@ -115,8 +115,38 @@
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Work Status</span>
-					<div class="badge-success info-value">
-						{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
+					<div class="text-center d-block" *ngIf="x.workStatus">
+						<div class="badge-danger">
+							{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
+						</div>
+						{{ x.workStatus }}
+					</div>
+					<div
+						class="text-center d-block"
+						*ngIf="!x.startedWorkOn"
+						nbTooltip="{{
+							'EMPLOYEES_PAGE.NOT_STARTED_HELP' | translate
+						}}"
+					>
+						<div class="badge-disabled">
+							{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
+						</div>
+					</div>
+					<div
+						class="text-center d-block"
+						*ngIf="x.startedWorkOn && x.isActive && !x.workStatus"
+					>
+						<div class="badge-success">
+							{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
+						</div>
+					</div>
+					<div
+						class="text-center d-block"
+						*ngIf="x.startedWorkOn && !x.isActive"
+					>
+						<div class="badge-danger">
+							{{ 'EMPLOYEES_PAGE.DELETED' | translate }}
+						</div>
 					</div>
 				</div>
 
@@ -179,6 +209,27 @@
 		<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
 		{{
 			(selectedEmployee && selectedEmployee.endWork
+				? 'EMPLOYEES_PAGE.BACK_TO_WORK'
+				: 'EMPLOYEES_PAGE.END_WORK'
+			) | translate
+		}}
+	</button>
+	<button
+		nbButton
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+		(click)="
+			selectedItem.endWork
+				? backToWork(selectedItem)
+				: endWork(selectedItem)
+		"
+		status="warning"
+		class="mr-2"
+	>
+		<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
+		{{
+			(selectedItem && selectedItem.endWork
 				? 'EMPLOYEES_PAGE.BACK_TO_WORK'
 				: 'EMPLOYEES_PAGE.END_WORK'
 			) | translate
