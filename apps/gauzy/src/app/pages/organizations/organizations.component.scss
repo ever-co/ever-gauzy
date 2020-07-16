@@ -2,3 +2,83 @@
 
 // @include nb-install-component() {
 // }
+
+.header-selector-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Card grid */
+
+.flex-container {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.flex-item {
+  border: 0.0625rem solid #e4e9f2;
+  border-radius: 0.25rem;
+  width: 386px;
+  margin-top: 10px;
+}
+
+.fullName {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  line-height: 40px;
+  font-size: 1.5em;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+
+.info-line {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-size: 0.8em;
+  color: darkgray;
+  line-height: 0px;
+  padding: 1rem 1.5rem;
+
+  .info-meta {
+    margin-right: 10px;
+  }
+
+  .info-value {
+    display: flex;
+    justify-content: flex-end;
+    text-align: end;
+    color: black;
+    font-size: 1em;
+  }
+}
+
+.card-footer {
+  justify-content: space-around;
+  display: flex;
+}
+
+.badge-danger {
+  text-align: center;
+  padding: 5px;
+  background-color: #ff3d71;
+  margin-bottom: 5px;
+}
+
+.badge-success {
+  text-align: center;
+  padding: 5px;
+  background-color: #00d68f;
+}
