@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { Task } from '@gauzy/models';
 
 @Component({
@@ -8,7 +8,12 @@ import { Task } from '@gauzy/models';
 })
 export class SprintTaskComponent implements OnInit {
 	@Input() task: Task;
+	@Output() toggleItemEvent: EventEmitter<any> = new EventEmitter();
 	constructor() {}
 
 	ngOnInit(): void {}
+
+	toggleItem(item: Task): void {
+		this.toggleItemEvent.emit(item);
+	}
 }

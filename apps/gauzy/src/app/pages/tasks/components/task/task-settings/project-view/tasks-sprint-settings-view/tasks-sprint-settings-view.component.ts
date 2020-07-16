@@ -10,8 +10,7 @@ import { ItemActionType } from 'apps/gauzy/src/app/@shared/components/editable-g
 
 @Component({
 	selector: 'ngx-tasks-sprint-settings-view',
-	templateUrl: './tasks-sprint-settings-view.component.html',
-	styleUrls: ['./tasks-sprint-settings-view.component.css']
+	templateUrl: './tasks-sprint-settings-view.component.html'
 })
 export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 	@Input() project: OrganizationProjects;

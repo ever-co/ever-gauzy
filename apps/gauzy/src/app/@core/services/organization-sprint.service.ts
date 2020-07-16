@@ -65,9 +65,12 @@ export class SprintService extends TranslationBaseComponent {
 		);
 	}
 
-	editSprint(sprint: OrganizationSprint): Observable<OrganizationSprint> {
+	editSprint(
+		sprintId: string,
+		sprint: Partial<OrganizationSprint>
+	): Observable<OrganizationSprint> {
 		return this._http
-			.put<OrganizationSprint>(`${this.API_URL}/${sprint.id}`, sprint)
+			.put<OrganizationSprint>(`${this.API_URL}/${sprintId}`, sprint)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary(

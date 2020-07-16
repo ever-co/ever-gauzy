@@ -4,10 +4,11 @@ import {
 	OrganizationSprint,
 	Organization,
 	ITenant,
-	GetSprintsOptions
+	GetSprintsOptions,
+	Task
 } from '@gauzy/models';
 import { SprintService } from 'apps/gauzy/src/app/@core/services/organization-sprint.service';
-import { tap, take } from 'rxjs/operators';
+import { tap, take, map, switchMap } from 'rxjs/operators';
 
 @Injectable({
 	providedIn: 'root'
@@ -54,16 +55,18 @@ export class SprintStoreService {
 	updateSprint(
 		editedSprint: OrganizationSprint
 	): Observable<OrganizationSprint> {
-		return this.sprintService.editSprint(editedSprint).pipe(
-			tap(() => {
-				const sprints = [...this.sprints];
-				const newState = sprints.map((t) =>
-					t.id === editedSprint.id ? editedSprint : t
-				);
-				this._sprints$.next(newState);
-			}),
-			take(1)
-		);
+		return this.sprintService
+			.editSprint(editedSprint.id, editedSprint)
+			.pipe(
+				tap(() => {
+					const sprints = [...this.sprints];
+					const newState = sprints.map((t) =>
+						t.id === editedSprint.id ? editedSprint : t
+					);
+					this._sprints$.next(newState);
+				}),
+				take(1)
+			);
 	}
 
 	deleteSprint(id: string): Observable<void> {
@@ -73,6 +76,32 @@ export class SprintStoreService {
 					(sprint: OrganizationSprint) => sprint.id !== id
 				);
 				this._sprints$.next(newState);
+			}),
+			take(1)
+		);
+	}
+
+	moveTaskToSprint(
+		sprintId: string,
+		task: Task
+	): Observable<OrganizationSprint> {
+		return this.sprints$.pipe(
+			map((sprints: OrganizationSprint[]) =>
+				sprints.find(
+					(sprint: OrganizationSprint) => sprint.id === sprintId
+				)
+			),
+			switchMap(({ tasks }: OrganizationSprint) =>
+				this.sprintService.editSprint(sprintId, {
+					tasks: [...tasks, task]
+				})
+			),
+			tap((updatedSprint: OrganizationSprint) => {
+				// const sprints = [...this.sprints];
+				// const newState = sprints.map((sprint: OrganizationSprint): OrganizationSprint =>
+				//   sprint.id === updatedSprint.id ? updatedSprint : sprint
+				// );
+				// this._sprints$.next(newState);
 			}),
 			take(1)
 		);

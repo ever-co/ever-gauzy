@@ -98,6 +98,8 @@
 
 			<ng-template [ngSwitchCase]="'SPRINT'">
 				<ga-tasks-sprint-view
+					(createTaskEvent)="createTaskDialog()"
+					(editTaskEvent)="editTaskDialog($event)"
 					[project]="selectedProject"
 					[tasks]="availableTasks$ | async"
 				></ga-tasks-sprint-view>

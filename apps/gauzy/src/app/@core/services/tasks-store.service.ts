@@ -49,10 +49,15 @@ export class TasksStoreService {
 	}
 
 	createTask(task: Task): void {
+		console.log('createdTask[0] in store service: ', task);
 		this._taskService
 			.createTask(task)
 			.pipe(
 				tap((createdTask) => {
+					console.log(
+						'createdTask[1] in store service: ',
+						createdTask
+					);
 					const tasks = [...this.tasks, createdTask];
 					this._tasks$.next(tasks);
 				})

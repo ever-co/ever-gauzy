@@ -5,17 +5,11 @@ import {
 	TemplateRef,
 	EventEmitter,
 	Output,
-	OnDestroy,
-	ViewChild
+	OnDestroy
 } from '@angular/core';
 
 import { TranslateService } from '@ngx-translate/core';
-import {
-	NbComponentStatus,
-	NbComponentSize,
-	NbDialogService,
-	NbDialogRef
-} from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil, take, tap, filter } from 'rxjs/operators';
 
@@ -28,7 +22,7 @@ export type ItemActionType = 'create' | 'edit' | 'delete';
 	templateUrl: './gauzy-editable-grid.component.html',
 	styleUrls: ['./gauzy-editable-grid.component.css']
 })
-export class GauzyEditableGridComponent<T extends { id: string | number }>
+export class GauzyEditableGridComponent<T extends { id?: string }>
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() items: T[];
@@ -54,7 +48,8 @@ export class GauzyEditableGridComponent<T extends { id: string | number }>
 	ngOnInit(): void {}
 
 	toggleItemSelection(item: T): void {
-		if (!this.selectedItem) {
+		console.log(7, item);
+		if (!this.selectedItem || this.selectedItem.id !== item.id) {
 			this.selectedItem = item;
 			return;
 		}

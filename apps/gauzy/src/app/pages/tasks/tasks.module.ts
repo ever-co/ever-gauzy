@@ -38,7 +38,6 @@ import { ProjectViewComponent } from './components/task/task-settings/project-vi
 import { TasksSprintSettingsViewComponent } from './components/task/task-settings/project-view/tasks-sprint-settings-view/tasks-sprint-settings-view.component';
 import { GauzyEditableGridModule } from '../../@shared/components/editable-grid/gauzy-editable-grid.module';
 import { SprintDialogComponent } from './components/task/task-settings/project-view/tasks-sprint-settings-view/sprint-dialog/sprint-dialog.component';
-import { TasksLayoutsComponent } from './components/task/tasks-layouts/tasks-layouts.component';
 import { TasksSprintViewComponent } from './components/task/tasks-layouts/tasks-sprint-view/tasks-sprint-view.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprint-view/task/task.component';
@@ -56,7 +55,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		ProjectViewComponent,
 		TasksSprintSettingsViewComponent,
 		SprintDialogComponent,
-		TasksLayoutsComponent,
 		TasksSprintViewComponent,
 		SprintTaskComponent
 	],

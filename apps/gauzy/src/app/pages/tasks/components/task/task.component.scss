@@ -12,11 +12,14 @@
   }
 }
 
-ng-select {
-  min-width: 10rem;
-  .selector-template {
-    display: flex;
-    align-items: center;
-    height: 100%;
+.project-selector {
+  min-width: 15rem;
+  ng-select {
+    min-width: 10rem;
+    .selector-template {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
   }
 }

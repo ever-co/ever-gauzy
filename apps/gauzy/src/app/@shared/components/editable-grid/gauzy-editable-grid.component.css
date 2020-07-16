@@ -1,4 +1,3 @@
 .selected-item {
-	background-color: #3366ff;
-	color: #fff;
+	background: rgba(0, 0, 0, 0.05);
 }
