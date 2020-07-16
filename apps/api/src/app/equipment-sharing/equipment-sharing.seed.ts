@@ -4,7 +4,7 @@ import { EquipmentSharing } from './equipment-sharing.entity';
 import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { addDays } from 'date-fns';
-import { Employee, EquipmentSharingStatusEnum } from '@gauzy/models';
+import { Employee } from '@gauzy/models';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 
 export const createRandomEquipmentSharing = async (

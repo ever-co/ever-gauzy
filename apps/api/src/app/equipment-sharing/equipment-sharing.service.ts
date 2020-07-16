@@ -8,7 +8,6 @@ import {
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RequestContext } from '../core/context';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 
 @Injectable()

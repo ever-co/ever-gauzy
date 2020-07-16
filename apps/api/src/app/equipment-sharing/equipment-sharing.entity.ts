@@ -10,7 +10,7 @@ import {
 import { Base } from '../core/entities/base';
 import {
 	EquipmentSharing as IEquipmentSharing,
-	EquipmentSharingStatusEnum
+	ApprovalPolicyTypesEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
@@ -47,7 +47,7 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@Column({ nullable: true })
 	shareEndDay: Date;
 
-	@IsEnum(EquipmentSharingStatusEnum)
+	@IsEnum(ApprovalPolicyTypesEnum)
 	@IsNotEmpty()
 	@Column()
 	status: number;
