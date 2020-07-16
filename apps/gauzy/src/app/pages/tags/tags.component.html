@@ -23,10 +23,13 @@
 			nbSpinnerStatus="primary"
 			nbSpinnerSize="large"
 		>
-			<nb-card-header>
+			<nb-card-header class="header-selector-wrapper">
 				<h4>
 					{{ 'TAGS_PAGE.HEADER' | translate }}
 				</h4>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
 			</nb-card-header>
 			<nb-card-body>
 				<div class="mb-3">
@@ -39,26 +42,12 @@
 						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 						>{{ 'BUTTONS.ADD' | translate }}
 					</button>
-					<button
-						nbButton
-						status="info"
-						(click)="edit()"
-						class="mr-2"
-						[disabled]="disableButton"
-					>
-						<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-						{{ 'BUTTONS.EDIT' | translate }}
-					</button>
-					<button
-						nbButton
-						status="danger"
-						(click)="delete()"
-						class="mr-2"
-						[disabled]="disableButton"
-					>
-						<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-						{{ 'BUTTONS.DELETE' | translate }}
-					</button>
+					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+						<ng-container
+							*ngTemplateOutlet="actionButtons"
+						></ng-container>
+					</ng-container>
+
 					<ngx-search-input class="search"></ngx-search-input>
 				</div>
 
@@ -68,10 +57,45 @@
 					[source]="smartTableSource"
 					(userRowSelect)="selectTag($event)"
 					style="cursor: pointer;"
+					*ngIf="dataLayoutStyle === 'TABLE'"
 					#tagsTable
 				>
 				</ng2-smart-table>
+				<ga-card-grid
+					[settings]="settingsSmartTable"
+					[source]="tagsData"
+					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+					[buttonTemplate]="actionButtons"
+				></ga-card-grid>
 			</nb-card-body>
 		</nb-card>
+		<ng-template
+			#actionButtons
+			let-buttonSize="buttonSize"
+			let-selectedItem="selectedItem"
+		>
+			<button
+				nbButton
+				status="info"
+				(click)="edit(selectedItem)"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="danger"
+				(click)="delete(selectedItem)"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</ng-template>
 	</div>
 </div>
