@@ -10,6 +10,7 @@ import { EquipmentSharingMutationComponent } from '../../@shared/equipment-shari
 import { first } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
 
 export interface SelectedEquipmentSharing {
 	data: EquipmentSharing;
@@ -89,9 +90,52 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.STATUS'),
 					type: 'string',
 					filter: false
+				},
+				actions: {
+					title: this.getTranslation(
+						'EQUIPMENT_SHARING_PAGE.ACTIONS'
+					),
+					type: 'custom',
+					renderComponent: EquipmentSharingActionComponent,
+					onComponentInitFunction: (instance) => {
+						instance.updateResult.subscribe((eventUpdate) => {
+							this.handleEvent(eventUpdate);
+						});
+					},
+					filter: false
 				}
 			}
 		};
+	}
+
+	async handleEvent(params) {
+		if (params.isApproval) {
+			const request = await this.equipmentSharingService.approval(
+				params.data.id
+			);
+			if (request) {
+				this.toastrService.primary(
+					this.getTranslation(
+						'EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS'
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
+			this.loadSettings();
+		} else {
+			const request = await this.equipmentSharingService.refuse(
+				params.data.id
+			);
+			if (request) {
+				this.toastrService.primary(
+					this.getTranslation(
+						'EQUIPMENT_SHARING_PAGE.REFUSE_SUCCESS'
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
+			this.loadSettings();
+		}
 	}
 
 	async save() {

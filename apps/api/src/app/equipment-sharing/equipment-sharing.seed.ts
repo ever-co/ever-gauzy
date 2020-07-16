@@ -4,7 +4,7 @@ import { EquipmentSharing } from './equipment-sharing.entity';
 import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { addDays } from 'date-fns';
-import { Employee, EquipmentSharingStatusEnum } from '@gauzy/models';
+import { Employee } from '@gauzy/models';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 
 export const createRandomEquipmentSharing = async (
@@ -34,9 +34,7 @@ export const createRandomEquipmentSharing = async (
 				sharing.shareStartDay,
 				faker.random.number(15)
 			);
-			sharing.status = faker.random.arrayElement(
-				Object.values(EquipmentSharingStatusEnum)
-			);
+			sharing.status = faker.random.number({ min: 1, max: 3 });
 			// sharing.teams =[faker.random.arrayElement(teams)];
 			sharing.employees = [faker.random.arrayElement(employees)];
 			equipmentSharings.push(sharing);
