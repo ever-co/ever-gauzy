@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { StatusTypesEnum, PermissionsEnum, TimeOff } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { first } from 'rxjs/operators';

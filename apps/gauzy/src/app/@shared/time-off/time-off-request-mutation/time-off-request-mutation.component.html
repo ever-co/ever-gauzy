@@ -13,8 +13,7 @@
 						formControlName="description"
 						(selectedChange)="onHolidaySelected($event)"
 						fullWidth
-						required
-						placeholder="{{ 'TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate }}"
+						placeholder="{{ description || ('TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate) }}"
 						[ngClass]="{
 							'status-danger':
 								form.controls['start'].invalid &&
