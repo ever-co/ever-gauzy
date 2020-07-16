@@ -779,6 +779,8 @@
 	},
 	"KEY_RESULT_PAGE": {
 		"UPDATE_KEY_RESULT": "Обновить результат ключа",
+		"EDIT_KEY_RESULT": "Изменить результат ключа",
+		"ADD_KEY_RESULT": "Добавить результат ключа",
 		"UPDATE": {
 			"STATUS": {
 				"ON_TRACK": "на треке",
@@ -824,7 +826,8 @@
 				"STATUS": "Статус",
 				"WEIGHT": "Вес",
 				"SELECT_PROJECT": "Выбрать проект",
-				"SELECT_TASK": "Выберите задачу"
+				"SELECT_TASK": "Выберите задачу",
+				"ASSIGN_AS_OBJECTIVE": "Назначить как цель"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Имя результата ключа. Например. Добавить метаданные для улучшения SEO",
