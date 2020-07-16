@@ -241,4 +241,25 @@ export class AuthController {
 			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
+
+	@Get('auth0')
+	@UseGuards(AuthGuard('auth0'))
+	auth0Login() {}
+
+	@Get('auth0/callback')
+	@UseGuards(AuthGuard('auth0'))
+	auth0LoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
 }

@@ -455,7 +455,8 @@
 		"CLIENTS_COUNT": "Количество клиентов",
 		"DETAILS": "Детали",
 		"SKILLS": "Навыки",
-		"PRIVACY": "Приватность"
+		"PRIVACY": "Приватность",
+		"SELECT_TIMEZONE": "Выберите часовой пояс"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -753,7 +754,8 @@
 			"LABELS": {
 				"LEVEL": "Уровень",
 				"OWNER": "Владелец",
-				"LEAD": "Ведущий (опционально)",
+				"LEAD": "Предв. контакт",
+				"LEAD_OPTIONAL": "Ведущий (опционально)",
 				"DEADLINE": "Срок сдачи",
 				"STATUS": "Статус",
 				"KPI_SHOULD_BE": "Этот КПП должен быть",
@@ -897,7 +899,9 @@
 				"CREATE_CRITERIONS": "Создать критерии",
 				"EMAIL_NOTIFICATION": "Уведомление по e-mail",
 				"DELETE_INTERVIEW": "Удалить интервью",
-				"DELETE_ARE_YOU_SURE": "Вы уверены, что хотите удалить этот интервью?",
+				"DELETE_FEEDBACK": "Удалить отзыв",
+				"DELETE_INTERVIEW_ARE_YOU_SURE": "Вы уверены, что хотите удалить этот интервью?",
+				"DELETE_FEEDBACK_ARE_YOU_SURE": "Вы уверены, что хотите удалить этот отзыв?",
 				"SUMMARY": "Summary",
 				"DETAILS": "Отправить данные интервью",
 				"NOTIFY_CANDIDATE": "Уведомлять кандидата",
@@ -943,8 +947,10 @@
 			"DATE": "Дата",
 			"SORT_BY": "Сортировать по",
 			"SEARCH_BY_INTERVIEW": "Поиск по названию интервьюа",
+			"SEARCH_BY_CANDIDATE": "Поиск по имени кандидата",
 			"CANDIDATE_NAME": "Имя Кандидата",
-			"RATING": "Рейтинг"
+			"RATING": "Рейтинг",
+			"RESET_FILTERS": "Сбросить фильтры"
 		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
@@ -1514,6 +1520,7 @@
 		"APPLIED": "Применяется",
 		"NOT_APPLIED": "Не применено",
 		"STATUS": "Статус",
+		"SET_STATUS": "Установить статус",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -2020,6 +2027,8 @@
 		"HOST": "Хост",
 		"RESCHEDULE": "Перенос назначения",
 		"CANCEL": "Отменить назначение",
+		"TIMEZONE": "Ваш часовой пояс:",
+		"CHANGE": "(Изменение)",
 		"SELECT_EMPLOYEE_ERROR": "Пожалуйста, выберите сотрудника.",
 		"EXPIRED_OR_CANCELLED": "**Срок действия контракта истёк или был отменен.",
 		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания."

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../@core/services/invoices.service';
-import { EstimateEmail } from '@gauzy/models';
+import { EstimateEmail, EstimateStatusTypesEnum } from '@gauzy/models';
 import { EstimateEmailService } from '../../@core/services/estimate-email.service';
 
 @Component({
@@ -46,7 +46,9 @@ export class EstimateEmailComponent implements OnInit {
 
 	async updateEstimate(id: string, isAccepted: boolean) {
 		await this.invoicesService.updateWithoutAuth(id, {
-			isAccepted: isAccepted
+			status: isAccepted
+				? EstimateStatusTypesEnum.ACCEPTED
+				: EstimateStatusTypesEnum.REJECTED
 		});
 	}
 

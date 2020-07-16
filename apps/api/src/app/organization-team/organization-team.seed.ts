@@ -4,11 +4,14 @@ import { environment as env } from '@env-api/environment';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Organization } from '../organization/organization.entity';
+import { Role } from '../role/role.entity';
+import { RolesEnum } from '@gauzy/models';
 
 export const createDefaultTeams = async (
 	connection: Connection,
 	organization: Organization,
-	employees: Employee[]
+	employees: Employee[],
+	roles: Role[]
 ): Promise<OrganizationTeam[]> => {
 	const teams = env.defaultTeams || [];
 
@@ -27,6 +30,19 @@ export const createDefaultTeams = async (
 		emps.forEach((emp) => {
 			const teamEmployee = new OrganizationTeamEmployee();
 			teamEmployee.employeeId = emp.id;
+			teamEmployees.push(teamEmployee);
+		});
+
+		const managers = employees.filter(
+			(e) => (teams[i].manager || []).indexOf(e.user.email) > -1
+		);
+
+		managers.forEach((emp) => {
+			const teamEmployee = new OrganizationTeamEmployee();
+			teamEmployee.employeeId = emp.id;
+			teamEmployee.role = roles.filter(
+				(x) => x.name === RolesEnum.MANAGER
+			)[0];
 			teamEmployees.push(teamEmployee);
 		});
 

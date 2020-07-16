@@ -27,7 +27,7 @@ export class EditKpiComponent extends TranslationBaseComponent
 	constructor(
 		private fb: FormBuilder,
 		readonly translate: TranslateService,
-		private dialogService: NbDialogRef<EditKpiComponent>,
+		private dialogRef: NbDialogRef<EditKpiComponent>,
 		private employeeService: EmployeesService,
 		private store: Store,
 		private goalSettingsService: GoalSettingsService
@@ -39,11 +39,14 @@ export class EditKpiComponent extends TranslationBaseComponent
 		this.kpiForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			metric: [KpiMetricEnum.NUMBER],
+			metric: [KpiMetricEnum.NUMBER, Validators.required],
 			currentValue: [0],
 			targetValue: [1],
-			lead: [''],
-			operator: [KpiOperatorEnum.GREATER_THAN_EQUAL_TO]
+			lead: ['', Validators.required],
+			operator: [
+				KpiOperatorEnum.GREATER_THAN_EQUAL_TO,
+				Validators.required
+			]
 		});
 		this.employeeService
 			.getAll(['user'])
@@ -92,7 +95,7 @@ export class EditKpiComponent extends TranslationBaseComponent
 	}
 
 	closeDialog(data) {
-		this.dialogService.close(data);
+		this.dialogRef.close(data);
 	}
 
 	ngOnDestroy() {

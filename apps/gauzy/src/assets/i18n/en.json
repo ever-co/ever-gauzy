@@ -127,9 +127,9 @@
 		"NO_RESULT": "No Result",
 		"CLIENT": "Client",
 		"INTERNAL": "Internal",
-		"START": "Start", 
-		"END" : "End", 
-		"REQUEST_DATE" : "Request Date",
+		"START": "Start",
+		"END": "End",
+		"REQUEST_DATE": "Request Date",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -455,7 +455,8 @@
 		"CLIENTS_COUNT": "Clients Count",
 		"DETAILS": "Details",
 		"SKILLS": "Skills",
-		"PRIVACY": "Privacy"
+		"PRIVACY": "Privacy",
+		"SELECT_TIMEZONE": "Select Timezone"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -753,7 +754,8 @@
 			"LABELS": {
 				"LEVEL": "Level",
 				"OWNER": "Owner",
-				"LEAD": "Lead (optional)",
+				"LEAD": "Lead",
+				"LEAD_OPTIONAL": "Lead (optional)",
 				"DEADLINE": "Deadline",
 				"STATUS": "Status",
 				"KPI_SHOULD_BE": "This KPI should be",
@@ -897,7 +899,9 @@
 				"CREATE_CRITERIONS": "Create criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"DELETE_INTERVIEW": "Delete interview",
-				"DELETE_ARE_YOU_SURE": "Are you sure you want to delete this interview?",
+				"DELETE_FEEDBACK": "Delete feedback",
+				"DELETE_INTERVIEW_ARE_YOU_SURE": "Are you sure you want to delete this interview?",
+				"DELETE_FEEDBACK_ARE_YOU_SURE": "Are you sure you want to delete this feedback?",
 				"SUMMARY": "Summary",
 				"DETAILS": "Send interview details to",
 				"NOTIFY_CANDIDATE": "Notify candidate",
@@ -943,8 +947,10 @@
 			"DATE": "Date",
 			"SORT_BY": "Sort by",
 			"SEARCH_BY_INTERVIEW": "Search by interview's title",
+			"SEARCH_BY_CANDIDATE": "Search by candidate's name",
 			"CANDIDATE_NAME": "Candidate's name",
-			"RATING": "Rating"
+			"RATING": "Rating",
+			"RESET_FILTERS": "Reset filters"
 		},
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidates statistic",
@@ -1196,9 +1202,9 @@
 		"HOLIDAY_NAME": "Holiday name",
 		"SELECT_EMPLOYEES": "Select Employees",
 		"TIME_OFF_SETTINGS": "Time Off Settings",
-		"SELECT_HOLIDAY_NAME": "Select Holiday name", 
-		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees", 
-		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy", 
+		"SELECT_HOLIDAY_NAME": "Select Holiday name",
+		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees",
+		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy",
 		"ADD_A_DESCRIPTION": "Add a description",
 		"STATUSES": {
 			"REQUESTED": "Requested",
@@ -1207,8 +1213,8 @@
 			"ALL": "All"
 		},
 		"ACTIONS": {
-			"APPROVE_DAYS_OFF_REQUEST": "Approve Days off Request", 
-			"DENY_DAYS_OFF_REQUEST": "Deny Days off Request", 
+			"APPROVE_DAYS_OFF_REQUEST": "Approve Days off Request",
+			"DENY_DAYS_OFF_REQUEST": "Deny Days off Request",
 			"DELETE_DAYS_OFF_REQUEST": "Delete Days off Request"
 		},
 		"POLICY": {
@@ -1514,6 +1520,7 @@
 		"APPLIED": "Applied",
 		"NOT_APPLIED": "Not Applied",
 		"STATUS": "Status",
+		"SET_STATUS": "Set Status",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -2020,6 +2027,8 @@
 		"HOST": "Host",
 		"RESCHEDULE": "Reschedule Appointment",
 		"CANCEL": "Cancel Appointment",
+		"TIMEZONE": "Your time zone:",
+		"CHANGE": "(Change)",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."

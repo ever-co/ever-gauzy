@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import * as UpworkApi from 'upwork-api';
+import * as _ from 'underscore';
 import { environment } from '@env-api/environment';
 import {
 	IAccessTokenSecretPair,
@@ -52,6 +53,7 @@ import { UserService } from '../user/user.service';
 import { OrganizationService } from '../organization/organization.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
+import { IncomeCreateCommand } from '../income/commands/income.create.command';
 
 @Injectable()
 export class UpworkService {
@@ -247,6 +249,30 @@ export class UpworkService {
 					});
 				}
 			);
+		});
+	}
+
+	/*
+	 * Get specific contract using contractId
+	 */
+	private async _getContractByContractId(
+		config: IUpworkApiConfig,
+		contractId
+	): Promise<IEngagement> {
+		const api = new UpworkApi(config);
+		const engagements = new Engagements(api);
+
+		return new Promise((resolve, reject) => {
+			api.setAccessToken(config.accessToken, config.accessSecret, () => {
+				engagements.getSpecific(contractId, (error, data) => {
+					if (error) {
+						reject(error);
+					} else {
+						const { engagement } = data;
+						resolve(engagement);
+					}
+				});
+			});
 		});
 	}
 
@@ -796,18 +822,76 @@ export class UpworkService {
 		providerId,
 		forDate
 	) {
-		let promises = [];
-		promises.push(this._getFreelanceLimitedReports(config, providerId));
-		promises.push(await this._getFreelanceFullReports(config, providerId));
+		try {
+			const reports = await this._getFreelanceFullReports(
+				config,
+				providerId
+			);
+			var {
+				table: { cols = [], rows = [] }
+			} = reports;
 
-		const reports = await Promise.all(promises);
-		return reports;
+			const columns = _.pluck(cols, 'label');
+			rows = _.map(rows, function (row) {
+				const innerRow = _.pluck(row['c'], 'v');
+				const ele = {};
+				for (let index = 0; index < columns.length; index++) {
+					ele[columns[index]] = innerRow[index];
+				}
+				return ele;
+			});
+
+			const incomeMapped = await Promise.all(
+				rows.map(async (row) => {
+					// const { assignment_ref: contractId, hours } = row;
+
+					// const engagement = await this._getContractByContractId(
+					// 	config,
+					// 	contractId
+					// );
+
+					let earnAmount = 0;
+					// let earnAmount = parseFloat(hours) * parseFloat(hourly_charge_rate);
+
+					const {
+						company_id: clientId,
+						company_name: clientName,
+						memo: notes,
+						worked_on
+					} = row;
+
+					const gauzyIncome = await this.commandBus.execute(
+						new IncomeCreateCommand({
+							employeeId,
+							orgId: organizationId,
+							clientName,
+							clientId,
+							amount: earnAmount,
+							valueDate: new Date(
+								moment(worked_on).format('YYYY-MM-DD hh:mm:ss')
+							),
+							notes,
+							tags: []
+						})
+					);
+
+					return gauzyIncome;
+				})
+			);
+
+			return {
+				incomeMapped,
+				rows
+			};
+		} catch (error) {
+			throw new BadRequestException('Cannot sync income reports');
+		}
 	}
 
 	private async _getFreelanceLimitedReports(
 		config: IUpworkApiConfig,
 		providerId
-	) {
+	): Promise<any> {
 		const api = new UpworkApi(config);
 		const reports = new Time(api);
 
@@ -817,13 +901,15 @@ export class UpworkService {
 		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
 
 		const select = `SELECT 
-							worked_on, 
+							worked_on,
+							company_id,
 							company_name, 
 							assignment_name, 
-							assignment_team_id, 
+							assignment_team_id,
+							assignment_ref,
 							hours, 
-							task, 
-							memo 
+							memo,
+							contract_type
 						WHERE worked_on > '${startOfMonth}' AND 
 						worked_on <= '${endOfMonth}'`;
 
@@ -843,7 +929,7 @@ export class UpworkService {
 	private async _getFreelanceFullReports(
 		config: IUpworkApiConfig,
 		providerId
-	) {
+	): Promise<any> {
 		const api = new UpworkApi(config);
 		const reports = new Time(api);
 
@@ -853,13 +939,15 @@ export class UpworkService {
 		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
 
 		const select = `SELECT 
-							worked_on, 
+							worked_on,
+							company_id,
 							company_name, 
 							assignment_name, 
-							assignment_team_id, 
+							assignment_team_id,
+							assignment_ref,
 							hours, 
-							task, 
-							memo 
+							memo,
+							contract_type
 						WHERE worked_on > '${startOfMonth}' AND 
 						worked_on <= '${endOfMonth}'`;
 

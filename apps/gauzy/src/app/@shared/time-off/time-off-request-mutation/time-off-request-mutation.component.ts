@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import * as Holidays from 'date-holidays';
 import { Employee, TimeOffPolicy } from '@gauzy/models';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
@@ -35,20 +36,39 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	selectedEmployee: any;
 	organizationId: string;
 	policy: TimeOffPolicy;
+	startDate: Date = null;
+	endDate: Date = null;
 	requestDate: Date;
 	status: string;
 	holidayName: string;
 	invalidInterval: boolean;
 	isHoliday = false;
-	holidays = ['Christmas', 'Easter'];
+	holidays = [];
 	description = '';
 
 	ngOnInit() {
 		if (this.type === 'holiday') {
 			this.isHoliday = true;
+			this._getAllHolidays();
 		}
 
 		this._initializeForm();
+	}
+
+	private async _getAllHolidays() {
+		const holidays = new Holidays();
+		const currentMoment = new Date;
+
+		fetch('https://extreme-ip-lookup.com/json/')
+			.then( res => res.json())
+			.then(response => {
+				holidays.init(response.countryCode);
+				this.holidays = holidays.getHolidays(currentMoment.getFullYear()).filter(holiday => holiday.type === 'public');
+			})
+			.catch(() => {
+				this.toastrService.danger('Unable to get holidays')
+			})
+		
 	}
 
 	private async _initializeForm() {
@@ -56,8 +76,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 		this.form = this.fb.group({
 			description: [this.description],
-			start: ['', Validators.required],
-			end: ['', Validators.required],
+			start: [this.startDate, Validators.required],
+			end: [this.endDate, Validators.required],
 			policy: [this.policy, Validators.required],
 			requestDate: [new Date()],
 			status: ['']
@@ -161,8 +181,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this.employeesArr = employees;
 	}
 
-	onHolidaySelected(holiday: string) {
-		this.description = holiday;
+	onHolidaySelected(holiday) {
+		this.startDate = holiday.start;
+		this.endDate = holiday.end || null;
+		this.description = holiday.name;
+		this._initializeForm();
 	}
 
 	close() {

@@ -54,6 +54,11 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		this._loadTableSettings(e.tabTitle);
 		this._applyTranslationOnSmartTable();
 		this._loadTableData(e.tabTitle);
+		if (this.smartTable) {
+			this.selectedKPI = null;
+			this.selectedTimeFrame = null;
+			this.smartTable.grid.dataSet.willSelect = 'false';
+		}
 	}
 
 	selectRow(ev: {
@@ -186,7 +191,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				type: source
 			}
 		});
-		const response = kpiDialog.onClose.pipe(first()).toPromise();
+		const response = await kpiDialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			this._loadTableSettings('KPI');
 			await this._loadTableData('KPI');

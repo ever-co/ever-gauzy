@@ -113,6 +113,12 @@ export const environment: IEnvironment = {
 		cookieKey: process.env.KeycloakCookieKey
 	},
 
+	auth0Config: {
+		clientID: process.env.Auth0ClientId,
+		clientSecret: process.env.Auth0ClientSecret,
+		domain: process.env.Auth0Domanin
+	},
+
 	defaultOrganizations: [
 		{
 			name: 'Ever Technologies LTD',
@@ -147,6 +153,14 @@ export const environment: IEnvironment = {
 	],
 
 	defaultEmployees: [
+		{
+			email: 'ruslan@ever.co',
+			password: '123456',
+			firstName: 'Ruslan',
+			lastName: 'Konviser',
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
 		{
 			email: 'alish@ever.co',
 			password: '123456',
@@ -234,6 +248,17 @@ export const environment: IEnvironment = {
 			lastName: 'Tsvetkova',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
 			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
+			email: 'yordan@ever.co',
+			password: '123456',
+			firstName: 'Yordan ',
+			lastName: 'Genovski',
+			imageUrl: 'assets/images/avatars/yordan.jpg',
+			startedWorkOn: '2018-08-01',
+			endWork: null,
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultCandidates: [
@@ -259,19 +284,23 @@ export const environment: IEnvironment = {
 				'hristo@ever.co',
 				'alex@ever.co',
 				'milena@ever.co'
-			]
-		},
-		{
-			name: 'Candidates',
-			defaultMembers: ['alish@ever.co']
+			],
+			manager: ['ruslan@ever.co']
 		},
 		{
 			name: 'Contractors',
-			defaultMembers: [
-				'rachit@ever.co',
-				'atanas@ever.co',
-				'dimana@ever.co'
-			]
+			defaultMembers: ['atanas@ever.co', 'dimana@ever.co'],
+			manager: ['ruslan@ever.co', 'rachit@ever.co']
+		},
+		{
+			name: 'Designers',
+			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
+			manager: []
+		},
+		{
+			name: 'QA',
+			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
+			manager: []
 		}
 	],
 
@@ -290,10 +319,10 @@ export const environment: IEnvironment = {
 		emailsPerOrganization: 30,
 		invitePerOrganization: 30,
 		requestApprovalPerOrganization: 20,
-    employeeTimeOffPerOrganization:10,
-    equipmentPerTenant:20,
-    equipmentSharingPerTenant:20
-
+		employeeTimeOffPerOrganization: 10,
+		equipmentPerTenant: 20,
+		equipmentSharingPerTenant: 20,
+		proposalsSharingPerOrganizations: 30
 	},
 
 	defaultHubstaffUserPass:

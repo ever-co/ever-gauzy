@@ -87,6 +87,7 @@ import { CriterionsRatingChartComponent } from './candidate-statistic/candidate-
 import { CandidateSelectModule } from '../../@shared/candidate/candidate-select/candidate-select.module';
 import { CandidateCriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-criterions-rating-chart/candidate-criterions-rating-chart.component';
 import { DeleteInterviewModule } from '../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.module';
+import { DeleteFeedbackModule } from '../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -180,7 +181,8 @@ const COMPONENTS = [
 		CandidateMultiSelectModule,
 		EmployeeMultiSelectModule,
 		CandidateInterviewFeedbackModule,
-		DeleteInterviewModule
+		DeleteInterviewModule,
+		DeleteFeedbackModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

@@ -2,17 +2,24 @@
 	<nb-card-body>
 		<div class="row">
 			<div class="col">
-				<label class="label">From</label>
-				<ng-select> </ng-select>
-			</div>
-			<div class="col">
 				<label class="label">To</label>
-				<ng-select> </ng-select>
+
+				<ng-select
+					[(ngModel)]="emailTo"
+					[items]="to"
+					bindLabel="email"
+					bindValue="email"
+					[searchable]="true"
+					name="EmailTo"
+				>
+				</ng-select>
 			</div>
 		</div>
+
 		<div class="row">
 			<div class="col">
 				<label class="label">Template/Language</label>
+
 				<ng-select
 					[(ngModel)]="selectedTemplateId"
 					[searchable]="true"
@@ -20,6 +27,7 @@
 					placeholder="Email Templates"
 					bindLabel="name"
 					bindValue="id"
+					name="EmailTemplates"
 				>
 				</ng-select>
 			</div>
