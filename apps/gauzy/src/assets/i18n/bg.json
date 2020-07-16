@@ -779,6 +779,8 @@
 	},
 	"KEY_RESULT_PAGE": {
 		"UPDATE_KEY_RESULT": "Update Key Result",
+		"EDIT_KEY_RESULT": "Edit Key Result",
+		"ADD_KEY_RESULT": "Add Key Result",
 		"UPDATE": {
 			"STATUS": {
 				"ON_TRACK": "on track",
@@ -824,7 +826,8 @@
 				"STATUS": "Статус",
 				"WEIGHT": "Weight",
 				"SELECT_PROJECT": "Select Project",
-				"SELECT_TASK": "Select Task"
+				"SELECT_TASK": "Select Task",
+				"ASSIGN_AS_OBJECTIVE": "Assign as objective"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
