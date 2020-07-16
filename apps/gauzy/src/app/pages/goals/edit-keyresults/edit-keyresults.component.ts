@@ -14,9 +14,16 @@ import {
 	KeyResult,
 	KeyResultTypeEnum,
 	KeyResultDeadlineEnum,
-	KeyResultWeightEnum
+	KeyResultWeightEnum,
+	GoalLevelEnum,
+	OrganizationTeam,
+	RolesEnum,
+	Goal
 } from '@gauzy/models';
 import { TasksService } from '../../../@core/services/tasks.service';
+import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
+import { Store } from '../../../@core/services/store.service';
+import { GoalService } from '../../../@core/services/goal.service';
 
 @Component({
 	selector: 'ga-edit-keyresults',
@@ -27,8 +34,14 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	keyResultsForm: FormGroup;
 	data: KeyResult;
 	showAllEmployees = false;
+	orgId: string;
+	orgName: string;
+	teams: OrganizationTeam[] = [];
+	hideOrg = false;
+	goalLevelEnum = GoalLevelEnum;
 	softDeadline: FormControl;
 	keyResultTypeEnum = KeyResultTypeEnum;
+	goalDeadline: string;
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
 	minDate = new Date();
 	private _ngDestroy$ = new Subject<void>();
@@ -36,7 +49,10 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
 		public fb: FormBuilder,
 		private employeeService: EmployeesService,
-		private taskService: TasksService
+		private taskService: TasksService,
+		private organizationTeamsService: OrganizationTeamsService,
+		private store: Store,
+		private goalService: GoalService
 	) {}
 
 	ngOnInit() {
@@ -58,7 +74,10 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			projectId: [null],
 			taskId: [null],
 			softDeadline: [null],
-			hardDeadline: [null]
+			hardDeadline: [null],
+			assignAsObjective: [false],
+			level: [''],
+			alignedGoalOwner: ['']
 		});
 
 		this.employeeService
@@ -80,6 +99,22 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				owner: this.data.owner.id
 			});
 		}
+		if (
+			this.store.user.role.name !== RolesEnum.SUPER_ADMIN &&
+			this.store.user.role.name !== RolesEnum.MANAGER &&
+			this.store.user.role.name !== RolesEnum.ADMIN
+		) {
+			this.hideOrg = true;
+		}
+	}
+
+	async getTeams() {
+		await this.organizationTeamsService
+			.getAll(['members'], { organizationId: this.orgId })
+			.then((res) => {
+				const { items } = res;
+				this.teams = items;
+			});
 	}
 
 	taskTypeValidators() {
@@ -155,12 +190,34 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	selectEmployee(event, control) {
 		if (control === 'lead') {
 			this.keyResultsForm.patchValue({ lead: event });
+		} else if (control === 'alignedGoalOwner') {
+			this.keyResultsForm.patchValue({ alignedGoalOwner: event });
 		} else {
 			this.keyResultsForm.patchValue({ owner: event });
 		}
 	}
 
 	async saveKeyResult() {
+		if (!!this.keyResultsForm.value.assignAsObjective) {
+			const objectiveData: Goal = {
+				name: this.keyResultsForm.value.name,
+				description: this.keyResultsForm.value.description,
+				lead: this.keyResultsForm.value.lead,
+				deadline: this.goalDeadline,
+				level: this.keyResultsForm.value.level,
+				progress: 0,
+				organizationId: this.orgId
+			};
+			objectiveData[
+				this.keyResultsForm.value.level === GoalLevelEnum.EMPLOYEE
+					? 'ownerEmployee'
+					: this.keyResultsForm.value.level === GoalLevelEnum.TEAM
+					? 'ownerTeam'
+					: 'ownerOrg'
+			] = this.keyResultsForm.value.alignedGoalOwner;
+			await this.goalService.createGoal(objectiveData);
+		}
+
 		if (this.keyResultsForm.value.type === this.keyResultTypeEnum.TASK) {
 			await this.taskService
 				.getById(this.keyResultsForm.value.taskId)
