@@ -8,7 +8,7 @@ export interface EquipmentSharing extends IBaseEntityModel {
 	shareRequestDay: Date;
 	shareStartDay: Date;
 	shareEndDay: Date;
-	status: string;
+	status: number;
 	employees: Employee[];
 	teams: OrganizationTeam[];
 	equipment: Equipment;
@@ -20,7 +20,7 @@ export interface EquipmentSharingRequest extends IBaseEntityModel {
 	shareRequestDay: Date;
 	shareStartDay: Date;
 	shareEndDay: Date;
-	status: string;
+	status: number;
 	employees?: string[];
 	teams?: string[];
 }

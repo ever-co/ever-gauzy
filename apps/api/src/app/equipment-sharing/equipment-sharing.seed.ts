@@ -34,9 +34,7 @@ export const createRandomEquipmentSharing = async (
 				sharing.shareStartDay,
 				faker.random.number(15)
 			);
-			sharing.status = faker.random.arrayElement(
-				Object.values(EquipmentSharingStatusEnum)
-			);
+			sharing.status = faker.random.number({ min: 1, max: 3 });
 			// sharing.teams =[faker.random.arrayElement(teams)];
 			sharing.employees = [faker.random.arrayElement(employees)];
 			equipmentSharings.push(sharing);

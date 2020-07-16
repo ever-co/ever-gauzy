@@ -21,10 +21,7 @@ import { OrganizationTeam } from '../organization-team/organization-team.entity'
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@ApiProperty({ type: Equipment })
-	@ManyToOne(
-		(type) => Equipment,
-		(equipment) => equipment.equipmentSharings
-	)
+	@ManyToOne((type) => Equipment, (equipment) => equipment.equipmentSharings)
 	@JoinColumn()
 	equipment: Equipment;
 
@@ -53,7 +50,7 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@IsEnum(EquipmentSharingStatusEnum)
 	@IsNotEmpty()
 	@Column()
-	status: string;
+	status: number;
 
 	@ManyToMany((type) => Employee, { cascade: true })
 	@JoinTable({
