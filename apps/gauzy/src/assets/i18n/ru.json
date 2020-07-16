@@ -1307,7 +1307,12 @@
 			"EXCEED_PERIOD_ERR": "Максимально допустимые дни для этого элемента ",
 			"BEFORE_START_DATE_ERR": "Дата окончания не может быть раньше даты начала. ",
 			"ITEM_RETURNED_BEFORE_ERR": "Товар должен быть возвращен до "
-		}
+		},
+		"ACTIONS": "Действия",
+		"APPROVE": "Одобрить",
+		"REFUSE": "Отклонить",
+		"APPROVAL_SUCCESS": "Запрос успешно одобрен",
+		"REFUSE_SUCCESS": "Запрос отменен"
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Инвентаризация",
