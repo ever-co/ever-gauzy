@@ -136,7 +136,10 @@ export const createRandomUsers = async (
 	tenants: Tenant[],
 	organizationPerTenant: number,
 	employeesPerOrganization: number,
-	candidatesPerOrganization: number
+	candidatesPerOrganization: number,
+	managersPerOrganization: number,
+	dataEntriesPerOrganization: number,
+	viewerPerOrganization: number
 ): Promise<Map<Tenant, ISeedUsers>> => {
 	const adminRole = roles.filter((role) => role.name === RolesEnum.ADMIN)[0];
 
@@ -146,6 +149,18 @@ export const createRandomUsers = async (
 
 	const candidateRole = roles.filter(
 		(role) => role.name === RolesEnum.CANDIDATE
+	)[0];
+
+	const managerRole = roles.filter(
+		(role) => role.name === RolesEnum.MANAGER
+	)[0];
+
+	const dataEntryRole = roles.filter(
+		(role) => role.name === RolesEnum.DATA_ENTRY
+	)[0];
+
+	const viewerRole = roles.filter(
+		(role) => role.name === RolesEnum.VIEWER
 	)[0];
 
 	const randomTenantUsers: Map<Tenant, ISeedUsers> = new Map();
@@ -169,16 +184,47 @@ export const createRandomUsers = async (
 			candidatesPerOrganization * organizationPerTenant
 		);
 
-		const [adminUsers, employeeUsers, candidateUsers] = await Promise.all([
+		const _managerUsers: Promise<User[]> = seedRandomUsers(
+			managerRole,
+			tenant,
+			managersPerOrganization * organizationPerTenant
+		);
+
+		const _dataEntryUsers: Promise<User[]> = seedRandomUsers(
+			dataEntryRole,
+			tenant,
+			dataEntriesPerOrganization * organizationPerTenant
+		);
+
+		const _viewerUsers: Promise<User[]> = seedRandomUsers(
+			viewerRole,
+			tenant,
+			viewerPerOrganization * organizationPerTenant
+		);
+
+		const [
+			adminUsers,
+			employeeUsers,
+			candidateUsers,
+			managerUsers,
+			dataEntryUsers,
+			viewerUsers
+		] = await Promise.all([
 			_adminUsers,
 			_employeeUsers,
-			_candidateUsers
+			_candidateUsers,
+			_managerUsers,
+			_dataEntryUsers,
+			_viewerUsers
 		]);
 
 		await insertUsers(connection, [
 			...adminUsers,
 			...employeeUsers,
-			...candidateUsers
+			...candidateUsers,
+			...managerUsers,
+			...dataEntryUsers,
+			...viewerUsers
 		]);
 
 		randomTenantUsers.set(tenant, {
