@@ -1,0 +1,16 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+        Upload Organization documents
+    </nb-card-header>
+    <nb-card-body>
+        <label>Upload Request for Days off Template</label>
+        <span>
+            <ga-upload-doc
+                #uploadDoc
+                [documentUrl]="documentUrl"
+                [isDocument]="true"
+                style="width: 50%;">
+            </ga-upload-doc>
+        </span>
+    </nb-card-body>
+</nb-card>

@@ -61,6 +61,9 @@ import { OrganizationExpenseCategoriesService } from '../../../../@core/services
 import { InviteService } from '../../../../@core/services/invite.service';
 import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization-employee-levels/edit-organization-employee-level.component';
+import { EditOrganizationDocuments } from './edit-organization-documents/edit-organization-documents/edit-organization-documents';
+import { UploadDocumentComponent } from './edit-organization-documents/upload-document/upload-document.component';
+import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-input/file-uploader-input.module';
 
 @NgModule({
 	imports: [
@@ -100,7 +103,8 @@ import { EditOrganizationEmployeeLevelComponent } from './edit-organization-empl
 		EmployeeSelectorsModule,
 		EntityWithMembersModule,
 		EmployeeMultiSelectModule,
-		TagsColorInputModule
+		TagsColorInputModule,
+		FileUploaderModule
 	],
 	providers: [
 		OrganizationDepartmentsService,
@@ -132,7 +136,9 @@ import { EditOrganizationEmployeeLevelComponent } from './edit-organization-empl
 		EditOrganizationContactMutationComponent,
 		EditOrganizationProjectsMutationComponent,
 		EditOrganizationEmploymentTypes,
+		EditOrganizationDocuments,
 		InviteContactComponent,
+		UploadDocumentComponent,
 		EditOrganizationEmployeeLevelComponent
 	]
 })
