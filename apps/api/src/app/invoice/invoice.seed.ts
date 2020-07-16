@@ -18,9 +18,7 @@ export const createRandomInvoice = async (
 	noOfInvoicePerOrganization: number
 ) => {
 	let invoices: Invoice[] = [];
-	let invoiceItems: InvoiceItem[] = await connection.manager.find(
-		InvoiceItem
-	);
+
 	for (const tenant of tenants) {
 		let organizations = tenantOrganizationsMap.get(tenant);
 		for (const organization of organizations) {
@@ -65,8 +63,6 @@ export const createRandomInvoice = async (
 					Object.values(InvoiceTypeEnum)
 				);
 				invoice.organizationId = organization.id;
-				// invoice.clientId
-				// invoice.invoiceItems = [faker.random.arrayElement(invoiceItems)];
 				invoice.status = 'Active';
 				invoices.push(invoice);
 			}
