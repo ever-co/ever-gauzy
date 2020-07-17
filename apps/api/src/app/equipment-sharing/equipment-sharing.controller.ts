@@ -13,6 +13,7 @@ import { CrudController, IPagination } from '../core';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
 import { AuthGuard } from '@nestjs/passport';
+import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 
 @ApiTags('EquipmentSharing')
 @UseGuards(AuthGuard('jwt'))
@@ -64,5 +65,47 @@ export class EquipmentSharingController extends CrudController<
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<any> {
 		return this.equipmentSharingService.update(id, equipmentSharing);
+	}
+
+	@ApiOperation({ summary: 'equipment sharings request approval' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found equipment sharings',
+		type: EquipmentSharing
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put('approval/:id')
+	async equipmentSharingsRequestApproval(
+		@Param('id') id: string
+	): Promise<EquipmentSharing> {
+		return this.equipmentSharingService.updateStatusRequestApprovalByAdmin(
+			id,
+			RequestApprovalStatusTypesEnum.APPROVED
+		);
+	}
+
+	@ApiOperation({ summary: 'equipment sharings request refuse' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found equipment sharings',
+		type: EquipmentSharing
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put('refuse/:id')
+	async equipmentSharingsRequestRefuse(
+		@Param('id') id: string
+	): Promise<EquipmentSharing> {
+		return this.equipmentSharingService.updateStatusRequestApprovalByAdmin(
+			id,
+			RequestApprovalStatusTypesEnum.REFUSED
+		);
 	}
 }

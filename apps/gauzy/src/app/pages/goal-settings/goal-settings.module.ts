@@ -23,6 +23,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '../../@shared/shared.module';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { ThemeModule } from '../../@theme/theme.module';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -50,6 +52,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeeMultiSelectModule,
 		SharedModule,
 		NbTabsetModule,
+		ThemeModule,
+		CardGridModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

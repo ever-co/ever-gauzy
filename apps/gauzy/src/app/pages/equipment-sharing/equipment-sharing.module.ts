@@ -21,6 +21,7 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
 import { EquipmentSharingMutationModule } from '../../@shared/equipment-sharing/equipment-sharing-mutation.module';
+import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -51,6 +52,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	providers: [EquipmentSharingService],
 	entryComponents: [EquipmentSharingMutationComponent],
-	declarations: [EquipmentSharingComponent]
+	declarations: [EquipmentSharingComponent, EquipmentSharingActionComponent]
 })
 export class EquipmentSharingModule {}

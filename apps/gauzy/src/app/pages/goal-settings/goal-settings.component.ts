@@ -11,10 +11,14 @@ import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 import { Store } from '../../@core/services/store.service';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
 @Component({
 	selector: 'ga-goal-settings',
-	templateUrl: './goal-settings.component.html'
+	templateUrl: './goal-settings.component.html',
+	styleUrls: ['./goal-settings.component.scss']
 })
 export class GoalSettingsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -24,6 +28,10 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	selectedKPI: any = null;
 	selectedTab = 'Set Time Frame';
 	selectedOrganizationId: string;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	disableButton = true;
+	goalSettingData: any[];
 	@ViewChild('smartTable') smartTable;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
@@ -31,9 +39,11 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private goalSettingService: GoalSettingsService,
 		private toastrService: NbToastrService,
-		private store: Store
+		private store: Store,
+		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -46,6 +56,23 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					this.selectedOrganizationId = organization.id;
 					await this._loadTableData(null);
 				}
+			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.GOAL_SETTINGS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
 			});
 	}
 
@@ -61,25 +88,25 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectRow(ev: {
-		data: any;
-		isSelected: boolean;
-		selected: any[];
-		source: LocalDataSource;
-	}) {
-		if (ev.isSelected) {
+	selectRow({ isSelected, data }) {
+		if (isSelected) {
 			this.selectedTab === 'KPI'
-				? (this.selectedKPI = ev.data)
-				: (this.selectedTimeFrame = ev.data);
+				? (this.selectedKPI = data)
+				: (this.selectedTimeFrame = data);
 		} else {
 			this.selectedTab === 'KPI'
 				? (this.selectedKPI = null)
 				: (this.selectedTimeFrame = null);
 		}
+		if (this.smartTable) {
+			this.smartTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
 	}
 
 	private async _loadTableData(tab) {
 		this.smartTableData.empty();
+		this.goalSettingData = [];
 		const findObj = {
 			organization: {
 				id: this.selectedOrganizationId
@@ -88,6 +115,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		if (tab === 'KPI') {
 			await this.goalSettingService.getAllKPI(findObj).then((res) => {
 				this.smartTableData.load(res.items);
+				this.goalSettingData = res.items;
 				if (this.smartTable) {
 					this.smartTable.grid.dataSet.willSelect = 'false';
 				}
@@ -97,6 +125,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				.getAllTimeFrames(findObj)
 				.then((res) => {
 					this.smartTableData.load(res.items);
+					this.goalSettingData = res.items;
 					if (this.smartTable) {
 						this.smartTable.grid.dataSet.willSelect = 'false';
 					}
@@ -161,7 +190,13 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editTimeFrame(source) {
+	async editTimeFrame(source, selectedItem?: any) {
+		if (selectedItem) {
+			this.selectRow({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		if (source === 'add') {
 			this.selectedTimeFrame = null;
 			this.smartTable.grid.dataSet.willSelect = 'false';
@@ -180,7 +215,13 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editKPI(source) {
+	async editKPI(source, selectedItem?: any) {
+		if (selectedItem) {
+			this.selectRow({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		if (source === 'add') {
 			this.selectedKPI = null;
 			this.smartTable.grid.dataSet.willSelect = 'false';
@@ -198,7 +239,13 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async deleteTimeFrame() {
+	async deleteTimeFrame(selectedItem?: any) {
+		if (selectedItem) {
+			this.selectRow({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
@@ -229,7 +276,13 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async deleteKPI() {
+	async deleteKPI(selectedItem?: any) {
+		if (selectedItem) {
+			this.selectRow({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {

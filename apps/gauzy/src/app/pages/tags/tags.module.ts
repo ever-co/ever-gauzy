@@ -27,6 +27,7 @@ import { TagsRoutingModule } from './tags-routing.module';
 import { TagsMutationModule } from '../../@shared/tags/tags-mutation.module';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { TagsColorComponent } from './tags-color/tags-color.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -54,6 +55,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCheckboxModule,
 		TagsMutationModule,
 		ColorPickerModule,
+		CardGridModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
