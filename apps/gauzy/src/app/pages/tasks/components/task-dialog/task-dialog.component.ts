@@ -80,8 +80,6 @@ export class TaskDialogComponent extends TranslationBaseComponent
 				organizationId
 			}
 		);
-		console.log('load projects');
-		console.log(organizationId, items);
 
 		if (items) this.projects = items;
 	}
@@ -96,9 +94,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		estimate,
 		dueDate,
 		tags
-	}: Task) {
-		console.log('PROJECT');
-		console.log(project);
+	}: Task) {		
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedMembers = (members || []).map((member) => member.id);
 		this.selectedTeams = (teams || []).map((team) => team.id);
