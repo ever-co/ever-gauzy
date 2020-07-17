@@ -14,6 +14,17 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { ComponentLayoutStyleEnum } from '@gauzy/models';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import {
+	getYear,
+	getQuarter,
+	addDays,
+	lastDayOfYear,
+	startOfQuarter,
+	endOfQuarter,
+	lastDayOfQuarter,
+	startOfYear,
+	endOfYear
+} from 'date-fns';
 
 @Component({
 	selector: 'ga-goal-settings',
@@ -31,7 +42,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
-	goalSettingData: any[];
+	goalTimeFrames: any[];
+	predefinedTimeFrames = [];
 	@ViewChild('smartTable') smartTable;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
@@ -108,7 +120,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 
 	private async _loadTableData(tab) {
 		this.smartTableData.empty();
-		this.goalSettingData = [];
+		this.goalTimeFrames = [];
 		const findObj = {
 			organization: {
 				id: this.selectedOrganizationId
@@ -117,7 +129,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		if (tab === 'KPI') {
 			await this.goalSettingService.getAllKPI(findObj).then((res) => {
 				this.smartTableData.load(res.items);
-				this.goalSettingData = res.items;
+				this.goalTimeFrames = res.items;
 				if (this.smartTable) {
 					this.smartTable.grid.dataSet.willSelect = 'false';
 				}
@@ -126,10 +138,13 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 			await this.goalSettingService
 				.getAllTimeFrames(findObj)
 				.then((res) => {
-					this.smartTableData.load(res.items);
-					this.goalSettingData = res.items;
-					if (this.smartTable) {
-						this.smartTable.grid.dataSet.willSelect = 'false';
+					if (!!res) {
+						this.smartTableData.load(res.items);
+						this.goalTimeFrames = res.items;
+						if (this.smartTable) {
+							this.smartTable.grid.dataSet.willSelect = 'false';
+						}
+						this.generateTimeFrames();
 					}
 				});
 		}
@@ -192,7 +207,49 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		}
 	}
 
+	generateTimeFrames() {
+		const today = new Date();
+		let date = today;
+		let year = getYear(today);
+		this.predefinedTimeFrames = [];
+		// Add Quarters
+		if (getQuarter(date) > 2) {
+			year = getYear(addDays(lastDayOfYear(today), 1));
+		}
+		while (getYear(date) <= year) {
+			const timeFrameName = `Q${getQuarter(date)}-${getYear(date)}`;
+			this.predefinedTimeFrames.push({
+				name: timeFrameName,
+				start: new Date(startOfQuarter(date)),
+				end: new Date(endOfQuarter(date))
+			});
+			date = addDays(lastDayOfQuarter(date), 1);
+		}
+		// Annual Time Frames
+		this.predefinedTimeFrames.push({
+			name: `Annual-${getYear(today)}`,
+			start: new Date(startOfYear(today)),
+			end: new Date(endOfYear(today))
+		});
+		if (year > getYear(today)) {
+			this.predefinedTimeFrames.push({
+				name: `Annual-${year}`,
+				start: new Date(startOfYear(addDays(lastDayOfYear(today), 1))),
+				end: new Date(endOfYear(addDays(lastDayOfYear(today), 1)))
+			});
+		}
+	}
+
 	async editTimeFrame(source, selectedItem?: any) {
+		this.predefinedTimeFrames = this.predefinedTimeFrames.filter(
+			(timeFrame) => {
+				return (
+					this.goalTimeFrames.findIndex(
+						(goalTimeFrame) => goalTimeFrame.name === timeFrame.name
+					) === -1
+				);
+			}
+		);
 		if (selectedItem) {
 			this.selectRow({
 				isSelected: true,
@@ -206,7 +263,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
 			context: {
 				timeFrame: this.selectedTimeFrame,
-				type: source
+				type: source,
+				predefinedTimeFrames: this.predefinedTimeFrames
 			}
 		});
 
