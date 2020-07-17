@@ -1530,6 +1530,7 @@
 		"NOT_APPLIED": "Не применено",
 		"STATUS": "Статус",
 		"SET_STATUS": "Установить статус",
+		"SHOW_COLUMNS": "Показать колонки",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
