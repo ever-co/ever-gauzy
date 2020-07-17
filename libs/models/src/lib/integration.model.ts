@@ -87,7 +87,9 @@ export enum IntegrationEntity {
 	EMPLOYEE = 'Employee',
 	TIME_LOG = 'TimeLog',
 	TIME_SLOT = 'TimeSlot',
-	SCREENSHOT = 'Screenshot'
+	SCREENSHOT = 'Screenshot',
+	INCOME = 'Income',
+	EXPENSE = 'Expense'
 }
 
 export enum IntegrationTypeGroupEnum {
