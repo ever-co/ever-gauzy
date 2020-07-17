@@ -24,7 +24,7 @@
 					[items]="projects$ | async"
 					bindName="id"
 					(change)="selectProject($event)"
-					[(ngModel)]="selectedProject"
+					[ngModel]="selectedProject$ | async"
 					placeholder="All Projects"
 				>
 					<ng-template
@@ -41,17 +41,19 @@
 					</ng-template>
 				</ng-select>
 			</div>
-			<button
-				class="project-settings"
-				*ngIf="!!selectedProject"
-				nbButton
-				class="tasks-component__setup-btn mr-2"
-			>
-				<nb-icon
-					icon="settings"
-					(click)="openTasksSettings()"
-				></nb-icon>
-			</button>
+			<ng-container *ngIf="selectedProject$ | async as selectedProject">
+				<button
+					class="project-settings"
+					*ngIf="!!selectedProject"
+					nbButton
+					class="tasks-component__setup-btn mr-2"
+				>
+					<nb-icon
+						icon="settings"
+						(click)="openTasksSettings(selectedProject)"
+					></nb-icon>
+				</button>
+			</ng-container>
 			<ga-layout-selector
 				class="layout-selector"
 				componentName="{{ viewComponentName }}"
@@ -100,7 +102,7 @@
 				<ga-tasks-sprint-view
 					(createTaskEvent)="createTaskDialog()"
 					(editTaskEvent)="editTaskDialog($event)"
-					[project]="selectedProject"
+					[project]="selectedProject$ | async"
 					[tasks]="availableTasks$ | async"
 				></ga-tasks-sprint-view>
 			</ng-template>

@@ -5,7 +5,8 @@ import {
 	RolePermissions,
 	User,
 	LanguagesEnum,
-	OrganizationPermissionsEnum
+	OrganizationPermissionsEnum,
+	OrganizationProjects
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
@@ -26,6 +27,7 @@ export interface AppState {
 	selectedOrganization: Organization;
 	selectedEmployee: SelectedEmployee;
 	selectedProposal: ProposalViewModel;
+	selectedProject: OrganizationProjects;
 	selectedDate: Date;
 }
 
@@ -39,6 +41,7 @@ export interface PersistState {
 }
 
 export function createInitialAppState(): AppState {
+	console.log('create initial app state');
 	return {
 		selectedDate: new Date(),
 		userRolePermissions: []
@@ -107,6 +110,7 @@ export class Store {
 		(state) => state.selectedOrganization
 	);
 	selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
+	selectedProject$ = this.appQuery.select((state) => state.selectedProject);
 	selectedDate$ = this.appQuery.select((state) => state.selectedDate);
 	userRolePermissions$ = this.appQuery.select(
 		(state) => state.userRolePermissions
@@ -184,6 +188,12 @@ export class Store {
 			selectedOrganization: organization
 		});
 		this.loadPermissions();
+	}
+
+	set selectedProject(project: OrganizationProjects) {
+		this.appStore.update({
+			selectedProject: project
+		});
 	}
 
 	get token(): string | null {

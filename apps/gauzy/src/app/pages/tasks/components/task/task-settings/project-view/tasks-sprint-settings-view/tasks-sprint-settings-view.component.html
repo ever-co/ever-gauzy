@@ -50,15 +50,25 @@
 
 					<ng-template #item let-sprint>
 						<div
-							class="d-flex justify-content-between px-2 sprints__item"
+							class="d-flex justify-content-between px-2 sprints__item w-100"
 						>
-							<span>{{ sprint.name }}</span>
-							<span>{{ sprint.goal || 'No goal setts' }}</span>
-							<span *ngIf="!!sprint.startDate">{{
-								moment(sprint.startDate).format('DD-MM-YYYY')
+							<span class="col">{{ sprint.name }}</span>
+							<span class="col">{{
+								sprint.goal || 'No goal setts'
 							}}</span>
-							<span *ngIf="!!sprint.startDate">{{
-								moment(sprint.endDate).format('DD-MM-YYYY')
+							<span class="col">{{
+								sprint.startDate
+									? moment(sprint.startDate).format(
+											'DD-MM-YYYY'
+									  )
+									: null
+							}}</span>
+							<span class="col">{{
+								sprint.startDate
+									? moment(sprint.endDate).format(
+											'DD-MM-YYYY'
+									  )
+									: null
 							}}</span>
 						</div>
 					</ng-template>

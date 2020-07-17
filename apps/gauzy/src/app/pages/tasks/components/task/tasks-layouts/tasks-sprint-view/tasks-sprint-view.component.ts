@@ -27,6 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 	implements OnInit, OnChanges {
+	sprints: OrganizationSprint[] = [];
 	@Input() project: OrganizationProjects;
 	@Input() private tasks: Task[];
 	backlogTasks: Task[] = [];
@@ -62,11 +63,34 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 		// this.backlogTasks = this.tasks.filter((task) => !task.organizationSprint);
 	}
 
+	reduceTasks(tasks: Task[]): void {
+		const sprints = {};
+		const backlog = [];
+		this.tasks.forEach((task) => {
+			if (!!task.organizationSprint) {
+				if (!sprints[task.organizationSprint.id]) {
+					sprints[task.organizationSprint.id] = {
+						...task.organizationSprint,
+						tasks: []
+					};
+					sprints[task.organizationSprint.id].tasks.push(task);
+				} else {
+					sprints[task.organizationSprint.id].tasks.push(task);
+				}
+			} else {
+				backlog.push(task);
+			}
+		});
+		this.sprints = Object.values(sprints);
+		this.backlogTasks = backlog;
+	}
+
 	ngOnChanges(changes: SimpleChanges): void {
 		if (!!changes && !!changes.tasks) {
-			this.backlogTasks = this.tasks.filter(
-				(task) => !task.organizationSprint
-			);
+			this.reduceTasks(changes.tasks.currentValue);
+			// this.backlogTasks = this.tasks.filter(
+			//   (task) => !task.organizationSprint
+			// );
 		}
 		console.log(changes);
 	}

@@ -7,6 +7,7 @@ import { map, tap, switchMap, filter } from 'rxjs/operators';
 
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 import { ActivatedRoute } from '@angular/router';
+import { Location } from '@angular/common';
 
 @Component({
 	selector: 'ngx-task-settings',
@@ -20,7 +21,8 @@ export class TaskSettingsComponent {
 
 	constructor(
 		private _store: TasksStoreService,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private location: Location
 	) {
 		this.tasks$ = this._store.tasks$;
 		// this.projects$ = this.tasks$.pipe(
@@ -51,5 +53,9 @@ export class TaskSettingsComponent {
 				)
 			)
 		);
+	}
+
+	goBack(): void {
+		this.location.back();
 	}
 }

@@ -66,7 +66,7 @@ export class TaskComponent extends TranslationBaseComponent
 	teams;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
-	selectedProject: OrganizationProjects = null;
+	selectedProject$: Observable<OrganizationProjects>;
 	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
 
 	constructor(
@@ -110,6 +110,15 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	initProjectFilter(): void {
+		this.selectedProject$ = this._organizationsStore.selectedProject$.pipe(
+			tap((selectedProject: OrganizationProjects) => {
+				if (!!selectedProject) {
+					this.viewMode = selectedProject.taskListType as TaskListTypeEnum;
+				} else {
+					this.viewMode = TaskListTypeEnum.GRID;
+				}
+			})
+		);
 		this.projects$ = this.availableTasks$.pipe(
 			map((tasks: Task[]): OrganizationProjects[] => {
 				console.log(tasks);
@@ -125,19 +134,20 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	selectProject(project: OrganizationProjects | null): void {
-		if (!project) {
-			this.initTasks();
-			return;
+		this._organizationsStore.selectedProject = project;
+		this.initTasks();
+		this.viewMode = !!project
+			? (project.taskListType as TaskListTypeEnum)
+			: TaskListTypeEnum.GRID;
+
+		if (!!project) {
+			this.availableTasks$ = this.availableTasks$.pipe(
+				map((tasks: Task[]) =>
+					tasks.filter((task: Task) => task.project.id === project.id)
+				),
+				tap((tasks) => console.log('Reactive Tasks: ', tasks))
+			);
 		}
-		this.viewMode = project.taskListType as TaskListTypeEnum;
-		console.log(project.taskListType);
-		this.availableTasks$ = this.availableTasks$.pipe(
-			map((tasks: Task[]) =>
-				tasks.filter(
-					(task: Task) => task.projectId === this.selectedProject.id
-				)
-			)
-		);
 	}
 
 	private initTasks(): void {
@@ -490,11 +500,11 @@ export class TaskComponent extends TranslationBaseComponent
 		return this.view === 'team-tasks';
 	}
 
-	openTasksSettings(): void {
-		this.router.navigate(
-			['/pages/tasks/settings', this.selectedProject.id],
-			{ state: this.selectedProject }
-		);
+	openTasksSettings(selectedProject: OrganizationProjects): void {
+		console.log('SELECTED_PROJECT: ', selectedProject);
+		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
+			state: selectedProject
+		});
 	}
 
 	/**
