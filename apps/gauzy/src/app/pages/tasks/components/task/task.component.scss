@@ -10,8 +10,16 @@
     display: flex;
     align-items: center;
   }
+}
 
-  &__setup-btn {
-    margin-right: 10px;
+.project-selector {
+  min-width: 15rem;
+  ng-select {
+    min-width: 10rem;
+    .selector-template {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
   }
 }

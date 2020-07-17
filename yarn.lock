@@ -2964,12 +2964,12 @@
   resolved "https://registry.yarnpkg.com/@nestjsx/util/-/util-4.6.2.tgz#89bd31447a30f9666d7ad1616111c78b2d61dd56"
   integrity sha512-YG2gQvSm7p8zBFaW6MFM5r1Ihk4Vr189SB2OTr7fV7qcjPS+02v7xILw2dTz2emdmu0t0AgCL2RU1V0lY8Aa9w==
 
-"@ng-select/ng-select@^3.7.3":
-  version "3.7.3"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-3.7.3.tgz#317fbf94211fb2044f6ab233795cf1cbab4b44a3"
-  integrity sha512-Duw5t0b9Jup/tVEoDHLm+UhGv5RnwQ7pQorCAQc4LZR35oOZFjec8FrEGGtgVAGtwaQAYyd7PSMk3nEsWPg6AQ==
+"@ng-select/ng-select@4.0.4":
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-4.0.4.tgz#fe4ba82f4ab6110627fefb072e81bfb3eb79fafb"
+  integrity sha512-KaVlVdt7DWZBfmL6nc16i80l1dDx0cO3eGjW+grQPnhZ9KurapioQUYVf6dSmYyWyBXihvt4I3SWkCzqSWFJbQ==
   dependencies:
-    tslib "^1.9.0"
+    tslib "^1.10.0"
 
 "@ngtools/webpack@9.1.7":
   version "9.1.7"

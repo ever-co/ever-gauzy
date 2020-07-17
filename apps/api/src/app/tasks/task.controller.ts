@@ -108,7 +108,7 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
-	async createTask(@Body() entity: Task): Promise<any> {
+	async createTask(@Body() entity: Task): Promise<Task> {
 		return this.taskService.createTask(entity);
 	}
 

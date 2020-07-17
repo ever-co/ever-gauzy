@@ -36,8 +36,11 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TaskSettingsComponent } from './components/task/task-settings/task-settings.component';
 import { ProjectViewComponent } from './components/task/task-settings/project-view/project-view.component';
 import { TasksSprintSettingsViewComponent } from './components/task/task-settings/project-view/tasks-sprint-settings-view/tasks-sprint-settings-view.component';
-import { ItemsActionsModule } from '../../@shared/components/items-actions/items-actions.module';
+import { GauzyEditableGridModule } from '../../@shared/components/editable-grid/gauzy-editable-grid.module';
 import { SprintDialogComponent } from './components/task/task-settings/project-view/tasks-sprint-settings-view/sprint-dialog/sprint-dialog.component';
+import { TasksSprintViewComponent } from './components/task/tasks-layouts/tasks-sprint-view/tasks-sprint-view.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprint-view/task/task.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -51,7 +54,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TaskSettingsComponent,
 		ProjectViewComponent,
 		TasksSprintSettingsViewComponent,
-		SprintDialogComponent
+		SprintDialogComponent,
+		TasksSprintViewComponent,
+		SprintTaskComponent
 	],
 	imports: [
 		NbBadgeModule,
@@ -87,7 +92,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSpinnerModule,
 		NbDatepickerModule,
 		EmployeeMultiSelectModule,
-		ItemsActionsModule
+		GauzyEditableGridModule,
+		DragDropModule
 	],
 	entryComponents: [
 		TaskDialogComponent,

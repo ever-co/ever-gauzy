@@ -34,7 +34,8 @@ export class TasksService extends TranslationBaseComponent {
 				'members',
 				'members.user',
 				'teams',
-				'creator'
+				// 'creator'
+				'organizationSprint'
 			],
 			findInput
 		});

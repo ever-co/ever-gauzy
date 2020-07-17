@@ -1,0 +1,120 @@
+<!-- <div class="sprints" cdkDropListGroup> -->
+<div class="mb-3">
+	<button nbButton status="success" class="mr-2" (click)="createTask()">
+		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+		>{{ 'BUTTONS.ADD' | translate }}
+	</button>
+	<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+</div>
+<div class="sprints">
+	<!-- <nb-accordion multi>
+		<nb-accordion-item
+			[expanded]="true"
+			*ngFor="let sprint of sprints$ | async as sprints"
+		>
+			<nb-accordion-item-header>
+				{{ sprint.name }}
+			</nb-accordion-item-header>
+			<nb-accordion-item-body
+				class="tasks"
+				id="{{ sprint.id }}"
+				cdkDropList
+				[cdkDropListData]="sprint.tasks"
+				[cdkDropListConnectedTo]="sprintIds"
+				(cdkDropListDropped)="drop($event)"
+			>
+				<ga-sprint-task
+					(toggleItemEvent)="toggleItemSelection($event)"
+					*ngFor="let task of sprint.tasks; trackBy: trackByFn"
+					[task]="task"
+				></ga-sprint-task>
+			</nb-accordion-item-body>
+		</nb-accordion-item>
+		<nb-accordion-item [expanded]="true">
+			<nb-accordion-item-header>Backlog</nb-accordion-item-header>
+			<nb-accordion-item-body
+				id="backlog"
+				cdkDropList
+				[cdkDropListData]="backlogTasks"
+				[cdkDropListConnectedTo]="sprintIds"
+				(cdkDropListDropped)="drop($event)"
+			>
+				<ga-sprint-task
+					(click)="toggleItemSelection(task)"
+					*ngFor="let task of backlogTasks"
+					[task]="task"
+				></ga-sprint-task>
+			</nb-accordion-item-body>
+		</nb-accordion-item>
+  </nb-accordion> -->
+
+	<nb-accordion multi>
+		<nb-accordion-item [expanded]="true" *ngFor="let sprint of sprints">
+			<nb-accordion-item-header>
+				{{ sprint.name }}
+			</nb-accordion-item-header>
+			<nb-accordion-item-body
+				class="tasks"
+				id="{{ sprint.id }}"
+				cdkDropList
+				[cdkDropListData]="sprint.tasks"
+				[cdkDropListConnectedTo]="sprintIds"
+				(cdkDropListDropped)="drop($event)"
+			>
+				<ga-sprint-task
+					(toggleItemEvent)="toggleItemSelection($event)"
+					*ngFor="let task of sprint.tasks; trackBy: trackByFn"
+					[task]="task"
+				></ga-sprint-task>
+			</nb-accordion-item-body>
+		</nb-accordion-item>
+		<nb-accordion-item [expanded]="true">
+			<nb-accordion-item-header>Backlog</nb-accordion-item-header>
+			<nb-accordion-item-body
+				id="backlog"
+				cdkDropList
+				[cdkDropListData]="backlogTasks"
+				[cdkDropListConnectedTo]="sprintIds"
+				(cdkDropListDropped)="drop($event)"
+			>
+				<ga-sprint-task
+					(click)="toggleItemSelection(task)"
+					*ngFor="let task of backlogTasks"
+					[task]="task"
+				></ga-sprint-task>
+			</nb-accordion-item-body>
+		</nb-accordion-item>
+	</nb-accordion>
+</div>
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button nbButton status="info" class="mr-2" [size]="buttonSize || 'medium'">
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.DUPLICATE' | translate }}
+	</button>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+		(click)="editTask()"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		nbButton
+		status="danger"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+		[disabled]="!selectedItem"
+		(click)="deleteTask()"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

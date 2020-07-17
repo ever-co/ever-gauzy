@@ -1,14 +1,29 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import {
+	Router,
+	NavigationEnd,
+	RouterEvent,
+	ActivatedRoute
+} from '@angular/router';
+
+import { uniqBy } from 'lodash';
+import { Observable, Subject } from 'rxjs';
+import { first, takeUntil, map, tap, filter } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
+
+import {
+	Task,
+	Tag,
+	OrganizationProjects,
+	ComponentLayoutStyleEnum,
+	TaskListTypeEnum
+} from '@gauzy/models';
 import { TaskDialogComponent } from '../task-dialog/task-dialog.component';
-import { first, takeUntil } from 'rxjs/operators';
-import { Task, Tag } from '@gauzy/models';
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
-import { Observable, Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
@@ -18,19 +33,12 @@ import { TaskTeamsComponent } from 'apps/gauzy/src/app/@shared/table-components/
 import { MyTasksStoreService } from 'apps/gauzy/src/app/@core/services/my-tasks-store.service';
 import { AssignedToComponent } from 'apps/gauzy/src/app/@shared/table-components/assigned-to/assigned-to.component';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
-import {
-	Router,
-	NavigationEnd,
-	RouterEvent,
-	ActivatedRoute
-} from '@angular/router';
 import { TeamTasksStoreService } from 'apps/gauzy/src/app/@core/services/team-tasks-store.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-task',
@@ -46,6 +54,8 @@ export class TaskComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
+	projects$: Observable<OrganizationProjects[]>;
+	availableTasks$: Observable<Task[]>;
 	tasks$: Observable<Task[]>;
 	myTasks$: Observable<Task[]>;
 	teamTasks$: Observable<Task[]>;
@@ -55,6 +65,9 @@ export class TaskComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	teams;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+
+	selectedProject$: Observable<OrganizationProjects>;
+	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -77,6 +90,7 @@ export class TaskComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.storeInstance.fetchTasks();
 		this._loadTableSettings();
+		this.initProjectFilter();
 		this._applyTranslationOnSmartTable();
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
@@ -95,12 +109,68 @@ export class TaskComponent extends TranslationBaseComponent
 			});
 	}
 
+	initProjectFilter(): void {
+		this.selectedProject$ = this._organizationsStore.selectedProject$.pipe(
+			tap((selectedProject: OrganizationProjects) => {
+				if (!!selectedProject) {
+					this.viewMode = selectedProject.taskListType as TaskListTypeEnum;
+				} else {
+					this.viewMode = TaskListTypeEnum.GRID;
+				}
+			})
+		);
+		this.projects$ = this.availableTasks$.pipe(
+			map((tasks: Task[]): OrganizationProjects[] => {
+				console.log(tasks);
+				return uniqBy(
+					tasks.map(
+						(task: Task): OrganizationProjects => task.project
+					),
+					'id'
+				);
+			}),
+			tap(console.log)
+		);
+	}
+
+	selectProject(project: OrganizationProjects | null): void {
+		this._organizationsStore.selectedProject = project;
+		this.initTasks();
+		this.viewMode = !!project
+			? (project.taskListType as TaskListTypeEnum)
+			: TaskListTypeEnum.GRID;
+
+		if (!!project) {
+			this.availableTasks$ = this.availableTasks$.pipe(
+				map((tasks: Task[]) =>
+					tasks.filter((task: Task) => task.project.id === project.id)
+				),
+				tap((tasks) => console.log('Reactive Tasks: ', tasks))
+			);
+		}
+	}
+
+	private initTasks(): void {
+		const pathName = window.location.href;
+		if (pathName.indexOf('tasks/me') !== -1) {
+			this.availableTasks$ = this.myTasks$;
+			return;
+		}
+		if (pathName.indexOf('tasks/team') !== -1) {
+			this.availableTasks$ = this.teamTasks$;
+			return;
+		}
+		this.availableTasks$ = this.tasks$;
+	}
+
 	setView() {
+		this.initTasks();
 		const pathName = window.location.href;
 		if (pathName.indexOf('tasks/me') !== -1) {
 			this._myTaskStore.fetchTasks();
 			this.view = 'my-tasks';
 			this.viewComponentName = ComponentEnum.MY_TASKS;
+			// this.availableTasks$ = this.myTasks$;
 		} else if (pathName.indexOf('tasks/team') !== -1) {
 			this.view = 'team-tasks';
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
@@ -120,9 +190,11 @@ export class TaskComponent extends TranslationBaseComponent
 				.subscribe((data) => {
 					this.loadTeams();
 				});
+			// this.availableTasks$ = this.teamTasks$;
 		} else {
 			this.view = 'tasks';
 			this.viewComponentName = ComponentEnum.ALL_TASKS;
+			// this.availableTasks$ = this.tasks$;
 		}
 		this._organizationsStore
 			.componentLayout$(this.viewComponentName)
@@ -275,6 +347,7 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async editTaskDialog(selectedItem?: Task) {
+		console.log(selectedItem);
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
@@ -427,8 +500,11 @@ export class TaskComponent extends TranslationBaseComponent
 		return this.view === 'team-tasks';
 	}
 
-	openTasksSettings(): void {
-		this.router.navigate(['/pages/tasks/settings']);
+	openTasksSettings(selectedProject: OrganizationProjects): void {
+		console.log('SELECTED_PROJECT: ', selectedProject);
+		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
+			state: selectedProject
+		});
 	}
 
 	/**
