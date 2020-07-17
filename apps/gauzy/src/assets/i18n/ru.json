@@ -1308,11 +1308,11 @@
 			"BEFORE_START_DATE_ERR": "Дата окончания не может быть раньше даты начала. ",
 			"ITEM_RETURNED_BEFORE_ERR": "Товар должен быть возвращен до "
 		},
-		"ACTIONS": "Actions",
-		"APPROVE": "Approve",
-		"REFUSE": "Refuse",
-		"APPROVAL_SUCCESS": "Request Approval Success",
-		"REFUSE_SUCCESS": "Request Refuse Success"
+		"ACTIONS": "Действия",
+		"APPROVE": "Одобрить",
+		"REFUSE": "Отклонить",
+		"APPROVAL_SUCCESS": "Запрос успешно одобрен",
+		"REFUSE_SUCCESS": "Запрос отменен"
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Инвентаризация",
