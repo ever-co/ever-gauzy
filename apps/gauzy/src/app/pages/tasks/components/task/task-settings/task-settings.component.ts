@@ -1,10 +1,8 @@
 import { Component } from '@angular/core';
 import { Task, OrganizationProjects } from '@gauzy/models';
-
 import { uniqWith, isEqual } from 'lodash';
 import { Observable } from 'rxjs';
 import { map, tap, switchMap, filter } from 'rxjs/operators';
-
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
@@ -25,14 +23,6 @@ export class TaskSettingsComponent {
 		private location: Location
 	) {
 		this.tasks$ = this._store.tasks$;
-		// this.projects$ = this.tasks$.pipe(
-		// 	map((tasks: Task[]) => {
-		// 		return uniqWith(
-		// 			tasks.map((task: Task) => task.project),
-		// 			isEqual
-		// 		);
-		// 	})
-		// );
 
 		this.project$ = this.route.params.pipe(
 			switchMap(({ id: currentProjectId }: { id: string }) =>
