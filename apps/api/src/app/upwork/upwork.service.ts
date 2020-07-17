@@ -58,7 +58,6 @@ import { OrganizationService } from '../organization/organization.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
-import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 
 @Injectable()
 export class UpworkService {
@@ -528,7 +527,7 @@ export class UpworkService {
 				organizationId,
 				config
 			);
-			employeeId = '68ba16da-833e-4df6-927f-622ed00cd27b';
+			employeeId = employee.gauzyId;
 		}
 
 		return await Promise.all(
