@@ -17,7 +17,8 @@ import {
 	ProjectBillingEnum,
 	TimeLogType,
 	IntegrationEntity,
-	RolesEnum
+	RolesEnum,
+	ExpenseCategoriesEnum
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -57,6 +58,7 @@ import { OrganizationService } from '../organization/organization.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
+import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 
 @Injectable()
 export class UpworkService {
@@ -526,7 +528,7 @@ export class UpworkService {
 				organizationId,
 				config
 			);
-			employeeId = employee.gauzyId;
+			employeeId = '68ba16da-833e-4df6-927f-622ed00cd27b';
 		}
 
 		return await Promise.all(
@@ -823,78 +825,138 @@ export class UpworkService {
 		employeeId,
 		providerRefernceId,
 		providerId,
-		forDate
+		dateRange
 	) {
 		try {
-			const reports = await this._getFreelancerFullReports(
+			const syncedIncome = await this._syncIncome(
+				organizationId,
+				integrationId,
 				config,
-				providerId
+				employeeId,
+				providerId,
+				dateRange
 			);
-			const earnings = await this._getEarningReportsForFreelancer(
+
+			const syncedExpense = await this._syncExpense(
+				organizationId,
+				integrationId,
 				config,
-				providerRefernceId
+				employeeId,
+				providerRefernceId,
+				dateRange
 			);
-			return { reports, earnings };
-			var {
-				table: { cols = [], rows = [] }
-			} = reports;
-
-			const columns = _.pluck(cols, 'label');
-			rows = _.map(rows, function (row) {
-				const innerRow = _.pluck(row['c'], 'v');
-				const ele = {};
-				for (let index = 0; index < columns.length; index++) {
-					ele[columns[index]] = innerRow[index];
-				}
-				return ele;
-			});
-
-			const incomeMapped = await Promise.all(
-				rows.map(async (row) => {
-					// const { assignment_ref: contractId, hours } = row;
-
-					// const { hourly_charge_rate } = await this._getContractByContractId(
-					// 	config,
-					// 	contractId
-					// );
-					// console.log(hourly_charge_rate, 'hourly_charge_rate');
-
-					let earnAmount = 0;
-					// let earnAmount = parseFloat(hours) * parseFloat(hourly_charge_rate);
-
-					const {
-						company_id: clientId,
-						company_name: clientName,
-						memo: notes,
-						worked_on
-					} = row;
-
-					const gauzyIncome = await this.commandBus.execute(
-						new IncomeCreateCommand({
-							employeeId,
-							orgId: organizationId,
-							clientName,
-							clientId,
-							amount: earnAmount,
-							valueDate: new Date(
-								moment(worked_on).format('YYYY-MM-DD hh:mm:ss')
-							),
-							notes,
-							tags: []
-						})
-					);
-
-					return gauzyIncome;
-				})
-			);
-
 			return {
-				incomeMapped,
-				rows
+				syncedIncome,
+				syncedExpense
 			};
 		} catch (error) {
-			throw new BadRequestException('Cannot sync income reports');
+			throw new BadRequestException('Cannot sync reports');
 		}
+	}
+
+	private async _syncExpense(
+		organizationId,
+		integrationId,
+		config,
+		employeeId,
+		providerRefernceId,
+		dateRange
+	) {
+		const reports = await this._getEarningReportsForFreelancer(
+			config,
+			providerRefernceId
+		);
+		var {
+			table: { cols = [], rows = [] }
+		} = reports;
+		const columns = _.pluck(cols, 'label');
+
+		//mapped inner row and associate to object key
+		rows = _.map(rows, function (row) {
+			const innerRow = _.pluck(row['c'], 'v');
+			const ele = {};
+			for (let index = 0; index < columns.length; index++) {
+				ele[columns[index]] = innerRow[index];
+			}
+			return ele;
+		});
+
+		return await Promise.all(
+			rows
+				.filter(
+					(row) => row.subtype === ExpenseCategoriesEnum.SERVICE_FEE
+				)
+				.map(async (row) => {
+					return row;
+				})
+		);
+	}
+
+	private async _syncIncome(
+		organizationId,
+		integrationId,
+		config,
+		employeeId,
+		providerId,
+		dateRange
+	) {
+		const reports = await this._getFreelancerFullReports(
+			config,
+			providerId,
+			dateRange
+		);
+		var {
+			table: { cols = [], rows = [] }
+		} = reports;
+
+		const columns = _.pluck(cols, 'label');
+		//mapped inner row and associate to object key
+		rows = _.map(rows, function (row) {
+			const innerRow = _.pluck(row['c'], 'v');
+			const ele = {};
+			for (let index = 0; index < columns.length; index++) {
+				ele[columns[index]] = innerRow[index];
+			}
+			return ele;
+		});
+
+		return await Promise.all(
+			rows.map(async (row) => {
+				const {
+					company_id: clientId,
+					company_name: clientName,
+					memo: notes,
+					worked_on,
+					assignment_rate,
+					hours,
+					assignment_ref
+				} = row;
+
+				const gauzyIncome = await this.commandBus.execute(
+					new IncomeCreateCommand({
+						employeeId,
+						orgId: organizationId,
+						clientName,
+						clientId,
+						amount: parseFloat(hours) * parseFloat(assignment_rate),
+						valueDate: new Date(
+							moment(worked_on).format('YYYY-MM-DD hh:mm:ss')
+						),
+						notes,
+						tags: [],
+						reference: assignment_ref
+					})
+				);
+
+				const sourceId = assignment_ref;
+				return await this._integrationMapService.create({
+					gauzyId: gauzyIncome.id,
+					integrationId,
+					sourceId,
+					entity: IntegrationEntity.INCOME
+				});
+			})
+		);
 	}
 
 	/*
@@ -919,6 +981,7 @@ export class UpworkService {
 							assignment_name, 
 							assignment_team_id,
 							assignment_ref,
+							assignment_rate,
 							hours, 
 							memo,
 							contract_type
@@ -947,7 +1010,8 @@ export class UpworkService {
 	 */
 	private async _getFreelancerFullReports(
 		config: IUpworkApiConfig,
-		providerId
+		providerId,
+		dateRange
 	): Promise<any> {
 		const api = new UpworkApi(config);
 		const reports = new Time(api);
@@ -962,6 +1026,7 @@ export class UpworkService {
 							assignment_name, 
 							assignment_team_id,
 							assignment_ref,
+							assignment_rate,
 							hours, 
 							memo,
 							contract_type
@@ -971,6 +1036,7 @@ export class UpworkService {
 						ORDER BY 
 							worked_on,
 							assignment_ref`;
+
 		return new Promise((resolve, reject) => {
 			api.setAccessToken(config.accessToken, config.accessSecret, () => {
 				reports.getByFreelancerFull(
@@ -1025,7 +1091,7 @@ export class UpworkService {
 	private async _getEarningReportsForFreelancer(
 		config: IUpworkApiConfig,
 		providerRefernceId
-	) {
+	): Promise<any> {
 		const api = new UpworkApi(config);
 		const earnings = new Earnings(api);
 
@@ -1036,7 +1102,8 @@ export class UpworkService {
 							amount,
 							date,
 							type,
-							subtype
+							subtype,
+							description
 						WHERE 
 							date > '${startOfMonth}' AND 
 							date <= '${endOfMonth}'`;
@@ -1060,7 +1127,7 @@ export class UpworkService {
 	private async _getEarningReportsForClient(
 		config: IUpworkApiConfig,
 		providerId
-	) {
+	): Promise<any> {
 		const api = new UpworkApi(config);
 		const earnings = new Earnings(api);
 
@@ -1095,7 +1162,7 @@ export class UpworkService {
 	private async _getFinancialReportsForAccount(
 		config: IUpworkApiConfig,
 		providerRefernceId
-	) {
+	): Promise<any> {
 		const api = new UpworkApi(config);
 		const financeReports = new Accounts(api);
 
