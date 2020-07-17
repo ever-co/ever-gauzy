@@ -62,4 +62,11 @@ export class Goal extends TenantBase implements IGoal {
 	@OneToMany((type) => KeyResult, (keyResult) => keyResult.goal)
 	@IsOptional()
 	keyResults?: KeyResult[];
+
+	@ManyToOne((type) => KeyResult, (keyResult) => keyResult.id)
+	alignedKeyResult?: KeyResult;
+
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
+	alignedKeyResultId: string;
 }

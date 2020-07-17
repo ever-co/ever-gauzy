@@ -111,7 +111,9 @@ export class GoalsComponent extends TranslationBaseComponent
 					'lead',
 					'lead.user',
 					'keyResults.owner',
-					'keyResults.lead'
+					'keyResults.lead',
+					'alignedKeyResult',
+					'alignedKeyResult.goal'
 				],
 				findObj
 			)

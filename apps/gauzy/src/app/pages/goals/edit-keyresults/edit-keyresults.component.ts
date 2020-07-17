@@ -206,7 +206,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				deadline: this.goalDeadline,
 				level: this.keyResultsForm.value.level,
 				progress: 0,
-				organizationId: this.orgId
+				organizationId: this.orgId,
+				alignedKeyResult: this.data
 			};
 			objectiveData[
 				this.keyResultsForm.value.level === GoalLevelEnum.EMPLOYEE
