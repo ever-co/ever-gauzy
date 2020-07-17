@@ -1397,6 +1397,11 @@
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "עבודה"
 	},
+	"SPRINTS_PAGE": {
+		"SPRINT_ADDED": "Sprint added",
+		"SPRINT_UPDATED": "Sprint updated",
+		"SPRINT_DELETED": "Sprint deleted"
+	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
