@@ -50,6 +50,38 @@
 					</nb-option>
 				</nb-select>
 			</div>
+			<nb-select
+				class="mr-2 show-columns"
+				*ngIf="!isEstimate"
+				[multiple]="true"
+				[(selected)]="columns"
+				(selectedChange)="selectColumn($event)"
+				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
+			>
+				<nb-option
+					class="column"
+					*ngFor="let column of invoiceColumns"
+					[value]="column"
+				>
+					{{ column }}
+				</nb-option>
+			</nb-select>
+			<nb-select
+				class="mr-2 show-columns"
+				*ngIf="isEstimate"
+				[multiple]="true"
+				[(selected)]="columns"
+				(selectedChange)="selectColumn($event)"
+				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
+			>
+				<nb-option
+					class="column"
+					*ngFor="let column of estimateColumns"
+					[value]="column"
+				>
+					{{ column }}
+				</nb-option>
+			</nb-select>
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>

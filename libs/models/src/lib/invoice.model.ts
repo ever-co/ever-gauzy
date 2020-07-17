@@ -98,3 +98,28 @@ export enum EstimateStatusTypesEnum {
 	REJECTED = 'Rejected',
 	VOID = 'Void'
 }
+
+export enum InvoiceColumnsEnum {
+	INVOICE_DATE = 'Invoice Date',
+	DUE_DATE = 'Due Date',
+	STATUS = 'Status',
+	TOTAL_VALUE = 'Total Value',
+	CURRENCY = 'Currency',
+	TAX = 'Tax',
+	TAX_2 = 'Tax 2',
+	DISCOUNT = 'Discount',
+	CLIENT = 'Client',
+	PAID_STATUS = 'Paid Status'
+}
+
+export enum EstimateColumnsEnum {
+	INVOICE_DATE = 'Invoice Date',
+	DUE_DATE = 'Due Date',
+	STATUS = 'Status',
+	TOTAL_VALUE = 'Total Value',
+	CURRENCY = 'Currency',
+	TAX = 'Tax',
+	TAX_2 = 'Tax 2',
+	DISCOUNT = 'Discount',
+	CLIENT = 'Client'
+}
