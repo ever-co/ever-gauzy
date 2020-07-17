@@ -1530,6 +1530,7 @@
 		"NOT_APPLIED": "Not Applied",
 		"STATUS": "Статус",
 		"SET_STATUS": "Set Status",
+		"SHOW_COLUMNS": "Show Columns",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
