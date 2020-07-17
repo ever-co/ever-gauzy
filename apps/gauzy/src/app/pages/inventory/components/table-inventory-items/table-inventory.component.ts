@@ -3,22 +3,21 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first, take } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { first, take, takeUntil } from 'rxjs/operators';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
 	Product,
 	ProductTypeTranslated,
-	ProductCategoryTranslated
+	ProductCategoryTranslated,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { PictureNameTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
-
-export interface SelectedProduct {
-	data: Product;
-	isSelected: false;
-}
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { PictureNameTagsComponent } from '../../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { ProductService } from '../../../../@core/services/product.service';
+import { ComponentEnum } from '../../../../@core/constants/layout.constants';
+import { Subject } from 'rxjs';
+import { Store } from '../../../../@core/services/store.service';
 
 @Component({
 	selector: 'ngx-table-inventory',
@@ -29,13 +28,29 @@ export class TableInventoryComponent extends TranslationBaseComponent
 	implements OnInit {
 	settingsSmartTable: object;
 	loading = true;
-	selectedItem: Product;
+	selectedProduct: Product;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
-	disableButton = true;
 	selectedLanguage: string;
+	inventoryData: Product[];
+	disableButton = true;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
+	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('inventoryTable') inventoryTable;
+
+	constructor(
+		readonly translateService: TranslateService,
+		private dialogService: NbDialogService,
+		private toastrService: NbToastrService,
+		private productService: ProductService,
+		private router: Router,
+		private store: Store
+	) {
+		super(translateService);
+		this.setView();
+	}
 
 	ngOnInit(): void {
 		this.selectedLanguage = this.translateService.currentLang;
@@ -48,16 +63,24 @@ export class TableInventoryComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
+
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
 
-	constructor(
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
-		private productService: ProductService,
-		private router: Router
-	) {
-		super(translateService);
+	setView() {
+		this.viewComponentName = ComponentEnum.INVENTORY;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	async loadSmartTable() {
@@ -76,8 +99,9 @@ export class TableInventoryComponent extends TranslationBaseComponent
 				type: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
-					valuePrepareFunction: (type: ProductTypeTranslated) =>
-						type ? type.name : ''
+					valuePrepareFunction: (type: ProductTypeTranslated) => {
+						return type ? type.name : '';
+					}
 				},
 				category: {
 					title: this.getTranslation(
@@ -86,7 +110,9 @@ export class TableInventoryComponent extends TranslationBaseComponent
 					type: 'string',
 					valuePrepareFunction: (
 						category: ProductCategoryTranslated
-					) => (category ? category.name : '')
+					) => {
+						return category ? category.name : '';
+					}
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
@@ -116,13 +142,25 @@ export class TableInventoryComponent extends TranslationBaseComponent
 		this.router.navigate([`/pages/organization/inventory/create`]);
 	}
 
-	onEditInventoryItem() {
+	onEditInventoryItem(selectedItem?: Product) {
+		if (selectedItem) {
+			this.selectProduct({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
-			`/pages/organization/inventory/edit/${this.selectedItem.id}`
+			`/pages/organization/inventory/edit/${this.selectedProduct.id}`
 		]);
 	}
 
-	async delete() {
+	async delete(selectedItem?: Product) {
+		if (selectedItem) {
+			this.selectProduct({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
@@ -131,7 +169,9 @@ export class TableInventoryComponent extends TranslationBaseComponent
 		if (!result) return;
 
 		try {
-			const res = await this.productService.delete(this.selectedItem.id);
+			const res = await this.productService.delete(
+				this.selectedProduct.id
+			);
 
 			if (res.affected > 0) {
 				this.loadSettings();
@@ -153,7 +193,7 @@ export class TableInventoryComponent extends TranslationBaseComponent
 	}
 
 	async loadSettings() {
-		this.selectedItem = null;
+		this.selectedProduct = null;
 		const { items } = await this.productService.getAll(
 			['type', 'category', 'tags'],
 			null,
@@ -161,17 +201,17 @@ export class TableInventoryComponent extends TranslationBaseComponent
 		);
 
 		this.loading = false;
+		this.inventoryData = items;
 		this.smartTableSource.load(items);
 	}
 
-	async selectItem($event: SelectedProduct) {
-		if ($event.isSelected) {
-			this.selectedItem = $event.data;
-			this.disableButton = false;
+	async selectProduct({ isSelected, data }) {
+		const selectedProduct = isSelected ? data : null;
+		if (this.inventoryTable) {
 			this.inventoryTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedProduct = selectedProduct;
 	}
 
 	_applyTranslationOnSmartTable() {

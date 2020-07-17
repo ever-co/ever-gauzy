@@ -1,6 +1,9 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
+	<nb-card-header class="header-selector-wrapper">
 		<h4>{{ 'ORGANIZATIONS_PAGE.ORGANIZATIONS' | translate }}</h4>
+		<ga-layout-selector
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
@@ -14,37 +17,92 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-
-			<button
-				nbButton
-				[disabled]="!selectedOrganization"
-				(click)="editOrganization()"
-				status="info"
-				class="mr-2"
-				*ngIf="hasEditPermission || hasEditExpensesPermission"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.MANAGE' | translate }}
-			</button>
-			<button
-				nbButton
-				[disabled]="!selectedOrganization"
-				(click)="deleteOrganization()"
-				status="danger"
-				class="mr-2"
-				*ngIf="hasEditPermission"
-			>
-				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-				>{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 		<ng2-smart-table
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			(userRowSelect)="selectOrganization($event)"
 			style="cursor: pointer;"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#settingsTable
 		>
 		</ng2-smart-table>
+		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<li class="flex-item" *ngFor="let x of organizations">
+				<div class="fullName">
+					<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
+					<span>{{ x.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Employees</span>
+					<span class="info-value">{{ x.totalEmployees }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Currency</span>
+					<span class="info-value">{{ x.currency }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Status</span>
+					<div class="text-center" *ngIf="x.isActive; else archived">
+						<div class="text-center badge-success">
+							{{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
+						</div>
+					</div>
+					<ng-template #archived>
+						<div class="text-center">
+							<div class="badge-danger d-block">
+								{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
+							</div>
+						</div>
+					</ng-template>
+				</div>
+
+				<nb-card-footer class="card-footer">
+					<ng-container
+						*ngTemplateOutlet="
+							actionButtons;
+							context: {
+								buttonSize: 'tiny',
+								selectedItem: x
+							}
+						"
+					>
+					</ng-container>
+				</nb-card-footer>
+			</li>
+		</ul>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		[disabled]="!selectedItem && disableButton"
+		(click)="editOrganization(selectedItem)"
+		status="info"
+		class="mr-2"
+		*ngIf="hasEditPermission || hasEditExpensesPermission"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+		>{{ 'BUTTONS.MANAGE' | translate }}
+	</button>
+	<button
+		nbButton
+		[disabled]="!selectedItem && disableButton"
+		(click)="deleteOrganization(selectedItem)"
+		status="danger"
+		class="mr-2"
+		*ngIf="hasEditPermission"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+		>{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

@@ -206,6 +206,8 @@ import {
 } from '../../equipment/equipment.seed';
 import { createRandomEquipmentSharing } from '../../equipment-sharing/equipment-sharing.seed';
 import { createRandomProposals } from '../../proposal/proposal.seed';
+import { createRandomInvoiceItem } from '../../invoice-item/invoice-item.seed';
+import { createRandomInvoice } from '../../invoice/invoice.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -577,7 +579,10 @@ export class SeedDataService {
 			tenants,
 			env.randomSeedConfig.organizationsPerTenant || 1,
 			env.randomSeedConfig.employeesPerOrganization || 1,
-			env.randomSeedConfig.candidatesPerOrganization || 1
+			env.randomSeedConfig.candidatesPerOrganization || 1,
+			env.randomSeedConfig.managersPerOrganization || 1,
+			env.randomSeedConfig.dataEntriesPerOrganization || 1,
+			env.randomSeedConfig.viewersPerOrganization || 1
 		);
 
 		//Organization level inserts which need connection, tenant, organizations, users
@@ -742,6 +747,18 @@ export class SeedDataService {
 
 		await createRandomTask(this.connection, this.defaultProjects);
 		await createRandomTimesheet(this.connection, this.defaultProjects);
+		await createRandomInvoice(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			50
+		);
+		await createRandomInvoiceItem(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			tenantEmployeeMap
+		);
 	}
 
 	/**

@@ -32,9 +32,9 @@ export default class TrayIcon {
 				click(menuItem) {
 					const projectSelect = store.get('project');
 					if (projectSelect && projectSelect.projectId) {
-						timerHandler.startTimer(win2, knex, win3);
+						win3.webContents.send('start_from_tray');
 						const timeMenu = menuItem.menu.getMenuItemById('0');
-						getTime();
+						periodicUpdate();
 						timeMenu.visible = true;
 						const stopMenu = menuItem.menu.getMenuItemById('2');
 						stopMenu.enabled = true;
@@ -57,7 +57,7 @@ export default class TrayIcon {
 					timeView.visible = false;
 					startMenu.enabled = true;
 					menuItem.enabled = false;
-					timerHandler.stopTime(win2, win3, knex);
+					win3.webContents.send('stop_from_tray');
 				}
 			},
 			{
@@ -87,7 +87,7 @@ export default class TrayIcon {
 				}
 			}
 		]);
-		const getTime = () => {
+		const periodicUpdate = () => {
 			timerHandler.updateTime(win2, knex);
 		};
 		this.tray.setContextMenu(contextMenu);

@@ -2,23 +2,28 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ 'INVENTORY_PAGE.HEADER' | translate }}</h4>
-			<div>
-				<button
-					nbButton
-					status="primary"
-					(click)="manageProductTypes()"
-				>
-					<nb-icon icon="edit-outline"></nb-icon>
-					{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
-				</button>
-				<button
-					nbButton
-					status="primary"
-					(click)="manageProductCategories()"
-				>
-					<nb-icon icon="edit-outline"></nb-icon>
-					{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
-				</button>
+			<div class="header-selector-wrapper">
+				<div style="margin-right: 9px;">
+					<button
+						nbButton
+						status="primary"
+						(click)="manageProductTypes()"
+					>
+						<nb-icon icon="edit-outline"></nb-icon>
+						{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
+					</button>
+					<button
+						nbButton
+						status="primary"
+						(click)="manageProductCategories()"
+					>
+						<nb-icon icon="edit-outline"></nb-icon>
+						{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
+					</button>
+				</div>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
 			</div>
 		</div>
 	</nb-card-header>
@@ -34,36 +39,84 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<button
-				(click)="onEditInventoryItem()"
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="delete()"
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
-			(userRowSelect)="selectItem($event)"
+			(userRowSelect)="selectProduct($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#inventoryTable
 		>
 		</ng2-smart-table>
+		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<li class="flex-item" *ngFor="let x of inventoryData">
+				<div class="info-line">
+					<span class="info-meta">Name</span>
+					<span class="info-value">{{ x.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Code</span>
+					<span class="info-value">{{ x.code }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Product type</span>
+					<span class="info-value">{{ x.type.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Product category</span>
+					<span class="info-value">{{ x.category.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Description</span>
+					<span class="info-value">{{ x.description }}</span>
+				</div>
+				<nb-card-footer class="card-footer">
+					<ng-container
+						*ngTemplateOutlet="
+							actionButtons;
+							context: {
+								buttonSize: 'tiny',
+								selectedItem: x
+							}
+						"
+					>
+					</ng-container>
+				</nb-card-footer>
+			</li>
+		</ul>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="onEditInventoryItem(selectedItem)"
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		(click)="delete(selectedItem)"
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

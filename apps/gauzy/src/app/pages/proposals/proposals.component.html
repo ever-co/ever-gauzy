@@ -111,4 +111,25 @@
 			'BUTTONS.MARK_AS_ACCEPTED' | translate
 		}}</span>
 	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+		nbButton
+		(click)="
+			selectedItem.status == 'SENT'
+				? switchToAccepted(selectedItem)
+				: switchToSent(selectedItem)
+		"
+		[size]="buttonSize || 'medium'"
+		status="warning"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+	>
+		<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
+		<span *ngIf="selectedItem.status == 'ACCEPTED'">{{
+			'BUTTONS.MARK_AS_SENT' | translate
+		}}</span>
+		<span *ngIf="selectedItem.status == 'SENT'">{{
+			'BUTTONS.MARK_AS_ACCEPTED' | translate
+		}}</span>
+	</button>
 </ng-template>

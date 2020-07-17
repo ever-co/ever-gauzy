@@ -109,12 +109,12 @@
 			#invoicesTable
 		>
 		</ng2-smart-table>
-		<ga-card-grid
+		<ga-card-grid-invoice
 			[settings]="settingsSmartTable"
 			[source]="invoices"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+		></ga-card-grid-invoice>
 	</nb-card-body>
 </nb-card>
 
@@ -127,7 +127,7 @@
 		nbButton
 		status="info"
 		(click)="download(selectedItem)"
-		class="mr-2"
+		class="mr-2 btn"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -138,7 +138,7 @@
 		nbButton
 		status="info"
 		(click)="edit(selectedItem)"
-		class="mr-2"
+		class="mr-2 btn"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -149,7 +149,7 @@
 		nbButton
 		status="info"
 		(click)="duplicate(selectedItem)"
-		class="mr-2"
+		class="mr-2 btn"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -160,7 +160,7 @@
 		nbButton
 		status="info"
 		(click)="send(selectedItem)"
-		class="mr-2"
+		class="mr-2 btn"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -172,7 +172,7 @@
 		nbButton
 		status="info"
 		(click)="convert(selectedItem)"
-		class="mr-2"
+		class="mr-2 btn"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -183,7 +183,7 @@
 		nbButton
 		status="info"
 		(click)="email(selectedItem)"
-		class="mr-2"
+		class="mr-2 btn"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -194,7 +194,7 @@
 		nbButton
 		status="danger"
 		(click)="delete(selectedItem)"
-		class="mr-2"
+		class="mr-2 btn"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>

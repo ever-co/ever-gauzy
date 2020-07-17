@@ -462,11 +462,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	}
 
 	async sendToClient() {
-		if (this.form.value.client.contactOrganizationId) {
-			await this.addInvoice(
-				'Sent',
-				this.form.value.client.contactOrganizationId
-			);
+		if (this.form.value.client.id) {
+			await this.addInvoice('Sent', this.form.value.client.id);
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),

@@ -45,4 +45,24 @@ export class EquipmentSharingService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	approval(id): Promise<EquipmentSharing> {
+		return this.http
+			.put<EquipmentSharing>(
+				`${this.EQUIPMENT_SHARING_URL}/approval/${id}`,
+				null
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	refuse(id): Promise<EquipmentSharing> {
+		return this.http
+			.put<EquipmentSharing>(
+				`${this.EQUIPMENT_SHARING_URL}/refuse/${id}`,
+				null
+			)
+			.pipe(first())
+			.toPromise();
+	}
 }

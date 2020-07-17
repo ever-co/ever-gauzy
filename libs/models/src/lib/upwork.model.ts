@@ -52,6 +52,7 @@ export interface IEngagement {
 	engagement_start_ts: string;
 	buyer_team__reference: string;
 	fixed_price_upfront_payment: string;
+	hourly_charge_rate: string;
 }
 
 export interface IUpworkApiConfig {

@@ -185,6 +185,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this.startDate = holiday.start;
 		this.endDate = holiday.end || null;
 		this.description = holiday.name;
+		
 		this._initializeForm();
 	}
 

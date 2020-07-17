@@ -9,7 +9,7 @@ import {
 import {
 	EquipmentSharing,
 	Equipment,
-	EquipmentSharingStatusEnum,
+	RequestApprovalStatusTypesEnum,
 	Employee,
 	OrganizationTeam
 } from '@gauzy/models';
@@ -55,7 +55,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	employees: Employee[];
 	disabled: boolean;
 	selectedOrgId: string;
-	requestStatus: string;
+	requestStatus: number;
 	participants = 'employees';
 
 	teams: OrganizationTeam[];
@@ -63,7 +63,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
 
-	requestStatuses = Object.values(EquipmentSharingStatusEnum);
+	requestStatuses = Object.values(RequestApprovalStatusTypesEnum);
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -202,7 +202,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	loadRequestStatus() {
 		this.requestStatus = this.equipmentSharing
 			? this.equipmentSharing.status
-			: EquipmentSharingStatusEnum.REQUESTED;
+			: RequestApprovalStatusTypesEnum.REQUESTED;
 	}
 
 	setRequestStatus(statusValue: string) {
@@ -212,16 +212,17 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 		if (
 			this.equipmentSharing &&
-			this.equipmentSharing.status === EquipmentSharingStatusEnum.ACTIVE
+			this.equipmentSharing.status ===
+				RequestApprovalStatusTypesEnum.REFUSED
 		) {
-			this.requestStatus = EquipmentSharingStatusEnum.ACTIVE;
+			this.requestStatus = RequestApprovalStatusTypesEnum.REFUSED;
 			return;
 		}
 
 		if (selectedItem.autoApproveShare) {
-			this.requestStatus = EquipmentSharingStatusEnum.APPROVED;
+			this.requestStatus = RequestApprovalStatusTypesEnum.APPROVED;
 		} else {
-			this.requestStatus = EquipmentSharingStatusEnum.REQUESTED;
+			this.requestStatus = RequestApprovalStatusTypesEnum.REQUESTED;
 		}
 	}
 

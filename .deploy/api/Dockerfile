@@ -2,7 +2,7 @@
 FROM node:alpine AS dependencies
 
 RUN apk --update add bash && \
-    apk add --no-cache dos2unix g++ git make python
+    apk add --no-cache dos2unix g++ git make python vips-dev
 
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 

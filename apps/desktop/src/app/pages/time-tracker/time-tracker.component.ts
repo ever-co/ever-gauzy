@@ -33,6 +33,7 @@ export class TimeTrackerComponent implements OnInit {
 	projectSelect = '';
 	taskSelect = '';
 	errors: any = {};
+	note: String = '';
 
 	constructor(
 		private electronService: ElectronService,
@@ -49,6 +50,14 @@ export class TimeTrackerComponent implements OnInit {
 				this.getTask(arg);
 			}
 		);
+
+		this.electronService.ipcRenderer.on('start_from_tray', (event, arg) => {
+			this.toggleStart();
+		});
+
+		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) => {
+			this.toggleStart();
+		});
 	}
 
 	ngOnInit(): void {
@@ -62,6 +71,7 @@ export class TimeTrackerComponent implements OnInit {
 			this.startTime();
 		} else {
 			this.stopTimer();
+			this._cdr.detectChanges();
 		}
 	}
 
@@ -83,6 +93,7 @@ export class TimeTrackerComponent implements OnInit {
 					: `0${value.hours}`
 		};
 		this._cdr.detectChanges();
+		console.log('time running');
 	}
 
 	startTime() {
@@ -91,7 +102,8 @@ export class TimeTrackerComponent implements OnInit {
 		if (!this.errors.task && !this.errors.project) {
 			this.electronService.ipcRenderer.send('start_timer', {
 				projectId: this.projectSelect,
-				taskId: this.taskSelect
+				taskId: this.taskSelect,
+				note: this.note
 			});
 		}
 	}
@@ -106,19 +118,22 @@ export class TimeTrackerComponent implements OnInit {
 	}
 
 	getTask(arg) {
-		console.log(arg);
 		this.timeTrackerService.getTasks(arg).then((res: any) => {
 			this.organization = res.items;
-			this.getProjects(this.organization);
-			if (arg.projectId && arg.taskId) {
-				this.projectSelect = arg.projectId;
-				this.taskSelect = arg.taskId;
-			}
+			this.getProjects(this.organization, arg);
 		});
 	}
 
-	getProjects(items) {
+	getProjects(items, arg) {
 		this.projects = items.map((item) => item.project);
+		if (this.projects.length > 0) {
+			if (arg.projectId && arg.taskId) {
+				this.projectSelect = arg.projectId;
+				this.taskSelect = arg.taskId;
+				this.note = arg.note;
+				this._cdr.detectChanges();
+			}
+		}
 	}
 
 	setProject(item) {

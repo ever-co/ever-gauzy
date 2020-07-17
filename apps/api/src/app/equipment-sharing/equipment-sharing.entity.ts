@@ -10,7 +10,7 @@ import {
 import { Base } from '../core/entities/base';
 import {
 	EquipmentSharing as IEquipmentSharing,
-	EquipmentSharingStatusEnum
+	ApprovalPolicyTypesEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
@@ -21,10 +21,7 @@ import { OrganizationTeam } from '../organization-team/organization-team.entity'
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@ApiProperty({ type: Equipment })
-	@ManyToOne(
-		(type) => Equipment,
-		(equipment) => equipment.equipmentSharings
-	)
+	@ManyToOne((type) => Equipment, (equipment) => equipment.equipmentSharings)
 	@JoinColumn()
 	equipment: Equipment;
 
@@ -50,10 +47,10 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@Column({ nullable: true })
 	shareEndDay: Date;
 
-	@IsEnum(EquipmentSharingStatusEnum)
+	@IsEnum(ApprovalPolicyTypesEnum)
 	@IsNotEmpty()
 	@Column()
-	status: string;
+	status: number;
 
 	@ManyToMany((type) => Employee, { cascade: true })
 	@JoinTable({

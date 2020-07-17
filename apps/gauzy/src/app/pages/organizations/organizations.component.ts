@@ -1,6 +1,10 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
-import { Organization, PermissionsEnum } from '@gauzy/models';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import {
+	Organization,
+	PermissionsEnum,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -18,6 +22,7 @@ import { OrganizationsStatusComponent } from './table-components/organizations-s
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface SelectedRow {
 	data: Organization;
@@ -44,6 +49,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		private userOrganizationService: UsersOrganizationsService
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	private _ngDestroy$ = new Subject<void>();
@@ -55,7 +61,9 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 
 	organizations: Organization[] = [];
-
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	loading = true;
 	hasEditPermission = false;
 	hasEditExpensesPermission = false;
@@ -114,14 +122,32 @@ export class OrganizationsComponent extends TranslationBaseComponent
 					PermissionsEnum.ORG_EXPENSES_EDIT
 				);
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
 
-	selectOrganization(data: SelectedRow) {
-		if (data.isSelected) {
-			this.selectedOrganization = data.data;
-		} else {
-			this.selectedOrganization = null;
+	setView() {
+		this.viewComponentName = ComponentEnum.ORGANIZATION;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+
+	selectOrganization({ isSelected, data }) {
+		const selectedOrganization = isSelected ? data : null;
+		if (this.settingsTable) {
+			this.settingsTable.grid.dataSet.willSelect = false;
 		}
+		this.disableButton = !isSelected;
+		this.selectedOrganization = selectedOrganization;
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -155,13 +181,25 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editOrganization() {
+	async editOrganization(selectedItem?: Organization) {
+		if (selectedItem) {
+			this.selectOrganization({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
 			'/pages/organizations/edit/' + this.selectedOrganization.id
 		]);
 	}
 
-	async deleteOrganization() {
+	async deleteOrganization(selectedItem?: Organization) {
+		if (selectedItem) {
+			this.selectOrganization({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {

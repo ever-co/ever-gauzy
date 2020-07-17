@@ -1,5 +1,10 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import {
 	Role,
 	InvitationTypeEnum,
@@ -9,7 +14,8 @@ import {
 	UserOrganizationCreateInput,
 	RolesEnum,
 	User,
-	Tag
+	Tag,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,6 +30,7 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { UsersService } from '../../@core/services';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface UserViewModel {
 	fullName: string;
@@ -67,7 +74,10 @@ export class UsersComponent extends TranslationBaseComponent
 	users: User[] = [];
 	tags: Tag[];
 	selectedTags: any;
-
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	userData: User[];
 	@ViewChild('usersTable') usersTable;
 
 	constructor(
@@ -81,6 +91,7 @@ export class UsersComponent extends TranslationBaseComponent
 		private readonly usersService: UsersService
 	) {
 		super(translate);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -124,21 +135,38 @@ export class UsersComponent extends TranslationBaseComponent
 					this.add();
 				}
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
 
-	selectUserTmp(ev: {
-		data: UserViewModel;
-		isSelected: boolean;
-		selected: UserViewModel[];
-		source: LocalDataSource;
-	}) {
-		this.userToRemoveId = ev.data.id;
-		const checkName = ev.data.fullName.trim();
-		this.userName = checkName ? checkName : 'User';
+	setView() {
+		this.viewComponentName = ComponentEnum.USERS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 
-		this.selectedUser = ev.isSelected ? ev.data : null;
-
-		if (ev.data.role === RolesEnum.SUPER_ADMIN)
+	selectUserTmp({ isSelected, data }) {
+		const selectedUser = isSelected ? data : null;
+		if (this.usersTable) {
+			this.usersTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedUser = selectedUser;
+		if (this.selectedUser) {
+			this.userToRemoveId = data.id;
+			const checkName = data.fullName.trim();
+			this.userName = checkName ? checkName : 'User';
+		}
+		if (data.role === RolesEnum.SUPER_ADMIN)
 			this.selectedUser = this.hasSuperAdminPermission
 				? this.selectedUser
 				: null;
@@ -207,7 +235,13 @@ export class UsersComponent extends TranslationBaseComponent
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 
-	edit() {
+	edit(selectedItem?: User) {
+		if (selectedItem) {
+			this.selectUserTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate(['/pages/users/edit/' + this.selectedUser.id]);
 	}
 
@@ -215,7 +249,13 @@ export class UsersComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/users/invites/']);
 	}
 
-	async delete() {
+	async delete(selectedItem?: User) {
+		if (selectedItem) {
+			this.selectUserTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -368,6 +408,7 @@ export class UsersComponent extends TranslationBaseComponent
 				});
 			}
 		}
+		this.userData = usersVm;
 		this.sourceSmartTable.load(usersVm);
 
 		if (this.usersTable) {

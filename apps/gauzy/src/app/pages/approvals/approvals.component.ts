@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { RequestApproval } from '@gauzy/models';
+import { RequestApproval, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -15,15 +15,11 @@ import { ApprovalPolicyComponent } from './table-components/approval-policy/appr
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
 import { RequestApprovalTypeComponent } from './table-components/request-approval-type/request-approval-type.component';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 export interface IApprovalsData {
 	icon: string;
 	title: string;
-}
-
-export interface SelectedRequestApproval {
-	data: RequestApproval;
-	isSelected: false;
 }
 
 @Component({
@@ -41,9 +37,12 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	public smartTableSource = new LocalDataSource();
 	public hasEditPermission = false;
 	public selectedEmployeeId: string;
-
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private ngDestroy$ = new Subject<void>();
 	private selectedOrganizationId: string;
+	private _ngDestroy$ = new Subject<void>();
+	requestApprovalData: RequestApproval[];
 
 	@ViewChild('requestApprovalTable') requestApprovalTable;
 
@@ -56,6 +55,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit() {
@@ -92,16 +92,33 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
 		// this.initListApprovals();
+
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
 
-	async selectRequestApproval($event: SelectedRequestApproval) {
-		if ($event.isSelected) {
-			this.selectedRequestApproval = $event.data;
-			this.disableButton = false;
+	setView() {
+		this.viewComponentName = ComponentEnum.APPROVALS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+
+	async selectRequestApproval({ isSelected, data }) {
+		const selectedCandidate = isSelected ? data : null;
+		if (this.requestApprovalTable) {
 			this.requestApprovalTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedRequestApproval = selectedCandidate;
 	}
 
 	async loadSettings() {
@@ -125,6 +142,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			).items;
 		}
 		this.loading = false;
+		this.requestApprovalData = items;
 		this.smartTableSource.load(items);
 	}
 
@@ -219,13 +237,19 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			this.loadSmartTable();
 		});
 	}
-	
+
 	manageAppropvalPolicy() {
 		this.router.navigate(['/pages/organization/approval-policy']);
 	}
 
-	async save(isCreate: boolean) {
+	async save(isCreate: boolean, selectedItem?: RequestApproval) {
 		let dialog;
+		if (selectedItem) {
+			this.selectRequestApproval({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		if (!isCreate) {
 			dialog = this.dialogService.open(RequestApprovalMutationComponent, {
 				context: {
@@ -264,7 +288,13 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete() {
+	async delete(selectedItem?: RequestApproval) {
+		if (selectedItem) {
+			this.selectRequestApproval({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const isSuccess = await this.approvalRequestService.delete(
 			this.selectedRequestApproval.id
 		);

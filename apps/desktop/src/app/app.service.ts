@@ -258,4 +258,28 @@ export class AppService {
 			.pipe()
 			.toPromise();
 	}
+
+	toggleApi(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+
+		return this.http
+			.post(
+				`${values.apiHost}/api/timesheet/timer/toggle`,
+				{
+					description: values.note,
+					isBillable: true,
+					logType: 'TRACKED',
+					projectId: values.projectId,
+					taskId: values.taskId,
+					source: 'Desktop'
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
 }

@@ -41,7 +41,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedEventType: EventTypeViewModel;
-	eventTypeData;
+	eventTypeData: EventTypeViewModel[];
 	showTable: boolean;
 	selectedEmployeeId: string;
 	employeeName: string;
