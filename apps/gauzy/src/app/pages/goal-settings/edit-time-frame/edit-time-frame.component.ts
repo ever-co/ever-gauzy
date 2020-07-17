@@ -3,17 +3,6 @@ import { NbDialogRef, NbDateService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { GoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/models';
-import {
-	getQuarter,
-	startOfQuarter,
-	endOfQuarter,
-	getYear,
-	lastDayOfQuarter,
-	addDays,
-	startOfYear,
-	endOfYear,
-	lastDayOfYear
-} from 'date-fns';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
@@ -29,7 +18,6 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	timeFrameForm: FormGroup;
 	timeFrame: GoalTimeFrame;
-	today = new Date();
 	type: string;
 	predefinedTimeFrames = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
@@ -73,8 +61,6 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 					});
 				}
 			});
-
-		this.generateTimeFrames();
 	}
 
 	ngOnDestroy() {
@@ -94,37 +80,6 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 				: null,
 			status: TimeFrameStatusEnum.ACTIVE
 		});
-	}
-
-	generateTimeFrames() {
-		const today = new Date();
-		let date = today;
-		let year = getYear(today);
-		// Add Quarters
-		if (getQuarter(date) > 2) {
-			year = getYear(addDays(lastDayOfYear(today), 1));
-		}
-
-		while (getYear(date) <= year) {
-			this.predefinedTimeFrames.push({
-				name: `Q${getQuarter(date)}-${getYear(date)}`,
-				start: new Date(startOfQuarter(date)),
-				end: new Date(endOfQuarter(date))
-			});
-			date = addDays(lastDayOfQuarter(date), 1);
-		}
-		this.predefinedTimeFrames.push({
-			name: `Annual-${getYear(today)}`,
-			start: new Date(startOfYear(today)),
-			end: new Date(endOfYear(today))
-		});
-		if (year > getYear(today)) {
-			this.predefinedTimeFrames.push({
-				name: `Annual-${year}`,
-				start: new Date(startOfYear(addDays(lastDayOfYear(today), 1))),
-				end: new Date(endOfYear(addDays(lastDayOfYear(today), 1)))
-			});
-		}
 	}
 
 	async saveTimeFrame() {
