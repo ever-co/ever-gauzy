@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { EventTypeViewModel } from '../event-type.component';
 import { Tag } from '@gauzy/models';
 

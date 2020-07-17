@@ -59,8 +59,8 @@ import { PaymentService } from '../../@core/services/payment.service';
 import { PaymentMutationComponent } from './invoice-payments/payment-mutation/payment-mutation.component';
 import { TasksStoreService } from '../../@core/services/tasks-store.service';
 import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-apply-tax-discount.component';
+import { CardGridInvoiceModule } from '../../@shared/card-grid-invoice/card-grid-invoice.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -76,7 +76,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbButtonModule,
 		Ng2SmartTableModule,
-		CardGridModule,
+		CardGridInvoiceModule,
 		FormsModule,
 		NbBadgeModule,
 		ReactiveFormsModule,
