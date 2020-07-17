@@ -1397,6 +1397,11 @@
 		"ESTIMATE_MINUTES": "Минс",
 		"TASKS_STATUS": "Статус"
 	},
+	"SPRINTS_PAGE": {
+		"SPRINT_ADDED": "Спринт добавлен",
+		"SPRINT_UPDATED": "Спринт обновлен",
+		"SPRINT_DELETED": "Спринт удален"
+	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
 		"ADD_USER": "Добавить пользователя",
