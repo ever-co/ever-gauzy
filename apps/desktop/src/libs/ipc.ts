@@ -67,7 +67,8 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 		store.set({
 			project: {
 				projectId: arg.projectId,
-				taskId: arg.taskId
+				taskId: arg.taskId,
+				note: arg.note
 			}
 		});
 		timerHandler.startTimer(win2, knex, win3);
