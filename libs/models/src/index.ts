@@ -82,3 +82,4 @@ export * from './lib/pipeline.model';
 export * from './lib/stage.model';
 export * from './lib/deal.model';
 export * from './lib/contact.model';
+export * from './lib/organization-document.model'

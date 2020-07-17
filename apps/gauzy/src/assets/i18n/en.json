@@ -1005,6 +1005,7 @@
 		"LEVEL_NAME": "Level name",
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
+		"DOCUMENTS": "Documents",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "Client",

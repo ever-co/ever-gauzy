@@ -145,6 +145,14 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				icon: 'settings-outline',
 				responsive: true,
 				route: this.getRoute('employment-types')
+			},
+			{
+				title: this.getTranslation(
+					'ORGANIZATIONS_PAGE.DOCUMENTS'
+				),
+				icon: 'file-text-outline',
+				responsive: true,
+				route: this.getRoute('documents')
 			}
 		];
 	}
