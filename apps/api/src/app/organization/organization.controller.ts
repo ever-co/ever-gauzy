@@ -107,10 +107,10 @@ export class OrganizationController extends CrudController<Organization> {
 		);
 	}
 
-	@ApiOperation({ summary: 'Create new Sprint' })
+	@ApiOperation({ summary: 'Create new Organization' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The Sprint has been successfully created.'
+		description: 'The Organization has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
