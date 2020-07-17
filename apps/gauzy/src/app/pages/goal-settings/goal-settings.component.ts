@@ -73,6 +73,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+				this.selectedKPI = null;
+				this.selectedTimeFrame = null;
 			});
 	}
 
@@ -196,10 +198,10 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				isSelected: true,
 				data: selectedItem
 			});
-		}
-		if (source === 'add') {
-			this.selectedTimeFrame = null;
-			this.smartTable.grid.dataSet.willSelect = 'false';
+			if (source === 'add') {
+				this.selectedTimeFrame = null;
+				this.smartTable.grid.dataSet.willSelect = 'false';
+			}
 		}
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
 			context: {
@@ -221,10 +223,10 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				isSelected: true,
 				data: selectedItem
 			});
-		}
-		if (source === 'add') {
-			this.selectedKPI = null;
-			this.smartTable.grid.dataSet.willSelect = 'false';
+			if (source === 'add') {
+				this.selectedKPI = null;
+				this.smartTable.grid.dataSet.willSelect = 'false';
+			}
 		}
 		const kpiDialog = this.dialogService.open(EditKpiComponent, {
 			context: {
