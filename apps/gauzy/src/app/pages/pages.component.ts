@@ -655,8 +655,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		console.log('MENU_ITEM ON IINIT', this.MENU_ITEMS);
-
 		await this.checkForEmployee();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
