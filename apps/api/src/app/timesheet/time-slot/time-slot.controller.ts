@@ -5,14 +5,16 @@ import {
 	Query,
 	HttpStatus,
 	Delete,
-	Param
+	Param,
+	Post,
+	Body
 } from '@nestjs/common';
 import { TimeSlot } from '../time-slot.entity';
 import { CrudController } from '../../core/crud/crud.controller';
 import { TimeSlotService } from './time-slot.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { IGetTimeSlotInput } from '@gauzy/models';
+import { IGetTimeSlotInput, ICreateTimeSlotInput } from '@gauzy/models';
 
 @ApiTags('TimeSlot')
 @UseGuards(AuthGuard('jwt'))
@@ -22,7 +24,7 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 		super(timeSlotService);
 	}
 
-	@ApiOperation({ summary: 'Get Timer Logs' })
+	@ApiOperation({ summary: 'Get Time Slots' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
@@ -31,6 +33,19 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 	@Get('/')
 	async getAll(@Query() entity: IGetTimeSlotInput): Promise<TimeSlot[]> {
 		return this.timeSlotService.getTimeSlots(entity);
+	}
+
+	@ApiOperation({ summary: 'Create or Update Time Slot' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('/')
+	async createOrUpdate(
+		@Body() entity: ICreateTimeSlotInput
+	): Promise<TimeSlot> {
+		return this.timeSlotService.createOrUpdate(entity);
 	}
 
 	@ApiOperation({ summary: 'Delete TimeSlot' })

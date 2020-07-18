@@ -32,82 +32,118 @@ export class ActivityService extends CrudService<Activity> {
 			employeeIds = [user.employeeId];
 		}
 
-		return await this.activityRepository.find({
-			join: {
-				alias: 'activity',
-				innerJoin: {
-					employee: 'activity.employee'
-				}
-			},
-			relations: [
-				...(RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-					? ['employee', 'employee.user']
-					: [])
-			],
-			order: {
-				duration: 'DESC'
-			},
-			where: (qb) => {
-				if (request.startDate && request.endDate) {
-					const startDate = moment(request.startDate).format(
-						'YYYY-MM-DD HH:mm:ss'
-					);
-					const endDate = moment(request.endDate).format(
-						'YYYY-MM-DD HH:mm:ss'
-					);
-					qb.andWhere('"date" Between :startDate AND :endDate', {
+		const query = await this.activityRepository.createQueryBuilder();
+		if (request.limit > 0) {
+			query.take(request.limit);
+			query.skip((request.page || 0) * request.limit);
+		}
+
+		//query.addSelect(`array_agg("${query.alias}"."id")`, 'ids');
+		//query.addSelect(`SUM(${query.alias}.duration)`, 'duration');
+
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+
+		query.where((qb) => {
+			if (request.startDate && request.endDate) {
+				const startDate = moment(request.startDate).format(
+					'YYYY-MM-DD HH:mm:ss'
+				);
+				const endDate = moment(request.endDate).format(
+					'YYYY-MM-DD HH:mm:ss'
+				);
+				qb.andWhere(
+					`${query.alias}."date" Between :startDate AND :endDate`,
+					{
 						startDate,
 						endDate
-					});
-				}
-				if (employeeIds) {
-					qb.andWhere('"employeeId" IN (:...employeeId)', {
-						employeeId: employeeIds
-					});
-				}
-				if (request.organizationId) {
-					qb.andWhere(
-						'"employee"."organizationId" = :organizationId',
-						{ organizationId: request.organizationId }
-					);
-				}
-				if (request.activityLevel) {
-					qb.andWhere(
-						'"duration" BETWEEN :start AND :end',
-						request.activityLevel
-					);
-				}
-				if (request.source) {
-					if (request.source instanceof Array) {
-						qb.andWhere('"source" IN (:...source)', {
-							source: request.source
-						});
-					} else {
-						qb.andWhere('"source" = :source', {
-							source: request.source
-						});
 					}
-				}
-				if (request.logType) {
-					if (request.logType instanceof Array) {
-						qb.andWhere('"logType" IN (:...logType)', {
-							logType: request.logType
-						});
-					} else {
-						qb.andWhere('"logType" = :logType', {
-							logType: request.logType
-						});
-					}
-				}
-
-				if (request.type) {
-					qb.andWhere('"type" = :type', {
-						type: request.type
+				);
+			}
+			if (employeeIds) {
+				qb.andWhere(`${query.alias}."employeeId" IN (:...employeeId)`, {
+					employeeId: employeeIds
+				});
+			}
+			if (request.organizationId) {
+				qb.andWhere('"employee"."organizationId" = :organizationId', {
+					organizationId: request.organizationId
+				});
+			}
+			if (request.activityLevel) {
+				qb.andWhere(
+					`${query.alias}."duration" BETWEEN :start AND :end`,
+					request.activityLevel
+				);
+			}
+			if (request.source) {
+				if (request.source instanceof Array) {
+					qb.andWhere(`${query.alias}."source" IN (:...source)`, {
+						source: request.source
+					});
+				} else {
+					qb.andWhere(`${query.alias}."source" = :source`, {
+						source: request.source
 					});
 				}
 			}
+			if (request.logType) {
+				if (request.logType instanceof Array) {
+					qb.andWhere(`${query.alias}."logType" IN (:...logType)`, {
+						logType: request.logType
+					});
+				} else {
+					qb.andWhere(`${query.alias}."logType" = :logType`, {
+						logType: request.logType
+					});
+				}
+			}
+
+			if (request.type) {
+				qb.andWhere(`${query.alias}."type" = :type`, {
+					type: request.type
+				});
+			}
 		});
+
+		query.orderBy(`${query.alias}.duration`, 'DESC');
+
+		if (
+			RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			query.leftJoinAndSelect(
+				`${query.alias}.employee`,
+				'activiyEmployee'
+			);
+			query.leftJoinAndSelect(
+				`activiyEmployee.user`,
+				'activiyUser',
+				'"employee"."userId" = activiyUser.id'
+			);
+		}
+
+		// switch (request.groupBy) {
+		// 	case 'title_date':
+
+		// 		break;
+
+		// 	default:
+		// 		query.groupBy(`${query.alias}.id`);
+		// 		break;
+		// }
+		return await query.getManyAndCount();
+	}
+
+	bulkSave(activities: Activity[]) {
+		return (
+			this.activityRepository
+				.createQueryBuilder()
+				.insert()
+				.values(activities)
+				//.onConflict('("employeeId", "date") DO UPDATE SET duration = EXCLUDED.duration + duration;')
+				.returning('*')
+				.execute()
+		);
 	}
 }

@@ -11,6 +11,12 @@ import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/models';
 
 export abstract class Base implements IBaseEntityModel {
+	constructor(input?: any) {
+		if (input) {
+			Object.assign(this, input);
+		}
+	}
+
 	@ApiPropertyOptional({ type: String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;

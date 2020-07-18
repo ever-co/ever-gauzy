@@ -658,12 +658,16 @@ export class HubstaffService {
 					organizationId
 				);
 
+				const time = moment(date).format('YYYY-MM-DD');
+				date = moment(date).format('HH:mm:ss');
+
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
 						title: site,
 						duration: tracked,
 						type: 'URL',
 						date,
+						time,
 						projectId,
 						employeeId: employee.gauzyId
 					})
@@ -768,12 +772,15 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
+				const time = moment(date).format('YYYY-MM-DD');
+				date = moment(date).format('HH:mm:ss');
 
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
 						title: name,
 						duration: tracked,
 						type: 'APP',
+						time,
 						date,
 						projectId,
 						employeeId: employee.gauzyId

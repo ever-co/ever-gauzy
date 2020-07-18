@@ -30,12 +30,12 @@ export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
-	employee: Employee;
+	employee?: Employee;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeSlot: TimeSlot) => timeSlot.employee)
+	@RelationId((activity: Activity) => activity.employee)
 	@Column()
-	readonly employeeId: string;
+	readonly employeeId?: string;
 
 	@ApiProperty({ type: OrganizationProjects })
 	@ManyToOne(() => OrganizationProjects, { nullable: true })
@@ -46,6 +46,16 @@ export class Activity extends Base implements IActivity {
 	@RelationId((activity: Activity) => activity.project)
 	@Column({ nullable: true })
 	readonly projectId?: string;
+
+	@ApiProperty({ type: TimeSlot })
+	@ManyToOne(() => TimeSlot, { nullable: true })
+	@JoinColumn()
+	timeSlot?: TimeSlot;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((activity: Activity) => activity.timeSlot)
+	@Column({ nullable: true })
+	readonly timeSlotId?: string;
 
 	@ApiProperty({ type: Task })
 	@ManyToOne(() => Task, { nullable: true })
@@ -65,7 +75,12 @@ export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: 'date' })
 	@IsDateString()
 	@CreateDateColumn({ type: 'date' })
-	date: Date;
+	date: string;
+
+	@ApiProperty({ type: 'time' })
+	@IsDateString()
+	@CreateDateColumn({ type: 'time' })
+	time: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
@@ -83,7 +98,7 @@ export class Activity extends Base implements IActivity {
 	@IsEnum(TimeLogSourceEnum)
 	@IsString()
 	@Column({ default: TimeLogSourceEnum.BROWSER })
-	source: string;
+	source?: string;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()

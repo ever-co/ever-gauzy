@@ -5,16 +5,24 @@ import { CrudService } from '../../core/crud/crud.service';
 import { TimeSlot } from '../time-slot.entity';
 import * as moment from 'moment';
 import { RequestContext } from '../../core/context/request-context';
-import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	IGetTimeSlotInput,
+	ICreateTimeSlotInput,
+	ActivityType
+} from '@gauzy/models';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
 import { TimeLogService } from '../time-log/time-log.service';
 import { generateTimeSlots } from './utils';
+import { Activity } from '../activity.entity';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+		@InjectRepository(Activity)
+		private readonly activityRepository: Repository<Activity>,
 		@InjectRepository(TimeSlotMinute)
 		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
 		private readonly timeLogService: TimeLogService
@@ -179,6 +187,16 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		return generateTimeSlots(start, end);
 	}
 
+	async createOrUpdate(entity: ICreateTimeSlotInput) {
+		const timeSlot = new TimeSlot(entity);
+		timeSlot.activites = entity.activites.map(
+			(activity) => new Activity(activity)
+		);
+		await this.activityRepository.save(entity.activites);
+		await this.timeSlotRepository.save(timeSlot);
+		return timeSlot;
+	}
+
 	/*
 	 *create time slot minute activity for spacific timeslot
 	 */
@@ -212,11 +230,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			if (timeSlot.timeLogs.length > 0) {
 				const deleteSlotPromise = timeSlot.timeLogs.map(
 					async (timeLog) => {
-						console.log({
-							start: timeSlot.startedAt,
-							end: timeSlot.stoppedAt
-						});
-
 						await this.timeLogService.deleteTimeSpan(
 							{
 								start: timeSlot.startedAt,

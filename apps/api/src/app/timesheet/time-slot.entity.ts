@@ -18,6 +18,7 @@ import * as moment from 'moment';
 import { Screenshot } from './screenshot.entity';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 import { TimeLog } from './time-log.entity';
+import { Activity } from './activity.entity';
 
 @Entity('time_slot')
 @Unique(['employeeId', 'startedAt'])
@@ -37,6 +38,11 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@JoinColumn()
 	screenshots?: Screenshot[];
 
+	@ApiProperty({ type: Activity })
+	@OneToMany(() => Activity, (activites) => activites.timeSlot)
+	@JoinColumn()
+	activites?: Activity[];
+
 	@ApiProperty({ type: TimeSlotMinute })
 	@OneToMany(
 		() => TimeSlotMinute,
@@ -51,17 +57,17 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	duration: number;
+	duration?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	keyboard: number;
+	keyboard?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	mouse: number;
+	mouse?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
