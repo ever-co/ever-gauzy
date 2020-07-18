@@ -18,7 +18,8 @@ import {
 	TimeLogType,
 	IntegrationEntity,
 	RolesEnum,
-	ExpenseCategoriesEnum
+	ExpenseCategoriesEnum,
+	OrganizationVendorEnum
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -55,19 +56,24 @@ import { EmployeeCreateCommand } from '../employee/commands';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { UserService } from '../user/user.service';
 import { OrganizationService } from '../organization/organization.service';
+import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
+import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
+import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 
 @Injectable()
 export class UpworkService {
 	private _upworkApi: UpworkApi;
 
 	constructor(
+		private _expenseCategoryService: ExpenseCategoriesService,
 		private _integrationMapService: IntegrationMapService,
 		private _userService: UserService,
 		private _roleService: RoleService,
 		private _organizationService: OrganizationService,
+		private _orgVendorService: OrganizationVendorsService,
 		private _timeSlotService: TimeSlotService,
 		private commandBus: CommandBus
 	) {}
@@ -853,6 +859,9 @@ export class UpworkService {
 		}
 	}
 
+	/*
+	 * Upwork freelancer expense
+	 */
 	private async _syncExpense(
 		organizationId,
 		integrationId,
@@ -863,13 +872,15 @@ export class UpworkService {
 	) {
 		const reports = await this._getEarningReportsForFreelancer(
 			config,
-			providerRefernceId
+			providerRefernceId,
+			dateRange
 		);
+
 		var {
 			table: { cols = [], rows = [] }
 		} = reports;
-		const columns = _.pluck(cols, 'label');
 
+		const columns = _.pluck(cols, 'label');
 		//mapped inner row and associate to object key
 		rows = _.map(rows, function (row) {
 			const innerRow = _.pluck(row['c'], 'v');
@@ -886,11 +897,53 @@ export class UpworkService {
 					(row) => row.subtype === ExpenseCategoriesEnum.SERVICE_FEE
 				)
 				.map(async (row) => {
-					return row;
+					const { amount, date, description, subtype } = row;
+					const {
+						record: category
+					} = await this._expenseCategoryService.findOneOrFail({
+						where: {
+							name: ExpenseCategoriesEnum.SERVICE_FEE
+						}
+					});
+
+					const {
+						record: vendor
+					} = await this._orgVendorService.findOneOrFail({
+						where: {
+							name: OrganizationVendorEnum.UPWORK,
+							organizationId
+						}
+					});
+
+					const gauzyExpense = await this.commandBus.execute(
+						new ExpenseCreateCommand({
+							employeeId,
+							orgId: organizationId,
+							amount,
+							category,
+							valueDate: new Date(
+								moment(date).format('YYYY-MM-DD hh:mm:ss')
+							),
+							vendor,
+							notes: description,
+							typeOfExpense: subtype
+						})
+					);
+
+					const { assignment__reference: sourceId } = row;
+					return await this._integrationMapService.create({
+						gauzyId: gauzyExpense.id,
+						integrationId,
+						sourceId,
+						entity: IntegrationEntity.EXPENSE
+					});
 				})
 		);
 	}
 
+	/*
+	 * Upwork freelancer income
+	 */
 	private async _syncIncome(
 		organizationId,
 		integrationId,
@@ -1089,7 +1142,8 @@ export class UpworkService {
 	 */
 	private async _getEarningReportsForFreelancer(
 		config: IUpworkApiConfig,
-		providerRefernceId
+		providerRefernceId,
+		dateRange
 	): Promise<any> {
 		const api = new UpworkApi(config);
 		const earnings = new Earnings(api);
@@ -1102,7 +1156,9 @@ export class UpworkService {
 							date,
 							type,
 							subtype,
-							description
+							description,
+							assignment_name,
+							assignment__reference
 						WHERE 
 							date > '${startOfMonth}' AND 
 							date <= '${endOfMonth}'`;
