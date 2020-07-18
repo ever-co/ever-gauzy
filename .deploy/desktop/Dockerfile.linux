@@ -23,23 +23,9 @@ RUN yarn build:desktop:linux
 
 #=========================================================================#
 
-FROM electronuserland/builder:wine as windows
-
-WORKDIR /opt/src
-
-COPY apps/desktop/package.json ./apps/desktop/
-COPY apps/api/package.json ./apps/api/
-COPY package.json yarn.lock ./
-COPY --from=linux /opt/src/node_modules/ ./node_modules
-COPY . .
-
-RUN yarn build:desktop:windows
-
-#=========================================================================#
-
 FROM debian:buster-slim
 
 WORKDIR /opt/artifacts
 
 COPY --from=linux /opt/src/dist/apps/desktop-packages ./linux/
-COPY --from=windows /opt/src/dist/apps/desktop-packages ./windows/
+
