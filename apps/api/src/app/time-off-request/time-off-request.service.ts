@@ -36,6 +36,7 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 						items.push(request);
 					}
 				});
+				if (request.employees.length === 0) items.push(request);
 			});
 		} else {
 			items = allRequests;
