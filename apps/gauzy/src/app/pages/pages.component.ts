@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Organization, PermissionsEnum, RolesEnum } from '@gauzy/models';
+import { Organization, PermissionsEnum } from '@gauzy/models';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { filter, first, takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../@core/services/auth.service';
 import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
