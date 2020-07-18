@@ -58,16 +58,26 @@ export class TimeTrackerComponent implements OnInit {
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) => {
 			this.toggleStart();
 		});
+
+		this.electronService.ipcRenderer.on(
+			'set_project_task_reply',
+			(event, arg) => {
+				this.setProject(arg.projectId);
+				this.setTask(arg.taskId);
+				this.note = arg.note;
+				_cdr.detectChanges();
+			}
+		);
 	}
 
 	ngOnInit(): void {
 		// this.getTask()
+		// console.log('init', this.projectSelect);
 	}
 
 	toggleStart() {
 		this.start = !this.start;
 		if (this.start) {
-			console.log('start');
 			this.startTime();
 		} else {
 			this.stopTimer();
@@ -76,6 +86,7 @@ export class TimeTrackerComponent implements OnInit {
 	}
 
 	setTime(value) {
+		if (!this.start) this.start = true;
 		value.second = value.second % 60;
 		value.minute = value.minute % 60;
 		this.timeRun = {
@@ -92,8 +103,13 @@ export class TimeTrackerComponent implements OnInit {
 					? `${value.hours}`
 					: `0${value.hours}`
 		};
+		if (value.second % 60 === 0) {
+			this.electronService.ipcRenderer.send('update_tray_time_update', {
+				hours: this.timeRun.hours,
+				minutes: this.timeRun.minute
+			});
+		}
 		this._cdr.detectChanges();
-		console.log('time running');
 	}
 
 	startTime() {
@@ -105,11 +121,18 @@ export class TimeTrackerComponent implements OnInit {
 				taskId: this.taskSelect,
 				note: this.note
 			});
+
+			this.electronService.ipcRenderer.send('update_tray_start');
 		}
 	}
 
 	stopTimer() {
 		this.electronService.ipcRenderer.send('stop_timer');
+		this.electronService.ipcRenderer.send('update_tray_stop');
+		this.electronService.ipcRenderer.send('update_tray_time_update', {
+			hours: '00',
+			minutes: '00'
+		});
 		this.timeRun = {
 			second: '00',
 			minute: '00',
@@ -121,28 +144,30 @@ export class TimeTrackerComponent implements OnInit {
 		this.timeTrackerService.getTasks(arg).then((res: any) => {
 			this.organization = res.items;
 			this.getProjects(this.organization, arg);
+			this.electronService.ipcRenderer.send('set_project_task', {
+				projectId: arg.projectId,
+				taskId: arg.taskId,
+				note: arg.note
+			});
 		});
+		this._cdr.detectChanges();
 	}
 
 	getProjects(items, arg) {
 		this.projects = items.map((item) => item.project);
-		if (this.projects.length > 0) {
-			if (arg.projectId && arg.taskId) {
-				this.projectSelect = arg.projectId;
-				this.taskSelect = arg.taskId;
-				this.note = arg.note;
-				this._cdr.detectChanges();
-			}
-		}
+		this._cdr.detectChanges();
 	}
 
 	setProject(item) {
-		console.log(item);
+		console.log('set_project', item);
 		this.projectSelect = item;
 		this.tasks = this.organization.filter((t) => t.project.id === item);
+		this._cdr.detectChanges();
 	}
 
 	setTask(item) {
+		console.log('set task', item);
+		this._cdr.detectChanges();
 		this.taskSelect = item;
 	}
 }
