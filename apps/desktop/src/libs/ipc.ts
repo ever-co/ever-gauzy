@@ -34,10 +34,6 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 		arg.afk.forEach((item) => {
 			const now = moment().utc();
 			const afkDuration = now.diff(moment(arg.start).utc(), 'seconds');
-			console.log('now time', now);
-			console.log('time start afk from aw', item.start);
-			console.log('duration from start afk to now', afkDuration);
-			console.log('afk duration from aw', item.duration);
 			if (afkDuration < item.duration) {
 				item.duration = afkDuration;
 			}
@@ -45,7 +41,7 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 				eventId: item.id,
 				durations: item.duration,
 				timerId: arg.timerId,
-				data: item.data,
+				data: JSON.stringify(item.data),
 				created_at: new Date(),
 				updated_at: new Date(),
 				timeSlotId: null,
@@ -106,5 +102,9 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 			id: arg.timerId,
 			timeLogId: arg.timeLogId
 		});
+	});
+
+	ipcMain.on('set_project_task', (event, arg) => {
+		event.sender.send('set_project_task_reply', arg);
 	});
 }

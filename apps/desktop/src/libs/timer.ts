@@ -109,7 +109,7 @@ export default class Timerhandler {
 					win2.webContents.send('set_activity', {
 						...LocalStore.beforeRequestParams(),
 						title: JSON.parse(item.data).app,
-						date: moment().format('YYY-MM-DD'),
+						date: moment().format('YYYY-MM-DD'),
 						duration: Math.floor(item.durations),
 						type: 'app',
 						eventId: item.eventId
