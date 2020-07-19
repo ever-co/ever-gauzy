@@ -1,16 +1,13 @@
 <nb-layout center>
 	<nb-layout-column>
-		<nb-card size="medium" class="full-height">
+		<nb-card size="large" class="full-height">
 			<nb-card-body>
 				<div class="row mb3">
 					<div class="col-12 form-group">
 						<div class="row">
 							<div class="col-6"></div>
 							<div *ngIf="defaultToggle" class="col-6 pull-right">
-								<nb-toggle
-									status="basic"
-									[(ngModel)]="isDefaultValue"
-									(change)="onSwitch()"
+								<nb-toggle status="basic" (change)="onSwitch()"
 									>Default</nb-toggle
 								>
 							</div>
@@ -49,13 +46,33 @@
 							</div>
 							<div class="col-12 form-group">
 								<div class="row">
-									<div class="col-4">
-										<nb-checkbox (click)="setAW()"
-											>Activiwatch</nb-checkbox
-										>
+									<div class="col-12">
+										<div class="row">
+											<div class="col-6">
+												<nb-checkbox (click)="setAW()"
+													>Activiwatch</nb-checkbox
+												>
+											</div>
+											<div class="col-6">
+												<p
+													*ngIf="loadingAw"
+													[nbSpinner]="loadingAw"
+													nbSpinnerStatus="info"
+												></p>
+												<nb-icon
+													*ngIf="awCheck"
+													[icon]="iconAw"
+													[status]="statusIcon"
+												>
+												</nb-icon>
+											</div>
+										</div>
 									</div>
-									<div class="col-4">
-										<nb-checkbox>Wakatime</nb-checkbox>
+
+									<div class="col-12">
+										<nb-checkbox [disabled]="true"
+											>Wakatime</nb-checkbox
+										>
 									</div>
 								</div>
 							</div>

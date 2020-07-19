@@ -2,8 +2,8 @@ import { ipcMain } from 'electron';
 import { TimerData } from '../local-data/timer';
 import TimerHandler from './timer';
 import moment from 'moment';
-export function ipcMainHandler(store, startServer, knex, win2, win3) {
-	const timerHandler = new TimerHandler();
+import { LocalStore } from './getSetStore';
+export function ipcMainHandler(store, startServer, knex) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
@@ -59,28 +59,6 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 		});
 	});
 
-	ipcMain.on('start_timer', (event, arg) => {
-		store.set({
-			project: {
-				projectId: arg.projectId,
-				taskId: arg.taskId,
-				note: arg.note
-			}
-		});
-		timerHandler.startTimer(win2, knex, win3);
-		timerHandler.updateTime(win2, knex);
-	});
-
-	ipcMain.on('stop_timer', (event, arg) => {
-		timerHandler.stopTime(win2, win3, knex);
-	});
-
-	ipcMain.on('auth_success', (event, arg) => {
-		store.set({
-			auth: arg
-		});
-	});
-
 	ipcMain.on('return_time_slot', (event, arg) => {
 		TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
@@ -106,5 +84,36 @@ export function ipcMainHandler(store, startServer, knex, win2, win3) {
 
 	ipcMain.on('set_project_task', (event, arg) => {
 		event.sender.send('set_project_task_reply', arg);
+	});
+
+	ipcMain.on('time_tracker_ready', (event, arg) => {
+		console.log('open time tracker');
+		const auth = LocalStore.getStore('auth');
+		if (auth) {
+			event.sender.send(
+				'timer_tracker_show',
+				LocalStore.beforeRequestParams()
+			);
+		}
+	});
+}
+
+export function ipcTimer(store, knex, win2, win3) {
+	const timerHandler = new TimerHandler();
+	ipcMain.on('start_timer', (event, arg) => {
+		store.set({
+			project: {
+				projectId: arg.projectId,
+				taskId: arg.taskId,
+				note: arg.note,
+				aw: arg.aw
+			}
+		});
+		timerHandler.startTimer(win2, knex, win3);
+		timerHandler.updateTime(win2, knex);
+	});
+
+	ipcMain.on('stop_timer', (event, arg) => {
+		timerHandler.stopTime(win2, win3, knex);
 	});
 }

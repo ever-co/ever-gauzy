@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ElectronService } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -7,7 +7,7 @@ import { AppService } from './app.service';
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 	constructor(
 		private router: Router,
 		private electronService: ElectronService,
@@ -127,5 +127,29 @@ export class AppComponent {
 				appService.toggleApi(arg);
 			}
 		);
+
+		this.electronService.ipcRenderer.on('server_ping', (event, arg) => {
+			const pinghost = setInterval(() => {
+				appService
+					.pingServer(arg)
+					.then((res) => {
+						console.log('server found');
+						event.sender.send('server_is_ready');
+						clearInterval(pinghost);
+					})
+					.catch((e) => {
+						console.log('error', e.status);
+						if (e.status === 404) {
+							event.sender.send('server_is_ready');
+							clearInterval(pinghost);
+						}
+					});
+			}, 2000);
+		});
+	}
+
+	ngOnInit(): void {
+		console.log('on init');
+		this.electronService.ipcRenderer.send('app_is_init');
 	}
 }

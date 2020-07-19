@@ -2,7 +2,10 @@ import {
 	Component,
 	OnInit,
 	ChangeDetectionStrategy,
-	ChangeDetectorRef
+	ChangeDetectorRef,
+	AfterViewInit,
+	ViewChild,
+	ElementRef
 } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
@@ -13,7 +16,8 @@ import { TimeTrackerService } from './time-tracker.service';
 	styleUrls: ['./time-tracker.component.scss'],
 	changeDetection: ChangeDetectionStrategy.Default
 })
-export class TimeTrackerComponent implements OnInit {
+export class TimeTrackerComponent implements OnInit, AfterViewInit {
+	@ViewChild('selectRef') selectProjectElement: ElementRef;
 	start: Boolean = false;
 	timeRun: any = {
 		second: '00',
@@ -34,6 +38,12 @@ export class TimeTrackerComponent implements OnInit {
 	taskSelect = '';
 	errors: any = {};
 	note: String = '';
+	aw: Boolean = false;
+	loadingAw = false;
+	iconAw = 'close-square-outline';
+	statusIcon = 'success';
+	awCheck = false;
+	defaultAwAPI = 'http:localhost:5600';
 
 	constructor(
 		private electronService: ElectronService,
@@ -65,6 +75,11 @@ export class TimeTrackerComponent implements OnInit {
 				this.setProject(arg.projectId);
 				this.setTask(arg.taskId);
 				this.note = arg.note;
+				this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
+				this.selectProjectElement.nativeElement.focus();
+				const el: HTMLElement = this.selectProjectElement
+					.nativeElement as HTMLElement;
+				setTimeout(() => el.click(), 1000);
 				_cdr.detectChanges();
 			}
 		);
@@ -73,6 +88,13 @@ export class TimeTrackerComponent implements OnInit {
 	ngOnInit(): void {
 		// this.getTask()
 		// console.log('init', this.projectSelect);
+		console.log('on init');
+		this.electronService.ipcRenderer.send('time_tracker_ready');
+	}
+
+	ngAfterViewInit(): void {
+		console.log('test after view');
+		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
 	toggleStart() {
@@ -109,6 +131,10 @@ export class TimeTrackerComponent implements OnInit {
 				minutes: this.timeRun.minute
 			});
 		}
+
+		if (value.second % 5 === 0) {
+			this.pingAw(null);
+		}
 		this._cdr.detectChanges();
 	}
 
@@ -119,7 +145,11 @@ export class TimeTrackerComponent implements OnInit {
 			this.electronService.ipcRenderer.send('start_timer', {
 				projectId: this.projectSelect,
 				taskId: this.taskSelect,
-				note: this.note
+				note: this.note,
+				aw: {
+					host: this.defaultAwAPI,
+					isAw: this.aw
+				}
 			});
 
 			this.electronService.ipcRenderer.send('update_tray_start');
@@ -147,7 +177,8 @@ export class TimeTrackerComponent implements OnInit {
 			this.electronService.ipcRenderer.send('set_project_task', {
 				projectId: arg.projectId,
 				taskId: arg.taskId,
-				note: arg.note
+				note: arg.note,
+				aw: arg.aw
 			});
 		});
 		this._cdr.detectChanges();
@@ -169,5 +200,55 @@ export class TimeTrackerComponent implements OnInit {
 		console.log('set task', item);
 		this._cdr.detectChanges();
 		this.taskSelect = item;
+	}
+
+	setAW(event) {
+		if (event.target.checked) {
+			this.aw = true;
+			this.electronService.ipcRenderer.send('set_tp_aw', {
+				host: this.defaultAwAPI,
+				isAw: true
+			});
+		} else {
+			this.electronService.ipcRenderer.send('set_tp_aw', {
+				host: this.defaultAwAPI,
+				isAw: false
+			});
+			this.aw = false;
+		}
+		this._cdr.detectChanges();
+		if (this.aw) this.pingAw(null);
+		else {
+			this.awCheck = false;
+			this._cdr.detectChanges();
+		}
+	}
+
+	pingAw(host) {
+		this.loadingAw = true;
+		this.awCheck = false;
+		this.timeTrackerService
+			.pingAw(`${host || this.defaultAwAPI}/api`)
+			.then((res) => {
+				this.iconAw = 'checkmark-square-outline';
+				this.awCheck = true;
+				this.statusIcon = 'success';
+				this._cdr.detectChanges();
+			})
+			.catch((e) => {
+				if (e.status === 200) {
+					this.iconAw = 'checkmark-square-outline';
+					this.awCheck = true;
+					this.statusIcon = 'success';
+					this._cdr.detectChanges();
+					this.loadingAw = false;
+				} else {
+					this.loadingAw = false;
+					this.iconAw = 'close-square-outline';
+					this.awCheck = true;
+					this.statusIcon = 'danger';
+					this._cdr.detectChanges();
+				}
+			});
 	}
 }

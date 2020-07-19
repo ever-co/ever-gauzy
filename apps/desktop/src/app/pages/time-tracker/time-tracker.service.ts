@@ -29,4 +29,8 @@ export class TimeTrackerService {
 			.pipe()
 			.toPromise();
 	}
+
+	pingAw(host) {
+		return this.http.get(host).pipe().toPromise();
+	}
 }

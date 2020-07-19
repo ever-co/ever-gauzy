@@ -7,7 +7,7 @@ import { ipcMain } from 'electron';
 
 export default class TrayIcon {
 	tray: Tray;
-	constructor(win2, knex, win3) {
+	constructor(win2, knex, win3, auth) {
 		const timerHandler = new TimerHandler();
 		const store = new Store();
 		const iconPath = path.join(
@@ -21,7 +21,16 @@ export default class TrayIcon {
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
-		const contextMenu = [
+		let contextMenu: any = [
+			{
+				id: '0',
+				label: 'quit',
+				click() {
+					app.quit();
+				}
+			}
+		];
+		const menuAuth = [
 			{
 				id: '0',
 				label: 'Now tracking time - 0h 0m',
@@ -34,16 +43,17 @@ export default class TrayIcon {
 					const projectSelect = store.get('project');
 					if (projectSelect && projectSelect.projectId) {
 						win3.show();
-						win3.webContents.send(
-							'timer_tracker_show',
-							LocalStore.beforeRequestParams()
-						);
-						win3.webContents.send('start_from_tray');
+						setTimeout(() => {
+							win3.webContents.send('start_from_tray');
+						}, 1000);
 					} else {
-						const auth = store.get('auth');
-						auth.apiHost = LocalStore.getServerUrl();
-						win3.webContents.send('timer_tracker_show', auth);
 						win3.show();
+						setTimeout(() => {
+							win3.webContents.send(
+								'timer_tracker_show',
+								LocalStore.beforeRequestParams()
+							);
+						}, 1000);
 					}
 				}
 			},
@@ -53,7 +63,9 @@ export default class TrayIcon {
 				enabled: false,
 				click(menuItem) {
 					win3.show();
-					win3.webContents.send('stop_from_tray');
+					setTimeout(() => {
+						win3.webContents.send('stop_from_tray');
+					}, 1000);
 				}
 			},
 			{
@@ -61,11 +73,13 @@ export default class TrayIcon {
 				label: 'Open Time Tracker',
 				enabled: true,
 				click(menuItem) {
-					win3.webContents.send(
-						'timer_tracker_show',
-						LocalStore.beforeRequestParams()
-					);
 					win3.show();
+					setTimeout(() => {
+						win3.webContents.send(
+							'timer_tracker_show',
+							LocalStore.beforeRequestParams()
+						);
+					}, 1000);
 				}
 			},
 			{
@@ -84,9 +98,7 @@ export default class TrayIcon {
 			}
 		];
 
-		const periodicUpdate = () => {
-			timerHandler.updateTime(win2, knex);
-		};
+		if (auth) contextMenu = menuAuth;
 		this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 
 		ipcMain.on('update_tray_start', (event, arg) => {
@@ -108,6 +120,13 @@ export default class TrayIcon {
 			contextMenu[0].label = `Now tracking time - ${arg.hours}h ${arg.minutes}m`;
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
-		console.log(this.tray);
+
+		ipcMain.on('auth_success', (event, arg) => {
+			store.set({
+				auth: arg
+			});
+			contextMenu = menuAuth;
+			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+		});
 	}
 }
