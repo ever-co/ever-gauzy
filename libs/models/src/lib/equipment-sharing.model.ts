@@ -4,14 +4,15 @@ import { OrganizationTeam } from './organization-team-model';
 import { Equipment } from './equipment.model';
 
 export interface EquipmentSharing extends IBaseEntityModel {
-	equipmentId: string;
-	shareRequestDay: Date;
-	shareStartDay: Date;
-	shareEndDay: Date;
-	status: number;
-	employees: Employee[];
-	teams: OrganizationTeam[];
-	equipment: Equipment;
+	equipmentId?: string;
+	shareRequestDay?: Date;
+	shareStartDay?: Date;
+	shareEndDay?: Date;
+	status?: number;
+	employees?: Employee[];
+	teams?: OrganizationTeam[];
+	equipment?: Equipment;
+	name?: string;
 }
 
 export interface EquipmentSharingRequest extends IBaseEntityModel {

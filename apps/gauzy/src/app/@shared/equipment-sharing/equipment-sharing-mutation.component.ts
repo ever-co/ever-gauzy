@@ -10,6 +10,7 @@ import {
 	EquipmentSharing,
 	Equipment,
 	RequestApprovalStatusTypesEnum,
+	RequestApprovalStatus,
 	Employee,
 	OrganizationTeam
 } from '@gauzy/models';
@@ -63,7 +64,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
 
-	requestStatuses = Object.values(RequestApprovalStatusTypesEnum);
+	requestStatuses = Object.values(RequestApprovalStatus);
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -85,6 +86,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.loadTeams();
 		this.loadRequestStatus();
 		this.validateForm();
+	}
+
+	parseInt(value) {
+		return parseInt(value, 10);
 	}
 
 	ngOnDestroy() {
@@ -122,7 +127,13 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 					? new Date(this.equipmentSharing.shareEndDay)
 					: null
 			],
-			status: [this.requestStatus]
+			status: [this.requestStatus],
+			name: [
+				this.equipmentSharing && this.equipmentSharing.name
+					? this.equipmentSharing.name
+					: '',
+				Validators.required
+			]
 		});
 	}
 
@@ -141,9 +152,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			shareRequestDay: this.form.value['shareRequestDay'],
 			shareStartDay: this.form.value['shareStartDay'],
 			shareEndDay: this.form.value['shareEndDay'],
-			status: this.requestStatus
+			status: this.requestStatus,
+			name: this.form.value['name']
 		};
-
+		console.log('shareRequest', shareRequest);
 		let equipmentSharing: EquipmentSharing;
 
 		if (this.equipmentSharing) {
