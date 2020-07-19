@@ -1,0 +1,166 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(requestApproval
+					? 'APPROVAL_REQUEST_PAGE.EDIT_APPROVAL_REQUEST'
+					: 'APPROVAL_REQUEST_PAGE.ADD_APPROVAL_REQUEST'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-12 mb-3">
+					<label for="name" class="label">
+						{{
+							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
+								| translate
+						}}
+					</label>
+					<input
+						nbInput
+						type="text"
+						formControlName="name"
+						fullWidth
+						placeholder="{{
+							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
+								| translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['name'].invalid &&
+								form.controls['name'].dirty,
+							'status-success':
+								form.controls['name'].valid &&
+								form.controls['name'].dirty
+						}"
+					/>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<label for="Min Count" class="label">
+						{{
+							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
+								| translate
+						}}
+					</label>
+					<input
+						nbInput
+						type="number"
+						formControlName="min_count"
+						fullWidth
+						placeholder="{{
+							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
+								| translate
+						}}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<label for="Approval Policy" class="label">
+						{{
+							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'
+								| translate
+						}}
+					</label>
+					<nb-select
+						formControlName="approvalPolicyId"
+						[selected]="selectedApprovalPolicy"
+						(selectedChange)="onApprovalPolicySelected($event)"
+						fullWidth
+						placeholder="{{
+							'APPROVAL_REQUEST_PAGE.CHOOSE_POLICIES' | translate
+						}}"
+					>
+						<nb-option
+							*ngFor="let approvalPolicy of approvalPolicies"
+							[value]="approvalPolicy.id"
+						>
+							{{ approvalPolicy.name }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<label for="employees" class="label">
+						{{ 'APPROVAL_REQUEST_PAGE.EMPLOYEES' | translate }}
+					</label>
+					<nb-select
+						formControlName="employees"
+						multiple
+						[(ngModel)]="selectedEmployees"
+						(selectedChange)="onEmployeesSelected($event)"
+						fullWidth
+						placeholder="{{
+							'FORM.PLACEHOLDERS.CHOOSE_EMPLOYEES' | translate
+						}}"
+					>
+						<nb-option
+							*ngFor="let employee of employees"
+							[value]="employee.id"
+						>
+							<img
+								src="{{ employee.user.imageUrl }}"
+								alt="Employee picture"
+								height="40"
+								width="40"
+								style="margin-right: 10px;"
+							/>
+							{{ employee.user.firstName }}
+							{{ employee.user.lastName }}</nb-option
+						>
+					</nb-select>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<label for="teams" class="label">
+						{{ 'APPROVAL_REQUEST_PAGE.TEAMS' | translate }}
+					</label>
+					<nb-select
+						formControlName="teams"
+						multiple
+						[(ngModel)]="selectedTeams"
+						(selectedChange)="onTeamsSelected($event)"
+						fullWidth
+						placeholder="{{
+							'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
+						}}"
+					>
+						<nb-option *ngFor="let team of teams" [value]="team.id">
+							{{ team.name }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+
+			<input type="hidden" formControlName="id" />
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="warning"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			[disabled]="form.invalid"
+			(click)="saveRequestApproval()"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

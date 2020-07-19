@@ -7,7 +7,7 @@ import { EditEmployeeMainComponent } from './edit-employee/edit-employee-profile
 import { EditEmployeeRatesComponent } from './edit-employee/edit-employee-profile/edit-employee-rate/edit-employee-rate.component';
 import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-employee-invite.component';
 import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
-import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
+import { EditEmployeeContactComponent } from './edit-employee/edit-employee-profile/edit-employee-contact/edit-employee-contact.component';
 import { PermissionsEnum } from '@gauzy/models';
 import { InviteGuard } from '../../@core/role/invite.guard';
 import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
@@ -45,8 +45,8 @@ const routes: Routes = [
 				component: EditEmployeeProjectsComponent
 			},
 			{
-				path: 'clients',
-				component: EditEmployeeClientComponent
+				path: 'contacts',
+				component: EditEmployeeContactComponent
 			},
 			{
 				path: 'location',
@@ -79,6 +79,11 @@ const routes: Routes = [
 			import('./timesheet/timesheet.module').then(
 				(m) => m.TimesheetModule
 			)
+	},
+	{
+		path: 'activity',
+		loadChildren: () =>
+			import('./activity/activity.module').then((m) => m.ActivityModule)
 	}
 ];
 

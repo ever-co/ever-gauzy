@@ -12,6 +12,7 @@
 				(click)="addOrEditDepartments()"
 				nbButton
 				status="success"
+				[disabled]="!name"
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
@@ -36,9 +37,6 @@
 				/>
 			</div>
 			<div class="form-group col-4">
-				<label class="label">{{
-					'SM_TABLE.EMPLOYEES' | translate
-				}}</label>
 				<ga-employee-multi-select
 					[selectedEmployeeIds]="selectedEmployeeIds"
 					[allEmployees]="employees"
@@ -47,7 +45,12 @@
 				</ga-employee-multi-select>
 			</div>
 			<div class="form-group col-4">
-				<ngx-tags-color-input> </ngx-tags-color-input>
+				<ga-tags-color-input
+					[selectedTags]="tags"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+					[isOrgLevel]="true"
+				>
+				</ga-tags-color-input>
 			</div>
 		</form>
 	</nb-card-body>

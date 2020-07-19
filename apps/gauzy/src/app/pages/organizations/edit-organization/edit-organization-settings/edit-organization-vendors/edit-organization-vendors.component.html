@@ -9,26 +9,43 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="showAddCard" class="row m-0">
-			<input
-				#addInput
-				class="col-8"
-				nbInput
-				type="text"
-				placeholder="{{ 'FORM.PLACEHOLDERS.ADD_VENDOR' | translate }}"
-				fullWidth
-			/>
-			<span class="col-2 pl-2 pr-1"
+		<div *ngIf="showAddCard" class="row">
+			<div class="col-sm-3 d-flex flex-column justify-content-end">
+				<label class="label" for="add-vendor">{{
+					'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
+				}}</label>
+				<input
+					#addInput="ngModel"
+					nbInput
+					type="text"
+					style="max-width: none;"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
+					}}"
+					id="add-vendor"
+					[ngModel]="vendor"
+					required
+				/>
+			</div>
+			<ga-tags-color-input
+				[selectedTags]="tags"
+				(selectedTagsEvent)="selectedTagsEvent($event)"
+				class="col-sm-3"
+				[isOrgLevel]="true"
+			>
+			</ga-tags-color-input>
+			<span class="col-sm-3" style="margin-top: 29px;"
 				><button
 					class="w-100"
 					(click)="addVendor(addInput.value)"
 					nbButton
 					status="success"
+					[disabled]="addInput.invalid"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
 			>
-			<span class="col-2 pl-1 pr-0"
+			<span class="col-sm-3" style="margin-top: 29px;"
 				><button
 					class="w-100"
 					(click)="showAddCard = !showAddCard"
@@ -41,23 +58,38 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="vendors?.length">
-		<div class="ml-3 mb-4"><strong>Vendor name</strong></div>
+		<div class="ml-3 mb-4">
+			<strong>{{ 'ORGANIZATIONS_PAGE.VENDORS' | translate }}</strong>
+		</div>
 
 		<nb-card *ngFor="let v of vendors">
 			<nb-card-body>
-				{{ selectedVendor === v ? '' : v.name }}
+				<ga-notes-with-tags [rowData]="v"> </ga-notes-with-tags>
 				<div
 					*ngIf="showEditDiv && v === selectedVendor"
-					class="row m-0"
+					class="row align-items-end"
 				>
-					<input
-						#editInput
-						class="col-8"
-						nbInput
-						type="text"
-						[value]="selectedVendor.name"
-						fullWidth
-					/>
+					<div
+						class="col-sm-3 d-flex flex-column justify-content-end"
+					>
+						<label class="label">{{
+							'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
+						}}</label>
+						<input
+							#editInput="ngModel"
+							nbInput
+							type="text"
+							fullWidth
+							[(ngModel)]="selectedVendor.name"
+							required
+						/>
+					</div>
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					>
+					</ga-tags-color-input>
 					<span class="col-2 pl-2 pr-1">
 						<button
 							class="w-100"
@@ -66,8 +98,9 @@
 							"
 							nbButton
 							status="success"
+							[disabled]="editInput.invalid"
 						>
-							Update
+							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span
 					>
 					<span class="col-2 pl-1 pr-0">

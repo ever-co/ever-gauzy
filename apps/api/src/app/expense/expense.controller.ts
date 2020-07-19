@@ -27,7 +27,6 @@ import { ExpenseCreateCommand } from './commands/expense.create.command';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
-import { OrganizationService } from '../organization/organization.service';
 import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.query';
 
 @ApiTags('Expense')
@@ -37,7 +36,6 @@ export class ExpenseController extends CrudController<Expense> {
 	constructor(
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
-		private readonly organizationService: OrganizationService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus
 	) {
@@ -124,7 +122,7 @@ export class ExpenseController extends CrudController<Expense> {
 	): Promise<IPagination<Expense>> {
 		const { relations, findInput, filterDate } = JSON.parse(data);
 
-		return this.expenseService.findAll(
+		return this.expenseService.findAllExpenses(
 			{ where: findInput, relations },
 			filterDate
 		);

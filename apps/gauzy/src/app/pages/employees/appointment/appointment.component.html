@@ -1,0 +1,27 @@
+<nb-card>
+	<nb-card-header>
+		<div class="main-header" *ngIf="showHeader">
+			<h4>{{ 'MENU.APPOINTMENTS' | translate }}</h4>
+			<button
+				style="float: right;"
+				status="success"
+				nbButton
+				(click)="bookPublicAppointment()"
+			>
+				{{ 'BUTTONS.PUBLIC_APPOINTMENT_BOOK' | translate }}
+			</button>
+		</div>
+		<div class="block-info">
+			{{ 'PUBLIC_APPOINTMENTS.TIMEZONE' | translate }}
+			<strong>
+				{{ selectedTimeZoneName }} {{ selectedTimeZoneOffset }}
+			</strong>
+			<a style="cursor: pointer;" (click)="selectTimezone()">{{
+				'PUBLIC_APPOINTMENTS.CHANGE' | translate
+			}}</a>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<full-calendar #calendar [options]="calendarOptions"></full-calendar>
+	</nb-card-body>
+</nb-card>

@@ -158,12 +158,24 @@
 								/>
 							</div>
 						</div>
+						<div class="col-6">
+							<div class="form-group">
+								<ga-tags-color-input
+									[selectedTags]="tags"
+									(selectedTagsEvent)="
+										selectedTagsHandler($event)
+									"
+									[isTenantLevel]="true"
+								>
+								</ga-tags-color-input>
+							</div>
+						</div>
 					</div>
 
 					<div class="row">
 						<div class="col-sm-6" *ngIf="allowRoleChange">
 							<div class="form-group">
-								<label for="startedWork" class="label">{{
+								<label for="roleName" class="label">{{
 									'FORM.LABELS.ROLE' | translate
 								}}</label>
 								<nb-select
@@ -172,6 +184,7 @@
 										'FORM.PLACEHOLDERS.ROLE' | translate
 									}}"
 									formControlName="roleName"
+									id="roleName"
 								>
 									<nb-option
 										*ngFor="let role of allRoles"
@@ -179,6 +192,31 @@
 										>{{
 											'USERS_PAGE.ROLE.' + role
 												| translate
+										}}</nb-option
+									>
+								</nb-select>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label for="preferredLanguage" class="label">{{
+									'FORM.LABELS.PREFERRED_LANGUAGE' | translate
+								}}</label>
+								<nb-select
+									class="d-block"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'
+											| translate
+									}}"
+									formControlName="preferredLanguage"
+									id="preferredLanguage"
+								>
+									<nb-option
+										*ngFor="let language of languages"
+										value="{{ language }}"
+										>{{
+											'USERS_PAGE.EDIT_USER.PREFERRED_LANGUAGE.' +
+												language | translate
 										}}</nb-option
 									>
 								</nb-select>

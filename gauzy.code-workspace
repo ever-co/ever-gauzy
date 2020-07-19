@@ -9,9 +9,22 @@
 	],
 	"settings": {
 		"typescript.tsdk": "./node_modules/typescript/lib",
-		"debug.node.autoAttach": "on",
+		"debug.node.autoAttach": "off",
 		"search.usePCRE2": true,
 		"git.ignoreLimitWarning": true,
-		"checkpoints.showActiveFileOnly": true
+		"checkpoints.showActiveFileOnly": true,
+		"deepscan.enable": true
+	},
+	"launch": {
+		"configurations": [
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Debug Server",
+				"port": 9229,
+				"restart": true,
+				"cwd": "${workspaceFolder:apps}/.."
+			}
+		]
 	}
 }

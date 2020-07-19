@@ -13,7 +13,6 @@ import { Organization } from '@gauzy/models';
 @Component({
 	selector: 'ga-timer-picker',
 	templateUrl: './timer-picker.component.html',
-	styleUrls: ['./timer-picker.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
@@ -23,7 +22,7 @@ import { Organization } from '@gauzy/models';
 	]
 })
 export class TimerPickerComponent implements OnInit {
-	private _max: string = '23:59';
+	private _max: string = '23:00';
 	private _min: string = '00:00';
 	timeSlots: { value: string; label: string }[] = [];
 	organization: Organization;
@@ -68,7 +67,7 @@ export class TimerPickerComponent implements OnInit {
 	}
 
 	updateSlots() {
-		const interval = 10;
+		const interval = 5;
 		let slotTime = moment(this.min, 'HH:mm');
 		let endTime = moment(this.max, 'HH:mm');
 
@@ -81,7 +80,6 @@ export class TimerPickerComponent implements OnInit {
 
 			slotTime = slotTime.add(interval, 'minutes');
 		}
-
 		this.timeSlots = times;
 	}
 

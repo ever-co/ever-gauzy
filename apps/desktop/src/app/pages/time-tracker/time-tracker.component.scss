@@ -1,0 +1,41 @@
+.border-vertical {
+  border-right: solid 0.1px rgba($color: #000000, $alpha: 0.1);
+  height: 90%;
+  min-height: 90%;
+  margin-top: 0;
+}
+.timer-container {
+  background-color: black;
+  color: white;
+  font-size: large;
+  font-weight: bolder;
+  padding: 10px;
+  text-align: center;
+}
+
+.timer-box {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.start-button {
+  font-size: 50px !important;
+  cursor: pointer;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.full-height {
+  height: 100%;
+}
+
+.no-padding {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.tp-padding {
+  padding-top: 50px;
+}

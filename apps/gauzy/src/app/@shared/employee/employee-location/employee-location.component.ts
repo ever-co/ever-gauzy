@@ -54,14 +54,23 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
+		const contact = {
+			country: this.form.value.country,
+			city: this.form.value.city,
+			address: this.form.value.address,
+			address2: this.form.value.address2,
+			postcode: this.form.value.postcode
+		};
 		if (this.form.valid && this.isCandidate) {
 			this.candidateStore.candidateForm = {
-				...this.form.value
+				...this.form.value,
+				contact
 			};
 		}
 		if (this.form.valid && this.isEmployee) {
 			this.employeeStore.employeeForm = {
-				...this.form.value
+				...this.form.value,
+				contact
 			};
 		}
 	}
@@ -70,11 +79,11 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 		await this.loadCountries();
 
 		this.form = this.fb.group({
-			country: [role.country],
-			city: [role.city],
-			postcode: [role.postcode],
-			address: [role.address],
-			address2: [role.address2]
+			country: [role.contact ? role.contact.country : ''],
+			city: [role.contact ? role.contact.city : ''],
+			postcode: [role.contact ? role.contact.postcode : ''],
+			address: [role.contact ? role.contact.address : ''],
+			address2: [role.contact ? role.contact.address2 : '']
 		});
 	}
 

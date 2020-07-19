@@ -14,7 +14,8 @@ import {
 	DefaultValueDateTypeEnum,
 	DEFAULT_PROFIT_BASED_BONUS,
 	RegionsEnum,
-	WeekDaysEnum
+	WeekDaysEnum,
+	Tag
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import * as moment from 'moment';
@@ -49,6 +50,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	orgLocationForm: FormGroup;
 	orgBonusForm: FormGroup;
 	orgSettingsForm: FormGroup;
+	tags: Tag[] = [];
 
 	@Output()
 	createOrganization = new EventEmitter();
@@ -70,10 +72,11 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 				'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
 				Validators.required
 			],
-			currency: [, Validators.required],
-			name: [, Validators.required],
+			currency: ['', Validators.required],
+			name: ['', Validators.required],
 			officialName: [],
-			taxId: []
+			taxId: [],
+			tags: []
 		});
 
 		this.orgLocationForm = this.fb.group({
@@ -203,6 +206,10 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 			...this.orgSettingsForm.value
 		};
 		this.createOrganization.emit(consolidatedFormValues);
+	}
+
+	selectedTagsEvent(currentSelection: Tag[]) {
+		this.orgMainForm.get('tags').setValue(currentSelection);
 	}
 
 	ngOnDestroy() {

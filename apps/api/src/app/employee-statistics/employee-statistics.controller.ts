@@ -1,16 +1,27 @@
 import {
 	AggregatedEmployeeStatistic,
 	EmployeeStatistics,
-	MonthAggregatedEmployeeStatistics
+	MonthAggregatedEmployeeStatistics,
+	EmployeeStatisticsHistory
 } from '@gauzy/models';
-import { Controller, Get, HttpStatus, Param, Query } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	HttpStatus,
+	Param,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { parseISO } from 'date-fns';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { AggregatedEmployeeStatisticQuery } from './queries/aggregate-employee-statistic.query';
 import { MonthAggregatedEmployeeStatisticsQuery } from './queries/month-aggregated-employee-statistics.query';
+import { EmployeeStatisticsHistoryQuery } from './queries/employee-statistics-history.query';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(
@@ -83,6 +94,30 @@ export class EmployeeStatisticsController {
 
 		return this.queryBus.execute(
 			new MonthAggregatedEmployeeStatisticsQuery(findInput)
+		);
+	}
+	@ApiOperation({
+		summary:
+			'Find Statistics History by Employee id, valueDate and past N months'
+	})
+	@ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/history')
+	async findEmployeeStatisticsHistory(
+		@Query('data') data?: string
+	): Promise<EmployeeStatisticsHistory[]> {
+		const { findInput } = JSON.parse(data);
+		/**
+		 * JSON parse changes Date object to String type
+		 * Changing Date String to Date Object using parseISO
+		 */
+		findInput.valueDate = parseISO(findInput.valueDate);
+
+		return this.queryBus.execute(
+			new EmployeeStatisticsHistoryQuery(findInput)
 		);
 	}
 }

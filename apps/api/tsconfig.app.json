@@ -6,7 +6,8 @@
 		"target": "es2017",
 		"removeComments": true,
 		"incremental": true,
-		"types": ["node"]
+		"types": ["node"],
+		"resolveJsonModule": true
 	},
 	"exclude": ["**/*.spec.ts"],
 	"include": ["**/*.ts"]

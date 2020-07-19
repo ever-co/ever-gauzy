@@ -7,7 +7,6 @@ import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 @Component({
 	selector: 'ga-task-selector',
 	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,

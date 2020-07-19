@@ -1,0 +1,95 @@
+<ng-template #dialog let-data let-action="currentAction" let-ref="dialogRef">
+	<ng-container *ngIf="currentAction === 'create'">
+		<ng-template
+			*ngTemplateOutlet="
+				addDialogTmpl;
+				context: {
+					$implicit: selectedItem,
+					action: currentAction,
+					dialogRef: ref
+				}
+			"
+		>
+		</ng-template>
+	</ng-container>
+
+	<ng-container *ngIf="currentAction === 'edit'">
+		<ng-template
+			*ngTemplateOutlet="
+				editDialogTmpl;
+				context: {
+					$implicit: selectedItem,
+					action: currentAction,
+					dialogRef: ref
+				}
+			"
+		>
+		</ng-template>
+	</ng-container>
+
+	<ng-container *ngIf="currentAction === 'delete'">
+		<ng-template
+			*ngTemplateOutlet="
+				deleteDialogTmpl;
+				context: {
+					$implicit: selectedItem,
+					action: currentAction,
+					dialogRef: ref
+				}
+			"
+		>
+		</ng-template>
+	</ng-container>
+</ng-template>
+
+<ng-container>
+	<nb-card size="medium">
+		<nb-card-header>
+			<div>
+				<button
+					nbButton
+					status="info"
+					(click)="openDialog('create', dialog)"
+					class="mr-2"
+					size="medium"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'BUTTONS.CREATE' | translate }}
+				</button>
+				<button
+					nbButton
+					status="info"
+					[disabled]="!selectedItem"
+					(click)="openDialog('edit', dialog)"
+					class="mr-2"
+					size="medium"
+				>
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+				<button
+					nbButton
+					status="danger"
+					[disabled]="!selectedItem"
+					(click)="openDialog('delete', dialog)"
+					class="mr-2"
+					size="medium"
+				>
+					<nb-icon class="mr-1" icon="trash"></nb-icon>
+					{{ 'BUTTONS.DELETE' | translate }}
+				</button>
+			</div>
+		</nb-card-header>
+		<nb-list>
+			<nb-list-item
+				*ngFor="let item of items"
+				[class.selected-item]="selectedItem?.id === item?.id"
+				(click)="toggleItemSelection(item)"
+			>
+				<ng-container
+					*ngTemplateOutlet="itemTmpl; context: { $implicit: item }"
+				></ng-container>
+			</nb-list-item>
+		</nb-list>
+	</nb-card>
+</ng-container>

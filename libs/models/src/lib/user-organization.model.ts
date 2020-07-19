@@ -1,24 +1,34 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { User } from './user.model';
+import { Organization, OrganizationFindInput } from './organization.model';
+import { LanguagesEnum, User } from './user.model';
 
 export interface UserOrganization extends IBaseEntityModel {
 	userId: string;
-	orgId: string;
+	organizationId: string;
 	isDefault: boolean;
 	isActive: boolean;
 	user?: User;
+	organization?: Organization;
 }
 
 export interface UserOrganizationFindInput extends IBaseEntityModel {
 	userId?: string;
-	orgId?: string;
+	organizationId?: string;
 	isDefault?: boolean;
 	isActive?: boolean;
+	organization?: OrganizationFindInput;
 }
 
 export interface UserOrganizationCreateInput {
 	userId: string;
-	orgId: string;
+	organizationId: string;
 	isDefault?: boolean;
 	isActive?: boolean;
+	organization?: Organization;
+}
+
+export interface UserOrganizationDeleteInput {
+	userOrganizationId: string;
+	requestingUser: User;
+	language?: LanguagesEnum;
 }

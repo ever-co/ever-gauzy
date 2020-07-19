@@ -26,11 +26,11 @@ export class ProposalDetailsComponent implements OnInit {
 		this.proposal = this.store.selectedProposal;
 
 		if (!this.proposal) {
-			this.router.navigate([`/pages/proposals`]);
+			this.router.navigate([`/pages/sales/proposals`]);
 		}
 
 		this.jobPostLink = this.sanitizer.bypassSecurityTrustHtml(
-			this.proposal.jobPostLink
+			this.proposal.jobPostUrl
 		);
 
 		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(
@@ -52,6 +52,8 @@ export class ProposalDetailsComponent implements OnInit {
 	}
 
 	edit() {
-		this.router.navigate([`/pages/proposals/edit/${this.proposal.id}`]);
+		this.router.navigate([
+			`/pages/sales/proposals/edit/${this.proposal.id}`
+		]);
 	}
 }

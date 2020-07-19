@@ -1,75 +1,87 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from '../../../../@core/services/store.service';
-import { takeUntil, tap } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbToastrService } from '@nebular/theme';
-import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
+import { ActivatedRoute } from '@angular/router';
+import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
 
 @Component({
 	selector: 'ngx-upwork',
-	templateUrl: './upwork.component.html',
-	styleUrls: ['./upwork.component.scss']
+	templateUrl: './upwork.component.html'
 })
 export class UpworkComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$: Subject<void> = new Subject();
-	private _selectedOrganizationId: string;
-	file: File;
+	tabs: any[];
 
 	constructor(
-		private _upworkService: UpworkService,
-		private _store: Store,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
-		private errorHandler: ErrorHandlingService
+		private _ar: ActivatedRoute,
+		private _us: UpworkStoreService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this._store.selectedOrganization$
+		this._getConfig();
+		this.loadTabs();
+		this._applyTranslationOnTabs();
+	}
+
+	private _getConfig() {
+		const integrationdId = this._ar.snapshot.params.id;
+		this._us
+			.getConfig(integrationdId)
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				if (org) {
-					this._selectedOrganizationId = org.id;
-				}
+			.subscribe();
+	}
+
+	getRoute(tabName: string) {
+		return `./${tabName}`;
+	}
+
+	loadTabs() {
+		this.tabs = [
+			{
+				title: this.getTranslation(
+					'INTEGRATIONS.UPWORK_PAGE.ACTIVITIES'
+				),
+				icon: 'trending-up-outline',
+				responsive: true,
+				route: this.getRoute('activities')
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.REPORTS'),
+				icon: 'file-text-outline',
+				responsive: true,
+				route: this.getRoute('reports')
+			},
+			{
+				title: this.getTranslation(
+					'INTEGRATIONS.UPWORK_PAGE.TRANSACTIONS'
+				),
+				icon: 'flip-outline',
+				responsive: true,
+				route: this.getRoute('transactions')
+			},
+			{
+				title: this.getTranslation(
+					'INTEGRATIONS.UPWORK_PAGE.CONTRACTS'
+				),
+				icon: 'book-outline',
+				responsive: true,
+				route: this.getRoute('contracts')
+			}
+		];
+	}
+
+	private _applyTranslationOnTabs() {
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadTabs();
 			});
-	}
-
-	imageUrlChanged(event) {
-		const [file] = event.target.files;
-		this.file = file;
-		event.target.value = null;
-	}
-
-	importCsv() {
-		const formData = new FormData();
-		formData.append('file', this.file);
-		formData.append('orgId', this._selectedOrganizationId);
-		this._upworkService
-			.uploadTransaction(formData)
-			.pipe(
-				takeUntil(this._ngDestroy$),
-				tap(() => (this.file = null))
-			)
-			.subscribe(
-				({ totalExpenses, totalIncomes }) => {
-					this.toastrService.primary(
-						this.getTranslation(
-							'INTEGRATIONS.TOTAL_UPWORK_TRANSACTIONS_SUCCEED',
-							{ totalExpenses, totalIncomes }
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
-				},
-				(err) => {
-					// added infinite duration to error toastr, error message can be too long to read in 3 sec
-					this.errorHandler.handleError(err, 0);
-				}
-			);
 	}
 
 	ngOnDestroy(): void {

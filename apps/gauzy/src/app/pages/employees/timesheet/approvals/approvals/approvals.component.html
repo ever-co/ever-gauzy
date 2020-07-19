@@ -1,0 +1,172 @@
+<div class="header">
+	<h5 class="mb-3">
+		{{ 'TIMESHEET.APPROVALS' | translate }}
+	</h5>
+</div>
+
+<div class="filters row mb-3">
+	<div class="col">
+		<ngx-filters
+			dateRange="month"
+			[hasLogTypeFilter]="false"
+			[hasSourceFilter]="false"
+			[hasActivityLevelFilter]="false"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
+	</div>
+</div>
+<div class="bulk-actions row">
+	<div class="bulk-actions mb-3 col-sm-3">
+		<button
+			nbButton
+			status="default"
+			*ngIf="showBulkAction"
+			[nbContextMenu]="bulkActionOptions"
+			nbContextMenuTag="timesheet-bulk-acton"
+		>
+			{{ 'TIMESHEET.BULK_ACTION' | translate }}
+			<nb-icon icon="chevron-down-outline"></nb-icon>
+		</button>
+	</div>
+</div>
+<div
+	class="row-table"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
+	<div
+		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
+	>
+		<div class="col employee-name">
+			{{ 'TIMESHEET.EMPLOYEE' | translate }}
+		</div>
+		<div class="col">{{ 'TIMESHEET.TOTAL_TIME' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.ACTIVITES' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.DURATION' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.APPROVED_AT' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.SUBMITTED_AT' | translate }}</div>
+		<div class="col">{{ 'TIMESHEET.STATUS' | translate }}</div>
+		<div class="col action">{{ 'TIMESHEET.ACTION' | translate }}</div>
+	</div>
+	<ng-template [ngIf]="timeSheets?.length > 0" [ngIfElse]="notFound">
+		<div
+			class="row border-bottom py-3 align-items-center"
+			*ngFor="let timesheet of timeSheets"
+		>
+			<div class="col employee-name">
+				<div class="name-container">
+					<ngx-avatar
+						[name]="timesheet?.employee?.user?.name"
+						[src]="timesheet?.employee?.user?.imageUrl"
+					>
+					</ngx-avatar>
+				</div>
+			</div>
+			<div class="col">{{ timesheet.duration | durationFormat }}</div>
+			<div class="col">{{ timesheet.keyboard }}</div>
+			<div class="col">
+				{{ timesheet.startedAt | amDateFormat: 'LL' }} -
+				{{ timesheet.stoppedAt | amDateFormat: 'LL' }}
+			</div>
+			<div class="col">
+				{{ timesheet.approvedAt | amDateFormat: 'LL' }}
+			</div>
+			<div class="col">
+				{{ timesheet.submittedAt | amDateFormat: 'LL' }}
+			</div>
+			<div class="col">{{ timesheet.status }}</div>
+			<div class="col action">
+				<div class="action-button">
+					<button
+						outline
+						nbButton
+						[nbPopover]="templateRef"
+						nbPopoverPlacement="bottom"
+					>
+						{{ 'TIMESHEET.ACTION' | translate }}
+					</button>
+
+					<ng-template #templateRef>
+						<div class="menu-item">
+							<button
+								class="m-1"
+								(click)="redirectToView(timesheet)"
+								nbButton
+								ghost
+								size="small"
+							>
+								{{ 'TIMESHEET.VIEW' | translate }}
+							</button>
+						</div>
+						<div class="menu-item" *ngIf="!timesheet.submittedAt">
+							<button
+								class="m-1"
+								nbButton
+								ghost
+								size="small"
+								(click)="submitTimeheet(timesheet.id, 'submit')"
+							>
+								{{ 'TIMESHEET.SUBMIT_TIMESHEET' | translate }}
+							</button>
+						</div>
+						<div
+							class="menu-item"
+							*ngIf="timesheet.submittedAt"
+							(click)="submitTimeheet(timesheet.id, 'unsubmit')"
+						>
+							<button class="m-1" nbButton ghost size="small">
+								{{ 'TIMESHEET.UNSUBMIT_TIMESHEET' | translate }}
+							</button>
+						</div>
+						<div
+							class="menu-item"
+							*ngIf="timesheet.status != TimesheetStatus.APPROVED"
+						>
+							<button
+								class="m-1"
+								nbButton
+								ghost
+								size="small"
+								(click)="
+									updateStatus(
+										timesheet.id,
+										TimesheetStatus.APPROVED
+									)
+								"
+							>
+								{{ 'TIMESHEET.APPROVE' | translate }}
+							</button>
+						</div>
+						<div
+							class="menu-item"
+							*ngIf="timesheet.status != TimesheetStatus.DENIED"
+						>
+							<button
+								class="m-1"
+								nbButton
+								ghost
+								size="small"
+								(click)="
+									updateStatus(
+										timesheet.id,
+										TimesheetStatus.DENIED
+									)
+								"
+							>
+								{{ 'TIMESHEET.DENY' | translate }}
+							</button>
+						</div>
+					</ng-template>
+				</div>
+			</div>
+		</div>
+	</ng-template>
+	<ng-template #notFound>
+		<div class="row font-weight-bold py-3 align-items-center">
+			<div class="col text-center">
+				{{ 'TIMESHEET.NO_TIMELOG' | translate }}
+			</div>
+		</div>
+	</ng-template>
+</div>

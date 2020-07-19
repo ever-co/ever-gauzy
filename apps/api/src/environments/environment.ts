@@ -2,29 +2,57 @@
 // `ng build ---prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 require('dotenv').config();
+import * as path from 'path';
 import { IEnvironment } from './ienvironment';
-import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import {
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	LanguagesEnum
+} from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
-const databaseConfig: TypeOrmModuleOptions = {
-	type: 'postgres', // TODO: process process.env.DB_TYPE value (we need to create different options obj depending on it)
-	host: process.env.DB_HOST || 'localhost',
-	port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
-	database: process.env.DB_NAME || 'postgres',
-	username: process.env.DB_USER || 'postgres',
-	password: process.env.DB_PASS || 'root',
-	keepConnectionAlive: true,
-	logging: true,
-	synchronize: true,
-	uuidExtension: 'pgcrypto'
-};
+const dbType =
+	process.env.DB_TYPE && process.env.DB_TYPE === 'sqlite'
+		? 'sqlite'
+		: 'postgres';
+
+let databaseConfig: TypeOrmModuleOptions;
+
+switch (dbType) {
+	case 'postgres':
+		databaseConfig = {
+			type: dbType,
+			host: process.env.DB_HOST || 'localhost',
+			port: process.env.DB_PORT
+				? parseInt(process.env.DB_PORT, 10)
+				: 5432,
+			database: process.env.DB_NAME || 'postgres',
+			username: process.env.DB_USER || 'postgres',
+			password: process.env.DB_PASS || 'root',
+			keepConnectionAlive: true,
+			logging: true,
+			synchronize: true,
+			uuidExtension: 'pgcrypto'
+		};
+		break;
+
+	case 'sqlite':
+		databaseConfig = {
+			type: dbType,
+			database: path.join(__dirname, '../../data/gauzy.sqlite3'),
+			keepConnectionAlive: true,
+			logging: true,
+			synchronize: true
+		};
+		break;
+}
 
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
 
 export const environment: IEnvironment = {
-	// TODO: port & host used in FB / Google Auth, but we probably should detect that some other way instead of have it as env settings!
 	port: process.env.port || 3000,
 	host: process.env.host || 'http://localhost',
+	baseUrl: process.env.BASE_URL || 'http://localhost:3000',
 
 	production: false,
 	envName: 'dev',
@@ -33,6 +61,7 @@ export const environment: IEnvironment = {
 		LOG_LEVEL: 'debug'
 	},
 
+	EXPRESS_SESSION_SECRET: 'gauzy',
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 	JWT_SECRET: 'secretKey',
 
@@ -41,32 +70,81 @@ export const environment: IEnvironment = {
 	facebookConfig: {
 		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
 		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
-		clientId: process.env.FacebookClientId || 'fakeclientid',
-		clientSecret: process.env.FacebookClientSecret || 'fakesecret',
+		clientId: process.env.FacebookClientId,
+		clientSecret: process.env.FacebookClientSecret,
 		oauthRedirectUri: `${process.env.host}:${process.env.port}/api/auth/facebook/callback`,
 		state: '{fbstate}'
 	},
 
 	googleConfig: {
-		clientId:
-			process.env.GoogleClientId ||
-			'1061129983046-pt4tnjteh9h1phfqapqkkea03iq0s351.apps.googleusercontent.com',
-		clientSecret:
-			process.env.GoogleClientSecret || 'liU5ihpwoqnsmXJNxNjFp1yP'
+		clientId: process.env.GoogleClientId,
+		clientSecret: process.env.GoogleClientSecret
 	},
 
-	defaultOrganization: {
-		name: 'Ever Technologies LTD',
-		currency: CurrenciesEnum.BGN,
-		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-		imageUrl: 'assets/images/logos/ever-large.jpg'
+	githubConfig: {
+		clientId: process.env.GithubClientId,
+		clientSecret: process.env.GithubClientSecret
 	},
+
+	microsoftConfig: {
+		clientId: process.env.MicrosoftClientId,
+		clientSecret: process.env.MicrosoftConfig,
+		resource: process.env.MicrosoftResource,
+		tenant: process.env.MicrosoftTenant
+	},
+
+	linkedinConfig: {
+		clientId: process.env.LinkedinClientId,
+		clientSecret: process.env.LinkedinClientSecret
+	},
+
+	twitterConfig: {
+		clientId: process.env.TwitterClientId,
+		clientSecret: process.env.TwitterClientSecret
+	},
+
+	fiverrConfig: {
+		clientId: process.env.FiverrClientId,
+		clientSecret: process.env.FiverrClientSecret
+	},
+
+	keycloakConfig: {
+		realm: process.env.KeycloakRealm,
+		clientId: process.env.KeycloakClientId,
+		secret: process.env.KeycloakSecret,
+		authServerUrl: process.env.KeycloakAuthServerURL,
+		cookieKey: process.env.KeycloakCookieKey
+	},
+
+	auth0Config: {
+		clientID: process.env.Auth0ClientId,
+		clientSecret: process.env.Auth0ClientSecret,
+		domain: process.env.Auth0Domanin
+	},
+
+	defaultOrganizations: [
+		{
+			name: 'Ever Technologies LTD',
+			currency: CurrenciesEnum.BGN,
+			defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+			imageUrl: 'assets/images/logos/ever-large.jpg'
+		},
+		{
+			name: 'Ever Co. Ltd',
+			currency: CurrenciesEnum.BGN,
+			defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+			imageUrl: 'assets/images/logos/ever-large.jpg'
+		}
+	],
 
 	defaultSuperAdmins: [
 		{
 			email: 'admin@ever.co',
 			password: 'admin',
-			imageUrl: 'assets/images/avatars/ruslan.jpg'
+			firstName: 'Admin',
+			lastName: 'Super',
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 
@@ -74,11 +152,22 @@ export const environment: IEnvironment = {
 		{
 			email: 'local.admin@ever.co',
 			password: 'admin',
-			imageUrl: 'assets/images/avatars/ruslan.jpg'
+			firstName: 'Admin',
+			lastName: 'Local',
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 
 	defaultEmployees: [
+		{
+			email: 'ruslan@ever.co',
+			password: '123456',
+			firstName: 'Ruslan',
+			lastName: 'Konviser',
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
 		{
 			email: 'alish@ever.co',
 			password: '123456',
@@ -87,7 +176,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/alish.jpg',
 			startedWorkOn: '2018-03-20',
 			endWork: null,
-			employeeLevel: 'D'
+			employeeLevel: 'D',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'blagovest@ever.co',
@@ -97,7 +187,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/blagovest.jpg',
 			startedWorkOn: '2018-03-19',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'elvis@ever.co',
@@ -107,7 +198,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/elvis.jpg',
 			startedWorkOn: '2018-05-25',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'emil@ever.co',
@@ -117,7 +209,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/emil.jpg',
 			startedWorkOn: '2019-01-21',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'boyan@ever.co',
@@ -127,7 +220,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/boyan.jpg',
 			startedWorkOn: '2019-01-21',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'hristo@ever.co',
@@ -137,7 +231,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/hristo.jpg',
 			startedWorkOn: '2019-06-17',
 			endWork: null,
-			employeeLevel: 'B'
+			employeeLevel: 'B',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'alex@ever.co',
@@ -147,7 +242,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/alexander.jpg',
 			startedWorkOn: '2019-08-01',
 			endWork: null,
-			employeeLevel: 'B'
+			employeeLevel: 'B',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'rachit@ever.co',
@@ -157,7 +253,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/rachit.png',
 			startedWorkOn: '2019-11-27',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'atanas@ever.co',
@@ -167,7 +264,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
 			startedWorkOn: '2020-02-01',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'dimana@ever.co',
@@ -177,7 +275,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
 			startedWorkOn: '2019-11-26',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'sunko@ever.co',
@@ -187,7 +286,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/savov.jpg',
 			startedWorkOn: '2020-02-04',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'lubomir@ever.co',
@@ -197,7 +297,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/lubomir.jpg',
 			startedWorkOn: '2020-02-06',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'pavel@ever.co',
@@ -207,7 +308,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/pavel.jpg',
 			startedWorkOn: '2020-03-16',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'yavor@ever.co',
@@ -217,7 +319,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/yavor.jpg',
 			startedWorkOn: '2020-02-05',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'tsvetelina@ever.co',
@@ -227,7 +330,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/tsvetelina.jpg',
 			startedWorkOn: '2020-03-02',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'everq@ever.co',
@@ -237,7 +341,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
 			startedWorkOn: '2018-08-01',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'muiz@smooper.xyz',
@@ -247,7 +352,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/muiz.jpg',
 			startedWorkOn: '2019-11-27',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'deko898@hotmail.com',
@@ -257,7 +363,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/dejan.jpg',
 			startedWorkOn: '2020-03-07',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'ckhandla94@gmail.com',
@@ -267,7 +374,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/chetan.png',
 			startedWorkOn: '2020-03-07',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'julia@ever.co',
@@ -277,7 +385,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/julia.png',
 			startedWorkOn: '2018-08-01',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: '',
@@ -287,7 +396,19 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/milena.png',
 			startedWorkOn: '2019-07-15',
 			endWork: '2019-10-15',
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
+			email: 'yordan@ever.co',
+			password: '123456',
+			firstName: 'Yordan ',
+			lastName: 'Genovski',
+			imageUrl: 'assets/images/avatars/yordan.jpg',
+			startedWorkOn: '2018-08-01',
+			endWork: null,
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultCandidates: [
@@ -297,7 +418,8 @@ export const environment: IEnvironment = {
 			firstName: 'John',
 			lastName: 'Smith',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			candidateLevel: 'D'
+			candidateLevel: 'D',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'jaye@ever.co',
@@ -305,9 +427,8 @@ export const environment: IEnvironment = {
 			firstName: 'Jaye',
 			lastName: 'Jeffreys',
 			imageUrl: 'assets/images/avatars/alexander.jpg',
-			startedWorkOn: '2019-08-01',
-			endWork: null,
-			employeeLevel: 'B'
+			candidateLevel: 'B',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'kasey@ever.co',
@@ -315,9 +436,8 @@ export const environment: IEnvironment = {
 			firstName: 'Kasey',
 			lastName: 'Kraker',
 			imageUrl: 'assets/images/avatars/rachit.png',
-			startedWorkOn: '2019-11-27',
-			endWork: null,
-			employeeLevel: null
+			candidateLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'norris@ever.co',
@@ -325,9 +445,8 @@ export const environment: IEnvironment = {
 			firstName: 'Norris ',
 			lastName: 'Nesbit',
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
-			startedWorkOn: '2020-02-01',
-			endWork: null,
-			employeeLevel: 'A'
+			candidateLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'estella@ever.co',
@@ -335,9 +454,8 @@ export const environment: IEnvironment = {
 			firstName: 'Estella',
 			lastName: 'Ennis',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
-			startedWorkOn: '2019-11-26',
-			endWork: null,
-			employeeLevel: null
+			candidateLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'greg@ever.co',
@@ -345,9 +463,8 @@ export const environment: IEnvironment = {
 			firstName: 'Greg ',
 			lastName: 'Grise',
 			imageUrl: 'assets/images/avatars/savov.jpg',
-			startedWorkOn: '2020-02-04',
-			endWork: null,
-			employeeLevel: 'A'
+			candidateLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultTeams: [
@@ -371,25 +488,61 @@ export const environment: IEnvironment = {
 				'tsvetelina@ever.co',
 				'everq@ever.co',
 				'julia@ever.co'
-			]
+			],
+			manager: ['ruslan@ever.co']
 		},
-		{
-			name: 'Candidates',
-			defaultMembers: ['john@ever.co']
-		},
-
 		{
 			name: 'Contractors',
 			defaultMembers: [
-				'rachit@ever.co',
 				'dimana@ever.co',
 				'deko898@hotmail.com',
 				'muiz@smooper.xyz',
 				'ckhandla94@gmail.com'
-			]
+			],
+			manager: ['ruslan@ever.co', 'rachit@ever.co']
+		},
+		{
+			name: 'Designers',
+			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
+			manager: []
+		},
+		{
+			name: 'QA',
+			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
+			manager: []
 		}
 	],
+
 	sentry: {
-		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+		dns:
+			process.env.SENTRY ||
+			'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+	},
+
+	randomSeedConfig: {
+		tenants: 5,
+		organizationsPerTenant: 2,
+		employeesPerOrganization: 5,
+		candidatesPerOrganization: 2,
+		managersPerOrganization: 2,
+		dataEntriesPerOrganization: 4,
+		viewersPerOrganization: 4,
+		projectsPerOrganization: 30,
+		emailsPerOrganization: 30,
+		invitePerOrganization: 30,
+		requestApprovalPerOrganization: 20,
+		employeeTimeOffPerOrganization: 10,
+		equipmentPerTenant: 20,
+		equipmentSharingPerTenant: 20,
+		proposalsSharingPerOrganizations: 30
+	},
+
+	defaultHubstaffUserPass:
+		process.env.INTEGRATED_HUBSTAFF_USER_PASS || 'hubstaff',
+
+	upworkConfig: {
+		callbackUrl:
+			process.env.UPWORK_CALLBACK_URL ||
+			'http://localhost:4200/#/pages/integrations/upwork'
 	}
 };

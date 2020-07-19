@@ -2,57 +2,33 @@ import { Connection } from 'typeorm';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import { User } from '@gauzy/models';
-import { CandidateSource } from '../candidate_source/candidate_source.entity';
-
-export const createCandidates = async (
-	connection: Connection,
-	defaultData?: {
-		tenant: Tenant[];
-		org: Organization;
-		users: User[];
-	},
-	randomData?: {
-		source: CandidateSource[];
-		org: Organization;
-		orgs: Organization[];
-		users: User[];
-	}
-): Promise<{
-	randomCandidates: Candidate[];
-	defaultCandidates: Candidate[];
-}> => {
-	const defaultCandidates: Candidate[] = await createDefaultCandidates(
-		connection,
-		defaultData
-	);
-	const randomCandidates: Candidate[] = await createRandomCandidates(
-		connection,
-		randomData
-	);
-
-	return { randomCandidates, defaultCandidates };
-};
-const createDefaultCandidates = async (
+import { User, ISeedUsers } from '@gauzy/models';
+import { environment as env } from '@env-api/environment';
+export const createDefaultCandidates = async (
 	connection: Connection,
 	defaultData: {
-		tenant: Tenant[];
+		tenant: Tenant;
 		org: Organization;
 		users: User[];
 	}
 ): Promise<Candidate[]> => {
+	const defaultCandidates = env.defaultCandidates || [];
 	let candidate: Candidate;
 	const candidates: Candidate[] = [];
 	const defaultUsers = defaultData.users;
 	const defaultOrg = defaultData.org;
-	const defaultTenants = defaultData.tenant;
+	const defaultTenant = defaultData.tenant;
 
 	let counter = 0;
 	for (const user of defaultUsers) {
 		candidate = new Candidate();
 		candidate.organization = defaultOrg;
 		candidate.user = user;
-		candidate.tenant = defaultTenants[counter];
+		candidate.isArchived = false;
+		candidate.tenant = defaultTenant;
+		candidate.source = defaultCandidates.filter(
+			(e) => e.email === candidate.user.email
+		)[0].source;
 
 		await insertCandidate(connection, candidate);
 		candidates.push(candidate);
@@ -61,47 +37,46 @@ const createDefaultCandidates = async (
 	return candidates;
 };
 
-const createRandomCandidates = async (
+export const createRandomCandidates = async (
 	connection: Connection,
-	randomData: {
-		source: CandidateSource[];
-		org: Organization;
-		orgs: Organization[];
-		users: User[];
-	}
-): Promise<Candidate[]> => {
-	const quantity = 100;
-	let candidate: Candidate;
-	const candidates: Candidate[] = [];
-	const randomUsers = randomData.users;
-	const randomOrgs = randomData.orgs;
-	const organization = randomData.org;
-	const candidate_source = randomData.source;
-	// const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenantUsersMap: Map<Tenant, ISeedUsers>,
+	candidatesPerOrganization: number
+): Promise<Map<Tenant, Candidate[]>> => {
+	const candidateMap: Map<Tenant, Candidate[]> = new Map();
+	for (const tenant of tenants) {
+		let candidate: Candidate;
+		const candidates: Candidate[] = [];
+		const randomUsers = tenantUsersMap.get(tenant).candidateUsers;
+		const randomOrgs = tenantOrganizationsMap.get(tenant);
+		const insertCandidatesInToOrganization = async (
+			quantity: number,
+			organization: Organization
+		) => {
+			for (let index = 0; index < quantity; index++) {
+				candidate = new Candidate();
+				candidate.organization = organization;
+				candidate.isArchived = false;
+				candidate.user = randomUsers.pop();
+				if (candidate.user) {
+					await insertCandidate(connection, candidate);
+					candidates.push(candidate);
+				}
+			}
+		};
 
-	const insertCandidatesInToOrganization = async (
-		quantity: number,
-		organization: Organization
-	) => {
-		for (let index = 0; index < quantity; index++) {
-			candidate = new Candidate();
-			candidate.organization = organization;
-			candidate.source = candidate_source[0].id;
-			candidate.user = randomUsers.pop();
-			if (candidate.user) {
-				await insertCandidate(connection, candidate);
-				candidates.push(candidate);
+		for (const org of randomOrgs) {
+			if (randomUsers.length) {
+				await insertCandidatesInToOrganization(
+					candidatesPerOrganization,
+					org
+				);
 			}
 		}
-	};
-	await insertCandidatesInToOrganization(quantity, organization);
-	for (const org of randomOrgs) {
-		if (randomUsers.length) {
-			await insertCandidatesInToOrganization(quantity, org);
-		}
+		candidateMap.set(tenant, candidates);
 	}
-
-	return candidates;
+	return candidateMap;
 };
 
 const insertCandidate = async (

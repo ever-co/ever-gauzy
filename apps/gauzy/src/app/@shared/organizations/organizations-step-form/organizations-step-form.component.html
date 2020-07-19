@@ -192,8 +192,20 @@
 								</div>
 							</div>
 						</div>
+						<div class="row">
+							<div class="col-6">
+								<ga-tags-color-input
+									[selectedTags]="tags"
+									(selectedTagsEvent)="
+										selectedTagsEvent($event)
+									"
+									[isTenantLevel]="true"
+								>
+								</ga-tags-color-input>
+							</div>
+						</div>
 
-						<div class="">
+						<div class="" style="margin-top: 20px;">
 							<button
 								[disabled]="orgMainForm.invalid"
 								nbButton
@@ -311,7 +323,7 @@
 									<input
 										fullWidth
 										id="postcodeInput"
-										type="text"
+										type="number"
 										nbInput
 										formControlName="postcode"
 										placeholder="{{
@@ -324,7 +336,7 @@
 						</div>
 					</div>
 
-					<div class=" stepper-buttons">
+					<div class="stepper-buttons">
 						<button nbButton nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
@@ -499,7 +511,7 @@
 						</div>
 					</div>
 
-					<div class=" stepper-buttons">
+					<div class="stepper-buttons">
 						<button nbButton nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
@@ -708,7 +720,7 @@
 						</div>
 					</div>
 
-					<div class=" stepper-buttons">
+					<div class="stepper-buttons">
 						<button nbButton nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>

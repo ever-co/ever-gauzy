@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
-import { User } from '@gauzy/models';
+import { User, Tag } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -24,6 +24,7 @@ export class EditUserProfileComponent extends TranslationBaseComponent
 	selectedUser: User;
 
 	tabs: any[];
+	tags: Tag[];
 
 	constructor(
 		private route: ActivatedRoute,
@@ -76,7 +77,7 @@ export class EditUserProfileComponent extends TranslationBaseComponent
 	private async _loadUserData() {
 		const { id } = this.routeParams;
 		const { items } = await this.usersOrganizationsService.getAll(
-			['user', 'user.role'],
+			['user', 'user.role', 'user.tags'],
 			{ id }
 		);
 

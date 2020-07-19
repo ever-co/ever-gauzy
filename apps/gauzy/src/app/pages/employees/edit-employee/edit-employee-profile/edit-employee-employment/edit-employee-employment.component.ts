@@ -7,7 +7,8 @@ import {
 	OrganizationDepartment,
 	OrganizationEmploymentType,
 	OrganizationPositions,
-	Tag
+	Tag,
+	Skill
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
@@ -18,7 +19,6 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
-import { EmployeesService } from '../../../../../@core/services/employees.service';
 
 @Component({
 	selector: 'ga-edit-employee-employment',
@@ -40,6 +40,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	departments: OrganizationDepartment[] = [];
 	positions: OrganizationPositions[] = [];
 	tags: Tag[] = [];
+	skills: Skill[] = [];
 	selectedTags: any;
 
 	constructor(
@@ -47,7 +48,6 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly toastrService: NbToastrService,
 		private readonly employeeStore: EmployeeStore,
-		private readonly employeeService: EmployeesService,
 		private readonly employeeLevelService: EmployeeLevelService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly organizationPositionsService: OrganizationPositionsService,
@@ -124,8 +124,12 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	selectedTagsHandler(tags: Tag[]) {
-		this.tags = tags;
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
+	}
+
+	selectedSkillsHandler(currentSelection: Skill[]) {
+		this.form.get('skills').setValue(currentSelection);
 	}
 
 	private _initializeForm(employee: Employee) {
@@ -139,14 +143,18 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			organizationDepartments: [employee.organizationDepartments || null],
 			organizationPosition: [employee.organizationPosition || null],
 			tags: [employee.tags],
+			skills: [employee.skills],
+			short_description: employee.short_description,
+			description: employee.description,
 			startedWorkOn: [
 				employee.startedWorkOn !== null
 					? new Date(employee.startedWorkOn)
-					: '' || ''
+					: ''
 			]
 		});
 
-		this.tags = employee.tags;
+		this.tags = this.form.get('tags').value || [];
+		this.skills = this.form.get('skills').value || [];
 	}
 
 	ngOnDestroy() {

@@ -1,0 +1,117 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			nbButton
+			status="success"
+			*ngIf="!showAddCard"
+			(click)="showCard()"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<div *ngIf="showAddCard" class="row m-0">
+			<form class="col-8" [formGroup]="form" *ngIf="form">
+				<div formArrayName="skills">
+					<div
+						*ngFor="
+							let skill of form.controls.skills?.controls;
+							let i = index
+						"
+					>
+						<div [formGroupName]="i">
+							<input
+								formControlName="name"
+								class="col-12"
+								nbInput
+								type="text"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_SKILL' | translate
+								}}"
+								fullWidth
+							/>
+						</div>
+					</div>
+				</div>
+			</form>
+			<span class="col-2 pl-2 pr-1"
+				><button
+					class="w-100"
+					(click)="addSkill()"
+					nbButton
+					status="success"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button></span
+			>
+			<span class="col-2 pl-1 pr-0"
+				><button
+					class="w-100"
+					(click)="showAddCard = !showAddCard"
+					nbButton
+					status="danger"
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button></span
+			>
+		</div>
+	</nb-card-header>
+	<nb-card-body *ngIf="skillList?.length">
+		<div class="ml-3 mb-4">
+			<strong>{{
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.SKILLS' | translate
+			}}</strong>
+		</div>
+
+		<nb-card *ngFor="let skill of skillList; let i = index">
+			<nb-card-body>
+				<span *ngIf="!showEditDiv[i]"> {{ skill.name }}</span>
+				<div class="row m-0" *ngIf="showEditDiv[i]">
+					<input
+						#editInput
+						class="col-8"
+						nbInput
+						type="text"
+						[value]="skill.name"
+						fullWidth
+					/>
+					<span class="col-2 pl-2 pr-1">
+						<button
+							class="w-100"
+							(click)="editSkill(editInput.value, i)"
+							nbButton
+							status="success"
+						>
+							Update
+						</button></span
+					>
+					<span class="col-2 pl-1 pr-0">
+						<button
+							class="w-100"
+							(click)="cancel(i)"
+							nbButton
+							status="danger"
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button></span
+					>
+				</div>
+				<nb-actions
+					*ngIf="!showEditDiv[i]"
+					class="float-right"
+					e="medium"
+				>
+					<nb-action
+						(click)="showEditCard(i, skill.id)"
+						class="d-inline pr-2"
+						icon="edit"
+					></nb-action>
+					<nb-action
+						(click)="removeSkill(skill.id)"
+						class="d-inline pr-0 pl-2"
+						icon="close"
+					></nb-action>
+				</nb-actions>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

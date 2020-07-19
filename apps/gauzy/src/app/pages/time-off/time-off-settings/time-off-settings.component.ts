@@ -1,24 +1,18 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	ErrorHandler,
-	ViewChild
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ErrorHandler, ViewChild } from '@angular/core';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RolesEnum, Employee, PermissionsEnum } from '@gauzy/models';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
 import { TranslateService } from '@ngx-translate/core';
 import { TimeOffService } from '../../../@core/services/time-off.service';
-import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { RequestApprovalIcon } from '../table-components/request-approval-icon';
 import { PaidIcon } from '../table-components/paid-icon';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 export interface TimeOffPolicyVM {
 	id: string;
@@ -28,7 +22,7 @@ export interface TimeOffPolicyVM {
 	employees: Employee[];
 }
 
-interface SelectedRowModel {
+export interface SelectedRowModel {
 	data: TimeOffPolicyVM;
 	isSelected: boolean;
 	selected: TimeOffPolicyVM[];
@@ -37,8 +31,7 @@ interface SelectedRowModel {
 
 @Component({
 	selector: 'ga-time-off-settings',
-	templateUrl: './time-off-settings.component.html',
-	styleUrls: ['./time-off-settings.component.scss']
+	templateUrl: './time-off-settings.component.html'
 })
 export class TimeOffSettingsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -55,7 +48,6 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	}
 
 	private _selectedOrganizationId: string;
-	private _ngDestroy$ = new Subject<void>();
 	smartTableSettings: object;
 	hasRole: boolean;
 	selectedPolicy: SelectedRowModel;
@@ -66,35 +58,36 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	loading = false;
 	hasEditPermission = false;
 
-	@ViewChild('timeOffPolicyTable', { static: false }) timeOffPolicyTable;
+	@ViewChild('timeOffPolicyTable') timeOffPolicyTable;
 
 	async ngOnInit() {
-		this.loadSettingsSmartTable();
+		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.POLICY_EDIT
 				);
 			});
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
 
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
 					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
+
+		this.authService
+			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
+			.pipe(first())
+			.subscribe((res) => (this.hasRole = res));
 	}
 
-	loadSettingsSmartTable() {
+	private _loadSettingsSmartTable() {
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
@@ -129,30 +122,30 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 		};
 	}
 
-	async openAddPolicyDialog() {
+	openAddPolicyDialog() {
 		this.dialogService
 			.open(TimeOffSettingsMutationComponent)
-			.onClose.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (formData) => {
+			.onClose.pipe(first())
+			.subscribe((formData) => {
 				if (formData) {
-					await this.addPolicy(formData);
+					this.addPolicy(formData);
 					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 	}
 
-	async addPolicy(formData) {
+	addPolicy(formData) {
 		if (formData) {
-			try {
-				await this.tymeOffService.createPolicy(formData);
-
-				this.toastrService.primary(
-					this.getTranslation('NOTES.POLICY.ADD_POLICY'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-			} catch (err) {
-				console.log(err);
-			}
+			this.tymeOffService
+				.createPolicy(formData)
+				.pipe(first())
+				.subscribe(() => {
+					this.toastrService.primary(
+						this.getTranslation('NOTES.POLICY.ADD_POLICY'),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+					this._loadTableData(this._selectedOrganizationId);
+				}, () => this.toastrService.danger('Unable to create Policy record'));
 		}
 	}
 
@@ -165,60 +158,51 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 					policy: this.selectedPolicy.data
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (formData) => {
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((formData) => {
 				if (formData) {
-					await this.editPolicy(formData);
+					this.editPolicy(formData);
 					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 	}
 
-	async editPolicy(formData) {
-		if (formData) {
-			try {
-				await this.tymeOffService.updatePolicy(
-					this.selectedPolicyId,
-					formData
-				);
+	editPolicy(formData) {
+		this.tymeOffService
+			.updatePolicy(this.selectedPolicyId, formData)
+			.pipe(first())
+			.subscribe(() => {
 				this.toastrService.primary(
 					this.getTranslation('NOTES.POLICY.EDIT_POLICY'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 
 				this._loadTableData(this._selectedOrganizationId);
-			} catch (error) {
-				this.errorHandler.handleError(error);
-			}
-		}
+			}, (error) => this.errorHandler.handleError(error));
 	}
 
-	async deletePolicy() {
+	deletePolicy() {
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: 'Policy'
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (result) => {
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((result) => {
 				if (result) {
-					try {
-						await this.tymeOffService.deletePolicy(
-							this.selectedPolicy.data.id
-						);
-
+					this.tymeOffService.deletePolicy(
+						this.selectedPolicy.data.id
+					).pipe(first()).subscribe(() => {
 						this.toastrService.primary(
 							this.getTranslation('NOTES.POLICY.DELETE_POLICY'),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this._loadTableData(this._selectedOrganizationId);
 						this.selectedPolicy = null;
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					}
+					});
 				}
-			});
+			}, (error) => this.errorHandler.handleError(error));
 	}
 
 	selectTimeOffPolicy(ev: SelectedRowModel) {
@@ -237,43 +221,38 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 				}
 			};
 
-			try {
-				const { items } = await this.tymeOffService.getAllPolicies(
-					['employees'],
-					findObj
-				);
-
-				const policyVM: TimeOffPolicyVM[] = items.map((i) => {
-					return {
-						id: i.id,
-						name: i.name,
-						requiresApproval: i.requiresApproval,
-						paid: i.paid,
-						employees: i.employees
-					};
+			this.tymeOffService
+				.getAllPolicies(['employees'], findObj)
+				.pipe(first())
+				.subscribe((res) => {
+					const items = res.items;
+					const policyVM: TimeOffPolicyVM[] = items.map((i) => {
+						return {
+							id: i.id,
+							name: i.name,
+							requiresApproval: i.requiresApproval,
+							paid: i.paid,
+							employees: i.employees
+						};
+					});
+					this.smartTableSource.load(policyVM);
+					this.showTable = true;
+				}, (error) => {
+					this.toastrService.danger(
+						this.getTranslation('', {
+							error: error.error.message || error.message
+						}),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
 				});
-
-				this.smartTableSource.load(policyVM);
-				this.showTable = true;
-			} catch (error) {
-				this.toastrService.danger(
-					this.getTranslation('', {
-						error: error.error.message || error.message
-					}),
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
-			}
 		}
 	}
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
-			this.loadSettingsSmartTable();
+			this._loadSettingsSmartTable();
 		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

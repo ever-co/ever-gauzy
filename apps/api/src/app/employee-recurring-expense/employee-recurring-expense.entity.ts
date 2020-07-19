@@ -14,7 +14,8 @@ import {
 	IsDate,
 	IsOptional
 } from 'class-validator';
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Employee } from '../employee/employee.entity';
 import { Base } from '../core/entities/base';
 
 @Entity('employee_recurring_expense')
@@ -109,4 +110,7 @@ export class EmployeeRecurringExpense extends Base
 	@Index()
 	@Column({ nullable: true })
 	parentRecurringExpenseId?: string;
+
+	@ManyToOne((type) => Employee, (employee) => employee.id)
+	employee: Employee;
 }

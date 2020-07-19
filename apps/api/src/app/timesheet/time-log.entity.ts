@@ -1,19 +1,28 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
-import { Base } from '../core/entities/base';
-import { TimeLog as ITimeLog, TimeLogType } from '@gauzy/models';
-import { ApiProperty } from '@nestjs/swagger';
 import {
-	IsString,
-	IsBoolean,
-	IsDateString,
-	IsEnum,
-	IsNumber
-} from 'class-validator';
+	Entity,
+	Column,
+	RelationId,
+	ManyToOne,
+	JoinColumn,
+	AfterLoad,
+	ManyToMany,
+	JoinTable
+} from 'typeorm';
+import { Base } from '../core/entities/base';
+import {
+	TimeLog as ITimeLog,
+	TimeLogType,
+	TimeLogSourceEnum
+} from '@gauzy/models';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { Timesheet } from './timesheet.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Task } from '../tasks/task.entity';
+import * as moment from 'moment';
+import { TimeSlot } from './time-slot.entity';
 
 @Entity('time_log')
 export class TimeLog extends Base implements ITimeLog {
@@ -28,7 +37,7 @@ export class TimeLog extends Base implements ITimeLog {
 	readonly employeeId: string;
 
 	@ApiProperty({ type: Timesheet })
-	@ManyToOne(() => Timesheet, { nullable: true })
+	@ManyToOne(() => Timesheet, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	timesheet?: Timesheet;
 
@@ -36,6 +45,14 @@ export class TimeLog extends Base implements ITimeLog {
 	@RelationId((timeLog: TimeLog) => timeLog.timesheet)
 	@Column({ nullable: true })
 	readonly timesheetId?: string;
+
+	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
+		cascade: true
+	})
+	@JoinTable({
+		name: 'time_slot_time_logs'
+	})
+	timeSlots?: TimeSlot[];
 
 	@ApiProperty({ type: OrganizationProjects })
 	@ManyToOne(() => OrganizationProjects, { nullable: true })
@@ -57,10 +74,10 @@ export class TimeLog extends Base implements ITimeLog {
 	@Column({ nullable: true })
 	readonly taskId?: string;
 
-	@ApiProperty({ type: OrganizationClients })
-	@ManyToOne(() => OrganizationClients, { nullable: true })
+	@ApiProperty({ type: OrganizationContact })
+	@ManyToOne(() => OrganizationContact, { nullable: true })
 	@JoinColumn()
-	client?: OrganizationClients;
+	client?: OrganizationContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.client)
@@ -83,15 +100,16 @@ export class TimeLog extends Base implements ITimeLog {
 	@Column({ default: TimeLogType.TRACKED })
 	logType: string;
 
+	@ApiProperty({ type: String, enum: TimeLogSourceEnum })
+	@IsEnum(TimeLogSourceEnum)
+	@IsString()
+	@Column({ default: TimeLogSourceEnum.BROWSER })
+	source?: string;
+
 	@ApiProperty({ type: String })
 	@IsBoolean()
 	@Column({ default: null, nullable: true })
 	description?: string;
-
-	@ApiProperty({ type: Number })
-	@IsNumber()
-	@Column({ default: 0 })
-	duration: number;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
@@ -102,4 +120,12 @@ export class TimeLog extends Base implements ITimeLog {
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
+
+	duration: number;
+
+	@AfterLoad()
+	getDuration?() {
+		const end = this.stoppedAt ? this.stoppedAt : new Date();
+		this.duration = moment(end).diff(moment(this.startedAt), 'seconds');
+	}
 }

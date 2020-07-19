@@ -30,9 +30,9 @@ export abstract class FindRecurringExpenseByMonthHandler<
 		);
 		const inputEndDate = new Date(input.year, input.month, 1);
 
-		let whereId: Object = input.orgId
+		let whereId: Object = input.organizationId
 			? {
-					orgId: input.orgId
+					organizationId: input.organizationId
 			  }
 			: {
 					employeeId: input.employeeId

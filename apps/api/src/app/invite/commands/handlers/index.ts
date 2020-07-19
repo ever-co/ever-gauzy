@@ -1,13 +1,13 @@
 import { InviteAcceptEmployeeHandler } from './invite.accept-employee.handler';
 import { InviteAcceptUserHandler } from './invite.accept-user.handler';
 import { InviteResendHandler } from './invite.resend.handler';
-import { InviteOrganizationClientsHandler } from './invite.organization-clients.handler';
-import { InviteLinkOrganizationClientsHandler } from './invite.link-organization-clients.handler';
+import { InviteOrganizationContactHandler } from './invite.organization-contact.handler';
+import { InviteAcceptOrganizationContactHandler } from './invite.accept-organization-contact.handler';
 
 export const CommandHandlers = [
 	InviteAcceptEmployeeHandler,
 	InviteAcceptUserHandler,
+	InviteAcceptOrganizationContactHandler,
 	InviteResendHandler,
-	InviteOrganizationClientsHandler,
-	InviteLinkOrganizationClientsHandler
+	InviteOrganizationContactHandler
 ];

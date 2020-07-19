@@ -1,0 +1,106 @@
+.interviews-line {
+  margin: 0.2rem 0 0.2rem 0.2rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.interviews-card {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.image-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.candidate-image-small {
+  max-width: 35px;
+  max-height: 35px;
+  border-radius: 13px;
+  margin: 4px;
+}
+
+.disabled {
+  color: rgba(143, 155, 179, 0.48) !important;
+  font-size: 2rem;
+  padding: 0 4px;
+  margin: 0 2px;
+  pointer-events: none;
+}
+
+.icons {
+  pointer-events: visible;
+  padding: 0 4px;
+  margin: 0 2px;
+  color: #222b45 !important;
+  font-size: 2rem;
+}
+
+.icon-wrap {
+  padding-left: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ribbon-wrap {
+  position: relative;
+}
+.ribbon {
+  position: absolute;
+  left: -6px;
+  top: -5px;
+  z-index: 1;
+  overflow: hidden;
+  width: 55px;
+  height: 55px;
+  text-align: right;
+}
+.ribbon span {
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 20px;
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  width: 76px;
+  display: block;
+  background: linear-gradient(#b6bac9 0%, #808080 100%);
+  box-shadow: 0 3px 10px -5px rgba(0, 0, 0, 1);
+  position: absolute;
+  top: 10px;
+  left: -18px;
+}
+.ribbon span::before {
+  content: '';
+  position: absolute;
+  left: 0px;
+  top: 100%;
+  z-index: -1;
+  border-left: 3px solid #808080;
+  border-right: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  border-top: 3px solid #808080;
+}
+.ribbon span::after {
+  content: '';
+  position: absolute;
+  right: 0px;
+  top: 100%;
+  z-index: -1;
+  border-left: 3px solid transparent;
+  border-right: 3px solid #808080;
+  border-bottom: 3px solid transparent;
+  border-top: 3px solid #808080;
+}

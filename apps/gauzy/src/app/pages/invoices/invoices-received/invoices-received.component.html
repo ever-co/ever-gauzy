@@ -1,0 +1,55 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<h4 *ngIf="!isEstimate">
+			{{ 'INVOICES_PAGE.RECEIVED_INVOICES' | translate }}
+		</h4>
+		<h4 *ngIf="isEstimate">
+			{{ 'INVOICES_PAGE.RECEIVED_ESTIMATES' | translate }}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3">
+			<button
+				nbButton
+				status="info"
+				class="mr-2"
+				(click)="view()"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+			<button
+				*ngIf="isEstimate"
+				nbButton
+				status="success"
+				class="mr-2"
+				(click)="accept()"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="checkmark-outline"></nb-icon>
+				{{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
+			</button>
+			<button
+				*ngIf="isEstimate"
+				nbButton
+				status="danger"
+				class="mr-2"
+				(click)="reject()"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+				{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
+			</button>
+		</div>
+		<ng2-smart-table
+			class="tags-table"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			(userRowSelect)="selectInvoice($event)"
+			style="cursor: pointer;"
+			#invoicesTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>

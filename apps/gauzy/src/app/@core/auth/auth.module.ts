@@ -18,11 +18,12 @@ const socialLinks = [
 		icon: 'linkedin-outline'
 	},
 	{
-		url: environment.COMPANY_GITHUB_LINK,
+		url: environment.GITHUB_AUTH_LINK,
+		target: '_blank',
 		icon: 'github-outline'
 	},
 	{
-		url: environment.COMPANY_TWITTER_LINK,
+		url: environment.TWITTER_AUTH_LINK,
 		target: '_blank',
 		icon: 'twitter-outline'
 	},
@@ -30,6 +31,11 @@ const socialLinks = [
 		url: environment.FACEBOOK_AUTH_LINK,
 		target: '_blank',
 		icon: 'facebook-outline'
+	},
+	{
+		url: environment.MICROSOFT_AUTH_LINK,
+		target: '_blank',
+		icon: 'square-outline'
 	}
 ];
 

@@ -1,0 +1,17 @@
+:host {
+  height: 100%;
+}
+.task-settings {
+  &__title {
+  }
+  &__projects {
+    padding: 0 !important;
+
+    .project {
+      &__title {
+      }
+      &__settings {
+      }
+    }
+  }
+}

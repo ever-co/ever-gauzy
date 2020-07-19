@@ -68,7 +68,7 @@ export class EditUserOrganizationsMutationComponent
 		);
 
 		const filtered = all_orgs.items.filter(
-			(a) => !excludedOrgs.filter((b) => b.orgId === a.id).length
+			(a) => !excludedOrgs.filter((b) => b.organizationId === a.id).length
 		);
 
 		this.organizations = filtered;
@@ -87,7 +87,7 @@ export class EditUserOrganizationsMutationComponent
 			for (let i = 0; i < this.selectedOrganizationsId.length; i++) {
 				this.addOrg.emit({
 					userId: this.selectedUserId,
-					orgId: this.selectedOrganizationsId[i],
+					organizationId: this.selectedOrganizationsId[i],
 					isActive: true
 				});
 			}

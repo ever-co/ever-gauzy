@@ -2,21 +2,22 @@ import { Component, OnInit } from '@angular/core';
 import {
 	Employee,
 	Organization,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationProjects,
 	OrganizationProjectsCreateInput,
 	PermissionsEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { EmployeesService } from '../../../../../@core/services';
+import { OrganizationContactService } from '../../../../../@core/services/organization-contact.service';
+import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
+import { OrganizationProjectsService } from '../../../../../@core/services/organization-projects.service';
+import { Store } from '../../../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-org-projects',
@@ -30,19 +31,20 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 	organization: Organization;
 	showAddCard: boolean;
 	projects: OrganizationProjects[];
-	clients: OrganizationClients[];
+	organizationContacts: OrganizationContact[];
 	employees: Employee[] = [];
 	projectToEdit: OrganizationProjects;
 	viewPrivateProjects: boolean;
 
 	constructor(
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private store: Store,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly employeesService: EmployeesService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -55,7 +57,7 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 					this.organization = organization;
 					this.loadProjects();
 					this.loadEmployees();
-					this.loadClients();
+					this.loadOrganizationContacts();
 				}
 			});
 		this.store.userRolePermissions$
@@ -64,6 +66,15 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 				this.viewPrivateProjects = this.store.hasPermission(
 					PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 				);
+			});
+
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.showAddCard = !this.showAddCard;
+					this.loadProjects();
+				}
 			});
 	}
 
@@ -136,7 +147,7 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 		}
 
 		const res = await this.organizationProjectsService.getAll(
-			['client', 'members', 'members.user'],
+			['organizationContact', 'members', 'members.user', 'tags'],
 			{
 				organizationId: this.organization.id
 			}
@@ -146,11 +157,11 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 			if (this.viewPrivateProjects) {
 				this.projects = res.items;
 			} else {
-				res.items.filter((item) => {
+				res.items.forEach((item) => {
 					if (item.public) {
 						canView.push(item);
 					} else {
-						item.members.filter((member) => {
+						item.members.forEach((member) => {
 							if (member.id === this.store.userId) {
 								canView.push(item);
 							}
@@ -162,16 +173,16 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async loadClients() {
+	private async loadOrganizationContacts() {
 		if (!this.organization) {
 			return;
 		}
 
-		const res = await this.organizationClientsService.getAll(['projects'], {
+		const res = await this.organizationContactService.getAll(['projects'], {
 			organizationId: this.organization.id
 		});
 		if (res) {
-			this.clients = res.items;
+			this.organizationContacts = res.items;
 		}
 	}
 

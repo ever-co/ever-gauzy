@@ -10,7 +10,7 @@ import {
 	IsEnum
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 @Entity('timesheet')
 export class Timesheet extends Base implements ITimesheet {
@@ -22,12 +22,12 @@ export class Timesheet extends Base implements ITimesheet {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timesheet: Timesheet) => timesheet.employee)
 	@Column()
-	readonly employeeId: string;
+	readonly employeeId?: string;
 
-	@ApiProperty({ type: OrganizationClients })
-	@ManyToOne(() => OrganizationClients, { nullable: true })
+	@ApiProperty({ type: OrganizationContact })
+	@ManyToOne(() => OrganizationContact, { nullable: true })
 	@JoinColumn()
-	approvedBy?: OrganizationClients;
+	approvedBy?: OrganizationContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timesheet: Timesheet) => timesheet.approvedBy)
@@ -37,56 +37,61 @@ export class Timesheet extends Base implements ITimesheet {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	duration: number;
+	duration?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	keyboard: number;
+	keyboard?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	mouse: number;
+	mouse?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	overall: number;
+	overall?: number;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	startedAt: Date;
+	startedAt?: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	stoppedAt: Date;
+	stoppedAt?: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	approvedAt: Date;
+	approvedAt?: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	submittedAt: Date;
+	submittedAt?: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	lockedAt: Date;
+	lockedAt?: Date;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: false })
-	isBilled: boolean;
+	isBilled?: boolean;
 
 	@ApiProperty({ type: String, enum: TimesheetStatus })
 	@IsEnum(TimesheetStatus)
 	@IsString()
 	@Column({ default: TimesheetStatus.PENDING })
 	status: string;
+
+	@ApiProperty({ type: 'timestamptz' })
+	@IsDateString()
+	@Column({ nullable: true, default: null })
+	deletedAt?: Date;
 }

@@ -1,0 +1,147 @@
+.sidemenu-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.sidemenu {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 800px;
+  width: 93%;
+}
+
+.base-button {
+  margin-bottom: 10px;
+  width: 240px;
+}
+
+.blue {
+  color: blue;
+}
+
+.text {
+  padding: 0 0.3rem;
+}
+
+.add-icon-field {
+  flex-direction: column;
+  display: flex;
+  margin-left: 17px;
+}
+
+.edit-field {
+  justify-content: space-between;
+  flex-direction: row;
+  display: flex;
+}
+
+.add-icon {
+  margin-left: 10px;
+  margin-top: 2px;
+  color: gray;
+}
+
+.base {
+  box-shadow: 0 1.5px 6px 0 rgba(44, 51, 73, 0.1);
+  border-radius: 0.25rem;
+  padding: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.icons {
+  font-size: 1.1rem;
+}
+
+.edit-icons {
+  display: none;
+  font-size: 1.1rem;
+}
+
+.base:hover .edit-icons {
+  display: inline-block;
+}
+
+.edit-node-field {
+  width: 300px;
+}
+
+.child {
+  min-width: 233px;
+  margin-left: -10px;
+  background-color: #fafafa;
+}
+
+.parent {
+  min-width: 240px;
+}
+
+.parentin {
+  min-width: 233px;
+  margin-left: -10px;
+}
+
+.childout {
+  margin-left: 3px;
+  min-width: 240px;
+  background-color: #fafafa;
+}
+
+::ng-deep {
+  .toggle-children-wrapper {
+    .toggle-children {
+      position: relative;
+      top: 11px;
+      left: 210px;
+      border: solid black;
+      border-width: 0 2px 2px 0;
+      display: inline-block;
+      width: 8px;
+      background-image: none;
+    }
+  }
+
+  .node-content-wrapper-focused {
+    background: #fff;
+  }
+
+  .node-content-wrapper-active,
+  .node-content-wrapper.node-content-wrapper-active:hover,
+  .node-content-wrapper-active.node-content-wrapper-focused {
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .node-content-wrapper-active,
+  .node-content-wrapper-focused,
+  .node-content-wrapper:hover {
+    box-shadow: inset 0 0 1px #fff;
+  }
+
+  .node-content-wrapper-active
+    .node-content-wrapper-focused
+    .node-content-wrapper:hover {
+    background: #fff !important;
+    box-shadow: inset 0 0 0 #fff !important;
+    border: none;
+  }
+
+  .node-content-wrapper:hover {
+    background: none;
+    box-shadow: none;
+    border: none;
+  }
+
+  .toggle-children-wrapper-collapsed .toggle-children {
+    transform: rotate(225deg);
+  }
+
+  .toggle-children-wrapper-expanded .toggle-children {
+    transform: rotate(45deg);
+  }
+}

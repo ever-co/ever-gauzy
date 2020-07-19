@@ -13,25 +13,45 @@ import {
 	ManyToMany,
 	ManyToOne,
 	OneToOne,
-	RelationId
+	RelationId,
+	OneToMany
 } from 'typeorm';
-import { LocationBase } from '../core/entities/location-base';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
-import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+import { Skill } from '../skills/skill.entity';
+import { Contact } from '../contact/contact.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('employee')
-export class Employee extends LocationBase implements IEmployee {
-	@ManyToMany((type) => Tag)
+export class Employee extends TenantBase implements IEmployee {
+	@ManyToMany((type) => Tag, (tag) => tag.employee)
 	@JoinTable({
 		name: 'tag_employee'
 	})
 	tags: Tag[];
+
+	@ApiProperty({ type: Contact })
+	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
+	@JoinColumn()
+	contact: Contact;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((employee: Employee) => employee.contact)
+	readonly contactId?: string;
+
+	@ManyToMany((type) => Skill, (skill) => skill.employee)
+	@JoinTable({
+		name: 'skill_employee'
+	})
+	skills: Skill[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -46,15 +66,6 @@ export class Employee extends LocationBase implements IEmployee {
 	@RelationId((employee: Employee) => employee.user)
 	@Column()
 	readonly userId: string;
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((employee: Employee) => employee.tenant)
-	readonly tenantId?: string;
 
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
@@ -83,6 +94,16 @@ export class Employee extends LocationBase implements IEmployee {
 	@ApiPropertyOptional({ type: Boolean, default: true })
 	@Column({ nullable: true, default: true })
 	isActive: boolean;
+
+	@ApiPropertyOptional({ type: String, maxLength: 200 })
+	@IsOptional()
+	@Column({ length: 200, nullable: true })
+	short_description?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	description?: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -120,11 +141,11 @@ export class Employee extends LocationBase implements IEmployee {
 	@Column({ nullable: true })
 	reWeeklyLimit?: number;
 
-	@ManyToMany((type) => OrganizationTeams) // , orgTeams => orgTeams.members
-	@JoinTable({
-		name: 'organization_team_employee'
-	})
-	teams?: OrganizationTeams[];
+	@OneToMany(
+		(type) => OrganizationTeamEmployee,
+		(organizationTeamEmployee) => organizationTeamEmployee.employee
+	)
+	teams?: OrganizationTeam[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -166,4 +187,17 @@ export class Employee extends LocationBase implements IEmployee {
 	@ApiPropertyOptional({ type: Boolean })
 	@Column({ nullable: true })
 	anonymousBonus?: boolean;
+
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.employee, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
+
+	@OneToMany(
+		(type) => RequestApprovalEmployee,
+		(requestApprovals) => requestApprovals.employee
+	)
+	requestApprovals?: RequestApprovalEmployee[];
 }

@@ -1,19 +1,23 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { PermissionsEnum, Candidate } from '@gauzy/models';
+import { PermissionsEnum, Candidate, ICandidateInterview } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { takeUntil, first } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
+import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { NbDialogService } from '@nebular/theme';
+import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 
 @Component({
-	selector: 'ngx-edit-candidate',
+	selector: 'ga-edit-candidate',
 	templateUrl: './edit-candidate.component.html',
 	styleUrls: [
 		'../../organizations/edit-organization/edit-organization.component.scss',
-		'../../dashboard/dashboard.component.scss'
+		'../../dashboard/dashboard.component.scss',
+		'./edit-candidate.component.scss'
 	]
 })
 export class EditCandidateComponent extends TranslationBaseComponent
@@ -21,13 +25,16 @@ export class EditCandidateComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
 	candidateName = 'Candidate';
+	interviewList: ICandidateInterview[];
 	hasEditPermission = false;
 	constructor(
+		private readonly candidateInterviewService: CandidateInterviewService,
 		private router: Router,
 		private store: Store,
 		private candidatesService: CandidatesService,
 		private route: ActivatedRoute,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -47,17 +54,38 @@ export class EditCandidateComponent extends TranslationBaseComponent
 				const id = params.id;
 
 				const { items } = await this.candidatesService
-					.getAll(['user', 'organizationPosition', 'tags'], { id })
+					.getAll(['user'], { id })
 					.pipe(first())
 					.toPromise();
 
 				this.selectedCandidate = items[0];
-
+				this.loadInterview();
 				const checkUsername = this.selectedCandidate.user.username;
 				this.candidateName = checkUsername
 					? checkUsername
 					: 'Candidate';
 			});
+	}
+	private async loadInterview() {
+		const interviews = await this.candidateInterviewService.getAll(
+			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
+			{ candidateId: this.selectedCandidate.id }
+		);
+
+		if (interviews) {
+			this.interviewList = interviews.items;
+		}
+	}
+	async interviewInfo() {
+		if (this.interviewList.length > 0) {
+			this.dialogService.open(CandidateInterviewInfoComponent, {
+				context: {
+					interviewList: this.interviewList,
+					selectedCandidate: this.selectedCandidate,
+					isSlider: true
+				}
+			});
+		}
 	}
 
 	editCandidate() {

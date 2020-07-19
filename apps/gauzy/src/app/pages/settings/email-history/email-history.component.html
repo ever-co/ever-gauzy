@@ -1,0 +1,87 @@
+<nb-card>
+	<nb-card-header>
+		<div class="filter">
+			<button
+				(click)="openFiltersDialog()"
+				nbButton
+				status="primary"
+				size="small"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+				Add Filter
+				<span>
+					<nb-badge
+						*ngIf="this.filteredCount"
+						status="danger"
+						text="{{ this.filteredCount }}"
+						position="center"
+						class="filterCount"
+					>
+					</nb-badge>
+				</span>
+			</button>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="content-container">
+			<nb-list [nbSpinner]="loading">
+				<nb-list-item
+					(click)="selectEmail(email)"
+					*ngFor="let email of emails"
+				>
+					<div class="email-list-item">
+						<span
+							>From:
+							<b>{{
+								email.user ? email.user.email : 'System'
+							}}</b></span
+						>
+						<span [title]="email.email"
+							>To: <b>{{ email.email }}</b></span
+						>
+					</div>
+				</nb-list-item>
+			</nb-list>
+			<div class="email-container">
+				<div class="email-details" *ngIf="selectedEmail">
+					<span
+						>From:
+						<b>{{
+							selectedEmail.user
+								? selectedEmail.user.email
+								: 'System'
+						}}</b></span
+					>
+					<span
+						>To: <b>{{ selectedEmail.email }}</b></span
+					>
+					<span
+						>Subject: <b>{{ selectedEmail.name }}</b></span
+					>
+					<span
+						>Language:
+						<b>{{
+							getEmailLanguageFullName(
+								selectedEmail.emailTemplate.languageCode
+							)
+						}}</b></span
+					>
+					<span
+						>Template:
+						<b>{{
+							selectedEmail.emailTemplate.name | titlecase
+						}}</b></span
+					>
+				</div>
+				<div
+					[innerHTML]="selectedEmailHTML"
+					*ngIf="selectedEmail; else emailNotSelected"
+					class="email-content"
+				></div>
+				<ng-template #emailNotSelected>
+					<h2>Please select an email</h2>
+				</ng-template>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

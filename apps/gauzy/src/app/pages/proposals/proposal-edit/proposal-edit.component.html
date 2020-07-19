@@ -1,26 +1,22 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h3>
-			{{
-				'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL'
-					| translate
-			}}
+			{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL' | translate }}
 		</h3>
 	</nb-card-header>
 
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="col-sm-4">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label class="label">{{
-							'PROPOSALS_PAGE.EDIT_PROPOSAL.AUTHOR'
-								| translate
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.AUTHOR' | translate
 						}}</label>
 						<div>{{ proposal.author }}</div>
 					</div>
 				</div>
-				<div class="col-sm-4">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label class="label">{{
 							'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_URL'
@@ -39,13 +35,23 @@
 						/>
 					</div>
 				</div>
-				<div class="col-sm-4">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label class="label">{{
 							'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_SENT_ON'
 								| translate
 						}}</label>
 						<div>{{ proposal.valueDate | date: 'shortDate' }}</div>
+					</div>
+				</div>
+				<div class="col-sm-3">
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
 					</div>
 				</div>
 				<div class="col-sm-6">
@@ -91,10 +97,9 @@
 			status="success"
 			nbButton
 		>
-		{{
-			'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL_BUTTON'
-				| translate
-		}}
+			{{
+				'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL_BUTTON' | translate
+			}}
 		</button>
 	</nb-card-footer>
 </nb-card>

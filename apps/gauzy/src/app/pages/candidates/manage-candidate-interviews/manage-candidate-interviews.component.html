@@ -1,0 +1,23 @@
+<nb-card>
+	<nb-card-header
+		><ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
+		<div class="header">
+			<h4>
+				{{
+					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.MANAGE_INTERVIEWS'
+						| translate
+				}}
+			</h4>
+			<button nbButton status="primary" (click)="add()">
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
+						| translate
+				}}
+			</button>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
+	</nb-card-body>
+</nb-card>

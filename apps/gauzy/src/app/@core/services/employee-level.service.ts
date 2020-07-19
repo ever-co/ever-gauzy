@@ -10,16 +10,20 @@ export class EmployeeLevelService {
 	constructor(private http: HttpClient) {}
 
 	getAll(
-		orgId: string
+		orgId: string,
+		relations?: string[]
 	): Promise<{
 		items: EmployeeLevel[];
 		total: number;
 	}> {
+		const data = JSON.stringify({ relations: relations || [] });
 		return this.http
 			.get<{
 				items: EmployeeLevel[];
 				total: number;
-			}>(`/api/employee-level/${orgId}`)
+			}>(`/api/employee-level/${orgId}`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}

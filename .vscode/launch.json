@@ -6,11 +6,30 @@
 	"configurations": [
 		{
 			"type": "node",
+			"request": "attach",
+			"name": "Debug Server",
+			"sourceMaps": true,
+			"restart": true,
+			"port": 9229
+		},
+		{
+			"type": "node",
 			"request": "launch",
 			"name": "Launch Program",
 			"program": "${workspaceFolder}\\start:gauzy",
 			"preLaunchTask": "tsc: build - tsconfig.json",
 			"outFiles": ["${workspaceFolder}/dist/out-tsc/**/*.js"]
+		},
+
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Nest Framework",
+			"args": ["${workspaceFolder}/src/main.ts"],
+			"runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+			"sourceMaps": true,
+			"cwd": "${workspaceRoot}",
+			"protocol": "inspector"
 		}
 	]
 }

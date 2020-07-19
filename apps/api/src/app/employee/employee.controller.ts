@@ -1,6 +1,7 @@
 import {
 	EmployeeCreateInput as IEmployeeCreateInput,
-	PermissionsEnum
+	PermissionsEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import {
 	Body,
@@ -12,7 +13,8 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	Req
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
@@ -24,6 +26,10 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { ParseJsonPipe } from '../shared';
+import { I18nLang } from 'nestjs-i18n';
+import { ITryRequest } from '../core/crud/try-request';
+import { Request } from 'express';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -59,7 +65,7 @@ export class EmployeeController extends CrudController<Employee> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
-			return this.employeeService.create({
+			return await this.employeeService.create({
 				id,
 				...entity
 			});
@@ -69,10 +75,10 @@ export class EmployeeController extends CrudController<Employee> {
 		}
 	}
 
-	@ApiOperation({ summary: 'Find all employees.' })
+	@ApiOperation({ summary: 'Find all employees in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found employees',
+		description: 'Found employees in the tenant',
 		type: Employee
 	})
 	@ApiResponse({
@@ -87,10 +93,34 @@ export class EmployeeController extends CrudController<Employee> {
 		return this.employeeService.findAll({ where: findInput, relations });
 	}
 
-	@ApiOperation({ summary: 'Find User by id.' })
+	@ApiOperation({ summary: 'Find all working employees.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found one record',
+		description: 'Found working employees',
+		type: Employee
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/working')
+	async findAllWorkingEmployees(
+		@Query('data') data: string
+	): Promise<IPagination<Employee>> {
+		const { organizationId, forMonth = new Date(), withUser } = JSON.parse(
+			data
+		);
+		return this.employeeService.findWorkingEmployees(
+			organizationId,
+			new Date(forMonth),
+			withUser
+		);
+	}
+
+	@ApiOperation({ summary: 'Find employee by id in the same tenant.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee in the same tenant',
 		type: Employee
 	})
 	@ApiResponse({
@@ -98,8 +128,46 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<Employee> {
-		return this.employeeService.findOne(id);
+	async findById(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Employee> {
+		const { relations = [], useTenant } = data;
+
+		if (useTenant) {
+			return this.employeeService.findOne(id, {
+				relations
+			});
+		} else {
+			return this.employeeService.findWithoutTenant(id, {
+				relations
+			});
+		}
+	}
+
+	@ApiOperation({ summary: 'Find employee by user id in the same tenant.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee in the same tenant',
+		type: Employee
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/user/:userId')
+	async findByUserId(
+		@Param('userId') userId: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<ITryRequest> {
+		const { relations = [] } = data;
+
+		return this.employeeService.findOneOrFail({
+			where: {
+				userId
+			},
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -117,9 +185,17 @@ export class EmployeeController extends CrudController<Employee> {
 	@Post('/create')
 	async create(
 		@Body() entity: IEmployeeCreateInput,
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<Employee> {
-		return this.commandBus.execute(new EmployeeCreateCommand(entity));
+		if (!entity.user.imageUrl) {
+			entity.user.imageUrl = getUserDummyImage(entity.user);
+		}
+		entity.originalUrl = request.get('Origin');
+		return this.commandBus.execute(
+			new EmployeeCreateCommand(entity, languageCode)
+		);
 	}
 
 	@ApiOperation({ summary: 'Create records in Bulk' })
@@ -137,6 +213,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Post('/createBulk')
 	async createBulk(
 		@Body() input: IEmployeeCreateInput[],
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<Employee[]> {
 		/**
@@ -145,11 +222,13 @@ export class EmployeeController extends CrudController<Employee> {
 
 		input
 			.filter((entity) => !entity.user.imageUrl)
-			.map(
+			.forEach(
 				(entity) =>
 					(entity.user.imageUrl = getUserDummyImage(entity.user))
 			);
 
-		return this.commandBus.execute(new EmployeeBulkCreateCommand(input));
+		return this.commandBus.execute(
+			new EmployeeBulkCreateCommand(input, languageCode)
+		);
 	}
 }

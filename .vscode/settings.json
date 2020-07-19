@@ -5,7 +5,9 @@
 		"Datepicker",
 		"Fargate",
 		"Fullname",
+		"HUBSTAFF",
 		"Tabset",
+		"UPWORK",
 		"adminer",
 		"compodoc",
 		"cqrs",
@@ -29,5 +31,6 @@
 		"webapp",
 		"websockets"
 	],
-	"vsicons.presets.angular": true
+	"vsicons.presets.angular": true,
+	"deepscan.enable": true
 }

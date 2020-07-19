@@ -8,15 +8,29 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimerController } from './timer/timer.controller';
 import { TimerService } from './timer/timer.service';
 import { Employee } from '../employee/employee.entity';
-import { TimeSheetService } from './timesheet.service';
-import { ActivityService } from './activity.service';
-import { ScreenShotService } from './screenshot.service';
-import { TimeSlotService } from './time_slot.service';
+import { TimeSlotMinute } from './time-slot-minute.entity';
+import { TimeSheetService } from './timesheet/timesheet.service';
+import { ActivityService } from './activity/activity.service';
+import { ScreenshotService } from './screenshot/screenshot.service';
+import { TimeSlotService } from './time-slot/time-slot.service';
 import { TimeLogController } from './time-log/time-log.controller';
 import { TimeLogService } from './time-log/time-log.service';
+import { CqrsModule } from '@nestjs/cqrs';
+import { CommandHandlers } from './commands/handlers';
+import { TimeSheetController } from './timesheet/timesheet.controller';
+import { TimeSlotController } from './time-slot/time-slot.controller';
+import { ScreenshotController } from './screenshot/screenshot.controller';
+import { ActivityController } from './activity/activity.controller';
 
 @Module({
-	controllers: [TimerController, TimeLogController],
+	controllers: [
+		TimerController,
+		ActivityController,
+		TimeLogController,
+		TimeSlotController,
+		ScreenshotController,
+		TimeSheetController
+	],
 	imports: [
 		TypeOrmModule.forFeature([
 			TimeSlot,
@@ -24,21 +38,24 @@ import { TimeLogService } from './time-log/time-log.service';
 			Screenshot,
 			TimeLog,
 			Timesheet,
-			Employee
-		])
+			Employee,
+			TimeSlotMinute
+		]),
+		CqrsModule
 	],
 	providers: [
 		TimerService,
 		TimeSheetService,
 		ActivityService,
-		ScreenShotService,
+		ScreenshotService,
 		TimeLogService,
-		TimeSlotService
+		TimeSlotService,
+		...CommandHandlers
 	],
 	exports: [
 		TimeSheetService,
 		ActivityService,
-		ScreenShotService,
+		ScreenshotService,
 		TimeLogService,
 		TimeSlotService
 	]

@@ -1,33 +1,150 @@
 <nb-card class="main">
 	<nb-card-header>
-		<h5>Request Days Off</h5>
+		<h5>{{ (isHoliday ? 'TIME_OFF_PAGE.ADD_HOLIDAYS' : 'TIME_OFF_PAGE.REQUEST_DAYS_OFF') | translate }}</h5>
 		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 
 	<nb-card-body>
-		<form class="row">
-			<div class="form-group col-6">
-				<ga-employee-selector
-					#employeeSelector
-					fullWidth
-					[skipGlobalChange]="true"
-					class="employees"
-				>
-				</ga-employee-selector>
-			</div>
-			<div class="form-group col-6">
-				<nb-select
-					[selected]="policy"
-					(selectedChange)="onPolicySelected($event)"
-					fullWidth
-					placeholder="Seletc Time-off Policy"
-				>
-					<nb-option
-						*ngFor="let policy of policies"
-						[value]="policy"
-						>{{ policy.name }}</nb-option
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="form-group col-6" *ngIf="isHoliday">
+					<label class="label">{{ 'TIME_OFF_PAGE.HOLIDAY_NAME' | translate}}</label>
+					<nb-select
+						formControlName="description"
+						(selectedChange)="onHolidaySelected($event)"
+						fullWidth
+						placeholder="{{ description || ('TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate) }}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['start'].invalid &&
+								form.controls['start'].dirty,
+							'status-success':
+								form.controls['start'].valid &&
+								form.controls['start'].dirty
+						}"
 					>
-				</nb-select>
+						<nb-option
+							*ngFor="let holiday of holidays"
+							[value]="holiday"
+							>{{ holiday.name }}</nb-option
+						>
+					</nb-select>
+				</div>
+				<div class="form-group col-6" *ngIf="isHoliday; else isRequest">
+					<label class="label">{{ 'TIME_OFF_PAGE.SELECT_EMPLOYEES' | translate}}</label>
+					<nb-select
+						multiple
+						[selected]="employeesArr"
+						(selectedChange)="onEmployeesSelected($event)"
+						fullWidth
+						required
+						placeholder="{{ 'TIME_OFF_PAGE.ADD_OR_REMOVE_EMPLOYEES' | translate }}"
+					>
+						<nb-option
+							*ngFor="let employee of orgEmployees"
+							[value]="employee.id"
+						>
+							<img
+								src="{{ employee.user.imageUrl }}"
+								alt="Smiley face"
+								height="40"
+								width="40"
+								style="margin-right: 10px;"
+							/>
+							{{ employee.user.firstName }}
+							{{ employee.user.lastName }}</nb-option
+						>
+					</nb-select>
+				</div>
+				<ng-template #isRequest>
+					<div class="form-group col-6">
+						<label class="label">{{ 'FORM.LABELS.EMPLOYEE' | translate }}</label>
+						<ga-employee-selector
+							#employeeSelector
+							fullWidth
+							required
+							[skipGlobalChange]="true"
+							class="employees"
+						>
+						</ga-employee-selector>
+					</div>
+				</ng-template>
+				<div class="form-group col-6">
+					<label class="label">{{ 'TIME_OFF_PAGE.POLICY.POLICY' | translate }}</label>
+					<nb-select
+						formControlName="policy"
+						(selectedChange)="onPolicySelected($event)"
+						fullWidth
+						placeholder="{{ 'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate }}"
+					>
+						<nb-option
+							*ngFor="let policy of policies"
+							[value]="policy"
+							>{{ policy.name }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-6">
+					<label class="label" for="start">{{ 'FORM.LABELS.FROM' | translate }}</label>
+					<input
+						formControlName="start"
+						nbInput
+						fullWidth
+						required
+						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						[nbDatepicker]="startDate"
+						[ngClass]="{
+							'status-danger':
+								form.controls['start'].invalid &&
+								form.controls['start'].dirty,
+							'status-success':
+								form.controls['start'].valid &&
+								form.controls['start'].dirty
+						}"
+					/>
+					<nb-datepicker #startDate></nb-datepicker>
+				</div>
+				<div class="form-group col-6">
+					<label class="label" for="end">{{ 'FORM.LABELS.TO' | translate }}</label>
+					<input
+						formControlName="end"
+						nbInput
+						fullWidth
+						required
+						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						[nbDatepicker]="endDate"
+						[ngClass]="{
+							'status-danger':
+								form.controls['end'].invalid &&
+								form.controls['end'].touched &&
+								form.controls['end'].dirty,
+							'status-success':
+								form.controls['end'].valid &&
+								form.controls['end'].dirty
+						}"
+					/>
+					<nb-datepicker #endDate></nb-datepicker>
+				</div>
+			</div>
+
+			<div class="row" *ngIf="!isHoliday">
+				<div class="form-group col-12">
+					<div class="form-group">
+						<label class="label" for="description"
+							>{{ 'FORM.LABELS.DESCRIPTION' | translate }}</label
+						>
+						<textarea
+							fullWidth
+							id="addressInput"
+							type="text-area"
+							nbInput
+							formControlName="description"
+							placeholder="{{ 'TIME_OFF_PAGE.ADD_A_DESCRIPTION' | translate }}"
+						></textarea>
+					</div>
+				</div>
 			</div>
 		</form>
 	</nb-card-body>
@@ -35,8 +152,18 @@
 		<button (click)="close()" status="danger" class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="addRequest()" status="success" nbButton>
+		<button
+			*ngIf="isHoliday; else isRequest"
+			(click)="addHolidays()"
+			status="success"
+			nbButton
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
+		<ng-template #isRequest>
+			<button (click)="addRequest()" status="success" nbButton>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</ng-template>
 	</nb-card-footer>
 </nb-card>

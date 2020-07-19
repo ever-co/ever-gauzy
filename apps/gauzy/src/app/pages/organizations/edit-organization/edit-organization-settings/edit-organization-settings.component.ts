@@ -3,12 +3,12 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { Country, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { OrganizationEditStore } from '../../../../@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
 import { OrganizationsService } from '../../../../@core/services/organizations.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 
 export enum ListsInputType {
 	DEPARTMENTS = 'DEPARTMENTS',
@@ -34,6 +34,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	vendors: string[] = [];
 	employeesCount: number;
 	countries: Country[] = [];
+	test: any;
 
 	private _ngOnDestroy$ = new Subject();
 	routeParams: Params;
@@ -86,22 +87,24 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('departments')
 			},
 			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.CLIENTS'),
+				title: this.getTranslation('ORGANIZATIONS_PAGE.CONTACTS'),
 				icon: 'briefcase-outline',
 				responsive: true,
-				route: this.getRoute('clients')
+				route: this.getRoute('contacts')
+			},
+			{
+				title: this.getTranslation(
+					'ORGANIZATIONS_PAGE.LEVEL_OF_EMPLOYEE'
+				),
+				icon: 'award-outline',
+				responsive: true,
+				route: this.getRoute('employeeLevels')
 			},
 			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.POSITIONS'),
 				icon: 'award-outline',
 				responsive: true,
 				route: this.getRoute('positions')
-			},
-			{
-				title: 'Employee Levels',
-				icon: 'award-outline',
-				responsive: true,
-				route: this.getRoute('employeeLevels')
 			},
 			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
@@ -142,6 +145,12 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				icon: 'settings-outline',
 				responsive: true,
 				route: this.getRoute('employment-types')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.DOCUMENTS'),
+				icon: 'file-text-outline',
+				responsive: true,
+				route: this.getRoute('documents')
 			}
 		];
 	}
@@ -157,10 +166,9 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	private async _loadOrganization(id: string) {
 		try {
 			this.organization = await this.organizationService
-				.getById(id)
+				.getById(id, null, ['tags'])
 				.pipe(first())
 				.toPromise();
-
 			this.organizationEditStore.selectedOrganization = this.organization;
 		} catch (error) {
 			this.toastrService.danger(

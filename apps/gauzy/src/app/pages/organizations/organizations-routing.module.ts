@@ -5,7 +5,7 @@ import { EditOrganizationSettingsComponent } from './edit-organization/edit-orga
 import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 import { EditOrganizationLocationComponent } from './edit-organization/edit-organization-settings/edit-organization-location/edit-organization-location.component';
 import { EditOrganizationDepartmentsComponent } from './edit-organization/edit-organization-settings/edit-organization-departments/edit-organization-departments.component';
-import { EditOrganizationClientsComponent } from './edit-organization/edit-organization-settings/edit-organization-clients/edit-organization-clients.component';
+import { EditOrganizationContactComponent } from './edit-organization/edit-organization-settings/edit-organization-contacts/edit-organization-contact.component';
 import { EditOrganizationPositionsComponent } from './edit-organization/edit-organization-settings/edit-organization-positions/edit-organization-positions.component';
 import { EditOrganizationVendorsComponent } from './edit-organization/edit-organization-settings/edit-organization-vendors/edit-organization-vendors.component';
 import { EditOrganizationProjectsComponent } from './edit-organization/edit-organization-settings/edit-organization-projects/edit-organization-projects.component';
@@ -15,6 +15,7 @@ import { EditOrganizationMainComponent } from './edit-organization/edit-organiza
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit-organization-settings/edit-organization-employee-levels/edit-organization-employee-level.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization/edit-organization-settings/edit-organization-employment-types/edit-organization-employment-types.component';
 import { EditOrganizationExpenseCategoriesComponent } from './edit-organization/edit-organization-settings/edit-organization-expense-categories/edit-organization-expense-categories.component';
+import { EditOrganizationDocuments } from './edit-organization/edit-organization-settings/edit-organization-documents/edit-organization-documents/edit-organization-documents';
 
 const routes: Routes = [
 	{
@@ -47,8 +48,8 @@ const routes: Routes = [
 				component: EditOrganizationDepartmentsComponent
 			},
 			{
-				path: 'clients',
-				component: EditOrganizationClientsComponent
+				path: 'contacts',
+				component: EditOrganizationContactComponent
 			},
 			{
 				path: 'positions',
@@ -81,6 +82,10 @@ const routes: Routes = [
 			{
 				path: 'employeeLevels',
 				component: EditOrganizationEmployeeLevelComponent
+			},
+			{
+				path: 'documents',
+				component: EditOrganizationDocuments
 			}
 		]
 	}

@@ -1,4 +1,8 @@
-import { EditEntityByMemberInput, PermissionsEnum } from '@gauzy/models';
+import {
+	EditEntityByMemberInput,
+	PermissionsEnum,
+	TaskListTypeEnum
+} from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -101,6 +105,36 @@ export class OrganizationProjectsController extends CrudController<
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationProjectEditByEmployeeCommand(entity)
+		);
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	// @UseGuards(PermissionGuard)
+	// @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Put(':id')
+	async updateTaskViewMode(
+		@Param('id') id: string,
+		@Body() entity: { taskViewMode: TaskListTypeEnum }
+	): Promise<any> {
+		console.log(entity);
+		return this.organizationProjectsService.updateTaskViewMode(
+			id,
+			entity.taskViewMode
+			// new OrganizationProjectEditByEmployeeCommand(entity)
 		);
 	}
 }

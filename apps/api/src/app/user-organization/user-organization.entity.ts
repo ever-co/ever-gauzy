@@ -11,6 +11,7 @@ import { UserOrganization as IUserOrganization } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { User } from '../user/user.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('user_organization')
 export class UserOrganization extends Base implements IUserOrganization {
@@ -27,12 +28,20 @@ export class UserOrganization extends Base implements IUserOrganization {
 	@RelationId((userOrganization: UserOrganization) => userOrganization.user)
 	userId: string;
 
+	@ApiProperty({ type: Organization })
+	@ManyToOne(() => Organization, { nullable: false, onDelete: 'CASCADE' })
+	@JoinColumn()
+	organization: Organization;
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
-	orgId: string;
+	@RelationId(
+		(userOrganization: UserOrganization) => userOrganization.organization
+	)
+	organizationId: string;
 
 	@ApiProperty({ type: Boolean, default: true })
 	@Index()

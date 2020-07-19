@@ -1,0 +1,299 @@
+[
+	{
+		"name": "Software",
+		"description": "a collection of data or computer instructions that tell the computer how to work",
+		"fakerImageCategory": "technics",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Софтуер",
+				"description": "Kолекция от данни или компютърни инструкции, които казват на компютъра как да работи"
+			},
+			{
+				"languageCode": "en",
+				"name": "Software",
+				"description": "a collection of data or computer instructions that tell the computer how to work"
+			},
+			{
+				"languageCode": "he",
+				"name": "תוכנה",
+				"description": "אוסף נתונים או הוראות מחשב המספרים למחשב כיצד לעבוד"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Програмное обеспечение",
+				"description": "Набор данных или компьютерных инструкций, которые говорят компьютеру, как работать"
+			}
+		]
+	},
+	{
+		"name": "Food",
+		"description": "Any substance consumed to provide nutritional support for an organism",
+		"fakerImageCategory": "food",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Храна",
+				"description": "Всяко вещество, консумирано за осигуряване на хранителна подкрепа на организма"
+			},
+			{
+				"languageCode": "en",
+				"name": "Food",
+				"description": "Any substance consumed to provide nutritional support for an organism"
+			},
+			{
+				"languageCode": "he",
+				"name": "מזון",
+				"description": "כל חומר הנצרך בכדי לספק תמיכה תזונתית לאורגניזם"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Питание",
+				"description": "Любое вещество, потребляемое для обеспечения питательной поддержки организма"
+			}
+		]
+	},
+	{
+		"name": "Transport",
+		"description": "The movement of people or goods from one place to another",
+		"fakerImageCategory": "transport",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Tранспорт",
+				"description": "Движението на хора или стоки от едно място на друго"
+			},
+			{
+				"languageCode": "en",
+				"name": "Transport",
+				"description": "The movement of people or goods from one place to another"
+			},
+			{
+				"languageCode": "he",
+				"name": "הובלה",
+				"description": "תנועה של אנשים או טובין ממקום למקום"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Транспорт",
+				"description": "Перемещение людей или товаров из одного места в другое"
+			}
+		]
+	},
+	{
+		"name": "Education",
+		"description": "Aquisition of knowledge, skills, values, beliefs, and habits",
+		"fakerImageCategory": "people",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Oбразование",
+				"description": "Придобиване на знания, умения, ценности, вярвания и навици"
+			},
+			{
+				"languageCode": "en",
+				"name": "Education",
+				"description": "Aquisition of knowledge, skills, values, beliefs, and habits"
+			},
+			{
+				"languageCode": "he",
+				"name": "חינוך",
+				"description": "מימוש ידע, מיומנויות, ערכים, אמונות והרגלים"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Образование",
+				"description": "Приобретение знаний, навыков, ценностей, убеждений и привычек"
+			}
+		]
+	},
+	{
+		"name": "Clothing",
+		"description": "Items worn on the body",
+		"fakerImageCategory": "fashion",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Oблекло",
+				"description": "Елементи, носени по тялото"
+			},
+			{
+				"languageCode": "en",
+				"name": "Clothing",
+				"description": "Items worn on the body"
+			},
+			{
+				"languageCode": "he",
+				"name": "ביגוד",
+				"description": "פריטים שחוקים על הגוף"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Одежда",
+				"description": "Предметы, носимые на теле"
+			}
+		]
+	},
+	{
+		"name": "Office",
+		"description": "A place for commercial, professional, or bureaucratic work.",
+		"fakerImageCategory": "business",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Oфис",
+				"description": "Място за търговска, професионална или бюрократична работа."
+			},
+			{
+				"languageCode": "en",
+				"name": "Office",
+				"description": "A place for commercial, professional, or bureaucratic work."
+			},
+			{
+				"languageCode": "he",
+				"name": "משרד",
+				"description": "מקום לעבודה מסחרית, מקצועית או בירוקרטית."
+			},
+			{
+				"languageCode": "ru",
+				"name": "Офис",
+				"description": "Место для коммерческой, профессиональной или бюрократической работы."
+			}
+		]
+	},
+	{
+		"name": "Advertisement",
+		"description": "How a company encourages people to buy their products, services or ideas",
+		"fakerImageCategory": "business",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Реклама",
+				"description": "Как една компания насърчава хората да купуват своите продукти, услуги или идеи"
+			},
+			{
+				"languageCode": "en",
+				"name": "Advertisement",
+				"description": "How a company encourages people to buy their products, services or ideas"
+			},
+			{
+				"languageCode": "he",
+				"name": "פרסומת",
+				"description": "כיצד חברה מעודדת אנשים לקנות את המוצרים, השירותים או הרעיונות שלהם"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Реклама",
+				"description": "Как компания поощряет людей покупать их продукты, услуги или идеи"
+			}
+		]
+	},
+	{
+		"name": "Health",
+		"description": "State of complete physical, mental, and social well-being",
+		"fakerImageCategory": "nature",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Здраве",
+				"description": "Състояние на пълно физическо, психическо и социално благополучие"
+			},
+			{
+				"languageCode": "en",
+				"name": "Health",
+				"description": "State of complete physical, mental, and social well-being"
+			},
+			{
+				"languageCode": "he",
+				"name": "בריאות",
+				"description": "מצב של רווחה גופנית, נפשית וחברתית מוחלטת"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Здоровье",
+				"description": "Состояние полного физического, психического и социального благополучия"
+			}
+		]
+	},
+	{
+		"name": "Sport",
+		"description": "An activity involving physical exertion and skill",
+		"fakerImageCategory": "sports",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Спорт",
+				"description": "Дейност, включваща физически натоварвания и умения"
+			},
+			{
+				"languageCode": "en",
+				"name": "Sport",
+				"description": "An activity involving physical exertion and skill"
+			},
+			{
+				"languageCode": "he",
+				"name": "ספורט",
+				"description": "פעילות הכוללת מאמץ ומיומנות גופנית"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Спорт",
+				"description": "Деятельность, включающая физические нагрузки и навыки"
+			}
+		]
+	},
+	{
+		"name": "Furniture",
+		"description": "Used to make a room or building suitable for living or working in",
+		"fakerImageCategory": "abstract",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Мебели",
+				"description": "Използва се за направа на стая или сграда, подходяща за живеене или работа"
+			},
+			{
+				"languageCode": "en",
+				"name": "Furniture",
+				"description": "Used to make a room or building suitable for living or working in"
+			},
+			{
+				"languageCode": "he",
+				"name": "ריהוט",
+				"description": "משמש לייצור חדר או בניין המתאימים למגורים או לעבוד בו"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Мебель",
+				"description": "Используется, чтобы сделать комнату или здание пригодными для проживания или работы в"
+			}
+		]
+	},
+	{
+		"name": "Pets",
+		"description": "An animal kept primarily for a person's company or entertainment rather than as a working animal",
+		"fakerImageCategory": "cats",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Домашни любимци",
+				"description": "Животно, отглеждано основно за компания или забавление на човек, а не като работещо животно"
+			},
+			{
+				"languageCode": "en",
+				"name": "Pets",
+				"description": "An animal kept primarily for a person's company or entertainment rather than as a working animal"
+			},
+			{
+				"languageCode": "he",
+				"name": "חיות מחמד",
+				"description": "חיה שהוחזקה בעיקר עבור החברה או הבידור של האדם ולא כחיה עובדת"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Домашние питомцы",
+				"description": "Животное держится в основном для компании или развлечения человека, а не как рабочее животное"
+			}
+		]
+	}
+]

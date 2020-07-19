@@ -1,6 +1,15 @@
 <div>
-	<div>{{ rowData.notes }}</div>
-	<div class="tags">
+	<div *ngIf="rowData.notes">{{ rowData.notes }}</div>
+	<div *ngIf="rowData.description" [hidden]="rowData.title">
+		{{ rowData.description }}
+	</div>
+	<div *ngIf="rowData.purpose">{{ rowData.purpose }}</div>
+	<div *ngIf="rowData.invoiceNumber">{{ rowData.invoiceNumber }}</div>
+	<div *ngIf="rowData.title">{{ rowData.title }}</div>
+	<div *ngIf="rowData.jobTitle">{{ rowData.jobTitle }}</div>
+	<div *ngIf="rowData.name">{{ rowData.name }}</div>
+	<div *ngIf="rowData.level">{{ rowData.level }}</div>
+	<div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}">
 		<nb-badge
 			*ngFor="let tag of rowData?.tags"
 			class="color"

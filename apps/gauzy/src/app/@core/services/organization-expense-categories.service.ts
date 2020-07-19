@@ -28,9 +28,10 @@ export class OrganizationExpenseCategoriesService {
 	}
 
 	getAll(
-		findInput?: IOrganizationExpenseCategoryFindInput
+		findInput?: IOrganizationExpenseCategoryFindInput,
+		relations?: string[]
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		const data = JSON.stringify({ findInput, relations });
 
 		return this.http
 			.get<{ items: IOrganizationExpenseCategory[]; total: number }>(

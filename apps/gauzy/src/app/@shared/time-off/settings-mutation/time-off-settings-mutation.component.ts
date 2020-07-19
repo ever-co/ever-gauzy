@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { Employee, OrganizationTeams } from '@gauzy/models';
+import { Employee, OrganizationTeam } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
@@ -22,7 +22,7 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input()
-	team?: OrganizationTeams;
+	team?: OrganizationTeam;
 
 	policy: TimeOffPolicyVM;
 	organizationId: string;

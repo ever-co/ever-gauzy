@@ -1,0 +1,176 @@
+<nb-card size="large" class="max-width-40vw">
+	<nb-card-header>
+		{{ !!data ? 'Edit Objective' : 'Add Objective' }}
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="objectiveForm">
+			<label for="objective-title" class="label">
+				{{ 'FORM.LABELS.NAME' | translate }}
+			</label>
+			<input
+				type="text"
+				id="objective-title"
+				nbInput
+				fullWidth
+				formControlName="name"
+				placeholder="{{
+					'GOALS_PAGE.FORM.PLACEHOLDERS.NAME' | translate
+				}}"
+			/>
+
+			<label for="objective-description" class="label mt-3">
+				{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
+			</label>
+			<textarea
+				id="objective-description"
+				nbInput
+				fullWidth
+				formControlName="description"
+				placeholder="{{
+					'GOALS_PAGE.FORM.PLACEHOLDERS.DESCRIPTION' | translate
+				}}"
+			></textarea>
+
+			<label for="objective-level" class="label mt-3">
+				{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
+			</label>
+			<nb-select
+				id="objective-level"
+				formControlName="level"
+				placeholder="{{
+					'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL' | translate
+				}}"
+				[selected]="objectiveForm.value.level"
+				(selectedChange)="
+					$event === goalLevelEnum.TEAM ? getTeams() : null
+				"
+				fullWidth
+			>
+				<nb-option
+					*ngFor="let level of goalLevelEnum | keyvalue"
+					[value]="level.value"
+					[attr.disabled]="
+						!hideOrg
+							? false
+							: objectiveForm.value.level ===
+							  goalLevelEnum.ORGANIZATION
+							? true
+							: level.value === goalLevelEnum.ORGANIZATION
+							? true
+							: false
+					"
+					>{{
+						'GOALS_PAGE.LEVELS.' + level.key | translate
+					}}</nb-option
+				>
+			</nb-select>
+
+			<label for="objective-owner" class="label mt-3">
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
+			</label>
+			<ga-employee-multi-select
+				*ngIf="objectiveForm.value.level === goalLevelEnum.EMPLOYEE"
+				[multiple]="false"
+				[allEmployees]="employees"
+				[selectedEmployeeIds]="objectiveForm.value.owner"
+				[label]="false"
+				(selectedChange)="selectEmployee($event, 'owner')"
+				id="key-result-owner"
+				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
+				class="header-selector employee-selector"
+			></ga-employee-multi-select>
+			<nb-select
+				fullWidth
+				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
+				*ngIf="objectiveForm.value.level === goalLevelEnum.TEAM"
+				formControlName="owner"
+			>
+				<nb-option *ngFor="let team of teams" [value]="team.id">
+					{{ team.name }}
+				</nb-option>
+			</nb-select>
+			<nb-select
+				fullWidth
+				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
+				*ngIf="objectiveForm.value.level === goalLevelEnum.ORGANIZATION"
+				formControlName="owner"
+			>
+				<nb-option [value]="orgId">
+					{{ orgName }}
+				</nb-option>
+			</nb-select>
+
+			<label for="objective-Lead" class="label mt-3">
+				{{ 'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate }}
+			</label>
+			<ga-employee-multi-select
+				[multiple]="false"
+				[allEmployees]="employees"
+				[selectedEmployeeIds]="objectiveForm.value.lead"
+				[label]="false"
+				(selectedChange)="selectEmployee($event, 'lead')"
+				id="key-result-Lead"
+				placeholder="{{
+					'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate
+				}}"
+				class="header-selector employee-selector"
+			></ga-employee-multi-select>
+
+			<label for="objective-deadline" class="label mt-3">
+				{{ 'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate }}
+			</label>
+			<nb-select
+				*ngIf="timeFrames.length > 0"
+				id="objective-deadline"
+				formControlName="deadline"
+				placeholder="{{
+					'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate
+				}}"
+				fullWidth
+			>
+				<nb-option
+					*ngFor="let deadline of timeFrames"
+					[value]="deadline.name"
+					>{{ deadline.name }}</nb-option
+				>
+			</nb-select>
+			<p>
+				<button
+					id="objective-deadline"
+					*ngIf="timeFrames.length == 0"
+					status="primary"
+					nbButton
+					(click)="openSetTimeFrame()"
+				>
+					{{ 'GOALS_PAGE.BUTTONS.ADD_TIME_FRAME' | translate }}
+				</button>
+			</p>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-3" nbButton (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			nbButton
+			[disabled]="
+				!objectiveForm.valid || !hideOrg
+					? false
+					: this.objectiveForm.value.level ===
+					  goalLevelEnum.ORGANIZATION
+					? true
+					: false
+			"
+			status="success"
+			(click)="saveObjective()"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

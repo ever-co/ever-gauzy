@@ -1,52 +1,71 @@
-# API
+# devependecies
+FROM node:alpine AS dependencies
 
-FROM node:alpine AS development
+RUN apk --update add bash && \
+    apk add --no-cache dos2unix g++ git make python vips-dev
 
-RUN apk update \
-    && apk add libexecinfo libexecinfo-dev \
-    && npm i -g npm \
-    && apk --no-cache add --virtual builds-deps build-base \
-    snappy g++ snappy-dev gcc libgcc libstdc++ linux-headers autoconf automake make nasm python git \
-    && npm install --quiet node-gyp -g \ 
-    && npm config set python /usr/bin/python \
-    && npm install yarn@latest -g --force
+RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
-RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
+COPY wait .deploy/api/entrypoint /
+RUN chmod +x /wait /entrypoint
 
-USER node
+RUN dos2unix /entrypoint
+
+USER node:node
 
 WORKDIR /srv/gauzy
 
+COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
+COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node package.json yarn.lock ./
-COPY --chown=node:node apps/api/package.json ./apps/api/package.json
-# COPY .snyk /tmp/.snyk
+
 RUN yarn install
 
-FROM node:alpine AS production
+# development
+FROM node:alpine AS development
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
-
-RUN npm install cross-env -g \
-    && npm install pm2 -g --unsafe-perm \
-    && chmod +x /wait
-
-RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
-RUN mkdir /srv/gauzy/dist && chown node:node /srv/gauzy/dist
-
-USER node
+USER node:node
 
 WORKDIR /srv/gauzy
 
-ARG NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_OPTIONS $NODE_OPTIONS
-ENV NODE_ENV production
-
-COPY --from=development --chown=root:root /srv/gauzy/node_modules ./node_modules
-COPY --from=development --chown=root:root /srv/gauzy/apps/api/node_modules ./apps/api/node_modules
-
+COPY --chown=node:node --from=dependencies /wait /entrypoint /
+COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-EXPOSE 3000
+# build
+FROM node:alpine AS build
 
-CMD /wait \
-    && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn ng serve api --host 0.0.0.0 -c=production --prod
+WORKDIR /srv/gauzy
+
+RUN mkdir dist
+
+COPY --chown=node:node --from=development /srv/gauzy .
+
+ARG NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_ENV production
+
+RUN yarn build:api:prod
+
+# production
+FROM node:alpine AS production
+
+WORKDIR /srv/gauzy
+
+COPY --chown=node:node --from=dependencies /wait ./wait
+COPY --chown=node:node --from=dependencies /entrypoint .
+COPY --chown=node:node --from=dependencies /srv/gauzy/node_modules ./node_modules/
+COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates
+COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
+
+RUN chown node:node wait && chmod +x wait && chown -R node:node apps/
+USER node:node
+
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_ENV production
+ENV DB_NAME postgres
+ENV API_PORT 3000
+ENV DB_PORT 5432
+
+EXPOSE ${API_PORT:-3000}
+CMD [ "node", "main.js" ]
+ENTRYPOINT [ "./entrypoint" ]

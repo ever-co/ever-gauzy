@@ -1,5 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { PermissionsEnum, InvitationTypeEnum } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	InvitationTypeEnum,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -8,13 +12,23 @@ import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidatesService } from '../../@core/services/candidates.service';
-import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbToastrService, NbDialogService, NbMenuItem } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { Router, ActivatedRoute } from '@angular/router';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import {
+	Router,
+	ActivatedRoute,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
+import { CandidateSourceService } from '../../@core/services/candidate-source.service';
+import { CandidateFeedbacksService } from '../../@core/services/candidate-feedbacks.service';
+import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
+import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation/candidate-action-confirmation.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -33,19 +47,23 @@ export class CandidatesComponent extends TranslationBaseComponent
 	sourceSmartTable = new LocalDataSource();
 	selectedCandidate: CandidateViewModel;
 	selectedOrganizationId: string;
-
 	private _ngDestroy$ = new Subject<void>();
-
 	candidateName = 'Candidate';
-
-	includeDeleted = false;
+	candidateSource: string;
+	candidateRating: number;
+	includeArchived = false;
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	candidateData: CandidateViewModel[];
 
-	@ViewChild('candidatesTable', { static: false }) candidatesTable;
+	@ViewChild('candidatesTable') candidatesTable;
+	supportContextMenu: NbMenuItem[];
 
 	constructor(
 		private candidatesService: CandidatesService,
@@ -55,9 +73,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 		private router: Router,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private candidateSourceService: CandidateSourceService,
+		private candidateFeedbacksService: CandidateFeedbacksService
 	) {
 		super(translate);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -96,20 +117,53 @@ export class CandidatesComponent extends TranslationBaseComponent
 					this.add();
 				}
 			});
+
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+		this.supportContextMenu = [
+			{
+				title: this.getTranslation('CONTEXT_MENU.MANAGE_INTERVIEWS'),
+				icon: 'people-outline',
+				link: 'pages/employees/candidates/interviews'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.MANAGE_INVITES'),
+				icon: 'email-outline',
+				link: 'pages/employees/candidates/invites'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.CANDIDATE_STATISTIC'),
+				icon: 'bar-chart-outline',
+				link: 'pages/employees/candidates/statistic'
+			}
+		];
 	}
 
-	selectCandidateTmp(ev: {
-		data: CandidateViewModel;
-		isSelected: boolean;
-		selected: CandidateViewModel[];
-		source: LocalDataSource;
-	}) {
-		if (ev.isSelected) {
-			this.selectedCandidate = ev.data;
+	setView() {
+		this.viewComponentName = ComponentEnum.CANDIDATES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+
+	selectCandidateTmp({ isSelected, data }) {
+		const selectedCandidate = isSelected ? data : null;
+		if (this.candidatesTable) {
+			this.candidatesTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedCandidate = selectedCandidate;
+		if (this.selectedCandidate) {
 			const checkName = this.selectedCandidate.fullName.trim();
 			this.candidateName = checkName ? checkName : 'Candidate';
-		} else {
-			this.selectedCandidate = null;
 		}
 	}
 	async add() {
@@ -134,20 +188,32 @@ export class CandidatesComponent extends TranslationBaseComponent
 			this.loadPage();
 		}
 	}
-	edit() {
+	edit(selectedItem?: CandidateViewModel) {
+		if (selectedItem) {
+			this.selectCandidateTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
 		]);
 	}
-	async delete() {
+	async archive(selectedItem?: CandidateViewModel) {
+		if (selectedItem) {
+			this.selectCandidateTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
-			.open(DeleteConfirmationComponent, {
+			.open(ArchiveConfirmationComponent, {
 				context: {
 					recordType:
 						this.selectedCandidate.fullName +
 						' ' +
 						this.getTranslation(
-							'FORM.DELETE_CONFIRMATION.CANDIDATE'
+							'FORM.ARCHIVE_CONFIRMATION.CANDIDATE'
 						)
 				}
 			})
@@ -155,12 +221,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.candidatesService.delete(
+						await this.candidatesService.setCandidateAsArchived(
 							this.selectedCandidate.id
 						);
 
 						this.toastrService.primary(
-							this.candidateName + ' has been deleted.',
+							this.candidateName + '  set as archived.',
 							'Success'
 						);
 
@@ -184,11 +250,37 @@ export class CandidatesComponent extends TranslationBaseComponent
 	manageInvites() {
 		this.router.navigate(['/pages/employees/candidates/invites']);
 	}
+	manageInterviews() {
+		this.router.navigate(['/pages/employees/candidates/interviews']);
+	}
+	async getCandidateSource(id: string) {
+		this.candidateSource = null;
+		const res = await this.candidateSourceService.getAll({
+			candidateId: id
+		});
+		if (res) {
+			return (this.candidateSource = res.items[0]);
+		}
+	}
+	async getCandidateRating(id: string) {
+		const res = await this.candidateFeedbacksService.getAll(
+			['interviewer'],
+			{
+				candidateId: id
+			}
+		);
+		if (res) {
+			this.candidateRating = 0;
+			for (let i = 0; i < res.total; i++) {
+				this.candidateRating += +res.items[i].rating / res.total;
+			}
+		}
+	}
 	private async loadPage() {
 		this.selectedCandidate = null;
 
 		const { items } = await this.candidatesService
-			.getAll(['user', 'tags'], {
+			.getAll(['user', 'source', 'tags'], {
 				organization: { id: this.selectedOrganizationId }
 			})
 			.pipe(first())
@@ -197,24 +289,32 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 		let candidatesVm = [];
 		const result = [];
+
 		for (const candidate of items) {
+			await this.getCandidateSource(candidate.id);
+			await this.getCandidateRating(candidate.id);
 			result.push({
 				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
 				email: candidate.user.email,
 				id: candidate.id,
+				source: this.candidateSource,
+				rating: this.candidateRating,
 				status: candidate.status,
+				isArchived: candidate.isArchived,
 				imageUrl: candidate.user.imageUrl,
-				tag: candidate.tags
+				tags: candidate.tags
 			});
 		}
-
-		if (!this.includeDeleted) {
+		if (!this.includeArchived) {
 			result.forEach((candidate) => {
-				candidatesVm.push(candidate);
+				if (!candidate.isArchived) {
+					candidatesVm.push(candidate);
+				}
 			});
 		} else {
 			candidatesVm = result;
 		}
+		this.candidateData = candidatesVm;
 		this.sourceSmartTable.load(candidatesVm);
 
 		if (this.candidatesTable) {
@@ -231,7 +331,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: CandidateFullNameComponent,
+					renderComponent: PictureNameTagsComponent,
 					class: 'align-row'
 				},
 				email: {
@@ -239,15 +339,15 @@ export class CandidatesComponent extends TranslationBaseComponent
 					type: 'email',
 					class: 'email-column'
 				},
-				//  WIP - need to fix, makes mistake when initialize
+				source: {
+					title: this.getTranslation('SM_TABLE.SOURCE'),
+					type: 'custom',
+					class: 'text-center',
+					width: '200px',
+					renderComponent: CandidateSourceComponent,
+					filter: false
+				},
 
-				// source: {
-				// 	title: this.getTranslation('SM_TABLE.SOURCE'),
-				// 	type: 'custom',
-				// 	class: 'text-center',
-				// 	width: '200px',
-				// 	filter: false
-				// },
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
@@ -264,11 +364,78 @@ export class CandidatesComponent extends TranslationBaseComponent
 		};
 	}
 
-	changeIncludeDeleted(checked: boolean) {
-		this.includeDeleted = checked;
+	changeIncludeArchived(checked: boolean) {
+		this.includeArchived = checked;
 		this.loadPage();
 	}
+	async reject(selectedItem?: CandidateViewModel) {
+		if (selectedItem) {
+			this.selectCandidateTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.dialogService
+			.open(CandidateActionConfirmationComponent, {
+				context: {
+					recordType: this.selectedCandidate.fullName,
+					isReject: true
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.candidatesService.setCandidateAsRejected(
+							this.selectedCandidate.id
+						);
 
+						this.toastrService.success(
+							this.candidateName + '  set as rejected.',
+							'Success'
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
+			});
+	}
+	async hire(selectedItem?: CandidateViewModel) {
+		if (selectedItem) {
+			this.selectCandidateTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.dialogService
+			.open(CandidateActionConfirmationComponent, {
+				context: {
+					recordType: this.selectedCandidate.fullName,
+					isReject: false
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.candidatesService.setCandidateAsHired(
+							this.selectedCandidate.id
+						);
+
+						this.toastrService.success(
+							this.candidateName + '  set as hired.',
+							'Success'
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
+			});
+	}
 	private _applyTranslationOnSmartTable() {
 		this.translate.onLangChange
 			.pipe(takeUntil(this._ngDestroy$))

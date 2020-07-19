@@ -1,6 +1,10 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
-import { Organization, PermissionsEnum } from '@gauzy/models';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import {
+	Organization,
+	PermissionsEnum,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -14,9 +18,11 @@ import { OrganizationsMutationComponent } from '../../@shared/organizations/orga
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
-import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface SelectedRow {
 	data: Organization;
@@ -39,19 +45,25 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		private employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
-		private store: Store
+		private store: Store,
+		private userOrganizationService: UsersOrganizationsService
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('settingsTable', { static: false }) settingsTable;
+	@ViewChild('settingsTable') settingsTable;
 
 	settingsSmartTable: object;
 	selectedOrganization: Organization;
 	smartTableSource = new LocalDataSource();
 
+	organizations: Organization[] = [];
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	loading = true;
 	hasEditPermission = false;
 	hasEditExpensesPermission = false;
@@ -62,7 +74,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
 					type: 'custom',
-					renderComponent: OrganizationsFullnameComponent
+					renderComponent: PictureNameTagsComponent
 				},
 				totalEmployees: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
@@ -110,15 +122,32 @@ export class OrganizationsComponent extends TranslationBaseComponent
 					PermissionsEnum.ORG_EXPENSES_EDIT
 				);
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
 
-	selectOrganization(data: SelectedRow) {
-		if (data.isSelected) {
-			this.selectedOrganization = data.data;
-		
-		} else {
-			this.selectedOrganization = null;
+	setView() {
+		this.viewComponentName = ComponentEnum.ORGANIZATION;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+
+	selectOrganization({ isSelected, data }) {
+		const selectedOrganization = isSelected ? data : null;
+		if (this.settingsTable) {
+			this.settingsTable.grid.dataSet.willSelect = false;
 		}
+		this.disableButton = !isSelected;
+		this.selectedOrganization = selectedOrganization;
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -152,13 +181,25 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editOrganization() {
+	async editOrganization(selectedItem?: Organization) {
+		if (selectedItem) {
+			this.selectOrganization({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
 			'/pages/organizations/edit/' + this.selectedOrganization.id
 		]);
 	}
 
-	async deleteOrganization() {
+	async deleteOrganization(selectedItem?: Organization) {
+		if (selectedItem) {
+			this.selectOrganization({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -191,9 +232,18 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	private async _loadSmartTable() {
 		try {
-			const { items } = await this.organizationsService.getAll();
+			const { items } = await this.userOrganizationService.getAll(
+				['organization', 'organization.tags'],
+				{
+					userId: this.store.userId
+				}
+			);
 
-			for (const org of items) {
+			this.organizations = items.map(
+				(userOrganization) => userOrganization.organization
+			);
+
+			for (const org of this.organizations) {
 				const data = await this.employeesService
 					.getAll([], { organization: { id: org.id } })
 					.pipe(first())
@@ -203,7 +253,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 				org.totalEmployees = activeEmployees.length;
 			}
 
-			this.smartTableSource.load(items);
+			this.smartTableSource.load(this.organizations);
 			if (this.settingsTable) {
 				this.settingsTable.grid.dataSet.willSelect = 'false';
 			}

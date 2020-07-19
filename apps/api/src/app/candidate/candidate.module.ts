@@ -9,7 +9,7 @@ import { AuthService } from '../auth/auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Candidate } from './candidate.entity';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
-
+import { CommandHandlers } from './commands/handlers';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Candidate, User]),
@@ -18,7 +18,13 @@ import { UserOrganizationModule } from '../user-organization/user-organization.m
 		UserOrganizationModule
 	],
 	controllers: [CandidateController],
-	providers: [CandidateService, UserService, AuthService, EmailService],
+	providers: [
+		CandidateService,
+		UserService,
+		AuthService,
+		EmailService,
+		...CommandHandlers
+	],
 	exports: [CandidateService]
 })
 export class CandidateModule {}

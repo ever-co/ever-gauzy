@@ -1,0 +1,632 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<div class="navigate">
+			<button (click)="onCancel()" nbButton status="primary" class="mr-4">
+				<nb-icon icon="arrow-back-outline"></nb-icon>
+			</button>
+		</div>
+		<h5>
+			{{
+				(itemVariant
+					? 'INVENTORY_PAGE.EDIT_VARIANT'
+					: 'INVENTORY_PAGE.ADD_VARIANT'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="onCancel()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<div class="col-md-3 col-sm-12">
+				<div class="product-variant-container">
+					<div class="product-variant-photo">
+						<ngx-image-uploader
+							(changeHoverState)="hoverState = $event"
+							(uploadedImageUrl)="
+								form.get('imageUrl').setValue($event)
+							"
+							(uploadImageError)="handleImageUploadError($event)"
+						></ngx-image-uploader>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							xmlns:xlink="http://www.w3.org/1999/xlink"
+							width="68"
+							height="68"
+							viewBox="0 0 68 68"
+							[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+						>
+							<defs>
+								<path
+									id="a"
+									d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+								/>
+							</defs>
+							<g fill="none" fill-rule="evenodd">
+								<circle
+									cx="34"
+									cy="34"
+									r="34"
+									fill="#0091FF"
+									opacity=".3"
+								/>
+								<circle
+									cx="34"
+									cy="34"
+									r="26"
+									fill="#0091FF"
+									opacity=".9"
+								/>
+								<use
+									fill="#FFF"
+									fill-rule="nonzero"
+									xlink:href="#a"
+								/>
+							</g>
+						</svg>
+						<div
+							class="image-overlay"
+							[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
+						></div>
+
+						<img
+							*ngIf="!!form"
+							[src]="
+								'https://afostats.imagead.net/uploads/afo/no_img.png'
+							"
+							alt="Product Item Photo"
+							(mouseenter)="hoverState = true"
+							(mouseleave)="hoverState = false"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-9 col-sm-12">
+				<form [formGroup]="form" *ngIf="form">
+					<div class="form-group">
+						<div class="row">
+							<div class="col-sm-6 mb-4">
+								<label
+									class="label"
+									for="internationalReferenceInput"
+								>
+									{{
+										'INVENTORY_PAGE.INTERNATIONAL_REFERENCE'
+											| translate
+									}}
+								</label>
+								<input
+									fullWidth
+									id="internationalReferenceInput"
+									type="text"
+									nbInput
+									formControlName="internationalReference"
+									[placeholder]="
+										'INVENTORY_PAGE.INTERNATIONAL_REFERENCE'
+											| translate
+									"
+									[ngClass]="{
+										'status-danger':
+											form.controls[
+												'internationalReference'
+											].invalid &&
+											form.controls[
+												'internationalReference'
+											].touched
+									}"
+								/>
+								<div
+									*ngIf="
+										form.controls['internationalReference']
+											.invalid &&
+										form.controls['internationalReference']
+											.touched
+									"
+								>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls[
+												'internationalReference'
+											].errors &&
+											form.controls[
+												'internationalReference'
+											].errors.required
+										"
+									>
+										{{
+											'VALIDATION.FIELD_REQUIRED'
+												| translate
+										}}
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-6 mb-4">
+								<label class="label" for="invoicingPolicyInput">
+									{{
+										'INVENTORY_PAGE.BILLING_INVOICING_POLICY'
+											| translate
+									}}
+								</label>
+								<nb-select
+									id="unitCostCurrency"
+									fullWidth
+									[placeholder]="
+										'INVENTORY_PAGE.BILLING_INVOICING_POLICY'
+											| translate
+									"
+									formControlName="invoicingPolicy"
+									[ngClass]="{
+										'status-danger':
+											form.controls['invoicingPolicy']
+												.invalid &&
+											form.controls['invoicingPolicy']
+												.touched
+									}"
+								>
+									<nb-option
+										*ngFor="
+											let policy of billingInvoicingPolicies
+										"
+										value="{{ policy }}"
+									>
+										{{ policy }}
+									</nb-option>
+								</nb-select>
+								<div
+									*ngIf="
+										form.controls['invoicingPolicy']
+											.invalid &&
+										form.controls['invoicingPolicy'].touched
+									"
+								>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['invoicingPolicy']
+												.errors &&
+											form.controls['invoicingPolicy']
+												.errors.required
+										"
+									>
+										{{
+											'VALIDATION.FIELD_REQUIRED'
+												| translate
+										}}
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6 mb-4">
+								<label class="label" for="quantityInput">
+									{{ 'INVENTORY_PAGE.QUANTITY' | translate }}
+								</label>
+								<input
+									fullWidth
+									id="quantityInput"
+									type="number"
+									formControlName="quantity"
+									nbInput
+									[placeholder]="
+										'INVENTORY_PAGE.QUANTITY' | translate
+									"
+									[ngClass]="{
+										'status-danger':
+											form.controls['quantity'].invalid &&
+											form.controls['quantity'].touched
+									}"
+								/>
+								<div
+									*ngIf="
+										form.controls['quantity'].invalid &&
+										form.controls['quantity'].touched
+									"
+								>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['quantity'].errors &&
+											form.controls['quantity'].errors
+												.required
+										"
+									>
+										{{
+											'VALIDATION.FIELD_REQUIRED'
+												| translate
+										}}
+									</div>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['quantity'].errors &&
+											form.controls['quantity'].errors.min
+										"
+									>
+										{{
+											'VALIDATION.ENTER_POSITIVE_NUMBER'
+												| translate
+										}}
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-6 mb-4">
+								<label class="label" for="taxesInput">
+									{{ 'INVENTORY_PAGE.TAXES' | translate }}
+								</label>
+								<input
+									fullWidth
+									id="taxesInput"
+									type="number"
+									formControlName="taxes"
+									nbInput
+									[placeholder]="
+										'INVENTORY_PAGE.TAXES' | translate
+									"
+									[ngClass]="{
+										'status-danger':
+											form.controls['taxes'].invalid &&
+											form.controls['taxes'].touched
+									}"
+								/>
+								<div
+									*ngIf="
+										form.controls['taxes'].invalid &&
+										form.controls['taxes'].touched
+									"
+								>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['taxes'].errors &&
+											form.controls['taxes'].errors
+												.required
+										"
+									>
+										{{
+											'VALIDATION.FIELD_REQUIRED'
+												| translate
+										}}
+									</div>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['taxes'].errors &&
+											form.controls['taxes'].errors.min
+										"
+									>
+										{{
+											'VALIDATION.ENTER_POSITIVE_NUMBER'
+												| translate
+										}}
+									</div>
+								</div>
+							</div>
+						</div>
+						<hr />
+						<div class="row">
+							<div class="col-sm-8 mb-4">
+								<label class="label" for="retailPriceInput">
+									{{
+										'INVENTORY_PAGE.RETAIL_PRICE'
+											| translate
+									}}
+								</label>
+								<input
+									fullWidth
+									id="retailPriceInput"
+									type="number"
+									formControlName="retailPrice"
+									nbInput
+									[placeholder]="
+										'INVENTORY_PAGE.RETAIL_PRICE'
+											| translate
+									"
+									[ngClass]="{
+										'status-danger':
+											form.controls['retailPrice']
+												.invalid &&
+											form.controls['retailPrice'].touched
+									}"
+								/>
+								<div
+									*ngIf="
+										form.controls['retailPrice'].invalid &&
+										form.controls['retailPrice'].touched
+									"
+								>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['retailPrice']
+												.errors &&
+											form.controls['retailPrice'].errors
+												.required
+										"
+									>
+										{{
+											'VALIDATION.FIELD_REQUIRED'
+												| translate
+										}}
+									</div>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['retailPrice']
+												.errors &&
+											form.controls['retailPrice'].errors
+												.min
+										"
+									>
+										{{
+											'VALIDATION.ENTER_POSITIVE_NUMBER'
+												| translate
+										}}
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-4 mb-4">
+								<label
+									class="label"
+									for="retailPriceCurrencyInput"
+								>
+									{{
+										'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
+											| translate
+									}}
+								</label>
+								<nb-select
+									id="retailPriceCurrencyInput"
+									fullWidth
+									formControlName="retailPriceCurrency"
+									[placeholder]="
+										'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
+											| translate
+									"
+									[ngClass]="{
+										'status-danger':
+											form.controls['retailPriceCurrency']
+												.invalid &&
+											form.controls['retailPriceCurrency']
+												.touched
+									}"
+								>
+									<nb-option
+										*ngFor="let currency of currencies"
+										value="{{ currency }}"
+										>{{ currency }}
+									</nb-option>
+								</nb-select>
+								<div
+									*ngIf="
+										form.controls['retailPriceCurrency']
+											.invalid &&
+										form.controls['retailPriceCurrency']
+											.touched
+									"
+								>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['retailPriceCurrency']
+												.errors &&
+											form.controls['retailPriceCurrency']
+												.errors.required
+										"
+									>
+										{{
+											'VALIDATION.FIELD_REQUIRED'
+												| translate
+										}}
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-8 mb-4">
+								<label class="label" for="unitCost">
+									{{ 'INVENTORY_PAGE.UNIT_COST' | translate }}
+								</label>
+								<input
+									fullWidth
+									id="unitCost"
+									type="number"
+									formControlName="unitCost"
+									nbInput
+									[placeholder]="
+										'INVENTORY_PAGE.UNIT_COST' | translate
+									"
+									[ngClass]="{
+										'status-danger':
+											form.controls['unitCost'].invalid &&
+											form.controls['unitCost'].touched
+									}"
+								/>
+								<div
+									*ngIf="
+										form.controls['unitCost'].invalid &&
+										form.controls['unitCost'].touched
+									"
+								>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['unitCost'].errors &&
+											form.controls['unitCost'].errors
+												.required
+										"
+									>
+										{{
+											'VALIDATION.FIELD_REQUIRED'
+												| translate
+										}}
+									</div>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['unitCost'].errors &&
+											form.controls['unitCost'].errors.min
+										"
+									>
+										{{
+											'VALIDATION.ENTER_POSITIVE_NUMBER'
+												| translate
+										}}
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-4 mb-4">
+								<label class="label" for="unitCostCurrency">
+									{{
+										'INVENTORY_PAGE.UNIT_COST_CURRENCY'
+											| translate
+									}}
+								</label>
+								<nb-select
+									id="unitCostCurrency"
+									fullWidth
+									[placeholder]="
+										'INVENTORY_PAGE.UNIT_COST_CURRENCY'
+											| translate
+									"
+									formControlName="unitCostCurrency"
+									[ngClass]="{
+										'status-danger':
+											form.controls['unitCostCurrency']
+												.invalid &&
+											form.controls['unitCostCurrency']
+												.touched
+									}"
+								>
+									<nb-option
+										*ngFor="let currency of currencies"
+										value="{{ currency }}"
+										>{{ currency }}
+									</nb-option>
+								</nb-select>
+								<div
+									*ngIf="
+										form.controls['unitCostCurrency']
+											.invalid &&
+										form.controls['unitCostCurrency']
+											.touched
+									"
+								>
+									<div
+										class="text-danger"
+										*ngIf="
+											form.controls['unitCostCurrency']
+												.errors &&
+											form.controls['unitCostCurrency']
+												.errors.required
+										"
+									>
+										{{
+											'VALIDATION.FIELD_REQUIRED'
+												| translate
+										}}
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row mb-4">
+							<div class="col-sm-4 flex-column">
+								<nb-checkbox formControlName="enabled">
+									<span>{{
+										'INVENTORY_PAGE.ENABLED' | translate
+									}}</span>
+								</nb-checkbox>
+								<nb-checkbox formControlName="isSubscription">
+									<span>{{
+										'INVENTORY_PAGE.IS_SUBSCRIPTION'
+											| translate
+									}}</span>
+								</nb-checkbox>
+								<nb-checkbox
+									formControlName="isPurchaseAutomatically"
+								>
+									<span>{{
+										'INVENTORY_PAGE.IS_PURCHASE_AUTOMATICALLY'
+											| translate
+									}}</span>
+								</nb-checkbox>
+							</div>
+							<div class="col-sm-4 flex-column">
+								<nb-checkbox formControlName="canBeSold">
+									<span>{{
+										'INVENTORY_PAGE.CAN_BE_SOLD' | translate
+									}}</span>
+								</nb-checkbox>
+								<nb-checkbox formControlName="canBePurchased">
+									<span>{{
+										'INVENTORY_PAGE.CAN_BE_PURCHASED'
+											| translate
+									}}</span>
+								</nb-checkbox>
+								<nb-checkbox formControlName="canBeCharged">
+									<span>{{
+										'INVENTORY_PAGE.CAN_BE_CHARGED'
+											| translate
+									}}</span>
+								</nb-checkbox>
+							</div>
+							<div class="col-sm-4 flex-column">
+								<nb-checkbox formControlName="canBeRented">
+									<span>{{
+										'INVENTORY_PAGE.CAN_BE_RENTED'
+											| translate
+									}}</span>
+								</nb-checkbox>
+								<nb-checkbox formControlName="trackInventory">
+									<span>{{
+										'INVENTORY_PAGE.TRACK_INVENTORY'
+											| translate
+									}}</span>
+								</nb-checkbox>
+								<nb-checkbox formControlName="isEquipment">
+									<span>{{
+										'INVENTORY_PAGE.IS_EQUIPMENT'
+											| translate
+									}}</span>
+								</nb-checkbox>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-12 mb-4">
+								<label class="label" for="notes">
+									{{ 'INVENTORY_PAGE.NOTES' | translate }}
+								</label>
+								<textarea
+									nbInput
+									fullWidth
+									formControlName="notes"
+									id="notes"
+									[placeholder]="
+										'INVENTORY_PAGE.NOTES' | translate
+									"
+								>
+								</textarea>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="onCancel()" status="warning" class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			status="success"
+			[disabled]="form && form.invalid"
+			nbButton
+			(click)="onSaveRequest()"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

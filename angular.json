@@ -5,8 +5,9 @@
 			"typescriptMismatch": false,
 			"versionMismatch": false
 		},
-		"defaultCollection": "@nrwl/angular",
-		"packageManager": "yarn"
+		"defaultCollection": "@nstudio/xplat",
+		"packageManager": "yarn",
+		"analytics": false
 	},
 	"version": 1,
 	"newProjectRoot": "",
@@ -23,8 +24,12 @@
 			"prefix": "gauzy",
 			"architect": {
 				"build": {
-					"builder": "@angular-devkit/build-angular:browser",
+					"builder": "@angular-builders/custom-webpack:browser",
 					"options": {
+						"aot": true,
+						"customWebpackConfig": {
+							"path": "apps/gauzy/config/custom-webpack.config.js"
+						},
 						"outputPath": "dist/apps/gauzy",
 						"index": "apps/gauzy/src/index.html",
 						"main": "apps/gauzy/src/main.ts",
@@ -74,30 +79,30 @@
 							"optimization": true,
 							"outputHashing": "all",
 							"serviceWorker": true,
-							"sourceMap": {
-								"hidden": true,
-								"scripts": true,
-								"styles": false
-							},
+							"sourceMap": false,
 							"extractCss": true,
 							"namedChunks": false,
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
 							"aot": true,
-							"extractLicenses": true,
+							"extractLicenses": false,
 							"vendorChunk": false,
 							"buildOptimizer": false,
 							"budgets": [
 								{
 									"type": "initial",
-									"maximumWarning": "2mb",
+									"maximumWarning": "10mb",
 									"maximumError": "20mb"
+								},
+								{
+									"type": "anyComponentStyle",
+									"maximumWarning": "100kb"
 								}
 							]
 						}
 					}
 				},
 				"serve": {
-					"builder": "@angular-devkit/build-angular:dev-server",
+					"builder": "@angular-builders/custom-webpack:dev-server",
 					"options": {
 						"browserTarget": "gauzy:build",
 						"proxyConfig": "apps/gauzy/proxy.conf.json"
@@ -202,7 +207,9 @@
 						}
 					},
 					"options": {
-						"buildTarget": "api:build"
+						"buildTarget": "api:build",
+						"inspect": true,
+						"port": 9229
 					}
 				},
 				"lint": {
@@ -269,6 +276,252 @@
 					"options": {
 						"jestConfig": "libs/api-interface/jest.config.js",
 						"tsConfig": "libs/api-interface/tsconfig.spec.json"
+					}
+				}
+			}
+		},
+		"desktop": {
+			"projectType": "application",
+			"schematics": {
+				"@nrwl/workspace:component": {
+					"style": "scss"
+				}
+			},
+			"root": "apps/gauzy",
+			"sourceRoot": "apps/gauzy/src",
+			"prefix": "gauzy",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:browser",
+					"options": {
+						"outputPath": "dist/apps/desktop",
+						"index": "apps/gauzy/src/index.html",
+						"main": "apps/gauzy/src/main.ts",
+						"polyfills": "apps/gauzy/src/polyfills.ts",
+						"tsConfig": "apps/gauzy/tsconfig.app.json",
+						"stylePreprocessorOptions": {
+							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+						},
+						"assets": [
+							"apps/gauzy/src/favicon.ico",
+							"apps/gauzy/src/assets",
+							"apps/gauzy/src/manifest.json",
+							"apps/gauzy/src/silent-refresh.html",
+							{
+								"glob": "**/*",
+								"input": "apps/desktop/src/",
+								"ignore": ["**/*.ts"],
+								"output": ""
+							}
+						],
+						"styles": [
+							"node_modules/bootstrap/dist/css/bootstrap.css",
+							"node_modules/typeface-exo/index.css",
+							"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+							"node_modules/ionicons/dist/scss/ionicons.scss",
+							"node_modules/@fortawesome/fontawesome-free/css/all.css",
+							"node_modules/socicon/css/socicon.css",
+							"node_modules/nebular-icons/scss/nebular-icons.scss",
+							"node_modules/angular-tree-component/dist/angular-tree-component.css",
+							"node_modules/pace-js/templates/pace-theme-flash.tmpl.css",
+							"node_modules/leaflet/dist/leaflet.css",
+							"apps/gauzy/src/app/@theme/styles/styles.scss"
+						],
+						"scripts": [
+							"node_modules/pace-js/pace.min.js",
+							"node_modules/tinymce/tinymce.min.js",
+							"node_modules/tinymce/plugins/link/plugin.min.js",
+							"node_modules/tinymce/plugins/paste/plugin.min.js",
+							"node_modules/tinymce/plugins/table/plugin.min.js",
+							"node_modules/echarts/dist/echarts.min.js",
+							"node_modules/echarts/dist/extension/bmap.min.js",
+							"node_modules/chart.js/dist/Chart.min.js"
+						]
+					},
+					"configurations": {
+						"production": {
+							"fileReplacements": [
+								{
+									"replace": "apps/gauzy/src/environments/environment.ts",
+									"with": "apps/gauzy/src/environments/environment.prod.ts"
+								}
+							],
+							"optimization": true,
+							"outputHashing": "all",
+							"serviceWorker": true,
+							"sourceMap": false,
+							"extractCss": true,
+							"namedChunks": false,
+							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
+							"aot": true,
+							"extractLicenses": false,
+							"vendorChunk": false,
+							"buildOptimizer": false,
+							"budgets": [
+								{
+									"type": "initial",
+									"maximumWarning": "2mb",
+									"maximumError": "20mb"
+								}
+							]
+						}
+					}
+				},
+				"serve": {
+					"builder": "@angular-devkit/build-angular:dev-server",
+					"options": {
+						"browserTarget": "desktop:build",
+						"proxyConfig": "apps/gauzy/proxy.conf.json"
+					},
+					"configurations": {
+						"production": {
+							"browserTarget": "desktop:build:production",
+							"proxyConfig": "apps/gauzy/proxy.prod.conf.json"
+						}
+					}
+				}
+			}
+		},
+		"desktop-api": {
+			"root": "apps/api",
+			"sourceRoot": "apps/api/src",
+			"projectType": "application",
+			"prefix": "api",
+			"schematics": {},
+			"architect": {
+				"build": {
+					"builder": "@nrwl/node:build",
+					"options": {
+						"webpackConfig": "tools/build/webpack.config.js",
+						"outputPath": "dist/apps/desktop/api",
+						"main": "apps/api/src/main.ts",
+						"showCircularDependencies": false,
+						"sourceMap": true,
+						"maxWorkers": 4,
+						"tsConfig": "apps/api/tsconfig.app.json",
+						"assets": ["apps/api/src/assets"]
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": true,
+							"inspect": false,
+							"sourceMap": false,
+							"fileReplacements": [
+								{
+									"replace": "apps/api/src/environments/environment.ts",
+									"with": "apps/api/src/environments/environment.prod.ts"
+								}
+							]
+						}
+					}
+				}
+			}
+		},
+		"desktop-ui": {
+			"projectType": "application",
+			"schematics": {
+				"@nrwl/angular:component": {
+					"style": "scss"
+				}
+			},
+			"root": "apps/desktop",
+			"sourceRoot": "apps/desktop/src",
+			"prefix": "gauzy",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:browser",
+					"options": {
+						"outputPath": "dist/apps/desktop/ui",
+						"index": "apps/desktop/src/index.html",
+						"main": "apps/desktop/src/main.ts",
+						"polyfills": "apps/desktop/src/polyfills.ts",
+						"tsConfig": "apps/desktop/tsconfig.app.json",
+						"aot": true,
+						"assets": [
+							"apps/desktop/src/favicon.ico",
+							"apps/desktop/src/assets"
+						],
+						"styles": [
+							"node_modules/@nebular/theme/styles/prebuilt/default.css",
+							"node_modules/bootstrap/dist/css/bootstrap.css",
+							"node_modules/typeface-exo/index.css",
+							"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+							"node_modules/ionicons/dist/scss/ionicons.scss",
+							"node_modules/@fortawesome/fontawesome-free/css/all.css",
+							"node_modules/socicon/css/socicon.css",
+							"node_modules/nebular-icons/scss/nebular-icons.scss",
+							"node_modules/angular-tree-component/dist/angular-tree-component.css",
+							"node_modules/pace-js/templates/pace-theme-flash.tmpl.css",
+							"node_modules/leaflet/dist/leaflet.css"
+						],
+						"scripts": []
+					},
+					"configurations": {
+						"production": {
+							"fileReplacements": [
+								{
+									"replace": "apps/desktop/src/environments/environment.ts",
+									"with": "apps/desktop/src/environments/environment.prod.ts"
+								}
+							],
+							"optimization": true,
+							"outputHashing": "all",
+							"sourceMap": false,
+							"extractCss": true,
+							"namedChunks": false,
+							"extractLicenses": true,
+							"vendorChunk": false,
+							"buildOptimizer": true,
+							"budgets": [
+								{
+									"type": "initial",
+									"maximumWarning": "2mb",
+									"maximumError": "5mb"
+								},
+								{
+									"type": "anyComponentStyle",
+									"maximumWarning": "6kb",
+									"maximumError": "10kb"
+								}
+							]
+						}
+					}
+				},
+				"serve": {
+					"builder": "@angular-devkit/build-angular:dev-server",
+					"options": {
+						"browserTarget": "desktop-ui:build"
+					},
+					"configurations": {
+						"production": {
+							"browserTarget": "desktop-ui:build:production"
+						}
+					}
+				},
+				"extract-i18n": {
+					"builder": "@angular-devkit/build-angular:extract-i18n",
+					"options": {
+						"browserTarget": "desktop-ui:build"
+					}
+				},
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"apps/desktop/tsconfig.app.json",
+							"apps/desktop/tsconfig.spec.json"
+						],
+						"exclude": ["**/node_modules/**", "!apps/desktop/**"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "apps/desktop/web-ui/jest.config.js",
+						"tsConfig": "apps/desktop/web-ui/tsconfig.spec.json",
+						"passWithNoTests": true,
+						"setupFile": "apps/desktop/web-ui/src/test-setup.ts"
 					}
 				}
 			}

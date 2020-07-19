@@ -1,0 +1,61 @@
+<div class="p-3 time-log-view-contiainer">
+	<h6>Time logs</h6>
+
+	<nb-list class="time-span custom-scroll">
+		<nb-list-item
+			*ngFor="let timelog of timelogs"
+			class="row align-items-center"
+			(click)="viewLog(timelog)"
+		>
+			<div class="time-log-content col">
+				<nb-user
+					[name]="timelog.employee?.user?.name"
+					title="{{
+						timelog.startedAt | utcToLocal | timeFormat: true
+					}} -  {{
+						timelog.stoppedAt | utcToLocal | timeFormat: true
+					}} ({{ timelog.duration | durationFormat }})"
+					[picture]="timelog.employee?.user?.imageUrl"
+				>
+				</nb-user>
+			</div>
+			<div class="time-log-action col-auto">
+				<button
+					*ngxPermissionsOnly="[
+						OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+					]"
+					nbButton
+					ghost
+					status="primary"
+					(click)="openEdit($event, timelog)"
+				>
+					<nb-icon icon="edit"></nb-icon>
+				</button>
+				<button
+					*ngxPermissionsOnly="[
+						OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+					]"
+					nbButton
+					ghost
+					status="danger"
+					(click)="onDeleteConfirm($event, timelog)"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</div>
+		</nb-list-item>
+	</nb-list>
+	<div class="text-center">
+		<button
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+			]"
+			nbButton
+			class="mx-auto mt-3"
+			status="primary"
+			(click)="openAddByDateProject($event)"
+		>
+			<nb-icon icon="plus-outline"></nb-icon> Add Time
+		</button>
+	</div>
+</div>

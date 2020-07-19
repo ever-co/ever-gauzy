@@ -1,82 +1,43 @@
-<form [formGroup]="form" *ngIf="form">
+<div>
 	<label class="label" for="addTags">
 		{{ 'TAGS_PAGE.HEADER' | translate }}
 	</label>
 	<ng-select
+		[items]="tags"
+		multiple="true"
 		bindLabel="name"
-		[addTag]="true"
-		formControlName="tags"
-		[items]="tags"
-		[(ngModel)]="selectedTags"
-		multiple="true"
-		(change)="onChange()"
+		[loading]="loading"
+		[addTag]="addTag"
+		(change)="selectedTagsEvent.emit($event)"
+		[ngModel]="selectedTags"
+		[closeOnSelect]="false"
+		id="addTags"
+		placeholder="{{ 'MENU.TAGS' | translate }}"
 	>
-		<ng-template ng-label-tmp let-item="item" let-clear="clear">
-			<span class="ng-value-label"
-				><nb-badge
-					style="position: static !important;"
-					width="20px"
-					height="20px"
-					[style.background]="item.color"
-					text="{{ item.name }}"
-				></nb-badge
-			></span>
-			<span
-				class="ng-value-icon right"
-				(click)="clear(item)"
-				aria-hidden="true"
-				>×</span
-			>
-		</ng-template>
-		<ng-template ng-option-tmp let-item="item">
-			<nb-badge
-				style="position: static !important;"
-				width="20px"
-				height="20px"
-				[style.background]="item.color"
-				text="{{ item.name }}"
-			></nb-badge>
-		</ng-template>
-	</ng-select>
-</form>
+		<ng-template ng-option-tmp let-tag="item" let-tag$="item$">
+			<input type="checkbox" [ngModel]="tag$.selected" />
 
-<form *ngIf="!form">
-	<label class="label" for="addTags">
-		{{ 'TAGS_PAGE.HEADER' | translate }}
-	</label>
-	<ng-select
-		[items]="tags"
-		[(ngModel)]="selectedTags"
-		bindLabel="id"
-		multiple="true"
-		(change)="onChange()"
-		[ngModelOptions]="{ standalone: true }"
-	>
-		<ng-template ng-label-tmp let-item="item" let-clear="clear">
-			<span class="ng-value-label"
-				><nb-badge
-					style="position: static !important;"
-					width="20px"
-					height="20px"
-					[style.background]="item.color"
-					text="{{ item.name }}"
-				></nb-badge
-			></span>
-			<span
-				class="ng-value-icon right"
-				(click)="clear(item)"
-				aria-hidden="true"
-				>×</span
-			>
-		</ng-template>
-		<ng-template ng-option-tmp let-item="item">
 			<nb-badge
-				style="position: static !important;"
-				width="20px"
-				height="20px"
-				[style.background]="item.color"
-				text="{{ item.name }}"
+				[style.background]="tag.color"
+				class="tag-color"
 			></nb-badge>
+			<span>{{ tag.name }}</span>
+		</ng-template>
+
+		<ng-template ng-label-tmp let-tag="item" let-clear="clear">
+			<nb-badge
+				class="tag-color tag-label"
+				[style.background]="tag.color"
+				[style.color]="backgroundContrast(tag.color)"
+				text="X"
+				(click)="clear(tag)"
+			></nb-badge>
+			<span>{{ tag.name }}</span>
+		</ng-template>
+
+		<ng-template ng-tag-tmp let-newTagName="searchTerm">
+			<b>{{ 'TAGS_PAGE.ADD_NEW_TAG' | translate }}</b
+			>: {{ newTagName }}
 		</ng-template>
 	</ng-select>
-</form>
+</div>

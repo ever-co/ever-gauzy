@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Validators, FormGroup, FormBuilder } from '@angular/forms';
-import { filter, tap, takeUntil } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
+import { filter, tap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { HubstaffService } from 'apps/gauzy/src/app/@core/services/hubstaff.service';
 
@@ -53,11 +53,9 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	}
 
 	addIntegration() {
+		const { client_secret } = this.clientSecretForm.value;
 		this._hubstaffService
-			.addIntegration(
-				this.hubStaffAppCode,
-				this.clientSecretForm.value.client_secret
-			)
+			.addIntegration(this.hubStaffAppCode, client_secret)
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(({ id }) =>
 				this._router.navigate(['pages/integrations/hubstaff', id])

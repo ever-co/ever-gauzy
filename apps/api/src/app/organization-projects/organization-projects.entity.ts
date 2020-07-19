@@ -5,7 +5,8 @@ import {
 	JoinColumn,
 	ManyToOne,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -16,17 +17,29 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import {
-	OrganizationProjects as IOrganizationProjects,
-	CurrenciesEnum
+  OrganizationProjects as IOrganizationProjects,
+  CurrenciesEnum, TaskListTypeEnum
 } from '@gauzy/models';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Employee } from '../employee/employee.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { Tag } from '../tags/tag.entity';
+import { TenantBase } from '../core/entities/tenant-base';
+import { Organization } from '../organization/organization.entity';
+import { Task } from '../tasks/task.entity';
+import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 
 @Entity('organization_project')
-export class OrganizationProjects extends Base
+export class OrganizationProjects extends TenantBase
 	implements IOrganizationProjects {
+	@ApiProperty()
+	@ManyToMany((type) => Tag, (tag) => tag.organizationProject)
+	@JoinTable({
+		name: 'tag_organization_project'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -40,17 +53,22 @@ export class OrganizationProjects extends Base
 	@Column()
 	organizationId: string;
 
-	@ApiPropertyOptional({ type: OrganizationClients })
+	@ApiPropertyOptional({ type: OrganizationContact })
 	@ManyToOne(
-		(type) => OrganizationClients,
-		(client) => client.projects,
+		(type) => OrganizationContact,
+		(organizationContact) => organizationContact.projects,
 		{
 			nullable: true,
 			onDelete: 'CASCADE'
 		}
 	)
 	@JoinColumn()
-	client?: OrganizationClients;
+	organizationContact?: OrganizationContact;
+
+	@ApiProperty({ type: Task })
+	@OneToMany((type) => Task, (task) => task.project)
+	@JoinColumn()
+	tasks?: Task[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -68,7 +86,7 @@ export class OrganizationProjects extends Base
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	type: string;
+	billing: string;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
@@ -87,4 +105,30 @@ export class OrganizationProjects extends Base
 		name: 'organization_project_employee'
 	})
 	members?: Employee[];
+
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.project, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
+
+	@ManyToOne((type) => Organization, (organization) => organization.id)
+	organization?: Organization;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ nullable: true })
+	owner: string;
+
+	@ApiPropertyOptional({ type: OrganizationSprint })
+	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.project)
+	@JoinColumn()
+	organizationSprints?: OrganizationSprint[];
+
+  @ApiProperty({ type: String, enum: TaskListTypeEnum })
+  @IsEnum(TaskListTypeEnum)
+  @Column({ default: TaskListTypeEnum.GRID })
+  taskListType: string;
 }

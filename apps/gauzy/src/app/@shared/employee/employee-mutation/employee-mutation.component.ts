@@ -26,9 +26,9 @@ import { FormGroup } from '@angular/forms';
 	styleUrls: ['employee-mutation.component.scss']
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
-	@ViewChild('stepper', { static: false })
+	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 	form: FormGroup;
 	role: Role;
@@ -49,7 +49,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		this.form = this.userBasicInfo.form;
 		this.role = await this.roleService
 			.getRoleByName({
-				name: RolesEnum.EMPLOYEE
+				name: RolesEnum.EMPLOYEE,
+				tenant: this.store.user.tenant
 			})
 			.pipe(first())
 			.toPromise();
@@ -68,7 +69,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			imageUrl: this.form.get('imageUrl').value,
 			tenant: null,
 			role: this.role,
-			tags: this.userBasicInfo.selectedTags
+			tags: this.form.get('tags').value
 		};
 
 		const offerDate = this.form.get('offerDate').value || null;
@@ -77,13 +78,13 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 		const newEmployee: EmployeeCreateInput = {
 			user,
-			startedWorkOn: this.form.get('startedWorkOn').value,
+			startedWorkOn: this.form.get('startedWorkOn').value || null,
 			password: this.form.get('password').value,
 			organization: this.store.selectedOrganization,
 			offerDate,
 			acceptDate,
 			rejectDate,
-			tags: this.userBasicInfo.selectedTags
+			tags: this.form.get('tags').value
 		};
 		this.employees.push(newEmployee);
 		this.userBasicInfo.loadFormData();

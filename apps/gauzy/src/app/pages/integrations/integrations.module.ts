@@ -5,9 +5,15 @@ import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './components/integrations/integrations.component';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { NbCardModule } from '@nebular/theme';
+import {
+	NbCardModule,
+	NbSelectModule,
+	NbInputModule,
+	NbSpinnerModule
+} from '@nebular/theme';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
+import { SharedModule } from '../../@shared/shared.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -19,6 +25,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 		CommonModule,
 		IntegrationsRoutingModule,
 		NbCardModule,
+		SharedModule,
+		NbSelectModule,
+		NbInputModule,
+		NbSpinnerModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

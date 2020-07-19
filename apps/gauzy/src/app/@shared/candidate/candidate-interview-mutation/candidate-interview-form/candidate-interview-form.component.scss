@@ -1,0 +1,67 @@
+.form {
+  width: 35rem;
+}
+
+.radio-label {
+  margin-bottom: 0;
+  display: block;
+}
+
+.checkbox {
+  margin: 0 10px 0 10px;
+}
+
+.checkbox-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 68px;
+  margin-bottom: 0;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  margin-left: 1rem;
+}
+
+.location {
+  width: 278px;
+}
+
+.title-wrap {
+  flex-direction: row;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.input-title {
+  width: 78%;
+}
+
+.title-width-small {
+  width: 78%;
+}
+
+.title-width {
+  width: 100%;
+}
+
+.button {
+  height: 40px;
+}
+
+.nameValidParent {
+  position: relative;
+
+  .nameValid {
+    position: absolute;
+    top: 66px;
+    left: 0px;
+    font-size: 11px;
+    color: #ff3d71;
+  }
+}

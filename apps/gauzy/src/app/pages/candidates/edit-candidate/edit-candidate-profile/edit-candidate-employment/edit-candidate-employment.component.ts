@@ -111,8 +111,8 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	selectedTagsHandler(tags: Tag[]) {
-		this.tags = tags;
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	private _initializeForm(candidate: Candidate) {
@@ -128,7 +128,7 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 			tags: [candidate.tags]
 		});
 
-		this.tags = candidate.tags;
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	ngOnDestroy() {

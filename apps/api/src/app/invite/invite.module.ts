@@ -6,8 +6,8 @@ import { EmailModule } from '../email/email.module';
 import { EmailService } from '../email/email.service';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
@@ -25,6 +25,10 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
+import { TenantService } from '../tenant/tenant.service';
+import { Tenant } from '../tenant/tenant.entity';
+import { RolePermissionsService } from '../role-permissions/role-permissions.service';
+import { RolePermissions } from '../role-permissions/role-permissions.entity';
 
 @Module({
 	imports: [
@@ -35,9 +39,11 @@ import { RoleService } from '../role/role.service';
 			User,
 			UserOrganization,
 			OrganizationProjects,
-			OrganizationClients,
+			OrganizationContact,
 			OrganizationDepartment,
-			Organization
+			Organization,
+			Tenant,
+			RolePermissions
 		]),
 		SharedModule,
 		CqrsModule,
@@ -54,9 +60,11 @@ import { RoleService } from '../role/role.service';
 		UserOrganizationService,
 		EmailService,
 		OrganizationProjectsService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentService,
-		OrganizationService
+		OrganizationService,
+		TenantService,
+		RolePermissionsService
 	],
 	exports: [InviteService]
 })

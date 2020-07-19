@@ -1,0 +1,36 @@
+{
+	"name": "@gauzy/desktop",
+	"version": "0.1.0",
+	"description": "Gauzy Desktop",
+	"license": "AGPL-3.0",
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ever-co/gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/gauzy/issues"
+	},
+	"private": true,
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"devDependencies": {
+		"electron": "8.3.0",
+		"electron-builder": "^22.6.1",
+		"electron-installer-dmg": "~3.0.0",
+		"electron-packager": "~14.1.0",
+		"electron-rebuild": "~1.8.6",
+		"electron-reload": "~1.5.0",
+		"electron-store": "~5.1.0",
+		"electron-updater": "~4.2.0"
+	},
+	"dependencies": {
+		"electron-store": "^5.2.0",
+		"knex": "^0.21.1",
+		"moment": "^2.25.3",
+		"node-notifier": "^7.0.1"
+	}
+}

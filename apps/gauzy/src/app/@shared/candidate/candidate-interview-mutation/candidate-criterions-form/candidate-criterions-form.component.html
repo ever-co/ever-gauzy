@@ -1,0 +1,51 @@
+<form class="form">
+	<strong class="form-title">
+		<nb-icon icon="funnel-outline" class="title-icon"></nb-icon
+		>{{
+			'CANDIDATES_PAGE.CRITERIONS.CHOOSE_CRITERIONS' | translate
+		}}</strong
+	>
+	<div class="form-blocks">
+		<div class="form-block">
+			<div class="label mb-2" *ngIf="technologiesList?.length > 0">
+				{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
+			</div>
+			<div *ngFor="let technology of technologiesList; let i = index">
+				<nb-checkbox
+					(checkedChange)="checkedTechnologies(technology.name)"
+					[checked]="checkedTech[i]"
+					>{{ technology.name }}</nb-checkbox
+				>
+			</div>
+			<div class="placeholder" *ngIf="technologiesList?.length === 0">
+				{{
+					'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_PLACEHOLDER'
+						| translate
+				}}
+			</div>
+		</div>
+		<div class="form-block">
+			<div class="label mb-2" *ngIf="personalQualitiesList?.length > 0">
+				{{
+					'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate
+				}}
+			</div>
+			<div *ngFor="let quality of personalQualitiesList; let i = index">
+				<nb-checkbox
+					(checkedChange)="checkedQualities(quality.name)"
+					[checked]="checkedQual[i]"
+					>{{ quality.name }}</nb-checkbox
+				>
+			</div>
+			<div
+				class="placeholder"
+				*ngIf="personalQualitiesList?.length === 0"
+			>
+				{{
+					'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES_PLACEHOLDER'
+						| translate
+				}}
+			</div>
+		</div>
+	</div>
+</form>

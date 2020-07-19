@@ -1,4 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Tag } from '..';
 
 export enum GenericEmploymentTypes {
 	INTERN = 'Intern',
@@ -12,6 +13,7 @@ export enum GenericEmploymentTypes {
 export interface OrganizationEmploymentType extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
+	tags: Tag[];
 }
 
 export interface OrganizationEmploymentTypeFindInput {
@@ -21,4 +23,5 @@ export interface OrganizationEmploymentTypeFindInput {
 export interface OrganizationEmploymentTypeCreateInput {
 	name: string;
 	organizationId: string;
+	tags: Tag[];
 }

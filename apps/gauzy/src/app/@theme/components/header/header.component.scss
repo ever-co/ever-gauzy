@@ -7,6 +7,10 @@
 	justify-content: space-between;
 	width: 100%;
 
+	.show-large-down {
+		display: none;
+	}
+
 	.logo-container {
 		display: flex;
 		align-items: center;
@@ -77,6 +81,15 @@
 	@include media-breakpoint-down(is) {
 		nb-select {
 			display: none;
+		}
+	}
+
+	@include media-breakpoint-down(lg) {
+		.show-large-up {
+			display: none;
+		}
+		.show-large-down {
+			display: block;
 		}
 	}
 }

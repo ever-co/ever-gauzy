@@ -33,15 +33,17 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionE = false;
 	hasPermissionI = false;
 	hasPermissionP = false;
+	hasPermissionIn = false;
 	hasPermissionIEdit = false;
 	hasPermissionEEdit = false;
 	hasPermissionPEdit = false;
+	hasPermissionInEdit = false;
 
 	@Input() position = 'normal';
 	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
-	@ViewChild('timerPopover', { static: false })
+	@ViewChild('timerPopover')
 	timerPopover: NbPopoverDirective;
 
 	showDateSelector = true;
@@ -50,11 +52,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
 	showExtraActions = false;
-	largeBreakpoint = 1290;
 
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
-	timerDueration: string;
+	timerDuration: string;
 
 	constructor(
 		private sidebarService: NbSidebarService,
@@ -78,9 +79,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.timeTrackerService.$dueration
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((time) => {
-				this.timerDueration = moment
-					.utc(time * 1000)
-					.format('HH:mm:ss');
+				this.timerDuration = moment.utc(time * 1000).format('HH:mm:ss');
 			});
 
 		this.menuService
@@ -159,8 +158,18 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		return false;
 	}
 
-	getWindowWidth() {
-		return window.innerWidth;
+	closeExtraActionsIfLarge(event?: any) {
+		let width;
+
+		if (event !== undefined) {
+			width = event.target.innerWidth;
+		} else {
+			width = document.body.clientWidth;
+		}
+
+		if (width >= 1200) {
+			this.showExtraActions = false;
+		}
 	}
 
 	toggleExtraActions(bool?: boolean) {
@@ -181,6 +190,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				this.hasPermissionP = this.store.hasPermission(
 					PermissionsEnum.ORG_PROPOSALS_VIEW
 				);
+				this.hasPermissionIn = this.store.hasPermission(
+					PermissionsEnum.INVOICES_VIEW
+				);
+
 				this.hasPermissionEEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_EXPENSES_EDIT
 				);
@@ -189,6 +202,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				);
 				this.hasPermissionPEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_PROPOSALS_EDIT
+				);
+				this.hasPermissionInEdit = this.store.hasPermission(
+					PermissionsEnum.INVOICES_EDIT
 				);
 			});
 
@@ -216,19 +232,19 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.INVOICE'),
 				icon: 'archive-outline',
-				link: '#'
-				//hidden: this.hasEditPermission
+				link: 'pages/accounting/invoices/add',
+				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
 				icon: 'paper-plane-outline',
-				link: 'pages/proposals/register',
+				link: 'pages/sales/proposals/register',
 				hidden: !this.hasPermissionP || !this.hasPermissionPEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
 				icon: 'file-text-outline',
-				link: '#'
+				link: 'pages/integrations/upwork/contracts'
 			},
 			// TODO: divider
 			{
@@ -242,14 +258,14 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				link: 'pages/tasks/dashboard'
 			},
 			{
-				title: this.getTranslation('CONTEXT_MENU.CLIENT'),
+				title: this.getTranslation('CONTEXT_MENU.CONTACT'),
 				icon: 'person-done-outline',
-				link: '#'
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/contacts`
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
 				icon: 'color-palette-outline',
-				link: '#'
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/projects`
 			},
 			// TODO: divider
 			{

@@ -5,7 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	Employee,
 	Organization,
-	OrganizationEmploymentType
+	OrganizationEmploymentType,
+	Tag
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
@@ -25,6 +26,9 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 	selectedEmployee: Employee;
 	organization: Organization;
 	organizationEmploymentTypes: OrganizationEmploymentType[];
+	tags: Tag[] = [];
+	showEditDiv: boolean = true;
+	selectedOrgEmplType: OrganizationEmploymentType;
 
 	constructor(
 		private fb: FormBuilder,
@@ -37,14 +41,21 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this.showEditDiv = !this.showEditDiv;
 		this._initializeForm();
+	}
+
+	private _initializeForm() {
+		this.form = this.fb.group({
+			name: ['', Validators.required]
+		});
 		this.organizationEditStore.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => {
 				this.organization = data;
 				if (this.organization) {
 					this.organizationEmploymentTypesService
-						.getAll([], {
+						.getAll(['tags'], {
 							organizationId: this.organization.id
 						})
 						.pipe(takeUntil(this._ngDestroy$))
@@ -53,12 +64,6 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 						});
 				}
 			});
-	}
-
-	private _initializeForm() {
-		this.form = this.fb.group({
-			name: ['', Validators.required]
-		});
 	}
 
 	private async onKeyEnter($event) {
@@ -71,7 +76,8 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 		if (name) {
 			const newEmploymentType = {
 				name,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tags: this.tags
 			};
 			this.organizationEmploymentTypesService
 				.addEmploymentType(newEmploymentType)
@@ -105,7 +111,8 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 		const name = this.form.controls['name'].value;
 		const newEmploymentType = {
 			name,
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tags: this.tags
 		};
 		this.organizationEmploymentTypesService
 			.addEmploymentType(newEmploymentType)
@@ -130,6 +137,35 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 		this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter(
 			(t) => t['id'] !== id
 		);
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
+	}
+
+	showEditCard(orgEmplType: OrganizationEmploymentType) {
+		this.showEditDiv = true;
+		this.selectedOrgEmplType = orgEmplType;
+		this.tags = orgEmplType.tags;
+	}
+
+	cancel() {
+		this.showEditDiv = !this.showEditDiv;
+		this.selectedOrgEmplType = null;
+	}
+
+	async editOrgEmplType(id: string, name: string) {
+		const orgEmplTypeForEdit = {
+			name: name,
+			tags: this.tags
+		};
+
+		await this.organizationEmploymentTypesService.editEmploymentType(
+			id,
+			orgEmplTypeForEdit
+		);
+		this._initializeForm();
+		this.showEditDiv = !this.showEditDiv;
+		this.tags = [];
 	}
 
 	ngOnDestroy() {

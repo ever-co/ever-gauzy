@@ -1,3 +1,4 @@
+import { ArchiveConfirmationComponent } from './archive-confirmation/archive-confirmation.component';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { NgModule } from '@angular/core';
 import { BasicInfoFormComponent } from './basic-info/basic-info-form.component';
@@ -8,7 +9,8 @@ import {
 	NbDatepickerModule,
 	NbButtonModule,
 	NbSelectModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -22,6 +24,7 @@ import { FileUploaderModule } from '../../file-uploader-input/file-uploader-inpu
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { CandidateActionConfirmationComponent } from './candidate-action-confirmation/candidate-action-confirmation.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -40,6 +43,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NgSelectModule,
 		NbBadgeModule,
+		NbCheckboxModule,
 		TagsColorInputModule,
 		TranslateModule.forChild({
 			loader: {
@@ -52,17 +56,23 @@ export function HttpLoaderFactory(http: HttpClient) {
 	exports: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
-		ActionConfirmationComponent
+		ActionConfirmationComponent,
+		ArchiveConfirmationComponent,
+		CandidateActionConfirmationComponent
 	],
 	declarations: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
-		ActionConfirmationComponent
+		ActionConfirmationComponent,
+		ArchiveConfirmationComponent,
+		CandidateActionConfirmationComponent
 	],
 	entryComponents: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
-		ActionConfirmationComponent
+		ActionConfirmationComponent,
+		ArchiveConfirmationComponent,
+		CandidateActionConfirmationComponent
 	],
 	providers: [AuthService, RoleService, IncomeService, TagsService]
 })

@@ -1,7 +1,6 @@
-#### !!! Hiring: remote TypeScript / NestJS / Angular developers. Send CV to jobs@ever.co !!!
-
 # Gauzy Platform
 
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/gauzy)
 [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gauzy)
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
@@ -11,22 +10,36 @@ Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fa
 Gauzy Platform includes multiple ERP/CRM features, usually available in the _accounting_, _human resources_, _invoicing_, _time management_ and _project management_ software:
 
 -   Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
+-   Contacts Management (Clients / Customers / Leads / etc.)
 -   Employees Management (register of company employees / contractors, rates of employees, etc.)
--   Employees Onboarding (WIP)
--   Income / Expenses Management
+-   Employees Onboarding / Candidates Interviews
+-   Time Management / Time Tracking / Activity Tracking / Timesheets
+-   Schedules / Appointments / Events
+-   Project Management / Tasks
+-   Goals / KPI / Objectives / Key Results
+-   Sales Pipelines
 -   Proposals
--   Sales Pipelines (WIP)
--   Multiple Organizations Management
+-   Accounting / Invoicing / Estimates
+-   Billing
+-   Payments
+-   Income / Expenses Management
+-   Time Off Management / Holidays / Approvals
+-   Inventory
+-   Equipment / Sharing
 -   Organization Departments and Teams
 -   Organization Clients and Vendors
--   Days Off Management
--   Equipment Sharing (WIP)
--   Project Management (WIP)
--   Invoicing (WIP)
--   Billing (WIP)
--   Payments (WIP)
--   Time Management/Tracking (WIP)
+-   Help Center / Knowledge Base
+-   Multiple Organizations Management
+-   Tags / Labels
+-   Reports
+-   Organization and Employee Public Pages
+-   Integrations (Upwork, HubStaff, etc.)
+-   Email History / Email Templates
+-   Data Import / Export
+-   Roles / Permissions
 -   Multi-currency
+-   Multi-language
+-   Dark / Light / Corporate and other Themes
 
 So, while initially the primary purpose of Gauzy Platform was to allow transparent and fair accounting, profits sharing and bonuses calculation, today you can also use Gauzy software as the modern and intelligent platform to run your **Outsourcing/Freelance Agency or Studio business** in a completely new, open way.
 
@@ -129,7 +142,6 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
 -   Lubomir Petrov ([lpetrv](https://github.com/lpetrv))
--   Nikolay Monov ([ntmonov](https://github.com/ntmonov))
 -   Tsvetelina Yordanova ([tsvetelina-e-y](https://github.com/tsvetelina-e-y))
 -   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
@@ -141,12 +153,14 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 -   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
 -   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
+-   Nikolay Monov ([ntmonov](https://github.com/ntmonov))
 
 View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
 
 ## Contact Us
 
 -   [Slack Community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU)
+-   [Discord Chat](https://discord.gg/hKQfn4j)
 -   [Spectrum Community](https://spectrum.chat/gauzy)
 -   [Gitter Chat](https://gitter.im/ever-co/gauzy)
 -   [CodeMentor](https://www.codementor.io/evereq)
@@ -182,6 +196,7 @@ All other brand and product names are trademarks, registered trademarks or servi
 
 #### Copyright © 2019-present, Ever Co. LTD. All rights reserved.
 
+![visitors](https://visitor-badge.laobi.icu/badge?page_id=ever-co.gauzy-platform)
 [![Circle CI](https://circleci.com/gh/ever-co/gauzy.svg?style=svg)](https://circleci.com/gh/ever-co/gauzy)
 [![codecov](https://codecov.io/gh/ever-co/gauzy/branch/master/graph/badge.svg)](https://codecov.io/gh/ever-co/gauzy)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/8e0f1c13c3d94f18b1523b896d4500aa)](https://www.codacy.com/manual/Ever/gauzy?utm_source=github.com&utm_medium=referral&utm_content=ever-co/gauzy&utm_campaign=Badge_Grade)
@@ -190,4 +205,7 @@ All other brand and product names are trademarks, registered trademarks or servi
 [![Greenkeeper badge](https://badges.greenkeeper.io/ever-co/gauzy.svg)](https://greenkeeper.io)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
 
-#### !!! Hiring: remote TypeScript / NestJS / Angular developers. Send CV to jobs@ever.co !!!
+## P.S.
+
+-   If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Platform](https://github.com/ever-co/ever)
+-   [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)

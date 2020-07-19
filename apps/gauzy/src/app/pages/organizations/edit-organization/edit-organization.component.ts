@@ -6,7 +6,8 @@ import {
 	OrganizationRecurringExpense,
 	RecurringExpenseDeletionEnum,
 	RecurringExpenseDefaultCategoriesEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	Tag
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -46,6 +47,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	hasEditExpensePermission = false;
 	private _ngDestroy$ = new Subject<void>();
 	fetchedHistories: Object = {};
+	tags: Tag[];
 
 	loading = true;
 
@@ -93,6 +95,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 					.getById(id)
 					.pipe(first())
 					.toPromise();
+
 				this.selectedOrgFromHeader = this.selectedOrg;
 				this.loadEmployeesCount();
 				this._loadOrgRecurringExpense();
@@ -115,6 +118,12 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	editOrg() {
 		this.router.navigate([
 			'/pages/organizations/edit/' + this.selectedOrg.id + '/settings'
+		]);
+	}
+
+	editPublicPage() {
+		this.router.navigate([
+			'/share/organization/' + this.selectedOrg.profile_link
 		]);
 	}
 
@@ -188,7 +197,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	}
 
 	async addOrganizationRecurringExpense() {
-		console.log(this.selectedDate);
 		const result = await this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {
@@ -202,7 +210,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		if (result) {
 			try {
 				await this.organizationRecurringExpenseService.create({
-					orgId: this.selectedOrg.id,
+					organizationId: this.selectedOrg.id,
 					...result
 				});
 
@@ -273,7 +281,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		if (this.selectedOrg && this.selectedDate) {
 			this.selectedOrgRecurringExpense = (
 				await this.organizationRecurringExpenseService.getAllByMonth({
-					orgId: this.selectedOrg.id,
+					organizationId: this.selectedOrg.id,
 					year: this.selectedDate.getFullYear(),
 					month: this.selectedDate.getMonth()
 				})

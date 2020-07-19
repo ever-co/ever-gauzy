@@ -1,0 +1,35 @@
+<div class="d-flex file-uploader-container">
+	<input
+		[hidden]="true"
+		(change)="imageUrlChanged($event)"
+		#fileInput
+		type="file"
+		id="fileInput"
+		accept=".csv"
+	/>
+
+	<input
+		type="text"
+		class="form-control"
+		[value]="file?.name"
+		readonly="true"
+		fullWidth
+	/>
+	<button
+		nbButton
+		status="primary"
+		(click)="fileInput.click()"
+		class="browse"
+	>
+		{{ 'BROWSE' | translate }}
+	</button>
+	<button
+		(click)="importCsv()"
+		nbButton
+		status="success"
+		[disabled]="!file"
+		class="add"
+	>
+		{{ 'BUTTONS.ADD' | translate }}
+	</button>
+</div>

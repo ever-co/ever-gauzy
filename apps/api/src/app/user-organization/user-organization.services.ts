@@ -27,25 +27,28 @@ export class UserOrganizationService extends CrudService<UserOrganization> {
 		const roleName: string = user.role.name;
 
 		if (roleName === RolesEnum.SUPER_ADMIN)
-			return this._addUserToAllOrganizations(user.id);
+			return this._addUserToAllOrganizations(user.id, user.tenant.id);
 
 		const entity: UserOrganization = new UserOrganization();
-		entity.orgId = organizationId;
+		entity.organizationId = organizationId;
 		entity.userId = user.id;
 		return this.create(entity);
 	}
 
 	private async _addUserToAllOrganizations(
-		userId: string
+		userId: string,
+		tenantId: string
 	): Promise<UserOrganization[]> {
 		const organizations = await this.organizationRepository.find({
-			select: ['id']
+			select: ['id'],
+			where: { tenant: { id: tenantId } },
+			relations: ['tenant']
 		});
 		const entities: UserOrganization[] = [];
 
 		organizations.forEach((organization) => {
 			const entity: UserOrganization = new UserOrganization();
-			entity.orgId = organization.id;
+			entity.organizationId = organization.id;
 			entity.userId = userId;
 			entities.push(entity);
 		});

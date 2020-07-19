@@ -11,8 +11,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 
 @Component({
 	selector: 'ga-danger-zone',
-	templateUrl: './danger-zone.component.html',
-	styleUrls: ['./danger-zone.component.scss']
+	templateUrl: './danger-zone.component.html'
 })
 export class DangerZoneComponent extends TranslationBaseComponent
 	implements OnInit {

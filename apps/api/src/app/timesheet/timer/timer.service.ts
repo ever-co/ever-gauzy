@@ -11,20 +11,19 @@ import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
 import { TimeLogType, TimerStatus } from '@gauzy/models';
 import * as moment from 'moment';
-import { Timesheet } from '../timesheet.entity';
-import { TimeSheetService } from '../timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet.service';
+import { TimeSlotService } from '../time-slot/time-slot.service';
 
 @Injectable()
 export class TimerService {
 	constructor(
 		@Inject(forwardRef(() => TimeSheetService))
 		private readonly timesheetService: TimeSheetService,
+		@Inject(forwardRef(() => TimeSlotService))
+		private readonly timeSlotService: TimeSlotService,
 
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
-
-		@InjectRepository(Timesheet)
-		private readonly timesheetRepository: Repository<Timesheet>,
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
@@ -49,7 +48,7 @@ export class TimerService {
 				startedAt: 'DESC'
 			}
 		});
-		let stauts: TimerStatus = {
+		const stauts: TimerStatus = {
 			duration: 0,
 			running: false,
 			lastLog: null
@@ -106,17 +105,28 @@ export class TimerService {
 			});
 		} else {
 			const stoppedAt = new Date();
-			const diffTime = Math.abs(
-				stoppedAt.getTime() - lastLog.startedAt.getTime()
-			);
-			const duration = Math.ceil(diffTime / 1000);
+			if (lastLog.startedAt === stoppedAt) {
+				await this.timeLogRepository.delete(lastLog.id);
+				return;
+			}
 			await this.timeLogRepository.update(lastLog.id, {
-				stoppedAt,
-				duration
+				stoppedAt
 			});
-
-			await this.timesheetRepository.update(timesheet.id, { duration });
+			// await this.timesheetRepository.update(timesheet.id, { duration });
 			newTimeLog = await this.timeLogRepository.findOne(lastLog.id);
+
+			let timeSlots = this.timeSlotService.generateTimeSlots(
+				newTimeLog.startedAt,
+				newTimeLog.stoppedAt
+			);
+			timeSlots = timeSlots.map((slot) => ({
+				...slot,
+				employeeId: user.employeeId,
+				keyboard: 0,
+				mouse: 0,
+				overall: 0
+			}));
+			await this.timeSlotService.bulkCreate(timeSlots);
 		}
 		return newTimeLog;
 	}

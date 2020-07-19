@@ -5,8 +5,7 @@ import 'rxjs/add/operator/filter';
 
 @Component({
 	selector: 'ga-sign-in-success',
-	templateUrl: './sign-in-success.component.html',
-	styleUrls: ['./sign-in-success.component.scss']
+	templateUrl: './sign-in-success.component.html'
 })
 export class SignInSuccessComponent {
 	constructor(

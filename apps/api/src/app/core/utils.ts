@@ -45,3 +45,12 @@ export function reflect(promise) {
 export function getLastDayOfMonth(year, month) {
 	return new Date(year, month + 1, 0).getDate();
 }
+
+export function arrayToObject(array, key, value) {
+	return array.reduce((prev, current) => {
+		return {
+			...prev,
+			[current[key]]: current[value]
+		};
+	}, {});
+}

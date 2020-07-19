@@ -21,7 +21,6 @@ import { UsersComponent } from './users.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { UserMutationModule } from '../../@shared/user/user-mutation/user-mutation.module';
-import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
 import { EditUserMutationComponent } from './edit-user-mutation/edit-user-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -43,6 +42,8 @@ import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-u
 import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-organizations-multi-select/user-organizations-multi-select.module';
 import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
 import { UserIdService } from '../../@core/services/edit-user-data.service';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -50,7 +51,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 const COMPONENTS = [
 	UsersComponent,
-	UserFullNameComponent,
 	EditUserProfileComponent,
 	ManageUserInviteComponent,
 	EditUserMutationComponent,
@@ -61,6 +61,8 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		TagsColorInputModule,
+		TableComponentsModule,
 		NbSidebarModule,
 		NbLayoutModule,
 		UsersRoutingModule,
@@ -98,7 +100,7 @@ const COMPONENTS = [
 		EditEmployeeMembershipFormModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [UserFullNameComponent],
+	entryComponents: [],
 	providers: [
 		OrganizationsService,
 		UsersOrganizationsService,

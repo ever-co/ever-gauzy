@@ -1,0 +1,26 @@
+<nb-select
+	[formControl]="select"
+	[selected]="selectedCandidateId"
+	(selectedChange)="onMembersSelected($event)"
+	[disabled]="disabled"
+	fullWidth
+	placeholder="{{ placeholder }} "
+>
+	<nb-option *ngIf="isAllMembers" value="all">
+		<ngx-avatar
+			size="sm"
+			[src]="'https://i.imgur.com/XwA2T62.jpg'"
+			[name]="'All'"
+		></ngx-avatar>
+	</nb-option>
+	<nb-option
+		*ngFor="let candidate of allCandidates"
+		[value]="candidate.id"
+		[disabled]="disabledIds?.includes(candidate.id) ? true : false"
+		><ngx-avatar
+			size="sm"
+			[src]="candidate.user?.imageUrl"
+			[name]="candidate.user?.name"
+		></ngx-avatar>
+	</nb-option>
+</nb-select>

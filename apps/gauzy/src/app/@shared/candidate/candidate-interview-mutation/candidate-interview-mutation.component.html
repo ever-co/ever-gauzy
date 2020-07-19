@@ -1,0 +1,158 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<img
+			*ngIf="!isCalendar"
+			class="candidate-image"
+			[src]="selectedCandidate?.user.imageUrl"
+			alt="Candidate Avatar"
+		/>
+		<div>
+			<h5>
+				{{ header }}
+			</h5>
+			<span *ngIf="!isCalendar">
+				{{ selectedCandidate?.user.firstName }}
+				{{ selectedCandidate?.user.lastName }}
+			</span>
+		</div>
+
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="stepper">
+		<nb-stepper #stepper>
+			<nb-step [label]="step1">
+				<ng-template #step1>{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_1'
+						| translate
+				}}</ng-template>
+				<div class="form-group" *ngIf="isCalendar">
+					<label for="note" class="label">{{
+						'FORM.LABELS.CANDIDATE' | translate
+					}}</label>
+					<ga-candidate-select
+						[allCandidates]="candidates"
+						[placeholder]="
+							'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate
+						"
+						(selectedChange)="onCandidateSelected($event)"
+						[selectedCandidateId]="selectedCandidateId"
+					>
+					</ga-candidate-select>
+				</div>
+
+				<ga-candidate-interview-form
+					[interviewList]="interviewList"
+					#candidateInterviewForm
+					(titleExist)="titleExist($event)"
+					[isCalendar]="isCalendar"
+					[editData]="editData"
+				></ga-candidate-interview-form>
+
+				<div class="text-right">
+					<button
+						status="success"
+						class="btn"
+						[disabled]="
+							candidateInterviewForm.form.invalid || isTitleExist
+						"
+						nbButton
+						nbStepperNext
+						(click)="next()"
+					>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
+								| translate
+						}}
+					</button>
+				</div>
+			</nb-step>
+
+			<nb-step [label]="step2">
+				<ng-template #step2>{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_2'
+						| translate
+				}}</ng-template>
+
+				<ga-candidate-criterions-form
+					#candidateCriterionsForm
+					[editSelectedTechnologies]="editData?.technologies"
+					[editSelectedQualities]="editData?.personalQualities"
+				>
+				</ga-candidate-criterions-form>
+
+				<div class="button-container">
+					<button
+						class="btn"
+						status="primary"
+						(click)="previous()"
+						nbButton
+						nbStepperPrevious
+					>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS'
+								| translate
+						}}
+					</button>
+					<button status="warning" (click)="route()" nbButton>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CREATE_CRITERIONS'
+								| translate
+						}}
+					</button>
+					<button class="btn" status="success" nbButton nbStepperNext>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
+								| translate
+						}}
+					</button>
+				</div>
+			</nb-step>
+
+			<nb-step [label]="step3">
+				<ng-template #step3>{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_3'
+						| translate
+				}}</ng-template>
+
+				<ga-candidate-notification-form
+					#candidateNotificationForm
+					[interview]="interview"
+					[employees]="employees"
+					[selectedCandidate]="selectedCandidate"
+				>
+				</ga-candidate-notification-form>
+
+				<div class="button-container">
+					<button
+						class="btn"
+						status="primary"
+						(click)="previous()"
+						nbButton
+						nbStepperPrevious
+					>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS'
+								| translate
+						}}
+					</button>
+					<button
+						class="btn"
+						status="success"
+						nbButton
+						nbStepperSave
+						(click)="save()"
+					>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SAVE'
+								| translate
+						}}
+					</button>
+				</div>
+			</nb-step>
+		</nb-stepper>
+	</nb-card-body>
+</nb-card>

@@ -1,0 +1,27 @@
+:host {
+	.filters {
+		.form-control {
+			min-height: 40px;
+		}
+	}
+	.week-date-input {
+		position: relative;
+		input {
+			opacity: 0;
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+		}
+	}
+	.weekly-logs-table {
+		td,
+		th {
+			padding: 16px;
+		}
+		.day-col {
+			text-align: center;
+		}
+	}
+}

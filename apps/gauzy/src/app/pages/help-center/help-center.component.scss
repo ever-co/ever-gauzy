@@ -1,0 +1,165 @@
+.global {
+  display: flex;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 85%;
+  margin-left: 5px;
+}
+
+.head {
+  margin-bottom: 0.5rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 1rem;
+  height: auto;
+  background-color: #fafafa;
+}
+
+.base-button {
+  max-height: 40px;
+}
+
+.cards {
+  padding: 0.5rem 0.5rem 0 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info {
+  padding: 0 0.5rem 0.5rem 0;
+  display: flex;
+  flex-direction: row;
+}
+
+.create-at {
+  margin-left: 100px;
+  display: flex;
+  flex-direction: row;
+}
+
+.icon {
+  font-size: 13px;
+  margin-right: 0.1rem;
+  margin-top: 0.3rem;
+}
+
+.articles {
+  margin-left: 10px;
+  margin-right: 10px;
+  color: gray;
+}
+
+.header-article {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: row;
+}
+
+.cards:hover .edit-icon {
+  display: inline-block;
+}
+
+.edit-icon {
+  font-size: 24px;
+  display: none;
+}
+
+.row-name {
+  display: flex;
+  flex-direction: row;
+  margin-top: 0.5rem;
+}
+
+.draft {
+  padding: 0 0.4rem;
+  color: #fff;
+  background-color: #aaaeb3;
+  margin-left: 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  width: auto;
+  text-align: center;
+}
+
+.privacy {
+  padding: 0 0.4rem;
+  color: #fff;
+  background-color: blueviolet;
+  margin-left: 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  width: auto;
+  text-align: center;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 16px;
+  padding-bottom: 0.1rem;
+}
+
+.data {
+  padding-bottom: 0.5rem;
+}
+
+.main-article {
+  width: 90%;
+}
+
+.image-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  margin: -1rem 0 0 1rem;
+  flex-wrap: wrap;
+}
+
+.author-image-small {
+  max-width: 30px;
+  max-height: 30px;
+  border-radius: 50%;
+  margin: 4px;
+}
+
+.search-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.column-first {
+  display: flex;
+  flex-direction: column;
+  width: 40%;
+  margin: 1rem;
+}
+
+.column-second {
+  display: flex;
+  flex-direction: column;
+  min-width: 24rem;
+  margin: 1rem;
+}
+
+.clear-button {
+  margin: 0 1rem 1rem 1rem;
+}
+
+.search-input {
+  max-width: 100% !important;
+}

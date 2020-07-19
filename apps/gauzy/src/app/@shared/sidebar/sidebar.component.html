@@ -1,0 +1,79 @@
+<div class="sidemenu-wrap">
+	<nb-card class="sidemenu">
+		<nb-card-body class="sidebar">
+			<div class="add-icon-field">
+				<button
+					status="success"
+					class="base-button"
+					(click)="addNode()"
+					nbButton
+				>
+					{{ 'HELP_PAGE.KNOWLEDGE_BASE' | translate }}
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="edit-node-field">
+				<tree-root
+					#tree
+					[focused]="false"
+					[nodes]="nodes"
+					[options]="options"
+					(moveNode)="onMoveNode($event)"
+				>
+					<ng-template #loadingTemplate
+						>Loading, please hold....</ng-template
+					>
+					<ng-template
+						#treeNodeTemplate
+						let-node
+						let-index="index"
+						class="tree"
+					>
+						<div
+							class="base"
+							[ngStyle]="{ color: node.data.color }"
+							[ngClass]="setClasses(node)"
+							(click)="onNodeClicked(node.data)"
+						>
+							<div>
+								<nb-icon
+									icon="{{ node.data.icon }}"
+									class="icons"
+									(click)="addIcon(node)"
+								></nb-icon>
+								<span class="text">{{ node.data.name }}</span>
+								<nb-icon
+									class="icons"
+									icon="{{ node.data.privacy }}"
+									(click)="changePrivacy(node.data)"
+								></nb-icon>
+							</div>
+							<div>
+								<nb-action
+									*ngIf="node.data.flag === 'base'"
+									icon="settings-2-outline"
+									class="icons"
+									[nbContextMenu]="settingsContextMenu"
+								></nb-action>
+								<nb-icon
+									*ngIf="node.data.flag === 'category'"
+									[ngStyle]="{ color: 'black' }"
+									class="edit-icons"
+									icon="edit-outline"
+									(click)="editCategory(node.data)"
+								></nb-icon>
+								<nb-icon
+									*ngIf="node.data.flag === 'category'"
+									[ngStyle]="{ color: 'black' }"
+									class="edit-icons"
+									icon="trash-2-outline"
+									(click)="deleteCategory(node.data)"
+								></nb-icon>
+							</div>
+						</div>
+					</ng-template>
+				</tree-root>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</div>

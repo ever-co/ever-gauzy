@@ -1,11 +1,14 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-    name: 'removeLodash'
+	name: 'removeLodash'
 })
 export class RemoveLodashPipe implements PipeTransform {
-
-    transform(value: string, args?: any): any {
-        return value.split('_').join(' ');
-    }
+	transform(value: string, args?: any): any {
+		if (value) {
+			return value.split('_').join(' ');
+		} else {
+			return value;
+		}
+	}
 }

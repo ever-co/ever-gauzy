@@ -1,0 +1,526 @@
+<nb-card>
+	<nb-card-body *ngIf="organization">
+		<div class="org-info">
+			<div *ngIf="hasEditPermission">
+				<div class="edit-icon">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="36"
+						height="36"
+						viewBox="0 0 36 36"
+					>
+						<circle
+							cx="18"
+							cy="18"
+							r="18"
+							fill="#0091FF"
+							fill-rule="evenodd"
+						/>
+					</svg>
+					<nb-icon
+						class="ml-2 open"
+						icon="edit-outline"
+						(click)="editPage()"
+						[options]="{ color: 'white' }"
+					>
+					</nb-icon>
+				</div>
+			</div>
+			<div class="org-head">
+				<div class="row">
+					<div class="col-md-6 org-head-left-sec">
+						<img
+							*ngIf="!hasEditPermission"
+							class="org-image"
+							[src]="organization.imageUrl"
+							alt="Organization Avatar"
+						/>
+						<div
+							class="organization-photo"
+							*ngIf="hasEditPermission"
+						>
+							<ngx-image-uploader
+								(changeHoverState)="hoverState = $event"
+								(uploadedImageUrl)="updateImageUrl($event)"
+								(uploadImageError)="
+									handleImageUploadError($event)
+								"
+							></ngx-image-uploader>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								xmlns:xlink="http://www.w3.org/1999/xlink"
+								width="68"
+								height="68"
+								viewBox="0 0 68 68"
+								[ngStyle]="{
+									opacity: hoverState ? '1' : '0.3'
+								}"
+							>
+								<defs>
+									<path
+										id="a"
+										d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+									/>
+								</defs>
+								<g fill="none" fill-rule="evenodd">
+									<circle
+										cx="34"
+										cy="34"
+										r="34"
+										fill="#0091FF"
+										opacity=".3"
+									/>
+									<circle
+										cx="34"
+										cy="34"
+										r="26"
+										fill="#0091FF"
+										opacity=".9"
+									/>
+									<use
+										fill="#FFF"
+										fill-rule="nonzero"
+										xlink:href="#a"
+									/>
+								</g>
+							</svg>
+							<div
+								class="image-overlay"
+								[ngStyle]="{
+									opacity: hoverState ? '0.2' : '0'
+								}"
+							></div>
+
+							<img
+								*ngIf="imageUrl"
+								[src]="imageUrl"
+								alt="{{
+									'PUBLIC_PAGE.COMPANY_PROFILE' | translate
+								}}"
+								(mouseenter)="hoverState = true"
+								(mouseleave)="hoverState = false"
+							/>
+							<button
+								*ngIf="imageUpdateButton"
+								class="save_image"
+								(click)="saveImage({ imageUrl: imageUrl })"
+								status="success"
+								nbButton
+							>
+								{{ 'BUTTONS.UPDATE' | translate }}
+							</button>
+						</div>
+						<h4
+							class="org-name"
+							[textContent]="organization.name"
+						></h4>
+						<span
+							class="org-banner"
+							[textContent]="organization.banner"
+						></span>
+					</div>
+					<div class="col-md-6 org-head-right-sec">
+						<div class="org-year-found">
+							<h5
+								*ngIf="organization.registrationDate"
+								class="org-title"
+								[textContent]="
+									('PUBLIC_PAGE.YEAR_FOUNDED' | translate) +
+									': ' +
+									moment(
+										organization.registrationDate
+									).format('Y')
+								"
+							></h5>
+						</div>
+						<div class="org-size">
+							<h5
+								*ngIf="organization.totalEmployees"
+								class="org-title"
+								[textContent]="
+									('PUBLIC_PAGE.COMPANY_SIZE' | translate) +
+									': ' +
+									organization.totalEmployees
+								"
+							></h5>
+						</div>
+						<div
+							class="org-size"
+							*ngIf="organization.show_clients_count"
+						>
+							<h5
+								class="org-title"
+								[textContent]="
+									('PUBLIC_PAGE.TOTAL_CLIENTS' | translate) +
+									': ' +
+									total_clients
+								"
+							></h5>
+						</div>
+						<div
+							class="org-client-focus"
+							*ngIf="organization.client_focus"
+						>
+							<h5 class="org-title">
+								{{ 'PUBLIC_PAGE.CLIENT_FOCUS' | translate }}:
+								<span
+									class="client-focus"
+									[textContent]="
+										organization.client_focus.replace(
+											',',
+											', '
+										)
+									"
+								></span>
+							</h5>
+						</div>
+						<div class="row" *ngIf="this.organization.show_profits">
+							<div class="col">
+								<div class="org-year-found">
+									<h5 class="org-title org-key">
+										{{ 'PUBLIC_PAGE.PROFITS' | translate }}
+										:
+									</h5>
+									<span
+										class="org-value"
+										[textContent]="
+											organization.currency +
+											' ' +
+											profits
+										"
+									></span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="section_block"></div>
+			<nb-tabset class="o__p__s">
+				<nb-tab tabTitle="Profile" class="o__p__s__t">
+					<div
+						class="row"
+						*ngIf="
+							this.organization.show_projects_count &&
+							total_projects
+						"
+					>
+						<div class="col">
+							<div class="org-year-found">
+								<h5 class="org-title org-key">
+									{{
+										'PUBLIC_PAGE.TOTAL_PROJECTS' | translate
+									}}
+									:
+								</h5>
+								<span
+									class="org-value"
+									[textContent]="total_projects"
+								></span>
+							</div>
+						</div>
+					</div>
+					<div
+						class="row"
+						*ngIf="
+							this.organization.show_minimum_project_size &&
+							minimum_project_size
+						"
+					>
+						<div class="col">
+							<div class="org-year-found">
+								<h5 class="org-title org-key">
+									{{
+										'PUBLIC_PAGE.MINIMUM_PROJECT_SIZE'
+											| translate
+									}}
+									:
+								</h5>
+								<span
+									class="org-value"
+									[textContent]="minimum_project_size"
+								></span>
+							</div>
+						</div>
+					</div>
+					<div
+						class="row"
+						*ngIf="this.organization.show_income && total_income"
+					>
+						<div class="col">
+							<div class="org-year-found">
+								<h5 class="org-title org-key">
+									{{ 'PUBLIC_PAGE.TOTAL_INCOME' | translate }}
+									:
+								</h5>
+								<span
+									class="org-value"
+									[textContent]="
+										organization.currency +
+										' ' +
+										total_income
+									"
+								></span>
+							</div>
+						</div>
+					</div>
+					<div
+						class="row"
+						*ngIf="
+							this.organization.show_bonuses_paid && bonuses_paid
+						"
+					>
+						<div class="col">
+							<div class="org-year-found">
+								<h5 class="org-title org-key">
+									{{
+										'PUBLIC_PAGE.TOTAL_BONUSES_PAID'
+											| translate
+									}}
+									:
+								</h5>
+								<span
+									class="org-value"
+									[textContent]="
+										organization.currency +
+										' ' +
+										bonuses_paid
+									"
+								></span>
+							</div>
+						</div>
+					</div>
+					<div class="row" *ngIf="languageExist">
+						<div class="col">
+							<div class="org-year-found">
+								<h5 class="org-title org-key">
+									{{ 'PUBLIC_PAGE.LANGUAGES' | translate }} :
+								</h5>
+								<span class="org-value">
+									<span
+										class="org_list_data"
+										*ngFor="
+											let l of organization_languages;
+											let i = index
+										"
+										[textContent]="
+											(i !== 0 ? ', ' : ' ') +
+											l.name +
+											' (' +
+											l.level +
+											')'
+										"
+									>
+									</span>
+								</span>
+							</div>
+						</div>
+					</div>
+					<div class="row" *ngIf="awardExist">
+						<div class="col">
+							<div class="org-year-found">
+								<h5 class="org-title org-key">
+									{{ 'PUBLIC_PAGE.AWARDS' | translate }} :
+								</h5>
+								<span class="org-value">
+									<span
+										class="org_list_data"
+										*ngFor="let a of awards; let i = index"
+										[textContent]="
+											(i !== 0 ? ', ' : ' ') +
+											a.name +
+											' (' +
+											a.year +
+											')'
+										"
+									>
+									</span>
+								</span>
+							</div>
+						</div>
+					</div>
+					<div class="row" *ngIf="employees">
+						<div class="col">
+							<div class="org-year-found">
+								<h5 class="org-title org-key">
+									{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }} :
+								</h5>
+								<span
+									class="org-value"
+									[textContent]="employees.length"
+								>
+								</span>
+							</div>
+						</div>
+					</div>
+					<div class="section_block"></div>
+					<div class="row" *ngIf="organization.short_description">
+						<div class="col">
+							<p
+								class="org-banner"
+								[textContent]="organization.short_description"
+							></p>
+						</div>
+					</div>
+					<div class="row" *ngIf="organization.overview">
+						<div class="col org-overview">
+							<div [outerHTML]="organization.overview"></div>
+						</div>
+					</div>
+					<div class="row" *ngIf="organization.skills">
+						<div class="col">
+							<div class="org-skills">
+								<p class="org-title org-key">
+									{{ 'PUBLIC_PAGE.SKILLS' | translate }}
+								</p>
+								<ul class="org-value">
+									<li
+										class="org_list_data"
+										*ngFor="
+											let skill of organization.skills;
+											let i = index
+										"
+									>
+										<span [textContent]="skill.name"></span>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="Employees" class="o__p__s__t">
+					<div class="row" *ngIf="employees">
+						<div class="col">
+							<div class="employee-list">
+								<nb-list class="nb_list">
+									<!-- New Code -->
+									<nb-list-item
+										*ngFor="
+											let employee of employees;
+											let i = index
+										"
+										class="search-result"
+									>
+										<div class="avatar has-aura">
+											<a href="javascript:void(0)">
+												<img
+													src="{{
+														employee.user.imageUrl
+													}}"
+												/>
+											</a>
+										</div>
+										<div class="main-details">
+											<a
+												class="name margin-right-10"
+												href="#"
+											>
+												{{
+													employee.user.firstName +
+														' ' +
+														employee.user.lastName
+												}}
+											</a>
+											<div
+												class="label label-hourly margin-right-10"
+											>
+												hourly
+											</div>
+											<div class="pay-rate">
+												$25/hr
+											</div>
+											<div class="clearfix"></div>
+											<div class="speciality">
+												Full Stack Web Developer
+											</div>
+											<a
+												class="works-at"
+												href="#/share/organization/{{
+													organization.profile_link
+												}}"
+											>
+												<nb-icon
+													icon="globe-2-outline"
+													[options]="{
+														color: '#55a8fd'
+													}"
+												>
+												</nb-icon>
+												Ever Technologies
+											</a>
+											<span class="location text-success">
+												<nb-icon
+													icon="navigation-2-outline"
+													[options]="{
+														color: '#28a745'
+													}"
+												>
+												</nb-icon>
+												Sofia, Sofia, Bulgaria
+											</span>
+											<div
+												class="profil-bio push-bottom-10"
+											>
+												I am Full-stack Web Developer
+												with experience in the following
+												languages &amp;amp; platforms
+												TypeScript and JavaScript
+												React.js, G...
+											</div>
+											<div
+												class="list-inline push-bottom-20"
+											>
+												<li>
+													<span class="tag tag-sm"
+														>MySQL</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>React</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>AngularJS</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>ASP &amp; ASP.NET</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>jQuery</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>Node.js</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>TypeScript</span
+													>
+												</li>
+												<li>
+													<span class="tag tag-sm"
+														>GraphQL</span
+													>
+												</li>
+											</div>
+										</div>
+									</nb-list-item>
+									<!-- New Code -->
+								</nb-list>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="Portfolio" class="o__p__s__t"> </nb-tab>
+			</nb-tabset>
+		</div>
+	</nb-card-body>
+</nb-card>

@@ -1,0 +1,66 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+  min-width: 500px;
+}
+
+.select-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.select {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  width: 50%;
+}
+
+.select-label {
+  color: #8f9bb3;
+  font-family: Open Sans, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1rem;
+  margin: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.main-buttons {
+  margin-top: -10px;
+  margin-bottom: 10px;
+  width: 100% !important;
+  max-width: 30rem !important;
+}
+
+.lang-buttons {
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+.save-button {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.select-color {
+  margin: -10px 0 10px 0;
+}
+
+.nb-theme-default [nbInput].size-medium:not(.input-full-width) {
+  max-width: none !important;
+  width: none !important;
+}

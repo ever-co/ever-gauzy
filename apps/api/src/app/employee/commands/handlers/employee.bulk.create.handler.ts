@@ -1,9 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../employee.service';
-import { Employee, EmployeeCreateInput } from '@gauzy/models';
+import { Employee, EmployeeCreateInput, LanguagesEnum } from '@gauzy/models';
 import { EmployeeBulkCreateCommand } from '../employee.bulk.create.command';
 import { AuthService } from '../../../auth/auth.service';
 import { EmailService } from '../../../email';
+import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 
 @CommandHandler(EmployeeBulkCreateCommand)
 export class EmployeeBulkCreateHandler
@@ -11,27 +12,44 @@ export class EmployeeBulkCreateHandler
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly authService: AuthService,
-		private readonly emailService: EmailService
+		private readonly emailService: EmailService,
+		private readonly userOrganizationService: UserOrganizationService
 	) {}
 
 	public async execute(
 		command: EmployeeBulkCreateCommand
 	): Promise<Employee[]> {
-		const { input } = command;
+		const { input, languageCode } = command;
 		const inputWithHash = await this._loadPasswordHash(input);
 
 		const createdEmployees = await this.employeeService.createBulk(
 			inputWithHash
 		);
 
-		this._sendWelcomeEmail(createdEmployees);
+		const usersWithOrganizations = createdEmployees.map((employee) =>
+			this.userOrganizationService.addUserToOrganization(
+				employee.user,
+				employee.orgId
+			)
+		);
+
+		await Promise.all(usersWithOrganizations);
+
+		this._sendWelcomeEmail(createdEmployees, languageCode);
 
 		return createdEmployees;
 	}
 
-	private _sendWelcomeEmail(employees: Employee[]) {
-		employees.map((employee) =>
-			this.emailService.welcomeUser(employee.user)
+	private _sendWelcomeEmail(
+		employees: Employee[],
+		languageCode: LanguagesEnum
+	) {
+		employees.forEach((employee) =>
+			this.emailService.welcomeUser(
+				employee.user,
+				languageCode,
+				employee.organization.id
+			)
 		);
 	}
 

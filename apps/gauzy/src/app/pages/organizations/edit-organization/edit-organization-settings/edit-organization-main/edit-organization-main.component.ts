@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CurrenciesEnum, Organization } from '@gauzy/models';
+import { CurrenciesEnum, Organization, Tag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
@@ -25,6 +25,8 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	employeesCount: number;
 	form: FormGroup;
 	currencies: string[] = Object.values(CurrenciesEnum);
+	tags: Tag[] = [];
+	selectedTags: any;
 
 	constructor(
 		private fb: FormBuilder,
@@ -89,11 +91,12 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-
 		this.form = this.fb.group({
+			tags: [this.organization.tags],
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
 			officialName: [this.organization.officialName],
+			profile_link: [this.organization.profile_link],
 			taxId: [this.organization.taxId],
 			registrationDate: [
 				this.organization.registrationDate
@@ -101,5 +104,10 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 					: null
 			]
 		});
+		this.tags = this.form.get('tags').value || [];
+	}
+
+	selectedTagsEvent(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 }

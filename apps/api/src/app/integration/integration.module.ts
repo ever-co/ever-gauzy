@@ -1,18 +1,18 @@
 import { Module } from '@nestjs/common';
-import { IntegrationController } from './integration.controller';
-import { IntegrationService } from './integration.service';
-import { Integration } from './integration.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { TenantService } from '../tenant/tenant.service';
-import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
+import { IntegrationType } from './integration-type.entity';
+import { Integration } from './integration.entity';
+import { IntegrationService } from './integration.service';
+import { IntegrationController } from './integration.controller';
+import { CqrsModule } from '@nestjs/cqrs';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Integration, IntegrationSetting, Tenant])
+		TypeOrmModule.forFeature([Integration, IntegrationType]),
+		CqrsModule
 	],
 	controllers: [IntegrationController],
-	providers: [IntegrationService, IntegrationSettingService, TenantService]
+	providers: [IntegrationService, ...CommandHandlers]
 })
 export class IntegrationModule {}

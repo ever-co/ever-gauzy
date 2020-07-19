@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Employee, OrganizationDepartment } from '@gauzy/models';
+import { Employee, OrganizationDepartment, Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-organization-departments-mutation',
@@ -22,6 +22,7 @@ export class EditOrganizationDepartmentsMutationComponent implements OnInit {
 	members: string[];
 	name: string;
 	selectedEmployeeIds: string[];
+	tags: Tag[] = [];
 
 	ngOnInit() {
 		if (this.department) {
@@ -30,11 +31,13 @@ export class EditOrganizationDepartmentsMutationComponent implements OnInit {
 			);
 
 			this.name = this.department.name;
+			this.tags = this.department.tags;
 		}
 	}
 
 	addOrEditDepartments() {
 		this.addOrEditDepartment.emit({
+			tags: this.tags,
 			name: this.name,
 			members: (this.members || this.selectedEmployeeIds || [])
 				.map((id) => this.employees.find((e) => e.id === id))
@@ -53,5 +56,8 @@ export class EditOrganizationDepartmentsMutationComponent implements OnInit {
 
 	cancel() {
 		this.canceled.emit();
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

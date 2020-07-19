@@ -1,0 +1,125 @@
+<nb-card size="large" class="max-width-30vw">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>{{ 'KEY_RESULT_PAGE.UPDATE_KEY_RESULT' | translate }}</h4>
+			<nb-icon
+				class="ml-auto mt-1 close"
+				icon="close-outline"
+				(click)="closeDialog()"
+			></nb-icon>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<h6>{{ keyResult.name }}</h6>
+		<div
+			*ngIf="
+				keyResult.type == keyResultTypeEnum.NUMBER ||
+				keyResult.type == keyResultTypeEnum.CURRENCY
+			"
+		>
+			<div class="row p-2">
+				<div class="col-md-6">
+					<p>
+						<span class="label mr-2">
+							{{
+								'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+									| translate
+							}}:</span
+						><span class="font-weight-bold">{{
+							keyResult.initialValue
+						}}</span>
+					</p>
+				</div>
+				<div class="col-md-6">
+					<p>
+						<span class="label mr-2">
+							{{
+								'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+									| translate
+							}}:</span
+						><span class="font-weight-bold">{{
+							keyResult.targetValue
+						}}</span>
+					</p>
+				</div>
+			</div>
+		</div>
+		<form [formGroup]="keyResultUpdateForm">
+			<label for="updated-value" class="label">
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.UPDATED_VALUE' | translate }}
+			</label>
+			<input
+				*ngIf="
+					keyResult.type == keyResultTypeEnum.NUMBER ||
+					keyResult.type == keyResultTypeEnum.CURRENCY
+				"
+				type="number"
+				id="updated-value"
+				nbInput
+				[min]="keyResult.initialValue"
+				[max]="keyResult.targetValue"
+				fullWidth
+				formControlName="newValueNumber"
+			/>
+			<div class="row">
+				<nb-toggle
+					id="updated-value"
+					class="row ml-3"
+					*ngIf="keyResult.type == keyResultTypeEnum.TRUE_OR_FALSE"
+					formControlName="newValueBoolean"
+					status="primary"
+				>
+					{{
+						'KEY_RESULT_PAGE.FORM.LABELS.MARK_COMPLETE' | translate
+					}}
+				</nb-toggle>
+			</div>
+
+			<label
+				*ngIf="!hideStatus"
+				for="updated-value-status"
+				class="label mt-3"
+			>
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.STATUS' | translate }}
+			</label>
+			<nb-select
+				*ngIf="!hideStatus"
+				id="updated-value-status"
+				filled
+				[status]="
+					keyResultUpdateForm.value.newStatus ==
+					updateStatusEnum.ON_TRACK
+						? 'success'
+						: keyResultUpdateForm.value.newStatus ==
+						  updateStatusEnum.NEEDS_ATTENTION
+						? 'warning'
+						: 'danger'
+				"
+				fullWidth
+				formControlName="newStatus"
+			>
+				<nb-option
+					[value]="status.value"
+					*ngFor="let status of updateStatusEnum | keyvalue"
+					>{{
+						'KEY_RESULT_PAGE.UPDATE.STATUS.' + status.key
+							| translate
+					}}</nb-option
+				>
+			</nb-select>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-3" nbButton (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			[disabled]="!keyResultUpdateForm.valid"
+			nbButton
+			status="success"
+			(click)="updateKeyResult()"
+		>
+			{{ 'BUTTONS.UPDATE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

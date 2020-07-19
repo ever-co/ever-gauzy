@@ -10,47 +10,66 @@ import {
 } from '@gauzy/models';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
+import { Tenant } from '../tenant/tenant.entity';
+import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
+import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 
-export const createExpenses = async (
+export const createDefaultExpenses = async (
 	connection: Connection,
 	defaultData: {
 		org: Organization;
 		employees: Employee[];
-		categories: IExpenseCategory[];
-		organizationVendors: IOrganizationVendor[];
-	},
-	randomData: {
-		orgs: Organization[];
-		employees: Employee[];
-		categories: IExpenseCategory[];
-		organizationVendors: IOrganizationVendor[];
+		categories: IExpenseCategory[] | void;
+		organizationVendors: IOrganizationVendor[] | void;
 	}
-): Promise<{ defaultExpenses: Expense[]; randomExpenses: Expense[] }> => {
-	const currencies = Object.values(CurrenciesEnum);
-	const defaultExpenses = [];
-	const filePath =
-		'./apps/api/src/app/expense/expense-seed-data/expenses-data.csv';
+): Promise<Expense[]> => {
+	if (!defaultData.categories) {
+		console.warn(
+			'Warning: Categories not found, default expenses would not be created'
+		);
+		return;
+	}
+
+	if (!defaultData.organizationVendors) {
+		console.warn(
+			'Warning: organizationVendors not found, default expenses would not be created'
+		);
+		return;
+	}
+
+	const expensesFromFile = [];
+	let defaultExpenses: Expense[] = [];
+	let filePath = './src/app/expense/expense-seed-data/expenses-data.csv';
+
+	try {
+		filePath = fs.existsSync(filePath)
+			? filePath
+			: `./apps/api/${filePath.slice(2)}`;
+	} catch (error) {
+		console.error('Cannot find income data csv');
+	}
 
 	fs.createReadStream(filePath)
 		.pipe(csv())
-		.on('data', (data) => defaultExpenses.push(data))
-		.on('end', () => {
-			defaultExpenses.map(async (seedExpense) => {
+		.on('data', (data) => expensesFromFile.push(data))
+		.on('end', async () => {
+			defaultExpenses = expensesFromFile.map((seedExpense) => {
 				const expense = new Expense();
 				const foundEmployee = defaultData.employees.find(
 					(emp) => emp.user.email === seedExpense.email
 				);
 
-				const foundCategory = defaultData.categories.find(
+				const foundCategory = (defaultData.categories || []).find(
 					(category) => seedExpense.categoryName === category.name
 				);
 
-				const foundVendor = defaultData.organizationVendors.find(
-					(vendor) => seedExpense.vendorName === vendor.name
-				);
+				const foundVendor = (
+					defaultData.organizationVendors || []
+				).find((vendor) => seedExpense.vendorName === vendor.name);
 
 				expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
+				expense.tenant = defaultData.org.tenant;
 				expense.amount = Math.abs(seedExpense.amount);
 				expense.vendor = foundVendor;
 				expense.category = foundCategory;
@@ -58,11 +77,37 @@ export const createExpenses = async (
 				expense.valueDate = new Date(seedExpense.valueDate);
 				expense.notes = seedExpense.notes;
 
-				await insertExpense(connection, expense);
+				return expense;
 			});
+
+			await insertExpense(connection, defaultExpenses);
 		});
 
-	const randomExpenses: Expense[] = [];
+	return expensesFromFile;
+};
+
+export const createRandomExpenses = async (
+	connection: Connection,
+	tenants: Tenant[],
+	tenantEmployeeMap: Map<Tenant, Employee[]>,
+	organizationVendorsMap: Map<Organization, OrganizationVendor[]> | void,
+	categoriesMap: Map<Organization, ExpenseCategory[]> | void
+): Promise<void> => {
+	if (!categoriesMap) {
+		console.warn(
+			'Warning: categoriesMap not found, RandomExpenses will not be created'
+		);
+		return;
+	}
+
+	if (!organizationVendorsMap) {
+		console.warn(
+			'Warning: organizationVendorsMap not found, RandomExpenses will not be created'
+		);
+		return;
+	}
+
+	const currencies = Object.values(CurrenciesEnum);
 
 	const notesArray = [
 		'Windows 10',
@@ -72,33 +117,52 @@ export const createExpenses = async (
 		'Rent for September'
 	];
 
-	for (let index = 0; index < 25; index++) {
-		const expense = new Expense();
+	for (const tenant of tenants) {
+		const randomExpenses: Expense[] = [];
 
-		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
+		const employees = tenantEmployeeMap.get(tenant);
 
-		expense.organization = randomData.orgs[index % 5];
-		expense.employee = randomData.employees[currentIndex];
-		expense.amount = faker.random.number({ min: 10, max: 999 });
-		expense.vendor =
-			randomData.organizationVendors[currentIndex] ||
-			randomData.organizationVendors[0];
-		expense.category =
-			randomData.categories[currentIndex] || randomData.categories[0];
-		expense.currency = currencies[(index % currencies.length) + 1 - 1];
-		expense.valueDate = faker.date.recent(15);
-		expense.notes = notesArray[currentIndex];
+		for (const employee of employees) {
+			const organizationVendors = organizationVendorsMap.get(
+				employee.organization
+			);
+			const categories = categoriesMap.get(employee.organization);
 
-		await insertExpense(connection, expense);
-		randomExpenses.push(expense);
+			for (let index = 0; index < 100; index++) {
+				const expense = new Expense();
+
+				const currentIndex = faker.random.number({
+					min: 0,
+					max: index % 5
+				});
+
+				expense.organization = employee.organization;
+				expense.tenant = tenant;
+				expense.employee = employee;
+				expense.amount = faker.random.number({ min: 10, max: 999 });
+				expense.vendor =
+					organizationVendors[
+						currentIndex % organizationVendors.length
+					];
+				expense.category = categories[currentIndex % categories.length];
+				expense.currency =
+					currencies[(index % currencies.length) + 1 - 1];
+				expense.valueDate = faker.date.recent(150);
+				expense.notes = notesArray[currentIndex];
+
+				randomExpenses.push(expense);
+			}
+		}
+
+		await insertExpense(connection, randomExpenses);
 	}
 
-	return { defaultExpenses, randomExpenses };
+	return;
 };
 
 const insertExpense = async (
 	connection: Connection,
-	expense: Expense
+	expense: Expense[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()

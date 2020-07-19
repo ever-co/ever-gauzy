@@ -6,10 +6,11 @@ import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tag } from './tag-entity.model';
 import { Employee } from './employee.model';
-import { ITenant } from '@gauzy/models';
+import { ITenant, Payment } from '@gauzy/models';
 
 export interface User extends IBaseEntityModel {
 	thirdPartyId?: string;
+	name?: string;
 	firstName?: string;
 	lastName?: string;
 	email?: string;
@@ -22,6 +23,10 @@ export interface User extends IBaseEntityModel {
 	employeeId?: string;
 	tenant: ITenant;
 	tags: Tag[];
+	preferredLanguage?: string;
+	payments?: Payment[];
+	paymentsId?: string;
+	preferredComponentLayout?: string;
 }
 
 export interface UserFindInput extends IBaseEntityModel {
@@ -34,6 +39,8 @@ export interface UserFindInput extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	tags?: Tag[];
+	preferredLanguage?: LanguagesEnum;
 }
 
 export interface UserRegistrationInput {
@@ -41,6 +48,7 @@ export interface UserRegistrationInput {
 	password?: string;
 	originalUrl?: string;
 	organizationId?: string;
+	createdById?: string;
 }
 
 export interface UserCreateInput {
@@ -52,6 +60,9 @@ export interface UserCreateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	tags?: Tag[];
+	preferredLanguage?: LanguagesEnum;
+	preferredComponentLayout?: ComponentLayoutStyleEnum;
 }
 
 export interface UserUpdateInput {
@@ -63,4 +74,19 @@ export interface UserUpdateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	preferredLanguage?: LanguagesEnum;
+	preferredComponentLayout?: ComponentLayoutStyleEnum;
+}
+
+export enum LanguagesEnum {
+	ENGLISH = 'en',
+	BULGARIAN = 'bg',
+	HEBREW = 'he',
+	RUSSIAN = 'ru'
+}
+
+export enum ComponentLayoutStyleEnum {
+	CARDS_GRID = 'CARDS_GRID',
+	TABLE = 'TABLE',
+	SPRINT_VIEW = 'SPRINT_VIEW'
 }

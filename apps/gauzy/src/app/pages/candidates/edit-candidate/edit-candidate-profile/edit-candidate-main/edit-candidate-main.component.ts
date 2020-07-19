@@ -1,8 +1,7 @@
-import { Candidate } from './../../../../../../../../../libs/models/src/lib/candidate.model';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { Organization } from '@gauzy/models';
+import { Organization, Candidate } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';

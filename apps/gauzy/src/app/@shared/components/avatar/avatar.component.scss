@@ -1,0 +1,27 @@
+:host {
+	display: flex;
+	align-items: center;
+	.image-container {
+		margin-right: 16px;
+		width: 48px;
+		img {
+			width: 48px;
+			height: 48px;
+			object-fit: cover;
+		}
+		&.lg {
+			width: 64px;
+			img {
+				width: 64px;
+				height: 64px;
+			}
+		}
+		&.sm {
+			width: 32px;
+			img {
+				width: 32px;
+				height: 32px;
+			}
+		}
+	}
+}

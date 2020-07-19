@@ -1,13 +1,20 @@
-import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
+import {
+	User,
+	Tag,
+	Skill,
+	OrganizationDepartment,
+	OrganizationPositions
+} from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
-import { OrganizationTeams } from './organization-teams-model';
+import { OrganizationTeam } from './organization-team-model';
+import { Contact as IContact } from './contact.model';
 import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
+import { RequestApprovalEmployee } from './request-approval-employee.model';
 
-export interface Employee extends IBaseEntityModel, ILocation {
+export interface Employee extends IContact, IBaseEntityModel {
 	endWork?: any;
 	startedWorkOn?: any;
 	user: User;
@@ -16,7 +23,9 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	orgId: string;
 	valueDate?: Date;
 	isActive: boolean;
-	teams?: OrganizationTeams[];
+	short_description?: string;
+	description?: string;
+	teams?: OrganizationTeam[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
@@ -25,12 +34,15 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
 	tags: Tag[];
+	skills: Skill[];
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
 	employeeLevel?: string;
 	anonymousBonus?: boolean;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	requestApprovalEmployee?: RequestApprovalEmployee[];
+	contact: IContact;
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {
@@ -38,6 +50,8 @@ export interface EmployeeFindInput extends IBaseEntityModel {
 	user?: UserFindInput;
 	valueDate?: Date;
 	orgId?: string;
+	tags?: Tag[];
+	skills?: Skill[];
 }
 
 export interface EmployeeUpdateInput {
@@ -50,6 +64,8 @@ export interface EmployeeUpdateInput {
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
+	short_description?: string;
+	description?: string;
 }
 
 export interface EmployeeCreateInput {
@@ -61,7 +77,11 @@ export interface EmployeeCreateInput {
 	rejectDate?: Date;
 	members?: Employee[];
 	tags?: Tag[];
+	skills?: Skill[];
 	startedWorkOn?: any;
+	short_description?: string;
+	description?: string;
+	originalUrl?: string;
 }
 
 export enum PayPeriodEnum {
@@ -75,10 +95,14 @@ export interface EmployeeLevel {
 	id: string;
 	level: string;
 	organizationId: string;
+	tag?: Tag[];
+	skills?: Skill[];
 }
 
 export interface EmployeeLevelInput {
 	id?: string;
 	level: string;
 	organizationId: string;
+	tags?: Tag[];
+	skills?: Skill[];
 }

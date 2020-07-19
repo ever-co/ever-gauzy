@@ -1,12 +1,21 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { InvitationTypeEnum, PermissionsEnum } from '@gauzy/models';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
+import {
+	InvitationTypeEnum,
+	PermissionsEnum,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
+import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -19,9 +28,10 @@ import { EmployeeAverageBonusComponent } from './table-components/employee-avera
 import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
 import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
-import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -41,10 +51,12 @@ export class EmployeesComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedEmployee: EmployeeViewModel;
+	employeeData: EmployeeViewModel[];
 	selectedOrganizationId: string;
-
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private _ngDestroy$ = new Subject<void>();
-
 	incomeStatistics: number[];
 	expenseStatistics: number[];
 	profitStatistics: number[];
@@ -68,8 +80,10 @@ export class EmployeesComponent extends TranslationBaseComponent
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
+	month;
+	year;
 
-	@ViewChild('employeesTable', { static: false }) employeesTable;
+	@ViewChild('employeesTable') employeesTable;
 
 	constructor(
 		private employeesService: EmployeesService,
@@ -83,6 +97,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		private employeeStatisticsService: EmployeeStatisticsService
 	) {
 		super(translate);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -124,6 +139,23 @@ export class EmployeesComponent extends TranslationBaseComponent
 				if (params.get('openAddDialog')) {
 					this.add();
 				}
+			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EMPLOYEES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
 			});
 	}
 
@@ -180,18 +212,16 @@ export class EmployeesComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectEmployeeTmp(ev: {
-		data: EmployeeViewModel;
-		isSelected: boolean;
-		selected: EmployeeViewModel[];
-		source: LocalDataSource;
-	}) {
-		if (ev.isSelected) {
-			this.selectedEmployee = ev.data;
+	selectEmployeeTmp({ isSelected, data }) {
+		const selectedEmployee = isSelected ? data : null;
+		if (this.employeesTable) {
+			this.employeesTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedEmployee = selectedEmployee;
+		if (this.selectedEmployee) {
 			const checkName = this.selectedEmployee.fullName.trim();
 			this.employeeName = checkName ? checkName : 'Employee';
-		} else {
-			this.selectedEmployee = null;
 		}
 	}
 
@@ -217,7 +247,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 		}
 	}
 
-	edit() {
+	edit(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate([
 			'/pages/employees/edit/' + this.selectedEmployee.id
 		]);
@@ -239,7 +275,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 
-	async delete() {
+	async delete(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -270,7 +312,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 			});
 	}
 
-	async endWork() {
+	async endWork(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 			context: {
 				endWorkValue: this.selectedEmployee.endWork,
@@ -298,7 +346,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async backToWork() {
+	async backToWork(selectedItem?: EmployeeViewModel) {
+		if (selectedItem) {
+			this.selectEmployeeTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 			context: {
 				backToWork: true,
@@ -359,16 +413,16 @@ export class EmployeesComponent extends TranslationBaseComponent
 					  new Date(emp.endWork).getFullYear()
 					: '',
 				imageUrl: emp.user.imageUrl,
-				tag: emp.tags,
+				tags: emp.tags,
 				// TODO: laod real bonus and bonusDate
 				bonus: this.bonusForSelectedMonth,
 				averageIncome: Math.floor(this.averageIncome),
 				averageExpenses: Math.floor(this.averageExpense),
 				averageBonus: Math.floor(this.averageBonus),
-				bonusDate: Date.now()
+				bonusDate: Date.now(),
+				startedWorkOn: emp.startedWorkOn
 			});
 		}
-
 		if (!this.includeDeleted) {
 			result.forEach((employee) => {
 				if (employee.isActive) {
@@ -378,6 +432,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		} else {
 			employeesVm = result;
 		}
+		this.employeeData = employeesVm;
 		this.sourceSmartTable.load(employeesVm);
 
 		if (this.employeesTable) {
@@ -391,10 +446,10 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 	private _loadSmartTableSettings() {
 		const dateNow = new Date();
-		const month =
+		this.month =
 			monthNames[dateNow.getMonth() - 1] ||
 			monthNames[monthNames.length - 1];
-		const year = monthNames[dateNow.getMonth() - 1]
+		this.year = monthNames[dateNow.getMonth() - 1]
 			? dateNow.getFullYear()
 			: dateNow.getFullYear() - 1;
 
@@ -404,7 +459,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: EmployeeFullNameComponent,
+					renderComponent: PictureNameTagsComponent,
 					class: 'align-row'
 				},
 				email: {
@@ -434,9 +489,9 @@ export class EmployeesComponent extends TranslationBaseComponent
 					renderComponent: EmployeeAverageBonusComponent
 				},
 				bonus: {
-					title: `${this.getTranslation(
-						'SM_TABLE.BONUS'
-					)} (${month} ${year})`,
+					title: `${this.getTranslation('SM_TABLE.BONUS')} (${
+						this.month
+					} ${this.year})`,
 					type: 'custom',
 					filter: false,
 					class: 'text-center',

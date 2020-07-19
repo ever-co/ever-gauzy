@@ -1,0 +1,47 @@
+:host ::ng-deep ng2-smart-table .ng2-smart-actions-title a {
+  background-color: #00d68f !important;
+  transform: scale(0.9);
+}
+
+:host ::ng-deep ng2-smart-table .ng2-smart-actions a {
+  transform: scale(0.6);
+  border-radius: 0.375rem;
+}
+
+:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(1) {
+  background-color: #00d68f !important;
+  color: white;
+}
+
+:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(2) {
+  background-color: #ff3d71 !important;
+  color: white;
+}
+
+:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(1):hover {
+  color: white;
+}
+
+:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(2):hover {
+  color: white;
+}
+
+.total {
+  float: right;
+
+  &-item {
+    border: solid 2px gray;
+    border-radius: 5px;
+    margin: 20px 80px;
+    padding: 10px;
+    font-size: 18px;
+  }
+}
+
+.payment-button {
+  margin-left: 80%;
+}
+
+:host ::ng-deep ng2-smart-table .ng2-smart-actions {
+  width: 5%;
+}

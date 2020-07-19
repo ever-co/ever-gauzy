@@ -1,0 +1,31 @@
+<nb-card class="card">
+	<nb-card-body class="card-body">
+		<div class="card-body-header">
+			<h5>
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.DELETE_FEEDBACK'
+						| translate
+				}}
+			</h5>
+			<nb-icon
+				icon="close-outline"
+				class="card-body-header-icon"
+				(click)="closeDialog()"
+			></nb-icon>
+		</div>
+		<span class="label">
+			{{
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.DELETE_FEEDBACK_ARE_YOU_SURE'
+					| translate
+			}}</span
+		>
+		<div class="card-body-buttons">
+			<button status="warning" (click)="closeDialog()" nbButton>
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button status="danger" (click)="delete()" nbButton>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+	</nb-card-body>
+</nb-card>

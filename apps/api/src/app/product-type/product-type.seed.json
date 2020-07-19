@@ -1,0 +1,277 @@
+[
+	{
+		"icon": "checkmark-circle-outline",
+		"translations": [
+			{
+				"languageCode": "bg",
+				"name": "Физически продукти",
+				"description": "Може да се докосне, осезаемо, твърдо, прахообразно, течно вещество в контейнер."
+			},
+			{
+				"languageCode": "en",
+				"name": "Physical Products",
+				"description": "Can be touched or tangible, solid, dust or liquid state in a container."
+			},
+			{
+				"languageCode": "he",
+				"name": "מוצרים פיזיים",
+				"description": "ניתן לגעת או מוחשי, מוצק, אבק או מצב נוזלי במיכל."
+			},
+			{
+				"languageCode": "ru",
+				"name": "Физические продукты",
+				"description": "Может быть тронутым или осязаемым, твердым, пылевым или жидким в контейнере."
+			}
+		]
+	},
+	{
+		"icon": "flash-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Digital Products",
+				"description": "Any product you sell online that doesn’t have physical form or substance"
+			},
+			{
+				"languageCode": "bg",
+				"name": "Дигитални продукти",
+				"description": "Всеки продукт, който продавате онлайн, който няма физическа форма или вещество"
+			},
+			{
+				"languageCode": "he",
+				"name": "מוצרים דיגיטליים",
+				"description": "כל מוצר שאתה מוכר באופן מקוון שאין לו צורה פיזית או חומר"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Цифровые продукты",
+				"description": "Любой продукт, который вы продаете онлайн, который не имеет физической формы или содержания"
+			}
+		]
+	},
+	{
+		"icon": "heart-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Consumer Products",
+				"description": "Final goods, are products that are bought by individuals or households for personal use."
+			},
+			{
+				"languageCode": "bg",
+				"name": "Потребителски продукти",
+				"description": "Крайни стоки са продукти, които се купуват от физически лица или домакинства за лична употреба."
+			},
+			{
+				"languageCode": "he",
+				"name": "מוצרי צריכה",
+				"description": "מוצרים סופיים הם מוצרים שנרכשים על ידי אנשים או משקי בית לשימוש אישי."
+			},
+			{
+				"languageCode": "ru",
+				"name": "Потребительские товары",
+				"description": "Конечные товары - это товары, которые покупают частные лица или домохозяйства для личного пользования."
+			}
+		]
+	},
+	{
+		"icon": "shopping-bag-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Raw materials",
+				"description": "Unprocessed material, or primary commodity, is a basic material that is used to produce goods"
+			},
+			{
+				"languageCode": "bg",
+				"name": "Сурови материали",
+				"description": "Необработеният материал или първичната стока е основен материал, който се използва за производство на стоки"
+			},
+			{
+				"languageCode": "he",
+				"name": "מוצרים פיזיים",
+				"description": "חומר לא מעובד, או סחורה ראשונית, הוא חומר בסיסי המשמש לייצור סחורות"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Сырье",
+				"description": "Необработанный материал, или основной товар, является основным материалом, который используется для производства товаров."
+			}
+		]
+	},
+	{
+		"icon": "shopping-cart-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Supplies",
+				"description": "Items purchased and typically used up during the year."
+			},
+			{
+				"languageCode": "bg",
+				"name": "Припаси",
+				"description": "Елементи, закупени и обикновено използвани през годината."
+			},
+			{
+				"languageCode": "he",
+				"name": "אספקה",
+				"description": "פריטים שנרכשו ובדרך כלל נעשה בהם שימוש במהלך השנה."
+			},
+			{
+				"languageCode": "ru",
+				"name": "Предметы снабжения",
+				"description": "Товары, приобретенные и обычно израсходованные в течение года."
+			}
+		]
+	},
+	{
+		"icon": "layers-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Experiences",
+				"description": "Knowledge or skill in a particular job or activity"
+			},
+			{
+				"languageCode": "bg",
+				"name": "Опит",
+				"description": "Знания или умения в определена работа или дейност"
+			},
+			{
+				"languageCode": "he",
+				"name": "חוויות",
+				"description": "ידע או מיומנות בעבודה או בפעילות מסוימת"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Опыт",
+				"description": "Знание или умение в конкретной работе или деятельности"
+			}
+		]
+	},
+	{
+		"icon": "star-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Specialty Goods",
+				"description": "Have particularly unique characteristics"
+			},
+			{
+				"languageCode": "bg",
+				"name": "Специални стоки",
+				"description": "Имат особено уникални характеристики"
+			},
+			{
+				"languageCode": "he",
+				"name": "מוצרים מיוחדים",
+				"description": "בעלי מאפיינים ייחודיים במיוחד"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Специализированные товары",
+				"description": "Имеют особенно уникальные характеристики"
+			}
+		]
+	},
+	{
+		"icon": "home-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Common",
+				"description": null
+			},
+			{
+				"languageCode": "bg",
+				"name": "Общи",
+				"description": null
+			},
+			{
+				"languageCode": "he",
+				"name": "נפוץ",
+				"description": null
+			},
+			{
+				"languageCode": "ru",
+				"name": "Общий",
+				"description": null
+			}
+		]
+	},
+	{
+		"icon": "radio-button-off-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Physical Products",
+				"description": "Can be touched or tangible, solid, dust or liquid state in a container."
+			},
+			{
+				"languageCode": "bg",
+				"name": "Промишлени стоки",
+				"description": "Закупен и използван за промишлена и бизнес употреба"
+			},
+			{
+				"languageCode": "he",
+				"name": "מוצרים תעשייתיים",
+				"description": "נקנה ומשמש לשימוש תעשייתי ועסקי"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Промышленные товары",
+				"description": "Куплено и использовано для промышленного и коммерческого использования"
+			}
+		]
+	},
+	{
+		"icon": "star-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Amenities",
+				"description": "any feature that provides comfort, convenience, or pleasure"
+			},
+			{
+				"languageCode": "bg",
+				"name": "Удобства",
+				"description": "Всяка функция, която осигурява комфорт, удобство или удоволствие"
+			},
+			{
+				"languageCode": "he",
+				"name": "שירותים",
+				"description": "כל תכונה המספקת נוחות, נוחות או הנאה"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Удобства",
+				"description": "Любая функция, которая обеспечивает комфорт, удобство или удовольствие"
+			}
+		]
+	},
+	{
+		"icon": "heart-outline",
+		"translations": [
+			{
+				"languageCode": "en",
+				"name": "Animals",
+				"description": "Consume organic material, breathe oxygen, are able to move"
+			},
+			{
+				"languageCode": "bg",
+				"name": "Животни",
+				"description": "Животните консумират органичен материал, дишат кислород, са в състояние да се движат"
+			},
+			{
+				"languageCode": "he",
+				"name": "בעלי חיים",
+				"description": "בעלי חיים צורכים חומר אורגני, נושמים חמצן, מסוגלים לנוע"
+			},
+			{
+				"languageCode": "ru",
+				"name": "Животные",
+				"description": "Животные потребляют органический материал, дышат кислородом, способны двигаться"
+			}
+		]
+	}
+]

@@ -41,7 +41,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		private directionService: NbLayoutDirectionService,
 		private router: Router
 	) {}
-	@ViewChild(NbLayoutComponent, { static: false }) layout: NbLayoutComponent;
+	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: any;
 	showOrganizationsSelector = false;
@@ -71,10 +71,12 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 
 	private async loadUserData() {
 		const id = this.store.userId;
+		if (!id) return;
 		this.user = await this.usersService.getMe([
 			'employee',
 			'role',
-			'role.rolePermissions'
+			'role.rolePermissions',
+			'tenant'
 		]);
 
 		//When a new user registers & logs in for the first time, he/she does not have tenantId.
@@ -98,7 +100,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 				items: userOrg
 			} = await this.usersOrganizationsService.getAll([], { userId: id });
 			const org = await this.organizationsService
-				.getById(userOrg[0].orgId)
+				.getById(userOrg[0].organizationId)
 				.pipe(first())
 				.toPromise();
 			this.store.selectedOrganization = org;

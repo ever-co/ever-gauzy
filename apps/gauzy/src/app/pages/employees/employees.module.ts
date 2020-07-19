@@ -34,7 +34,7 @@ import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invit
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { InviteGuard } from './../../@core/role/invite.guard';
-import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
+import { EditEmployeeContactComponent } from './edit-employee/edit-employee-profile/edit-employee-contact/edit-employee-contact.component';
 import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
 import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
 import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
@@ -50,13 +50,16 @@ import { EmployeeAverageBonusComponent } from './table-components/employee-avera
 import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
 import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
-import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { SkillsInputModule } from '../../@shared/skills/skills-input/skills-input.module';
 import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { SkillsService } from '../../@core/services/skills.service';
+import { CKEditorModule } from 'ng2-ckeditor';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -68,7 +71,6 @@ const COMPONENTS = [
 	EmployeeAverageIncomeComponent,
 	EmployeeAverageExpensesComponent,
 	EmployeeAverageBonusComponent,
-	EmployeeFullNameComponent,
 	EmployeeWorkStatusComponent,
 	EditEmployeeComponent,
 	EditEmployeeProfileComponent,
@@ -76,7 +78,7 @@ const COMPONENTS = [
 	EditEmployeeRatesComponent,
 	ManageEmployeeInviteComponent,
 	EditEmployeeProjectsComponent,
-	EditEmployeeClientComponent,
+	EditEmployeeContactComponent,
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
 	EditEmployeeEmploymentComponent
@@ -84,6 +86,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
 		SharedModule,
 		EmployeesRoutingModule,
 		ThemeModule,
@@ -121,8 +124,10 @@ const COMPONENTS = [
 		NbDatepickerModule,
 		RecurringExpenseBlockModule,
 		TagsColorInputModule,
+		SkillsInputModule,
 		EmployeeLocationModule,
-		EmployeeRatesModule
+		EmployeeRatesModule,
+		CKEditorModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
@@ -130,7 +135,6 @@ const COMPONENTS = [
 		EmployeeAverageIncomeComponent,
 		EmployeeAverageExpensesComponent,
 		EmployeeAverageBonusComponent,
-		EmployeeFullNameComponent,
 		EmployeeWorkStatusComponent,
 		ManageEmployeeInviteComponent
 	],
@@ -139,7 +143,8 @@ const COMPONENTS = [
 		InviteGuard,
 		CountryService,
 		CandidatesService,
-		OrganizationEmploymentTypesService
+		OrganizationEmploymentTypesService,
+		SkillsService
 	]
 })
 export class EmployeesModule {}

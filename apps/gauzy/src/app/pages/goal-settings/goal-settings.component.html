@@ -1,0 +1,126 @@
+<nb-card>
+	<nb-card-header class="header-selector-wrapper">
+		<div>
+			<h4>{{ 'GOALS_PAGE.GOAL_SETTINGS' | translate }}</h4>
+		</div>
+		<ga-layout-selector
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-tabset (changeTab)="tabChange($event)">
+			<nb-tab
+				tabTitle="{{
+					'GOALS_PAGE.SETTINGS.TIME_FRAME_PAGE_TITLE' | translate
+				}}"
+			>
+				<div class="mb-3">
+					<button
+						nbButton
+						status="success"
+						(click)="editTimeFrame('add')"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+						>{{ 'BUTTONS.ADD' | translate }}
+					</button>
+					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+						<ng-container
+							*ngTemplateOutlet="actionButtons"
+						></ng-container>
+					</ng-container>
+				</div>
+			</nb-tab>
+			<nb-tab tabTitle="KPI">
+				<div class="mb-3">
+					<button
+						nbButton
+						status="success"
+						(click)="editKPI('add')"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+						>{{ 'BUTTONS.ADD' | translate }}
+					</button>
+					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+						<ng-container
+							*ngTemplateOutlet="actionButtons"
+						></ng-container>
+					</ng-container>
+				</div>
+			</nb-tab>
+		</nb-tabset>
+		<ng-container>
+			<ng2-smart-table
+				[settings]="smartTableSettings"
+				[source]="smartTableData"
+				(userRowSelect)="selectRow($event)"
+				style="cursor: pointer;"
+				*ngIf="dataLayoutStyle === 'TABLE'"
+				#smartTable
+			>
+			</ng2-smart-table>
+			<ga-card-grid
+				[settings]="smartTableSettings"
+				[source]="goalTimeFrames"
+				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+				[buttonTemplate]="actionButtons"
+			></ga-card-grid>
+		</ng-container>
+	</nb-card-body>
+</nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		*ngIf="selectedTab !== 'KPI'"
+		nbButton
+		status="info"
+		(click)="editTimeFrame('edit', selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		*ngIf="selectedTab !== 'KPI'"
+		nbButton
+		status="danger"
+		(click)="deleteTimeFrame(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+
+	<button
+		*ngIf="selectedTab === 'KPI'"
+		nbButton
+		status="info"
+		(click)="editKPI('edit', selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		*ngIf="selectedTab === 'KPI'"
+		nbButton
+		status="danger"
+		(click)="deleteKPI(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

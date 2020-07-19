@@ -1,0 +1,51 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<h5>{{ 'MENU.UPWORK' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<ng-container *ngIf="upworkConfigForm">
+			<form
+				[formGroup]="upworkConfigForm"
+				(ngSubmit)="authorizeUpwork(upworkConfigForm.value)"
+			>
+				<div class="form-group">
+					<label for="consumerKey" class="label">{{
+						'INTEGRATIONS.UPWORK_PAGE.API_KEY' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="consumerKey"
+						formControlName="consumerKey"
+						type="text"
+						nbInput
+						placeholder="Upwork API key"
+					/>
+				</div>
+				<div class="form-group">
+					<label for="consumerSecret" class="label">{{
+						'INTEGRATIONS.UPWORK_PAGE.SECRET' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="consumerSecret"
+						formControlName="consumerSecret"
+						type="text"
+						nbInput
+						placeholder="Upwork Secret"
+					/>
+				</div>
+				<div class="hint">
+					<nb-icon icon="info-outline"></nb-icon>
+					{{ 'INTEGRATIONS.UPWORK_PAGE.NEXT_STEP_INFO' | translate }}
+				</div>
+				<button
+					nbButton
+					status="primary"
+					[disabled]="!upworkConfigForm.valid"
+				>
+					{{ 'BUTTONS.NEXT' | translate }}
+				</button>
+			</form>
+		</ng-container>
+	</nb-card-body>
+</nb-card>

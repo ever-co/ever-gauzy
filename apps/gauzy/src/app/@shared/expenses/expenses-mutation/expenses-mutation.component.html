@@ -18,6 +18,7 @@
 			placeholder="Organization"
 			[defaultSelected]="false"
 			(selectionChanged)="onEmployeeChange($event)"
+			[selectedDate]="valueDate.value"
 		></ga-employee-selector>
 		<span
 			*ngIf="showTooltip"
@@ -118,16 +119,19 @@
 					</nb-select>
 				</div>
 				<div class="col-sm-6">
-					<ng-select
-						[items]="expenseCategories$ | async"
-						[searchable]="true"
-						[addTag]="addNewCategory"
-						bindLabel="name"
-						[searchable]="false"
-						formControlName="category"
-						placeholder="{{ 'POP_UPS.ALL_CATEGORIES' | translate }}"
-					>
-					</ng-select>
+					<div class="form-group">
+						<ng-select
+							[items]="expenseCategories"
+							[searchable]="true"
+							[addTag]="addNewCategory"
+							bindLabel="name"
+							formControlName="category"
+							placeholder="{{
+								'POP_UPS.ALL_CATEGORIES' | translate
+							}}"
+						>
+						</ng-select>
+					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
@@ -167,7 +171,7 @@
 								[isOpen]="showWarning ? true : null"
 								[addTag]="addNewClient"
 								[items]="clients"
-								bindLabel="name"
+								bindLabel="clientName"
 								[searchable]="true"
 								autocomplete="on"
 								formControlName="client"
@@ -200,12 +204,12 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<ngx-tags-color-input
-							[form]="form"
+						<ga-tags-color-input
 							[selectedTags]="tags"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
+							[isOrgLevel]="true"
 						>
-						</ngx-tags-color-input>
+						</ga-tags-color-input>
 					</div>
 				</div>
 			</div>
@@ -342,5 +346,3 @@
 		</button>
 	</nb-card-footer>
 </nb-card>
-
-<!-- [disabled]="form.invalid" -->

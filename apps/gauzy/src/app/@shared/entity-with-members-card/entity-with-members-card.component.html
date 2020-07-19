@@ -1,7 +1,8 @@
-<nb-card style="padding: 0 !important" class="card-body">
+<nb-card style="padding: 0 !important;" class="card-body">
 	<nb-card-header style="padding: 0.5rem;">
 		<div class="header-container">
-			<div>{{ entityWithMembers.name }}</div>
+			<ga-notes-with-tags [rowData]="entityWithMembers">
+			</ga-notes-with-tags>
 			<div class="members-count">
 				{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
 				{{

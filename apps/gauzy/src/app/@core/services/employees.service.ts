@@ -18,6 +18,7 @@ export class EmployeesService {
 		findInput?: EmployeeFindInput
 	): Observable<{ items: Employee[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
+
 		return this.http.get<{ items: Employee[]; total: number }>(
 			`/api/employee`,
 			{
@@ -26,9 +27,49 @@ export class EmployeesService {
 		);
 	}
 
-	getEmployeeById(id: string) {
+	getWorking(
+		organizationId: string,
+		forMonth: Date,
+		withUser: boolean
+	): Promise<{ items: Employee[]; total: number }> {
+		const data = JSON.stringify({ organizationId, forMonth, withUser });
 		return this.http
-			.get<Employee>(`/api/employee/${id}`)
+			.get<{ items: Employee[]; total: number }>(
+				`/api/employee/working`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getEmployeeByUserId(
+		userId: string,
+		relations?: string[],
+		useTenant?: boolean
+	): Promise<{
+		success: boolean;
+		result: Employee;
+	}> {
+		const data = JSON.stringify({ relations, useTenant });
+		return this.http
+			.get<{
+				success: boolean;
+				result: Employee;
+			}>(`/api/employee/user/${userId}`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getEmployeeById(id: string, relations?: string[], useTenant?: boolean) {
+		const data = JSON.stringify({ relations, useTenant });
+		return this.http
+			.get<Employee>(`/api/employee/${id}`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}

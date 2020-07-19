@@ -1,0 +1,11 @@
+<div [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<div *ngIf="!loading">
+		<div *ngIf="!errorMessage">
+			<h1 *ngIf="isAccepted">Estimate accpeted</h1>
+			<h1 *ngIf="!isAccepted">Estimate rejected</h1>
+		</div>
+		<div *ngIf="errorMessage">
+			<h1>{{ errorMessage }}</h1>
+		</div>
+	</div>
+</div>

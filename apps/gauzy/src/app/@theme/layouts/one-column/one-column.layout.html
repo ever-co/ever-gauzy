@@ -1,5 +1,5 @@
 <nb-layout windowMode>
-	<nb-layout-header fixed>
+	<nb-layout-header fixed *ngIf="user">
 		<ngx-header
 			[showEmployeesSelector]="showEmployeesSelector"
 			[showOrganizationsSelector]="showOrganizationsSelector"
@@ -10,6 +10,7 @@
 		class="menu-sidebar sidebar_class"
 		tag="menu-sidebar"
 		responsive
+		*ngIf="user"
 	>
 		<ng-content select="nb-menu"></ng-content>
 		<div class="user-container">

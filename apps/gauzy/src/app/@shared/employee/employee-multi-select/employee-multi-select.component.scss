@@ -1,0 +1,8 @@
+:host {
+  ::ng-deep {
+    .ng-select.ng-select-multiple .ng-select-container .ng-value-container {
+      flex-wrap: nowrap;
+      overflow: hidden;
+    }
+  }
+}

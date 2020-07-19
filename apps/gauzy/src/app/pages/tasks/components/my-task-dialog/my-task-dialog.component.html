@@ -1,0 +1,192 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(selectedTask
+					? 'TASKS_PAGE.EDIT_TASKS'
+					: 'TASKS_PAGE.ADD_TASKS'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="dialogRef.close()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form">
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{
+							'CONTEXT_MENU.PROJECT' | translate
+						}}</label>
+						<ng-select
+							[addTag]="addNewProject"
+							[items]="projects"
+							nbInput
+							bindLabel="name"
+							[searchable]="true"
+							autocomplete="on"
+							formControlName="project"
+							placeholder="{{
+								'CONTEXT_MENU.PROJECT' | translate
+							}}"
+						>
+						</ng-select>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{
+							'TASKS_PAGE.TASKS_STATUS' | translate
+						}}</label>
+						<ng-select
+							[items]="statuses"
+							nbInput
+							bindLabel="name"
+							autocomplete="on"
+							formControlName="status"
+							placeholder="{{
+								'TASKS_PAGE.TASKS_STATUS' | translate
+							}}"
+						>
+						</ng-select>
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<div class="form-group">
+						<ga-employee-multi-select
+							[selectedEmployeeIds]="selectedMembers"
+							[allEmployees]="employees"
+							disabled="true"
+						>
+						</ga-employee-multi-select>
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<label for="dueDate" class="label">{{
+						'TASKS_PAGE.TASKS_TITLE' | translate
+					}}</label>
+					<input
+						class="name-input"
+						formControlName="title"
+						type="text"
+						nbInput
+						placeholder="Add title"
+					/>
+				</div>
+				<div class="col-sm-12">
+					<div class="formGroup">
+						<ga-tags-color-input
+							[selectedTags]="selectedTask?.tags"
+							(selectedTagsEvent)="selectedTagsHandler($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="dueDate" class="label">{{
+							'TASKS_PAGE.DUE_DATE' | translate
+						}}</label>
+						<input
+							formControlName="dueDate"
+							type="text"
+							nbInput
+							placeholder="{{
+								'TASKS_PAGE.DUE_DATE' | translate
+							}}"
+							[nbDatepicker]="taskDueDatePicker"
+							id="dueDate"
+							fullWidth
+						/>
+						<nb-datepicker #taskDueDatePicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{
+							'TASKS_PAGE.ESTIMATE' | translate
+						}}</label>
+						<div class="estimate-inputs">
+							<input
+								formControlName="estimateDays"
+								type="number"
+								nbInput
+								placeholder="{{
+									'TASKS_PAGE.ESTIMATE_DAYS' | translate
+								}}"
+							/>
+
+							<input
+								formControlName="estimateHours"
+								type="number"
+								[status]="
+									form.get('estimateHours').errors
+										? 'danger'
+										: 'basic'
+								"
+								min="0"
+								max="23"
+								nbInput
+								placeholder="{{
+									'TASKS_PAGE.ESTIMATE_HOURS' | translate
+								}}"
+							/>
+
+							<input
+								formControlName="estimateMinutes"
+								type="number"
+								[status]="
+									form.get('estimateMinutes').errors
+										? 'danger'
+										: 'basic'
+								"
+								min="0"
+								max="59"
+								nbInput
+								placeholder="{{
+									'TASKS_PAGE.ESTIMATE_MINUTES' | translate
+								}}"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-sm-12">
+					<label class="label">{{
+						'TASKS_PAGE.TASKS_DESCRIPTION' | translate
+					}}</label>
+					<textarea
+						formControlName="description"
+						nbInput
+						fullWidth
+						class="description"
+						placeholder="Description"
+					></textarea>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="danger"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			(click)="onSave()"
+			[disabled]="form.invalid || employeeId === null"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

@@ -10,7 +10,8 @@ import {
 	User,
 	Role,
 	CandidateCreateInput,
-	Candidate
+	Candidate,
+	ICandidateDocument
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -19,6 +20,7 @@ import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
+import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 
 @Component({
 	selector: 'ga-candidate-mutation',
@@ -26,12 +28,15 @@ import { CandidatesService } from '../../../@core/services/candidates.service';
 	styleUrls: ['candidate-mutation.component.scss']
 })
 export class CandidateMutationComponent implements OnInit, AfterViewInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
-	@ViewChild('userBasicInfoCV', { static: false })
-	userBasicInfoCV: BasicInfoFormComponent;
-	@ViewChild('stepper', { static: false })
+
+	@ViewChild('candidateCv')
+	candidateCv: CandidateCvComponent;
+
+	@ViewChild('stepper')
 	stepper: NbStepperComponent;
+
 	form: FormGroup;
 	formCV: FormGroup;
 	role: Role;
@@ -50,10 +55,11 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 
 	async ngAfterViewInit() {
 		this.form = this.userBasicInfo.form;
-		this.formCV = this.userBasicInfoCV.form;
+		this.formCV = this.candidateCv.form;
 		this.role = await this.roleService
 			.getRoleByName({
-				name: RolesEnum.CANDIDATE
+				name: RolesEnum.CANDIDATE,
+				tenant: this.store.user.tenant
 			})
 			.pipe(first())
 			.toPromise();
@@ -78,10 +84,15 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		const rejectDate = this.form.get('rejectDate').value || null;
 		const hiredDate = this.form.get('hiredDate').value || null;
 		const cvUrl = this.formCV.get('cvUrl').value || null;
+		let documents: ICandidateDocument[] = null;
+		if (cvUrl !== null) {
+			documents = [{ name: 'CV', documentUrl: cvUrl }];
+		}
 
 		const newCandidate: CandidateCreateInput = {
 			user,
 			cvUrl,
+			documents,
 			password: this.form.get('password').value,
 			organization: this.store.selectedOrganization,
 			appliedDate,
@@ -89,11 +100,12 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			rejectDate,
 			tags: this.userBasicInfo.selectedTags
 		};
+
 		this.candidates.push(newCandidate);
 		this.userBasicInfo.loadFormData();
-		this.userBasicInfoCV.loadFormData();
+		this.candidateCv.loadFormData();
 		this.form = this.userBasicInfo.form;
-		this.formCV = this.userBasicInfoCV.form;
+		this.formCV = this.candidateCv.form;
 		this.stepper.reset();
 	}
 	async add() {

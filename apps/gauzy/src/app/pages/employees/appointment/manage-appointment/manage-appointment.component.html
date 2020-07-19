@@ -1,0 +1,240 @@
+<nb-card>
+	<nb-card-header>
+		<h4>
+			{{
+				(editMode
+					? 'APPOINTMENTS_PAGE.EDIT_APPOINTMENT'
+					: 'APPOINTMENTS_PAGE.ADD_APPOINTMENT'
+				) | translate
+			}}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+		<div class="appointment-form">
+			<form [formGroup]="form" *ngIf="form">
+				<div class="row">
+					<div class="col-9">
+						<div class="form-group">
+							<label for="agenda" class="label">{{
+								'FORM.LABELS.MEETING_AGENDA' | translate
+							}}</label>
+							<input
+								fullWidth
+								id="agenda"
+								type="text"
+								nbInput
+								formControlName="agenda"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.MEETING_AGENDA'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-9">
+						<ngx-timer-range-picker
+							[timezoneOffset]="timezoneOffset"
+							[slotStartTime]="start"
+							[slotEndTime]="end"
+							[maxDate]="selectedRange.end"
+							[minDate]="selectedRange.start"
+							[allowedDuration]="allowedDuration"
+							[disableDatePicker]="disabled"
+							[disableEndPicker]="disabled"
+							name="selectedRange"
+							formControlName="selectedRange"
+							fromEmployeeAppointment="true"
+						>
+						</ngx-timer-range-picker>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-3">
+						<div class="form-group">
+							<nb-checkbox formControlName="bufferTime">
+								Buffer Time
+							</nb-checkbox>
+						</div>
+					</div>
+					<div class="col-3" *ngIf="form.get('bufferTime').value">
+						<div class="form-group">
+							<nb-checkbox formControlName="bufferTimeStart">
+								Buffer at Start
+							</nb-checkbox>
+						</div>
+					</div>
+					<div class="col-3" *ngIf="form.get('bufferTime').value">
+						<div class="form-group">
+							<nb-checkbox formControlName="bufferTimeEnd">
+								Buffer at End
+							</nb-checkbox>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div
+						class="col-6 form-group"
+						*ngIf="form.get('bufferTime').value"
+					>
+						<input
+							fullWidth
+							id="bufferTimeInMins"
+							type="number"
+							nbInput
+							formControlName="bufferTimeInMins"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.BUFFER_TIME' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-3">
+						<div class="form-group">
+							<nb-checkbox formControlName="breakTime">
+								Break Time
+							</nb-checkbox>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div
+						class="col-6 form-group"
+						*ngIf="form.get('breakTime').value"
+					>
+						<ga-timer-picker
+							name="break_start_time"
+							[min]="form.get('selectedRange').value.start"
+							[max]="form.get('selectedRange').value.end"
+							formControlName="breakStartTime"
+						></ga-timer-picker>
+					</div>
+				</div>
+				<div class="row">
+					<div
+						class="col-6 form-group"
+						*ngIf="form.get('breakTime').value"
+					>
+						<input
+							fullWidth
+							id="breakTimeInMins"
+							type="number"
+							nbInput
+							formControlName="breakTimeInMins"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.BREAK_TIME' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-9">
+						<div class="form-group">
+							<label for="location" class="label">{{
+								'FORM.LABELS.MEETING_LOCATION' | translate
+							}}</label>
+							<input
+								fullWidth
+								id="location"
+								type="text"
+								nbInput
+								formControlName="location"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.MEETING_LOCATION'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-9">
+						<div class="form-group">
+							<label for="description" class="label">{{
+								'FORM.LABELS.MEETING_DESCRIPTION' | translate
+							}}</label>
+							<input
+								fullWidth
+								id="description"
+								type="text"
+								nbInput
+								formControlName="description"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.MEETING_DESCRIPTION'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="row" *ngIf="!hidePrivateFields">
+					<div class="col-9">
+						<div class="form-group">
+							<label for="description" class="label">{{
+								'FORM.LABELS.MEETING_INVITEES' | translate
+							}}</label>
+							<ga-employee-multi-select
+								[label]="false"
+								[selectedEmployeeIds]="selectedEmployeeIds"
+								[allEmployees]="employees"
+								(selectedChange)="onMembersSelected($event)"
+							>
+							</ga-employee-multi-select>
+						</div>
+					</div>
+				</div>
+				<div class="row" *ngIf="hidePrivateFields">
+					<div class="col-sm-12">
+						<div class="form-group">
+							<label for="emailsSelect" class="label">{{
+								'FORM.LABELS.EMAILS' | translate
+							}}</label>
+							<ng-select
+								id="emailsSelect"
+								class="adjust-height"
+								[items]="[]"
+								[addTag]="addTagFn"
+								[hideSelected]="true"
+								multiple="true"
+								bindLabel="emailAddress"
+								formControlName="emails"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.EMAILS' | translate
+								}}"
+								notFoundText="{{
+									'FORM.PLACEHOLDERS.EMAILS' | translate
+								}}"
+								[ngClass]="{
+									'item-invalid':
+										emails.invalid &&
+										(emails.dirty || emails.touched),
+									'item-valid':
+										emails.valid &&
+										(emails.dirty || emails.touched)
+								}"
+							>
+							</ng-select>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</nb-card-body>
+	<nb-card-footer>
+		<button status="success" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+		<button
+			*ngIf="editMode"
+			style="margin-left: 10px;"
+			status="warning"
+			nbButton
+			(click)="cancelAppointment()"
+		>
+			{{ 'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

@@ -14,9 +14,10 @@ import {
 	Min,
 	IsBoolean
 } from 'class-validator';
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 
 import { Base } from '../core/entities/base';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('organization_recurring_expense')
 export class OrganizationRecurringExpense extends Base
@@ -26,7 +27,7 @@ export class OrganizationRecurringExpense extends Base
 	@IsNotEmpty()
 	@Index()
 	@Column()
-	orgId: string;
+	organizationId: string;
 
 	@ApiProperty({ type: Number, minimum: 1, maximum: 31 })
 	@IsNumber()
@@ -116,4 +117,7 @@ export class OrganizationRecurringExpense extends Base
 	@Index()
 	@Column({ nullable: true })
 	parentRecurringExpenseId?: string;
+
+	@ManyToOne((type) => Organization, (organization) => organization.id)
+	organization: Organization;
 }

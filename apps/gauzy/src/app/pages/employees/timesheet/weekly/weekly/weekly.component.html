@@ -1,0 +1,107 @@
+<div class="header row">
+	<h5 class="mb-3 col">
+		{{ 'TIMESHEET.WEEKLY' | translate }}
+	</h5>
+	<div class="col-auto">
+		<ng-template
+			[ngxPermissionsOnly]="[
+				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+			]"
+		>
+			<button nbButton status="primary" (click)="openAddEdit()">
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'TIMESHEET.ADD_TIME' | translate }}
+			</button>
+		</ng-template>
+	</div>
+</div>
+
+<div class="filters row mb-3">
+	<div class="col">
+		<ngx-filters
+			dateRange="week"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
+	</div>
+</div>
+<div
+	class="weekly-logs row-table"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
+	<div
+		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
+	>
+		<div class="col-sm-3 project-name">
+			{{ 'TIMESHEET.PROJECT' | translate }} /
+			{{ 'TIMESHEET.TODO' | translate }}
+		</div>
+		<div class="col text-center day-col" *ngFor="let date of weekDayList">
+			{{ date | date }}
+		</div>
+	</div>
+	<ng-template [ngIf]="weekData?.length > 0" [ngIfElse]="notFound">
+		<div
+			class="row border-bottom py-3 align-items-center"
+			*ngFor="let day of weekData"
+		>
+			<div class="col-sm-3 project-name">
+				<span *ngIf="day?.project; else noProfject">{{
+					day?.project?.name
+				}}</span>
+				<ng-template #noProfject>
+					<span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
+				</ng-template>
+			</div>
+			<div
+				class="col text-center day-col"
+				*ngFor="let date of weekDayList"
+			>
+				<button
+					*ngIf="day.dates[date]?.sum > 0; else noLogsCol"
+					nbButton
+					ghost
+					status="primary"
+					[nbPopover]="viewTimeLogComponent"
+					[nbPopoverContext]="{
+						timelogs: day.dates[date]?.logs,
+						callback: addTimeCallback
+					}"
+				>
+					{{ day.dates[date]?.sum | durationFormat }}
+				</button>
+				<ng-template #noLogsCol>
+					<ng-template
+						[ngxPermissionsOnly]="[
+							OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+						]"
+						[ngxPermissionsOnlyElse]="notAllowAddTimeBlock"
+					>
+						<button
+							nbButton
+							outline
+							status="primary"
+							(click)="
+								openAddByDateProject(date, day?.project?.id)
+							"
+							*ngIf="allowAdd(date); else notAllowAddTimeBlock"
+						>
+							<nb-icon icon="plus-outline"></nb-icon>
+						</button>
+					</ng-template>
+					<ng-template #notAllowAddTimeBlock>
+						-
+					</ng-template>
+				</ng-template>
+			</div>
+		</div>
+	</ng-template>
+	<ng-template #notFound>
+		<div class="row font-weight-bold py-3 align-items-center">
+			<div class="col text-center">
+				{{ 'TIMESHEET.NO_TIMELOG' | translate }}
+			</div>
+		</div>
+	</ng-template>
+</div>

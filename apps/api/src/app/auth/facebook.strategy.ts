@@ -17,8 +17,8 @@ export class FacebookStrategy {
 			'facebook',
 			new FacebookTokenStrategy(
 				{
-					clientID: clientId,
-					clientSecret: clientSecret,
+					clientID: clientId || 'disabled',
+					clientSecret: clientSecret || 'disabled',
 					callbackURL: oauthRedirectUri,
 					profileFields: ['email']
 				},

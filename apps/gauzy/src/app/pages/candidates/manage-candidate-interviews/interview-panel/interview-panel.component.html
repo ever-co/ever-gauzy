@@ -1,0 +1,183 @@
+<nb-card-body class="card">
+	<div class="card-filter">
+		<input
+			nbInput
+			type="text"
+			[formControl]="candidateSearch"
+			class="search"
+			placeholder="{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.SEARCH_BY_CANDIDATE'
+					| translate
+			}}"
+		/>
+		<input
+			nbInput
+			type="text"
+			[formControl]="interviewSearch"
+			class="search"
+			placeholder="{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.SEARCH_BY_INTERVIEW'
+					| translate
+			}}"
+		/>
+		<ga-employee-multi-select
+			class="select"
+			[multiple]="true"
+			[label]="false"
+			[allEmployees]="employeeList"
+			(selectedChange)="onEmployeeSelected($event)"
+			[reset]="isResetSelect"
+		>
+		</ga-employee-multi-select>
+		<nb-select
+			class="select"
+			[formControl]="sort"
+			placeholder="{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.SORT_BY' | translate
+			}}"
+			(selectedChange)="onSortSelected($event)"
+		>
+			<nb-option value="date">{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE' | translate
+			}}</nb-option>
+			<nb-option value="name">{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CANDIDATE_NAME' | translate
+			}}</nb-option>
+			<nb-option value="rating">{{
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING' | translate
+			}}</nb-option>
+		</nb-select>
+		<button
+			status="danger"
+			class="clear-button"
+			(click)="clearFilters()"
+			nbButton
+		>
+			{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RESET_FILTERS' | translate }}
+		</button>
+	</div>
+	<div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+		<nb-accordion *ngIf="interviewList?.length > 0">
+			<nb-accordion-item
+				*ngFor="let interview of interviewList; let i = index"
+			>
+				<nb-accordion-item-header class="header">
+					<div class="header-small-block">
+						<img
+							class="header-small-block-image"
+							[src]="interview?.candidate?.user?.imageUrl"
+							alt="Candidate Avatar"
+							(click)="goToCandidate(interview.candidateId)"
+						/>
+					</div>
+					<div class="header-large-block">
+						<strong>
+							{{ interview?.candidate?.user?.name }}
+						</strong>
+					</div>
+					<div class="header-large-block">
+						<strong>
+							{{ interview?.title }}
+						</strong>
+					</div>
+					<div class="header-large-block">
+						<div class="start-column">
+							<strong
+								>{{ interview?.startTime | date: 'shortDate' }}
+							</strong>
+							<span>
+								{{
+									interview?.startTime | date: 'shortTime'
+								}}-{{ interview?.endTime | date: 'shortTime' }}
+							</span>
+						</div>
+					</div>
+					<div class="header-medium-block">
+						<ga-star-rating-output
+							nbTooltip=" Average interview rating"
+							nbTooltipPlacement="left"
+							[rate]="
+								interview?.rating ? interview?.rating : null
+							"
+						>
+						</ga-star-rating-output>
+					</div>
+
+					<div class="header-large-block">
+						<span
+							*ngFor="let employee of interview.employees"
+							nbTooltip=" {{ employee?.user?.firstName }}
+				{{ employee?.user?.lastName }}"
+							nbTooltipPlacement="top"
+						>
+							<img
+								class="header-large-block-image-employee"
+								[src]="employee?.user?.imageUrl"
+								alt="employee Avatar"
+							/>
+						</span>
+					</div>
+				</nb-accordion-item-header>
+				<nb-accordion-item-body class="body">
+					<div class="body-block-update">
+						<span>
+							updated: {{ interview?.updatedAt | date: 'short' }}
+						</span>
+						<nb-icon
+							(click)="editInterview(interview.id)"
+							icon="edit"
+							class="icons ml-3"
+							[ngClass]="{
+								enabled: !isPastInterview(interview),
+								disabled: isPastInterview(interview)
+							}"
+						></nb-icon>
+						<nb-icon
+							(click)="removeInterview(interview.id)"
+							icon="close"
+							class="icons ml-2"
+							[ngClass]="{
+								enabled: !isPastInterview(interview),
+								disabled: isPastInterview(interview)
+							}"
+						></nb-icon>
+					</div>
+					<div class="body-block">
+						<div
+							*ngIf="interview?.location"
+							class="body-block-content"
+						>
+							<nb-icon icon="navigation-outline"></nb-icon>
+							<span class="ml-2 body-block-content-text">{{
+								interview?.location
+							}}</span>
+						</div>
+						<div
+							class="body-block-content mt-2"
+							*ngIf="interview?.note"
+						>
+							<nb-icon icon="info-outline"></nb-icon>
+							<span class="ml-2 body-block-content-text">{{
+								interview?.note
+							}}</span>
+						</div>
+					</div>
+					<div class="body-block-criterion">
+						<div
+							*ngFor="let tech of interview?.technologies"
+							class="body-block-criterion-card"
+						>
+							{{ tech.name }}
+						</div>
+						<div
+							*ngFor="let qual of interview?.personalQualities"
+							class="body-block-criterion-card"
+						>
+							{{ qual.name }}
+						</div>
+					</div>
+				</nb-accordion-item-body>
+			</nb-accordion-item>
+		</nb-accordion>
+	</div>
+</nb-card-body>

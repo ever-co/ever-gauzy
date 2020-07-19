@@ -1,0 +1,136 @@
+<div class="row">
+	<div class="bulk-actions col-auto">
+		<div class="input-group" *ngIf="hasDateRangeFilter">
+			<div class="input-group-append" id="button-addon4">
+				<button nbButton status="primary" (click)="previousDay()">
+					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="week-date-input form-control ml-1">
+				<div class="display-box">
+					<span *ngIf="dateRange == 'day'; else displayDateRange">
+						{{ filters.startDate | date }}
+					</span>
+					<ng-template #displayDateRange>
+						{{ filters.startDate | date }} -
+						{{ filters.endDate | date }}
+					</ng-template>
+				</div>
+				<input
+					type="text"
+					nbInput
+					placeholder="Select Date"
+					[(ngModel)]="selectedDate"
+					[nbDatepicker]="formpicker"
+				/>
+			</div>
+			<div class="input-group-append ml-1" id="button-addon4">
+				<button
+					nbButton
+					status="primary"
+					(click)="nextDay()"
+					[disabled]="isNextDisabled()"
+				>
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="input-group-append ml-1" id="button-addon4">
+				<button
+					[disabled]="isTodayDisabled()"
+					nbButton
+					status="primary"
+					(click)="selectedDate = today"
+				>
+					{{ 'TIMESHEET.TODAY' | translate }}
+				</button>
+			</div>
+			<nb-datepicker
+				#formpicker
+				[max]="futureDateAllowed ? null : today"
+			></nb-datepicker>
+		</div>
+	</div>
+	<div class="col-auto ml-auto">
+		<div class="row align-items-end">
+			<ng-template
+				[ngxPermissionsOnly]="[
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				]"
+			>
+				<div class="col-auto ml-auto pr-1" *ngIf="hasEmployeeFilter">
+					<ga-employee-multi-select
+						class="select-box"
+						name="employeeId"
+						[label]="false"
+						[placeholder]="'TIMESHEET.ALL_EMPLOYEE' | translate"
+						[(ngModel)]="employeeIds"
+						[allEmployees]="employees"
+						[multiple]="multipleEmployeSelect"
+					>
+					</ga-employee-multi-select>
+				</div>
+			</ng-template>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasProjectFilter">
+				<ga-project-selector
+					name="projectId"
+					[(ngModel)]="filters.projectIds"
+					(ngModelChange)="triggerFilterChange()"
+					[multiple]="true"
+				></ga-project-selector>
+			</div>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasSourceFilter">
+				<nb-select
+					multiple
+					[placeholder]="'TIMESHEET.SELECT_SOURCE' | translate"
+					[(selected)]="filters.source"
+					(selectedChange)="triggerFilterChange()"
+				>
+					<nb-option
+						*ngFor="let source of TimeLogSourceEnum | keyvalue"
+						[value]="source.key"
+					>
+						{{ source.value }}
+					</nb-option>
+				</nb-select>
+			</div>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasActivityLevelFilter">
+				<button
+					class="activity-level-filter text-capitalize"
+					nbButton
+					status="basic"
+					outline
+					[nbPopover]="templateRef"
+					nbPopoverPlacement="bottom"
+				>
+					{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
+					<nb-icon icon="chevron-down-outline"></nb-icon>
+				</button>
+				<ng-template #templateRef>
+					<div class="p-3 slider-dropdown">
+						<ng5-slider
+							[value]="activityLevel?.start"
+							[highValue]="activityLevel?.end"
+							(userChange)="setActivityLevel($event)"
+							[options]="sliderOptions"
+						></ng5-slider>
+					</div>
+				</ng-template>
+			</div>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasLogTypeFilter">
+				<nb-select
+					multiple
+					[placeholder]="'TIMESHEET.SELECT_LOG_TYPE' | translate"
+					[(selected)]="filters.logType"
+					(selectedChange)="triggerFilterChange()"
+				>
+					<nb-option
+						*ngFor="let logType of TimeLogType | keyvalue"
+						[value]="logType.key"
+					>
+						{{ logType.value }}
+					</nb-option>
+				</nb-select>
+			</div>
+		</div>
+	</div>
+</div>

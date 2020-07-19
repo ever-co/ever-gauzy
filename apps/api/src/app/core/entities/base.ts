@@ -11,6 +11,12 @@ import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/models';
 
 export abstract class Base implements IBaseEntityModel {
+	constructor(input?: any) {
+		if (input) {
+			Object.assign(this, input);
+		}
+	}
+
 	@ApiPropertyOptional({ type: String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
@@ -25,7 +31,7 @@ export abstract class Base implements IBaseEntityModel {
 		format: 'date-time',
 		example: '2018-11-21T06:20:32.232Z'
 	})
-	@CreateDateColumn({ type: 'timestamptz' })
+	@CreateDateColumn()
 	createdAt?: Date;
 
 	@ApiProperty({
@@ -33,6 +39,6 @@ export abstract class Base implements IBaseEntityModel {
 		format: 'date-time',
 		example: '2018-11-21T06:20:32.232Z'
 	})
-	@UpdateDateColumn({ type: 'timestamptz' })
+	@UpdateDateColumn()
 	updatedAt?: Date;
 }

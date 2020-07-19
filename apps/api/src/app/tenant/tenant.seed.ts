@@ -1,34 +1,37 @@
 import { Connection } from 'typeorm';
 import { Tenant } from './tenant.entity';
+import * as faker from 'faker';
 
-export const createTenants = async (
+export const createDefaultTenants = async (
 	connection: Connection
-): Promise<Tenant[]> => {
-	const tenants: Tenant[] = [
-		{
-			name: 'Ever'
-		},
-		{
-			name: 'Google'
-		},
-		{
-			name: 'Yahoo'
-		},
-		{
-			name: 'Youtube'
-		}
-	];
-
-	for (let i = 0; i < tenants.length; i++) {
-		await insertTenant(connection, tenants[i]);
-	}
-
-	return tenants;
+): Promise<Tenant> => {
+	const tenant = {
+		name: 'Ever'
+	};
+	await insertTenants(connection, [tenant]);
+	return tenant;
 };
 
-const insertTenant = async (
+export const createRandomTenants = async (
 	connection: Connection,
-	tenant: Tenant
+	noOfTenants: number = 0
+): Promise<Tenant[]> => {
+	const randomTenants: Tenant[] = [];
+
+	for (let i = 0; i < noOfTenants; i++) {
+		randomTenants.push({
+			name: faker.company.companyName()
+		});
+	}
+
+	await insertTenants(connection, randomTenants);
+
+	return randomTenants;
+};
+
+const insertTenants = async (
+	connection: Connection,
+	tenant: Tenant[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()

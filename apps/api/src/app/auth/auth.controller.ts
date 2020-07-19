@@ -16,11 +16,15 @@ import { User as IUser } from '../user/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import {
+	UserRegistrationInput as IUserRegistrationInput,
+	LanguagesEnum
+} from '@gauzy/models';
 import { getUserDummyImage } from '../core';
 import { environment as env } from '@env-api/environment';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Auth')
 @Controller()
@@ -63,13 +67,16 @@ export class AuthController {
 	async create(
 		@Body() entity: IUserRegistrationInput,
 		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<IUser> {
 		if (!entity.user.imageUrl) {
 			entity.user.imageUrl = getUserDummyImage(entity.user);
 		}
 		entity.originalUrl = request.get('Origin');
-		return this.commandBus.execute(new AuthRegisterCommand(entity));
+		return this.commandBus.execute(
+			new AuthRegisterCommand(entity, languageCode)
+		);
 	}
 
 	@HttpCode(HttpStatus.OK)
@@ -90,10 +97,12 @@ export class AuthController {
 	async requestPass(
 		@Body() findObj,
 		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<{ id: string; token: string } | null> {
 		return await this.authService.requestPassword(
 			findObj,
+			languageCode,
 			request.get('Origin')
 		);
 	}
@@ -112,10 +121,52 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
+
+	@Get('linkedin')
+	@UseGuards(AuthGuard('linkedin'))
+	linkedinLogin() {}
+
+	@Get('linkedin/callback')
+	@UseGuards(AuthGuard('linkedin'))
+	linkedinLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
+
+	@Get('github')
+	@UseGuards(AuthGuard('github'))
+	githubLogin() {}
+
+	@Get('github/callback')
+	@UseGuards(AuthGuard('github'))
+	githubLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 
@@ -142,10 +193,73 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:4200/#/auth/register`);
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
+
+	@Get('twitter')
+	@UseGuards(AuthGuard('twitter'))
+	twitterLogin() {}
+
+	@Get('twitter/callback')
+	@UseGuards(AuthGuard('twitter'))
+	twitterLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
+
+	@Get('microsoft')
+	@UseGuards(AuthGuard('microsoft'))
+	microsoftLogin() {}
+
+	@Get('microsoft/callback')
+	@UseGuards(AuthGuard('microsoft'))
+	microsoftLoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+		}
+	}
+
+	@Get('auth0')
+	@UseGuards(AuthGuard('auth0'))
+	auth0Login() {}
+
+	@Get('auth0/callback')
+	@UseGuards(AuthGuard('auth0'))
+	auth0LoginCallback(@Req() req, @Res() res) {
+		const {
+			success,
+			authData: { jwt, userId }
+		} = req.user;
+
+		if (success) {
+			return res.redirect(
+				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+			);
+		} else {
+			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
 		}
 	}
 }

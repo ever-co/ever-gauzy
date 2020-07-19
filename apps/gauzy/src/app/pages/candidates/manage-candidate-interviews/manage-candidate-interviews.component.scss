@@ -1,0 +1,17 @@
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navigation {
+  height: 24px;
+  margin-bottom: 5px;
+}
+
+::ng-deep {
+  .nb-theme-default .tab-link:focus {
+    outline: none !important;
+  }
+}

@@ -1,0 +1,14 @@
+:host {
+  ::ng-deep {
+    .route-tabset {
+      margin-bottom: 16px !important;
+    }
+  }
+  height: 100%;
+  nb-card {
+    height: 100%;
+    nb-card-body {
+      height: 100%;
+    }
+  }
+}

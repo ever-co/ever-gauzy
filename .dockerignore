@@ -29,3 +29,7 @@ e2e/*.map
 #System Files
 .DS_Store
 Thumbs.db
+
+!/.deploy/api/entrypoint
+!/.deploy/webapp/entrypoint
+!/.deploy/webapp/nginx.conf

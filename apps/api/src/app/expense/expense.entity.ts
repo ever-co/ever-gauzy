@@ -18,18 +18,18 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
 import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('expense')
-export class Expense extends Base implements IExpense {
+export class Expense extends TenantBase implements IExpense {
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.expense)
 	@JoinTable({
 		name: 'tag_expense'
 	})

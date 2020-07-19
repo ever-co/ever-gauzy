@@ -1,15 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-	CreateEmailInvitesInput,
-	CreateEmailInvitesOutput,
+	ICreateEmailInvitesInput,
+	ICreateEmailInvitesOutput,
 	Invite,
 	InviteFindInput,
 	PublicInviteFindInput,
-	InviteAcceptInput,
-	InviteResendInput,
-	OrganizationClients,
-	LinkClientOrganizationInviteInput
+	IInviteAcceptInput,
+	IInviteResendInput,
+	OrganizationContact,
+	IOrganizationContactAcceptInviteInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -18,10 +18,10 @@ export class InviteService {
 	constructor(private http: HttpClient) {}
 
 	createWithEmails(
-		createInput: CreateEmailInvitesInput
-	): Promise<CreateEmailInvitesOutput> {
+		createInput: ICreateEmailInvitesInput
+	): Promise<ICreateEmailInvitesOutput> {
 		return this.http
-			.post<CreateEmailInvitesOutput>('/api/invite/emails', createInput)
+			.post<ICreateEmailInvitesOutput>('/api/invite/emails', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -61,26 +61,26 @@ export class InviteService {
 			.toPromise();
 	}
 
-	acceptEmployeeInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+	acceptEmployeeInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/employee`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}
-	acceptCandidateInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+	acceptCandidateInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/candidate`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}
-	acceptUserInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+	acceptUserInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/user`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	resendInvite(inviteResendInput: InviteResendInput): Promise<any> {
+	resendInvite(inviteResendInput: IInviteResendInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/resend`, inviteResendInput)
 			.pipe(first())
@@ -88,32 +88,26 @@ export class InviteService {
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/invite/${id}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.delete(`/api/invite/${id}`).pipe(first()).toPromise();
 	}
 
-	inviteOrganizationClient(
-		organizationClientId: string
-	): Promise<OrganizationClients> {
+	inviteOrganizationContact(
+		organizationContactId: string
+	): Promise<OrganizationContact> {
 		return this.http
-			.put<OrganizationClients>(
-				`/api/invite/organization-client/${organizationClientId}`,
+			.put<OrganizationContact>(
+				`/api/invite/organization-contact/${organizationContactId}`,
 				{}
 			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	linkClientOrganizationInvite(
-		data: LinkClientOrganizationInviteInput
-	): Promise<OrganizationClients> {
+	acceptOrganizationContactInvite(
+		acceptInviteInput: IOrganizationContactAcceptInviteInput
+	) {
 		return this.http
-			.put<OrganizationClients>(
-				`/api/invite/link-organization-client`,
-				data
-			)
+			.post(`/api/invite/contact`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}

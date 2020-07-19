@@ -1,0 +1,110 @@
+<form class="form" [formGroup]="form">
+	<div class="form-group title-wrap">
+		<div
+			[ngClass]="{
+				'title-width': isCalendar,
+				'title-width-small': !isCalendar
+			}"
+			class="nameValidParent"
+		>
+			<label for="inputTitle" class="label">{{
+				'FORM.LABELS.TITLE' | translate
+			}}</label>
+			<input
+				nbInput
+				type="text"
+				id="inputTitle"
+				[ngClass]="{
+					'title-width': !isCalendar,
+					'title-width-small': isCalendar
+				}"
+				fullWidth
+				placeholder="{{
+					'FORM.PLACEHOLDERS.ADD_INTERVIEW.TITLE' | translate
+				}}"
+				formControlName="title"
+			/>
+			<div *ngIf="isTitleExisted" class="nameValid">
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW_TITLE_EXIST'
+						| translate
+				}}
+			</div>
+		</div>
+		<button
+			*ngIf="!isCalendar"
+			status="success"
+			class="button"
+			nbButton
+			nbStepperSave
+			(click)="findTime()"
+		>
+			{{ 'BUTTONS.FIND_TIME' | translate }}
+		</button>
+	</div>
+
+	<ngx-timer-range-picker
+		name="selectedRange"
+		[minDate]="yesterday"
+		[ngModelOptions]="{ standalone: true }"
+		[(ngModel)]="selectedRange"
+	>
+	</ngx-timer-range-picker>
+	<div class="form-group">
+		<ga-employee-multi-select
+			[allEmployees]="employees"
+			(selectedChange)="onMembersSelected($event)"
+			[selectedEmployeeIds]="employeeIds"
+		>
+		</ga-employee-multi-select>
+	</div>
+	<div class="form-group checkbox-wrap">
+		<label class="label radio-label">
+			{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.TYPE' | translate }}
+		</label>
+		<nb-radio-group
+			[(ngModel)]="isMeeting"
+			(ngModelChange)="detectChanges($event)"
+			[ngModelOptions]="{ standalone: true }"
+			class="radio-group"
+		>
+			<nb-radio [value]="false" [checked]="true">{{
+				'FORM.PLACEHOLDERS.ADD_INTERVIEW.CALL' | translate
+			}}</nb-radio>
+			<nb-radio [value]="true">{{
+				'FORM.PLACEHOLDERS.ADD_INTERVIEW.MEETING' | translate
+			}}</nb-radio>
+		</nb-radio-group>
+		<div class="location" *ngIf="isMeeting">
+			<label for="location" class="label">{{
+				'FORM.LABELS.LOCATION' | translate
+			}}</label>
+			<input
+				fullWidth
+				id="location"
+				type="text"
+				nbInput
+				formControlName="location"
+				placeholder="{{
+					'FORM.PLACEHOLDERS.ADD_INTERVIEW.LOCATION' | translate
+				}}"
+			/>
+		</div>
+	</div>
+
+	<div class="form-group">
+		<label for="note" class="label">{{
+			'FORM.LABELS.NOTE' | translate
+		}}</label>
+		<input
+			fullWidth
+			id="note"
+			type="text"
+			nbInput
+			formControlName="note"
+			placeholder="{{
+				'FORM.PLACEHOLDERS.ADD_INTERVIEW.NOTE' | translate
+			}}"
+		/>
+	</div>
+</form>

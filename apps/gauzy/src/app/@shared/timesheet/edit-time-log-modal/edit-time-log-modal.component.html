@@ -1,0 +1,239 @@
+<form #f="ngForm" ngForm>
+	<nb-card>
+		<nb-card-header class="header">
+			<div class="row">
+				<div class="col">
+					{{
+						(mode == 'update'
+							? 'TIMESHEET.EDIT_TIME_LOGS'
+							: 'TIMESHEET.ADD_TIME_LOGS'
+						) | translate
+					}}
+				</div>
+				<button
+					class="col-auto"
+					nbButton
+					ghost
+					(click)="close()"
+					type="button"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+		</nb-card-header>
+		<nb-card-body class="custom-scroll">
+			<div
+				class="form-group"
+				*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+			>
+				<div
+					class="description"
+					*ngIf="mode == 'update'; else employeeSelect"
+				>
+					<ngx-avatar
+						[name]="timeLog?.employee?.user?.name"
+						[src]="timeLog?.employee?.user?.imageUrl"
+					></ngx-avatar>
+				</div>
+				<ng-template #employeeSelect>
+					<ga-employee-multi-select
+						name="employeeId"
+						[multiple]="false"
+						label="TIMESHEET.SELECT_EMPLOYEE"
+						[placeholder]="'TIMESHEET.SELECT_EMPLOYEE' | translate"
+						#employeeInput="ngModel"
+						[(ngModel)]="addEditRequest.employeeId"
+						(ngModelChange)="checkOverlaps()"
+						[allEmployees]="employees"
+						required
+					>
+					</ga-employee-multi-select>
+					<div
+						*ngIf="employeeInput.invalid && f.submitted"
+						class="invalid-feedback d-block"
+					>
+						<div *ngIf="employeeInput.errors.required">
+							{{ 'TIMESHEET.VALIDATION.EMPLOYEE' | translate }}
+						</div>
+					</div>
+				</ng-template>
+			</div>
+
+			<div class="form-group">
+				<ngx-timer-range-picker
+					name="selectedRange"
+					[maxDate]="futureDateAllowed ? null : today"
+					[(ngModel)]="selectedRange"
+					(ngModelChange)="checkOverlaps()"
+				>
+				</ngx-timer-range-picker>
+			</div>
+
+			<nb-card status="danger" *ngIf="overlaps.length > 0">
+				<nb-card-header>
+					<div class="d-flex align-items-center">
+						<nb-icon
+							icon="alert-triangle-outline"
+							class="mr-3"
+						></nb-icon>
+						Time overlaps
+					</div>
+				</nb-card-header>
+				<nb-card-body>
+					<p>{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
+					<div
+						class="row border-bottom border-top font-weight-bold align-items-center py-2"
+					>
+						<div class="col">
+							{{ 'TIMESHEET.PROJECT' | translate }} /
+							{{ 'TIMESHEET.TODO' | translate }}
+						</div>
+						<div class="col text-center">
+							{{ 'TIMESHEET.DURATION' | translate }}
+						</div>
+					</div>
+					<div
+						class="row border-top py-2"
+						*ngFor="let timelog of overlaps"
+					>
+						<div class="col">
+							<span *ngIf="timelog?.task; else noProfject">
+								{{ timelog?.project?.name }}
+							</span>
+							<ng-template #noProfject>
+								<span>{{
+									'TIMESHEET.NO_PROJECT' | translate
+								}}</span>
+							</ng-template>
+							<div class="mt-2 small">
+								<span *ngIf="timelog?.task; else noToDo">
+									<strong
+										>{{ 'TIMESHEET.TODO' | translate }} :
+									</strong>
+									{{ timelog?.task?.title }}
+								</span>
+								<ng-template #noToDo>
+									<span>{{
+										'TIMESHEET.NO_TODO' | translate
+									}}</span>
+								</ng-template>
+							</div>
+						</div>
+						<div class="col text-center">
+							{{ timelog.overlapDueration | durationFormat }}
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+
+			<div class="form-group">
+				<nb-checkbox
+					[(ngModel)]="addEditRequest.isBillable"
+					name="isBillable"
+					status="primary"
+				>
+					{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
+				</nb-checkbox>
+			</div>
+			<div class="form-group">
+				<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
+				<ga-project-selector
+					name="projectId"
+					[(ngModel)]="addEditRequest.projectId"
+					#projectInput="ngModel"
+					[required]="organization.requireProject"
+				></ga-project-selector>
+
+				<div
+					*ngIf="projectInput.invalid && f.submitted"
+					class="invalid-feedback d-block"
+				>
+					<div *ngIf="projectInput.errors.required">
+						{{ 'TIMESHEET.VALIDATION.PROJECT' | translate }}
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
+				<ga-task-selector
+					name="taskId"
+					[projectId]="addEditRequest.projectId"
+					[(ngModel)]="addEditRequest.taskId"
+					#taskInput="ngModel"
+					[required]="organization.requireTask"
+				>
+				</ga-task-selector>
+
+				<div
+					*ngIf="taskInput.invalid && f.submitted"
+					class="invalid-feedback d-block"
+				>
+					<div *ngIf="taskInput.errors.required">
+						{{ 'TIMESHEET.VALIDATION.TASK' | translate }}
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
+				<textarea
+					class="form-control"
+					rows="2"
+					[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
+					name="description"
+					[(ngModel)]="addEditRequest.description"
+					#descriptionInput="ngModel"
+					[required]="organization.requireDescription"
+				></textarea>
+
+				<div
+					*ngIf="descriptionInput.invalid && f.submitted"
+					class="invalid-feedback d-block"
+				>
+					<div *ngIf="descriptionInput.errors.required">
+						{{ 'TIMESHEET.VALIDATION.DESCRIPTION' | translate }}
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group"></div>
+		</nb-card-body>
+		<nb-card-footer>
+			<button
+				nbButton
+				status="primary"
+				class="mr-2"
+				(click)="addTime(f)"
+				[nbSpinner]="loading"
+				[disabled]="loading"
+				nbSpinnerStatus="primary"
+			>
+				<nb-icon icon="save-outline"></nb-icon>
+				{{
+					(mode == 'create'
+						? 'TIMESHEET.ADD_TIME'
+						: 'TIMESHEET.UPDATE_TIME'
+					) | translate
+				}}
+			</button>
+			<ng-template
+				*ngxPermissionsOnly="[
+					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+				]"
+			>
+				<button
+					type="button"
+					class="mr-2"
+					nbButton
+					status="danger"
+					(click)="onDeleteConfirm()"
+					*ngIf="mode == 'update'"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+					{{ 'TIMESHEET.DELETE' | translate }}
+				</button>
+			</ng-template>
+		</nb-card-footer>
+	</nb-card>
+</form>

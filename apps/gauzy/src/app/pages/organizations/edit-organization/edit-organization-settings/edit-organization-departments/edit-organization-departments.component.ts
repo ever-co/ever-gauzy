@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import {
 	Employee,
 	OrganizationDepartment,
-	OrganizationDepartmentCreateInput
+	OrganizationDepartmentCreateInput,
+	Tag
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -30,6 +31,7 @@ export class EditOrganizationDepartmentsComponent
 	departments: OrganizationDepartment[];
 	employees: Employee[] = [];
 	departmentToEdit: OrganizationDepartment;
+	tags: Tag[];
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
@@ -131,7 +133,7 @@ export class EditOrganizationDepartmentsComponent
 		}
 
 		const res = await this.organizationDepartmentsService.getAll(
-			['members', 'members.user'],
+			['members', 'members.user', 'tags'],
 			{
 				organizationId: this.organizationId
 			}

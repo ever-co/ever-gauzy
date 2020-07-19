@@ -1,0 +1,71 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+  width: 50rem;
+}
+
+.select {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  width: 50%;
+}
+
+.select-label {
+  color: #8f9bb3;
+  font-family: Open Sans, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1rem;
+  margin: 0;
+  margin-right: 1rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.main-buttons {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.save-button {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.first-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.second-row {
+  width: 49%;
+}
+
+.selector {
+  display: flex;
+  flex-direction: row;
+  margin-left: -15px;
+  margin-bottom: 10px;
+}
+
+.multi-select {
+  margin-bottom: 1rem;
+}
+
+::ng-deep {
+  .nb-theme-default [nbInput].size-medium:not(.input-full-width) {
+    max-width: 23rem !important;
+    width: 23rem !important;
+  }
+}

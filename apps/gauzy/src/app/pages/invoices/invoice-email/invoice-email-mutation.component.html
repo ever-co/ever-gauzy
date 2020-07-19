@@ -1,0 +1,46 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			<span *ngIf="!isEstimate">{{
+				'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate
+			}}</span>
+			<span *ngIf="isEstimate">{{
+				'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' | translate
+			}}</span>
+		</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<ga-invoice-view-inner [invoice]="invoice" [isEstimate]="isEstimate">
+		</ga-invoice-view-inner>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="form-group col-12">
+					<label for="email" class="label">{{
+						'FORM.EMAIL' | translate
+					}}</label>
+					<input
+						type="text"
+						nbInput
+						fullWidth
+						formControlName="email"
+						id="email"
+						placeholder="{{ 'FORM.EMAIL' | translate }}"
+					/>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			(click)="sendEmail()"
+			status="success"
+			[disabled]="form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SEND' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

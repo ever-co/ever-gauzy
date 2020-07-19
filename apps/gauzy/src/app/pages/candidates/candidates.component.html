@@ -5,18 +5,25 @@
 				{{ 'CANDIDATES_PAGE.HEADER' | translate }}
 				{{ organizationName }}
 			</h4>
-			<button
-				*ngIf="
-					organizationInvitesAllowed &&
-					hasInviteViewOrEditPermission &&
-					hasEditPermission
-				"
-				nbButton
-				status="primary"
-				(click)="manageInvites()"
-			>
-				{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-			</button>
+			<div class="header-selector-wrapper">
+				<div style="margin-right: 9px;">
+					<nb-action
+						*ngIf="
+							organizationInvitesAllowed &&
+							hasInviteViewOrEditPermission &&
+							hasEditPermission
+						"
+						icon="menu-outline"
+						class="toggle-layout"
+						[nbContextMenu]="supportContextMenu"
+					></nb-action>
+				</div>
+				<div>
+					<ga-layout-selector
+						componentName="{{ viewComponentName }}"
+					></ga-layout-selector>
+				</div>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -37,33 +44,16 @@
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 
-			<button
-				nbButton
-				[disabled]="!selectedCandidate"
-				(click)="edit()"
-				status="info"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				[disabled]="!selectedCandidate"
-				(click)="delete()"
-				status="danger"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-				>{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 
 			<nb-checkbox
-				(checkedChange)="changeIncludeDeleted($event)"
-				status="danger"
+				(checkedChange)="changeIncludeArchived($event)"
+				status="warning"
 				class="float-right py-auto"
 				>{{
-					'FORM.CHECKBOXES.INCLUDE_DELETED' | translate
+					'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate
 				}}</nb-checkbox
 			>
 		</div>
@@ -84,9 +74,180 @@
 			style="cursor: pointer;"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			(userRowSelect)="selectCandidateTmp($event)"
 			#candidatesTable
 		>
 		</ng2-smart-table>
+		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<li class="flex-item" *ngFor="let x of candidateData">
+				<div class="fullName">
+					<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
+					<span>{{ x.fullName }}</span>
+				</div>
+				<div class="email">
+					<span class="info-value">{{ x.email }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Source</span>
+					<span class="info-value">{{ x.source.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Status</span>
+					<div class="rating">
+						<ga-star-rating-output
+							[rate]="x.rating"
+						></ga-star-rating-output>
+					</div>
+					<div *ngIf="!x?.isArchived">
+						<div
+							class="text-center d-block"
+							*ngIf="x?.status === 'APPLIED'"
+						>
+							<div class="badge-primary">
+								{{ 'CANDIDATES_PAGE.APPLIED' | translate }}
+							</div>
+						</div>
+						<div
+							class="text-center d-block"
+							*ngIf="x?.status === 'HIRED'"
+						>
+							<div class="badge-success">
+								{{ 'CANDIDATES_PAGE.HIRED' | translate }}
+							</div>
+						</div>
+						<div
+							class="text-center d-block"
+							*ngIf="x?.status === 'REJECTED'"
+						>
+							<div class="badge-danger">
+								{{ 'CANDIDATES_PAGE.REJECTED' | translate }}
+							</div>
+						</div>
+					</div>
+					<div class="text-center d-block" *ngIf="x?.isArchived">
+						<div class="badge-warning">
+							{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
+						</div>
+					</div>
+				</div>
+				<nb-card-footer class="card-footer">
+					<ng-container
+						*ngTemplateOutlet="
+							actionButtons;
+							context: {
+								buttonSize: 'tiny',
+								selectedItem: x
+							}
+						"
+					>
+					</ng-container>
+				</nb-card-footer>
+			</li>
+		</ul>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		[disabled]="!selectedItem && disableButton"
+		(click)="edit(selectedItem)"
+		status="info"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+		>{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		[disabled]="
+			(!selectedItem && disableButton) || selectedCandidate?.isArchived
+		"
+		(click)="archive(selectedItem)"
+		status="warning"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+		>{{ 'BUTTONS.ARCHIVE' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+		nbButton
+		[disabled]="
+			(!selectedItem && disableButton) || selectedItem?.isArchived
+		"
+		(click)="archive(selectedItem)"
+		status="warning"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+		>{{ 'BUTTONS.ARCHIVE' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		[disabled]="
+			(!selectedItem && disableButton) ||
+			selectedCandidate?.status === 'HIRED'
+		"
+		(click)="hire(selectedItem)"
+		status="success"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="person-done-outline"></nb-icon
+		>{{ 'BUTTONS.HIRE' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+		nbButton
+		[disabled]="
+			(!selectedItem && disableButton) || selectedItem?.status === 'HIRED'
+		"
+		(click)="hire(selectedItem)"
+		status="success"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="person-done-outline"></nb-icon
+		>{{ 'BUTTONS.HIRE' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		[disabled]="
+			(!selectedItem && disableButton) ||
+			selectedCandidate?.status === 'REJECTED'
+		"
+		(click)="reject(selectedItem)"
+		status="danger"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="person-remove-outline"></nb-icon
+		>{{ 'BUTTONS.REJECT' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+		nbButton
+		[disabled]="
+			(!selectedItem && disableButton) ||
+			selectedItem?.status === 'REJECTED'
+		"
+		(click)="reject(selectedItem)"
+		status="danger"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="person-remove-outline"></nb-icon
+		>{{ 'BUTTONS.REJECT' | translate }}
+	</button>
+</ng-template>

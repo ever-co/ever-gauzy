@@ -1,9 +1,10 @@
 <div class="row">
 	<div class="col-12">
 		<div class="form-group">
-			<label>{{ 'TIMER_TRACKER.DATE' | translate }}</label>
+			<label class="label"> {{ 'TIMER_TRACKER.DATE' | translate }}</label>
 			<input
 				type="text"
+				[attr.disabled]="disableDatePicker === true ? 'disabled' : null"
 				class="form-control"
 				autocomplete="off"
 				name="date"
@@ -13,7 +14,9 @@
 				#dateModel="ngModel"
 			/>
 			<nb-datepicker
+				[filter]="filter"
 				[max]="maxDate"
+				[min]="minDate"
 				(dateChange)="updateTimePickerLimit($event)"
 				#datepicker
 			></nb-datepicker>
@@ -21,7 +24,9 @@
 	</div>
 	<div class="col">
 		<div class="form-group">
-			<label>{{ 'TIMER_TRACKER.START_TIME' | translate }}</label>
+			<label class="label">{{
+				'TIMER_TRACKER.START_TIME' | translate
+			}}</label>
 			<ga-timer-picker
 				name="start_time"
 				[min]="minSlotStartTime"
@@ -30,20 +35,21 @@
 				[(ngModel)]="startTime"
 				#startTimeModel="ngModel"
 			></ga-timer-picker>
-			<!-- <input type="text" class="form-control" autocomplete="off" name="start_time" [(ngModel)]="manualTime.startTime" placeholder="00:00"> -->
 		</div>
 	</div>
 	<div class="col">
 		<div class="form-group">
-			<label>{{ 'TIMER_TRACKER.END_TIME' | translate }}</label>
+			<label class="label">{{
+				'TIMER_TRACKER.END_TIME' | translate
+			}}</label>
 			<ga-timer-picker
+				[disabled]="disableEndPicker"
 				name="end_time"
 				[min]="minSlotEndTime"
 				[max]="maxSlotEndTime"
 				[(ngModel)]="endTime"
 				#endTimeModel="ngModel"
 			></ga-timer-picker>
-			<!-- <input type="text" class="form-control" autocomplete="off" name="end_time" [(ngModel)]="manualTime.endTime" placeholder="01:00"> -->
 		</div>
 	</div>
 </div>

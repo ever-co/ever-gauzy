@@ -20,7 +20,7 @@ import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/b
 })
 export class EditUserMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 	@Input()
 	userOrganization: UserOrganization;
@@ -60,13 +60,17 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 	private async _loadUsers() {
 		const { items } = await this.usersOrganizationsService.getAll([
 			'user',
-			'user.role'
+			'user.role',
+			'user.tags'
 		]);
 
 		const usersVm = [];
 
 		const existedUsers = items
-			.filter((item) => item.orgId === this.store.selectedOrganization.id)
+			.filter(
+				(item) =>
+					item.organizationId === this.store.selectedOrganization.id
+			)
 			.map((item) => item.userId);
 
 		for (const orgUser of items.filter(
@@ -111,7 +115,7 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 				const organization = this.store.selectedOrganization;
 				this.addOrEditUser.emit({
 					userId: this.selectedUsersIds[i],
-					orgId: organization.id,
+					organizationId: organization.id,
 					isActive: true
 				});
 			}

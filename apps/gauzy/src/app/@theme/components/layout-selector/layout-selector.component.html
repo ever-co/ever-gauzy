@@ -1,0 +1,26 @@
+<div class="layout-switch">
+	<button
+		(click)="changeLayout(layoutStyles.CARDS_GRID)"
+		status="{{
+			componentLayoutStyle === layoutStyles.CARDS_GRID
+				? 'primary'
+				: 'basic'
+		}}"
+		class="switch-button"
+		nbButton
+		nbTooltip="{{ 'SETTINGS_MENU.CARDS_GRID' | translate }}"
+	>
+		<nb-icon icon="grid-outline"></nb-icon>
+	</button>
+	<button
+		(click)="changeLayout(layoutStyles.TABLE)"
+		status="{{
+			componentLayoutStyle === layoutStyles.TABLE ? 'primary' : 'basic'
+		}}"
+		class="switch-button"
+		nbButton
+		nbTooltip="{{ 'SETTINGS_MENU.TABLE' | translate }}"
+	>
+		<nb-icon icon="list-outline"></nb-icon>
+	</button>
+</div>

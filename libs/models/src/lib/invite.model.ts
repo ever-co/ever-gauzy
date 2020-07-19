@@ -4,10 +4,10 @@
 
 import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { User, UserRegistrationInput } from './user.model';
+import { User, UserRegistrationInput, LanguagesEnum } from './user.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Organization } from './organization.model';
-import { OrganizationClients } from './organization-clients.model';
+import { OrganizationContact } from './organization-contact.model';
 import { OrganizationDepartment } from './organization-department.model';
 
 export interface Invite extends IBaseEntityModel {
@@ -21,25 +21,26 @@ export interface Invite extends IBaseEntityModel {
 	role?: Role;
 	invitedBy?: User;
 	projects?: OrganizationProjects[];
-	clients?: OrganizationClients[];
+	organizationContacts?: OrganizationContact[];
 	departments?: OrganizationDepartment[];
 	organization?: Organization;
 }
 
-export interface InviteAcceptInput extends UserRegistrationInput {
+export interface IInviteAcceptInput extends UserRegistrationInput {
 	inviteId: string;
 	organization: Organization;
+	originalUrl?: string;
 }
 
-export interface InviteResendInput {
+export interface IInviteResendInput {
 	id: string;
 	invitedById: string;
 }
 
-export interface CreateEmailInvitesInput {
+export interface ICreateEmailInvitesInput {
 	emailIds: string[];
 	projectIds?: string[];
-	clientIds?: string[];
+	organizationContactIds?: string[];
 	departmentIds?: string[];
 	organizationId: string;
 	roleId: string;
@@ -48,30 +49,20 @@ export interface CreateEmailInvitesInput {
 	startedWorkOn: string;
 }
 
-export interface CreateOrganizationClientInviteInput {
+export interface ICreateOrganizationContactInviteInput {
 	emailId: string;
-	clientId: string;
+	organizationContactId: string;
 	organizationId: string;
 	roleId: string;
 	invitedById: string;
 	originalUrl: string;
+	languageCode: LanguagesEnum;
 }
 
-export interface CreateEmailInvitesOutput {
+export interface ICreateEmailInvitesOutput {
 	items: Invite[];
 	total: number;
 	ignored: number;
-}
-
-export interface CreateInviteInput {
-	token: string;
-	email: string;
-	organizationId: string;
-	roleId: string;
-	invitedById: string;
-	status: string;
-	expireDate: Date;
-	projects?: OrganizationProjects[];
 }
 
 export interface InviteFindInput {

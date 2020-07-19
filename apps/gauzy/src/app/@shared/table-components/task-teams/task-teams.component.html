@@ -1,0 +1,8 @@
+<ng-container *ngIf="value">
+	<ng-container *ngFor="let team of value; let i = index">
+		<span>
+			{{ team.name || team }}
+			<span *ngIf="i !== value.length - 1">, </span>
+		</span>
+	</ng-container>
+</ng-container>

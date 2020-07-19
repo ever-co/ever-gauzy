@@ -1,0 +1,14 @@
+<nb-card [status]="alertOptions.status">
+	<nb-card-header>
+		{{ alertOptions.title }}
+	</nb-card-header>
+	<nb-card-body>
+		{{ alertOptions.message }}
+	</nb-card-body>
+	<nb-card-footer>
+		<button nbButton class="mr-3" (click)="closeDialog('no')">No</button>
+		<button nbButton status="success" (click)="closeDialog('yes')">
+			Yes
+		</button>
+	</nb-card-footer>
+</nb-card>

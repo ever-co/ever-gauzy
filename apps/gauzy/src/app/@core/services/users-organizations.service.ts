@@ -38,6 +38,13 @@ export class UsersOrganizationsService {
 			.toPromise();
 	}
 
+	getUserOrganizationCount(id: string): Promise<number> {
+		return this.http
+			.get<number>(`/api/user-organization/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	removeUserFromOrg(id: string): Promise<UserOrganization> {
 		return this.http
 			.delete<UserOrganization>(`/api/user-organization/${id}`)

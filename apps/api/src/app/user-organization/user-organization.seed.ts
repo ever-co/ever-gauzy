@@ -2,105 +2,92 @@ import { Connection } from 'typeorm';
 import {
 	Organization,
 	User,
-	UserOrganization as IUserOrganization
+	UserOrganization as IUserOrganization,
+	ISeedUsers
 } from '@gauzy/models';
 import { UserOrganization } from './user-organization.entity';
+import { Tenant } from '../tenant/tenant.entity';
 
-export const createUsersOrganizations = async (
+export const createDefaultUsersOrganizations = async (
 	connection: Connection,
 	defaultData: {
-		org: Organization;
-		users: User[];
-	},
-	randomData: {
-		orgs: Organization[];
-		users: User[];
-		superAdminUsers: User[];
-	}
-): Promise<{
-	defaultUsersOrganizations: IUserOrganization[];
-	randomUsersOrganizations: IUserOrganization[];
-}> => {
-	const defaultUsersOrganizations: IUserOrganization[] = await createDefaultUsersOrganizations(
-		connection,
-		defaultData
-	);
-
-	const randomUsersOrganizations: IUserOrganization[] = await createRandomUsersOrganizations(
-		connection,
-		randomData
-	);
-
-	return { defaultUsersOrganizations, randomUsersOrganizations };
-};
-
-const createDefaultUsersOrganizations = async (
-	connection: Connection,
-	defaultData: {
-		org: Organization;
+		organizations: Organization[];
 		users: User[];
 	}
 ): Promise<IUserOrganization[]> => {
 	let userOrganization: IUserOrganization;
+
 	const usersOrganizations: IUserOrganization[] = [];
 	const defaultUsers = defaultData.users;
-	const defaultOrg = defaultData.org;
+	const defaultOrgs = defaultData.organizations;
 
-	for (const user of defaultUsers) {
-		userOrganization = new UserOrganization();
-		userOrganization.orgId = defaultOrg.id;
-		userOrganization.userId = user.id;
+	defaultOrgs.forEach((org) => {
+		for (const user of defaultUsers) {
+			userOrganization = new UserOrganization();
+			userOrganization.organizationId = org.id;
+			userOrganization.userId = user.id;
+			usersOrganizations.push(userOrganization);
+		}
+	});
 
-		await insertUserOrganization(connection, userOrganization);
-
-		usersOrganizations.push(userOrganization);
-	}
-
+	await insertUserOrganization(connection, usersOrganizations);
 	return usersOrganizations;
 };
 
-const createRandomUsersOrganizations = async (
+export const createRandomUsersOrganizations = async (
 	connection: Connection,
-	randomData: {
-		orgs: Organization[];
-		users: User[];
-		superAdminUsers: User[];
-	}
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenantSuperAdminsMap: Map<Tenant, User[]>,
+	tenantUsersMap: Map<Tenant, ISeedUsers>,
+	employeesPerOrganization: number
 ): Promise<IUserOrganization[]> => {
-	const { orgs, users, superAdminUsers } = randomData;
 	const usersOrganizations: IUserOrganization[] = [];
 
-	const usersPerOrg: number = Math.ceil(users.length / orgs.length);
-	let start = 0;
-	let end: number = usersPerOrg;
+	for (const tenant of tenants) {
+		const orgs = tenantOrganizationsMap.get(tenant);
+		const superAdmins = tenantSuperAdminsMap.get(tenant);
+		const { adminUsers, employeeUsers } = tenantUsersMap.get(tenant);
 
-	orgs.forEach((org) => {
-		const userList = [...users.slice(start, end), ...superAdminUsers];
-		start = end;
-		end = end + usersPerOrg;
+		let start = 0;
+		let end: number = employeesPerOrganization;
 
-		userList.forEach(async (user) => {
-			if (user.id) {
-				const userOrganization = new UserOrganization();
-				userOrganization.orgId = org.id;
-				userOrganization.userId = user.id;
-				await insertUserOrganization(connection, userOrganization);
-				usersOrganizations.push(userOrganization);
-			}
+		let count = 0;
+
+		orgs.forEach((org) => {
+			const userList = [
+				...employeeUsers.slice(start, end),
+				adminUsers[count % adminUsers.length],
+				...superAdmins
+			];
+			start = end;
+			end = end + employeesPerOrganization;
+			count++;
+
+			userList.forEach(async (user) => {
+				if (user.id) {
+					const userOrganization = new UserOrganization();
+					userOrganization.organizationId = org.id;
+					userOrganization.userId = user.id;
+					usersOrganizations.push(userOrganization);
+				}
+			});
 		});
-	});
+	}
+
+	await insertUserOrganization(connection, usersOrganizations);
 
 	return usersOrganizations;
 };
 
 const insertUserOrganization = async (
 	connection: Connection,
-	userOrganization: IUserOrganization
+	userOrganizations: IUserOrganization[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(UserOrganization)
-		.values(userOrganization)
+		.values(userOrganizations)
 		.execute();
 };

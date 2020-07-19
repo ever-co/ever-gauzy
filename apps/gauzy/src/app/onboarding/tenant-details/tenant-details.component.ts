@@ -36,8 +36,8 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 	}
 
 	async onboardUser(formData: OrganizationCreateInput) {
-		await this.tenantService.create({ name: formData.name });
-		await this.organizationsService.create(formData);
+		const tenant = await this.tenantService.create({ name: formData.name });
+		await this.organizationsService.create({ ...formData, tenant });
 		this.router.navigate(['/onboarding/complete']);
 	}
 

@@ -9,9 +9,10 @@ import {
 import {
 	EquipmentSharing,
 	Equipment,
-	EquipmentSharingStatusEnum,
+	RequestApprovalStatusTypesEnum,
+	RequestApprovalStatus,
 	Employee,
-	OrganizationTeams
+	OrganizationTeam
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -55,15 +56,15 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	employees: Employee[];
 	disabled: boolean;
 	selectedOrgId: string;
-	requestStatus: string;
+	requestStatus: number;
 	participants = 'employees';
 
-	teams: OrganizationTeams[];
+	teams: OrganizationTeam[];
 	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
 
-	requestStatuses = Object.values(EquipmentSharingStatusEnum);
+	requestStatuses = Object.values(RequestApprovalStatus);
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -87,11 +88,14 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.validateForm();
 	}
 
+	parseInt(value) {
+		return parseInt(value, 10);
+	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}
-
 	async initializeForm() {
 		this.form = this.fb.group({
 			equipment: [
@@ -123,7 +127,13 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 					? new Date(this.equipmentSharing.shareEndDay)
 					: null
 			],
-			status: [this.requestStatus]
+			status: [this.requestStatus],
+			name: [
+				this.equipmentSharing && this.equipmentSharing.name
+					? this.equipmentSharing.name
+					: '',
+				Validators.required
+			]
 		});
 	}
 
@@ -142,9 +152,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			shareRequestDay: this.form.value['shareRequestDay'],
 			shareStartDay: this.form.value['shareStartDay'],
 			shareEndDay: this.form.value['shareEndDay'],
-			status: this.requestStatus
+			status: this.requestStatus,
+			name: this.form.value['name']
 		};
-
+		console.log('shareRequest', shareRequest);
 		let equipmentSharing: EquipmentSharing;
 
 		if (this.equipmentSharing) {
@@ -187,7 +198,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.teams = (
 			await this.organizationTeamsService.getAll(['members'])
 		).items.filter((org) => {
-			return org.id === this.selectedOrgId || this.selectedOrgId === '';
+			return (
+				org.organizationId === this.selectedOrgId ||
+				this.selectedOrgId === ''
+			);
 		});
 	}
 
@@ -200,7 +214,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	loadRequestStatus() {
 		this.requestStatus = this.equipmentSharing
 			? this.equipmentSharing.status
-			: EquipmentSharingStatusEnum.REQUESTED;
+			: RequestApprovalStatusTypesEnum.REQUESTED;
 	}
 
 	setRequestStatus(statusValue: string) {
@@ -210,16 +224,17 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 		if (
 			this.equipmentSharing &&
-			this.equipmentSharing.status === EquipmentSharingStatusEnum.ACTIVE
+			this.equipmentSharing.status ===
+				RequestApprovalStatusTypesEnum.REFUSED
 		) {
-			this.requestStatus = EquipmentSharingStatusEnum.ACTIVE;
+			this.requestStatus = RequestApprovalStatusTypesEnum.REFUSED;
 			return;
 		}
 
 		if (selectedItem.autoApproveShare) {
-			this.requestStatus = EquipmentSharingStatusEnum.APPROVED;
+			this.requestStatus = RequestApprovalStatusTypesEnum.APPROVED;
 		} else {
-			this.requestStatus = EquipmentSharingStatusEnum.REQUESTED;
+			this.requestStatus = RequestApprovalStatusTypesEnum.REQUESTED;
 		}
 	}
 
@@ -317,7 +332,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 				//check if end date is after period in use
 				//
 				//find nearest period in use and get start date
-				const followingPeriods = this.periodsUnderUse
+				const followingPeriods = [...this.periodsUnderUse]
 					.sort((a, b) => a.startDate - b.startDate)
 					.filter((period) => {
 						return period.startDate > this.shareStartDay.value;

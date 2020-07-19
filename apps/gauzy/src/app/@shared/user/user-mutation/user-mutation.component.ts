@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { RolesEnum, User } from '@gauzy/models';
+import { RolesEnum, User, Tag } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
@@ -10,8 +10,10 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 	styleUrls: ['./user-mutation.component.scss']
 })
 export class UserMutationComponent implements OnInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
+	tags: Tag[];
+	selectedTags: any;
 
 	@Input() public isSuperAdmin: boolean;
 
@@ -22,6 +24,9 @@ export class UserMutationComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
+	}
 
 	closeDialog(user: User = null) {
 		this.dialogRef.close({ user });
@@ -29,10 +34,11 @@ export class UserMutationComponent implements OnInit {
 
 	async add() {
 		try {
-			const organization = await this.store.selectedOrganization;
+			const organization = this.store.selectedOrganization;
 			const user = await this.userBasicInfo.registerUser(
-				RolesEnum.VIEWER,
-				organization.id
+				RolesEnum.VIEWER, //TODO: take role from the form.
+				organization.id,
+				this.store.userId
 			);
 			this.closeDialog(user);
 		} catch (error) {

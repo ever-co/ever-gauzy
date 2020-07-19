@@ -14,6 +14,13 @@ import { JwtStrategy } from './jwt.strategy';
 import { UserOrganization } from '../user-organization/user-organization.entity';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { Organization } from '../organization/organization.entity';
+import { MicrosoftAuthGuard } from './guard/microsoft-auth-guard';
+import { MicrosoftStrategy } from './microsoft.strategy';
+import { LinkedinStrategy } from './linkedin.strategy';
+import { KeycloakAuthGuard } from './guard/keycloak-auth-guard';
+import { GithubStrategy } from './github.strategy';
+import { TwitterStrategy } from './twitter.strategy';
+import { Auth0Strategy } from './auth0.strategy';
 
 @Module({
 	imports: [
@@ -30,9 +37,16 @@ import { Organization } from '../organization/organization.entity';
 		...CommandHandlers,
 		GoogleStrategy,
 		FacebookStrategy,
-		JwtStrategy
+		JwtStrategy,
+		MicrosoftAuthGuard,
+		MicrosoftStrategy,
+		LinkedinStrategy,
+		GithubStrategy,
+		TwitterStrategy,
+		Auth0Strategy,
+		KeycloakAuthGuard
 	],
-	exports: [AuthService]
+	exports: [AuthService, UserService]
 })
 export class AuthModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

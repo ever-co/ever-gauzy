@@ -1,18 +1,26 @@
 import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Candidate } from '@gauzy/models';
+import {
+	Candidate,
+	CandidateUpdateInput,
+	UserUpdateInput
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
+import { CandidatesService } from '../../../../@core/services/candidates.service';
+import { CandidateStore } from '../../../../@core/services/candidate-store.service';
+import { UsersService } from '../../../../@core/services';
+import { NbToastrService } from '@nebular/theme';
+import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 
 @Component({
-	selector: 'ngx-edit-candidate-profile',
+	selector: 'ga-edit-candidate-profile',
 	templateUrl: './edit-candidate-profile.component.html',
 	styleUrls: [
+		'./edit-candidate-profile.component.scss',
 		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	],
 	providers: [CandidateStore]
@@ -28,8 +36,11 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	constructor(
 		private route: ActivatedRoute,
 		private location: Location,
-		private candidateService: CandidatesService,
+		private candidatesService: CandidatesService,
 		private candidateStore: CandidateStore,
+		private userService: UsersService,
+		private toastrService: NbToastrService,
+		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -41,6 +52,18 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			.subscribe((params) => {
 				this.routeParams = params;
 				this._loadCandidateData();
+			});
+
+		this.candidateStore.userForm$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((value) => {
+				this.submitUserForm(value);
+			});
+
+		this.candidateStore.candidateForm$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((value) => {
+				this.submitCandidateForm(value);
 			});
 
 		this.loadTabs();
@@ -124,6 +147,22 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				icon: 'file-text-outline',
 				responsive: true,
 				route: this.getRoute('documents')
+			},
+			{
+				title: this.getTranslation(
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'
+				),
+				icon: 'people-outline',
+				responsive: true,
+				route: this.getRoute('interview')
+			},
+			{
+				title: this.getTranslation(
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACKS'
+				),
+				icon: 'message-square-outline',
+				responsive: true,
+				route: this.getRoute('feedbacks')
 			}
 		];
 	}
@@ -132,10 +171,59 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 		this.location.back();
 	}
 
+	private async submitCandidateForm(value: CandidateUpdateInput) {
+		if (value) {
+			try {
+				await this.candidatesService.update(
+					this.selectedCandidate.id,
+					value
+				);
+
+				this.toastrService.primary(
+					this.getTranslation(
+						'TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE',
+						{ name: this.candidateName }
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this._loadCandidateData();
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
+		}
+	}
+
+	/**
+	 * This is to update the User details of an Candidate.
+	 * Do NOT use this function to update any details which are NOT stored in the User Entity.
+	 */
+	private async submitUserForm(value: UserUpdateInput) {
+		if (value) {
+			try {
+				await this.userService.update(
+					this.selectedCandidate.user.id,
+					value
+				);
+
+				this.toastrService.primary(
+					this.getTranslation(
+						'TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE',
+						{ name: this.candidateName }
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+
+				this._loadCandidateData();
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
+		}
+	}
+
 	private async _loadCandidateData() {
 		const { id } = this.routeParams;
-		const { items } = await this.candidateService
-			.getAll(['user'], { id })
+		const { items } = await this.candidatesService
+			.getAll(['user', 'tags', 'contact'], { id })
 			.pipe(first())
 			.toPromise();
 

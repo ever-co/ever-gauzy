@@ -9,7 +9,7 @@
 		<ngx-back-navigation class="d-block"></ngx-back-navigation>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="col-sm-4">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label class="label">
 							{{
@@ -25,7 +25,7 @@
 						</ga-employee-selector>
 					</div>
 				</div>
-				<div class="col-sm-4">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label class="label"
 							>{{
@@ -46,7 +46,7 @@
 						/>
 					</div>
 				</div>
-				<div class="col-sm-4">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label class="label"
 							>{{
@@ -66,6 +66,14 @@
 						/>
 						<nb-datepicker #formpicker></nb-datepicker>
 					</div>
+				</div>
+				<div class="col-sm-3">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					>
+					</ga-tags-color-input>
 				</div>
 				<div class="col-xl-6">
 					<nb-card>

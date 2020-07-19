@@ -68,14 +68,14 @@ const routes: Routes = [
 					{
 						path: 'payments',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./payments/payments.module').then(
+								(m) => m.PaymentsModule
+							)
 					}
 				]
 			},
 			{
-				path: 'clients',
+				path: 'contacts',
 				loadChildren: () =>
 					import('./work-in-progress/work-in-progress.module').then(
 						(m) => m.WorkInProgressModule
@@ -93,29 +93,10 @@ const routes: Routes = [
 				children: [
 					{
 						path: '',
-						redirectTo: 'dashboard',
-						pathMatch: 'full'
-					},
-					{
-						path: 'dashboard',
 						loadChildren: () =>
 							import('./tasks/tasks.module').then(
 								(m) => m.TasksModule
 							)
-					},
-					{
-						path: 'me',
-						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
-					},
-					{
-						path: 'team',
-						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
 					}
 				]
 			},
@@ -153,9 +134,16 @@ const routes: Routes = [
 					{
 						path: 'payments',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./payments/payments.module').then(
+								(m) => m.PaymentsModule
+							)
+					},
+					{
+						path: 'pipelines',
+						loadChildren: () =>
+							import('./pipelines/pipelines.module').then(
+								({ PipelinesModule }) => PipelinesModule
+							)
 					}
 				]
 			},
@@ -187,14 +175,35 @@ const routes: Routes = [
 						path: 'schedules',
 						loadChildren: () =>
 							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+								'./employees/schedules/schedule.module'
+							).then((m) => m.ScheduleModule)
+					},
+					{
+						path: 'appointments',
+						loadChildren: () =>
+							import(
+								'./employees/appointment/appointment.module'
+							).then((m) => m.AppointmentModule)
+					},
+					{
+						path: 'event-types',
+						loadChildren: () =>
+							import(
+								'./employees/event-types/event-type.module'
+							).then((m) => m.EventTypeModule)
 					},
 					{
 						path: 'time-off',
 						loadChildren: () =>
 							import('./time-off/time-off.module').then(
 								(m) => m.TimeOffModule
+							)
+					},
+					{
+						path: 'approvals',
+						loadChildren: () =>
+							import('./approvals/approvals.module').then(
+								(m) => m.ApprovalsModule
 							)
 					},
 					{
@@ -217,6 +226,13 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'inventory',
+						loadChildren: () =>
+							import('./inventory/inventory.module').then(
+								(m) => m.InventoryModule
+							)
+					},
+					{
 						path: 'tags',
 						loadChildren: () =>
 							import('./tags/tags.module').then(
@@ -224,11 +240,18 @@ const routes: Routes = [
 							)
 					},
 					{
-						path: 'email-templates',
+						path: 'help-center',
+						loadChildren: () =>
+							import('./help-center/help-center.module').then(
+								(m) => m.HelpCenterModule
+							)
+					},
+					{
+						path: 'approval-policy',
 						loadChildren: () =>
 							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+								'./approval-policy/approval-policy.module'
+							).then((m) => m.ApprovalPolicyModule)
 					},
 					{
 						path: 'equipment-sharing',
@@ -236,6 +259,32 @@ const routes: Routes = [
 							import(
 								'./equipment-sharing/equipment-sharing.module'
 							).then((m) => m.EquipmentSharingModule)
+					}
+				]
+			},
+			{
+				path: 'goals',
+				children: [
+					{
+						path: '',
+						loadChildren: () =>
+							import('./goals/goals.module').then(
+								(m) => m.GoalsModule
+							)
+					},
+					{
+						path: 'reports',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'settings',
+						loadChildren: () =>
+							import('./goal-settings/goal-settings.module').then(
+								(m) => m.GoalSettingsModule
+							)
 					}
 				]
 			},

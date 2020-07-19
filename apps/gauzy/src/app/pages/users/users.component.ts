@@ -1,5 +1,10 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import {
 	Role,
 	InvitationTypeEnum,
@@ -8,7 +13,9 @@ import {
 	Organization,
 	UserOrganizationCreateInput,
 	RolesEnum,
-	User
+	User,
+	Tag,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,10 +26,11 @@ import { Store } from '../../@core/services/store.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
-import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { UsersService } from '../../@core/services';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface UserViewModel {
 	fullName: string;
@@ -32,6 +40,7 @@ interface UserViewModel {
 	id: string;
 	roleName?: string;
 	role?: string;
+	tags?: Tag[];
 }
 
 @Component({
@@ -46,6 +55,8 @@ export class UsersComponent extends TranslationBaseComponent
 	selectedUser: UserViewModel;
 	selectedOrganizationId: string;
 	UserRole: Role;
+	userToRemoveId: string;
+	userToRemove: UserOrganization;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -61,8 +72,13 @@ export class UsersComponent extends TranslationBaseComponent
 	showAddCard: boolean;
 	userToEdit: UserOrganization;
 	users: User[] = [];
-
-	@ViewChild('usersTable', { static: false }) usersTable;
+	tags: Tag[];
+	selectedTags: any;
+	viewComponentName: ComponentEnum;
+	disableButton = true;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	userData: User[];
+	@ViewChild('usersTable') usersTable;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -75,6 +91,7 @@ export class UsersComponent extends TranslationBaseComponent
 		private readonly usersService: UsersService
 	) {
 		super(translate);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -118,20 +135,38 @@ export class UsersComponent extends TranslationBaseComponent
 					this.add();
 				}
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
 
-	selectUserTmp(ev: {
-		data: UserViewModel;
-		isSelected: boolean;
-		selected: UserViewModel[];
-		source: LocalDataSource;
-	}) {
-		const checkName = ev.data.fullName.trim();
-		this.userName = checkName ? checkName : 'User';
+	setView() {
+		this.viewComponentName = ComponentEnum.USERS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 
-		this.selectedUser = ev.isSelected ? ev.data : null;
-
-		if (ev.data.role === RolesEnum.SUPER_ADMIN)
+	selectUserTmp({ isSelected, data }) {
+		const selectedUser = isSelected ? data : null;
+		if (this.usersTable) {
+			this.usersTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedUser = selectedUser;
+		if (this.selectedUser) {
+			this.userToRemoveId = data.id;
+			const checkName = data.fullName.trim();
+			this.userName = checkName ? checkName : 'User';
+		}
+		if (data.role === RolesEnum.SUPER_ADMIN)
 			this.selectedUser = this.hasSuperAdminPermission
 				? this.selectedUser
 				: null;
@@ -145,8 +180,7 @@ export class UsersComponent extends TranslationBaseComponent
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
-
-		if (data) {
+		if (data && data.user) {
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
 			}
@@ -201,7 +235,13 @@ export class UsersComponent extends TranslationBaseComponent
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 
-	edit() {
+	edit(selectedItem?: User) {
+		if (selectedItem) {
+			this.selectUserTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.router.navigate(['/pages/users/edit/' + this.selectedUser.id]);
 	}
 
@@ -209,7 +249,13 @@ export class UsersComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/users/invites/']);
 	}
 
-	async delete() {
+	async delete(selectedItem?: User) {
+		if (selectedItem) {
+			this.selectUserTmp({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -263,120 +309,75 @@ export class UsersComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const { items } = await this.userOrganizationsService.getAll(['user'], {
-			orgId: this.organization.id
-		});
+		const { items } = await this.userOrganizationsService.getAll(
+			['user', 'user.tags'],
+			{
+				organization: { id: this.organization.id }
+			}
+		);
 
 		this.users = items.map((user) => user.user);
 	}
 
-	async remove() {
-		const user = await this.usersService.getUserByEmail(
-			this.selectedUser.email
+	async remove(selectedOrganization: UserViewModel) {
+		const { id: userOrganizationId } = selectedOrganization;
+		const fullName =
+			selectedOrganization.fullName.trim() || selectedOrganization.email;
+
+		/**
+		 *  User belongs to only 1 organization -> delete user
+		 *	User belongs multiple organizations -> remove user from Organization
+		 *
+		 */
+		const count = await this.userOrganizationsService.getUserOrganizationCount(
+			userOrganizationId
 		);
+		const confirmationMessage =
+			count === 1
+				? 'FORM.DELETE_CONFIRMATION.DELETE_USER'
+				: 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
 
-		const { items } = await this.userOrganizationsService.getAll([
-			'user',
-			'user.role'
-		]);
-		let counter = 0;
-
-		let userToRemove;
-
-		for (const orgUser of items) {
-			if (
-				orgUser.isActive &&
-				(!orgUser.user.role ||
-					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
-			) {
-				userToRemove = orgUser;
-				if (userToRemove.user.id === user.id) {
-					counter++;
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: `${fullName} ${this.getTranslation(
+						confirmationMessage
+					)}`
 				}
-			}
-		}
-		// TODO: Recheck the flow.
-		// condition always holds true as counter value can either be 0 or 1
-		if (counter - 1 < 1) {
-			this.dialogService
-				.open(DeleteConfirmationComponent, {
-					context: {
-						recordType:
-							this.selectedUser.fullName +
-							' ' +
-							this.getTranslation(
-								'FORM.DELETE_CONFIRMATION.DELETE_USER'
-							)
-					}
-				})
-				.onClose.pipe(takeUntil(this._ngDestroy$))
-				.subscribe(async (result) => {
-					if (result) {
-						try {
-							this.usersService.delete(
-								userToRemove.user.id,
-								userToRemove
-							);
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.userOrganizationsService.removeUserFromOrg(
+							userOrganizationId
+						);
 
-							this.toastrService.primary(
-								this.userName + ' was successfuly deleted.',
-								'Success'
-							);
+						this.toastrService.primary(
+							this.getTranslation('USERS_PAGE.REMOVE_USER', {
+								name: fullName
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
 
-							this.loadPage();
-						} catch (error) {
-							this.toastrService.danger(
-								error.error.message || error.message,
-								'Error'
-							);
-						}
+						this.loadPage();
+					} catch (error) {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
 					}
-				});
-		} else {
-			this.dialogService
-				.open(DeleteConfirmationComponent, {
-					context: {
-						recordType:
-							this.selectedUser.fullName +
-							' ' +
-							this.getTranslation(
-								'FORM.DELETE_CONFIRMATION.USER_RECORD'
-							)
-					}
-				})
-				.onClose.pipe(takeUntil(this._ngDestroy$))
-				.subscribe(async (result) => {
-					if (result) {
-						try {
-							await this.userOrganizationsService.removeUserFromOrg(
-								this.selectedUser.id
-							);
-
-							this.toastrService.primary(
-								this.userName +
-									' was successfuly removed from organization.',
-								'Success'
-							);
-
-							this.loadPage();
-						} catch (error) {
-							this.toastrService.danger(
-								error.error.message || error.message,
-								'Error'
-							);
-						}
-					}
-				});
-		}
+				}
+			});
 	}
 
 	private async loadPage() {
 		this.selectedUser = null;
 
 		const { items } = await this.userOrganizationsService.getAll(
-			['user', 'user.role'],
+			['user', 'user.role', 'user.tags'],
 			{
-				orgId: this.selectedOrganizationId
+				organization: { id: this.selectedOrganizationId }
 			}
 		);
 
@@ -390,9 +391,11 @@ export class UsersComponent extends TranslationBaseComponent
 					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
 			) {
 				usersVm.push({
-					fullName: `${orgUser.user.firstName || ''} ${orgUser.user
-						.lastName || ''}`,
+					fullName: `${orgUser.user.firstName || ''} ${
+						orgUser.user.lastName || ''
+					}`,
 					email: orgUser.user.email,
+					tags: orgUser.user.tags,
 					id: orgUser.id,
 					isActive: orgUser.isActive,
 					imageUrl: orgUser.user.imageUrl,
@@ -405,7 +408,7 @@ export class UsersComponent extends TranslationBaseComponent
 				});
 			}
 		}
-
+		this.userData = usersVm;
 		this.sourceSmartTable.load(usersVm);
 
 		if (this.usersTable) {
@@ -424,7 +427,7 @@ export class UsersComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: UserFullNameComponent,
+					renderComponent: PictureNameTagsComponent,
 					class: 'align-row'
 				},
 				email: {

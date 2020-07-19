@@ -15,7 +15,6 @@ import { OnDestroy } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
 import { EmployeeSettingService } from '../employee-setting';
-import { EquipmentService } from '../equipment';
 import { EquipmentSharingService } from '../equipment-sharing';
 import { ExpenseService } from '../expense/expense.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
@@ -25,13 +24,13 @@ import { InvoiceService } from '../invoice/invoice.service';
 import { InvoiceItemService } from '../invoice-item/invoice-item.service';
 import { OrganizationService } from '../organization/organization.service';
 import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
 import { OrganizationPositionsService } from '../organization-positions/organization-positions.service';
 import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
-import { OrganizationTeamsService } from '../organization-teams/organization-teams.service';
+import { OrganizationTeamService } from '../organization-team/organization-team.service';
 import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
 import { ProposalService } from '../proposal/proposal.service';
 import { RoleService } from '../role/role.service';
@@ -40,11 +39,17 @@ import { TagService } from '../tags/tag.service';
 import { TaskService } from '../tasks/task.service';
 import { TenantService } from '../tenant/tenant.service';
 import { TimeOffPolicyService } from '../time-off-policy/time-off-policy.service';
-import { TimeSheetService } from '../timesheet/timesheet.service';
-import { ActivityService } from '../timesheet/activity.service';
-import { ScreenShotService } from '../timesheet/screenshot.service';
-import { TimeSlotService } from '../timesheet/time_slot.service';
+import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
+import { ActivityService } from '../timesheet/activity/activity.service';
+import { ScreenshotService } from '../timesheet/screenshot/screenshot.service';
+import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
+import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
+import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
+import { CandidateService } from '../candidate/candidate.service';
+import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
+import { EquipmentService } from '../equipment/equipment.service';
+import { ContactService } from '../contact/contact.service';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {
@@ -86,8 +91,8 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'organization_employee_level'
 		},
 		{
-			service: this.organizationClientsService,
-			nameFile: 'organization_client'
+			service: this.organizationContactService,
+			nameFile: 'organization_contact'
 		},
 		{
 			service: this.organizationDepartmentService,
@@ -110,7 +115,7 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'organization_recurring_expense'
 		},
 		{
-			service: this.organizationTeamsService,
+			service: this.organizationTeamService,
 			nameFile: 'organization_team'
 		},
 		{
@@ -128,7 +133,14 @@ export class ExportAllService implements OnDestroy {
 		{ service: this.activityService, nameFile: 'activity' },
 		{ service: this.screenShotService, nameFile: 'screenshot' },
 		{ service: this.timeLogService, nameFile: 'time_log' },
-		{ service: this.timeSlotService, nameFile: 'time_slot' }
+		{ service: this.timeSlotService, nameFile: 'time_slot' },
+		{
+			service: this.appointmentEmployeeService,
+			nameFile: 'appointment_employees'
+		},
+		{ service: this.approvalPolicyService, nameFile: 'approval_policy' },
+		{ service: this.candidateService, nameFile: 'candidate' },
+		{ service: this.contactService, nameFile: 'contact' }
 	];
 
 	constructor(
@@ -150,13 +162,14 @@ export class ExportAllService implements OnDestroy {
 		private invoiceItemService: InvoiceItemService,
 		private organizationService: OrganizationService,
 		private employeeLevelService: EmployeeLevelService,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactService: OrganizationContactService,
 		private organizationDepartmentService: OrganizationDepartmentService,
 		private organizationEmploymentTypeService: OrganizationEmploymentTypeService,
 		private organizationPositionsService: OrganizationPositionsService,
 		private organizationProjectsService: OrganizationProjectsService,
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
-		private organizationTeamsService: OrganizationTeamsService,
+		private organizationTeamService: OrganizationTeamService,
+		private organizationTeamEmployeeService: OrganizationTeamEmployeeService,
 		private organizationVendorsService: OrganizationVendorsService,
 		private proposalService: ProposalService,
 		private roleService: RoleService,
@@ -167,9 +180,13 @@ export class ExportAllService implements OnDestroy {
 		private timeOffPolicyService: TimeOffPolicyService,
 		private timeSheetService: TimeSheetService,
 		private activityService: ActivityService,
-		private screenShotService: ScreenShotService,
+		private screenShotService: ScreenshotService,
 		private timeLogService: TimeLogService,
-		private timeSlotService: TimeSlotService
+		private timeSlotService: TimeSlotService,
+		private appointmentEmployeeService: AppointmentEmployeesService,
+		private approvalPolicyService: ApprovalPolicyService,
+		private candidateService: CandidateService,
+		private contactService: ContactService
 	) {}
 
 	async createFolders(): Promise<any> {
@@ -206,15 +223,15 @@ export class ExportAllService implements OnDestroy {
 					zlib: { level: 9 }
 				});
 
-				output.on('close', function() {
+				output.on('close', function () {
 					resolve();
 				});
 
-				output.on('end', function() {
+				output.on('end', function () {
 					console.log('Data has been drained');
 				});
 
-				archive.on('warning', function(err) {
+				archive.on('warning', function (err) {
 					if (err.code === 'ENOENT') {
 						reject(err);
 					} else {
@@ -222,7 +239,7 @@ export class ExportAllService implements OnDestroy {
 					}
 				});
 
-				archive.on('error', function(err) {
+				archive.on('error', function (err) {
 					reject(err);
 				});
 
@@ -290,6 +307,13 @@ export class ExportAllService implements OnDestroy {
 		});
 	}
 
+	async downloadTemplate(res) {
+		return new Promise((resolve, reject) => {
+			res.download('./export/template.zip');
+			resolve();
+		});
+	}
+
 	async deleteCsvFiles(): Promise<any> {
 		return new Promise((resolve, reject) => {
 			let id$ = '';
@@ -330,7 +354,7 @@ export class ExportAllService implements OnDestroy {
 
 	async exportTables() {
 		return new Promise(async (resolve, reject) => {
-			for (const [i, value] of this.services.entries()) {
+			for (const [i] of this.services.entries()) {
 				await this.getAsCsv(i);
 			}
 			resolve();

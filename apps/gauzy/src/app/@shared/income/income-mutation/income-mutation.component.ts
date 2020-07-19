@@ -10,14 +10,14 @@ import {
 	Income,
 	OrganizationSelectInput,
 	Tag,
-	OrganizationClients
+	OrganizationContact
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -29,7 +29,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 })
 export class IncomeMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
 	income?: Income;
@@ -107,7 +107,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		protected dialogRef: NbDialogRef<IncomeMutationComponent>,
 		private organizationsService: OrganizationsService,
 		private store: Store,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService
@@ -123,8 +123,10 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 	private async _getClients() {
 		this.organizationId = this.store.selectedOrganization.id;
-		const items = await this.organizationClientsService.getAll();
-		items['items'].forEach((i) => {
+		const { items } = await this.organizationContactService.getAll([], {
+			organizationId: this.store.selectedOrganization.id
+		});
+		items.forEach((i) => {
 			this.clients = [
 				...this.clients,
 				{ clientName: i.name, clientId: i.id }
@@ -143,7 +145,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	addNewClient = (name: string): Promise<OrganizationClients> => {
+	addNewClient = (name: string): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -154,7 +156,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			return this.organizationClientsService.create({
+			return this.organizationContactService.create({
 				name,
 				organizationId: this.organizationId
 			});
@@ -169,7 +171,6 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		if (this.income) {
-			this.tags = this.income.tags;
 			this.form = this.fb.group({
 				valueDate: [
 					new Date(this.income.valueDate),
@@ -186,7 +187,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				notes: this.income.notes,
 				currency: this.income.currency,
 				isBonus: this.income.isBonus,
-				tags: this.income.tags
+				tags: [this.income.tags]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -205,6 +206,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			this._loadDefaultCurrency();
 		}
 		this.notes = this.form.get('notes');
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	private async _loadDefaultCurrency() {
@@ -219,7 +221,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			this.currency.setValue(orgData.currency);
 		}
 	}
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 }

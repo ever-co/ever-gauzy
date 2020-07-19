@@ -1,24 +1,25 @@
 import { environment as env } from '@env-api/environment';
 import {
-	CreateEmailInvitesInput,
-	CreateEmailInvitesOutput,
+	ICreateEmailInvitesInput,
+	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
 	OrganizationProjects as IOrganizationProjects,
-	OrganizationClients as IOrganizationClients,
+	OrganizationContact as IOrganizationContact,
 	OrganizationDepartment as IOrganizationDepartment,
 	Role as IOrganizationRole,
 	User,
-	CreateOrganizationClientInviteInput
+	ICreateOrganizationContactInviteInput,
+	RolesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Invite } from './invite.entity';
-import * as nodemailer from 'nodemailer';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { Organization } from '../organization/organization.entity';
 import { EmailService } from '../email/email.service';
@@ -35,9 +36,9 @@ export class InviteService extends CrudService<Invite> {
 			OrganizationProjects
 		>,
 
-		@InjectRepository(OrganizationClients)
-		private readonly organizationClientsRepository: Repository<
-			OrganizationClients
+		@InjectRepository(OrganizationContact)
+		private readonly organizationContactRepository: Repository<
+			OrganizationContact
 		>,
 
 		@InjectRepository(OrganizationDepartment)
@@ -91,16 +92,17 @@ export class InviteService extends CrudService<Invite> {
 	 * @param emailInvites Emails Ids to send invite
 	 */
 	async createBulk(
-		emailInvites: CreateEmailInvitesInput,
-		originUrl: string
-	): Promise<CreateEmailInvitesOutput> {
+		emailInvites: ICreateEmailInvitesInput,
+		originUrl: string,
+		languageCode: LanguagesEnum
+	): Promise<ICreateEmailInvitesOutput> {
 		const invites: Invite[] = [];
 
 		const {
 			emailIds,
 			roleId,
 			projectIds,
-			clientIds,
+			organizationContactIds,
 			departmentIds,
 			organizationId,
 			invitedById
@@ -114,8 +116,8 @@ export class InviteService extends CrudService<Invite> {
 			departmentIds || []
 		);
 
-		const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
-			clientIds || []
+		const organizationContacts: IOrganizationContact[] = await this.organizationContactRepository.findByIds(
+			organizationContactIds || []
 		);
 
 		const organization: Organization = await this.organizationRepository.findOne(
@@ -125,6 +127,17 @@ export class InviteService extends CrudService<Invite> {
 		const role: IOrganizationRole = await this.roleRepository.findOne(
 			roleId
 		);
+
+		const user = await this.userService.findOne(invitedById, {
+			relations: ['role']
+		});
+
+		if (role.name === RolesEnum.SUPER_ADMIN) {
+			const { role: inviterRole } = user;
+
+			if (inviterRole.name !== RolesEnum.SUPER_ADMIN)
+				throw new UnauthorizedException();
+		}
 
 		const inviteExpiryPeriod =
 			organization && organization.inviteExpiryPeriod
@@ -159,25 +172,26 @@ export class InviteService extends CrudService<Invite> {
 			invite.expireDate = expireDate;
 			invite.projects = projects;
 			invite.departments = departments;
-			invite.clients = clients;
+			invite.organizationContact = organizationContacts;
 
 			invites.push(invite);
 		}
 
 		const items = await this.repository.save(invites);
 		items.forEach((item) => {
-			const registerUrl = `${originUrl ||
-				env.host}/#/auth/accept-invite?email=${item.email}&token=${
-				item.token
-			}`;
+			const registerUrl = `${
+				originUrl || env.host
+			}/#/auth/accept-invite?email=${item.email}&token=${item.token}`;
 
 			if (emailInvites.inviteType.indexOf('/pages/users') > -1) {
 				this.emailService.inviteUser({
 					email: item.email,
 					role: role.name,
-					organization: organization.name,
+					organization: organization,
 					registerUrl,
-					originUrl
+					originUrl,
+					languageCode,
+					invitedBy: user
 				});
 			} else if (
 				emailInvites.inviteType.indexOf('/pages/employees') > -1
@@ -185,10 +199,12 @@ export class InviteService extends CrudService<Invite> {
 				this.emailService.inviteEmployee({
 					email: item.email,
 					registerUrl,
-					clients,
+					organizationContacts,
 					departments,
 					originUrl,
-					organization: organization.name
+					organization: organization,
+					languageCode,
+					invitedBy: user
 				});
 			}
 		});
@@ -196,20 +212,21 @@ export class InviteService extends CrudService<Invite> {
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 
-	async createOrganizationClientInvite(
-		inviteInput: CreateOrganizationClientInviteInput
+	async createOrganizationContactInvite(
+		inviteInput: ICreateOrganizationContactInviteInput
 	): Promise<Invite> {
 		const {
 			emailId,
 			roleId,
-			clientId,
+			organizationContactId,
 			organizationId,
 			invitedById,
-			originalUrl
+			originalUrl,
+			languageCode
 		} = inviteInput;
 
-		const client: IOrganizationClients = await this.organizationClientsRepository.findOne(
-			clientId
+		const organizationContact: IOrganizationContact = await this.organizationContactRepository.findOne(
+			organizationContactId
 		);
 
 		const organization: Organization = await this.organizationRepository.findOne(
@@ -233,15 +250,16 @@ export class InviteService extends CrudService<Invite> {
 		invite.invitedById = invitedById;
 		invite.status = InviteStatusEnum.INVITED;
 		invite.expireDate = expireDate;
-		invite.clients = [client];
+		invite.organizationContact = [organizationContact];
 
 		const createdInvite = await this.repository.save(invite);
 
-		this.emailService.inviteOrganizationClient(
-			client,
+		this.emailService.inviteOrganizationContact(
+			organizationContact,
 			inviterUser,
 			organization,
 			createdInvite,
+			languageCode,
 			originalUrl
 		);
 

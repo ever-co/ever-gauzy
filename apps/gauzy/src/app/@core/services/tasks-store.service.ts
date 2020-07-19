@@ -22,17 +22,25 @@ export class TasksStoreService {
 
 	constructor(private _taskService: TasksService) {
 		if (!this.tasks.length) {
-			this._taskService
-				.getAllTasks()
-				.pipe(tap(({ items }) => this.loadAllTasks(items)))
-				.subscribe();
+			this.fetchTasks();
 		}
+	}
+
+	fetchTasks() {
+		this._taskService
+			.getAllTasks()
+			.pipe(tap(({ items }) => this.loadAllTasks(items)))
+			.subscribe();
 	}
 
 	private _mapToViewModel(tasks) {
 		return tasks.map((task) => ({
 			...task,
-			projectName: task.project ? task.project.name : undefined
+			projectName: task.project ? task.project.name : undefined,
+			employees: task.members ? task.members : undefined,
+			creator: task.creator
+				? `${task.creator.firstName} ${task.creator.lastName}`
+				: null
 		}));
 	}
 
@@ -41,11 +49,16 @@ export class TasksStoreService {
 	}
 
 	createTask(task: Task): void {
+		console.log('createdTask[0] in store service: ', task);
 		this._taskService
 			.createTask(task)
 			.pipe(
-				tap((task) => {
-					const tasks = [...this.tasks, task];
+				tap((createdTask) => {
+					console.log(
+						'createdTask[1] in store service: ',
+						createdTask
+					);
+					const tasks = [...this.tasks, createdTask];
 					this._tasks$.next(tasks);
 				})
 			)

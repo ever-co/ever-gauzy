@@ -11,7 +11,7 @@ export class EquipmentService {
 
 	getAll(): Promise<{ items: Equipment[] }> {
 		return this.http
-			.get<{ items: Equipment[] }>(this.EQUIPMENT_URL)
+			.get<{ items: Equipment[] }>(`${this.EQUIPMENT_URL}`)
 			.pipe(first())
 			.toPromise();
 	}

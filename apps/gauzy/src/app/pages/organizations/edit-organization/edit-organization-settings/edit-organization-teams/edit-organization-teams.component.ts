@@ -3,7 +3,9 @@ import {
 	Employee,
 	Organization,
 	OrganizationTeamCreateInput,
-	OrganizationTeams
+	OrganizationTeam,
+	Tag,
+	RolesEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -14,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-org-teams',
@@ -28,10 +31,11 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 
 	organizationId: string;
 	showAddCard: boolean;
-	teams: OrganizationTeams[];
+	teams: OrganizationTeam[];
 	employees: Employee[] = [];
-	teamToEdit: OrganizationTeams;
+	teamToEdit: OrganizationTeam;
 	loading = true;
+	tags: Tag[] = [];
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
@@ -39,7 +43,8 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private route: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -52,6 +57,14 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 					this.organizationId = organization.id;
 					this.loadTeams();
 					this.loadEmployees();
+				}
+			});
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.showAddCard = !this.showAddCard;
+					this.loadTeams();
 				}
 			});
 	}
@@ -147,7 +160,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		}
 	}
 
-	editTeam(team: OrganizationTeams) {
+	editTeam(team: OrganizationTeam) {
 		this.showAddCard = !this.showAddCard;
 		this.teamToEdit = team;
 		this.showAddCard = true;
@@ -165,28 +178,42 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		}
 
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: this.organizationId } })
+			.getAll(['user', 'tags'], {
+				organization: { id: this.organizationId }
+			})
 			.pipe(first())
 			.toPromise();
-
 		this.employees = items;
 	}
+	public getTagsByEmployeeId(id: string) {
+		const employee = this.employees.find((empl) => empl.id === id);
 
-	private async loadTeams() {
+		return employee ? employee.tags : [];
+	}
+
+	async loadTeams() {
 		if (!this.organizationId) {
 			return;
 		}
-
-		const teams = await this.organizationTeamsService.getAll(['members'], {
-			organizationId: this.organizationId
-		});
-
+		const { items: teams } = await this.organizationTeamsService.getAll(
+			['members', 'tags', 'members.role'],
+			{
+				organizationId: this.organizationId
+			}
+		);
 		if (teams) {
-			this.teams = teams.items.sort(
+			teams.forEach((team: OrganizationTeam) => {
+				team.managers = team.members.filter(
+					(member) =>
+						member.role && member.role.name === RolesEnum.MANAGER
+				);
+				team.members = team.members.filter((member) => !member.role);
+			});
+
+			this.teams = [...teams].sort(
 				(a, b) => b.members.length - a.members.length
 			);
 		}
-
 		this.loading = false;
 	}
 }

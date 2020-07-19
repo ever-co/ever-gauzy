@@ -37,7 +37,7 @@ export class FindSplitExpenseHandler
 		});
 
 		//1. Find all expenses for organization which have splitExpense = true & all for the employee
-		const { items, total } = await this.expenseService.findAll(
+		const { items, total } = await this.expenseService.findAllExpenses(
 			{
 				where: [
 					{

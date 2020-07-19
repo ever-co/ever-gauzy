@@ -1,0 +1,120 @@
+<nb-card class="view-log-dialog">
+	<nb-card-header>
+		<div class="row">
+			<div class="col">
+				{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}
+			</div>
+			<button
+				class="col-auto"
+				nbButton
+				ghost
+				(click)="close()"
+				type="button"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="custom-scroll">
+		<div
+			class="mb-3"
+			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+		>
+			<div class="description">
+				<ngx-avatar
+					[name]="timeLog?.employee?.user?.name"
+					[src]="timeLog?.employee?.user?.imageUrl"
+				></ngx-avatar>
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.PROJECT' | translate }}
+			</div>
+			<div class="description">
+				{{
+					timeLog?.project
+						? timeLog?.project.name
+						: ('TIMESHEET.NO_PROJECT' | translate)
+				}}
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.TODO' | translate }}
+			</div>
+			<div class="description">
+				{{
+					timeLog?.task
+						? timeLog?.task?.title
+						: ('TIMESHEET.NO_TOTO' | translate)
+				}}
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.LOG_TYPE' | translate }}
+			</div>
+			<div class="description">{{ timeLog?.logType }}</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.TIME_SPAN' | translate }}
+			</div>
+			<div class="description">
+				<span class="start-timer">
+					{{ timeLog?.startedAt | utcToLocal | timeFormat: true }}
+				</span>
+				-
+				<span
+					class="end-timer"
+					*ngIf="timeLog?.stoppedAt; else runningTimer"
+				>
+					{{ timeLog?.stoppedAt | utcToLocal | timeFormat: true }}
+				</span>
+				<ng-template #runningTimer>
+					<span class="running-timer">
+						{{ 'TIMESHEET.TILL_NOW' | translate }}
+					</span>
+				</ng-template>
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.DURATION' | translate }}
+			</div>
+			<div class="description">
+				{{ timeLog?.duration | durationFormat }}
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">Description</div>
+			<div class="description">{{ timeLog?.description || '-' }}</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer>
+		<button
+			class="mr-2"
+			nbButton
+			status="primary"
+			(click)="openDialog()"
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+			]"
+		>
+			<nb-icon icon="edit"></nb-icon> {{ 'TIMESHEET.EDIT' | translate }}
+		</button>
+		<button
+			class="mr-2"
+			nbButton
+			status="danger"
+			(click)="onDeleteConfirm()"
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_DELETE_TIME
+			]"
+		>
+			<nb-icon icon="trash-2-outline"></nb-icon>
+			{{ 'TIMESHEET.DELETE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

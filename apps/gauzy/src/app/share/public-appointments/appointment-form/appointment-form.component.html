@@ -1,0 +1,10 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<ga-manage-appointment
+		*ngIf="employee"
+		[employee]="employee"
+		[selectedRange]="selectedRange"
+		[hidePrivateFields]="true"
+		[allowedDuration]="allowedDuration"
+		[disabled]="true"
+	></ga-manage-appointment>
+</nb-card>

@@ -18,15 +18,15 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { Income as IIncome, CurrenciesEnum } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('income')
-export class Income extends Base implements IIncome {
-	@ManyToMany((type) => Tag)
+export class Income extends TenantBase implements IIncome {
+	@ManyToMany((type) => Tag, (tag) => tag.income)
 	@JoinTable({
 		name: 'tag_income'
 	})

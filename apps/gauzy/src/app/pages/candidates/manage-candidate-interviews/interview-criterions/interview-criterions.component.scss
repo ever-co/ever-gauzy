@@ -1,0 +1,11 @@
+.add-criterion {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  &-card {
+    width: 48%;
+  }
+}

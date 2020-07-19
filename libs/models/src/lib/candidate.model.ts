@@ -1,19 +1,30 @@
-import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
+import { ICandidateInterview } from './candidate-interview.model';
+import { ICandidateFeedback } from './candidate-feedback.model';
+import { ICandidateSource } from './candidate-source.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Location as ILocation } from './location.model';
-import { UserFindInput } from './user.model';
-import { OrganizationTeams } from './organization-teams-model';
-import { ITenant } from '@gauzy/models';
+import { UserFindInput, User } from './user.model';
+import { OrganizationTeam } from './organization-team-model';
+import {
+	ITenant,
+	OrganizationDepartment,
+	OrganizationPositions,
+	Tag,
+	Contact as IContact
+} from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
+import { IExperience } from './candidate-experience.model';
+import { ISkill } from './candidate-skill.model';
+import { IEducation } from './candidate-education.model';
+import { ICandidateDocument } from './candidate-document.model';
 
-export interface Candidate extends IBaseEntityModel, ILocation {
+export interface Candidate extends IBaseEntityModel, IContact {
 	user: User;
 	userId: string;
 	organization: Organization;
 	orgId: string;
-	status?: Status;
-	teams?: OrganizationTeams[];
+	status?: string;
+	teams?: OrganizationTeam[];
 	tenant: ITenant;
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
@@ -23,16 +34,29 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	rejectDate?: Date;
 	candidateLevel?: string;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
-	education?: string;
-	experience?: string;
-	skills?: string;
+	experience?: IExperience[];
+	skills?: ISkill[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	documents?: ICandidateDocument[];
+	educations?: IEducation[];
+	source?: ICandidateSource;
+	cvUrl?: string;
+	feedbacks?: ICandidateFeedback[];
+	rating?: number;
+	isArchived?: boolean;
+	interview?: ICandidateInterview[];
+	contact: IContact;
 }
 
-export type Status = 'applied' | 'rejected' | 'hired';
+export enum CandidateStatus {
+	APPLIED = 'APPLIED',
+	REJECTED = 'REJECTED',
+	HIRED = 'HIRED'
+}
+
 export interface CandidateFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 	user?: UserFindInput;
@@ -50,6 +74,7 @@ export interface CandidateUpdateInput {
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
+	cvUrl?: string;
 }
 
 export interface CandidateCreateInput {
@@ -62,6 +87,7 @@ export interface CandidateCreateInput {
 	cvUrl?: string;
 	members?: Candidate[];
 	tags?: Tag[];
+	documents: ICandidateDocument[];
 }
 export interface CandidateLevel {
 	id: string;

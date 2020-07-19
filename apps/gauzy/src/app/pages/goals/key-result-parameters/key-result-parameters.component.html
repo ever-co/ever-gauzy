@@ -1,0 +1,171 @@
+<nb-card size="medium" style="max-width: 40vw; min-width: 40vw;">
+	<nb-card-header
+		>Edit Key Result Parameters
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog(null)"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-tabset>
+			<nb-tab tabTitle="Weight">
+				<nb-alert status="info">{{
+					'KEY_RESULT_PAGE.WEIGHT.MESSAGE' | translate
+				}}</nb-alert>
+				<form [formGroup]="weightForm">
+					<div class="row mt-2">
+						<div class="col-md-6">
+							<label for="key-result-weight" class="label mt-3">
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT'
+										| translate
+								}}
+							</label>
+							<nb-select
+								id="key-result-weight"
+								fullWidth
+								formControlName="weight"
+							>
+								<nb-option
+									*ngFor="
+										let weight of keyResultWeightEnum
+											| keyvalue
+									"
+									[value]="weight.value"
+									>{{
+										'KEY_RESULT_PAGE.WEIGHT.' + weight.key
+											| translate
+									}}</nb-option
+								>
+							</nb-select>
+						</div>
+						<div
+							class="col-md-6 d-flex flex-column justify-content-around"
+						>
+							<label
+								for="goal-progress-comparison"
+								class="label mt-3"
+							>
+								{{
+									'KEY_RESULT_PAGE.WEIGHT.OBJECTIVE_PROGRESS'
+										| translate: { weight: keyResultWeight }
+								}}
+							</label>
+							<nb-progress-bar
+								id="goal-progress-comparison"
+								[value]="keyResultWeight"
+								status="primary"
+								size="small"
+								>{{ keyResultWeight }}%
+							</nb-progress-bar>
+						</div>
+					</div>
+				</form>
+			</nb-tab>
+			<nb-tab tabTitle="Type">
+				<form [formGroup]="typeForm">
+					<label for="key-result-type" class="label mt-3">
+						{{
+							'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE'
+								| translate
+						}}
+					</label>
+					<nb-select
+						id="key-result-type"
+						fullWidth
+						formControlName="type"
+					>
+						<nb-option
+							*ngFor="let type of keyResultTypeEnum | keyvalue"
+							[value]="type.value"
+							>{{
+								'KEY_RESULT_PAGE.TYPE.' + type.key | translate
+							}}</nb-option
+						>
+					</nb-select>
+
+					<div class="row">
+						<div class="col-md-6">
+							<label
+								*ngIf="
+									typeForm.value.type ==
+										keyResultTypeEnum.NUMBER ||
+									typeForm.value.type ==
+										keyResultTypeEnum.CURRENCY
+								"
+								for="initial-value"
+								class="label"
+							>
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+										| translate
+								}}
+							</label>
+							<input
+								type="number"
+								id="initial-value"
+								*ngIf="
+									typeForm.value.type ==
+										keyResultTypeEnum.NUMBER ||
+									typeForm.value.type ==
+										keyResultTypeEnum.CURRENCY
+								"
+								nbInput
+								fullWidth
+								formControlName="initialValue"
+								placeholder="						{{
+									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+										| translate
+								}}"
+							/>
+						</div>
+
+						<div class="col-md-6">
+							<label
+								*ngIf="
+									typeForm.value.type ==
+										keyResultTypeEnum.NUMBER ||
+									typeForm.value.type ==
+										keyResultTypeEnum.CURRENCY
+								"
+								for="target-value"
+								class="label"
+							>
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+										| translate
+								}}
+							</label>
+							<input
+								type="number"
+								id="target-value"
+								*ngIf="
+									typeForm.value.type ==
+										keyResultTypeEnum.NUMBER ||
+									typeForm.value.type ==
+										keyResultTypeEnum.CURRENCY
+								"
+								nbInput
+								fullWidth
+								formControlName="targetValue"
+								placeholder="{{
+									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</form>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-3" nbButton (click)="closeDialog(null)">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button nbButton status="success" (click)="updateKeyResult()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

@@ -1,0 +1,40 @@
+<div class="header">
+	<div class="row">
+		<div class="col">
+			<h5 class="mb-3">
+				{{
+					(!recurringAvailabilityMode
+						? 'SCHEDULE.DATE_SPECIFIC_AVAILABILITY'
+						: 'SCHEDULE.RECURRING_AVAILABILITY'
+					) | translate
+				}}
+			</h5>
+		</div>
+		<div class="col text-right">
+			<button
+				[disabled]="!dateSelected"
+				(click)="saveSelectedDateRange()"
+				status="success"
+				nbButton
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
+	</div>
+</div>
+
+<div class="filters row mb-3">
+	<div
+		class="employee-select col-sm-3"
+		*ngIf="canChangeSelectedEmployee && _selectedOrganizationId"
+	>
+		<ga-employee-selector
+			#employeeSelector
+			[skipGlobalChange]="true"
+			(selectionChanged)="onEmployeeChange($event)"
+			class="employee-selector"
+		></ga-employee-selector>
+	</div>
+</div>
+
+<full-calendar #calendar [options]="calendarOptions"></full-calendar>

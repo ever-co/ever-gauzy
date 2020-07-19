@@ -45,6 +45,13 @@ import * as Sentry from '@sentry/browser';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
+import { HubstaffTokenInterceptor } from './@core/hubstaff-token-interceptor';
+import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
+import { LanguageInterceptor } from './@core/language.interceptor';
+import { NgxElectronModule } from 'ngx-electron';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { ColorPickerService } from 'ngx-color-picker';
+import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -53,7 +60,7 @@ export const cloudinary = {
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http);
 }
-if (environment.SENTRY_DNS) {
+if (environment.SENTRY_DNS && environment.production) {
 	Sentry.init({
 		dsn: environment.SENTRY_DNS,
 		environment: environment.production ? 'production' : 'development'
@@ -62,6 +69,7 @@ if (environment.SENTRY_DNS) {
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
+		EstimateEmailModule,
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
@@ -90,7 +98,10 @@ if (environment.SENTRY_DNS) {
 		CloudinaryModule.forRoot(cloudinary, cloudinaryConfiguration),
 		FileUploadModule,
 		TimeTrackerModule.forRoot(),
-		SharedModule.forRoot()
+		environment.production ? [] : AkitaNgDevtools,
+		SharedModule.forRoot(),
+		NgxElectronModule,
+		NgxPermissionsModule.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [
@@ -106,7 +117,17 @@ if (environment.SENTRY_DNS) {
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
+			useClass: HubstaffTokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: LanguageInterceptor,
 			multi: true
 		},
 		ServerConnectionService,
@@ -116,7 +137,12 @@ if (environment.SENTRY_DNS) {
 			deps: [ServerConnectionService, Store],
 			multi: true
 		},
-		AppModuleGuard
+		{
+			provide: ErrorHandler,
+			useClass: SentryErrorHandler
+		},
+		AppModuleGuard,
+		ColorPickerService
 	]
 })
 export class AppModule {}

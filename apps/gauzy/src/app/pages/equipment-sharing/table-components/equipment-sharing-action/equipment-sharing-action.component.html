@@ -1,0 +1,12 @@
+<button
+	nbButton
+	status="success"
+	(click)="approval()"
+	*ngIf="isApproval"
+	class="mr-3"
+>
+	{{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
+</button>
+<button nbButton status="danger" (click)="refuse()" *ngIf="isRefuse">
+	{{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
+</button>

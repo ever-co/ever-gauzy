@@ -7,10 +7,12 @@ import {
 	EventEmitter
 } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { Tag } from '@gauzy/models';
+import { Tag, Organization, Skill } from '@gauzy/models';
+import { ActivatedRoute } from '@angular/router';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 //TODO: Currently the whole application assumes that if employee or id is null then you need to get data for All Employees
 //That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
@@ -22,6 +24,7 @@ export interface SelectedEmployee {
 	imageUrl: string;
 	defaultType?: DEFAULT_TYPE;
 	tags?: Tag[];
+	skills?: Skill[];
 }
 
 export enum DEFAULT_TYPE {
@@ -35,7 +38,8 @@ export const ALL_EMPLOYEES_SELECTED: SelectedEmployee = {
 	lastName: '',
 	imageUrl: 'https://i.imgur.com/XwA2T62.jpg',
 	defaultType: DEFAULT_TYPE.ALL_EMPLOYEE,
-	tags: []
+	tags: [],
+	skills: []
 };
 
 export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
@@ -44,7 +48,8 @@ export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
 	lastName: '',
 	imageUrl: '',
 	defaultType: DEFAULT_TYPE.NO_EMPLOYEE,
-	tags: []
+	tags: [],
+	skills: []
 };
 
 @Component({
@@ -64,6 +69,22 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	@Input()
 	placeholder: string;
 
+	@Input()
+	set selectedDate(value: Date) {
+		//This will set _selectDate too
+		this.loadWorkingEmployeesIfRequired(
+			this.store.selectedOrganization,
+			value
+		);
+	}
+
+	get selectedDate() {
+		return this._selectedDate;
+	}
+
+	private _selectedOrganization?: Organization;
+	private _selectedDate?: Date;
+
 	@Output()
 	selectionChanged: EventEmitter<SelectedEmployee> = new EventEmitter();
 
@@ -74,7 +95,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private employeesService: EmployeesService,
-		private store: Store
+		private store: Store,
+		private activatedRoute: ActivatedRoute
 	) {}
 
 	ngOnInit() {
@@ -87,6 +109,16 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 		this._loadEmployees();
 		this._loadEmployeeId();
+
+		this.activatedRoute.queryParams
+			.pipe(
+				debounceTime(500),
+				filter((query) => !!query.employeeId),
+				untilDestroyed(this)
+			)
+			.subscribe((query) => {
+				this.selectEmployeeById(query.employeeId);
+			});
 	}
 
 	searchEmployee(term: string, item: any) {
@@ -105,10 +137,20 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	selectEmployee(employee: SelectedEmployee) {
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+		} else {
+			this.selectedEmployee = employee;
 		}
 		this.selectionChanged.emit(employee);
 	}
 
+	selectEmployeeById(employeeId: string) {
+		const employeies = this.people.filter(
+			(employee: SelectedEmployee) => employeeId === employee.id
+		);
+		if (employeies.length > 0) {
+			this.selectEmployee(employeies[0]);
+		}
+	}
 	getShortenedName(firstName: string, lastName: string) {
 		if (firstName && lastName) {
 			return firstName + ' ' + lastName[0] + '.';
@@ -132,54 +174,25 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployees() {
-		/**
-		 * TODO: fetch only employees of selected organization,
-		 * currently all employees are fetched and filtered at the frontend
-		 */
-
-		const { items } = await this.employeesService
-			.getAll(['user'])
-			.pipe(first())
-			.toPromise();
-
-		const load = (loadItems) => {
-			this.people = [
-				...loadItems.map((e) => {
-					return {
-						id: e.id,
-						firstName: e.user.firstName,
-						lastName: e.user.lastName,
-						imageUrl: e.user.imageUrl
-					};
-				})
-			];
-			if (this.showAllEmployeesOption)
-				this.people.unshift(ALL_EMPLOYEES_SELECTED);
-		};
-
-		this.store.selectedOrganization$.subscribe((org) => {
+		this.store.selectedOrganization$.subscribe(async (org) => {
 			if (org) {
-				load(items.filter((e) => e.orgId === org.id));
+				await this.loadWorkingEmployeesIfRequired(
+					org,
+					this.store.selectedDate
+				);
 			}
 		});
 
-		const selectedOrg = this.store.selectedOrganization;
-		load(
-			selectedOrg
-				? items.filter((e) => e.orgId === selectedOrg.id)
-				: items
-		);
-
-		if (items.length > 0 && !this.store.selectedEmployee) {
-			this.store.selectedEmployee =
-				this.people[0] || ALL_EMPLOYEES_SELECTED;
-		}
+		this.store.selectedDate$.subscribe((date) => {
+			this.loadWorkingEmployeesIfRequired(
+				this.store.selectedOrganization,
+				date
+			);
+		});
 
 		if (!this.selectedEmployee) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
-			this.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
-			this.store.selectedEmployee.id = null;
 		}
 
 		if (
@@ -188,6 +201,59 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 		)
 			this.selectedEmployee = null;
 	}
+
+	loadWorkingEmployeesIfRequired = async (
+		org: Organization,
+		selectedDate: Date
+	) => {
+		//If no organization, then something is wrong
+		if (!org) {
+			this.people = [];
+			return;
+		}
+
+		//Save repeated API calls for the same organization & date
+		if (
+			this._selectedOrganization &&
+			this._selectedDate &&
+			selectedDate &&
+			org.id === this._selectedOrganization.id &&
+			selectedDate.getTime() === this._selectedDate.getTime()
+		) {
+			return;
+		}
+
+		this._selectedOrganization = org;
+		this._selectedDate = selectedDate;
+
+		const { items } = await this.employeesService.getWorking(
+			org.id,
+			selectedDate,
+			true
+		);
+
+		this.people = [
+			...items.map((e) => {
+				return {
+					id: e.id,
+					firstName: e.user.firstName,
+					lastName: e.user.lastName,
+					imageUrl: e.user.imageUrl
+				};
+			})
+		];
+
+		//Insert All Employees Option
+		if (this.showAllEmployeesOption) {
+			this.people.unshift(ALL_EMPLOYEES_SELECTED);
+		}
+
+		//Set selected employee if no employee selected
+		if (items.length > 0 && !this.store.selectedEmployee) {
+			this.store.selectedEmployee =
+				this.people[0] || ALL_EMPLOYEES_SELECTED;
+		}
+	};
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

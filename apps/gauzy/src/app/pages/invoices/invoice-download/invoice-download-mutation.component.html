@@ -1,0 +1,22 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5 *ngIf="!isEstimate">
+			{{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_INVOICE' | translate }}
+		</h5>
+		<h5 *ngIf="isEstimate">
+			{{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_ESTIMATE' | translate }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<ga-invoice-view-inner [invoice]="invoice" [isEstimate]="isEstimate">
+		</ga-invoice-view-inner>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="download()" status="success" nbButton>
+			{{ 'BUTTONS.DOWNLOAD' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

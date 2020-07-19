@@ -7,6 +7,11 @@ import { HttpLoaderFactory } from '../../@theme/components/header/selectors/sele
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
+import { PictureNameTagsComponent } from './picture-name-tags/picture-name-tags.component';
+import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
+import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
+import { TaskTeamsComponent } from './task-teams/task-teams.component';
+import { AssignedToComponent } from './assigned-to/assigned-to.component';
 
 @NgModule({
 	imports: [
@@ -18,20 +23,31 @@ import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.compon
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	entryComponents: [
 		DateViewComponent,
 		IncomeExpenseAmountComponent,
-		NotesWithTagsComponent
+		NotesWithTagsComponent,
+		PictureNameTagsComponent,
+		TaskEstimateComponent,
+		EmployeeWithLinksComponent,
+		TaskTeamsComponent,
+		AssignedToComponent,
 	],
 	declarations: [
 		DateViewComponent,
 		IncomeExpenseAmountComponent,
-		NotesWithTagsComponent
+		NotesWithTagsComponent,
+		PictureNameTagsComponent,
+		TaskEstimateComponent,
+		EmployeeWithLinksComponent,
+		TaskTeamsComponent,
+		AssignedToComponent,
 	],
-	providers: []
+	exports: [NotesWithTagsComponent, PictureNameTagsComponent],
+	providers: [],
 })
 export class TableComponentsModule {}

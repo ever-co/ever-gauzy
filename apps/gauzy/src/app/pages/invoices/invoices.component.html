@@ -1,44 +1,221 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
-		<h4>
-			{{ 'INVOICES_PAGE.HEADER' | translate }}
-		</h4>
+	<nb-card-header class="header-selector-wrapper">
+		<div>
+			<h4 *ngIf="!isEstimate">
+				{{ 'INVOICES_PAGE.HEADER' | translate }}
+			</h4>
+			<h4 *ngIf="isEstimate">
+				{{ 'INVOICES_PAGE.ESTIMATES.HEADER' | translate }}
+			</h4>
+		</div>
+		<div>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
+		<div class="mb-3 actions" *ngIf="hasInvoiceEditPermission">
 			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
+
+			<nb-select
+				class="mr-2 show-columns"
+				*ngIf="!isEstimate"
+				[multiple]="true"
+				[(selected)]="columns"
+				(selectedChange)="selectColumn($event)"
+				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
+			>
+				<nb-option
+					class="column"
+					*ngFor="let column of invoiceColumns"
+					[value]="column"
+				>
+					{{ column }}
+				</nb-option>
+			</nb-select>
+			<nb-select
+				class="mr-2 show-columns"
+				*ngIf="isEstimate"
+				[multiple]="true"
+				[(selected)]="columns"
+				(selectedChange)="selectColumn($event)"
+				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
+			>
+				<nb-option
+					class="column"
+					*ngFor="let column of estimateColumns"
+					[value]="column"
+				>
+					{{ column }}
+				</nb-option>
+			</nb-select>
+
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+		</div>
+
+		<div class="mb-3" *ngIf="!hasInvoiceEditPermission">
 			<button
 				nbButton
 				status="info"
+				(click)="view()"
 				class="mr-2"
 				[disabled]="disableButton"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="danger"
-				(click)="delete()"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
+				{{ 'BUTTONS.VIEW' | translate }}
 			</button>
 		</div>
-
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			(userRowSelect)="selectInvoice($event)"
 			style="cursor: pointer;"
 			#invoicesTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			[settings]="settingsSmartTable"
+			[source]="invoices"
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<div class="mr-2" *ngIf="dataLayoutStyle === 'TABLE'">
+		<nb-select
+			*ngIf="!isEstimate"
+			[disabled]="!selectedItem && disableButton"
+			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+			[(selected)]="status"
+			(selectedChange)="selectStatus($event)"
+		>
+			<nb-option
+				*ngFor="let status of invoiceStatusTypes"
+				[value]="status"
+			>
+				{{ status }}
+			</nb-option>
+		</nb-select>
+		<nb-select
+			*ngIf="isEstimate"
+			[disabled]="!selectedItem && disableButton"
+			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+			[(selected)]="status"
+			(selectedChange)="selectStatus($event)"
+		>
+			<nb-option
+				*ngFor="let status of estimateStatusTypes"
+				[value]="status"
+			>
+				{{ status }}
+			</nb-option>
+		</nb-select>
+	</div>
+	<button
+		nbButton
+		status="info"
+		(click)="download(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="download-outline"> </nb-icon>
+		{{ 'BUTTONS.DOWNLOAD' | translate }}
+	</button>
+	<button
+		nbButton
+		status="info"
+		(click)="edit(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+
+	<button
+		nbButton
+		[nbContextMenu]="settingsContextMenu"
+		nbContextMenuPlacement="top"
+		(click)="selectMenu(selectedItem)"
+		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+	>
+		<nb-icon class="icons" icon="settings-2-outline"></nb-icon>
+	</button>
+
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="duplicate(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="copy-outline"></nb-icon>
+		{{ 'BUTTONS.DUPLICATE' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="send(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="upload-outline"> </nb-icon>
+		{{ 'BUTTONS.SEND' | translate }}
+	</button>
+	<button
+		*ngIf="isEstimate && dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="convert(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="swap"> </nb-icon>
+		{{ 'BUTTONS.CONVERT_TO_INVOICE' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="email(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="email-outline"> </nb-icon>
+		{{ 'BUTTONS.EMAIL' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="danger"
+		(click)="delete(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

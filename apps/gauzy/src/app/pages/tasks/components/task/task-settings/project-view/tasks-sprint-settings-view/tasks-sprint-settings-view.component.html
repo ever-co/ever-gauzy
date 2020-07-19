@@ -1,0 +1,79 @@
+<div class="sprints">
+	<div class="sprints__settings">
+		<nb-card>
+			<nb-card-header>Sprints Settings</nb-card-header>
+			<nb-card-body *ngIf="sprints$ | async as sprints">
+				<ga-editable-grid
+					[itemTmpl]="item"
+					[items]="sprints"
+					[addDialogTmpl]="editDialog"
+					[editDialogTmpl]="editDialog"
+					[deleteDialogTmpl]="deleteDialog"
+					(dialogData)="sprintAction($event)"
+				>
+					<ng-template
+						#editDialog
+						let-sprint
+						let-action="action"
+						let-dialogRef="dialogRef"
+					>
+						<ngx-sprint-dialog
+							[action]="action"
+							[sprintData]="sprint"
+							[dialogRef]="dialogRef"
+						></ngx-sprint-dialog>
+					</ng-template>
+					<ng-template
+						#deleteDialog
+						let-sprint
+						let-dialogRef="dialogRef"
+					>
+						<nb-card>
+							<nb-card-header>Delete Sprint</nb-card-header>
+							<nb-card-body
+								>Are you shure you want delete sprint:
+								{{ sprint.name }}?</nb-card-body
+							>
+							<nb-card-footer>
+								<button nbButton (click)="dialogRef.close()">
+									No
+								</button>
+								<button
+									nbButton
+									(click)="dialogRef.close(sprint)"
+								>
+									Yes
+								</button>
+							</nb-card-footer>
+						</nb-card>
+					</ng-template>
+
+					<ng-template #item let-sprint>
+						<div
+							class="d-flex justify-content-between px-2 sprints__item w-100"
+						>
+							<span class="col">{{ sprint.name }}</span>
+							<span class="col">{{
+								sprint.goal || 'No goal setts'
+							}}</span>
+							<span class="col">{{
+								sprint.startDate
+									? moment(sprint.startDate).format(
+											'DD-MM-YYYY'
+									  )
+									: null
+							}}</span>
+							<span class="col">{{
+								sprint.startDate
+									? moment(sprint.endDate).format(
+											'DD-MM-YYYY'
+									  )
+									: null
+							}}</span>
+						</div>
+					</ng-template>
+				</ga-editable-grid>
+			</nb-card-body>
+		</nb-card>
+	</div>
+</div>

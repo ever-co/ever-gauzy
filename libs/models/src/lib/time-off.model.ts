@@ -38,47 +38,36 @@ export interface TimeOffPolicyFindInput extends IBaseEntityModel {
 }
 
 export interface TimeOff extends IBaseEntityModel {
-	employee?: Employee;
+	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
-	policy?: string;
+	policy?: TimeOffPolicy;
 	start?: Date;
 	end?: Date;
 	requestDate?: Date;
 	status?: string;
+	isHoliday?: boolean;
 }
 
 export interface TimeOffFindInput extends IBaseEntityModel {
-	employee?: Employee;
+	employeeId?: string;
 	organizationId?: string;
-	description?: string;
-	policy?: string;
-	start?: Date;
-	end?: Date;
-	requestDate?: Date;
-	status?: string;
 }
 
 export interface TimeOffUpdateInput {
-	employee?: Employee;
-	organizationId?: string;
-	description?: string;
-	policy?: string;
-	start?: Date;
-	end?: Date;
-	requestDate?: Date;
 	status?: string;
 }
 
 export interface TimeOffCreateInput {
-	employee?: Employee;
+	employees?: Employee[];
 	organizationId?: string;
 	description?: string;
-	policy?: string;
+	policy?: TimeOffPolicy;
 	start?: Date;
 	end?: Date;
 	requestDate?: Date;
 	status?: string;
+	isHoliday?: boolean;
 }
 
 export enum StatusTypesEnum {

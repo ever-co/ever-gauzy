@@ -7,14 +7,15 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum, Tag, ITenant } from '@gauzy/models';
+import { RolesEnum, Tag, ITenant, User } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
-import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -25,13 +26,14 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	implements OnInit, AfterViewInit {
 	UPLOADER_PLACEHOLDER = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
-	@ViewChild('imagePreview', { static: false })
+	@ViewChild('imagePreview')
 	imagePreviewElement: ElementRef;
 
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
-	@Input() public isCandidateCV: boolean;
 	@Input() public isSuperAdmin: boolean;
+	@Input() public createdById: string;
+	@Input() public selectedTags: Tag[];
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -54,17 +56,17 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	hiredDate: any;
 	rejectDate: any;
 	tags: Tag[] = [];
-	selectedTags: any;
 	items: any;
-	cvUrl: any;
+	createEmployee: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly authService: AuthService,
 		private readonly roleService: RoleService,
+		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private readonly validatorService: ValidationService,
-		private readonly tagsService: TagsService
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -74,8 +76,13 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
 		);
 		this.loadFormData();
+	}
 
-		// this.getAllTags();
+	public enableEmployee() {
+		return (
+			this.form.get('role').value === RolesEnum.SUPER_ADMIN ||
+			this.form.get('role').value === RolesEnum.ADMIN
+		);
 	}
 
 	get uploaderPlaceholder() {
@@ -132,18 +139,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 				appliedDate: [''],
 				hiredDate: [''],
 				rejectDate: [''],
-				tags: [''],
-				cvUrl: [
-					'',
-					Validators.compose([
-						Validators.pattern(
-							new RegExp(
-								`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
-								'g'
-							)
-						)
-					])
-				]
+				tags: [this.selectedTags],
+				createEmployee: [false]
 			},
 			{
 				validator: this.validatorService.validateDate
@@ -151,7 +148,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		);
 
 		this.imageUrl = this.form.get('imageUrl');
-		this.cvUrl = this.form.get('cvUrl');
 		this.username = this.form.get('username');
 		this.firstName = this.form.get('firstName');
 		this.lastName = this.form.get('lastName');
@@ -163,39 +159,59 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		this.appliedDate = this.form.get('appliedDate');
 		this.hiredDate = this.form.get('hiredDate');
 		this.rejectDate = this.form.get('rejectDate');
-		this.selectedTags = this.form.get('selectedTags');
+		this.tags = this.form.get('tags').value || [];
+		this.createEmployee = this.form.get('createEmployee');
 	};
 
 	get showImageMeta() {
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(defaultRoleName: RolesEnum, organizationId?: string) {
+	async registerUser(
+		defaultRoleName: RolesEnum,
+		organizationId?: string,
+		createdById?: string
+	) {
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
-					name: this.role.value ? this.role.value : defaultRoleName
+					name: this.role.value ? this.role.value : defaultRoleName,
+					tenant: this.store.user.tenant
 				})
 				.pipe(first())
 				.toPromise();
 
-			return this.authService
-				.register({
-					user: {
-						firstName: this.firstName.value,
-						lastName: this.lastName.value,
-						email: this.email.value,
-						username: this.username.value || null,
-						imageUrl: this.imageUrl.value,
-						role,
-						tenant: this.tenant,
-						tags: this.selectedTags
-					},
-					password: this.password.value,
-					organizationId
-				})
-				.pipe(first())
-				.toPromise();
+			const user: User = {
+				firstName: this.firstName.value,
+				lastName: this.lastName.value,
+				email: this.email.value,
+				username: this.username.value || null,
+				imageUrl: this.imageUrl.value,
+				role,
+				tenant: this.store.user.tenant,
+				tags: this.form.get('tags').value
+			};
+
+			if (this.createEmployee.value) {
+				return this.employeesService
+					.create({
+						user,
+						organization: this.store.selectedOrganization,
+						password: this.password.value
+					})
+					.pipe(first())
+					.toPromise();
+			} else {
+				return this.authService
+					.register({
+						user,
+						password: this.password.value,
+						organizationId,
+						createdById
+					})
+					.pipe(first())
+					.toPromise();
+			}
 		}
 
 		return;
@@ -205,8 +221,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		this.imageUrl.setValue('');
 	}
 
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	ngAfterViewInit() {

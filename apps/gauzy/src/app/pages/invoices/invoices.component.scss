@@ -1,0 +1,18 @@
+.header-selector-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.actions {
+  display: flex;
+}
+
+.show-columns {
+  width: 123px;
+}
+
+.btn {
+  margin: 2px;
+}

@@ -8,8 +8,8 @@ import { AuthService } from './auth.service';
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 	constructor(private readonly _authService: AuthService) {
 		super({
-			clientID: env.googleConfig.clientId,
-			clientSecret: env.googleConfig.clientSecret,
+			clientID: env.googleConfig.clientId || 'disabled',
+			clientSecret: env.googleConfig.clientSecret || 'disabled',
 			callbackURL: `${env.host}:${env.port}/api/auth/google/callback`,
 			passReqToCallback: true,
 			scope: ['profile', 'email']

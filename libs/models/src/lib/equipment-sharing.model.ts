@@ -1,17 +1,18 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee } from './employee.model';
-import { OrganizationTeams } from './organization-teams-model';
+import { OrganizationTeam } from './organization-team-model';
 import { Equipment } from './equipment.model';
 
 export interface EquipmentSharing extends IBaseEntityModel {
-	equipmentId: string;
-	shareRequestDay: Date;
-	shareStartDay: Date;
-	shareEndDay: Date;
-	status: string;
-	employees: Employee[];
-	teams: OrganizationTeams[];
-	equipment: Equipment;
+	equipmentId?: string;
+	shareRequestDay?: Date;
+	shareStartDay?: Date;
+	shareEndDay?: Date;
+	status?: number;
+	employees?: Employee[];
+	teams?: OrganizationTeam[];
+	equipment?: Equipment;
+	name?: string;
 }
 
 export interface EquipmentSharingRequest extends IBaseEntityModel {
@@ -20,7 +21,7 @@ export interface EquipmentSharingRequest extends IBaseEntityModel {
 	shareRequestDay: Date;
 	shareStartDay: Date;
 	shareEndDay: Date;
-	status: string;
+	status: number;
 	employees?: string[];
 	teams?: string[];
 }

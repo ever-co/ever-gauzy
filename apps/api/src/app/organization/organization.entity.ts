@@ -2,51 +2,62 @@ import {
 	Column,
 	Entity,
 	Index,
-	ManyToOne,
 	JoinColumn,
-	RelationId,
+	JoinTable,
 	ManyToMany,
-	JoinTable
+	ManyToOne,
+	OneToMany,
+	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsNotEmpty,
-	IsString,
+	IsBoolean,
 	IsDate,
-	IsOptional,
 	IsEnum,
+	IsNotEmpty,
 	IsNumber,
-	Min,
+	IsOptional,
+	IsString,
 	Max,
-	IsBoolean
+	Min
 } from 'class-validator';
 import {
-	Organization as IOrganization,
+	BonusTypeEnum,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	WeekDaysEnum,
-	BonusTypeEnum
+	Organization as IOrganization,
+	WeekDaysEnum
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from './../tenant/tenant.entity';
-import { LocationBase } from '../core/entities/location-base';
+import { Skill } from '../skills/skill.entity';
+import { Invoice } from '../invoice/invoice.entity';
+import { Payment } from '../payment/payment.entity';
+import { Contact } from '../contact/contact.entity';
+import { TenantBase } from '../core/entities/tenant-base';
+import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 
 @Entity('organization')
-export class Organization extends LocationBase implements IOrganization {
+export class Organization extends TenantBase implements IOrganization {
+	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_organizations'
 	})
 	tags: Tag[];
 
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@ApiProperty({ type: Contact })
+	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
 	@JoinColumn()
-	tenant: Tenant;
+	contact: Contact;
 
-	@ApiProperty()
-	@RelationId((organization: Organization) => organization.tenant)
-	readonly tenantId?: string;
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((organization: Organization) => organization.contact)
+	readonly contactId?: string;
+
+	@ApiPropertyOptional({ type: Invoice, isArray: true })
+	@OneToMany((type) => Invoice, (invoices) => invoices.fromOrganization)
+	@JoinColumn()
+	invoices?: Invoice[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -54,6 +65,47 @@ export class Organization extends LocationBase implements IOrganization {
 	@Index()
 	@Column()
 	name: string;
+
+	@ApiProperty({ type: String, minLength: 3, maxLength: 100 })
+	@IsString()
+	@Index({ unique: true })
+	@IsOptional()
+	@Column({ nullable: true })
+	profile_link: string;
+
+	@ApiProperty({ type: String, maxLength: 300 })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	banner: string;
+
+	@ApiProperty({ type: Number, maxLength: 4 })
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	totalEmployees: number;
+
+	@ApiProperty({ type: String, maxLength: 600 })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	short_description: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	client_focus: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	overview: string;
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
@@ -149,6 +201,41 @@ export class Organization extends LocationBase implements IOrganization {
 	@Column({ nullable: true })
 	invitesAllowed?: boolean;
 
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_income?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_profits?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_bonuses_paid?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_total_hours?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_minimum_project_size?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_projects_count?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_clients_count?: boolean;
+
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ nullable: true })
@@ -221,4 +308,33 @@ export class Organization extends LocationBase implements IOrganization {
 	@IsBoolean()
 	@Column({ default: 12 })
 	timeFormat?: 12 | 24;
+
+	@ApiProperty({ type: Skill })
+	@ManyToMany((type) => Skill, (skill) => skill.organization)
+	@JoinTable({
+		name: 'skill_organization'
+	})
+	skills: Skill[];
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	organizationId?: string;
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payment) => payment.organization, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: Payment[];
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	separateInvoiceItemTaxAndDiscount?: boolean;
+
+	@ApiPropertyOptional({ type: OrganizationSprint, isArray: true })
+	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.organization)
+	@JoinColumn()
+	organizationSprints?: OrganizationSprint[];
 }

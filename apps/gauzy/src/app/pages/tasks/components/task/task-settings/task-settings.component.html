@@ -1,0 +1,9 @@
+<nb-card class="h-100 task-settings" *ngIf="project$ | async as project">
+	<nb-card-header class="task-settings__title">
+		<p>{{ project.name }}</p>
+		<button nbButton (click)="goBack()">Back</button>
+	</nb-card-header>
+	<nb-card-body class="task-settings__projects">
+		<ngx-project-view [project]="project"></ngx-project-view>
+	</nb-card-body>
+</nb-card>

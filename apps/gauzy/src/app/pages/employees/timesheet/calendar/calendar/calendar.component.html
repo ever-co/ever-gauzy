@@ -1,0 +1,35 @@
+<div class="header row">
+	<h5 class="mb-3 col">
+		{{ 'TIMESHEET.CALENDAR' | translate }}
+	</h5>
+	<div class="col-auto">
+		<button
+			nbButton
+			status="primary"
+			(click)="openDialog()"
+			*ngxPermissionsOnly="[
+				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+			]"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'TIMESHEET.ADD_TIME' | translate }}
+		</button>
+	</div>
+</div>
+
+<div class="filters row mb-3">
+	<div class="col">
+		<ngx-filters
+			[hasDateRangeFilter]="false"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
+	</div>
+</div>
+
+<full-calendar
+	#calendar
+	[options]="calendarOptions"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+></full-calendar>

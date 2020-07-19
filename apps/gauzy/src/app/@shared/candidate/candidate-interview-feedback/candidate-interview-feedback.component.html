@@ -1,0 +1,178 @@
+<nb-card class="card-wrap">
+	<nb-card-header>
+		<h5>
+			{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.LEAVE_FEEDBACK' | translate }}
+			{{ currentInterview?.title }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<form class="form" [formGroup]="form" *ngIf="form">
+			<ga-candidate-select
+				class="select"
+				[allCandidates]="currentInterview.employees"
+				[placeholder]="
+					'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEE' | translate
+				"
+				[disabledIds]="disabledIds"
+				(selectedChange)="onMembersSelected($event)"
+			>
+			</ga-candidate-select>
+			<div class="label-wrap">
+				<ga-star-rating-output
+					[rate]="averageRating"
+				></ga-star-rating-output>
+
+				<nb-radio-group
+					[(ngModel)]="status"
+					[ngModelOptions]="{ standalone: true }"
+					class="radio-group"
+				>
+					<nb-radio [value]="'HIRED'" [disabled]="isRejected"
+						>{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
+								| translate
+						}}
+						<span *ngIf="interviewers?.length > 1">
+							({{ statusHire }}/{{ interviewers?.length }}) </span
+						><i
+							class="fas fa-thumbs-up"
+							[ngClass]="{
+								success: !isRejected,
+								disabled: isRejected
+							}"
+						></i>
+					</nb-radio>
+
+					<nb-radio [value]="'REJECTED'"
+						>{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
+								| translate
+						}}
+						<i class="fas error fa-thumbs-down"></i
+					></nb-radio>
+				</nb-radio-group>
+			</div>
+			<div class="form-group">
+				<nb-accordion
+					class="accordion"
+					*ngIf="technologiesList[0] && personalQualitiesList[0]"
+				>
+					<nb-accordion-item>
+						<nb-accordion-item-header class="accordion-title">
+							{{
+								'CANDIDATES_PAGE.CRITERIONS.RATE_CANDIDATE_BY_CRITERIONS'
+									| translate
+							}}
+						</nb-accordion-item-header>
+						<nb-accordion-item-body>
+							<div class="form-blocks">
+								<div
+									[ngStyle]="{
+										width:
+											personalQualitiesList.length === 0
+												? '100%'
+												: '50%'
+									}"
+									*ngIf="technologiesList.length > 0"
+								>
+									<div class="label mb-2">
+										{{
+											'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
+												| translate
+										}}
+									</div>
+
+									<div
+										class="criterion"
+										*ngFor="
+											let technologyRating of form.get(
+												'technologies'
+											).controls as controls;
+											index as i
+										"
+									>
+										<div *ngIf="technologiesList">
+											{{ technologiesList[i]?.name }}
+										</div>
+										<ga-star-rating-input
+											[formControl]="technologyRating"
+										></ga-star-rating-input>
+									</div>
+								</div>
+								<div
+									[ngStyle]="{
+										width:
+											technologiesList.length === 0
+												? '100%'
+												: '50%'
+									}"
+									*ngIf="personalQualitiesList.length > 0"
+								>
+									<div class="label mb-2">
+										{{
+											'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'
+												| translate
+										}}
+									</div>
+									<div
+										class="criterion"
+										*ngFor="
+											let personalQualityRating of form.get(
+												'personalQualities'
+											).controls as controls;
+											index as i
+										"
+									>
+										<div *ngIf="personalQualitiesList">
+											{{ personalQualitiesList[i]?.name }}
+										</div>
+										<ga-star-rating-input
+											[formControl]="
+												personalQualityRating
+											"
+										></ga-star-rating-input>
+									</div>
+								</div>
+							</div>
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+				</nb-accordion>
+			</div>
+
+			<div class="form-group">
+				<label for="description" class="label">{{
+					'FORM.LABELS.FEEDBACK_DESCRIPTION' | translate
+				}}</label>
+				<textarea
+					id="description"
+					nbInput
+					fullWidth
+					formControlName="description"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.FEEDBACK_DESCRIPTION' | translate
+					}}"
+				>
+				</textarea>
+			</div>
+		</form>
+
+		<div class="buttons">
+			<button
+				class="form-btn"
+				(click)="closeDialog()"
+				nbButton
+				status="danger"
+			>
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button
+				class="form-btn"
+				(click)="createFeedback()"
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
+	</nb-card-body>
+</nb-card>

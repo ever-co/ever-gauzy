@@ -26,6 +26,6 @@ import { UserOrganizationModule } from '../user-organization/user-organization.m
 		EmailService,
 		...CommandHandlers
 	],
-	exports: [EmployeeService]
+	exports: [TypeOrmModule, EmployeeService]
 })
 export class EmployeeModule {}

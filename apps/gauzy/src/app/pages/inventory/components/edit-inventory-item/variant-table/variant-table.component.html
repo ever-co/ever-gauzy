@@ -1,0 +1,34 @@
+<div class="">
+	<div class="mb-3">
+		<button
+			(click)="onEditVariant()"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="disableButton"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="delete()"
+			nbButton
+			status="danger"
+			class="mr-2"
+			[disabled]="disableButton"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</div>
+
+	<ng2-smart-table
+		class="tags-table"
+		[settings]="settingsSmartTable"
+		(userRowSelect)="selectItem($event)"
+		[source]="smartTableSource"
+		style="cursor: pointer;"
+		#variantTable
+	>
+	</ng2-smart-table>
+</div>

@@ -110,30 +110,30 @@
 	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
 		<div class="col-sm-12">
 			<div class="form-group">
-				<label for="clientsSelect" class="label label-with-select"
-					>{{ 'FORM.LABELS.CLIENTS_OPTIONAL' | translate }}
+				<label for="contactsSelect" class="label label-with-select"
+					>{{ 'FORM.LABELS.CONTACTS_OPTIONAL' | translate }}
 					<button
 						nbButton
 						ghost
 						size="tiny"
-						(click)="selectAllClients()"
+						(click)="selectAllOrganizationContacts()"
 					>
 						{{ 'BUTTONS.SELECT_ALL' | translate }}
 					</button>
 				</label>
 				<ng-select
-					id="clientsSelect"
+					id="contactsSelect"
 					class="adjust-height"
 					[hideSelected]="true"
 					multiple="true"
 					bindLabel="name"
-					formControlName="clients"
-					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+					formControlName="organizationContacts"
+					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
 				>
 					<ng-option
-						*ngFor="let client of organizationClients"
-						value="{{ client.id }}"
-						>{{ client.name }}</ng-option
+						*ngFor="let contact of organizationContact"
+						value="{{ contact.id }}"
+						>{{ contact.name }}</ng-option
 					>
 				</ng-select>
 			</div>

@@ -15,8 +15,8 @@ services:
             - api
             - webapp
         links:
-            - api
-            - webapp
+            - api:${API_HOST:-api}
+            - webapp:${HOST:-webapp}
         networks:
             - overlay
 
@@ -25,9 +25,9 @@ services:
         container_name: db
         restart: always
         environment:
-            POSTGRES_DB: postgres
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: root
+            POSTGRES_DB: ${DB_NAME:-postgres}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASS:-root}
         healthcheck:
             test:
                 [
@@ -48,12 +48,12 @@ services:
         depends_on:
             - db
         links:
-            - db
+            - db:${DB_HOST:-db}
         environment:
-            POSTGRES_DB: postgres
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: root
-            DATABASE_URL: postgres://postgres:root@db:5432/postgres?sslmode=disable
+            POSTGRES_DB: ${DB_NAME:-postgres}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASS:-root}
+            DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASS:-root}@${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-postgres}?sslmode=disable
         ports:
             - '8081:8081'
         networks:
@@ -66,13 +66,13 @@ services:
         depends_on:
             - db
         links:
-            - db
+            - db:${DB_HOST:-db}
         environment:
-            PGHOST: db
-            PGDATABASE: postgres
-            PGUSER: postgres
-            PGPASSWORD: root
-            PGPORT: 5432
+            PGHOST: ${DB_HOST:-db}
+            PGDATABASE: ${DB_NAME:-postgres}
+            PGUSER: ${DB_USER:-postgres}
+            PGPASSWORD: ${DB_PASS:-root}
+            PGPORT: ${DB_PORT:-5432}
         ports:
             - '8082:80'
             - '14645:14645'
@@ -86,7 +86,7 @@ services:
         depends_on:
             - db
         links:
-            - db
+            - db:${DB_HOST:-db}
         ports:
             - '8083:8080'
             - '25482:25482'
@@ -100,12 +100,12 @@ services:
         depends_on:
             - db
         links:
-            - db
+            - db:${DB_HOST:-db}
         environment:
             ADMINER_DEFAULT_DB_DRIVER: pgsql
-            ADMINER_DEFAULT_DB_HOST: db
-            ADMINER_DEFAULT_DB_NAME: postgres
-            ADMINER_DEFAULT_DB_PASSWORD: root
+            ADMINER_DEFAULT_DB_HOST: ${DB_HOST:-db}
+            ADMINER_DEFAULT_DB_NAME: ${DB_NAME:-postgres}
+            ADMINER_DEFAULT_DB_PASSWORD: ${DB_PASS:-root}
         ports:
             - '8084:8080'
         networks:
@@ -118,23 +118,20 @@ services:
             context: .
             dockerfile: .deploy/api/Dockerfile
         environment:
-            NODE_ENV: production
-            WAIT_HOSTS: db:5432
+            NODE_ENV: ${NODE_ENV:-development}
             DB_HOST: db
-            DB_NAME: postgres
-            DB_USER: postgres
-            DB_PASS: root
+        env_file:
+            - .env
         restart: on-failure
         depends_on:
             - db
         links:
-            - db
-        volumes:
-            - .:/srv/gauzy
+            - db:${DB_HOST:-db}
+        volumes:            
             - webapp_node_modules:/srv/gauzy/node_modules
             - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
-            - '3000:3000'
+            - 3000:3000:${API_PORT:-3000}
         networks:
             - overlay
 
@@ -144,21 +141,23 @@ services:
         build:
             context: .
             dockerfile: .deploy/webapp/Dockerfile
+            args:
+                API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
         environment:
-            NODE_ENV: production
-            WAIT_HOSTS: db:5432
+            NODE_ENV: ${NODE_ENV:-development}
+        env_file:
+            - .env
         restart: on-failure
         links:
-            - db
-            - api
+            - db:${DB_HOST:-db}
+            - api:${API_HOST:-api}
         depends_on:
             - db
             - api
-        volumes:
-            - .:/srv/gauzy
+        volumes:            
             - webapp_node_modules:/srv/gauzy/node_modules
         ports:
-            - '4200:4200'
+            - 4200:${HOST:-4200}
         networks:
             - overlay
 

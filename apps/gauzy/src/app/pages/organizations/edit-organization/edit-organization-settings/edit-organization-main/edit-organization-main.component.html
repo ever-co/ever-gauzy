@@ -141,6 +141,35 @@
 			<div class="row">
 				<div class="col-6">
 					<div class="form-group">
+						<label class="label" for="profileLinkInput">{{
+							'FORM.LABELS.PROFILE_LINK' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="profileLinkInput"
+							type="text"
+							nbInput
+							formControlName="profile_link"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.PROFILE_LINK' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
 						<label class="label" for="registrationDate">{{
 							'FORM.LABELS.REGISTRATION_DATE' | translate
 						}}</label>

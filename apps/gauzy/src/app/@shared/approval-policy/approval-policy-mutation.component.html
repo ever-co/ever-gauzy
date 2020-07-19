@@ -1,0 +1,116 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(approvalPolicy
+					? 'APPROVAL_POLICY_PAGE.EDIT_APPROVAL_POLICY'
+					: 'APPROVAL_POLICY_PAGE.ADD_APPROVAL_POLICY'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<label for="name" class="label">
+						{{
+							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_NAME'
+								| translate
+						}}
+					</label>
+					<input
+						nbInput
+						type="text"
+						formControlName="name"
+						fullWidth
+						placeholder="{{
+							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_NAME'
+								| translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['name'].invalid &&
+								form.controls['name'].dirty,
+							'status-success':
+								form.controls['name'].valid &&
+								form.controls['name'].dirty
+						}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<label for="type" class="label">
+						{{
+							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE'
+								| translate
+						}}
+					</label>
+
+					<nb-select
+						class="d-block"
+						[selected]="selectedApprovalPolicy"
+						(selectedChange)="onApprovalPolicySelected($event)"
+						placeholder="{{
+							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE'
+								| translate
+						}}"
+						[ngClass]="{ 'in-valid': !isHasType }"
+					>
+						<nb-option
+							*ngFor="let item of typeItems"
+							value="{{ item.value }}"
+							>{{ item.name }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<label for="Description" class="label">
+						{{
+							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
+								| translate
+						}}
+					</label>
+					<input
+						nbInput
+						type="text"
+						formControlName="description"
+						fullWidth
+						placeholder="{{
+							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
+								| translate
+						}}"
+					/>
+				</div>
+			</div>
+
+			<input type="hidden" formControlName="id" />
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="warning"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			[disabled]="form.invalid"
+			(click)="saveApprovalPolicy()"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

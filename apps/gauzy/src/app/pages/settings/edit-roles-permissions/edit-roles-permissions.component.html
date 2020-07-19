@@ -48,7 +48,6 @@
 									permissionChanged(permission, $event)
 								"
 								labelPosition="start"
-								[disabled]="selectedRole === superAdminRole"
 								status="basic"
 								>{{
 									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
@@ -90,7 +89,7 @@
 								(checkedChange)="
 									permissionChanged(permission, $event)
 								"
-								disabled
+								[disabled]="selectedRole !== adminRole"
 								>{{
 									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
 										permission | translate

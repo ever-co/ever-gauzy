@@ -1,0 +1,50 @@
+<div class="gallery-inner" [@fadeInOut]>
+	<div class="gallery-header d-flex p-2">
+		<span class="spacer"></span>
+		<div class="ml-auto">
+			<a [href]="item.fullUrl" target="_blank" download nbButton>
+				<nb-icon icon="download-outline"></nb-icon>
+			</a>
+			<button class="ml-2" nbButton (click)="close()">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</div>
+	<div class="gallery-content" (click)="close()">
+		<div class="left-button">
+			<button
+				class="nav-button"
+				nbButton
+				status="primary"
+				(click)="prev($event)"
+			>
+				<nb-icon icon="arrow-left"></nb-icon>
+			</button>
+		</div>
+		<div class="media-viewer" (click)="$event.stopPropagation()">
+			<img #imageMedia [src]="item.fullUrl" />
+		</div>
+		<div class="right-button">
+			<button
+				class="nav-button"
+				nbButton
+				status="primary"
+				(click)="next($event)"
+			>
+				<nb-icon icon="arrow-right"></nb-icon>
+			</button>
+		</div>
+	</div>
+	<div class="gallery-footer">
+		<div class="thumb-items custom-scroll" #customScroll>
+			<div
+				class="thumb-item"
+				*ngFor="let thumb of items; let index = index"
+				[ngClass]="{ 'thumb-item-active': item == thumb }"
+				(click)="setFocus(thumb)"
+			>
+				<img *ngIf="thumb" [src]="thumb.thumbUrl" />
+			</div>
+		</div>
+	</div>
+</div>

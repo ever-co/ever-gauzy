@@ -1,0 +1,139 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  width: 100%;
+  border: none;
+  padding: 0;
+  margin-top: 2rem;
+
+  &-filter {
+    padding-bottom: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}
+
+.select {
+  width: 15rem;
+}
+
+.search {
+  width: 15rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+
+  &-large-block {
+    width: 20%;
+
+    &-image-employee {
+      max-width: 30px;
+      max-height: 30px;
+      border-radius: 50%;
+      margin-left: 0.5rem;
+    }
+  }
+
+  &-small-block {
+    width: 7%;
+
+    &-image {
+      max-width: 50px;
+      max-height: 50px;
+      border-radius: 10px;
+    }
+  }
+  &-medium-block {
+    width: 13%;
+  }
+}
+
+.center-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.start-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: space-between;
+  padding-top: 0;
+
+  &-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin: 0 0 0.6rem 0;
+
+    &-content {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+
+      &-text {
+        width: 100%;
+      }
+    }
+  }
+  &-block-criterion {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+
+    &-card {
+      border: 1px #e4e9f2 solid;
+      margin: 0.2rem;
+      padding: 0.4rem;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+  &-block-update {
+    color: #8f9bb3;
+    font-size: 12px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+
+    .icons {
+      font-size: 1.15rem;
+      cursor: pointer !important;
+    }
+
+    .enabled {
+      pointer-events: visible;
+      color: #222b45 !important;
+    }
+
+    .disabled {
+      color: rgba(143, 155, 179, 0.48) !important;
+      pointer-events: none;
+    }
+  }
+}

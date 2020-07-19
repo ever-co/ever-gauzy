@@ -1,5 +1,6 @@
 import { ITenant, ITenantCreateInput, RolesEnum } from '@gauzy/models';
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Delete,
@@ -7,17 +8,14 @@ import {
 	HttpStatus,
 	Param,
 	Post,
-	UseGuards,
-	BadRequestException
+	UseGuards
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestContext } from '../core/context';
 import { CrudController } from '../core/crud/crud.controller';
-import { RoleService } from '../role/role.service';
 import { Roles } from '../shared/decorators/roles';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
-import { UserService } from '../user/user.service';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 
@@ -25,11 +23,7 @@ import { TenantService } from './tenant.service';
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TenantController extends CrudController<Tenant> {
-	constructor(
-		private readonly tenantService: TenantService,
-		private readonly userService: UserService,
-		private readonly roleService: RoleService
-	) {
+	constructor(private readonly tenantService: TenantService) {
 		super(tenantService);
 	}
 
@@ -53,19 +47,7 @@ export class TenantController extends CrudController<Tenant> {
 		if (user.tenantId || user.roleId) {
 			throw new BadRequestException('Tenant already exists');
 		}
-		const tenant = await this.tenantService.create(entity);
-		const role = await this.roleService.findOne({
-			name: RolesEnum.SUPER_ADMIN
-		});
-		this.userService.update(user.id, {
-			tenant: {
-				id: tenant.id
-			},
-			role: {
-				id: role.id
-			}
-		});
-		return tenant;
+		return this.tenantService.onboardTenant(entity, user);
 	}
 
 	@ApiOperation({

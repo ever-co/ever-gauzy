@@ -1,0 +1,30 @@
+<div class="d-flex my-2 settings">
+	<div class="col-6 settings__name">
+		<span>Task View Mode:</span>
+	</div>
+	<div class="col-6 settings__value">
+		<ng-select
+			[items]="taskViewModeList"
+			bindLabel="type"
+			binValue="name"
+			(change)="setTaskViewMode($event)"
+			[(ngModel)]="selectedTaskViewMode"
+			placeholder="Task View Mode"
+		>
+			<ng-template ng-option-tmp let-item="item" let-index="index">
+				{{ item.name }}
+			</ng-template>
+			<ng-template ng-label-tmp let-item="item">
+				<div class="selector-template">
+					<span>{{ item.name }}</span>
+				</div>
+			</ng-template>
+		</ng-select>
+	</div>
+</div>
+<hr />
+<ng-container *ngIf="selectedTaskViewMode.type === taskViewModeType.SPRINT">
+	<ngx-tasks-sprint-settings-view
+		[project]="project"
+	></ngx-tasks-sprint-settings-view>
+</ng-container>

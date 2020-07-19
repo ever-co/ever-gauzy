@@ -1,0 +1,13 @@
+::ng-deep {
+  .contracts-table {
+    .ng2-smart-actions {
+      text-align: center;
+      width: 5%;
+
+      .form-control {
+        width: 15px;
+        display: inline-block;
+      }
+    }
+  }
+}

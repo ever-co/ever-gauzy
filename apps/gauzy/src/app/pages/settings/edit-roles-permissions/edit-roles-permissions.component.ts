@@ -1,17 +1,19 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	Organization,
+	PermissionGroups,
 	RolePermissions,
 	RolesEnum,
-	PermissionGroups
+	User
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { RolePermissionsService } from 'apps/gauzy/src/app/@core/services/role-permissions.service';
-import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
+import { RolePermissionsService } from '../../../@core/services/role-permissions.service';
+import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-org-roles-permissions',
@@ -21,9 +23,11 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
+	private currentUser: User;
 
 	organization: Organization;
 
+	adminRole: RolesEnum = RolesEnum.ADMIN;
 	selectedRole: RolesEnum = RolesEnum.EMPLOYEE;
 	superAdminRole: RolesEnum = RolesEnum.SUPER_ADMIN;
 	selectedRoleId: string;
@@ -41,13 +45,19 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private readonly toastrService: NbToastrService,
 		private readonly rolePermissionsService: RolePermissionsService,
-		private readonly rolesService: RoleService
+		private readonly rolesService: RoleService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.loadPermissionsForSelectedRole();
+		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+			this.currentUser = user;
+			if (this.currentUser && this.currentUser.tenant) {
+				this.loadPermissionsForSelectedRole();
+			}
+		});
 	}
 
 	async updateOrganizationSettings() {
@@ -69,9 +79,11 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	async loadPermissionsForSelectedRole() {
 		this.enabledPermissions = {};
 		this.loading = true;
-
 		const role = await this.rolesService
-			.getRoleByName({ name: this.selectedRole })
+			.getRoleByName({
+				name: this.selectedRole,
+				tenant: this.currentUser.tenant
+			})
 			.pipe(first())
 			.toPromise();
 
@@ -110,7 +122,8 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 				: await this.rolePermissionsService.create({
 						roleId: this.selectedRoleId,
 						permission,
-						enabled
+						enabled,
+						tenant: this.store.user.tenant
 				  });
 
 			await this.refreshPermissions();

@@ -1,0 +1,114 @@
+<nb-card class="main">
+	<nb-card-header>
+		<div class="header">
+			<h6 *ngIf="editType === 'edit'">
+				{{ 'HELP_PAGE.MANAGE_CATEGORY' | translate }}
+			</h6>
+			<h6 *ngIf="editType === 'add'">
+				{{ 'HELP_PAGE.ADD_CATEGORY' | translate }}
+			</h6>
+			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="select-wrap">
+			<div class="select">
+				<p class="select-label">
+					{{ 'HELP_PAGE.LANGUAGE' | translate }}:
+				</p>
+				<nb-select
+					class="ml-3"
+					placeholder="Select"
+					[(selected)]="selectedLang"
+				>
+					<nb-option *ngFor="let lang of languages" [value]="lang">{{
+						lang
+					}}</nb-option>
+				</nb-select>
+			</div>
+			<nb-toggle
+				class="select"
+				status="primary"
+				labelPosition="start"
+				[(ngModel)]="isToggled"
+				(checkedChange)="toggleStatus($event)"
+			>
+				<p class="select-label ml-3">
+					{{ 'HELP_PAGE.PUBLISH_STATUS' | translate }}:
+				</p>
+			</nb-toggle>
+		</div>
+		<div class="mb-1">
+			<p class="label">{{ 'HELP_PAGE.CHOSE_ICON' | translate }}:</p>
+			<nb-select
+				class="main-buttons"
+				placeholder="Select Icon"
+				[(selected)]="selectedIcon"
+			>
+				<nb-select-label *ngIf="selectedIcon">
+					<nb-icon
+						[ngStyle]="{ color: 'black' }"
+						class="mr-1"
+						icon="{{ selectedIcon }}"
+					></nb-icon
+					>{{ selectedIcon | slice: 0:selectedIcon.length - 8 }}
+				</nb-select-label>
+				<nb-option *ngFor="let icon of icons" [value]="icon"
+					><nb-icon class="mr-1" icon="{{ icon }}"></nb-icon
+					>{{ icon | slice: 0:icon.length - 8 }}</nb-option
+				>
+			</nb-select>
+		</div>
+		<form [formGroup]="form" (ngSubmit)="submit()">
+			<p class="label">{{ 'HELP_PAGE.COLOR' | translate }}:</p>
+			<input
+				class="select-color"
+				nbInput
+				placeholder="Color"
+				formControlName="color"
+				[(colorPicker)]="color"
+				[value]="color"
+				[style.background]="color"
+				id="inputColor"
+				fullWidth
+			/>
+			<div class="edit-field">
+				<div>
+					<p class="label">
+						{{ 'HELP_PAGE.NAME_CATEGORY' | translate }}:
+					</p>
+					<input
+						formControlName="name"
+						class="main-buttons"
+						type="text"
+						size="24"
+						maxlength="18"
+						nbInput
+					/>
+				</div>
+				<div>
+					<p class="label">
+						{{ 'HELP_PAGE.DESCRIPTION' | translate }}:
+					</p>
+					<input
+						formControlName="desc"
+						class="main-buttons"
+						type="text"
+						size="30"
+						maxlength="26"
+						nbInput
+					/>
+				</div>
+			</div>
+			<div class="save-button">
+				<button
+					[disabled]="!selectedLang || !selectedIcon || form.invalid"
+					status="success"
+					nbButton
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>

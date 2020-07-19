@@ -14,6 +14,8 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { CandidateMutationComponent } from './candidate-mutation.component';
+import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
+import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -28,6 +30,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbIconModule,
 		NbStepperModule,
+		FileUploaderModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -36,9 +39,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	exports: [CandidateMutationComponent],
-	declarations: [CandidateMutationComponent],
-	entryComponents: [CandidateMutationComponent],
+	exports: [CandidateMutationComponent, CandidateCvComponent],
+	declarations: [CandidateMutationComponent, CandidateCvComponent],
+	entryComponents: [CandidateMutationComponent, CandidateCvComponent],
 	providers: [OrganizationsService, RoleService]
 })
 export class CandidateMutationModule {}

@@ -19,7 +19,6 @@ import {
 	EmployeeRecurringExpense
 } from '../employee-recurring-expense';
 import { EmployeeSettingService, EmployeeSetting } from '../employee-setting';
-import { Equipment, EquipmentService } from '../equipment';
 import {
 	EquipmentSharingService,
 	EquipmentSharing
@@ -40,22 +39,22 @@ import { OrganizationDepartment } from '../organization-department/organization-
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { InvoiceService } from '../invoice/invoice.service';
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItemService } from '../invoice-item/invoice-item.service';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationPositionsService } from '../organization-positions/organization-positions.service';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
-import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
-import { OrganizationTeamsService } from '../organization-teams/organization-teams.service';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { OrganizationTeamService } from '../organization-team/organization-team.service';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
 import { Proposal } from '../proposal/proposal.entity';
@@ -75,11 +74,31 @@ import { TimeSlot } from '../timesheet/time-slot.entity';
 import { Activity } from '../timesheet/activity.entity';
 import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
-import { TimeSheetService } from '../timesheet/timesheet.service';
-import { ActivityService } from '../timesheet/activity.service';
-import { ScreenShotService } from '../timesheet/screenshot.service';
-import { TimeSlotService } from '../timesheet/time_slot.service';
+import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
+import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
+import { ActivityService } from '../timesheet/activity/activity.service';
+import { ScreenshotService } from '../timesheet/screenshot/screenshot.service';
+import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
+import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
+import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
+import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
+import { CandidateService } from '../candidate/candidate.service';
+import { Candidate } from '../candidate/candidate.entity';
+import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
+import { Equipment } from '../equipment/equipment.entity';
+import { EquipmentService } from '../equipment/equipment.service';
+import { EstimateEmailService } from '../estimate-email/estimate-email.service';
+import { EstimateEmail } from '../estimate-email/estimate-email.entity';
+import { Contact } from '../contact/contact.entity';
+import { ContactService } from '../contact/contact.service';
+import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { RequestApproval } from '../request-approval/request-approval.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
+import { OrganizationSprintService } from '../organization-sprint/organization-sprint.service';
 
 @Module({
 	imports: [
@@ -103,14 +122,18 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 			OrganizationDepartment,
 			OrganizationProjects,
 			Role,
-			OrganizationClients,
+			OrganizationContact,
 			Invoice,
 			InvoiceItem,
 			EmployeeLevel,
 			OrganizationEmploymentType,
 			OrganizationPositions,
 			OrganizationRecurringExpense,
-			OrganizationTeams,
+			OrganizationTeam,
+			RequestApproval,
+			RequestApprovalEmployee,
+			RequestApprovalTeam,
+			OrganizationTeamEmployee,
 			OrganizationVendor,
 			Proposal,
 			RolePermissions,
@@ -122,7 +145,14 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 			TimeSlot,
 			Activity,
 			Screenshot,
-			TimeLog
+			TimeLog,
+			TimeSlotMinute,
+			AppointmentEmployees,
+			ApprovalPolicy,
+			Candidate,
+			EstimateEmail,
+			Contact,
+			OrganizationSprint
 		])
 	],
 	controllers: [ExportAllController],
@@ -146,13 +176,14 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 		InvoiceService,
 		InvoiceItemService,
 		EmployeeLevelService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
 		OrganizationProjectsService,
 		OrganizationRecurringExpenseService,
-		OrganizationTeamsService,
+		OrganizationTeamService,
+		OrganizationTeamEmployeeService,
 		OrganizationVendorsService,
 		ProposalService,
 		RoleService,
@@ -163,9 +194,15 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 		TimeOffPolicyService,
 		TimeSheetService,
 		ActivityService,
-		ScreenShotService,
+		ScreenshotService,
 		TimeLogService,
-		TimeSlotService
+		TimeSlotService,
+		AppointmentEmployeesService,
+		ApprovalPolicyService,
+		CandidateService,
+		EstimateEmailService,
+		ContactService,
+		OrganizationSprintService
 	],
 	exports: [
 		ExportAllService,
@@ -187,13 +224,14 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 		InvoiceService,
 		InvoiceItemService,
 		EmployeeLevelService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
 		OrganizationProjectsService,
 		OrganizationRecurringExpenseService,
-		OrganizationTeamsService,
+		OrganizationTeamService,
+		OrganizationTeamEmployeeService,
 		OrganizationVendorsService,
 		ProposalService,
 		RoleService,
@@ -204,9 +242,15 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 		TimeOffPolicyService,
 		TimeSheetService,
 		ActivityService,
-		ScreenShotService,
+		ScreenshotService,
 		TimeLogService,
-		TimeSlotService
+		TimeSlotService,
+		AppointmentEmployeesService,
+		ApprovalPolicyService,
+		CandidateService,
+		EstimateEmailService,
+		ContactService,
+		OrganizationSprintService
 	]
 })
 export class ExportAllModule {}

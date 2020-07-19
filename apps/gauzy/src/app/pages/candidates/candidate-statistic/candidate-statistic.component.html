@@ -1,0 +1,84 @@
+<nb-card>
+	<nb-card-header>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+		<h4>
+			{{ 'CANDIDATES_PAGE.STATISTIC.CANDIDATE_STATISTICS' | translate }}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-accordion>
+			<nb-accordion-item>
+				<nb-accordion-item-header
+					><h6>
+						{{
+							'CANDIDATES_PAGE.STATISTIC.CANDIDATE_RATING'
+								| translate
+						}}
+					</h6></nb-accordion-item-header
+				>
+				<nb-accordion-item-body>
+					<ga-candidate-rating-chart
+						*ngIf="candidates"
+						[candidates]="candidates"
+						[employeeList]="employeeList"
+					></ga-candidate-rating-chart>
+				</nb-accordion-item-body>
+			</nb-accordion-item>
+
+			<nb-accordion-item>
+				<nb-accordion-item-header
+					><h6>
+						{{
+							'CANDIDATES_PAGE.STATISTIC.INTERVIEWER_ASSESSMENT'
+								| translate
+						}}
+					</h6></nb-accordion-item-header
+				>
+				<nb-accordion-item-body>
+					<ga-interviewer-assessment-chart
+						*ngIf="candidates"
+						[interviewList]="interviewList"
+						[candidates]="candidates"
+						[employeeList]="employeeList"
+					></ga-interviewer-assessment-chart>
+				</nb-accordion-item-body>
+			</nb-accordion-item>
+
+			<nb-accordion-item>
+				<nb-accordion-item-header
+					><h6>
+						{{
+							'CANDIDATES_PAGE.STATISTIC.CRITERIONS_RATING'
+								| translate
+						}}
+					</h6></nb-accordion-item-header
+				>
+				<nb-accordion-item-body>
+					<ga-criterions-rating-chart
+						*ngIf="candidates"
+						[candidates]="candidates"
+						[interviewList]="interviewList"
+					></ga-criterions-rating-chart>
+				</nb-accordion-item-body>
+			</nb-accordion-item>
+
+			<nb-accordion-item>
+				<nb-accordion-item-header
+					><h6>
+						{{
+							'CANDIDATES_PAGE.STATISTIC.CANDIDATE_CRITERIONS_RATING'
+								| translate
+						}}
+					</h6></nb-accordion-item-header
+				>
+				<nb-accordion-item-body>
+					<ga-candidate-criterions-rating-chart
+						*ngIf="candidates"
+						[candidates]="candidates"
+						[interviewList]="interviewList"
+					></ga-candidate-criterions-rating-chart>
+				</nb-accordion-item-body>
+			</nb-accordion-item>
+		</nb-accordion>
+	</nb-card-body>
+</nb-card>

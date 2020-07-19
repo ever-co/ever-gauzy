@@ -11,7 +11,8 @@ import {
 	NbSelectModule,
 	NbTooltipModule,
 	NbRadioModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbListModule
 } from '@nebular/theme';
 import { TagsComponent } from './tags.component';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -26,12 +27,14 @@ import { TagsRoutingModule } from './tags-routing.module';
 import { TagsMutationModule } from '../../@shared/tags/tags-mutation.module';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { TagsColorComponent } from './tags-color/tags-color.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 @NgModule({
 	imports: [
+		NbListModule,
 		TagsRoutingModule,
 		ThemeModule,
 		UserFormsModule,
@@ -52,6 +55,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCheckboxModule,
 		TagsMutationModule,
 		ColorPickerModule,
+		CardGridModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

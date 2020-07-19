@@ -1,3 +1,4 @@
+import { CandidatePersonalQualitiesService } from './../../@core/services/candidate-personal-qualities.service';
 import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
 import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
 import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';
@@ -21,7 +22,13 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule,
 	NbSelectModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbActionsModule,
+	NbTabsetModule,
+	NbRadioModule,
+	NbMenuModule,
+	NbContextMenuModule,
+	NbAccordionModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -38,7 +45,6 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { CandidatesComponent } from './candidates.component';
 import { CandidatesRoutingModule } from './candidates-routing.module';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
-import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 import { CandidateMutationModule } from '../../@shared/candidate/candidate-mutation/candidate-mutation.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageCandidateInviteComponent } from './manage-candidate-invite/manage-candidate-invite.component';
@@ -49,6 +55,39 @@ import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-pr
 import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
 import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
+import { EditCandidateSkillsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-skills/edit-candidate-skills.component';
+import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-education/edit-candidate-education.component';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
+import { EditCandidateExperienceFormComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience/edit-candidate-experience-form.component';
+import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/edit-candidate-feedbacks.component';
+import { StarRatingInputModule } from '../../@shared/star-rating/star-rating-input/star-rating-input.module';
+import { StarRatingOutputModule } from '../../@shared/star-rating/star-rating-output/star-rating-output.module';
+import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
+import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
+import { CandidateInterviewMutationModule } from '../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.module';
+import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
+import { FullCalendarModule } from '@fullcalendar/angular';
+import { CandidateInterviewInfoModule } from '../../@shared/candidate/candidate-interview-info/candidate-interview-info.module';
+import { CandidateInterviewersService } from '../../@core/services/candidate-interviewers.service';
+import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-multi-select/candidate-multi-select.module';
+import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.module';
+import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
+import { ChartModule } from 'angular2-chartjs';
+import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-rating-chart/candidate-rating-chart.component';
+import { InterviewerAssessmentChartComponent } from './candidate-statistic/candidate-statistic-charts/interviewer-assessment-chart/interviewer-assessment-chart.component';
+import { CandidateTechnologiesService } from '../../@core/services/candidate-technologies.service';
+import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
+import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
+import { InterviewCriterionsComponent } from './manage-candidate-interviews/interview-criterions/interview-criterions.component';
+import { CandidateTechnologiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-technologies/candidate-technologies.component';
+import { CandidatePersonalQualitiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
+import { CriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/criterions-rating-chart/criterions-rating-chart.component';
+import { CandidateSelectModule } from '../../@shared/candidate/candidate-select/candidate-select.module';
+import { CandidateCriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-criterions-rating-chart/candidate-criterions-rating-chart.component';
+import { DeleteInterviewModule } from '../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.module';
+import { DeleteFeedbackModule } from '../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -56,10 +95,11 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 const COMPONENTS = [
 	CandidatesComponent,
-	CandidateFullNameComponent,
 	CandidateStatusComponent,
+	CandidateSourceComponent,
 	EditCandidateComponent,
 	EditCandidateDocumentsComponent,
+	EditCandidateFeedbacksComponent,
 	EditCandidateEmploymentComponent,
 	EditCandidateExperienceComponent,
 	EditCandidateHiringComponent,
@@ -69,12 +109,30 @@ const COMPONENTS = [
 	EditCandidateProfileComponent,
 	EditCandidateRatesComponent,
 	EditCandidateTasksComponent,
-	ManageCandidateInviteComponent
+	EditCandidateInterviewComponent,
+	ManageCandidateInviteComponent,
+	CandidateStatisticComponent,
+	EditCandidateSkillsComponent,
+	EditCandidateEducationComponent,
+	EditCandidateExperienceFormComponent,
+	ManageCandidateInterviewsComponent,
+	InterviewCalendarComponent,
+	InterviewPanelComponent,
+	CandidateRatingChartComponent,
+	CriterionsRatingChartComponent,
+	CandidateCriterionsRatingChartComponent,
+	InterviewerAssessmentChartComponent,
+	InterviewCriterionsComponent,
+	CandidateTechnologiesComponent,
+	CandidatePersonalQualitiesComponent
 ];
 
 @NgModule({
 	imports: [
+		FullCalendarModule,
+		TableComponentsModule,
 		SharedModule,
+		ChartModule,
 		CandidatesRoutingModule,
 		ThemeModule,
 		NbCardModule,
@@ -92,6 +150,12 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
+		FileUploaderModule,
+		NbTabsetModule,
+		CandidateSelectModule,
+		NbRadioModule,
+		NbActionsModule,
+		NbAccordionModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -103,15 +167,27 @@ const COMPONENTS = [
 		NbDatepickerModule,
 		TagsColorInputModule,
 		CandidateMutationModule,
+		CandidateInterviewMutationModule,
+		CandidateInterviewInfoModule,
 		InviteMutationModule,
 		InviteTableModule,
 		EmployeeLocationModule,
-		EmployeeRatesModule
+		EmployeeRatesModule,
+		NbMenuModule,
+		NbContextMenuModule,
+		NbActionsModule,
+		StarRatingInputModule,
+		StarRatingOutputModule,
+		CandidateMultiSelectModule,
+		EmployeeMultiSelectModule,
+		CandidateInterviewFeedbackModule,
+		DeleteInterviewModule,
+		DeleteFeedbackModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
 		CandidateStatusComponent,
-		CandidateFullNameComponent,
+		CandidateSourceComponent,
 		ManageCandidateInviteComponent
 	],
 	providers: [
@@ -119,7 +195,10 @@ const COMPONENTS = [
 		InviteGuard,
 		CountryService,
 		OrganizationEmploymentTypesService,
-		CandidatesService
+		CandidatesService,
+		CandidateInterviewersService,
+		CandidatePersonalQualitiesService,
+		CandidateTechnologiesService
 	]
 })
 export class CandidatesModule {}

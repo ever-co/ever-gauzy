@@ -1,0 +1,96 @@
+<nb-card>
+	<nb-card-header class="header-selector-wrapper">
+		<div>
+			<h4 [innerHTML]="'PIPELINES_PAGE.HEADER' | translate"></h4>
+		</div>
+		<div>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="btn-container mb-3">
+			<button
+				*ngIf="CAN_EDIT_SALES_PIPELINES"
+				(click)="createPipeline()"
+				style="cursor: pointer;"
+				status="success"
+				type="button"
+				class="mr-2"
+				nbButton
+			>
+				<nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
+				<span [innerHTML]="'BUTTONS.ADD' | translate"></span>
+			</button>
+
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+
+			<input
+				[placeholder]="'FORM.FILTER' | translate"
+				(ngModelChange)="filterPipelines()"
+				[(ngModel)]="name"
+				type="text"
+				nbInput
+			/>
+		</div>
+
+		<ng2-smart-table
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			(rowSelect)="pipeline = $event.data"
+			[settings]="smartTableSettings"
+			[source]="pipelines"
+		></ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="smartTableSettings"
+			[source]="pipelineData"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+	</nb-card-body>
+</nb-card>
+
+<ng-template #actionButtons let-buttonSize="buttonSize">
+	<button
+		*ngIf="CAN_EDIT_SALES_PIPELINES && pipeline"
+		[size]="buttonSize || 'medium'"
+		(click)="editPipeline()"
+		style="cursor: pointer;"
+		status="info"
+		type="button"
+		class="mr-2"
+		nbButton
+	>
+		<nb-icon icon="edit-outline" pack="eva"></nb-icon>
+		<span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
+	</button>
+	<button
+		*ngIf="CAN_EDIT_SALES_PIPELINES && pipeline"
+		[size]="buttonSize || 'medium'"
+		(click)="deletePipeline()"
+		style="cursor: pointer;"
+		status="danger"
+		type="button"
+		class="mr-2"
+		nbButton
+	>
+		<nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
+		<span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
+	</button>
+	<a
+		[routerLink]="['./', pipeline.id, 'deals']"
+		*ngIf="pipeline"
+		status="basic"
+		type="button"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+		nbButton
+	>
+		<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+		<span>
+			{{ 'PIPELINES_PAGE.VIEW_DEALS' | translate }}
+		</span>
+	</a>
+</ng-template>

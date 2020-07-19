@@ -16,6 +16,9 @@ import { RouterModule } from '@angular/router';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';
 import { TaskSelectModule } from '../task-select/task-select.module';
 import { ProjectSelectModule } from '../project-select/project-select.module';
+import { AngularDraggableModule } from 'angular2-draggable';
+import { NgxPermissionsModule } from 'ngx-permissions';
+
 @NgModule({
 	declarations: [TimeTrackerComponent],
 	imports: [
@@ -31,12 +34,14 @@ import { ProjectSelectModule } from '../project-select/project-select.module';
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,
-		ProjectSelectModule
+		ProjectSelectModule,
+		AngularDraggableModule,
+		NgxPermissionsModule
 	],
 	exports: [TimeTrackerComponent]
 })
 export class TimeTrackerModule {
-	static forRoot(): ModuleWithProviders {
+	static forRoot(): ModuleWithProviders<TimeTrackerModule> {
 		return {
 			ngModule: TimeTrackerModule,
 			providers: [TimeTrackerService]

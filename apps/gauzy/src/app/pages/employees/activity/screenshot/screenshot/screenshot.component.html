@@ -1,0 +1,211 @@
+<div class="filters row mb-3">
+	<div class="col">
+		<ngx-filters
+			(filtersChange)="filtersChange($event)"
+			[multipleEmployeSelect]="false"
+		></ngx-filters>
+	</div>
+</div>
+<div
+	class="screenshot-container"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
+	<ng-template [ngIf]="timeSlots?.length > 0" [ngIfElse]="notFound">
+		<div class="row" *ngFor="let hourSlot of timeSlots; let i = index">
+			<div class="col">
+				<div
+					class="hour-lable mt-3"
+					[ngClass]="{ 'border-top pt-3': i != 0 }"
+				>
+					<h6>
+						{{ hourSlot.startTime | timeFormat }} -
+						{{ hourSlot.endTime | timeFormat }}
+					</h6>
+				</div>
+
+				<div class="row my-3 align-items-center justify-content-center">
+					<div
+						class="col"
+						*ngFor="let timeSlot of hourSlot.timeSlots"
+					>
+						<div class="card">
+							<div
+								class="activity"
+								*ngIf="timeSlot; else noActivity"
+							>
+								<div
+									class="image-contaer curser-pointer"
+									[ngClass]="{
+										'select-mode': selectedIdsCount > 0
+									}"
+									(click)="toggleSelect(timeSlot.id)"
+								>
+									<div class="hover">
+										<div
+											class="actions d-flex align-items-center w-100"
+										>
+											<nb-checkbox
+												[(ngModel)]="
+													selectedIds[timeSlot.id]
+												"
+												(click)="
+													$event.stopPropagation()
+												"
+												(ngModelChange)="toggleSelect()"
+											></nb-checkbox>
+											<button
+												class="ml-auto select-hidden"
+												status="danger"
+												nbButton
+												size="tiny"
+												(click)="
+													$event.stopPropagation();
+													deleteSlot(timeSlot)
+												"
+											>
+												<nb-icon
+													icon="trash-2-outline"
+												></nb-icon>
+											</button>
+										</div>
+										<div class="view-button select-hidden">
+											<button
+												class="mr-1"
+												nbButton
+												size="small"
+												status="primary"
+												(click)="
+													$event.stopPropagation()
+												"
+												ngxGallery
+												[item]="
+													timeSlot.screenshots[0]
+														?.fullUrl
+												"
+												[items]="screenshotsUrls"
+												*ngIf="
+													timeSlot?.screenshots
+														?.length > 0
+												"
+											>
+												{{
+													'ACTIVITY.VIEW_SCREEN'
+														| translate
+												}}
+											</button>
+											<button
+												nbButton
+												size="small"
+												status="secondary"
+												(click)="
+													$event.stopPropagation();
+													viewInfo(timeSlot)
+												"
+											>
+												{{
+													'ACTIVITY.VIEW_INFO'
+														| translate
+												}}
+											</button>
+										</div>
+									</div>
+									<ng-template
+										[ngIf]="
+											timeSlot?.screenshots?.length > 0
+										"
+										[ngIfElse]="noImageEl"
+									>
+										<img
+											draggable="false"
+											[src]="
+												timeSlot.screenshots[0]?.fullUrl
+											"
+										/>
+									</ng-template>
+									<ng-template #noImageEl>
+										<img draggable="false" />
+										<span class="no-image p-3">
+											{{
+												'ACTIVITY.NO_SCREENSHOTS'
+													| translate
+											}}
+										</span>
+									</ng-template>
+								</div>
+								<div class="slot-info text-center p-2">
+									<div class="time-span mb-1">
+										{{
+											timeSlot.localStartedAt | timeFormat
+										}}
+										-
+										{{
+											timeSlot.localStoppedAt | timeFormat
+										}}
+									</div>
+									<nb-progress-bar
+										class="mb-1"
+										[value]="timeSlot.overall"
+										[status]="
+											prgressStatus(timeSlot.overall)
+										"
+										[displayValue]="true"
+										size="tiny"
+									></nb-progress-bar>
+									<div class="activity-count">
+										{{ timeSlot.overall || 0 }}% of
+										{{
+											timeSlot.duration
+												| amFromUnix
+												| amFromUtc
+												| amDateFormat: 'mm'
+										}}
+										Minutes
+									</div>
+								</div>
+							</div>
+							<ng-template #noActivity>
+								<div class="no-activity p-3 text-center">
+									{{ 'ACTIVITY.NO_ACTIVITY' | translate }}
+								</div>
+							</ng-template>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</ng-template>
+	<ng-template #notFound>
+		<div class="py-5 text-center">
+			<h6>{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}</h6>
+		</div>
+	</ng-template>
+</div>
+<div class="selecte-items-action" *ngIf="selectedIdsCount > 0">
+	<div class="card p-4 w-100">
+		<div class="row align-items-center">
+			<div class="col">{{ this.selectedIdsCount }} Screen selected</div>
+			<div class="col-auto">
+				<button
+					class="ml-auto mr-2 select-hidden"
+					status="info"
+					nbButton
+					size="small"
+					(click)="toggleAllSelecte()"
+				>
+					{{ this.allSelected ? 'Unselect All' : 'Select All' }}
+				</button>
+				<button
+					class="ml-auto select-hidden"
+					status="danger"
+					nbButton
+					size="small"
+					(click)="deleteSlots()"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</div>
+		</div>
+	</div>
+</div>

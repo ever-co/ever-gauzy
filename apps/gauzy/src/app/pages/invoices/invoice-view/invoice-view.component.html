@@ -1,0 +1,23 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h3 *ngIf="!isEstimate">
+			{{ 'INVOICES_PAGE.VIEW_INVOICE' | translate }}
+		</h3>
+		<h3 *ngIf="isEstimate">
+			{{ 'INVOICES_PAGE.VIEW_ESTIMATE' | translate }}
+		</h3>
+	</nb-card-header>
+	<ga-invoice-view-inner
+		id="contentToConvert"
+		*ngIf="invoice"
+		[invoice]="invoice"
+		[isEstimate]="isEstimate"
+	>
+	</ga-invoice-view-inner>
+	<nb-card-footer class="text-right">
+		<button nbButton status="info" (click)="download()" class="mr-2">
+			<nb-icon class="mr-1" icon="download-outline"></nb-icon>
+			{{ 'BUTTONS.DOWNLOAD' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

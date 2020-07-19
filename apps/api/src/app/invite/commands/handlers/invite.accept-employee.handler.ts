@@ -6,7 +6,7 @@ import { getUserDummyImage } from '../../../core';
 import { Employee } from '../../../employee/employee.entity';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
-import { OrganizationClientsService } from '../../../organization-clients/organization-clients.service';
+import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { OrganizationDepartmentService } from '../../../organization-department/organization-department.service';
 import { OrganizationProjectsService } from '../../../organization-projects/organization-projects.service';
 import { InviteService } from '../../invite.service';
@@ -25,7 +25,7 @@ export class InviteAcceptEmployeeHandler
 		private readonly employeeService: EmployeeService,
 		private readonly organizationService: OrganizationService,
 		private readonly organizationProjectService: OrganizationProjectsService,
-		private readonly organizationClientService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentService,
 		private readonly authService: AuthService
 	) {}
@@ -33,16 +33,16 @@ export class InviteAcceptEmployeeHandler
 	public async execute(
 		command: InviteAcceptEmployeeCommand
 	): Promise<UpdateResult | Invite> {
-		const { input } = command;
+		const { input, languageCode } = command;
 
 		const invite = await this.inviteService.findOne({
 			where: { id: input.inviteId },
 			relations: [
 				'projects',
-				'clients',
+				'organizationContact',
 				'departments',
 				'projects.members',
-				'clients.members',
+				'organizationContact.members',
 				'departments.members'
 			]
 		});
@@ -61,11 +61,26 @@ export class InviteAcceptEmployeeHandler
 			input.user.imageUrl = getUserDummyImage(input.user);
 		}
 
-		const user = await this.authService.register(input);
+		const user = await this.authService.register(
+			{
+				...input,
+				user: {
+					...input.user,
+					tenant: {
+						id: organization.tenantId
+					}
+				},
+				organizationId: input.organization.id
+			},
+			languageCode
+		);
 
 		const employee = await this.employeeService.create({
 			user,
-			organization: input.organization
+			organization: input.organization,
+			tenant: {
+				id: organization.tenantId
+			}
 		});
 
 		this.updateEmployeeMemberships(invite, employee);
@@ -88,13 +103,13 @@ export class InviteAcceptEmployeeHandler
 				});
 			});
 
-		//Update client members
-		invite.clients.forEach((client) => {
-			let members = client.members || [];
+		//Update organization Contacts members
+		invite.organizationContacts.forEach((organizationContact) => {
+			let members = organizationContact.members || [];
 			members = [...members, employee];
-			//This will call save() on the client (and not really create a new organization client)
-			this.organizationClientService.create({
-				...client,
+			//This will call save() on the organizationContacts (and not really create a new organization Contacts)
+			this.organizationContactService.create({
+				...organizationContact,
 				members
 			});
 		});

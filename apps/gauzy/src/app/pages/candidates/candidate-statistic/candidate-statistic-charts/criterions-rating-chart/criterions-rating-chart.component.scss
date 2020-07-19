@@ -1,0 +1,38 @@
+.title {
+  margin-top: 2rem;
+}
+
+.select {
+  width: 100%;
+}
+
+.selectors {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0 0 1.25rem 0;
+}
+
+.select-interviewer {
+  width: 20rem;
+  padding-left: 1rem;
+}
+
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px #e5e5e5 solid;
+  height: 150px;
+
+  &-text {
+    color: #909cb4;
+  }
+
+  &-icon {
+    font-size: 1.5rem !important;
+    color: #909cb4;
+  }
+}

@@ -1,0 +1,80 @@
+<nb-card-body class="contentToConvert">
+	<div class="item">
+		<span *ngIf="!isEstimate"
+			>{{ 'INVOICES_PAGE.INVOICE_NUMBER' | translate }}:</span
+		>
+		<span *ngIf="isEstimate"
+			>{{ 'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER' | translate }}:</span
+		>
+		{{ invoice ? invoice.invoiceNumber : '' }}
+	</div>
+	<div class="grid">
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.VIEW.FROM' | translate }}:
+			{{ invoice ? invoice.fromOrganization.name : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.VIEW.TO' | translate }}:
+			{{ invoice ? invoice.toClient.name : '' }}
+		</div>
+		<div class="grid-item">
+			<span *ngIf="!isEstimate"
+				>{{
+					'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE' | translate
+				}}:</span
+			>
+			<span *ngIf="isEstimate"
+				>{{
+					'INVOICES_PAGE.ESTIMATES.ESTIMATE_DATE' | translate
+				}}:</span
+			>
+			{{ invoiceDate ? invoiceDate : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE' | translate }}:
+			{{ dueDate ? dueDate : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE' | translate }}:
+			{{ invoice ? invoice.discountValue : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.DISCOUNT_TYPE' | translate }}:
+			{{ invoice ? invoice.discountType : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.INVOICES_SELECT_TAX' | translate }}:
+			{{ invoice ? invoice.tax : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.TAX_TYPE' | translate }}:
+			{{ invoice ? invoice.taxType : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate }}:
+			{{ invoice ? invoice.currency : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.INVOICES_SELECT_TOTAL_VALUE' | translate }}:
+			{{ invoice ? invoice.currency : '' }}
+			{{ invoice ? invoice.totalValue : '' }}
+		</div>
+		<div class="grid-item">
+			{{ 'INVOICES_PAGE.INVOICES_SELECT_PAID' | translate }}:
+			{{ invoice ? (invoice.paid ? 'Yes' : 'No') : '' }}
+		</div>
+	</div>
+	<div class="item">
+		{{ 'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate }}:
+		{{ invoice ? invoice.terms : '' }}
+	</div>
+	<div class="table">
+		<ng2-smart-table
+			*ngIf="loadTable"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			style="cursor: pointer;"
+		>
+		</ng2-smart-table>
+	</div>
+</nb-card-body>

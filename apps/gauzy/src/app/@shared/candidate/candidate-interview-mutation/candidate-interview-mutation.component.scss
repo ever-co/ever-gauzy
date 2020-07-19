@@ -1,0 +1,45 @@
+.candidate-image {
+  max-width: 70px;
+  max-height: 70px;
+  border-radius: 13px;
+  margin-right: 24px;
+  margin-left: 24px;
+}
+
+.candidate-image-small {
+  max-width: 35px;
+  max-height: 35px;
+  border-radius: 13px;
+  margin-right: 4px;
+  margin-left: 4px;
+}
+
+.button-container {
+  justify-content: space-between;
+  flex-direction: row;
+  display: flex;
+}
+
+.summary {
+  min-width: 45rem;
+}
+
+.employeeName {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.title-icon {
+  color: #8f9bb3 !important;
+  font-size: 16px;
+}
+
+.stepper {
+  max-height: 46rem;
+}
+
+.btn {
+  width: 6rem;
+}

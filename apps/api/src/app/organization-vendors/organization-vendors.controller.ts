@@ -6,7 +6,9 @@ import {
 	UseGuards,
 	HttpCode,
 	Delete,
-	Param
+	Param,
+	Put,
+	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -40,12 +42,15 @@ export class OrganizationVendorsController extends CrudController<
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAllOrganizations(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationVendor>> {
-		const { findInput } = JSON.parse(data);
+		const { relations, findInput } = JSON.parse(data);
 
-		return this.organizationVendorsService.findAll({ where: findInput });
+		return this.organizationVendorsService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -66,5 +71,16 @@ export class OrganizationVendorsController extends CrudController<
 	@Delete(':id')
 	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
 		return this.organizationVendorsService.deleteVendor(id);
+	}
+	@Put(':id')
+	async updateOrganizationTeam(
+		@Param('id') id: string,
+		@Body() entity: OrganizationVendor,
+		...options: any[]
+	): Promise<OrganizationVendor> {
+		return this.organizationVendorsService.create({
+			id,
+			...entity
+		});
 	}
 }

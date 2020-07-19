@@ -1,48 +1,69 @@
-# Webapp
+# devependecies
+FROM node:alpine AS dependencies
 
-FROM node:alpine AS development
+RUN apk --update add bash && \
+    apk add --no-cache dos2unix g++ git make python
 
-RUN apk update \
-    && apk add libexecinfo libexecinfo-dev \
-    && npm i -g npm \
-    && apk --no-cache add --virtual builds-deps build-base \
-    snappy g++ snappy-dev gcc libgcc libstdc++ linux-headers autoconf automake make nasm python git \
-    && npm install --quiet node-gyp -g \ 
-    && npm config set python /usr/bin/python \
-    && npm install yarn@latest -g --force
+RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
-RUN mkdir /srv/gauzy
+COPY wait .deploy/webapp/entrypoint /
+RUN chmod +x /wait /entrypoint
+
+RUN dos2unix /entrypoint
+
+USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY package.json yarn.lock ./
-COPY apps/api/package.json ./apps/api/package.json
-# COPY .snyk /tmp/.snyk
+COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
+COPY --chown=node:node apps/api/package.json ./apps/api/
+COPY --chown=node:node package.json yarn.lock ./
+
 RUN yarn install
 
-FROM node:alpine AS production
+# development
+FROM node:alpine AS development
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
-
-RUN npm install cross-env -g \
-    && npm install pm2 -g --unsafe-perm \
-    && chmod +x /wait
-
-RUN mkdir /srv/gauzy
-RUN mkdir /srv/gauzy/dist
+USER node:node
 
 WORKDIR /srv/gauzy
 
-ARG NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_OPTIONS $NODE_OPTIONS
-ENV NODE_ENV production
-
-COPY --from=development /srv/gauzy/node_modules ./node_modules
-
+COPY --chown=node:node --from=dependencies /wait /entrypoint /
+COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-EXPOSE 4200
+# build
+FROM node:alpine AS build
 
-CMD /wait \
-    && cross-env NODE_ENV=production yarn run config:prod \
-    && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn ng serve gauzy --disable-host-check --host 0.0.0.0 -c=production --prod
+WORKDIR /srv/gauzy
+
+RUN mkdir dist
+
+COPY --chown=node:node --from=development /srv/gauzy .
+
+ARG NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_ENV production
+
+RUN yarn build:prod
+
+# production
+FROM nginx:alpine AS production
+
+# USER nginx:nginx
+
+WORKDIR /srv/gauzy
+
+COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint ./
+COPY --chown=nginx:nginx .deploy/webapp/nginx.conf /etc/nginx
+COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
+
+RUN chmod +x wait
+
+ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_ENV production
+ENV API_PORT 3000
+
+EXPOSE ${PORT:-4200}
+CMD [ "nginx", "-g", "daemon off;" ]
+ENTRYPOINT [ "./entrypoint" ]

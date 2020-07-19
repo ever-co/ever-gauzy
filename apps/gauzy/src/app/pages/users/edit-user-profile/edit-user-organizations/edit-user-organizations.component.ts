@@ -119,7 +119,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 				this.userToRemove = orgUser;
 				userName = orgUser.user.firstName + ' ' + orgUser.user.lastName;
 
-				if (orgUser.orgId === id) this.orgUserId = orgUser.id;
+				if (orgUser.organizationId === id) this.orgUserId = orgUser.id;
 				if (this.userToRemove.user.id === user.id) counter++;
 			}
 		}
@@ -219,7 +219,8 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 		this.selectedUserId = items[0].userId;
 
 		const user = await this.usersService.getUserById(items[0].userId);
-		this.selectedUserName = user.firstName + ' ' + user.lastName;
+		this.selectedUserName =
+			(user.firstName || '') + ' ' + (user.lastName || '');
 
 		const all_orgs = await this.organizationsService.getAll();
 
@@ -228,7 +229,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 		);
 
 		const filtered = all_orgs.items.filter(
-			(a) => includedOrgs.filter((b) => b.orgId === a.id).length
+			(a) => includedOrgs.filter((b) => b.organizationId === a.id).length
 		);
 
 		this.organizations = filtered;

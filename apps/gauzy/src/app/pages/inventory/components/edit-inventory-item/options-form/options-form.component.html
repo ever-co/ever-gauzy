@@ -1,0 +1,65 @@
+<div class="options-wrap mb-4">
+	<div *ngIf="options.length === 0">
+		<p class="text-primary">
+			{{ 'INVENTORY_PAGE.NO_OPTIONS_LABEL' | translate }}
+		</p>
+	</div>
+	<div
+		*ngFor="let option of options"
+		class="option"
+		(click)="onEditOption(option)"
+	>
+		{{ option.name }}
+		<span class="option-delete">
+			<nb-icon
+				class="ml-auto mt-1 close"
+				icon="close-outline"
+				(click)="onRemoveOption(option)"
+			></nb-icon>
+		</span>
+	</div>
+</div>
+<div class="row d-bottom mb-4">
+	<div class="col-sm-5">
+		<label class="label" for="addOption">
+			{{ 'INVENTORY_PAGE.ADD_OPTION' | translate }}
+		</label>
+		<input
+			fullWidth
+			id="addOption"
+			type="text"
+			[(ngModel)]="activeOption.name"
+			[ngModelOptions]="{ standalone: true }"
+			nbInput
+			[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+		/>
+	</div>
+	<div class="col-sm-4">
+		<label class="label" for="optionCode">
+			{{ 'INVENTORY_PAGE.CODE' | translate }}
+		</label>
+		<input
+			fullWidth
+			id="optionCode"
+			type="text"
+			[(ngModel)]="activeOption.code"
+			[ngModelOptions]="{ standalone: true }"
+			nbInput
+			[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+		/>
+	</div>
+	<div class="col-sm-3">
+		<button
+			status="success"
+			nbButton
+			(click)="onSaveOption()"
+			class="width-100"
+		>
+			{{
+				optionMode === 'create'
+					? ('INVENTORY_PAGE.ADD_OPTION' | translate)
+					: ('INVENTORY_PAGE.EDIT_OPTION' | translate)
+			}}
+		</button>
+	</div>
+</div>

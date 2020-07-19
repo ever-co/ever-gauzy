@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { OrganizationProjects } from '@gauzy/models';
-import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -17,28 +16,28 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 	]
 })
 export class ProjectSelectorComponent implements OnInit, OnDestroy {
+	private _projectId: string | string[];
 	projects: OrganizationProjects[];
+
+	@Input() disabled = false;
+	@Input() multiple = false;
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
-	val: any;
 
-	@Input() disabled = false;
+	constructor(private organizationProjects: OrganizationProjectsService) {}
 
-	set projectId(val: string) {
+	set projectId(val: string | string[]) {
 		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
-		this.val = val;
+		this._projectId = val;
+		console.log('projectId', this._projectId);
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	get projectId() {
+	get projectId(): string | string[] {
 		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
-		return this.val;
+		return this._projectId;
 	}
-
-	private _ngDestroy$ = new Subject<void>();
-
-	constructor(private organizationProjects: OrganizationProjectsService) {}
 
 	ngOnInit() {
 		this.loadProjects();
@@ -47,12 +46,17 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	private async loadProjects(): Promise<void> {
 		const { items = [] } = await this.organizationProjects.getAll([]);
 		this.projects = items;
-		this.projectId = this.val;
+		// this._projectId = this._projectId;
 	}
 
-	writeValue(value: any) {
-		this.projectId = value;
+	writeValue(value: string | string[]) {
+		if (this.multiple) {
+			this._projectId = value instanceof Array ? value : [value];
+		} else {
+			this._projectId = value;
+		}
 	}
+
 	registerOnChange(fn: (rating: number) => void): void {
 		this.onChange = fn;
 	}
@@ -64,8 +68,5 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

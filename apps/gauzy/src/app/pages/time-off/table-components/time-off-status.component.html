@@ -1,0 +1,11 @@
+<div class="text-center d-block" *ngIf="rowData.status">
+	<div class="badge-danger" *ngIf="rowData.status=='Denied'">
+		{{ 'TIME_OFF_PAGE.STATUSES.DENIED' | translate }}
+	</div>
+	<div class="badge-success" *ngIf="rowData.status=='Approved'">
+		{{ 'TIME_OFF_PAGE.STATUSES.APPROVED' | translate }}
+    </div>
+    <div class="badge-warning" *ngIf="rowData.status=='Requested'">
+		{{ 'TIME_OFF_PAGE.STATUSES.REQUESTED' | translate }}
+	</div>
+</div>

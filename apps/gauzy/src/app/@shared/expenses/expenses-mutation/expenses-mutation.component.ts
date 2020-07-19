@@ -12,10 +12,9 @@ import {
 	OrganizationSelectInput,
 	TaxTypesEnum,
 	ExpenseTypesEnum,
-	IExpenseCategory,
 	IOrganizationVendor,
 	Tag,
-	OrganizationClients,
+	OrganizationContact,
 	OrganizationProjects
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -27,14 +26,16 @@ import {
 	SelectedEmployee
 } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
-import { Subject, Observable } from 'rxjs';
-import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
+import { Subject } from 'rxjs';
+
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
+import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 
 @Component({
 	selector: 'ga-expenses-mutation',
@@ -45,7 +46,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	form: FormGroup;
 	expense: ExpenseViewModel;
@@ -54,7 +55,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	expenseTypes = Object.values(ExpenseTypesEnum);
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
-	expenseCategories$: Observable<IExpenseCategory[]>;
+	expenseCategories: IOrganizationExpenseCategory[];
 	vendors: IOrganizationVendor[];
 	clients: { clientName: string; clientId: string }[] = [];
 	projects: { projectName: string; projectId: string }[] = [];
@@ -80,9 +81,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		private organizationsService: OrganizationsService,
 		private organizationVendorsService: OrganizationVendorsService,
 		private store: Store,
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
+		private readonly expenseCategoriesStore: OrganizationExpenseCategoriesService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService
@@ -103,7 +104,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async getDefaultData() {
-		this.expenseCategories$ = this.expenseCategoriesStore.expenseCategories$;
+		this.organizationId = this.store.selectedOrganization.id;
+		const { items: category } = await this.expenseCategoriesStore.getAll({
+			organizationId: this.organizationId
+		});
+		this.expenseCategories = category;
 		this.organizationId = this.store.selectedOrganization.id;
 		const { items: vendors } = await this.organizationVendorsService.getAll(
 			{
@@ -152,13 +157,18 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		);
 	}
 
-	addNewCategory = async (name: string): Promise<IExpenseCategory> => {
+	addNewCategory = async (
+		name: string
+	): Promise<IOrganizationExpenseCategory> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			return await this.expenseCategoriesStore.create(name).toPromise();
+			return await this.expenseCategoriesStore.create({
+				name,
+				organizationId: this.organizationId
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -184,7 +194,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		}
 	};
 
-	addNewClient = (name: string): Promise<OrganizationClients> => {
+	addNewClient = (name: string): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -195,7 +205,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			return this.organizationClientsService.create({
+			return this.organizationContactService.create({
 				name,
 				organizationId: this.organizationId
 			});
@@ -239,7 +249,6 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		if (this.expense) {
-			this.tags = this.expense.tags;
 			this.form = this.fb.group({
 				id: [this.expense.id],
 				amount: [this.expense.amount, Validators.required],
@@ -290,6 +299,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.valueDate = this.form.get('valueDate');
 		this.amount = this.form.get('amount');
 		this.notes = this.form.get('notes');
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	private calculateTaxes() {
@@ -318,7 +328,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async loadClients() {
-		const res = await this.organizationClientsService.getAll(['projects'], {
+		const res = await this.organizationContactService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});
 
@@ -333,9 +343,12 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async loadProjects() {
-		const res = await this.organizationProjectsService.getAll(['client'], {
-			organizationId: this.organizationId
-		});
+		const res = await this.organizationProjectsService.getAll(
+			['organizationContact'],
+			{
+				organizationId: this.organizationId
+			}
+		);
 
 		if (res) {
 			res.items.forEach((project) => {
@@ -377,8 +390,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			});
 	}
 
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
+	selectedTagsHandler(currentSelection: Tag) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	onEmployeeChange(selectedEmployee: SelectedEmployee) {

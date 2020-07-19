@@ -42,7 +42,7 @@ export class FileUploaderInputComponent {
 	}
 
 	async imageUrlChanged() {
-		let newValue =
+		const newValue =
 			this.fileUrl &&
 			this.fileUrl.replace(this.oldValue || '', '').trim();
 

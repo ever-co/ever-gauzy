@@ -33,12 +33,14 @@ import { OrganizationsEmployeesComponent } from './table-components/organization
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
-import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit-organization-settings/edit-organization-employee-levels/edit-organization-employee-level.component';
+
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/reecurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
 		OrganizationsRoutingModule,
 		ThemeModule,
 		NbCardModule,
@@ -85,8 +87,7 @@ import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-ex
 		OrganizationsStatusComponent,
 		EditOrganizationComponent,
 		OrganizationsEmployeesComponent,
-		OrganizationsCurrencyComponent,
-		EditOrganizationEmployeeLevelComponent
+		OrganizationsCurrencyComponent
 	],
 	providers: [OrganizationEmploymentTypesService]
 })

@@ -1,0 +1,15 @@
+<ng-select
+	[items]="languages"
+	bindLabel="name"
+	[loading]="loading"
+	[addTag]="addLanguage"
+	(change)="selectedLanguageEvent.emit($event)"
+	[closeOnSelect]="true"
+	id="addLanguages"
+	placeholder="{{ 'MENU.LANGUAGE' | translate }}"
+>
+	<ng-template ng-tag-tmp let-newLanguageName="searchTerm">
+		<b>{{ 'LANGUAGE_PAGE.ADD_NEW_LANGUAGE' | translate }}</b
+		>: {{ newLanguageName }}
+	</ng-template>
+</ng-select>

@@ -1,11 +1,12 @@
 import { AuthGuard } from '@nestjs/passport';
 import {
-	CreateEmailInvitesInput,
-	CreateEmailInvitesOutput,
-	InviteAcceptInput,
-	InviteResendInput,
+	ICreateEmailInvitesInput,
+	ICreateEmailInvitesOutput,
+	IInviteAcceptInput,
+	IInviteResendInput,
 	PermissionsEnum,
-	LinkClientOrganizationInviteInput
+	LanguagesEnum,
+	IOrganizationContactAcceptInviteInput
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -33,15 +34,16 @@ import { UpdateResult } from 'typeorm';
 import { IPagination } from '../core';
 import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.command';
 import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
-import { InviteOrganizationClientsCommand } from './commands/invite.organization-clients.command';
+import { InviteOrganizationContactCommand } from './commands/invite.organization-contact.command';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { InviteResendCommand } from './commands/invite.resend.command';
 import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
-import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-organization-clients.command';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Request } from 'express';
+import { I18nLang } from 'nestjs-i18n';
+import { InviteAcceptOrganizationContactCommand } from './commands/invite.accept-organization-contact.command';
 
 @ApiTags('Invite')
 @Controller()
@@ -66,10 +68,15 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
 	async createManyWithEmailsId(
-		@Body() entity: CreateEmailInvitesInput,
-		@Req() request: Request
-	): Promise<CreateEmailInvitesOutput> {
-		return this.inviteService.createBulk(entity, request.get('Origin'));
+		@Body() entity: ICreateEmailInvitesInput,
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum
+	): Promise<ICreateEmailInvitesOutput> {
+		return this.inviteService.createBulk(
+			entity,
+			request.get('Origin'),
+			languageCode
+		);
 	}
 
 	@ApiOperation({ summary: 'Get invite.' })
@@ -135,9 +142,14 @@ export class InviteController {
 	})
 	@Post('employee')
 	async acceptEmployeeInvite(
-		@Body() entity: InviteAcceptInput
+		@Body() entity: IInviteAcceptInput,
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
-		return this.commandBus.execute(new InviteAcceptEmployeeCommand(entity));
+		entity.originalUrl = request.get('Origin');
+		return this.commandBus.execute(
+			new InviteAcceptEmployeeCommand(entity, languageCode)
+		);
 	}
 
 	@ApiOperation({ summary: 'Accept user invite.' })
@@ -152,9 +164,36 @@ export class InviteController {
 	})
 	@Post('user')
 	async acceptUserInvite(
-		@Body() entity: InviteAcceptInput
+		@Body() entity: IInviteAcceptInput,
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
-		return this.commandBus.execute(new InviteAcceptUserCommand(entity));
+		entity.originalUrl = request.get('Origin');
+		return this.commandBus.execute(
+			new InviteAcceptUserCommand(entity, languageCode)
+		);
+	}
+
+	@ApiOperation({ summary: 'Accept organization Contact invite.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('contact')
+	async acceptOrganizationContactInvite(
+		@Body() input: IOrganizationContactAcceptInviteInput,
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum
+	): Promise<any> {
+		input.originalUrl = request.get('Origin');
+		return this.commandBus.execute(
+			new InviteAcceptOrganizationContactCommand(input, languageCode)
+		);
 	}
 
 	@ApiOperation({ summary: 'Resend invite.' })
@@ -171,7 +210,7 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
 	async resendInvite(
-		@Body() entity: InviteResendInput
+		@Body() entity: IInviteResendInput
 	): Promise<UpdateResult | Invite> {
 		return this.commandBus.execute(new InviteResendCommand(entity));
 	}
@@ -216,41 +255,19 @@ export class InviteController {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
-	@Put('organization-client/:id')
-	async inviteClient(
+	@Put('organization-contact/:id')
+	async inviteOrganizationContact(
 		@Param('id') id: string,
-		@Req() request
-	): Promise<OrganizationClients> {
+		@Req() request,
+		@I18nLang() languageCode: LanguagesEnum
+	): Promise<OrganizationContact> {
 		return this.commandBus.execute(
-			new InviteOrganizationClientsCommand({
+			new InviteOrganizationContactCommand({
 				id,
 				originalUrl: request.get('Origin'),
-				inviterUser: request.user
+				inviterUser: request.user,
+				languageCode
 			})
-		);
-	}
-
-	@ApiOperation({ summary: 'Update an existing record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Put('link-organization-client')
-	async linkInviteClient(
-		@Body() input: LinkClientOrganizationInviteInput
-	): Promise<OrganizationClients> {
-		return this.commandBus.execute(
-			new InviteLinkOrganizationClientsCommand(input)
 		);
 	}
 }

@@ -13,7 +13,8 @@ import {
 	NbIconModule,
 	NbThemeModule,
 	NbPopoverModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbLayoutDirectionService
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
@@ -53,6 +54,8 @@ import { SelectorService } from '../@core/utils/selector.service';
 import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
 import { OrganizationsService } from '../@core/services/organizations.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
+import { LanguagesService } from '../@core/services/languages.service';
+import { LayoutSelectorComponent } from './components/layout-selector/layout-selector.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -92,7 +95,8 @@ const COMPONENTS = [
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
-	ThemeSettingsComponent
+	ThemeSettingsComponent,
+	LayoutSelectorComponent
 ];
 const PIPES = [
 	CapitalizePipe,
@@ -111,12 +115,14 @@ const PIPES = [
 		UsersService,
 		SelectorService,
 		UsersOrganizationsService,
-		OrganizationsService
+		OrganizationsService,
+		NbLayoutDirectionService,
+		LanguagesService
 	]
 })
 export class ThemeModule {
-	static forRoot(): ModuleWithProviders {
-		return <ModuleWithProviders>{
+	static forRoot(): ModuleWithProviders<ThemeModule> {
+		return {
 			ngModule: ThemeModule,
 			providers: [
 				...NbThemeModule.forRoot(

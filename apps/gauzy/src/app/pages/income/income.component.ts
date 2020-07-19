@@ -1,6 +1,16 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Income, PermissionsEnum, Tag } from '@gauzy/models';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
+import {
+	Income,
+	PermissionsEnum,
+	Tag,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -15,13 +25,7 @@ import { IncomeExpenseAmountComponent } from '../../@shared/table-components/inc
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-
-interface SelectedRowModel {
-	data: Income;
-	isSelected: boolean;
-	selected: Income[];
-	source: LocalDataSource;
-}
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	templateUrl: './income.component.html',
@@ -36,24 +40,29 @@ export class IncomeComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	smartTableSettings: object;
 	selectedEmployeeId: string;
 	selectedDate: Date;
 	smartTableSource = new LocalDataSource();
-
-	selectedIncome: SelectedRowModel;
+	disableButton = true;
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
 	hasEditPermission = false;
 	tags: Tag[] = [];
+	viewComponentName: ComponentEnum;
+	incomes: Income[];
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	selectedIncome: Income;
 
-	@ViewChild('incomeTable', { static: false }) incomeTable;
+	@ViewChild('incomeTable') incomeTable;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
@@ -131,7 +140,23 @@ export class IncomeComponent extends TranslationBaseComponent
 				}
 			});
 
-		this.loading = false;
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.INCOME;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	canShowTable() {
@@ -180,10 +205,6 @@ export class IncomeComponent extends TranslationBaseComponent
 		};
 	}
 
-	selectIncome(ev: SelectedRowModel) {
-		this.selectedIncome = ev;
-	}
-
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSettingsSmartTable();
@@ -216,7 +237,9 @@ export class IncomeComponent extends TranslationBaseComponent
 
 				this.toastrService.primary(
 					this.getTranslation('NOTES.INCOME.ADD_INCOME', {
-						name: this.employeeName
+						name: result.employee
+							? `${result.employee.firstName} ${result.employee.lastName}`
+							: this.getTranslation('SM_TABLE.EMPLOYEE')
 					}),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
@@ -236,11 +259,26 @@ export class IncomeComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editIncome() {
+	selectIncome({ isSelected, data }) {
+		const selectedIncome = isSelected ? data : null;
+		if (this.incomeTable) {
+			this.incomeTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedIncome = selectedIncome;
+	}
+
+	async editIncome(selectedItem?: Income) {
+		if (selectedItem) {
+			this.selectIncome({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(IncomeMutationComponent, {
 				context: {
-					income: this.selectedIncome.data
+					income: this.selectedIncome
 				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
@@ -248,7 +286,7 @@ export class IncomeComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.incomeService.update(
-							this.selectedIncome.data.id,
+							this.selectedIncome.id,
 							{
 								amount: result.amount,
 								clientName: result.client.clientName,
@@ -281,7 +319,13 @@ export class IncomeComponent extends TranslationBaseComponent
 			});
 	}
 
-	async deleteIncome() {
+	async deleteIncome(selectedItem?: Income) {
+		if (selectedItem) {
+			this.selectIncome({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -292,9 +336,7 @@ export class IncomeComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.incomeService.delete(
-							this.selectedIncome.data.id
-						);
+						await this.incomeService.delete(this.selectedIncome.id);
 
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
@@ -363,6 +405,8 @@ export class IncomeComponent extends TranslationBaseComponent
 			  ).trim()
 			: '';
 		this.smartTableSource.load(items);
+		this.incomes = items;
+		this.loading = false;
 		this.showTable = true;
 	}
 

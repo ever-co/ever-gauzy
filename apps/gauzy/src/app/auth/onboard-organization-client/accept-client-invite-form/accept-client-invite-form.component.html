@@ -113,8 +113,22 @@
 
 	<div class="actions">
 		<button
+			class="form-input"
 			[disabled]="form.invalid || !matchPassword"
-			(click)="saveInvites()"
+			(click)="addClientOrganization()"
+			nbButton
+			fullWidth
+			status="primary"
+		>
+			{{
+				'ACCEPT_INVITE.ACCEPT_INVITE_FORM.ADD_ORGANIZATION' | translate
+			}}
+		</button>
+
+		<button
+			class="form-input"
+			[disabled]="form.invalid || !matchPassword || !addedOrganization"
+			(click)="createClient()"
 			nbButton
 			fullWidth
 			status="success"

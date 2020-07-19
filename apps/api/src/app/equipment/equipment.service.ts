@@ -1,11 +1,12 @@
-import { CrudService, IPagination } from '../core';
+import { IPagination } from '../core';
 import { Equipment } from './equipment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 
 @Injectable()
-export class EquipmentService extends CrudService<Equipment> {
+export class EquipmentService extends TenantAwareCrudService<Equipment> {
 	constructor(
 		@InjectRepository(Equipment)
 		private readonly equipmentRepository: Repository<Equipment>
@@ -14,12 +15,8 @@ export class EquipmentService extends CrudService<Equipment> {
 	}
 
 	async getAll(): Promise<IPagination<Equipment>> {
-		const items = await this.equipmentRepository.find({
-			relations: ['equipmentSharings']
+		return await this.findAll({
+			relations: ['equipmentSharings', 'tags']
 		});
-
-		const total = await this.equipmentRepository.count();
-
-		return { items, total };
 	}
 }

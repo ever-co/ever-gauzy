@@ -1,0 +1,238 @@
+<nb-layout center>
+	<nb-layout-column>
+		<nb-card size="large" class="full-height">
+			<nb-card-body>
+				<div class="row mb3">
+					<div class="col-12 form-group">
+						<div class="row">
+							<div class="col-6"></div>
+							<div *ngIf="defaultToggle" class="col-6 pull-right">
+								<nb-toggle status="basic" (change)="onSwitch()"
+									>Default</nb-toggle
+								>
+							</div>
+						</div>
+					</div>
+					<div class="col-6 form-group">
+						<div class="row">
+							<div class="col-12 form-group">
+								<nb-select
+									placeholder="Server"
+									[(ngModel)]="selectedServer"
+									(ngModelChange)="onServerChange($event)"
+								>
+									<nb-option
+										[value]="server.id"
+										*ngFor="let server of serverOption"
+										>{{ server.name }}</nb-option
+									>
+								</nb-select>
+							</div>
+							<div
+								*ngIf="isLocalServer"
+								class="col-12 form-group"
+							>
+								<nb-select
+									placeholder="Database"
+									[(ngModel)]="selectedDatabase"
+									(ngModelChange)="onDatabaseChange($event)"
+								>
+									<nb-option
+										[value]="db.id"
+										*ngFor="let db of databaseOption"
+										>{{ db.name }}</nb-option
+									>
+								</nb-select>
+							</div>
+							<div class="col-12 form-group">
+								<div class="row">
+									<div class="col-12">
+										<div class="row">
+											<div class="col-6">
+												<nb-checkbox (click)="setAW()"
+													>Activiwatch</nb-checkbox
+												>
+											</div>
+											<div class="col-6">
+												<p
+													*ngIf="loadingAw"
+													[nbSpinner]="loadingAw"
+													nbSpinnerStatus="info"
+												></p>
+												<nb-icon
+													*ngIf="awCheck"
+													[icon]="iconAw"
+													[status]="statusIcon"
+												>
+												</nb-icon>
+											</div>
+										</div>
+									</div>
+
+									<div class="col-12">
+										<nb-checkbox [disabled]="true"
+											>Wakatime</nb-checkbox
+										>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-6 form-group">
+						<div class="row">
+							<div
+								*ngIf="isLocalServer"
+								class="col-12 form-group"
+							>
+								<input
+									[(ngModel)]="setup.serverPort"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									placeholder="{{
+										defaultPlaceholder.serverPort
+									}}"
+									(focus)="inputFocus($event)"
+									id="serverPort"
+									(focusout)="inOutFocus($event)"
+								/>
+							</div>
+							<div *ngIf="isLiveServer" class="col-12 form-group">
+								<input
+									[(ngModel)]="setup.serverUrl"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									placeholder="{{
+										defaultPlaceholder.serverUrl
+									}}"
+									(focus)="inputFocus($event)"
+									id="serverUrl"
+									(focusout)="inOutFocus($event)"
+								/>
+							</div>
+							<div
+								*ngIf="isLocalServer && isPostgres"
+								class="col-12 form-group"
+							>
+								<input
+									[(ngModel)]="setup.dbHost"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									placeholder="{{
+										defaultPlaceholder.dbHost
+									}}"
+									(focus)="inputFocus($event)"
+									id="dbHost"
+									(focusout)="inOutFocus($event)"
+									autocomplete="off"
+								/>
+							</div>
+							<div
+								*ngIf="isLocalServer && isPostgres"
+								class="col-12 form-group"
+							>
+								<input
+									[(ngModel)]="setup.dbPort"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									placeholder="{{
+										defaultPlaceholder.dbPort
+									}}"
+									(focus)="inputFocus($event)"
+									id="dbPort"
+									(focusout)="inOutFocus($event)"
+									autocomplete="off"
+								/>
+							</div>
+							<div
+								*ngIf="isLocalServer && isPostgres"
+								class="col-12 form-group"
+							>
+								<input
+									[(ngModel)]="setup.dbName"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									placeholder="{{
+										defaultPlaceholder.dbName
+									}}"
+									(focus)="inputFocus($event)"
+									id="dbName"
+									(focusout)="inOutFocus($event)"
+									autocomplete="off"
+								/>
+							</div>
+							<div
+								*ngIf="isLocalServer && isPostgres"
+								class="col-12 form-group"
+							>
+								<input
+									[(ngModel)]="setup.dbUser"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									placeholder="{{
+										defaultPlaceholder.dbUser
+									}}"
+									(focus)="inputFocus($event)"
+									id="dbUser"
+									(focusout)="inOutFocus($event)"
+									autocomplete="off"
+								/>
+							</div>
+							<div
+								*ngIf="isLocalServer && isPostgres"
+								class="col-12 form-group"
+							>
+								<input
+									[(ngModel)]="setup.dbPassword"
+									type="password"
+									nbInput
+									fullWidth
+									status="basic"
+									placeholder="{{
+										defaultPlaceholder.dbPassword
+									}}"
+									(focus)="inputFocus($event)"
+									id="dbPassword"
+									(focusout)="inOutFocus($event)"
+									autocomplete="off"
+								/>
+							</div>
+						</div>
+						<div></div>
+					</div>
+					<div class="col-12 form-group btn-save">
+						<div class="row">
+							<div class="col-3">
+								<button
+									class="btn-width"
+									[nbSpinner]="loading"
+									nbSpinnerStatus="info"
+									(click)="saveConfiguration()"
+									nbButton
+									status="primary"
+									[disabled]="
+										(!isLiveServer || !isLocalServer) &&
+										(!selectedDatabase || !selectedServer)
+									"
+								>
+									Save
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</nb-layout-column>
+</nb-layout>

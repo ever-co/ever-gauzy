@@ -1,7 +1,11 @@
 import { environment as env, environment } from '@env-api/environment';
-import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import {
+	UserRegistrationInput as IUserRegistrationInput,
+	LanguagesEnum,
+	RolePermissions
+} from '@gauzy/models';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { get, post, Response } from 'request';
 import { EmailService } from '../email/email.service';
@@ -35,22 +39,33 @@ export class AuthService {
 		password: string
 	): Promise<{ user: User; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role', 'employee']
+			relations: ['role', 'role.rolePermissions', 'employee']
 		});
 
 		if (!user || !(await bcrypt.compare(password, user.hash))) {
 			return null;
 		}
 
-		const token = sign(
-			{
-				id: user.id,
-				employeeId: user.employee ? user.employee.id : null,
-				role: user.role ? user.role.name : ''
-			},
-			env.JWT_SECRET,
-			{}
-		); // Never expires
+		const tokenData: any = {
+			id: user.id,
+			employeeId: user.employee ? user.employee.id : null
+		};
+
+		if (user.role) {
+			tokenData.role = user.role.name;
+			if (user.role.rolePermissions) {
+				tokenData.permissions = user.role.rolePermissions.map(
+					(rolePermission: RolePermissions) =>
+						rolePermission.permission
+				);
+			} else {
+				tokenData.permissions = null;
+			}
+		} else {
+			tokenData.role = null;
+		}
+
+		const token = sign(tokenData, env.JWT_SECRET, {}); // Never expires
 
 		delete user.hash;
 
@@ -62,10 +77,11 @@ export class AuthService {
 
 	async requestPassword(
 		findObj: any,
+		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<{ id: string; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role']
+			relations: ['role', 'employee']
 		});
 
 		let token: string;
@@ -77,7 +93,20 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
-				this.emailService.requestPassword(user, url, originUrl);
+				const {
+					organizationId
+				} = await this.userOrganizationService.findOne({
+					where: {
+						user
+					}
+				});
+				this.emailService.requestPassword(
+					user,
+					url,
+					languageCode,
+					organizationId,
+					originUrl
+				);
 
 				return {
 					id: user.id,
@@ -109,10 +138,31 @@ export class AuthService {
 		const hash = await this.getPasswordHash(findObject.password);
 		return this.userService.changePassword(findObject.user.id, hash);
 	}
+	/**
+	 * Shared method involved in
+	 * 1. Sign up
+	 * 2. Addition of new user to organization
+	 * 3. User invite accept scenario
+	 */
+	async register(
+		input: IUserRegistrationInput,
+		languageCode: LanguagesEnum
+	): Promise<User> {
+		let tenant = input.user.tenant;
 
-	async register(input: IUserRegistrationInput): Promise<User> {
+		if (input.createdById) {
+			const creatingUser = await this.userService.findOne(
+				input.createdById,
+				{
+					relations: ['tenant']
+				}
+			);
+			tenant = creatingUser.tenant;
+		}
+
 		const user = this.userService.create({
 			...input.user,
+			tenant,
 			...(input.password
 				? {
 						hash: await this.getPasswordHash(input.password)
@@ -127,7 +177,12 @@ export class AuthService {
 			);
 		}
 
-		this.emailService.welcomeUser(input.user, input.originalUrl);
+		this.emailService.welcomeUser(
+			input.user,
+			languageCode,
+			input.organizationId,
+			input.originalUrl
+		);
 
 		return user;
 	}
@@ -276,10 +331,10 @@ export class AuthService {
 					},
 					form: { access_token }
 				},
-				async (error: Error, res: Response, body: any) => {
-					if (error) {
-						console.error(error);
-						throw error;
+				async (innerError: Error) => {
+					if (innerError) {
+						console.error(innerError);
+						throw innerError;
 					} else if (body.error) {
 						console.error(body.error);
 						throw body.error;

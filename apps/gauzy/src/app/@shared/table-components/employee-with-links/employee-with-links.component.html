@@ -1,0 +1,18 @@
+<ng-container *ngIf="value">
+	<ng-container *ngFor="let employee of value; let i = index">
+		<a
+			*ngIf="employee.user"
+			(click)="
+				selectEmployee(
+					employee,
+					employee.user.firstName,
+					employee.user.lastName,
+					employee.user.imageUrl
+				)
+			"
+		>
+			{{ employee.user.firstName }} {{ employee.user.lastName
+			}}<span *ngIf="i !== value.length - 1">, </span>
+		</a>
+	</ng-container>
+</ng-container>

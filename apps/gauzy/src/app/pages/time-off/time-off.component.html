@@ -3,7 +3,7 @@
 		<h4>{{ 'TIME_OFF_PAGE.HEADER' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row">
+		<div class="row mb-3">
 			<button
 				nbButton
 				status="primary"
@@ -23,6 +23,7 @@
 				<nb-radio-group
 					class="align-center"
 					[(ngModel)]="selectedStatus"
+					(ngModelChange)="detectStatusChange($event)"
 				>
 					<nb-radio
 						*ngFor="let status of timeOffStatuses"
@@ -52,16 +53,60 @@
 					></nb-icon>
 					{{ 'TIME_OFF_PAGE.TIME_OFF_SETTINGS' | translate }}
 				</button>
+
+				<div class="actions-container" *ngIf="isRecordSelected">
+					<button
+						(click)="approveDaysOff()"
+						nbButton
+						status="success"
+						class="ml-4"
+					>
+						<nb-icon
+							class="mx-2"
+							icon="checkmark-circle-outline"
+							nbTooltip="{{ 'TIME_OFF_PAGE.ACTIONS.APPROVE_DAYS_OFF_REQUEST' | translate }}"
+							nbTooltipTrigger="hover"
+						></nb-icon>
+					</button>
+
+					<button
+						(click)="denyDaysOff()"
+						nbButton
+						status="warning"
+						class="ml-4"
+					>
+						<nb-icon
+							class="mx-2"
+							icon="close-outline"
+							nbTooltip="{{ 'TIME_OFF_PAGE.ACTIONS.DENY_DAYS_OFF_REQUEST' | translate }}"
+							nbTooltipTrigger="hover"
+						></nb-icon>
+					</button>
+
+					<button
+						(click)="deleteRequest()"
+						nbButton
+						status="danger"
+						class="ml-4"
+					>
+						<nb-icon
+							class="mx-2"
+							icon="trash-2-outline"
+							nbTooltip="{{ 'TIME_OFF_PAGE.ACTIONS.DELETE_DAYS_OFF_REQUEST' | translate }}"
+							nbTooltipTrigger="hover"
+						></nb-icon>
+					</button>
+				</div>
 			</div>
 		</div>
-
-		<!-- <ng2-smart-table
-			class="tyme-off-table"
+		<ng2-smart-table
+			class="time-off-table"
 			style="cursor: pointer;"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
-			(userRowSelect)="selectEmployeeTmp($event)"
+			(userRowSelect)="selectRecord($event)"
 			#timeOffTable
-        </ng2-smart-table> -->
+		>
+		</ng2-smart-table>
 	</nb-card-body>
 </nb-card>

@@ -1,7 +1,17 @@
 {
-  "singleQuote": true,
-  "semi": true,
-  "useTabs": true,
-  "tabWidth": 4,
-  "arrowParens": "always"
+	"singleQuote": true,
+	"semi": true,
+	"useTabs": true,
+	"tabWidth": 4,
+	"arrowParens": "always",
+	"trailingComma": "none",
+	"overrides": [
+		{
+			"files": "*.scss",
+			"options": {
+				"useTabs": false,
+				"tabWidth": 2
+			}
+		}
+	]
 }

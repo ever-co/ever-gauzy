@@ -6,7 +6,7 @@
 				{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_EXPENSES' | translate }}
 			</div>
 			<div class="mx-auto pb-2">
-				<b>{{ expensesTotal }} {{ currency }}</b>
+				<b>{{ recordsData.expenseTotal }} {{ currency }}</b>
 			</div>
 		</nb-card>
 		<nb-card>
@@ -14,7 +14,7 @@
 				{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_INCOME' | translate }}
 			</div>
 			<div class="mx-auto pb-2">
-				<b>{{ incomeTotal }} {{ currency }}</b>
+				<b>{{ recordsData.incomeTotal }} {{ currency }}</b>
 			</div>
 		</nb-card>
 		<nb-card>
@@ -22,7 +22,7 @@
 				{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_PROFIT' | translate }}
 			</div>
 			<div class="mx-auto pb-2">
-				<b>{{ profit }} {{ currency }}</b>
+				<b>{{ recordsData.profit }} {{ currency }}</b>
 			</div>
 		</nb-card>
 	</div>

@@ -120,6 +120,33 @@
 					</div>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label for="preferredLanguage" class="label">{{
+							'FORM.LABELS.PREFERRED_LANGUAGE' | translate
+						}}</label>
+						<nb-select
+							class="d-block"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'
+									| translate
+							}}"
+							formControlName="preferredLanguage"
+							id="preferredLanguage"
+						>
+							<nb-option
+								*ngFor="let language of languages"
+								value="{{ language }}"
+								>{{
+									'USERS_PAGE.EDIT_USER.PREFERRED_LANGUAGE.' +
+										language | translate
+								}}</nb-option
+							>
+						</nb-select>
+					</div>
+				</div>
+			</div>
 
 			<div class="actions">
 				<button

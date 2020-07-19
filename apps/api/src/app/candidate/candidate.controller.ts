@@ -20,10 +20,13 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import {
 	PermissionsEnum,
-	CandidateCreateInput as ICandidateCreateInput
+	CandidateCreateInput as ICandidateCreateInput,
+	LanguagesEnum
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { CandidateCreateCommand, CandidateBulkCreateCommand } from './commands';
+import { I18nLang } from 'nestjs-i18n';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Candidate')
 @UseGuards(AuthGuard('jwt'))
@@ -59,7 +62,7 @@ export class CandidateController extends CrudController<Candidate> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
-			return this.candidateService.create({
+			return await this.candidateService.create({
 				id,
 				...entity
 			});
@@ -69,10 +72,10 @@ export class CandidateController extends CrudController<Candidate> {
 		}
 	}
 
-	@ApiOperation({ summary: 'Find all candidates.' })
+	@ApiOperation({ summary: 'Find all candidates in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found candidates',
+		description: 'Found candidates in the tenant',
 		type: Candidate
 	})
 	@ApiResponse({
@@ -80,14 +83,14 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllCandidades(
+	async findAllCandidates(
 		@Query('data') data: string
 	): Promise<IPagination<Candidate>> {
 		const { relations, findInput } = JSON.parse(data);
 		return this.candidateService.findAll({ where: findInput, relations });
 	}
 
-	@ApiOperation({ summary: 'Find Candidate by id.' })
+	@ApiOperation({ summary: 'Find Candidate by id ' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',
@@ -98,8 +101,14 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<Candidate> {
-		return this.candidateService.findOne(id);
+	async findById(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Candidate> {
+		const { relations = [] } = data;
+		return this.candidateService.findOne(id, {
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -137,6 +146,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Post('/createBulk')
 	async createBulk(
 		@Body() input: ICandidateCreateInput[],
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<Candidate[]> {
 		/**
@@ -144,11 +154,13 @@ export class CandidateController extends CrudController<Candidate> {
 		 */
 		input
 			.filter((entity) => !entity.user.imageUrl)
-			.map(
+			.forEach(
 				(entity) =>
 					(entity.user.imageUrl = getUserDummyImage(entity.user))
 			);
 
-		return this.commandBus.execute(new CandidateBulkCreateCommand(input));
+		return this.commandBus.execute(
+			new CandidateBulkCreateCommand(input, languageCode)
+		);
 	}
 }

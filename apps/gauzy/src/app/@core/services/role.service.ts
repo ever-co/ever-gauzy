@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Role, RolesEnum } from '@gauzy/models';
+import { Role, RolesEnum, ITenant } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 
@@ -8,7 +8,10 @@ import { first } from 'rxjs/operators';
 export class RoleService {
 	constructor(private http: HttpClient) {}
 
-	getRoleByName(findInput?: { name: RolesEnum }): Observable<Role> {
+	getRoleByName(findInput?: {
+		name: RolesEnum;
+		tenant: ITenant;
+	}): Observable<Role> {
 		const data = JSON.stringify({ findInput });
 		return this.http.get<Role>(`/api/role`, {
 			params: { data }

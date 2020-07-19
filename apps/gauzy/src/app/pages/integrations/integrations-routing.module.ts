@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { IntegrationsComponent } from './components/integrations/integrations.component';
 import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
+import { WorkspaceComponent } from '../../@shared/components/workspace/workspace.component';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: IntegrationsComponent,
+		component: WorkspaceComponent,
 		children: [
 			{
 				path: '',

@@ -1,19 +1,19 @@
+<label class="label" *ngIf="label">{{ label | translate }}</label>
+
 <nb-select
-	multiple
-	[selected]="selectedEmployeeIds"
+	[formControl]="select"
+	[multiple]="multiple"
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth
-	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate }}"
+	[disabled]="disabled"
+	[(ngModel)]="employeeId"
+	placeholder="{{ placeholder | translate }}"
 >
-	<nb-option *ngFor="let employee of allEmployees" [value]="employee.id">
-		<img
-			src="{{ employee.user.imageUrl }}"
-			alt="Smiley face"
-			height="40"
-			width="40"
-			style="margin-right:10px"
-		/>
-		{{ employee.user.firstName }}
-		{{ employee.user.lastName }}
+	<nb-option *ngFor="let employee of employees" [value]="employee.id">
+		<ngx-avatar
+			size="sm"
+			[src]="employee.user?.imageUrl"
+			[name]="employee.user?.name"
+		></ngx-avatar>
 	</nb-option>
 </nb-select>

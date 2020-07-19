@@ -1,0 +1,5 @@
+{
+	"rules": {
+		"selector-type-no-unknown": false
+	}
+}

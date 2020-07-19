@@ -17,6 +17,7 @@ import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 import { NoAuthGuard } from './@core/auth/no-auth.guard';
 import { OnboardOrganizationClientModule } from './auth/onboard-organization-client/onboard-organization-client.module';
 import { AcceptClientInvitePage } from './auth/onboard-organization-client/accept-client-invite.component';
+import { EstimateEmailComponent } from './auth/estimate-email/estimate-email.component';
 
 const routes: Routes = [
 	{
@@ -32,6 +33,12 @@ const routes: Routes = [
 				(m) => m.OnboardingModule
 			),
 		canActivate: [AuthGuard, AppModuleGuard]
+	},
+	{
+		path: 'share',
+		loadChildren: () =>
+			import('./share/share.module').then((m) => m.ShareModule),
+		canActivate: []
 	},
 	{
 		path: 'auth',
@@ -76,12 +83,20 @@ const routes: Routes = [
 				path: 'accept-client-invite',
 				component: AcceptClientInvitePage,
 				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'estimate',
+				component: EstimateEmailComponent,
+				canActivate: [NoAuthGuard]
 			}
 		]
 	},
 	{
 		path: 'server-down',
-		loadChildren: './server-down/server-down.module#ServerDownModule'
+		loadChildren: () =>
+			import('./server-down/server-down.module').then(
+				(m) => m.ServerDownModule
+			)
 	},
 	{ path: 'sign-in/success', component: SignInSuccessComponent },
 	{ path: '', redirectTo: 'pages', pathMatch: 'full' },
@@ -89,7 +104,7 @@ const routes: Routes = [
 ];
 
 const config: ExtraOptions = {
-	useHash: true
+	useHash: false
 };
 
 @NgModule({

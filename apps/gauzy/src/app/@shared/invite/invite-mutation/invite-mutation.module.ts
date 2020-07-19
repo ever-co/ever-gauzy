@@ -10,7 +10,7 @@ import { HttpClient } from '@angular/common/http';
 import { UsersService } from '../../../@core/services';
 import { InviteFormsModule } from '../forms/invite-forms.module';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -39,7 +39,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	providers: [
 		OrganizationsService,
 		OrganizationProjectsService,
-		OrganizationClientsService,
+		OrganizationContactService,
 		OrganizationDepartmentsService,
 		UsersService
 	]

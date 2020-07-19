@@ -6,7 +6,9 @@ import {
 	NbCardModule,
 	NbInputModule,
 	NbSelectModule,
-	NbIconModule
+	NbIconModule,
+	NbCheckboxModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TagsService } from '../../@core/services/tags.service';
@@ -17,6 +19,8 @@ import { ColorPickerModule } from 'ngx-color-picker';
 
 @NgModule({
 	imports: [
+		NbTooltipModule,
+		NbCheckboxModule,
 		ThemeModule,
 		FormsModule,
 		NbCardModule,

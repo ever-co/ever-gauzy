@@ -1,10 +1,9 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { OrganizationTeams, Employee } from '@gauzy/models';
+import { OrganizationTeam, Employee, Tag } from '@gauzy/models';
 
 @Component({
-	selector: 'ngx-edit-organization-teams-mutation',
-	templateUrl: './edit-organization-teams-mutation.component.html',
-	styleUrls: ['./edit-organization-teams-mutation.component.scss']
+	selector: 'ga-edit-organization-teams-mutation',
+	templateUrl: './edit-organization-teams-mutation.component.html'
 })
 export class EditOrganizationTeamsMutationComponent implements OnInit {
 	@Input()
@@ -12,7 +11,7 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	@Input()
 	organizationId: string;
 	@Input()
-	team?: OrganizationTeams;
+	team?: OrganizationTeam;
 
 	@Output()
 	canceled = new EventEmitter();
@@ -20,15 +19,22 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	addOrEditTeam = new EventEmitter();
 
 	members: string[];
+	managers: string[];
 	name: string;
 	selectedEmployees: string[];
+	selectedManagers: string[];
+	tags: Tag[] = [];
 
 	ngOnInit() {
 		if (this.team) {
 			this.selectedEmployees = this.team.members.map(
-				(member) => member.id
+				(member) => member.employeeId
+			);
+			this.selectedManagers = this.team.managers.map(
+				(member) => member.employeeId
 			);
 			this.name = this.team.name;
+			this.tags = this.team.tags;
 		}
 	}
 
@@ -36,9 +42,10 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 		this.addOrEditTeam.emit({
 			name: this.name,
 			members: this.members || this.selectedEmployees,
-			organizationId: this.organizationId
+			managers: this.managers || this.selectedManagers,
+			organizationId: this.organizationId,
+			tags: this.tags
 		});
-
 		this.name = '';
 	}
 
@@ -46,7 +53,14 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 		this.members = members;
 	}
 
+	onManagersSelected(managers: string[]) {
+		this.managers = managers;
+	}
+
 	cancel() {
 		this.canceled.emit();
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

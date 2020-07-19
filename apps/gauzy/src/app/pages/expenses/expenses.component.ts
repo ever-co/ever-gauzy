@@ -5,7 +5,8 @@ import {
 	PermissionsEnum,
 	IExpenseCategory,
 	IOrganizationVendor,
-	Tag
+	Tag,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -16,13 +17,19 @@ import { ExpensesService } from '../../@core/services/expenses.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { ActivatedRoute } from '@angular/router';
+import {
+	ActivatedRoute,
+	RouterEvent,
+	NavigationEnd,
+	Router
+} from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -50,13 +57,6 @@ export interface ExpenseViewModel {
 	tags: Tag[];
 }
 
-interface SelectedRowModel {
-	data: ExpenseViewModel;
-	isSelected: boolean;
-	selected: ExpenseViewModel[];
-	source: LocalDataSource;
-}
-
 @Component({
 	templateUrl: './expenses.component.html',
 	styleUrls: ['./expenses.component.scss']
@@ -66,19 +66,19 @@ export class ExpensesComponent extends TranslationBaseComponent
 	smartTableSettings: object;
 	selectedEmployeeId: string;
 	selectedDate: Date;
-
 	smartTableSource = new LocalDataSource();
-
-	selectedExpense: SelectedRowModel;
+	expenses: Expense[];
+	selectedExpense: ExpenseViewModel;
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
 	hasEditPermission = false;
-
+	viewComponentName: ComponentEnum;
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
-
-	@ViewChild('expensesTable', { static: false }) expensesTable;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	disableButton = true;
+	@ViewChild('expensesTable') expensesTable;
 
 	loadSettingsSmartTable() {
 		this.smartTableSettings = {
@@ -131,9 +131,11 @@ export class ExpensesComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService,
-		private expenseCategoriesStore: ExpenseCategoriesStoreService
+		private expenseCategoriesStore: ExpenseCategoriesStoreService,
+		private readonly router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -204,7 +206,23 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}
 			});
 
-		this.loading = false;
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EXPENSES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	canShowTable() {
@@ -247,7 +265,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
-					name: this.employeeName
+					name: formData.employee
+						? `${formData.employee.firstName} ${formData.employee.lastName}`
+						: this.getTranslation('SM_TABLE.EMPLOYEE')
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
@@ -277,11 +297,17 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	openEditExpenseDialog() {
+	openEditExpenseDialog(selectedItem?: Expense) {
+		if (selectedItem) {
+			this.selectExpense({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(ExpensesMutationComponent, {
 				context: {
-					expense: this.selectedExpense.data
+					expense: this.selectedExpense
 				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
@@ -315,7 +341,13 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	openDuplicateExpenseDialog() {
+	openDuplicateExpenseDialog(selectedItem?: Expense) {
+		if (selectedItem) {
+			this.selectExpense({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
 		}
@@ -323,7 +355,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(ExpensesMutationComponent, {
 				context: {
-					expense: this.selectedExpense.data,
+					expense: this.selectedExpense,
 					duplicate: true
 				}
 			})
@@ -336,7 +368,13 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	async deleteExpense() {
+	async deleteExpense(selectedItem?: Expense) {
+		if (selectedItem) {
+			this.selectExpense({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -350,7 +388,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.expenseService.delete(
-							this.selectedExpense.data.id
+							this.selectedExpense.id
 						);
 
 						this.toastrService.primary(
@@ -376,8 +414,13 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	selectExpense(ev: SelectedRowModel) {
-		this.selectedExpense = ev;
+	selectExpense({ isSelected, data }) {
+		const selectedExpense = isSelected ? data : null;
+		if (this.expensesTable) {
+			this.expensesTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedExpense = selectedExpense;
 	}
 
 	private async _loadTableData(
@@ -453,7 +496,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					tags: i.tags
 				};
 			});
-
+			this.expenses = items;
 			this.smartTableSource.load(expenseVM);
 			this.showTable = true;
 		} catch (error) {
@@ -471,6 +514,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					this.store.selectedEmployee.lastName
 			  ).trim()
 			: 'All Employees';
+		this.loading = false;
 	}
 
 	_applyTranslationOnSmartTable() {

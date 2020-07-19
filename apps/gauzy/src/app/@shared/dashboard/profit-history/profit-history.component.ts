@@ -4,6 +4,7 @@ import { DateViewComponent } from '../../table-components/date-view/date-view.co
 import { Store } from '../../../@core/services/store.service';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
+import { EmployeeStatisticsHistory } from '@gauzy/models';
 
 @Component({
 	templateUrl: './profit-history.component.html',
@@ -12,17 +13,21 @@ import { IncomeTableComponent } from './table-components/income-table.component'
 export class ProfitHistoryComponent implements OnInit, OnDestroy {
 	smartTableSettings;
 	smartTableSource = new LocalDataSource();
-	recordsData: any;
-	incomeTotal: number;
-	expensesTotal: number;
-	profit: number;
+	recordsData: {
+		incomes: EmployeeStatisticsHistory[];
+		expenses: EmployeeStatisticsHistory[];
+		incomeTotal: number;
+		expenseTotal: number;
+		profit: number;
+	};
+
 	currency: string;
 
 	constructor(private store: Store) {}
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
-		const incomeList = this.recordsData.income.map((inc) => {
+		const incomeList = this.recordsData.incomes.map((inc) => {
 			return {
 				income: inc.amount,
 				expense: 0,
@@ -40,15 +45,6 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 			};
 		});
 		const combinedTableData = [...incomeList, ...expenseList];
-
-		this.incomeTotal = combinedTableData.reduce((a, b) => a + +b.income, 0);
-
-		this.expensesTotal = combinedTableData.reduce(
-			(a, b) => a + +b.expense,
-			0
-		);
-
-		this.profit = this.incomeTotal - Math.abs(this.expensesTotal);
 
 		this.currency = this.store.selectedOrganization.currency;
 
