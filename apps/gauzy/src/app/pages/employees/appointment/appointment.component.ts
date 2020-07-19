@@ -34,6 +34,8 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
+import { TimeOffService } from '../../../@core/services/time-off.service';
+import { first } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-appointment-calendar',
@@ -77,26 +79,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 	dateSpecificSlots: IAvailabilitySlots[];
 	recurringSlots: IAvailabilitySlots[];
 	appointments: EmployeeAppointment[];
-	timeOff: TimeOff[] = [
-		{
-			start: new Date(
-				moment()
-					.hour(0)
-					.minute(0)
-					.second(0)
-					.subtract(2, 'days')
-					.format()
-			),
-			end: new Date(
-				moment()
-					.hour(0)
-					.minute(0)
-					.second(0)
-					.subtract(1, 'days')
-					.format()
-			)
-		}
-	];
+	timeOff: TimeOff[];
 
 	constructor(
 		private router: Router,
@@ -105,6 +88,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private availabilitySlotsService: AvailabilitySlotsService,
 		private employeeAppointmentService: EmployeeAppointmentService,
+		private timeOffService: TimeOffService,
 		private appointmentEmployeesService: AppointmentEmployeesService,
 		readonly translateService: TranslateService
 	) {
@@ -202,6 +186,18 @@ export class AppointmentComponent extends TranslationBaseComponent
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					if (org.timeZone && !this.selectedEventType) {
+						this.selectedTimeZoneName = org.timeZone;
+						this.selectedTimeZoneOffset = moment
+							.tz(org.timeZone)
+							.format('Z');
+						const calendarApi = this.calendarComponent.getApi();
+						calendarApi &&
+							calendarApi.setOption(
+								'timeZone',
+								this.selectedTimeZoneName
+							);
+					}
 				}
 			});
 
@@ -214,14 +210,28 @@ export class AppointmentComponent extends TranslationBaseComponent
 				} else {
 					this._selectedEmployeeId = null;
 					this.calendarEvents = [];
+					this.renderAppointmentsAndSlots(null);
 					this.calendarComponent.getApi() &&
 						this.calendarComponent.getApi().refetchEvents();
 				}
 			});
 
-		if (this.employee && this.employee.id) {
+		// only call in case of public appointment booking
+		if (this.employee && this.employee.id && this.selectedEventType) {
 			this.renderAppointmentsAndSlots(this.employee.id);
 		}
+	}
+
+	async fetchTimeOff() {
+		const data = await this.timeOffService
+			.getAllTimeOffRecords(['employees', 'employees.user'], {
+				organizationId: this._selectedOrganizationId,
+				employeeId: this._selectedEmployeeId || ''
+			})
+			.pipe(first())
+			.toPromise();
+
+		this.timeOff = data.items;
 	}
 
 	bookPublicAppointment() {
@@ -233,12 +243,26 @@ export class AppointmentComponent extends TranslationBaseComponent
 	}
 
 	renderAppointmentsAndSlots(employeeId: string) {
-		const findObj = {
-			status: null,
-			employee: {
-				id: employeeId
-			}
-		};
+		let findObj;
+
+		if (employeeId) {
+			findObj = {
+				status: null,
+				employee: {
+					id: employeeId
+				}
+			};
+		} else {
+			findObj = {
+				status: null,
+				organization: {
+					id: this._selectedOrganizationId
+				},
+				employee: {
+					id: null
+				}
+			};
+		}
 
 		this.employeeAppointmentService
 			.getAll(['employee', 'employee.user'], findObj)
@@ -248,11 +272,15 @@ export class AppointmentComponent extends TranslationBaseComponent
 				this.calendarComponent.getApi().refetchEvents();
 
 				this.appointments = appointments.items;
+				await this.fetchTimeOff();
 				this.renderBookedAppointments(this.appointments);
-				await this.fetchEmployeeAppointments(employeeId);
+				employeeId &&
+					(await this.fetchEmployeeAppointments(employeeId));
 
-				this.fetchEmployeeAppointments(employeeId);
 				this._fetchAvailableSlots(employeeId);
+				this.calendarComponent
+					.getApi()
+					.setOption('timeZone', this.selectedTimeZoneName);
 			});
 	}
 
@@ -266,7 +294,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		this.renderBookedAppointments(
 			employeeAppointments
 				.map((o) => o.employeeAppointment)
-				.filter((o) => o)
+				.filter((o) => o && o.status !== 'Cancelled')
 		);
 	}
 
@@ -293,11 +321,24 @@ export class AppointmentComponent extends TranslationBaseComponent
 	}
 
 	private async _fetchAvailableSlots(employeeId: string) {
-		const findObj = {
-			employee: {
-				id: employeeId
-			}
-		};
+		let findObj = {};
+
+		if (employeeId) {
+			findObj = {
+				employee: {
+					id: employeeId
+				}
+			};
+		} else {
+			findObj = {
+				organization: {
+					id: this._selectedOrganizationId
+				},
+				employee: {
+					id: null
+				}
+			};
+		}
 
 		try {
 			const slots = await this.availabilitySlotsService.getAll(
@@ -386,7 +427,13 @@ export class AppointmentComponent extends TranslationBaseComponent
 	) {
 		if (
 			startTime === endTime ||
-			new Date(startTime).getTime() < new Date().getTime()
+			new Date(startTime).getTime() < new Date().getTime() ||
+			this.timeOff.find(
+				(o) =>
+					o.status === 'Approved' &&
+					(moment(startTime).isBetween(o.start, o.end, 'day', '[]') ||
+						moment(endTime).isBetween(o.start, o.end, 'day', '[]'))
+			)
 		)
 			return;
 		const durationCheck = type === 'AvailabilitySlot' ? true : false;
@@ -399,6 +446,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		) &&
 			(!durationCheck ||
 				this._selectedEmployeeId ||
+				this._selectedOrganizationId ||
 				moment(endTime).diff(moment(startTime), 'minutes') >=
 					this.allowedDuration) &&
 			this.calendarEvents.push({

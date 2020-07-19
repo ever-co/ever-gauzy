@@ -1,4 +1,9 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+	Injectable,
+	HttpException,
+	HttpStatus,
+	BadRequestException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './task.entity';
 import { Repository } from 'typeorm';
@@ -20,10 +25,20 @@ export class TaskService extends CrudService<Task> {
 
 	async createTask(task: Task) {
 		const user = RequestContext.currentUser();
-		return await this.repository.insert({
+		const obj = this.repository.create({
 			...task,
 			creatorId: user.id
 		});
+		try {
+			// https://github.com/Microsoft/TypeScript/issues/21592
+			return await this.repository.save(obj as any);
+		} catch (err /*: WriteError*/) {
+			throw new BadRequestException(err);
+		}
+		// return await this.repository.insert({
+		// 	...task,
+		// 	creatorId: user.id
+		// });
 	}
 
 	async getMyTasks(employeeId) {
@@ -31,7 +46,7 @@ export class TaskService extends CrudService<Task> {
 			.createQueryBuilder('task')
 			.leftJoinAndSelect('task.project', 'project')
 			.leftJoinAndSelect('task.tags', 'tags')
-      .leftJoinAndSelect('task.organizationSprint', 'sprint')
+			.leftJoinAndSelect('task.organizationSprint', 'sprint')
 			.leftJoinAndSelect('task.members', 'members')
 			.leftJoinAndSelect('members.user', 'users')
 			.leftJoinAndSelect('task.teams', 'teams')
@@ -42,7 +57,7 @@ export class TaskService extends CrudService<Task> {
 			.createQueryBuilder('task')
 			.leftJoinAndSelect('task.project', 'project')
 			.leftJoinAndSelect('task.tags', 'tags')
-      .leftJoinAndSelect('task.organizationSprint', 'sprint')
+			.leftJoinAndSelect('task.organizationSprint', 'sprint')
 			.leftJoinAndSelect('task.members', 'members')
 			.leftJoinAndSelect('members.user', 'users')
 			.leftJoinAndSelect('task.teams', 'teams')
@@ -69,7 +84,7 @@ export class TaskService extends CrudService<Task> {
 				.createQueryBuilder('task')
 				.leftJoinAndSelect('task.project', 'project')
 				.leftJoinAndSelect('task.tags', 'tags')
-        .leftJoinAndSelect('task.organizationSprint', 'sprint')
+				.leftJoinAndSelect('task.organizationSprint', 'sprint')
 				.leftJoinAndSelect('task.members', 'members')
 				.leftJoinAndSelect('task.teams', 'teams')
 				.leftJoinAndSelect('task.creator', 'users')
@@ -98,7 +113,7 @@ export class TaskService extends CrudService<Task> {
 				.createQueryBuilder('task')
 				.leftJoinAndSelect('task.project', 'project')
 				.leftJoinAndSelect('task.tags', 'tags')
-        .leftJoinAndSelect('task.organizationSprint', 'sprint')
+				.leftJoinAndSelect('task.organizationSprint', 'sprint')
 				.leftJoinAndSelect('task.members', 'members')
 				.leftJoinAndSelect('task.teams', 'teams')
 				.leftJoinAndSelect('task.creator', 'users')

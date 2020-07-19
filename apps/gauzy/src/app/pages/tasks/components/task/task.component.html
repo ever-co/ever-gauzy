@@ -19,80 +19,93 @@
 			</h4>
 		</div>
 		<div class="tasks-component__settings">
-			<button nbButton class="tasks-component__setup-btn">
-				<nb-icon icon="settings" (click)="openTasksSettings()">
-				</nb-icon>
-			</button>
+			<div class="project-selector mr-2">
+				<ng-select
+					[items]="projects$ | async"
+					bindName="id"
+					(change)="selectProject($event)"
+					[ngModel]="selectedProject$ | async"
+					placeholder="All Projects"
+				>
+					<ng-template
+						ng-option-tmp
+						let-item="item"
+						let-index="index"
+					>
+						{{ item.name }}
+					</ng-template>
+					<ng-template ng-label-tmp let-item="item">
+						<div class="selector-template">
+							<span>{{ item.name }}</span>
+						</div>
+					</ng-template>
+				</ng-select>
+			</div>
+			<ng-container *ngIf="selectedProject$ | async as selectedProject">
+				<button
+					class="project-settings"
+					*ngIf="!!selectedProject"
+					nbButton
+					class="tasks-component__setup-btn mr-2"
+				>
+					<nb-icon
+						icon="settings"
+						(click)="openTasksSettings(selectedProject)"
+					></nb-icon>
+				</button>
+			</ng-container>
 			<ga-layout-selector
+				class="layout-selector"
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
-			<button
-				nbButton
-				status="success"
-				(click)="createTaskDialog()"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
-		<ng-container *ngIf="isTasksPage()">
-			<ng2-smart-table
-				[settings]="settingsSmartTable"
-				[source]="tasks$ | async"
-				(userRowSelect)="selectTask($event)"
-				style="cursor: pointer;"
-				#tasksTable
-				*ngIf="dataLayoutStyle === 'TABLE'"
-			>
-			</ng2-smart-table>
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="tasks$ | async"
-				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-				[buttonTemplate]="actionButtons"
-			></ga-card-grid>
-		</ng-container>
-		<ng-container *ngIf="isMyTasksPage()">
-			<ng2-smart-table
-				[settings]="settingsSmartTable"
-				[source]="myTasks$ | async"
-				(userRowSelect)="selectTask($event)"
-				style="cursor: pointer;"
-				#tasksTable
-				*ngIf="dataLayoutStyle === 'TABLE'"
-			>
-			</ng2-smart-table>
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="myTasks$ | async"
-				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-				[buttonTemplate]="actionButtons"
-			></ga-card-grid>
-		</ng-container>
-		<ng-container *ngIf="isTeamTaskPage()">
-			<ng2-smart-table
-				[settings]="settingsSmartTable"
-				[source]="teamTasks$ | async"
-				(userRowSelect)="selectTask($event)"
-				style="cursor: pointer;"
-				#tasksTable
-				*ngIf="dataLayoutStyle === 'TABLE'"
-			>
-			</ng2-smart-table>
-			<ga-card-grid
-				[settings]="settingsSmartTable"
-				[source]="teamTasks$ | async"
-				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-				[buttonTemplate]="actionButtons"
-			></ga-card-grid>
+		<ng-container [ngSwitch]="viewMode">
+			<ng-template [ngSwitchCase]="'GRID'">
+				<div class="mb-3">
+					<button
+						nbButton
+						status="success"
+						(click)="createTaskDialog()"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+						>{{ 'BUTTONS.ADD' | translate }}
+					</button>
+					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+						<ng-container
+							*ngTemplateOutlet="actionButtons"
+						></ng-container>
+					</ng-container>
+				</div>
+				<ng-container>
+					<ng2-smart-table
+						[settings]="settingsSmartTable"
+						[source]="availableTasks$ | async"
+						(userRowSelect)="selectTask($event)"
+						style="cursor: pointer;"
+						#tasksTable
+						*ngIf="dataLayoutStyle === 'TABLE'"
+					>
+					</ng2-smart-table>
+					<ga-card-grid
+						[settings]="settingsSmartTable"
+						[source]="availableTasks$ | async"
+						*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+						[buttonTemplate]="actionButtons"
+					></ga-card-grid>
+				</ng-container>
+			</ng-template>
+
+			<ng-template [ngSwitchCase]="'SPRINT'">
+				<ga-tasks-sprint-view
+					(createTaskEvent)="createTaskDialog()"
+					(editTaskEvent)="editTaskDialog($event)"
+					[project]="selectedProject$ | async"
+					[tasks]="availableTasks$ | async"
+				></ga-tasks-sprint-view>
+			</ng-template>
 		</ng-container>
 	</nb-card-body>
 </nb-card>

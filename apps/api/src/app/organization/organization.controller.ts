@@ -126,6 +126,7 @@ export class OrganizationController extends CrudController<Organization> {
 	): Promise<Organization> {
 		return this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
+
 	@Put(':id')
 	async update(
 		@Param('id') id: string,

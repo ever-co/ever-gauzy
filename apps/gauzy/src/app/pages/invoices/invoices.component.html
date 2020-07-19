@@ -21,6 +21,39 @@
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 
+			<nb-select
+				class="mr-2 show-columns"
+				*ngIf="!isEstimate"
+				[multiple]="true"
+				[(selected)]="columns"
+				(selectedChange)="selectColumn($event)"
+				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
+			>
+				<nb-option
+					class="column"
+					*ngFor="let column of invoiceColumns"
+					[value]="column"
+				>
+					{{ column }}
+				</nb-option>
+			</nb-select>
+			<nb-select
+				class="mr-2 show-columns"
+				*ngIf="isEstimate"
+				[multiple]="true"
+				[(selected)]="columns"
+				(selectedChange)="selectColumn($event)"
+				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
+			>
+				<nb-option
+					class="column"
+					*ngFor="let column of estimateColumns"
+					[value]="column"
+				>
+					{{ column }}
+				</nb-option>
+			</nb-select>
+
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
@@ -120,34 +153,69 @@
 		[nbContextMenu]="settingsContextMenu"
 		nbContextMenuPlacement="top"
 		(click)="selectMenu(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
+		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 	>
 		<nb-icon class="icons" icon="settings-2-outline"></nb-icon>
 	</button>
 
-	<!-- <button *ngIf="dataLayoutStyle === 'TABLE'" nbButton status="info" (click)="duplicate(selectedItem)" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="duplicate(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
 		<nb-icon class="mr-1" icon="copy-outline"></nb-icon>
 		{{ 'BUTTONS.DUPLICATE' | translate }}
 	</button>
-	<button *ngIf="dataLayoutStyle === 'TABLE'" nbButton status="info" (click)="send(selectedItem)" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="send(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
 		<nb-icon class="mr-1" icon="upload-outline"> </nb-icon>
 		{{ 'BUTTONS.SEND' | translate }}
 	</button>
-	<button *ngIf="isEstimate && dataLayoutStyle === 'TABLE' " nbButton status="info" (click)="convert(selectedItem)"
-		class="mr-2" [disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+	<button
+		*ngIf="isEstimate && dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="convert(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
 		<nb-icon class="mr-1" icon="swap"> </nb-icon>
 		{{ 'BUTTONS.CONVERT_TO_INVOICE' | translate }}
 	</button>
-	<button *ngIf="dataLayoutStyle === 'TABLE'" nbButton status="info" (click)="email(selectedItem)" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="email(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
 		<nb-icon class="mr-1" icon="email-outline"> </nb-icon>
 		{{ 'BUTTONS.EMAIL' | translate }}
 	</button>
-	<button *ngIf="dataLayoutStyle === 'TABLE'" nbButton status="danger" (click)="delete(selectedItem)" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="danger"
+		(click)="delete(selectedItem)"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
 		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 		{{ 'BUTTONS.DELETE' | translate }}
-	</button> -->
+	</button>
 </ng-template>

@@ -3,6 +3,7 @@ import * as path from 'path';
 const Store = require('electron-store');
 import TimerHandler from './timer';
 import { LocalStore } from './getSetStore';
+import { ipcMain } from 'electron';
 
 export default class TrayIcon {
 	tray: Tray;
@@ -20,7 +21,7 @@ export default class TrayIcon {
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
-		const contextMenu = Menu.buildFromTemplate([
+		const contextMenu = [
 			{
 				id: '0',
 				label: 'Now tracking time - 0h 0m',
@@ -32,13 +33,12 @@ export default class TrayIcon {
 				click(menuItem) {
 					const projectSelect = store.get('project');
 					if (projectSelect && projectSelect.projectId) {
-						timerHandler.startTimer(win2, knex, win3);
-						const timeMenu = menuItem.menu.getMenuItemById('0');
-						getTime();
-						timeMenu.visible = true;
-						const stopMenu = menuItem.menu.getMenuItemById('2');
-						stopMenu.enabled = true;
-						menuItem.enabled = false;
+						win3.show();
+						win3.webContents.send(
+							'timer_tracker_show',
+							LocalStore.beforeRequestParams()
+						);
+						win3.webContents.send('start_from_tray');
 					} else {
 						const auth = store.get('auth');
 						auth.apiHost = LocalStore.getServerUrl();
@@ -52,12 +52,8 @@ export default class TrayIcon {
 				label: 'Stop Tracking Time',
 				enabled: false,
 				click(menuItem) {
-					const startMenu = menuItem.menu.getMenuItemById('1');
-					const timeView = menuItem.menu.getMenuItemById('0');
-					timeView.visible = false;
-					startMenu.enabled = true;
-					menuItem.enabled = false;
-					timerHandler.stopTime(win2, win3, knex);
+					win3.show();
+					win3.webContents.send('stop_from_tray');
 				}
 			},
 			{
@@ -86,11 +82,32 @@ export default class TrayIcon {
 					app.quit();
 				}
 			}
-		]);
-		const getTime = () => {
+		];
+
+		const periodicUpdate = () => {
 			timerHandler.updateTime(win2, knex);
 		};
-		this.tray.setContextMenu(contextMenu);
+		this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+
+		ipcMain.on('update_tray_start', (event, arg) => {
+			contextMenu[1].enabled = false;
+			contextMenu[0].visible = true;
+			contextMenu[2].enabled = true;
+			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+		});
+
+		ipcMain.on('update_tray_stop', (event, arg) => {
+			contextMenu[1].enabled = true;
+			contextMenu[0].visible = false;
+			contextMenu[2].enabled = false;
+			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+		});
+
+		ipcMain.on('update_tray_time_update', (event, arg) => {
+			console.log('update time view');
+			contextMenu[0].label = `Now tracking time - ${arg.hours}h ${arg.minutes}m`;
+			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+		});
 		console.log(this.tray);
 	}
 }

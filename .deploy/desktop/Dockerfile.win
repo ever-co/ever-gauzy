@@ -1,0 +1,23 @@
+FROM electronuserland/builder:wine as windows
+
+WORKDIR /opt/src
+
+COPY apps/desktop/package.json ./apps/desktop/
+COPY apps/api/package.json ./apps/api/
+COPY package.json yarn.lock ./
+
+RUN yarn install
+
+COPY . .
+
+RUN yarn bootstrap
+
+RUN yarn build:desktop:windows
+
+#=========================================================================#
+
+FROM debian:buster-slim
+
+WORKDIR /opt/artifacts
+
+COPY --from=windows /opt/src/dist/apps/desktop-packages ./windows/

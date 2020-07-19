@@ -1,111 +1,68 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 
 import * as moment from 'moment';
-import { NbDialogService } from '@nebular/theme';
-import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { tap, takeUntil, take } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
 
-import { OrganizationSprint, Organization } from '@gauzy/models';
-import { ItemActionControl } from 'apps/gauzy/src/app/@shared/components/items-actions/items-actions.component';
-import { SprintDialogComponent } from './sprint-dialog/sprint-dialog.component';
-import { SprintStoreService } from './services/sprint-store.service';
+import { OrganizationSprint, OrganizationProjects } from '@gauzy/models';
+import { SprintStoreService } from '../../../../../../../@core/services/organization-sprint-store.service';
+import { ItemActionType } from 'apps/gauzy/src/app/@shared/components/editable-grid/gauzy-editable-grid.component';
 
 @Component({
 	selector: 'ngx-tasks-sprint-settings-view',
-	templateUrl: './tasks-sprint-settings-view.component.html',
-	styleUrls: ['./tasks-sprint-settings-view.component.css']
+	templateUrl: './tasks-sprint-settings-view.component.html'
 })
 export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
-	actionsConfig$: BehaviorSubject<ItemActionControl[]> = new BehaviorSubject(
-		[]
+	@Input() project: OrganizationProjects;
+	sprints$: Observable<OrganizationSprint[]> = this.store.sprints$.pipe(
+		map((sprints: OrganizationSprint[]): OrganizationSprint[] =>
+			sprints.filter(
+				(sprint: OrganizationSprint) =>
+					sprint.projectId === this.project.id
+			)
+		)
 	);
-	sprints$: Observable<OrganizationSprint[]> = this.store.sprints$;
-	selectedSprint: OrganizationSprint = this.store.selectedSprint;
 	moment: any = moment;
 	private _onDestroy$: Subject<void> = new Subject<void>();
 
-	constructor(
-		private dialogService: NbDialogService,
-		private store: SprintStoreService
-	) {}
+	constructor(private store: SprintStoreService) {}
 
-	ngOnInit(): void {
-		this.setItemActions();
-	}
+	ngOnInit(): void {}
 
-	private setItemActions(): void {
-		this.actionsConfig$.next([
-			{
-				type: 'add',
-				actionCallback: () => this.createNewSprint()
-			},
-			{
-				type: 'edit',
-				disabled: !this.store.isSprintSelected(),
-				actionCallback: (index: number) => {
-					this.editSprint();
-				}
-			},
-			{
-				type: 'delete',
-				disabled: !this.store.isSprintSelected(),
-				actionCallback: (index: number) => this.deleteSprint()
-			}
-		]);
-	}
+	sprintAction({
+		actionType,
+		data
+	}: {
+		actionType: ItemActionType;
+		data: OrganizationSprint;
+	}): void {
+		switch (actionType) {
+			case 'create':
+				const createSprintInput: OrganizationSprint = {
+					...data,
+					organizationId: this.project.organizationId,
+					projectId: this.project.id
+				};
+				this.store
+					.createSprint(createSprintInput)
+					.pipe(takeUntil(this._onDestroy$))
+					.subscribe();
+				break;
 
-	selectSprint(selectedSprint: OrganizationSprint): void {
-		console.log('selected item index: ', selectedSprint);
-		this.store.selectSprint(selectedSprint);
-		this.setItemActions();
-	}
+			case 'edit':
+				this.store
+					.updateSprint(data)
+					.pipe(takeUntil(this._onDestroy$))
+					.subscribe();
+				break;
 
-	createNewSprint(): void {
-		this.dialogService
-			.open(SprintDialogComponent, {
-				context: {
-					sprintAction: 'create'
-				}
-			})
-			.onClose.pipe(
-				tap((sprintData: OrganizationSprint) => {
-					this.store.createSprint({
-						...sprintData,
-						organization: {} as Organization,
-						tenant: { name: 'Tenant Name' }
-					});
-				}),
-				take(1),
-				takeUntil(this._onDestroy$)
-			)
-			.subscribe();
-	}
-
-	editSprint(): void {
-		this.dialogService
-			.open(SprintDialogComponent, {
-				context: {
-					sprintAction: 'edit',
-					sprintData: this.store.selectedSprint
-				}
-			})
-			.onClose.pipe(
-				tap((updatedSprint: OrganizationSprint) => {
-					this.store.updateSprint({
-						...this.store.selectedSprint,
-						...updatedSprint
-					});
-					this.setItemActions();
-				}),
-				take(1),
-				takeUntil(this._onDestroy$)
-			)
-			.subscribe();
-	}
-
-	deleteSprint(): void {
-		this.store.deleteSprint();
-		this.setItemActions();
+			case 'delete':
+				this.store
+					.deleteSprint(data.id)
+					.pipe(takeUntil(this._onDestroy$))
+					.subscribe();
+				break;
+		}
 	}
 
 	ngOnDestroy(): void {

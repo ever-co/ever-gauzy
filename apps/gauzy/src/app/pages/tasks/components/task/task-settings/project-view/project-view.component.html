@@ -1,24 +1,30 @@
-<div class="row settings">
+<div class="d-flex my-2 settings">
 	<div class="col-6 settings__name">
-		<span>List Type:</span>
+		<span>Task View Mode:</span>
 	</div>
 	<div class="col-6 settings__value">
-		<nb-select
-			placeholder="Select list type"
-			[(ngModel)]="selectedProjectTaskListType"
-			(ngModelChange)="setListType($event)"
-			[(selected)]="selectedProjectTaskListType"
+		<ng-select
+			[items]="taskViewModeList"
+			bindLabel="type"
+			binValue="name"
+			(change)="setTaskViewMode($event)"
+			[(ngModel)]="selectedTaskViewMode"
+			placeholder="Task View Mode"
 		>
-			<nb-option
-				*ngFor="let listType of projectTaskListType"
-				[value]="listType"
-			>
-				{{ listType }}
-			</nb-option>
-		</nb-select>
+			<ng-template ng-option-tmp let-item="item" let-index="index">
+				{{ item.name }}
+			</ng-template>
+			<ng-template ng-label-tmp let-item="item">
+				<div class="selector-template">
+					<span>{{ item.name }}</span>
+				</div>
+			</ng-template>
+		</ng-select>
 	</div>
 </div>
 <hr />
-<ng-container *ngIf="selectedProjectTaskListType === taskListTypes.Sprint">
-	<ngx-tasks-sprint-settings-view></ngx-tasks-sprint-settings-view>
+<ng-container *ngIf="selectedTaskViewMode.type === taskViewModeType.SPRINT">
+	<ngx-tasks-sprint-settings-view
+		[project]="project"
+	></ngx-tasks-sprint-settings-view>
 </ng-container>

@@ -2964,12 +2964,12 @@
   resolved "https://registry.yarnpkg.com/@nestjsx/util/-/util-4.6.2.tgz#89bd31447a30f9666d7ad1616111c78b2d61dd56"
   integrity sha512-YG2gQvSm7p8zBFaW6MFM5r1Ihk4Vr189SB2OTr7fV7qcjPS+02v7xILw2dTz2emdmu0t0AgCL2RU1V0lY8Aa9w==
 
-"@ng-select/ng-select@^3.7.3":
-  version "3.7.3"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-3.7.3.tgz#317fbf94211fb2044f6ab233795cf1cbab4b44a3"
-  integrity sha512-Duw5t0b9Jup/tVEoDHLm+UhGv5RnwQ7pQorCAQc4LZR35oOZFjec8FrEGGtgVAGtwaQAYyd7PSMk3nEsWPg6AQ==
+"@ng-select/ng-select@4.0.4":
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-4.0.4.tgz#fe4ba82f4ab6110627fefb072e81bfb3eb79fafb"
+  integrity sha512-KaVlVdt7DWZBfmL6nc16i80l1dDx0cO3eGjW+grQPnhZ9KurapioQUYVf6dSmYyWyBXihvt4I3SWkCzqSWFJbQ==
   dependencies:
-    tslib "^1.9.0"
+    tslib "^1.10.0"
 
 "@ngtools/webpack@9.1.7":
   version "9.1.7"
@@ -19910,6 +19910,15 @@ pascalcase@^0.1.1:
   resolved "https://registry.yarnpkg.com/pascalcase/-/pascalcase-0.1.1.tgz#b363e55e8006ca6fe21784d2db22bd15d7917f14"
   integrity sha1-s2PlXoAGym/iF4TS2yK9FdeRfxQ=
 
+passport-auth0@^1.3.3:
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/passport-auth0/-/passport-auth0-1.3.3.tgz#d377f9aea2f6e89af0318a6364a847e80966bb88"
+  integrity sha512-rcjT0fV6HnJuSb8REwREl42/K5LpGK+doekDgEQbtT/pNwLAjfobSMiQ3RbTP1CkiEcDVRucGucuDSfgqHX/Vg==
+  dependencies:
+    passport-oauth "^1.0.0"
+    passport-oauth2 "^1.5.0"
+    request "^2.88.0"
+
 passport-azure-ad-oauth2@^0.0.4:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/passport-azure-ad-oauth2/-/passport-azure-ad-oauth2-0.0.4.tgz#1a09d8869efd4afd095116e228941961b3a5c120"
@@ -19962,7 +19971,7 @@ passport-oauth1@1.x.x:
     passport-strategy "1.x.x"
     utils-merge "1.x.x"
 
-passport-oauth2@1.x.x:
+passport-oauth2@1.x.x, passport-oauth2@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/passport-oauth2/-/passport-oauth2-1.5.0.tgz#64babbb54ac46a4dcab35e7f266ed5294e3c4108"
   integrity sha512-kqBt6vR/5VlCK8iCx1/KpY42kQ+NEHZwsSyt4Y6STiNjU+wWICG1i8ucc1FapXDGO15C5O5VZz7+7vRzrDPXXQ==
@@ -19973,7 +19982,7 @@ passport-oauth2@1.x.x:
     uid2 "0.0.x"
     utils-merge "1.x.x"
 
-passport-oauth@1.0.0, passport-oauth@1.0.x:
+passport-oauth@1.0.0, passport-oauth@1.0.x, passport-oauth@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/passport-oauth/-/passport-oauth-1.0.0.tgz#90aff63387540f02089af28cdad39ea7f80d77df"
   integrity sha1-kK/2M4dUDwIImvKM2tOep/gNd98=

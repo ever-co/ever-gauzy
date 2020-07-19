@@ -111,5 +111,21 @@ export class AppComponent {
 				appService.updateTimeLog(arg);
 			}
 		);
+
+		this.electronService.ipcRenderer.on('time_toggle', (event, arg) => {
+			appService.toggleApi(arg).then((res) => {
+				event.sender.send('return_toggle_api', {
+					result: res,
+					timerId: arg.timerId
+				});
+			});
+		});
+
+		this.electronService.ipcRenderer.on(
+			'update_toggle_timer',
+			(event, arg) => {
+				appService.toggleApi(arg);
+			}
+		);
 	}
 }

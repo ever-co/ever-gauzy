@@ -30,6 +30,7 @@ export class FileUploaderInputComponent {
 
 	@Output()
 	uploadedImgUrl: EventEmitter<string> = new EventEmitter<string>();
+
 	uploader: FileUploader;
 
 	private oldValue: string;

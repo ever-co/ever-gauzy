@@ -2,49 +2,77 @@
 	<div class="sprints__settings">
 		<nb-card>
 			<nb-card-header>Sprints Settings</nb-card-header>
-			<nb-card-body>
-				<nb-tabset>
-					<nb-tab
-						*ngIf="sprints$ | async as sprints"
-						tabTitle="Sprints"
-						[badgeText]="sprints.length"
-						badgePosition="top right"
-						badgeStatus="success"
+			<nb-card-body *ngIf="sprints$ | async as sprints">
+				<ga-editable-grid
+					[itemTmpl]="item"
+					[items]="sprints"
+					[addDialogTmpl]="editDialog"
+					[editDialogTmpl]="editDialog"
+					[deleteDialogTmpl]="deleteDialog"
+					(dialogData)="sprintAction($event)"
+				>
+					<ng-template
+						#editDialog
+						let-sprint
+						let-action="action"
+						let-dialogRef="dialogRef"
 					>
-						<nb-list>
-							<nb-list-item>
-								<ngx-items-actions
-									[config]="actionsConfig$ | async"
-								></ngx-items-actions>
-							</nb-list-item>
-							<nb-list-item
-								*ngFor="let sprint of sprints; let i = index"
-								[ngClass]="{
-									'selected-sprint':
-										selectedSprint?.id === sprint.id
-								}"
+						<ngx-sprint-dialog
+							[action]="action"
+							[sprintData]="sprint"
+							[dialogRef]="dialogRef"
+						></ngx-sprint-dialog>
+					</ng-template>
+					<ng-template
+						#deleteDialog
+						let-sprint
+						let-dialogRef="dialogRef"
+					>
+						<nb-card>
+							<nb-card-header>Delete Sprint</nb-card-header>
+							<nb-card-body
+								>Are you shure you want delete sprint:
+								{{ sprint.name }}?</nb-card-body
 							>
-								<div
-									class="d-flex justify-content-between sprints__item"
-									(click)="selectSprint(sprint)"
+							<nb-card-footer>
+								<button nbButton (click)="dialogRef.close()">
+									No
+								</button>
+								<button
+									nbButton
+									(click)="dialogRef.close(sprint)"
 								>
-									<span>{{ sprint.name }}</span>
-									<span>{{ sprint.goal }}</span>
-									<span>{{
-										moment(sprint.startDate).format(
+									Yes
+								</button>
+							</nb-card-footer>
+						</nb-card>
+					</ng-template>
+
+					<ng-template #item let-sprint>
+						<div
+							class="d-flex justify-content-between px-2 sprints__item w-100"
+						>
+							<span class="col">{{ sprint.name }}</span>
+							<span class="col">{{
+								sprint.goal || 'No goal setts'
+							}}</span>
+							<span class="col">{{
+								sprint.startDate
+									? moment(sprint.startDate).format(
 											'DD-MM-YYYY'
-										)
-									}}</span>
-									<span>{{
-										moment(sprint.endDate).format(
+									  )
+									: null
+							}}</span>
+							<span class="col">{{
+								sprint.startDate
+									? moment(sprint.endDate).format(
 											'DD-MM-YYYY'
-										)
-									}}</span>
-								</div>
-							</nb-list-item>
-						</nb-list>
-					</nb-tab>
-				</nb-tabset>
+									  )
+									: null
+							}}</span>
+						</div>
+					</ng-template>
+				</ga-editable-grid>
 			</nb-card-body>
 		</nb-card>
 	</div>

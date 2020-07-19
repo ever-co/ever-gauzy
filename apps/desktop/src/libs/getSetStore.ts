@@ -22,7 +22,8 @@ export const LocalStore = {
 			token: auth.token,
 			employeeId: auth.employeeId,
 			projectId: projectInfo.projectId,
-			taskId: projectInfo.taskId
+			taskId: projectInfo.taskId,
+			note: projectInfo.note
 		};
 	}
 };

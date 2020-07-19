@@ -733,6 +733,11 @@
 			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров",
 			"ADD_KPI": "Добавить KPI"
 		},
+		"MESSAGE": {
+			"NO_KEY_RESULT": "Нет ключевых результатов для отображения.",
+			"NO_UPDATES": "Пока нет обновлений.",
+			"NO_ALIGNMENT": "Пока нет выравниваний."
+		},
 		"LEVELS": {
 			"ORGANIZATION": "Организация",
 			"TEAM": "Команда",
@@ -1005,6 +1010,7 @@
 		"LEVEL_NAME": "Название уровня",
 		"EXPENSE_NAME": "Имя Расхода",
 		"EMPLOYMENT_TYPE_NAME": "Название типа занятости",
+		"DOCUMENTS": "Документы",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -1391,6 +1397,11 @@
 		"ESTIMATE_MINUTES": "Минс",
 		"TASKS_STATUS": "Статус"
 	},
+	"SPRINTS_PAGE": {
+		"SPRINT_ADDED": "Спринт добавлен",
+		"SPRINT_UPDATED": "Спринт обновлен",
+		"SPRINT_DELETED": "Спринт удален"
+	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
 		"ADD_USER": "Добавить пользователя",
@@ -1529,6 +1540,7 @@
 		"NOT_APPLIED": "Не применено",
 		"STATUS": "Статус",
 		"SET_STATUS": "Установить статус",
+		"SHOW_COLUMNS": "Показать колонки",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",

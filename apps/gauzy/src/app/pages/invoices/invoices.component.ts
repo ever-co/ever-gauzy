@@ -17,7 +17,9 @@ import {
 	InvoiceTypeEnum,
 	ComponentLayoutStyleEnum,
 	InvoiceStatusTypesEnum,
-	EstimateStatusTypesEnum
+	EstimateStatusTypesEnum,
+	InvoiceColumnsEnum,
+	EstimateColumnsEnum
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -53,9 +55,12 @@ export class InvoicesComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	invoiceStatusTypes = Object.values(InvoiceStatusTypesEnum);
 	estimateStatusTypes = Object.values(EstimateStatusTypesEnum);
+	invoiceColumns = Object.values(InvoiceColumnsEnum);
+	estimateColumns = Object.values(EstimateColumnsEnum);
 	status: string;
 	settingsContextMenu: NbMenuItem[];
 	menuArray = [];
+	columns = Object.values(InvoiceColumnsEnum);
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -453,35 +458,134 @@ export class InvoicesComponent extends TranslationBaseComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '25%',
+					width: '10px',
 					renderComponent: NotesWithTagsComponent
-				},
-				totalValue: {
-					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
-					type: 'text',
-					filter: false,
-					width: '25%',
-					valuePrepareFunction: (cell, row) => {
-						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
-					}
-				},
-				status: {
-					title: this.getTranslation('INVOICES_PAGE.STATUS'),
-					type: 'text',
-					filter: false,
-					width: '25%'
 				}
 			}
 		};
 
-		if (!this.isEstimate) {
-			this.settingsSmartTable['columns']['paid'] = {
-				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-				type: 'custom',
-				renderComponent: InvoicePaidComponent,
+		if (this.columns.includes(InvoiceColumnsEnum.INVOICE_DATE)) {
+			this.settingsSmartTable['columns']['invoiceDate'] = {
+				title: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+				type: 'text',
+				width: '10%',
 				filter: false,
-				width: '25%'
+				valuePrepareFunction: (cell, row) => {
+					return `${cell.slice(0, 10)}`;
+				}
 			};
+		}
+
+		if (this.columns.includes(InvoiceColumnsEnum.DUE_DATE)) {
+			this.settingsSmartTable['columns']['dueDate'] = {
+				title: this.getTranslation(
+					'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
+				),
+				type: 'text',
+				width: '10%',
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					return `${cell.slice(0, 10)}`;
+				}
+			};
+		}
+
+		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
+			this.settingsSmartTable['columns']['status'] = {
+				title: this.getTranslation('INVOICES_PAGE.STATUS'),
+				type: 'text',
+				width: '5%',
+				filter: false
+			};
+		}
+
+		if (this.columns.includes(InvoiceColumnsEnum.TOTAL_VALUE)) {
+			this.settingsSmartTable['columns']['totalValue'] = {
+				title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
+				type: 'text',
+				filter: false,
+				width: '8%',
+				valuePrepareFunction: (cell, row) => {
+					return `${parseFloat(cell).toFixed(2)}`;
+				}
+			};
+		}
+
+		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
+			this.settingsSmartTable['columns']['tax'] = {
+				title: this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_TAX'),
+				type: 'text',
+				width: '8%',
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					return `${cell} ${row.taxType === 'Percent' ? '%' : ''}`;
+				}
+			};
+		}
+
+		if (this.columns.includes(InvoiceColumnsEnum.TAX_2)) {
+			this.settingsSmartTable['columns']['tax2'] = {
+				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
+				type: 'text',
+				width: '8%',
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					return `${cell} ${row.tax2Type === 'Percent' ? '%' : ''}`;
+				}
+			};
+		}
+
+		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
+			this.settingsSmartTable['columns']['discountValue'] = {
+				title: this.getTranslation(
+					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
+				),
+				type: 'text',
+				width: '8%',
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					return `${cell} ${
+						row.discountType === 'Percent' ? '%' : ''
+					}`;
+				}
+			};
+		}
+
+		if (this.columns.includes(InvoiceColumnsEnum.CURRENCY)) {
+			this.settingsSmartTable['columns']['currency'] = {
+				title: this.getTranslation(
+					'INVOICES_PAGE.INVOICES_SELECT_CURRENCY'
+				),
+				type: 'text',
+				width: '8%',
+				filter: false
+			};
+		}
+
+		if (this.columns.includes(InvoiceColumnsEnum.CLIENT)) {
+			this.settingsSmartTable['columns']['client'] = {
+				title: this.getTranslation(
+					'INVOICES_PAGE.INVOICES_SELECT_CLIENT'
+				),
+				type: 'text',
+				width: '8%',
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					return row.toClient.name;
+				}
+			};
+		}
+
+		if (!this.isEstimate) {
+			if (this.columns.includes(InvoiceColumnsEnum.PAID_STATUS)) {
+				this.settingsSmartTable['columns']['paid'] = {
+					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
+					type: 'custom',
+					width: '20%',
+					renderComponent: InvoicePaidComponent,
+					filter: false
+				};
+			}
 		}
 	}
 
@@ -493,6 +597,11 @@ export class InvoicesComponent extends TranslationBaseComponent
 			...this.selectedInvoice,
 			status: $event
 		});
+	}
+
+	selectColumn($event) {
+		this.columns = $event;
+		this.loadSmartTable();
 	}
 
 	_applyTranslationOnSmartTable() {

@@ -17,6 +17,7 @@ export interface Goal extends IBaseEntityModel {
 	progress: number;
 	organizationId: string;
 	keyResults?: Array<KeyResult>;
+	alignedKeyResult?: KeyResult;
 }
 
 export interface KeyResult extends IBaseEntityModel {

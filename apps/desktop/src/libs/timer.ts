@@ -29,13 +29,9 @@ export default class Timerhandler {
 			userId: ProjectInfo.taskId
 		});
 
-		const started = this.timeStart.toDate();
-		const stopped = moment(started).add(10, 'seconds').utc().format();
-		win2.webContents.send('set_time_log', {
+		win2.webContents.send('time_toggle', {
 			...LocalStore.beforeRequestParams(),
-			timerId: this.lastTimer[0],
-			startedAt: this.timeStart.utc().format(),
-			stoppedAt: stopped
+			timerId: this.lastTimer[0]
 		});
 
 		this.intevalTimer = setInterval(() => {
@@ -82,34 +78,20 @@ export default class Timerhandler {
 	updateTime(win2, knex) {
 		this.intervalUpdateTime = setInterval(() => {
 			this.getSetActivity(knex, win2);
-			this.getSetTimeSlot(win2, knex);
+			this.updateToggle(win2, knex);
 		}, 60 * 1000 * 5);
+	}
+
+	updateToggle(win2, knex) {
+		win2.webContents.send('update_toggle_timer', {
+			...LocalStore.beforeRequestParams(),
+			timerId: this.lastTimer[0]
+		});
 	}
 
 	getSetTimeSlot(win2, knex) {
 		TimerData.getTimer(knex, this.lastTimer[0]).then((timerD) => {
-			TimerData.getAfk(knex, this.lastTimer[0]).then((afk) => {
-				win2.webContents.send('set_time_slot', {
-					...LocalStore.beforeRequestParams(),
-					duration: this.timeRecordSecond,
-					keyboard: afk && afk.length > 0 ? afk[0].durations : 0,
-					mouse: afk && afk.length > 0 ? afk[0].durations : 0,
-					overall: afk && afk.length > 0 ? afk[0].durations : 0,
-					startedAt: this.timeStart.utc().format(),
-					timerId: this.lastTimer[0]
-				});
-
-				// win2.webContents.send('update_time_slot', {
-				// 	duration: this.timeRecordSecond,
-				// 	keyboard: afk && afk.length > 0 ? afk[0].durations : 0,
-				// 	mouse: afk && afk.length > 0 ? afk[0].durations : 0,
-				// 	overall: afk && afk.length > 0 ? afk[0].durations : 0,
-				// 	timeSlotId: timerD[0].timeSlotId,
-				// 	token: auth.token,
-				// 	timerId: this.lastTimer[0],
-				// 	apiHost: LocalStore.getServerUrl()
-				// });
-			});
+			TimerData.getAfk(knex, this.lastTimer[0]).then((afk) => {});
 		});
 	}
 
@@ -127,7 +109,7 @@ export default class Timerhandler {
 					win2.webContents.send('set_activity', {
 						...LocalStore.beforeRequestParams(),
 						title: JSON.parse(item.data).app,
-						date: moment().format('YYY-MM-DD'),
+						date: moment().format('YYYY-MM-DD'),
 						duration: Math.floor(item.durations),
 						type: 'app',
 						eventId: item.eventId
@@ -139,15 +121,7 @@ export default class Timerhandler {
 
 	stopTime(win2, win3, knex) {
 		this.notificationDesktop.startTimeNotification(false);
-		TimerData.getTimer(knex, this.lastTimer[0]).then((logTime) => {
-			console.log('time stop log', logTime);
-			win2.webContents.send('update_time_log_stop', {
-				...LocalStore.beforeRequestParams(),
-				startedAt: this.timeStart.utc().format(),
-				stoppedAt: moment().utc().format(),
-				timeLogId: logTime[0].timeLogId
-			});
-		});
+		this.updateToggle(win2, knex);
 		clearInterval(this.intevalTimer);
 		clearInterval(this.intervalUpdateTime);
 	}

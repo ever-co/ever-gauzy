@@ -24,4 +24,10 @@ export class OrganizationProjectsService extends TenantAwareCrudService<
 			.where('member.id = :id', { id })
 			.getMany();
 	}
+
+	async updateTaskViewMode(id: string, taskViewMode: string): Promise<any> {
+		const project = await this.organizationProjectsRepository.findOne(id);
+		project.taskListType = taskViewMode;
+		return await this.organizationProjectsRepository.save(project);
+	}
 }
