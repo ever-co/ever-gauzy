@@ -23,8 +23,15 @@ const candidateSourceList: ICandidateSource[] = [
 
 export const createCandidateSources = async (
 	connection: Connection,
-	candidates: Candidate[]
+	candidates: Candidate[] | void
 ): Promise<CandidateSource[]> => {
+	if (!candidates) {
+		console.warn(
+			'Warning: candidates not found, CandidateSources will not be created'
+		);
+		return;
+	}
+
 	let defaultCandidateSources = [];
 
 	candidates.forEach((candidate) => {
@@ -44,8 +51,15 @@ export const createCandidateSources = async (
 export const createRandomCandidateSources = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, Candidate[]>
+	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
 ): Promise<Map<Candidate, CandidateSource[]>> => {
+	if (!tenantCandidatesMap) {
+		console.warn(
+			'Warning: tenantCandidatesMap not found, CandidateSources will not be created'
+		);
+		return;
+	}
+
 	let candidateSources = [];
 	const candidateSourcesMap: Map<Candidate, CandidateSource[]> = new Map();
 

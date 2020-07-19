@@ -17,9 +17,16 @@ const candidateDocumentList: ICandidateDocument[] = [
 ];
 export const createCandidateDocuments = async (
 	connection: Connection,
-	candidates: Candidate[]
+	candidates: Candidate[] | void
 ): Promise<CandidateDocument[]> => {
 	let defaultCandidateDocuments = [];
+
+	if (!candidates) {
+		console.warn(
+			'Warning: candidates not found, CandidateDocuments will not be created'
+		);
+		return;
+	}
 
 	candidates.forEach((candidate) => {
 		const documents = candidateDocumentList.map((document) => ({
@@ -42,8 +49,15 @@ export const createCandidateDocuments = async (
 export const createRandomCandidateDocuments = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, Candidate[]>
+	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
 ): Promise<Map<Candidate, CandidateDocument[]>> => {
+	if (!tenantCandidatesMap) {
+		console.warn(
+			'Warning: tenantCandidatesMap not found, CandidateDocuments will not be created'
+		);
+		return;
+	}
+
 	let candidateDocuments = [];
 	const candidateDocumentsMap: Map<Candidate, any[]> = new Map();
 

@@ -14,8 +14,15 @@ const GITHUB_API_URL = 'https://api.github.com';
 
 export const createRandomTask = async (
 	connection: Connection,
-	projects: OrganizationProjects[]
+	projects: OrganizationProjects[] | void
 ) => {
+	if (!projects) {
+		console.warn(
+			'Warning: projects not found, RandomTask will not be created'
+		);
+		return;
+	}
+
 	const httpService = new HttpService();
 
 	const tasks: Task[] = [];

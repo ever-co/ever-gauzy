@@ -10,12 +10,20 @@ import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 export const createDefaultKeyResultUpdates = async (
 	connection: Connection,
 	tenant: Tenant,
-	keyResults: KeyResult[]
+	keyResults: KeyResult[] | void
 ): Promise<KeyResultUpdate[]> => {
 	const defaultKeyResultUpdates = [];
 	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
 		GoalTimeFrame
 	);
+
+	if (!keyResults) {
+		console.warn(
+			'Warning: keyResults not found, DefaultKeyResultUpdates will not be created'
+		);
+		return;
+	}
+
 	keyResults.forEach(async (keyResult) => {
 		const numberOfUpdates = faker.random.number({ min: 2, max: 10 });
 		for (let i = 0; i < numberOfUpdates; i++) {

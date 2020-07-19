@@ -19,10 +19,24 @@ export const createDefaultExpenses = async (
 	defaultData: {
 		org: Organization;
 		employees: Employee[];
-		categories: IExpenseCategory[];
-		organizationVendors: IOrganizationVendor[];
+		categories: IExpenseCategory[] | void;
+		organizationVendors: IOrganizationVendor[] | void;
 	}
 ): Promise<Expense[]> => {
+	if (!defaultData.categories) {
+		console.warn(
+			'Warning: Categories not found, default expenses would not be created'
+		);
+		return;
+	}
+
+	if (!defaultData.organizationVendors) {
+		console.warn(
+			'Warning: organizationVendors not found, default expenses would not be created'
+		);
+		return;
+	}
+
 	const expensesFromFile = [];
 	let defaultExpenses: Expense[] = [];
 	let filePath = './src/app/expense/expense-seed-data/expenses-data.csv';
@@ -45,13 +59,13 @@ export const createDefaultExpenses = async (
 					(emp) => emp.user.email === seedExpense.email
 				);
 
-				const foundCategory = defaultData.categories.find(
+				const foundCategory = (defaultData.categories || []).find(
 					(category) => seedExpense.categoryName === category.name
 				);
 
-				const foundVendor = defaultData.organizationVendors.find(
-					(vendor) => seedExpense.vendorName === vendor.name
-				);
+				const foundVendor = (
+					defaultData.organizationVendors || []
+				).find((vendor) => seedExpense.vendorName === vendor.name);
 
 				expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
@@ -76,9 +90,23 @@ export const createRandomExpenses = async (
 	connection: Connection,
 	tenants: Tenant[],
 	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	organizationVendorsMap: Map<Organization, OrganizationVendor[]>,
-	categoriesMap: Map<Organization, ExpenseCategory[]>
+	organizationVendorsMap: Map<Organization, OrganizationVendor[]> | void,
+	categoriesMap: Map<Organization, ExpenseCategory[]> | void
 ): Promise<void> => {
+	if (!categoriesMap) {
+		console.warn(
+			'Warning: categoriesMap not found, RandomExpenses will not be created'
+		);
+		return;
+	}
+
+	if (!organizationVendorsMap) {
+		console.warn(
+			'Warning: organizationVendorsMap not found, RandomExpenses will not be created'
+		);
+		return;
+	}
+
 	const currencies = Object.values(CurrenciesEnum);
 
 	if (!categoriesMap) {
