@@ -3,7 +3,12 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbToastrService,
+	NbMenuItem,
+	NbMenuService
+} from '@nebular/theme';
 import {
 	Invoice,
 	PermissionsEnum,
@@ -16,7 +21,7 @@ import {
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, takeUntil, map } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { Subject } from 'rxjs';
@@ -49,6 +54,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 	invoiceStatusTypes = Object.values(InvoiceStatusTypesEnum);
 	estimateStatusTypes = Object.values(EstimateStatusTypesEnum);
 	status: string;
+	settingsContextMenu: NbMenuItem[];
+	menuArray = [];
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -63,7 +70,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
-		private router: Router
+		private router: Router,
+		private nbMenuService: NbMenuService
 	) {
 		super(translateService);
 		this.setView();
@@ -83,6 +91,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
+		this.loadMenu();
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
@@ -100,6 +109,64 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	loadMenu() {
+		this.menuArray = [
+			{
+				title: 'Duplicate',
+				icon: 'copy-outline'
+			},
+			{
+				title: 'Send',
+				icon: 'upload-outline'
+			},
+			{
+				title: 'Convert to Invoice',
+				icon: 'swap'
+			},
+			{
+				title: 'Email',
+				icon: 'email-outline'
+			},
+			{
+				title: 'Delete',
+				icon: 'archive-outline'
+			}
+		];
+
+		if (this.isEstimate) {
+			this.settingsContextMenu = this.menuArray.filter((items) => items);
+		} else {
+			this.settingsContextMenu = this.menuArray.filter(
+				(items) => items.title !== 'Convert to Invoice'
+			);
+		}
+		this.nbMenuService.onItemClick().pipe(first());
+	}
+
+	selectMenu(selectedItem?: Invoice) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.nbMenuService
+			.onItemClick()
+			.pipe(
+				first(),
+				map(({ item: { title } }) => title)
+			)
+			.subscribe((title) => this.bulkAction(title));
+	}
+
+	bulkAction(action) {
+		if (action === 'Duplicate') this.duplicate(this.selectedInvoice);
+		if (action === 'Send') this.send(this.selectedInvoice);
+		if (action === 'Convert to Invoice') this.convert(this.selectedInvoice);
+		if (action === 'Email') this.email(this.selectedInvoice);
+		if (action === 'Delete') this.delete(this.selectedInvoice);
 	}
 
 	add() {
@@ -152,10 +219,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 			paid: this.selectedInvoice.paid,
 			totalValue: this.selectedInvoice.totalValue,
 			clientId: this.selectedInvoice.clientId,
+			toClient: this.selectedInvoice.toClient,
+			fromOrganization: this.organization,
 			organizationId: this.selectedInvoice.organizationId,
 			invoiceType: this.selectedInvoice.invoiceType,
 			tags: this.selectedInvoice.tags,
-			isEstimate: this.isEstimate
+			isEstimate: this.isEstimate,
+			status: this.selectedInvoice.status
 		});
 
 		for (const item of this.selectedInvoice.invoiceItems) {
@@ -228,7 +298,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				data: selectedItem
 			});
 		}
-		if (this.selectedInvoice.toClient.contactOrganizationId) {
+		if (this.selectedInvoice.clientId) {
 			this.dialogService
 				.open(InvoiceSendMutationComponent, {
 					context: {
