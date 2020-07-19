@@ -4,6 +4,7 @@
 
 .full-height {
   height: 80% !important;
+  min-height: 600px !important;
 }
 
 .btn-save {
@@ -13,8 +14,8 @@
 }
 
 .btn-width {
-  width: 200px;
+  width: 80px;
   position: absolute;
   bottom: 10px;
-  right: -600px;
+  right: -500px;
 }

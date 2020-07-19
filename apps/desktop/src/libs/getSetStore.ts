@@ -12,18 +12,23 @@ export const LocalStore = {
 	},
 
 	beforeRequestParams: () => {
-		const configs = store.get('configs');
-		const auth = store.get('auth');
-		const projectInfo = store.get('project');
-		return {
-			apiHost: configs.isLocalServer
-				? `http://localhost:${configs.port}`
-				: configs.serverUrl,
-			token: auth.token,
-			employeeId: auth.employeeId,
-			projectId: projectInfo.projectId,
-			taskId: projectInfo.taskId,
-			note: projectInfo.note
-		};
+		try {
+			const configs = store.get('configs');
+			const auth = store.get('auth');
+			const projectInfo = store.get('project');
+			return {
+				apiHost: configs.isLocalServer
+					? `http://localhost:${configs.port}`
+					: configs.serverUrl,
+				token: auth ? auth.token : null,
+				employeeId: auth ? auth.employeeId : null,
+				projectId: projectInfo ? projectInfo.projectId : null,
+				taskId: projectInfo ? projectInfo.taskId : null,
+				note: projectInfo ? projectInfo.note : null,
+				aw: projectInfo ? projectInfo.aw : null
+			};
+		} catch (error) {
+			console.log(error);
+		}
 	}
 };

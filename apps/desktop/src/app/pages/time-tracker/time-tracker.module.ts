@@ -12,7 +12,8 @@ import {
 	NbSpinnerModule,
 	NbIconModule,
 	NbSidebarModule,
-	NbSidebarService
+	NbSidebarService,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule } from '@angular/forms';
@@ -31,7 +32,8 @@ import { FormsModule } from '@angular/forms';
 		NbIconModule,
 		NbEvaIconsModule,
 		NbSidebarModule,
-		FormsModule
+		FormsModule,
+		NbCheckboxModule
 	],
 	providers: [NbSidebarService, TimeTrackerService],
 	exports: [TimeTrackerComponent]

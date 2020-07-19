@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SetupComponent } from './setup.component';
+import { SetupService } from './setup.service';
 import {
 	NbLayoutModule,
 	NbCardModule,
@@ -9,9 +10,11 @@ import {
 	NbInputModule,
 	NbButtonModule,
 	NbSpinnerModule,
-	NbCheckboxModule
+	NbCheckboxModule,
+	NbIconModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 @NgModule({
 	declarations: [SetupComponent],
 	imports: [
@@ -24,8 +27,11 @@ import { FormsModule } from '@angular/forms';
 		NbButtonModule,
 		FormsModule,
 		NbSpinnerModule,
-		NbCheckboxModule
+		NbCheckboxModule,
+		NbIconModule,
+		NbEvaIconsModule
 	],
-	exports: [SetupComponent]
+	exports: [SetupComponent],
+	providers: [SetupService]
 })
 export class SetupModule {}
