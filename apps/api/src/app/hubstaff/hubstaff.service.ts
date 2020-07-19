@@ -350,8 +350,8 @@ export class HubstaffService {
 
 				const gauzyScreenshot = await this.commandBus.execute(
 					new ScreenshotCreateCommand({
-						fullUrl: full_url,
-						thumbUrl: thumb_url,
+						file: full_url,
+						thumb: thumb_url,
 						recordedAt: recorded_at,
 						activityTimestamp: time_slot,
 						employeeId: employee.gauzyId

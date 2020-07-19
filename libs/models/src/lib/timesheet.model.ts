@@ -161,19 +161,21 @@ export interface TimeLogFilters {
 export interface TimeSlot extends IBaseEntityModel {
 	[x: string]: any;
 	employeeId: string;
-	employee: Employee;
+	employee?: Employee;
 	activities?: Activity[];
 	screenshots?: Screenshot[];
 	timeLogs?: TimeLog[];
 	timeSlotMinutes?: TimeSlotMinute[];
 	project?: OrganizationProjects;
+	projectId?: string;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
 	overall?: number;
 	startedAt: Date;
-	stoppedAt: Date;
+	stoppedAt?: Date;
 	tags?: Tag[];
+	activites?: Activity[];
 }
 
 export interface ITimeSlotTimeLogs extends IBaseEntityModel {
@@ -238,15 +240,18 @@ export enum ActivityType {
 export interface ICreateScreenshotInput {
 	activityTimestamp: string;
 	employeeId?: string;
-	fullUrl: string;
-	thumbUrl?: string;
+	file: string;
+	thumb?: string;
 	recordedAt: Date | string;
 }
 
 export interface Screenshot extends IBaseEntityModel {
 	[x: string]: any;
-	timeSlot: TimeSlot;
-	fullUrl: string;
+	timeSlot?: TimeSlot;
+	timeSlotId?: string;
+	file: string;
+	thumb?: string;
+	fileUrl?: string;
 	thumbUrl?: string;
 	recordedAt?: Date;
 }
@@ -296,10 +301,6 @@ export interface IGetTimeLogConflictInput {
 
 export interface IGetTimeSlotInput extends TimeLogFilters {
 	relations?: string[];
-}
-
-export interface ICreateTimeSlotInput extends TimeSlot {
-	activites?: Activity[];
 }
 
 export interface IGetActivitiesInput extends TimeLogFilters, Pagination {

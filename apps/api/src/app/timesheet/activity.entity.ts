@@ -35,7 +35,7 @@ export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.employee)
 	@Column()
-	readonly employeeId?: string;
+	employeeId?: string;
 
 	@ApiProperty({ type: OrganizationProjects })
 	@ManyToOne(() => OrganizationProjects, { nullable: true })
@@ -45,7 +45,7 @@ export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.project)
 	@Column({ nullable: true })
-	readonly projectId?: string;
+	projectId?: string;
 
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true })
@@ -55,7 +55,7 @@ export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.timeSlot)
 	@Column({ nullable: true })
-	readonly timeSlotId?: string;
+	timeSlotId?: string;
 
 	@ApiProperty({ type: Task })
 	@ManyToOne(() => Task, { nullable: true })
@@ -65,7 +65,7 @@ export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.task)
 	@Column({ nullable: true })
-	readonly taskId?: string;
+	taskId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()

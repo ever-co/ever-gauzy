@@ -26,12 +26,12 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
-	employee: Employee;
+	employee?: Employee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeSlot: TimeSlot) => timeSlot.employee)
 	@Column()
-	readonly employeeId: string;
+	employeeId: string;
 
 	@ApiProperty({ type: Screenshot })
 	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
@@ -79,7 +79,7 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@Column()
 	startedAt: Date;
 
-	stoppedAt: Date;
+	stoppedAt?: Date;
 	@AfterLoad()
 	getStoppedAt?() {
 		this.stoppedAt = moment(this.startedAt).add(10, 'minutes').toDate();
