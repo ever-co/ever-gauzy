@@ -49,7 +49,8 @@ export const createRandomActivities = async (connection: Connection) => {
 				activity.project = project;
 				activity.task = task;
 				activity.title = appName;
-				activity.date = date;
+				activity.date = moment(date).format('YYYY-MM-DD');
+				activity.time = moment(date).format('HH:mm:ss');
 				activity.duration = faker.random.number(100);
 				activity.type = ActivityType.APP;
 
@@ -66,7 +67,8 @@ export const createRandomActivities = async (connection: Connection) => {
 				activity.project = project;
 				activity.task = task;
 				activity.title = url;
-				activity.date = date;
+				activity.date = moment(date).format('YYYY-MM-DD');
+				activity.time = moment(date).format('HH:mm:ss');
 				activity.duration = faker.random.number(100);
 				activity.type = ActivityType.URL;
 

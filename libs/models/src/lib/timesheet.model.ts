@@ -3,6 +3,11 @@ import { Tag, Task, Employee, EmployeeFindInput } from '..';
 import { OrganizationContact } from './organization-contact.model';
 import { OrganizationProjects } from './organization-projects.model';
 
+export interface Pagination {
+	limit?: number;
+	page?: number;
+}
+
 export interface Timesheet extends IBaseEntityModel {
 	employee: Employee;
 	approvedBy?: OrganizationContact;
@@ -92,7 +97,7 @@ export interface TimeLog extends IBaseEntityModel {
 	description?: string;
 	duration: number;
 	isBillable: boolean;
-	employeeId?: string;
+	employeeId: string;
 	projectId?: string;
 	clientId?: string;
 	taskId?: string;
@@ -155,18 +160,22 @@ export interface TimeLogFilters {
 
 export interface TimeSlot extends IBaseEntityModel {
 	[x: string]: any;
-	employee: Employee;
+	employeeId: string;
+	employee?: Employee;
+	activities?: Activity[];
 	screenshots?: Screenshot[];
 	timeLogs?: TimeLog[];
 	timeSlotMinutes?: TimeSlotMinute[];
 	project?: OrganizationProjects;
+	projectId?: string;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
 	overall?: number;
 	startedAt: Date;
-	stoppedAt: Date;
+	stoppedAt?: Date;
 	tags?: Tag[];
+	activites?: Activity[];
 }
 
 export interface ITimeSlotTimeLogs extends IBaseEntityModel {
@@ -187,11 +196,14 @@ export interface Activity extends IBaseEntityModel {
 	title: string;
 	employee?: Employee;
 	employeeId?: string;
+	timeSlot?: TimeSlot;
+	timeSlotId?: string;
 	project?: OrganizationProjects;
 	projectId?: string;
 	task?: Task;
 	taskId?: string;
-	date: Date;
+	date: string;
+	time: string;
 	duration?: number;
 	type?: string;
 	source?: string;
@@ -228,15 +240,18 @@ export enum ActivityType {
 export interface ICreateScreenshotInput {
 	activityTimestamp: string;
 	employeeId?: string;
-	fullUrl: string;
-	thumbUrl?: string;
+	file: string;
+	thumb?: string;
 	recordedAt: Date | string;
 }
 
 export interface Screenshot extends IBaseEntityModel {
 	[x: string]: any;
-	timeSlot: TimeSlot;
-	fullUrl: string;
+	timeSlot?: TimeSlot;
+	timeSlotId?: string;
+	file: string;
+	thumb?: string;
+	fileUrl?: string;
 	thumbUrl?: string;
 	recordedAt?: Date;
 }
@@ -288,7 +303,12 @@ export interface IGetTimeSlotInput extends TimeLogFilters {
 	relations?: string[];
 }
 
-export interface IGetActivitiesInput extends TimeLogFilters {
+export interface IGetActivitiesInput extends TimeLogFilters, Pagination {
 	relations?: string[];
 	type?: string[];
+	groupBy: 'date' | 'title' | 'title_date';
+}
+
+export interface IBulkActivitiesInput {
+	activities: Activity[];
 }

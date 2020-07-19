@@ -104,7 +104,7 @@ export class TimeLog extends Base implements ITimeLog {
 	@IsEnum(TimeLogSourceEnum)
 	@IsString()
 	@Column({ default: TimeLogSourceEnum.BROWSER })
-	source: string;
+	source?: string;
 
 	@ApiProperty({ type: String })
 	@IsBoolean()

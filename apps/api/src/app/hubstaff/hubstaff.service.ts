@@ -350,8 +350,8 @@ export class HubstaffService {
 
 				const gauzyScreenshot = await this.commandBus.execute(
 					new ScreenshotCreateCommand({
-						fullUrl: full_url,
-						thumbUrl: thumb_url,
+						file: full_url,
+						thumb: thumb_url,
 						recordedAt: recorded_at,
 						activityTimestamp: time_slot,
 						employeeId: employee.gauzyId
@@ -658,12 +658,16 @@ export class HubstaffService {
 					organizationId
 				);
 
+				const time = moment(date).format('YYYY-MM-DD');
+				date = moment(date).format('HH:mm:ss');
+
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
 						title: site,
 						duration: tracked,
 						type: 'URL',
 						date,
+						time,
 						projectId,
 						employeeId: employee.gauzyId
 					})
@@ -768,12 +772,15 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
+				const time = moment(date).format('YYYY-MM-DD');
+				date = moment(date).format('HH:mm:ss');
 
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
 						title: name,
 						duration: tracked,
 						type: 'APP',
+						time,
 						date,
 						projectId,
 						employeeId: employee.gauzyId

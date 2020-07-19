@@ -24,6 +24,8 @@ import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeSlot } from '../timesheet/time-slot.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { ExportAllModule } from '../export_import/export-all.module';
+import { Activity } from '../timesheet/activity.entity';
+import { TimeLog } from '../timesheet/time-log.entity';
 
 @Module({
 	imports: [
@@ -37,6 +39,8 @@ import { ExportAllModule } from '../export_import/export-all.module';
 			Organization,
 			Role,
 			TimeSlot,
+			Activity,
+			TimeLog,
 			TimeSlotMinute
 		]),
 		CqrsModule,

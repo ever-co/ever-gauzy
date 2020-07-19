@@ -104,12 +104,17 @@ import { DealModule } from './deal/deal.module';
 import { HelpCenterAuthorModule } from './help-center-author/help-center-author.module';
 import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
 import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { FileStorage } from './core/file-storage';
 
 @Module({
 	imports: [
 		ServeStaticModule.forRoot({
 			rootPath: path.resolve(process.cwd(), 'apps', 'api', 'public'),
 			serveRoot: '/public/'
+		}),
+		MulterModule.register({
+			dest: FileStorage.rootPath
 		}),
 		RouterModule.forRoutes([
 			{

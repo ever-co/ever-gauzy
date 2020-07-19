@@ -17,8 +17,8 @@ export class ScreenshotCreateHandler
 		try {
 			const { input } = command;
 			const {
-				fullUrl,
-				thumbUrl,
+				file,
+				thumb,
 				recordedAt,
 				activityTimestamp,
 				employeeId
@@ -28,9 +28,7 @@ export class ScreenshotCreateHandler
 				record: timeSlot
 			} = await this._timeSlotService.findOneOrFail({
 				where: {
-					startedAt: moment(activityTimestamp).format(
-						'YYYY-MM-DD HH:mm:ss'
-					)
+					startedAt: moment(activityTimestamp).toDate()
 				}
 			});
 
@@ -42,7 +40,7 @@ export class ScreenshotCreateHandler
 					keyboard: 0,
 					mouse: 0,
 					overall: 0,
-					startedAt: activityTimestamp
+					startedAt: moment(activityTimestamp).toDate()
 				});
 			}
 
@@ -57,8 +55,8 @@ export class ScreenshotCreateHandler
 			if (!screenshot) {
 				return await this._screenshotService.create({
 					timeSlotId: timeSlot,
-					fullUrl,
-					thumbUrl,
+					file,
+					thumb,
 					recordedAt
 				});
 			}

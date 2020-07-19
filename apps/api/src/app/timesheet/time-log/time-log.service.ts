@@ -108,12 +108,12 @@ export class TimeLogService extends CrudService<TimeLog> {
 						employeeId: employeeIds
 					});
 				}
-				if (request.organizationId) {
-					qb.andWhere(
-						'"employee"."organizationId" = :organizationId',
-						{ organizationId: request.organizationId }
-					);
-				}
+				// if (request.organizationId) {
+				// 	qb.andWhere(
+				// 		'"employee"."organizationId" = :organizationId',
+				// 		{ organizationId: request.organizationId }
+				// 	);
+				// }
 
 				if (request.projectIds) {
 					qb.andWhere(
@@ -355,7 +355,10 @@ export class TimeLogService extends CrudService<TimeLog> {
 		await this.timeSlotService.bulkCreate(updateTimeSlots);
 	}
 
-	async dbDelete(ids: string | string[] | TimeLog | TimeLog[]): Promise<any> {
+	async dbDelete(
+		ids: string | string[] | TimeLog | TimeLog[],
+		forceDelete = false
+	): Promise<any> {
 		let timeLogs: TimeLog[];
 		if (typeof ids === 'string') {
 			timeLogs = await this.timeLogRepository.find({ id: ids });
@@ -376,11 +379,16 @@ export class TimeLogService extends CrudService<TimeLog> {
 				timeLog.stoppedAt
 			);
 		}
-
-		return await this.timeLogRepository.update(
-			{ id: In(_.pluck(timeLogs, 'id')) },
-			{ deletedAt: new Date() }
-		);
+		if (forceDelete) {
+			return await this.timeLogRepository.delete({
+				id: In(_.pluck(timeLogs, 'id'))
+			});
+		} else {
+			return await this.timeLogRepository.update(
+				{ id: In(_.pluck(timeLogs, 'id')) },
+				{ deletedAt: new Date() }
+			);
+		}
 	}
 
 	async checkConfictTime(request: IGetTimeLogConflictInput) {
@@ -433,6 +441,12 @@ export class TimeLogService extends CrudService<TimeLog> {
 	async deleteTimeSpan(newTime: IDateRange, timeLog: TimeLog) {
 		const { start, end } = newTime;
 
+		console.log({
+			startedAt: timeLog.startedAt,
+			stoppedAt: timeLog.stoppedAt,
+			start,
+			end
+		});
 		if (
 			moment(timeLog.startedAt).isBetween(
 				moment(start),
@@ -456,7 +470,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				 *  			|----------------------------|
 				 */
 				console.log('Delete time log because overlap entire time');
-				await this.dbDelete(timeLog.id);
+				await this.dbDelete(timeLog.id, true);
 			} else {
 				/* Update start time
 				 * New Start time							New Stop time
@@ -469,6 +483,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 					moment(end),
 					'seconds'
 				);
+				console.log('reamingDueration', reamingDueration);
 				if (reamingDueration > 0) {
 					await this.dbUpdate(
 						{
@@ -478,7 +493,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 					);
 				} else {
 					/* Delete if reaming dueration 0 seconds */
-					await this.dbDelete(timeLog);
+					await this.dbDelete(timeLog, true);
 				}
 			}
 		} else {
@@ -501,6 +516,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 					moment(timeLog.startedAt),
 					'seconds'
 				);
+				console.log('reamingDueration', reamingDueration);
 				if (reamingDueration > 0) {
 					await this.timeLogRepository.update(
 						{
@@ -522,14 +538,24 @@ export class TimeLogService extends CrudService<TimeLog> {
 				 *  |--------------------------------------------------|
 				 */
 				console.log('Split database time in two entries');
-				await this.timeLogRepository.update(
-					{
-						id: timeLog.id
-					},
-					{
-						stoppedAt: start
-					}
+				const reamingDueration = moment(end).diff(
+					moment(timeLog.startedAt),
+					'seconds'
 				);
+				console.log('reamingDueration', reamingDueration);
+				if (reamingDueration > 0) {
+					await this.timeLogRepository.update(
+						{
+							id: timeLog.id
+						},
+						{
+							stoppedAt: start
+						}
+					);
+				} else {
+					/* Delete if reaming dueration 0 seconds */
+					await this.dbDelete(timeLog, true);
+				}
 
 				this.timeSlotService.rangeDelete(
 					timeLog.employeeId,
@@ -543,7 +569,20 @@ export class TimeLogService extends CrudService<TimeLog> {
 					'id'
 				]);
 				newLog.startedAt = end;
-				await this.timeLogRepository.insert(newLog);
+				const newLogreamingDueration = moment(newLog.stoppedAt).diff(
+					moment(newLog.startedAt),
+					'seconds'
+				);
+
+				console.log(
+					'newLogreamingDueration',
+					newLogreamingDueration,
+					newLog
+				);
+				/* Insert if reaming dueration is more 0 seconds */
+				if (newLogreamingDueration > 0) {
+					await this.timeLogRepository.insert(newLog);
+				}
 			}
 		}
 		return true;
