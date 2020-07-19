@@ -4,7 +4,6 @@ import { Repository, SelectQueryBuilder, Between, In } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { TimeSlot } from '../time-slot.entity';
 import * as moment from 'moment';
-import * as _ from 'underscore';
 import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
