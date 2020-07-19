@@ -15,9 +15,16 @@ const candidateFeedbackList: ICandidateFeedback[] = [
 ];
 export const createCandidateFeedbacks = async (
 	connection: Connection,
-	candidates: Candidate[]
+	candidates: Candidate[] | void
 ): Promise<CandidateFeedback[]> => {
 	let defaultCandidateFeedbacks = [];
+
+	if (!candidates) {
+		console.warn(
+			'Warning: candidates not found, CandidateFeedbacks will not be created'
+		);
+		return;
+	}
 
 	candidates.forEach((candidate) => {
 		const feedbacks = candidateFeedbackList.map((feedback) => ({
@@ -40,8 +47,15 @@ export const createCandidateFeedbacks = async (
 export const createRandomCandidateFeedbacks = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, Candidate[]>
+	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
 ): Promise<Map<Candidate, CandidateFeedback[]>> => {
+	if (!tenantCandidatesMap) {
+		console.warn(
+			'Warning: tenantCandidatesMap not found, CandidateFeedbacks will not be created'
+		);
+		return;
+	}
+
 	let candidateFeedbacks = [];
 	const candidateFeedbacksMap: Map<Candidate, any[]> = new Map();
 
