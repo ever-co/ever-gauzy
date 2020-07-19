@@ -202,8 +202,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.taskSelect = item;
 	}
 
-	setAW() {
-		this.aw = !this.aw;
+	setAW(event) {
+		if (event.target.checked) {
+			this.aw = true;
+			this.electronService.ipcRenderer.send('set_tp_aw', {
+				host: this.defaultAwAPI,
+				isAw: true
+			});
+		} else {
+			this.electronService.ipcRenderer.send('set_tp_aw', {
+				host: this.defaultAwAPI,
+				isAw: false
+			});
+			this.aw = false;
+		}
+		this._cdr.detectChanges();
 		if (this.aw) this.pingAw(null);
 		else {
 			this.awCheck = false;
