@@ -35,36 +35,40 @@ export default class Timerhandler {
 		});
 
 		this.intevalTimer = setInterval(() => {
-			const now = moment();
-			TimerData.updateDurationOfTimer(knex, {
-				id: this.lastTimer[0],
-				durations: now.diff(moment(this.timeStart), 'milliseconds')
-			});
-
-			if (this.configs && this.configs.aw) {
-				win2.webContents.send('collect_data', {
-					start: this.timeStart.utc().format(),
-					end: moment().utc().format(),
-					tpURL: this.configs.awAPI,
-					tp: 'aw',
-					timerId: this.lastTimer[0]
+			try {
+				const now = moment();
+				TimerData.updateDurationOfTimer(knex, {
+					id: this.lastTimer[0],
+					durations: now.diff(moment(this.timeStart), 'milliseconds')
 				});
 
-				win2.webContents.send('collect_afk', {
-					start: this.timeStart.utc().format(),
-					end: moment().utc().format(),
-					tpURL: this.configs.awAPI,
-					tp: 'aw',
-					timerId: this.lastTimer[0]
+				if (ProjectInfo && ProjectInfo.aw && ProjectInfo.aw.isAw) {
+					win2.webContents.send('collect_data', {
+						start: this.timeStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: ProjectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer[0]
+					});
+
+					win2.webContents.send('collect_afk', {
+						start: this.timeStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: ProjectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer[0]
+					});
+				}
+
+				this.calculateTimeRecord();
+				win3.webContents.send('timer_push', {
+					second: this.timeRecordSecond,
+					minute: this.timeRecordMinute,
+					hours: this.timeRecordHours
 				});
+			} catch (error) {
+				console.log('errr', error);
 			}
-
-			this.calculateTimeRecord();
-			win3.webContents.send('timer_push', {
-				second: this.timeRecordSecond,
-				minute: this.timeRecordMinute,
-				hours: this.timeRecordHours
-			});
 		}, 1000);
 	}
 
@@ -97,7 +101,6 @@ export default class Timerhandler {
 
 	getSetActivity(knex, win2) {
 		TimerData.getWindowEvent(knex, this.lastTimer[0]).then((events) => {
-			console.log('result of acti', events);
 			events.map((item) => {
 				if (item.activityId) {
 					win2.webContents.send('update_to_activity', {
@@ -109,7 +112,7 @@ export default class Timerhandler {
 					win2.webContents.send('set_activity', {
 						...LocalStore.beforeRequestParams(),
 						title: JSON.parse(item.data).app,
-						date: moment().format('YYY-MM-DD'),
+						date: moment().format('YYYY-MM-DD'),
 						duration: Math.floor(item.durations),
 						type: 'app',
 						eventId: item.eventId

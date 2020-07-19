@@ -1,6 +1,6 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>{{ sprintAction }} Sprint</h5>
+		<h5>{{ action | titlecase }} Sprint</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -29,7 +29,19 @@
 				</div>
 
 				<div class="row">
-					<div class="col-sm-5">
+					<div class="col">
+						<div class="form-group">
+							<label class="label">Length</label>
+							<input
+								nbInput
+								class="sprint__length"
+								placeholder="Sprint length"
+								formControlName="length"
+							/>
+							<nb-datepicker #startDate></nb-datepicker>
+						</div>
+					</div>
+					<div class="col">
 						<div class="form-group">
 							<label class="label">Start date</label>
 							<input
@@ -42,7 +54,7 @@
 							<nb-datepicker #startDate></nb-datepicker>
 						</div>
 					</div>
-					<div class="col-sm-5">
+					<div class="col">
 						<div class="form-group">
 							<label class="label">End date</label>
 							<input
@@ -76,10 +88,10 @@
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button
-			(click)="dialogRef.close()"
 			status="danger"
 			class="mr-3"
 			nbButton
+			(click)="dialogRef.close()"
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>

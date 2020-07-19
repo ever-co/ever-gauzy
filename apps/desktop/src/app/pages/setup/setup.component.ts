@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
+import { SetupService } from './setup.service';
 
 @Component({
 	selector: 'ngx-setup',
@@ -7,11 +8,19 @@ import { ElectronService } from 'ngx-electron';
 	styleUrls: ['./setup.component.scss']
 })
 export class SetupComponent implements OnInit {
-	constructor(private electronService: ElectronService) {}
+	constructor(
+		private electronService: ElectronService,
+		private setupService: SetupService,
+		private _cdr: ChangeDetectorRef
+	) {}
 	defaultToggle: Boolean = false;
-	isDefauValue: Boolean = false;
+	isDefaultValue: Boolean = false;
 	loading: Boolean = false;
 	aw: Boolean = false;
+	loadingAw = false;
+	iconAw = 'close-square-outline';
+	statusIcon = 'success';
+	awCheck = false;
 	awAPI: String = 'http://localhost:5600';
 	serverOption: any = [
 		{
@@ -127,6 +136,7 @@ export class SetupComponent implements OnInit {
 		}
 
 		this.electronService.ipcRenderer.send('start_server', data);
+		this.electronService.ipcRenderer.send('app_is_init');
 	}
 
 	inputFocus(event) {
@@ -141,8 +151,8 @@ export class SetupComponent implements OnInit {
 	}
 
 	onSwitch() {
-		this.isDefauValue = !this.isDefauValue;
-		if (this.isDefauValue) {
+		this.isDefaultValue = !this.isDefaultValue;
+		if (this.isDefaultValue) {
 			this.setup = {
 				...this.defaultValue
 			};
@@ -153,6 +163,39 @@ export class SetupComponent implements OnInit {
 
 	setAW() {
 		this.aw = !this.aw;
+		if (this.aw) this.pingAw();
+		else {
+			this.awCheck = false;
+			this._cdr.detectChanges();
+		}
+	}
+
+	pingAw() {
+		this.loadingAw = true;
+		this.awCheck = false;
+		this.setupService
+			.pingAw(`${this.awAPI}/api`)
+			.then((res) => {
+				this.iconAw = 'checkmark-square-outline';
+				this.awCheck = true;
+				this.statusIcon = 'success';
+				this._cdr.detectChanges();
+			})
+			.catch((e) => {
+				if (e.status === 200) {
+					this.iconAw = 'checkmark-square-outline';
+					this.awCheck = true;
+					this.statusIcon = 'success';
+					this._cdr.detectChanges();
+					this.loadingAw = false;
+				} else {
+					this.loadingAw = false;
+					this.iconAw = 'close-square-outline';
+					this.awCheck = true;
+					this.statusIcon = 'danger';
+					this._cdr.detectChanges();
+				}
+			});
 	}
 
 	ngOnInit(): void {}

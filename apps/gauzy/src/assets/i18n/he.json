@@ -733,6 +733,11 @@
 			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames",
 			"ADD_KPI": "Add KPI"
 		},
+		"MESSAGE": {
+			"NO_KEY_RESULT": "No Key Results to display.",
+			"NO_UPDATES": "No Updates yet.",
+			"NO_ALIGNMENT": "No Alignments yet."
+		},
 		"LEVELS": {
 			"ORGANIZATION": "Organization",
 			"TEAM": "Team",
@@ -1392,6 +1397,11 @@
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "עבודה"
 	},
+	"SPRINTS_PAGE": {
+		"SPRINT_ADDED": "Sprint added",
+		"SPRINT_UPDATED": "Sprint updated",
+		"SPRINT_DELETED": "Sprint deleted"
+	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
@@ -1530,6 +1540,7 @@
 		"NOT_APPLIED": "Not Applied",
 		"STATUS": "עבודה",
 		"SET_STATUS": "Set Status",
+		"SHOW_COLUMNS": "Show Columns",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",

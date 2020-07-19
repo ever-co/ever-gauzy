@@ -47,7 +47,7 @@ export function createInitialTimerState(): TimerState {
 }
 
 @Injectable({ providedIn: 'root' })
-@StoreConfig({ name: 'app' })
+@StoreConfig({ name: 'timer' })
 export class TimerStore extends Store<TimerState> {
 	constructor() {
 		super(createInitialTimerState());

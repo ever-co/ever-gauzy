@@ -12,8 +12,15 @@ import { createRandomActivities } from '../activity/activities.seed';
 
 export const createRandomTimesheet = async (
 	connection: Connection,
-	defaultProjects: OrganizationProjects[]
+	defaultProjects: OrganizationProjects[] | void
 ) => {
+	if (!defaultProjects) {
+		console.warn(
+			'Warning: defaultProjects not found, RandomTimesheet will not be created'
+		);
+		return;
+	}
+
 	const timesheets: Timesheet[] = [];
 	const employees = await connection
 		.getRepository(Employee)

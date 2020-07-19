@@ -5,7 +5,6 @@ import { Validators, FormBuilder } from '@angular/forms';
 	selector: 'ga-upload-doc',
 	templateUrl: './upload-document.component.html'
 })
-
 export class UploadDocumentComponent implements OnInit {
 	@Input() documentUrl: any;
 	@Input() isDocument: false;

@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Organization, PermissionsEnum, RolesEnum } from '@gauzy/models';
+import { Organization, PermissionsEnum } from '@gauzy/models';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { filter, first, takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../@core/services/auth.service';
 import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
@@ -642,6 +642,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			]
 		}
 	];
+
 	menu: NbMenuItem[] = this.MENU_ITEMS;
 
 	constructor(
@@ -654,7 +655,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		await this.checkForAdmin();
 		await this.checkForEmployee();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
@@ -699,18 +699,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 	refreshMenuItem(item, withOrganizationShortcuts) {
 		item.title = this.getTranslation(item.data.translationKey);
 
-		if (item.data.hide) {
-			item.hidden = item.data.hide();
-		}
+		if (item.data.permissionKeys || item.data.hide) {
+			const anyPermission = item.data.permissionKeys
+				? item.data.permissionKeys.reduce((permission, key) => {
+						return this.store.hasPermission(key) || permission;
+				  }, false)
+				: true;
 
-		if (!item.hidden && item.data.permissionKeys) {
-			const anyPermission = item.data.permissionKeys.reduce(
-				(permission, key) => {
-					return this.store.hasPermission(key) || permission;
-				},
-				false
-			);
-			item.hidden = !anyPermission;
+			item.hidden =
+				!anyPermission || (item.data.hide && item.data.hide());
 
 			if (anyPermission && item.data.organizationShortcut) {
 				item.hidden =
@@ -729,14 +726,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 				this.refreshMenuItem(childItem, withOrganizationShortcuts);
 			});
 		}
-	}
-
-	async checkForAdmin() {
-		this.isAdmin = await this.authService
-			.hasRole([RolesEnum.ADMIN])
-			.pipe(first())
-			.pipe(takeUntil(this._ngDestroy$))
-			.toPromise();
 	}
 
 	async checkForEmployee() {

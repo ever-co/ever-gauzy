@@ -34,8 +34,15 @@ const DEFAULT_INTEGRATIONS = [
 
 export const createDefaultIntegrations = async (
 	connection: Connection,
-	integrationTypes: IntegrationType[]
+	integrationTypes: IntegrationType[] | void
 ): Promise<Integration[]> => {
+	if (!integrationTypes) {
+		console.warn(
+			'Warning: integrationTypes not found, DefaultIntegrations will not be created'
+		);
+		return;
+	}
+
 	const integrations = DEFAULT_INTEGRATIONS.map(
 		({ name, imgSrc, isComingSoon, integrationTypesMap }) => {
 			const entity = new Integration();

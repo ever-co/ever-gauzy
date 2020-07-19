@@ -23,6 +23,11 @@ export interface GetTaskOptions {
 	organizationId?: string;
 }
 
+export interface GetSprintsOptions {
+	projectId?: string;
+	organizationId?: string;
+}
+
 export enum TaskStatusEnum {
 	TODO = 'Todo',
 	IN_PROGRESS = 'In Progress',

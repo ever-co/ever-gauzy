@@ -17,6 +17,7 @@ import { GoalSettingsService } from '../../../@core/services/goal-settings.servi
 import { EditTimeFrameComponent } from '../../goal-settings/edit-time-frame/edit-time-frame.component';
 import { Store } from '../../../@core/services/store.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
+import { isFuture } from 'date-fns';
 
 @Component({
 	selector: 'ga-edit-objective',
@@ -105,7 +106,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			if (res) {
 				this.timeFrames = res.items.filter(
 					(timeframe) =>
-						timeframe.status === this.timeFrameStatusEnum.ACTIVE
+						timeframe.status === this.timeFrameStatusEnum.ACTIVE &&
+						isFuture(new Date(timeframe.endDate))
 				);
 			}
 		});

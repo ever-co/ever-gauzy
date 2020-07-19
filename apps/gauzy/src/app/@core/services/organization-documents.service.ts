@@ -7,13 +7,13 @@ import { OrganizationDocument } from '@gauzy/models';
 	providedIn: 'root'
 })
 export class OrganizationDocumentsService {
-    constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) {}
 
-    create(newDocument: OrganizationDocument): Observable<any> {
-        return this.http.post('url', newDocument)
-    }
+	create(newDocument: OrganizationDocument): Observable<any> {
+		return this.http.post('url', newDocument);
+	}
 
-    delete(id: string): Observable<any> {
-        return this.http.delete(`url/${id}`)
-    }
+	delete(id: string): Observable<any> {
+		return this.http.delete(`url/${id}`);
+	}
 }

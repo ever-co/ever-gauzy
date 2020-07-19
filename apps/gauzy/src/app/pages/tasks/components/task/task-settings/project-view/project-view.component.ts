@@ -1,9 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationProjects } from '@gauzy/models';
+import { OrganizationProjects, TaskListTypeEnum } from '@gauzy/models';
+import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 
-export enum ProjectTaskListType {
-	Grid = 'grid',
-	Sprint = 'sprint'
+export interface TaskViewMode {
+	type: TaskListTypeEnum;
+	name: TaskListTypeEnum;
 }
 
 @Component({
@@ -13,16 +14,23 @@ export enum ProjectTaskListType {
 })
 export class ProjectViewComponent implements OnInit {
 	@Input() project: OrganizationProjects;
-	taskListTypes: typeof ProjectTaskListType = ProjectTaskListType;
-	projectTaskListType: ProjectTaskListType[] = [
-		ProjectTaskListType.Grid,
-		ProjectTaskListType.Sprint
+	taskViewModeType: typeof TaskListTypeEnum = TaskListTypeEnum;
+	taskViewModeList: TaskViewMode[] = [
+		{ type: TaskListTypeEnum.GRID, name: TaskListTypeEnum.GRID },
+		{ type: TaskListTypeEnum.SPRINT, name: TaskListTypeEnum.SPRINT }
 	];
-	selectedProjectTaskListType: ProjectTaskListType = ProjectTaskListType.Grid;
+	selectedTaskViewMode: TaskViewMode;
 
-	constructor() {}
+	constructor(private projectService: OrganizationProjectsService) {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.selectedTaskViewMode = {
+			type: this.project.taskListType as TaskListTypeEnum,
+			name: this.project.taskListType as TaskListTypeEnum
+		};
+	}
 
-	setListType(evt: ProjectTaskListType): void {}
+	async setTaskViewMode(evt: TaskViewMode): Promise<void> {
+		await this.projectService.updateTaskViewMode(this.project.id, evt.type);
+	}
 }

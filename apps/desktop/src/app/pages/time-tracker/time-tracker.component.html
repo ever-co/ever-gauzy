@@ -28,6 +28,40 @@
 									}}
 								</div>
 							</div>
+							<div class="col-12 form-group tp-padding">
+								<div class="row">
+									<div class="col-12">
+										<div class="row">
+											<div class="col-6">
+												<nb-checkbox
+													[checked]="aw"
+													(change)="setAW($event)"
+													>Activiwatch</nb-checkbox
+												>
+											</div>
+											<div class="col-6">
+												<p
+													*ngIf="loadingAw"
+													[nbSpinner]="loadingAw"
+													nbSpinnerStatus="info"
+												></p>
+												<nb-icon
+													*ngIf="awCheck"
+													[icon]="iconAw"
+													[status]="statusIcon"
+												>
+												</nb-icon>
+											</div>
+										</div>
+									</div>
+
+									<div class="col-12">
+										<nb-checkbox [disabled]="true"
+											>Wakatime</nb-checkbox
+										>
+									</div>
+								</div>
+							</div>
 							<div class="col-12">
 								<div class="row">
 									<div class="col-11 center-text">
@@ -54,7 +88,7 @@
 							<div class="col-12">
 								<h6>Electron APP</h6>
 							</div>
-							<div class="col-12 form-group">
+							<div class="col-12 form-group" #selectRef>
 								<nb-select
 									placeholder="Project"
 									[(ngModel)]="projectSelect"

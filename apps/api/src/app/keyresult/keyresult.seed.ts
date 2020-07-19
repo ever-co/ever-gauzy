@@ -109,14 +109,16 @@ export const updateDefaultKeyResultProgress = async (
 			}
 		);
 		const recentUpdate = sortedUpdates[sortedUpdates.length - 1];
-		await connection.manager.update(
-			KeyResult,
-			{ id: keyResult.id },
-			{
-				progress: recentUpdate.progress,
-				update: recentUpdate.update
-			}
-		);
+		if (recentUpdate) {
+			await connection.manager.update(
+				KeyResult,
+				{ id: keyResult.id },
+				{
+					progress: recentUpdate.progress,
+					update: recentUpdate.update
+				}
+			);
+		}
 	});
 	return keyResults;
 };

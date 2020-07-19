@@ -13,7 +13,9 @@ import {
 	NbDatepickerModule,
 	NbRadioModule,
 	NbSpinnerModule,
-	NbToggleModule
+	NbToggleModule,
+	NbContextMenuModule,
+	NbMenuModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -60,7 +62,7 @@ import { PaymentMutationComponent } from './invoice-payments/payment-mutation/pa
 import { TasksStoreService } from '../../@core/services/tasks-store.service';
 import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
 import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-apply-tax-discount.component';
-import { CardGridInvoiceModule } from '../../@shared/card-grid-invoice/card-grid-invoice.module';
+import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -76,7 +78,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbButtonModule,
 		Ng2SmartTableModule,
-		CardGridInvoiceModule,
+		CardGridModule,
 		FormsModule,
 		NbBadgeModule,
 		ReactiveFormsModule,
@@ -93,6 +95,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		NgSelectModule,
 		NbToggleModule,
+		NbContextMenuModule,
+		NbMenuModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

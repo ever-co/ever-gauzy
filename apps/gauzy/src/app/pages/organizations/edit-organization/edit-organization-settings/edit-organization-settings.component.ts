@@ -147,9 +147,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('employment-types')
 			},
 			{
-				title: this.getTranslation(
-					'ORGANIZATIONS_PAGE.DOCUMENTS'
-				),
+				title: this.getTranslation('ORGANIZATIONS_PAGE.DOCUMENTS'),
 				icon: 'file-text-outline',
 				responsive: true,
 				route: this.getRoute('documents')

@@ -6,7 +6,7 @@ require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 import * as url from 'url';
 const Store = require('electron-store');
-import { ipcMainHandler } from './libs/ipc';
+import { ipcMainHandler, ipcTimer } from './libs/ipc';
 import TrayIcon from './libs/tray-icon';
 import DataModel from './local-data/local-table';
 const knex = require('knex')({
@@ -18,7 +18,6 @@ const knex = require('knex')({
 const dataModel = new DataModel();
 dataModel.createNewTable(knex);
 
-console.log('path', app.getPath('userData'));
 const store = new Store();
 
 let serve: boolean;
@@ -29,6 +28,8 @@ let win: BrowserWindow = null;
 let win2: BrowserWindow = null;
 let win3: BrowserWindow = null;
 let tray = null;
+let isAlreadyRun = false;
+let willquit = false;
 
 const getFromEnv = parseInt(process.env.ELECTRON_IS_DEV, 10) === 1;
 
@@ -75,6 +76,7 @@ function initMainListener() {
 function createWindow() {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
 	mainWindowSettings.frame = true;
+	mainWindowSettings.title = 'Gauzy';
 	if (debugMode) {
 		process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
@@ -130,8 +132,9 @@ function createWindow() {
 /* create second window */
 function createSetupWindow(value) {
 	mainWindowSettings.width = 800;
-	mainWindowSettings.height = 600;
-	mainWindowSettings.frame = false;
+	mainWindowSettings.height = 800;
+	mainWindowSettings.frame = true;
+	mainWindowSettings.title = 'Setup';
 	win2 = new BrowserWindow(mainWindowSettings);
 	const launchPath = url.format({
 		pathname: path.join(__dirname, 'ui/index.html'),
@@ -147,6 +150,7 @@ function createSetupWindow(value) {
 function timeTrackerWindow() {
 	mainWindowSettings.width = 900;
 	mainWindowSettings.height = 600;
+	mainWindowSettings.title = 'Time Tracker';
 	win3 = new BrowserWindow(mainWindowSettings);
 	const launchPath = url.format({
 		pathname: path.join(__dirname, 'ui/index.html'),
@@ -183,15 +187,24 @@ function startServer(value) {
 			configs: config
 		});
 	} catch (error) {}
-
-	setTimeout(() => {
-		if (!value.isSetup) {
-			win2.hide();
+	/* ping server before launch the ui */
+	console.log('run this');
+	ipcMain.on('app_is_init', () => {
+		console.log('app is init');
+		try {
+			if (!isAlreadyRun && value) {
+				win2.webContents.send('server_ping', {
+					host: value.serverUrl
+						? value.serverUrl
+						: value.port
+						? `http://localhost:${value.port}`
+						: 'http://localhost:3000'
+				});
+			}
+		} catch (error) {
+			console.log(error);
 		}
-		createWindow();
-		tray = new TrayIcon(win2, knex, win3);
-	}, 5000);
-
+	});
 	return true;
 }
 
@@ -205,7 +218,6 @@ try {
 	// More details at https://github.com/electron/electron/issues/15947
 	app.on('ready', () => {
 		try {
-			timeTrackerWindow();
 			const configs: any = store.get('configs');
 			if (configs.isSetup) {
 				global.variableGlobal = {
@@ -222,10 +234,34 @@ try {
 			createSetupWindow(false);
 		}
 
-		ipcMainHandler(store, startServer, knex, win2, win3);
+		ipcMainHandler(store, startServer, knex);
 	});
 
 	app.on('window-all-closed', quit);
+
+	ipcMain.on('server_is_ready', () => {
+		console.log('this server is ready');
+		try {
+			isAlreadyRun = true;
+			win2.hide();
+			timeTrackerWindow();
+			createWindow();
+			ipcTimer(store, knex, win2, win3);
+			const auth = store.get('auth');
+			tray = new TrayIcon(win2, knex, win3, auth);
+			win3.on('close', (event) => {
+				console.log('close', event);
+				if (willquit) {
+					app.quit();
+				} else {
+					event.preventDefault();
+					win3.hide();
+				}
+			});
+		} catch (error) {
+			console.log(error);
+		}
+	});
 
 	ipcMain.on('quit', quit);
 
@@ -247,6 +283,10 @@ try {
 		if (win === null) {
 			createWindow();
 		}
+	});
+
+	app.on('before-quit', () => {
+		willquit = true;
 	});
 } catch (err) {}
 

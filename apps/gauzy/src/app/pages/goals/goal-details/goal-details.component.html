@@ -58,6 +58,9 @@
 	<nb-card-body>
 		<nb-tabset fullWidth>
 			<nb-tab tabTitle="{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}">
+				<nb-alert accent="warning" *ngIf="goal.keyResults.length == 0">
+					{{ 'GOALS_PAGE.MESSAGE.NO_KEY_RESULT' | translate }}
+				</nb-alert>
 				<nb-card
 					*ngFor="let keyResult of goal.keyResults; let i = index"
 				>
@@ -96,12 +99,12 @@
 				</nb-card>
 			</nb-tab>
 			<nb-tab tabTitle="{{ 'GOALS_PAGE.UPDATES' | translate }}">
-				<nb-card>
+				<nb-alert accent="warning" *ngIf="updates.length == 0">
+					{{ 'GOALS_PAGE.MESSAGE.NO_UPDATES' | translate }}
+				</nb-alert>
+				<nb-card *ngIf="updates.length > 0">
 					<nb-card-header>
-						<div
-							class="section mt-2 overflow-scroll"
-							*ngIf="!!this.updates"
-						>
+						<div class="section mt-2 overflow-scroll">
 							<nb-card *ngFor="let update of updates">
 								<nb-card-header>
 									<div class="main-header">
@@ -136,6 +139,88 @@
 							</nb-card>
 						</div>
 					</nb-card-header>
+				</nb-card>
+			</nb-tab>
+			<nb-tab tabTitle="Alignments">
+				<nb-alert accent="warning" *ngIf="!goal.alignedKeyResult">
+					{{ 'GOALS_PAGE.MESSAGE.NO_ALIGNMENT' | translate }}
+				</nb-alert>
+				<nb-card *ngIf="!!goal.alignedKeyResult">
+					<nb-card-header class="row"
+						><span class="col-md-8">{{
+							goal.alignedKeyResult.goal.name
+						}}</span
+						><span class="col-md-4"
+							><nb-progress-bar
+								class="mt-1"
+								[status]="
+									goal.alignedKeyResult.goal.progress < 50
+										? 'warning'
+										: goal.alignedKeyResult.progress < 75
+										? 'info'
+										: 'success'
+								"
+								[value]="goal.alignedKeyResult.goal.progress"
+								size="tiny"
+								>{{
+									goal.alignedKeyResult.goal.progress
+								}}%</nb-progress-bar
+							></span
+						></nb-card-header
+					>
+					<nb-card-body>
+						<nb-card class="ml-2">
+							<nb-card-header class="row"
+								><span class="col-md-8">{{
+									goal.alignedKeyResult.name
+								}}</span
+								><span class="col-md-4"
+									><nb-progress-bar
+										class="mt-1"
+										[status]="
+											goal.alignedKeyResult.progress < 50
+												? 'warning'
+												: goal.alignedKeyResult
+														.progress < 75
+												? 'info'
+												: 'success'
+										"
+										[value]="goal.alignedKeyResult.progress"
+										size="tiny"
+										>{{
+											goal.alignedKeyResult.progress
+										}}%</nb-progress-bar
+									></span
+								></nb-card-header
+							>
+							<nb-card-body>
+								<nb-card class="ml-2">
+									<nb-card-header class="row"
+										><span class="col-md-6">{{
+											goal.name
+										}}</span>
+										<span class="col-md-6"
+											><nb-progress-bar
+												class="mt-1"
+												[status]="
+													goal.progress < 50
+														? 'warning'
+														: goal.progress < 75
+														? 'info'
+														: 'success'
+												"
+												[value]="goal.progress"
+												size="tiny"
+												>{{
+													goal.progress
+												}}%</nb-progress-bar
+											></span
+										></nb-card-header
+									>
+								</nb-card>
+							</nb-card-body>
+						</nb-card>
+					</nb-card-body>
 				</nb-card>
 			</nb-tab>
 		</nb-tabset>

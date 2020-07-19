@@ -4,9 +4,10 @@ import {
 	OrganizationProjectsCreateInput,
 	OrganizationProjects,
 	OrganizationProjectsFindInput,
-	EditEntityByMemberInput
+	EditEntityByMemberInput,
+	TaskListTypeEnum
 } from '@gauzy/models';
-import { first } from 'rxjs/operators';
+import { first, take } from 'rxjs/operators';
 
 @Injectable({
 	providedIn: 'root'
@@ -63,6 +64,16 @@ export class OrganizationProjectsService {
 		return this.http
 			.put(`/api/organization-projects/employee`, updateInput)
 			.pipe(first())
+			.toPromise();
+	}
+
+	updateTaskViewMode(
+		id: string,
+		taskViewMode: TaskListTypeEnum
+	): Promise<any> {
+		return this.http
+			.put(`api/organization-projects/${id}`, { taskViewMode })
+			.pipe(take(1))
 			.toPromise();
 	}
 

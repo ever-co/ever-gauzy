@@ -49,7 +49,9 @@ export class Screenshot extends Base implements IScreenshot {
 
 	@AfterLoad()
 	afterLoad?() {
-		this.fullUrl = environment.baseUrl + '/' + this.fullUrl;
-		this.thumbUrl = environment.baseUrl + '/' + this.thumbUrl;
+		if (this.fullUrl.substring(0, 5) != 'https') {
+			this.fullUrl = environment.baseUrl + '/' + this.fullUrl;
+			this.thumbUrl = environment.baseUrl + '/' + this.thumbUrl;
+		}
 	}
 }

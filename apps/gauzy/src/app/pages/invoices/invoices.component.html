@@ -20,36 +20,7 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<div class="mr-2">
-				<nb-select
-					*ngIf="!isEstimate"
-					[disabled]="disableButton"
-					placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-					[(selected)]="status"
-					(selectedChange)="selectStatus($event)"
-				>
-					<nb-option
-						*ngFor="let status of invoiceStatusTypes"
-						[value]="status"
-					>
-						{{ status }}
-					</nb-option>
-				</nb-select>
-				<nb-select
-					*ngIf="isEstimate"
-					[disabled]="disableButton"
-					placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-					[(selected)]="status"
-					(selectedChange)="selectStatus($event)"
-				>
-					<nb-option
-						*ngFor="let status of estimateStatusTypes"
-						[value]="status"
-					>
-						{{ status }}
-					</nb-option>
-				</nb-select>
-			</div>
+
 			<nb-select
 				class="mr-2 show-columns"
 				*ngIf="!isEstimate"
@@ -82,6 +53,7 @@
 					{{ column }}
 				</nb-option>
 			</nb-select>
+
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
@@ -109,12 +81,12 @@
 			#invoicesTable
 		>
 		</ng2-smart-table>
-		<ga-card-grid-invoice
+		<ga-card-grid
 			[settings]="settingsSmartTable"
 			[source]="invoices"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[buttonTemplate]="actionButtons"
-		></ga-card-grid-invoice>
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
 
@@ -123,11 +95,41 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
+	<div class="mr-2" *ngIf="dataLayoutStyle === 'TABLE'">
+		<nb-select
+			*ngIf="!isEstimate"
+			[disabled]="!selectedItem && disableButton"
+			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+			[(selected)]="status"
+			(selectedChange)="selectStatus($event)"
+		>
+			<nb-option
+				*ngFor="let status of invoiceStatusTypes"
+				[value]="status"
+			>
+				{{ status }}
+			</nb-option>
+		</nb-select>
+		<nb-select
+			*ngIf="isEstimate"
+			[disabled]="!selectedItem && disableButton"
+			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+			[(selected)]="status"
+			(selectedChange)="selectStatus($event)"
+		>
+			<nb-option
+				*ngFor="let status of estimateStatusTypes"
+				[value]="status"
+			>
+				{{ status }}
+			</nb-option>
+		</nb-select>
+	</div>
 	<button
 		nbButton
 		status="info"
 		(click)="download(selectedItem)"
-		class="mr-2 btn"
+		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -138,18 +140,30 @@
 		nbButton
 		status="info"
 		(click)="edit(selectedItem)"
-		class="mr-2 btn"
+		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
 		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
+
 	<button
+		nbButton
+		[nbContextMenu]="settingsContextMenu"
+		nbContextMenuPlacement="top"
+		(click)="selectMenu(selectedItem)"
+		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+	>
+		<nb-icon class="icons" icon="settings-2-outline"></nb-icon>
+	</button>
+
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
 		status="info"
 		(click)="duplicate(selectedItem)"
-		class="mr-2 btn"
+		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -157,10 +171,11 @@
 		{{ 'BUTTONS.DUPLICATE' | translate }}
 	</button>
 	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
 		status="info"
 		(click)="send(selectedItem)"
-		class="mr-2 btn"
+		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -168,11 +183,11 @@
 		{{ 'BUTTONS.SEND' | translate }}
 	</button>
 	<button
-		*ngIf="isEstimate"
+		*ngIf="isEstimate && dataLayoutStyle === 'TABLE'"
 		nbButton
 		status="info"
 		(click)="convert(selectedItem)"
-		class="mr-2 btn"
+		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -180,10 +195,11 @@
 		{{ 'BUTTONS.CONVERT_TO_INVOICE' | translate }}
 	</button>
 	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
 		status="info"
 		(click)="email(selectedItem)"
-		class="mr-2 btn"
+		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
@@ -191,10 +207,11 @@
 		{{ 'BUTTONS.EMAIL' | translate }}
 	</button>
 	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
 		status="danger"
 		(click)="delete(selectedItem)"
-		class="mr-2 btn"
+		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
