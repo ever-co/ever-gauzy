@@ -94,7 +94,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		estimate,
 		dueDate,
 		tags
-	}: Task) {		
+	}: Task) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedMembers = (members || []).map((member) => member.id);
 		this.selectedTeams = (teams || []).map((team) => team.id);

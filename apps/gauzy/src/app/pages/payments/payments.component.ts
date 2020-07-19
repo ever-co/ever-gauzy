@@ -83,20 +83,22 @@ export class PaymentsComponent extends TranslationBaseComponent
 					const allData = [];
 					let data = {};
 					for (const item of items) {
-						const client = await this.organizationContactService.getById(
-							item.invoice.clientId
-						);
-						data = {
-							invoiceNumber: item.invoice.invoiceNumber,
-							clientName: client.name,
-							amount: item.amount,
-							paymentDate: item.paymentDate
-								.toString()
-								.slice(0, 10),
-							recordedBy: item.recordedBy,
-							note: item.note,
-							overdue: item.overdue
-						};
+						if (item.invoice) {
+							const client = await this.organizationContactService.getById(
+								item.invoice.clientId
+							);
+							data = {
+								invoiceNumber: item.invoice.invoiceNumber,
+								clientName: client.name,
+								amount: item.amount,
+								paymentDate: item.paymentDate
+									.toString()
+									.slice(0, 10),
+								recordedBy: item.recordedBy,
+								note: item.note,
+								overdue: item.overdue
+							};
+						}
 						allData.push(data);
 					}
 					this.paymentsData = allData;
