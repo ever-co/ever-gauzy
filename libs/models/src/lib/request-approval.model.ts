@@ -3,6 +3,7 @@ import { RequestApprovalEmployee } from './request-approval-employee.model';
 import { Employee } from './employee.model';
 import { OrganizationTeam } from './organization-team-model';
 import { RequestApprovalTeam } from './request-approval-team.model';
+import { ApprovalPolicy } from './approval-policy.model';
 
 export interface RequestApproval extends IBaseEntityModel {
 	employeeApprovals?: RequestApprovalEmployee[];
@@ -14,6 +15,7 @@ export interface RequestApproval extends IBaseEntityModel {
 	min_count?: number;
 	status?: number;
 	approvalPolicyId?: string;
+	approvalPolicy?: ApprovalPolicy;
 }
 
 export interface RequestApprovalCreateInput extends IBaseEntityModel {
@@ -33,3 +35,9 @@ export enum RequestApprovalStatusTypesEnum {
 	APPROVED = 2,
 	REFUSED = 3
 }
+
+export const RequestApprovalStatus = {
+	REQUESTED: 1,
+	APPROVED: 2,
+	REFUSED: 3
+};

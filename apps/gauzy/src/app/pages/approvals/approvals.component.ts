@@ -134,11 +134,10 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			).items;
 		} else {
 			items = (
-				await this.approvalRequestService.getAll([
-					'approvalPolicy',
-					'employeeApprovals',
-					'teamApprovals'
-				])
+				await this.approvalRequestService.getAll(
+					['employeeApprovals', 'teamApprovals'],
+					this.selectedOrganizationId
+				)
 			).items;
 		}
 		this.loading = false;

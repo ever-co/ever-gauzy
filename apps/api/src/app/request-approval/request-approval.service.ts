@@ -37,28 +37,33 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 	}
 
 	async findAllRequestApprovals(
-		filter: FindManyOptions<RequestApproval>
+		filter: FindManyOptions<RequestApproval>,
+		organizationId: string
 	): Promise<IPagination<IRequestApproval>> {
-		const total = await this.requestApprovalRepository.count(filter);
+		let requestApproval = this.requestApprovalRepository
+			.createQueryBuilder('request_approval')
+			.innerJoinAndSelect(
+				'request_approval.approvalPolicy',
+				'approvalPolicy'
+			);
 
-		const items = await this.requestApprovalRepository.find(filter);
-		for (const rApproval of items) {
-			if (
-				rApproval &&
-				rApproval.employeeApprovals &&
-				rApproval.employeeApprovals.length > 0
-			) {
-				for (const empApproval of rApproval.employeeApprovals) {
-					const emp = await this.employeeRepository.findOne(
-						empApproval.employeeId
-					);
-					emp.user = await this.employeeRepository.findOne(
-						emp.userId
-					);
-					empApproval.employee = emp;
-				}
-			}
+		if (filter.relations && filter.relations.length > 0) {
+			filter.relations.forEach((item) => {
+				requestApproval = requestApproval.leftJoinAndSelect(
+					`request_approval.${item}`,
+					item
+				);
+			});
 		}
+
+		const [
+			items,
+			total
+		] = await requestApproval
+			.where('approvalPolicy.organizationId =:organizationId', {
+				organizationId
+			})
+			.getManyAndCount();
 
 		return { items, total };
 	}
@@ -139,12 +144,12 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 	): Promise<RequestApproval> {
 		try {
 			const requestApproval = new RequestApproval();
-			requestApproval.name = entity.name;
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
+			requestApproval.createdBy = RequestContext.currentUser().id;
+			requestApproval.name = entity.name;
 			requestApproval.type = entity.type;
 			requestApproval.min_count = entity.min_count;
-			requestApproval.createdBy = RequestContext.currentUser().id;
 
 			const employees = await this.employeeRepository.findByIds(
 				entity.employeeApprovals,
