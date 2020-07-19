@@ -368,9 +368,7 @@ export class SeedDataService {
 
 			await this.tryExecute(createDefaultEmailTemplates(this.connection));
 
-			const countries = await this.tryExecute(
-				createCountries(this.connection)
-			);
+			await this.tryExecute(createCountries(this.connection));
 
 			await this.seedDefaultData();
 

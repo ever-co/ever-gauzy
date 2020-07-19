@@ -109,10 +109,6 @@ export const createRandomExpenses = async (
 
 	const currencies = Object.values(CurrenciesEnum);
 
-	if (!categoriesMap) {
-		return;
-	}
-
 	const notesArray = [
 		'Windows 10',
 		'MultiSport Card',
