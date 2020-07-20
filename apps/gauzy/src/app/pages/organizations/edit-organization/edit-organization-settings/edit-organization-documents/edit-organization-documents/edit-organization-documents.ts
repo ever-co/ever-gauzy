@@ -6,6 +6,7 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 import { OrganizationDocument } from '@gauzy/models';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { OrganizationDocumentsService } from 'apps/gauzy/src/app/@core/services/organization-documents.service';
+import { first } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-edit-organization-documents',
@@ -37,6 +38,7 @@ export class EditOrganizationDocuments implements OnInit, OnDestroy {
 				this.organizationId = org.id;
 
 				this._initializeForm();
+				this._loadDocuments();
 			});
 	}
 
@@ -57,7 +59,7 @@ export class EditOrganizationDocuments implements OnInit, OnDestroy {
 		const documentForm = this.form.controls.documents as FormArray;
 		const formValue = { ...documentForm.value[0] };
 		this.formDocument = this.uploadDoc.form;
-		formValue.documentUrl = this.formDocument.get('uploadDoc').value;
+		formValue.documentUrl = this.formDocument.get('docUrl').value;
 
 		if (formValue.documentUrl !== '' && formValue.name !== '') {
 			this._createDocument(formValue);
@@ -67,12 +69,31 @@ export class EditOrganizationDocuments implements OnInit, OnDestroy {
 	}
 
 	private _createDocument(formValue: OrganizationDocument) {
-		this.organizationDocumentsService.create({
-			...formValue,
-			organizationId: this.organizationId
-		});
+		this.organizationDocumentsService
+			.create({
+				...formValue,
+				organizationId: this.organizationId
+			})
+			.pipe(first())
+			.subscribe(() => {
+				this.toastrService.success('Document successfully created');
+				this._loadDocuments();
+			});
+	}
 
-		this.toastrService.success('Document successfully created');
+	private _loadDocuments() {
+		this.organizationDocumentsService
+			.getAll({ organizationId: this.organizationId })
+			.pipe(first())
+			.subscribe(
+				(res) => {
+					this.documentList = res.items;
+				},
+				() =>
+					this.toastrService.danger(
+						'Unable to load organization documents'
+					)
+			);
 	}
 
 	editDocument(index: number, id: string) {
