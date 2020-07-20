@@ -1,50 +1,81 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { EquipmentSharing, Equipment } from '@gauzy/models';
+import {
+	EquipmentSharing,
+	Equipment,
+	ComponentLayoutStyleEnum,
+	RequestApprovalStatusTypesEnum
+} from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
-
-export interface SelectedEquipmentSharing {
-	data: EquipmentSharing;
-	isSelected: false;
-}
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { Store } from '../../@core/services/store.service';
+import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
-	templateUrl: './equipment-sharing.component.html'
+	templateUrl: './equipment-sharing.component.html',
+	styleUrls: ['./equipment-sharing.component.scss']
 })
 export class EquipmentSharingComponent extends TranslationBaseComponent
 	implements OnInit {
 	settingsSmartTable: object;
 	loading = true;
 	selectedEquipmentSharing: EquipmentSharing;
+	equipmentsData: EquipmentSharing[];
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	isApproval: Boolean = false;
+	isRefuse: Boolean = false;
+	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('equipmentSharingTable')
-	equipmentSharingTable;
+	@ViewChild('equipmentSharingTable') equipmentSharingTable;
 
 	constructor(
 		readonly translateService: TranslateService,
 		private equipmentSharingService: EquipmentSharingService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private router: Router,
+		private store: Store
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
+		this.loadSettings();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadSettings();
+
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EQUIPMENT_SHARING;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	async loadSmartTable() {
@@ -138,7 +169,13 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		}
 	}
 
-	async save() {
+	async save(selectedItem?: EquipmentSharing) {
+		if (selectedItem) {
+			this.selectEquipmentSharing({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const dialog = this.dialogService.open(
 			EquipmentSharingMutationComponent,
 			{
@@ -157,7 +194,13 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete() {
+	async delete(selectedItem?: EquipmentSharing) {
+		if (selectedItem) {
+			this.selectEquipmentSharing({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
@@ -176,21 +219,48 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		this.disableButton = true;
 	}
 
-	async selectEquipmentSharing($event: SelectedEquipmentSharing) {
-		if ($event.isSelected) {
-			this.selectedEquipmentSharing = $event.data;
-			this.disableButton = false;
+	async selectEquipmentSharing({ isSelected, data }) {
+		const selectedEquipment = isSelected ? data : null;
+		if (this.equipmentSharingTable) {
 			this.equipmentSharingTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedEquipmentSharing = selectedEquipment;
 	}
 
 	async loadSettings() {
 		this.selectedEquipmentSharing = null;
 		const equipmentItems = await this.equipmentSharingService.getAll();
 		this.loading = false;
+		this.equipmentsData = equipmentItems;
 		this.smartTableSource.load(equipmentItems);
+
+		equipmentItems.map((rowData) => {
+			if (rowData && rowData.status) {
+				if (rowData.status === 1) {
+					this.isApproval = true;
+					this.isRefuse = true;
+				} else {
+					this.isApproval = false;
+					this.isRefuse = false;
+				}
+			}
+		});
+	}
+
+	approval(rowData) {
+		const params = {
+			isApproval: true,
+			data: rowData
+		};
+		this.handleEvent(params);
+	}
+	refuse(rowData) {
+		const params = {
+			isApproval: false,
+			data: rowData
+		};
+		this.handleEvent(params);
 	}
 
 	_formatDate(date): string {

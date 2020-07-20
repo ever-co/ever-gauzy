@@ -1,3 +1,4 @@
+import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
 import { EquipmentRoutingModule } from './equipment-routing.module';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -39,6 +40,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDialogModule.forChild(),
 		EquipmentMutationModule,
 		TableComponentsModule,
+		CardGridModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
