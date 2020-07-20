@@ -4,8 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	EquipmentSharing,
 	Equipment,
-	ComponentLayoutStyleEnum,
-	RequestApprovalStatusTypesEnum
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
