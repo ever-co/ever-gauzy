@@ -20,7 +20,12 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 				(sprint: OrganizationSprint) =>
 					sprint.projectId === this.project.id
 			)
-		)
+		),
+		map((sprints: OrganizationSprint[]): OrganizationSprint[] => {
+			return sprints.sort((sprint, nextSprint) =>
+				sprint.startDate < nextSprint.startDate ? -1 : 1
+			);
+		})
 	);
 	moment: any = moment;
 	private _onDestroy$: Subject<void> = new Subject<void>();
