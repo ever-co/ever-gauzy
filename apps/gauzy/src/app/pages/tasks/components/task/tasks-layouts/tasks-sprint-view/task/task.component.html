@@ -1,4 +1,10 @@
-<nb-card cdkDrag [cdkDragData]="task" class="mb-1" (click)="toggleItem(task)">
+<nb-card
+	cdkDrag
+	[cdkDragData]="task"
+	[cdkDragLockAxis]="'y'"
+	class="mb-1"
+	(click)="toggleItem(task)"
+>
 	<nb-card-body class="task">
 		<div class="task__title">{{ task.title }}</div>
 	</nb-card-body>
