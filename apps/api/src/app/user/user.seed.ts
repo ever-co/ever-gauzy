@@ -28,7 +28,16 @@ export const createDefaultSuperAdminUsers = async (
 	const superAdminRole = roles.filter(
 		(role) => role.name === RolesEnum.SUPER_ADMIN
 	)[0];
-	const defaultSuperAdmins = env.defaultSuperAdmins || [];
+	const defaultSuperAdmins = [
+    {
+      email: 'admin@ever.co',
+      password: 'admin',
+      firstName: 'Admin',
+      lastName: 'Super',
+      imageUrl: 'assets/images/avatars/ruslan.jpg',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    }
+  ];
 
 	// Generate default super admins
 	for (const superAdmin of defaultSuperAdmins) {
@@ -245,7 +254,16 @@ const seedAdminUsers = async (
 	let adminUser: Promise<User>;
 
 	const adminRole = roles.filter((role) => role.name === RolesEnum.ADMIN)[0];
-	const defaultAdmins = env.defaultAdmins || [];
+	const defaultAdmins = [
+    {
+      email: 'local.admin@ever.co',
+      password: 'admin',
+      firstName: 'Admin',
+      lastName: 'Local',
+      imageUrl: 'assets/images/avatars/ruslan.jpg',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    }
+  ];
 
 	// Generate default admins
 	for (const admin of defaultAdmins) {
@@ -263,7 +281,258 @@ const seedDefaultEmployeeUsers = async (
 	const defaultUsers: Promise<User>[] = [];
 	let user: Promise<User>;
 
-	const defaultEmployees = env.defaultEmployees || [];
+	const defaultEmployees = [
+    {
+      email: 'ruslan@ever.co',
+      password: '123456',
+      firstName: 'Ruslan',
+      lastName: 'Konviser',
+      imageUrl: 'assets/images/avatars/ruslan.jpg',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'alish@ever.co',
+      password: '123456',
+      firstName: 'Alish',
+      lastName: 'Meklyov',
+      imageUrl: 'assets/images/avatars/alish.jpg',
+      startedWorkOn: '2018-03-20',
+      endWork: null,
+      employeeLevel: 'D',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'blagovest@ever.co',
+      password: '123456',
+      firstName: 'Blagovest',
+      lastName: 'Gerov',
+      imageUrl: 'assets/images/avatars/blagovest.jpg',
+      startedWorkOn: '2018-03-19',
+      endWork: null,
+      employeeLevel: 'C',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'elvis@ever.co',
+      password: '123456',
+      firstName: 'Elvis',
+      lastName: 'Arabadjiiski',
+      imageUrl: 'assets/images/avatars/elvis.jpg',
+      startedWorkOn: '2018-05-25',
+      endWork: null,
+      employeeLevel: 'C',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'emil@ever.co',
+      password: '123456',
+      firstName: 'Emil',
+      lastName: 'Momchilov',
+      imageUrl: 'assets/images/avatars/emil.jpg',
+      startedWorkOn: '2019-01-21',
+      endWork: null,
+      employeeLevel: 'C',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'boyan@ever.co',
+      password: '123456',
+      firstName: 'Boyan',
+      lastName: 'Stanchev',
+      imageUrl: 'assets/images/avatars/boyan.jpg',
+      startedWorkOn: '2019-01-21',
+      endWork: null,
+      employeeLevel: 'C',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'hristo@ever.co',
+      password: '123456',
+      firstName: 'Hristo',
+      lastName: 'Hristov',
+      imageUrl: 'assets/images/avatars/hristo.jpg',
+      startedWorkOn: '2019-06-17',
+      endWork: null,
+      employeeLevel: 'B',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'alex@ever.co',
+      password: '123456',
+      firstName: 'Aleksandar',
+      lastName: 'Tasev',
+      imageUrl: 'assets/images/avatars/alexander.jpg',
+      startedWorkOn: '2019-08-01',
+      endWork: null,
+      employeeLevel: 'B',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'rachit@ever.co',
+      password: '123456',
+      firstName: 'Rachit',
+      lastName: 'Magon',
+      imageUrl: 'assets/images/avatars/rachit.png',
+      startedWorkOn: '2019-11-27',
+      endWork: null,
+      employeeLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'atanas@ever.co',
+      password: '123456',
+      firstName: 'Atanas',
+      lastName: 'Yonkov',
+      imageUrl: 'assets/images/avatars/atanas.jpeg',
+      startedWorkOn: '2020-02-01',
+      endWork: null,
+      employeeLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'dimana@ever.co',
+      password: '123456',
+      firstName: 'Dimana',
+      lastName: 'Tsvetkova',
+      imageUrl: 'assets/images/avatars/dimana.jpeg',
+      startedWorkOn: '2019-11-26',
+      endWork: null,
+      employeeLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'sunko@ever.co',
+      password: '123456',
+      firstName: 'Alexander',
+      lastName: 'Savov',
+      imageUrl: 'assets/images/avatars/savov.jpg',
+      startedWorkOn: '2020-02-04',
+      endWork: null,
+      employeeLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'lubomir@ever.co',
+      password: '123456',
+      firstName: 'Lubomir',
+      lastName: 'Petrov',
+      imageUrl: 'assets/images/avatars/lubomir.jpg',
+      startedWorkOn: '2020-02-06',
+      endWork: null,
+      employeeLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'pavel@ever.co',
+      password: '123456',
+      firstName: 'Pavel',
+      lastName: 'Denchev',
+      imageUrl: 'assets/images/avatars/pavel.jpg',
+      startedWorkOn: '2020-03-16',
+      endWork: null,
+      employeeLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'yavor@ever.co',
+      password: '123456',
+      firstName: 'Yavor',
+      lastName: 'Grancharov',
+      imageUrl: 'assets/images/avatars/yavor.jpg',
+      startedWorkOn: '2020-02-05',
+      endWork: null,
+      employeeLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'tsvetelina@ever.co',
+      password: '123456',
+      firstName: 'Tsvetelina',
+      lastName: 'Yordanova',
+      imageUrl: 'assets/images/avatars/tsvetelina.jpg',
+      startedWorkOn: '2020-03-02',
+      endWork: null,
+      employeeLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'everq@ever.co',
+      password: '123456',
+      firstName: 'Ruslan',
+      lastName: 'Konviser',
+      imageUrl: 'assets/images/avatars/ruslan.jpg',
+      startedWorkOn: '2018-08-01',
+      endWork: null,
+      employeeLevel: 'C',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'muiz@smooper.xyz',
+      password: '123456',
+      firstName: 'Muiz',
+      lastName: 'Nadeem',
+      imageUrl: 'assets/images/avatars/muiz.jpg',
+      startedWorkOn: '2019-11-27',
+      endWork: null,
+      employeeLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'deko898@hotmail.com',
+      password: '123456',
+      firstName: 'Dejan',
+      lastName: 'Obradovikj',
+      imageUrl: 'assets/images/avatars/dejan.jpg',
+      startedWorkOn: '2020-03-07',
+      endWork: null,
+      employeeLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'ckhandla94@gmail.com',
+      password: '123456',
+      firstName: 'Chetan',
+      lastName: 'Khandla',
+      imageUrl: 'assets/images/avatars/chetan.png',
+      startedWorkOn: '2020-03-07',
+      endWork: null,
+      employeeLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'julia@ever.co',
+      password: '123456',
+      firstName: 'Julia',
+      lastName: 'Konviser',
+      imageUrl: 'assets/images/avatars/julia.png',
+      startedWorkOn: '2018-08-01',
+      endWork: null,
+      employeeLevel: 'C',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: '',
+      password: '123456',
+      firstName: 'Milena',
+      lastName: 'Dimova',
+      imageUrl: 'assets/images/avatars/milena.png',
+      startedWorkOn: '2019-07-15',
+      endWork: '2019-10-15',
+      employeeLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'yordan@ever.co',
+      password: '123456',
+      firstName: 'Yordan ',
+      lastName: 'Genovski',
+      imageUrl: 'assets/images/avatars/yordan.jpg',
+      startedWorkOn: '2018-08-01',
+      endWork: null,
+      employeeLevel: 'C',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    }
+  ];
 	let counter = 0;
 	// Generate default users
 	for (const employee of defaultEmployees) {
@@ -297,7 +566,62 @@ const seedDefaultCandidateUsers = async (
 	const defaultCandidateUsers: Promise<User>[] = [];
 	let user: Promise<User>;
 
-	const defaultCandidates = env.defaultCandidates || [];
+	const defaultCandidates = [
+    {
+      email: 'john@ever.co',
+      password: '123456',
+      firstName: 'John',
+      lastName: 'Smith',
+      imageUrl: 'assets/images/avatars/alish.jpg',
+      candidateLevel: 'D',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'jaye@ever.co',
+      password: '123456',
+      firstName: 'Jaye',
+      lastName: 'Jeffreys',
+      imageUrl: 'assets/images/avatars/alexander.jpg',
+      candidateLevel: 'B',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'kasey@ever.co',
+      password: '123456',
+      firstName: 'Kasey',
+      lastName: 'Kraker',
+      imageUrl: 'assets/images/avatars/rachit.png',
+      candidateLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'norris@ever.co',
+      password: '123456',
+      firstName: 'Norris ',
+      lastName: 'Nesbit',
+      imageUrl: 'assets/images/avatars/atanas.jpeg',
+      candidateLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'estella@ever.co',
+      password: '123456',
+      firstName: 'Estella',
+      lastName: 'Ennis',
+      imageUrl: 'assets/images/avatars/dimana.jpeg',
+      candidateLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'greg@ever.co',
+      password: '123456',
+      firstName: 'Greg ',
+      lastName: 'Grise',
+      imageUrl: 'assets/images/avatars/savov.jpg',
+      candidateLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    }
+  ];
 
 	let counter = 0;
 	// Generate default candidate users

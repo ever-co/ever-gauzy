@@ -3,14 +3,6 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import {
-	IDefaultUser,
-	IDefaultOrganization,
-	IDefaultCandidate,
-	IDefaultEmployee,
-	IDefaultProductCategory,
-	IDefaultProductType
-} from '@gauzy/models';
 import { IFacebookConfig } from './IFacebookConfig';
 import { IGoogleConfig } from './IGoogleConfig';
 import { IUpworkConfig } from './IUpworkConfig';
@@ -60,24 +52,6 @@ export interface IEnvironment {
 	fiverrConfig: IFiverrConfig;
 	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;
-
-	defaultAdmins: IDefaultUser[];
-	defaultSuperAdmins: IDefaultUser[];
-
-	defaultEmployees?: IDefaultEmployee[];
-	defaultCandidates?: IDefaultCandidate[];
-
-	defaultOrganizations?: IDefaultOrganization[];
-
-	defaultProductCategories?: IDefaultProductCategory[];
-
-	defaultProductTypes?: IDefaultProductType[];
-
-	defaultTeams?: {
-		name: string;
-		defaultMembers: string[];
-		manager: string[];
-	}[];
 
 	randomSeedConfig?: {
 		tenants: number; //The number of random tenants to be seeded.

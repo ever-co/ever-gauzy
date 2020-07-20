@@ -1,5 +1,4 @@
 import { Connection } from 'typeorm';
-import { environment as env } from '@env-api/environment';
 import { Organization } from './organization.entity';
 import * as faker from 'faker';
 import { getDummyImage } from '../core';
@@ -10,13 +9,28 @@ import {
 } from '@gauzy/models';
 import { Tenant } from './../tenant/tenant.entity';
 
+const defaultOrganizationsData = [
+    {
+      name: 'Ever Technologies LTD',
+      currency: CurrenciesEnum.BGN,
+      defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+      imageUrl: 'assets/images/logos/ever-large.jpg'
+    },
+    {
+      name: 'Ever Co. Ltd',
+      currency: CurrenciesEnum.BGN,
+      defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+      imageUrl: 'assets/images/logos/ever-large.jpg'
+    }
+    ];
+
 export const createDefaultOrganizations = async (
 	connection: Connection,
 	tenant: Tenant
 ): Promise<Organization[]> => {
 	const defaultOrganizations: Organization[] = [];
 
-	env.defaultOrganizations.forEach((organiziation) => {
+  defaultOrganizationsData.forEach((organiziation) => {
 		const defaultOrganization: Organization = new Organization();
 
 		const {
