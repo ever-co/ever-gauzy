@@ -37,52 +37,52 @@ export class Timesheet extends Base implements ITimesheet {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	duration: number;
+	duration?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	keyboard: number;
+	keyboard?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	mouse: number;
+	mouse?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	overall: number;
+	overall?: number;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	startedAt: Date;
+	startedAt?: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	stoppedAt: Date;
+	stoppedAt?: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	approvedAt: Date;
+	approvedAt?: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	submittedAt: Date;
+	submittedAt?: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
-	lockedAt: Date;
+	lockedAt?: Date;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: false })
-	isBilled: boolean;
+	isBilled?: boolean;
 
 	@ApiProperty({ type: String, enum: TimesheetStatus })
 	@IsEnum(TimesheetStatus)

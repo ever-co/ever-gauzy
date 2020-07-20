@@ -11,7 +11,7 @@ export class RequestApprovalService {
 
 	getAll(
 		relations?: string[],
-		findInput?: RequestApproval
+		findInput?: string
 	): Promise<{ items: RequestApproval[] }> {
 		const data = JSON.stringify({ relations, findInput });
 

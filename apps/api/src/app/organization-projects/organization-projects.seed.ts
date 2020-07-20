@@ -41,9 +41,16 @@ export const createRandomOrganizationProjects = async (
 	connection: Connection,
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tags: Tag[],
+	tags: Tag[] | void,
 	maxProjectsPerOrganization
 ) => {
+	if (!tags) {
+		console.warn(
+			'Warning: tags not found, RandomOrganizationProjects will not be created'
+		);
+		return;
+	}
+
 	const projects: OrganizationProjects[] = [];
 	for (const tenant of tenants) {
 		const projectsPerOrganization =

@@ -693,8 +693,8 @@ export class UpworkService {
 
 				const gauzyScreenshot = await this.commandBus.execute(
 					new ScreenshotCreateCommand({
-						fullUrl: screenshot_img,
-						thumbUrl: screenshot_img_thmb,
+						file: screenshot_img,
+						thumb: screenshot_img_thmb,
 						recordedAt,
 						activityTimestamp,
 						employeeId

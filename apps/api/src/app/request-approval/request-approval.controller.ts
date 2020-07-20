@@ -54,10 +54,12 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	): Promise<IPagination<IRequestApproval>> {
 		const { relations, findInput } = JSON.parse(data);
 
-		return this.requestApprovalService.findAllRequestApprovals({
-			where: findInput,
-			relations
-		});
+		return this.requestApprovalService.findAllRequestApprovals(
+			{
+				relations
+			},
+			findInput
+		);
 	}
 
 	@ApiOperation({ summary: 'Find all request approval.' })

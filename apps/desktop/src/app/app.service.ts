@@ -9,6 +9,10 @@ export class AppService {
 	AW_HOST = environment.AWHost;
 	constructor(private http: HttpClient) {}
 
+	pingServer(values) {
+		return this.http.get(values.host).pipe().toPromise();
+	}
+
 	startTime(id): Promise<any> {
 		const defaultValue: any = [
 			{

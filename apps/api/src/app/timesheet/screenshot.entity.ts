@@ -11,14 +11,14 @@ import { Screenshot as IScreenshot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
-import { environment } from '@env-api/environment';
+import { FileStorage } from '../core/file-storage';
 
 @Entity('screenshot')
 export class Screenshot extends Base implements IScreenshot {
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	timeSlot: TimeSlot;
+	timeSlot?: TimeSlot;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((screenshot: Screenshot) => screenshot.timeSlot)
@@ -28,13 +28,13 @@ export class Screenshot extends Base implements IScreenshot {
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()
-	fullUrl: string;
+	file: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsOptional()
 	@Column({ default: null, nullable: true })
-	thumbUrl?: string;
+	thumb?: string;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsNumber()
@@ -47,11 +47,12 @@ export class Screenshot extends Base implements IScreenshot {
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
 
+	fullUrl?: string;
+	thumbUrl?: string;
+
 	@AfterLoad()
 	afterLoad?() {
-		if (this.fullUrl.substring(0, 5) != 'https') {
-			this.fullUrl = environment.baseUrl + '/' + this.fullUrl;
-			this.thumbUrl = environment.baseUrl + '/' + this.thumbUrl;
-		}
+		this.fullUrl = FileStorage.url(this.file);
+		this.thumbUrl = FileStorage.url(this.thumb);
 	}
 }

@@ -14,6 +14,7 @@ import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
+import { Post } from '@nestjs/common';
 
 @ApiTags('EquipmentSharing')
 @UseGuards(AuthGuard('jwt'))
@@ -42,6 +43,26 @@ export class EquipmentSharingController extends CrudController<
 	@Get()
 	async findAllEquipmentSharings(): Promise<IPagination<EquipmentSharing>> {
 		return this.equipmentSharingService.findAllEquipmentSharings();
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Post()
+	async create(@Body() equipmentSharing: EquipmentSharing): Promise<any> {
+		return this.equipmentSharingService.create(equipmentSharing);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
