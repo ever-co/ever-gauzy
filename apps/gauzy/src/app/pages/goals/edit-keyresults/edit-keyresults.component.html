@@ -1,9 +1,10 @@
 <nb-card size="large">
 	<nb-card-header>
 		{{
-			!!data
+			(!!data
 				? 'KEY_RESULT_PAGE.EDIT_KEY_RESULT'
-				: ('KEY_RESULT_PAGE.ADD_KEY_RESULT' | translate)
+				: 'KEY_RESULT_PAGE.ADD_KEY_RESULT'
+			) | translate
 		}}
 		<nb-icon
 			class="ml-auto mt-1 close"

@@ -1,6 +1,11 @@
 <nb-card size="large" class="max-width-40vw">
 	<nb-card-header>
-		{{ !!data ? 'Edit Objective' : 'Add Objective' }}
+		{{
+			(!!data
+				? 'GOALS_PAGE.EDIT_OBJECTIVE'
+				: 'GOALS_PAGE.ADD_NEW_OBJECTIVE'
+			) | translate
+		}}
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"

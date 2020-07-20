@@ -719,6 +719,7 @@
 		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
 		"ADD_NEW_KEY_RESULT": "Add new key result",
 		"ADD_NEW_OBJECTIVE": "Add new Objective",
+		"EDIT_OBJECTIVE": "Edit Objective",
 		"SESSION": "Session",
 		"GOAL_SETTINGS": "Goal Settings",
 		"NO_DESCRIPTION": "No Description",
