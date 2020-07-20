@@ -16,97 +16,32 @@ export class ActivityService extends CrudService<Activity> {
 		super(activityRepository);
 	}
 
+	async getDailyActivites(request: IGetActivitiesInput) {
+		const query = this.filterQuery(request);
+
+		query.select(`SUM("${query.alias}"."duration")`, `totalDuration`);
+		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
+		query.addSelect(`"${query.alias}"."date"`, `date`);
+		query.addSelect(`"${query.alias}"."title"`, `title`);
+
+		// if ( RequestContext.hasPermission( PermissionsEnum.CHANGE_SELECTED_EMPLOYEE ) ) {
+		// 	query.innerJoinAndSelect(`${query.alias}.employee`,'activitesEmployee');
+		// }
+
+		query.addGroupBy(`"${query.alias}"."date"`);
+		query.addGroupBy(
+			`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`
+		);
+		query.addGroupBy(`"${query.alias}"."title"`);
+		query.addGroupBy(`"${query.alias}"."employeeId"`);
+
+		query.orderBy(`"totalDuration"`, 'DESC');
+
+		return await query.getRawMany();
+	}
+
 	async getActivites(request: IGetActivitiesInput) {
-		let employeeIds: string[];
-
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (request.employeeIds) {
-				employeeIds = request.employeeIds;
-			}
-		} else {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
-
-		const query = await this.activityRepository.createQueryBuilder();
-		if (request.limit > 0) {
-			query.take(request.limit);
-			query.skip((request.page || 0) * request.limit);
-		}
-
-		//query.addSelect(`array_agg("${query.alias}"."id")`, 'ids');
-		//query.addSelect(`SUM(${query.alias}.duration)`, 'duration');
-
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-
-		query.where((qb) => {
-			if (request.startDate && request.endDate) {
-				const startDate = moment(request.startDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
-				const endDate = moment(request.endDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
-				qb.andWhere(
-					`${query.alias}."date" Between :startDate AND :endDate`,
-					{
-						startDate,
-						endDate
-					}
-				);
-			}
-			if (employeeIds) {
-				qb.andWhere(`${query.alias}."employeeId" IN (:...employeeId)`, {
-					employeeId: employeeIds
-				});
-			}
-			if (request.organizationId) {
-				qb.andWhere('"employee"."organizationId" = :organizationId', {
-					organizationId: request.organizationId
-				});
-			}
-			if (request.activityLevel) {
-				qb.andWhere(
-					`${query.alias}."duration" BETWEEN :start AND :end`,
-					request.activityLevel
-				);
-			}
-			if (request.source) {
-				if (request.source instanceof Array) {
-					qb.andWhere(`${query.alias}."source" IN (:...source)`, {
-						source: request.source
-					});
-				} else {
-					qb.andWhere(`${query.alias}."source" = :source`, {
-						source: request.source
-					});
-				}
-			}
-			if (request.logType) {
-				if (request.logType instanceof Array) {
-					qb.andWhere(`${query.alias}."logType" IN (:...logType)`, {
-						logType: request.logType
-					});
-				} else {
-					qb.andWhere(`${query.alias}."logType" = :logType`, {
-						logType: request.logType
-					});
-				}
-			}
-
-			if (request.type) {
-				qb.andWhere(`${query.alias}."type" = :type`, {
-					type: request.type
-				});
-			}
-		});
-
-		query.orderBy(`${query.alias}.duration`, 'DESC');
-
+		const query = this.filterQuery(request);
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -123,16 +58,9 @@ export class ActivityService extends CrudService<Activity> {
 			);
 		}
 
-		// switch (request.groupBy) {
-		// 	case 'title_date':
+		query.orderBy(`${query.alias}.duration`, 'DESC');
 
-		// 		break;
-
-		// 	default:
-		// 		query.groupBy(`${query.alias}.id`);
-		// 		break;
-		// }
-		return await query.getManyAndCount();
+		return await query.getMany();
 	}
 
 	bulkSave(activities: Activity[]) {
@@ -145,5 +73,96 @@ export class ActivityService extends CrudService<Activity> {
 				.returning('*')
 				.execute()
 		);
+	}
+
+	private filterQuery(request: IGetActivitiesInput) {
+		let employeeIds: string[];
+
+		const query = this.activityRepository.createQueryBuilder();
+		if (request.limit > 0) {
+			query.take(request.limit);
+			query.skip((request.page || 0) * request.limit);
+		}
+
+		if (
+			RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			if (request.employeeIds) {
+				employeeIds = request.employeeIds;
+			}
+		} else {
+			const user = RequestContext.currentUser();
+			employeeIds = [user.employeeId];
+		}
+
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+
+		query.where((qb) => {
+			if (request.startDate && request.endDate) {
+				const startDate = moment(request.startDate).format(
+					'YYYY-MM-DD HH:mm:ss'
+				);
+				const endDate = moment(request.endDate).format(
+					'YYYY-MM-DD HH:mm:ss'
+				);
+				qb.andWhere(
+					`"${query.alias}"."date" Between :startDate AND :endDate`,
+					{
+						startDate,
+						endDate
+					}
+				);
+			}
+			if (employeeIds) {
+				qb.andWhere(
+					`"${query.alias}"."employeeId" IN (:...employeeId)`,
+					{
+						employeeId: employeeIds
+					}
+				);
+			}
+			if (request.organizationId) {
+				qb.andWhere('"employee"."organizationId" = :organizationId', {
+					organizationId: request.organizationId
+				});
+			}
+			if (request.activityLevel) {
+				qb.andWhere(
+					`"${query.alias}"."duration" BETWEEN :start AND :end`,
+					request.activityLevel
+				);
+			}
+			if (request.source) {
+				if (request.source instanceof Array) {
+					qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
+						source: request.source
+					});
+				} else {
+					qb.andWhere(`"${query.alias}"."source" = :source`, {
+						source: request.source
+					});
+				}
+			}
+			if (request.logType) {
+				if (request.logType instanceof Array) {
+					qb.andWhere(`"${query.alias}"."logType" IN (:...logType)`, {
+						logType: request.logType
+					});
+				} else {
+					qb.andWhere(`"${query.alias}"."logType" = :logType`, {
+						logType: request.logType
+					});
+				}
+			}
+
+			if (request.type) {
+				qb.andWhere(`"${query.alias}"."type" = :type`, {
+					type: request.type
+				});
+			}
+		});
+		return query;
 	}
 }

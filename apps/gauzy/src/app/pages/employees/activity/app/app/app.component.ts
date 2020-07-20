@@ -89,7 +89,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
 		this.loading = true;
 		this.activityService
-			.getActivites(request)
+			.getDailyActivites(request)
 			.then((activities) => {
 				this.apps = activities;
 			})
