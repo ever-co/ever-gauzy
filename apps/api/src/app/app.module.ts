@@ -33,6 +33,7 @@ import { OrganizationTeamModule } from './organization-team/organization-team.mo
 import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
 import { OrganizationAwardsModule } from './organization-awards/organization-awards.module';
 import { OrganizationLanguagesModule } from './organization-languages/organization-languages.module';
+import { OrganizationDocumentsModule } from './organization-documents/organization-documents.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { InviteModule } from './invite/invite.module';
@@ -239,6 +240,10 @@ import { FileStorage } from './core/file-storage';
 						module: OrganizationRecurringExpenseModule
 					},
 					{
+						path: '/organization-documents',
+						module: OrganizationDocumentsModule
+					},
+					{
 						path: '/employee-recurring-expense',
 						module: EmployeeRecurringExpenseModule
 					},
@@ -429,6 +434,7 @@ import { FileStorage } from './core/file-storage';
 		AuthModule,
 		UserModule,
 		EmployeeModule,
+		EmployeeRecurringExpenseModule,
 		CandidateModule,
 		CandidateDocumentsModule,
 		CandidateSourceModule,
@@ -461,9 +467,9 @@ import { FileStorage } from './core/file-storage';
 		OrganizationAwardsModule,
 		OrganizationLanguagesModule,
 		OrganizationSprintModule,
-		EmployeeRecurringExpenseModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
+		OrganizationDocumentsModule,
 		RequestApprovalEmployeeModule,
 		RequestApprovalTeamModule,
 		ProposalModule,
