@@ -194,6 +194,7 @@ export interface ITimeSlotMinute extends IBaseEntityModel {
 
 export interface Activity extends IBaseEntityModel {
 	title: string;
+	description?: string;
 	employee?: Employee;
 	employeeId?: string;
 	timeSlot?: TimeSlot;
@@ -306,7 +307,6 @@ export interface IGetTimeSlotInput extends TimeLogFilters {
 export interface IGetActivitiesInput extends TimeLogFilters, Pagination {
 	relations?: string[];
 	type?: string[];
-	groupBy: 'date' | 'title' | 'title_date';
 }
 
 export interface IBulkActivitiesInput {

@@ -69,8 +69,13 @@ export class Activity extends Base implements IActivity {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@Column({ default: 0 })
+	@Column()
 	title: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	description?: string;
 
 	@ApiProperty({ type: 'date' })
 	@IsDateString()

@@ -16,4 +16,12 @@ export class ActivityService {
 			})
 			.toPromise();
 	}
+
+	getDailyActivites(request: IGetActivitiesInput) {
+		return this.http
+			.get<Activity[]>('/api/timesheet/activity/daily', {
+				params: toParams(request)
+			})
+			.toPromise();
+	}
 }
