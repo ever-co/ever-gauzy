@@ -17,17 +17,18 @@
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="col-sm-3 mb-4">
+				<div class="col-sm-5 mb-4">
 					<input
 						class="d-block"
 						nbInput
 						type="text"
 						formControlName="name"
 						fullWidth
+						placeholder="{{ 'FORM.PLACEHOLDERS.NAME' | translate }}"
 					/>
 				</div>
 
-				<div class="col-sm-6 mb-4">
+				<div class="col-sm-5 mb-4">
 					<nb-select
 						class="d-block"
 						formControlName="equipment"
@@ -43,7 +44,7 @@
 						>
 					</nb-select>
 				</div>
-				<div class="col-sm-3 mb-4">
+				<div class="col-sm-2 mb-4">
 					<div
 						class="status-label"
 						[ngClass]="{
@@ -52,8 +53,31 @@
 							approved: requestStatus === requestStatuses[2]
 						}"
 					>
-						<h4>{{ requestStatus }}</h4>
+						<h4>
+							{{ getStatus(requestStatus) }}
+						</h4>
 					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12 mb-3">
+					<nb-select
+						formControlName="approvalPolicy"
+						[selected]="selectedApprovalPolicy"
+						(selectedChange)="onApprovalPolicySelected($event)"
+						fullWidth
+						placeholder="{{
+							'FORM.PLACEHOLDERS.CHOOSE_APPROVAL_POLICY'
+								| translate
+						}}"
+					>
+						<nb-option
+							*ngFor="let approvalPolicy of approvalPolicies"
+							[value]="approvalPolicy.id"
+						>
+							{{ approvalPolicy.name }}</nb-option
+						>
+					</nb-select>
 				</div>
 			</div>
 			<div class="row">

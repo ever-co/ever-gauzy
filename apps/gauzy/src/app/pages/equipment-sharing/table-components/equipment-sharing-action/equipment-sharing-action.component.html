@@ -4,9 +4,16 @@
 	(click)="approval()"
 	*ngIf="isApproval"
 	class="mr-3"
+	[size]="'tiny'"
 >
 	{{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
 </button>
-<button nbButton status="danger" (click)="refuse()" *ngIf="isRefuse">
+<button
+	nbButton
+	status="danger"
+	(click)="refuse()"
+	*ngIf="isRefuse"
+	[size]="'tiny'"
+>
 	{{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
 </button>
