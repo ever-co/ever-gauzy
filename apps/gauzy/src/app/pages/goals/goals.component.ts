@@ -20,6 +20,7 @@ import { KeyResultService } from '../../@core/services/keyresult.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
+import { GoalLevelEnum } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-goals',
@@ -34,9 +35,10 @@ export class GoalsComponent extends TranslationBaseComponent
 	organizationName: string;
 	employee: SelectedEmployee;
 	employeeId: string;
-	selectedFilter: string;
+	selectedFilter = 'all';
+	objectiveGroup = 'level';
 	goalTimeFrames: Array<string> = [];
-	filter = [
+	filters = [
 		{
 			title: 'All Objectives',
 			value: 'all'
@@ -53,6 +55,11 @@ export class GoalsComponent extends TranslationBaseComponent
 			title: 'My Objectives',
 			value: 'employee'
 		}
+	];
+	goalLevels = [...Object.values(GoalLevelEnum)];
+	groupObjectivesBy = [
+		{ title: 'Objective Level', value: 'level' },
+		{ title: 'Time Frames', value: 'timeFrames' }
 	];
 	private _ngDestroy$ = new Subject<void>();
 	goals: Goal[];
@@ -113,7 +120,14 @@ export class GoalsComponent extends TranslationBaseComponent
 					'keyResults.owner',
 					'keyResults.lead',
 					'alignedKeyResult',
-					'alignedKeyResult.goal'
+					'alignedKeyResult.goal',
+					'alignedKeyResult.goal.ownerEmployee',
+					'alignedKeyResult.goal.ownerEmployee.user',
+					'alignedKeyResult.goal.ownerOrg',
+					'alignedKeyResult.goal.ownerTeam',
+					'alignedKeyResult.owner',
+					'alignedKeyResult.lead',
+					'alignedKeyResult.updates'
 				],
 				findObj
 			)
@@ -222,6 +236,13 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
+	groupBy(group) {
+		this.loading = true;
+		this.objectiveGroup = group;
+		this.popover.hide();
+		this.loading = false;
+	}
+
 	calculateGoalProgress(keyResults) {
 		const progressTotal = keyResults.reduce(
 			(a, b) => a + b.progress * parseInt(b.weight, 10),
@@ -236,6 +257,7 @@ export class GoalsComponent extends TranslationBaseComponent
 
 	filterGoals(selection) {
 		this.loading = true;
+		this.popover.hide();
 		this.selectedFilter = selection;
 		if (selection !== 'all') {
 			if (selection === 'employee' && !!this.employee) {
@@ -249,16 +271,18 @@ export class GoalsComponent extends TranslationBaseComponent
 					(goal) => goal.level.toLowerCase() === selection
 				);
 			}
+			this.goalLevels = [GoalLevelEnum[selection.toUpperCase()]];
 		} else {
 			this.goals = this.allGoals;
+			this.goalLevels = [...Object.values(GoalLevelEnum)];
 		}
 		this.noGoals = this.goals.length > 0 ? false : true;
 		if (this.goals.length > 0) {
 			this.createTimeFrameGroups(this.goals);
 		} else {
+			this.goalLevels = [];
 			this.goalTimeFrames = [];
 		}
-		this.popover.hide();
 		this.loading = false;
 	}
 

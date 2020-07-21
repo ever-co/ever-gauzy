@@ -109,6 +109,13 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 						timeframe.status === this.timeFrameStatusEnum.ACTIVE &&
 						isFuture(new Date(timeframe.endDate))
 				);
+				if (!!this.data) {
+					this.timeFrames.push(
+						res.items.find(
+							(timeFrame) => this.data.deadline === timeFrame.name
+						)
+					);
+				}
 			}
 		});
 	}

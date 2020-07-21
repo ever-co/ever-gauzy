@@ -91,7 +91,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_DELETED'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
-			} else {
+			} else if (!!index) {
 				this.goal.keyResults[index] = response;
 				this.goal.progress = this.calculateGoalProgress(
 					this.goal.keyResults
