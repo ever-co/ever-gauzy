@@ -4,13 +4,15 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	CreateDateColumn
+	CreateDateColumn,
+	AfterLoad
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import {
 	Activity as IActivity,
 	ActivityType,
-	TimeLogSourceEnum
+	TimeLogSourceEnum,
+	URLMetaData
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -77,6 +79,11 @@ export class Activity extends Base implements IActivity {
 	@Column({ nullable: true })
 	description?: string;
 
+	@ApiProperty({ type: 'json' })
+	@IsDateString()
+	@Column({ nullable: true, type: 'json' })
+	metaData?: string | URLMetaData;
+
 	@ApiProperty({ type: 'date' })
 	@IsDateString()
 	@CreateDateColumn({ type: 'date' })
@@ -109,4 +116,15 @@ export class Activity extends Base implements IActivity {
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
+
+	@AfterLoad()
+	getStoppedAt?() {
+		if (typeof this.metaData === 'string') {
+			try {
+				this.metaData = JSON.parse(this.metaData);
+			} catch (error) {
+				this.metaData = {};
+			}
+		}
+	}
 }

@@ -6,21 +6,27 @@ import {
 	Organization,
 	TimeLogFilters,
 	IGetActivitiesInput,
-	Activity,
-	ActivityType
+	ActivityType,
+	DailyActivity
 } from '@gauzy/models';
 import { debounceTime } from 'rxjs/operators';
-import { toUTC } from 'libs/utils';
+import { toUTC, toLocal } from 'libs/utils';
 import { ActivityService } from 'apps/gauzy/src/app/@shared/timesheet/activity.service';
 import { ActivatedRoute } from '@angular/router';
+import * as _ from 'underscore';
+import * as moment from 'moment';
 
 @Component({
-	selector: 'ngx-app',
-	templateUrl: './app.component.html'
+	selector: 'ngx-app-url-activity',
+	styleUrls: ['./app-url-activity.component.scss'],
+	templateUrl: './app-url-activity.component.html'
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	loading: boolean;
-	apps: Activity[];
+	apps: {
+		hour: string;
+		activities: DailyActivity[];
+	}[];
 	request: any;
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
@@ -91,7 +97,36 @@ export class AppComponent implements OnInit, OnDestroy {
 		this.activityService
 			.getDailyActivites(request)
 			.then((activities) => {
-				this.apps = activities;
+				this.apps = _.chain(activities)
+					.map((activity) => {
+						activity.hours = toLocal(
+							moment(
+								moment(activity.date).format('YYYY-MM-DD') +
+									' ' +
+									activity.time
+							).toDate()
+						);
+						return activity;
+					})
+					.groupBy('hours')
+					.mapObject((value, key) => {
+						const sum = _.reduce(
+							value,
+							(memo, activitiy) =>
+								memo + parseInt(activitiy.duration + '', 10),
+							0
+						);
+						value = value.map((activity) => {
+							activity.durationPercentage = (
+								(activity.duration * 100) /
+								sum
+							).toFixed(1);
+							return activity;
+						});
+						return { hour: key, activities: value };
+					})
+					.values()
+					.value();
 			})
 			.finally(() => (this.loading = false));
 	}
