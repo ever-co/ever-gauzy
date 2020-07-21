@@ -31,6 +31,7 @@ import { RequestApprovalIcon } from './table-components/request-approval-icon';
 import { PaidIcon } from './table-components/paid-icon';
 import { SharedModule } from '../../@shared/shared.module';
 import { TimeOffStatusComponent } from './table-components/time-off-status.component';
+import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -55,6 +56,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbRadioModule,
 		NbSelectModule,
 		NbBadgeModule,
+		CardGridModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
 		TranslateModule.forChild({
@@ -74,7 +76,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TimeOffStatusComponent,
 		PaidIcon
 	],
-	entryComponents: [TimeOffSettingsComponent, TimeOffStatusComponent, RequestApprovalIcon, PaidIcon],
+	entryComponents: [
+		TimeOffSettingsComponent,
+		TimeOffStatusComponent,
+		RequestApprovalIcon,
+		PaidIcon
+	],
 	providers: [OrganizationsService, TimeOffService]
 })
 export class TimeOffModule {}
