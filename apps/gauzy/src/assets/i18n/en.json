@@ -1114,7 +1114,13 @@
 				"ADMINISTRATION": "Administration"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
-			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
+			"ORG_SPRINT_EDIT": "Create/Edit Sprints",
+			"ORG_SPRINT_VIEW": "View Sprints",
+			"ORG_PROJECT_EDIT": "Create/Edit Projects",
+			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
+			"ORG_TEAM_EDIT": "Create/Edit Teams",
+			"ORG_CONTRACT_EDIT": "Create/Edit Contracts"
 		}
 	},
 	"PUBLIC_PAGE": {

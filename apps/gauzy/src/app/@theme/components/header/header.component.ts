@@ -38,6 +38,13 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionEEdit = false;
 	hasPermissionPEdit = false;
 	hasPermissionInEdit = false;
+	hasPermissionTask = false;
+	hasPermissionEmpEdit = false;
+	hasPermissionProjEdit = false;
+	hasPermissionContactEdit = false;
+	hasPermissionTeamEdit = false;
+	hasPermissionContractEdit = false;
+	isEmployee = false;
 
 	@Input() position = 'normal';
 	user: User;
@@ -105,6 +112,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 
 		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
 			this.user = user;
+			this.isEmployee = !!user.employeeId;
 		});
 
 		this.themeService
@@ -193,6 +201,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				this.hasPermissionIn = this.store.hasPermission(
 					PermissionsEnum.INVOICES_VIEW
 				);
+				this.hasPermissionTask = this.store.hasPermission(
+					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
+				);
 
 				this.hasPermissionEEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_EXPENSES_EDIT
@@ -206,14 +217,29 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				this.hasPermissionInEdit = this.store.hasPermission(
 					PermissionsEnum.INVOICES_EDIT
 				);
+				this.hasPermissionEmpEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_EMPLOYEES_EDIT
+				);
+				this.hasPermissionProjEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_PROJECT_EDIT
+				);
+				this.hasPermissionContactEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_CONTACT_EDIT
+				);
+				this.hasPermissionTeamEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_TEAM_EDIT
+				);
+				this.hasPermissionContractEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_CONTRACT_EDIT
+				);
 			});
 
 		this.createContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.TIMER'),
 				icon: 'clock-outline',
-				link: '#'
-				//hidden: this.hasEditPermission
+				link: '#', //TODO: FIXME This should be a link to start timer
+				hidden: !this.isEmployee
 			},
 			// TODO: divider
 			{
@@ -244,34 +270,40 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
 				icon: 'file-text-outline',
-				link: 'pages/integrations/upwork/contracts'
+				link: 'pages/integrations/upwork/contracts',
+				hidden: !this.hasPermissionContractEdit
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.TEAM'),
 				icon: 'people-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/teams`
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/teams`,
+				hidden: !this.hasPermissionTeamEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.TASK'),
 				icon: 'calendar-outline',
-				link: 'pages/tasks/dashboard'
+				link: 'pages/tasks/dashboard',
+				hidden: !this.hasPermissionTask
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTACT'),
 				icon: 'person-done-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/contacts`
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/contacts`,
+				hidden: !this.hasPermissionContactEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
 				icon: 'color-palette-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/projects`
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/projects`,
+				hidden: !this.hasPermissionProjEdit
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
 				icon: 'people-outline',
-				link: 'pages/employees'
+				link: 'pages/employees',
+				hidden: !this.hasPermissionEmpEdit
 			}
 		];
 

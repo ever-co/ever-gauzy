@@ -99,7 +99,6 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 					preferredLanguage &&
 					preferredLanguage !== this.currentLang
 				) {
-					console.log('yaha se?');
 					this.currentLang = preferredLanguage;
 					this.switchLanguage();
 				}
