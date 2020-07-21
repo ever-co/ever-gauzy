@@ -50,9 +50,12 @@ export const createDefaultTags = async (
 		const organizationTags: Tag[] = Object.values(tagGlobalNames).map(
 			(name) => {
 				const orgTags = new Tag();
-				orgTags.name = org.name + ' -' + name;
+				orgTags.name = name;
 				orgTags.description = '';
 				orgTags.color = faker.commerce.color();
+				if(orgTags.color === 'white'){
+				  orgTags.color = 'Red'
+        }
 				orgTags.organization = org;
 				orgTags.tenant = tenant;
 				return orgTags;
@@ -70,6 +73,9 @@ export const createTags = async (connection: Connection): Promise<Tag[]> => {
 		tag.name = name;
 		tag.description = '';
 		tag.color = faker.commerce.color();
+		if(tag.color === 'white'){
+		  tag.color = 'red';
+    }
 		tags.push(tag);
 	}
 
@@ -96,11 +102,16 @@ export const createRandomOrganizationTags = async (
 			const organizationTags: Tag[] = Object.values(tagGlobalNames).map(
 				(name) => {
 					const orgTags = new Tag();
-					orgTags.name = name + '-' + org.name;
+					orgTags.name = name;
 					orgTags.description = '';
 					orgTags.color = faker.commerce.color();
 					orgTags.organization = org;
 					orgTags.tenant = tenant;
+
+					if(orgTags.color === 'white'){
+					  orgTags.color = 'red';
+          }
+
 					return orgTags;
 				}
 			);
