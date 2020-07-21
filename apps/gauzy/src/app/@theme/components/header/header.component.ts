@@ -23,6 +23,7 @@ import { PermissionsEnum } from '@gauzy/models';
 import { User } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
+import { TimeTrackerComponent } from '../../../@shared/time-tracker/time-tracker/time-tracker.component';
 
 @Component({
 	selector: 'ngx-header',
@@ -52,6 +53,8 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	@Input() showOrganizationsSelector;
 	@ViewChild('timerPopover')
 	timerPopover: NbPopoverDirective;
+	@ViewChild('timeTracker')
+	timeTracker: TimeTrackerComponent;
 
 	showDateSelector = true;
 	organizationSelected = false;
@@ -59,6 +62,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
 	showExtraActions = false;
+
+	actions = {
+		START_TIMER: 'START_TIMER'
+	};
 
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
@@ -94,6 +101,15 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			.pipe(filter(({ tag }) => tag === 'create-context-menu'))
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((e) => {
+				if (e.item.data.action) {
+					switch (e.item.data.action) {
+						case this.actions.START_TIMER:
+							this.timeTracker.show();
+							break;
+					}
+					return; //If action is given then do not navigate
+				}
+
 				this.router.navigate([e.item.link], {
 					queryParams: {
 						openAddDialog: true
@@ -238,8 +254,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.TIMER'),
 				icon: 'clock-outline',
-				link: '#', //TODO: FIXME This should be a link to start timer
-				hidden: !this.isEmployee
+				hidden: !this.isEmployee,
+				data: {
+					action: this.actions.START_TIMER //This opens the timer poup in the header, managed by menu.itemClick TOO: Start the timer also
+				}
 			},
 			// TODO: divider
 			{
