@@ -730,7 +730,7 @@
 		"UPDATE": "Обновить",
 		"COMMENTS": "Комментарии",
 		"KEY_RESULTS": "Ключевые результаты",
-		"GROUP_BY": "Group By",
+		"GROUP_BY": "Группировать по",
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Добавить временной кадр",
 			"TIME_FRAME_PAGE_TITLE": "Установить время",
