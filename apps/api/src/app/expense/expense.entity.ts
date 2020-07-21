@@ -175,6 +175,11 @@ export class Expense extends TenantBase implements IExpense {
 	@Column({ nullable: true })
 	reference?: string;
 
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	status?: string;
+
 	//IN SOME CASES THE EXPENSES ARE CRASHING BECAUZE ITS TRYING TO ADD EXPENSEID AND THERE IS NO SUCH THING
 
 	// IF THIS HAPPENS AGAIN ADD THIS
