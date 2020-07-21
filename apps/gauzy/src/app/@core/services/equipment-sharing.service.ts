@@ -16,6 +16,24 @@ export class EquipmentSharingService {
 			.toPromise();
 	}
 
+	getOrganization(id): Promise<EquipmentSharing[]> {
+		return this.http
+			.get<EquipmentSharing[]>(
+				`${this.EQUIPMENT_SHARING_URL}/organization/` + id
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getEmployee(id): Promise<EquipmentSharing[]> {
+		return this.http
+			.get<EquipmentSharing[]>(
+				`${this.EQUIPMENT_SHARING_URL}/employee/` + id
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`${this.EQUIPMENT_SHARING_URL}/${id}`)

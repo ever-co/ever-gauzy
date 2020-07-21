@@ -178,6 +178,13 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					renderComponent: ApprovalPolicyComponent,
 					filter: false
 				},
+				createdBy: {
+					title: this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.CREATED_BY'
+					),
+					type: 'string',
+					filter: false
+				},
 				status: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
@@ -262,29 +269,30 @@ export class ApprovalsComponent extends TranslationBaseComponent
 
 		this.selectedRequestApproval = null;
 		this.disableButton = true;
-		const params = {
-			name: requestApproval.name,
-			type: Number(requestApproval.type),
-			approvalPolicyId: requestApproval.approvalPolicyId,
-			employeeApprovals: requestApproval.employees || [],
-			teams: requestApproval.teams || [],
-			min_count: requestApproval.min_count,
-			id: undefined
-		};
-		if (requestApproval.id) {
-			params.id = requestApproval.id;
+		if (requestApproval) {
+			const params = {
+				name: requestApproval.name || '',
+				type: Number(requestApproval.type) || 0,
+				approvalPolicyId: requestApproval.approvalPolicyId || '',
+				employeeApprovals: requestApproval.employees || [],
+				teams: requestApproval.teams || [],
+				min_count: requestApproval.min_count || '',
+				id: undefined
+			};
+			if (requestApproval.id) {
+				params.id = requestApproval.id;
+			}
+			const isSuccess = await this.approvalRequestService.save(params);
+			if (isSuccess) {
+				this.toastrService.primary(
+					this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_SAVED'
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
+			this.loadSettings();
 		}
-		const isSuccess = await this.approvalRequestService.save(params);
-		if (isSuccess) {
-			this.toastrService.primary(
-				this.getTranslation(
-					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_SAVED'
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-		}
-
-		this.loadSettings();
 	}
 
 	async delete(selectedItem?: RequestApproval) {
