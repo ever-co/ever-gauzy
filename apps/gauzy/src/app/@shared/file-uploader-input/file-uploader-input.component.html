@@ -1,4 +1,8 @@
-<div class="row file-uploader-container">
+<div
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	class="row file-uploader-container"
+>
 	<input
 		[hidden]="true"
 		(change)="imageUrlChanged()"
