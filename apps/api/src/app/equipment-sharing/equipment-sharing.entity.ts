@@ -24,8 +24,7 @@ import { Index } from 'typeorm';
 export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@ApiProperty({ type: String })
 	@IsString()
-	@Index()
-	@Column()
+	@Column({ nullable: true })
 	name: string;
 
 	@ApiProperty({ type: Equipment })

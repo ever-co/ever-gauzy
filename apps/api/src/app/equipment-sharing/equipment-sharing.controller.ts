@@ -45,6 +45,46 @@ export class EquipmentSharingController extends CrudController<
 		return this.equipmentSharingService.findAllEquipmentSharings();
 	}
 
+	@ApiOperation({
+		summary: 'Find equipment sharings By Orgization Id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found equipment sharings',
+		type: EquipmentSharing
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/organization/:id')
+	async findEquipmentSharingsByOrgId(
+		@Param('id') orgId: string
+	): Promise<IPagination<EquipmentSharing>> {
+		return this.equipmentSharingService.findEquipmentSharingsByOrgId(orgId);
+	}
+
+	@ApiOperation({
+		summary: 'Find equipment sharings By Employee Id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found equipment sharings',
+		type: EquipmentSharing
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('employee/:id')
+	async findEquipmentSharingsByEmployeeId(
+		@Param('id') empId: string
+	): Promise<IPagination<EquipmentSharing>> {
+		return this.equipmentSharingService.findRequestApprovalsByEmployeeId(
+			empId
+		);
+	}
+
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
