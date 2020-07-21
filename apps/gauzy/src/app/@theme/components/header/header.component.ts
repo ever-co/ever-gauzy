@@ -3,15 +3,13 @@ import {
 	Input,
 	OnDestroy,
 	OnInit,
-	ViewChild,
 	AfterViewInit
 } from '@angular/core';
 import {
 	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
-	NbMenuItem,
-	NbPopoverDirective
+	NbMenuItem
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';
@@ -43,8 +41,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
-	@ViewChild('timerPopover')
-	timerPopover: NbPopoverDirective;
 
 	showDateSelector = true;
 	organizationSelected = false;
@@ -118,19 +114,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngAfterViewInit(): void {
-		this.timeTrackerService.$showTimerWindow
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((status: boolean) => {
-				if (this.timerPopover) {
-					if (status) {
-						this.timerPopover.show();
-					} else {
-						this.timerPopover.hide();
-					}
-				}
-			});
-	}
+	ngAfterViewInit(): void {}
 
 	toggleSidebar(): boolean {
 		if (this.showExtraActions) {

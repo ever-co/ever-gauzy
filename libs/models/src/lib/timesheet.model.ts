@@ -203,11 +203,21 @@ export interface Activity extends IBaseEntityModel {
 	projectId?: string;
 	task?: Task;
 	taskId?: string;
+	metaData?: string | URLMetaData;
 	date: string;
 	time: string;
 	duration?: number;
 	type?: string;
 	source?: string;
+}
+
+export interface DailyActivity {
+	[x: string]: any;
+	sessions?: number;
+	duration?: number;
+	employeeId?: string;
+	date?: string;
+	title?: string;
 }
 
 export interface TimeSlotMinute extends IBaseEntityModel {
@@ -236,6 +246,12 @@ export interface ICreateActivityInput {
 export enum ActivityType {
 	URL = 'URL',
 	APP = 'APP'
+}
+
+export interface URLMetaData {
+	title?: string;
+	description?: string;
+	image?: string;
 }
 
 export interface ICreateScreenshotInput {

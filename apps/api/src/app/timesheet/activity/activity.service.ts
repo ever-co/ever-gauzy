@@ -5,7 +5,11 @@ import { CrudService } from '../../core/crud/crud.service';
 import { Activity } from '../activity.entity';
 import * as moment from 'moment';
 import { RequestContext } from '../../core/context';
-import { PermissionsEnum, IGetActivitiesInput } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	IGetActivitiesInput,
+	DailyActivity
+} from '@gauzy/models';
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {
@@ -16,12 +20,19 @@ export class ActivityService extends CrudService<Activity> {
 		super(activityRepository);
 	}
 
-	async getDailyActivites(request: IGetActivitiesInput) {
+	async getDailyActivites(
+		request: IGetActivitiesInput
+	): Promise<DailyActivity[]> {
 		const query = this.filterQuery(request);
 
-		query.select(`SUM("${query.alias}"."duration")`, `totalDuration`);
+		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
+		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
 		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
 		query.addSelect(`"${query.alias}"."date"`, `date`);
+		query.addSelect(
+			`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`,
+			`time`
+		);
 		query.addSelect(`"${query.alias}"."title"`, `title`);
 
 		// if ( RequestContext.hasPermission( PermissionsEnum.CHANGE_SELECTED_EMPLOYEE ) ) {
@@ -35,7 +46,8 @@ export class ActivityService extends CrudService<Activity> {
 		query.addGroupBy(`"${query.alias}"."title"`);
 		query.addGroupBy(`"${query.alias}"."employeeId"`);
 
-		query.orderBy(`"totalDuration"`, 'DESC');
+		query.orderBy(`time`, 'ASC');
+		query.orderBy(`"duration"`, 'DESC');
 
 		return await query.getRawMany();
 	}

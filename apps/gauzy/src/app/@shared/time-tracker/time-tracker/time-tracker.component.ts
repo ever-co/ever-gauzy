@@ -108,11 +108,13 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			.subscribe((time) => {
 				this.time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
+
 		this.timeTrackerService.$current_session_dueration
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
+
 		this.timeTrackerService.$running
 			.pipe(untilDestroyed(this))
 			.subscribe((isRunning) => {
