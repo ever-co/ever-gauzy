@@ -1,16 +1,20 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { EquipmentSharing, Equipment } from '@gauzy/models';
+import { EquipmentSharing, Equipment, ApprovalPolicy } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
-import { first } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
+import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';
+import { Store } from '../../@core/services/store.service';
+import { Subject } from 'rxjs';
+import { Router } from '@angular/router';
 
 export interface SelectedEquipmentSharing {
 	data: EquipmentSharing;
@@ -18,17 +22,21 @@ export interface SelectedEquipmentSharing {
 }
 
 @Component({
-	templateUrl: './equipment-sharing.component.html'
+	templateUrl: './equipment-sharing.component.html',
+	styleUrls: ['./equiqment-sharing.component.scss']
 })
 export class EquipmentSharingComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
 	selectedEquipmentSharing: EquipmentSharing;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
-
+	selectedEmployeeId: string;
+	ngDestroy$ = new Subject<void>();
+	approvalPolicies: ApprovalPolicy[] = [];
+	selectedOrgId: string;
 	@ViewChild('equipmentSharingTable')
 	equipmentSharingTable;
 
@@ -36,12 +44,34 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private equipmentSharingService: EquipmentSharingService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private store: Store,
+		private router: Router
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		this.store.selectedEmployee$
+			.pipe(takeUntil(this.ngDestroy$))
+			.subscribe((employee) => {
+				if (employee && employee.id) {
+					this.selectedEmployeeId = employee.id;
+					this.loadSettings();
+				} else {
+					this.selectedEmployeeId = undefined;
+					this.loadSettings();
+				}
+			});
+
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this.ngDestroy$))
+			.subscribe((org) => {
+				if (org) {
+					this.selectedOrgId = org.id;
+					this.loadSettings();
+				}
+			});
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
@@ -51,14 +81,20 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				equipment: {
+				name: {
 					title: this.getTranslation(
 						'EQUIPMENT_SHARING_PAGE.EQUIPMENT_NAME'
 					),
+					type: 'string'
+				},
+				approvalPolicy: {
+					title: this.getTranslation(
+						'EQUIPMENT_SHARING_PAGE.APPROVAL_POLICY'
+					),
 					type: 'string',
-					valuePrepareFunction: (equipment: Equipment) => {
-						if (equipment) {
-							return equipment.name;
+					valuePrepareFunction: (approvalPolicy: any) => {
+						if (approvalPolicy && approvalPolicy.name) {
+							return approvalPolicy.name;
 						}
 						return '-';
 					}
@@ -86,9 +122,16 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					valuePrepareFunction: this._formatDate,
 					filter: false
 				},
+				createdBy: {
+					title: this.getTranslation(
+						'EQUIPMENT_SHARING_PAGE.CREATED_BY'
+					),
+					type: 'string'
+				},
 				status: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.STATUS'),
-					type: 'string',
+					type: 'custom',
+					renderComponent: EquipmentSharingStatusComponent,
 					filter: false
 				},
 				actions: {
@@ -138,16 +181,23 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		}
 	}
 
-	async save() {
-		const dialog = this.dialogService.open(
-			EquipmentSharingMutationComponent,
-			{
-				context: { equipmentSharing: this.selectedEquipmentSharing }
-			}
-		);
+	async save(isCreate: boolean) {
+		let dialog;
+
+		if (!isCreate) {
+			dialog = this.dialogService.open(
+				EquipmentSharingMutationComponent,
+				{
+					context: { equipmentSharing: this.selectedEquipmentSharing }
+				}
+			);
+		} else {
+			dialog = this.dialogService.open(EquipmentSharingMutationComponent);
+		}
 
 		const equipmentSharing = await dialog.onClose.pipe(first()).toPromise();
 
+		this.disableButton = true;
 		if (equipmentSharing) {
 			this.toastrService.primary(
 				this.getTranslation('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED'),
@@ -188,7 +238,18 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedEquipmentSharing = null;
-		const equipmentItems = await this.equipmentSharingService.getAll();
+		let equipmentItems = [];
+		if (this.selectedEmployeeId) {
+			equipmentItems = await this.equipmentSharingService.getEmployee(
+				this.selectedEmployeeId
+			);
+		} else {
+			if (this.selectedOrgId) {
+				equipmentItems = await this.equipmentSharingService.getOrganization(
+					this.selectedOrgId
+				);
+			}
+		}
 		this.loading = false;
 		this.smartTableSource.load(equipmentItems);
 	}
@@ -205,5 +266,14 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();
 		});
+	}
+
+	ngOnDestroy() {
+		this.ngDestroy$.next();
+		this.ngDestroy$.complete();
+	}
+
+	manageAppropvalPolicy() {
+		this.router.navigate(['/pages/organization/approval-policy']);
 	}
 }

@@ -1,11 +1,22 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<h4>{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}</h4>
+		<div class="space-center">
+			<h4>{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}</h4>
+			<div class="header-selector-wrapper">
+				<button
+					nbButton
+					status="primary"
+					(click)="manageAppropvalPolicy()"
+				>
+					{{ 'EQUIPMENT_SHARING_PAGE.APPROVAL_POLICY' | translate }}
+				</button>
+			</div>
+		</div>
 	</nb-card-header>
 
 	<nb-card-body>
 		<div class="mb-3">
-			<button nbButton status="success" class="mr-2" (click)="save()">
+			<button nbButton status="success" class="mr-2" (click)="save(true)">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.REQUEST' | translate }}
 			</button>
@@ -14,7 +25,7 @@
 				status="info"
 				class="mr-2"
 				[disabled]="disableButton"
-				(click)="save()"
+				(click)="save(false)"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
