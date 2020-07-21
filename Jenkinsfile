@@ -67,50 +67,75 @@ pipeline {
         stage("Login to repositories") {
             steps {
                 sh "docker login docker.pkg.github.com -u ${env.GITHUB_DOCKER_USERNAME} -p ${env.GITHUB_DOCKER_PASSWORD}"
-            }
-            steps {
                 script {
                     sh("eval \$(aws ecr get-login --no-include-email | sed 's|https://||')")
                 } // Login to AWS ECR
             }
         }
-        stage ("Docker Image Push") {
+        stage ("Push API Image") {
             parallel {
-                stage ("Push API Image") {
-                    steps {
-                        sh "docker tag ${env.IMAGE_API} docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}:latest"
-                        sh "docker push docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}:latest"
-                    }
+                stage ("Push to AWS ECR") {
                     steps {
                         // Tag and push to ECR
-                        sh "docker tag docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}:latest ${env.AWS_ECR}/${env.IMAGE_API}"
+                        sh "docker tag ${env.IMAGE_API} ${env.AWS_ECR}/${env.IMAGE_API}"
                         sh "docker push ${env.AWS_ECR}/${env.IMAGE_API}"
+                        sh "docker rmi ${env.AWS_ECR}/${env.IMAGE_API}" // Cleans tag
                     }
                     post {
                         success {
-                            echo "API image successfully pushed to repository!"
+                            echo "Successfuly pushed to ECR on build ${env.BUILD_ID}!"
                         }
                         failure {
-                            echo "Image push failed! See log for details..."
+                            echo "Push to ECR failed! See log for details..."
                         }
                     }
                 }
-                stage ("Push WebApp Image") {
+                stage ("Push to GitHub") {
                     steps {
-                        sh "docker tag ${env.IMAGE_WEBAPP} docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}:latest"
-                        sh "docker push docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}:latest"
-                    }
-                    steps {
-                        // Tag and push to ECR
-                        sh "docker tag docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}:latest ${env.AWS_ECR}/${env.IMAGE_WEBAPP}"
-                        sh "docker push ${env.AWS_ECR}/${env.IMAGE_WEBAPP}"
+                        sh "docker tag ${env.IMAGE_API} docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}"
+                        sh "docker push docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}"
+                        sh "docker rmi docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}" // Cleans Tag
                     }
                     post {
                         success {
-                            echo "WebApp image successfully pushed to repository!"
+                            echo "Successfully pushed to GitHub on build ${env.BUILD_ID}!"
                         }
                         failure {
-                            echo "Image push failed! See log for details..."
+                            echo "Push to GitHub failed! See log for details..."
+                        }
+                    }
+                }
+            }
+        }
+        stage ("Push WebApp Image") {
+            parallel {
+                stage ("Push to AWS ECR") {
+                    steps {
+                        sh "docker tag ${env.IMAGE_WEBAPP} ${env.AWS_ECR}/${env.IMAGE_WEBAPP}"
+                        sh "docker push ${env.AWS_ECR}/${env.IMAGE_WEBAPP}"
+                        sh "docker rmi ${env.AWS_ECR}/${env.IMAGE_WEBAPP}"
+                    }
+                    post {
+                        success {
+                            echo "Successfully pushed to ECR on build ${env.BUILD_ID}!"
+                        }
+                        failure {
+                            echo "Push to ECR failed! See log for details..."
+                        }
+                    }
+                }
+                stage ("Push to GitHub") {
+                    steps {
+                        sh "docker tag docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}"
+                        sh "docker push docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}"
+                        sh "docker rmi docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}"
+                    }
+                    post {
+                        success {
+                            echo "Successfully pushed to GitHub on build ${env.BUILD_ID}!"
+                        }
+                        failure {
+                            echo "Push to GitHub failed! See log for details..."
                         }
                     }
                 }
