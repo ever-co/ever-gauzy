@@ -288,6 +288,7 @@ const seedDefaultEmployeeUsers = async (
       firstName: 'Ruslan',
       lastName: 'Konviser',
       imageUrl: 'assets/images/avatars/ruslan.jpg',
+      employeeLevel: 'A',
       preferredLanguage: LanguagesEnum.ENGLISH
     },
     {
