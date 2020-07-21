@@ -728,6 +728,7 @@
 		"UPDATE": "Update",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
+		"GROUP_BY": "Group By",
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",

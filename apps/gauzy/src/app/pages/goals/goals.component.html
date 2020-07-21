@@ -17,24 +17,61 @@
 					{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
 				</nb-action>
 			</nb-actions>
-			<button
-				nbButton
-				status="primary"
-				nbPopoverPlacement="left"
-				[nbPopover]="filterPopover"
-			>
-				<nb-icon icon="funnel"></nb-icon>{{ 'FORM.FILTER' | translate }}
-			</button>
-			<ng-template class="p-2" #filterPopover>
-				<nb-list>
-					<nb-list-item
-						(click)="filterGoals(filter.value)"
-						style="cursor: pointer; font-weight: bold;"
-						*ngFor="let filter of filters"
-						>{{ filter.title }}</nb-list-item
-					>
-				</nb-list>
-			</ng-template>
+			<div>
+				<button
+					class="mr-3"
+					nbButton
+					status="primary"
+					nbPopoverTrigger="click"
+					nbPopoverPlacement="left"
+					[nbPopover]="groupByPopover"
+				>
+					<nb-icon icon="folder"></nb-icon
+					>{{ 'GOALS_PAGE.GROUP_BY' | translate }}
+				</button>
+				<ng-template class="p-2" #groupByPopover>
+					<nb-list>
+						<nb-list-item
+							(click)="groupBy(group.value)"
+							[ngStyle]="{
+								'font-weight':
+									objectiveGroup === group.value
+										? 'bold'
+										: 'normal'
+							}"
+							style="cursor: pointer;"
+							*ngFor="let group of groupObjectivesBy"
+							>{{ group.title }}</nb-list-item
+						>
+					</nb-list>
+				</ng-template>
+				<button
+					nbButton
+					status="primary"
+					nbPopoverTrigger="click"
+					nbPopoverPlacement="bottom"
+					[nbPopover]="filterPopover"
+				>
+					<nb-icon icon="funnel"></nb-icon
+					>{{ 'FORM.FILTER' | translate }}
+				</button>
+				<ng-template class="p-2" #filterPopover>
+					<nb-list>
+						<nb-list-item
+							(click)="filterGoals(filter.value)"
+							[ngStyle]="{
+								'font-weight':
+									selectedFilter === filter.value
+										? 'bold'
+										: 'normal'
+							}"
+							style="cursor: pointer;"
+							*ngFor="let filter of filters"
+							>{{ filter.title }}</nb-list-item
+						>
+					</nb-list>
+				</ng-template>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -43,10 +80,20 @@
 				{{ 'GOALS_PAGE.GOALS_EMPTY' | translate }}
 			</p>
 		</div>
-		<div *ngFor="let timeFrame of goalTimeFrames">
-			<h6>{{ timeFrame }}</h6>
+		<div
+			*ngFor="
+				let group of objectiveGroup == 'timeFrames'
+					? goalTimeFrames
+					: goalLevels
+			"
+		>
+			<h6 *ngIf="noGoals == false">{{ group }}</h6>
 			<nb-accordion
-				[hidden]="goal.deadline != timeFrame"
+				[hidden]="
+					objectiveGroup == 'timeFrames'
+						? goal.deadline != group
+						: goal.level != group
+				"
 				class="my-3"
 				*ngFor="let goal of goals; let index = index"
 			>
