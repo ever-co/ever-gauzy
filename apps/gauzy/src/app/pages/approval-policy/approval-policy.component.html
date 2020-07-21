@@ -2,6 +2,9 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ 'APPROVAL_POLICY_PAGE.HEADER' | translate }}</h4>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 
@@ -11,26 +14,9 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<button
-				(click)="save()"
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="delete()"
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 
 		<ng2-smart-table
@@ -39,8 +25,43 @@
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#approvalPolicyTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="approvalData"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="save(selectedItem)"
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		(click)="delete(selectedItem)"
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

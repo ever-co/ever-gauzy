@@ -2,8 +2,10 @@ import { Connection } from 'typeorm';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import { User, ISeedUsers } from '@gauzy/models';
-import { environment as env } from '@env-api/environment';
+import { User, ISeedUsers, LanguagesEnum } from '@gauzy/models';
+import { CandidateSource } from '../candidate-source/candidate-source.entity';
+import * as faker from 'faker';
+
 export const createDefaultCandidates = async (
 	connection: Connection,
 	defaultData: {
@@ -12,7 +14,64 @@ export const createDefaultCandidates = async (
 		users: User[];
 	}
 ): Promise<Candidate[]> => {
-	const defaultCandidates = env.defaultCandidates || [];
+	const defaultCandidates = [
+    {
+      email: 'john@ever.co',
+      password: '123456',
+      firstName: 'John',
+      lastName: 'Smith',
+      imageUrl: 'assets/images/avatars/alish.jpg',
+      candidateLevel: 'D',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'jaye@ever.co',
+      password: '123456',
+      firstName: 'Jaye',
+      lastName: 'Jeffreys',
+      imageUrl: 'assets/images/avatars/alexander.jpg',
+      candidateLevel: 'B',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'kasey@ever.co',
+      password: '123456',
+      firstName: 'Kasey',
+      lastName: 'Kraker',
+      imageUrl: 'assets/images/avatars/rachit.png',
+      candidateLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'norris@ever.co',
+      password: '123456',
+      firstName: 'Norris ',
+      lastName: 'Nesbit',
+      imageUrl: 'assets/images/avatars/atanas.jpeg',
+      candidateLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'estella@ever.co',
+      password: '123456',
+      firstName: 'Estella',
+      lastName: 'Ennis',
+      imageUrl: 'assets/images/avatars/dimana.jpeg',
+      candidateLevel: null,
+      preferredLanguage: LanguagesEnum.ENGLISH
+    },
+    {
+      email: 'greg@ever.co',
+      password: '123456',
+      firstName: 'Greg ',
+      lastName: 'Grise',
+      imageUrl: 'assets/images/avatars/savov.jpg',
+      candidateLevel: 'A',
+      preferredLanguage: LanguagesEnum.ENGLISH
+    }
+  ];
+	const defaultSources = await connection.manager.find(CandidateSource);
+
 	let candidate: Candidate;
 	const candidates: Candidate[] = [];
 	const defaultUsers = defaultData.users;
@@ -26,9 +85,10 @@ export const createDefaultCandidates = async (
 		candidate.user = user;
 		candidate.isArchived = false;
 		candidate.tenant = defaultTenant;
-		candidate.source = defaultCandidates.filter(
-			(e) => e.email === candidate.user.email
-		)[0].source;
+		candidate.source = faker.random.arrayElement(defaultSources);
+		// candidate.source = defaultCandidates.filter(
+		// 	(e) => e.email === candidate.user.email
+		// )[0].source;
 
 		await insertCandidate(connection, candidate);
 		candidates.push(candidate);

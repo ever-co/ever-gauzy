@@ -1,6 +1,9 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
+import {
+	RequestApprovalStatusTypesEnum,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-request-approval-action',
@@ -13,6 +16,10 @@ export class RequestApprovalActionComponent implements ViewCell, OnInit {
 	isRefuse = true;
 	@Output() updateResult = new EventEmitter<any>();
 
+	@Input()
+	layout?: ComponentLayoutStyleEnum | undefined;
+
+	@Input()
 	value: string | number;
 
 	ngOnInit(): void {
