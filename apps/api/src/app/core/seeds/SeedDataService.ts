@@ -292,21 +292,21 @@ const allEntities = [
 ];
 
 const randomSeedConfig = {
-  tenants: 5,
-    organizationsPerTenant: 2,
-    employeesPerOrganization: 5,
-    candidatesPerOrganization: 2,
-    managersPerOrganization: 2,
-    dataEntriesPerOrganization: 4,
-    viewersPerOrganization: 4,
-    projectsPerOrganization: 30,
-    emailsPerOrganization: 30,
-    invitePerOrganization: 30,
-    requestApprovalPerOrganization: 20,
-    employeeTimeOffPerOrganization: 10,
-    equipmentPerTenant: 20,
-    equipmentSharingPerTenant: 20,
-    proposalsSharingPerOrganizations: 30
+	tenants: 5, //The number of random tenants to be seeded.
+	organizationsPerTenant: 2, //No of random organizations seeded will be (organizationsPerTenant * tenants)
+	employeesPerOrganization: 5, //No of random employees seeded will be (employeesPerOrganization * organizationsPerTenant * tenants)
+	candidatesPerOrganization: 2, //No of random employees seeded will be (candidatesPerOrganization * organizationsPerTenant * tenants)
+	managersPerOrganization: 2, //No of random manager seeded will be (managersPerOrganization * organizationsPerTenant * tenants)
+	dataEntriesPerOrganization: 4, //No of random data entry users seeded will be (dataEntriesPerOrganization * organizationsPerTenant * tenants)
+	viewersPerOrganization: 4, //No of random viewers seeded will be (viewersPerOrganization * organizationsPerTenant * tenants)
+	projectsPerOrganization: 30, // No of random projects seeded will be  (projectsPerOrganization * organizationsPerTenant * tenants)
+	emailsPerOrganization: 30, // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
+	invitePerOrganization: 30, // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
+	requestApprovalPerOrganization: 20, // No of random request to approve seeded will be  (requestApprovalPerOrganization * organizationsPerTenant * tenants)
+	employeeTimeOffPerOrganization: 10, // No of timeoff request to approve seeded will be  (employeeTimeOffPerOrganization * organizationsPerTenant * tenants)
+	equipmentPerTenant: 20, // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
+	equipmentSharingPerTenant: 20, // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
+	proposalsSharingPerOrganizations: 30 // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
 };
 
 @Injectable()
@@ -602,15 +602,6 @@ export class SeedDataService {
 	 * Populate database with random generated data
 	 */
 	async seedRandomData() {
-		if (!randomSeedConfig) {
-			this.log(
-				chalk.red(
-					`randomSeedConfig NOT FOUND IN ENV. Random data would not be seeded`
-				)
-			);
-			return;
-		}
-
 		//Platform level data which only need database connection
 		const tenants = await createRandomTenants(
 			this.connection,
