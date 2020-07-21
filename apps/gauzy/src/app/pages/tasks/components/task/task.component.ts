@@ -39,6 +39,7 @@ import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/orga
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { StatusViewComponent } from 'apps/gauzy/src/app/@shared/table-components/status-view/status-view.component';
 
 @Component({
 	selector: 'ngx-task',
@@ -216,15 +217,10 @@ export class TaskComponent extends TranslationBaseComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				title: {
-					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
-					type: 'string',
-					width: '10%'
-				},
 				description: {
-					title: this.getTranslation('TASKS_PAGE.TASKS_DESCRIPTION'),
+					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'custom',
-					filter: false,
+					filter: true,
 					class: 'align-row',
 					renderComponent: NotesWithTagsComponent
 				},
@@ -253,8 +249,9 @@ export class TaskComponent extends TranslationBaseComponent
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
-					type: 'string',
-					filter: false
+					type: 'custom',
+					filter: false,
+					renderComponent: StatusViewComponent
 				}
 			}
 		};

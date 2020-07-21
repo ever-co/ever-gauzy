@@ -49,7 +49,10 @@
   </nb-accordion> -->
 
 	<nb-accordion multi>
-		<nb-accordion-item [expanded]="true" *ngFor="let sprint of sprints">
+		<nb-accordion-item
+			[expanded]="true"
+			*ngFor="let sprint of sprints$ | async"
+		>
 			<nb-accordion-item-header>
 				{{ sprint.name }}
 			</nb-accordion-item-header>

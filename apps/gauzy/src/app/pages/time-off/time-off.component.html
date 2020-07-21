@@ -1,6 +1,9 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
+	<nb-card-header class="main-header">
 		<h4>{{ 'TIME_OFF_PAGE.HEADER' | translate }}</h4>
+		<ga-layout-selector
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row mb-3">
@@ -55,47 +58,11 @@
 				</button>
 
 				<div class="actions-container" *ngIf="isRecordSelected">
-					<button
-						(click)="approveDaysOff()"
-						nbButton
-						status="success"
-						class="ml-4"
-					>
-						<nb-icon
-							class="mx-2"
-							icon="checkmark-circle-outline"
-							nbTooltip="{{ 'TIME_OFF_PAGE.ACTIONS.APPROVE_DAYS_OFF_REQUEST' | translate }}"
-							nbTooltipTrigger="hover"
-						></nb-icon>
-					</button>
-
-					<button
-						(click)="denyDaysOff()"
-						nbButton
-						status="warning"
-						class="ml-4"
-					>
-						<nb-icon
-							class="mx-2"
-							icon="close-outline"
-							nbTooltip="{{ 'TIME_OFF_PAGE.ACTIONS.DENY_DAYS_OFF_REQUEST' | translate }}"
-							nbTooltipTrigger="hover"
-						></nb-icon>
-					</button>
-
-					<button
-						(click)="deleteRequest()"
-						nbButton
-						status="danger"
-						class="ml-4"
-					>
-						<nb-icon
-							class="mx-2"
-							icon="trash-2-outline"
-							nbTooltip="{{ 'TIME_OFF_PAGE.ACTIONS.DELETE_DAYS_OFF_REQUEST' | translate }}"
-							nbTooltipTrigger="hover"
-						></nb-icon>
-					</button>
+					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+						<ng-container
+							*ngTemplateOutlet="actionButtons"
+						></ng-container>
+					</ng-container>
 				</div>
 			</div>
 		</div>
@@ -105,8 +72,129 @@
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
 			(userRowSelect)="selectRecord($event)"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#timeOffTable
 		>
 		</ng2-smart-table>
+		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<li class="flex-item" *ngFor="let x of timeOffData">
+				<div class="fullName">
+					<img
+						[src]="x.employees[0].user.imageUrl"
+						alt="Avatar"
+						class="avatar"
+					/>
+					<span>{{ x.fullName }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Description</span>
+					<span class="info-value">{{ x.description }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Policy</span>
+					<span class="info-value">{{ x.policy }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Start Date</span>
+					<span class="info-value">{{ x.start | date }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">End Date</span>
+					<span class="info-value">{{ x.end | date }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Request Date</span>
+					<span class="info-value">{{ x.requestDate | date }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Status</span>
+					<div class="text-center d-block" *ngIf="x.status">
+						<div class="badge-danger" *ngIf="x.status == 'Denied'">
+							{{ 'TIME_OFF_PAGE.STATUSES.DENIED' | translate }}
+						</div>
+						<div
+							class="badge-success"
+							*ngIf="x.status == 'Approved'"
+						>
+							{{ 'TIME_OFF_PAGE.STATUSES.APPROVED' | translate }}
+						</div>
+						<div
+							class="badge-warning"
+							*ngIf="x.status == 'Requested'"
+						>
+							{{ 'TIME_OFF_PAGE.STATUSES.REQUESTED' | translate }}
+						</div>
+					</div>
+				</div>
+				<nb-card-footer class="card-footer">
+					<ng-container
+						*ngTemplateOutlet="
+							actionButtons;
+							context: {
+								buttonSize: 'tiny',
+								selectedItem: x
+							}
+						"
+					>
+					</ng-container>
+				</nb-card-footer>
+			</li>
+		</ul>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="approveDaysOff(selectedItem)"
+		nbButton
+		status="success"
+		class="ml-4"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon
+			class="mx-2"
+			icon="checkmark-circle-outline"
+			nbTooltip="{{
+				'TIME_OFF_PAGE.ACTIONS.APPROVE_DAYS_OFF_REQUEST' | translate
+			}}"
+			nbTooltipTrigger="hover"
+		></nb-icon>
+	</button>
+
+	<button
+		(click)="denyDaysOff(selectedItem)"
+		nbButton
+		status="warning"
+		class="ml-4"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon
+			class="mx-2"
+			icon="close-outline"
+			nbTooltip="{{
+				'TIME_OFF_PAGE.ACTIONS.DENY_DAYS_OFF_REQUEST' | translate
+			}}"
+			nbTooltipTrigger="hover"
+		></nb-icon>
+	</button>
+
+	<button
+		(click)="deleteRequest(selectedItem)"
+		nbButton
+		status="danger"
+		class="ml-4"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon
+			class="mx-2"
+			icon="trash-2-outline"
+			nbTooltip="{{
+				'TIME_OFF_PAGE.ACTIONS.DELETE_DAYS_OFF_REQUEST' | translate
+			}}"
+			nbTooltipTrigger="hover"
+		></nb-icon>
+	</button>
+</ng-template>

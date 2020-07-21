@@ -1,46 +1,20 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
+	<nb-card-header class="header-selector-wrapper">
 		<h4 *ngIf="!isEstimate">
 			{{ 'INVOICES_PAGE.RECEIVED_INVOICES' | translate }}
 		</h4>
 		<h4 *ngIf="isEstimate">
 			{{ 'INVOICES_PAGE.RECEIVED_ESTIMATES' | translate }}
 		</h4>
+		<ga-layout-selector
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
-			<button
-				nbButton
-				status="info"
-				class="mr-2"
-				(click)="view()"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
-			<button
-				*ngIf="isEstimate"
-				nbButton
-				status="success"
-				class="mr-2"
-				(click)="accept()"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="checkmark-outline"></nb-icon>
-				{{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
-			</button>
-			<button
-				*ngIf="isEstimate"
-				nbButton
-				status="danger"
-				class="mr-2"
-				(click)="reject()"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-				{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 		<ng2-smart-table
 			class="tags-table"
@@ -48,8 +22,56 @@
 			[source]="smartTableSource"
 			(userRowSelect)="selectInvoice($event)"
 			style="cursor: pointer;"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#invoicesTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="invoices"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		(click)="view(selectedItem)"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.VIEW' | translate }}
+	</button>
+	<button
+		*ngIf="isEstimate"
+		nbButton
+		status="success"
+		class="mr-2"
+		(click)="accept(selectedItem)"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="checkmark-outline"></nb-icon>
+		{{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
+	</button>
+	<button
+		*ngIf="isEstimate"
+		nbButton
+		status="danger"
+		class="mr-2"
+		(click)="reject(selectedItem)"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+		{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
+	</button>
+</ng-template>

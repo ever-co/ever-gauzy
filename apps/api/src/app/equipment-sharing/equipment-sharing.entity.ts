@@ -18,7 +18,6 @@ import { Equipment } from '../equipment/equipment.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
-import { Index } from 'typeorm';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {

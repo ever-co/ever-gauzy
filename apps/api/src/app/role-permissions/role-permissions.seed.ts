@@ -57,7 +57,11 @@ export const defaultRolePermissions = [
 			PermissionsEnum.EDIT_SALES_PIPELINES,
 			PermissionsEnum.CAN_APPROVE_TIMESHEET,
 			PermissionsEnum.ORG_SPRINT_EDIT,
-			PermissionsEnum.ORG_SPRINT_VIEW
+			PermissionsEnum.ORG_SPRINT_VIEW,
+			PermissionsEnum.ORG_PROJECT_EDIT,
+			PermissionsEnum.ORG_CONTACT_EDIT,
+			PermissionsEnum.ORG_TEAM_EDIT,
+			PermissionsEnum.ORG_CONTRACT_EDIT
 		]
 	},
 	{
@@ -108,7 +112,11 @@ export const defaultRolePermissions = [
 			PermissionsEnum.EDIT_SALES_PIPELINES,
 			PermissionsEnum.CAN_APPROVE_TIMESHEET,
 			PermissionsEnum.ORG_SPRINT_EDIT,
-			PermissionsEnum.ORG_SPRINT_VIEW
+			PermissionsEnum.ORG_SPRINT_VIEW,
+			PermissionsEnum.ORG_PROJECT_EDIT,
+			PermissionsEnum.ORG_CONTACT_EDIT,
+			PermissionsEnum.ORG_TEAM_EDIT,
+			PermissionsEnum.ORG_CONTRACT_EDIT
 		]
 	},
 	{

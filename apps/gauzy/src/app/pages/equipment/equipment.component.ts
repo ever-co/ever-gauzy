@@ -1,22 +1,20 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { Equipment } from '@gauzy/models';
+import { Equipment, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import { Router } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-
-export interface SelectedEquipment {
-	data: Equipment;
-	isSelected: false;
-}
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { Subject } from 'rxjs/internal/Subject';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
 	templateUrl: './equipment.component.html',
@@ -29,26 +27,49 @@ export class EquipmentComponent extends TranslationBaseComponent
 	selectedEquipment: Equipment;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
-	disableButton = true;
 	tags: any;
 	selectedTags: any;
+	equipmentsData: Equipment[];
+	private _ngDestroy$ = new Subject<void>();
+	disableButton = true;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	@ViewChild('equipmentTable') equipmentTable;
-
-	ngOnInit(): void {
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
-		this.loadSettings();
-	}
 
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private equipmentService: EquipmentService,
 		private toastrService: NbToastrService,
-		private router: Router
+		private router: Router,
+		private store: Store
 	) {
 		super(translateService);
+		this.setView();
+	}
+
+	ngOnInit(): void {
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
+		this.loadSettings();
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EQUIPMENT;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	async loadSmartTable() {
@@ -112,7 +133,13 @@ export class EquipmentComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/organization/equipment-sharing']);
 	}
 
-	async save() {
+	async save(selectedItem?: Equipment) {
+		if (selectedItem) {
+			this.selectEquipment({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		if (this.selectedEquipment) {
 			this.selectedTags = this.selectedEquipment.tags;
 		} else {
@@ -138,7 +165,13 @@ export class EquipmentComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete() {
+	async delete(selectedItem?: Equipment) {
+		if (selectedItem) {
+			this.selectEquipment({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
@@ -159,17 +192,17 @@ export class EquipmentComponent extends TranslationBaseComponent
 		this.selectedEquipment = null;
 		const { items } = await this.equipmentService.getAll();
 		this.loading = false;
+		this.equipmentsData = items;
 		this.smartTableSource.load(items);
 	}
 
-	async selectEquipment($event: SelectedEquipment) {
-		if ($event.isSelected) {
-			this.selectedEquipment = $event.data;
-			this.disableButton = false;
+	async selectEquipment({ isSelected, data }) {
+		const selectedEquipment = isSelected ? data : null;
+		if (this.equipmentTable) {
 			this.equipmentTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedEquipment = selectedEquipment;
 	}
 
 	_applyTranslationOnSmartTable() {

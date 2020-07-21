@@ -12,6 +12,7 @@ import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
 import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
 import { TaskTeamsComponent } from './task-teams/task-teams.component';
 import { AssignedToComponent } from './assigned-to/assigned-to.component';
+import { StatusViewComponent } from './status-view/status-view.component';
 
 @NgModule({
 	imports: [
@@ -23,9 +24,9 @@ import { AssignedToComponent } from './assigned-to/assigned-to.component';
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	entryComponents: [
 		DateViewComponent,
@@ -36,6 +37,7 @@ import { AssignedToComponent } from './assigned-to/assigned-to.component';
 		EmployeeWithLinksComponent,
 		TaskTeamsComponent,
 		AssignedToComponent,
+		StatusViewComponent
 	],
 	declarations: [
 		DateViewComponent,
@@ -46,8 +48,9 @@ import { AssignedToComponent } from './assigned-to/assigned-to.component';
 		EmployeeWithLinksComponent,
 		TaskTeamsComponent,
 		AssignedToComponent,
+		StatusViewComponent
 	],
 	exports: [NotesWithTagsComponent, PictureNameTagsComponent],
-	providers: [],
+	providers: []
 })
 export class TableComponentsModule {}

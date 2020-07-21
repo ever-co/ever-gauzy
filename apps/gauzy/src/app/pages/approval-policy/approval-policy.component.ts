@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ApprovalPolicy } from '@gauzy/models';
+import { ApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -11,15 +11,13 @@ import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy/approval-policy-mutation.component';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-
-export interface SelectedApprovalPolicy {
-	data: ApprovalPolicy;
-	isSelected: false;
-}
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
 @Component({
 	selector: 'ngx-approval-policy',
-	templateUrl: './approval-policy.component.html'
+	templateUrl: './approval-policy.component.html',
+	styleUrls: ['./approval-policy.component.scss']
 })
 export class ApprovalPolicyComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -29,7 +27,9 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
 	public hasEditPermission = false;
-
+	approvalData: ApprovalPolicy[];
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private ngDestroy$ = new Subject<void>();
 	private selectedOrganizationId: string;
 	private selectedTenantId: string;
@@ -41,9 +41,11 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		private store: Store,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
-		private approvalPolicyService: ApprovalPolicyService
+		private approvalPolicyService: ApprovalPolicyService,
+		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit() {
@@ -69,16 +71,23 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
 		// this.initListApprovals();
+		this.router.events
+			.pipe(takeUntil(this.ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
 
-	async selectEquipment($event: SelectedApprovalPolicy) {
-		if ($event.isSelected) {
-			this.selectedApprovalPolicy = $event.data;
-			this.disableButton = false;
-			this.approvalPolicyTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
-		}
+	setView() {
+		this.viewComponentName = ComponentEnum.APPROVAL_POLICY;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this.ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	async loadSettings() {
@@ -94,6 +103,7 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 			await this.approvalPolicyService.getAll(['organization'], findInput)
 		).items;
 		this.loading = false;
+		this.approvalData = items;
 		this.smartTableSource.load(items);
 	}
 
@@ -130,7 +140,13 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		});
 	}
 
-	async save() {
+	async save(selectedItem?: ApprovalPolicy) {
+		if (selectedItem) {
+			this.selectApprovalPolicy({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const dialog = this.dialogService.open(
 			ApprovalPolicyMutationComponent,
 			{
@@ -155,17 +171,22 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async selectApprovalPolicy($event: SelectedApprovalPolicy) {
-		if ($event.isSelected) {
-			this.selectedApprovalPolicy = $event.data;
-			this.disableButton = false;
+	async selectApprovalPolicy({ isSelected, data }) {
+		const selectedApprovalPolicy = isSelected ? data : null;
+		if (this.approvalPolicyTable) {
 			this.approvalPolicyTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedApprovalPolicy = selectedApprovalPolicy;
 	}
 
-	async delete() {
+	async delete(selectedItem?: ApprovalPolicy) {
+		if (selectedItem) {
+			this.selectApprovalPolicy({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())

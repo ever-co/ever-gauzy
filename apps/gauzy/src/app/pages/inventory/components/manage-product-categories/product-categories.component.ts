@@ -1,26 +1,24 @@
 import {
 	ProductCategoryTranslated,
 	Organization,
-	LanguagesEnum
+	LanguagesEnum,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { ProductCategoryService } from 'apps/gauzy/src/app/@core/services/product-category.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ProductCategoryService } from '../../../../@core/services/product-category.service';
+import { Store } from '../../../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { ImageRowComponent } from '../table-components/image-row.component';
-import { ProductCategoryMutationComponent } from 'apps/gauzy/src/app/@shared/product-mutation/product-category-mutation/product-category-mutation.component';
-import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Location } from '@angular/common';
-
-export interface SelectedProductCategory {
-	data: ProductCategoryTranslated;
-	isSelected: boolean;
-}
+import { ComponentEnum } from '../../../../@core/constants/layout.constants';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
 @Component({
 	selector: 'ngx-product-categories',
@@ -31,11 +29,13 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
-	selectedItem: ProductCategoryTranslated;
+	selectedProductCategory: ProductCategoryTranslated;
+	productData: ProductCategoryTranslated[];
 	selectedOrganization: Organization;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
-
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('productCategoriesTable', { static: true })
@@ -47,9 +47,11 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		private productCategoryService: ProductCategoryService,
 		private toastrService: NbToastrService,
 		private location: Location,
+		private router: Router,
 		private store: Store
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
@@ -65,14 +67,25 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 			.subscribe(() => {
 				this.loadSettings();
 			});
-
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	setView() {
+		this.viewComponentName = ComponentEnum.PRODUCT_CATEGORY;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	async loadSmartTable() {
@@ -101,7 +114,7 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	}
 
 	async loadSettings() {
-		this.selectedItem = null;
+		this.selectedProductCategory = null;
 		const searchCriteria = this.selectedOrganization
 			? { organization: { id: this.selectedOrganization.id } }
 			: null;
@@ -113,6 +126,7 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		);
 
 		this.loading = false;
+		this.productData = items;
 		this.smartTableSource.load(items);
 	}
 
@@ -122,9 +136,17 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		});
 	}
 
-	async save() {
-		const editProductCategory = this.selectedItem
-			? await this.productCategoryService.getById(this.selectedItem.id)
+	async save(selectedItem?: ProductCategoryTranslated) {
+		if (selectedItem) {
+			this.selectProductCategory({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		const editProductCategory = this.selectedProductCategory
+			? await this.productCategoryService.getById(
+					this.selectedProductCategory.id
+			  )
 			: null;
 
 		const dialog = this.dialogService.open(
@@ -137,7 +159,7 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		);
 
 		const productCategory = await dialog.onClose.pipe(first()).toPromise();
-		this.selectedItem = null;
+		this.selectedProductCategory = null;
 		this.disableButton = true;
 
 		if (productCategory) {
@@ -150,14 +172,22 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete() {
+	async delete(selectedItem?: ProductCategoryTranslated) {
+		if (selectedItem) {
+			this.selectProductCategory({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
 			.toPromise();
 
 		if (result) {
-			await this.productCategoryService.delete(this.selectedItem.id);
+			await this.productCategoryService.delete(
+				this.selectedProductCategory.id
+			);
 			this.loadSettings();
 			this.toastrService.primary(
 				this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED'),
@@ -167,17 +197,21 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		this.disableButton = true;
 	}
 
-	selectProductCategory($event: SelectedProductCategory) {
-		if ($event.isSelected) {
-			this.selectedItem = $event.data;
-			this.disableButton = false;
+	selectProductCategory({ isSelected, data }) {
+		const selectedProductCategory = isSelected ? data : null;
+		if (this.productCategoriesTable) {
 			this.productCategoriesTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedProductCategory = selectedProductCategory;
 	}
 
 	goBack() {
 		this.location.back();
+	}
+
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

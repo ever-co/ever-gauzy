@@ -6,11 +6,26 @@
 				<ga-editable-grid
 					[itemTmpl]="item"
 					[items]="sprints"
-					[addDialogTmpl]="editDialog"
+					[addDialogTmpl]="addDialog"
 					[editDialogTmpl]="editDialog"
 					[deleteDialogTmpl]="deleteDialog"
 					(dialogData)="sprintAction($event)"
 				>
+					<ng-template
+						#addDialog
+						let-sprint
+						let-action="action"
+						let-dialogRef="dialogRef"
+					>
+						<ngx-sprint-dialog
+							[action]="action"
+							[dialogRef]="dialogRef"
+							[options]="{
+								sprintIndex: sprints?.length,
+								sprintStartDate: sprints.slice(-1)[0].endDate
+							}"
+						></ngx-sprint-dialog>
+					</ng-template>
 					<ng-template
 						#editDialog
 						let-sprint
@@ -53,9 +68,7 @@
 							class="d-flex justify-content-between px-2 sprints__item w-100"
 						>
 							<span class="col">{{ sprint.name }}</span>
-							<span class="col">{{
-								sprint.goal || 'No goal setts'
-							}}</span>
+							<span class="col">{{ sprint.goal }}</span>
 							<span class="col">{{
 								sprint.startDate
 									? moment(sprint.startDate).format(

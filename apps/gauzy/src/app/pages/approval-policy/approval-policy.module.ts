@@ -1,3 +1,4 @@
+import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -45,6 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		NbTooltipModule,
 		NbRadioModule,
+		CardGridModule,
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
 		TranslateModule.forChild({

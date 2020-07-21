@@ -1,6 +1,9 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
+	<nb-card-header class="main-header">
 		<h4>{{ 'TIME_OFF_PAGE.POLICY.HEADER' | translate }}</h4>
+		<ga-layout-selector
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<ngx-back-navigation class="d-block"></ngx-back-navigation>
@@ -14,36 +17,54 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<button
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="selectedPolicy ? !selectedPolicy.isSelected : true"
-				(click)="openEditPolicyDialog()"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="selectedPolicy ? !selectedPolicy.isSelected : true"
-				(click)="deletePolicy()"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"></nb-icon
-				>{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 
 		<ng2-smart-table
 			class="income-table"
 			[settings]="smartTableSettings"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			[source]="smartTableSource"
 			(userRowSelect)="selectTimeOffPolicy($event)"
 			style="cursor: pointer;"
 			#timeOffPolicyTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="smartTableSettings"
+			[source]="timeOffPolicyData"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="openEditPolicyDialog(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+		>{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="deletePolicy(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+		>{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

@@ -45,6 +45,7 @@ export class ExpenseCreateHandler
 		expense.receipt = input.receipt;
 		expense.splitExpense = input.splitExpense;
 		expense.tags = input.tags;
+		expense.status = input.status;
 
 		if (!expense.currency) {
 			expense.currency = organization.currency;
