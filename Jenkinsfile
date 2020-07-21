@@ -14,7 +14,7 @@ pipeline {
         AWS_DEFAULT_REGION = "us-east-1"
         AWS_ECR = """${sh(
                   returnStdout: true,
-                  script: "\$(echo \$(aws ecr get-login --no-include-email | grep -o 'https://.*' | sed 's/https:\/\///g'))"
+                  script: "\$(echo \$(aws ecr get-login --no-include-email | grep -o 'https://.*' | sed 's|https://||g'))"
                   )}
                   """
     }
