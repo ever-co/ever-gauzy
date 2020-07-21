@@ -50,7 +50,12 @@ import { StatusViewComponent } from './status-view/status-view.component';
 		AssignedToComponent,
 		StatusViewComponent
 	],
-	exports: [NotesWithTagsComponent, PictureNameTagsComponent],
+	exports: [
+		NotesWithTagsComponent,
+		PictureNameTagsComponent,
+		EmployeeWithLinksComponent,
+		StatusViewComponent
+	],
 	providers: []
 })
 export class TableComponentsModule {}

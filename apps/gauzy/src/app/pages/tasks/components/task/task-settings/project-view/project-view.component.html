@@ -12,10 +12,20 @@
 			placeholder="Task View Mode"
 		>
 			<ng-template ng-option-tmp let-item="item" let-index="index">
-				{{ item.name }}
+				<nb-icon
+					[icon]="item.icon"
+					class="mr-1"
+					style="font-size: 1rem;"
+				></nb-icon>
+				<span>{{ item.name }}</span>
 			</ng-template>
 			<ng-template ng-label-tmp let-item="item">
 				<div class="selector-template">
+					<nb-icon
+						[icon]="item.icon"
+						class="mr-1"
+						style="font-size: 1rem;"
+					></nb-icon>
 					<span>{{ item.name }}</span>
 				</div>
 			</ng-template>

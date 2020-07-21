@@ -7,54 +7,46 @@
 	<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 </div>
 <div class="sprints">
-	<!-- <nb-accordion multi>
-		<nb-accordion-item
-			[expanded]="true"
-			*ngFor="let sprint of sprints$ | async as sprints"
-		>
-			<nb-accordion-item-header>
-				{{ sprint.name }}
-			</nb-accordion-item-header>
-			<nb-accordion-item-body
-				class="tasks"
-				id="{{ sprint.id }}"
-				cdkDropList
-				[cdkDropListData]="sprint.tasks"
-				[cdkDropListConnectedTo]="sprintIds"
-				(cdkDropListDropped)="drop($event)"
-			>
-				<ga-sprint-task
-					(toggleItemEvent)="toggleItemSelection($event)"
-					*ngFor="let task of sprint.tasks; trackBy: trackByFn"
-					[task]="task"
-				></ga-sprint-task>
-			</nb-accordion-item-body>
-		</nb-accordion-item>
-		<nb-accordion-item [expanded]="true">
-			<nb-accordion-item-header>Backlog</nb-accordion-item-header>
-			<nb-accordion-item-body
-				id="backlog"
-				cdkDropList
-				[cdkDropListData]="backlogTasks"
-				[cdkDropListConnectedTo]="sprintIds"
-				(cdkDropListDropped)="drop($event)"
-			>
-				<ga-sprint-task
-					(click)="toggleItemSelection(task)"
-					*ngFor="let task of backlogTasks"
-					[task]="task"
-				></ga-sprint-task>
-			</nb-accordion-item-body>
-		</nb-accordion-item>
-  </nb-accordion> -->
-
 	<nb-accordion multi>
-		<nb-accordion-item
-			[expanded]="true"
-			*ngFor="let sprint of sprints$ | async"
-		>
-			<nb-accordion-item-header>
-				{{ sprint.name }}
+		<nb-accordion-item [expanded]="true" *ngFor="let sprint of sprints">
+			<nb-accordion-item-header
+				class="d-flex flex-column align-items-start"
+			>
+				<div
+					class="sprint__title w-100 d-flex flex-row justify-content-between"
+				>
+					<div class="h6">{{ sprint.name }}</div>
+					<div class="sprint__actions mr-5">
+						<button
+							nbButton
+							size="tiny"
+							*ngIf="sprint.isActive"
+							(click)="completeSprint(sprint, $event)"
+						>
+							Complete Sprint
+						</button>
+						<button
+							nbButton
+							size="tiny"
+							[nbContextMenu]="sprintActions"
+							[nbContextMenuTag]="sprint.id"
+							(click)="preventExpand($event)"
+						>
+							...
+						</button>
+					</div>
+				</div>
+
+				<div class="sprint__details">
+					<span class="col">Tasks: {{ sprint.tasks?.length }}</span>
+					<span class="col" *ngIf="sprint.startDate"
+						>Date Start:
+						{{ sprint.startDate | date: 'short' }}</span
+					>
+					<span class="col" *ngIf="sprint.endDate"
+						>Date End: {{ sprint.endDate | date: 'short' }}</span
+					>
+				</div>
 			</nb-accordion-item-header>
 			<nb-accordion-item-body
 				class="tasks"
@@ -65,7 +57,8 @@
 				(cdkDropListDropped)="drop($event)"
 			>
 				<ga-sprint-task
-					(toggleItemEvent)="toggleItemSelection($event)"
+					(taskActionEvent)="taskAction($event)"
+					(changeStatusEvent)="changeTaskStatus($event)"
 					*ngFor="let task of sprint.tasks; trackBy: trackByFn"
 					[task]="task"
 				></ga-sprint-task>

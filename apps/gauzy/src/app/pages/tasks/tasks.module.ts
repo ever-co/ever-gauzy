@@ -19,7 +19,8 @@ import {
 	NbAccordionModule,
 	NbListModule,
 	NbTabsetModule,
-	NbActionsModule
+	NbActionsModule,
+	NbContextMenuModule
 } from '@nebular/theme';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -79,6 +80,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		NbListModule,
+		NbContextMenuModule,
 		Ng2SmartTableModule,
 		UserFormsModule,
 		CardGridModule,

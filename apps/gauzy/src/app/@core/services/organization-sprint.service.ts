@@ -29,7 +29,7 @@ export class SprintService extends TranslationBaseComponent {
 	getAllSprints(findInput: GetSprintsOptions = {}): Observable<any> {
 		const data = JSON.stringify({
 			relations: [
-				'tasks'
+				// 'tasks'
 				// 'project',
 				// 'tags',
 				// 'members',
