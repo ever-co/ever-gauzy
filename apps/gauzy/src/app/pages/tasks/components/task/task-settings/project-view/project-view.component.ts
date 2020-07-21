@@ -5,6 +5,7 @@ import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/o
 export interface TaskViewMode {
 	type: TaskListTypeEnum;
 	name: TaskListTypeEnum;
+	icon?: string;
 }
 
 @Component({
@@ -16,8 +17,16 @@ export class ProjectViewComponent implements OnInit {
 	@Input() project: OrganizationProjects;
 	taskViewModeType: typeof TaskListTypeEnum = TaskListTypeEnum;
 	taskViewModeList: TaskViewMode[] = [
-		{ type: TaskListTypeEnum.GRID, name: TaskListTypeEnum.GRID },
-		{ type: TaskListTypeEnum.SPRINT, name: TaskListTypeEnum.SPRINT }
+		{
+			type: TaskListTypeEnum.GRID,
+			name: TaskListTypeEnum.GRID,
+			icon: 'grid-outline'
+		},
+		{
+			type: TaskListTypeEnum.SPRINT,
+			name: TaskListTypeEnum.SPRINT,
+			icon: 'refresh-outline'
+		}
 	];
 	selectedTaskViewMode: TaskViewMode;
 

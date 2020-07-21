@@ -22,7 +22,7 @@
 							[dialogRef]="dialogRef"
 							[options]="{
 								sprintIndex: sprints?.length,
-								sprintStartDate: sprints.slice(-1)[0].endDate
+								sprintStartDate: sprints.slice(-1)[0]?.endDate
 							}"
 						></ngx-sprint-dialog>
 					</ng-template>
@@ -65,24 +65,32 @@
 
 					<ng-template #item let-sprint>
 						<div
-							class="d-flex justify-content-between px-2 sprints__item w-100"
+							class="d-flex justify-content-between align-items-center px-2 sprints__item w-100"
 						>
 							<span class="col">{{ sprint.name }}</span>
 							<span class="col">{{ sprint.goal }}</span>
-							<span class="col">{{
-								sprint.startDate
-									? moment(sprint.startDate).format(
-											'DD-MM-YYYY'
-									  )
-									: null
-							}}</span>
-							<span class="col">{{
-								sprint.startDate
-									? moment(sprint.endDate).format(
-											'DD-MM-YYYY'
-									  )
-									: null
-							}}</span>
+							<span class="col d-flex flex-column">
+								<div class="row" *ngIf="sprint.startDate">
+									<span class="col-6">Date Start:</span>
+									<span class="col-6">{{
+										sprint.startDate
+											? moment(sprint.startDate).format(
+													'DD-MM-YYYY'
+											  )
+											: null
+									}}</span>
+								</div>
+								<div class="row" *ngIf="sprint.startDate">
+									<span class="col-6">Date End:</span>
+									<span class="col-6">{{
+										sprint.startDate
+											? moment(sprint.endDate).format(
+													'DD-MM-YYYY'
+											  )
+											: null
+									}}</span>
+								</div>
+							</span>
 						</div>
 					</ng-template>
 				</ga-editable-grid>

@@ -122,15 +122,13 @@ export class TaskComponent extends TranslationBaseComponent
 		);
 		this.projects$ = this.availableTasks$.pipe(
 			map((tasks: Task[]): OrganizationProjects[] => {
-				console.log(tasks);
 				return uniqBy(
 					tasks.map(
 						(task: Task): OrganizationProjects => task.project
 					),
 					'id'
 				);
-			}),
-			tap(console.log)
+			})
 		);
 	}
 
@@ -145,8 +143,7 @@ export class TaskComponent extends TranslationBaseComponent
 			this.availableTasks$ = this.availableTasks$.pipe(
 				map((tasks: Task[]) =>
 					tasks.filter((task: Task) => task.project.id === project.id)
-				),
-				tap((tasks) => console.log('Reactive Tasks: ', tasks))
+				)
 			);
 		}
 	}
@@ -344,7 +341,6 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async editTaskDialog(selectedItem?: Task) {
-		console.log(selectedItem);
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
@@ -498,7 +494,6 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	openTasksSettings(selectedProject: OrganizationProjects): void {
-		console.log('SELECTED_PROJECT: ', selectedProject);
 		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject
 		});
