@@ -102,44 +102,37 @@
 				<nb-alert accent="warning" *ngIf="updates.length == 0">
 					{{ 'GOALS_PAGE.MESSAGE.NO_UPDATES' | translate }}
 				</nb-alert>
-				<nb-card *ngIf="updates.length > 0">
-					<nb-card-header>
-						<div class="section mt-2 overflow-scroll">
-							<nb-card *ngFor="let update of updates">
-								<nb-card-header>
-									<div class="main-header">
-										<ngx-avatar
-											class="ml-2"
-											size="sm"
-											[src]="src"
-											[name]="ownerName"
-										>
-										</ngx-avatar>
-										<p>{{ update.createdAt | date }}</p>
-									</div>
-								</nb-card-header>
-								<nb-card-footer>
-									<div class="main-header p-3">
-										<p class="font-weight-bold">
-											{{
-												'GOALS_PAGE.UPDATE' | translate
-											}}: {{ update.update }}
-										</p>
-										<p class="font-weight-bold">
-											{{ update.status }}
-										</p>
-										<p class="font-weight-bold">
-											{{
-												'GOALS_PAGE.PROGRESS'
-													| translate
-											}}: {{ update.progress }}%
-										</p>
-									</div>
-								</nb-card-footer>
-							</nb-card>
-						</div>
-					</nb-card-header>
-				</nb-card>
+				<div *ngIf="updates.length > 0">
+					<nb-card *ngFor="let update of updates">
+						<nb-card-header>
+							<div class="main-header">
+								<ngx-avatar
+									class="ml-2"
+									size="sm"
+									[src]="src"
+									[name]="ownerName"
+								>
+								</ngx-avatar>
+								<p>{{ update.createdAt | date }}</p>
+							</div>
+						</nb-card-header>
+						<nb-card-footer>
+							<div class="main-header p-3">
+								<p class="font-weight-bold">
+									{{ 'GOALS_PAGE.UPDATE' | translate }}:
+									{{ update.update }}
+								</p>
+								<p class="font-weight-bold">
+									{{ update.status }}
+								</p>
+								<p class="font-weight-bold">
+									{{ 'GOALS_PAGE.PROGRESS' | translate }}:
+									{{ update.progress }}%
+								</p>
+							</div>
+						</nb-card-footer>
+					</nb-card>
+				</div>
 			</nb-tab>
 			<nb-tab tabTitle="Alignments">
 				<nb-alert accent="warning" *ngIf="!goal.alignedKeyResult">

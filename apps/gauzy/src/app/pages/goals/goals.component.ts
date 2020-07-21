@@ -36,7 +36,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	employeeId: string;
 	selectedFilter: string;
 	goalTimeFrames: Array<string> = [];
-	filter = [
+	filters = [
 		{
 			title: 'All Objectives',
 			value: 'all'
