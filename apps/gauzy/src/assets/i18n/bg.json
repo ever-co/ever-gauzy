@@ -231,7 +231,8 @@
 			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
 			"SHORT_DESCRIPTION": "Short Description",
 			"ENABLE_EMPLOYEE_FEATURES": "Enable Employee Features",
-			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features"
+			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features",
+			"STATUS": "Статус"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -315,6 +316,7 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
+			"SELECT_STATUS": "Select Status",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -719,6 +721,7 @@
 		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
 		"ADD_NEW_KEY_RESULT": "Add new key result",
 		"ADD_NEW_OBJECTIVE": "Add new Objective",
+		"EDIT_OBJECTIVE": "Edit Objective",
 		"SESSION": "Session",
 		"GOAL_SETTINGS": "Goal Settings",
 		"NO_DESCRIPTION": "No Description",
@@ -727,6 +730,7 @@
 		"UPDATE": "Update",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
+		"GROUP_BY": "Group By",
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",

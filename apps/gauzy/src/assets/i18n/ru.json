@@ -231,7 +231,8 @@
 			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников",
 			"SHORT_DESCRIPTION": "Краткое описание",
 			"ENABLE_EMPLOYEE_FEATURES": "Включить функции сотрудника",
-			"REVOKE_EMPLOYEE_FEATURES": "Отозвать функции сотрудника"
+			"REVOKE_EMPLOYEE_FEATURES": "Отозвать функции сотрудника",
+			"STATUS": "Статус"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -315,6 +316,7 @@
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"OWNER": "Владелец",
+			"SELECT_STATUS": "Выберите статус",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -719,6 +721,7 @@
 		"GOALS_EMPTY": "Вы еще не создали ни одной цели. Нажмите \"Добавить\", чтобы создать одну",
 		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа",
 		"ADD_NEW_OBJECTIVE": "Добавить новую цель",
+		"EDIT_OBJECTIVE": "Изменить цель",
 		"SESSION": "Сессия",
 		"GOAL_SETTINGS": "Настройки цели",
 		"NO_DESCRIPTION": "Нет описания",
@@ -727,6 +730,7 @@
 		"UPDATE": "Обновить",
 		"COMMENTS": "Комментарии",
 		"KEY_RESULTS": "Ключевые результаты",
+		"GROUP_BY": "Группировать по",
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Добавить временной кадр",
 			"TIME_FRAME_PAGE_TITLE": "Установить время",
