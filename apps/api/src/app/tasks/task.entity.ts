@@ -97,8 +97,7 @@ export class Task extends Base implements ITask {
 
 	@ApiProperty({ type: OrganizationSprint })
 	@ManyToOne((type) => OrganizationSprint, {
-		nullable: true,
-		onDelete: 'CASCADE'
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationSprint?: OrganizationSprint;
