@@ -1,6 +1,16 @@
 <nb-card>
+	<nb-spinner *ngIf="loading"></nb-spinner>
 	<nb-card-header>
-		<div class="row documents-card m-0">
+		<button
+			nbButton
+			status="success"
+			*ngIf="!showAddCard"
+			(click)="showCard()"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD'
+			| translate }}
+		</button>
+		<div *ngIf="showAddCard" class="row documents-card m-0">
 			<form class="col-3" [formGroup]="form" *ngIf="form">
 				<div formArrayName="documents">
 					<div
