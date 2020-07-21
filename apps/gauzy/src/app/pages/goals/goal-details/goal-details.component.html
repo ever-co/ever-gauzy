@@ -164,7 +164,7 @@
 					<nb-card-body>
 						<nb-card class="ml-2">
 							<nb-card-header class="row"
-								><span class="col-md-8">{{
+								><span class="col-md-6">{{
 									goal.alignedKeyResult.name
 								}}</span
 								><span class="col-md-4"
@@ -183,9 +183,21 @@
 										>{{
 											goal.alignedKeyResult.progress
 										}}%</nb-progress-bar
-									></span
-								></nb-card-header
-							>
+									>
+								</span>
+								<span class="col-md-2">
+									<nb-actions>
+										<nb-action
+											(click)="
+												keyResultDetails(
+													null,
+													goal.alignedKeyResult
+												)
+											"
+											icon="eye"
+										></nb-action>
+									</nb-actions> </span
+							></nb-card-header>
 							<nb-card-body>
 								<nb-card class="ml-2">
 									<nb-card-header class="row"
