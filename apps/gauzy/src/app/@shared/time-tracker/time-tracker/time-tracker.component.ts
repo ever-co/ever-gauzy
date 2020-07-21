@@ -33,6 +33,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	organization: Organization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	allowFutureDate: boolean;
+	form: NgForm;
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
