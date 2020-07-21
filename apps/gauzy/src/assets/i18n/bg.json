@@ -1705,6 +1705,7 @@
 			"WARNING": "Warning"
 		},
 		"MESSAGE": {
+			"ERRORS": "Please check the form for errors",
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
 			"INVITES_LOAD": "Could Not Load Invites",
@@ -1903,6 +1904,16 @@
 				"ADD_LANGUAGE": "New language {{ name }} successfully added!",
 				"INVALID_LANGUAGE_NAME_LEVEL": "Please check the Name and Level for Language input",
 				"REMOVE_LANGUAGE": "Language {{ name }} successfully removed!"
+			},
+			"EDIT_ORGANIZATION_DOCS": {
+				"CREATED": "Document successfully created",
+				"ERR_CREATE": "Unable to create new organization document",
+				"ERR_LOAD": "Unable to load organization documents",
+				"UPDATED": "Selected document successfully updated!",
+				"ERR_UPDATED": "Unable to update the selected document!",
+				"SELECTED_DOC": "selected document",
+				"DELETED": "Document successfully deleted!",
+				"ERR_DELETED": "Unable to delete the selected document!"
 			}
 		},
 		"DANGER_ZONE": {
