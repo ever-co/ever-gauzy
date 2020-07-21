@@ -27,7 +27,8 @@ import { GoalService } from '../../../@core/services/goal.service';
 
 @Component({
 	selector: 'ga-edit-keyresults',
-	templateUrl: './edit-keyresults.component.html'
+	templateUrl: './edit-keyresults.component.html',
+	styleUrls: ['./edit-keyresults.component.scss']
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: Employee[];
@@ -198,6 +199,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	}
 
 	async saveKeyResult() {
+		// Create objective from keyResult
 		if (!!this.keyResultsForm.value.assignAsObjective) {
 			const objectiveData: Goal = {
 				name: this.keyResultsForm.value.name,
@@ -218,7 +220,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			] = this.keyResultsForm.value.alignedGoalOwner;
 			await this.goalService.createGoal(objectiveData);
 		}
-
+		// Assign Task dueDate as keyResult's hard Deadline.
 		if (this.keyResultsForm.value.type === this.keyResultTypeEnum.TASK) {
 			await this.taskService
 				.getById(this.keyResultsForm.value.taskId)

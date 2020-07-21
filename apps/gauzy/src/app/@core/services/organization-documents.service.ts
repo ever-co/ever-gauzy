@@ -31,6 +31,13 @@ export class OrganizationDocumentsService {
 		);
 	}
 
+	update(id: string, updateInput: OrganizationDocument) {
+		return this.http.put<OrganizationDocument>(
+			`/api/organization-documents/${id}`,
+			updateInput
+		);
+	}
+
 	delete(id: string): Observable<OrganizationDocument> {
 		return this.http.delete<OrganizationDocument>(
 			`/api/organization-documents/${id}`

@@ -55,6 +55,7 @@ export interface ExpenseViewModel {
 	receipt: string;
 	splitExpense: boolean;
 	tags: Tag[];
+	status: string;
 }
 
 @Component({
@@ -116,6 +117,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 				},
 				purpose: {
 					title: 'Purpose',
+					type: 'string'
+				},
+				status: {
+					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string'
 				}
 			}
@@ -251,7 +256,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 			rateValue: formData.rateValue,
 			receipt: formData.receipt,
 			splitExpense: formData.splitExpense,
-			tags: formData.tags
+			tags: formData.tags,
+			status: formData.status
 		};
 	}
 
@@ -493,7 +499,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 					rateValue: i.rateValue,
 					receipt: i.receipt,
 					splitExpense: i.splitExpense,
-					tags: i.tags
+					tags: i.tags,
+					status: i.status
 				};
 			});
 			this.expenses = items;

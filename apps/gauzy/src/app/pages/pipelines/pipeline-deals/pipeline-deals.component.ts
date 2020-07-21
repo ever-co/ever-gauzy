@@ -1,7 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { Deal, Pipeline } from '@gauzy/models';
+import { Deal, Pipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { PipelinesService } from '../../../@core/services/pipelines.service';
-import { ActivatedRoute } from '@angular/router';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,15 +14,20 @@ import { PipelineDealExcerptComponent } from './pipeline-deal-excerpt/pipeline-d
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DealsService } from '../../../@core/services/deals.service';
+import { ComponentEnum } from '../../../@core/constants/layout.constants';
+import { Store } from '../../../@core/services/store.service';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
+	selector: 'ga-pipeline-deals',
 	templateUrl: './pipeline-deals.component.html',
-	selector: 'ga-pipeline-deals'
+	styleUrls: ['./pipeline-deals.component.scss']
 })
 export class PipelineDealsComponent extends TranslationBaseComponent
 	implements OnInit {
 	public deals = new LocalDataSource([] as Deal[]);
-
+	dealsData: Deal[];
 	public readonly smartTableSettings = {
 		actions: false,
 		noDataMessage: '-',
@@ -38,19 +48,23 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 	};
 
 	public pipeline: Pipeline;
-
 	public stageId: string;
-
 	public deal: Deal;
+	private _ngDestroy$ = new Subject<void>();
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	public constructor(
 		translateService: TranslateService,
 		private dealsService: DealsService,
 		private dialogService: NbDialogService,
 		private activatedRoute: ActivatedRoute,
-		private pipelinesService: PipelinesService
+		private pipelinesService: PipelinesService,
+		private router: Router,
+		private store: Store
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	public ngOnInit(): void {
@@ -64,6 +78,23 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 		this.smartTableSettings.columns.stage.title = this.getTranslation(
 			'SM_TABLE.STAGE'
 		);
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.PIPELINE_DEALS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	public filterDealsByStage(): void {
@@ -116,6 +147,7 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 							))
 					);
 					this.deals.load(items);
+					this.dealsData = items;
 					this.filterDealsByStage();
 				});
 		});

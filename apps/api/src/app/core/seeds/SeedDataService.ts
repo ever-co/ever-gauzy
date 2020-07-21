@@ -291,6 +291,24 @@ const allEntities = [
 	Integration
 ];
 
+const randomSeedConfig = {
+	tenants: 5, //The number of random tenants to be seeded.
+	organizationsPerTenant: 2, //No of random organizations seeded will be (organizationsPerTenant * tenants)
+	employeesPerOrganization: 5, //No of random employees seeded will be (employeesPerOrganization * organizationsPerTenant * tenants)
+	candidatesPerOrganization: 2, //No of random employees seeded will be (candidatesPerOrganization * organizationsPerTenant * tenants)
+	managersPerOrganization: 2, //No of random manager seeded will be (managersPerOrganization * organizationsPerTenant * tenants)
+	dataEntriesPerOrganization: 4, //No of random data entry users seeded will be (dataEntriesPerOrganization * organizationsPerTenant * tenants)
+	viewersPerOrganization: 4, //No of random viewers seeded will be (viewersPerOrganization * organizationsPerTenant * tenants)
+	projectsPerOrganization: 30, // No of random projects seeded will be  (projectsPerOrganization * organizationsPerTenant * tenants)
+	emailsPerOrganization: 30, // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
+	invitePerOrganization: 30, // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
+	requestApprovalPerOrganization: 20, // No of random request to approve seeded will be  (requestApprovalPerOrganization * organizationsPerTenant * tenants)
+	employeeTimeOffPerOrganization: 10, // No of timeoff request to approve seeded will be  (employeeTimeOffPerOrganization * organizationsPerTenant * tenants)
+	equipmentPerTenant: 20, // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
+	equipmentSharingPerTenant: 20, // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
+	proposalsSharingPerOrganizations: 30 // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
+};
+
 @Injectable()
 export class SeedDataService {
 	connection: Connection;
@@ -584,19 +602,10 @@ export class SeedDataService {
 	 * Populate database with random generated data
 	 */
 	async seedRandomData() {
-		if (!env.randomSeedConfig) {
-			this.log(
-				chalk.red(
-					`randomSeedConfig NOT FOUND IN ENV. Random data would not be seeded`
-				)
-			);
-			return;
-		}
-
 		//Platform level data which only need database connection
 		const tenants = await createRandomTenants(
 			this.connection,
-			env.randomSeedConfig.tenants || 1
+			randomSeedConfig.tenants || 1
 		);
 
 		// Independent roles and role permissions for each tenant
@@ -608,7 +617,7 @@ export class SeedDataService {
 		const tenantOrganizationsMap = await createRandomOrganizations(
 			this.connection,
 			tenants,
-			env.randomSeedConfig.organizationsPerTenant || 1
+			randomSeedConfig.organizationsPerTenant || 1
 		);
 
 		const tenantSuperAdminsMap = await createRandomSuperAdminUsers(
@@ -622,12 +631,12 @@ export class SeedDataService {
 			this.connection,
 			roles,
 			tenants,
-			env.randomSeedConfig.organizationsPerTenant || 1,
-			env.randomSeedConfig.employeesPerOrganization || 1,
-			env.randomSeedConfig.candidatesPerOrganization || 1,
-			env.randomSeedConfig.managersPerOrganization || 1,
-			env.randomSeedConfig.dataEntriesPerOrganization || 1,
-			env.randomSeedConfig.viewersPerOrganization || 1
+			randomSeedConfig.organizationsPerTenant || 1,
+			randomSeedConfig.employeesPerOrganization || 1,
+			randomSeedConfig.candidatesPerOrganization || 1,
+			randomSeedConfig.managersPerOrganization || 1,
+			randomSeedConfig.dataEntriesPerOrganization || 1,
+			randomSeedConfig.viewersPerOrganization || 1
 		);
 
 		//Organization level inserts which need connection, tenant, organizations, users
@@ -637,7 +646,7 @@ export class SeedDataService {
 			tenantOrganizationsMap,
 			tenantSuperAdminsMap,
 			tenantUsersMap,
-			env.randomSeedConfig.employeesPerOrganization || 1
+			randomSeedConfig.employeesPerOrganization || 1
 		);
 
 		const tenantEmployeeMap = await createRandomEmployees(
@@ -645,7 +654,7 @@ export class SeedDataService {
 			tenants,
 			tenantOrganizationsMap,
 			tenantUsersMap,
-			env.randomSeedConfig.employeesPerOrganization || 1
+			randomSeedConfig.employeesPerOrganization || 1
 		);
 
 		const tenantCandidatesMap = await this.tryExecute(
@@ -654,7 +663,7 @@ export class SeedDataService {
 				tenants,
 				tenantOrganizationsMap,
 				tenantUsersMap,
-				env.randomSeedConfig.candidatesPerOrganization || 1
+				randomSeedConfig.candidatesPerOrganization || 1
 			)
 		);
 
@@ -724,7 +733,7 @@ export class SeedDataService {
 			createRandomEquipments(
 				this.connection,
 				tenants,
-				env.randomSeedConfig.equipmentPerTenant || 20
+				randomSeedConfig.equipmentPerTenant || 20
 			)
 		);
 
@@ -733,7 +742,7 @@ export class SeedDataService {
 				this.connection,
 				tenants,
 				tenantEmployeeMap,
-				env.randomSeedConfig.equipmentSharingPerTenant || 20
+				randomSeedConfig.equipmentSharingPerTenant || 20
 			)
 		);
 
@@ -759,7 +768,7 @@ export class SeedDataService {
 				tenants,
 				tenantOrganizationsMap,
 				tenantSuperAdminsMap,
-				env.randomSeedConfig.invitePerOrganization || 20
+				randomSeedConfig.invitePerOrganization || 20
 			)
 		);
 
@@ -784,7 +793,7 @@ export class SeedDataService {
 				this.connection,
 				tenants,
 				tenantEmployeeMap,
-				env.randomSeedConfig.requestApprovalPerOrganization || 20
+				randomSeedConfig.requestApprovalPerOrganization || 20
 			)
 		);
 
@@ -806,7 +815,7 @@ export class SeedDataService {
 				tenants,
 				tenantOrganizationsMap,
 				tags,
-				env.randomSeedConfig.projectsPerOrganization || 10
+				randomSeedConfig.projectsPerOrganization || 10
 			)
 		);
 
@@ -816,7 +825,7 @@ export class SeedDataService {
 				tenants,
 				tenantOrganizationsMap,
 				tenantEmployeeMap,
-				env.randomSeedConfig.employeeTimeOffPerOrganization || 20
+				randomSeedConfig.employeeTimeOffPerOrganization || 20
 			)
 		);
 
@@ -826,7 +835,7 @@ export class SeedDataService {
 				tenants,
 				tenantEmployeeMap,
 				tenantOrganizationsMap,
-				env.randomSeedConfig.proposalsSharingPerOrganizations || 30
+				randomSeedConfig.proposalsSharingPerOrganizations || 30
 			)
 		);
 
@@ -835,7 +844,7 @@ export class SeedDataService {
 				this.connection,
 				tenants,
 				tenantOrganizationsMap,
-				env.randomSeedConfig.emailsPerOrganization || 20
+				randomSeedConfig.emailsPerOrganization || 20
 			)
 		);
 

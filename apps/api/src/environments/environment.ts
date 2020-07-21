@@ -123,24 +123,6 @@ export const environment: IEnvironment = {
 			'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
 	},
 
-	randomSeedConfig: {
-		tenants: 5,
-		organizationsPerTenant: 2,
-		employeesPerOrganization: 5,
-		candidatesPerOrganization: 2,
-		managersPerOrganization: 2,
-		dataEntriesPerOrganization: 4,
-		viewersPerOrganization: 4,
-		projectsPerOrganization: 30,
-		emailsPerOrganization: 30,
-		invitePerOrganization: 30,
-		requestApprovalPerOrganization: 20,
-		employeeTimeOffPerOrganization: 10,
-		equipmentPerTenant: 20,
-		equipmentSharingPerTenant: 20,
-		proposalsSharingPerOrganizations: 30
-	},
-
 	defaultHubstaffUserPass:
 		process.env.INTEGRATED_HUBSTAFF_USER_PASS || 'hubstaff',
 
