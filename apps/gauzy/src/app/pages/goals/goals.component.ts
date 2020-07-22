@@ -151,7 +151,8 @@ export class GoalsComponent extends TranslationBaseComponent
 					selectedKeyResult: keyResult,
 					allKeyResults: this.goals[index].keyResults
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -193,7 +194,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				orgId: this.selectedOrganizationId,
 				orgName: this.organizationName,
 				goalDeadline: this.goals[index].deadline
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (response) {
@@ -293,7 +295,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				data: goal,
 				orgId: this.selectedOrganizationId,
 				orgName: this.organizationName
-			}
+			},
+			closeOnBackdropClick: false
 		});
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
@@ -342,7 +345,8 @@ export class GoalsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				goal: data
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -377,7 +381,8 @@ export class GoalsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				keyResult: selectedkeyResult
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -410,7 +415,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				hasScroll: true,
 				context: {
 					keyResult: selectedKeyResult
-				}
+				},
+				closeOnBackdropClick: false
 			}
 		);
 		const response = await keyResultDialog.onClose

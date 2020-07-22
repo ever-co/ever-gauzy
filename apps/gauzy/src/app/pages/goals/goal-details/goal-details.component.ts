@@ -63,7 +63,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 					message: 'Are you sure? This action is irreversible.',
 					status: 'danger'
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -81,7 +82,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				keyResult: selectedKeyResult
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -105,7 +107,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				keyResult: selectedKeyResult
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {

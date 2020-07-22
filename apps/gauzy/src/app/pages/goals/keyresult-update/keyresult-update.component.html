@@ -14,6 +14,7 @@
 		<div
 			*ngIf="
 				keyResult.type == keyResultTypeEnum.NUMBER ||
+				keyResult.type == keyResultTypeEnum.KPI ||
 				keyResult.type == keyResultTypeEnum.CURRENCY
 			"
 		>
@@ -51,6 +52,7 @@
 			<input
 				*ngIf="
 					keyResult.type == keyResultTypeEnum.NUMBER ||
+					keyResult.type == keyResultTypeEnum.KPI ||
 					keyResult.type == keyResultTypeEnum.CURRENCY
 				"
 				type="number"
