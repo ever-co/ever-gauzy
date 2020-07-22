@@ -45,8 +45,6 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	equipmentsData: EquipmentSharing[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	isApproval: Boolean = true;
-	isRefuse: Boolean = true;
 	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('equipmentSharingTable')
