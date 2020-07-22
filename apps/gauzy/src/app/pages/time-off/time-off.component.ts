@@ -145,8 +145,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				},
 				description: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
-					type: 'string',
-					class: 'text-center'
+					type: 'html'
 				},
 				policy: {
 					title: this.getTranslation('SM_TABLE.POLICY'),
@@ -210,6 +209,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 					res.items.forEach((result: TimeOff) => {
 						let employeeName: string;
 						let employeeImage: string;
+						let extendedDescription = '';
 
 						if (result.employees.length !== 1) {
 							employeeName = 'Multiple employees';
@@ -220,11 +220,18 @@ export class TimeOffComponent extends TranslationBaseComponent
 							employeeImage = result.employees[0].user.imageUrl;
 						}
 
+						if (result.documentUrl) {
+							extendedDescription = `<a href=${result.documentUrl} target="_blank">View Request Document</a><br>${result.description}`;
+						} else {
+							extendedDescription = result.description;
+						}
+
 						this.tableData.push({
 							...result,
 							fullName: employeeName,
 							imageUrl: employeeImage,
-							policy: result.policy.name
+							policy: result.policy.name,
+							description: extendedDescription
 						});
 					});
 					this.timeOffData = this.tableData;
@@ -368,8 +375,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 				context: { recordType: 'Time off request' }
 			})
 			.onClose.pipe(first())
-			.subscribe((result) => {
-				if (result) {
+			.subscribe((res) => {
+				if (res) {
 					this.timeOffService
 						.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
 						.pipe(first())
@@ -449,7 +456,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 		}
 	}
 
-	_applyTranslationOnSmartTable() {
+	applyTranslationOnSmartTable() {
 		this.translate.onLangChange.subscribe(() => {
 			this._loadSmartTableSettings();
 		});

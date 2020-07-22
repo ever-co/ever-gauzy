@@ -49,6 +49,7 @@
 						<div
 							class="name-container"
 							*ngFor="let manager of team.managers"
+							(click)="openEmployees(manager.employee.id)"
 						>
 							<div class="image-container">
 								<img [src]="manager.employee.user.imageUrl" />
@@ -87,6 +88,7 @@
 						<div
 							class="name-container"
 							*ngFor="let member of team.members"
+							(click)="openEmployees(member.employee.id)"
 						>
 							<div class="image-container">
 								<img [src]="member.employee.user.imageUrl" />

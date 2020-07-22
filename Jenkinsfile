@@ -5,18 +5,22 @@ pipeline {
 
     environment {
         DOCKER_BUILDKIT = 1 // Experimental faster build system
-        IMAGE_API = "gauzy/api"
-        IMAGE_WEBAPP = "gauzy/webapp"
+        IMAGE_API = "gauzy-api"
+        IMAGE_WEBAPP = "gauzy-webapp"
         GITHUB_DOCKER_USERNAME = credentials('github-docker-username')
         GITHUB_DOCKER_PASSWORD = credentials('github-docker-password')
+        GITHUB_DOCKER_REPO = "docker.pkg.github.com/ever-co/gauzy"
         AWS_ACCESS_KEY_ID = credentials('aws-access-key')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
         AWS_DEFAULT_REGION = "us-east-1"
-        AWS_ECR = """${sh(
-                  returnStdout: true,
-                  script: "\$(echo \$(aws ecr get-login --no-include-email | grep -o 'https://.*' | sed 's|https://||g'))"
-                  )}
-                  """
+        AWS_ECR_REPO = """${sh(
+            script: "aws ecr get-login --no-include-email --region ${env.AWS_DEFAULT_REGION} | grep -o 'https://.*' | sed -e 's|https://||g' | tr -d '\n'",
+            returnStdout: true
+        )}"""
+        AWS_ECR_PASSWORD = """${sh(
+            script: "aws ecr get-login-password --region ${env.AWS_DEFAULT_REGION}",
+            returnStdout: true
+        )}"""
     }
 
     stages {
@@ -66,20 +70,18 @@ pipeline {
         }
         stage("Login to repositories") {
             steps {
-                sh "docker login docker.pkg.github.com -u ${env.GITHUB_DOCKER_USERNAME} -p ${env.GITHUB_DOCKER_PASSWORD}"
-                script {
-                    sh("eval \$(aws ecr get-login --no-include-email | sed 's|https://||')")
-                } // Login to AWS ECR
+                sh "docker login docker.pkg.github.com -u ${GITHUB_DOCKER_USERNAME} -p ${GITHUB_DOCKER_PASSWORD}"
+                sh "docker login ${AWS_ECR_REPO} -u AWS -p ${AWS_ECR_PASSWORD}" // Login to AWS ECR
             }
         }
-        stage ("Push API Image") {
+        stage ("Push To AWS ECR") {
             parallel {
-                stage ("Push to AWS ECR") {
+                stage ("API Image") {
                     steps {
                         // Tag and push to ECR
-                        sh "docker tag ${env.IMAGE_API} ${env.AWS_ECR}/${env.IMAGE_API}"
-                        sh "docker push ${env.AWS_ECR}/${env.IMAGE_API}"
-                        sh "docker rmi ${env.AWS_ECR}/${env.IMAGE_API}" // Cleans tag
+                        sh "docker tag ${IMAGE_API} ${AWS_ECR_REPO}/${IMAGE_API}"
+                        sh "docker push ${AWS_ECR_REPO}/${IMAGE_API}"
+                        sh "docker rmi ${AWS_ECR_REPO}/${IMAGE_API}" // Cleans tag
                     }
                     post {
                         success {
@@ -90,30 +92,11 @@ pipeline {
                         }
                     }
                 }
-                stage ("Push to GitHub") {
+                stage ("WebApp Image") {
                     steps {
-                        sh "docker tag ${env.IMAGE_API} docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}"
-                        sh "docker push docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}"
-                        sh "docker rmi docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_API}" // Cleans Tag
-                    }
-                    post {
-                        success {
-                            echo "Successfully pushed to GitHub on build ${env.BUILD_ID}!"
-                        }
-                        failure {
-                            echo "Push to GitHub failed! See log for details..."
-                        }
-                    }
-                }
-            }
-        }
-        stage ("Push WebApp Image") {
-            parallel {
-                stage ("Push to AWS ECR") {
-                    steps {
-                        sh "docker tag ${env.IMAGE_WEBAPP} ${env.AWS_ECR}/${env.IMAGE_WEBAPP}"
-                        sh "docker push ${env.AWS_ECR}/${env.IMAGE_WEBAPP}"
-                        sh "docker rmi ${env.AWS_ECR}/${env.IMAGE_WEBAPP}"
+                        sh "docker tag ${IMAGE_WEBAPP} ${AWS_ECR_REPO}/${IMAGE_WEBAPP}"
+                        sh "docker push ${AWS_ECR_REPO}/${IMAGE_WEBAPP}"
+                        sh "docker rmi ${AWS_ECR_REPO}/${IMAGE_WEBAPP}" // Cleans tag
                     }
                     post {
                         success {
@@ -124,11 +107,30 @@ pipeline {
                         }
                     }
                 }
-                stage ("Push to GitHub") {
+            }
+        }
+        stage ("Push to GitHub") {
+            parallel {
+                stage ("API Image") {
                     steps {
-                        sh "docker tag docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}"
-                        sh "docker push docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}"
-                        sh "docker rmi docker.pkg.github.com/ever-co/gauzy/${env.IMAGE_WEBAPP}"
+                        sh "docker tag ${IMAGE_API} ${GITHUB_DOCKER_REPO}/${IMAGE_API}"
+                        sh "docker push ${GITHUB_DOCKER_REPO}/${IMAGE_API}"
+                        sh "docker rmi ${GITHUB_DOCKER_REPO}/${IMAGE_API}"
+                    }
+                    post {
+                        success {
+                            echo "Successfully pushed to GitHub on build ${env.BUILD_ID}!"
+                        }
+                        failure {
+                            echo "Push to GitHub failed! See log for details..."
+                        }
+                    }
+                }
+                stage ("WebApp Image") {
+                    steps {
+                        sh "docker tag ${IMAGE_WEBAPP} ${GITHUB_DOCKER_REPO}/${IMAGE_WEBAPP}"
+                        sh "docker push ${GITHUB_DOCKER_REPO}/${IMAGE_WEBAPP}"
+                        sh "docker rmi ${GITHUB_DOCKER_REPO}/${IMAGE_WEBAPP}"
                     }
                     post {
                         success {

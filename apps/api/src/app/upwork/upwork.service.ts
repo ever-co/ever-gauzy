@@ -31,7 +31,6 @@ import {
 	IntegrationSettingCreateCommand
 } from '../integration-setting/commands';
 import { arrayToObject } from '../core';
-import { Companies } from 'upwork-api/lib/routers/organization/companies.js';
 import { Engagements } from 'upwork-api/lib/routers/hr/engagements.js';
 import { Workdiary } from 'upwork-api/lib/routers/workdiary.js';
 import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';

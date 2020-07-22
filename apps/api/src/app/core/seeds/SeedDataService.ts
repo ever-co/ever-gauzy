@@ -54,7 +54,7 @@ import { createCountries } from '../../country/country.seed';
 import { OrganizationTeam } from '../../organization-team/organization-team.entity';
 import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
 import { Country } from '../../country';
-import { createDefaultTeams } from '../../organization-team/organization-team.seed';
+import { createDefaultTeams, createRandomTeam } from '../../organization-team/organization-team.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
@@ -200,6 +200,7 @@ import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import { createRandomEmployeeTimeOff } from '../../time-off-request/time-off-request.seed';
+import { createOrganizationDocuments } from '../../organization-documents/organization-documents.seed';
 import {
 	createDefaultEquipments,
 	createRandomEquipments
@@ -680,6 +681,10 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+      createRandomTeam(this.connection, tenants, tenantEmployeeMap,tenantOrganizationsMap,roles)
+    );
+
+		await this.tryExecute(
 			createRandomCandidateDocuments(
 				this.connection,
 				tenants,
@@ -827,6 +832,10 @@ export class SeedDataService {
 				tenantEmployeeMap,
 				randomSeedConfig.employeeTimeOffPerOrganization || 20
 			)
+		);
+
+		await this.tryExecute(
+			createOrganizationDocuments(this.connection, this.organizations)
 		);
 
 		await this.tryExecute(

@@ -26,6 +26,11 @@
         align-items: center;
         margin-bottom: 10px;
 
+        &:hover {
+          cursor: pointer;
+          color: #3366ff;
+        }
+
         .image-container {
           width: 70px;
           height: 50px;

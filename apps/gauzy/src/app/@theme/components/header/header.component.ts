@@ -3,27 +3,24 @@ import {
 	Input,
 	OnDestroy,
 	OnInit,
-	ViewChild,
 	AfterViewInit
 } from '@angular/core';
 import {
 	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
-	NbMenuItem,
-	NbPopoverDirective
+	NbMenuItem
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
-import { Subject } from 'rxjs';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { PermissionsEnum } from '@gauzy/models';
 import { User } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
-import { TimeTrackerComponent } from '../../../@shared/time-tracker/time-tracker/time-tracker.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ngx-header',
@@ -51,10 +48,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
-	@ViewChild('timerPopover')
-	timerPopover: NbPopoverDirective;
-	@ViewChild('timeTracker')
-	timeTracker: TimeTrackerComponent;
 
 	showDateSelector = true;
 	organizationSelected = false;
@@ -68,7 +61,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	};
 
 	private _selectedOrganizationId: string;
-	private _ngDestroy$ = new Subject<void>();
 	timerDuration: string;
 
 	constructor(
@@ -85,13 +77,13 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	ngOnInit() {
 		this.router.events
 			.pipe(filter((event) => event instanceof NavigationEnd))
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.timeTrackerService.showTimerWindow = false;
 			});
 
-		this.timeTrackerService.$dueration
-			.pipe(takeUntil(this._ngDestroy$))
+		this.timeTrackerService.duration$
+			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.timerDuration = moment.utc(time * 1000).format('HH:mm:ss');
 			});
@@ -99,12 +91,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.menuService
 			.onItemClick()
 			.pipe(filter(({ tag }) => tag === 'create-context-menu'))
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((e) => {
-				if (e.item.data.action) {
+				if (e.item.data && e.item.data.action) {
 					switch (e.item.data.action) {
 						case this.actions.START_TIMER:
-							this.timeTracker.show();
+							this.timeTrackerService.openAndStartTimer();
 							break;
 					}
 					return; //If action is given then do not navigate
@@ -118,7 +110,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			});
 
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
@@ -126,14 +118,14 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				}
 			});
 
-		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+		this.store.user$.pipe(untilDestroyed(this)).subscribe((user) => {
 			this.user = user;
 			this.isEmployee = !!user.employeeId;
 		});
 
 		this.themeService
 			.onThemeChange()
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((t) => {
 				this.theme = t.name;
 			});
@@ -142,18 +134,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngAfterViewInit(): void {
-		this.timeTrackerService.$showTimerWindow
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((status: boolean) => {
-				if (this.timerPopover) {
-					if (status) {
-						this.timerPopover.show();
-					} else {
-						this.timerPopover.hide();
-					}
-				}
-			});
+	ngAfterViewInit(): void {}
+
+	toggleTimerWindow() {
+		this.timeTrackerService.showTimerWindow = !this.timeTrackerService
+			.showTimerWindow;
 	}
 
 	toggleSidebar(): boolean {
@@ -178,7 +163,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	navigateHome() {
-		this.menuService.navigateHome();
+		//this.menuService.navigateHome();
 		return false;
 	}
 
@@ -203,7 +188,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	loadItems() {
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasPermissionE = this.store.hasPermission(
 					PermissionsEnum.ORG_EXPENSES_VIEW
@@ -356,17 +341,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.createContextMenu = [];
-				this.supportContextMenu = [];
-				this.loadItems();
-			});
+		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this.createContextMenu = [];
+			this.supportContextMenu = [];
+			this.loadItems();
+		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }
