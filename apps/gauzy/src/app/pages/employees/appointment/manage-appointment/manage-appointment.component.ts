@@ -4,7 +4,8 @@ import {
 	OnInit,
 	Input,
 	Output,
-	EventEmitter
+	EventEmitter,
+	ViewChild
 } from '@angular/core';
 import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
 import {
@@ -16,7 +17,11 @@ import {
 import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Employee, EmployeeAppointment } from '@gauzy/models';
+import {
+	Employee,
+	EmployeeAppointment,
+	IAvailabilitySlots
+} from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../../@core/services';
@@ -25,6 +30,9 @@ import { AppointmentEmployeesService } from 'apps/gauzy/src/app/@core/services/a
 import * as moment from 'moment';
 import { Store } from '../../../../@core/services/store.service';
 import { AlertModalComponent } from 'apps/gauzy/src/app/@shared/alert-modal/alert-modal.component';
+import { AvailabilitySlotsService } from 'apps/gauzy/src/app/@core/services/availability-slots.service';
+import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';
+import { EmployeeSelectComponent } from 'apps/gauzy/src/app/@shared/employee/employee-multi-select/employee-multi-select.component';
 
 @Component({
 	selector: 'ga-manage-appointment',
@@ -48,6 +56,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	@Output() cancel = new EventEmitter<string>();
 
 	timezoneOffset: string;
+	employeeAvailability: object = {};
 	selectedEmployeeIds: string[] = [];
 	selectedEmployeeAppointmentIds: string[] = [];
 	emailAddresses: any[] = [];
@@ -60,6 +69,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	@Input('selectedRange')
 	selectedRange: { start: Date; end: Date };
 
+	@ViewChild('employeeSelector')
+	employeeSelector: EmployeeSelectComponent;
+
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
@@ -69,6 +81,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		private employeeService: EmployeesService,
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private appointmentEmployeesService: AppointmentEmployeesService,
+		private availabilitySlotsService: AvailabilitySlotsService,
 		private toastrService: NbToastrService,
 		readonly translateService: TranslateService
 	) {
@@ -99,8 +112,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				}
 			});
 
-		this._parseParams();
-		this._loadEmployees();
+		this._loadEmployees().then(() => this._parseParams());
 	}
 
 	EmailListValidator(
@@ -181,13 +193,13 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		this.emails = this.form.get('emails');
 	}
 
-	private _loadEmployees() {
-		this.employeeService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
+	private async _loadEmployees() {
+		this.employees = (
+			await this.employeeService
+				.getAll(['user'])
+				.pipe(takeUntil(this._ngDestroy$))
+				.toPromise()
+		).items;
 	}
 
 	private _parseParams() {
@@ -224,6 +236,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 					this.employeeAppointment = appointment;
 				}
 				this._initializeForm();
+				this.fetchAvailabilitySlotsForAllEmployees();
 			});
 	}
 
@@ -260,6 +273,28 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
+	}
+
+	async fetchAvailabilitySlotsForAllEmployees() {
+		const slots = (
+			await this.availabilitySlotsService.getAll([], {
+				organization: {
+					id: this._selectedOrganizationId
+				}
+			})
+		).items;
+		this.employees.map((e) => {
+			this.employeeAvailability[e.id] = slots.filter(
+				(s) =>
+					s.employeeId === e.id &&
+					moment(this.selectedRange.start).isBetween(
+						moment(s.startTime),
+						moment(s.endTime),
+						'day',
+						'[]'
+					)
+			);
+		});
 	}
 
 	async onSaveRequest() {
@@ -335,7 +370,61 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		}
 	}
 
-	onMembersSelected(ev) {
+	async onMembersSelected(ev) {
+		const startDateTime = this.form.get('selectedRange').value.start;
+		const endDateTime = this.form.get('selectedRange').value.end;
+		const added = ev.find((o) => !this.selectedEmployeeIds.includes(o));
+
+		if (added) {
+			const slots: IAvailabilitySlots[] = this.employeeAvailability[
+				added
+			];
+			const slotInSelectedRange = slots.find(
+				(s) =>
+					moment(startDateTime).isBetween(
+						moment(s.startTime),
+						moment(s.endTime),
+						'minutes',
+						'[]'
+					) &&
+					moment(endDateTime).isBetween(
+						moment(s.startTime),
+						moment(s.endTime),
+						'minutes',
+						'[]'
+					)
+			);
+
+			if (
+				(slots.length > 0 && !slotInSelectedRange) ||
+				slots.length === 0
+			) {
+				const dialog = this.dialogService.open(
+					EmployeeSchedulesComponent,
+					{
+						context: {
+							employeeSchedule: {
+								employeeName: this.employees.find(
+									(o) => o.id === added
+								).user.name,
+								slots,
+								timezone: this.timezone
+							}
+						}
+					}
+				);
+
+				const response = await dialog.onClose.pipe(first()).toPromise();
+
+				if (response !== 'yes') {
+					this.employeeSelector.employeeId = ev.filter(
+						(o) => o !== added
+					);
+					return;
+				}
+			}
+		}
+
 		this.selectedEmployeeIds = ev || [];
 	}
 

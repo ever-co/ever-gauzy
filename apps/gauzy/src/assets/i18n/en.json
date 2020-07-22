@@ -56,6 +56,7 @@
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
+		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "Edit",
@@ -465,7 +466,6 @@
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
 		"APPOINTMENTS": "Appointments",
-		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
@@ -2045,6 +2045,11 @@
 		"DURATION_ERROR": "Selected Duration is not valid",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"EMPLOYEE": "Employee"
+	},
+	"EMPLOYEE_SCHEDULES_MODAL": {
+		"EMPLOYEE": "Employee",
+		"SLOTS_AVAILABLE": "Employee is available only for the below time slots, Do you still want to continue?",
+		"SLOTS_UNAVAILABLE": "Employee unavailable for this time slot"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",

@@ -73,7 +73,8 @@ export enum PermissionsEnum {
 	ORG_PROJECT_EDIT = 'ORG_PROJECT_EDIT',
 	ORG_CONTACT_EDIT = 'ORG_CONTACT_EDIT',
 	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
-	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT'
+	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT',
+	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW'
 }
 
 export const PermissionGroups = {
@@ -115,7 +116,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PROJECT_EDIT,
 		PermissionsEnum.ORG_CONTACT_EDIT,
 		PermissionsEnum.ORG_TEAM_EDIT,
-		PermissionsEnum.ORG_CONTRACT_EDIT
+		PermissionsEnum.ORG_CONTRACT_EDIT,
+		PermissionsEnum.EVENT_TYPES_VIEW
 	],
 
 	//Readonly permissions, are only enabled for admin role
