@@ -75,7 +75,7 @@
 		<nb-action
 			*ngIf="user?.employee?.id"
 			class="timer-action"
-			(click)="timeTracker.toggle($event)"
+			(click)="toggleTimerWindow()"
 		>
 			<nb-icon class="mr-3" icon="clock-outline"></nb-icon>
 			{{ timerDuration }}
