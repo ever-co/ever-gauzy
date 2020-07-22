@@ -16,6 +16,7 @@ export interface Task extends IBaseEntityModel {
 	invoiceItems?: InvoiceItem[];
 	teams?: OrganizationTeam[];
 	organizationSprint?: OrganizationSprint;
+	organizationSprintId?: string;
 }
 
 export interface GetTaskOptions {

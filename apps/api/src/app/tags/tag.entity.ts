@@ -26,7 +26,6 @@ import { Product } from '../product/product.entity';
 import { Payment } from '../payment/payment.entity';
 
 @Entity('tag')
-// @Unique(['name'])
 export class Tag extends Base implements ITag {
 	@ApiProperty({ type: String })
 	@Column()
