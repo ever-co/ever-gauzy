@@ -35,6 +35,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	allowFutureDate: boolean;
 	@ViewChild(NgForm) form: NgForm;
 
+	@ViewChild(NgForm) form: NgForm;
+
 	constructor(
 		private timeTrackerService: TimeTrackerService,
 		private timesheetService: TimesheetService,
@@ -103,12 +105,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: User) => {
 			this.user = user;
 		});
-
-		this.timeTrackerService.showTimerWindow$
-			.pipe(untilDestroyed(this))
-			.subscribe((isOpen) => {
-				this.isOpen = isOpen;
-			});
 
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
