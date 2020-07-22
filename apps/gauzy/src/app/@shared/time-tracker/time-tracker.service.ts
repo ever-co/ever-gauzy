@@ -5,7 +5,6 @@ import {
 	ITimerToggleInput,
 	TimeLogType,
 	TimerStatus,
-	OrganizationPermissionsEnum,
 	Organization
 } from '@gauzy/models';
 import { toLocal } from 'libs/utils';
@@ -174,13 +173,12 @@ export class TimeTrackerService implements OnDestroy {
 			.toPromise();
 	}
 
-	startTimer() {
+	openAndStartTimer() {
+		this.showTimerWindow = true;
 		if (!this.running) {
 			if (this.canStartTimer()) {
 				this.current_session_duration = 0;
 				this.turnOnTimer();
-			} else {
-				this.showTimerWindow = true;
 			}
 		}
 	}

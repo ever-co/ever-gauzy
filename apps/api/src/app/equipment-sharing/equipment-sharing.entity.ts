@@ -18,7 +18,6 @@ import { Equipment } from '../equipment/equipment.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
-import { Index } from 'typeorm';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
@@ -28,7 +27,7 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	name: string;
 
 	@ApiProperty({ type: Equipment })
-	@ManyToOne((type) => Equipment, (equipment) => equipment.equipmentSharings)
+	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings)
 	@JoinColumn()
 	equipment: Equipment;
 
@@ -59,20 +58,20 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@Column()
 	status: number;
 
-	@ManyToMany((type) => Employee, { cascade: true })
+	@ManyToMany(() => Employee, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_employees'
 	})
 	employees: Employee[];
 
-	@ManyToMany((type) => OrganizationTeam, { cascade: true })
+	@ManyToMany(() => OrganizationTeam, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_teams'
 	})
 	teams: OrganizationTeam[];
 
 	@ApiProperty({ type: ApprovalPolicy })
-	@ManyToOne((type) => ApprovalPolicy, {
+	@ManyToOne(() => ApprovalPolicy, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})

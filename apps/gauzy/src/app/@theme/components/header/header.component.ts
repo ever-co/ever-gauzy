@@ -50,9 +50,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
-	
-	@ViewChild('timeTracker', { static: true })
-	timeTracker: TimeTrackerComponent;
 
 	showDateSelector = true;
 	organizationSelected = false;
@@ -101,7 +98,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				if (e.item.data && e.item.data.action) {
 					switch (e.item.data.action) {
 						case this.actions.START_TIMER:
-							this.timeTrackerService.startTimer();
+							this.timeTrackerService.openAndStartTimer();
 							break;
 					}
 					return; //If action is given then do not navigate
@@ -127,17 +124,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			this.user = user;
 			this.isEmployee = !!user.employeeId;
 		});
-
-		this.timeTrackerService.showTimerWindow$
-			.pipe(untilDestroyed(this))
-			.subscribe((isOpen) => {
-				console.log(isOpen);
-				if (isOpen) {
-					this.timeTracker.show();
-				} else {
-					this.timeTracker.hide();
-				}
-			});
 
 		this.themeService
 			.onThemeChange()

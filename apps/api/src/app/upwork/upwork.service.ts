@@ -31,7 +31,6 @@ import {
 	IntegrationSettingCreateCommand
 } from '../integration-setting/commands';
 import { arrayToObject } from '../core';
-import { Companies } from 'upwork-api/lib/routers/organization/companies.js';
 import { Engagements } from 'upwork-api/lib/routers/hr/engagements.js';
 import { Workdiary } from 'upwork-api/lib/routers/workdiary.js';
 import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
@@ -263,30 +262,6 @@ export class UpworkService {
 					});
 				}
 			);
-		});
-	}
-
-	/*
-	 * Get specific contract using contractId
-	 */
-	private async _getContractByContractId(
-		config: IUpworkApiConfig,
-		contractId
-	): Promise<IEngagement> {
-		const api = new UpworkApi(config);
-		const engagements = new Engagements(api);
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				engagements.getSpecific(contractId, (error, data) => {
-					if (error) {
-						reject(error);
-					} else {
-						const { engagement } = data;
-						resolve(engagement);
-					}
-				});
-			});
 		});
 	}
 
@@ -682,7 +657,6 @@ export class UpworkService {
 		} = timeSlotsData;
 		const integrationMaps = await timeSlots.map(
 			async ({
-				id,
 				cell_time,
 				screenshot_img,
 				screenshot_img_thmb,
@@ -906,8 +880,7 @@ export class UpworkService {
 	) {
 		const reports = await this._getEarningReportsForFreelancer(
 			config,
-			providerRefernceId,
-			dateRange
+			providerRefernceId
 		);
 
 		var {
@@ -988,8 +961,7 @@ export class UpworkService {
 	) {
 		const reports = await this._getFreelancerFullReports(
 			config,
-			providerId,
-			dateRange
+			providerId
 		);
 		var {
 			table: { cols = [], rows = [] }
@@ -1019,11 +991,6 @@ export class UpworkService {
 				} = row;
 
 				//sync upwork contract client
-				const client = await this.syncClient(
-					integrationId,
-					organizationId,
-					row
-				);
 
 				const gauzyIncome = await this.commandBus.execute(
 					new IncomeCreateCommand({
@@ -1052,58 +1019,11 @@ export class UpworkService {
 	}
 
 	/*
-	 * Get freelancer limited reports for freelancer
-	 */
-	private async _getFreelanceLimitedReports(
-		config: IUpworkApiConfig,
-		providerId
-	): Promise<any> {
-		const api = new UpworkApi(config);
-		const reports = new Time(api);
-
-		const freelancerId = providerId;
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							worked_on,
-							company_id,
-							company_name, 
-							assignment_name, 
-							assignment_team_id,
-							assignment_ref,
-							assignment_rate,
-							hours, 
-							memo,
-							contract_type
-						WHERE
-							worked_on > '${startOfMonth}' AND 
-							worked_on <= '${endOfMonth}',
-						ORDER BY 
-							worked_on,
-							assignment_ref`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				reports.getByFreelancerLimited(
-					freelancerId,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
 	 * Get freelancer reports for client
 	 */
 	private async _getFreelancerFullReports(
 		config: IUpworkApiConfig,
-		providerId,
-		dateRange
+		providerId
 	): Promise<any> {
 		const api = new UpworkApi(config);
 		const reports = new Time(api);
@@ -1143,47 +1063,11 @@ export class UpworkService {
 	}
 
 	/*
-	 * Get billings reports for freelancer
-	 */
-	private async _getBillingReportsForFreelancer(
-		config: IUpworkApiConfig,
-		providerRefernceId
-	) {
-		const api = new UpworkApi(config);
-		const billings = new Billings(api);
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							amount,
-							date,
-							type,
-							subtype
-						WHERE 
-							date > '${startOfMonth}' AND 
-							date <= '${endOfMonth}'`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				billings.getByFreelancer(
-					providerRefernceId,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
 	 * Get earning reports for freelancer
 	 */
 	private async _getEarningReportsForFreelancer(
 		config: IUpworkApiConfig,
-		providerRefernceId,
-		dateRange
+		providerRefernceId
 	): Promise<any> {
 		const api = new UpworkApi(config);
 		const earnings = new Earnings(api);
@@ -1206,73 +1090,6 @@ export class UpworkService {
 		return new Promise((resolve, reject) => {
 			api.setAccessToken(config.accessToken, config.accessSecret, () => {
 				earnings.getByFreelancer(
-					providerRefernceId,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
-	 * Get earning reports for client
-	 */
-	private async _getEarningReportsForClient(
-		config: IUpworkApiConfig,
-		providerId
-	): Promise<any> {
-		const api = new UpworkApi(config);
-		const earnings = new Earnings(api);
-
-		const buyerCompanyReference = '4882863';
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							amount
-						WHERE 
-							date > '${startOfMonth}' AND 
-							date <= '${endOfMonth}' AND
-							provider__id = '${providerId}'`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				earnings.getByBuyersCompany(
-					buyerCompanyReference,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
-	 * Get financial reports for freelancer account
-	 */
-	private async _getFinancialReportsForAccount(
-		config: IUpworkApiConfig,
-		providerRefernceId
-	): Promise<any> {
-		const api = new UpworkApi(config);
-		const financeReports = new Accounts(api);
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							amount
-						WHERE 
-							date > '${startOfMonth}' AND 
-							date <= '${endOfMonth}'`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				financeReports.getSpecific(
 					providerRefernceId,
 					{
 						tq: select

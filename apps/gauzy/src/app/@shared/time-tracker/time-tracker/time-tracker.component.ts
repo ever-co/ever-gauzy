@@ -33,8 +33,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	organization: Organization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	allowFutureDate: boolean;
-	form: NgForm;
-
 	@ViewChild(NgForm) form: NgForm;
 
 	constructor(
@@ -106,6 +104,12 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			this.user = user;
 		});
 
+		this.timeTrackerService.showTimerWindow$
+			.pipe(untilDestroyed(this))
+			.subscribe((isOpen) => {
+				this.isOpen = isOpen;
+			});
+
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
@@ -146,11 +150,11 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	show() {
-		this.isOpen = true;
+		this.timeTrackerService.showTimerWindow = true;
 	}
 
 	hide() {
-		this.isOpen = false;
+		this.timeTrackerService.showTimerWindow = false;
 	}
 
 	toggleTimer() {
