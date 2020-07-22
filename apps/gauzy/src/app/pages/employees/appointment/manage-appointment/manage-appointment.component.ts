@@ -425,7 +425,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			}
 		}
 
-		this.selectedEmployeeIds = ev || [];
+		this.selectedEmployeeIds = ev;
 	}
 
 	ngOnDestroy() {
