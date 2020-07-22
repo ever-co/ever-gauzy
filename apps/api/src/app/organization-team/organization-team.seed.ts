@@ -5,6 +5,9 @@ import { OrganizationTeamEmployee } from '../organization-team-employee/organiza
 import { Organization } from '../organization/organization.entity';
 import { Role } from '../role/role.entity';
 import { RolesEnum } from '@gauzy/models';
+import { Tenant } from '../tenant/tenant.entity';
+import * as _ from 'underscore';
+import * as faker from "faker";
 
 export const createDefaultTeams = async (
 	connection: Connection,
@@ -97,6 +100,65 @@ export const createDefaultTeams = async (
 	await insertOrganizationTeam(connection, organizationTeams);
 
 	return organizationTeams;
+};
+
+export const createRandomTeam = async (
+  connection: Connection,
+  tenants: Tenant[],
+  tenantEmployeeMap: Map<Tenant, Employee[]>,
+  tenantOrganizationsMap: Map<Tenant, Organization[]>,
+  roles: Role[],
+):Promise<OrganizationTeam[]>=>{
+
+  const teamNames =["QA", "Designers", "Developers","Employees"];
+  const organizationTeams: OrganizationTeam[] = [];
+
+  for (const tenant of tenants) {
+    let organizations = tenantOrganizationsMap.get(tenant);
+    let employees = tenantOrganizationsMap.get(tenant);
+
+    for(const organization of organizations){
+      for(let name of teamNames){
+        const team = new OrganizationTeam();
+        team.name = name;
+        team.organizationId = organization.id;
+
+        const emps = _.chain(employees)
+          .shuffle()
+          .take(faker.random.number({ min: 1, max: 5 }))
+          .values()
+          .value();
+
+        const teamEmployees: OrganizationTeamEmployee[] = [];
+
+        emps.forEach((emp) => {
+          const teamEmployee = new OrganizationTeamEmployee();
+          teamEmployee.employeeId = emp.id;
+          teamEmployees.push(teamEmployee);
+        });
+
+        const managers = _.chain(employees)
+          .shuffle()
+          .take(faker.random.number({ min: 1, max: 2 }))
+          .values()
+          .value();
+
+        managers.forEach((emp) => {
+          const teamEmployee = new OrganizationTeamEmployee();
+          teamEmployee.employeeId = emp.id;
+          teamEmployee.role = roles.filter(
+            (x) => x.name === RolesEnum.MANAGER
+          )[0];
+          teamEmployees.push(teamEmployee);
+        });
+
+        organizationTeams.push(team);
+      }
+    }
+  }
+
+  await insertOrganizationTeam(connection, organizationTeams);
+  return organizationTeams;
 };
 
 const insertOrganizationTeam = async (

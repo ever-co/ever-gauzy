@@ -8,15 +8,15 @@ import {
 	RolesEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
-import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { EmployeesService } from '../../../../../@core/services';
+import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
+import { OrganizationTeamsService } from '../../../../../@core/services/organization-teams.service';
+import { DeleteConfirmationComponent } from '../../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { ActivatedRoute } from '@angular/router';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-org-teams',
@@ -44,7 +44,8 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		readonly translateService: TranslateService,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private router: Router
 	) {
 		super(translateService);
 	}
@@ -189,6 +190,10 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		const employee = this.employees.find((empl) => empl.id === id);
 
 		return employee ? employee.tags : [];
+	}
+
+	openEmployees(id) {
+		this.router.navigate([`/pages/employees/edit/${id}`]);
 	}
 
 	async loadTeams() {

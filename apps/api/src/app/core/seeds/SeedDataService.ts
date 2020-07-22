@@ -54,7 +54,7 @@ import { createCountries } from '../../country/country.seed';
 import { OrganizationTeam } from '../../organization-team/organization-team.entity';
 import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
 import { Country } from '../../country';
-import { createDefaultTeams } from '../../organization-team/organization-team.seed';
+import { createDefaultTeams, createRandomTeam } from '../../organization-team/organization-team.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
@@ -678,6 +678,10 @@ export class SeedDataService {
 		await this.tryExecute(
 			createRandomIncomes(this.connection, tenants, tenantEmployeeMap)
 		);
+
+		await this.tryExecute(
+      createRandomTeam(this.connection, tenants, tenantEmployeeMap,tenantOrganizationsMap,roles)
+    );
 
 		await this.tryExecute(
 			createRandomCandidateDocuments(
