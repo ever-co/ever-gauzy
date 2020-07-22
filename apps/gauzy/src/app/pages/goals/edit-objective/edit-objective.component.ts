@@ -124,7 +124,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
 			context: {
 				type: 'add'
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (response) {

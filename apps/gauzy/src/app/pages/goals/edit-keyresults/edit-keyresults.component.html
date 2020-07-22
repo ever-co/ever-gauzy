@@ -84,6 +84,16 @@
 					</ga-task-selector>
 				</div>
 			</div>
+			<div *ngIf="keyResultsForm.value.type === keyResultTypeEnum.KPI">
+				<label for="kpi" class="label mt-3">
+					{{ 'KEY_RESULT_PAGE.FORM.LABELS.SELECT_KPI' | translate }}
+				</label>
+				<nb-select id="kpi" fullWidth formControlName="kpiId">
+					<nb-option *ngFor="let kpi of KPIs" [value]="kpi.id">
+						{{ kpi.name }}
+					</nb-option>
+				</nb-select>
+			</div>
 			<div class="row mt-2">
 				<div class="col-md-6">
 					<label

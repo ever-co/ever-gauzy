@@ -11,7 +11,7 @@ interface IGoalTimeFrameResponse {
 }
 
 interface IKpiResponse {
-	items: GoalTimeFrame[];
+	items: KPI[];
 	count: number;
 }
 
@@ -90,7 +90,7 @@ export class GoalSettingsService {
 			.toPromise();
 	}
 
-	getAllKPI(findInput: KpiFindInput): Promise<IKpiResponse> {
+	getAllKPI(findInput?: KpiFindInput): Promise<IKpiResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
 			.get<IKpiResponse>(`${this.KPI_URL}/all`, {

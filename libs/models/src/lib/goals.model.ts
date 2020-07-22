@@ -4,6 +4,7 @@ import { OrganizationFindInput, Organization } from './organization.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Task } from './task-entity.model';
 import { OrganizationTeam } from './organization-team-model';
+import { KPI } from './goal-settings.model';
 
 export interface Goal extends IBaseEntityModel {
 	name: string;
@@ -43,6 +44,8 @@ export interface KeyResult extends IBaseEntityModel {
 	task?: Task;
 	taskId?: string;
 	updates?: Array<KeyResultUpdates>;
+	kpi?: KPI;
+	kpiId?: string;
 }
 
 export interface KeyResultUpdates extends IBaseEntityModel {
@@ -69,7 +72,8 @@ export enum KeyResultTypeEnum {
 	NUMBER = 'Number',
 	TRUE_OR_FALSE = 'True/False',
 	CURRENCY = 'Currency',
-	TASK = 'Task'
+	TASK = 'Task',
+	KPI = 'KPI'
 }
 
 export enum KeyResultDeadlineEnum {
