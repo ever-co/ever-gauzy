@@ -737,7 +737,7 @@ export class SeedDataService {
 			)
 		);
 
-		const contacts = await this.tryExecute(createRandomContacts(this.connection,randomSeedConfig.contacts || 10));
+		await this.tryExecute(createRandomContacts(this.connection,randomSeedConfig.contacts || 10));
 
 		await this.tryExecute(
 			createRandomEquipments(
