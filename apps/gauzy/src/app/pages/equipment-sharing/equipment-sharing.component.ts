@@ -1,7 +1,11 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { EquipmentSharing, ApprovalPolicy } from '@gauzy/models';
+import {
+	EquipmentSharing,
+	ApprovalPolicy,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
@@ -14,7 +18,8 @@ import { EquipmentSharingActionComponent } from './table-components/equipment-sh
 import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd, RouterEvent } from '@angular/router';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 export interface SelectedEquipmentSharing {
 	data: EquipmentSharing;
@@ -23,7 +28,7 @@ export interface SelectedEquipmentSharing {
 
 @Component({
 	templateUrl: './equipment-sharing.component.html',
-	styleUrls: ['./equiqment-sharing.component.scss']
+	styleUrls: ['./equipment-sharing.component.scss']
 })
 export class EquipmentSharingComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -37,6 +42,11 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	ngDestroy$ = new Subject<void>();
 	approvalPolicies: ApprovalPolicy[] = [];
 	selectedOrgId: string;
+	equipmentsData: EquipmentSharing[];
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	private _ngDestroy$ = new Subject<void>();
+
 	@ViewChild('equipmentSharingTable')
 	equipmentSharingTable;
 
@@ -49,6 +59,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
@@ -72,9 +83,26 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					this.loadSettings();
 				}
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EQUIPMENT_SHARING;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	async loadSmartTable() {
@@ -91,7 +119,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'EQUIPMENT_SHARING_PAGE.APPROVAL_POLICY'
 					),
-					type: 'string',
+					type: 'function',
 					valuePrepareFunction: (approvalPolicy: any) => {
 						if (approvalPolicy && approvalPolicy.name) {
 							return approvalPolicy.name;
@@ -181,9 +209,14 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		}
 	}
 
-	async save(isCreate: boolean) {
+	async save(isCreate: boolean, selectedItem?: EquipmentSharing) {
 		let dialog;
-
+		if (selectedItem) {
+			this.selectEquipmentSharing({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		if (!isCreate) {
 			dialog = this.dialogService.open(
 				EquipmentSharingMutationComponent,
@@ -207,7 +240,13 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete() {
+	async delete(selectedItem?: EquipmentSharing) {
+		if (selectedItem) {
+			this.selectEquipmentSharing({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
@@ -226,14 +265,13 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		this.disableButton = true;
 	}
 
-	async selectEquipmentSharing($event: SelectedEquipmentSharing) {
-		if ($event.isSelected) {
-			this.selectedEquipmentSharing = $event.data;
-			this.disableButton = false;
+	async selectEquipmentSharing({ isSelected, data }) {
+		const selectedEquipment = isSelected ? data : null;
+		if (this.equipmentSharingTable) {
 			this.equipmentSharingTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedEquipmentSharing = selectedEquipment;
 	}
 
 	async loadSettings() {
@@ -251,6 +289,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 			}
 		}
 		this.loading = false;
+		this.equipmentsData = equipmentItems;
 		this.smartTableSource.load(equipmentItems);
 	}
 
