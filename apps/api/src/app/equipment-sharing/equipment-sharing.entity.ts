@@ -27,7 +27,7 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	name: string;
 
 	@ApiProperty({ type: Equipment })
-	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings)
+	@ManyToOne((type) => Equipment, (equipment) => equipment.equipmentSharings)
 	@JoinColumn()
 	equipment: Equipment;
 
@@ -58,20 +58,20 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@Column()
 	status: number;
 
-	@ManyToMany(() => Employee, { cascade: true })
+	@ManyToMany((type) => Employee, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_employees'
 	})
 	employees: Employee[];
 
-	@ManyToMany(() => OrganizationTeam, { cascade: true })
+	@ManyToMany((type) => OrganizationTeam, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_teams'
 	})
 	teams: OrganizationTeam[];
 
 	@ApiProperty({ type: ApprovalPolicy })
-	@ManyToOne(() => ApprovalPolicy, {
+	@ManyToOne((type) => ApprovalPolicy, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
