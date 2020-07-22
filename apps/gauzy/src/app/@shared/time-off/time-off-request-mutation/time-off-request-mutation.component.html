@@ -1,6 +1,13 @@
 <nb-card class="main">
 	<nb-card-header>
-		<h5>{{ (isHoliday ? 'TIME_OFF_PAGE.ADD_HOLIDAYS' : 'TIME_OFF_PAGE.REQUEST_DAYS_OFF') | translate }}</h5>
+		<h5>
+			{{
+				(isHoliday
+					? 'TIME_OFF_PAGE.ADD_HOLIDAYS'
+					: 'TIME_OFF_PAGE.REQUEST_DAYS_OFF'
+				) | translate
+			}}
+		</h5>
 		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 
@@ -8,12 +15,18 @@
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="form-group col-6" *ngIf="isHoliday">
-					<label class="label">{{ 'TIME_OFF_PAGE.HOLIDAY_NAME' | translate}}</label>
+					<label class="label">{{
+						'TIME_OFF_PAGE.HOLIDAY_NAME' | translate
+					}}</label>
 					<nb-select
 						formControlName="description"
 						(selectedChange)="onHolidaySelected($event)"
 						fullWidth
-						placeholder="{{ description || ('TIME_OFF_PAGE.SELECT_HOLIDAY_NAME' | translate) }}"
+						placeholder="{{
+							description ||
+								('TIME_OFF_PAGE.SELECT_HOLIDAY_NAME'
+									| translate)
+						}}"
 						[ngClass]="{
 							'status-danger':
 								form.controls['start'].invalid &&
@@ -31,14 +44,18 @@
 					</nb-select>
 				</div>
 				<div class="form-group col-6" *ngIf="isHoliday; else isRequest">
-					<label class="label">{{ 'TIME_OFF_PAGE.SELECT_EMPLOYEES' | translate}}</label>
+					<label class="label">{{
+						'TIME_OFF_PAGE.SELECT_EMPLOYEES' | translate
+					}}</label>
 					<nb-select
 						multiple
 						[selected]="employeesArr"
 						(selectedChange)="onEmployeesSelected($event)"
 						fullWidth
 						required
-						placeholder="{{ 'TIME_OFF_PAGE.ADD_OR_REMOVE_EMPLOYEES' | translate }}"
+						placeholder="{{
+							'TIME_OFF_PAGE.ADD_OR_REMOVE_EMPLOYEES' | translate
+						}}"
 					>
 						<nb-option
 							*ngFor="let employee of orgEmployees"
@@ -58,7 +75,9 @@
 				</div>
 				<ng-template #isRequest>
 					<div class="form-group col-6">
-						<label class="label">{{ 'FORM.LABELS.EMPLOYEE' | translate }}</label>
+						<label class="label">{{
+							'FORM.LABELS.EMPLOYEE' | translate
+						}}</label>
 						<ga-employee-selector
 							#employeeSelector
 							fullWidth
@@ -70,12 +89,16 @@
 					</div>
 				</ng-template>
 				<div class="form-group col-6">
-					<label class="label">{{ 'TIME_OFF_PAGE.POLICY.POLICY' | translate }}</label>
+					<label class="label">{{
+						'TIME_OFF_PAGE.POLICY.POLICY' | translate
+					}}</label>
 					<nb-select
 						formControlName="policy"
 						(selectedChange)="onPolicySelected($event)"
 						fullWidth
-						placeholder="{{ 'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate }}"
+						placeholder="{{
+							'TIME_OFF_PAGE.SELECT_TIME_OFF_POLICY' | translate
+						}}"
 					>
 						<nb-option
 							*ngFor="let policy of policies"
@@ -87,7 +110,9 @@
 			</div>
 			<div class="row">
 				<div class="form-group col-6">
-					<label class="label" for="start">{{ 'FORM.LABELS.FROM' | translate }}</label>
+					<label class="label" for="start">{{
+						'FORM.LABELS.FROM' | translate
+					}}</label>
 					<input
 						formControlName="start"
 						nbInput
@@ -107,7 +132,9 @@
 					<nb-datepicker #startDate></nb-datepicker>
 				</div>
 				<div class="form-group col-6">
-					<label class="label" for="end">{{ 'FORM.LABELS.TO' | translate }}</label>
+					<label class="label" for="end">{{
+						'FORM.LABELS.TO' | translate
+					}}</label>
 					<input
 						formControlName="end"
 						nbInput
@@ -130,18 +157,55 @@
 			</div>
 
 			<div class="row" *ngIf="!isHoliday">
+				<div class="form-group col-6">
+					<button
+						nbButton
+						status="primary"
+						class="download-btn"
+						(click)="getRequestForm()"
+					>
+						Download Request Form
+					</button>
+				</div>
+				<div class="form-group col-6">
+					<div class="label">
+						Upload Request Document
+					</div>
+					<ngx-file-uploader-input
+						[placeholder]="
+							'FORM.PLACEHOLDERS.UPLOADER_DOCUMENT_PLACEHOLDER'
+								| translate
+						"
+						[fileUrl]="uploadDocUrl"
+						(uploadedImgUrl)="documentUrl.setValue($event)"
+						[ngClass]="{
+							'status-danger':
+								form.controls['end'].invalid &&
+								form.controls['end'].touched &&
+								form.controls['end'].dirty,
+							'status-success':
+								form.controls['end'].valid &&
+								form.controls['end'].dirty
+						}"
+					>
+					</ngx-file-uploader-input>
+				</div>
+			</div>
+
+			<div class="row" *ngIf="!isHoliday">
 				<div class="form-group col-12">
 					<div class="form-group">
-						<label class="label" for="description"
-							>{{ 'FORM.LABELS.DESCRIPTION' | translate }}</label
-						>
+						<label class="label" for="description">{{
+							'FORM.LABELS.DESCRIPTION' | translate
+						}}</label>
 						<textarea
 							fullWidth
-							id="addressInput"
 							type="text-area"
 							nbInput
 							formControlName="description"
-							placeholder="{{ 'TIME_OFF_PAGE.ADD_A_DESCRIPTION' | translate }}"
+							placeholder="{{
+								'TIME_OFF_PAGE.ADD_A_DESCRIPTION' | translate
+							}}"
 						></textarea>
 					</div>
 				</div>

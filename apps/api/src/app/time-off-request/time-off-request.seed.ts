@@ -36,6 +36,7 @@ export const createRandomEmployeeTimeOff = async (
 				request.policy = faker.random.arrayElement(policies);
 				request.requestDate = faker.date.recent();
 				request.status = faker.random.arrayElement(status);
+				request.documentUrl = '';
 				requests.push(request);
 			}
 		}
