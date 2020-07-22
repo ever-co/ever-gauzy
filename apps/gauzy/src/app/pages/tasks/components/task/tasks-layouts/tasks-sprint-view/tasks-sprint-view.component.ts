@@ -8,14 +8,9 @@ import {
 	OnChanges
 } from '@angular/core';
 import { SprintStoreService } from 'apps/gauzy/src/app/@core/services/organization-sprint-store.service';
-import {
-	Task,
-	OrganizationSprint,
-	OrganizationProjects,
-	TaskStatusEnum
-} from '@gauzy/models';
+import { Task, OrganizationSprint, OrganizationProjects } from '@gauzy/models';
 import { Observable } from 'rxjs';
-import { map, tap, takeUntil, filter } from 'rxjs/operators';
+import { map, tap, filter } from 'rxjs/operators';
 import {
 	CdkDragDrop,
 	moveItemInArray,
@@ -24,7 +19,6 @@ import {
 import { GauzyEditableGridComponent } from 'apps/gauzy/src/app/@shared/components/editable-grid/gauzy-editable-grid.component';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TasksService } from 'apps/gauzy/src/app/@core/services/tasks.service';
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 
 @Component({

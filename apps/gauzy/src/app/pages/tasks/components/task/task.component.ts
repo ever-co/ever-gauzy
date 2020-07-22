@@ -9,7 +9,7 @@ import {
 
 import { uniqBy } from 'lodash';
 import { Observable, Subject } from 'rxjs';
-import { first, takeUntil, map, tap, filter } from 'rxjs/operators';
+import { first, takeUntil, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
