@@ -200,6 +200,7 @@ import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import { createRandomEmployeeTimeOff } from '../../time-off-request/time-off-request.seed';
+import { createOrganizationDocuments } from '../../organization-documents/organization-documents.seed';
 import {
 	createDefaultEquipments,
 	createRandomEquipments
@@ -827,6 +828,10 @@ export class SeedDataService {
 				tenantEmployeeMap,
 				randomSeedConfig.employeeTimeOffPerOrganization || 20
 			)
+		);
+
+		await this.tryExecute(
+			createOrganizationDocuments(this.connection, this.organizations)
 		);
 
 		await this.tryExecute(

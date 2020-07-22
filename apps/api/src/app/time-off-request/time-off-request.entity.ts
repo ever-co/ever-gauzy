@@ -36,6 +36,12 @@ export class TimeOffRequest extends Base implements ITimeOffRequest {
 	@IsString()
 	@IsOptional()
 	@Column()
+	documentUrl?: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: TimeOffPolicy })
