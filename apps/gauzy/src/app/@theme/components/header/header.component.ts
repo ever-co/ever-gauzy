@@ -3,8 +3,7 @@ import {
 	Input,
 	OnDestroy,
 	OnInit,
-	AfterViewInit,
-	ViewChild
+	AfterViewInit
 } from '@angular/core';
 import {
 	NbMenuService,
@@ -22,7 +21,6 @@ import { User } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
 import { untilDestroyed } from 'ngx-take-until-destroy';
-import { TimeTrackerComponent } from '../../../@shared/time-tracker/time-tracker/time-tracker.component';
 
 @Component({
 	selector: 'ngx-header',

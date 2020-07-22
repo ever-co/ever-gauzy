@@ -37,9 +37,7 @@ import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
 import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { Time } from 'upwork-api/lib/routers/reports/time.js';
-import { Accounts } from 'upwork-api/lib/routers/reports/finance/accounts.js';
 import { Earnings } from 'upwork-api/lib/routers/reports/finance/earnings.js';
-import { Billings } from 'upwork-api/lib/routers/reports/finance/billings.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
 import {
 	TimesheetGetCommand,
@@ -846,8 +844,7 @@ export class UpworkService {
 				integrationId,
 				config,
 				employeeId,
-				providerId,
-				dateRange
+				providerId
 			);
 
 			const syncedExpense = await this._syncExpense(
@@ -855,8 +852,7 @@ export class UpworkService {
 				integrationId,
 				config,
 				employeeId,
-				providerRefernceId,
-				dateRange
+				providerRefernceId
 			);
 			return {
 				syncedIncome,
@@ -875,8 +871,7 @@ export class UpworkService {
 		integrationId,
 		config,
 		employeeId,
-		providerRefernceId,
-		dateRange
+		providerRefernceId
 	) {
 		const reports = await this._getEarningReportsForFreelancer(
 			config,
@@ -956,8 +951,7 @@ export class UpworkService {
 		integrationId,
 		config,
 		employeeId,
-		providerId,
-		dateRange
+		providerId
 	) {
 		const reports = await this._getFreelancerFullReports(
 			config,
