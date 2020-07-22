@@ -2,14 +2,18 @@
 	<nb-card-header>
 		<div class="space-center">
 			<h4>{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}</h4>
-			<div class="header-selector-wrapper">
+			<div class="main-header">
 				<button
+					style="margin-right: 9px;"
 					nbButton
 					status="primary"
 					(click)="manageAppropvalPolicy()"
 				>
 					{{ 'EQUIPMENT_SHARING_PAGE.APPROVAL_POLICY' | translate }}
 				</button>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
 			</div>
 		</div>
 	</nb-card-header>
@@ -20,26 +24,9 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.REQUEST' | translate }}
 			</button>
-			<button
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="disableButton"
-				(click)="save(false)"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="disableButton"
-				(click)="delete()"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 
 		<ng2-smart-table
@@ -48,8 +35,43 @@
 			(userRowSelect)="selectEquipmentSharing($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#equipmentSharingTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="equipmentsData"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="save(false, selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="delete(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>
