@@ -22,7 +22,6 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Subject } from 'rxjs/internal/Subject';
-import { result } from 'underscore';
 
 @Component({
 	selector: 'ngx-time-off',
