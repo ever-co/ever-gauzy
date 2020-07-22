@@ -814,7 +814,8 @@
 			"NUMBER": "Number",
 			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "Валута",
-			"TASK": "Задача"
+			"TASK": "Задача",
+			"KPI": "KPI"
 		},
 		"DEADLINE": {
 			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
@@ -837,6 +838,7 @@
 				"WEIGHT": "Weight",
 				"SELECT_PROJECT": "Select Project",
 				"SELECT_TASK": "Select Task",
+				"SELECT_KPI": "Select KPI",
 				"ASSIGN_AS_OBJECTIVE": "Assign as objective"
 			},
 			"PLACEHOLDERS": {
