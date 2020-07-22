@@ -1,21 +1,23 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app/app.component';
+import { AppUrlActivityRoutingModule } from './app-url-activity-routing.module';
+import { AppUrlActivityComponent } from './app-url-activity/app-url-activity.component';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 import { NbSpinnerModule, NbProgressBarModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 
 @NgModule({
-	declarations: [AppComponent],
+	declarations: [AppUrlActivityComponent],
 	imports: [
 		CommonModule,
-		AppRoutingModule,
+		AppUrlActivityRoutingModule,
 		FiltersModule,
 		NbSpinnerModule,
 		NbProgressBarModule,
-		TranslateModule
+		TranslateModule,
+		SharedModule
 	]
 })
-export class AppModule {}
+export class AppUrlActivityModule {}

@@ -1,19 +1,22 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	TimeLog,
 	ITimerToggleInput,
 	TimeLogType,
-	TimerStatus
+	TimerStatus,
+	Organization
 } from '@gauzy/models';
 import { toLocal } from 'libs/utils';
 import * as moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
+import { Store as AppStore } from '../../@core/services/store.service';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 export interface TimerState {
 	showTimerWindow: boolean;
-	dueration: number;
-	current_session_dueration: number;
+	duration: number;
+	current_session_duration: number;
 	running: boolean;
 	timerConfig: ITimerToggleInput;
 }
@@ -39,8 +42,8 @@ export function createInitialTimerState(): TimerState {
 	} catch (error) {}
 	return {
 		showTimerWindow: false,
-		dueration: 0,
-		current_session_dueration: 0,
+		duration: 0,
+		current_session_duration: 0,
 		running: false,
 		timerConfig
 	} as TimerState;
@@ -64,32 +67,34 @@ export class TimerQuery extends Query<TimerState> {
 @Injectable({
 	providedIn: 'root'
 })
-export class TimeTrackerService {
+export class TimeTrackerService implements OnDestroy {
 	interval: any;
 
-	$showTimerWindow = this.timerQuery.select((state) => state.showTimerWindow);
-	$dueration = this.timerQuery.select((state) => state.dueration);
-	$current_session_dueration = this.timerQuery.select(
-		(state) => state.current_session_dueration
+	showTimerWindow$ = this.timerQuery.select((state) => state.showTimerWindow);
+	duration$ = this.timerQuery.select((state) => state.duration);
+	current_session_duration$ = this.timerQuery.select(
+		(state) => state.current_session_duration
 	);
 	$running = this.timerQuery.select((state) => state.running);
 	$timerConfig = this.timerQuery.select((state) => state.timerConfig);
+	organization: any;
 
 	constructor(
 		protected timerStore: TimerStore,
 		protected timerQuery: TimerQuery,
+		protected store: AppStore,
 		private http: HttpClient
 	) {
 		this.getTimerStatus()
 			.then((status: TimerStatus) => {
-				this.dueration = status.duration;
+				this.duration = status.duration;
 				if (status.lastLog && !status.lastLog.stoppedAt) {
-					this.current_session_dueration = moment().diff(
+					this.current_session_duration = moment().diff(
 						toLocal(status.lastLog.startedAt),
 						'seconds'
 					);
 				} else {
-					this.current_session_dueration = 0;
+					this.current_session_duration = 0;
 				}
 
 				if (status.running) {
@@ -97,6 +102,12 @@ export class TimeTrackerService {
 				}
 			})
 			.catch(() => {});
+
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((organization: Organization) => {
+				this.organization = organization;
+			});
 	}
 
 	public get showTimerWindow(): boolean {
@@ -109,23 +120,23 @@ export class TimeTrackerService {
 		});
 	}
 
-	public get dueration(): number {
-		const { dueration } = this.timerQuery.getValue();
-		return dueration;
+	public get duration(): number {
+		const { duration } = this.timerQuery.getValue();
+		return duration;
 	}
-	public set dueration(value: number) {
+	public set duration(value: number) {
 		this.timerStore.update({
-			dueration: value
+			duration: value
 		});
 	}
 
-	public get current_session_dueration(): number {
-		const { current_session_dueration } = this.timerQuery.getValue();
-		return current_session_dueration;
+	public get current_session_duration(): number {
+		const { current_session_duration } = this.timerQuery.getValue();
+		return current_session_duration;
 	}
-	public set current_session_dueration(value: number) {
+	public set current_session_duration(value: number) {
 		this.timerStore.update({
-			current_session_dueration: value
+			current_session_duration: value
 		});
 	}
 
@@ -162,11 +173,21 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
+	openAndStartTimer() {
+		this.showTimerWindow = true;
+		if (!this.running) {
+			if (this.canStartTimer()) {
+				this.current_session_duration = 0;
+				this.turnOnTimer();
+			}
+		}
+	}
+
 	toggle() {
 		if (this.interval) {
 			this.turnOffTimer();
 		} else {
-			this.current_session_dueration = 0;
+			this.current_session_duration = 0;
 			this.turnOnTimer();
 		}
 
@@ -176,8 +197,8 @@ export class TimeTrackerService {
 	turnOnTimer() {
 		this.running = true;
 		this.interval = setInterval(() => {
-			this.dueration++;
-			this.current_session_dueration++;
+			this.duration++;
+			this.current_session_duration++;
 		}, 1000);
 	}
 
@@ -186,4 +207,30 @@ export class TimeTrackerService {
 		clearInterval(this.interval);
 		this.interval = null;
 	}
+
+	canStartTimer() {
+		let isValid = true;
+		if (this.organization) {
+			if (
+				this.organization.requireProject &&
+				!this.timerConfig.projectId
+			) {
+				isValid = false;
+			}
+			if (this.organization.requireTask && !this.timerConfig.taskId) {
+				isValid = false;
+			}
+			if (
+				this.organization.requireDescription &&
+				!this.timerConfig.description
+			) {
+				isValid = false;
+			}
+		} else {
+			isValid = false;
+		}
+		return isValid;
+	}
+
+	ngOnDestroy(): void {}
 }

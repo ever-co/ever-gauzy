@@ -31,7 +31,7 @@ export const createRandomActivities = async (connection: Connection) => {
 
 	const appNames: string[] = _.shuffle(AppsNames);
 
-	for (let day = 0; day < 15; day++) {
+	for (let day = 0; day < 5; day++) {
 		const date = moment().subtract(day, 'day').toDate();
 
 		employees.forEach((employee) => {
@@ -50,7 +50,12 @@ export const createRandomActivities = async (connection: Connection) => {
 				activity.task = task;
 				activity.title = appName;
 				activity.date = moment(date).format('YYYY-MM-DD');
-				activity.time = moment(date).format('HH:mm:ss');
+				activity.time = moment(
+					faker.date.between(
+						moment(date).startOf('day').toDate(),
+						moment(date).endOf('day').toDate()
+					)
+				).format('HH:mm:ss');
 				activity.duration = faker.random.number(100);
 				activity.type = ActivityType.APP;
 
@@ -59,24 +64,42 @@ export const createRandomActivities = async (connection: Connection) => {
 
 			for (let i = 0; i < faker.random.number({ min: 0, max: 30 }); i++) {
 				const url = faker.internet.domainName();
-				const project = faker.random.arrayElement(projects);
-				const task = faker.random.arrayElement(project.tasks);
+				for (
+					let j = 0;
+					j < faker.random.number({ min: 1, max: 10 });
+					j++
+				) {
+					const project = faker.random.arrayElement(projects);
+					const task = faker.random.arrayElement(project.tasks);
 
-				const activity = new Activity();
-				activity.employee = employee;
-				activity.project = project;
-				activity.task = task;
-				activity.title = url;
-				activity.date = moment(date).format('YYYY-MM-DD');
-				activity.time = moment(date).format('HH:mm:ss');
-				activity.duration = faker.random.number(100);
-				activity.type = ActivityType.URL;
+					const activity = new Activity();
+					activity.employee = employee;
+					activity.project = project;
+					activity.task = task;
+					activity.title = url;
+					activity.metaData = {
+						title: faker.internet.domainSuffix(),
+						description: faker.lorem.sentence()
+					};
+					activity.description = faker.internet.url();
+					activity.date = moment(date).format('YYYY-MM-DD');
+					activity.time = moment(
+						faker.date.between(
+							moment(date).startOf('day').toDate(),
+							moment(date).endOf('day').toDate()
+						)
+					).format('HH:mm:ss');
+					activity.duration = faker.random.number({
+						min: 10,
+						max: 100
+					});
+					activity.type = ActivityType.URL;
 
-				activities.push(activity);
+					activities.push(activity);
+				}
 			}
 		});
+		await connection.manager.save(activities);
 	}
-	await connection.manager.save(activities);
-
 	return activities;
 };

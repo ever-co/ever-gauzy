@@ -5,12 +5,12 @@
 			size="small"
 			nbButton
 			ghost
-			(click)="toggle($event)"
+			(click)="toggleWindow()"
 		>
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>
 	</div>
-	<form #f="ngForm">
+	<form #form="ngForm">
 		<div class="timer-container form-group pr-4">
 			<div class="time-tracker" *ngIf="timeType == 'TRACKED'">
 				<div class="is_billable">
@@ -41,7 +41,7 @@
 								'btn-danger': running,
 								'btn-success': !running
 							}"
-							(click)="toggleTimer(f)"
+							(click)="toggleTimer()"
 							[nbTooltip]="
 								(running
 									? 'TIMER_TRACKER.STOP_TIMER'
@@ -137,7 +137,7 @@
 			></ga-project-selector>
 
 			<div
-				*ngIf="projectInput.invalid && f.submitted"
+				*ngIf="projectInput.invalid && form.submitted"
 				class="invalid-feedback d-block"
 			>
 				<div *ngIf="projectInput.errors.required">
@@ -157,7 +157,7 @@
 			></ga-task-selector>
 
 			<div
-				*ngIf="taskInput.invalid && f.submitted"
+				*ngIf="taskInput.invalid && form.submitted"
 				class="invalid-feedback d-block"
 			>
 				<div *ngIf="taskInput.errors.required">Please selct task</div>
@@ -177,7 +177,7 @@
 			></textarea>
 
 			<div
-				*ngIf="descriptionInput.invalid && f.submitted"
+				*ngIf="descriptionInput.invalid && form.submitted"
 				class="invalid-feedback d-block"
 			>
 				<div *ngIf="descriptionInput.errors.required">
@@ -186,7 +186,7 @@
 			</div>
 		</div>
 		<div class="time-menual" *ngIf="timeType == 'MANUAL'">
-			<button class="btn btn-success" (click)="addTime(f)">
+			<button class="btn btn-success" (click)="addTime()">
 				Add Time
 			</button>
 		</div>

@@ -3,14 +3,13 @@ import {
 	Input,
 	EventEmitter,
 	Output,
-	Inject,
 	OnInit,
 	OnDestroy
 } from '@angular/core';
 import { Task, Employee, TaskStatusEnum } from '@gauzy/models';
-import { NbMenuService, NB_WINDOW } from '@nebular/theme';
-import { tap, take, filter, map, takeUntil } from 'rxjs/operators';
-import { Subject, Observable } from 'rxjs';
+import { NbMenuService } from '@nebular/theme';
+import { tap, filter, map, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-sprint-task',
