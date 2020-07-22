@@ -140,7 +140,12 @@ export class CandidateInterviewFeedbackComponent
 
 	async createFeedback() {
 		const description = this.form.get('description').value;
-		if (this.form.valid) {
+		const rating =
+			this.technologiesList.length === 0 &&
+			this.personalQualitiesList.length === 0
+				? this.form.get('rating').value
+				: this.averageRating;
+		if (this.form.valid && this.status && rating) {
 			try {
 				const feedback = await this.candidateFeedbacksService.create({
 					...this.emptyFeedback,
@@ -153,9 +158,10 @@ export class CandidateInterviewFeedbackComponent
 					this.technologiesList,
 					this.personalQualitiesList
 				);
+
 				await this.candidateFeedbacksService.update(feedback.id, {
 					description: description,
-					rating: this.averageRating,
+					rating: rating,
 					interviewer: this.feedbackInterviewer,
 					status: this.status
 				});
