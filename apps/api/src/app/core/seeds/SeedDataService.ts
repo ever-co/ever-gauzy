@@ -188,7 +188,10 @@ import {
 	updateDefaultKeyResultProgress
 } from '../../keyresult/keyresult.seed';
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
-import { seedRandomOrganizationDepartments } from '../../organization-department/organization-department.seed';
+import {
+	seedRandomOrganizationDepartments,
+	createDefaultOrganizationDepartments
+} from '../../organization-department/organization-department.seed';
 import { seedRandomOrganizationPosition } from '../../organization-positions/organization-position.seed';
 import {
 	createDefaultTags,
@@ -209,6 +212,18 @@ import { createRandomEquipmentSharing } from '../../equipment-sharing/equipment-
 import { createRandomProposals } from '../../proposal/proposal.seed';
 import { createRandomInvoiceItem } from '../../invoice-item/invoice-item.seed';
 import { createRandomInvoice } from '../../invoice/invoice.seed';
+import {
+	createCandidateSkills,
+	createRandomCandidateSkills
+} from '../../candidate-skill/candidate-skill.seed';
+import {
+	createCandidateExperiences,
+	createRandomCandidateExperience
+} from '../../candidate-experience/candidate-experience.seed';
+import {
+	createCandidateEducations,
+	createRandomCandidateEducations
+} from '../../candidate-education/candidate-education.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
 import { createRandomOrganizationContact } from '../../organization-contact/organization-contact.seed';
 
@@ -458,6 +473,13 @@ export class SeedDataService {
 			)
 		);
 
+		await this.tryExecute(
+			createDefaultOrganizationDepartments(
+				this.connection,
+				defaultOrganizations
+			)
+		);
+
 		await this.tryExecute(createDefaultProducts(this.connection, tenant));
 
 		await this.tryExecute(
@@ -531,6 +553,18 @@ export class SeedDataService {
 		await this.tryExecute(
 			createCandidateFeedbacks(this.connection, defaultCandidates)
 		);
+
+		await this.tryExecute(
+			createCandidateEducations(this.connection, defaultCandidates)
+		);
+
+		await this.tryExecute(
+			createCandidateExperiences(this.connection, defaultCandidates)
+		);
+		await this.tryExecute(
+			createCandidateSkills(this.connection, defaultCandidates)
+		);
+
 		await this.tryExecute(
 			createDefaultIncomes(this.connection, {
 				org: defaultOrganizations[0],
@@ -697,6 +731,30 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			createRandomCandidateFeedbacks(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomCandidateEducations(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomCandidateExperience(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomCandidateSkills(
 				this.connection,
 				tenants,
 				tenantCandidatesMap

@@ -14,7 +14,8 @@ import {
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
 	Product,
-	Tag
+	Tag,
+	Expense
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -37,6 +38,8 @@ import { InvoiceProductsSelectorComponent } from '../table-components/invoice-pr
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { ExpensesService } from '../../../@core/services/expenses.service';
+import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -66,6 +69,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	selectedEmployeeIds: string[];
 	products: Product[];
 	selectedProducts: Product[];
+	expenses: Expense[];
+	selectedExpenses: Expense[];
 	invoiceType: string;
 	selectedInvoiceType: string;
 	shouldLoadTable: boolean;
@@ -73,6 +78,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	isProjectHourTable: boolean;
 	isTaskHourTable: boolean;
 	isProductTable: boolean;
+	isExpenseTable: boolean;
 	disableSaveButton = true;
 	organizationId: string;
 	subtotal = 0;
@@ -100,7 +106,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private errorHandler: ErrorHandlingService,
 		private employeeService: EmployeesService,
 		private productService: ProductService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private expensesService: ExpensesService
 	) {
 		super(translateService);
 		this.observableTasks = this.tasksStore.tasks$;
@@ -147,6 +154,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			project: [''],
 			task: [''],
 			product: [''],
+			expense: [''],
 			tags: ['']
 		});
 	}
@@ -248,6 +256,24 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					}
 				};
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				this.settingsSmartTable['columns']['selectedItem'] = {
+					title: this.getTranslation(
+						'INVOICES_PAGE.INVOICE_ITEM.EXPENSE'
+					),
+					width: '13%',
+					editor: {
+						type: 'custom',
+						component: InvoiceExpensesSelectorComponent
+					},
+					valuePrepareFunction: (cell) => {
+						const expense = this.expenses.find(
+							(e) => e.id === cell
+						);
+						return `${expense.purpose}`;
+					}
+				};
+				break;
 			default:
 				break;
 		}
@@ -278,7 +304,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			};
 		} else if (
 			this.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
-			this.invoiceType === InvoiceTypeEnum.BY_PRODUCTS
+			this.invoiceType === InvoiceTypeEnum.BY_PRODUCTS ||
+			this.invoiceType === InvoiceTypeEnum.BY_EXPENSES
 		) {
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
@@ -434,6 +461,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					case InvoiceTypeEnum.BY_PRODUCTS:
 						itemToAdd['productId'] = invoiceItem.selectedItem;
 						break;
+					case InvoiceTypeEnum.BY_EXPENSES:
+						itemToAdd['expenseId'] = invoiceItem.selectedItem;
+						break;
 					default:
 						break;
 				}
@@ -550,6 +580,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					case InvoiceTypeEnum.BY_PRODUCTS:
 						itemToAdd['productId'] = invoiceItem.selectedItem;
 						break;
+					case InvoiceTypeEnum.BY_EXPENSES:
+						itemToAdd['expenseId'] = invoiceItem.selectedItem;
+						break;
 					default:
 						break;
 				}
@@ -642,6 +675,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						organizationId: organization.id
 					});
 					this.products = products.items;
+
+					const expenses = await this.expensesService.getAll([], {
+						typeOfExpense: 'Billable to Client',
+						organization: {
+							id: organization.id
+						}
+					});
+					this.expenses = expenses.items;
 				}
 			});
 	}
@@ -653,6 +694,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		let isProjectHourTable = false;
 		let isTaskHourTable = false;
 		let isProductTable = false;
+		let isExpenseTable = false;
 
 		switch ($event) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -667,6 +709,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				isProductTable = true;
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				isExpenseTable = true;
+				break;
 			default:
 				break;
 		}
@@ -675,6 +720,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.isProjectHourTable = isProjectHourTable;
 		this.isTaskHourTable = isTaskHourTable;
 		this.isProductTable = isProductTable;
+		this.isExpenseTable = isExpenseTable;
 	}
 
 	async generateTable() {
@@ -757,6 +803,24 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					}
 				}
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				if (this.selectedExpenses.length) {
+					for (const expense of this.selectedExpenses) {
+						const data = {
+							description: 'Desc',
+							price: fakePrice,
+							quantity: fakeQuantity,
+							selectedItem: expense.id,
+							totalValue: fakePrice * fakeQuantity,
+							applyTax: true,
+							applyDiscount: true
+						};
+						fakeData.push(data);
+						fakePrice++;
+						fakeQuantity++;
+					}
+				}
+				break;
 			default:
 				break;
 		}
@@ -795,6 +859,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	selectProduct($event) {
 		this.selectedProducts = $event;
+	}
+
+	selectExpense($event) {
+		this.selectedExpenses = $event;
 	}
 
 	searchClient(term: string, item: any) {

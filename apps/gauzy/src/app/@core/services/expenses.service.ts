@@ -39,6 +39,13 @@ export class ExpensesService {
 			.toPromise();
 	}
 
+	getById(id: string) {
+		return this.http
+			.get<Expense>(`/api/expense/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAllWithSplitExpenses(
 		employeeId: string,
 		relations?: string[],
@@ -80,9 +87,6 @@ export class ExpensesService {
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/expense/${id}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.delete(`/api/expense/${id}`).pipe(first()).toPromise();
 	}
 }

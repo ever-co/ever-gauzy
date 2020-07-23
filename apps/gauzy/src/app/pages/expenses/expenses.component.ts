@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { AuthService } from '../../@core/services/auth.service';
 import {
 	Expense,
 	PermissionsEnum,
 	IExpenseCategory,
 	IOrganizationVendor,
 	Tag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	Employee
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -41,8 +41,8 @@ export interface ExpenseViewModel {
 	categoryId: string;
 	categoryName: string;
 	category: IExpenseCategory;
-	clientId: string;
-	clientName: string;
+	organizationContactId: string;
+	organizationContactName: string;
 	projectId: string;
 	projectName: string;
 	currency: string;
@@ -51,6 +51,8 @@ export interface ExpenseViewModel {
 	purpose: string;
 	taxType: string;
 	taxLabel: string;
+	employee: Employee;
+	employeeName: string;
 	rateValue: number;
 	receipt: string;
 	splitExpense: boolean;
@@ -68,7 +70,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 	selectedEmployeeId: string;
 	selectedDate: Date;
 	smartTableSource = new LocalDataSource();
-	expenses: Expense[];
+	expenses: ExpenseViewModel[];
 	selectedExpense: ExpenseViewModel;
 	showTable: boolean;
 	employeeName: string;
@@ -128,7 +130,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private authService: AuthService,
 		private dialogService: NbDialogService,
 		private store: Store,
 		private expenseService: ExpensesService,
@@ -243,8 +244,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 			category: formData.category,
 			vendor: formData.vendor,
 			typeOfExpense: formData.typeOfExpense,
-			clientId: formData.client.clientId,
-			clientName: formData.client.clientName,
+			organizationContactId:
+				formData.organizationContact.organizationContactId,
+			organizationContactName:
+				formData.organizationContact.organizationContactName,
 			projectId: formData.project.projectId,
 			projectName: formData.project.projectName,
 			valueDate: formData.valueDate,
@@ -444,10 +447,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}
 			};
 
-			this.smartTableSettings['columns']['employee'] = {
+			this.smartTableSettings['columns']['employeeName'] = {
 				title: 'Employee',
 				type: 'string',
-				valuePrepareFunction: (_, expense: Expense) => {
+				valuePrepareFunction: (_, expense: ExpenseViewModel) => {
 					const user = expense.employee
 						? expense.employee.user
 						: null;
@@ -485,14 +488,15 @@ export class ExpensesComponent extends TranslationBaseComponent
 					categoryId: i.categoryId,
 					categoryName: i.category.name,
 					category: i.category,
-					clientId: i.clientId,
-					clientName: i.clientName,
+					organizationContactId: i.organizationContactId,
+					organizationContactName: i.organizationContactName,
 					projectId: i.projectId,
 					projectName: i.projectName,
 					amount: i.amount,
 					notes: i.notes,
 					currency: i.currency,
 					employee: i.employee,
+					employeeName: i.employee?.user?.name,
 					purpose: i.purpose,
 					taxType: i.taxType,
 					taxLabel: i.taxLabel,
@@ -503,7 +507,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					status: i.status
 				};
 			});
-			this.expenses = items;
+			this.expenses = expenseVM;
 			this.smartTableSource.load(expenseVM);
 			this.showTable = true;
 		} catch (error) {

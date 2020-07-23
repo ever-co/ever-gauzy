@@ -482,7 +482,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
 				),
 				type: 'date',
-				width: '10%',
+				width: '11%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${cell.slice(0, 10)}`;

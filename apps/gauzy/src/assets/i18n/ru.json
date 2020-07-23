@@ -659,8 +659,8 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Затраты",
 		"MUTATION": {
-			"CLIENT_IS_REQUIRED!": "Клиент не требуется!",
-			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Пожалуйста, выберите Клиента из выпадающего меню ниже или измените настройки типа расходов.",
+			"CONTACT_IS_REQUIRED!": "Требуется контакт!",
+			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Пожалуйста, выберите контакт из выпадающего меню ниже или измените тип расходов.",
 			"ASSIGN_TO": "Назначить",
 			"INCLUDE_TAXES": "Включить налоги",
 			"ATTACH_A_RECEIPT": "Добавить квитанцию"
@@ -1557,6 +1557,7 @@
 		"STATUS": "Статус",
 		"SET_STATUS": "Установить статус",
 		"SHOW_COLUMNS": "Показать колонки",
+		"ITEM": "Пункт 1",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -1566,13 +1567,15 @@
 			"BY_PROJECT_HOURS": "По часам проекта",
 			"BY_TASK_HOURS": "По часам задания",
 			"BY_PRODUCTS": "По товарам",
+			"BY_EXPENSES": "По расходам",
 			"DETAILS_INVOICE_ITEMS": "Детали накладной",
 			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов",
 			"SELECT_INVOICE_TYPE": "Выберите тип счета",
 			"SELECT_ESTIMATE_TYPE": "Выберите тип оценки",
 			"SELECT_PROJECTS": "Выберите проекты",
 			"SELECT_TASKS": "Выберите задачи",
-			"SELECT_PRODUCTS": "Выберите товары"
+			"SELECT_PRODUCTS": "Выберите товары",
+			"SELECT_EXPENSES": "Выберите расходы"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",
@@ -1587,6 +1590,7 @@
 			"HOURS_WORKED": "Часы работы",
 			"PROJECT": "Проект",
 			"PRODUCT": "Товар",
+			"EXPENSE": "Расходная",
 			"NO_ITEMS": "Пожалуйста, добавьте элементы счета",
 			"INVALID_ITEM": "Неверный элемент счета",
 			"EMPLOYEE_VALUE": "Сотрудник не может быть пустым",
