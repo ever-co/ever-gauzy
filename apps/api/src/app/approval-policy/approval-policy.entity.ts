@@ -49,11 +49,6 @@ export class ApprovalPolicy extends Base implements IApprovalPolicy {
 	@Column({ nullable: true })
 	tenantId: string;
 
-	@ApiProperty({ type: Number })
-	@IsNumber()
-	@Column({ nullable: true })
-	type: number;
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })

@@ -4,7 +4,6 @@ export interface ApprovalPolicy extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId?: string;
 	name?: string;
-	type?: number;
 	description?: string;
 }
 
@@ -12,7 +11,6 @@ export interface ApprovalPolicyCreateInput extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId?: string;
 	name?: string;
-	type?: number;
 	description?: string;
 }
 
@@ -20,7 +18,6 @@ export interface ApprovalPolicyUpdateInput extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId?: string;
 	name?: string;
-	type?: number;
 	description?: string;
 }
 
@@ -28,7 +25,6 @@ export interface ApprovalPolicyFindInput extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId?: string;
 	name?: string;
-	type?: number;
 	description?: string;
 }
 

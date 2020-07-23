@@ -150,7 +150,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					valuePrepareFunction: this._formatDate,
 					filter: false
 				},
-				createdBy: {
+				createdByName: {
 					title: this.getTranslation(
 						'EQUIPMENT_SHARING_PAGE.CREATED_BY'
 					),

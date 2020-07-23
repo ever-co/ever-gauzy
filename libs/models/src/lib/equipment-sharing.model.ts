@@ -15,6 +15,7 @@ export interface EquipmentSharing extends IBaseEntityModel {
 	equipment?: Equipment;
 	name?: string;
 	createdBy?: string;
+	createdByName?: string;
 }
 
 export interface EquipmentSharingRequest extends IBaseEntityModel {

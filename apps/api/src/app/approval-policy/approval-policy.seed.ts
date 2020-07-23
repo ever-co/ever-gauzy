@@ -18,7 +18,6 @@ export const createDefaultApprovalPolicyForOrg = async (
 		defaultApprovalPolicy.organizationId = org.id;
 		defaultApprovalPolicy.description = 'Default approval policy';
 		defaultApprovalPolicy.tenantId = org.tenantId;
-		defaultApprovalPolicy.type = ApprovalPolicyTypesEnum.BUSINESS_TRIP;
 		promises.push(insertDefaultPolicy(connection, defaultApprovalPolicy));
 	});
 
@@ -61,10 +60,6 @@ export const createRandomApprovalPolicyForOrg = async (
 				policy.name = name;
 				policy.tenant = tenant;
 				policy.organization = org;
-				policy.type = faker.random.number({
-					min: 1,
-					max: 3
-				});
 				policies.push(policy);
 			});
 		});

@@ -69,6 +69,7 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 	): Promise<EquipmentSharing> {
 		try {
 			equipmentSharing.createdBy = RequestContext.currentUser().id;
+			equipmentSharing.createdByName = RequestContext.currentUser().name;
 			equipmentSharing.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			const equipmentSharingSaved = await this.equipmentSharingRepository.save(
 				equipmentSharing
@@ -79,8 +80,8 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 			requestApproval.approvalPolicyId =
 				equipmentSharing.approvalPolicyId;
 			requestApproval.createdBy = RequestContext.currentUser().id;
+			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = equipmentSharing.name;
-			requestApproval.type = ApprovalPolicyTypesEnum.EQUIPMENT_SHARING;
 			requestApproval.min_count = 1;
 			await this.requestApprovalRepository.save(requestApproval);
 			return equipmentSharingSaved;
@@ -105,8 +106,8 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 			requestApproval.approvalPolicyId =
 				equipmentSharing.approvalPolicyId;
 			requestApproval.createdBy = RequestContext.currentUser().id;
+			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = equipmentSharing.name;
-			requestApproval.type = ApprovalPolicyTypesEnum.EQUIPMENT_SHARING;
 			requestApproval.min_count = 1;
 			await this.requestApprovalRepository.save(requestApproval);
 			return equipmentSharingSaved;

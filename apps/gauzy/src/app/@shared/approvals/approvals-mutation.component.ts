@@ -8,7 +8,6 @@ import {
 	ApprovalPolicy
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
-import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
 import { EmployeesService } from '../../@core/services/employees.service';
@@ -38,7 +37,6 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 
 	constructor(
 		public dialogRef: NbDialogRef<RequestApprovalMutationComponent>,
-		private requestApprovalService: RequestApprovalService,
 		private approvalPolicyService: ApprovalPolicyService,
 		private employeesService: EmployeesService,
 		private organizationTeamsService: OrganizationTeamsService,
@@ -142,11 +140,6 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 					? this.requestApproval.teamApprovals.map((team) => team.id)
 					: []
 			],
-			type: [
-				this.requestApproval && this.requestApproval.type
-					? this.requestApproval.type
-					: ''
-			],
 			min_count: [
 				this.requestApproval && this.requestApproval.min_count
 					? this.requestApproval.min_count
@@ -190,12 +183,6 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 				});
 			}
 			requestApproval.employees = listEmployees;
-			requestApproval.type = 1;
-			this.approvalPolicies.forEach((e) => {
-				if (e.id === requestApproval.approvalPolicyId) {
-					requestApproval.type = e.type;
-				}
-			});
 		}
 		this.dialogRef.close(requestApproval);
 	}

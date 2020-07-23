@@ -31,12 +31,6 @@ export class RequestApproval extends Base implements IRequestApproval {
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: Number })
-	@IsNumber()
-	@IsNotEmpty()
-	@Column()
-	type: number;
-
 	@ApiProperty({ type: ApprovalPolicy })
 	@ManyToOne((type) => ApprovalPolicy, {
 		nullable: true,
@@ -83,4 +77,9 @@ export class RequestApproval extends Base implements IRequestApproval {
 	@IsNumber()
 	@Column({ nullable: true })
 	min_count: number;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	createdByName: string;
 }

@@ -88,4 +88,9 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@IsString()
 	@Column({ nullable: true })
 	createdBy: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	createdByName: string;
 }
