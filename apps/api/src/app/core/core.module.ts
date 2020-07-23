@@ -106,6 +106,7 @@ import { Deal } from '../deal/deal.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 import { OrganizationDocuments } from '../organization-documents/organization-documents.entity';
+import { GoalGeneralSetting } from '../goal-general-setting/goal-general-setting.entity';
 
 const entities = [
 	Invite,
@@ -150,6 +151,7 @@ const entities = [
 	Task,
 	Goal,
 	GoalTimeFrame,
+	GoalGeneralSetting,
 	GoalKPI,
 	KeyResult,
 	KeyResultUpdate,

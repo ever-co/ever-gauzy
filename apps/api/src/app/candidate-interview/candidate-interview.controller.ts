@@ -6,7 +6,8 @@ import {
 	Body,
 	Post,
 	UseGuards,
-	Param
+	Param,
+	Put
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -68,6 +69,18 @@ export class CandidateInterviewController extends CrudController<
 		@Body() entity: ICandidateInterviewCreateInput
 	): Promise<any> {
 		return this.candidateInterviewService.create(entity);
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
+	@Put(':id')
+	async updateInterview(
+		@Param() id: string,
+		@Body() entity: any
+	): Promise<any> {
+		return this.candidateInterviewService.updateInterview(id, {
+			...entity
+		});
 	}
 
 	@ApiOperation({ summary: 'Find interview by id' })

@@ -114,6 +114,12 @@
 								class="header-large-block-image-employee"
 								[src]="employee?.user?.imageUrl"
 								alt="employee Avatar"
+								[ngClass]="{
+									active: isInterviewerActive(
+										interview.id,
+										employee.id
+									)
+								}"
 							/>
 						</span>
 					</div>

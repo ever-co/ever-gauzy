@@ -10,6 +10,16 @@ export interface GoalTimeFrame extends IBaseEntityModel {
 	organization: Organization;
 }
 
+export interface GoalGeneralSetting extends IBaseEntityModel {
+	maxObjectives: number;
+	maxKeyResults: number;
+	employeeCanCreateObjective: boolean;
+	canOwnObjectives: string;
+	canOwnKeyResult: string;
+	krTypeKPI: boolean;
+	krTypeTask: boolean;
+}
+
 export interface KPI extends IBaseEntityModel {
 	name: string;
 	description: string;
@@ -35,7 +45,13 @@ export enum KpiOperatorEnum {
 	LESSER_THAN_EQUAL_TO = '<='
 }
 
-export interface KpiFindInput extends IBaseEntityModel {
+export interface SettingFindInput extends IBaseEntityModel {
 	employee?: EmployeeFindInput;
 	organization?: OrganizationFindInput;
+}
+
+export enum GoalOwnershipEnum {
+	EMPLOYEES = 'Employees',
+	TEAMS = 'Teams',
+	EMPLOYEES_AND_TEAMS = 'Employees and Teams'
 }

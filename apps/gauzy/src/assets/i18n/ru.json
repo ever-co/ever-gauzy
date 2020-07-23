@@ -732,11 +732,22 @@
 		"COMMENTS": "Комментарии",
 		"KEY_RESULTS": "Ключевые результаты",
 		"GROUP_BY": "Группировать по",
+		"OWNERSHIP": {
+			"EMPLOYEES": "Сотрудники",
+			"TEAMS": "Команды",
+			"EMPLOYEES_AND_TEAMS": "Сотрудники и команды"
+		},
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Добавить временной кадр",
 			"TIME_FRAME_PAGE_TITLE": "Установить время",
 			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров",
-			"ADD_KPI": "Добавить KPI"
+			"ADD_KPI": "Добавить KPI",
+			"MAX_ENTITIES": "Максимальное количество элементов, которые могут быть созданы",
+			"EMPLOYEE_OBJECTIVES": "Сотрудники могут самостоятельно решать свои задачи",
+			"WHO_CAN_OWN_OBJECTIVES": "Кто может владеть целями?",
+			"WHO_CAN_OWN_KEY_RESULTS": "Кто может владеть ключевыми результатами?",
+			"ADD_KPI_TO_KEY_RESULT": "Добавить KPI к ключевым результатам тип?",
+			"ADD_TASK_TO_KEY_RESULT": "Добавить задание к ключевых результатов тип?"
 		},
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Нет ключевых результатов для отображения.",
@@ -769,7 +780,9 @@
 				"DEADLINE": "Срок сдачи",
 				"STATUS": "Статус",
 				"KPI_SHOULD_BE": "Этот КПП должен быть",
-				"CURRENT_VALUE": "Текущее значение"
+				"CURRENT_VALUE": "Текущее значение",
+				"OBJECTIVE": "Цели",
+				"KEY_RESULT": "Ключевые результаты"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Объективное имя. Например: Улучшение SEO сайта",
@@ -1763,6 +1776,7 @@
 			"CANDIDATE_EDIT_DELETED": "Успешно удален",
 			"CANDIDATE_EDUCATION_REQUIRED": "Необходима информация об образовании",
 			"CANDIDATE_FEEDBACK_REQUIRED": "Требуется информация об отзыве",
+			"CANDIDATE_FEEDBACK_ABILITY": "Все интервьюеры уже оставили отзыв",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Требуется информация о документе",
 			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
@@ -1792,7 +1806,8 @@
 			"KEY_RESULT_ADDED": "Результат ключа добавлен",
 			"KEY_RESULT_DELETED": "Результат ключа удален",
 			"KEY_RESULT_UPDATED": "Результат ключа загружен",
-			"TIME_FRAME_DELETED": "Рамка времени удалена"
+			"TIME_FRAME_DELETED": "Рамка времени удалена",
+			"GOAL_GENERAL_SETTING_UPDATED": "Общие настройки цели обновлены"
 		}
 	},
 	"ACCEPT_INVITE": {

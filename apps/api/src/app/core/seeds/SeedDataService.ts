@@ -233,6 +233,7 @@ import { createRandomCandidatePersonalQualities } from '../../candidate-personal
 import { createRandomCandidateTechnologies } from '../../candidate-technologies/candidate-technologies.seed';
 import { createRandomCandidateInterview } from '../../candidate-interview/candidate-interview.seed';
 import { createRandomAwards } from '../../organization-awards/organization-awards.seed';
+import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -599,6 +600,14 @@ export class SeedDataService {
 				org: defaultOrganizations[0],
 				employees: defaultEmployees
 			})
+		);
+
+		await this.tryExecute(
+			createDefaultGeneralGoalSetting(
+				this.connection,
+				tenant,
+				defaultOrganizations
+			)
 		);
 
 		const goals = await this.tryExecute(

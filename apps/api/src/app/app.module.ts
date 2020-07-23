@@ -107,6 +107,7 @@ import { OrganizationSprintModule } from './organization-sprint/organization-spr
 import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileStorage } from './core/file-storage';
+import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
 
 @Module({
 	imports: [
@@ -416,6 +417,10 @@ import { FileStorage } from './core/file-storage';
 						module: GoalTimeFrameModule
 					},
 					{
+						path: '/goal-general-settings',
+						module: GoalGeneralSettingModule
+					},
+					{
 						path: '/goal-kpi',
 						module: GoalKpiModule
 					},
@@ -493,6 +498,7 @@ import { FileStorage } from './core/file-storage';
 		EstimateEmail,
 		GoalModule,
 		GoalTimeFrameModule,
+		GoalGeneralSettingModule,
 		KeyResultModule,
 		KeyResultUpdateModule,
 		EmployeeLevelModule,
