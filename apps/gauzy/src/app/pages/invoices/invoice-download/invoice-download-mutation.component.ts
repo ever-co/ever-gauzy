@@ -10,6 +10,7 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { TasksService } from '../../../@core/services/tasks.service';
 import { ProductService } from '../../../@core/services/product.service';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
+import { ExpensesService } from '../../../@core/services/expenses.service';
 
 @Component({
 	selector: 'ga-invoice-send',
@@ -27,7 +28,8 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
-		private productService: ProductService
+		private productService: ProductService,
+		private expensesService: ExpensesService
 	) {
 		super(translateService);
 	}
@@ -53,6 +55,9 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				service = this.productService;
+				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				service = this.expensesService;
 				break;
 			default:
 				break;

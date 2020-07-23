@@ -56,6 +56,7 @@
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
+		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "Edit",
@@ -465,7 +466,6 @@
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
 		"APPOINTMENTS": "Appointments",
-		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
@@ -659,8 +659,8 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Expenses",
 		"MUTATION": {
-			"CLIENT_IS_REQUIRED!": "Client is required!",
-			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Please select a Client from the dropdown menu below or change Expense type setting.",
+			"CONTACT_IS_REQUIRED!": "Contact is required!",
+			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
 			"ATTACH_A_RECEIPT": "Attach a receipt"
@@ -732,11 +732,22 @@
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
+		"OWNERSHIP": {
+			"EMPLOYEES": "Employees",
+			"TEAMS": "Teams",
+			"EMPLOYEES_AND_TEAMS": "Employees and Teams"
+		},
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
 			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames",
-			"ADD_KPI": "Add KPI"
+			"ADD_KPI": "Add KPI",
+			"MAX_ENTITIES": "Max Number of entites that can be created",
+			"EMPLOYEE_OBJECTIVES": "Employees can create their own objectives",
+			"WHO_CAN_OWN_OBJECTIVES": "Who can own Objectives?",
+			"WHO_CAN_OWN_KEY_RESULTS": "Who can own Key Results?",
+			"ADD_KPI_TO_KEY_RESULT": "Add KPI to Key Result Type?",
+			"ADD_TASK_TO_KEY_RESULT": "Add Task to Key Result Type?"
 		},
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
@@ -769,7 +780,9 @@
 				"DEADLINE": "Deadline",
 				"STATUS": "Status",
 				"KPI_SHOULD_BE": "This KPI should be",
-				"CURRENT_VALUE": "Current Value"
+				"CURRENT_VALUE": "Current Value",
+				"OBJECTIVE": "Objectives",
+				"KEY_RESULT": "Key Results"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Objective Name. eg. Improve Website SEO",
@@ -814,7 +827,8 @@
 			"NUMBER": "Number",
 			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "Currency",
-			"TASK": "Task"
+			"TASK": "Task",
+			"KPI": "KPI"
 		},
 		"DEADLINE": {
 			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
@@ -837,6 +851,7 @@
 				"WEIGHT": "Weight",
 				"SELECT_PROJECT": "Select Project",
 				"SELECT_TASK": "Select Task",
+				"SELECT_KPI": "Select KPI",
 				"ASSIGN_AS_OBJECTIVE": "Assign as objective"
 			},
 			"PLACEHOLDERS": {
@@ -1555,6 +1570,7 @@
 		"STATUS": "Status",
 		"SET_STATUS": "Set Status",
 		"SHOW_COLUMNS": "Show Columns",
+		"ITEM": "Item",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -1564,13 +1580,15 @@
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
+			"BY_EXPENSES": "By Expenses",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
 			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
 			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
 			"SELECT_TASKS": "Select tasks",
-			"SELECT_PRODUCTS": "Select products"
+			"SELECT_PRODUCTS": "Select products",
+			"SELECT_EXPENSES": "Select expenses"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
@@ -1585,6 +1603,7 @@
 			"HOURS_WORKED": "Hours Worked",
 			"PROJECT": "Project",
 			"PRODUCT": "Product",
+			"EXPENSE": "Expense",
 			"NO_ITEMS": "Please add invoice items",
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
@@ -1786,7 +1805,8 @@
 			"KEY_RESULT_ADDED": "Key Result added",
 			"KEY_RESULT_DELETED": "Key Result deleted",
 			"KEY_RESULT_UPDATED": "Key Result upadated",
-			"TIME_FRAME_DELETED": "Time Frame deleted"
+			"TIME_FRAME_DELETED": "Time Frame deleted",
+			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2045,6 +2065,11 @@
 		"DURATION_ERROR": "Selected Duration is not valid",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"EMPLOYEE": "Employee"
+	},
+	"EMPLOYEE_SCHEDULES_MODAL": {
+		"EMPLOYEE": "Employee",
+		"SLOTS_AVAILABLE": "Employee is available only for the below time slots, Do you still want to continue?",
+		"SLOTS_UNAVAILABLE": "Employee unavailable for this time slot"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",

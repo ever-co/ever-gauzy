@@ -32,7 +32,11 @@ export class EmployeeSelectComponent implements OnInit {
 	@Input()
 	public set reset(value: boolean | null) {
 		if (value) {
-			this.select.reset();
+			if (this.multiple) {
+				this.select.setValue([]);
+			} else {
+				this.select.reset();
+			}
 		}
 	}
 

@@ -61,7 +61,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_PROJECT_EDIT,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_TEAM_EDIT,
-			PermissionsEnum.ORG_CONTRACT_EDIT
+			PermissionsEnum.ORG_CONTRACT_EDIT,
+			PermissionsEnum.EVENT_TYPES_VIEW
 		]
 	},
 	{
@@ -116,7 +117,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_PROJECT_EDIT,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_TEAM_EDIT,
-			PermissionsEnum.ORG_CONTRACT_EDIT
+			PermissionsEnum.ORG_CONTRACT_EDIT,
+			PermissionsEnum.EVENT_TYPES_VIEW
 		]
 	},
 	{
@@ -146,7 +148,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.APPROVAL_POLICY_VIEW,
 			PermissionsEnum.REQUEST_APPROVAL_EDIT,
 			PermissionsEnum.REQUEST_APPROVAL_VIEW,
-			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
+			PermissionsEnum.EVENT_TYPES_VIEW
 		]
 	},
 	{

@@ -37,5 +37,5 @@ export class KeyResultUpdate extends TenantBase implements IKeyResultUpdate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((keyResult: KeyResultUpdate) => keyResult.keyResult)
 	@Column({ nullable: true })
-	readonly keyResultId?: string;
+	keyResultId?: string;
 }

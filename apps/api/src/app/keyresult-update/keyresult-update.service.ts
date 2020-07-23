@@ -14,4 +14,17 @@ export class KeyResultUpdateService extends TenantAwareCrudService<
 	) {
 		super(keyResultUpdateRepository);
 	}
+
+	async findByKeyResultId(keyResultId: string): Promise<KeyResultUpdate[]> {
+		return await this.repository
+			.createQueryBuilder('key_result_update')
+			.where('key_result_update.keyResultId = :keyResultId', {
+				keyResultId
+			})
+			.getMany();
+	}
+
+	async deleteBulkByKeyResultId(ids: string[]) {
+		return await this.repository.delete(ids);
+	}
 }

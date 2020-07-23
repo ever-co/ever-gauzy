@@ -23,9 +23,9 @@ export class OrganizationDocumentsService {
 
 	getAll(
 		findInput: OrganizationDocumentFindInput
-	): Observable<{ items: any[]; total: number }> {
+	): Observable<{ items: OrganizationDocument[]; total: number }> {
 		const data = JSON.stringify({ findInput });
-		return this.http.get<{ items: any[]; total: number }>(
+		return this.http.get<{ items: OrganizationDocument[]; total: number }>(
 			'/api/organization-documents',
 			{ params: { data } }
 		);

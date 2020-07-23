@@ -56,6 +56,7 @@
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
+		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "Редактиране",
@@ -465,7 +466,6 @@
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Табло",
 		"APPOINTMENTS": "Appointments",
-		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
@@ -659,8 +659,8 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Разходи",
 		"MUTATION": {
-			"CLIENT_IS_REQUIRED!": "Клиентът е задължителен!",
-			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Моля селектирай клиент от падащото меню по-долу или промени ...",
+			"CONTACT_IS_REQUIRED!": "Contact is required!",
+			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Възложи на",
 			"INCLUDE_TAXES": "Включете такси",
 			"ATTACH_A_RECEIPT": "Приложете разписка"
@@ -814,7 +814,8 @@
 			"NUMBER": "Number",
 			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "Валута",
-			"TASK": "Задача"
+			"TASK": "Задача",
+			"KPI": "KPI"
 		},
 		"DEADLINE": {
 			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
@@ -837,6 +838,7 @@
 				"WEIGHT": "Weight",
 				"SELECT_PROJECT": "Select Project",
 				"SELECT_TASK": "Select Task",
+				"SELECT_KPI": "Select KPI",
 				"ASSIGN_AS_OBJECTIVE": "Assign as objective"
 			},
 			"PLACEHOLDERS": {
@@ -1555,6 +1557,7 @@
 		"STATUS": "Статус",
 		"SET_STATUS": "Set Status",
 		"SHOW_COLUMNS": "Show Columns",
+		"ITEM": "Item",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -1564,13 +1567,15 @@
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
+			"BY_EXPENSES": "By Expenses",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
 			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
 			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
 			"SELECT_TASKS": "Select tasks",
-			"SELECT_PRODUCTS": "Select products"
+			"SELECT_PRODUCTS": "Select products",
+			"SELECT_EXPENSES": "Select expenses"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
@@ -1585,6 +1590,7 @@
 			"HOURS_WORKED": "Hours Worked",
 			"PROJECT": "Проект",
 			"PRODUCT": "Product",
+			"EXPENSE": "Разходи",
 			"NO_ITEMS": "Please add invoice items",
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
@@ -2045,6 +2051,11 @@
 		"DURATION_ERROR": "Selected Duration is not valid",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"EMPLOYEE": "Служител"
+	},
+	"EMPLOYEE_SCHEDULES_MODAL": {
+		"EMPLOYEE": "Служител",
+		"SLOTS_AVAILABLE": "Employee is available only for the below time slots, Do you still want to continue?",
+		"SLOTS_UNAVAILABLE": "Employee unavailable for this time slot"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",

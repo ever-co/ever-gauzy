@@ -17,7 +17,8 @@ import {
 	Tag,
 	Task,
 	OrganizationProjects,
-	Product
+	Product,
+	Expense
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -38,6 +39,8 @@ import { ProductService } from '../../../@core/services/product.service';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
+import { ExpensesService } from '../../../@core/services/expenses.service';
 
 @Component({
 	selector: 'ga-invoice-edit',
@@ -61,7 +64,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		private projectService: OrganizationProjectsService,
 		private productService: ProductService,
 		private tasksStore: TasksStoreService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private expensesService: ExpensesService
 	) {
 		super(translate);
 		this.observableTasks = this.tasksStore.tasks$;
@@ -91,6 +95,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	hasInvoiceEditPermission: boolean;
 	tags: Tag[] = [];
 	tasks: Task[];
+	expenses: Expense[] = [];
 	observableTasks: Observable<Task[]>;
 
 	subtotal = 0;
@@ -113,29 +118,25 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.route.paramMap.subscribe((params) => {
 			this.invoiceId = params.get('id');
 		});
-		this.executeInitialFunctions();
+		this.loadData();
 	}
 
-	async getInvoice() {
+	async loadData() {
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
 			'invoiceItems',
-			'tags'
+			'tags',
+			'toClient',
+			'fromOrganization'
 		]);
 		this.invoice = invoice;
-		this.invoiceItems = this.invoice.invoiceItems;
+		this.invoiceItems = invoice.invoiceItems;
+		this.selectedClient = invoice.toClient;
+		this.organization = invoice.fromOrganization;
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 		await this._loadOrganizationData();
-	}
-
-	async executeInitialFunctions() {
-		await this.getInvoice();
-		if (this.invoice) {
-			this.invoiceDate = new Date(this.invoice.invoiceDate);
-			this.dueDate = new Date(this.invoice.dueDate);
-			this.loadSmartTable();
-			this._applyTranslationOnSmartTable();
-			this.seedFormData(this.invoice);
-			this.form.get('currency').disable();
-		}
+		this.seedFormData(invoice);
+		this.form.get('currency').disable();
 	}
 
 	initializeForm() {
@@ -170,8 +171,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 	seedFormData(invoice: Invoice) {
 		this.form.get('invoiceNumber').setValue(invoice.invoiceNumber);
-		this.form.get('invoiceDate').setValue(this.invoiceDate);
-		this.form.get('dueDate').setValue(this.dueDate);
+		this.form.get('invoiceDate').setValue(new Date(invoice.invoiceDate));
+		this.form.get('dueDate').setValue(new Date(invoice.dueDate));
 		this.form.get('discountValue').setValue(invoice.discountValue);
 		this.form.get('tax').setValue(invoice.tax);
 		this.form.get('tax2').setValue(invoice.tax2);
@@ -291,6 +292,26 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					}
 				};
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				this.settingsSmartTable['columns']['selectedItem'] = {
+					title: this.getTranslation(
+						'INVOICES_PAGE.INVOICE_ITEM.EXPENSE'
+					),
+					width: '13%',
+					editor: {
+						type: 'custom',
+						component: InvoiceExpensesSelectorComponent
+					},
+					valuePrepareFunction: (cell) => {
+						if (this.expenses) {
+							const expense = this.expenses.find(
+								(e) => e.id === cell
+							);
+							return `${expense.purpose}`;
+						}
+					}
+				};
+				break;
 			default:
 				break;
 		}
@@ -322,7 +343,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		} else if (
 			this.invoice.invoiceType ===
 				InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
-			this.invoice.invoiceType === InvoiceTypeEnum.BY_PRODUCTS
+			this.invoice.invoiceType === InvoiceTypeEnum.BY_PRODUCTS ||
+			this.invoice.invoiceType === InvoiceTypeEnum.BY_EXPENSES
 		) {
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
@@ -364,7 +386,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			filter: false,
 			width: '13%'
 		};
-		if (this.organization.separateInvoiceItemTaxAndDiscount) {
+		if (
+			this.organization &&
+			this.organization.separateInvoiceItemTaxAndDiscount
+		) {
 			this.settingsSmartTable['columns']['applyTax'] = {
 				title: this.getTranslation('INVOICES_PAGE.APPLY_TAX'),
 				editor: {
@@ -401,68 +426,56 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	private async _loadOrganizationData() {
-		this.store.selectedOrganization$
+		const orgData = await this.organizationsService
+			.getById(this.organization.id, [OrganizationSelectInput.currency])
+			.pipe(first())
+			.toPromise();
+
+		if (orgData && this.currency) {
+			this.currency.setValue(orgData.currency);
+		}
+
+		this.employeeService
+			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (organization) => {
-				if (organization) {
-					this.organization = organization;
-
-					this.employeeService
-						.getAll(['user'])
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe(async (employees) => {
-							this.employees = employees.items.filter((emp) => {
-								return (
-									emp.orgId === organization.id ||
-									organization.id === ''
-								);
-							});
-							await this.loadInvoiceItemData();
-							this.calculateTotal();
-						});
-
-					const products = await this.productService.getAll([], {
-						organizationId: organization.id
-					});
-					this.products = products.items;
-
-					this.tasksStore.fetchTasks();
-					this.observableTasks.subscribe((data) => {
-						this.tasks = data;
-					});
-
-					const projects = await this.projectService.getAll([], {
-						organizationId: organization.id
-					});
-					this.projects = projects.items;
-
-					const orgData = await this.organizationsService
-						.getById(organization.id, [
-							OrganizationSelectInput.currency
-						])
-						.pipe(first())
-						.toPromise();
-
-					if (orgData && this.currency) {
-						this.currency.setValue(orgData.currency);
-					}
-
-					const res = await this.organizationContactService.getAll(
-						['projects'],
-						{
-							organizationId: organization.id
-						}
+			.subscribe(async (employees) => {
+				this.employees = employees.items.filter((emp) => {
+					return (
+						emp.orgId === this.organization.id ||
+						this.organization.id === ''
 					);
-
-					if (res) {
-						this.clients = res.items;
-						const client = this.clients.filter(
-							(c) => c.id === this.invoice.clientId
-						);
-						this.selectedClient = client[0];
-					}
-				}
+				});
 			});
+
+		const projects = await this.projectService.getAll([], {
+			organizationId: this.organization.id
+		});
+		this.projects = projects.items;
+
+		this.tasksStore.fetchTasks();
+		this.observableTasks.subscribe((data) => {
+			this.tasks = data;
+		});
+
+		const products = await this.productService.getAll([], {
+			organizationId: this.organization.id
+		});
+		this.products = products.items;
+
+		const clients = await this.organizationContactService.getAll([], {
+			organizationId: this.organization.id
+		});
+		this.clients = clients.items;
+
+		const expenses = await this.expensesService.getAll([], {
+			typeOfExpense: 'Billable to Client',
+			organization: {
+				id: this.organization.id
+			}
+		});
+		this.expenses = expenses.items;
+		await this.loadInvoiceItemData();
+		this.calculateTotal();
 	}
 
 	async updateInvoice(status: string, sendTo?: string) {
@@ -539,6 +552,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 						break;
 					case InvoiceTypeEnum.BY_PRODUCTS:
 						itemToAdd['productId'] = invoiceItem.selectedItem;
+						break;
+					case InvoiceTypeEnum.BY_EXPENSES:
+						itemToAdd['expenseId'] = invoiceItem.selectedItem;
 						break;
 					default:
 						break;
@@ -673,6 +689,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					case InvoiceTypeEnum.BY_PRODUCTS:
 						itemToAdd['productId'] = invoiceItem.selectedItem;
 						break;
+					case InvoiceTypeEnum.BY_EXPENSES:
+						itemToAdd['expenseId'] = invoiceItem.selectedItem;
+						break;
 					default:
 						break;
 				}
@@ -729,6 +748,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					break;
 				case InvoiceTypeEnum.BY_PRODUCTS:
 					data['selectedItem'] = item.productId;
+					break;
+				case InvoiceTypeEnum.BY_EXPENSES:
+					data['selectedItem'] = item.expenseId;
 					break;
 				default:
 					break;

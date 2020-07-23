@@ -19,6 +19,7 @@ import { Employee } from '../employee/employee.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
+import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 
 @Entity('key_result')
 export class KeyResult extends TenantBase implements IKeyResult {
@@ -86,6 +87,17 @@ export class KeyResult extends TenantBase implements IKeyResult {
 	@RelationId((keyResult: KeyResult) => keyResult.task)
 	@Column({ nullable: true })
 	readonly taskId?: string;
+
+	@ApiProperty({ type: GoalKPI })
+	@ManyToOne((type) => GoalKPI, { nullable: true })
+	@JoinColumn({ name: 'kpiId' })
+	@IsOptional()
+	kpi?: GoalKPI;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((keyResult: KeyResult) => keyResult.task)
+	@Column({ nullable: true })
+	readonly kpiId?: string;
 
 	@ApiProperty({ type: String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)
