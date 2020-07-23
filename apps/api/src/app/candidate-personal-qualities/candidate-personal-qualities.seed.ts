@@ -8,8 +8,15 @@ import { CandidateInterview } from '../candidate-interview/candidate-interview.e
 export const createRandomCandidatePersonalQualities = async (
   connection: Connection,
   tenants: Tenant[],
-  tenantCandidatesMap: Map<Tenant, Candidate[]>
+  tenantCandidatesMap: Map<Tenant, Candidate[]> | void
 ): Promise<CandidatePersonalQualities[]> => {
+  if(!tenantCandidatesMap){
+    console.warn(
+      'Warning: tenantCandidatesMap not found, CandidatePersonalQualities will not be created'
+    );
+    return;
+  }
+
   let candidates: CandidatePersonalQualities[] = [];
   for (const tenant of tenants) {
     let tenantCandidates = tenantCandidatesMap.get(tenant);

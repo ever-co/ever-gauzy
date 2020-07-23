@@ -7,8 +7,15 @@ import { CandidateExperience } from './candidate-experience.entity';
 export const createRandomCandidateExperience = async (
   connection: Connection,
   tenants: Tenant[],
-  tenantCandidatesMap: Map<Tenant, Candidate[]>
+  tenantCandidatesMap: Map<Tenant, Candidate[]> | void
 ): Promise<CandidateExperience[]> => {
+
+  if(!tenantCandidatesMap){
+    console.warn(
+      'Warning: tenantCandidatesMap not found, CandidateExperience will not be created'
+    );
+    return;
+  }
 
   let candidates: CandidateExperience[] = [];
 

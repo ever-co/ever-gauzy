@@ -220,7 +220,6 @@ import {
 	createRandomCandidateSkills
 } from '../../candidate-skill/candidate-skill.seed';
 import {
-	createCandidateExperiences,
 	createRandomCandidateExperience
 } from '../../candidate-experience/candidate-experience.seed';
 import {
@@ -229,8 +228,10 @@ import {
 } from '../../candidate-education/candidate-education.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
 import { createRandomOrganizationContact } from '../../organization-contact/organization-contact.seed';
-import { createRandomCandidateEducations } from '../../candidate-education/candidate-education.seed';
 import { createRandomAvailabilitySlots } from '../../availability-slots/availability-slots.seed';
+import { createRandomCandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
+import { createRandomCandidateTechnologies } from '../../candidate-technologies/candidate-technologies.seed';
+import { createRandomCandidateInterview } from '../../candidate-interview/candidate-interview.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -564,9 +565,6 @@ export class SeedDataService {
 			createCandidateEducations(this.connection, defaultCandidates)
 		);
 
-		await this.tryExecute(
-			createCandidateExperiences(this.connection, defaultCandidates)
-		);
 		await this.tryExecute(
 			createCandidateSkills(this.connection, defaultCandidates)
 		);
@@ -981,6 +979,54 @@ export class SeedDataService {
 				tenantEmployeeMap
 			)
 		);
+
+    await this.tryExecute(
+      createRandomCandidateEducations(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidateExperience(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidateSkills(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidateInterview(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidateTechnologies(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidatePersonalQualities(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
 
 		await this.tryExecute(
 			createRandomCandidateEducations(
