@@ -66,6 +66,12 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	@Column({ nullable: true })
 	productId?: string;
 
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	expenseId?: string;
+
 	@ApiPropertyOptional({ type: Invoice })
 	@ManyToOne((type) => Invoice, (invoice) => invoice.invoiceItems, {
 		onDelete: 'SET NULL'

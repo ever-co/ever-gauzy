@@ -72,6 +72,7 @@ export enum InvoiceTypeEnum {
 	BY_PROJECT_HOURS = 'By Project Hours',
 	BY_TASK_HOURS = 'By Task Hours',
 	BY_PRODUCTS = 'By Products',
+	BY_EXPENSES = 'By Expenses',
 	DETAILS_INVOICE_ITEMS = 'Details Invoice Items'
 }
 
