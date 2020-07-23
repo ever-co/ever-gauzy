@@ -63,6 +63,7 @@ import { TasksStoreService } from '../../@core/services/tasks-store.service';
 import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
 import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-apply-tax-discount.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
+import { InvoiceExpensesSelectorComponent } from './table-components/invoice-expense-selector.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -140,7 +141,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
 		InvoicePaymentOverdueComponent,
-		InvoiceApplyTaxDiscountComponent
+		InvoiceApplyTaxDiscountComponent,
+		InvoiceExpensesSelectorComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -165,7 +167,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
 		InvoicePaymentOverdueComponent,
-		InvoiceApplyTaxDiscountComponent
+		InvoiceApplyTaxDiscountComponent,
+		InvoiceExpensesSelectorComponent
 	]
 })
 export class InvoicesModule {}
