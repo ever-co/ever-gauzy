@@ -232,6 +232,7 @@ import { createRandomAvailabilitySlots } from '../../availability-slots/availabi
 import { createRandomCandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
 import { createRandomCandidateTechnologies } from '../../candidate-technologies/candidate-technologies.seed';
 import { createRandomCandidateInterview } from '../../candidate-interview/candidate-interview.seed';
+import { createRandomAwards } from '../../organization-awards/organization-awards.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -1025,6 +1026,13 @@ export class SeedDataService {
         this.connection,
         tenants,
         tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(createRandomAwards(
+        this.connection,
+        tenants,
+        tenantOrganizationsMap
       )
     );
 
