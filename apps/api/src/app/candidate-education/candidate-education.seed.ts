@@ -1,47 +1,92 @@
+import { IEducation, Candidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { Candidate } from '../candidate/candidate.entity';
 import { CandidateEducation } from './candidate-education.entity';
-import * as faker from 'faker';
+import { Tenant } from '../tenant/tenant.entity';
+
+const candidateEducations: IEducation[] = [
+	{
+		schoolName: 'MIT',
+		degree: 'Master',
+		completionDate: new Date(2017, 4, 4),
+		field: 'Computer Science'
+	}
+];
+
+export const createCandidateEducations = async (
+	connection: Connection,
+	candidates: Candidate[] | void
+): Promise<CandidateEducation[]> => {
+	let defaultCandidateEducation = [];
+
+	if (!candidates) {
+		console.warn(
+			'Warning: candidates not found, CandidateEducation will not be created'
+		);
+		return;
+	}
+	candidates.forEach((candidate) => {
+		const educations = candidateEducations.map((education) => ({
+			schoolName: education.schoolName,
+			degree: education.degree,
+			completionDate: education.completionDate,
+			field: education.field,
+			candidateId: candidate.id
+		}));
+		defaultCandidateEducation = [
+			...defaultCandidateEducation,
+			...educations
+		];
+	});
+	insertCandidateEducations(connection, defaultCandidateEducation);
+
+	return defaultCandidateEducation;
+};
 
 export const createRandomCandidateEducations = async (
 	connection: Connection,
 	tenants: Tenant[],
 	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
-): Promise<CandidateEducation[]> => {
-	let candidates: CandidateEducation[] = [];
-	let degrees = ['Bachelor', 'Master', 'PhD'];
-
-	for (const tenant of tenants) {
-		let tenantCandidates = await connection.manager.find(Candidate, {
-			where: [{ tenant: tenant }]
-		});
-		for (const tenantCandidate of tenantCandidates) {
-			for (let name of degrees) {
-				let candidate = new CandidateEducation();
-				candidate.schoolName = faker.company.companyName();
-				candidate.degree = name;
-				candidate.field = faker.name.jobArea();
-				candidate.completionDate = faker.date.past();
-				candidate.candidateId = tenantCandidate.id;
-				candidate.candidate = tenantCandidate;
-				candidates.push(candidate);
-			}
-		}
+): Promise<Map<Candidate, CandidateEducation[]>> => {
+	if (!tenantCandidatesMap) {
+		console.warn(
+			'Warning: tenantCandidatesMap not found, CandidateEducation will not be created'
+		);
+		return;
 	}
-	await insertCandidateEducation(connection, candidates);
 
-	return candidates;
+	let candidateEducation = [];
+	const candidateEducationsMap: Map<Candidate, any[]> = new Map();
+
+	(tenants || []).forEach((tenant) => {
+		const candidates = tenantCandidatesMap.get(tenant);
+
+		(candidates || []).forEach((candidate) => {
+			const educations = candidateEducations.map((education) => ({
+				schoolName: education.schoolName,
+				degree: education.degree,
+				completionDate: education.completionDate,
+				field: education.field,
+				candidateId: candidate.id
+			}));
+
+			candidateEducationsMap.set(candidate, educations);
+			candidateEducation = [...candidateEducations, ...educations];
+		});
+	});
+
+	await insertCandidateEducations(connection, candidateEducation);
+
+	return candidateEducationsMap;
 };
 
-const insertCandidateEducation = async (
+const insertCandidateEducations = async (
 	connection: Connection,
-	CandidateEducations: CandidateEducation[]
+	educations: CandidateEducation[]
 ) => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(CandidateEducation)
-		.values(CandidateEducations)
+		.values(educations)
 		.execute();
 };

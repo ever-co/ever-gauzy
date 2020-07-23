@@ -8,6 +8,7 @@ import { OrganizationProjectsService } from '../../../../@core/services/organiza
 import { TasksService } from '../../../../@core/services/tasks.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { ProductService } from '../../../../@core/services/product.service';
+import { ExpensesService } from '../../../../@core/services/expenses.service';
 
 @Component({
 	selector: 'ga-invoice-view-inner',
@@ -32,7 +33,8 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
-		private productService: ProductService
+		private productService: ProductService,
+		private expensesService: ExpensesService
 	) {
 		super(translateService);
 	}
@@ -54,7 +56,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 			},
 			columns: {
 				name: {
-					title: this.getTranslation('INVOICES_PAGE.NAME'),
+					title: this.getTranslation('INVOICES_PAGE.ITEM'),
 					type: 'text',
 					filter: false
 				},
@@ -133,6 +135,12 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 						item.productId
 					);
 					data['name'] = product.name;
+					break;
+				case InvoiceTypeEnum.BY_EXPENSES:
+					const expense = await this.expensesService.getById(
+						item.expenseId
+					);
+					data['name'] = expense.purpose;
 					break;
 				default:
 					delete this.settingsSmartTable['columns']['name'];

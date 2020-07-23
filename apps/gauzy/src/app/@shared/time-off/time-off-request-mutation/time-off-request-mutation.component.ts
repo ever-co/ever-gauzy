@@ -104,15 +104,17 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		}
 	}
 
-	getRequestForm() {
+	getRequestForm(reqType: string) {
 		this.documentsService
-			.getAll({
-				name: 'Request Days Off',
-				organizationId: this.organizationId
-			})
+			.getAll({ organizationId: this.organizationId })
 			.pipe(first())
 			.subscribe((docs) => {
-				this.downloadDocUrl = docs.items[0].documentUrl;
+				if (reqType === 'paid') {
+					this.downloadDocUrl = docs.items[0].documentUrl;
+				} else {
+					this.downloadDocUrl = docs.items[1].documentUrl;
+				}
+
 				window.open(`${this.downloadDocUrl}`);
 			});
 	}

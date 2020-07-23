@@ -11,6 +11,7 @@ export interface InvoiceItem extends IBaseEntityModel {
 	employeeId?: string;
 	projectId?: string;
 	productId?: string;
+	expenseId?: string;
 	applyTax?: boolean;
 	applyDiscount?: boolean;
 }

@@ -94,13 +94,13 @@ export class Expense extends TenantBase implements IExpense {
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
-	clientId?: string;
+	organizationContactId?: string;
 
 	@ApiPropertyOptional({ type: String })
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
-	clientName?: string;
+	organizationContactName?: string;
 
 	@ApiPropertyOptional({ type: String })
 	@Index()

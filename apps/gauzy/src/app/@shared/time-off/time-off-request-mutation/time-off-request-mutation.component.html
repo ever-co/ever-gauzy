@@ -158,13 +158,26 @@
 
 			<div class="row" *ngIf="!isHoliday">
 				<div class="form-group col-6">
+					<div>
+						<label class="label" for="end"
+							>Download Request Form</label
+						>
+					</div>
 					<button
 						nbButton
-						status="primary"
-						class="download-btn"
-						(click)="getRequestForm()"
+						status="basic"
+						class="download-btn mr-4"
+						(click)="getRequestForm('paid')"
 					>
-						Download Request Form
+						Paid Days off
+					</button>
+					<button
+						nbButton
+						status="basic"
+						class="download-btn"
+						(click)="getRequestForm('unpaid')"
+					>
+						Unpaid Days off
 					</button>
 				</div>
 				<div class="form-group col-6">
