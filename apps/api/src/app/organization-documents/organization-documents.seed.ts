@@ -9,14 +9,21 @@ export const createOrganizationDocuments = async (
 	const documents: OrganizationDocuments[] = [];
 
 	for (const organization of organizations) {
-		const document = new OrganizationDocuments();
+		const requestPaidDaysOff = new OrganizationDocuments();
+		const requestUnpaidDaysOff = new OrganizationDocuments();
 
-		document.name = 'Request Days Off';
-		document.organizationId = organization.id;
-		document.documentUrl =
+		requestPaidDaysOff.name = 'Paid Days off Request';
+		requestPaidDaysOff.organizationId = organization.id;
+		requestPaidDaysOff.documentUrl =
 			'http://res.cloudinary.com/evereq/image/upload/v1595424362/everbie-products-images/qanadywgn3gxte7kwtwu.pdf';
 
-		documents.push(document);
+		requestUnpaidDaysOff.name = 'Unpaid Days off Request';
+		requestUnpaidDaysOff.documentUrl =
+			'http://res.cloudinary.com/evereq/image/upload/v1595506200/everbie-products-images/am3ujibzu660swicfcsw.pdf';
+		requestUnpaidDaysOff.organizationId = organization.id;
+
+		documents.push(requestPaidDaysOff);
+		documents.push(requestUnpaidDaysOff);
 	}
 
 	return await connection.manager.save(documents);
