@@ -54,7 +54,10 @@ import { createCountries } from '../../country/country.seed';
 import { OrganizationTeam } from '../../organization-team/organization-team.entity';
 import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
 import { Country } from '../../country';
-import { createDefaultTeams, createRandomTeam } from '../../organization-team/organization-team.seed';
+import {
+	createDefaultTeams,
+	createRandomTeam
+} from '../../organization-team/organization-team.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
@@ -211,6 +214,7 @@ import { createRandomInvoiceItem } from '../../invoice-item/invoice-item.seed';
 import { createRandomInvoice } from '../../invoice/invoice.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
 import { createRandomOrganizationContact } from '../../organization-contact/organization-contact.seed';
+import { createRandomCandidateEducations } from '../../candidate-education/candidate-education.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -310,7 +314,7 @@ const randomSeedConfig = {
 	equipmentPerTenant: 20, // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
 	equipmentSharingPerTenant: 20, // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
 	proposalsSharingPerOrganizations: 30, // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
-  contacts:50 // The number of random contacts to be seeded.
+	contacts: 50 // The number of random contacts to be seeded.
 };
 
 @Injectable()
@@ -684,8 +688,14 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-      createRandomTeam(this.connection, tenants, tenantEmployeeMap,tenantOrganizationsMap,roles)
-    );
+			createRandomTeam(
+				this.connection,
+				tenants,
+				tenantEmployeeMap,
+				tenantOrganizationsMap,
+				roles
+			)
+		);
 
 		await this.tryExecute(
 			createRandomCandidateDocuments(
@@ -737,7 +747,12 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(createRandomContacts(this.connection,randomSeedConfig.contacts || 10));
+		await this.tryExecute(
+			createRandomContacts(
+				this.connection,
+				randomSeedConfig.contacts || 10
+			)
+		);
 
 		await this.tryExecute(
 			createRandomEquipments(
@@ -869,13 +884,15 @@ export class SeedDataService {
 			createRandomTimesheet(this.connection, this.defaultProjects)
 		);
 
-    await this.tryExecute(createRandomOrganizationContact(
-      this.connection,
-      tenants,
-      tenantEmployeeMap,
-      tenantOrganizationsMap,
-      10
-    ));
+		await this.tryExecute(
+			createRandomOrganizationContact(
+				this.connection,
+				tenants,
+				tenantEmployeeMap,
+				tenantOrganizationsMap,
+				10
+			)
+		);
 
 		await this.tryExecute(
 			createRandomInvoice(
@@ -891,6 +908,14 @@ export class SeedDataService {
 				tenants,
 				tenantOrganizationsMap,
 				tenantEmployeeMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomCandidateEducations(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
 			)
 		);
 	}
