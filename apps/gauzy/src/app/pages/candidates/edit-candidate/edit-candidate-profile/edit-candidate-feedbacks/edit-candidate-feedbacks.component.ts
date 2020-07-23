@@ -224,7 +224,6 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	async editFeedback(index: number, id: string) {
 		this.currentFeedback = this.feedbackList[index];
 		this._initializeForm();
-		this.loadFeedbacks();
 		this.loadCriterions(this.currentFeedback);
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.feedbacks.patchValue([this.currentFeedback]);

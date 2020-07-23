@@ -79,10 +79,9 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	private async loadInterview() {
 		this.loading = true;
 		const res = await this.candidateInterviewService.getAll(
-			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
+			['personalQualities', 'interviewers', 'technologies', 'feedbacks'],
 			{ candidateId: this.candidateId }
 		);
-
 		if (res) {
 			this.interviewList = res.items;
 			this.showPastCheckbox =
@@ -114,6 +113,11 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				this.toastrSuccess('CREATED');
 				this.loadInterview();
 			}
+		} else {
+			this.toastrService.warning(
+				this.getTranslation('TOASTR.TITLE.WARNING'),
+				this.getTranslation('TOASTR.MESSAGE.CANDIDATE_FEEDBACK_ABILITY')
+			);
 		}
 	}
 

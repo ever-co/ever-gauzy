@@ -3,7 +3,12 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
-import { ICandidateInterview, Candidate, Employee } from '@gauzy/models';
+import {
+	ICandidateInterview,
+	Candidate,
+	Employee,
+	ICandidateFeedback
+} from '@gauzy/models';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -12,6 +17,7 @@ import { FormControl } from '@angular/forms';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { DeleteInterviewComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
+import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 @Component({
 	selector: 'ga-interview-panel',
 	templateUrl: './interview-panel.component.html',
@@ -29,6 +35,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	interviewSearch: FormControl = new FormControl();
 	candidateSearch: FormControl = new FormControl();
 	sort: FormControl = new FormControl();
+	feedbacks: ICandidateFeedback[];
 	isResetSelect: boolean;
 	filter = {
 		name: '',
@@ -43,12 +50,14 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		private candidateInterviewService: CandidateInterviewService,
 		private candidatesService: CandidatesService,
 		private employeesService: EmployeesService,
+		private candidateFeedbacksService: CandidateFeedbacksService,
 		private router: Router
 	) {
 		super(translateService);
 	}
 	async ngOnInit() {
 		this.loadInterviews();
+		this.loadFeedbacks();
 		this.interviewSearch.valueChanges.subscribe((item) => {
 			this.filterBySearch(item, 'title');
 		});
@@ -68,7 +77,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		this.isResetSelect = false;
 		this.filterInterviews();
 	}
-
 	filterInterviews() {
 		//TO FIX
 		// 0
@@ -81,7 +89,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			this.interviewList = this.findByTitle(this.allInterviews);
 		if (!this.filter.name && !this.filter.title && this.filter.empIds)
 			this.interviewList = this.findByEmployee(this.allInterviews);
-
 		// 2
 		if (this.filter.name && this.filter.title && !this.filter.empIds)
 			this.interviewList = this.findByTitle(
@@ -91,7 +98,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			this.interviewList = this.findByEmployee(
 				this.findByTitle(this.allInterviews)
 			);
-
 		if (this.filter.name && !this.filter.title && this.filter.empIds)
 			this.interviewList = this.findByEmployee(
 				this.findByName(this.allInterviews)
@@ -172,6 +178,14 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				return this.interviewList;
 		}
 	}
+	async loadFeedbacks() {
+		const result = await this.candidateFeedbacksService.getAll([
+			'interviewer'
+		]);
+		if (result) {
+			this.feedbacks = result.items;
+		}
+	}
 	async loadInterviews() {
 		this.loading = true;
 		const interviews = await this.candidateInterviewService.getAll([
@@ -214,6 +228,14 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 					this.loading = false;
 				});
 		}
+	}
+	isInterviewerActive(interviewId, employeeId) {
+		return this.feedbacks.find(
+			(el) =>
+				el.interviewId === interviewId &&
+				el.interviewer &&
+				employeeId === el.interviewer.employeeId
+		);
 	}
 	async loadEmployee(interview: ICandidateInterview) {
 		const employees = [];
