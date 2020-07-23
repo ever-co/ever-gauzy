@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { GoalTimeFrame, GoalFindInput, KPI, KpiFindInput } from '@gauzy/models';
+import {
+	GoalTimeFrame,
+	GoalFindInput,
+	KPI,
+	SettingFindInput,
+	GoalGeneralSetting
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { throwError } from 'rxjs';
 import { catchError, tap, first } from 'rxjs/operators';
@@ -15,12 +21,18 @@ interface IKpiResponse {
 	count: number;
 }
 
+interface IGeneralSettingResponse {
+	items: GoalGeneralSetting[];
+	count: number;
+}
+
 @Injectable({
 	providedIn: 'root'
 })
 export class GoalSettingsService {
 	private readonly TIME_FRAME_URL = '/api/goal-time-frame';
 	private readonly KPI_URL = '/api/goal-kpi';
+	private readonly GENERAL_SETTINGS_URL = '/api/goal-general-settings';
 	constructor(
 		private _http: HttpClient,
 		private toastrService: NbToastrService
@@ -90,7 +102,7 @@ export class GoalSettingsService {
 			.toPromise();
 	}
 
-	getAllKPI(findInput?: KpiFindInput): Promise<IKpiResponse> {
+	getAllKPI(findInput?: SettingFindInput): Promise<IKpiResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
 			.get<IKpiResponse>(`${this.KPI_URL}/all`, {
@@ -112,6 +124,39 @@ export class GoalSettingsService {
 			.put<KPI>(`${this.KPI_URL}/${id}`, kpiData)
 			.pipe(
 				tap(() => this.toastrService.primary('KPI Updated', 'Success'))
+			)
+			.toPromise();
+	}
+
+	// General Goal Settings
+	getAllGeneralSettings(
+		findInput?: SettingFindInput
+	): Promise<IGeneralSettingResponse> {
+		const data = JSON.stringify({ findInput });
+		return this._http
+			.get<IGeneralSettingResponse>(`${this.GENERAL_SETTINGS_URL}/all`, {
+				params: { data }
+			})
+			.pipe(catchError((error) => this.errorHandler(error)))
+			.toPromise();
+	}
+
+	updateGeneralSettings(
+		id: string,
+		generalSettingData: GoalGeneralSetting
+	): Promise<GoalGeneralSetting> {
+		return this._http
+			.put<GoalGeneralSetting>(
+				`${this.GENERAL_SETTINGS_URL}/${id}`,
+				generalSettingData
+			)
+			.pipe(
+				tap(() =>
+					this.toastrService.primary(
+						'Goal General Settings Updated',
+						'Success'
+					)
+				)
 			)
 			.toPromise();
 	}

@@ -12,7 +12,9 @@ import {
 	NbInputModule,
 	NbDialogModule,
 	NbListModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbCheckboxModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -54,6 +56,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbTabsetModule,
 		ThemeModule,
 		CardGridModule,
+		NbCheckboxModule,
+		NbToggleModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
