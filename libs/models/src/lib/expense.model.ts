@@ -16,8 +16,8 @@ export interface Expense extends IBaseEntityModel {
 	typeOfExpense?: string;
 	category: IExpenseCategory;
 	categoryId: string;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	projectId?: string;
 	projectName?: string;
 	notes?: string;
@@ -123,7 +123,7 @@ export interface SplitExpenseFindInput {
 export enum ExpenseTypesEnum {
 	TAX_DEDUCTIBLE = 'Tax Deductible',
 	NOT_TAX_DEDUCTIBLE = 'Not Tax Deductible',
-	BILLABLE_TO_CLIENT = 'Billable to Client'
+	BILLABLE_TO_CONTACT = 'Billable to Contact'
 }
 
 export enum TaxTypesEnum {
