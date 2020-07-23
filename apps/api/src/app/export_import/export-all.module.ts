@@ -99,158 +99,441 @@ import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { OrganizationSprintService } from '../organization-sprint/organization-sprint.service';
+import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
+import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
+import { CandidateExperience } from '../candidate-experience/candidate-experience.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
+import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
+import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
+import { CandidateEducation } from '../candidate-education/candidate-education.entity';
+import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
+import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
+import { CandidateSource } from '../candidate-source/candidate-source.entity';
+import { Deal } from '../deal/deal.entity';
+import {
+	EmployeeAppointment,
+	EmployeeAppointmentService
+} from '../employee-appointment';
+import { EventType } from '../event-types/event-type.entity';
+import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
+import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
+import { Goal } from '../goal/goal.entity';
+import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
+import { HelpCenterAuthor } from '../help-center-author/help-center-author.entity';
+import { HelpCenter } from '../help-center/help-center.entity';
+import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { Integration } from '../integration/integration.entity';
+import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
+import { IntegrationMap } from '../integration-map/integration-map.entity';
+import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
+import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
+import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
+import { KeyResult } from '../keyresult/keyresult.entity';
+import { Language } from '../language/language.entity';
+import { OrganizationAwards } from '../organization-awards/organization-awards.entity';
+import { OrganizationLanguages } from '../organization-languages/organization-languages.entity';
+import { Payment } from '../payment/payment.entity';
+import { Pipeline } from '../pipeline/pipeline.entity';
+import { Product } from '../product/product.entity';
+import { Skill } from '../skills/skill.entity';
+import { Stage } from '../stage/stage.entity';
+import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
+import { UpworkService } from '../upwork/upwork.service';
+import { RequestApprovalService } from '../request-approval/request-approval.service';
+import { AvailabilitySlotsService } from '../availability-slots/availability-slots.service';
+import { CandidateCriterionsRatingService } from '../candidate-criterions-rating/candidate-criterion-rating.service';
+import { CandidateDocumentsService } from '../candidate-documents/candidate-documents.service';
+import { CandidateExperienceService } from '../candidate-experience/candidate-experience.service';
+import { CandidateFeedbacksService } from '../candidate-feedbacks/candidate-feedbacks.service';
+import { CandidateInterviewService } from '../candidate-interview/candidate-interview.service';
+import { CandidateEducationService } from '../candidate-education/candidate-education.service';
+import { CandidateInterviewersService } from '../candidate-interviewers/candidate-interviewers.service';
+import { CandidatePersonalQualitiesService } from '../candidate-personal-qualities/candidate-personal-qualities.service';
+import { CandidateSkillService } from '../candidate-skill/candidate-skill.service';
+import { CandidateSourceService } from '../candidate-source/candidate-source.service';
+import { CandidateTechnologiesService } from '../candidate-technologies/candidate-technologies.service';
+import { DealService } from '../deal/deal.service';
+import { EmployeeStatisticsService } from '../employee-statistics';
+import { GoalService } from '../goal/goal.service';
+import { GoalKpiService } from '../goal-kpi/goal-kpi.service';
+import { GoalTimeFrameService } from '../goal-time-frame/goal-time-frame.service';
+import { EventTypeService } from '../event-types/event-type.service';
+import { HelpCenterService } from '../help-center/help-center.service';
+import { HelpCenterArticleService } from '../help-center-article/help-center-article.service';
+import { HelpCenterAuthorService } from '../help-center-author/help-center-author.service';
+import { TimerService } from '../timesheet/timer/timer.service';
+import { StageService } from '../stage/stage.service';
+import { SkillService } from '../skills/skill.service';
+import { TimeOffRequestService } from '../time-off-request/time-off-request.service';
+import { PipelineService } from '../pipeline/pipeline.service';
+import { PaymentService } from '../payment/payment.service';
+import { ProductService } from '../product/product.service';
+import { ProductOption } from '../product-option/product-option.entity';
+import { ProductVariantSettings } from '../product-settings/product-settings.entity';
+import { ProductType } from '../product-type/product-type.entity';
+import { ProductVariant } from '../product-variant/product-variant.entity';
+import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
+import { ProductTypeService } from '../product-type/product-type.service';
+import { ProductVariantSettingService } from '../product-settings/product-settings.service';
+import { ProductOptionService } from '../product-option/product-option.service';
+import { ProductVariantService } from '../product-variant/product-variant.service';
+import { ProductVariantPriceService } from '../product-variant-price/product-variant-price.service';
+import { OrganizationAwardsService } from '../organization-awards/organization-awards.service';
+import { OrganizationLanguagesService } from '../organization-languages/organization-languages.service';
+import { LanguageService } from '../language/language.service';
+import { IntegrationService } from '../integration/integration.service';
+import { IntegrationMapService } from '../integration-map/integration-map.service';
+import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
+import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
+import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
+import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
+import { KeyResultService } from '../keyresult/keyresult.service';
+import { KeyResultUpdateService } from '../keyresult-update/keyresult-update.service';
+import { ProductCategory } from '../product-category/product-category.entity';
+import { ProductCategoryService } from '../product-category/product-category.service';
+import { OrganizationDocuments } from '../organization-documents/organization-documents.entity';
+import { OrganizationDocumentsService } from '../organization-documents/organization-documents.service';
 
 @Module({
 	imports: [
 		CqrsModule,
 		TypeOrmModule.forFeature([
+			Activity,
+			AppointmentEmployees,
+			ApprovalPolicy,
+			AvailabilitySlots,
+
+			Candidate,
+			CandidateCriterionsRating,
+			CandidateDocument,
+			CandidateEducation,
+			CandidateExperience,
+			CandidateExperience,
+			CandidateFeedback,
+			CandidateInterview,
+			CandidateInterviewers,
+			CandidatePersonalQualities,
+			CandidateSkill,
+			CandidateSource,
+			CandidateTechnologies,
+			Contact,
 			Country,
-			User,
-			UserOrganization,
+
+			Deal,
+
 			Email,
 			EmailTemplate,
 			Employee,
+			EmployeeAppointment,
+			EmployeeLevel,
 			EmployeeRecurringExpense,
+			EmployeeSetting,
 			EmployeeSetting,
 			Equipment,
 			EquipmentSharing,
+			EstimateEmail,
+			EventType,
 			Expense,
 			ExpenseCategory,
+
+			Goal,
+			GoalKPI,
+			GoalTimeFrame,
+
+			HelpCenter,
+			HelpCenterArticle,
+			HelpCenterAuthor,
+
 			Income,
+			Integration,
+			IntegrationEntitySetting,
+			IntegrationEntitySettingTiedEntity,
+			IntegrationMap,
+			IntegrationSetting,
+			IntegrationTenant,
 			Invite,
-			Organization,
-			OrganizationDepartment,
-			OrganizationProjects,
-			Role,
-			OrganizationContact,
 			Invoice,
 			InvoiceItem,
-			EmployeeLevel,
+
+			KeyResult,
+			KeyResultUpdate,
+
+			Language,
+
+			Organization,
+			OrganizationAwards,
+			OrganizationContact,
+			OrganizationDepartment,
+			OrganizationDocuments,
 			OrganizationEmploymentType,
+			OrganizationLanguages,
 			OrganizationPositions,
+			OrganizationProjects,
 			OrganizationRecurringExpense,
+			OrganizationSprint,
 			OrganizationTeam,
+			OrganizationTeamEmployee,
+			OrganizationVendor,
+
+			Payment,
+			Pipeline,
+			Product,
+			ProductCategory,
+			ProductOption,
+			ProductVariantSettings,
+			ProductType,
+			ProductVariant,
+			ProductVariantPrice,
+			Proposal,
+
 			RequestApproval,
 			RequestApprovalEmployee,
 			RequestApprovalTeam,
-			OrganizationTeamEmployee,
-			OrganizationVendor,
-			Proposal,
+			Role,
 			RolePermissions,
+
+			Screenshot,
+			Skill,
+			Stage,
+
 			Tag,
 			Task,
 			Tenant,
 			TimeOffPolicy,
+			TimeOffRequest,
 			Timesheet,
 			TimeSlot,
-			Activity,
-			Screenshot,
 			TimeLog,
 			TimeSlotMinute,
-			AppointmentEmployees,
-			ApprovalPolicy,
-			Candidate,
-			EstimateEmail,
-			Contact,
-			OrganizationSprint
+
+			User,
+			UserOrganization
 		])
 	],
 	controllers: [ExportAllController],
 	providers: [
-		ExportAllService,
+		ActivityService,
+		AppointmentEmployeesService,
+		ApprovalPolicyService,
+		AvailabilitySlotsService,
+
+		CandidateService,
+		CandidateCriterionsRatingService,
+		CandidateDocumentsService,
+		CandidateEducationService,
+		CandidateExperienceService,
+		CandidateFeedbacksService,
+		CandidateInterviewService,
+		CandidateInterviewersService,
+		CandidatePersonalQualitiesService,
+		CandidateSkillService,
+		CandidateSourceService,
+		CandidateTechnologiesService,
+		ContactService,
 		CountryService,
-		UserService,
-		UserOrganizationService,
+
+		DealService,
+
 		EmailService,
 		EmailTemplateService,
 		EmployeeService,
+		EmployeeAppointmentService,
+		EmployeeLevelService,
 		EmployeeRecurringExpenseService,
 		EmployeeSettingService,
+		EmployeeStatisticsService,
 		EquipmentService,
 		EquipmentSharingService,
+		EstimateEmailService,
+		EventTypeService,
 		ExpenseService,
 		ExpenseCategoriesService,
+		ExportAllService,
+
+		GoalService,
+		GoalKpiService,
+		GoalTimeFrameService,
+
+		HelpCenterService,
+		HelpCenterArticleService,
+		HelpCenterAuthorService,
+
 		IncomeService,
+		IntegrationService,
+		IntegrationEntitySettingService,
+		IntegrationEntitySettingTiedEntityService,
+		IntegrationMapService,
+		IntegrationSettingService,
+		IntegrationTenantService,
 		InviteService,
-		OrganizationService,
 		InvoiceService,
 		InvoiceItemService,
-		EmployeeLevelService,
+
+		KeyResultService,
+		KeyResultUpdateService,
+
+		LanguageService,
+
+		OrganizationAwardsService,
+		OrganizationLanguagesService,
+		OrganizationService,
 		OrganizationContactService,
 		OrganizationDepartmentService,
+		OrganizationDocumentsService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
 		OrganizationProjectsService,
 		OrganizationRecurringExpenseService,
 		OrganizationTeamService,
 		OrganizationTeamEmployeeService,
+		OrganizationSprintService,
 		OrganizationVendorsService,
+
+		PaymentService,
+		PipelineService,
+		ProductService,
+		ProductCategoryService,
+		ProductTypeService,
+		ProductOptionService,
+		ProductVariantService,
+		ProductVariantSettingService,
+		ProductVariantPriceService,
 		ProposalService,
+
+		RequestApprovalService,
 		RoleService,
 		RolePermissionsService,
+
+		ScreenshotService,
+		StageService,
+		SkillService,
+
 		TagService,
 		TaskService,
 		TenantService,
+		TimerService,
 		TimeOffPolicyService,
+		TimeOffRequestService,
 		TimeSheetService,
-		ActivityService,
-		ScreenshotService,
 		TimeLogService,
 		TimeSlotService,
-		AppointmentEmployeesService,
-		ApprovalPolicyService,
-		CandidateService,
-		EstimateEmailService,
-		ContactService,
-		OrganizationSprintService
+
+		UpworkService,
+		UserService,
+		UserOrganizationService
 	],
 	exports: [
-		ExportAllService,
+		ActivityService,
+		AppointmentEmployeesService,
+		ApprovalPolicyService,
+		AvailabilitySlotsService,
+
+		CandidateService,
+		CandidateCriterionsRatingService,
+		CandidateDocumentsService,
+		CandidateEducationService,
+		CandidateExperienceService,
+		CandidateFeedbacksService,
+		CandidateInterviewService,
+		CandidateInterviewersService,
+		CandidatePersonalQualitiesService,
+		CandidateSkillService,
+		CandidateSourceService,
+		CandidateTechnologiesService,
+		ContactService,
 		CountryService,
-		UserService,
-		UserOrganizationService,
+
+		DealService,
+
 		EmailService,
 		EmailTemplateService,
 		EmployeeService,
+		EmployeeAppointmentService,
+		EmployeeLevelService,
 		EmployeeRecurringExpenseService,
 		EmployeeSettingService,
+		EmployeeStatisticsService,
 		EquipmentService,
 		EquipmentSharingService,
+		EstimateEmailService,
+		EventTypeService,
 		ExpenseService,
 		ExpenseCategoriesService,
+		ExportAllService,
+
+		GoalService,
+		GoalKpiService,
+		GoalTimeFrameService,
+
+		HelpCenterService,
+		HelpCenterArticleService,
+		HelpCenterAuthorService,
+
 		IncomeService,
+		IntegrationService,
+		IntegrationEntitySettingService,
+		IntegrationEntitySettingTiedEntityService,
+		IntegrationMapService,
+		IntegrationSettingService,
+		IntegrationTenantService,
 		InviteService,
-		OrganizationService,
 		InvoiceService,
 		InvoiceItemService,
-		EmployeeLevelService,
+
+		KeyResultService,
+		KeyResultUpdateService,
+
+		LanguageService,
+
+		OrganizationService,
+		OrganizationAwardsService,
+		OrganizationLanguagesService,
 		OrganizationContactService,
 		OrganizationDepartmentService,
+		OrganizationDocumentsService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
 		OrganizationProjectsService,
 		OrganizationRecurringExpenseService,
 		OrganizationTeamService,
 		OrganizationTeamEmployeeService,
+		OrganizationSprintService,
 		OrganizationVendorsService,
+
+		PaymentService,
+		PipelineService,
+		ProductService,
+		ProductCategoryService,
+		ProductTypeService,
+		ProductOptionService,
+		ProductVariantService,
+		ProductVariantSettingService,
+		ProductVariantPriceService,
 		ProposalService,
+
 		RoleService,
 		RolePermissionsService,
+		RequestApprovalService,
+
+		StageService,
+		SkillService,
+		ScreenshotService,
+
 		TagService,
 		TaskService,
 		TenantService,
+		TimerService,
 		TimeOffPolicyService,
+		TimeOffRequestService,
 		TimeSheetService,
-		ActivityService,
-		ScreenshotService,
 		TimeLogService,
 		TimeSlotService,
-		AppointmentEmployeesService,
-		ApprovalPolicyService,
-		CandidateService,
-		EstimateEmailService,
-		ContactService,
-		OrganizationSprintService
+
+		UpworkService,
+		UserService,
+		UserOrganizationService
 	]
 })
 export class ExportAllModule {}

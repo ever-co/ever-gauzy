@@ -59,6 +59,16 @@ export async function generatePdf(
 					`${item.totalValue}`
 				];
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				const expense = await service.getById(item.expenseId);
+				currentItem = [
+					`${expense.purpose}`,
+					`${item.description}`,
+					`${item.quantity}`,
+					`${item.price}`,
+					`${item.totalValue}`
+				];
+				break;
 			default:
 				break;
 		}
@@ -73,7 +83,7 @@ export async function generatePdf(
 	} else {
 		widths = ['20%', '20%', '20%', '20%', '20%'];
 		tableHeader = [
-			'Name',
+			'Item',
 			'Description',
 			'Quantity',
 			'Price',

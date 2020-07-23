@@ -111,7 +111,11 @@
 					</div>
 				</div>
 				<div class="col-sm-6">
-					<nb-select class="d-block" formControlName="currency">
+					<nb-select
+						class="d-block"
+						formControlName="currency"
+						disabled
+					>
 						<nb-option
 							*ngFor="let currency of currencies"
 							value="{{ currency }}"
@@ -153,31 +157,31 @@
 				></nb-icon>
 				<p>
 					<b>{{
-						'EXPENSES_PAGE.MUTATION.CLIENT_IS_REQUIRED' | translate
+						'EXPENSES_PAGE.MUTATION.CONTACT_IS_REQUIRED' | translate
 					}}</b>
 				</p>
 				<p>
 					{{
-						'EXPENSES_PAGE.MUTATION.PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE'
+						'EXPENSES_PAGE.MUTATION.PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE'
 							| translate
 					}}
 				</p>
 			</nb-card>
-			<div *ngIf="clients.length || projects.length">
+			<div *ngIf="organizationContacts.length || projects.length">
 				<h6>{{ 'EXPENSES_PAGE.MUTATION.ASSIGN_TO' | translate }}</h6>
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
 							<ng-select
 								[isOpen]="showWarning ? true : null"
-								[addTag]="addNewClient"
-								[items]="clients"
-								bindLabel="clientName"
+								[addTag]="addNewOrganizationContact"
+								[items]="organizationContacts"
+								bindLabel="organizationContactName"
 								[searchable]="true"
 								autocomplete="on"
-								formControlName="client"
+								formControlName="organizationContact"
 								placeholder="{{
-									'CONTEXT_MENU.CLIENT' | translate
+									'CONTEXT_MENU.CONTACT' | translate
 								}}"
 							>
 							</ng-select>
@@ -188,7 +192,6 @@
 							<ng-select
 								[items]="projects"
 								[addTag]="addNewProject"
-								nbInput
 								bindLabel="projectName"
 								[searchable]="true"
 								autocomplete="on"

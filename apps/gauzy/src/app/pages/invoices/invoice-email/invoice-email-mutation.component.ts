@@ -17,6 +17,7 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { TasksService } from '../../../@core/services/tasks.service';
 import { ProductService } from '../../../@core/services/product.service';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
+import { ExpensesService } from '../../../@core/services/expenses.service';
 
 @Component({
 	selector: 'ga-invoice-email',
@@ -37,7 +38,8 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
 		private productService: ProductService,
-		private invoiceService: InvoicesService
+		private invoiceService: InvoicesService,
+		private expensesService: ExpensesService
 	) {
 		super(translateService);
 	}
@@ -69,6 +71,9 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				service = this.productService;
+				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				service = this.expensesService;
 				break;
 			default:
 				break;

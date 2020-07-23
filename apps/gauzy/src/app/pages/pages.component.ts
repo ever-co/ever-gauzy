@@ -430,6 +430,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Documents',
+					icon: 'file-text-outline',
+					link: `/pages/organizations/`,
+					data: {
+						organizationShortcut: true,
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						urlPrefix: `/pages/organizations/edit/`,
+						urlPostfix: '/settings/documents',
+						translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS'
+					}
+				},
+				{
 					title: 'Help Center',
 					icon: 'question-mark-circle-outline',
 					link: '/pages/organization/help-center',

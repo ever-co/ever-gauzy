@@ -13,6 +13,7 @@ import { EmployeesService } from '../../../@core/services';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { ProductService } from '../../../@core/services/product.service';
+import { ExpensesService } from '../../../@core/services/expenses.service';
 
 @Component({
 	selector: 'ga-invoice-view',
@@ -35,7 +36,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
-		private productService: ProductService
+		private productService: ProductService,
+		private expensesService: ExpensesService
 	) {
 		super(translateService);
 	}
@@ -73,6 +75,9 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				service = this.productService;
+				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				service = this.expensesService;
 				break;
 			default:
 				break;
