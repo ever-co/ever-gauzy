@@ -1,6 +1,13 @@
-import { UserFindInput, Candidate, CandidateUpdateInput } from '@gauzy/models';
-import { BehaviorSubject } from 'rxjs';
+import {
+	UserFindInput,
+	Candidate,
+	CandidateUpdateInput,
+	ICandidateInterview
+} from '@gauzy/models';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
+import { CandidateInterviewService } from './candidate-interview.service';
+import { tap } from 'rxjs/operators';
 
 /**
  * Service used to update candidate
@@ -10,18 +17,44 @@ export class CandidateStore {
 	private _selectedCandidate: Candidate;
 	private _userForm: UserFindInput;
 	private _candidateForm: CandidateUpdateInput;
-
 	selectedCandidate$: BehaviorSubject<Candidate> = new BehaviorSubject(
 		this.selectedCandidate
 	);
-
 	userForm$: BehaviorSubject<UserFindInput> = new BehaviorSubject(
 		this.userForm
 	);
-
 	candidateForm$: BehaviorSubject<CandidateUpdateInput> = new BehaviorSubject(
 		this.candidateForm
 	);
+	private _interviewList$: BehaviorSubject<
+		ICandidateInterview[]
+	> = new BehaviorSubject([]);
+	public interviewList$: Observable<
+		ICandidateInterview[]
+	> = this._interviewList$.asObservable();
+
+	constructor(
+		private _candidateInterviewService: CandidateInterviewService
+	) {}
+
+	//TO DO
+
+	// getInterviewList() {
+	// 	this._candidateInterviewService
+	// 		.getAllInterviews([
+	// 			'feedbacks',
+	// 			'interviewers',
+	// 			'technologies',
+	// 			'personalQualities',
+	// 			'candidate'
+	// 		])
+	// 		.pipe(tap(({ items }) => this.loadAllInterviews(items)))
+	// 		.subscribe();
+	// }
+
+	// loadAllInterviews(interviewList: ICandidateInterview[]): void {
+	// 	this._interviewList$.next(interviewList);
+	// }
 
 	set selectedCandidate(candidate: Candidate) {
 		this._selectedCandidate = candidate;
