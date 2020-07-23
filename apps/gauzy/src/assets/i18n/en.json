@@ -732,11 +732,22 @@
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
+		"OWNERSHIP": {
+			"EMPLOYEES": "Employees",
+			"TEAMS": "Teams",
+			"EMPLOYEES_AND_TEAMS": "Employees and Teams"
+		},
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
 			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames",
-			"ADD_KPI": "Add KPI"
+			"ADD_KPI": "Add KPI",
+			"MAX_ENTITIES": "Max Number of entites that can be created",
+			"EMPLOYEE_OBJECTIVES": "Employees can create their own objectives",
+			"WHO_CAN_OWN_OBJECTIVES": "Who can own Objectives?",
+			"WHO_CAN_OWN_KEY_RESULTS": "Who can own Key Results?",
+			"ADD_KPI_TO_KEY_RESULT": "Add KPI to Key Result Type?",
+			"ADD_TASK_TO_KEY_RESULT": "Add Task to Key Result Type?"
 		},
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
@@ -769,7 +780,9 @@
 				"DEADLINE": "Deadline",
 				"STATUS": "Status",
 				"KPI_SHOULD_BE": "This KPI should be",
-				"CURRENT_VALUE": "Current Value"
+				"CURRENT_VALUE": "Current Value",
+				"OBJECTIVE": "Objectives",
+				"KEY_RESULT": "Key Results"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Objective Name. eg. Improve Website SEO",
@@ -1792,7 +1805,8 @@
 			"KEY_RESULT_ADDED": "Key Result added",
 			"KEY_RESULT_DELETED": "Key Result deleted",
 			"KEY_RESULT_UPDATED": "Key Result upadated",
-			"TIME_FRAME_DELETED": "Time Frame deleted"
+			"TIME_FRAME_DELETED": "Time Frame deleted",
+			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated"
 		}
 	},
 	"ACCEPT_INVITE": {

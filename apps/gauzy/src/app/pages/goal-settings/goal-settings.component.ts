@@ -12,7 +12,11 @@ import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.compo
 import { Store } from '../../@core/services/store.service';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	ComponentLayoutStyleEnum,
+	GoalOwnershipEnum,
+	GoalGeneralSetting
+} from '@gauzy/models';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
 	getYear,
@@ -25,6 +29,7 @@ import {
 	startOfYear,
 	endOfYear
 } from 'date-fns';
+import { FormGroup, FormBuilder } from '@angular/forms';
 
 @Component({
 	selector: 'ga-goal-settings',
@@ -34,6 +39,7 @@ import {
 export class GoalSettingsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	smartTableData = new LocalDataSource();
+	generalSettingsForm: FormGroup;
 	smartTableSettings: object;
 	selectedTimeFrame: any = null;
 	selectedKPI: any = null;
@@ -43,6 +49,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
 	goalTimeFrames: any[];
+	goalGeneralSettings: GoalGeneralSetting;
+	goalOwnershipEnum = GoalOwnershipEnum;
 	predefinedTimeFrames = [];
 	@ViewChild('smartTable') smartTable;
 	private _ngDestroy$ = new Subject<void>();
@@ -52,13 +60,23 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		private goalSettingService: GoalSettingsService,
 		private toastrService: NbToastrService,
 		private store: Store,
-		private router: Router
+		private router: Router,
+		private fb: FormBuilder
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	async ngOnInit() {
+		this.generalSettingsForm = this.fb.group({
+			maxObjectives: [],
+			maxKeyResults: [],
+			employeeCanCreateObjective: [true],
+			canOwnObjectives: [],
+			canOwnKeyResult: [],
+			krTypeKPI: [true],
+			krTypeTask: [true]
+		});
 		this._loadTableSettings(null);
 		this._applyTranslationOnSmartTable();
 		await this.store.selectedOrganization$
@@ -87,6 +105,25 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				this.dataLayoutStyle = componentLayout;
 				this.selectedKPI = null;
 				this.selectedTimeFrame = null;
+			});
+	}
+
+	saveGeneralSettings() {
+		this.goalSettingService
+			.updateGeneralSettings(
+				this.goalGeneralSettings.id,
+				this.generalSettingsForm.value
+			)
+			.then((res) => {
+				if (res) {
+					this.toastrService.success(
+						this.getTranslation(
+							'TOASTR.MESSAGE.GOAL_GENERAL_SETTING_UPDATED'
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+					this._loadTableData(null);
+				}
 			});
 	}
 
@@ -126,6 +163,15 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				id: this.selectedOrganizationId
 			}
 		};
+		this.goalSettingService
+			.getAllGeneralSettings(findObj)
+			.then((generalSettings) => {
+				const { items } = generalSettings;
+				this.goalGeneralSettings = items.pop();
+				this.generalSettingsForm.patchValue({
+					...this.goalGeneralSettings
+				});
+			});
 		if (tab === 'KPI') {
 			await this.goalSettingService.getAllKPI(findObj).then((res) => {
 				this.smartTableData.load(res.items);
