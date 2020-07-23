@@ -215,6 +215,7 @@ import { createRandomInvoice } from '../../invoice/invoice.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
 import { createRandomOrganizationContact } from '../../organization-contact/organization-contact.seed';
 import { createRandomCandidateEducations } from '../../candidate-education/candidate-education.seed';
+import { createRandomAvailabilitySlots } from '../../availability-slots/availability-slots.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -314,7 +315,8 @@ const randomSeedConfig = {
 	equipmentPerTenant: 20, // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
 	equipmentSharingPerTenant: 20, // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
 	proposalsSharingPerOrganizations: 30, // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
-	contacts: 50 // The number of random contacts to be seeded.
+	contacts: 50, // The number of random contacts to be seeded.
+	availabilitySlotsPerOrganization: 50 // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
 };
 
 @Injectable()
@@ -902,6 +904,17 @@ export class SeedDataService {
 				50
 			)
 		);
+
+		await this.tryExecute(
+			createRandomAvailabilitySlots(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				tenantEmployeeMap,
+				randomSeedConfig.availabilitySlotsPerOrganization || 20
+			)
+		);
+
 		await this.tryExecute(
 			createRandomInvoiceItem(
 				this.connection,
