@@ -659,8 +659,8 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Expenses",
 		"MUTATION": {
-			"CLIENT_IS_REQUIRED!": "Client is required!",
-			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Please select a Client from the dropdown menu below or change Expense type setting.",
+			"CONTACT_IS_REQUIRED!": "Contact is required!",
+			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
 			"ATTACH_A_RECEIPT": "Attach a receipt"

@@ -35,7 +35,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
+import { IOrganizationExpenseCategory } from '../../../../../../../libs/models/src/lib/organization-expense-category.model';
 import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 
 @Component({
@@ -59,7 +59,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	expenseStatuses = Object.values(ExpenseStatusesEnum);
 	expenseCategories: IOrganizationExpenseCategory[];
 	vendors: IOrganizationVendor[];
-	clients: { clientName: string; clientId: string }[] = [];
+	organizationContacts: {
+		organizationContactName: string;
+		organizationContactId: string;
+	}[] = [];
 	projects: { projectName: string; projectId: string }[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
 	calculatedValue = '0';
@@ -96,10 +99,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.getDefaultData();
-		this.loadClients();
+		this.loadOrganizationContacts();
 		this.loadProjects();
 		this._initializeForm();
-		this.form.get('currency').disable();
+		this.form.get('currency');
 		this.changeExpenseType(this.form.value.typeOfExpense);
 	}
 
@@ -124,8 +127,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	addOrEditExpense() {
 		if (
-			this.form.value.typeOfExpense === 'Billable to Client' &&
-			!this.form.value.client
+			this.form.value.typeOfExpense === 'Billable to Contact' &&
+			!this.form.value.organizationContact
 		) {
 			this.showWarning = true;
 			setTimeout(() => {
@@ -136,10 +139,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			this.closeWarning();
 		}
 
-		if (this.form.value.client === null) {
-			this.form.value.client = {
-				clientName: null,
-				clientId: null
+		if (this.form.value.organizationContact === null) {
+			this.form.value.organizationContact = {
+				organizationContactName: null,
+				organizationContactId: null
 			};
 		}
 
@@ -153,7 +156,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		if (this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED)
 			this.form.value.splitExpense = true;
 
-		if (this.form.value.typeOfExpense !== 'Billable to Client') {
+		if (this.form.value.typeOfExpense !== 'Billable to Contact') {
 			this.form.value.status = 'Not Billable';
 		}
 
@@ -202,11 +205,13 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		}
 	};
 
-	addNewClient = (name: string): Promise<OrganizationContact> => {
+	addNewOrganizationContact = (
+		name: string
+	): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
 					{
 						name: name
 					}
@@ -270,8 +275,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 					Validators.required
 				],
 				purpose: [this.expense.purpose],
-				client: [null],
-				project: [null],
+				organizationContact: [this.expense.organizationContactName],
+				project: [this.expense.projectName],
 				taxType: [this.expense.taxType],
 				taxLabel: [this.expense.taxLabel],
 				rateValue: [this.expense.rateValue],
@@ -293,7 +298,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 					Validators.required
 				],
 				purpose: [''],
-				client: [null],
+				organizationContact: [null],
 				project: [null],
 				taxType: [TaxTypesEnum.PERCENTAGE],
 				taxLabel: [''],
@@ -337,16 +342,16 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			});
 	}
 
-	private async loadClients() {
+	private async loadOrganizationContacts() {
 		const res = await this.organizationContactService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});
 
 		if (res) {
-			res.items.forEach((client) => {
-				this.clients.push({
-					clientName: client.name,
-					clientId: client.id
+			res.items.forEach((organizationContact) => {
+				this.organizationContacts.push({
+					organizationContactName: organizationContact.name,
+					organizationContactId: organizationContact.id
 				});
 			});
 		}
@@ -409,7 +414,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	changeExpenseType($event) {
-		if ($event !== 'Billable to Client') {
+		if ($event !== 'Billable to Contact') {
 			this.disableStatuses = true;
 		} else {
 			this.disableStatuses = false;
