@@ -1776,6 +1776,7 @@
 			"CANDIDATE_EDIT_DELETED": "Успешно удален",
 			"CANDIDATE_EDUCATION_REQUIRED": "Необходима информация об образовании",
 			"CANDIDATE_FEEDBACK_REQUIRED": "Требуется информация об отзыве",
+			"CANDIDATE_FEEDBACK_ABILITY": "Все интервьюеры уже оставили отзыв",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Требуется информация о документе",
 			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
