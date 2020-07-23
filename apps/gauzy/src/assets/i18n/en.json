@@ -1759,6 +1759,7 @@
 			"CANDIDATE_EDIT_DELETED": "Successfully deleted",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
 			"CANDIDATE_FEEDBACK_REQUIRED": "Feedback information is required",
+			"CANDIDATE_FEEDBACK_ABILITY": "All interviewers have already left feedback",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",

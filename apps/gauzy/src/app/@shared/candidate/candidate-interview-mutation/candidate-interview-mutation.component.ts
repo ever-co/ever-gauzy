@@ -163,7 +163,7 @@ export class CandidateInterviewMutationComponent
 		if (this.interviewId !== null) {
 			createdInterview = this.editInterview();
 		} else {
-			createdInterview = this.createInterview(interview);
+			createdInterview = await this.createInterview(interview);
 		}
 		this.closeDialog(createdInterview);
 	}

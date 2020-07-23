@@ -30,6 +30,10 @@
   width: 11rem;
 }
 
+.active {
+  opacity: 0.6 !important;
+}
+
 .header {
   display: flex;
   flex-direction: row;
@@ -44,6 +48,9 @@
       max-height: 30px;
       border-radius: 50%;
       margin-left: 0.5rem;
+      &:hover {
+        opacity: 1 !important;
+      }
     }
   }
 
