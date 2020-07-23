@@ -1,91 +1,56 @@
-import { IExperience, Candidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
-import { CandidateExperience } from './candidate-experience.entity';
 import { Tenant } from '../tenant/tenant.entity';
-
-const candidateExperience: IExperience[] = [
-	{
-		occupation: 'Frontend Developer',
-		organization: 'Ever',
-		duration: '4 years'
-	}
-];
-
-export const createCandidateExperiences = async (
-	connection: Connection,
-	candidates: Candidate[] | void
-): Promise<CandidateExperience[]> => {
-	let defaultCandidateExperience = [];
-
-	if (!candidates) {
-		console.warn(
-			'Warning: candidates not found, CandidateExperience will not be created'
-		);
-		return;
-	}
-
-	candidates.forEach((candidate) => {
-		const experiences = candidateExperience.map((experience) => ({
-			occupation: experience.occupation,
-			organization: experience.organization,
-			duration: experience.duration,
-			candidateId: candidate.id
-		}));
-		defaultCandidateExperience = [
-			...defaultCandidateExperience,
-			...experiences
-		];
-	});
-
-	insertCandidateExperience(connection, defaultCandidateExperience);
-
-	return defaultCandidateExperience;
-};
+import { Candidate } from '@gauzy/models';
+import * as faker from 'faker';
+import { CandidateExperience } from './candidate-experience.entity';
 
 export const createRandomCandidateExperience = async (
-	connection: Connection,
-	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
-): Promise<Map<Candidate, CandidateExperience[]>> => {
-	if (!tenantCandidatesMap) {
-		console.warn(
-			'Warning: tenantCandidatesMap not found, CandidateExperience will not be created'
-		);
-		return;
-	}
+  connection: Connection,
+  tenants: Tenant[],
+  tenantCandidatesMap: Map<Tenant, Candidate[]> | void
+): Promise<CandidateExperience[]> => {
 
-	let candidateExperiences = [];
-	const candidateExperienceMap: Map<Candidate, any[]> = new Map();
+  if(!tenantCandidatesMap){
+    console.warn(
+      'Warning: tenantCandidatesMap not found, CandidateExperience will not be created'
+    );
+    return;
+  }
 
-	(tenants || []).forEach((tenant) => {
-		const candidates = tenantCandidatesMap.get(tenant);
+  let candidates: CandidateExperience[] = [];
 
-		(candidates || []).forEach((candidate) => {
-			const experiences = candidateExperience.map((experience) => ({
-				occupation: experience.occupation,
-				organization: experience.organization,
-				duration: experience.duration,
-				candidateId: candidate.id
-			}));
-
-			candidateExperienceMap.set(candidate, experiences);
-			candidateExperiences = [...candidateExperience, ...experiences];
-		});
-	});
-
-	await insertCandidateExperience(connection, candidateExperiences);
-
-	return candidateExperienceMap;
+  for (const tenant of tenants) {
+    let tenantCandidates = tenantCandidatesMap.get(tenant);
+    for (const tenantCandidate of tenantCandidates) {
+      for (let i = 0; i <= (Math.floor(Math.random() * 3) + 1); i++) {
+        let candidate = new CandidateExperience();
+        var getExperience = (faker.date.past().getDate() - faker.date.past().getDate()) / 30 +
+          faker.date.past().getMonth() - faker.date.past().getMonth() +
+          (12 * (faker.date.past().getFullYear() - faker.date.past().getFullYear()));
+        getExperience = Number(getExperience.toFixed(2));
+        let val = Math.abs(getExperience);
+        candidate.occupation = faker.name.jobArea();
+        candidate.organization = faker.company.companyName();
+        candidate.duration = val.toString().split('.')[0].toString() + ' months';
+        candidate.description = faker.lorem.words();
+        candidate.candidateId = tenantCandidate.id;
+        candidate.candidate = tenantCandidate;
+        candidates.push(candidate);
+      }
+    }
+  }
+  await insertRandomCandidateExperience(connection, candidates);
+  return candidates;
 };
 
-const insertCandidateExperience = async (
-	connection: Connection,
-	candidateExperiences: CandidateExperience[]
+const insertRandomCandidateExperience = async (
+  connection: Connection,
+  Candidates: CandidateExperience[]
 ) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(CandidateExperience)
-		.values(candidateExperiences)
-		.execute();
+  await connection
+    .createQueryBuilder()
+    .insert()
+    .into(CandidateExperience)
+    .values(Candidates)
+    .execute();
 };

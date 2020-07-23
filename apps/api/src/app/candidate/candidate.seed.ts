@@ -15,61 +15,61 @@ export const createDefaultCandidates = async (
 	}
 ): Promise<Candidate[]> => {
 	const defaultCandidates = [
-    {
-      email: 'john@ever.co',
-      password: '123456',
-      firstName: 'John',
-      lastName: 'Smith',
-      imageUrl: 'assets/images/avatars/alish.jpg',
-      candidateLevel: 'D',
-      preferredLanguage: LanguagesEnum.ENGLISH
-    },
-    {
-      email: 'jaye@ever.co',
-      password: '123456',
-      firstName: 'Jaye',
-      lastName: 'Jeffreys',
-      imageUrl: 'assets/images/avatars/alexander.jpg',
-      candidateLevel: 'B',
-      preferredLanguage: LanguagesEnum.ENGLISH
-    },
-    {
-      email: 'kasey@ever.co',
-      password: '123456',
-      firstName: 'Kasey',
-      lastName: 'Kraker',
-      imageUrl: 'assets/images/avatars/rachit.png',
-      candidateLevel: null,
-      preferredLanguage: LanguagesEnum.ENGLISH
-    },
-    {
-      email: 'norris@ever.co',
-      password: '123456',
-      firstName: 'Norris ',
-      lastName: 'Nesbit',
-      imageUrl: 'assets/images/avatars/atanas.jpeg',
-      candidateLevel: 'A',
-      preferredLanguage: LanguagesEnum.ENGLISH
-    },
-    {
-      email: 'estella@ever.co',
-      password: '123456',
-      firstName: 'Estella',
-      lastName: 'Ennis',
-      imageUrl: 'assets/images/avatars/dimana.jpeg',
-      candidateLevel: null,
-      preferredLanguage: LanguagesEnum.ENGLISH
-    },
-    {
-      email: 'greg@ever.co',
-      password: '123456',
-      firstName: 'Greg ',
-      lastName: 'Grise',
-      imageUrl: 'assets/images/avatars/savov.jpg',
-      candidateLevel: 'A',
-      preferredLanguage: LanguagesEnum.ENGLISH
-    }
-  ];
+		{
+			email: 'john@ever.co',
+			password: '123456',
+			firstName: 'John',
+			lastName: 'Smith',
+			imageUrl: 'assets/images/avatars/alish.jpg',
+			candidateLevel: 'D',
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
+			email: 'jaye@ever.co',
+			password: '123456',
+			firstName: 'Jaye',
+			lastName: 'Jeffreys',
+			imageUrl: 'assets/images/avatars/alexander.jpg',
+			candidateLevel: 'B',
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
+			email: 'kasey@ever.co',
+			password: '123456',
+			firstName: 'Kasey',
+			lastName: 'Kraker',
+			imageUrl: 'assets/images/avatars/rachit.png',
+			candidateLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
+			email: 'norris@ever.co',
+			password: '123456',
+			firstName: 'Norris ',
+			lastName: 'Nesbit',
+			imageUrl: 'assets/images/avatars/atanas.jpeg',
+			candidateLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
+			email: 'estella@ever.co',
+			password: '123456',
+			firstName: 'Estella',
+			lastName: 'Ennis',
+			imageUrl: 'assets/images/avatars/dimana.jpeg',
+			candidateLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
+		},
+		{
+			email: 'greg@ever.co',
+			password: '123456',
+			firstName: 'Greg ',
+			lastName: 'Grise',
+			imageUrl: 'assets/images/avatars/savov.jpg',
+			candidateLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
+	];
 	const defaultSources = await connection.manager.find(CandidateSource);
 
 	let candidate: Candidate;
@@ -104,6 +104,7 @@ export const createRandomCandidates = async (
 	tenantUsersMap: Map<Tenant, ISeedUsers>,
 	candidatesPerOrganization: number
 ): Promise<Map<Tenant, Candidate[]>> => {
+	const defaultSources = await connection.manager.find(CandidateSource);
 	const candidateMap: Map<Tenant, Candidate[]> = new Map();
 	for (const tenant of tenants) {
 		let candidate: Candidate;
@@ -116,6 +117,8 @@ export const createRandomCandidates = async (
 		) => {
 			for (let index = 0; index < quantity; index++) {
 				candidate = new Candidate();
+				candidate.source = faker.random.arrayElement(defaultSources);
+				candidate.tenant = tenant;
 				candidate.organization = organization;
 				candidate.isArchived = false;
 				candidate.user = randomUsers.pop();

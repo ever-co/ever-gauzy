@@ -220,7 +220,6 @@ import {
 	createRandomCandidateSkills
 } from '../../candidate-skill/candidate-skill.seed';
 import {
-	createCandidateExperiences,
 	createRandomCandidateExperience
 } from '../../candidate-experience/candidate-experience.seed';
 import {
@@ -229,6 +228,11 @@ import {
 } from '../../candidate-education/candidate-education.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
 import { createRandomOrganizationContact } from '../../organization-contact/organization-contact.seed';
+import { createRandomAvailabilitySlots } from '../../availability-slots/availability-slots.seed';
+import { createRandomCandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
+import { createRandomCandidateTechnologies } from '../../candidate-technologies/candidate-technologies.seed';
+import { createRandomCandidateInterview } from '../../candidate-interview/candidate-interview.seed';
+import { createRandomAwards } from '../../organization-awards/organization-awards.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 
 const allEntities = [
@@ -329,7 +333,8 @@ const randomSeedConfig = {
 	equipmentPerTenant: 20, // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
 	equipmentSharingPerTenant: 20, // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
 	proposalsSharingPerOrganizations: 30, // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
-	contacts: 50 // The number of random contacts to be seeded.
+	contacts: 50, // The number of random contacts to be seeded.
+	availabilitySlotsPerOrganization: 50 // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
 };
 
 @Injectable()
@@ -562,9 +567,6 @@ export class SeedDataService {
 			createCandidateEducations(this.connection, defaultCandidates)
 		);
 
-		await this.tryExecute(
-			createCandidateExperiences(this.connection, defaultCandidates)
-		);
 		await this.tryExecute(
 			createCandidateSkills(this.connection, defaultCandidates)
 		);
@@ -968,12 +970,86 @@ export class SeedDataService {
 				50
 			)
 		);
+
+		await this.tryExecute(
+			createRandomAvailabilitySlots(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				tenantEmployeeMap,
+				randomSeedConfig.availabilitySlotsPerOrganization || 20
+			)
+		);
+
 		await this.tryExecute(
 			createRandomInvoiceItem(
 				this.connection,
 				tenants,
 				tenantOrganizationsMap,
 				tenantEmployeeMap
+			)
+		);
+
+    await this.tryExecute(
+      createRandomCandidateEducations(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidateExperience(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidateSkills(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidateInterview(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidateTechnologies(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(
+      createRandomCandidatePersonalQualities(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
+    await this.tryExecute(createRandomAwards(
+        this.connection,
+        tenants,
+        tenantOrganizationsMap
+      )
+    );
+
+		await this.tryExecute(
+			createRandomCandidateEducations(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
 			)
 		);
 	}
