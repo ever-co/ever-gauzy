@@ -1,5 +1,5 @@
 import { IExperience, Candidate } from '@gauzy/models';
-import { Connection, createQueryBuilder } from 'typeorm';
+import { Connection } from 'typeorm';
 import { CandidateExperience } from './candidate-experience.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
