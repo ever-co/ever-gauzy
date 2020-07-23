@@ -44,7 +44,8 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 		});
 		if (
 			this.keyResult.type === KeyResultTypeEnum.NUMBER ||
-			this.keyResult.type === KeyResultTypeEnum.CURRENCY
+			this.keyResult.type === KeyResultTypeEnum.CURRENCY ||
+			this.keyResult.type === KeyResultTypeEnum.KPI
 		) {
 			this.keyResultUpdateForm.patchValue({
 				newValueNumber: this.keyResult.update
@@ -80,6 +81,10 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 			this.keyResult.update =
 				this.keyResultUpdateForm.value.newValueBoolean === true ? 1 : 0;
 			this.keyResult.progress = this.keyResult.update === 0 ? 0 : 100;
+		} else if (this.keyResult.type === KeyResultTypeEnum.KPI) {
+			this.keyResult.update = this.keyResultUpdateForm.value.newValueNumber;
+			this.keyResult.progress =
+				this.keyResult.update < this.keyResult.targetValue ? 0 : 100;
 		}
 		this.keyResult.status = this.keyResultUpdateForm.value.newStatus;
 		try {

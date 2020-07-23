@@ -16,9 +16,11 @@ export class CandidateCriterionsRatingBulkDeleteHandler
 		const criterions = await this.candidateCriterionsRatingService.getCriterionsByFeedbackId(
 			id
 		);
-		await this.candidateCriterionsRatingService.deleteBulk(
-			criterions.map((item) => item.id)
-		);
+		if (criterions.length > 0) {
+			await this.candidateCriterionsRatingService.deleteBulk(
+				criterions.map((item) => item.id)
+			);
+		}
 		return;
 	}
 }

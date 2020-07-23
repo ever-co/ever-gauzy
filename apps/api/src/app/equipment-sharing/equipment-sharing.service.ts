@@ -28,6 +28,36 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 		super(equipmentSharingRepository);
 	}
 
+	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {
+		const equimentSharing = this.equipmentSharingRepository
+			.createQueryBuilder('equipment_sharing')
+			.innerJoinAndSelect(
+				'equipment_sharing.approvalPolicy',
+				'approvalPolicy'
+			)
+			.leftJoinAndSelect('equipment_sharing.employees', 'employees')
+			.leftJoinAndSelect('equipment_sharing.teams', 'teams');
+
+		return await equimentSharing
+			.where('approvalPolicy.organizationId =:organizationId', {
+				organizationId
+			})
+			.getMany();
+	}
+
+	async findRequestApprovalsByEmployeeId(id: string): Promise<any> {
+		try {
+			return await this.equipmentSharingRepository.find({
+				where: {
+					createdBy: id
+				},
+				relations: ['equipment', 'employees', 'teams', 'approvalPolicy']
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
 	async findAllEquipmentSharings(): Promise<any> {
 		return await this.equipmentSharingRepository.find({
 			relations: ['equipment', 'employees', 'teams']
@@ -68,6 +98,7 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 			const equipmentSharingSaved = await this.equipmentSharingRepository.save(
 				equipmentSharing
 			);
+			await this.requestApprovalRepository.delete(id);
 			const requestApproval = new RequestApproval();
 			requestApproval.id = equipmentSharingSaved.id;
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;

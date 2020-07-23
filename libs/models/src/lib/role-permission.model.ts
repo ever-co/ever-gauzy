@@ -69,7 +69,12 @@ export enum PermissionsEnum {
 	EDIT_SALES_PIPELINES = 'EDIT_SALES_PIPELINES',
 	CAN_APPROVE_TIMESHEET = 'CAN_APPROVE_TIMESHEET',
 	ORG_SPRINT_VIEW = 'ORG_SPRINT_VIEW',
-	ORG_SPRINT_EDIT = 'ORG_SPRINT_EDIT'
+	ORG_SPRINT_EDIT = 'ORG_SPRINT_EDIT',
+	ORG_PROJECT_EDIT = 'ORG_PROJECT_EDIT',
+	ORG_CONTACT_EDIT = 'ORG_CONTACT_EDIT',
+	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
+	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT',
+	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW'
 }
 
 export const PermissionGroups = {
@@ -107,7 +112,12 @@ export const PermissionGroups = {
 		PermissionsEnum.EDIT_SALES_PIPELINES,
 		PermissionsEnum.CAN_APPROVE_TIMESHEET,
 		PermissionsEnum.ORG_SPRINT_EDIT,
-		PermissionsEnum.ORG_SPRINT_VIEW
+		PermissionsEnum.ORG_SPRINT_VIEW,
+		PermissionsEnum.ORG_PROJECT_EDIT,
+		PermissionsEnum.ORG_CONTACT_EDIT,
+		PermissionsEnum.ORG_TEAM_EDIT,
+		PermissionsEnum.ORG_CONTRACT_EDIT,
+		PermissionsEnum.EVENT_TYPES_VIEW
 	],
 
 	//Readonly permissions, are only enabled for admin role

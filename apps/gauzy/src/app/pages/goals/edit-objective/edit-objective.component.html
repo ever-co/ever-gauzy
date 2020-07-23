@@ -1,6 +1,11 @@
 <nb-card size="large" class="max-width-40vw">
 	<nb-card-header>
-		{{ !!data ? 'Edit Objective' : 'Add Objective' }}
+		{{
+			(!!data
+				? 'GOALS_PAGE.EDIT_OBJECTIVE'
+				: 'GOALS_PAGE.ADD_NEW_OBJECTIVE'
+			) | translate
+		}}
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -106,7 +111,7 @@
 				</nb-option>
 			</nb-select>
 
-			<label for="objective-Lead" class="label mt-3">
+			<label for="objective-lead" class="label mt-3">
 				{{ 'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate }}
 			</label>
 			<ga-employee-multi-select
@@ -115,7 +120,7 @@
 				[selectedEmployeeIds]="objectiveForm.value.lead"
 				[label]="false"
 				(selectedChange)="selectEmployee($event, 'lead')"
-				id="key-result-Lead"
+				id="objective-lead"
 				placeholder="{{
 					'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate
 				}}"

@@ -72,6 +72,7 @@
 						}}
 					</label>
 					<nb-select
+						(selectedChange)="taskTypeValidators()"
 						id="key-result-type"
 						fullWidth
 						formControlName="type"
@@ -84,6 +85,35 @@
 							}}</nb-option
 						>
 					</nb-select>
+
+					<div
+						class="row"
+						*ngIf="typeForm.value.type === keyResultTypeEnum.TASK"
+					>
+						<div class="col-md-6">
+							<label class="label mt-3" for="project-selector">{{
+								'KEY_RESULT_PAGE.FORM.LABELS.SELECT_PROJECT'
+									| translate
+							}}</label>
+							<ga-project-selector
+								id="project-selector"
+								formControlName="projectId"
+							>
+							</ga-project-selector>
+						</div>
+						<div class="col-md-6">
+							<label class="label mt-3" for="task-selector">{{
+								'KEY_RESULT_PAGE.FORM.LABELS.SELECT_TASK'
+									| translate
+							}}</label>
+							<ga-task-selector
+								id="task-selector"
+								formControlName="taskId"
+								[(projectId)]="typeForm.value.projectId"
+							>
+							</ga-task-selector>
+						</div>
+					</div>
 
 					<div class="row">
 						<div class="col-md-6">

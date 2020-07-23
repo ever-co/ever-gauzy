@@ -1,5 +1,5 @@
 <nb-card>
-	<nb-card-header>
+	<nb-card-header class="header-selector-wrapper">
 		<h4>
 			<span>
 				{{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }}
@@ -9,6 +9,9 @@
 				{{ pipeline?.name }}
 			</span>
 		</h4>
+		<ga-layout-selector
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="btn-container mb-3">
@@ -24,30 +27,10 @@
 					{{ 'BUTTONS.ADD' | translate }}
 				</span>
 			</button>
-			<button
-				*ngIf="deal"
-				[routerLink]="['./', deal.id, 'edit']"
-				status="info"
-				class="mr-2"
-				nbButton
-			>
-				<nb-icon icon="edit-outline" pack="eva"></nb-icon>
-				<span>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</span>
-			</button>
-			<button
-				*ngIf="deal"
-				(click)="deleteDeal()"
-				style="cursor: pointer;"
-				status="danger"
-				type="button"
-				class="mr-2"
-				nbButton
-			>
-				<nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
-				<span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+
 			<nb-select
 				[(selected)]="stageId"
 				(selectedChange)="filterDealsByStage()"
@@ -72,6 +55,41 @@
 			(rowSelect)="deal = $event.data"
 			[settings]="smartTableSettings"
 			[source]="deals"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 		></ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="smartTableSettings"
+			[source]="dealsData"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template #actionButtons let-buttonSize="buttonSize">
+	<button
+		*ngIf="deal"
+		[routerLink]="['./', deal.id, 'edit']"
+		status="info"
+		class="mr-2"
+		nbButton
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon icon="edit-outline" pack="eva"></nb-icon>
+		<span>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</span>
+	</button>
+	<button
+		*ngIf="deal"
+		(click)="deleteDeal()"
+		style="cursor: pointer;"
+		status="danger"
+		type="button"
+		class="mr-2"
+		nbButton
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
+		<span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
+	</button>
+</ng-template>

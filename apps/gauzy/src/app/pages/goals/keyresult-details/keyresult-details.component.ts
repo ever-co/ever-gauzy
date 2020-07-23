@@ -9,7 +9,8 @@ import {
 	KeyResultTypeEnum,
 	Task,
 	TaskStatusEnum,
-	KeyResultUpdateStatusEnum
+	KeyResultUpdateStatusEnum,
+	KPI
 } from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first, takeUntil } from 'rxjs/operators';
@@ -41,6 +42,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	today = new Date();
 	loading = true;
 	task: Task;
+	kpi: KPI;
 	endDate: Date;
 	private _ngDestroy$ = new Subject<void>();
 	ownerName: string;
@@ -116,6 +118,15 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 							this.loading = false;
 						});
 				});
+		} else if (this.keyResult.type === KeyResultTypeEnum.KPI) {
+			console.log(this.keyResult.kpiId);
+			await this.goalSettingsService
+				.getAllKPI({ id: this.keyResult.kpiId })
+				.then((kpi) => {
+					const { items } = kpi;
+					this.kpi = items.pop();
+					this.loading = false;
+				});
 		} else {
 			this.loading = false;
 		}
@@ -140,7 +151,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			const taskDialog = this.dialogService.open(TaskDialogComponent, {
 				context: {
 					selectedTask: this.task
-				}
+				},
+				closeOnBackdropClick: false
 			});
 			const taskResponse = await taskDialog.onClose
 				.pipe(first())
@@ -198,7 +210,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				hasScroll: true,
 				context: {
 					keyResult: this.keyResult
-				}
+				},
+				closeOnBackdropClick: false
 			});
 			const response = await dialog.onClose.pipe(first()).toPromise();
 			if (!!response) {
@@ -225,7 +238,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 					message: 'Are you sure? This action is irreversible.',
 					status: 'danger'
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {

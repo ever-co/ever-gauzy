@@ -21,7 +21,6 @@ import { ProductCategoryTranslated } from '@gauzy/models';
 			}
 			img {
 				width: 50px;
-				margin-right: 15px;
 				border-radius: 5px;
 			}
 		`

@@ -119,7 +119,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			['technologies', 'personalQualities'],
 			{ candidateId: this.candidateId }
 		);
-		if (res) {
+		if (res && feedback.interviewId) {
 			this.currentInterview = res.items.find(
 				(item) => item.id === feedback.interviewId
 			);
@@ -267,7 +267,11 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			);
 			await this.candidateFeedbacksService.update(this.feedbackId, {
 				description: formValue.description,
-				rating: this.averageRating,
+				rating:
+					this.technologiesList.length === 0 &&
+					this.personalQualitiesList.length === 0
+						? formValue.rating
+						: this.averageRating,
 				interviewer: this.feedbackInterviewer,
 				status: this.status
 			});

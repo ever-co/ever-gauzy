@@ -109,6 +109,13 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 						timeframe.status === this.timeFrameStatusEnum.ACTIVE &&
 						isFuture(new Date(timeframe.endDate))
 				);
+				if (!!this.data) {
+					this.timeFrames.push(
+						res.items.find(
+							(timeFrame) => this.data.deadline === timeFrame.name
+						)
+					);
+				}
 			}
 		});
 	}
@@ -117,7 +124,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
 			context: {
 				type: 'add'
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (response) {

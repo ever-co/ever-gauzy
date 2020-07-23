@@ -40,6 +40,7 @@
 				<nb-radio
 					*ngFor="let expenseType of expenseTypes"
 					[value]="expenseType"
+					(valueChange)="changeExpenseType($event)"
 					>{{ expenseType }}
 				</nb-radio>
 			</nb-radio-group>
@@ -202,7 +203,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-sm-6">
 					<div class="form-group">
 						<ga-tags-color-input
 							[selectedTags]="tags"
@@ -210,6 +211,32 @@
 							[isOrgLevel]="true"
 						>
 						</ga-tags-color-input>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label" for="status">
+							{{ 'FORM.LABELS.STATUS' | translate }}
+						</label>
+						<div>
+							<nb-select
+								id="status"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.SELECT_STATUS'
+										| translate
+								}}"
+								fullWidth
+								[disabled]="disableStatuses"
+								formControlName="status"
+							>
+								<nb-option
+									*ngFor="let status of expenseStatuses"
+									[value]="status"
+								>
+									{{ status }}
+								</nb-option>
+							</nb-select>
+						</div>
 					</div>
 				</div>
 			</div>

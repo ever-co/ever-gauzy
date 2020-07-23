@@ -3,26 +3,24 @@ import {
 	Input,
 	OnDestroy,
 	OnInit,
-	ViewChild,
 	AfterViewInit
 } from '@angular/core';
 import {
 	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
-	NbMenuItem,
-	NbPopoverDirective
+	NbMenuItem
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
-import { Subject } from 'rxjs';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { PermissionsEnum } from '@gauzy/models';
 import { User } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ngx-header',
@@ -38,13 +36,18 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionEEdit = false;
 	hasPermissionPEdit = false;
 	hasPermissionInEdit = false;
+	hasPermissionTask = false;
+	hasPermissionEmpEdit = false;
+	hasPermissionProjEdit = false;
+	hasPermissionContactEdit = false;
+	hasPermissionTeamEdit = false;
+	hasPermissionContractEdit = false;
+	isEmployee = false;
 
 	@Input() position = 'normal';
 	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
-	@ViewChild('timerPopover')
-	timerPopover: NbPopoverDirective;
 
 	showDateSelector = true;
 	organizationSelected = false;
@@ -53,8 +56,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	supportContextMenu: NbMenuItem[];
 	showExtraActions = false;
 
+	actions = {
+		START_TIMER: 'START_TIMER'
+	};
+
 	private _selectedOrganizationId: string;
-	private _ngDestroy$ = new Subject<void>();
 	timerDuration: string;
 
 	constructor(
@@ -71,13 +77,13 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	ngOnInit() {
 		this.router.events
 			.pipe(filter((event) => event instanceof NavigationEnd))
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.timeTrackerService.showTimerWindow = false;
 			});
 
-		this.timeTrackerService.$dueration
-			.pipe(takeUntil(this._ngDestroy$))
+		this.timeTrackerService.duration$
+			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.timerDuration = moment.utc(time * 1000).format('HH:mm:ss');
 			});
@@ -85,8 +91,17 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.menuService
 			.onItemClick()
 			.pipe(filter(({ tag }) => tag === 'create-context-menu'))
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((e) => {
+				if (e.item.data && e.item.data.action) {
+					switch (e.item.data.action) {
+						case this.actions.START_TIMER:
+							this.timeTrackerService.openAndStartTimer();
+							break;
+					}
+					return; //If action is given then do not navigate
+				}
+
 				this.router.navigate([e.item.link], {
 					queryParams: {
 						openAddDialog: true
@@ -95,7 +110,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			});
 
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
@@ -103,13 +118,14 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				}
 			});
 
-		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+		this.store.user$.pipe(untilDestroyed(this)).subscribe((user) => {
 			this.user = user;
+			this.isEmployee = !!user.employeeId;
 		});
 
 		this.themeService
 			.onThemeChange()
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((t) => {
 				this.theme = t.name;
 			});
@@ -118,18 +134,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngAfterViewInit(): void {
-		this.timeTrackerService.$showTimerWindow
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((status: boolean) => {
-				if (this.timerPopover) {
-					if (status) {
-						this.timerPopover.show();
-					} else {
-						this.timerPopover.hide();
-					}
-				}
-			});
+	ngAfterViewInit(): void {}
+
+	toggleTimerWindow() {
+		this.timeTrackerService.showTimerWindow = !this.timeTrackerService
+			.showTimerWindow;
 	}
 
 	toggleSidebar(): boolean {
@@ -154,7 +163,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	navigateHome() {
-		this.menuService.navigateHome();
+		//this.menuService.navigateHome();
 		return false;
 	}
 
@@ -179,7 +188,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	loadItems() {
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasPermissionE = this.store.hasPermission(
 					PermissionsEnum.ORG_EXPENSES_VIEW
@@ -192,6 +201,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				);
 				this.hasPermissionIn = this.store.hasPermission(
 					PermissionsEnum.INVOICES_VIEW
+				);
+				this.hasPermissionTask = this.store.hasPermission(
+					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
 				);
 
 				this.hasPermissionEEdit = this.store.hasPermission(
@@ -206,14 +218,31 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				this.hasPermissionInEdit = this.store.hasPermission(
 					PermissionsEnum.INVOICES_EDIT
 				);
+				this.hasPermissionEmpEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_EMPLOYEES_EDIT
+				);
+				this.hasPermissionProjEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_PROJECT_EDIT
+				);
+				this.hasPermissionContactEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_CONTACT_EDIT
+				);
+				this.hasPermissionTeamEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_TEAM_EDIT
+				);
+				this.hasPermissionContractEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_CONTRACT_EDIT
+				);
 			});
 
 		this.createContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.TIMER'),
 				icon: 'clock-outline',
-				link: '#'
-				//hidden: this.hasEditPermission
+				hidden: !this.isEmployee,
+				data: {
+					action: this.actions.START_TIMER //This opens the timer poup in the header, managed by menu.itemClick TOO: Start the timer also
+				}
 			},
 			// TODO: divider
 			{
@@ -244,34 +273,40 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
 				icon: 'file-text-outline',
-				link: 'pages/integrations/upwork/contracts'
+				link: 'pages/integrations/upwork/contracts',
+				hidden: !this.hasPermissionContractEdit
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.TEAM'),
 				icon: 'people-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/teams`
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/teams`,
+				hidden: !this.hasPermissionTeamEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.TASK'),
 				icon: 'calendar-outline',
-				link: 'pages/tasks/dashboard'
+				link: 'pages/tasks/dashboard',
+				hidden: !this.hasPermissionTask
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTACT'),
 				icon: 'person-done-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/contacts`
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/contacts`,
+				hidden: !this.hasPermissionContactEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
 				icon: 'color-palette-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/projects`
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/projects`,
+				hidden: !this.hasPermissionProjEdit
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
 				icon: 'people-outline',
-				link: 'pages/employees'
+				link: 'pages/employees',
+				hidden: !this.hasPermissionEmpEdit
 			}
 		];
 
@@ -306,17 +341,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.createContextMenu = [];
-				this.supportContextMenu = [];
-				this.loadItems();
-			});
+		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this.createContextMenu = [];
+			this.supportContextMenu = [];
+			this.loadItems();
+		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

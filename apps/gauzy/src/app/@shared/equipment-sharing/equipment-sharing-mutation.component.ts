@@ -12,7 +12,8 @@ import {
 	RequestApprovalStatusTypesEnum,
 	RequestApprovalStatus,
 	Employee,
-	OrganizationTeam
+	OrganizationTeam,
+	ApprovalPolicy
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +21,7 @@ import { EquipmentSharingService } from '../../@core/services/equipment-sharing.
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
+import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
@@ -47,6 +49,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		private fb: FormBuilder,
 		readonly translationService: TranslateService,
 		private employeesService: EmployeesService,
+		public approvalPolicyService: ApprovalPolicyService,
 		private organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translationService);
@@ -59,10 +62,12 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	requestStatus: number;
 	participants = 'employees';
 
+	approvalPolicies: ApprovalPolicy[] = [];
 	teams: OrganizationTeam[];
 	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
+	selectedApprovalPolicy: string;
 
 	requestStatuses = Object.values(RequestApprovalStatus);
 
@@ -84,6 +89,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.loadSelectedOrganization();
 		this.loadEmployees();
 		this.loadTeams();
+		this.loadApprovalPolicies();
 		this.loadRequestStatus();
 		this.validateForm();
 	}
@@ -99,8 +105,13 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	async initializeForm() {
 		this.form = this.fb.group({
 			equipment: [
-				this.equipmentSharing ? this.equipmentSharing.equipment.id : '',
+				this.equipmentSharing ? this.equipmentSharing.equipmentId : '',
 				Validators.required
+			],
+			approvalPolicy: [
+				this.equipmentSharing
+					? this.equipmentSharing.approvalPolicyId
+					: ''
 			],
 			employees: [
 				this.equipmentSharing
@@ -143,6 +154,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			equipment: this.equipmentItems.find(
 				(eq) => eq.id === this.form.value['equipment']
 			),
+			createdBy: '',
+			approvalPolicyId: this.form.value['approvalPolicy'],
 			employees: this.employees.filter((emp) => {
 				return this.selectedEmployees.includes(emp.id);
 			}),
@@ -155,10 +168,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			status: this.requestStatus,
 			name: this.form.value['name']
 		};
-		console.log('shareRequest', shareRequest);
 		let equipmentSharing: EquipmentSharing;
 
 		if (this.equipmentSharing) {
+			shareRequest.createdBy = this.equipmentSharing.createdBy;
 			equipmentSharing = await this.equipmentSharingService.update(
 				this.equipmentSharing.id,
 				shareRequest
@@ -178,6 +191,19 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 	async loadEquipmentItems() {
 		this.equipmentItems = (await this.equipmentService.getAll()).items;
+	}
+
+	async loadApprovalPolicies() {
+		this.approvalPolicies = (
+			await this.approvalPolicyService.getAll([], {
+				organizationId: this.selectedOrgId
+			})
+		).items.filter((policy) => {
+			return (
+				policy.organizationId === this.selectedOrgId ||
+				this.selectedOrgId === ''
+			);
+		});
 	}
 
 	async loadEmployees() {
@@ -236,6 +262,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		} else {
 			this.requestStatus = RequestApprovalStatusTypesEnum.REQUESTED;
 		}
+	}
+
+	onApprovalPolicySelected(approvalPolicySelection: string) {
+		this.selectedApprovalPolicy = approvalPolicySelection;
 	}
 
 	onEmployeesSelected(employeeSelection: string[]) {
@@ -383,5 +413,16 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		}
 
 		return !this.checkIfDateBetweenPeriods(this.periodsUnderUse, date);
+	}
+
+	getStatus(id: number) {
+		switch (id) {
+			case RequestApprovalStatusTypesEnum.REQUESTED:
+				return 'Request';
+			case RequestApprovalStatusTypesEnum.REFUSED:
+				return 'Refused';
+			case RequestApprovalStatusTypesEnum.APPROVED:
+				return 'Approved';
+		}
 	}
 }

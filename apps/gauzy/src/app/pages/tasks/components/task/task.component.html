@@ -102,6 +102,7 @@
 				<ga-tasks-sprint-view
 					(createTaskEvent)="createTaskDialog()"
 					(editTaskEvent)="editTaskDialog($event)"
+					(deleteTaskEvent)="deleteTask($event)"
 					[project]="selectedProject$ | async"
 					[tasks]="availableTasks$ | async"
 				></ga-tasks-sprint-view>

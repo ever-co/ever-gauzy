@@ -46,6 +46,7 @@ import { ProductVariantPriceService } from '../../@core/services/product-variant
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
 import { EnabledStatusComponent } from './components/table-components/enabled-row.component';
+import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -92,6 +93,7 @@ const NB_MODULES = [
 		FormsModule,
 		SharedModule,
 		ImageUploaderModule,
+		CardGridModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

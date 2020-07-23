@@ -6,10 +6,15 @@ import { TaskStatusEnum } from '@gauzy/models';
 @Component({
 	selector: 'ngx-status-view',
 	templateUrl: './status-view.component.html',
-	styleUrls: ['./status-view.component.css']
+	styles: [
+		`
+			.badge {
+				position: static;
+			}
+		`
+	]
 })
 export class StatusViewComponent implements OnInit, ViewCell {
-	// tslint:disable-next-line: no-input-rename
 	@Input() value: string;
 	@Input() rowData: any;
 	status: NbComponentStatus;

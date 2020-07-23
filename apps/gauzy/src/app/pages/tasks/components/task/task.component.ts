@@ -9,7 +9,7 @@ import {
 
 import { uniqBy } from 'lodash';
 import { Observable, Subject } from 'rxjs';
-import { first, takeUntil, map, tap, filter } from 'rxjs/operators';
+import { first, takeUntil, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
@@ -122,15 +122,13 @@ export class TaskComponent extends TranslationBaseComponent
 		);
 		this.projects$ = this.availableTasks$.pipe(
 			map((tasks: Task[]): OrganizationProjects[] => {
-				console.log(tasks);
 				return uniqBy(
 					tasks.map(
 						(task: Task): OrganizationProjects => task.project
 					),
 					'id'
 				);
-			}),
-			tap(console.log)
+			})
 		);
 	}
 
@@ -145,8 +143,7 @@ export class TaskComponent extends TranslationBaseComponent
 			this.availableTasks$ = this.availableTasks$.pipe(
 				map((tasks: Task[]) =>
 					tasks.filter((task: Task) => task.project.id === project.id)
-				),
-				tap((tasks) => console.log('Reactive Tasks: ', tasks))
+				)
 			);
 		}
 	}
@@ -188,7 +185,7 @@ export class TaskComponent extends TranslationBaseComponent
 				});
 			this._organizationsStore.selectedOrganization$
 				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((data) => {
+				.subscribe(() => {
 					this.loadTeams();
 				});
 			// this.availableTasks$ = this.teamTasks$;
@@ -344,7 +341,6 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async editTaskDialog(selectedItem?: Task) {
-		console.log(selectedItem);
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
@@ -498,7 +494,6 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	openTasksSettings(selectedProject: OrganizationProjects): void {
-		console.log('SELECTED_PROJECT: ', selectedProject);
 		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject
 		});

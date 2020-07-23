@@ -10,7 +10,7 @@ import {
 import { SprintStoreService } from 'apps/gauzy/src/app/@core/services/organization-sprint-store.service';
 import { Task, OrganizationSprint, OrganizationProjects } from '@gauzy/models';
 import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, filter } from 'rxjs/operators';
 import {
 	CdkDragDrop,
 	moveItemInArray,
@@ -19,6 +19,7 @@ import {
 import { GauzyEditableGridComponent } from 'apps/gauzy/src/app/@shared/components/editable-grid/gauzy-editable-grid.component';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 
 @Component({
 	selector: 'ga-tasks-sprint-view',
@@ -29,12 +30,12 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 	implements OnInit, OnChanges {
 	sprints: OrganizationSprint[] = [];
 	@Input() project: OrganizationProjects;
-	@Input() private tasks: Task[];
 	backlogTasks: Task[] = [];
 	@Output() createTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() editTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() deleteTaskEvent: EventEmitter<any> = new EventEmitter();
 	sprints$: Observable<OrganizationSprint[]> = this.store$.sprints$.pipe(
+		filter((sprints: OrganizationSprint[]) => Boolean(sprints.length)),
 		map((sprints: OrganizationSprint[]): OrganizationSprint[] =>
 			sprints.filter(
 				(sprint: OrganizationSprint) =>
@@ -50,49 +51,53 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 	);
 
 	sprintIds: string[] = [];
+	sprintActions: { title: string }[] = [];
 
 	constructor(
 		private store$: SprintStoreService,
 		translateService: TranslateService,
-		dialogService: NbDialogService
+		dialogService: NbDialogService,
+		private taskStore: TasksStoreService
 	) {
 		super(translateService, dialogService);
 	}
 
 	ngOnInit(): void {
-		// this.backlogTasks = this.tasks.filter((task) => !task.organizationSprint);
+		this.sprintActions = [
+			{ title: 'Edit sprint' },
+			{ title: 'Delete Sprint' }
+		];
 	}
 
 	reduceTasks(tasks: Task[]): void {
-		const sprints = {};
-		const backlog = [];
-		this.tasks.forEach((task) => {
-			if (!!task.organizationSprint) {
-				if (!sprints[task.organizationSprint.id]) {
-					sprints[task.organizationSprint.id] = {
-						...task.organizationSprint,
-						tasks: []
-					};
+		this.sprints$.subscribe((availableSprints: OrganizationSprint[]) => {
+			const sprints = availableSprints.reduce(
+				(
+					acc: { [key: string]: OrganizationSprint },
+					sprint: OrganizationSprint
+				) => {
+					acc[sprint.id] = { ...sprint, tasks: [] };
+					return acc;
+				},
+				{}
+			);
+			const backlog = [];
+			tasks.forEach((task) => {
+				if (!!task.organizationSprint) {
 					sprints[task.organizationSprint.id].tasks.push(task);
 				} else {
-					sprints[task.organizationSprint.id].tasks.push(task);
+					backlog.push(task);
 				}
-			} else {
-				backlog.push(task);
-			}
+			});
+			this.sprints = Object.values(sprints);
+			this.backlogTasks = backlog;
 		});
-		this.sprints = Object.values(sprints);
-		this.backlogTasks = backlog;
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (!!changes && !!changes.tasks) {
 			this.reduceTasks(changes.tasks.currentValue);
-			// this.backlogTasks = this.tasks.filter(
-			//   (task) => !task.organizationSprint
-			// );
 		}
-		console.log(changes);
 	}
 
 	createTask(): void {
@@ -100,21 +105,14 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 	}
 
 	editTask(selectedItem: Task): void {
-		console.log('selectedItem: ', selectedItem);
-		console.log('this.selectedItem: ', this.selectedItem);
-		this.editTaskEvent.emit(this.selectedItem);
-		// this.editTaskEvent.emit(selectedItem);
+		this.editTaskEvent.emit(this.selectedItem || selectedItem);
 	}
 
 	deleteTask(selectedItem: Task): void {
-		console.log(selectedItem);
 		this.deleteTaskEvent.emit(selectedItem);
-		// this.editTaskEvent.emit(selectedItem);
 	}
 
 	drop(event: CdkDragDrop<string[]>) {
-		console.log(event);
-
 		if (event.previousContainer === event.container) {
 			moveItemInArray(
 				event.container.data,
@@ -122,9 +120,13 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 				event.currentIndex
 			);
 		} else {
-			this.store$
-				.moveTaskToSprint(event.container.id, event.item.data)
-				.subscribe(console.log);
+			this.taskStore.editTask({
+				id: event.item.data.id,
+				title: event.item.data.title,
+				organizationSprint: this.sprints.find(
+					(sprint) => sprint.id === event.container.id
+				)
+			});
 			transferArrayItem(
 				event.previousContainer.data,
 				event.container.data,
@@ -132,6 +134,41 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 				event.currentIndex
 			);
 		}
+	}
+
+	taskAction(evt: { action: string; task: Task }): void {
+		switch (evt.action) {
+			case 'EDIT_TASK':
+				this.editTask(evt.task);
+				break;
+
+			case 'DELETE_TASK':
+				this.deleteTask(evt.task);
+				break;
+		}
+	}
+
+	changeTaskStatus({ id, status, title }: Partial<Task>): void {
+		this.taskStore.editTask({
+			id,
+			status,
+			title
+		});
+	}
+
+	completeSprint(sprint: OrganizationSprint, evt: any): void {
+		this.preventExpand(evt);
+		this.store$
+			.updateSprint({
+				...sprint,
+				isActive: false
+			})
+			.subscribe();
+	}
+
+	preventExpand(evt: any): void {
+		evt.stopPropagation();
+		evt.preventDefault();
 	}
 
 	trackByFn(task: Task): string | null {

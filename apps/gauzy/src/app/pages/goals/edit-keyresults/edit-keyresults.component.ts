@@ -18,16 +18,20 @@ import {
 	GoalLevelEnum,
 	OrganizationTeam,
 	RolesEnum,
-	Goal
+	Goal,
+	KPI
 } from '@gauzy/models';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
 import { Store } from '../../../@core/services/store.service';
 import { GoalService } from '../../../@core/services/goal.service';
+import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
 
 @Component({
 	selector: 'ga-edit-keyresults',
-	templateUrl: './edit-keyresults.component.html'
+	templateUrl: './edit-keyresults.component.html',
+	styleUrls: ['./edit-keyresults.component.scss']
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: Employee[];
@@ -44,6 +48,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	goalDeadline: string;
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
 	minDate = new Date();
+	KPIs: Array<KPI>;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
@@ -52,7 +57,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		private taskService: TasksService,
 		private organizationTeamsService: OrganizationTeamsService,
 		private store: Store,
-		private goalService: GoalService
+		private goalService: GoalService,
+		private goalSettingsService: GoalSettingsService,
+		private keyResultUpdateService: KeyResultUpdateService
 	) {}
 
 	ngOnInit() {
@@ -77,9 +84,14 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			hardDeadline: [null],
 			assignAsObjective: [false],
 			level: [''],
-			alignedGoalOwner: ['']
+			alignedGoalOwner: [''],
+			kpiId: ['']
 		});
-
+		this.goalSettingsService.getAllKPI().then((kpi) => {
+			const { items } = kpi;
+			console.log(items);
+			this.KPIs = items;
+		});
 		this.employeeService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
@@ -198,6 +210,17 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	}
 
 	async saveKeyResult() {
+		if (this.keyResultsForm.value.type === KeyResultTypeEnum.KPI) {
+			const selectedKPI = this.KPIs.find(
+				(kpi) => kpi.id === this.keyResultsForm.value.kpiId
+			);
+			console.log(selectedKPI);
+			this.keyResultsForm.patchValue({
+				initialValue: selectedKPI.currentValue,
+				targetValue: selectedKPI.targetValue
+			});
+		}
+		// Create objective from keyResult
 		if (!!this.keyResultsForm.value.assignAsObjective) {
 			const objectiveData: Goal = {
 				name: this.keyResultsForm.value.name,
@@ -218,7 +241,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			] = this.keyResultsForm.value.alignedGoalOwner;
 			await this.goalService.createGoal(objectiveData);
 		}
-
+		// Assign Task dueDate as keyResult's hard Deadline.
 		if (this.keyResultsForm.value.type === this.keyResultTypeEnum.TASK) {
 			await this.taskService
 				.getById(this.keyResultsForm.value.taskId)
@@ -231,7 +254,19 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					}
 				});
 		}
+
 		if (!!this.data) {
+			if (this.data.type !== this.keyResultsForm.value.type) {
+				this.data.progress = 0;
+				this.data.update = this.keyResultsForm.value.initialValue;
+				try {
+					this.keyResultUpdateService.deleteBulkByKeyResultId(
+						this.data.id
+					);
+				} catch (error) {
+					console.log(error);
+				}
+			}
 			this.keyResultsForm.patchValue({
 				targetValue:
 					this.keyResultsForm.value.type ===

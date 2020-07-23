@@ -56,6 +56,7 @@
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
+		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "ערוך",
@@ -231,7 +232,8 @@
 			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
 			"SHORT_DESCRIPTION": "Short Description",
 			"ENABLE_EMPLOYEE_FEATURES": "Enable Employee Features",
-			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features"
+			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features",
+			"STATUS": "עבודה"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -307,6 +309,7 @@
 			"SWITCH_PROJECT_STATE": "Public",
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
+			"CHOOSE_APPROVAL_POLICY": "Choose Approval Policy",
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
@@ -315,6 +318,7 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
+			"SELECT_STATUS": "Select Status",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -462,7 +466,6 @@
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "לוח מחוונים",
 		"APPOINTMENTS": "Appointments",
-		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
@@ -719,6 +722,7 @@
 		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
 		"ADD_NEW_KEY_RESULT": "Add new key result",
 		"ADD_NEW_OBJECTIVE": "Add new Objective",
+		"EDIT_OBJECTIVE": "Edit Objective",
 		"SESSION": "Session",
 		"GOAL_SETTINGS": "Goal Settings",
 		"NO_DESCRIPTION": "No Description",
@@ -727,6 +731,7 @@
 		"UPDATE": "Update",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
+		"GROUP_BY": "Group By",
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
@@ -809,7 +814,8 @@
 			"NUMBER": "Number",
 			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "מטבע",
-			"TASK": "Task"
+			"TASK": "Task",
+			"KPI": "KPI"
 		},
 		"DEADLINE": {
 			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
@@ -832,6 +838,7 @@
 				"WEIGHT": "Weight",
 				"SELECT_PROJECT": "Select Project",
 				"SELECT_TASK": "Select Task",
+				"SELECT_KPI": "Select KPI",
 				"ASSIGN_AS_OBJECTIVE": "Assign as objective"
 			},
 			"PLACEHOLDERS": {
@@ -1114,7 +1121,13 @@
 				"ADMINISTRATION": "Administration"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
-			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
+			"ORG_SPRINT_EDIT": "Create/Edit Sprints",
+			"ORG_SPRINT_VIEW": "View Sprints",
+			"ORG_PROJECT_EDIT": "Create/Edit Projects",
+			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
+			"ORG_TEAM_EDIT": "Create/Edit Teams",
+			"ORG_CONTRACT_EDIT": "Create/Edit Contracts"
 		}
 	},
 	"PUBLIC_PAGE": {
@@ -1181,6 +1194,7 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "עבודה",
 		"APPROVAL_REQUEST_ACTIONS": "Actions",
+		"CREATED_BY": "Created By",
 		"APPROVAL": "Approval",
 		"REFUSE": "Refuse",
 		"HEADER": "Approval Request",
@@ -1302,9 +1316,11 @@
 		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
 		"REQUEST": "Request",
 		"EQUIPMENT_NAME": "Equipment name",
+		"APPROVAL_POLICY": "Approval policy",
 		"SHARE_REQUIEST_DATE": "Share request date",
 		"SHARE_START_DATE": "Share start date",
 		"SHARE_END_DATE": "Share end date",
+		"CREATED_BY": "Created By",
 		"STATUS": "עבודה",
 		"REQUEST_SAVED": "Request saved",
 		"REQUEST_DELETED": "Request deleted",
@@ -1705,6 +1721,7 @@
 			"WARNING": "Warning"
 		},
 		"MESSAGE": {
+			"ERRORS": "Please check the form for errors",
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
 			"INVITES_LOAD": "Could Not Load Invites",
@@ -1903,6 +1920,16 @@
 				"ADD_LANGUAGE": "New language {{ name }} successfully added!",
 				"INVALID_LANGUAGE_NAME_LEVEL": "Please check the Name and Level for Language input",
 				"REMOVE_LANGUAGE": "Language {{ name }} successfully removed!"
+			},
+			"EDIT_ORGANIZATION_DOCS": {
+				"CREATED": "Document successfully created",
+				"ERR_CREATE": "Unable to create new organization document",
+				"ERR_LOAD": "Unable to load organization documents",
+				"UPDATED": "Selected document successfully updated!",
+				"ERR_UPDATED": "Unable to update the selected document!",
+				"SELECTED_DOC": "selected document",
+				"DELETED": "Document successfully deleted!",
+				"ERR_DELETED": "Unable to delete the selected document!"
 			}
 		},
 		"DANGER_ZONE": {
@@ -2020,6 +2047,11 @@
 		"DURATION_ERROR": "Selected Duration is not valid",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"EMPLOYEE": "עובד"
+	},
+	"EMPLOYEE_SCHEDULES_MODAL": {
+		"EMPLOYEE": "עובד",
+		"SLOTS_AVAILABLE": "Employee is available only for the below time slots, Do you still want to continue?",
+		"SLOTS_UNAVAILABLE": "Employee unavailable for this time slot"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",

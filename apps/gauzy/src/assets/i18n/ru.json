@@ -56,6 +56,7 @@
 		"SAVE_AS_DRAFT": "Сохранить как черновик",
 		"SAVE_AND_SEND_CLIENT": "Сохранить и отправить клиенту в gauzy",
 		"SAVE_AND_SEND_EMAIL": "Сохранить и отправить по электронной почте",
+		"EVENT_TYPES": "Типы событий",
 		"SPRINT": {
 			"CREATE": "Создать спринт",
 			"EDIT": "Редактировать",
@@ -231,7 +232,8 @@
 			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников",
 			"SHORT_DESCRIPTION": "Краткое описание",
 			"ENABLE_EMPLOYEE_FEATURES": "Включить функции сотрудника",
-			"REVOKE_EMPLOYEE_FEATURES": "Отозвать функции сотрудника"
+			"REVOKE_EMPLOYEE_FEATURES": "Отозвать функции сотрудника",
+			"STATUS": "Статус"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -307,6 +309,7 @@
 			"SWITCH_PROJECT_STATE": "Публичный",
 			"CHOOSE_EMPLOYEES": "Выберите сотрудника/с",
 			"CHOOSE_TEAMS": "Выберите команду/с",
+			"CHOOSE_APPROVAL_POLICY": "Выберите политику одобрения",
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации",
 			"ORGANIZATIONS": "Выберите организации",
@@ -315,6 +318,7 @@
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"OWNER": "Владелец",
+			"SELECT_STATUS": "Выберите статус",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -462,7 +466,6 @@
 		"PIPELINES": "Трубопроводы",
 		"DASHBOARD": "Приборная доска",
 		"APPOINTMENTS": "Назначения",
-		"EVENT_TYPES": "Типы событий",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -719,6 +722,7 @@
 		"GOALS_EMPTY": "Вы еще не создали ни одной цели. Нажмите \"Добавить\", чтобы создать одну",
 		"ADD_NEW_KEY_RESULT": "Добавить новый результат ключа",
 		"ADD_NEW_OBJECTIVE": "Добавить новую цель",
+		"EDIT_OBJECTIVE": "Изменить цель",
 		"SESSION": "Сессия",
 		"GOAL_SETTINGS": "Настройки цели",
 		"NO_DESCRIPTION": "Нет описания",
@@ -727,6 +731,7 @@
 		"UPDATE": "Обновить",
 		"COMMENTS": "Комментарии",
 		"KEY_RESULTS": "Ключевые результаты",
+		"GROUP_BY": "Группировать по",
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Добавить временной кадр",
 			"TIME_FRAME_PAGE_TITLE": "Установить время",
@@ -809,7 +814,8 @@
 			"NUMBER": "Номер",
 			"TRUE_OR_FALSE": "Истина/Ложь",
 			"CURRENCY": "Валюта",
-			"TASK": "Задача"
+			"TASK": "Задача",
+			"KPI": "KPI"
 		},
 		"DEADLINE": {
 			"NO_CUSTOM_DEADLINE": "Нет пользовательских сроков",
@@ -832,6 +838,7 @@
 				"WEIGHT": "Вес",
 				"SELECT_PROJECT": "Выбрать проект",
 				"SELECT_TASK": "Выберите задачу",
+				"SELECT_KPI": "Выберите KPI",
 				"ASSIGN_AS_OBJECTIVE": "Назначить как цель"
 			},
 			"PLACEHOLDERS": {
@@ -1114,7 +1121,13 @@
 				"ADMINISTRATION": "Администрация"
 			},
 			"ONLY_ADMIN": "Эти разрешения доступны только для чтения и включены только для администратора",
-			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:"
+			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:",
+			"ORG_SPRINT_EDIT": "Создать/редактировать спринты",
+			"ORG_SPRINT_VIEW": "Просмотр спринтов",
+			"ORG_PROJECT_EDIT": "Создание/Редактирование проектов",
+			"ORG_CONTACT_EDIT": "Создать/редактировать контакты",
+			"ORG_TEAM_EDIT": "Создать/редактировать команды",
+			"ORG_CONTRACT_EDIT": "Создать/редактировать контракты"
 		}
 	},
 	"PUBLIC_PAGE": {
@@ -1181,6 +1194,7 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Политика одобрения",
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"APPROVAL_REQUEST_ACTIONS": "Действия",
+		"CREATED_BY": "Создано",
 		"APPROVAL": "Одобрение",
 		"REFUSE": "Отклонить",
 		"HEADER": "Запрос на утверждение",
@@ -1302,9 +1316,11 @@
 		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на оборудование",
 		"REQUEST": "Запросить",
 		"EQUIPMENT_NAME": "Название оборудования",
+		"APPROVAL_POLICY": "Утверждающая политика",
 		"SHARE_REQUIEST_DATE": "Поделиться датой запроса",
 		"SHARE_START_DATE": "Поделиться датой начала",
 		"SHARE_END_DATE": "Поделиться датой окончания",
+		"CREATED_BY": "Создано",
 		"STATUS": "Статус",
 		"REQUEST_SAVED": "Запрос сохранен",
 		"REQUEST_DELETED": "Запрос удален",
@@ -1705,6 +1721,7 @@
 			"WARNING": "Предупреждение"
 		},
 		"MESSAGE": {
+			"ERRORS": "Пожалуйста, проверьте форму на наличие ошибок",
 			"PROJECT_LOAD": "Не удалось загрузить проекты",
 			"COPIED": "Ссылка скопирована в буфер обмена",
 			"INVITES_LOAD": "Не удалось загрузить приглашения",
@@ -1903,6 +1920,16 @@
 				"ADD_LANGUAGE": "Новый язык {{ name }} успешно добавлен!",
 				"INVALID_LANGUAGE_NAME_LEVEL": "Пожалуйста, проверьте имя и уровень для ввода языка",
 				"REMOVE_LANGUAGE": "Язык {{ name }} успешно удален!"
+			},
+			"EDIT_ORGANIZATION_DOCS": {
+				"CREATED": "Документ успешно создан",
+				"ERR_CREATE": "Не удается создать новый документ организации",
+				"ERR_LOAD": "Не удается загрузить документы организации",
+				"UPDATED": "Выбранный документ успешно обновлен!",
+				"ERR_UPDATED": "Не удается обновить выбранный документ!",
+				"SELECTED_DOC": "выбранный документ",
+				"DELETED": "Документ успешно удален!",
+				"ERR_DELETED": "Не удается удалить выбранный документ!"
 			}
 		},
 		"DANGER_ZONE": {
@@ -2020,6 +2047,11 @@
 		"DURATION_ERROR": "Выбранная длительность недопустима",
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"EMPLOYEE": "Сотрудник"
+	},
+	"EMPLOYEE_SCHEDULES_MODAL": {
+		"EMPLOYEE": "Сотрудник",
+		"SLOTS_AVAILABLE": "Сотрудник доступен только для слотов ниже времени, хотите продолжить?",
+		"SLOTS_UNAVAILABLE": "Сотрудник недоступен за этот промежуток времени"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Типы событий",

@@ -32,6 +32,7 @@ export class FileUploaderInputComponent {
 	uploadedImgUrl: EventEmitter<string> = new EventEmitter<string>();
 
 	uploader: FileUploader;
+	loading = false;
 
 	private oldValue: string;
 
@@ -45,6 +46,8 @@ export class FileUploaderInputComponent {
 		const newValue =
 			this.fileUrl &&
 			this.fileUrl.replace(this.oldValue || '', '').trim();
+
+		this.loading = true;
 
 		if (this.uploader.queue.length > 0) {
 			this.uploader.queue[this.uploader.queue.length - 1].upload();
@@ -76,6 +79,7 @@ export class FileUploaderInputComponent {
 			// 	orientation
 			// };
 
+			this.loading = false;
 			this.uploadedImgUrl.emit(data.url);
 			this.oldValue = this.fileUrl;
 		};

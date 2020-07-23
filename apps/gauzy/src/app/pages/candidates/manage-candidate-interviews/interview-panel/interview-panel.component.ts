@@ -30,10 +30,10 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	candidateSearch: FormControl = new FormControl();
 	sort: FormControl = new FormControl();
 	isResetSelect: boolean;
-	filterParams = {
+	filter = {
 		name: '',
 		title: '',
-		employeeIds: null
+		empIds: null
 	};
 	loading: boolean;
 	constructor(
@@ -58,85 +58,95 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	}
 	filterBySearch(item: string, type: string) {
 		type === 'name'
-			? (this.filterParams.name = item)
-			: (this.filterParams.title = item);
+			? (this.filter.name = item)
+			: (this.filter.title = item);
 		this.isResetSelect = false;
 		this.filterInterviews();
 	}
-	onEmployeeSelected(employeeIds: string[]) {
-		this.filterParams.employeeIds = employeeIds;
+	onEmployeeSelected(empIds: string[]) {
+		this.filter.empIds = empIds;
 		this.isResetSelect = false;
 		this.filterInterviews();
 	}
+
 	filterInterviews() {
-		//TO DO
-		if (
-			!this.filterParams.name &&
-			!this.filterParams.title &&
-			!this.filterParams.employeeIds
-		)
+		//TO FIX
+		// 0
+		if (!this.filter.name && !this.filter.title && !this.filter.empIds)
 			this.interviewList = this.allInterviews;
+		// 1
+		if (this.filter.name && !this.filter.title && !this.filter.empIds)
+			this.interviewList = this.findByName(this.allInterviews);
+		if (!this.filter.name && this.filter.title && !this.filter.empIds)
+			this.interviewList = this.findByTitle(this.allInterviews);
+		if (!this.filter.name && !this.filter.title && this.filter.empIds)
+			this.interviewList = this.findByEmployee(this.allInterviews);
 
-		if (
-			this.filterParams.name &&
-			!this.filterParams.title &&
-			!this.filterParams.employeeIds
-		)
-			this.interviewList = this.allInterviews.filter(
-				(interview) =>
-					interview.candidate.user.name
-						.toLocaleLowerCase()
-						.indexOf(this.filterParams.name.toLocaleLowerCase()) !==
-					-1
+		// 2
+		if (this.filter.name && this.filter.title && !this.filter.empIds)
+			this.interviewList = this.findByTitle(
+				this.findByName(this.allInterviews)
+			);
+		if (!this.filter.name && this.filter.title && this.filter.empIds)
+			this.interviewList = this.findByEmployee(
+				this.findByTitle(this.allInterviews)
 			);
 
-		if (
-			!this.filterParams.name &&
-			this.filterParams.title &&
-			!this.filterParams.employeeIds
-		)
-			this.interviewList = this.allInterviews.filter(
-				(interview) =>
-					interview.title
-						.toLocaleLowerCase()
-						.indexOf(
-							this.filterParams.title.toLocaleLowerCase()
-						) !== -1
+		if (this.filter.name && !this.filter.title && this.filter.empIds)
+			this.interviewList = this.findByEmployee(
+				this.findByName(this.allInterviews)
 			);
-		if (
-			!this.filterParams.name &&
-			!this.filterParams.title &&
-			this.filterParams.employeeIds
-		) {
-			if (!this.filterParams.employeeIds[0]) {
-				this.interviewList = this.allInterviews;
-			} else {
-				const result = [];
-				this.allInterviews.forEach((interview) => {
-					interview.interviewers.forEach((interviewer) => {
-						this.filterParams.employeeIds.forEach(
-							(item: string) => {
-								if (
-									item === interviewer.employeeId &&
-									!result.includes(interview)
-								) {
-									result.push(interview);
-								}
-							}
-						);
+		// 3
+		if (this.filter.name && this.filter.title && this.filter.empIds)
+			this.interviewList = this.findByEmployee(
+				this.findByTitle(this.findByName(this.allInterviews))
+			);
+	}
+	findByName(list: ICandidateInterview[]) {
+		return list.filter(
+			(interview) =>
+				interview.candidate.user.name
+					.toLocaleLowerCase()
+					.indexOf(this.filter.name.toLocaleLowerCase()) !== -1
+		);
+	}
+	findByTitle(list: ICandidateInterview[]) {
+		return list.filter(
+			(interview) =>
+				interview.title
+					.toLocaleLowerCase()
+					.indexOf(this.filter.title.toLocaleLowerCase()) !== -1
+		);
+	}
+	findByEmployee(list: ICandidateInterview[]) {
+		if (!this.filter.empIds[0]) {
+			this.interviewList = list;
+		} else {
+			const result = [];
+			list.forEach((interview) => {
+				interview.interviewers.forEach((interviewer) => {
+					this.filter.empIds.forEach((item: string) => {
+						if (
+							item === interviewer.employeeId &&
+							!result.includes(interview)
+						) {
+							result.push(interview);
+						}
 					});
 				});
-				this.interviewList = result;
-			}
+			});
+			this.interviewList = result;
 		}
+		return this.interviewList;
 	}
 	clearFilters() {
 		this.candidateSearch.reset();
 		this.interviewSearch.reset();
-		// this.isResetSelect = true;
-		this.filterParams.name = '';
-		this.filterParams.title = '';
-		this.filterParams.employeeIds = null;
+		this.isResetSelect = true;
+		this.filter.name = '';
+		this.filter.title = '';
+		this.sort.reset();
+		this.filter.empIds = null;
 		this.interviewList = this.allInterviews;
 	}
 	onSortSelected(value: string) {

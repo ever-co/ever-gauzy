@@ -1,11 +1,51 @@
-<nb-card
+<div
+	class="task"
 	cdkDrag
 	[cdkDragData]="task"
 	[cdkDragLockAxis]="'y'"
 	class="mb-1"
-	(click)="toggleItem(task)"
 >
-	<nb-card-body class="task">
-		<div class="task__title">{{ task.title }}</div>
-	</nb-card-body>
-</nb-card>
+	<nb-card>
+		<nb-card-header class="d-flex justify-content-between" *ngIf="!!task">
+			<div>
+				<ngx-status-view
+					class="mr-2"
+					[value]="task.status"
+					[nbContextMenu]="taskStatusList"
+					[nbContextMenuTag]="'changeStatus:' + task.id"
+				></ngx-status-view>
+				<span>{{ task.title }}</span>
+			</div>
+			<div>
+				<button
+					nbButton
+					size="tiny"
+					[nbContextMenu]="taskActions"
+					[nbContextMenuTag]="'updateTask:' + task.id"
+				>
+					...
+				</button>
+			</div>
+		</nb-card-header>
+		<nb-card-body style="min-height: 3rem;">
+			<div class="row">
+				<span class="col-3">
+					<nb-badge
+						*ngFor="let tag of task.tags"
+						class="color"
+						position="centered"
+						[style.background]="tag.color"
+						text="{{ tag.name }}"
+					>
+					</nb-badge>
+				</span>
+				<span class="col-5">
+					<ngx-employee-with-links
+						[value]="task.employees"
+					></ngx-employee-with-links>
+				</span>
+				<span class="col-4"> </span>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</div>

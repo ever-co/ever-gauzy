@@ -15,7 +15,8 @@ import {
 	IOrganizationVendor,
 	Tag,
 	OrganizationContact,
-	OrganizationProjects
+	OrganizationProjects,
+	ExpenseStatusesEnum
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -55,6 +56,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	expenseTypes = Object.values(ExpenseTypesEnum);
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
+	expenseStatuses = Object.values(ExpenseStatusesEnum);
 	expenseCategories: IOrganizationExpenseCategory[];
 	vendors: IOrganizationVendor[];
 	clients: { clientName: string; clientId: string }[] = [];
@@ -73,6 +75,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	amount: AbstractControl;
 	notes: AbstractControl;
 	showTooltip = false;
+	disableStatuses = false;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -97,6 +100,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.loadProjects();
 		this._initializeForm();
 		this.form.get('currency').disable();
+		this.changeExpenseType(this.form.value.typeOfExpense);
 	}
 
 	get currency() {
@@ -148,6 +152,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 		if (this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED)
 			this.form.value.splitExpense = true;
+
+		if (this.form.value.typeOfExpense !== 'Billable to Client') {
+			this.form.value.status = 'Not Billable';
+		}
 
 		this.dialogRef.close(
 			Object.assign(
@@ -269,7 +277,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				rateValue: [this.expense.rateValue],
 				receipt: [this.expense.receipt],
 				splitExpense: [this.expense.splitExpense],
-				tags: [this.expense.tags]
+				tags: [this.expense.tags],
+				status: [this.expense.status]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -291,7 +300,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				rateValue: [0],
 				receipt: [this.defaultImage],
 				splitExpense: [false],
-				tags: []
+				tags: [],
+				status: []
 			});
 
 			this._loadDefaultCurrency();
@@ -396,6 +406,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	onEmployeeChange(selectedEmployee: SelectedEmployee) {
 		this.showTooltip = selectedEmployee === ALL_EMPLOYEES_SELECTED;
+	}
+
+	changeExpenseType($event) {
+		if ($event !== 'Billable to Client') {
+			this.disableStatuses = true;
+		} else {
+			this.disableStatuses = false;
+		}
 	}
 
 	ngOnDestroy() {

@@ -92,7 +92,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async deleteTask(@Param('id') id: string): Promise<any> {
+	async deleteKeyResult(@Param('id') id: string): Promise<any> {
 		return this.keyResultService.delete(id);
 	}
 }

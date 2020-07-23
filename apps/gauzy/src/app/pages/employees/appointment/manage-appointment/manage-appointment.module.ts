@@ -20,6 +20,7 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/employee-multi-select/employee-multi-select.module';
 import { AlertModalModule } from 'apps/gauzy/src/app/@shared/alert-modal/alert-modal.module';
 import { AppointmentEmployeesService } from 'apps/gauzy/src/app/@core/services/appointment-employees.service';
+import { EmployeeSchedulesModule } from '../employee-schedules/employee-schedules.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -34,6 +35,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbInputModule,
 		AlertModalModule,
+		EmployeeSchedulesModule,
 		ReactiveFormsModule,
 		NbIconModule,
 		NbSpinnerModule,

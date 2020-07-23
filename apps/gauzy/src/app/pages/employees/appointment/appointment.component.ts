@@ -23,7 +23,8 @@ import {
 	TimeOff,
 	IEventType,
 	Employee,
-	IAvailabilitySlots
+	IAvailabilitySlots,
+	PermissionsEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
@@ -68,6 +69,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 
+	hasEventTypesViewPermission: boolean = false;
 	selectedTimeZoneName = moment.tz.guess();
 	selectedTimeZoneOffset = moment.tz(this.selectedTimeZoneName).format('Z');
 	calendarOptions: OptionsInput;
@@ -172,6 +174,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this.hasEventTypesViewPermission = this.store.hasPermission(
+			PermissionsEnum.EVENT_TYPES_VIEW
+		);
+
 		if (this.selectedEventType) {
 			this.allowedDuration =
 				this.selectedEventType.durationUnit === 'Day(s)'
@@ -371,6 +377,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
+	}
+
+	openEventTypes() {
+		this.router.navigate(['/pages/employees/event-types']);
 	}
 
 	private _prepareSlots(date: Date) {

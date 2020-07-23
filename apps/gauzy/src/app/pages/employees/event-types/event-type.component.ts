@@ -117,6 +117,9 @@ export class EventTypeComponent extends TranslationBaseComponent
 						this._loadTableData(null, this._selectedOrganizationId);
 					}
 				}
+
+				this._loadSmartTableSettings();
+				this._applyTranslationOnSmartTable();
 			});
 
 		this.store.selectedOrganization$
@@ -161,9 +164,6 @@ export class EventTypeComponent extends TranslationBaseComponent
 					this.setView();
 				}
 			});
-
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
 	}
 
 	setView() {

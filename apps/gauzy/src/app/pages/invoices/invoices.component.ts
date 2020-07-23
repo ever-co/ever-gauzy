@@ -467,7 +467,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		if (this.columns.includes(InvoiceColumnsEnum.INVOICE_DATE)) {
 			this.settingsSmartTable['columns']['invoiceDate'] = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
-				type: 'text',
+				type: 'date',
 				width: '10%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
@@ -481,7 +481,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				title: this.getTranslation(
 					'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
 				),
-				type: 'text',
+				type: 'date',
 				width: '10%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {

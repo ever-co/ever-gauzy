@@ -22,6 +22,9 @@ import { EquipmentSharingService } from '../../@core/services/equipment-sharing.
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
 import { EquipmentSharingMutationModule } from '../../@shared/equipment-sharing/equipment-sharing-mutation.module';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
+import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';
+import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
+import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -41,6 +44,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EquipmentSharingMutationModule,
 		TableComponentsModule,
 		NbDatepickerModule,
+		CardGridModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -50,8 +54,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	providers: [EquipmentSharingService],
+	providers: [EquipmentSharingService, ApprovalPolicyService],
 	entryComponents: [EquipmentSharingMutationComponent],
-	declarations: [EquipmentSharingComponent, EquipmentSharingActionComponent]
+	declarations: [
+		EquipmentSharingComponent,
+		EquipmentSharingActionComponent,
+		EquipmentSharingStatusComponent
+	]
 })
 export class EquipmentSharingModule {}
