@@ -31,6 +31,7 @@
 		"electron-store": "^5.2.0",
 		"knex": "^0.21.1",
 		"moment": "^2.25.3",
-		"node-notifier": "^7.0.1"
+		"node-notifier": "^7.0.1",
+		"sharp": "^0.25.2"
 	}
 }
