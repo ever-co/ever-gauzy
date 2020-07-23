@@ -7,7 +7,6 @@ import {
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { CandidateInterviewService } from './candidate-interview.service';
-import { tap } from 'rxjs/operators';
 
 /**
  * Service used to update candidate
