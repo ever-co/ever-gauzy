@@ -659,8 +659,8 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "הוצאות",
 		"MUTATION": {
-			"CLIENT_IS_REQUIRED!": "Client is required!",
-			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Please select a Client from the dropdown menu below or change Expense type setting.",
+			"CONTACT_IS_REQUIRED!": "Contact is required!",
+			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
 			"ATTACH_A_RECEIPT": "Attach a receipt"
@@ -1557,6 +1557,7 @@
 		"STATUS": "עבודה",
 		"SET_STATUS": "Set Status",
 		"SHOW_COLUMNS": "Show Columns",
+		"ITEM": "Item",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -1566,13 +1567,15 @@
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
+			"BY_EXPENSES": "By Expenses",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
 			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
 			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
 			"SELECT_TASKS": "Select tasks",
-			"SELECT_PRODUCTS": "Select products"
+			"SELECT_PRODUCTS": "Select products",
+			"SELECT_EXPENSES": "Select expenses"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
@@ -1587,6 +1590,7 @@
 			"HOURS_WORKED": "Hours Worked",
 			"PROJECT": "פרויקטים",
 			"PRODUCT": "Product",
+			"EXPENSE": "הוצאה",
 			"NO_ITEMS": "Please add invoice items",
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
