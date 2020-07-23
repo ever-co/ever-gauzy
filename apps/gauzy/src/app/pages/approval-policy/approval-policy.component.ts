@@ -117,13 +117,6 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 					),
 					type: 'string'
 				},
-				type: {
-					title: this.getTranslation(
-						'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE'
-					),
-					type: 'string',
-					filter: false
-				},
 				description: {
 					title: this.getTranslation(
 						'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'

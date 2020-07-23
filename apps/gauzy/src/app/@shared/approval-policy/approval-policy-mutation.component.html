@@ -44,34 +44,6 @@
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
-					<label for="type" class="label">
-						{{
-							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE'
-								| translate
-						}}
-					</label>
-
-					<nb-select
-						class="d-block"
-						[selected]="selectedApprovalPolicy"
-						(selectedChange)="onApprovalPolicySelected($event)"
-						placeholder="{{
-							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_TYPE'
-								| translate
-						}}"
-						[ngClass]="{ 'in-valid': !isHasType }"
-					>
-						<nb-option
-							*ngFor="let item of typeItems"
-							value="{{ item.value }}"
-							>{{ item.name }}</nb-option
-						>
-					</nb-select>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-sm-6 mb-3">
 					<label for="Description" class="label">
 						{{
 							'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
@@ -90,7 +62,6 @@
 					/>
 				</div>
 			</div>
-
 			<input type="hidden" formControlName="id" />
 		</form>
 	</nb-card-body>

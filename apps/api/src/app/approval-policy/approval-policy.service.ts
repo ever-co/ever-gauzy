@@ -33,7 +33,6 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = entity.tenantId;
-			approvalPolicy.type = entity.type;
 			approvalPolicy.description = entity.description;
 
 			return this.approvalPolicyRepository.save(approvalPolicy);
@@ -53,7 +52,6 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = entity.tenantId;
-			approvalPolicy.type = entity.type;
 			approvalPolicy.description = entity.description;
 			return this.approvalPolicyRepository.save(approvalPolicy);
 		} catch (err /*: WriteError*/) {

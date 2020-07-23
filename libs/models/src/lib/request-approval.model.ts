@@ -11,7 +11,6 @@ export interface RequestApproval extends IBaseEntityModel {
 	employees?: Employee[];
 	teams?: OrganizationTeam[];
 	name?: string;
-	type?: number;
 	min_count?: number;
 	status?: number;
 	approvalPolicyId?: string;
@@ -24,7 +23,6 @@ export interface RequestApprovalCreateInput extends IBaseEntityModel {
 	teams?: OrganizationTeam[];
 	employees?: Employee[];
 	name?: string;
-	type?: number;
 	min_count?: number;
 	status?: number;
 	approvalPolicyId?: string;

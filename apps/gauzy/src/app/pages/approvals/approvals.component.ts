@@ -2,7 +2,11 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { RequestApproval, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	RequestApproval,
+	ComponentLayoutStyleEnum,
+	RequestApprovalCreateInput
+} from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -13,7 +17,6 @@ import { Store } from '../../@core/services/store.service';
 import { RequestApprovalStatusComponent } from './table-components/request-approval-status/request-approval-status.component';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
-import { RequestApprovalTypeComponent } from './table-components/request-approval-type/request-approval-type.component';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 
@@ -155,14 +158,6 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					),
 					type: 'string'
 				},
-				type: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_TYPE'
-					),
-					type: 'custom',
-					renderComponent: RequestApprovalTypeComponent,
-					filter: false
-				},
 				min_count: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
@@ -178,7 +173,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					renderComponent: ApprovalPolicyComponent,
 					filter: false
 				},
-				createdBy: {
+				createdByName: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.CREATED_BY'
 					),
@@ -270,9 +265,8 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		this.selectedRequestApproval = null;
 		this.disableButton = true;
 		if (requestApproval) {
-			const params = {
+			const params: RequestApprovalCreateInput = {
 				name: requestApproval.name || '',
-				type: Number(requestApproval.type) || 0,
 				approvalPolicyId: requestApproval.approvalPolicyId || '',
 				employeeApprovals: requestApproval.employees || [],
 				teams: requestApproval.teams || [],

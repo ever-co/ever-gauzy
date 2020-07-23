@@ -6,23 +6,22 @@ import * as faker from 'faker';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { Employee } from '../employee/employee.entity';
 
-const approvalTypes =[
-  "Business Trip",
-  "Contract Approval",
-  "Payment for Software",
-  "Car Rental",
-  "Job Referral Award",
-  "Best Employee Award",
-  "Christmas Bonus",
-  "Payment for Hardware",
-  "Payment for Service Provider",
-  "Loyalty Rewards",
-  "Bonus",
-  "Holiday Stay",
-  "Payment for Electric gadgets",
-  "Health Meal"
+const approvalTypes = [
+	'Business Trip',
+	'Contract Approval',
+	'Payment for Software',
+	'Car Rental',
+	'Job Referral Award',
+	'Best Employee Award',
+	'Christmas Bonus',
+	'Payment for Hardware',
+	'Payment for Service Provider',
+	'Loyalty Rewards',
+	'Bonus',
+	'Holiday Stay',
+	'Payment for Electric gadgets',
+	'Health Meal'
 ];
-
 
 export const createRandomRequestApproval = async (
 	connection: Connection,
@@ -49,7 +48,6 @@ export const createRandomRequestApproval = async (
 
 			// requestApproval.approvalPolicyId = tenantPolicy.id;
 			requestApproval.approvalPolicy = tenantPolicy;
-			requestApproval.type = faker.random.number({ min: 1, max: 3 });
 			requestApproval.min_count = faker.random.number({
 				min: 1,
 				max: 100

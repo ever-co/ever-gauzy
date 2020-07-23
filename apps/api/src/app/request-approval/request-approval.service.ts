@@ -56,10 +56,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			});
 		}
 
-		const [
-			items,
-			total
-		] = await requestApproval
+		const [items, total] = await requestApproval
 			.where('approvalPolicy.organizationId =:organizationId', {
 				organizationId
 			})
@@ -147,8 +144,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
 			requestApproval.createdBy = RequestContext.currentUser().id;
+			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = entity.name;
-			requestApproval.type = entity.type;
 			requestApproval.min_count = entity.min_count;
 
 			const employees = await this.employeeRepository.findByIds(
@@ -200,7 +197,6 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
 			requestApproval.min_count = entity.min_count;
-			requestApproval.type = entity.type;
 			const employees = await this.employeeRepository.findByIds(
 				entity.employeeApprovals,
 				{
