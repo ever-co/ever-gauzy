@@ -252,6 +252,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Activity',
 					icon: 'trending-up-outline',
 					link: '/pages/employees/activity',
+					pathMatch: 'prefix',
 					data: {
 						translationKey: 'MENU.ACTIVITY'
 					}
@@ -260,6 +261,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Timesheets',
 					icon: 'clock-outline',
 					link: '/pages/employees/timesheets',
+					pathMatch: 'prefix',
 					data: {
 						translationKey: 'MENU.TIMESHEETS'
 					}
@@ -268,6 +270,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Schedules',
 					icon: 'calendar-outline',
 					link: '/pages/employees/schedules',
+					pathMatch: 'prefix',
 					data: {
 						translationKey: 'MENU.SCHEDULES'
 					}
@@ -279,15 +282,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					pathMatch: 'prefix',
 					data: {
 						translationKey: 'MENU.APPOINTMENTS'
-					}
-				},
-				{
-					title: 'Event Types',
-					icon: 'calendar-outline',
-					link: '/pages/employees/event-types',
-					pathMatch: 'prefix',
-					data: {
-						translationKey: 'MENU.EVENT_TYPES'
 					}
 				},
 				{

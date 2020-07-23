@@ -28,7 +28,9 @@ const routes: Routes = [
 					title: 'ACTIVITY.APPS'
 				},
 				loadChildren: () =>
-					import('./app/app.module').then((m) => m.AppModule)
+					import('./app-url-activity/app-url-activity.module').then(
+						(m) => m.AppUrlActivityModule
+					)
 			}
 		]
 	}

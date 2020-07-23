@@ -56,6 +56,7 @@
 		"SAVE_AS_DRAFT": "Save as Draft",
 		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
+		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "ערוך",
@@ -465,7 +466,6 @@
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "לוח מחוונים",
 		"APPOINTMENTS": "Appointments",
-		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
@@ -814,7 +814,8 @@
 			"NUMBER": "Number",
 			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "מטבע",
-			"TASK": "Task"
+			"TASK": "Task",
+			"KPI": "KPI"
 		},
 		"DEADLINE": {
 			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
@@ -837,6 +838,7 @@
 				"WEIGHT": "Weight",
 				"SELECT_PROJECT": "Select Project",
 				"SELECT_TASK": "Select Task",
+				"SELECT_KPI": "Select KPI",
 				"ASSIGN_AS_OBJECTIVE": "Assign as objective"
 			},
 			"PLACEHOLDERS": {
@@ -2045,6 +2047,11 @@
 		"DURATION_ERROR": "Selected Duration is not valid",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"EMPLOYEE": "עובד"
+	},
+	"EMPLOYEE_SCHEDULES_MODAL": {
+		"EMPLOYEE": "עובד",
+		"SLOTS_AVAILABLE": "Employee is available only for the below time slots, Do you still want to continue?",
+		"SLOTS_UNAVAILABLE": "Employee unavailable for this time slot"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",

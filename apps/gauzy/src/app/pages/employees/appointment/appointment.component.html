@@ -2,14 +2,24 @@
 	<nb-card-header>
 		<div class="main-header" *ngIf="showHeader">
 			<h4>{{ 'MENU.APPOINTMENTS' | translate }}</h4>
-			<button
-				style="float: right;"
-				status="success"
-				nbButton
-				(click)="bookPublicAppointment()"
-			>
-				{{ 'BUTTONS.PUBLIC_APPOINTMENT_BOOK' | translate }}
-			</button>
+			<div style="float: right;">
+				<button
+					*ngIf="hasEventTypesViewPermission"
+					style="margin-right: 10px;"
+					status="success"
+					nbButton
+					(click)="openEventTypes()"
+				>
+					{{ 'BUTTONS.EVENT_TYPES' | translate }}
+				</button>
+				<button
+					status="success"
+					nbButton
+					(click)="bookPublicAppointment()"
+				>
+					{{ 'BUTTONS.PUBLIC_APPOINTMENT_BOOK' | translate }}
+				</button>
+			</div>
 		</div>
 		<div class="block-info">
 			{{ 'PUBLIC_APPOINTMENTS.TIMEZONE' | translate }}

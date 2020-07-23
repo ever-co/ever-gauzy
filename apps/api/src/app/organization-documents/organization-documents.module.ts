@@ -8,6 +8,6 @@ import { OrganizationDocumentsController } from './organization-documents.contro
 	imports: [TypeOrmModule.forFeature([OrganizationDocuments])],
 	providers: [OrganizationDocumentsService],
 	controllers: [OrganizationDocumentsController],
-	exports: [OrganizationDocumentsService]
+	exports: [TypeOrmModule]
 })
 export class OrganizationDocumentsModule {}

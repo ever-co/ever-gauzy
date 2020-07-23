@@ -43,7 +43,22 @@
 										<ga-star-rating-output
 											[rate]="averageRating"
 											class="stars-output"
+											*ngIf="
+												technologiesList?.length > 0 ||
+												personalQualitiesList?.length >
+													0
+											"
 										></ga-star-rating-output>
+										<ga-star-rating-input
+											*ngIf="
+												technologiesList?.length ===
+													0 &&
+												personalQualitiesList?.length ===
+													0
+											"
+											formControlName="rating"
+											class="stars-optional"
+										></ga-star-rating-input>
 
 										<nb-radio-group
 											class="radio-group"

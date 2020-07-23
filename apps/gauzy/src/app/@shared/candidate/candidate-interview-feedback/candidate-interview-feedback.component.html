@@ -20,7 +20,12 @@
 			<div class="label-wrap">
 				<ga-star-rating-output
 					[rate]="averageRating"
+					*ngIf="technologiesList[0] || personalQualitiesList[0]"
 				></ga-star-rating-output>
+				<ga-star-rating-input
+					formControlName="rating"
+					*ngIf="!(technologiesList[0] || personalQualitiesList[0])"
+				></ga-star-rating-input>
 
 				<nb-radio-group
 					[(ngModel)]="status"
@@ -55,7 +60,7 @@
 			<div class="form-group">
 				<nb-accordion
 					class="accordion"
-					*ngIf="technologiesList[0] && personalQualitiesList[0]"
+					*ngIf="technologiesList[0] || personalQualitiesList[0]"
 				>
 					<nb-accordion-item>
 						<nb-accordion-item-header class="accordion-title">

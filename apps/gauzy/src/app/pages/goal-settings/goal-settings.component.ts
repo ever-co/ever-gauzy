@@ -265,7 +265,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				timeFrame: this.selectedTimeFrame,
 				type: source,
 				predefinedTimeFrames: this.predefinedTimeFrames
-			}
+			},
+			closeOnBackdropClick: false
 		});
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
@@ -290,7 +291,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 			context: {
 				selectedKPI: this.selectedKPI,
 				type: source
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await kpiDialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -313,7 +315,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					message: 'Are you sure? This action is irreversible.',
 					status: 'danger'
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -350,7 +353,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					message: 'Are you sure? This action is irreversible.',
 					status: 'danger'
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {

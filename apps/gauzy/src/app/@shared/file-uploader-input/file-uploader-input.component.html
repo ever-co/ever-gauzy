@@ -16,13 +16,13 @@
 	<input
 		#shownInput="ngModel"
 		type="text"
-		class="form-control col-10"
+		class="form-control col-9"
 		[ngClass]="customClass"
 		placeholder="{{ placeholder }}"
 		(change)="imageUrlChanged()"
 		[(ngModel)]="fileUrl"
 	/>
-	<button nbButton status="primary" (click)="fileInput.click()" class="col-2">
+	<button nbButton status="primary" (click)="fileInput.click()" class="col-3">
 		{{ 'BROWSE' | translate }}
 	</button>
 </div>
