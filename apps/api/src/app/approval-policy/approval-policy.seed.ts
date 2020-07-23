@@ -1,8 +1,7 @@
 import { Connection } from 'typeorm';
-import { Organization, ApprovalPolicyTypesEnum } from '@gauzy/models';
+import { Organization } from '@gauzy/models';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import * as faker from 'faker';
 
 export const createDefaultApprovalPolicyForOrg = async (
 	connection: Connection,

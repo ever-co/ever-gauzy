@@ -14,7 +14,7 @@ import {
 import { Base } from '../core/entities/base';
 import { ApprovalPolicy as IApprovalPolicy } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
