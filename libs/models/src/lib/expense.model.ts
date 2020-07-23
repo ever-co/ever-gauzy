@@ -39,8 +39,8 @@ export interface ExpenseCreateInput {
 	typeOfExpense?: string;
 	category: IExpenseCategory;
 	vendor: IOrganizationVendor;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	projectId?: string;
 	projectName?: string;
 	notes?: string;
@@ -67,8 +67,8 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	categoryName?: string;
 	categoryId?: string;
 	amount?: number;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	projectId?: string;
 	projectName?: string;
 	notes?: string;
@@ -92,8 +92,8 @@ export interface ExpenseUpdateInput {
 	vendorId?: string;
 	typeOfExpense?: string;
 	category: IExpenseCategory;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	projectId?: string;
 	projectName?: string;
 	notes?: string;
