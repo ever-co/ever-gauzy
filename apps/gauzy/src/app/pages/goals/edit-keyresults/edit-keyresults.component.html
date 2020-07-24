@@ -52,6 +52,13 @@
 			>
 				<nb-option
 					*ngFor="let type of keyResultTypeEnum | keyvalue"
+					[hidden]="
+						type.value == keyResultTypeEnum.KPI
+							? !settings.krTypeKPI
+							: type.value == keyResultTypeEnum.TASK
+							? !settings.krTypeTask
+							: false
+					"
 					[value]="type.value"
 				>
 					{{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}

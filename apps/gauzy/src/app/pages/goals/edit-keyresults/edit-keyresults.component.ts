@@ -19,7 +19,8 @@ import {
 	OrganizationTeam,
 	RolesEnum,
 	Goal,
-	KPI
+	KPI,
+	GoalGeneralSetting
 } from '@gauzy/models';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
@@ -39,6 +40,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	keyResultsForm: FormGroup;
 	data: KeyResult;
 	showAllEmployees = false;
+	settings: GoalGeneralSetting;
 	orgId: string;
 	orgName: string;
 	teams: OrganizationTeam[] = [];

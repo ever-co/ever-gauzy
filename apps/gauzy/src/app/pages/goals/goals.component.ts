@@ -35,7 +35,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	selectedOrganizationId: string;
 	organizationName: string;
 	employee: SelectedEmployee;
-	employeeId: string;
+	isEmployee = false;
 	selectedFilter = 'all';
 	objectiveGroup = 'level';
 	goalGeneralSettings: GoalGeneralSetting;
@@ -82,6 +82,13 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
+		await this.store.user$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((user) => {
+				if (user) {
+					this.isEmployee = !!user.employee;
+				}
+			});
 		await this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
@@ -162,7 +169,8 @@ export class GoalsComponent extends TranslationBaseComponent
 			context: {
 				data: {
 					selectedKeyResult: keyResult,
-					allKeyResults: this.goals[index].keyResults
+					allKeyResults: this.goals[index].keyResults,
+					settings: this.goalGeneralSettings
 				}
 			},
 			closeOnBackdropClick: false
@@ -200,11 +208,10 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	async addKeyResult(index, keyResult) {
-		console.log(this.goals[index].keyResults.length);
-		console.log(this.goalGeneralSettings.maxKeyResults);
 		if (
+			!keyResult &&
 			this.goalGeneralSettings.maxKeyResults <=
-			this.goals[index].keyResults.length
+				this.goals[index].keyResults.length
 		) {
 			this.toastrService.info(
 				this.getTranslation('TOASTR.MESSAGE.MAX_KEY_RESULT_LIMIT'),
@@ -219,7 +226,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				data: keyResult,
 				orgId: this.selectedOrganizationId,
 				orgName: this.organizationName,
-				goalDeadline: this.goals[index].deadline
+				goalDeadline: this.goals[index].deadline,
+				settings: this.goalGeneralSettings
 			},
 			closeOnBackdropClick: false
 		});
@@ -315,7 +323,10 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	async createObjective(goal, index) {
-		if (this.goalGeneralSettings.maxObjectives <= this.allGoals.length) {
+		if (
+			!goal &&
+			this.goalGeneralSettings.maxObjectives <= this.allGoals.length
+		) {
 			this.toastrService.info(
 				this.getTranslation('TOASTR.MESSAGE.MAX_OBJECTIVE_LIMIT'),
 				this.getTranslation('TOASTR.TITLE.MAX_LIMIT_REACHED'),

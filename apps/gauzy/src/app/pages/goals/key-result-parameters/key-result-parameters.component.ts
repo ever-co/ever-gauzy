@@ -5,7 +5,8 @@ import {
 	KeyResult,
 	KeyResultWeightEnum,
 	KeyResultDeadlineEnum,
-	KPI
+	KPI,
+	GoalGeneralSetting
 } from '@gauzy/models';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
@@ -22,7 +23,11 @@ import { EditKpiComponent } from '../../goal-settings/edit-kpi/edit-kpi.componen
 export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	weightForm: FormGroup;
 	typeForm: FormGroup;
-	data: { selectedKeyResult: KeyResult; allKeyResults: KeyResult[] };
+	data: {
+		selectedKeyResult: KeyResult;
+		allKeyResults: KeyResult[];
+		settings: GoalGeneralSetting;
+	};
 	keyResultTypeEnum = KeyResultTypeEnum;
 	keyResultWeightEnum = KeyResultWeightEnum;
 	keyResultWeight: any;
