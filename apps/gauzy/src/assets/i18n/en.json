@@ -1735,7 +1735,8 @@
 		"TITLE": {
 			"SUCCESS": "Success",
 			"ERROR": "Error",
-			"WARNING": "Warning"
+			"WARNING": "Warning",
+			"MAX_LIMIT_REACHED": "Max limit reached"
 		},
 		"MESSAGE": {
 			"ERRORS": "Please check the form for errors",
@@ -1807,7 +1808,9 @@
 			"KEY_RESULT_DELETED": "Key Result deleted",
 			"KEY_RESULT_UPDATED": "Key Result upadated",
 			"TIME_FRAME_DELETED": "Time Frame deleted",
-			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated"
+			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated",
+			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
+			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results."
 		}
 	},
 	"ACCEPT_INVITE": {
