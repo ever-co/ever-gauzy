@@ -10,7 +10,7 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Stage } from '../stage/stage.entity';
+import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Injectable } from '@nestjs/common';
 import { Deal } from '../deal/deal.entity';
@@ -57,7 +57,7 @@ export class PipelineService extends CrudService<Pipeline> {
 		const updatedStages =
 			pipeline.stages?.filter((stage) => stage.id) || [];
 		const deletedStages = await manager
-			.find(Stage, {
+			.find(PipelineStage, {
 				where: {
 					pipelineId: id
 				},
@@ -87,13 +87,18 @@ export class PipelineService extends CrudService<Pipeline> {
 		await manager.remove(deletedStages);
 		await Promise.all(
 			createdStages.map((stage) => {
-				stage = manager.create(Stage, stage as DeepPartial<Stage>);
+				stage = manager.create(
+					PipelineStage,
+					stage as DeepPartial<PipelineStage>
+				);
 
 				return manager.save(stage);
 			})
 		);
 		await Promise.all(
-			updatedStages.map((stage) => manager.update(Stage, stage.id, stage))
+			updatedStages.map((stage) =>
+				manager.update(PipelineStage, stage.id, stage)
+			)
 		);
 
 		return await manager.update(Pipeline, id, pipeline);

@@ -1,8 +1,8 @@
 import {
 	BaseEntityModel,
 	Organization,
-	Stage,
-	StageCreateInput
+	PipelineStage,
+	PipelineStageCreateInput
 } from '@gauzy/models';
 
 export interface Pipeline extends BaseEntityModel, PipelineCreateInput {
@@ -10,7 +10,7 @@ export interface Pipeline extends BaseEntityModel, PipelineCreateInput {
 
 	description: string;
 
-	stages: Stage[];
+	stages: PipelineStage[];
 }
 
 export type PipelineFindInput = Partial<
@@ -18,7 +18,7 @@ export type PipelineFindInput = Partial<
 >;
 
 export interface PipelineCreateInput {
-	stages?: StageCreateInput[];
+	stages?: PipelineStageCreateInput[];
 
 	organizationId: string;
 

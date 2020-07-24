@@ -51,7 +51,7 @@ import { OrganizationTeamEmployeeService } from '../organization-team-employee/o
 import { EquipmentService } from '../equipment/equipment.service';
 import { ContactService } from '../contact/contact.service';
 import { TimeOffRequestService } from '../time-off-request/time-off-request.service';
-import { StageService } from '../stage/stage.service';
+import { StageService } from '../pipeline-stage/pipeline-stage.service';
 import { SkillService } from '../skills/skill.service';
 import { RequestApprovalService } from '../request-approval/request-approval.service';
 import { ProductVariantService } from '../product-variant/product-variant.service';

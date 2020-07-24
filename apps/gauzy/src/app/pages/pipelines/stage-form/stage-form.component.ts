@@ -6,8 +6,11 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import { StageUpdateInput } from '@gauzy/models';
+import { PipelineStageUpdateInput } from '@gauzy/models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { NbDialogService } from '@nebular/theme';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { first } from 'rxjs/operators';
 
 @Component({
 	templateUrl: './stage-form.component.html',
@@ -15,7 +18,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 })
 export class StageFormComponent implements OnInit {
 	@Input('values')
-	public stages: StageUpdateInput[];
+	public stages: PipelineStageUpdateInput[];
 
 	@Input()
 	public pipelineId: string;
@@ -26,6 +29,7 @@ export class StageFormComponent implements OnInit {
 
 	public constructor(
 		private readonly controlContainer: ControlContainer,
+		private dialogService: NbDialogService,
 		private fb: FormBuilder
 	) {}
 
@@ -48,7 +52,7 @@ export class StageFormComponent implements OnInit {
 			id,
 			name,
 			description
-		}: Omit<StageUpdateInput, 'pipelineId'> = {} as any
+		}: Omit<PipelineStageUpdateInput, 'pipelineId'> = {} as any
 	): void {
 		const { pipelineId } = this;
 
@@ -62,5 +66,18 @@ export class StageFormComponent implements OnInit {
 				description: [description]
 			})
 		);
+	}
+
+	deleteStage(index: number) {
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: { recordType: 'Stage' }
+			})
+			.onClose.pipe(first())
+			.subscribe((res) => {
+				if (res) {
+					this.control.removeAt(index);
+				}
+			});
 	}
 }

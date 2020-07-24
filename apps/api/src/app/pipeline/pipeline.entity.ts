@@ -15,13 +15,15 @@ import {
 } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Stage } from '../stage/stage.entity';
+import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 
 @Entity('pipeline')
 export class Pipeline extends Base implements IPipeline {
-	@OneToMany(() => Stage, ({ pipeline }) => pipeline, { cascade: ['insert'] })
-	@ApiProperty({ type: Stage })
-	public stages: Stage[];
+	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
+		cascade: ['insert']
+	})
+	@ApiProperty({ type: PipelineStage })
+	public stages: PipelineStage[];
 
 	@ManyToOne(() => Organization)
 	@ApiProperty({ type: Organization })
