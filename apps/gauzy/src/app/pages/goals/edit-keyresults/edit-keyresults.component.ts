@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import {
 	FormGroup,
 	FormBuilder,
@@ -7,7 +7,7 @@ import {
 	FormControl
 } from '@angular/forms';
 import { EmployeesService } from '../../../@core/services';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
 	Employee,
@@ -19,7 +19,8 @@ import {
 	OrganizationTeam,
 	RolesEnum,
 	Goal,
-	KPI
+	KPI,
+	GoalGeneralSetting
 } from '@gauzy/models';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
@@ -27,6 +28,7 @@ import { Store } from '../../../@core/services/store.service';
 import { GoalService } from '../../../@core/services/goal.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
+import { EditKpiComponent } from '../../goal-settings/edit-kpi/edit-kpi.component';
 
 @Component({
 	selector: 'ga-edit-keyresults',
@@ -38,6 +40,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	keyResultsForm: FormGroup;
 	data: KeyResult;
 	showAllEmployees = false;
+	settings: GoalGeneralSetting;
 	orgId: string;
 	orgName: string;
 	teams: OrganizationTeam[] = [];
@@ -52,6 +55,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
+		private dialogService: NbDialogService,
 		public fb: FormBuilder,
 		private employeeService: EmployeesService,
 		private taskService: TasksService,
@@ -62,7 +66,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		private keyResultUpdateService: KeyResultUpdateService
 	) {}
 
-	ngOnInit() {
+	async ngOnInit() {
 		this.minDate = new Date(
 			this.minDate.setDate(this.minDate.getDate() + 1)
 		);
@@ -87,11 +91,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			alignedGoalOwner: [''],
 			kpiId: ['']
 		});
-		this.goalSettingsService.getAllKPI().then((kpi) => {
-			const { items } = kpi;
-			console.log(items);
-			this.KPIs = items;
-		});
+		await this.getKPI();
 		this.employeeService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
@@ -120,6 +120,13 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	async getKPI() {
+		await this.goalSettingsService.getAllKPI().then((kpi) => {
+			const { items } = kpi;
+			this.KPIs = items;
+		});
+	}
+
 	async getTeams() {
 		await this.organizationTeamsService
 			.getAll(['members'], { organizationId: this.orgId })
@@ -127,6 +134,18 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				const { items } = res;
 				this.teams = items;
 			});
+	}
+
+	async openEditKPI() {
+		const dialog = this.dialogService.open(EditKpiComponent, {
+			context: {
+				type: 'add'
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			await this.getKPI();
+		}
 	}
 
 	taskTypeValidators() {
@@ -214,7 +233,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			const selectedKPI = this.KPIs.find(
 				(kpi) => kpi.id === this.keyResultsForm.value.kpiId
 			);
-			console.log(selectedKPI);
 			this.keyResultsForm.patchValue({
 				initialValue: selectedKPI.currentValue,
 				targetValue: selectedKPI.targetValue

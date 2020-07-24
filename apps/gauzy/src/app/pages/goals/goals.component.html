@@ -6,17 +6,26 @@
 			</h4>
 		</div>
 		<div class="main-header mt-3">
-			<nb-actions size="medium">
-				<nb-action
-					icon="plus-circle"
-					status="primary"
-					title="Add new Objective"
-					(click)="createObjective(null, null)"
-				></nb-action>
-				<nb-action>
-					{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
-				</nb-action>
-			</nb-actions>
+			<div>
+				<nb-actions
+					size="medium"
+					*ngIf="
+						!isEmployee
+							? true
+							: goalGeneralSettings.employeeCanCreateObjective
+					"
+				>
+					<nb-action
+						icon="plus-circle"
+						status="primary"
+						title="Add new Objective"
+						(click)="createObjective(null, null)"
+					></nb-action>
+					<nb-action>
+						{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
+					</nb-action>
+				</nb-actions>
+			</div>
 			<div>
 				<button
 					class="mr-3"
