@@ -23,6 +23,7 @@ import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewInfoComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
+import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 
 @Component({
 	selector: 'ga-interview-calendar',
@@ -51,7 +52,8 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 		private candidateInterviewersService: CandidateInterviewersService,
 		private toastrService: NbToastrService,
 		private candidatesService: CandidatesService,
-		private employeesService: EmployeesService
+		private employeesService: EmployeesService,
+		private candidateStore: CandidateStore
 	) {
 		super(translateService);
 	}
@@ -69,6 +71,9 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 				this.employees = employees.items;
 			});
 		this.loadInterviews();
+		this.candidateStore.interviewList$.subscribe(() => {
+			this.loadInterviews();
+		});
 	}
 
 	async loadInterviews() {

@@ -18,6 +18,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { DeleteInterviewComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 @Component({
 	selector: 'ga-interview-panel',
 	templateUrl: './interview-panel.component.html',
@@ -43,6 +44,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		empIds: null
 	};
 	loading: boolean;
+	addedInterview: ICandidateInterview[];
 	constructor(
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
@@ -51,7 +53,8 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		private candidatesService: CandidatesService,
 		private employeesService: EmployeesService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
-		private router: Router
+		private router: Router,
+		private candidateStore: CandidateStore
 	) {
 		super(translateService);
 	}
@@ -63,6 +66,10 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		});
 		this.candidateSearch.valueChanges.subscribe((item) => {
 			this.filterBySearch(item, 'name');
+		});
+
+		this.candidateStore.interviewList$.subscribe(() => {
+			this.loadInterviews();
 		});
 	}
 	filterBySearch(item: string, type: string) {
