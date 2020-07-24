@@ -53,10 +53,9 @@
 				<nb-option
 					*ngFor="let type of keyResultTypeEnum | keyvalue"
 					[value]="type.value"
-					>{{
-						'KEY_RESULT_PAGE.TYPE.' + type.key | translate
-					}}</nb-option
 				>
+					{{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}
+				</nb-option>
 			</nb-select>
 			<div
 				class="row"
@@ -198,8 +197,8 @@
 			></ga-employee-multi-select>
 
 			<label for="key-result-Lead" class="label mt-3">
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}</label
-			>
+				{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}
+			</label>
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
@@ -225,10 +224,9 @@
 				<nb-option
 					*ngFor="let deadline of keyResultDeadlineEnum | keyvalue"
 					[value]="deadline.value"
-					>{{
-						'KEY_RESULT_PAGE.DEADLINE.' + deadline.key | translate
-					}}</nb-option
 				>
+					{{ 'KEY_RESULT_PAGE.DEADLINE.' + deadline.key | translate }}
+				</nb-option>
 			</nb-select>
 			<div class="row mt-3">
 				<div
@@ -349,10 +347,9 @@
 									? true
 									: false
 							"
-							>{{
-								'GOALS_PAGE.LEVELS.' + level.key | translate
-							}}</nb-option
 						>
+							{{ 'GOALS_PAGE.LEVELS.' + level.key | translate }}
+						</nb-option>
 					</nb-select>
 				</div>
 				<div class="col-md-4" *ngIf="!!keyResultsForm.value.level">

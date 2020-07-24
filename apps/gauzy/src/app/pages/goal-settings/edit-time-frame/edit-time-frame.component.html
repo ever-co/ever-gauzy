@@ -66,11 +66,12 @@
 								let status of timeFrameStatusEnum | keyvalue
 							"
 							[value]="status.value"
-							>{{
+						>
+							{{
 								'GOALS_PAGE.TIME_FRAME_STATUS.' + status.key
 									| translate
-							}}</nb-option
-						>
+							}}
+						</nb-option>
 					</nb-select>
 
 					<div class="row mt-3">

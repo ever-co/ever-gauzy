@@ -119,7 +119,6 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 						});
 				});
 		} else if (this.keyResult.type === KeyResultTypeEnum.KPI) {
-			console.log(this.keyResult.kpiId);
 			await this.goalSettingsService
 				.getAllKPI({ id: this.keyResult.kpiId })
 				.then((kpi) => {

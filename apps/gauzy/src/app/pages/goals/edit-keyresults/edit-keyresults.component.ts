@@ -121,7 +121,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	async getKPI() {
 		await this.goalSettingsService.getAllKPI().then((kpi) => {
 			const { items } = kpi;
-			console.log(items);
 			this.KPIs = items;
 		});
 	}
@@ -143,7 +142,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			console.log(response);
 			await this.getKPI();
 		}
 	}
@@ -233,7 +231,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			const selectedKPI = this.KPIs.find(
 				(kpi) => kpi.id === this.keyResultsForm.value.kpiId
 			);
-			console.log(selectedKPI);
 			this.keyResultsForm.patchValue({
 				initialValue: selectedKPI.currentValue,
 				targetValue: selectedKPI.targetValue
