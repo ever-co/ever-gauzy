@@ -584,7 +584,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<button
 							*ngIf="!isEstimate"
@@ -611,6 +611,20 @@
 							}}
 						</button>
 					</div>
+				</div>
+				<div class="col-sm-3">
+					<button
+						*ngIf="isExpenseTable"
+						(click)="generateTable(true)"
+						status="success"
+						[disabled]="!invoiceType"
+						nbButton
+					>
+						{{
+							'INVOICES_PAGE.INVOICE_TYPE.GENERATE_FOR_UNINVOICED_EXPENSES'
+								| translate
+						}}
+					</button>
 				</div>
 			</div>
 		</form>
