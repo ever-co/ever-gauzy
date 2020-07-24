@@ -1576,6 +1576,7 @@
 			"ESTIMATE_TYPE": "Тип оценки",
 			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
 			"GENERATE_ESTIMATE_ITEMS": "Сгенерировать оценку предметов",
+			"GENERATE_FOR_UNINVOICED_EXPENSES": "Генерировать для всех неоплаченных расходов",
 			"BY_EMPLOYEE_HOURS": "По часам сотрудника",
 			"BY_PROJECT_HOURS": "По часам проекта",
 			"BY_TASK_HOURS": "По часам задания",
