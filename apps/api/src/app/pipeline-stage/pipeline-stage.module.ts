@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
-import { Stage } from './stage.entity';
-import { StageService } from './stage.service';
+import { PipelineStage } from './pipeline-stage.entity';
+import { StageService } from './pipeline-stage.service';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([Stage]), AuthModule],
+	imports: [TypeOrmModule.forFeature([PipelineStage]), AuthModule],
 	providers: [StageService],
 	exports: [StageService]
 })

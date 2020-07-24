@@ -1,14 +1,14 @@
 import { CrudService } from '../core/crud';
-import { Stage } from './stage.entity';
+import { PipelineStage } from './pipeline-stage.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@angular/core';
 
 @Injectable()
-export class StageService extends CrudService<Stage> {
+export class StageService extends CrudService<PipelineStage> {
 	public constructor(
-		@InjectRepository(Stage)
-		stageRepository: Repository<Stage>
+		@InjectRepository(PipelineStage)
+		stageRepository: Repository<PipelineStage>
 	) {
 		super(stageRepository);
 	}

@@ -12,7 +12,7 @@ import {
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
-import { Goal, KeyResult } from '@gauzy/models';
+import { Goal, KeyResult, GoalGeneralSetting } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { GoalService } from '../../@core/services/goal.service';
@@ -21,6 +21,7 @@ import { ErrorHandlingService } from '../../@core/services/error-handling.servic
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { GoalLevelEnum } from '@gauzy/models';
+import { GoalSettingsService } from '../../@core/services/goal-settings.service';
 
 @Component({
 	selector: 'ga-goals',
@@ -34,9 +35,10 @@ export class GoalsComponent extends TranslationBaseComponent
 	selectedOrganizationId: string;
 	organizationName: string;
 	employee: SelectedEmployee;
-	employeeId: string;
+	isEmployee = false;
 	selectedFilter = 'all';
 	objectiveGroup = 'level';
+	goalGeneralSettings: GoalGeneralSetting;
 	goalTimeFrames: Array<string> = [];
 	filters = [
 		{
@@ -73,12 +75,20 @@ export class GoalsComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private goalService: GoalService,
 		private errorHandler: ErrorHandlingService,
-		private keyResultService: KeyResultService
+		private keyResultService: KeyResultService,
+		private goalSettingsService: GoalSettingsService
 	) {
 		super(translateService);
 	}
 
 	async ngOnInit() {
+		await this.store.user$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((user) => {
+				if (user) {
+					this.isEmployee = !!user.employee;
+				}
+			});
 		await this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
@@ -94,6 +104,15 @@ export class GoalsComponent extends TranslationBaseComponent
 			});
 	}
 
+	async getGoalSettings(findObj) {
+		await this.goalSettingsService
+			.getAllGeneralSettings(findObj)
+			.then((res) => {
+				const { items } = res;
+				this.goalGeneralSettings = items.pop();
+			});
+	}
+
 	private async loadPage() {
 		this.loading = true;
 		const { name } = this.store.selectedOrganization
@@ -105,7 +124,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				id: this.selectedOrganizationId
 			}
 		};
-		this.goalService
+		await this.getGoalSettings(findObj);
+		await this.goalService
 			.getAllGoals(
 				[
 					'keyResults',
@@ -149,7 +169,8 @@ export class GoalsComponent extends TranslationBaseComponent
 			context: {
 				data: {
 					selectedKeyResult: keyResult,
-					allKeyResults: this.goals[index].keyResults
+					allKeyResults: this.goals[index].keyResults,
+					settings: this.goalGeneralSettings
 				}
 			},
 			closeOnBackdropClick: false
@@ -187,13 +208,26 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	async addKeyResult(index, keyResult) {
+		if (
+			!keyResult &&
+			this.goalGeneralSettings.maxKeyResults <=
+				this.goals[index].keyResults.length
+		) {
+			this.toastrService.info(
+				this.getTranslation('TOASTR.MESSAGE.MAX_KEY_RESULT_LIMIT'),
+				this.getTranslation('TOASTR.TITLE.MAX_LIMIT_REACHED'),
+				{ duration: 5000, preventDuplicates: true }
+			);
+			return;
+		}
 		const dialog = this.dialogService.open(EditKeyResultsComponent, {
 			hasScroll: true,
 			context: {
 				data: keyResult,
 				orgId: this.selectedOrganizationId,
 				orgName: this.organizationName,
-				goalDeadline: this.goals[index].deadline
+				goalDeadline: this.goals[index].deadline,
+				settings: this.goalGeneralSettings
 			},
 			closeOnBackdropClick: false
 		});
@@ -289,6 +323,17 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	async createObjective(goal, index) {
+		if (
+			!goal &&
+			this.goalGeneralSettings.maxObjectives <= this.allGoals.length
+		) {
+			this.toastrService.info(
+				this.getTranslation('TOASTR.MESSAGE.MAX_OBJECTIVE_LIMIT'),
+				this.getTranslation('TOASTR.TITLE.MAX_LIMIT_REACHED'),
+				{ duration: 5000, preventDuplicates: true }
+			);
+			return;
+		}
 		const dialog = this.dialogService.open(EditObjectiveComponent, {
 			hasScroll: true,
 			context: {

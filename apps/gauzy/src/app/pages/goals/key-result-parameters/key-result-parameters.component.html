@@ -79,6 +79,13 @@
 					>
 						<nb-option
 							*ngFor="let type of keyResultTypeEnum | keyvalue"
+							[hidden]="
+								type.value == keyResultTypeEnum.KPI
+									? !data.settings.krTypeKPI
+									: type.value == keyResultTypeEnum.TASK
+									? !data.settings.krTypeTask
+									: false
+							"
 							[value]="type.value"
 							>{{
 								'KEY_RESULT_PAGE.TYPE.' + type.key | translate
@@ -185,6 +192,37 @@
 								}}"
 							/>
 						</div>
+					</div>
+					<div *ngIf="typeForm.value.type === keyResultTypeEnum.KPI">
+						<label for="kpi" class="label mt-3">
+							{{
+								'KEY_RESULT_PAGE.FORM.LABELS.SELECT_KPI'
+									| translate
+							}}
+						</label>
+						<nb-select
+							*ngIf="KPIs.length > 0"
+							id="kpi"
+							fullWidth
+							formControlName="kpiId"
+						>
+							<nb-option
+								*ngFor="let kpi of KPIs"
+								[value]="kpi.id"
+							>
+								{{ kpi.name }}
+							</nb-option>
+						</nb-select>
+						<p *ngIf="KPIs.length === 0">
+							<button
+								nbButton
+								status="primary"
+								id="kpi"
+								(click)="openEditKPI()"
+							>
+								Add KPI
+							</button>
+						</p>
 					</div>
 				</form>
 			</nb-tab>

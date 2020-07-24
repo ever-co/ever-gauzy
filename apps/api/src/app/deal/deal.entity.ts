@@ -3,7 +3,7 @@ import { User } from '../user/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Stage } from '../stage/stage.entity';
+import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('deal')
@@ -13,10 +13,10 @@ export class Deal extends TenantBase implements IDeal {
 	@ApiProperty({ type: User })
 	public createdBy: User;
 
-	@ManyToOne(() => Stage, { onDelete: 'CASCADE' })
-	@ApiProperty({ type: Stage })
+	@ManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
+	@ApiProperty({ type: PipelineStage })
 	@JoinColumn()
-	public stage: Stage;
+	public stage: PipelineStage;
 
 	@ApiProperty({ type: String })
 	@IsNotEmpty()

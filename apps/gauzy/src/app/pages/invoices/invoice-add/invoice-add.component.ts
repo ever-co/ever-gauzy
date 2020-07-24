@@ -15,7 +15,9 @@ import {
 	DiscountTaxTypeEnum,
 	Product,
 	Tag,
-	Expense
+	Expense,
+	ExpenseTypesEnum,
+	ExpenseStatusesEnum
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -677,7 +679,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					this.products = products.items;
 
 					const expenses = await this.expensesService.getAll([], {
-						typeOfExpense: 'Billable to Client',
+						typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
 						organization: {
 							id: organization.id
 						}
@@ -723,12 +725,23 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.isExpenseTable = isExpenseTable;
 	}
 
-	async generateTable() {
+	async generateTable(generateUninvoiced?: boolean) {
 		this.selectedInvoiceType = this.invoiceType;
 		this.smartTableSource.refresh();
 		const fakeData = [];
 		let fakePrice = 10;
 		let fakeQuantity = 5;
+
+		if (generateUninvoiced) {
+			const expenses = await this.expensesService.getAll([], {
+				typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
+				status: ExpenseStatusesEnum.UNINVOICED,
+				organization: {
+					id: this.organization.id
+				}
+			});
+			this.selectedExpenses = expenses.items;
+		}
 
 		switch (this.selectedInvoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
