@@ -12,6 +12,13 @@
   width: 15%;
 }
 
+.filters {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-end;
+}
+
 .feedbacks-line {
   margin: 0.2rem 0;
   display: flex;
@@ -164,7 +171,7 @@
 }
 
 .select {
-  width: 20rem;
+  width: 17rem;
 }
 
 .disabled {

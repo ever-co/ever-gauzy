@@ -6,21 +6,33 @@
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 
-			<nb-select
-				class="select"
-				placeholder="Select interview"
-				(selectedChange)="onInterviewSelected($event)"
-				[selected]="all"
-			>
-				<nb-option [value]="all">
-					All feedbacks
-				</nb-option>
-				<nb-option
-					value="{{ interview.id }}"
-					*ngFor="let interview of allInterviews"
-					>{{ interview.title }}</nb-option
+			<div class="filters">
+				<ga-employee-multi-select
+					class="select"
+					[multiple]="false"
+					[label]="false"
+					[reset]="isEmployeeReset"
+					[allEmployees]="employeeList"
+					(selectedChange)="onEmployeeSelected($event)"
+					[reset]="isResetSelect"
 				>
-			</nb-select>
+				</ga-employee-multi-select>
+				<nb-select
+					[formControl]="selectInterview"
+					class="select ml-3"
+					placeholder="Select interview"
+					(selectedChange)="onInterviewSelected($event)"
+				>
+					<nb-option [value]="all">
+						All feedbacks
+					</nb-option>
+					<nb-option
+						value="{{ interview.id }}"
+						*ngFor="let interview of interviewList"
+						>{{ interview.title }}</nb-option
+					>
+				</nb-select>
+			</div>
 		</div>
 
 		<div *ngIf="showAddCard" class="add-card">
