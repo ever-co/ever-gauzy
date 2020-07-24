@@ -138,7 +138,7 @@ import { Payment } from '../payment/payment.entity';
 import { Pipeline } from '../pipeline/pipeline.entity';
 import { Product } from '../product/product.entity';
 import { Skill } from '../skills/skill.entity';
-import { Stage } from '../stage/stage.entity';
+import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
 import { UpworkService } from '../upwork/upwork.service';
 import { RequestApprovalService } from '../request-approval/request-approval.service';
@@ -164,7 +164,7 @@ import { HelpCenterService } from '../help-center/help-center.service';
 import { HelpCenterArticleService } from '../help-center-article/help-center-article.service';
 import { HelpCenterAuthorService } from '../help-center-author/help-center-author.service';
 import { TimerService } from '../timesheet/timer/timer.service';
-import { StageService } from '../stage/stage.service';
+import { StageService } from '../pipeline-stage/pipeline-stage.service';
 import { SkillService } from '../skills/skill.service';
 import { TimeOffRequestService } from '../time-off-request/time-off-request.service';
 import { PipelineService } from '../pipeline/pipeline.service';
@@ -296,7 +296,7 @@ import { OrganizationDocumentsService } from '../organization-documents/organiza
 
 			Screenshot,
 			Skill,
-			Stage,
+			PipelineStage,
 
 			Tag,
 			Task,

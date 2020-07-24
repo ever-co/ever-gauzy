@@ -1,9 +1,9 @@
-import { BaseEntityModel, Stage, User } from '@gauzy/models';
+import { BaseEntityModel, PipelineStage, User } from '@gauzy/models';
 
 export interface Deal extends BaseEntityModel, DealCreateInput {
 	createdBy: User;
 
-	stage: Stage;
+	stage: PipelineStage;
 }
 
 export type DealFindInput = Partial<DealCreateInput>;
