@@ -24,6 +24,8 @@ import {
 	IEngagement,
 	IUpworkApiConfig
 } from '@gauzy/models';
+import { Expense } from '../expense/expense.entity';
+import { Income } from '../income/income.entity';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller()
@@ -189,5 +191,33 @@ export class UpworkController {
 	@Post('sync-contracts-related-data')
 	async syncContractsRelatedData(@Body() dto): Promise<any> {
 		return await this._upworkService.syncContractsRelatedData(dto);
+	}
+
+	@ApiOperation({
+		summary: 'Find all expense and income for logged upwork user.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found income & expense',
+		type: Income || Expense
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid request'
+	})
+	@Get('report/:integrationId')
+	async getReports(
+		@Param('integrationId') integrationId: string,
+		@Query('data') data: string
+	): Promise<any> {
+		const getReportFilterDto: any = data;
+		return await this._upworkService.getReportsForFreelancer(
+			integrationId,
+			getReportFilterDto
+		);
 	}
 }

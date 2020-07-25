@@ -64,4 +64,12 @@ export class UpworkService {
 			dto
 		);
 	}
+
+	getAllReports(data): Observable<any> {
+		const { integrationId, filter } = data;
+		return this.http.get<any>(
+			`/api/integrations/upwork/report/${integrationId}`,
+			{ params: { filter } }
+		);
+	}
 }
