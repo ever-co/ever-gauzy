@@ -39,7 +39,8 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 		isBillable: true,
 		projectId: null,
 		taskId: null,
-		description: ''
+		description: '',
+		reason: ''
 	};
 	selectedRange: IDateRange = { start: null, end: null };
 	organization: Organization;

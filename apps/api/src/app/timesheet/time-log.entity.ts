@@ -111,6 +111,11 @@ export class TimeLog extends Base implements ITimeLog {
 	@Column({ default: null, nullable: true })
 	description?: string;
 
+	@ApiProperty({ type: String })
+	@IsBoolean()
+	@Column({ default: null, nullable: true })
+	reason?: string;
+
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: false })

@@ -220,6 +220,27 @@
 					</div>
 				</div>
 			</div>
+			<div class="form-group">
+				<label>{{ 'TIMESHEET.REASON' | translate }}</label>
+				<textarea
+					class="form-control"
+					rows="2"
+					[placeholder]="'TIMESHEET.REASON' | translate"
+					name="description"
+					[(ngModel)]="addEditRequest.reason"
+					#descriptionInput="ngModel"
+					[required]="organization.requireReason"
+				></textarea>
+
+				<div
+					*ngIf="descriptionInput.invalid && f.submitted"
+					class="invalid-feedback d-block"
+				>
+					<div *ngIf="descriptionInput.errors.required">
+						{{ 'TIMESHEET.VALIDATION.REASON' | translate }}
+					</div>
+				</div>
+			</div>
 
 			<div class="form-group"></div>
 		</nb-card-body>

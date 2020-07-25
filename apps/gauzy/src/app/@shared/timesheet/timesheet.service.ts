@@ -52,7 +52,7 @@ export class TimesheetService {
 
 	getTimeSheets(request?: IGetTimesheetInput) {
 		return this.http
-			.get('/api/timesheet', { params: { ...request } })
+			.get('/api/timesheet', { params: toParams(request) })
 			.toPromise()
 			.then((data: Timesheet[]) => {
 				return data;
