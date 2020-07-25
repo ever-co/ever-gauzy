@@ -96,6 +96,7 @@ export interface TimeLog extends IBaseEntityModel {
 	stoppedAt?: Date;
 	logType: string;
 	description?: string;
+	reason?: string;
 	duration: number;
 	isBillable: boolean;
 	employeeId: string;
@@ -298,6 +299,7 @@ export interface IManualTimeInput {
 	taskId?: string;
 	organizationContactId?: string;
 	description?: string;
+	reason?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
 	tags?: string[];

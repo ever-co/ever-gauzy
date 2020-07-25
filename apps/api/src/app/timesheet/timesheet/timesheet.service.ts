@@ -118,7 +118,7 @@ export class TimeSheetService extends CrudService<Timesheet> {
 			where: (qb) => {
 				qb.where({
 					startedAt: Between(startDate, endDate),
-					...(employeeIds ? { employeeIds: In(employeeIds) } : {})
+					...(employeeIds ? { employeeId: In(employeeIds) } : {})
 				});
 				qb.andWhere('"startedAt" Between :startDate AND :endDate', {
 					startDate,

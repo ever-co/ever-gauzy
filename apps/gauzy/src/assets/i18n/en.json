@@ -1070,13 +1070,21 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_MODIFY_TIME_INFO": "Allow employee to modify manual time.",
 				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_DELETE_TIME_INFO": "Allow employee to delete time.",
 				"ALLOW_MANUAL_TIME": "Allow Manual Time",
+				"ALLOW_MANUAL_TIME_INFO": "Allow employee to add manual time.",
 				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_REASON_INFO": "Reason of the add manual time or edit time logs.",
 				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_DESCRIPTION_INFO": "Description of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
 				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_PROJECT_INFO": "Project of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
 				"REQUIRE_TASK": "Require Task",
-				"REQUIRE_CLIENT": "Require Client"
+				"REQUIRE_TASK_INFO": "Task of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
+				"REQUIRE_CLIENT": "Require Client",
+				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time."
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2037,17 +2045,21 @@
 		"ACTION": "Action",
 		"EMPLOYEE": "Employee",
 		"DURATION": "Duration",
+		"ORGANIZATION_CONTACT": "Client",
+		"NO_ORGANIZATION_CONTACT": "No Client",
 		"PROJECT": "Project",
 		"NO_PROJECT": "No Project",
 		"NO_TIMELOG": "No timelogs found",
 		"TODO": "To-do",
 		"NO_TODO": "No To-do",
 		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
+		"REASON": "Reason",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",
 			"PROJECT": "Please selct project",
-			"EMPLOYEE": "Please selct employee"
+			"EMPLOYEE": "Please selct employee",
+			"REASON": "Please selct reason"
 		}
 	},
 	"ACTIVITY": {
