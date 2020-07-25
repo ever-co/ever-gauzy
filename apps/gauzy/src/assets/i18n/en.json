@@ -64,6 +64,8 @@
 		}
 	},
 	"SM_TABLE": {
+		"TRANSACTION_TYPE": "Type",
+		"AMOUNT": "Amount",
 		"DATE": "Date",
 		"TITLE": "Title",
 		"STAGE": "Stage",
