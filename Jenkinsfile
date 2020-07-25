@@ -149,11 +149,11 @@ pipeline {
     post {
         success {
             echo "Gauzy CI/CD pipeline executed successfully!"
-            sh "curl 'https://api.GitHub.com/repos/evereq/${REPO_NAME}/statuses/$GIT_COMMIT?access_token=${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d \"{\"state\": \"success\",\"context\": \"continuous-integration/jenkins\", \"description\": \"Jenkins\", \"target_url\": \"ci.ever.co/job/${JOB_NAME}/$BUILD_NUMBER/console\"}\""
+            sh "curl 'https://api.GitHub.com/repos/evereq/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d \"{\"state\": \"success\",\"context\": \"continuous-integration/jenkins\", \"description\": \"Jenkins\", \"target_url\": \"ci.ever.co/job/${JOB_NAME}/$BUILD_NUMBER/console\"}\""
 		}
         failure {
             echo "Gauzy CI/CD pipeline failed..."
-			sh "curl 'https://api.GitHub.com/repos/evereq/${REPO_NAME}/statuses/$GIT_COMMIT?access_token=${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d \"{\"state\": \"failure\",\"context\": \"continuous-integration/jenkins\", \"description\": \"Jenkins\", \"target_url\": \"ci.ever.co/job/${JOB_NAME}/$BUILD_NUMBER/console\"}\""
+			sh "curl 'https://api.GitHub.com/repos/evereq/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d \"{\"state\": \"failure\",\"context\": \"continuous-integration/jenkins\", \"description\": \"Jenkins\", \"target_url\": \"ci.ever.co/job/${JOB_NAME}/$BUILD_NUMBER/console\"}\""
         }
     }
 }
