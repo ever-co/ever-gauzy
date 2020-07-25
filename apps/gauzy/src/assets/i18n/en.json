@@ -1982,11 +1982,21 @@
 		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"SELECT_CLIENT": "Select Client",
 		"DATE": "Date",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
 		"DESCRIPTION": "Description",
-		"ADD_TIME_SUCCESS": "Time Successfully added"
+		"ADD_TIME_SUCCESS": "Time Successfully added",
+		"VALIDATION": {
+			"CLIENT_REQUIRED": "Please select client",
+			"PROJECT_REQUIRED": "Please select project",
+			"TASK_REQUIRED": "Please select task",
+			"DESCRIPTION_REQUIRED": "Description is required"
+		},
+		"VIEW_TIMESHEET": "View timesheet",
+		"ADD_TIME": "Add Time",
+		"TODAY": "Today"
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",
@@ -2014,8 +2024,7 @@
 		"CLOSE": "Close",
 		"DELETE": "Delete",
 		"IMMUTABLE_TIME": "Immutable Time",
-		"ADD_TIME ": "Add Time",
-		"BULK_ACTION ": "Bulk action",
+		"BULK_ACTION": "Bulk action",
 		"LOG_TYPE": "Log type",
 		"TOTAL_TIME": "Total Time",
 		"ACTIVITES": "Activites",

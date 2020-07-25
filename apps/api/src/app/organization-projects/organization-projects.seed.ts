@@ -4,6 +4,7 @@ import { Tag } from '../tags/tag.entity';
 import { OrganizationProjects } from './organization-projects.entity';
 import { Organization } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 const defaultProjects = [
 	'Gauzy Platform (Open-Source)',
@@ -23,14 +24,20 @@ export const createDefaultOrganizationProjects = async (
 	});
 	const projects: OrganizationProjects[] = [];
 
-	const organizations = faker.random.arrayElement(defaultOrganizations);
+	const organization = faker.random.arrayElement(defaultOrganizations);
+
+	const organizationContacts = await connection
+		.getRepository(OrganizationContact)
+		.find({ where: { organizationId: organization.id } });
+	const organizationContact = faker.random.arrayElement(organizationContacts);
 
 	defaultProjects.forEach((name) => {
 		const project = new OrganizationProjects();
 		project.tags = [tag];
 		project.name = name;
-		project.organizationId = organizations.id;
-		project.tenant = organizations.tenant;
+		project.organizationContact = organizationContact;
+		project.organizationId = organization.id;
+		project.tenant = organization.tenant;
 		// TODO: this seed creates default projects without tenantId.
 		projects.push(project);
 	});
@@ -56,20 +63,28 @@ export const createRandomOrganizationProjects = async (
 		const projectsPerOrganization =
 			Math.floor(Math.random() * (maxProjectsPerOrganization - 5)) + 5;
 		const orgs = tenantOrganizationsMap.get(tenant);
-		orgs.forEach((org) => {
+
+		for (const org of orgs) {
+			const organizationContacts = await connection
+				.getRepository(OrganizationContact)
+				.find({ where: { organizationId: org.id } });
+			const organizationContact = faker.random.arrayElement(
+				organizationContacts
+			);
 			let orgTags: Tag[] = [];
 			orgTags = tags.filter((x) => (x.organization = org));
 			for (let i = 0; i < projectsPerOrganization; i++) {
 				const project = new OrganizationProjects();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
 				project.name = faker.company.companyName();
+				project.organizationContact = organizationContact;
 				project.organizationId = org.id;
 				project.tenant = tenant;
 				project.startDate = faker.date.past(5);
 				project.endDate = faker.date.past(2);
 				projects.push(project);
 			}
-		});
+		}
 	}
 	await connection.manager.save(projects);
 };

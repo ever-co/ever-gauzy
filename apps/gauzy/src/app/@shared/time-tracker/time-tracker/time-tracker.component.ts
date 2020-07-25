@@ -29,7 +29,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	running: boolean;
 	today: Date = new Date();
 	selectedRange: IDateRange = { start: null, end: null };
-	user: any = {};
+	user: User;
 	organization: Organization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	allowFutureDate: boolean;
@@ -73,6 +73,16 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		};
 	}
 
+	public get organizationContactId(): string {
+		return this.timeTrackerService.timerConfig.organizationContactId;
+	}
+	public set organizationContactId(value: string) {
+		this.timeTrackerService.timerConfig = {
+			...this.timeTrackerService.timerConfig,
+			organizationContactId: value
+		};
+	}
+
 	public get projectId(): string {
 		return this.timeTrackerService.timerConfig.projectId;
 	}
@@ -108,6 +118,12 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.time = moment.utc(time * 1000).format('HH:mm:ss');
+			});
+
+		this.timeTrackerService.showTimerWindow$
+			.pipe(untilDestroyed(this))
+			.subscribe((isOpen) => {
+				this.isOpen = isOpen;
 			});
 
 		this.timeTrackerService.current_session_duration$

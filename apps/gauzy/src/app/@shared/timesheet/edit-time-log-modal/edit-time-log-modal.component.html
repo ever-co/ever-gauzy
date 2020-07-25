@@ -136,11 +136,35 @@
 				</nb-checkbox>
 			</div>
 			<div class="form-group">
+				<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
+				<gauzy-contact-selector
+					name="organizationContactId"
+					[(ngModel)]="addEditRequest.organizationContactId"
+					#clientInput="ngModel"
+					[required]="organization?.requireClient"
+				></gauzy-contact-selector>
+				<div
+					*ngIf="clientInput.invalid && f.submitted"
+					class="invalid-feedback d-block"
+				>
+					<div *ngIf="clientInput.errors.required">
+						{{
+							'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED'
+								| translate
+						}}
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
 				<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
 				<ga-project-selector
 					name="projectId"
 					[(ngModel)]="addEditRequest.projectId"
 					#projectInput="ngModel"
+					[organizationContactId]="
+						addEditRequest.organizationContactId
+					"
 					[required]="organization.requireProject"
 				></ga-project-selector>
 

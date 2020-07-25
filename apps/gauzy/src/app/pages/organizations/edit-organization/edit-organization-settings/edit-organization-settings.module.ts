@@ -15,7 +15,8 @@ import {
 	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -81,6 +82,7 @@ import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-inp
 		NbActionsModule,
 		NgSelectModule,
 		ColorPickerModule,
+		NbTooltipModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

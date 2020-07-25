@@ -77,12 +77,12 @@ export class TimeLog extends Base implements ITimeLog {
 	@ApiProperty({ type: OrganizationContact })
 	@ManyToOne(() => OrganizationContact, { nullable: true })
 	@JoinColumn()
-	client?: OrganizationContact;
+	organizationContact?: OrganizationContact;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeLog: TimeLog) => timeLog.client)
+	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
 	@Column({ nullable: true })
-	readonly clientId?: string;
+	readonly organizationContactId?: string;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()

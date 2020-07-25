@@ -16,6 +16,7 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	name: string;
 	organizationId: string;
 	organizationContact?: OrganizationContact;
+	organizationContactId?: string;
 	startDate?: Date;
 	endDate?: Date;
 	billing: string;
@@ -38,6 +39,7 @@ export enum TaskListTypeEnum {
 export interface OrganizationProjectsFindInput extends IBaseEntityModel {
 	name?: string;
 	organizationId?: string;
+	organizationContactId?: string;
 	organizationContact?: OrganizationContact;
 	members?: Employee[];
 	public?: boolean;

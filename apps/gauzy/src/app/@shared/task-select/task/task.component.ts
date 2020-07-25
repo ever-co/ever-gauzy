@@ -59,7 +59,13 @@ export class TaskSelectorComponent
 			.getAllTasks({ projectId: this.projectId })
 			.toPromise();
 		this.tasks = items;
-		this.taskId = this.val;
+		// this.taskId = this.val;
+		if (
+			items.length === 0 ||
+			items.find((item) => this.taskId !== item.id)
+		) {
+			this.taskId = null;
+		}
 	}
 
 	writeValue(value: any) {
