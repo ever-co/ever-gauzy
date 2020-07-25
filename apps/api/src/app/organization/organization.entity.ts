@@ -35,6 +35,7 @@ import { Payment } from '../payment/payment.entity';
 import { Contact } from '../contact/contact.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('organization')
 export class Organization extends TenantBase implements IOrganization {
@@ -58,6 +59,11 @@ export class Organization extends TenantBase implements IOrganization {
 	@OneToMany((type) => Invoice, (invoices) => invoices.fromOrganization)
 	@JoinColumn()
 	invoices?: Invoice[];
+
+	@ApiProperty({ type: Employee })
+	@OneToMany(() => Employee, (employee) => employee.organization)
+	@JoinColumn()
+	employees?: Employee[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -281,27 +287,27 @@ export class Organization extends TenantBase implements IOrganization {
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireReason?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireDescription?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireProject?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireTask?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireClient?: boolean;
 
 	@ApiProperty({ enum: [12, 24] })

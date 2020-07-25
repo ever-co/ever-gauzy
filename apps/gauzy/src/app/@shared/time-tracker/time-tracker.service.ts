@@ -26,7 +26,7 @@ export function createInitialTimerState(): TimerState {
 		isBillable: true,
 		projectId: null,
 		taskId: null,
-		clientId: null,
+		organizationContactId: null,
 		description: '',
 		logType: TimeLogType.TRACKED,
 		tags: []
