@@ -63,6 +63,8 @@
 		}
 	},
 	"SM_TABLE": {
+		"TRANSACTION_TYPE": "Type",
+		"AMOUNT": "כמות",
 		"DATE": "תאריך",
 		"TITLE": "Title",
 		"STAGE": "Stage",

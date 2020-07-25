@@ -63,6 +63,8 @@
 		}
 	},
 	"SM_TABLE": {
+		"TRANSACTION_TYPE": "Type",
+		"AMOUNT": "Сума",
 		"DATE": "Дата",
 		"TITLE": "Title",
 		"STAGE": "Stage",

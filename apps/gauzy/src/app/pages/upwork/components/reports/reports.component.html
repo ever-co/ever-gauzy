@@ -5,4 +5,11 @@
 			>{{ 'BUTTONS.MANAGE' | translate }}
 		</button>
 	</div>
+	<ng2-smart-table
+		class="contracts-table"
+		[settings]="settingsSmartTable"
+		[source]="reports$ | async"
+		#contractsTable
+	>
+	</ng2-smart-table>
 </div>

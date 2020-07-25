@@ -63,6 +63,8 @@
 		}
 	},
 	"SM_TABLE": {
+		"TRANSACTION_TYPE": "Тип",
+		"AMOUNT": "Количество",
 		"DATE": "Дата",
 		"TITLE": "Заголовок",
 		"STAGE": "Этап",
