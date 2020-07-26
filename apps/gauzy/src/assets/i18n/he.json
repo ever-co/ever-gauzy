@@ -64,7 +64,7 @@
 		}
 	},
 	"SM_TABLE": {
-		"TRANSACTION_TYPE": "Type",
+		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",
 		"DATE": "תאריך",
 		"TITLE": "Title",
