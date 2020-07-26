@@ -25,7 +25,10 @@
 		"electron-rebuild": "~1.8.6",
 		"electron-reload": "~1.5.0",
 		"electron-store": "~5.1.0",
-		"electron-updater": "~4.2.0"
+		"electron-updater": "~4.2.0",
+		"@nestjs/typeorm": "^7.0.0",
+		"typeorm": "^0.2.24",
+		"typeorm-express-query-builder": "^1.2.0"
 	},
 	"dependencies": {
 		"electron-store": "^5.2.0",

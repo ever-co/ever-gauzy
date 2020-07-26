@@ -86,7 +86,8 @@
 		"debug:desktop:app:mac": "lldb ./dist/apps/desktop-packages/mac/GauzyDesktop.app && run",
 		"start:desktop:ui": "npm run postinstall.web && cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 && yarn ng serve desktop-ui",
 		"build:desktop:ui": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 && ng build desktop-ui --prod --base-href",
-		"prepare:desktop:dev": "npm run postinstall.electron && tsc -p apps/desktop/tsconfig.dev.json"
+		"prepare:desktop:dev": "npm run postinstall.electron && tsc -p apps/desktop/tsconfig.dev.json",
+		"start:api:desktop": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn ng serve api-desktop"
 	},
 	"config": {
 		"commitizen": {
