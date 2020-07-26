@@ -10,7 +10,7 @@ docker-compose*.yml
 .deploy
 .git/
 .gitignore
-
+Jenkinsfile
 node_modules
 apps/api/node_modules
 
