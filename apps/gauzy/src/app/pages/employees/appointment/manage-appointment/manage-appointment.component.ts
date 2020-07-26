@@ -283,8 +283,30 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				}
 			})
 		).items;
+
+		this.employees = this.employees.filter(
+			(e) =>
+				e.id !==
+				(this.employee
+					? this.employee.id
+					: this.store.selectedEmployee
+					? this.store.selectedEmployee.id
+					: null)
+		);
+
 		this.employees.map((e) => {
-			this.employeeAvailability[e.id] = slots.filter(
+			const dateSpecificSlots: IAvailabilitySlots[] = [];
+			const recurringSlots: IAvailabilitySlots[] = [];
+
+			slots.forEach((s) => {
+				if (s.employeeId === e.id && s.type === 'Recurring') {
+					recurringSlots.push(s);
+				} else if (s.employeeId === e.id) {
+					dateSpecificSlots.push(s);
+				}
+			});
+
+			this.employeeAvailability[e.id] = dateSpecificSlots.filter(
 				(s) =>
 					s.employeeId === e.id &&
 					moment(this.selectedRange.start).isBetween(
@@ -294,6 +316,15 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 						'[]'
 					)
 			);
+
+			if (this.employeeAvailability[e.id].length === 0) {
+				const appointmentDay = moment(this.selectedRange.start).format(
+					'dddd'
+				);
+				this.employeeAvailability[e.id] = recurringSlots.filter(
+					(s) => moment(s.startTime).format('dddd') === appointmentDay
+				);
+			}
 		});
 	}
 
