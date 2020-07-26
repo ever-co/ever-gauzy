@@ -12,6 +12,7 @@ pipeline {
         GITHUB_DOCKER_PASSWORD = credentials('github-docker-password')
         GITHUB_DOCKER_REPO = "docker.pkg.github.com/ever-co/gauzy"
         GITHUB_TOKEN = credentials('github-token')
+        CI_URL = "ci.ever.co"
         AWS_ACCESS_KEY_ID = credentials('aws-access-key')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
         AWS_DEFAULT_REGION = "us-east-1"
@@ -149,11 +150,11 @@ pipeline {
     post {
         success {
             echo "Gauzy CI/CD pipeline executed successfully!"
-            sh "curl 'https://api.GitHub.com/repos/evereq/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d \"{\"state\": \"success\",\"context\": \"continuous-integration/jenkins\", \"description\": \"Jenkins\", \"target_url\": \"ci.ever.co/job/${JOB_NAME}/$BUILD_NUMBER/console\"}\""
+            sh "curl 'https://api.github.com/repos/ever-co/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d \"{\"state\": \"success\",\"context\": \"Jenkins\", \"description\": \"Jenkins pipeline succeeded\", \"target_url\": \"http://$CI_URL/job/${JOB_NAME}/$BUILD_NUMBER/console\"}\""
 		}
         failure {
             echo "Gauzy CI/CD pipeline failed..."
-			sh "curl 'https://api.GitHub.com/repos/evereq/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d \"{\"state\": \"failure\",\"context\": \"continuous-integration/jenkins\", \"description\": \"Jenkins\", \"target_url\": \"ci.ever.co/job/${JOB_NAME}/$BUILD_NUMBER/console\"}\""
+			sh "curl 'https://api.github.com/repos/ever-co/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d \"{\"state\": \"failure\",\"context\": \"Jenkins\", \"description\": \"Jenkins pipeline failed\", \"target_url\": \"http://$CI_URL/job/${JOB_NAME}/$BUILD_NUMBER/console\"}\""
         }
     }
 }
