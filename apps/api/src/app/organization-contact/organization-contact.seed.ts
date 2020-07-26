@@ -30,7 +30,7 @@ export const createRandomOrganizationContact = async (
       for (let i = 0; i < noOfContactsPerOrganization; i++) {
         let orgContact = new OrganizationContact();
         orgContact.contact = faker.random.arrayElement(contacts);
-        orgContact.contactOrganization = org;
+        orgContact.organizationId = org.id;
         orgContact.contactType = faker.random.arrayElement(contactTypes);
         orgContact.emailAddresses = [faker.internet.email(orgContact.contact.firstName, orgContact.contact.lastName)];
         orgContact.inviteStatus = faker.random.arrayElement(contactInvitationTypes);
@@ -54,7 +54,7 @@ export const createRandomOrganizationContact = async (
     }
   }
 
-  return await connection.manager.save(organizationContacts);
+  await connection.manager.save(organizationContacts);
+
+  return organizationContacts;
 };
-
-

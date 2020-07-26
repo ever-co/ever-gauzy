@@ -55,7 +55,7 @@ export const createRandomCandidateSkills = async (
 		const candidates = tenantCandidatesMap.get(tenant);
 
 		(candidates || []).forEach((candidate) => {
-			const skills = candidateSkills.map((skill) => ({
+			const skills = createCandiateSkills.map((skill) => ({
 				name: skill.name,
 				candidateId: candidate.id
 			}));

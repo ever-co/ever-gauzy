@@ -1,7 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
-import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
+import {
+	FormBuilder,
+	Validators,
+	FormGroup,
+	FormArray,
+	FormControl
+} from '@angular/forms';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
@@ -13,12 +19,12 @@ import {
 	ICandidateInterviewers,
 	ICandidateInterview,
 	ICandidateTechnologies,
-	ICandidatePersonalQualities
+	ICandidatePersonalQualities,
+	Employee
 } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateCriterionsRatingService } from 'apps/gauzy/src/app/@core/services/candidate-criterions-rating.service';
 import { DeleteFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
 
@@ -33,6 +39,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	feedbackId = null;
 	showAddCard: boolean;
 	feedbackList: ICandidateFeedback[] = [];
+	allFeedbacks: ICandidateFeedback[] = [];
 	candidateId: string;
 	form: FormGroup;
 	status: string;
@@ -42,16 +49,17 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	statusHire: number;
 	all = 'all';
 	interviewersHire: ICandidateInterviewers[] = [];
-	allInterviews: ICandidateInterview[] = [];
 	interviewers = [];
 	averageRating: number;
 	technologiesList: ICandidateTechnologies[];
 	personalQualitiesList: ICandidatePersonalQualities[];
 	currentFeedback: ICandidateFeedback;
-	qualRating = null;
-	techRating = null;
 	isCancel = false;
 	loading: boolean;
+	employeeList: Employee[];
+	isEmployeeReset: boolean;
+	selectInterview: FormControl = new FormControl();
+	interviewList: ICandidateInterview[];
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -60,24 +68,27 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		private candidateStore: CandidateStore,
 		private employeesService: EmployeesService,
 		private dialogService: NbDialogService,
-		private candidateInterviewersService: CandidateInterviewersService,
 		private candidatesService: CandidatesService,
 		private candidateInterviewService: CandidateInterviewService,
 		private candidateCriterionsRatingService: CandidateCriterionsRatingService
 	) {
 		super(translateService);
 	}
-
-	ngOnInit() {
+	async ngOnInit() {
 		this.candidateStore.selectedCandidate$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
 				if (candidate) {
 					this.candidateId = candidate.id;
 					this._initializeForm();
-					this.loadFeedbacks();
+					this.loadInterviews();
 				}
 			});
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		this.employeeList = items;
 	}
 	private _initializeForm() {
 		this.form = new FormGroup({
@@ -93,34 +104,20 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			})
 		);
 	}
-
-	private async loadFeedbacks(interviewId?: string) {
-		this.loading = true;
+	private async loadFeedbacks() {
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer', 'criterionsRating'],
 			{ candidateId: this.candidateId }
 		);
 		if (res) {
-			if (interviewId) {
-				this.feedbackList = [];
-				for (const feedback of res.items) {
-					if (feedback.interviewId === interviewId) {
-						this.feedbackList.push(feedback);
-					}
-				}
-			} else {
-				this.feedbackList = res.items;
-			}
-			this.loadInterviews(this.feedbackList);
+			this.feedbackList = res.items;
+			this.allFeedbacks = res.items;
+			return this.feedbackList;
 		}
 	}
 	private async loadCriterions(feedback: ICandidateFeedback) {
-		const res = await this.candidateInterviewService.getAll(
-			['technologies', 'personalQualities'],
-			{ candidateId: this.candidateId }
-		);
-		if (res && feedback.interviewId) {
-			this.currentInterview = res.items.find(
+		if (feedback.interviewId) {
+			this.currentInterview = this.interviewList.find(
 				(item) => item.id === feedback.interviewId
 			);
 			this.technologiesList = this.currentInterview.technologies;
@@ -138,27 +135,24 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				);
 			});
 		}
-
-		this.techRating = this.form.get([
+		const techRating = this.form.get([
 			'feedbacks',
 			0,
 			'technologies'
 		]) as FormArray;
-		this.qualRating = this.form.get([
+		const qualRating = this.form.get([
 			'feedbacks',
 			0,
 			'personalQualities'
 		]) as FormArray;
-		if (
-			this.qualRating.controls.length < this.personalQualitiesList.length
-		) {
+		if (qualRating.controls.length < this.personalQualitiesList.length) {
 			this.personalQualitiesList.forEach((item) => {
-				this.qualRating.push(this.fb.control(item.rating));
+				qualRating.push(this.fb.control(item.rating));
 			});
 		}
-		if (this.techRating.controls.length < this.technologiesList.length) {
+		if (techRating.controls.length < this.technologiesList.length) {
 			this.technologiesList.forEach((item) => {
-				this.techRating.push(this.fb.control(item.rating));
+				techRating.push(this.fb.control(item.rating));
 			});
 		}
 		this.form.valueChanges.subscribe((item) => {
@@ -190,38 +184,52 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		const res = techSum || qualSum ? (techSum + qualSum) / isSomeEmpty : 0;
 		return res;
 	}
-	async loadInterviews(feedbackList: ICandidateFeedback[]) {
-		const { items } = await this.employeesService
-			.getAll(['user'])
+	async loadInterviews() {
+		const result = await this.candidateInterviewService.getAll(
+			['feedbacks', 'interviewers', 'technologies', 'personalQualities'],
+			{ candidateId: this.candidateId }
+		);
+		const { items } = await this.candidatesService
+			.getAll(['user', 'interview', 'feedbacks'])
 			.pipe(first())
 			.toPromise();
-		const employeeList = items;
-		for (const feedback of feedbackList) {
-			if (feedback.interviewId) {
-				const res = await this.candidateInterviewService.findById(
-					feedback.interviewId
+		if (result) {
+			this.interviewList = result.items;
+			this.interviewList.forEach((interview) => {
+				items.forEach((candidate) => {
+					if (interview.candidateId === candidate.id) {
+						interview.candidate = candidate;
+					}
+				});
+			});
+			this.loading = true;
+			const feedbackList = await this.loadFeedbacks();
+			feedbackList.forEach((fb) => {
+				const currentInterview = this.interviewList.find(
+					(interview) =>
+						fb.interviewId && interview.id === fb.interviewId
 				);
-				if (res) {
-					feedback.interviewTitle = res.title;
-					employeeList.forEach((item) => {
-						if (feedback.interviewer.employeeId === item.id) {
-							feedback.interviewer.employeeImageUrl =
-								item.user.imageUrl;
-							feedback.interviewer.employeeName = item.user.name;
-						}
-					});
-					this.allInterviews.push(res); //for filter
-				}
-			}
+				fb.interviewTitle = currentInterview
+					? currentInterview.title
+					: '';
+				this.employeeList.forEach((item) => {
+					if (
+						fb.interviewId &&
+						fb.interviewer.employeeId === item.id
+					) {
+						fb.interviewer.employeeImageUrl = item.user.imageUrl;
+						fb.interviewer.employeeName = item.user.name;
+					}
+				});
+			});
+			const uniq = {};
+			this.interviewList = this.interviewList.filter(
+				(obj) => !uniq[obj.id] && (uniq[obj.id] = true)
+			);
 		}
-		const uniq = {};
-		this.allInterviews = this.allInterviews.filter(
-			(obj) => !uniq[obj.id] && (uniq[obj.id] = true)
-		);
 		this.loading = false;
 	}
-
-	async editFeedback(index: number, id: string) {
+	editFeedback(index: number, id: string) {
 		this.currentFeedback = this.feedbackList[index];
 		this._initializeForm();
 		this.loadCriterions(this.currentFeedback);
@@ -232,9 +240,9 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.status = this.currentFeedback.status;
 			this.feedbackInterviewer = this.currentFeedback.interviewer;
 			this.feedbackInterviewId = this.currentFeedback.interviewId;
-			this.interviewers = await this.candidateInterviewersService.findByInterviewId(
-				this.feedbackInterviewId
-			);
+			this.interviewers = this.interviewList.find(
+				(interview) => this.feedbackInterviewId === interview.id
+			).interviewers;
 			this.getStatusHire(this.feedbackInterviewId);
 			this.interviewersHire = this.interviewers
 				? this.interviewers
@@ -242,7 +250,13 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.averageRating = this.currentFeedback.rating;
 		}
 	}
-
+	onEmployeeSelected(id: string) {
+		this.isEmployeeReset = false;
+		this.selectInterview.reset();
+		return (this.feedbackList = this.allFeedbacks.filter(
+			(fb) => fb.interviewId && id === fb.interviewer.employeeId
+		));
+	}
 	submitForm() {
 		const feedbackForm = this.form.controls.feedbacks as FormArray;
 		const formValue = { ...feedbackForm.value[0] };
@@ -256,7 +270,6 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.toastrInvalid();
 		}
 	}
-
 	async updateFeedback(formValue: ICandidateFeedback) {
 		try {
 			await this.candidateCriterionsRatingService.updateBulk(
@@ -274,7 +287,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				interviewer: this.feedbackInterviewer,
 				status: this.status
 			});
-			this.loadFeedbacks();
+			this.loadInterviews();
 			this.toastrSuccess('UPDATED');
 			this.setStatus(this.status);
 			this.showAddCard = !this.showAddCard;
@@ -291,29 +304,26 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				candidateId: this.candidateId
 			});
 			this.toastrSuccess('CREATED');
-			this.loadFeedbacks();
+			this.loadInterviews();
 			this.showAddCard = !this.showAddCard;
 			this.form.controls.feedbacks.reset();
 		} catch (error) {
 			this.toastrError(error);
 		}
 	}
-
 	async getStatusHire(interviewId: string) {
 		this.statusHire = 0;
-		const result = await this.candidateFeedbacksService.findByInterviewId(
-			interviewId
+		const feedbacks = this.feedbackList.filter(
+			(fb) => fb.interviewId === interviewId
 		);
-		if (result) {
-			for (const feedback of result) {
-				if (feedback.interviewId === interviewId) {
-					this.statusHire =
-						feedback.status === CandidateStatus.HIRED
-							? this.statusHire + 1
-							: this.statusHire;
-				}
+		feedbacks.forEach((fb) => {
+			if (fb.interviewId === interviewId) {
+				this.statusHire =
+					fb.status === CandidateStatus.HIRED
+						? this.statusHire + 1
+						: this.statusHire;
 			}
-		}
+		});
 	}
 	async setStatus(status: string) {
 		this.getStatusHire(this.feedbackInterviewId);
@@ -341,17 +351,18 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
 			this.toastrSuccess('DELETED');
-			this.loadFeedbacks();
+			this.loadInterviews();
 		}
 	}
 	onInterviewSelected(value: any) {
-		if (value === 'all') {
-			this.loadFeedbacks();
-		} else {
-			this.loadFeedbacks(value);
+		this.isEmployeeReset = true;
+		this.feedbackList = this.allFeedbacks;
+		if (value !== 'all') {
+			this.feedbackList = this.feedbackList.filter(
+				(fb) => fb.interviewId === value
+			);
 		}
 	}
-
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
@@ -360,7 +371,6 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);
 	}
-
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),

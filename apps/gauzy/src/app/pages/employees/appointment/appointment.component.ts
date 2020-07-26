@@ -232,7 +232,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 		const data = await this.timeOffService
 			.getAllTimeOffRecords(['employees', 'employees.user'], {
 				organizationId: this._selectedOrganizationId,
-				employeeId: this._selectedEmployeeId || ''
+				employeeId:
+					this._selectedEmployeeId ||
+					(this.employee && this.employee.id) ||
+					''
 			})
 			.pipe(first())
 			.toPromise();

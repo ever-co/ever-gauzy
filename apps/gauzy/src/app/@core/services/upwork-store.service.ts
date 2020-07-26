@@ -4,6 +4,13 @@ import { IEngagement, IUpworkApiConfig } from '@gauzy/models';
 import { UpworkService } from './upwork.service';
 import { tap, switchMap } from 'rxjs/operators';
 import { Store } from './store.service';
+import * as moment from 'moment';
+
+const TODAY = new Date();
+const DEFAULT_DATE_RANGE = {
+	start: new Date(moment().subtract(1, 'months').format('YYYY-MM-DD')),
+	end: TODAY
+};
 
 const contractSettings = {
 	entitiesToSync: [
@@ -20,7 +27,7 @@ const contractSettings = {
 		{
 			name: 'Reports',
 			key: 'reports',
-			relatedTo: [],
+			relatedTo: ['Income', 'Expense'],
 			sync: true,
 			datePicker: {
 				max: new Date(),
@@ -30,6 +37,26 @@ const contractSettings = {
 	],
 	onlyContracts: false
 };
+
+/* const reportSettings = {
+	entitiesToSync: [
+		{
+			name: 'Reports',
+			key: 'reports',
+			relatedTo: ['Income', 'Expense'],
+			sync: true,
+			datePicker: {
+				max: new Date(),
+				selectedDate: new Date()
+			}
+		}
+	]
+} */
+
+interface IDateRangeFilter {
+	start: Date;
+	end: Date;
+}
 
 @Injectable({
 	providedIn: 'root'
@@ -59,6 +86,16 @@ export class UpworkStoreService {
 
 	private employeeId: string;
 
+	private _dateRangeActivity$: BehaviorSubject<
+		IDateRangeFilter
+	> = new BehaviorSubject(DEFAULT_DATE_RANGE);
+	public dateRangeActivity$: Observable<
+		IDateRangeFilter
+	> = this._dateRangeActivity$.asObservable();
+
+	private _reports$: BehaviorSubject<any[]> = new BehaviorSubject(null);
+	public reports$: Observable<any> = this._reports$.asObservable();
+
 	constructor(private _us: UpworkService, private _os: Store) {}
 
 	getContracts(): Observable<IEngagement[]> {
@@ -72,6 +109,20 @@ export class UpworkStoreService {
 			),
 			tap((contracts) => this._contracts$.next(contracts))
 		);
+	}
+
+	/**
+	 * Get upwork income/expense reports
+	 */
+	loadReports(): void {
+		const dateRange = this._dateRangeActivity$.getValue();
+		const integrationId = this._selectedIntegrationId$.getValue();
+		const filter = JSON.stringify({ dateRange });
+
+		this._us
+			.getAllReports({ integrationId, filter })
+			.pipe(tap((reports) => this._reports$.next(reports)))
+			.subscribe();
 	}
 
 	setSelectedIntegrationId(integrationId) {
@@ -125,6 +176,13 @@ export class UpworkStoreService {
 
 	setSelectedEmployeeId(employeeId) {
 		this.employeeId = employeeId;
+	}
+
+	setActivityDateRange({ start, end }) {
+		this._dateRangeActivity$.next({
+			start: start || DEFAULT_DATE_RANGE.start,
+			end: end || DEFAULT_DATE_RANGE.end
+		});
 	}
 
 	getConfig(integrationId): Observable<IUpworkApiConfig> {

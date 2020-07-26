@@ -85,7 +85,7 @@ export const createDefaultCandidates = async (
 		candidate.user = user;
 		candidate.isArchived = false;
 		candidate.tenant = defaultTenant;
-		candidate.source = faker.random.arrayElement(defaultSources);
+		// candidate.source = faker.random.arrayElement(defaultSources);
 		// candidate.source = defaultCandidates.filter(
 		// 	(e) => e.email === candidate.user.email
 		// )[0].source;
@@ -117,7 +117,7 @@ export const createRandomCandidates = async (
 		) => {
 			for (let index = 0; index < quantity; index++) {
 				candidate = new Candidate();
-				candidate.source = faker.random.arrayElement(defaultSources);
+				// candidate.source = faker.random.arrayElement(defaultSources);
 				candidate.tenant = tenant;
 				candidate.organization = organization;
 				candidate.isArchived = false;

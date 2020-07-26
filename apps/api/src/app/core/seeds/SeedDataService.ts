@@ -219,9 +219,7 @@ import {
 	createCandidateSkills,
 	createRandomCandidateSkills
 } from '../../candidate-skill/candidate-skill.seed';
-import {
-	createRandomCandidateExperience
-} from '../../candidate-experience/candidate-experience.seed';
+import { createRandomCandidateExperience } from '../../candidate-experience/candidate-experience.seed';
 import {
 	createCandidateEducations,
 	createRandomCandidateEducations
@@ -234,6 +232,11 @@ import { createRandomCandidateTechnologies } from '../../candidate-technologies/
 import { createRandomCandidateInterview } from '../../candidate-interview/candidate-interview.seed';
 import { createRandomAwards } from '../../organization-awards/organization-awards.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
+import { createRandomCandidateCriterionRating } from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
+import { createRandomGoalKpi } from '../../goal-kpi/goal-kpi.seed';
+import { createRandomEmployeeSetting } from '../../employee-setting/employee-setting.seed';
+import { createRandomEmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.seed';
+import { createRandomCandidateInterviewers } from '../../candidate-interviewers/candidate-interviewers.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -990,63 +993,102 @@ export class SeedDataService {
 			)
 		);
 
-    await this.tryExecute(
-      createRandomCandidateEducations(
-        this.connection,
-        tenants,
-        tenantCandidatesMap
-      )
-    );
+		await this.tryExecute(
+			createRandomCandidateEducations(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
 
-    await this.tryExecute(
-      createRandomCandidateExperience(
-        this.connection,
-        tenants,
-        tenantCandidatesMap
-      )
-    );
+		await this.tryExecute(
+			createRandomCandidateExperience(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
 
-    await this.tryExecute(
-      createRandomCandidateSkills(
-        this.connection,
-        tenants,
-        tenantCandidatesMap
-      )
-    );
+		await this.tryExecute(
+			createRandomCandidateSkills(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
 
-    await this.tryExecute(
-      createRandomCandidateInterview(
-        this.connection,
-        tenants,
-        tenantCandidatesMap
-      )
-    );
+		await this.tryExecute(
+			createRandomCandidateInterview(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
 
-    await this.tryExecute(
-      createRandomCandidateTechnologies(
-        this.connection,
-        tenants,
-        tenantCandidatesMap
-      )
-    );
+		await this.tryExecute(
+			createRandomCandidateTechnologies(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
 
-    await this.tryExecute(
-      createRandomCandidatePersonalQualities(
-        this.connection,
-        tenants,
-        tenantCandidatesMap
-      )
-    );
+		await this.tryExecute(
+			createRandomCandidatePersonalQualities(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
 
-    await this.tryExecute(createRandomAwards(
-        this.connection,
-        tenants,
-        tenantOrganizationsMap
-      )
-    );
+		await this.tryExecute(
+			createRandomAwards(this.connection, tenants, tenantOrganizationsMap)
+		);
 
 		await this.tryExecute(
 			createRandomCandidateEducations(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomCandidateInterviewers(
+				this.connection,
+				tenants,
+				tenantEmployeeMap,
+				tenantCandidatesMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomEmployeeRecurringExpense(
+				this.connection,
+				tenants,
+				tenantEmployeeMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomEmployeeSetting(
+				this.connection,
+				tenants,
+				tenantEmployeeMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomGoalKpi(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				tenantEmployeeMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomCandidateCriterionRating(
 				this.connection,
 				tenants,
 				tenantCandidatesMap

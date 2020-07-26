@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { In } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import * as UpworkApi from 'upwork-api';
 import * as _ from 'underscore';
@@ -19,7 +20,8 @@ import {
 	IntegrationEntity,
 	RolesEnum,
 	ExpenseCategoriesEnum,
-	OrganizationVendorEnum
+	OrganizationVendorEnum,
+	Income
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -64,6 +66,8 @@ import { OrganizationContactService } from '../organization-contact/organization
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.commant';
+import { IPagination } from '../core';
+import { IntegrationMap } from '../integration-map/integration-map.entity';
 
 @Injectable()
 export class UpworkService {
@@ -1276,5 +1280,27 @@ export class UpworkService {
 				);
 			});
 		});
+	}
+
+	/**
+	 * Get all reports for upwork integration
+	 */
+	async getReportsForFreelancer(
+		integrationId,
+		filter
+	): Promise<IPagination<IntegrationMap>> {
+		let incomeExpense = await this._integrationMapService.findAll({
+			where: {
+				integration: {
+					id: integrationId
+				},
+				entity: In([
+					IntegrationEntity.INCOME,
+					IntegrationEntity.EXPENSE
+				])
+			}
+		});
+
+		return incomeExpense;
 	}
 }

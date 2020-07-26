@@ -30,6 +30,7 @@ import { CandidateCriterionsFormComponent } from './candidate-criterions-form/ca
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
 import { Router } from '@angular/router';
+import { CandidateStore } from '../../../@core/services/candidate-store.service';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -85,7 +86,8 @@ export class CandidateInterviewMutationComponent
 		private candidateInterviewersService: CandidateInterviewersService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
 		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
-		private router: Router
+		private router: Router,
+		private candidateStore: CandidateStore
 	) {}
 
 	async ngOnInit() {
@@ -164,6 +166,7 @@ export class CandidateInterviewMutationComponent
 			createdInterview = this.editInterview();
 		} else {
 			createdInterview = await this.createInterview(interview);
+			this.candidateStore.loadInterviews(createdInterview);
 		}
 		this.closeDialog(createdInterview);
 	}

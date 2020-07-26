@@ -6,7 +6,6 @@ import {
 } from '@gauzy/models';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { CandidateInterviewService } from './candidate-interview.service';
 
 /**
  * Service used to update candidate
@@ -32,28 +31,13 @@ export class CandidateStore {
 		ICandidateInterview[]
 	> = this._interviewList$.asObservable();
 
-	constructor(
-		private _candidateInterviewService: CandidateInterviewService
-	) {}
+	get interviewList(): Observable<ICandidateInterview[]> {
+		return this._interviewList$.asObservable();
+	}
 
-	//TO DO
-
-	// getInterviewList() {
-	// 	this._candidateInterviewService
-	// 		.getAllInterviews([
-	// 			'feedbacks',
-	// 			'interviewers',
-	// 			'technologies',
-	// 			'personalQualities',
-	// 			'candidate'
-	// 		])
-	// 		.pipe(tap(({ items }) => this.loadAllInterviews(items)))
-	// 		.subscribe();
-	// }
-
-	// loadAllInterviews(interviewList: ICandidateInterview[]): void {
-	// 	this._interviewList$.next(interviewList);
-	// }
+	loadInterviews(interviewList: ICandidateInterview[]): void {
+		this._interviewList$.next(interviewList);
+	}
 
 	set selectedCandidate(candidate: Candidate) {
 		this._selectedCandidate = candidate;
