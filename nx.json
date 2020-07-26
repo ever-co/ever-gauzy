@@ -28,6 +28,9 @@
 		},
 		"desktop-ui": {
 			"tags": []
+		},
+		"api-desktop": {
+			"tags": []
 		}
 	}
 }

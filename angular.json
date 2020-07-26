@@ -525,6 +525,64 @@
 					}
 				}
 			}
+		},
+		"api-desktop": {
+			"root": "apps/desktop/desktop-api",
+			"sourceRoot": "apps/desktop/desktop-api/src",
+			"projectType": "application",
+			"prefix": "api-desktop",
+			"schematics": {},
+			"architect": {
+				"build": {
+					"builder": "@nrwl/node:build",
+					"options": {
+						"outputPath": "dist/apps/desktop/desktop-api",
+						"main": "apps/desktop/desktop-api/src/main.ts",
+						"tsConfig": "apps/desktop/desktop-api/tsconfig.app.json",
+						"assets": ["apps/desktop/desktop-api/src/assets"]
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": true,
+							"inspect": false,
+							"fileReplacements": [
+								{
+									"replace": "apps/desktop/desktop-api/src/environments/environment.ts",
+									"with": "apps/desktop/desktop-api/src/environments/environment.prod.ts"
+								}
+							]
+						}
+					}
+				},
+				"serve": {
+					"builder": "@nrwl/node:execute",
+					"options": {
+						"buildTarget": "api-desktop:build"
+					}
+				},
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"apps/desktop/desktop-api/tsconfig.app.json",
+							"apps/desktop/desktop-api/tsconfig.spec.json"
+						],
+						"exclude": [
+							"**/node_modules/**",
+							"!apps/desktop/desktop-api/**"
+						]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "apps/desktop/desktop-api/jest.config.js",
+						"tsConfig": "apps/desktop/desktop-api/tsconfig.spec.json",
+						"passWithNoTests": true
+					}
+				}
+			}
 		}
 	},
 	"schematics": {
