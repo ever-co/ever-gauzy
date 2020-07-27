@@ -225,7 +225,7 @@ import {
 	createRandomCandidateEducations
 } from '../../candidate-education/candidate-education.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
-import { createRandomOrganizationContact } from '../../organization-contact/organization-contact.seed';
+import { createRandomOrganizationContact, createDefaultOrganizationContact } from '../../organization-contact/organization-contact.seed';
 import { createRandomAvailabilitySlots } from '../../availability-slots/availability-slots.seed';
 import { createRandomCandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
 import { createRandomCandidateTechnologies } from '../../candidate-technologies/candidate-technologies.seed';
@@ -476,6 +476,12 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			createDefaultProductTypes(this.connection, defaultOrganizations)
+		);
+
+		await this.tryExecute(createRandomContacts(this.connection, 5));
+
+		await this.tryExecute(
+			createDefaultOrganizationContact(this.connection)
 		);
 
 		this.defaultProjects = await this.tryExecute(

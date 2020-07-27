@@ -19,8 +19,6 @@ export class TaskSelectorComponent
 	implements OnInit, OnDestroy, ControlValueAccessor {
 	tasks: Task[];
 
-	//@Output() change:EventEmitter<string> = new EventEmitter();
-
 	private _ngDestroy$ = new Subject<void>();
 	private _projectId;
 
@@ -58,8 +56,15 @@ export class TaskSelectorComponent
 		const { items = [] } = await this.tasksService
 			.getAllTasks({ projectId: this.projectId })
 			.toPromise();
+
 		this.tasks = items;
-		this.taskId = this.val;
+
+		if (
+			items.length === 0 ||
+			items.find((item) => this.taskId !== item.id)
+		) {
+			this.taskId = null;
+		}
 	}
 
 	writeValue(value: any) {
@@ -76,9 +81,7 @@ export class TaskSelectorComponent
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
-	// onChange($event:string) {
-	// 	this.change.emit($event);
-	// }
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

@@ -30,7 +30,10 @@
 				</div>
 				<div class="time-count">
 					<span class="currrent-session">{{ current_time }}</span>
-					<span class="today-time mt-2">Today: {{ time }}</span>
+					<span class="today-time mt-2"
+						>{{ 'TIMER_TRACKER.TODAY' | translate }}:
+						{{ time }}</span
+					>
 				</div>
 				<div class="actions">
 					<div class="toggle">
@@ -62,7 +65,7 @@
 				</div>
 			</div>
 			<div class="time-menual" *ngIf="timeType == 'MANUAL'">
-				<h6>Add Time</h6>
+				<h6>{{ 'TIMER_TRACKER.ADD_TIME' | translate }}</h6>
 				<div class="row">
 					<div class="col-12">
 						<ngx-timer-range-picker
@@ -127,9 +130,29 @@
 		</div>
 
 		<div class="form-group">
+			<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
+			<gauzy-contact-selector
+				name="organizationContactId"
+				[disabled]="running"
+				[(ngModel)]="organizationContactId"
+				#clientInput="ngModel"
+				[required]="organization?.requireClient"
+			></gauzy-contact-selector>
+			<div
+				*ngIf="clientInput.invalid && form.submitted"
+				class="invalid-feedback d-block"
+			>
+				<div *ngIf="clientInput.errors.required">
+					{{ 'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED' | translate }}
+				</div>
+			</div>
+		</div>
+
+		<div class="form-group">
 			<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
 			<ga-project-selector
 				name="projectId"
+				[organizationContactId]="organizationContactId"
 				[disabled]="running"
 				[(ngModel)]="projectId"
 				#projectInput="ngModel"
@@ -141,10 +164,13 @@
 				class="invalid-feedback d-block"
 			>
 				<div *ngIf="projectInput.errors.required">
-					Please selct project
+					{{
+						'TIMER_TRACKER.VALIDATION.PROJECT_REQUIRED' | translate
+					}}
 				</div>
 			</div>
 		</div>
+
 		<div class="form-group">
 			<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
 			<ga-task-selector
@@ -160,7 +186,9 @@
 				*ngIf="taskInput.invalid && form.submitted"
 				class="invalid-feedback d-block"
 			>
-				<div *ngIf="taskInput.errors.required">Please selct task</div>
+				<div *ngIf="taskInput.errors.required">
+					{{ 'TIMER_TRACKER.VALIDATION.TASK_REQUIRED' | translate }}
+				</div>
 			</div>
 		</div>
 		<div class="form-group">
@@ -181,13 +209,16 @@
 				class="invalid-feedback d-block"
 			>
 				<div *ngIf="descriptionInput.errors.required">
-					Description is required
+					{{
+						'TIMER_TRACKER.VALIDATION.DESCRIPTION_REQUIRED'
+							| translate
+					}}
 				</div>
 			</div>
 		</div>
 		<div class="time-menual" *ngIf="timeType == 'MANUAL'">
 			<button class="btn btn-success" (click)="addTime()">
-				Add Time
+				{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
 			</button>
 		</div>
 
@@ -196,7 +227,7 @@
 			*ngIf="user?.employee?.id"
 		>
 			<a nbButton ghost [routerLink]="['/pages/employees/timesheets']">
-				View timesheet
+				{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate }}
 			</a>
 		</div>
 	</form>

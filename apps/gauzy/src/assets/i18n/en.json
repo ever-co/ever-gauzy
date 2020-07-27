@@ -1072,13 +1072,21 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_MODIFY_TIME_INFO": "Allow employee to modify manual time.",
 				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_DELETE_TIME_INFO": "Allow employee to delete time.",
 				"ALLOW_MANUAL_TIME": "Allow Manual Time",
+				"ALLOW_MANUAL_TIME_INFO": "Allow employee to add manual time.",
 				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_REASON_INFO": "Reason of the add manual time or edit time logs.",
 				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_DESCRIPTION_INFO": "Description of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
 				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_PROJECT_INFO": "Project of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
 				"REQUIRE_TASK": "Require Task",
-				"REQUIRE_CLIENT": "Require Client"
+				"REQUIRE_TASK_INFO": "Task of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
+				"REQUIRE_CLIENT": "Require Client",
+				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time."
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -1982,11 +1990,21 @@
 		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"SELECT_CLIENT": "Select Client",
 		"DATE": "Date",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
 		"DESCRIPTION": "Description",
-		"ADD_TIME_SUCCESS": "Time Successfully added"
+		"ADD_TIME_SUCCESS": "Time Successfully added",
+		"VALIDATION": {
+			"CLIENT_REQUIRED": "Please select client",
+			"PROJECT_REQUIRED": "Please select project",
+			"TASK_REQUIRED": "Please select task",
+			"DESCRIPTION_REQUIRED": "Description is required"
+		},
+		"VIEW_TIMESHEET": "View timesheet",
+		"ADD_TIME": "Add Time",
+		"TODAY": "Today"
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",
@@ -2014,8 +2032,7 @@
 		"CLOSE": "Close",
 		"DELETE": "Delete",
 		"IMMUTABLE_TIME": "Immutable Time",
-		"ADD_TIME ": "Add Time",
-		"BULK_ACTION ": "Bulk action",
+		"BULK_ACTION": "Bulk action",
 		"LOG_TYPE": "Log type",
 		"TOTAL_TIME": "Total Time",
 		"ACTIVITES": "Activites",
@@ -2030,17 +2047,21 @@
 		"ACTION": "Action",
 		"EMPLOYEE": "Employee",
 		"DURATION": "Duration",
+		"ORGANIZATION_CONTACT": "Client",
+		"NO_ORGANIZATION_CONTACT": "No Client",
 		"PROJECT": "Project",
 		"NO_PROJECT": "No Project",
 		"NO_TIMELOG": "No timelogs found",
 		"TODO": "To-do",
 		"NO_TODO": "No To-do",
 		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
+		"REASON": "Reason",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",
 			"PROJECT": "Please selct project",
-			"EMPLOYEE": "Please selct employee"
+			"EMPLOYEE": "Please selct employee",
+			"REASON": "Please selct reason"
 		}
 	},
 	"ACTIVITY": {

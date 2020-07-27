@@ -18,6 +18,7 @@ import { TaskSelectModule } from '../task-select/task-select.module';
 import { ProjectSelectModule } from '../project-select/project-select.module';
 import { AngularDraggableModule } from 'angular2-draggable';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { ContactSelectorModule } from '../contact-selector/contact-selector.module';
 
 @NgModule({
 	declarations: [TimeTrackerComponent],
@@ -36,7 +37,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		TaskSelectModule,
 		ProjectSelectModule,
 		AngularDraggableModule,
-		NgxPermissionsModule
+		NgxPermissionsModule,
+		ContactSelectorModule
 	],
 	exports: [TimeTrackerComponent]
 })

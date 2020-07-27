@@ -72,7 +72,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			relations: [
 				'project',
 				'task',
-				'client',
+				'organizationContact',
 				...(RequestContext.hasPermission(
 					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 				)
@@ -236,7 +236,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				stoppedAt: request.stoppedAt,
 				projectId: request.projectId || null,
 				taskId: request.taskId || null,
-				clientId: request.clientId || null,
+				organizationContactId: request.organizationContactId || null,
 				logType: TimeLogType.MANUAL,
 				description: request.description || '',
 				isBillable: request.isBillable || false
@@ -278,7 +278,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			employeeId: request.employeeId,
 			projectId: request.projectId || null,
 			taskId: request.taskId || null,
-			clientId: request.clientId || null,
+			organizationContactId: request.organizationContactId || null,
 			logType: TimeLogType.MANUAL,
 			description: request.description || '',
 			isBillable: request.isBillable || false

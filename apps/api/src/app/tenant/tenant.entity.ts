@@ -11,4 +11,12 @@ export class Tenant extends Base {
 	@IsNotEmpty()
 	@Column({ nullable: false })
 	name?: string;
+
+	// @ApiProperty({ type: Organization })
+	// @OneToMany(
+	// 	() => Organization,
+	// 	(organization) => organization.tenant
+	// )
+	// @JoinColumn()
+	// organizations?: Organization[];
 }
