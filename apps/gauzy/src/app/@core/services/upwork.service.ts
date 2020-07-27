@@ -65,11 +65,11 @@ export class UpworkService {
 		);
 	}
 
-	getAllReports(data): Observable<any> {
-		const { integrationId, filter } = data;
+	getAllReports(dto): Observable<any> {
+		const { integrationId, data } = dto;
 		return this.http.get<any>(
 			`/api/integrations/upwork/report/${integrationId}`,
-			{ params: { filter } }
+			{ params: { data } }
 		);
 	}
 }

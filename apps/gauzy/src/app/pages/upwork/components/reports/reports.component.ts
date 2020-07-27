@@ -4,6 +4,9 @@ import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/internal/operators/takeUntil';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { UpworkStoreService } from '../../../../@core/services/upwork-store.service';
+import * as moment from 'moment';
+import { IncomeExpenseAmountComponent } from 'apps/gauzy/src/app/@shared/table-components/income-amount/income-amount.component';
+import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 
 @Component({
 	selector: 'ngx-reports',
@@ -13,7 +16,7 @@ import { UpworkStoreService } from '../../../../@core/services/upwork-store.serv
 export class ReportsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$: Subject<void> = new Subject();
-	reports$: Observable<any> = this._upworkStoreService.contracts$;
+	reports$: Observable<any> = this._upworkStoreService.reports$;
 	settingsSmartTable: object;
 
 	constructor(
@@ -40,25 +43,31 @@ export class ReportsComponent extends TranslationBaseComponent
 			mode: 'external',
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
-				date: {
+				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
-					type: 'string'
+					type: 'custom',
+					width: '20%',
+					renderComponent: DateViewComponent,
+					filter: false
 				},
-				type: {
-					title: this.getTranslation('SM_TABLE.TRANSACTION_TYPE'),
-					type: 'string'
-				},
-				description: {
+				// type: {
+				// 	title: this.getTranslation('SM_TABLE.TRANSACTION_TYPE'),
+				// 	type: 'string'
+				// },
+				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'string'
 				},
-				client: {
-					title: this.getTranslation('SM_TABLE.CLIENT'),
+				clientName: {
+					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
 					type: 'string'
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.AMOUNT'),
-					type: 'string'
+					type: 'custom',
+					width: '15%',
+					filter: false,
+					renderComponent: IncomeExpenseAmountComponent
 				}
 			},
 			pager: {
