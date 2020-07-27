@@ -225,7 +225,10 @@ import {
 	createRandomCandidateEducations
 } from '../../candidate-education/candidate-education.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
-import { createRandomOrganizationContact, createDefaultOrganizationContact } from '../../organization-contact/organization-contact.seed';
+import {
+	createRandomOrganizationContact,
+	createDefaultOrganizationContact
+} from '../../organization-contact/organization-contact.seed';
 import { createRandomAvailabilitySlots } from '../../availability-slots/availability-slots.seed';
 import { createRandomCandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
 import { createRandomCandidateTechnologies } from '../../candidate-technologies/candidate-technologies.seed';
@@ -237,6 +240,14 @@ import { createRandomGoalKpi } from '../../goal-kpi/goal-kpi.seed';
 import { createRandomEmployeeSetting } from '../../employee-setting/employee-setting.seed';
 import { createRandomEmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.seed';
 import { createRandomCandidateInterviewers } from '../../candidate-interviewers/candidate-interviewers.seed';
+import { createRandomPipelineStage } from '../../pipeline-stage/pipeline-stage.seed';
+import { createRandomPipeline } from '../../pipeline/pipeline.seed';
+import { createRandomOrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.seed';
+import { createRandomHelpCenterAuthor } from '../../help-center-author/help-center-author.seed';
+import { createRandomHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
+import { createRandomOrganizationLanguage } from '../../organization-languages/organization-languages.seed';
+import { createRandomOrganizationSprint } from '../../organization-sprint/organization-sprint.seed';
+import { createRandomOrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -337,6 +348,7 @@ const randomSeedConfig = {
 	equipmentSharingPerTenant: 20, // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
 	proposalsSharingPerOrganizations: 30, // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
 	contacts: 50, // The number of random contacts to be seeded.
+	noOfHelpCenterArticle: 10, // The number of random Help Center Articles.
 	availabilitySlotsPerOrganization: 50 // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
 };
 
@@ -1089,6 +1101,70 @@ export class SeedDataService {
 				this.connection,
 				tenants,
 				tenantOrganizationsMap,
+				tenantEmployeeMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomPipeline(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomPipelineStage(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomOrganizationLanguage(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomOrganizationRecurringExpense(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomHelpCenterArticle(
+				this.connection,
+				randomSeedConfig.noOfHelpCenterArticle || 5
+			)
+		);
+
+		await this.tryExecute(
+			createRandomOrganizationSprint(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomOrganizationTeamEmployee(
+				this.connection,
+				tenants,
+				tenantEmployeeMap,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomHelpCenterAuthor(
+				this.connection,
+				tenants,
 				tenantEmployeeMap
 			)
 		);

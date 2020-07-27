@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
 import { OrganizationProjects } from './organization-projects.entity';
-import { Organization } from '@gauzy/models';
+import { Organization, TaskListTypeEnum } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
@@ -38,6 +38,9 @@ export const createDefaultOrganizationProjects = async (
 		project.organizationContact = organizationContact;
 		project.organizationId = organization.id;
 		project.tenant = organization.tenant;
+		project.taskListType = faker.random.arrayElement(
+			Object.values(TaskListTypeEnum)
+		);
 		// TODO: this seed creates default projects without tenantId.
 		projects.push(project);
 	});
