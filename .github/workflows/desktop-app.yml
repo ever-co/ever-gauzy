@@ -2,15 +2,15 @@ name: Desktop App Build
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, bug/failing-github-actions ]
 
 jobs:
-  release:
+  release-linux:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ ubuntu-latest ]
 
     steps:
       - name: Check out Git repository
@@ -21,13 +21,47 @@ jobs:
         with:
           node-version: 14.5
 
-      - name: Build/release Electron app
-        uses: samuelmeuli/action-electron-builder@v1
-        with:
-          # GitHub token, automatically provided to the action
-          # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.github_token }}
+      - name: Change permissions
+        run: "sudo chown -R $(whoami) ./*"
 
-          # If the commit is tagged with a version (e.g. "v1.0.0"),
-          # release the app after building
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      - name: Install system dependencies
+        run: "sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick"
+
+      - name: Install Yarn dependencies
+        run: "yarn install"
+
+      - name: Bootstrap Yarn
+        run: "yarn bootstrap"
+
+      - name: Build Desktop App
+        run: "yarn build:desktop:linux"
+        env:
+          GH_TOKEN: ${{ secrets.github_token }}
+
+
+  release-mac:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ macos-latest ]
+    
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.5  
+      
+      - name: Install Yarn dependencies
+        run: "yarn install"
+
+      - name: Bootstrap Yarn
+        run: "yarn bootstrap"
+
+      - name: Build Desktop App
+        run: "yarn build:desktop:mac"
+        env: # Set the secret as an input
+          GH_TOKEN: ${{ secrets.github_token }}
