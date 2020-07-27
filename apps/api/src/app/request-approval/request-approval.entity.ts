@@ -82,4 +82,9 @@ export class RequestApproval extends Base implements IRequestApproval {
 	@IsString()
 	@Column({ nullable: true })
 	createdByName: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@IsString()
+	@Column({ nullable: true })
+	requestId: string;
 }
