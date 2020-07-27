@@ -29,6 +29,18 @@
 		</div>
 		<div class="mb-3">
 			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }}
+			</div>
+			<div class="description">
+				{{
+					timeLog?.organizationContact
+						? timeLog?.organizationContact.name
+						: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
+				}}
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">
 				{{ 'TIMESHEET.PROJECT' | translate }}
 			</div>
 			<div class="description">
@@ -87,9 +99,19 @@
 				{{ timeLog?.duration | durationFormat }}
 			</div>
 		</div>
+
 		<div class="mb-3">
 			<div class="font-weight-bold mb-2">Description</div>
 			<div class="description">{{ timeLog?.description || '-' }}</div>
+		</div>
+
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">
+				{{ 'TIMESHEET.REASON' | translate }}
+			</div>
+			<div class="description">
+				{{ timeLog?.reason || '-' }}
+			</div>
 		</div>
 	</nb-card-body>
 	<nb-card-footer>

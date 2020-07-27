@@ -1,5 +1,11 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { ITenant, Tag, Skill, OrganizationSprint } from '@gauzy/models';
+import {
+	ITenant,
+	Tag,
+	Skill,
+	OrganizationSprint,
+	Employee
+} from '@gauzy/models';
 import { Contact as IContact } from './contact.model';
 
 export enum OrganizationPermissionsEnum {
@@ -42,6 +48,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	bonusType?: string;
 	bonusPercentage?: number;
 	tenant: ITenant;
+	employees?: Employee[];
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
 	tags: Tag[];

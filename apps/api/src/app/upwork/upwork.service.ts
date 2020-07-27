@@ -20,8 +20,7 @@ import {
 	IntegrationEntity,
 	RolesEnum,
 	ExpenseCategoriesEnum,
-	OrganizationVendorEnum,
-	Income
+	OrganizationVendorEnum
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,

@@ -1,0 +1,22 @@
+<!-- <nb-select
+	class="multiple-select"
+	[disabled]="disabled"
+	[multiple]="multiple"
+	[placeholder]="'TIMER_TRACKER.SELECT_CLIENT' | translate"
+	[(selected)]="contactId"
+>
+	<nb-option *ngFor="let contact of contacts" [value]="contact.id">
+		{{ contact.name }}
+	</nb-option>
+</nb-select> -->
+
+<ng-select
+	[disabled]="disabled"
+	[clearable]="true"
+	[items]="contacts"
+	[(ngModel)]="contactId"
+	[placeholder]="'TIMER_TRACKER.SELECT_CLIENT' | translate"
+	bindValue="id"
+	bindLabel="name"
+>
+</ng-select>
