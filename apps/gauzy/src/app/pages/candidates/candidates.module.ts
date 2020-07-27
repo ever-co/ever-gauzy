@@ -28,8 +28,7 @@ import {
 	NbRadioModule,
 	NbMenuModule,
 	NbContextMenuModule,
-	NbAccordionModule,
-	NbAccordionItemComponent
+	NbAccordionModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
