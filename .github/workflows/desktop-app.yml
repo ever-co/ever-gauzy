@@ -1,8 +1,9 @@
 name: Desktop App Build
 
-on:
+on: 
   push:
-    branches: [ develop, bug/failing-github-actions ]
+    branches: [ develop ]
+  pull_request:
 
 jobs:
   release-linux:
@@ -65,3 +66,32 @@ jobs:
         run: "yarn build:desktop:mac"
         env: # Set the secret as an input
           GH_TOKEN: ${{ secrets.github_token }}
+
+
+  release-windows:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ windows-latest ]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.5  
+        
+      - name: Install Yarn dependencies
+        run: "yarn install"
+
+      - name: Bootstrap Yarn
+        run: "yarn bootstrap"
+
+      - name: Build Desktop App
+        run: "yarn build:desktop:windows"
+        env: # Set the secret as an input
+          GH_TOKEN: ${{ secrets.github_token }}
+      
