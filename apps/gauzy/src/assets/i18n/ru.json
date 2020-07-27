@@ -26,7 +26,7 @@
 		"INVITE": "Пригласить",
 		"SELECT_ALL": "Выделить все",
 		"COPY_LINK": "Скопировать ссылку",
-		"MANAGE_INTERVIEWS": "Управление интервью",
+		"MANAGE_INTERVIEWS": "Управление собеседованиями",
 		"MANAGE_INVITES": "Управление приглашениями",
 		"RESEND": "Переслать",
 		"NEXT": "Следующий",
@@ -61,7 +61,8 @@
 			"CREATE": "Создать спринт",
 			"EDIT": "Редактировать",
 			"DELETE": "Удалить"
-		}
+		},
+		"CANDIDATE_STATISTIC": "Статистика"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -983,11 +984,11 @@
 			"RESET_FILTERS": "Сбросить фильтры"
 		},
 		"STATISTIC": {
-			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
-			"CANDIDATE_RATING": "Рейтинг Кандидата",
-			"INTERVIEWER_ASSESSMENT": "Рейтинг Кандидата за интервью",
+			"STATISTICS": "Статистика",
+			"RATING": "Общий рейтинг",
+			"INTERVIEWER_ASSESSMENT": "Рейтинг за интервью",
 			"CRITERIONS_RATING": "Рейтинг критерия за интервью",
-			"CANDIDATE_CRITERIONS_RATING": "Рейтинг критерия из всех отзывов",
+			"CANDIDATE_CRITERIONS_RATING": "Средний рейтинг критерия",
 			"NO_DATA": "Пока нет данных ",
 			"SELECT_INTERVIEW": "Выберите интервью",
 			"SELECT_INTERVIEW_INTERVIEWER": "Выберите интервью и интервьюера",
@@ -1483,11 +1484,7 @@
 		"ADD_EMPLOYEE": "Добавить сотрудника",
 		"CHAT": "Чат поддержки",
 		"FAQ": "ЧаВо",
-		"HELP": "Помогите",
-		"MANAGE_INTERVIEWS": "Управление собеседованиями",
-		"MANAGE_INVITES": "Управление приглашениями",
-		"CANDIDATE_STATISTIC": "Статистика Кандидатов",
-		"CANDIDATE_CRITERIONS": "Кандидаты критерии"
+		"HELP": "Помогите"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",
