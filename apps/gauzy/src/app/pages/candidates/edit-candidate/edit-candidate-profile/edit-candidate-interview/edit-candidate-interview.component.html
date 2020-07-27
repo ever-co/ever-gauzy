@@ -14,13 +14,7 @@
 				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIDE_PAST' | translate
 			}}</nb-checkbox
 		>
-		<div *ngIf="interviewList?.length > 0">
-			<div class="ml-3 mb-4">
-				<strong>{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWS'
-						| translate
-				}}</strong>
-			</div>
+		<div *ngIf="interviewList?.length > 0" class="cards">
 			<div
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"

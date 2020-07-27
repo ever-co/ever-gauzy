@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidatesService } from '../../@core/services/candidates.service';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
-import { NbToastrService, NbDialogService, NbMenuItem } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import {
 	Router,
@@ -63,8 +63,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 	candidateData: CandidateViewModel[];
 
 	@ViewChild('candidatesTable') candidatesTable;
-	supportContextMenu: NbMenuItem[];
-
 	constructor(
 		private candidatesService: CandidatesService,
 		private dialogService: NbDialogService,
@@ -117,7 +115,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 					this.add();
 				}
 			});
-
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
@@ -125,25 +122,10 @@ export class CandidatesComponent extends TranslationBaseComponent
 					this.setView();
 				}
 			});
-		this.supportContextMenu = [
-			{
-				title: this.getTranslation('CONTEXT_MENU.MANAGE_INTERVIEWS'),
-				icon: 'people-outline',
-				link: 'pages/employees/candidates/interviews'
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.MANAGE_INVITES'),
-				icon: 'email-outline',
-				link: 'pages/employees/candidates/invites'
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.CANDIDATE_STATISTIC'),
-				icon: 'bar-chart-outline',
-				link: 'pages/employees/candidates/statistic'
-			}
-		];
 	}
-
+	goTo(page: string) {
+		this.router.navigate([`/pages/employees/candidates/${page}`]);
+	}
 	setView() {
 		this.viewComponentName = ComponentEnum.CANDIDATES;
 		this.store

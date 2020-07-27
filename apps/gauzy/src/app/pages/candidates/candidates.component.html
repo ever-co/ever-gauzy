@@ -6,23 +6,9 @@
 				{{ organizationName }}
 			</h4>
 			<div class="header-selector-wrapper">
-				<div style="margin-right: 9px;">
-					<nb-action
-						*ngIf="
-							organizationInvitesAllowed &&
-							hasInviteViewOrEditPermission &&
-							hasEditPermission
-						"
-						icon="menu-outline"
-						class="toggle-layout"
-						[nbContextMenu]="supportContextMenu"
-					></nb-action>
-				</div>
-				<div>
-					<ga-layout-selector
-						componentName="{{ viewComponentName }}"
-					></ga-layout-selector>
-				</div>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
 			</div>
 		</div>
 	</nb-card-header>
@@ -47,15 +33,43 @@
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
-
-			<nb-checkbox
-				(checkedChange)="changeIncludeArchived($event)"
-				status="warning"
-				class="float-right py-auto"
-				>{{
-					'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate
-				}}</nb-checkbox
-			>
+			<div class="float-right py-auto manage-btn">
+				<nb-checkbox
+					(checkedChange)="changeIncludeArchived($event)"
+					status="warning"
+					class="mr-3"
+					>{{
+						'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate
+					}}</nb-checkbox
+				>
+				<button
+					nbButton
+					status="primary"
+					(click)="goTo('interviews')"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="people-outline"></nb-icon
+					>{{ 'BUTTONS.MANAGE_INTERVIEWS' | translate }}
+				</button>
+				<button
+					nbButton
+					status="primary"
+					(click)="goTo('invites')"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="email-outline"></nb-icon
+					>{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+				</button>
+				<button
+					nbButton
+					status="primary"
+					(click)="goTo('statistic')"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="bar-chart-outline"></nb-icon
+					>{{ 'BUTTONS.CANDIDATE_STATISTIC' | translate }}
+				</button>
+			</div>
 		</div>
 		<div class="mb-3" *ngIf="!hasEditPermission">
 			<button

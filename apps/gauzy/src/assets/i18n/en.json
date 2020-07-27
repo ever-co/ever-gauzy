@@ -61,7 +61,10 @@
 			"CREATE": "Create Sprint",
 			"EDIT": "Edit",
 			"DELETE": "Delete"
-		}
+		},
+		"MANAGE_INTERVIEWS": "Manage interviews",
+		"MANAGE_INVITES": "Manage invites",
+		"CANDIDATE_STATISTIC": "Statistic"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -1475,11 +1478,7 @@
 		"ADD_EMPLOYEE": "Add Employee",
 		"CHAT": "Support Chat",
 		"FAQ": "FAQ",
-		"HELP": "Help",
-		"MANAGE_INTERVIEWS": "Manage interviews",
-		"MANAGE_INVITES": "Manage invites",
-		"CANDIDATE_STATISTIC": "Candidates statistic",
-		"CANDIDATE_CRITERIONS": "Candidates criterions"
+		"HELP": "Help"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",

@@ -77,13 +77,7 @@
 			>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="documentList?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.DOCUMENTS' | translate
-			}}</strong>
-		</div>
-
+	<nb-card-body *ngIf="documentList?.length" class="mt-3">
 		<nb-card *ngFor="let document of documentList; let i = index">
 			<nb-card-body class="documents-card">
 				<div class="documents-line">

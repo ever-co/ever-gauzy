@@ -96,13 +96,7 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="experienceList?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.EXPERIENCE' | translate
-			}}</strong>
-		</div>
-
+	<nb-card-body *ngIf="experienceList?.length" class="mt-3">
 		<nb-card *ngFor="let exp of experienceList; let i = index">
 			<nb-card-body class="experience-card">
 				<div>
