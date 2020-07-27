@@ -5,14 +5,29 @@ import { takeUntil } from 'rxjs/operators';
 import { Candidate } from '@gauzy/models';
 
 @Component({
-	selector: 'ga-candidate-rating-chart',
+	selector: 'ga-overall-rating-chart',
 	template: `
 		<chart
 			style="height: 400px; width: 100%;"
 			type="bar"
 			[data]="data"
 			[options]="options"
+			*ngIf="rating?.length > 0 && candidates.length > 0"
 		></chart>
+		<div
+			*ngIf="candidates.length === 0 || rating?.length === 0"
+			style="display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			border: 1px #e5e5e5 solid;
+			height: 150px;"
+		>
+			<nb-icon icon="info-outline" style="color: #909cb4;"></nb-icon>
+			<span style="color: #909cb4;">{{
+				'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
+			}}</span>
+		</div>
 	`
 })
 export class CandidateRatingChartComponent implements OnInit, OnDestroy {
@@ -41,7 +56,7 @@ export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 					datasets: [
 						{
 							maxBarThickness: 150,
-							label: 'Candidate rating',
+							label: 'Overall rating',
 							data: this.rating,
 							backgroundColor: this.backgroundColor
 						}

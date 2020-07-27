@@ -12,11 +12,11 @@ import {
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 
 @Component({
-	selector: 'ga-candidate-criterions-rating-chart',
-	templateUrl: './candidate-criterions-rating-chart.component.html',
-	styleUrls: ['./candidate-criterions-rating-chart.component.scss']
+	selector: 'ga-average-criterions-rating-chart',
+	templateUrl: './average-criterions-rating-chart.component.html',
+	styleUrls: ['./average-criterions-rating-chart.component.scss']
 })
-export class CandidateCriterionsRatingChartComponent implements OnDestroy {
+export class AverageCriterionsRatingChartComponent implements OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
 	feedbacks: ICandidateFeedback[];
@@ -116,7 +116,7 @@ export class CandidateCriterionsRatingChartComponent implements OnDestroy {
 					datasets: [
 						{
 							maxBarThickness: 150,
-							label: `Criterion's rating from all feedbacks`,
+							label: `Average criterion's rating`,
 							backgroundColor: this.backgroundColor,
 							data: this.rating
 						}

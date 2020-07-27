@@ -55,13 +55,7 @@
 			>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="skillList?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.SKILLS' | translate
-			}}</strong>
-		</div>
-
+	<nb-card-body *ngIf="skillList?.length" class="mt-3">
 		<nb-card *ngFor="let skill of skillList; let i = index">
 			<nb-card-body>
 				<span *ngIf="!showEditDiv[i]"> {{ skill.name }}</span>

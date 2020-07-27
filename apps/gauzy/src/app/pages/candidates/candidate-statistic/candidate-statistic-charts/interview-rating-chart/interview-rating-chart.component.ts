@@ -7,11 +7,11 @@ import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/can
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 
 @Component({
-	selector: 'ga-interviewer-assessment-chart',
-	templateUrl: './interviewer-assessment-chart.component.html',
-	styleUrls: ['./interviewer-assessment-chart.component.scss']
+	selector: 'ga-interview-rating-chart',
+	templateUrl: './interview-rating-chart.component.html',
+	styleUrls: ['./interview-rating-chart.component.scss']
 })
-export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
+export class InterviewRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
 	interviews = [];
@@ -69,7 +69,7 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 					datasets: [
 						{
 							maxBarThickness: 150,
-							label: 'Assessments from interviewers',
+							label: 'Rating per interview',
 							backgroundColor: this.backgroundColor,
 							data: this.rating
 						}

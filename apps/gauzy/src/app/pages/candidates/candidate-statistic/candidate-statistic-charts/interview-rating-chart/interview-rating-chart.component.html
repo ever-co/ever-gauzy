@@ -2,6 +2,7 @@
 	placeholder="Select an interview"
 	class="select"
 	(selectedChange)="onInterviewSelected($event)"
+	*ngIf="candidates.length > 0"
 >
 	<nb-option-group
 		*ngFor="let candidate of candidates"
@@ -20,7 +21,7 @@
 	<span class="no-data-text">{{
 		'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
 	}}</span>
-	<span class="no-data-text">
+	<span class="no-data-text" *ngIf="candidates.length > 0">
 		{{ 'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW' | translate }}
 	</span>
 </div>

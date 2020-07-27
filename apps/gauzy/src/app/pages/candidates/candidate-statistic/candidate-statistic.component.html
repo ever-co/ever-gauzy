@@ -1,8 +1,11 @@
 <nb-card>
 	<nb-card-header>
-		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+		<ngx-back-navigation
+			class="d-block"
+			style="height: 2rem;"
+		></ngx-back-navigation>
 		<h4>
-			{{ 'CANDIDATES_PAGE.STATISTIC.CANDIDATE_STATISTICS' | translate }}
+			{{ 'CANDIDATES_PAGE.STATISTIC.STATISTICS' | translate }}
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
@@ -10,18 +13,15 @@
 			<nb-accordion-item>
 				<nb-accordion-item-header
 					><h6>
-						{{
-							'CANDIDATES_PAGE.STATISTIC.CANDIDATE_RATING'
-								| translate
-						}}
+						{{ 'CANDIDATES_PAGE.STATISTIC.RATING' | translate }}
 					</h6></nb-accordion-item-header
 				>
 				<nb-accordion-item-body>
-					<ga-candidate-rating-chart
+					<ga-overall-rating-chart
 						*ngIf="candidates"
 						[candidates]="candidates"
 						[employeeList]="employeeList"
-					></ga-candidate-rating-chart>
+					></ga-overall-rating-chart>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
 
@@ -35,12 +35,12 @@
 					</h6></nb-accordion-item-header
 				>
 				<nb-accordion-item-body>
-					<ga-interviewer-assessment-chart
+					<ga-interview-rating-chart
 						*ngIf="candidates"
 						[interviewList]="interviewList"
 						[candidates]="candidates"
 						[employeeList]="employeeList"
-					></ga-interviewer-assessment-chart>
+					></ga-interview-rating-chart>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
 
@@ -72,11 +72,11 @@
 					</h6></nb-accordion-item-header
 				>
 				<nb-accordion-item-body>
-					<ga-candidate-criterions-rating-chart
+					<ga-average-criterions-rating-chart
 						*ngIf="candidates"
 						[candidates]="candidates"
 						[interviewList]="interviewList"
-					></ga-candidate-criterions-rating-chart>
+					></ga-average-criterions-rating-chart>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
 		</nb-accordion>
