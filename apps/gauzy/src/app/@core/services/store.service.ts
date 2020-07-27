@@ -6,7 +6,8 @@ import {
 	User,
 	LanguagesEnum,
 	OrganizationPermissionsEnum,
-	OrganizationProjects
+	OrganizationProjects,
+	Language
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
@@ -29,6 +30,7 @@ export interface AppState {
 	selectedProposal: ProposalViewModel;
 	selectedProject: OrganizationProjects;
 	selectedDate: Date;
+	systemLanguages: Language[];
 }
 
 export interface PersistState {
@@ -124,6 +126,7 @@ export class Store {
 	componentLayoutMap$ = this.persistQuery
 		.select((state) => state.componentLayout)
 		.pipe(map((componentLayout) => new Map(componentLayout)));
+	systemLanguages$ = this.appQuery.select((state) => state.systemLanguages);
 
 	subject = new Subject<ComponentEnum>();
 
@@ -194,6 +197,17 @@ export class Store {
 		this.appStore.update({
 			selectedProject: project
 		});
+	}
+
+	set systemLanguages(languages: Language[]) {
+		this.appStore.update({
+			systemLanguages: languages
+		});
+	}
+
+	get systemLanguages(): Language[] {
+		const { systemLanguages } = this.appQuery.getValue();
+		return systemLanguages;
 	}
 
 	get token(): string | null {

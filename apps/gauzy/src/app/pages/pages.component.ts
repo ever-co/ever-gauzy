@@ -654,7 +654,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	constructor(
 		private authService: AuthService,
 		private employeeService: EmployeesService,
-		private translate: TranslateService,
+		public translate: TranslateService,
 		private store: Store,
 		private selectorService: SelectorService,
 		private router: Router
@@ -693,10 +693,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	loadItems(
-		withOrganizationShortcuts: boolean,
-		forceTranslate: boolean = false
-	) {
+	loadItems(withOrganizationShortcuts: boolean) {
 		this.menu.forEach((item) => {
 			this.refreshMenuItem(item, withOrganizationShortcuts);
 		});
@@ -754,8 +751,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationShortcuts,
-					true
+						.showOrganizationShortcuts
 				);
 			});
 	}
