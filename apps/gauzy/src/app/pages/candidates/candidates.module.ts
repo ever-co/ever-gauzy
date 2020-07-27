@@ -28,7 +28,8 @@ import {
 	NbRadioModule,
 	NbMenuModule,
 	NbContextMenuModule,
-	NbAccordionModule
+	NbAccordionModule,
+	NbAccordionItemComponent
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -75,8 +76,6 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.module';
 import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
 import { ChartModule } from 'angular2-chartjs';
-import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-rating-chart/candidate-rating-chart.component';
-import { InterviewerAssessmentChartComponent } from './candidate-statistic/candidate-statistic-charts/interviewer-assessment-chart/interviewer-assessment-chart.component';
 import { CandidateTechnologiesService } from '../../@core/services/candidate-technologies.service';
 import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
 import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
@@ -85,9 +84,11 @@ import { CandidateTechnologiesComponent } from './manage-candidate-interviews/in
 import { CandidatePersonalQualitiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
 import { CriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/criterions-rating-chart/criterions-rating-chart.component';
 import { CandidateSelectModule } from '../../@shared/candidate/candidate-select/candidate-select.module';
-import { CandidateCriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-criterions-rating-chart/candidate-criterions-rating-chart.component';
 import { DeleteInterviewModule } from '../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.module';
 import { DeleteFeedbackModule } from '../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.module';
+import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/overall-rating-chart/overall-rating-chart.component';
+import { InterviewRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/interview-rating-chart/interview-rating-chart.component';
+import { AverageCriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/average-criterions-rating-chart/average-criterions-rating-chart.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -120,8 +121,8 @@ const COMPONENTS = [
 	InterviewPanelComponent,
 	CandidateRatingChartComponent,
 	CriterionsRatingChartComponent,
-	CandidateCriterionsRatingChartComponent,
-	InterviewerAssessmentChartComponent,
+	InterviewRatingChartComponent,
+	AverageCriterionsRatingChartComponent,
 	InterviewCriterionsComponent,
 	CandidateTechnologiesComponent,
 	CandidatePersonalQualitiesComponent

@@ -1,5 +1,6 @@
 <div class="select">
 	<ga-candidate-select
+		*ngIf="candidates.length > 0"
 		[allCandidates]="candidates"
 		[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate"
 		(selectedChange)="onMembersSelected($event)"
@@ -12,7 +13,7 @@
 	<span class="no-data-text">{{
 		'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
 	}}</span>
-	<span class="no-data-text">
+	<span class="no-data-text" *ngIf="candidates.length > 0">
 		{{ 'CANDIDATES_PAGE.STATISTIC.SELECT_CANDIDATE' | translate }}
 	</span>
 </div>

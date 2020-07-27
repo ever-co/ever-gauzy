@@ -3,9 +3,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
 import { Subject } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-candidate-statistic',
@@ -16,6 +17,7 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	candidateRating: number;
 	candidates: Candidate[] = null;
 	names: string[] = [];
+	selectedOrganizationId: string;
 	rating: number[] = [];
 	interviewList: ICandidateInterview[];
 	employeeList: Employee[];
@@ -23,17 +25,27 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 		private candidatesService: CandidatesService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
 		private candidateInterviewService: CandidateInterviewService,
-		private employeesService: EmployeesService
+		private employeesService: EmployeesService,
+		private store: Store
 	) {}
 
 	ngOnInit() {
-		this.loadData();
-		this.loadEmployee();
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.selectedOrganizationId = organization.id;
+					this.loadData();
+					this.loadEmployee();
+				}
+			});
 	}
 
 	async loadData() {
 		const { items } = await this.candidatesService
-			.getAll(['user', 'interview', 'feedbacks'])
+			.getAll(['user', 'interview', 'feedbacks'], {
+				organization: { id: this.selectedOrganizationId }
+			})
 			.pipe(first())
 			.toPromise();
 		const interviews = await this.candidateInterviewService.getAll([
