@@ -26,8 +26,8 @@
 		"INVITE": "Invite",
 		"SELECT_ALL": "Select All",
 		"COPY_LINK": "Copy Link",
-		"MANAGE_INTERVIEWS": "Manage Interviews",
-		"MANAGE_INVITES": "Manage Invites",
+		"MANAGE_INTERVIEWS": "Manage interviews",
+		"MANAGE_INVITES": "Manage invites",
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
@@ -61,7 +61,8 @@
 			"CREATE": "Create Sprint",
 			"EDIT": "ערוך",
 			"DELETE": "מחק"
-		}
+		},
+		"CANDIDATE_STATISTIC": "Statistic"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -983,11 +984,11 @@
 			"RESET_FILTERS": "Reset filters"
 		},
 		"STATISTIC": {
-			"CANDIDATE_STATISTICS": "Candidates statistic",
-			"CANDIDATE_RATING": "Candidate's rating",
-			"INTERVIEWER_ASSESSMENT": "Candidate's rating per interview",
+			"STATISTICS": "Statistic",
+			"RATING": "Overall rating",
+			"INTERVIEWER_ASSESSMENT": "Rating per interview",
 			"CRITERIONS_RATING": "Criterion's rating per interview",
-			"CANDIDATE_CRITERIONS_RATING": "Criterion's rating from all feedbacks",
+			"CANDIDATE_CRITERIONS_RATING": "Average criterion's rating",
 			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview",
 			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer",
@@ -1483,11 +1484,7 @@
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"CHAT": "Чат с нас",
 		"FAQ": "Въпроси и Отговори",
-		"HELP": "עזרה",
-		"MANAGE_INTERVIEWS": "Manage interviews",
-		"MANAGE_INVITES": "Manage invites",
-		"CANDIDATE_STATISTIC": "Candidates statistic",
-		"CANDIDATE_CRITERIONS": "Candidates criterions"
+		"HELP": "עזרה"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "שם פרטי",
