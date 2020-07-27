@@ -16,7 +16,8 @@ export const createDefaultApprovalPolicyForOrg = async (
 		defaultApprovalPolicy.name = 'Default Approval Policy';
 		defaultApprovalPolicy.organizationId = org.id;
 		defaultApprovalPolicy.description = 'Default approval policy';
-		defaultApprovalPolicy.tenantId = org.tenantId;
+		defaultApprovalPolicy.nameConst = 'DEFAULT_APPROVAL_POLICY';
+		defaultApprovalPolicy.tenantId = org.tenant.id;
 		promises.push(insertDefaultPolicy(connection, defaultApprovalPolicy));
 	});
 
@@ -48,7 +49,9 @@ export const createRandomApprovalPolicyForOrg = async (
 		'State Government Industrial Policies',
 		'Reservation Policy',
 		'National Policies',
-		'International Policies'
+		'International Policies',
+		'Time Off',
+		'Equipment Sharing'
 	];
 	for (const tenant of tenants) {
 		const orgs = tenantOrganizationsMap.get(tenant);
@@ -59,6 +62,8 @@ export const createRandomApprovalPolicyForOrg = async (
 				policy.name = name;
 				policy.tenant = tenant;
 				policy.organization = org;
+				policy.tenantId = tenant.id;
+				policy.nameConst = name.replace(/\s+/g, '_').toUpperCase();
 				policies.push(policy);
 			});
 		});
