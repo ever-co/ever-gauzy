@@ -5,25 +5,39 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
-import { Cloudinary } from '@cloudinary/angular-5.x';
-import { HttpClient } from '@angular/common/http';
 import { Store } from './@core/services/store.service';
-import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { LanguagesEnum } from '@gauzy/models';
+import { LanguagesService } from './@core/services/languages.service';
 
 @Component({
 	selector: 'ga-app',
-	template: '<router-outlet></router-outlet>'
+	template: '<router-outlet *ngIf="!loading"></router-outlet>'
 })
 export class AppComponent implements OnInit {
 	constructor(
 		private analytics: AnalyticsService,
-		private _cloudinary: Cloudinary,
-		private readonly httpClient: HttpClient,
 		private store: Store,
-		private router: Router
+		private languagesService: LanguagesService,
+		public translate: TranslateService
 	) {}
+
+	loading = true;
 
 	async ngOnInit() {
 		this.analytics.trackPageViews();
+		this.translate.onLangChange.subscribe(() => {
+			this.loading = false;
+		});
+		this.loadLanguages();
+	}
+
+	private async loadLanguages() {
+		const res = await this.languagesService.getSystemLanguages();
+		this.store.systemLanguages = res.items;
+		this.translate.setDefaultLang(LanguagesEnum.ENGLISH);
+		this.translate.use(
+			this.translate.getBrowserLang() || LanguagesEnum.ENGLISH
+		);
 	}
 }
