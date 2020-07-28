@@ -26,8 +26,9 @@
 		"INVITE": "Пригласить",
 		"SELECT_ALL": "Выделить все",
 		"COPY_LINK": "Скопировать ссылку",
-		"MANAGE_INTERVIEWS": "Управление собеседованиями",
+		"MANAGE_INTERVIEWS": "Управление интервью",
 		"MANAGE_INVITES": "Управление приглашениями",
+		"MANAGE_SPRINTS": "Управление спринтами",
 		"RESEND": "Переслать",
 		"NEXT": "Следующий",
 		"PREVIOUS": "Предыдущий",
@@ -321,6 +322,7 @@
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"OWNER": "Владелец",
+			"TASK_VIEW_MODE": "Режим просмотра задач",
 			"SELECT_STATUS": "Выберите статус",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
