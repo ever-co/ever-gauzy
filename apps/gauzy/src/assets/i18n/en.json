@@ -28,6 +28,7 @@
 		"COPY_LINK": "Copy Link",
 		"MANAGE_INTERVIEWS": "Manage Interviews",
 		"MANAGE_INVITES": "Manage Invites",
+		"MANAGE_SPRINTS": "Manage Sprints",
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
@@ -62,8 +63,6 @@
 			"EDIT": "Edit",
 			"DELETE": "Delete"
 		},
-		"MANAGE_INTERVIEWS": "Manage interviews",
-		"MANAGE_INVITES": "Manage invites",
 		"CANDIDATE_STATISTIC": "Statistic"
 	},
 	"SM_TABLE": {
@@ -323,6 +322,7 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
+			"TASK_VIEW_MODE": "Task view mode",
 			"SELECT_STATUS": "Select Status",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
@@ -983,7 +983,16 @@
 			"SEARCH_BY_CANDIDATE": "Search by candidate's name",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating",
-			"RESET_FILTERS": "Reset filters"
+			"RESET_FILTERS": "Reset filters",
+			"TITLE": "Title",
+			"DATE": "Date",
+			"RATING": "Rating",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Location",
+			"NOTES": "Notes",
+			"ACTIONS": "Actions",
+			"UPDATED": "Updated",
+			"CANDIDATE": "Candidate"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",

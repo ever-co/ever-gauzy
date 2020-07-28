@@ -10,19 +10,21 @@ import {
 import { Tenant } from './../tenant/tenant.entity';
 
 const defaultOrganizationsData = [
-    {
-      name: 'Ever Technologies LTD',
-      currency: CurrenciesEnum.BGN,
-      defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-      imageUrl: 'assets/images/logos/ever-large.jpg'
-    },
-    {
-      name: 'Ever Co. Ltd',
-      currency: CurrenciesEnum.BGN,
-      defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-      imageUrl: 'assets/images/logos/ever-large.jpg'
-    }
-    ];
+	{
+		name: 'Ever Technologies LTD',
+		currency: CurrenciesEnum.BGN,
+		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+		imageUrl: 'assets/images/logos/ever-large.jpg'
+	},
+	{
+		name: 'Ever Co. Ltd',
+		currency: CurrenciesEnum.BGN,
+		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+		imageUrl: 'assets/images/logos/ever-large.jpg'
+	}
+];
+
+let defaultOrganizationsInserted = [];
 
 export const createDefaultOrganizations = async (
 	connection: Connection,
@@ -30,7 +32,7 @@ export const createDefaultOrganizations = async (
 ): Promise<Organization[]> => {
 	const defaultOrganizations: Organization[] = [];
 
-  defaultOrganizationsData.forEach((organiziation) => {
+	defaultOrganizationsData.forEach((organiziation) => {
 		const defaultOrganization: Organization = new Organization();
 
 		const {
@@ -56,6 +58,8 @@ export const createDefaultOrganizations = async (
 
 	await insertOrganizations(connection, defaultOrganizations);
 
+	defaultOrganizationsInserted = [...defaultOrganizations];
+
 	return defaultOrganizations;
 };
 
@@ -72,34 +76,42 @@ export const createRandomOrganizations = async (
 
 	tenants.forEach((tenant) => {
 		const randomOrganizations: Organization[] = [];
+		if (tenant.name === 'Ever') {
+			tenantOrganizations.set(tenant, defaultOrganizationsInserted);
+		} else {
+			for (let index = 0; index < noOfOrganizations; index++) {
+				const organization = new Organization();
+				const companyName = faker.company.companyName();
 
-		for (let index = 0; index < noOfOrganizations; index++) {
-			const organization = new Organization();
-			const companyName = faker.company.companyName();
+				const logoAbbreviation = _extractLogoAbbreviation(companyName);
 
-			const logoAbbreviation = _extractLogoAbbreviation(companyName);
+				organization.name = companyName;
+				organization.profile_link = generateLink(companyName);
+				organization.currency = currencies[index % currencies.length];
+				organization.defaultValueDateType =
+					defaultDateTypes[index % defaultDateTypes.length];
+				organization.imageUrl = getDummyImage(
+					330,
+					300,
+					logoAbbreviation
+				);
+				organization.tenant = tenant;
+				organization.invitesAllowed = true;
 
-			organization.name = companyName;
-			organization.profile_link = generateLink(companyName);
-			organization.currency = currencies[index % currencies.length];
-			organization.defaultValueDateType =
-				defaultDateTypes[index % defaultDateTypes.length];
-			organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
-			organization.tenant = tenant;
-			organization.invitesAllowed = true;
+				const { bonusType, bonusPercentage } = randomBonus();
+				organization.bonusType = bonusType;
+				organization.bonusPercentage = bonusPercentage;
+				organization.registrationDate = faker.date.past(
+					Math.floor(Math.random() * 10) + 1
+				);
 
-			const { bonusType, bonusPercentage } = randomBonus();
-			organization.bonusType = bonusType;
-			organization.bonusPercentage = bonusPercentage;
-			organization.registrationDate = faker.date.past(
-				Math.floor(Math.random() * 10) + 1
-			);
+				randomOrganizations.push(organization);
+			}
 
-			randomOrganizations.push(organization);
+			tenantOrganizations.set(tenant, randomOrganizations);
 		}
 
 		allOrganizations = allOrganizations.concat(randomOrganizations);
-		tenantOrganizations.set(tenant, randomOrganizations);
 	});
 
 	await insertOrganizations(connection, allOrganizations);

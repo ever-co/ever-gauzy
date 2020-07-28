@@ -46,6 +46,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 	user: any;
 	showOrganizationsSelector = false;
 	showEmployeesSelector = false;
+	loading = true;
 
 	userMenu = [
 		{ title: 'Profile', link: '/pages/auth/profile' },
@@ -127,5 +128,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
 			}
 		}
+
+		this.loading = false;
 	}
 }

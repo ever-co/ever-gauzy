@@ -214,7 +214,7 @@ export class UpworkController {
 		@Param('integrationId') integrationId: string,
 		@Query('data') data: string
 	): Promise<any> {
-		const getReportFilterDto: any = data;
+		const getReportFilterDto: any = JSON.parse(data);
 		return await this._upworkService.getReportsForFreelancer(
 			integrationId,
 			getReportFilterDto

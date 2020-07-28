@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
 import { IEngagement, IUpworkApiConfig } from '@gauzy/models';
 import { UpworkService } from './upwork.service';
-import { tap, switchMap } from 'rxjs/operators';
+import { tap, switchMap, map } from 'rxjs/operators';
 import { Store } from './store.service';
 import * as moment from 'moment';
 
@@ -117,11 +117,14 @@ export class UpworkStoreService {
 	loadReports(): void {
 		const dateRange = this._dateRangeActivity$.getValue();
 		const integrationId = this._selectedIntegrationId$.getValue();
-		const filter = JSON.stringify({ dateRange });
+		const data = JSON.stringify({ dateRange });
 
 		this._us
-			.getAllReports({ integrationId, filter })
-			.pipe(tap((reports) => this._reports$.next(reports)))
+			.getAllReports({ integrationId, data })
+			.pipe(
+				map((reports) => reports.items),
+				tap((reports) => this._reports$.next(reports))
+			)
 			.subscribe();
 	}
 
@@ -178,7 +181,7 @@ export class UpworkStoreService {
 		this.employeeId = employeeId;
 	}
 
-	setActivityDateRange({ start, end }) {
+	setFilterDateRange({ start, end }) {
 		this._dateRangeActivity$.next({
 			start: start || DEFAULT_DATE_RANGE.start,
 			end: end || DEFAULT_DATE_RANGE.end

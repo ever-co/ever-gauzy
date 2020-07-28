@@ -88,6 +88,12 @@ import { DeleteFeedbackModule } from '../../@shared/candidate/candidate-confirma
 import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/overall-rating-chart/overall-rating-chart.component';
 import { InterviewRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/interview-rating-chart/interview-rating-chart.component';
 import { AverageCriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/average-criterions-rating-chart/average-criterions-rating-chart.component';
+import { InterviewStarRatingComponent } from './manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
+import { InterviewCandidatePictureNameComponent } from './manage-candidate-interviews/interview-panel/table-components/candidate/candidate.component';
+import { InterviewCriterionsTableComponent } from './manage-candidate-interviews/interview-panel/table-components/criterions/criterions.component';
+import { InterviewDateTableComponent } from './manage-candidate-interviews/interview-panel/table-components/date/date.component';
+import { InterviewersTableComponent } from './manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
+import { InterviewActionsTableComponent } from './manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -124,7 +130,13 @@ const COMPONENTS = [
 	AverageCriterionsRatingChartComponent,
 	InterviewCriterionsComponent,
 	CandidateTechnologiesComponent,
-	CandidatePersonalQualitiesComponent
+	CandidatePersonalQualitiesComponent,
+	InterviewCandidatePictureNameComponent,
+	InterviewStarRatingComponent,
+	InterviewCriterionsTableComponent,
+	InterviewDateTableComponent,
+	InterviewersTableComponent,
+	InterviewActionsTableComponent
 ];
 
 @NgModule({

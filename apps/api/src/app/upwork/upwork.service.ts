@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, Between } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import * as UpworkApi from 'upwork-api';
 import * as _ from 'underscore';
@@ -60,7 +60,9 @@ import { OrganizationService } from '../organization/organization.service';
 import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
+import { ExpenseService } from '../expense/expense.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
+import { IncomeService } from '../income/income.service';
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
@@ -73,7 +75,9 @@ export class UpworkService {
 	private _upworkApi: UpworkApi;
 
 	constructor(
+		private readonly _expenseService: ExpenseService,
 		private _expenseCategoryService: ExpenseCategoriesService,
+		private readonly _incomeService: IncomeService,
 		private _integrationMapService: IntegrationMapService,
 		private _userService: UserService,
 		private _roleService: RoleService,
@@ -582,7 +586,7 @@ export class UpworkService {
 			const integratedTimeSlotsMinutes = await Promise.all(
 				minutes.map(async (minute) => {
 					const {
-						record: timeSlot
+						record: findTimeSlot
 					} = await this._timeSlotService.findOneOrFail({
 						where: {
 							employeeId: employeeId,
@@ -600,7 +604,7 @@ export class UpworkService {
 							datetime: new Date(
 								moment.unix(time).format('YYYY-MM-DD HH:mm:ss')
 							),
-							timeSlot
+							timeSlot: findTimeSlot
 						})
 					);
 
@@ -690,10 +694,10 @@ export class UpworkService {
 				screenshot_img_thmb,
 				snapshot_time
 			}) => {
-				let recordedAt = moment
+				const recordedAt = moment
 					.unix(snapshot_time)
 					.format('YYYY-MM-DD HH:mm:ss');
-				let activityTimestamp = moment
+				const activityTimestamp = moment
 					.unix(cell_time)
 					.format('YYYY-MM-DD HH:mm:ss');
 
@@ -746,13 +750,13 @@ export class UpworkService {
 	}
 
 	private async _handleEmployee({ integrationId, organizationId, config }) {
-		let promises = [];
+		const promises = [];
 		promises.push(this._getUpworkAuthenticatedUser(config));
 		promises.push(this._getUpworkUserInfo(config));
 
 		return Promise.all(promises).then(async (results: any[]) => {
 			const { user } = results[0];
-			let { info } = results[1];
+			const { info } = results[1];
 			user['info'] = info;
 
 			return await this.syncEmployee({
@@ -769,7 +773,7 @@ export class UpworkService {
 		organizationId,
 		config
 	) {
-		let { record } = await this._integrationMapService.findOneOrFail({
+		const { record } = await this._integrationMapService.findOneOrFail({
 			where: {
 				sourceId: providerRefernceId,
 				entity: IntegrationEntity.EMPLOYEE
@@ -787,9 +791,10 @@ export class UpworkService {
 
 	async syncEmployee({ integrationId, user, organizationId }) {
 		const { reference: userId, email } = user;
-		let { record } = await this._userService.findOneOrFail({
+		const { record } = await this._userService.findOneOrFail({
 			where: { email: email }
 		});
+
 		let employee;
 		if (record) {
 			employee = await this.commandBus.execute(
@@ -912,8 +917,12 @@ export class UpworkService {
 			dateRange
 		);
 
-		var {
-			table: { cols = [], rows = [] }
+		const {
+			table: { cols = [] }
+		} = reports;
+
+		let {
+			table: { rows = [] }
 		} = reports;
 
 		const columns = _.pluck(cols, 'label');
@@ -993,8 +1002,12 @@ export class UpworkService {
 			providerId,
 			dateRange
 		);
-		var {
-			table: { cols = [], rows = [] }
+		const {
+			table: { cols = [] }
+		} = reports;
+
+		let {
+			table: { rows = [] }
 		} = reports;
 
 		const columns = _.pluck(cols, 'label');
@@ -1286,9 +1299,9 @@ export class UpworkService {
 	 */
 	async getReportsForFreelancer(
 		integrationId,
-		filter
+		data
 	): Promise<IPagination<IntegrationMap>> {
-		let incomeExpense = await this._integrationMapService.findAll({
+		const integrationMap = await this._integrationMapService.findAll({
 			where: {
 				integration: {
 					id: integrationId
@@ -1300,6 +1313,40 @@ export class UpworkService {
 			}
 		});
 
-		return incomeExpense;
+		const gauzyIds = _.pluck(integrationMap.items, 'gauzyId');
+
+		const {
+			dateRange: { start, end }
+		} = data;
+		const income = await this._incomeService.findAll({
+			where: {
+				id: In(gauzyIds),
+				valueDate: Between(
+					moment(start).format('YYYY-MM-DD hh:mm:ss'),
+					moment(end).format('YYYY-MM-DD hh:mm:ss')
+				)
+			}
+		});
+		const expense = await this._expenseService.findAll({
+			where: {
+				id: In(gauzyIds),
+				valueDate: Between(
+					moment(start).format('YYYY-MM-DD hh:mm:ss'),
+					moment(end).format('YYYY-MM-DD hh:mm:ss')
+				)
+			}
+		});
+
+		const reports = {
+			items: [],
+			total: income.total + expense.total
+		};
+		reports.items = reports.items.concat(income.items);
+		reports.items = reports.items.concat(expense.items);
+		reports.items = _.sortBy(reports.items, function (o) {
+			return o.valueDate;
+		}).reverse();
+
+		return reports;
 	}
 }
