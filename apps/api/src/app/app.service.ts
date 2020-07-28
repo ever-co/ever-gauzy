@@ -13,7 +13,7 @@ export class AppService {
 		const count = await this.userService.count();
 		console.log(`Found ${count} users in DB`);
 		if (count === 0) {
-			await this.seedDataService.run();
+			await this.seedDataService.run(true);
 		}
 	}
 
