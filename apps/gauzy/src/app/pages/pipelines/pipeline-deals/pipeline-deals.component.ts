@@ -18,6 +18,7 @@ import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
+import { PipelineDealCreatedByComponent } from './pipeline-deal-created-by/pipeline-deal-created-by';
 
 @Component({
 	selector: 'ga-pipeline-deals',
@@ -43,6 +44,13 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 				title: 'Stage',
 				type: 'custom',
 				renderComponent: PipelineDealExcerptComponent
+			},
+			createdBy: {
+				filter: false,
+				editor: false,
+				title: 'Created by',
+				type: 'custom',
+				renderComponent: PipelineDealCreatedByComponent
 			}
 		}
 	};
@@ -77,6 +85,9 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 		);
 		this.smartTableSettings.columns.stage.title = this.getTranslation(
 			'SM_TABLE.STAGE'
+		);
+		this.smartTableSettings.columns.createdBy.title = this.getTranslation(
+			'Created by'
 		);
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
@@ -140,12 +151,11 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 			await this.pipelinesService
 				.findDeals(pipelineId)
 				.then(({ items }) => {
-					items.forEach(
-						(deal) =>
-							(deal.stage = this.pipeline.stages.find(
-								({ id }) => id === deal.stageId
-							))
-					);
+					items.forEach((deal) => {
+						deal.stage = this.pipeline.stages.find(
+							({ id }) => id === deal.stageId
+						);
+					});
 					this.deals.load(items);
 					this.dealsData = items;
 					this.filterDealsByStage();
