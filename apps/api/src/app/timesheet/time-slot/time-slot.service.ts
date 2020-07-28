@@ -11,6 +11,8 @@ import { TimeLogService } from '../time-log/time-log.service';
 import { generateTimeSlots } from './utils';
 import { Activity } from '../activity.entity';
 import { TimeLog } from '../time-log.entity';
+import { DeleteTimeSpanCommand } from '../time-log/commands/delete-time-span.command';
+import { CommandBus } from '@nestjs/cqrs';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
@@ -21,9 +23,7 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		private readonly activityRepository: Repository<Activity>,
 		@InjectRepository(TimeSlotMinute)
 		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
-		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
-		private readonly timeLogService: TimeLogService
+		private readonly commandBus: CommandBus
 	) {
 		super(timeSlotRepository);
 	}
@@ -345,12 +345,14 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			if (timeSlot.timeLogs.length > 0) {
 				const deleteSlotPromise = timeSlot.timeLogs.map(
 					async (timeLog) => {
-						await this.timeLogService.deleteTimeSpan(
-							{
-								start: timeSlot.startedAt,
-								end: timeSlot.stoppedAt
-							},
-							timeLog
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(
+								{
+									start: timeSlot.startedAt,
+									end: timeSlot.stoppedAt
+								},
+								timeLog
+							)
 						);
 						return;
 					}
