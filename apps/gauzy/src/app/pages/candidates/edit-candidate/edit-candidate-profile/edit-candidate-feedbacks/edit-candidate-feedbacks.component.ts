@@ -89,6 +89,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			.pipe(first())
 			.toPromise();
 		this.employeeList = items;
+		this.selectInterview.setValue('all');
 	}
 	private _initializeForm() {
 		this.form = new FormGroup({
@@ -230,10 +231,13 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.loading = false;
 	}
 	editFeedback(index: number, id: string) {
+		this.cancel();
 		this.currentFeedback = this.feedbackList[index];
 		this._initializeForm();
 		this.loadCriterions(this.currentFeedback);
-		this.showAddCard = !this.showAddCard;
+		this.showAddCard = this.showAddCard
+			? this.showAddCard
+			: !this.showAddCard;
 		this.form.controls.feedbacks.patchValue([this.currentFeedback]);
 		this.feedbackId = id;
 		if (this.currentFeedback.interviewId) {
@@ -391,10 +395,6 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.feedbackInterviewer = null;
 		this.feedbackInterviewId = null;
 		this.interviewers = [];
-	}
-	showCard() {
-		this.showAddCard = !this.showAddCard;
-		this.form.reset();
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

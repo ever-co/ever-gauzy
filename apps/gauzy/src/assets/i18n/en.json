@@ -983,7 +983,16 @@
 			"SEARCH_BY_CANDIDATE": "Search by candidate's name",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating",
-			"RESET_FILTERS": "Reset filters"
+			"RESET_FILTERS": "Reset filters",
+			"TITLE": "Title",
+			"DATE": "Date",
+			"RATING": "Rating",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Location",
+			"NOTES": "Notes",
+			"ACTIONS": "Actions",
+			"UPDATED": "Updated",
+			"CANDIDATE": "Candidate"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",

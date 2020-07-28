@@ -134,7 +134,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 			this.calendarOptions.events = this.calendarEvents;
 		}
 	}
-
 	async onCandidateSelected(ids: string[]) {
 		if (!ids[0]) {
 			//if no one is selected
@@ -231,7 +230,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 				.changeView('timeGridWeek', event.date);
 		}
 	}
-
 	handleEventSelect(event) {
 		const now = new Date().getTime();
 		if (now < event.start.getTime()) {
@@ -240,7 +238,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 			disableCursor();
 		}
 	}
-
 	handleEventMouseEnter({ el }) {
 		if (this.hasOverflow(el.querySelector('.fc-event-main'))) {
 			el.style.position = 'unset';
@@ -249,7 +246,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 	handleEventMouseLeave({ el }) {
 		el.removeAttribute('style');
 	}
-
 	hasOverflow(el: HTMLElement) {
 		if (!el) {
 			return;
@@ -270,7 +266,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 
 		return isOverflowing;
 	}
-
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
