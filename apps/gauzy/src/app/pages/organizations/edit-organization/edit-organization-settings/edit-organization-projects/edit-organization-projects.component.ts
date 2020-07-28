@@ -112,33 +112,47 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 		this.showAddCard = !this.showAddCard;
 	}
 
-	private async addOrEditProject(project: OrganizationProjectsCreateInput) {
-		if (project.name) {
-			await this.organizationProjectsService.create(project);
+	private async addOrEditProject({
+		action,
+		project
+	}: {
+		action: 'add' | 'edit';
+		project: OrganizationProjectsCreateInput;
+	}) {
+		switch (action) {
+			case 'add':
+				if (project.name) {
+					await this.organizationProjectsService.create(project);
+				} else {
+					this.toastrService.danger(
+						this.getTranslation(
+							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.INVALID_PROJECT_NAME'
+						),
+						this.getTranslation(
+							'TOASTR.MESSAGE.NEW_ORGANIZATION_PROJECT_INVALID_NAME'
+						)
+					);
+				}
+				break;
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-					{
-						name: project.name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-
-			this.projectToEdit = null;
-			this.showAddCard = !this.showAddCard;
-			this.loadProjects();
-		} else {
-			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.INVALID_PROJECT_NAME'
-				),
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_PROJECT_INVALID_NAME'
-				)
-			);
+			case 'edit':
+				await this.organizationProjectsService.edit(project);
+				break;
 		}
+
+		this.toastrService.primary(
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				{
+					name: project.name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+
+		this.projectToEdit = null;
+		this.showAddCard = !this.showAddCard;
+		this.loadProjects();
 	}
 
 	private async loadProjects() {
