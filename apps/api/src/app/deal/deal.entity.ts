@@ -24,7 +24,6 @@ export class Deal extends TenantBase implements IDeal {
 	@Column()
 	public title: string;
 
-	@RelationId(({ createdBy }: Deal) => createdBy)
 	@ApiProperty({ type: String })
 	@IsNotEmpty()
 	@IsString()
