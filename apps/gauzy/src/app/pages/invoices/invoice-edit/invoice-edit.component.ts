@@ -162,9 +162,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			terms: [''],
 			client: ['', Validators.required],
 			currency: ['', Validators.required],
-			discountType: ['', Validators.required],
-			taxType: ['', Validators.required],
-			tax2Type: ['', Validators.required],
+			discountType: [''],
+			taxType: [''],
+			tax2Type: [''],
 			tags: []
 		});
 	}

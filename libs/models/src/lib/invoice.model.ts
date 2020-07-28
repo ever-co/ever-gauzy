@@ -20,6 +20,7 @@ export interface Invoice extends IBaseEntityModel {
 	terms?: string;
 	totalValue?: number;
 	clientId?: string;
+	clientName?: string;
 	organizationId?: string;
 	fromOrganization?: Organization;
 	toClient?: OrganizationContact;

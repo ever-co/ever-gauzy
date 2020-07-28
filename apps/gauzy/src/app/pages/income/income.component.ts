@@ -372,7 +372,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					id: orgId
 				}
 			};
-			this.smartTableSettings['columns']['employee'] = {
+			this.smartTableSettings['columns']['employeeName'] = {
 				title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 				type: 'string',
 				valuePrepareFunction: (_, income: Income) => {
@@ -392,11 +392,42 @@ export class IncomeComponent extends TranslationBaseComponent
 			delete this.smartTableSettings['columns']['employee'];
 		}
 
-		const { items } = await this.incomeService.getAll(
-			['employee', 'employee.user', 'tags'],
-			findObj,
-			this.selectedDate
-		);
+		try {
+			const { items } = await this.incomeService.getAll(
+				['employee', 'employee.user', 'tags'],
+				findObj,
+				this.selectedDate
+			);
+
+			const incomeVM: Income[] = items.map((i) => {
+				return {
+					id: i.id,
+					amount: i.amount,
+					clientName: i.clientName,
+					clientId: i.clientId,
+					valueDate: i.valueDate,
+					organization: i.organization,
+					employeeId: i.employee ? i.employee.id : null,
+					employeeName: i.employee ? i.employee.user.name : null,
+					orgId: this.store.selectedOrganization.id,
+					notes: i.notes,
+					currency: i.currency,
+					isBonus: i.isBonus,
+					tags: i.tags
+				};
+			});
+			this.smartTableSource.load(items);
+			this.incomes = incomeVM;
+			this.loading = false;
+			this.showTable = true;
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
+					error: error.error.message || error.message
+				}),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
 		this.employeeName = this.store.selectedEmployee
 			? (
 					this.store.selectedEmployee.firstName +
@@ -404,10 +435,6 @@ export class IncomeComponent extends TranslationBaseComponent
 					this.store.selectedEmployee.lastName
 			  ).trim()
 			: '';
-		this.smartTableSource.load(items);
-		this.incomes = items;
-		this.loading = false;
-		this.showTable = true;
 	}
 
 	ngOnDestroy() {

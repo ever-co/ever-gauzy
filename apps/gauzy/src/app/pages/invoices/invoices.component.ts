@@ -225,6 +225,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			totalValue: this.selectedInvoice.totalValue,
 			clientId: this.selectedInvoice.clientId,
 			toClient: this.selectedInvoice.toClient,
+			clientName: this.selectedInvoice.toClient?.name,
 			fromOrganization: this.organization,
 			organizationId: this.selectedInvoice.organizationId,
 			invoiceType: this.selectedInvoice.invoiceType,
@@ -411,23 +412,61 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (org) => {
 				if (org) {
-					const { items } = await this.invoicesService.getAll(
-						[
-							'invoiceItems',
-							'tags',
-							'payments',
-							'fromOrganization',
-							'toClient'
-						],
-						{
-							organizationId: org.id,
-							isEstimate: this.isEstimate
-						}
-					);
-					this.invoices = items;
-					this.organization = org;
-					this.loading = false;
-					this.smartTableSource.load(items);
+					try {
+						const { items } = await this.invoicesService.getAll(
+							[
+								'invoiceItems',
+								'tags',
+								'payments',
+								'fromOrganization',
+								'toClient'
+							],
+							{
+								organizationId: org.id,
+								isEstimate: this.isEstimate
+							}
+						);
+						const invoiceVM: Invoice[] = items.map((i) => {
+							return {
+								id: i.id,
+								invoiceNumber: i.invoiceNumber,
+								invoiceDate: i.invoiceDate,
+								dueDate: i.dueDate,
+								currency: i.currency,
+								discountValue: i.discountValue,
+								discountType: i.discountType,
+								tax: i.tax,
+								tax2: i.tax2,
+								taxType: i.taxType,
+								tax2Type: i.tax2Type,
+								terms: i.terms,
+								paid: i.paid,
+								payments: i.payments,
+								totalValue: i.totalValue,
+								toClient: i.toClient,
+								clientId: i.clientId,
+								clientName: i.toClient?.name,
+								fromOrganization: i.fromOrganization,
+								organizationId: i.organizationId,
+								invoiceType: i.invoiceType,
+								tags: i.tags,
+								isEstimate: i.isEstimate,
+								status: i.status,
+								sentTo: i.sentTo
+							};
+						});
+						this.invoices = invoiceVM;
+						this.smartTableSource.load(items);
+						this.organization = org;
+						this.loading = false;
+					} catch (error) {
+						this.toastrService.danger(
+							this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
+								error: error.error.message || error.message
+							}),
+							this.getTranslation('TOASTR.TITLE.ERROR')
+						);
+					}
 				}
 			});
 	}
@@ -563,7 +602,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 
 		if (this.columns.includes(InvoiceColumnsEnum.CLIENT)) {
-			this.settingsSmartTable['columns']['client'] = {
+			this.settingsSmartTable['columns']['clientName'] = {
 				title: this.getTranslation(
 					'INVOICES_PAGE.INVOICES_SELECT_CLIENT'
 				),
