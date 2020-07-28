@@ -1,6 +1,7 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { OrganizationProjects, TaskListTypeEnum } from '@gauzy/models';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 export interface TaskViewMode {
 	type: TaskListTypeEnum;
@@ -15,6 +16,9 @@ export interface TaskViewMode {
 })
 export class ProjectViewComponent implements OnInit {
 	@Input() project: OrganizationProjects;
+	@Output() changeEvent: EventEmitter<
+		Partial<OrganizationProjects>
+	> = new EventEmitter();
 	taskViewModeType: typeof TaskListTypeEnum = TaskListTypeEnum;
 	taskViewModeList: TaskViewMode[] = [
 		{
@@ -30,7 +34,10 @@ export class ProjectViewComponent implements OnInit {
 	];
 	selectedTaskViewMode: TaskViewMode;
 
-	constructor(private projectService: OrganizationProjectsService) {}
+	constructor(
+		private projectStore: Store,
+		private projectService: OrganizationProjectsService
+	) {}
 
 	ngOnInit(): void {
 		this.selectedTaskViewMode = {
@@ -41,5 +48,10 @@ export class ProjectViewComponent implements OnInit {
 
 	async setTaskViewMode(evt: TaskViewMode): Promise<void> {
 		await this.projectService.updateTaskViewMode(this.project.id, evt.type);
+		this.projectStore.selectedProject = {
+			...this.project,
+			taskListType: evt.type
+		};
+		this.changeEvent.emit({ taskListType: evt.type });
 	}
 }

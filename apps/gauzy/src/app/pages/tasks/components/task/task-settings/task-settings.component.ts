@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { Task, OrganizationProjects } from '@gauzy/models';
+import { Task, OrganizationProjects, TaskListTypeEnum } from '@gauzy/models';
 import { uniqWith, isEqual } from 'lodash';
 import { Observable } from 'rxjs';
-import { map, tap, switchMap, filter } from 'rxjs/operators';
+import { map, tap, switchMap, filter, take } from 'rxjs/operators';
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
@@ -43,6 +43,17 @@ export class TaskSettingsComponent {
 				)
 			)
 		);
+	}
+
+	changeProject(evt: TaskListTypeEnum): void {
+		this.project$
+			.pipe(
+				tap(({ id }: OrganizationProjects) => {
+					this._store.updateTasksViewMode(id, evt);
+				}),
+				take(1)
+			)
+			.subscribe();
 	}
 
 	goBack(): void {

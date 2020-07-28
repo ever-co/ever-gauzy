@@ -8,7 +8,8 @@ import {
 	OrganizationProjects,
 	ProjectBillingEnum,
 	Tag,
-	ProjectOwnerEnum
+	ProjectOwnerEnum,
+	TaskListTypeEnum
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../../../../../@core/services/organization-contact.service';
 import { Store } from '../../../../../../@core/services/store.service';
@@ -16,6 +17,7 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../../../../@core/services/error-handling.service';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-organization-projects-mutation',
@@ -47,6 +49,8 @@ export class EditOrganizationProjectsMutationComponent
 	organizationId: string;
 	organizationContacts: Object[] = [];
 	owners: string[] = Object.values(ProjectOwnerEnum);
+	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
+	showSprintManage = false;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -54,7 +58,8 @@ export class EditOrganizationProjectsMutationComponent
 		private readonly toastrService: NbToastrService,
 		private store: Store,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private readonly router: Router
 	) {
 		super(translateService);
 	}
@@ -116,7 +121,8 @@ export class EditOrganizationProjectsMutationComponent
 			],
 			startDate: [this.project ? this.project.startDate : null],
 			endDate: [this.project ? this.project.endDate : null],
-			owner: [this.project ? this.project.owner : 'CLIENT']
+			owner: [this.project ? this.project.owner : 'CLIENT'],
+			taskViewMode: [this.project ? this.project.taskListType : 'GRID']
 		});
 	}
 
@@ -135,21 +141,26 @@ export class EditOrganizationProjectsMutationComponent
 	async submitForm() {
 		if (this.form.valid) {
 			this.addOrEditProject.emit({
-				tags: this.tags,
-				public: this.form.value['public'],
-				id: this.project ? this.project.id : undefined,
-				organizationId: this.organization.id,
-				name: this.form.value['name'],
-				organizationContact: this.form.value['organizationContact']
-					.organizationContactId,
-				billing: this.form.value['billing'],
-				currency: this.form.value['currency'] || this.defaultCurrency,
-				startDate: this.form.value['startDate'],
-				endDate: this.form.value['endDate'],
-				owner: this.form.value['owner'],
-				members: (this.members || this.selectedEmployeeIds || [])
-					.map((id) => this.employees.find((e) => e.id === id))
-					.filter((e) => !!e)
+				action: !this.project ? 'add' : 'edit',
+				project: {
+					tags: this.tags,
+					public: this.form.value['public'],
+					id: this.project ? this.project.id : undefined,
+					organizationId: this.organization.id,
+					name: this.form.value['name'],
+					organizationContact: this.form.value['organizationContact']
+						.organizationContactId,
+					billing: this.form.value['billing'],
+					currency:
+						this.form.value['currency'] || this.defaultCurrency,
+					startDate: this.form.value['startDate'],
+					endDate: this.form.value['endDate'],
+					owner: this.form.value['owner'],
+					taskListType: this.form.value['taskViewMode'],
+					members: (this.members || this.selectedEmployeeIds || [])
+						.map((id) => this.employees.find((e) => e.id === id))
+						.filter((e) => !!e)
+				}
 			});
 			this.selectedEmployeeIds = [];
 			this.members = [];
@@ -181,4 +192,10 @@ export class EditOrganizationProjectsMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	};
+
+	openTasksSettings(): void {
+		this.router.navigate(['/pages/tasks/settings', this.project.id], {
+			state: this.project
+		});
+	}
 }
