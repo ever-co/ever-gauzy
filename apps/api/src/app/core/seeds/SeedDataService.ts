@@ -248,6 +248,11 @@ import { createRandomHelpCenterArticle } from '../../help-center-article/help-ce
 import { createRandomOrganizationLanguage } from '../../organization-languages/organization-languages.seed';
 import { createRandomOrganizationSprint } from '../../organization-sprint/organization-sprint.seed';
 import { createRandomOrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.seed';
+import { createRandomAppointmentEmployees } from '../../appointment-employees/appointment-employees.seed';
+import { createRandomEmployeeAppointment } from '../../employee-appointment/employee-appointment.seed';
+import { createRandomDeal } from '../../deal/deal.seed';
+import { createRandomIntegrationSetting } from '../../integration-setting/integration-setting.seed';
+import { createRandomIntegrationTenant } from '../../integration-tenant/integration-tenant.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -1183,6 +1188,24 @@ export class SeedDataService {
 				tenantEmployeeMap
 			)
 		);
+
+    await this.tryExecute(
+      createRandomAppointmentEmployees(this.connection, tenants, tenantEmployeeMap)
+    );
+
+    await this.tryExecute(
+      createRandomEmployeeAppointment(this.connection, tenants, tenantEmployeeMap, tenantOrganizationsMap)
+    );
+    await this.tryExecute(
+      createRandomDeal(this.connection, tenants, tenantEmployeeMap, tenantOrganizationsMap)
+    );
+
+    await this.tryExecute(
+      createRandomIntegrationTenant(this.connection, tenants)
+    );
+    await this.tryExecute(
+      createRandomIntegrationSetting(this.connection, tenants)
+    );
 
 		await this.tryExecute(
 			createRandomCandidateCriterionRating(
