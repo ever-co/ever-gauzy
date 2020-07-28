@@ -981,7 +981,14 @@
 			"SEARCH_BY_CANDIDATE": "Поиск по имени кандидата",
 			"CANDIDATE_NAME": "Имя Кандидата",
 			"RATING": "Рейтинг",
-			"RESET_FILTERS": "Сбросить фильтры"
+			"RESET_FILTERS": "Сбросить фильтры",
+			"TITLE": "Заголовок",
+			"INTERVIEWERS": "Интервьюеры",
+			"LOCATION": "Местоположение",
+			"NOTES": "Заметки",
+			"ACTIONS": "Действия",
+			"UPDATED": "Обновлено",
+			"CANDIDATE": "Кандидат"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Статистика",
