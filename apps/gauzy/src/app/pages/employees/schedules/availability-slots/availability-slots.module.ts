@@ -7,8 +7,15 @@ import { ShareModule } from 'apps/gauzy/src/app/share/share.module';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
-import { NbDialogModule, NbCardModule, NbButtonModule } from '@nebular/theme';
+import {
+	NbDialogModule,
+	NbCardModule,
+	NbButtonModule,
+	NbIconModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
 
 @NgModule({
 	declarations: [AvailabilitySlotsComponent],
@@ -16,6 +23,9 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 		CommonModule,
 		AvailabilitySlotsRouteModule,
 		ShareModule,
+		NbIconModule,
+		NbTooltipModule,
+		ThemeModule,
 		FullCalendarModule,
 		TranslateModule,
 		EmployeeSelectorsModule,
