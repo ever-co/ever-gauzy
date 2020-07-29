@@ -12,11 +12,6 @@ import { InvoicePaymentOverdueComponent } from '../invoices/table-components/inv
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
-export interface SelectedPayment {
-	data: Payment;
-	isSelected: false;
-}
-
 @Component({
 	selector: 'ngx-payments',
 	templateUrl: './payments.component.html',
@@ -84,12 +79,13 @@ export class PaymentsComponent extends TranslationBaseComponent
 					let data = {};
 					for (const item of items) {
 						if (item.invoice) {
-							const client = await this.organizationContactService.getById(
-								item.invoice.clientId
+							const organizationContact = await this.organizationContactService.getById(
+								item.invoice.organizationContactId
 							);
 							data = {
 								invoiceNumber: item.invoice.invoiceNumber,
-								clientName: client.name,
+								organizationContactName:
+									organizationContact.name,
 								amount: item.amount,
 								paymentDate: item.paymentDate
 									.toString()
@@ -116,8 +112,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 					type: 'text',
 					filter: false
 				},
-				clientName: {
-					title: this.getTranslation('PAYMENTS_PAGE.CLIENT'),
+				organizationContactName: {
+					title: this.getTranslation('PAYMENTS_PAGE.CONTACT'),
 					type: 'text'
 				},
 				amount: {

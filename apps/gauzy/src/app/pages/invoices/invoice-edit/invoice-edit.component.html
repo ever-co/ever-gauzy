@@ -1,16 +1,21 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h3 *ngIf="!isEstimate">
-			{{ 'INVOICES_PAGE.EDIT_INVOICE' | translate }}
-		</h3>
-		<h3 *ngIf="isEstimate">
-			{{ 'INVOICES_PAGE.EDIT_ESTIMATE' | translate }}
-		</h3>
-		<div *ngIf="!isEstimate" class="payment-button">
-			<button status="info" (click)="payments()" nbButton>
-				Payments
-			</button>
-		</div>
+		<h4 *ngIf="duplicate; else headerAdd">
+			{{ 'POP_UPS.DUPLICATE' | translate }}
+		</h4>
+		<ng-template #headerAdd>
+			<h3 *ngIf="!isEstimate">
+				{{ 'INVOICES_PAGE.EDIT_INVOICE' | translate }}
+			</h3>
+			<h3 *ngIf="isEstimate">
+				{{ 'INVOICES_PAGE.EDIT_ESTIMATE' | translate }}
+			</h3>
+			<div *ngIf="!isEstimate" class="payment-button">
+				<button status="info" (click)="payments()" nbButton>
+					Payments
+				</button>
+			</div>
+		</ng-template>
 	</nb-card-header>
 
 	<nb-card-body class="body">
@@ -143,18 +148,18 @@
 				<div class="col-sm-3">
 					<label for="inputInvoiceNumber" class="label"
 						>{{
-							'INVOICES_PAGE.INVOICES_SELECT_CLIENT' | translate
+							'INVOICES_PAGE.INVOICES_SELECT_CONTACT' | translate
 						}}
 					</label>
 					<ng-select
-						[items]="clients"
+						[items]="organizationContacts"
 						bindName="name"
-						placeholder="{{ 'POP_UPS.ALL_CLIENTS' | translate }}"
-						[(ngModel)]="selectedClient"
-						formControlName="client"
-						id="inputClient"
-						(change)="selectClient($event)"
-						[searchFn]="searchClient"
+						placeholder="{{ 'POP_UPS.ALL_CONTACTS' | translate }}"
+						[(ngModel)]="selectedOrganizationContact"
+						formControlName="organizationContact"
+						id="inputOrganizationContact"
+						(change)="selectOrganizationContact($event)"
+						[searchFn]="searchOrganizationContact"
 					>
 						<ng-template
 							ng-option-tmp
@@ -343,7 +348,13 @@
 		</div>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button status="danger" class="mr-3" (click)="cancel()" nbButton>
+		<button
+			*ngIf="!duplicate"
+			status="danger"
+			class="mr-3"
+			(click)="cancel()"
+			nbButton
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
@@ -357,12 +368,12 @@
 		</button>
 		<button
 			class="mr-3"
-			(click)="sendToClient()"
+			(click)="sendToContact()"
 			status="success"
 			[disabled]="form.invalid"
 			nbButton
 		>
-			{{ 'BUTTONS.SAVE_AND_SEND_CLIENT' | translate }}
+			{{ 'BUTTONS.SAVE_AND_SEND_CONTACT' | translate }}
 		</button>
 		<button
 			class="mr-3"

@@ -71,7 +71,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 			'invoiceItems',
 			'tags',
 			'fromOrganization',
-			'toClient'
+			'toContact'
 		]);
 		this.invoice = invoice;
 	}
@@ -185,7 +185,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 			this.invoice,
 			this.payments,
 			this.invoice.fromOrganization,
-			this.invoice.toClient,
+			this.invoice.toContact,
 			this.totalPaid
 		);
 

@@ -63,8 +63,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	selectedTasks: Task[];
 	observableTasks: Observable<Task[]>;
 	tasks: Task[];
-	client: OrganizationContact;
-	clients: OrganizationContact[];
+	organizationContact: OrganizationContact;
+	organizationContacts: OrganizationContact[];
 	selectedProjects: OrganizationProjects[];
 	projects: OrganizationProjects[];
 	employees: Employee[];
@@ -148,7 +148,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
 			terms: [''],
-			client: ['', Validators.required],
+			organizationContact: ['', Validators.required],
 			discountType: [''],
 			taxType: [''],
 			tax2Type: [''],
@@ -429,8 +429,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toClient: invoiceData.client,
-				clientId: invoiceData.client.id,
+				toContact: invoiceData.organizationContact,
+				organizationContactId: invoiceData.organizationContact.id,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
@@ -493,9 +493,12 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		}
 	}
 
-	async sendToClient() {
-		if (this.form.value.client.id) {
-			await this.addInvoice('Sent', this.form.value.client.id);
+	async sendToContact() {
+		if (this.form.value.organizationContact.id) {
+			await this.addInvoice(
+				'Sent',
+				this.form.value.organizationContact.id
+			);
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
@@ -548,8 +551,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toClient: invoiceData.client,
-				clientId: invoiceData.client.id,
+				toContact: invoiceData.organizationContact,
+				organizationContactId: invoiceData.organizationContact.id,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
@@ -665,7 +668,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					);
 
 					if (res) {
-						this.clients = res.items;
+						this.organizationContacts = res.items;
 					}
 
 					this.tasksStore.fetchTasks();
@@ -862,8 +865,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.selectedTasks = $event;
 	}
 
-	selectClient($event) {
-		this.client = $event;
+	selectOrganizationContact($event) {
+		this.organizationContact = $event;
 	}
 
 	selectProject($event) {
@@ -878,7 +881,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.selectedExpenses = $event;
 	}
 
-	searchClient(term: string, item: any) {
+	searchOrganizationContact(term: string, item: any) {
 		if (item.name) {
 			return item.name.toLowerCase().includes(term.toLowerCase());
 		}
@@ -1037,12 +1040,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		return d1 > d2;
 	}
 
-	addNewClient = (name: string): Promise<OrganizationContact> => {
+	addNewOrganizationContact = (
+		name: string
+	): Promise<OrganizationContact> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
 					{
 						name: name
 					}

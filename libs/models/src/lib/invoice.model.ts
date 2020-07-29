@@ -19,11 +19,11 @@ export interface Invoice extends IBaseEntityModel {
 	tax2Type: string;
 	terms?: string;
 	totalValue?: number;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	organizationId?: string;
 	fromOrganization?: Organization;
-	toClient?: OrganizationContact;
+	toContact?: OrganizationContact;
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;
 	sentTo?: string;
@@ -48,7 +48,8 @@ export interface InvoiceUpdateInput {
 	tax2Type?: string;
 	terms?: string;
 	totalValue?: number;
-	clientId?: string;
+	organizationContactId?: string;
+	toContact?: OrganizationContact;
 	organizationId?: string;
 	invoiceType?: string;
 	sentTo?: string;
@@ -60,7 +61,7 @@ export interface InvoiceUpdateInput {
 
 export interface InvoiceFindInput {
 	organizationId?: string;
-	clientId?: string;
+	organizationContactId?: string;
 	invoiceId?: string;
 	sentTo?: string;
 	invoiceNumber?: string;
@@ -110,7 +111,7 @@ export enum InvoiceColumnsEnum {
 	TAX = 'Tax',
 	TAX_2 = 'Tax 2',
 	DISCOUNT = 'Discount',
-	CLIENT = 'Client',
+	CONTACT = 'Contact',
 	PAID_STATUS = 'Paid Status'
 }
 
@@ -123,5 +124,5 @@ export enum EstimateColumnsEnum {
 	TAX = 'Tax',
 	TAX_2 = 'Tax 2',
 	DISCOUNT = 'Discount',
-	CLIENT = 'Client'
+	CONTACT = 'Contact'
 }

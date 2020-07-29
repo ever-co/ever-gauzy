@@ -61,7 +61,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	settingsContextMenu: NbMenuItem[];
 	menuArray = [];
 	columns = Object.values(InvoiceColumnsEnum);
-
+	duplicate: boolean;
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input() isEstimate: boolean;
@@ -167,7 +167,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	bulkAction(action) {
-		if (action === 'Duplicate') this.duplicate(this.selectedInvoice);
+		if (action === 'Duplicate') this.duplicated(this.selectedInvoice);
 		if (action === 'Send') this.send(this.selectedInvoice);
 		if (action === 'Convert to Invoice') this.convert(this.selectedInvoice);
 		if (action === 'Email') this.email(this.selectedInvoice);
@@ -183,6 +183,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	edit(selectedItem?: Invoice) {
+		this.invoicesService.changeValue(false);
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -201,7 +202,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async duplicate(selectedItem?: Invoice) {
+	async duplicated(selectedItem?: Invoice) {
+		this.invoicesService.changeValue(true);
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -223,9 +225,9 @@ export class InvoicesComponent extends TranslationBaseComponent
 			terms: this.selectedInvoice.terms,
 			paid: this.selectedInvoice.paid,
 			totalValue: this.selectedInvoice.totalValue,
-			clientId: this.selectedInvoice.clientId,
-			toClient: this.selectedInvoice.toClient,
-			clientName: this.selectedInvoice.toClient?.name,
+			organizationContactId: this.selectedInvoice.organizationContactId,
+			toContact: this.selectedInvoice.toContact,
+			organizationContactName: this.selectedInvoice.toContact?.name,
 			fromOrganization: this.organization,
 			organizationId: this.selectedInvoice.organizationId,
 			invoiceType: this.selectedInvoice.invoiceType,
@@ -304,7 +306,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				data: selectedItem
 			});
 		}
-		if (this.selectedInvoice.clientId) {
+		if (this.selectedInvoice.organizationContactId) {
 			this.dialogService
 				.open(InvoiceSendMutationComponent, {
 					context: {
@@ -419,7 +421,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 								'tags',
 								'payments',
 								'fromOrganization',
-								'toClient'
+								'toContact'
 							],
 							{
 								organizationId: org.id,
@@ -442,10 +444,11 @@ export class InvoicesComponent extends TranslationBaseComponent
 								terms: i.terms,
 								paid: i.paid,
 								payments: i.payments,
+								invoiceItems: i.invoiceItems,
 								totalValue: i.totalValue,
-								toClient: i.toClient,
-								clientId: i.clientId,
-								clientName: i.toClient?.name,
+								toContact: i.toContact,
+								organizationContactId: i.organizationContactId,
+								organizationContactName: i.toContact?.name,
 								fromOrganization: i.fromOrganization,
 								organizationId: i.organizationId,
 								invoiceType: i.invoiceType,
@@ -601,16 +604,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 			};
 		}
 
-		if (this.columns.includes(InvoiceColumnsEnum.CLIENT)) {
-			this.settingsSmartTable['columns']['clientName'] = {
+		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
+			this.settingsSmartTable['columns']['organizationContactName'] = {
 				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_SELECT_CLIENT'
+					'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
 				),
 				type: 'text',
 				width: '8%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return row.toClient.name;
+					return row.toContact.name;
 				}
 			};
 		}
