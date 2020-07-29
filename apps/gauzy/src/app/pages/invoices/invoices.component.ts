@@ -19,7 +19,9 @@ import {
 	InvoiceStatusTypesEnum,
 	EstimateStatusTypesEnum,
 	InvoiceColumnsEnum,
-	EstimateColumnsEnum
+	EstimateColumnsEnum,
+	CurrenciesEnum,
+	OrganizationContact
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -33,6 +35,8 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 
 @Component({
 	selector: 'ngx-invoices',
@@ -43,13 +47,12 @@ export class InvoicesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	invoice: Invoice;
 	selectedInvoice: Invoice;
 	loading = true;
 	disableButton = true;
 	hasInvoiceEditPermission: boolean;
 	invoices: Invoice[];
-	tags: Tag[];
+	tags: Tag[] = [];
 	organization: Organization;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -61,7 +64,11 @@ export class InvoicesComponent extends TranslationBaseComponent
 	settingsContextMenu: NbMenuItem[];
 	menuArray = [];
 	columns = Object.values(InvoiceColumnsEnum);
+	currencies = Object.values(CurrenciesEnum);
+	form: FormGroup;
+	clients: OrganizationContact[];
 	duplicate: boolean;
+
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input() isEstimate: boolean;
@@ -69,6 +76,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	@ViewChild('invoicesTable') invoicesTable;
 
 	constructor(
+		private fb: FormBuilder,
 		readonly translateService: TranslateService,
 		private store: Store,
 		private dialogService: NbDialogService,
@@ -76,13 +84,15 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
 		private router: Router,
-		private nbMenuService: NbMenuService
+		private nbMenuService: NbMenuService,
+		private organizationContactService: OrganizationContactService
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
+		this.initializeForm();
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
@@ -104,6 +114,18 @@ export class InvoicesComponent extends TranslationBaseComponent
 					this.setView();
 				}
 			});
+	}
+
+	initializeForm() {
+		this.form = this.fb.group({
+			invoiceNumber: [],
+			client: [],
+			invoiceDate: [],
+			dueDate: [],
+			totalValue: [],
+			currency: [],
+			status: []
+		});
 	}
 
 	setView() {
@@ -490,6 +512,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				display: true,
 				perPage: 10
 			},
+			hideSubHeader: true,
 			actions: false,
 			columns: {
 				invoiceNumber: {
@@ -629,6 +652,65 @@ export class InvoicesComponent extends TranslationBaseComponent
 				};
 			}
 		}
+	}
+
+	search() {
+		const searchObj = this.form.value;
+		const result = [];
+		const filteredInvoices = this.invoices.filter(
+			(invoice) =>
+				(searchObj.invoiceNumber === null ||
+					searchObj.invoiceNumber === +invoice.invoiceNumber) &&
+				(searchObj.client === null ||
+					searchObj.client.id === invoice.toContact.id) &&
+				(searchObj.invoiceDate === null ||
+					searchObj.invoiceDate.toString().slice(0, 15) ===
+						new Date(invoice.invoiceDate)
+							.toString()
+							.slice(0, 15)) &&
+				(searchObj.dueDate === null ||
+					searchObj.dueDate.toString().slice(0, 15) ===
+						new Date(invoice.dueDate).toString().slice(0, 15)) &&
+				(searchObj.totalValue === null ||
+					searchObj.totalValue === +invoice.totalValue) &&
+				(searchObj.currency === null ||
+					searchObj.currency === invoice.currency) &&
+				(searchObj.status === null ||
+					searchObj.status === invoice.status)
+		);
+
+		for (const invoice of filteredInvoices) {
+			let contains = 0;
+			for (const tag of invoice.tags) {
+				for (const t of this.tags) {
+					if (t.id === tag.id) {
+						contains++;
+						break;
+					}
+				}
+			}
+			if (contains === this.tags.length) {
+				result.push(invoice);
+			}
+		}
+
+		this.smartTableSource.load(result);
+	}
+
+	reset() {
+		this.smartTableSource.load(this.invoices);
+		this.initializeForm();
+		this.tags = [];
+	}
+
+	searchClient(term: string, item: any) {
+		if (item.name) {
+			return item.name.toLowerCase().includes(term.toLowerCase());
+		}
+	}
+
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.tags = currentTagSelection;
 	}
 
 	async selectStatus($event) {

@@ -58,6 +58,8 @@
 		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
 		"EVENT_TYPES": "Event Types",
+		"SEARCH": "Search",
+		"RESET": "Reset",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "Edit",
@@ -1607,6 +1609,8 @@
 		"SET_STATUS": "Set Status",
 		"SHOW_COLUMNS": "Show Columns",
 		"ITEM": "Item",
+		"SETTINGS": "Settings",
+		"SHOW_HIDE_COLUMNS": "Show/Hide Columns",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",

@@ -15,24 +15,61 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div
-			class="mb-3 header-selector-wrapper"
-			*ngIf="hasInvoiceEditPermission"
-		>
-			<div class="actions">
-				<button nbButton status="success" (click)="add()" class="mr-2">
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-					<ng-container
-						*ngTemplateOutlet="actionButtons"
-					></ng-container>
-				</ng-container>
-			</div>
-			<div>
+		<nb-tabset>
+			<nb-tab tabTitle="Actions">
+				<div class="mb-3" *ngIf="hasInvoiceEditPermission">
+					<button
+						nbButton
+						status="success"
+						(click)="add()"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+						>{{ 'BUTTONS.ADD' | translate }}
+					</button>
+
+					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+						<ng-container
+							*ngTemplateOutlet="actionButtons"
+						></ng-container>
+					</ng-container>
+				</div>
+			</nb-tab>
+			<nb-tab tabTitle="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}">
 				<nb-select
-					class="mr-2 show-columns"
+					*ngIf="!isEstimate"
+					placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+					[(selected)]="status"
+					[disabled]="disableButton"
+					(selectedChange)="selectStatus($event)"
+				>
+					<nb-option
+						*ngFor="let status of invoiceStatusTypes"
+						[value]="status"
+					>
+						{{ status }}
+					</nb-option>
+				</nb-select>
+				<nb-select
+					*ngIf="isEstimate"
+					placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+					[(selected)]="status"
+					[disabled]="disableButton"
+					(selectedChange)="selectStatus($event)"
+				>
+					<nb-option
+						*ngFor="let status of estimateStatusTypes"
+						[value]="status"
+					>
+						{{ status }}
+					</nb-option>
+				</nb-select>
+			</nb-tab>
+			<nb-tab
+				tabTitle="{{ 'INVOICES_PAGE.SHOW_HIDE_COLUMNS' | translate }}"
+			>
+				<nb-select
+					class="mr-2"
 					*ngIf="!isEstimate"
 					[multiple]="true"
 					[(selected)]="columns"
@@ -48,7 +85,7 @@
 					</nb-option>
 				</nb-select>
 				<nb-select
-					class="mr-2 show-columns"
+					class="mr-2"
 					*ngIf="isEstimate"
 					[multiple]="true"
 					[(selected)]="columns"
@@ -63,8 +100,273 @@
 						{{ column }}
 					</nb-option>
 				</nb-select>
-			</div>
-		</div>
+			</nb-tab>
+			<nb-tab tabTitle="Search">
+				<form [formGroup]="form">
+					<div class="row">
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="inputInvoiceNumber" class="label">
+									<span *ngIf="!isEstimate">{{
+										'INVOICES_PAGE.INVOICE_NUMBER'
+											| translate
+									}}</span>
+									<span *ngIf="isEstimate">{{
+										'INVOICES_PAGE.ESTIMATE_NUMBER'
+											| translate
+									}}</span>
+								</label>
+								<input
+									*ngIf="!isEstimate"
+									type="number"
+									nbInput
+									placeholder="{{
+										'INVOICES_PAGE.INVOICE_NUMBER'
+											| translate
+									}}"
+									formControlName="invoiceNumber"
+									id="inputInvoiceNumber"
+									fullWidth
+								/>
+								<input
+									*ngIf="isEstimate"
+									type="number"
+									nbInput
+									placeholder="{{
+										'INVOICES_PAGE.ESTIMATE_NUMBER'
+											| translate
+									}}"
+									formControlName="invoiceNumber"
+									id="inputInvoiceNumber"
+									fullWidth
+								/>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="inputClientName" class="label">
+									<span>{{
+										'INVOICES_PAGE.INVOICES_SELECT_CLIENT'
+											| translate
+									}}</span>
+								</label>
+								<ng-select
+									[items]="clients"
+									bindName="name"
+									placeholder="{{
+										'POP_UPS.ALL_CLIENTS' | translate
+									}}"
+									formControlName="client"
+									id="inputClient"
+									[searchFn]="searchClient"
+								>
+									<ng-template
+										ng-option-tmp
+										let-item="item"
+										let-index="index"
+									>
+										{{ item.name }}
+									</ng-template>
+									<ng-template ng-label-tmp let-item="item">
+										<div class="selector-template">
+											<span>{{ item.name }}</span>
+										</div>
+									</ng-template>
+								</ng-select>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="inputInvoiceDate" class="label">
+									<span *ngIf="!isEstimate">{{
+										'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
+											| translate
+									}}</span>
+									<span *ngIf="isEstimate">{{
+										'INVOICES_PAGE.ESTIMATE_DATE'
+											| translate
+									}}</span>
+								</label>
+								<input
+									*ngIf="!isEstimate"
+									formControlName="invoiceDate"
+									type="text"
+									nbInput
+									placeholder="{{
+										'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
+											| translate
+									}}"
+									[nbDatepicker]="invoiceDatePicker"
+									id="inputInvoiceDate"
+									fullWidth
+									required
+								/>
+								<input
+									*ngIf="isEstimate"
+									formControlName="invoiceDate"
+									type="text"
+									nbInput
+									placeholder="{{
+										'INVOICES_PAGE.ESTIMATE_DATE'
+											| translate
+									}}"
+									[nbDatepicker]="invoiceDatePicker"
+									id="inputInvoiceDate"
+									fullWidth
+									required
+								/>
+								<nb-datepicker
+									#invoiceDatePicker
+								></nb-datepicker>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="inputDueDate" class="label">{{
+									'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
+										| translate
+								}}</label>
+								<input
+									nbInput
+									placeholder="{{
+										'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
+											| translate
+									}}"
+									[nbDatepicker]="dueDatePicker"
+									formControlName="dueDate"
+									id="inputDueDate"
+									fullWidth
+								/>
+								<nb-datepicker #dueDatePicker></nb-datepicker>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="inputTotalValue" class="label">
+									{{
+										'INVOICES_PAGE.TOTAL_VALUE' | translate
+									}}
+								</label>
+								<input
+									type="number"
+									nbInput
+									placeholder="{{
+										'INVOICES_PAGE.TOTAL_VALUE' | translate
+									}}"
+									formControlName="totalValue"
+									id="inputTotalValue"
+									fullWidth
+								/>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="inputCurrency" class="label">
+									{{
+										'INVOICES_PAGE.INVOICES_SELECT_CURRENCY'
+											| translate
+									}}
+								</label>
+								<nb-select
+									class="d-block"
+									formControlName="currency"
+									placeholder="{{
+										'INVOICES_PAGE.INVOICES_SELECT_CURRENCY'
+											| translate
+									}}"
+									fullWidth
+								>
+									<nb-option
+										*ngFor="let currency of currencies"
+										value="{{ currency }}"
+										>{{ currency }}</nb-option
+									>
+								</nb-select>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="inputStatus" class="label">
+									{{ 'INVOICES_PAGE.STATUS' | translate }}
+								</label>
+								<nb-select
+									id="inputStatus"
+									*ngIf="!isEstimate"
+									formControlName="status"
+									fullWidth
+									placeholder="{{
+										'INVOICES_PAGE.SET_STATUS' | translate
+									}}"
+								>
+									<nb-option
+										*ngFor="
+											let status of invoiceStatusTypes
+										"
+										[value]="status"
+									>
+										{{ status }}
+									</nb-option>
+								</nb-select>
+								<nb-select
+									id="inputStatus"
+									*ngIf="isEstimate"
+									formControlName="status"
+									fullWidth
+									placeholder="{{
+										'INVOICES_PAGE.SET_STATUS' | translate
+									}}"
+								>
+									<nb-option
+										*ngFor="
+											let status of estimateStatusTypes
+										"
+										[value]="status"
+									>
+										{{ status }}
+									</nb-option>
+								</nb-select>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<ga-tags-color-input
+								[selectedTags]="tags"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-3">
+							<button
+								class="mr-3"
+								(click)="search()"
+								status="success"
+								nbButton
+							>
+								{{ 'BUTTONS.SEARCH' | translate }}
+							</button>
+						</div>
+						<div class="col-sm-3">
+							<button
+								class="mr-3"
+								(click)="reset()"
+								status="info"
+								nbButton
+							>
+								{{ 'BUTTONS.RESET' | translate }}
+							</button>
+						</div>
+					</div>
+				</form>
+			</nb-tab>
+		</nb-tabset>
 
 		<div class="mb-3" *ngIf="!hasInvoiceEditPermission">
 			<button
@@ -102,36 +404,6 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="mr-2" *ngIf="dataLayoutStyle === 'TABLE'">
-		<nb-select
-			*ngIf="!isEstimate"
-			[disabled]="!selectedItem && disableButton"
-			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-			[(selected)]="status"
-			(selectedChange)="selectStatus($event)"
-		>
-			<nb-option
-				*ngFor="let status of invoiceStatusTypes"
-				[value]="status"
-			>
-				{{ status }}
-			</nb-option>
-		</nb-select>
-		<nb-select
-			*ngIf="isEstimate"
-			[disabled]="!selectedItem && disableButton"
-			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-			[(selected)]="status"
-			(selectedChange)="selectStatus($event)"
-		>
-			<nb-option
-				*ngFor="let status of estimateStatusTypes"
-				[value]="status"
-			>
-				{{ status }}
-			</nb-option>
-		</nb-select>
-	</div>
 	<button
 		nbButton
 		status="info"

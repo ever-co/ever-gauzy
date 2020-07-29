@@ -18,7 +18,8 @@ import {
 	Task,
 	OrganizationProjects,
 	Product,
-	Expense
+	Expense,
+	ExpenseTypesEnum
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -439,50 +440,68 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			this.currency.setValue(orgData.currency);
 		}
 
-		this.employeeService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (employees) => {
-				this.employees = employees.items.filter((emp) => {
-					return (
-						emp.orgId === this.organization.id ||
-						this.organization.id === ''
-					);
-				});
-			});
-
-		const projects = await this.projectService.getAll([], {
-			organizationId: this.organization.id
-		});
-		this.projects = projects.items;
-
-		this.tasksStore.fetchTasks();
-		this.observableTasks.subscribe((data) => {
-			this.tasks = data;
-		});
-
-		const products = await this.productService.getAll([], {
-			organizationId: this.organization.id
-		});
-		this.products = products.items;
-
 		const organizationContacts = await this.organizationContactService.getAll(
 			[],
 			{
 				organizationId: this.organization.id
 			}
 		);
+
 		this.organizationContacts = organizationContacts.items;
 
-		const expenses = await this.expensesService.getAll([], {
-			typeOfExpense: 'Billable to Contact',
-			organization: {
-				id: this.organization.id
-			}
-		});
-		this.expenses = expenses.items;
+		switch (this.invoice.invoiceType) {
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+				this.employeeService
+					.getAll(['user'])
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe(async (employees) => {
+						this.employees = employees.items.filter((emp) => {
+							return (
+								emp.orgId === this.organization.id ||
+								this.organization.id === ''
+							);
+						});
+					});
+				break;
+
+			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+				const projects = await this.projectService.getAll([], {
+					organizationId: this.organization.id
+				});
+				this.projects = projects.items;
+				break;
+
+			case InvoiceTypeEnum.BY_TASK_HOURS:
+				this.tasksStore.fetchTasks();
+				this.observableTasks.subscribe((data) => {
+					this.tasks = data;
+				});
+				break;
+
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				const products = await this.productService.getAll([], {
+					organizationId: this.organization.id
+				});
+				this.products = products.items;
+				break;
+
+			case InvoiceTypeEnum.BY_EXPENSES:
+				const expenses = await this.expensesService.getAll([], {
+					typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
+					organization: {
+						id: this.organization.id
+					}
+				});
+
+				this.expenses = expenses.items;
+				break;
+
+			default:
+				break;
+		}
+
 		await this.loadInvoiceItemData();
-		this.calculateTotal();
+		await this.calculateTotal();
 	}
 
 	async updateInvoice(status: string, sendTo?: string) {
@@ -776,6 +795,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	async calculateTotal() {
+		const tableData = await this.smartTableSource.getAll();
+
 		const discountValue =
 			this.form.value.discountValue && this.form.value.discountValue > 0
 				? this.form.value.discountValue
@@ -792,16 +813,14 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		let totalDiscount = 0;
 		let totalTax = 0;
 
-		const tableData = await this.smartTableSource.getAll();
-
 		for (const item of tableData) {
 			if (item.applyTax) {
 				switch (this.form.value.taxType) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (tax / 100);
+						totalTax += item.totalValue * (+tax / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += tax;
+						totalTax += +tax;
 						break;
 					default:
 						totalTax = 0;
@@ -809,10 +828,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				}
 				switch (this.form.value.tax2Type) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (tax2 / 100);
+						totalTax += item.totalValue * (+tax2 / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += tax2;
+						totalTax += +tax2;
 						break;
 					default:
 						totalTax = 0;
@@ -824,10 +843,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
 						totalDiscount +=
-							item.totalValue * (discountValue / 100);
+							item.totalValue * (+discountValue / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalDiscount += discountValue;
+						totalDiscount += +discountValue;
 						break;
 					default:
 						totalDiscount = 0;

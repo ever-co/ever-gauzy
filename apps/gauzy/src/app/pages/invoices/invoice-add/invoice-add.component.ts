@@ -914,10 +914,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			if (item.applyTax) {
 				switch (this.form.value.taxType) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (tax / 100);
+						totalTax += item.totalValue * (+tax / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += tax;
+						totalTax += +tax;
 						break;
 					default:
 						totalTax = 0;
@@ -925,10 +925,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				}
 				switch (this.form.value.tax2Type) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (tax2 / 100);
+						totalTax += item.totalValue * (+tax2 / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += tax2;
+						totalTax += +tax2;
 						break;
 					default:
 						totalTax = 0;
@@ -940,10 +940,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
 						totalDiscount +=
-							item.totalValue * (discountValue / 100);
+							item.totalValue * (+discountValue / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalDiscount += discountValue;
+						totalDiscount += +discountValue;
 						break;
 					default:
 						totalDiscount = 0;
