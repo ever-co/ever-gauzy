@@ -58,6 +58,8 @@
 		"SAVE_AND_SEND_CONTACT": "Сохранить и отправить контакту в gauzy",
 		"SAVE_AND_SEND_EMAIL": "Сохранить и отправить по электронной почте",
 		"EVENT_TYPES": "Типы событий",
+		"SEARCH": "Искать",
+		"RESET": "Reset",
 		"SPRINT": {
 			"CREATE": "Создать спринт",
 			"EDIT": "Редактировать",
@@ -1607,6 +1609,8 @@
 		"SET_STATUS": "Установить статус",
 		"SHOW_COLUMNS": "Показать колонки",
 		"ITEM": "Пункт 1",
+		"SETTINGS": "Настройки",
+		"SHOW_HIDE_COLUMNS": "Показать/скрыть столбцы",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
