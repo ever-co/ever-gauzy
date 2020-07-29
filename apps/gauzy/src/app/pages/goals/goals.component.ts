@@ -339,7 +339,8 @@ export class GoalsComponent extends TranslationBaseComponent
 			context: {
 				data: goal,
 				orgId: this.selectedOrganizationId,
-				orgName: this.organizationName
+				orgName: this.organizationName,
+				settings: this.goalGeneralSettings
 			},
 			closeOnBackdropClick: false
 		});

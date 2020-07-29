@@ -73,7 +73,7 @@
 					<button
 						nbButton
 						size="small"
-						[disabled]="!isUpdatable"
+						[hidden]="!isUpdatable"
 						status="primary"
 						(click)="keyResultUpdate()"
 					>
@@ -135,16 +135,18 @@
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
-		<button status="danger" nbButton (click)="deleteKeyResult()">
-			{{ 'BUTTONS.DELETE' | translate }}
-		</button>
-		<button
-			class="float-right"
-			nbButton
-			status="success"
-			(click)="closeDialog()"
-		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
+		<div class="d-flex float-right">
+			<button
+				class="mr-3"
+				status="danger"
+				nbButton
+				(click)="deleteKeyResult()"
+			>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+			<button nbButton status="success" (click)="closeDialog()">
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
 	</nb-card-footer>
 </nb-card>

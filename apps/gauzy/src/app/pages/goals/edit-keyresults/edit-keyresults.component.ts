@@ -43,8 +43,11 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	settings: GoalGeneralSetting;
 	orgId: string;
 	orgName: string;
+	helperText = '';
 	teams: OrganizationTeam[] = [];
 	hideOrg = false;
+	hideTeam = false;
+	hideEmployee = false;
 	goalLevelEnum = GoalLevelEnum;
 	softDeadline: FormControl;
 	keyResultTypeEnum = KeyResultTypeEnum;
@@ -89,7 +92,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			assignAsObjective: [false],
 			level: [''],
 			alignedGoalOwner: [''],
-			kpiId: ['']
+			kpiId: [null]
 		});
 		await this.getKPI();
 		this.employeeService
