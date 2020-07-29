@@ -344,14 +344,13 @@
 						<nb-option
 							*ngFor="let level of goalLevelEnum | keyvalue"
 							[value]="level.value"
-							[attr.disabled]="
-								!hideOrg
-									? false
-									: keyResultsForm.value.level ===
-									  goalLevelEnum.ORGANIZATION
-									? true
-									: level.value === goalLevelEnum.ORGANIZATION
-									? true
+							[hidden]="
+								hideOrg
+									? level.value === goalLevelEnum.ORGANIZATION
+									: false || hideEmployee
+									? level.value === goalLevelEnum.EMPLOYEE
+									: false || hideTeam
+									? level.value === goalLevelEnum.TEAM
 									: false
 							"
 						>

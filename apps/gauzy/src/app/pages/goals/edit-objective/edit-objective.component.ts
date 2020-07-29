@@ -8,7 +8,9 @@ import {
 	GoalLevelEnum,
 	TimeFrameStatusEnum,
 	RolesEnum,
-	OrganizationTeam
+	OrganizationTeam,
+	GoalGeneralSetting,
+	GoalOwnershipEnum
 } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil, first } from 'rxjs/operators';
@@ -32,7 +34,10 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	orgId: string;
 	orgName: string;
 	goalLevelEnum = GoalLevelEnum;
+	hideEmployee = false;
+	hideTeam = false;
 	hideOrg = false;
+	settings: GoalGeneralSetting;
 	teams: OrganizationTeam[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
@@ -85,6 +90,10 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		) {
 			this.hideOrg = true;
 		}
+		this.hideEmployee =
+			this.settings.canOwnObjectives === GoalOwnershipEnum.TEAMS;
+		this.hideTeam =
+			this.settings.canOwnObjectives === GoalOwnershipEnum.EMPLOYEES;
 	}
 
 	async getTeams() {
@@ -134,7 +143,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	}
 
 	selectEmployee(event, control) {
-		if (control === 'lead') {
+		if (control === 'lead' && event !== '') {
 			this.objectiveForm.patchValue({ lead: event });
 		} else {
 			this.objectiveForm.patchValue({ owner: event });
