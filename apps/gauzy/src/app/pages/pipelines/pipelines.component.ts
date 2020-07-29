@@ -115,11 +115,6 @@ export class PipelinesComponent extends TranslationBaseComponent
 			});
 	}
 
-	public ngOnDestroy(): void {
-		this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
-		this.permissionSubscription.unsubscribe();
-	}
-
 	public async updatePipelines(): Promise<void> {
 		const { organizationId: value } = this;
 		const organizationId = value || void 0;
@@ -196,5 +191,11 @@ export class PipelinesComponent extends TranslationBaseComponent
 			);
 			await this.updatePipelines();
 		}
+	}
+
+	public ngOnDestroy(): void {
+		this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
+		this.permissionSubscription.unsubscribe();
+		clearTimeout();
 	}
 }

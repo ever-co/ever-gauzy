@@ -7,10 +7,11 @@ import { Pipeline } from './pipeline.entity';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { DealModule } from '../deal/deal.module';
 import { Deal } from '../deal/deal.entity';
+import { User } from '../user/user.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Pipeline, Deal]),
+		TypeOrmModule.forFeature([Pipeline, Deal, User]),
 		StageModule,
 		DealModule,
 		AuthModule

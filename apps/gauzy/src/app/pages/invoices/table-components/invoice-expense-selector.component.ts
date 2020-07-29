@@ -44,7 +44,7 @@ export class InvoiceExpensesSelectorComponent extends DefaultEditor
 			.subscribe(async (organization) => {
 				if (organization) {
 					const expenses = await this.expensesService.getAll([], {
-						typeOfExpense: 'Billable to Client',
+						typeOfExpense: 'Billable to Contact',
 						organization: {
 							id: organization.id
 						}

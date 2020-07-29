@@ -26,8 +26,9 @@
 		"INVITE": "Пригласить",
 		"SELECT_ALL": "Выделить все",
 		"COPY_LINK": "Скопировать ссылку",
-		"MANAGE_INTERVIEWS": "Управление собеседованиями",
+		"MANAGE_INTERVIEWS": "Управление интервью",
 		"MANAGE_INVITES": "Управление приглашениями",
+		"MANAGE_SPRINTS": "Управление спринтами",
 		"RESEND": "Переслать",
 		"NEXT": "Следующий",
 		"PREVIOUS": "Предыдущий",
@@ -54,7 +55,7 @@
 		"CONVERT_TO_INVOICE": "Преобразовать в счет",
 		"PUBLIC_APPOINTMENT_BOOK": "Назначение в книге",
 		"SAVE_AS_DRAFT": "Сохранить как черновик",
-		"SAVE_AND_SEND_CLIENT": "Сохранить и отправить клиенту в gauzy",
+		"SAVE_AND_SEND_CONTACT": "Сохранить и отправить контакту в gauzy",
 		"SAVE_AND_SEND_EMAIL": "Сохранить и отправить по электронной почте",
 		"EVENT_TYPES": "Типы событий",
 		"SPRINT": {
@@ -321,6 +322,7 @@
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"OWNER": "Владелец",
+			"TASK_VIEW_MODE": "Режим просмотра задач",
 			"SELECT_STATUS": "Выберите статус",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
@@ -417,7 +419,7 @@
 		"DUPLICATE": "Duplicate",
 		"DATE": "Дата",
 		"PICK_DATE": "Выбрать дату",
-		"ALL_CLIENTS": "Все клиенты",
+		"ALL_CONTACTS": "Все контакты",
 		"ALL_VENDORS": "Поставщик / Торговец",
 		"ALL_CATEGORIES": "Все категории",
 		"CATEGORY_NAME": "Название категории",
@@ -981,7 +983,14 @@
 			"SEARCH_BY_CANDIDATE": "Поиск по имени кандидата",
 			"CANDIDATE_NAME": "Имя Кандидата",
 			"RATING": "Рейтинг",
-			"RESET_FILTERS": "Сбросить фильтры"
+			"RESET_FILTERS": "Сбросить фильтры",
+			"TITLE": "Заголовок",
+			"INTERVIEWERS": "Интервьюеры",
+			"LOCATION": "Местоположение",
+			"NOTES": "Заметки",
+			"ACTIONS": "Действия",
+			"UPDATED": "Обновлено",
+			"CANDIDATE": "Кандидат"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Статистика",
@@ -1544,7 +1553,7 @@
 		"INVOICES_SELECT_TAX": "Налог",
 		"INVOICES_SELECT_TERMS": "Условия",
 		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
-		"INVOICES_SELECT_CLIENT": "Kлиент",
+		"INVOICES_SELECT_CONTACT": "Контакт",
 		"ADD_INVOICE": "Добавить счет",
 		"ADD_ESTIMATE": "Добавить оценку",
 		"EDIT_INVOICE": "Изменить счет",
@@ -1678,7 +1687,7 @@
 	},
 	"PAYMENTS_PAGE": {
 		"HEADER": "Платежи",
-		"CLIENT": "Kлиент",
+		"CONTACT": "Контакт",
 		"AMOUNT": "Количество",
 		"PAYMENT_DATE": "Дата оплаты",
 		"RECORDED_BY": "Записано",
@@ -1842,6 +1851,12 @@
 			"EDIT_INCOME": "Доход отредактирован для {{ name }}",
 			"DELETE_INCOME": "Доход удален для {{ name }}",
 			"INCOME_ERROR": "{{ error }}"
+		},
+		"INVOICE": {
+			"ADD_INVOICE": "Счет добавлен для {{ name }}",
+			"EDIT_INVOICE": "Счет отредактирован для {{ name }}",
+			"DELETE_INVOICE": "Счет удален для {{ name }}",
+			"INVOICE_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
 			"ADD_EXPENSE": "Добавлены расходы на {{ name }}",
@@ -2106,7 +2121,9 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Определенная дата наличия",
-		"RECURRING_AVAILABILITY": "Повторяющаяся доступность"
+		"RECURRING_AVAILABILITY": "Повторяющаяся доступность",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "Вы можете использовать дату для обозначения доступности для определенной даты или исключения из повторяющегося шаблона доступности. Изменения, которые вы вносите, превзойдут вашу еженедельную периодическую доступность только на эти собственные даты.",
+		"RECURRING_AVAILABILITY_TOOLTIP": "Вы можете использовать Периодическую доступность для отметки наличия на еженедельно. Чтобы изменить доступность только на определённые дни, вы должны использовать доступность, специфичную для дат."
 	},
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENT": "Назначение в книге",

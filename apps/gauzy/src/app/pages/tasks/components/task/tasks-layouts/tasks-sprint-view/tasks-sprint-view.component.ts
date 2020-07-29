@@ -10,7 +10,7 @@ import {
 import { SprintStoreService } from 'apps/gauzy/src/app/@core/services/organization-sprint-store.service';
 import { Task, OrganizationSprint, OrganizationProjects } from '@gauzy/models';
 import { Observable } from 'rxjs';
-import { map, tap, filter } from 'rxjs/operators';
+import { map, tap, filter, take } from 'rxjs/operators';
 import {
 	CdkDragDrop,
 	moveItemInArray,
@@ -28,6 +28,7 @@ import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store
 })
 export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 	implements OnInit, OnChanges {
+	@Input() tasks: Task[] = [];
 	sprints: OrganizationSprint[] = [];
 	@Input() project: OrganizationProjects;
 	backlogTasks: Task[] = [];
@@ -163,15 +164,16 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 				...sprint,
 				isActive: false
 			})
+			.pipe(take(1))
 			.subscribe();
-	}
-
-	preventExpand(evt: any): void {
-		evt.stopPropagation();
-		evt.preventDefault();
 	}
 
 	trackByFn(task: Task): string | null {
 		return task.id ? task.id : null;
+	}
+
+	private preventExpand(evt: any): void {
+		evt.stopPropagation();
+		evt.preventDefault();
 	}
 }

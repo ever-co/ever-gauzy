@@ -57,6 +57,15 @@
 					{{ (id ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE') | translate }}
 				</span>
 			</button>
+			<button
+				nbButton
+				(click)="cancel()"
+				type="reset"
+				status="danger"
+				class="ml-2"
+			>
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
 		</nb-card-footer>
 	</nb-card>
 </form>

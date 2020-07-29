@@ -15,48 +15,55 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3 actions" *ngIf="hasInvoiceEditPermission">
-			<button nbButton status="success" (click)="add()" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-
-			<nb-select
-				class="mr-2 show-columns"
-				*ngIf="!isEstimate"
-				[multiple]="true"
-				[(selected)]="columns"
-				(selectedChange)="selectColumn($event)"
-				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
-			>
-				<nb-option
-					class="column"
-					*ngFor="let column of invoiceColumns"
-					[value]="column"
+		<div
+			class="mb-3 header-selector-wrapper"
+			*ngIf="hasInvoiceEditPermission"
+		>
+			<div class="actions">
+				<button nbButton status="success" (click)="add()" class="mr-2">
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+			</div>
+			<div>
+				<nb-select
+					class="mr-2 show-columns"
+					*ngIf="!isEstimate"
+					[multiple]="true"
+					[(selected)]="columns"
+					(selectedChange)="selectColumn($event)"
+					placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
 				>
-					{{ column }}
-				</nb-option>
-			</nb-select>
-			<nb-select
-				class="mr-2 show-columns"
-				*ngIf="isEstimate"
-				[multiple]="true"
-				[(selected)]="columns"
-				(selectedChange)="selectColumn($event)"
-				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
-			>
-				<nb-option
-					class="column"
-					*ngFor="let column of estimateColumns"
-					[value]="column"
+					<nb-option
+						class="column"
+						*ngFor="let column of invoiceColumns"
+						[value]="column"
+					>
+						{{ column }}
+					</nb-option>
+				</nb-select>
+				<nb-select
+					class="mr-2 show-columns"
+					*ngIf="isEstimate"
+					[multiple]="true"
+					[(selected)]="columns"
+					(selectedChange)="selectColumn($event)"
+					placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
 				>
-					{{ column }}
-				</nb-option>
-			</nb-select>
-
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
+					<nb-option
+						class="column"
+						*ngFor="let column of estimateColumns"
+						[value]="column"
+					>
+						{{ column }}
+					</nb-option>
+				</nb-select>
+			</div>
 		</div>
 
 		<div class="mb-3" *ngIf="!hasInvoiceEditPermission">
@@ -162,7 +169,7 @@
 		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
 		status="info"
-		(click)="duplicate(selectedItem)"
+		(click)="duplicated(selectedItem)"
 		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"

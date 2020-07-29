@@ -68,7 +68,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 					Validators.compose([Validators.required, Validators.min(1)])
 				],
 				currency: ['', Validators.required],
-				paymentDate: ['', Validators.required],
+				paymentDate: [new Date(), Validators.required],
 				note: ['', Validators.required],
 				paymentMethod: ['', Validators.required]
 			});

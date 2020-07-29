@@ -26,8 +26,9 @@
 		"INVITE": "Invite",
 		"SELECT_ALL": "Select All",
 		"COPY_LINK": "Copy Link",
-		"MANAGE_INTERVIEWS": "Manage interviews",
-		"MANAGE_INVITES": "Manage invites",
+		"MANAGE_INTERVIEWS": "Manage Interviews",
+		"MANAGE_INVITES": "Manage Invites",
+		"MANAGE_SPRINTS": "Manage Sprints",
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
@@ -54,7 +55,7 @@
 		"CONVERT_TO_INVOICE": "Convert to invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
-		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
+		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
 		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
@@ -321,6 +322,7 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
+			"TASK_VIEW_MODE": "Task view mode",
 			"SELECT_STATUS": "Select Status",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
@@ -417,7 +419,7 @@
 		"DUPLICATE": "Duplicate",
 		"DATE": "תאריך",
 		"PICK_DATE": "תבחר תאריך",
-		"ALL_CLIENTS": "כל הלקוחות",
+		"ALL_CONTACTS": "All Contacts",
 		"ALL_VENDORS": "Vendor / Merchant",
 		"ALL_CATEGORIES": "כל הקטגוריות",
 		"CATEGORY_NAME": "שם קטגוריה",
@@ -981,7 +983,14 @@
 			"SEARCH_BY_CANDIDATE": "Search by candidate's name",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating",
-			"RESET_FILTERS": "Reset filters"
+			"RESET_FILTERS": "Reset filters",
+			"TITLE": "Title",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Location",
+			"NOTES": "הערות",
+			"ACTIONS": "Actions",
+			"UPDATED": "Updated",
+			"CANDIDATE": "Candidate"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",
@@ -1544,7 +1553,7 @@
 		"INVOICES_SELECT_TAX": "Tax",
 		"INVOICES_SELECT_TERMS": "Terms",
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
-		"INVOICES_SELECT_CLIENT": "לקוחות",
+		"INVOICES_SELECT_CONTACT": "Contact",
 		"ADD_INVOICE": "Add Invoice",
 		"ADD_ESTIMATE": "Add Estimate",
 		"EDIT_INVOICE": "Edit Invoice",
@@ -1678,7 +1687,7 @@
 	},
 	"PAYMENTS_PAGE": {
 		"HEADER": "Payments",
-		"CLIENT": "לקוחות",
+		"CONTACT": "Contact",
 		"AMOUNT": "כמות",
 		"PAYMENT_DATE": "Payment Date",
 		"RECORDED_BY": "Recorded By",
@@ -1842,6 +1851,12 @@
 			"EDIT_INCOME": "Income edited for {{ name }}",
 			"DELETE_INCOME": "Income deleted for {{ name }}",
 			"INCOME_ERROR": "{{ error }}"
+		},
+		"INVOICE": {
+			"ADD_INVOICE": "Invoice added for {{ name }}",
+			"EDIT_INVOICE": "Invoice edited for {{ name }}",
+			"DELETE_INVOICE": "Invoice deleted for {{ name }}",
+			"INVOICE_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
 			"ADD_EXPENSE": "Expense added for {{ name }}",
@@ -2106,7 +2121,9 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
-		"RECURRING_AVAILABILITY": "Recurring Availability"
+		"RECURRING_AVAILABILITY": "Recurring Availability",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availabity for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those sepcific dates only.",
+		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
 	},
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENT": "Book Appointment",

@@ -28,6 +28,7 @@
 		"COPY_LINK": "Copy Link",
 		"MANAGE_INTERVIEWS": "Manage Interviews",
 		"MANAGE_INVITES": "Manage Invites",
+		"MANAGE_SPRINTS": "Manage Sprints",
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
@@ -54,7 +55,7 @@
 		"CONVERT_TO_INVOICE": "Convert to invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
-		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
+		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
 		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
@@ -62,8 +63,6 @@
 			"EDIT": "Edit",
 			"DELETE": "Delete"
 		},
-		"MANAGE_INTERVIEWS": "Manage interviews",
-		"MANAGE_INVITES": "Manage invites",
 		"CANDIDATE_STATISTIC": "Statistic"
 	},
 	"SM_TABLE": {
@@ -323,6 +322,7 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
+			"TASK_VIEW_MODE": "Task view mode",
 			"SELECT_STATUS": "Select Status",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
@@ -419,7 +419,7 @@
 		"DUPLICATE": "Duplicate",
 		"DATE": "Date",
 		"PICK_DATE": "Pick a Date",
-		"ALL_CLIENTS": "All Clients",
+		"ALL_CONTACTS": "All Contacts",
 		"ALL_VENDORS": "Vendor / Merchant",
 		"ALL_CATEGORIES": "All Categories",
 		"CATEGORY_NAME": "Category Name",
@@ -1555,7 +1555,7 @@
 		"INVOICES_SELECT_TAX": "Tax",
 		"INVOICES_SELECT_TERMS": "Terms",
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
-		"INVOICES_SELECT_CLIENT": "Client",
+		"INVOICES_SELECT_CONTACT": "Contact",
 		"ADD_INVOICE": "Add Invoice",
 		"ADD_ESTIMATE": "Add Estimate",
 		"EDIT_INVOICE": "Edit Invoice",
@@ -1689,7 +1689,7 @@
 	},
 	"PAYMENTS_PAGE": {
 		"HEADER": "Payments",
-		"CLIENT": "Client",
+		"CONTACT": "Contact",
 		"AMOUNT": "Amount",
 		"PAYMENT_DATE": "Payment Date",
 		"RECORDED_BY": "Recorded By",
@@ -1853,6 +1853,12 @@
 			"EDIT_INCOME": "Income edited for {{ name }}",
 			"DELETE_INCOME": "Income deleted for {{ name }}",
 			"INCOME_ERROR": "{{ error }}"
+		},
+		"INVOICE": {
+			"ADD_INVOICE": "Invoice added for {{ name }}",
+			"EDIT_INVOICE": "Invoice edited for {{ name }}",
+			"DELETE_INVOICE": "Invoice deleted for {{ name }}",
+			"INVOICE_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
 			"ADD_EXPENSE": "Expense added for {{ name }}",
@@ -2117,7 +2123,9 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
-		"RECURRING_AVAILABILITY": "Recurring Availability"
+		"RECURRING_AVAILABILITY": "Recurring Availability",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availabity for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those sepcific dates only.",
+		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
 	},
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENT": "Book Appointment",
