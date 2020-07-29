@@ -32,7 +32,6 @@ export class SprintTaskComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.taskActions = [
-			{ title: 'Add task', action: 'ADD_TASK' },
 			{ title: 'Edit task', action: 'EDIT_TASK' },
 			{ title: 'Delete task', action: 'DELETE_TASK' }
 		];

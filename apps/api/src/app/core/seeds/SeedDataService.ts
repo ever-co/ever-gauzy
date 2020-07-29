@@ -248,6 +248,11 @@ import { createRandomHelpCenterArticle } from '../../help-center-article/help-ce
 import { createRandomOrganizationLanguage } from '../../organization-languages/organization-languages.seed';
 import { createRandomOrganizationSprint } from '../../organization-sprint/organization-sprint.seed';
 import { createRandomOrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.seed';
+import { createRandomAppointmentEmployees } from '../../appointment-employees/appointment-employees.seed';
+import { createRandomEmployeeAppointment } from '../../employee-appointment/employee-appointment.seed';
+import { createRandomDeal } from '../../deal/deal.seed';
+import { createRandomIntegrationSetting } from '../../integration-setting/integration-setting.seed';
+import { createRandomIntegrationTenant } from '../../integration-tenant/integration-tenant.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -358,6 +363,10 @@ export class SeedDataService {
 	log = console.log;
 	organizations: Organization[];
 	defaultProjects: OrganizationProjects[] | void;
+  tenant:Tenant ;
+  roles:Role[];
+  defaultCandidateUsers:User[];
+  defaultEmployees:Employee[];
 	constructor() {}
 
 	async createConnection() {
@@ -395,7 +404,7 @@ export class SeedDataService {
 	/**
 	 * Seed data
 	 */
-	async run() {
+	async run(isDefault:boolean) {
 		try {
 			// Connect to database
 			await this.createConnection();
@@ -404,7 +413,7 @@ export class SeedDataService {
 			await this.resetDatabase();
 
 			// Seed data with mock / fake data
-			await this.seedData();
+			await this.seedData(isDefault);
 
 			console.log('Database Seed completed');
 		} catch (error) {
@@ -415,7 +424,7 @@ export class SeedDataService {
 	/**
 	 * Populate database with mock data
 	 */
-	async seedData() {
+	async seedData(isDefault:boolean) {
 		try {
 			this.log(
 				chalk.green(
@@ -431,9 +440,14 @@ export class SeedDataService {
 
 			await this.tryExecute(createCountries(this.connection));
 
-			await this.seedDefaultData();
+      await this.seedBasicDefaultData();
 
-			await this.seedRandomData();
+			if(!isDefault) {
+
+			  await this.seedDefaultData();
+
+        await this.seedRandomData();
+      }
 
 			this.log(
 				chalk.green(
@@ -445,50 +459,74 @@ export class SeedDataService {
 		}
 	}
 
+	/** Populate Database with Basic Default Data **/
+	async seedBasicDefaultData(){
+    //Platform level data
+    this.tenant = await createDefaultTenants(this.connection);
+
+    this.roles = await createRoles(this.connection, [this.tenant]);
+
+    await createRolePermissions(this.connection, this.roles, [this.tenant]);
+
+    //Tenant level inserts which only need connection, tenant, roles
+    const defaultOrganizations = await createDefaultOrganizations(
+      this.connection,
+      this.tenant
+    );
+
+    this.organizations = defaultOrganizations;
+
+    const superAdminUsers = await createDefaultSuperAdminUsers(
+      this.connection,
+      this.roles,
+      this.tenant
+    );
+    const {
+      adminUsers,
+      defaultEmployeeUsers,
+      defaultCandidateUsers
+    } = await createDefaultUsers(this.connection, this.roles, this.tenant);
+
+    this.defaultCandidateUsers = defaultCandidateUsers;
+
+    await createDefaultUsersOrganizations(this.connection, {
+      organizations: this.organizations,
+      users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
+    });
+
+    //User level data that needs connection, tenant, organization, role, users
+    const defaultEmployees = await createDefaultEmployees(this.connection, {
+      tenant:this.tenant,
+      org: this.organizations[0],
+      users: defaultEmployeeUsers
+    });
+  }
+
 	/**
 	 * Populate default data from env files
 	 */
 	async seedDefaultData() {
-		//Platform level data
-		const tenant = await createDefaultTenants(this.connection);
-
-		const roles: Role[] = await createRoles(this.connection, [tenant]);
-
-		await createRolePermissions(this.connection, roles, [tenant]);
-
-		//Tenant level inserts which only need connection, tenant, roles
-		const defaultOrganizations = await createDefaultOrganizations(
-			this.connection,
-			tenant
-		);
-
-		this.organizations = defaultOrganizations;
-
-		const superAdminUsers = await createDefaultSuperAdminUsers(
-			this.connection,
-			roles,
-			tenant
-		);
 
 		//Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
-			createExpenseCategories(this.connection, defaultOrganizations)
+			createExpenseCategories(this.connection, this.organizations)
 		);
 
 		await this.tryExecute(
-			createEmployeeLevels(this.connection, defaultOrganizations)
+			createEmployeeLevels(this.connection, this.organizations)
 		);
 
-		await this.tryExecute(
-			createDefaultProductCategories(
-				this.connection,
-				defaultOrganizations
-			)
-		);
-
-		await this.tryExecute(
-			createDefaultProductTypes(this.connection, defaultOrganizations)
-		);
+    //todo :  Need to fix error of seeding Product Category
+		// await this.tryExecute(
+		// 	createDefaultProductCategories(
+		// 		this.connection,
+    //     this.organizations
+		// 	)
+		// );
+    //
+		// await this.tryExecute(
+		// 	createDefaultProductTypes(this.connection, this.organizations)
+		// );
 
 		await this.tryExecute(createRandomContacts(this.connection, 5));
 
@@ -499,67 +537,49 @@ export class SeedDataService {
 		this.defaultProjects = await this.tryExecute(
 			createDefaultOrganizationProjects(
 				this.connection,
-				defaultOrganizations
+        this.organizations
 			)
 		);
 
 		await this.tryExecute(
 			createDefaultOrganizationDepartments(
 				this.connection,
-				defaultOrganizations
+        this.organizations
 			)
 		);
 
-		await this.tryExecute(createDefaultProducts(this.connection, tenant));
+		await this.tryExecute(createDefaultProducts(this.connection, this.tenant));
 
 		await this.tryExecute(
 			createDefaultTimeFrames(
 				this.connection,
-				tenant,
-				defaultOrganizations
+				this.tenant,
+        this.organizations
 			)
 		);
 
 		await this.tryExecute(
-			createDefaultTags(this.connection, tenant, defaultOrganizations)
+			createDefaultTags(this.connection, this.tenant, this.organizations)
 		);
 
-		await this.tryExecute(createDefaultEquipments(this.connection, tenant));
+		await this.tryExecute(createDefaultEquipments(this.connection, this.tenant));
 
 		const organizationVendors = await this.tryExecute(
-			createOrganizationVendors(this.connection, defaultOrganizations)
+			createOrganizationVendors(this.connection, this.organizations)
 		);
-
-		const {
-			adminUsers,
-			defaultEmployeeUsers,
-			defaultCandidateUsers
-		} = await createDefaultUsers(this.connection, roles, tenant);
-
-		await createDefaultUsersOrganizations(this.connection, {
-			organizations: defaultOrganizations,
-			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
-		});
 
 		await this.tryExecute(
 			createHelpCenter(this.connection, {
-				tenant,
-				org: defaultOrganizations[0]
+				tenant:this.tenant,
+				org: this.organizations[0]
 			})
 		);
 
-		//User level data that needs connection, tenant, organization, role, users
-		const defaultEmployees = await createDefaultEmployees(this.connection, {
-			tenant,
-			org: defaultOrganizations[0],
-			users: defaultEmployeeUsers
-		});
-
 		const defaultCandidates = await this.tryExecute(
 			createDefaultCandidates(this.connection, {
-				tenant,
-				org: defaultOrganizations[0],
-				users: [...defaultCandidateUsers]
+				tenant:this.tenant,
+				org: this.organizations[0],
+				users: [...this.defaultCandidateUsers]
 			})
 		);
 
@@ -571,9 +591,9 @@ export class SeedDataService {
 		await this.tryExecute(
 			createDefaultTeams(
 				this.connection,
-				defaultOrganizations[0],
-				defaultEmployees,
-				roles
+        this.organizations[0],
+				this.defaultEmployees,
+				this.roles
 			)
 		);
 
@@ -594,15 +614,15 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			createDefaultIncomes(this.connection, {
-				org: defaultOrganizations[0],
-				employees: defaultEmployees
+				org: this.organizations[0],
+				employees: this.defaultEmployees
 			})
 		);
 
 		await this.tryExecute(
 			createDefaultExpenses(this.connection, {
-				org: defaultOrganizations[0],
-				employees: defaultEmployees,
+				org: this.organizations[0],
+				employees: this.defaultEmployees,
 				categories,
 				organizationVendors
 			})
@@ -611,46 +631,46 @@ export class SeedDataService {
 		await this.tryExecute(
 			seedDefaultEmploymentTypes(
 				this.connection,
-				defaultEmployees,
-				defaultOrganizations[0]
+				this.defaultEmployees,
+        this.organizations[0]
 			)
 		);
 
 		await this.tryExecute(
 			createDefaultTimeOffPolicy(this.connection, {
-				org: defaultOrganizations[0],
-				employees: defaultEmployees
+				org: this.organizations[0],
+				employees: this.defaultEmployees
 			})
 		);
 
 		await this.tryExecute(
 			createDefaultGeneralGoalSetting(
 				this.connection,
-				tenant,
-				defaultOrganizations
+				this.tenant,
+				this.organizations
 			)
 		);
 
 		const goals = await this.tryExecute(
 			createDefaultGoals(
 				this.connection,
-				tenant,
-				defaultOrganizations,
-				defaultEmployees
+				this.tenant,
+				this.organizations,
+				this.defaultEmployees
 			)
 		);
 
 		const keyResults = await this.tryExecute(
 			createDefaultKeyResults(
 				this.connection,
-				tenant,
-				defaultEmployees,
+				this.tenant,
+				this.defaultEmployees,
 				goals
 			)
 		);
 
 		await this.tryExecute(
-			createDefaultKeyResultUpdates(this.connection, tenant, keyResults)
+			createDefaultKeyResultUpdates(this.connection, this.tenant, keyResults)
 		);
 
 		await this.tryExecute(updateDefaultKeyResultProgress(this.connection));
@@ -659,7 +679,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			createDefaultApprovalPolicyForOrg(this.connection, {
-				orgs: defaultOrganizations
+				orgs: this.organizations
 			})
 		);
 
@@ -1168,6 +1188,24 @@ export class SeedDataService {
 				tenantEmployeeMap
 			)
 		);
+
+    await this.tryExecute(
+      createRandomAppointmentEmployees(this.connection, tenants, tenantEmployeeMap)
+    );
+
+    await this.tryExecute(
+      createRandomEmployeeAppointment(this.connection, tenants, tenantEmployeeMap, tenantOrganizationsMap)
+    );
+    await this.tryExecute(
+      createRandomDeal(this.connection, tenants, tenantEmployeeMap, tenantOrganizationsMap)
+    );
+
+    await this.tryExecute(
+      createRandomIntegrationTenant(this.connection, tenants)
+    );
+    await this.tryExecute(
+      createRandomIntegrationSetting(this.connection, tenants)
+    );
 
 		await this.tryExecute(
 			createRandomCandidateCriterionRating(

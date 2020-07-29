@@ -65,6 +65,8 @@ import { EditOrganizationEmployeeLevelComponent } from './edit-organization-empl
 import { EditOrganizationDocuments } from './edit-organization-documents/edit-organization-documents/edit-organization-documents';
 import { UploadDocumentComponent } from './edit-organization-documents/upload-document/upload-document.component';
 import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-input/file-uploader-input.module';
+import { TasksSprintSettingsViewComponent } from '../../../tasks/components/task/task-settings/project-view/tasks-sprint-settings-view/tasks-sprint-settings-view.component';
+import { SharedModule } from '../../../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -106,7 +108,8 @@ import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-inp
 		EntityWithMembersModule,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,
-		FileUploaderModule
+		FileUploaderModule,
+		SharedModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

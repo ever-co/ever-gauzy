@@ -26,8 +26,9 @@
 		"INVITE": "Invite",
 		"SELECT_ALL": "Select All",
 		"COPY_LINK": "Copy Link",
-		"MANAGE_INTERVIEWS": "Manage interviews",
-		"MANAGE_INVITES": "Manage invites",
+		"MANAGE_INTERVIEWS": "Manage Interviews",
+		"MANAGE_INVITES": "Manage Invites",
+		"MANAGE_SPRINTS": "Manage Sprints",
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
@@ -321,6 +322,7 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
+			"TASK_VIEW_MODE": "Task view mode",
 			"SELECT_STATUS": "Select Status",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
@@ -981,7 +983,14 @@
 			"SEARCH_BY_CANDIDATE": "Search by candidate's name",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating",
-			"RESET_FILTERS": "Reset filters"
+			"RESET_FILTERS": "Reset filters",
+			"TITLE": "Title",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Location",
+			"NOTES": "הערות",
+			"ACTIONS": "Actions",
+			"UPDATED": "Updated",
+			"CANDIDATE": "Candidate"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",
@@ -2106,7 +2115,9 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
-		"RECURRING_AVAILABILITY": "Recurring Availability"
+		"RECURRING_AVAILABILITY": "Recurring Availability",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availabity for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those sepcific dates only.",
+		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
 	},
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENT": "Book Appointment",

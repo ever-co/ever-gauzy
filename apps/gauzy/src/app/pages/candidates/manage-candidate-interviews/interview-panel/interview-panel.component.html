@@ -57,7 +57,7 @@
 		</button>
 	</div>
 	<div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-		<nb-accordion *ngIf="interviewList?.length > 0">
+		<!-- <nb-accordion *ngIf="interviewList?.length > 0">
 			<nb-accordion-item
 				*ngFor="let interview of interviewList; let i = index"
 			>
@@ -102,7 +102,6 @@
 						>
 						</ga-star-rating-output>
 					</div>
-
 					<div class="header-large-block">
 						<span
 							*ngFor="let employee of interview.employees"
@@ -184,6 +183,15 @@
 					</div>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
-		</nb-accordion>
+		</nb-accordion> -->
+		<ng2-smart-table
+			class="interviews-table"
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectInterview($event)"
+			#interviewsTable
+		>
+		</ng2-smart-table>
 	</div>
 </nb-card-body>
