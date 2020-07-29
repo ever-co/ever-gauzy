@@ -729,7 +729,7 @@
 		"ADD_NEW_OBJECTIVE": "Add new Objective",
 		"EDIT_OBJECTIVE": "Edit Objective",
 		"SESSION": "Session",
-		"GOAL_SETTINGS": "Goal Settings",
+		"GOAL_SETTINGS": "Goals Settings",
 		"NO_DESCRIPTION": "No Description",
 		"PROGRESS": "Progress",
 		"UPDATES": "Updates",
@@ -785,6 +785,7 @@
 				"DEADLINE": "Deadline",
 				"STATUS": "עבודה",
 				"KPI_SHOULD_BE": "This KPI should be",
+				"KPI_METRIC": "KPI Metric",
 				"CURRENT_VALUE": "Current Value",
 				"OBJECTIVE": "Objectives",
 				"KEY_RESULT": "Key Results"
@@ -803,6 +804,20 @@
 		},
 		"BUTTONS": {
 			"ADD_TIME_FRAME": "Add Time Frame"
+		},
+		"HELPER_TEXT": {
+			"OBJECTIVE_GENERAL": "An <b>Objective</b> is a description of a goal to be achieved in the future.",
+			"OBJECTIVE_TITLE": "<p>Create an ambitious title that best describes your goal.</p><p>The title should not contain any metric</p>eg.<ul><li>Generate more revenue than last year</li><li>Become market leader</li><li>Increase website engagement</li></ul>",
+			"OBJECTIVE_DESCRIPTION": "Write a short description to give some context to your Objective",
+			"OBJECTIVE_LEVEL": "The group to which this Objective belongs to.",
+			"OBJECTIVE_OWNER": "The group/ individual responsible for completing the Objective.",
+			"OBJECTIVE_LEAD": "The person responsible for organizing and planning that is needed to achieve the Objective.",
+			"OBJECTIVE_TIMEFRAME": "Time Frame for which this Objective is created. If a time frame doesn't exist, create one here.",
+			"KPI_GENERAL": "Organizations use <b> Key Performance Indicators (KPIs) </b> to evaluate their success at reaching targets. KPIs can be used as measurable metrics for Key results.",
+			"KPI_NAME": "<p>Name your new KPI</p><p>Examples for good KPI title</p><ul><li># of Followers</li><li>Annual Recurring Revenue</li><li>Customer Lifetime Value</li></ul>",
+			"KPI_DESCRIPTION": "Write a short description to give some context to your KPI",
+			"KPI_METRIC": "KPI measurable unit",
+			"KPI_LEAD": "Person who is responsible for updating the values of this KPI"
 		}
 	},
 	"KEY_RESULT_PAGE": {
@@ -863,6 +878,11 @@
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
 				"DESCRIPTION": "A short desciption to give some context about the Key Result"
 			}
+		},
+		"HELPER_TEXT": {
+			"KEY_RESULT_GENERAL": "A <b>Key Result</b> is how you plan to measure that you have achieved your objective .",
+			"KEY_RESULT_OWNER": "The person responsible for completing the Key Result.",
+			"KEY_RESULT_LEAD": "The person responsible for organizing and planning that is needed to achieve the Key Result."
 		}
 	},
 	"CANDIDATES_PAGE": {
@@ -1823,7 +1843,7 @@
 			"OBJECTIVE_UPDATED": "Objective updated",
 			"KEY_RESULT_ADDED": "Key Result added",
 			"KEY_RESULT_DELETED": "Key Result deleted",
-			"KEY_RESULT_UPDATED": "Key Result upadated",
+			"KEY_RESULT_UPDATED": "Key Result updated",
 			"TIME_FRAME_DELETED": "Time Frame deleted",
 			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated",
 			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
