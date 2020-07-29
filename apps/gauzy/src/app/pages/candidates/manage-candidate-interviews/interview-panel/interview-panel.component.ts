@@ -77,9 +77,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			this.loadInterviews();
 		});
 	}
-	selectInterview(value) {
-		// console.log(value);
-	}
+	selectInterview(value) {}
 
 	onEmployeeSelected(empIds: string[]) {
 		this.selectedEmployees = empIds;
@@ -244,6 +242,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			}
 		};
 	}
+
 	async editInterview(id: string) {
 		const currentInterview = this.interviewList.find(
 			(item) => item.id === id
