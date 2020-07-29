@@ -13,24 +13,17 @@
 			<nb-tab tabTitle="General">
 				<div>
 					<nb-card>
-						<nb-card-header>
-							<button
-								[disabled]="generalSettingsForm.invalid"
-								nbButton
-								status="success"
-								(click)="saveGeneralSettings()"
-							>
-								{{ 'BUTTONS.SAVE' | translate }}
-							</button>
-						</nb-card-header>
 						<nb-card-body>
-							<form [formGroup]="generalSettingsForm">
-								<h6>
+							<form
+								[formGroup]="generalSettingsForm"
+								(change)="saveGeneralSettings()"
+							>
+								<p class="font-weight-bold">
 									{{
 										'GOALS_PAGE.SETTINGS.MAX_ENTITIES'
 											| translate
 									}}
-								</h6>
+								</p>
 								<label class="label mr-3" for="max-goals">
 									{{
 										'GOALS_PAGE.FORM.LABELS.OBJECTIVE'
@@ -60,71 +53,90 @@
 									min="5"
 									type="number"
 								/>
-								<h6 class="mt-3">
+								<p class="mt-3 font-weight-bold">
 									{{
 										'GOALS_PAGE.SETTINGS.EMPLOYEE_OBJECTIVES'
 											| translate
 									}}
-								</h6>
+								</p>
 								<nb-toggle
 									formControlName="employeeCanCreateObjective"
 								></nb-toggle>
-								<h6 class="mt-3">
-									{{
-										'GOALS_PAGE.SETTINGS.WHO_CAN_OWN_OBJECTIVES'
-											| translate
-									}}
-								</h6>
-								<nb-select formControlName="canOwnObjectives">
-									<nb-option
-										*ngFor="
-											let level of goalOwnershipEnum
-												| keyvalue
-										"
-										[value]="level.value"
-									>
-										{{
-											'GOALS_PAGE.OWNERSHIP.' + level.key
-												| translate
-										}}
-									</nb-option>
-								</nb-select>
-								<h6 class="mt-3">
-									{{
-										'GOALS_PAGE.SETTINGS.WHO_CAN_OWN_KEY_RESULTS'
-											| translate
-									}}
-								</h6>
-								<nb-select formControlName="canOwnKeyResult">
-									<nb-option
-										*ngFor="
-											let level of goalOwnershipEnum
-												| keyvalue
-										"
-										[value]="level.value"
-									>
-										{{
-											'GOALS_PAGE.OWNERSHIP.' + level.key
-												| translate
-										}}
-									</nb-option>
-								</nb-select>
-								<h6 class="mt-3">
+								<div class="row">
+									<div class="col-md-4">
+										<p class="mt-3 font-weight-bold">
+											{{
+												'GOALS_PAGE.SETTINGS.WHO_CAN_OWN_OBJECTIVES'
+													| translate
+											}}
+										</p>
+										<nb-select
+											fullWidth
+											(selectedChange)="
+												saveGeneralSettings()
+											"
+											formControlName="canOwnObjectives"
+										>
+											<nb-option
+												*ngFor="
+													let level of goalOwnershipEnum
+														| keyvalue
+												"
+												[value]="level.value"
+											>
+												{{
+													'GOALS_PAGE.OWNERSHIP.' +
+														level.key | translate
+												}}
+											</nb-option>
+										</nb-select>
+									</div>
+									<div class="col-md-4">
+										<p class="mt-3 font-weight-bold">
+											{{
+												'GOALS_PAGE.SETTINGS.WHO_CAN_OWN_KEY_RESULTS'
+													| translate
+											}}
+										</p>
+										<nb-select
+											fullWidth
+											(selectedChange)="
+												saveGeneralSettings()
+											"
+											formControlName="canOwnKeyResult"
+										>
+											<nb-option
+												*ngFor="
+													let level of goalOwnershipEnum
+														| keyvalue
+												"
+												[value]="level.value"
+											>
+												{{
+													'GOALS_PAGE.OWNERSHIP.' +
+														level.key | translate
+												}}
+											</nb-option>
+										</nb-select>
+									</div>
+								</div>
+
+								<p class="mt-3 font-weight-bold">
 									{{
 										'GOALS_PAGE.SETTINGS.ADD_KPI_TO_KEY_RESULT'
 											| translate
 									}}
-								</h6>
+								</p>
 								<nb-toggle
 									status="basic"
 									formControlName="krTypeKPI"
 								></nb-toggle>
-								<h6 class="mt-3">
+								<p class="mt-3 font-weight-bold">
 									{{
 										'GOALS_PAGE.SETTINGS.ADD_TASK_TO_KEY_RESULT'
 											| translate
 									}}
-								</h6>
+								</p>
 								<nb-toggle
 									status="basic"
 									formControlName="krTypeTask"

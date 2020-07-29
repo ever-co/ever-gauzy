@@ -163,7 +163,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				id: this.selectedOrganizationId
 			}
 		};
-		this.goalSettingService
+		await this.goalSettingService
 			.getAllGeneralSettings(findObj)
 			.then((generalSettings) => {
 				const { items } = generalSettings;

@@ -3,118 +3,146 @@
 		{{ 'GOALS_PAGE.SETTINGS.ADD_KPI' | translate }}
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="kpiForm">
-			<label for="kpi-title" class="label">
-				{{ 'FORM.LABELS.NAME' | translate }}
-			</label>
-			<input
-				type="text"
-				id="kpi-title"
-				nbInput
-				fullWidth
-				formControlName="name"
-				placeholder="{{
-					'GOALS_PAGE.FORM.PLACEHOLDERS.KPI_NAME' | translate
-				}}"
-			/>
-			<label for="kpi-description" class="label mt-3">
-				{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
-			</label>
-			<textarea
-				id="kpi-description"
-				nbInput
-				fullWidth
-				formControlName="description"
-				placeholder="{{
-					'GOALS_PAGE.FORM.PLACEHOLDERS.KPI_DESCRIPTION' | translate
-				}}"
-			></textarea>
-
-			<label for="kpi-type" class="label mt-3">
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE' | translate }}
-			</label>
-			<nb-select id="kpi-type" fullWidth formControlName="metric">
-				<nb-option
-					*ngFor="let metric of kpiMetricEnum | keyvalue"
-					[value]="metric.value"
-					>{{
-						'GOALS_PAGE.KPI_METRIC.' + metric.key | translate
-					}}</nb-option
-				>
-			</nb-select>
-
-			<label for="key-result-Lead" class="label mt-3">
-				{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}</label
-			>
-			<ga-employee-multi-select
-				[multiple]="false"
-				[allEmployees]="employees"
-				[selectedEmployeeIds]="kpiForm.value.lead"
-				[label]="false"
-				(selectedChange)="selectEmployee($event, 'lead')"
-				id="key-result-Lead"
-				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}"
-				class="header-selector employee-selector"
-			></ga-employee-multi-select>
-
-			<div class="row">
-				<div class="col-md-4">
-					<label for="current-value" class="label">
-						{{ 'GOALS_PAGE.FORM.LABELS.CURRENT_VALUE' | translate }}
+		<div class="row">
+			<div class="col-md-7">
+				<form [formGroup]="kpiForm">
+					<label for="kpi-title" class="label">
+						{{ 'FORM.LABELS.NAME' | translate }}
 					</label>
 					<input
-						type="number"
-						id="current-value"
+						type="text"
+						id="kpi-title"
 						nbInput
 						fullWidth
-						formControlName="currentValue"
+						formControlName="name"
 						placeholder="{{
-							'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
-								| translate
+							'GOALS_PAGE.FORM.PLACEHOLDERS.KPI_NAME' | translate
 						}}"
 					/>
-				</div>
-
-				<div class="col-md-4">
-					<label for="kpi-operator" class="label">
-						{{ 'GOALS_PAGE.FORM.LABELS.KPI_SHOULD_BE' | translate }}
+					<label for="kpi-description" class="label mt-3">
+						{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
 					</label>
-					<nb-select
+					<textarea
+						id="kpi-description"
+						nbInput
 						fullWidth
-						id="kpi-operator"
-						formControlName="operator"
-					>
+						formControlName="description"
+						placeholder="{{
+							'GOALS_PAGE.FORM.PLACEHOLDERS.KPI_DESCRIPTION'
+								| translate
+						}}"
+					></textarea>
+
+					<label for="kpi-type" class="label mt-3">
+						{{
+							'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE'
+								| translate
+						}}
+					</label>
+					<nb-select id="kpi-type" fullWidth formControlName="metric">
 						<nb-option
-							*ngFor="let operator of kpiOperatorEnum | keyvalue"
-							[value]="operator.value"
+							*ngFor="let metric of kpiMetricEnum | keyvalue"
+							[value]="metric.value"
 							>{{
-								'GOALS_PAGE.KPI_OPERATOR.' + operator.key
+								'GOALS_PAGE.KPI_METRIC.' + metric.key
 									| translate
 							}}</nb-option
 						>
 					</nb-select>
-				</div>
-				<div class="col-md-4">
-					<label for="target-value" class="label">
-						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
-								| translate
-						}}
-					</label>
-					<input
-						type="number"
-						id="target-value"
-						nbInput
-						fullWidth
-						formControlName="targetValue"
+
+					<label for="key-result-Lead" class="label mt-3">
+						{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}</label
+					>
+					<ga-employee-multi-select
+						[multiple]="false"
+						[allEmployees]="employees"
+						[selectedEmployeeIds]="kpiForm.value.lead"
+						[label]="false"
+						(selectedChange)="selectEmployee($event, 'lead')"
+						id="key-result-Lead"
 						placeholder="{{
-							'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
-								| translate
+							'GOALS_PAGE.FORM.LABELS.LEAD' | translate
 						}}"
-					/>
-				</div>
+						class="header-selector employee-selector"
+					></ga-employee-multi-select>
+
+					<div class="row">
+						<div class="col-md-4">
+							<label for="current-value" class="label">
+								{{
+									'GOALS_PAGE.FORM.LABELS.CURRENT_VALUE'
+										| translate
+								}}
+							</label>
+							<input
+								type="number"
+								id="current-value"
+								nbInput
+								fullWidth
+								formControlName="currentValue"
+								placeholder="{{
+									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+										| translate
+								}}"
+							/>
+						</div>
+
+						<div class="col-md-4">
+							<label for="kpi-operator" class="label">
+								{{
+									'GOALS_PAGE.FORM.LABELS.KPI_SHOULD_BE'
+										| translate
+								}}
+							</label>
+							<nb-select
+								fullWidth
+								id="kpi-operator"
+								formControlName="operator"
+							>
+								<nb-option
+									*ngFor="
+										let operator of kpiOperatorEnum
+											| keyvalue
+									"
+									[value]="operator.value"
+									>{{
+										'GOALS_PAGE.KPI_OPERATOR.' +
+											operator.key | translate
+									}}</nb-option
+								>
+							</nb-select>
+						</div>
+						<div class="col-md-5">
+							<label for="target-value" class="label">
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+										| translate
+								}}
+							</label>
+							<input
+								type="number"
+								id="target-value"
+								nbInput
+								fullWidth
+								formControlName="targetValue"
+								placeholder="{{
+									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</form>
 			</div>
-		</form>
+			<div class="col-md-5">
+				<p>
+					Organizations use
+					<b>Key Performance Indicators (KPIs)</b> to evaluate their
+					success at reaching targets. KPIs can be used as measurable
+					metrics for Key results.
+				</p>
+			</div>
+		</div>
 	</nb-card-body>
 	<nb-card-footer>
 		<button class="mr-3" nbButton (click)="closeDialog(null)">
