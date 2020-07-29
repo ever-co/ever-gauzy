@@ -662,7 +662,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				(searchObj.invoiceNumber === null ||
 					searchObj.invoiceNumber === +invoice.invoiceNumber) &&
 				(searchObj.client === null ||
-					searchObj.client.id === invoice.toClient.id) &&
+					searchObj.client.id === invoice.toContact.id) &&
 				(searchObj.invoiceDate === null ||
 					searchObj.invoiceDate.toString().slice(0, 15) ===
 						new Date(invoice.invoiceDate)
