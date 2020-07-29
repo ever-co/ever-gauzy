@@ -10,12 +10,13 @@ import {
 	Organization,
 	PermissionsEnum,
 	Employee,
-	IAvailabilitySlotsCreateInput
+	IAvailabilitySlotsCreateInput,
+	TimeOff
 } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { AvailabilitySlotsService } from 'apps/gauzy/src/app/@core/services/availability-slots.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -25,6 +26,7 @@ import {
 	EmployeeSelectorComponent,
 	SelectedEmployee
 } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+import { TimeOffService } from 'apps/gauzy/src/app/@core/services/time-off.service';
 
 export interface IAvailabilitySlotsView {
 	id?: string;
@@ -43,7 +45,7 @@ export interface IAvailabilitySlotsView {
 })
 export class AvailabilitySlotsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('calendar', { static: true })
+	@ViewChild('calendar', { static: false })
 	calendar: FullCalendarComponent;
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
@@ -58,7 +60,19 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 	selectedEmployeeId: string;
 	canChangeSelectedEmployee: boolean;
 	dateSelected: boolean;
+	hiddenDays: number[] = [];
+	headerToolbarOptions: {
+		left: string;
+		center: string;
+		right: string;
+	} = {
+		left: 'next',
+		center: 'title',
+		right: 'dayGridMonth,timeGridWeek'
+	};
 	removedEvents: EventInput[] = [];
+	timeOff: TimeOff[];
+	public loading: boolean = true;
 
 	constructor(
 		private store: Store,
@@ -66,17 +80,20 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 		private errorHandler: ErrorHandlingService,
 		private toastrService: NbToastrService,
 		private availabilitySlotsService: AvailabilitySlotsService,
+		private timeOffService: TimeOffService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
 
+		let currentDay = moment().day();
+
+		while (currentDay >= 0) {
+			this.hiddenDays.push(currentDay--);
+		}
+
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
-			headerToolbar: {
-				left: 'prev,next today',
-				center: 'title',
-				right: 'dayGridMonth,timeGridWeek'
-			},
+			headerToolbar: this.headerToolbarOptions,
 			themeSystem: 'bootstrap',
 			plugins: [
 				dayGridPlugin,
@@ -91,6 +108,8 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			events: this.getEvents.bind(this),
 			editable: true,
 			eventOverlap: false,
+			hiddenDays: this.hiddenDays,
+			dayHeaderDidMount: this.headerMount.bind(this),
 			eventClick: this.unselectEvent.bind(this),
 			selectAllow: (select) => moment().diff(select.start) <= 0,
 			select: this.handleSelectRange.bind(this)
@@ -111,7 +130,11 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				right: '',
 				left: ''
 			};
+			this.calendarOptions.hiddenDays = [];
 		}
+
+		this.selectedEmployeeId =
+			this.store.selectedEmployee && this.store.selectedEmployee.id;
 
 		this.store.user$.subscribe(() => {
 			this.canChangeSelectedEmployee = this.store.hasPermission(
@@ -125,14 +148,51 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				if (org) {
 					this._selectedOrganizationId = org.id;
 				}
-				this.fetchAvailableSlots(true);
+				this.fetchAvailableSlots(
+					this.selectedEmployeeId ? false : true
+				);
 			});
+	}
+
+	headerMount(config) {
+		if (this.calendar && !this.recurringAvailabilityMode) {
+			const currentStart = this.calendar.getApi().view.currentStart;
+			const currentEnd = this.calendar.getApi().view.currentEnd;
+			const hideDays = moment().isBetween(currentStart, currentEnd, 'day')
+				? this.hiddenDays
+				: [];
+			this.calendar.getApi().setOption('hiddenDays', hideDays);
+			this.headerToolbarOptions.left = moment(currentStart).isBefore(
+				moment(),
+				'day'
+			)
+				? 'next'
+				: 'prev,next';
+			this.calendar
+				.getApi()
+				.setOption('headerToolbar', this.headerToolbarOptions);
+
+			const isDayOff = this.timeOff.find(
+				(o) =>
+					o.status === 'Approved' &&
+					moment(config.date).isBetween(o.start, o.end, 'date', '[]')
+			);
+			isDayOff &&
+				this._prepareEvent(
+					{
+						startTime: config.date,
+						endTime: config.date,
+						allDay: true
+					},
+					isDayOff
+				);
+		}
 	}
 
 	onEmployeeChange(selectedEmployee: SelectedEmployee) {
 		if (selectedEmployee && selectedEmployee.id) {
 			this.selectedEmployeeId = selectedEmployee.id;
-			this.fetchAvailableSlots(null);
+			this.fetchAvailableSlots(false);
 		} else {
 			if (this._selectedOrganizationId) {
 				this.fetchAvailableSlots(true);
@@ -148,9 +208,11 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 	}
 
 	unselectEvent(o) {
+		if (o.event.extendedProps && o.event.extendedProps.isDayOff) return;
 		if (o.event.extendedProps && o.event.extendedProps.id) {
 			this.removedEvents.push(o.event);
 			this.dateSelected = true;
+			this.saveSelectedDateRange();
 		}
 		this.calendarEvents = this.calendarEvents.filter(
 			(e) => !moment(e.start).isSame(moment(o.event.start))
@@ -168,7 +230,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			allDay: o.allDay
 		});
 
-		this.calendar.getApi().refetchEvents();
+		this.saveSelectedDateRange();
 	}
 
 	async saveSelectedDateRange() {
@@ -201,14 +263,29 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
+			this.removedEvents = [];
+			this.ngOnInit();
 			this.dateSelected = false;
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
 	}
 
+	async fetchTimeOff() {
+		const data = await this.timeOffService
+			.getAllTimeOffRecords(['employees', 'employees.user'], {
+				organizationId: this._selectedOrganizationId,
+				employeeId: this.selectedEmployeeId
+			})
+			.pipe(first())
+			.toPromise();
+
+		this.timeOff = data.items;
+	}
+
 	async fetchAvailableSlots(isOrganizationId) {
 		let findObj;
+		this.calendarEvents = [];
 
 		if (isOrganizationId) {
 			findObj = {
@@ -228,6 +305,8 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 		}
 
 		try {
+			!this.recurringAvailabilityMode && (await this.fetchTimeOff());
+			this.loading = false;
 			const slots = await this.availabilitySlotsService.getAll(
 				[],
 				findObj
@@ -259,33 +338,43 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				}
 			}
 
-			this.calendarEvents = [];
 			for (let o of slots.items) {
 				this._prepareEvent(o);
 			}
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.AVAILABILITY_SLOTS.ERROR', {
-					error: error.error.message || error.message
+					error: error.message || error.error.message
 				}),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
-		this.calendar.getApi().refetchEvents();
 	}
 
-	private _prepareEvent(slot: IAvailabilitySlotsView) {
+	private _prepareEvent(
+		slot: IAvailabilitySlotsView,
+		isDayOff: TimeOff = null
+	) {
 		let eventStartTime = slot.startTime;
 		let eventEndTime = slot.endTime;
 
+		if (
+			this.calendarEvents.find(
+				(e) =>
+					moment(e.start).format() === moment(slot.startTime).format()
+			)
+		)
+			return;
 		this.calendarEvents.push({
 			start: eventStartTime,
 			end: eventEndTime,
 			allDay: slot.allDay,
 			extendedProps: {
-				id: slot.id
+				id: slot.id,
+				isDayOff: isDayOff ? true : false
 			}
 		});
+		this.calendar.getApi().refetchEvents();
 	}
 
 	ngOnDestroy() {

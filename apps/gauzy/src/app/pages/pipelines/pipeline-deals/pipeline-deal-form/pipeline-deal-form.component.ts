@@ -67,8 +67,8 @@ export class PipelineDealFormComponent implements OnInit {
 				this.id = dealId;
 				await this.dealsService
 					.find(dealId)
-					.then(({ title, stageId }) => {
-						this.form.patchValue({ title, stageId });
+					.then(({ title, stageId, createdBy }) => {
+						this.form.patchValue({ title, stageId, createdBy });
 					});
 			}
 
@@ -92,5 +92,9 @@ export class PipelineDealFormComponent implements OnInit {
 				this.router.navigate([id ? '../..' : '..'], { relativeTo })
 			)
 			.catch(() => this.form.enable());
+	}
+
+	cancel() {
+		window.history.back();
 	}
 }

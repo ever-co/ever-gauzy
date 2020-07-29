@@ -14,6 +14,6 @@ import { SeedDataService } from './SeedDataService';
  * */
 (async () => {
 	const seedDataService = new SeedDataService();
-	await seedDataService.run();
+	await seedDataService.run(false);
 	process.exit(0);
 })();

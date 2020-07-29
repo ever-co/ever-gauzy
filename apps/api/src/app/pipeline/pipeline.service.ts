@@ -14,6 +14,7 @@ import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Injectable } from '@nestjs/common';
 import { Deal } from '../deal/deal.entity';
+import { User } from '../user/user.entity';
 
 @Injectable()
 export class PipelineService extends CrudService<Pipeline> {
@@ -21,7 +22,9 @@ export class PipelineService extends CrudService<Pipeline> {
 		@InjectRepository(Deal)
 		protected dealRepository: Repository<Deal>,
 		@InjectRepository(Pipeline)
-		protected pipelineRepository: Repository<Pipeline>
+		protected pipelineRepository: Repository<Pipeline>,
+		@InjectRepository(User)
+		protected userRepository: Repository<User>
 	) {
 		super(pipelineRepository);
 	}
@@ -38,6 +41,12 @@ export class PipelineService extends CrudService<Pipeline> {
 			.orderBy('stage.index', 'ASC')
 			.getMany();
 		const { length: total } = items;
+
+		for (const deal of items) {
+			deal.createdBy = await this.userRepository.findOne(
+				deal.createdByUserId
+			);
+		}
 
 		return { items, total };
 	}
