@@ -3,9 +3,13 @@
 		{{ 'GOALS_PAGE.SETTINGS.ADD_KPI' | translate }}
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row">
-			<div class="col-md-7">
-				<form [formGroup]="kpiForm">
+		<form [formGroup]="kpiForm">
+			<div
+				class="row"
+				(mouseenter)="helper = 'kpi-title'"
+				(mouseleave)="helperText(null)"
+			>
+				<div class="col-md-7">
 					<label for="kpi-title" class="label">
 						{{ 'FORM.LABELS.NAME' | translate }}
 					</label>
@@ -19,10 +23,32 @@
 							'GOALS_PAGE.FORM.PLACEHOLDERS.KPI_NAME' | translate
 						}}"
 					/>
+				</div>
+				<div class="col-md-5 mt-3 position-relative">
+					<p
+						class="mt-3 position-absolute"
+						*ngIf="helper === ''"
+						innerHtml="{{
+							'GOALS_PAGE.HELPER_TEXT.KPI_GENERAL' | translate
+						}}"
+					></p>
+					<div
+						class="mt-3 position-absolute"
+						*ngIf="helper === 'kpi-title'"
+						innerHtml="{{
+							'GOALS_PAGE.HELPER_TEXT.KPI_NAME' | translate
+						}}"
+					></div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-7">
 					<label for="kpi-description" class="label mt-3">
 						{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
 					</label>
 					<textarea
+						(mouseenter)="helperText($event)"
+						(mouseleave)="helperText(null)"
 						id="kpi-description"
 						nbInput
 						fullWidth
@@ -32,14 +58,36 @@
 								| translate
 						}}"
 					></textarea>
+				</div>
+				<div class="col-md-5 mt-3 position-relative">
+					<div
+						class="mt-3 position-absolute"
+						*ngIf="helper === 'kpi-description'"
+					>
+						<p>
+							{{
+								'GOALS_PAGE.HELPER_TEXT.KPI_DESCRIPTION'
+									| translate
+							}}
+						</p>
+					</div>
+				</div>
+			</div>
 
-					<label for="kpi-type" class="label mt-3">
-						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE'
-								| translate
-						}}
+			<div class="row">
+				<div
+					class="col-md-7"
+					(mouseenter)="helper = 'kpi-metric'"
+					(mouseleave)="helperText(null)"
+				>
+					<label for="kpi-metric" class="label mt-3">
+						{{ 'GOALS_PAGE.FORM.LABELS.KPI_METRIC' | translate }}
 					</label>
-					<nb-select id="kpi-type" fullWidth formControlName="metric">
+					<nb-select
+						id="kpi-metric"
+						fullWidth
+						formControlName="metric"
+					>
 						<nb-option
 							*ngFor="let metric of kpiMetricEnum | keyvalue"
 							[value]="metric.value"
@@ -49,8 +97,28 @@
 							}}</nb-option
 						>
 					</nb-select>
+				</div>
+				<div class="col-md-5 mt-3 position-relative">
+					<div
+						class="mt-3 position-absolute"
+						*ngIf="helper === 'kpi-metric'"
+					>
+						<p>
+							{{
+								'GOALS_PAGE.HELPER_TEXT.KPI_METRIC' | translate
+							}}
+						</p>
+					</div>
+				</div>
+			</div>
 
-					<label for="key-result-Lead" class="label mt-3">
+			<div class="row">
+				<div
+					class="col-md-7"
+					(mouseenter)="helper = 'kpi-lead'"
+					(mouseleave)="helperText(null)"
+				>
+					<label for="kpi-lead" class="label mt-3">
 						{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}</label
 					>
 					<ga-employee-multi-select
@@ -59,14 +127,28 @@
 						[selectedEmployeeIds]="kpiForm.value.lead"
 						[label]="false"
 						(selectedChange)="selectEmployee($event, 'lead')"
-						id="key-result-Lead"
+						id="kpi-lead"
 						placeholder="{{
 							'GOALS_PAGE.FORM.LABELS.LEAD' | translate
 						}}"
 						class="header-selector employee-selector"
 					></ga-employee-multi-select>
+				</div>
+				<div class="mt-3 col-md-5 position-relative">
+					<div
+						class="mt-3 position-absolute"
+						*ngIf="helper === 'kpi-lead'"
+					>
+						<p>
+							{{ 'GOALS_PAGE.HELPER_TEXT.KPI_LEAD' | translate }}
+						</p>
+					</div>
+				</div>
+			</div>
 
-					<div class="row">
+			<div class="row">
+				<div class="col-md-7">
+					<div class="row mt-3">
 						<div class="col-md-4">
 							<label for="current-value" class="label">
 								{{
@@ -112,7 +194,7 @@
 								>
 							</nb-select>
 						</div>
-						<div class="col-md-5">
+						<div class="col-md-4">
 							<label for="target-value" class="label">
 								{{
 									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
@@ -132,17 +214,9 @@
 							/>
 						</div>
 					</div>
-				</form>
+				</div>
 			</div>
-			<div class="col-md-5">
-				<p>
-					Organizations use
-					<b>Key Performance Indicators (KPIs)</b> to evaluate their
-					success at reaching targets. KPIs can be used as measurable
-					metrics for Key results.
-				</p>
-			</div>
-		</div>
+		</form>
 	</nb-card-body>
 	<nb-card-footer>
 		<button class="mr-3" nbButton (click)="closeDialog(null)">

@@ -43,6 +43,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	settings: GoalGeneralSetting;
 	orgId: string;
 	orgName: string;
+	helperText = '';
 	teams: OrganizationTeam[] = [];
 	hideOrg = false;
 	hideTeam = false;

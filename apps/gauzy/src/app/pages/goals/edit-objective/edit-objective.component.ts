@@ -37,6 +37,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	hideEmployee = false;
 	hideTeam = false;
 	hideOrg = false;
+	helperText = '';
 	settings: GoalGeneralSetting;
 	teams: OrganizationTeam[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
@@ -58,7 +59,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			description: [''],
 			owner: [null, Validators.required],
 			lead: [null],
-			level: ['', Validators.required],
+			level: [GoalLevelEnum.ORGANIZATION, Validators.required],
 			deadline: ['', Validators.required]
 		});
 
