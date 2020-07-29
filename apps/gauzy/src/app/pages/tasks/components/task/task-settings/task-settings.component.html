@@ -8,6 +8,9 @@
 		<button nbButton (click)="goBack()">Back</button>
 	</nb-card-header>
 	<nb-card-body class="task-settings__projects">
-		<ngx-project-view [project]="project"></ngx-project-view>
+		<ngx-project-view
+			[project]="project"
+			(changeEvent)="changeProject($event)"
+		></ngx-project-view>
 	</nb-card-body>
 </nb-card>

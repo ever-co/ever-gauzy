@@ -1,7 +1,7 @@
 <nb-card>
 	<nb-card-header>
 		<div class="main-btn" *ngIf="!showAddCard">
-			<button nbButton status="success" (click)="showCard()">
+			<button nbButton status="success" (click)="cancel()">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
@@ -272,15 +272,11 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="feedbackList?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACKS' | translate
-			}}</strong>
-		</div>
 		<div
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
+			class="mt-3"
 		>
 			<nb-card *ngFor="let feedback of feedbackList; let i = index">
 				<nb-card-body class="feedbacks-card">

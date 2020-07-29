@@ -82,7 +82,7 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 		docDefinition = await generatePdf(
 			this.invoice,
 			this.invoice.fromOrganization,
-			this.invoice.toClient,
+			this.invoice.toContact,
 			service
 		);
 

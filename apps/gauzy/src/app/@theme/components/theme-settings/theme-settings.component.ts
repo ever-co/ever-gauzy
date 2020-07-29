@@ -45,7 +45,6 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	currentLang: string = LanguagesEnum.ENGLISH;
 	currentLayout: string = ComponentLayoutStyleEnum.TABLE;
 
-	supportedLanguages = [];
 	currentUser: User;
 
 	private _ngDestroy$ = new Subject<void>();
@@ -57,21 +56,22 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		private store: Store,
 		private readonly languagesService: LanguagesService,
 		private readonly userService: UsersService
-	) {
-		translate.addLangs(this.supportedLanguages);
-		translate.setDefaultLang(this.currentLang);
-
-		const browserLang = translate.getBrowserLang() as string;
-		this.currentLang =
-			this.store.preferredLanguage ||
-			this.supportedLanguages.includes(browserLang)
-				? browserLang
-				: (translate.defaultLang as string);
-		this.translate.use(this.currentLang);
-	}
+	) {}
 
 	async ngOnInit() {
-		await this.loadLanguages();
+		this.store.systemLanguages$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((systemLanguages) => {
+				if (systemLanguages && systemLanguages.length > 0) {
+					this.languages = systemLanguages.map((item) => {
+						return {
+							value: item.code,
+							name: 'SETTINGS_MENU.' + item.name.toUpperCase()
+						};
+					});
+				}
+			});
+
 		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
 			if (user) {
 				this.currentUser = user;
@@ -113,17 +113,6 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	private async loadLanguages() {
-		const res = await this.languagesService.getSystemLanguages();
-		this.supportedLanguages = res.items.map((item) => item.code);
-		this.languages = res.items.map((item) => {
-			return {
-				value: item.code,
-				name: 'SETTINGS_MENU.' + item.name.toUpperCase()
-			};
-		});
-	}
-
 	toggleTheme() {
 		this.themeService.changeTheme(this.currentTheme);
 	}
@@ -140,13 +129,13 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 			preferredLanguage: this.store.preferredLanguage
 		};
 		this.updateUser(updatedUserData);
-
-		if (this.supportedLanguages.length) {
-			this.translate.use(
-				this.supportedLanguages.includes(this.currentLang)
-					? this.currentLang
-					: this.translate.defaultLang
-			);
+		if (
+			this.currentLang !== this.translate.currentLang &&
+			!!this.store.systemLanguages.find(
+				(item) => item.code === this.currentLang
+			)
+		) {
+			this.translate.use(this.currentLang);
 		}
 	}
 

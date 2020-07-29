@@ -120,6 +120,32 @@ export class EquipmentSharingController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Post('organization/:id')
+	async createEquipmentSharing(
+		@Param('id') orgId: string,
+		@Body() equipmentSharing: EquipmentSharing
+	): Promise<any> {
+		return this.equipmentSharingService.createEquipmentSharing(
+			orgId,
+			equipmentSharing
+		);
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
 		@Param('id') id: string,

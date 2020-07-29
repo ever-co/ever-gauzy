@@ -1,4 +1,4 @@
-<div class="selectors">
+<div class="selectors" *ngIf="candidates.length > 0">
 	<nb-select
 		placeholder="Select an interview"
 		class="select"
@@ -38,7 +38,7 @@
 	<span class="no-data-text">{{
 		'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
 	}}</span>
-	<span class="no-data-text">
+	<span class="no-data-text" *ngIf="candidates.length > 0">
 		{{
 			'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW_INTERVIEWER' | translate
 		}}

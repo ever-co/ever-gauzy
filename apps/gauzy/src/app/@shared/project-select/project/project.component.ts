@@ -17,10 +17,22 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	private _projectId: string | string[];
+	private _organizationContactId: string;
 	projects: OrganizationProjects[];
 
 	@Input() disabled = false;
 	@Input() multiple = false;
+
+	@Input()
+	public get organizationContactId(): string {
+		return this._organizationContactId;
+	}
+	public set organizationContactId(value: string) {
+		this._organizationContactId = value;
+		if (this._organizationContactId) {
+			this.loadProjects();
+		}
+	}
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
@@ -28,14 +40,11 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	constructor(private organizationProjects: OrganizationProjectsService) {}
 
 	set projectId(val: string | string[]) {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
 		this._projectId = val;
-		console.log('projectId', this._projectId);
 		this.onChange(val);
 		this.onTouched(val);
 	}
 	get projectId(): string | string[] {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
 		return this._projectId;
 	}
 
@@ -44,9 +53,16 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	private async loadProjects(): Promise<void> {
-		const { items = [] } = await this.organizationProjects.getAll([]);
+		const { items = [] } = await this.organizationProjects.getAll([], {
+			organizationContactId: this.organizationContactId
+		});
 		this.projects = items;
-		// this._projectId = this._projectId;
+		if (
+			items.length === 0 ||
+			items.find((item) => this.projectId !== item.id)
+		) {
+			this.projectId = this.multiple ? [] : null;
+		}
 	}
 
 	writeValue(value: string | string[]) {

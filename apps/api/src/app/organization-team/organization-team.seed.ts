@@ -157,8 +157,11 @@ export const createRandomTeam = async (
     }
   }
 
-  await insertOrganizationTeam(connection, organizationTeams);
-  return organizationTeams;
+  let uniqueTeams = organizationTeams.filter(function(elem, index, self) {
+    return index === self.indexOf(elem);
+  });
+  await insertOrganizationTeam(connection, uniqueTeams);
+  return uniqueTeams;
 };
 
 const insertOrganizationTeam = async (

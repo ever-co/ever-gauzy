@@ -90,16 +90,18 @@ export interface TimeLog extends IBaseEntityModel {
 	task?: Task;
 	timeSlots?: TimeSlot[];
 	project?: OrganizationProjects;
+	organizationContact?: OrganizationContact;
 	source?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
 	logType: string;
 	description?: string;
+	reason?: string;
 	duration: number;
 	isBillable: boolean;
 	employeeId: string;
 	projectId?: string;
-	clientId?: string;
+	organizationContactId?: string;
 	taskId?: string;
 	tags?: string[];
 }
@@ -283,7 +285,7 @@ export interface ITimerToggleInput {
 	//timesheetId?: string;
 	projectId?: string;
 	taskId?: string;
-	clientId?: string;
+	organizationContactId?: string;
 	description?: string;
 	logType?: TimeLogType;
 	tags?: string[];
@@ -295,8 +297,9 @@ export interface IManualTimeInput {
 	employeeId?: string;
 	projectId?: string;
 	taskId?: string;
-	clientId?: string;
+	organizationContactId?: string;
 	description?: string;
+	reason?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
 	tags?: string[];

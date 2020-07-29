@@ -725,7 +725,7 @@ export class HubstaffService {
 							pagination &&
 							pagination.hasOwnProperty('next_page_start_id')
 						) {
-							let { next_page_start_id } = pagination;
+							const { next_page_start_id } = pagination;
 							nextPageStartId = next_page_start_id;
 							stillRecordsAvailable = true;
 						} else {

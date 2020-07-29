@@ -27,6 +27,18 @@ export class OrganizationProjectsService {
 			.toPromise();
 	}
 
+	edit(
+		editInput: Partial<OrganizationProjectsCreateInput & { id: string }>
+	): Promise<OrganizationProjects> {
+		return this.http
+			.put<OrganizationProjects>(
+				`/api/organization-projects/${editInput.id}`,
+				editInput
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAllByEmployee(id: string): Promise<OrganizationProjects[]> {
 		return this.http
 			.get<OrganizationProjects[]>(

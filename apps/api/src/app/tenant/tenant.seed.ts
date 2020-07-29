@@ -2,6 +2,8 @@ import { Connection } from 'typeorm';
 import { Tenant } from './tenant.entity';
 import * as faker from 'faker';
 
+let defaultTenantInserted = {};
+
 export const createDefaultTenants = async (
 	connection: Connection
 ): Promise<Tenant> => {
@@ -9,6 +11,9 @@ export const createDefaultTenants = async (
 		name: 'Ever'
 	};
 	await insertTenants(connection, [tenant]);
+
+	defaultTenantInserted = { ...tenant };
+
 	return tenant;
 };
 
@@ -25,6 +30,8 @@ export const createRandomTenants = async (
 	}
 
 	await insertTenants(connection, randomTenants);
+
+	randomTenants.push(defaultTenantInserted);
 
 	return randomTenants;
 };

@@ -77,12 +77,12 @@ export class TimeLog extends Base implements ITimeLog {
 	@ApiProperty({ type: OrganizationContact })
 	@ManyToOne(() => OrganizationContact, { nullable: true })
 	@JoinColumn()
-	client?: OrganizationContact;
+	organizationContact?: OrganizationContact;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeLog: TimeLog) => timeLog.client)
+	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
 	@Column({ nullable: true })
-	readonly clientId?: string;
+	readonly organizationContactId?: string;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
@@ -110,6 +110,11 @@ export class TimeLog extends Base implements ITimeLog {
 	@IsBoolean()
 	@Column({ default: null, nullable: true })
 	description?: string;
+
+	@ApiProperty({ type: String })
+	@IsBoolean()
+	@Column({ default: null, nullable: true })
+	reason?: string;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()

@@ -1,5 +1,6 @@
 <nb-card>
 	<nb-card-header>
+		<ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
 		<h4>
 			{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.HEADER' | translate }}
 			<span
@@ -32,9 +33,7 @@
 			</span>
 		</h4>
 	</nb-card-header>
-	<nb-card-body>
-		<ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
-
+	<nb-card-body class="tabset">
 		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
 	</nb-card-body>
 </nb-card>

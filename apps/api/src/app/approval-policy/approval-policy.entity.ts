@@ -53,4 +53,9 @@ export class ApprovalPolicy extends Base implements IApprovalPolicy {
 	@IsString()
 	@Column({ nullable: true })
 	description: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	nameConst: string;
 }

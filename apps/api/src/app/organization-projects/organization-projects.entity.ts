@@ -6,7 +6,8 @@ import {
 	ManyToOne,
 	ManyToMany,
 	JoinTable,
-	OneToMany
+	OneToMany,
+	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -18,8 +19,9 @@ import {
 	IsBoolean
 } from 'class-validator';
 import {
-  OrganizationProjects as IOrganizationProjects,
-  CurrenciesEnum, TaskListTypeEnum
+	OrganizationProjects as IOrganizationProjects,
+	CurrenciesEnum,
+	TaskListTypeEnum
 } from '@gauzy/models';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Employee } from '../employee/employee.entity';
@@ -64,6 +66,11 @@ export class OrganizationProjects extends TenantBase
 	)
 	@JoinColumn()
 	organizationContact?: OrganizationContact;
+
+	@ApiProperty({ type: String })
+	@RelationId((contact: OrganizationProjects) => contact.organizationContact)
+	@Column({ nullable: true })
+	organizationContactId?: string;
 
 	@ApiProperty({ type: Task })
 	@OneToMany((type) => Task, (task) => task.project)
@@ -127,8 +134,8 @@ export class OrganizationProjects extends TenantBase
 	@JoinColumn()
 	organizationSprints?: OrganizationSprint[];
 
-  @ApiProperty({ type: String, enum: TaskListTypeEnum })
-  @IsEnum(TaskListTypeEnum)
-  @Column({ default: TaskListTypeEnum.GRID })
-  taskListType: string;
+	@ApiProperty({ type: String, enum: TaskListTypeEnum })
+	@IsEnum(TaskListTypeEnum)
+	@Column({ default: TaskListTypeEnum.GRID })
+	taskListType: string;
 }

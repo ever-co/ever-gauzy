@@ -28,6 +28,7 @@
 		"COPY_LINK": "Copy Link",
 		"MANAGE_INTERVIEWS": "Manage Interviews",
 		"MANAGE_INVITES": "Manage Invites",
+		"MANAGE_SPRINTS": "Manage Sprints",
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
@@ -54,14 +55,15 @@
 		"CONVERT_TO_INVOICE": "Convert to invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
-		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
+		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
 		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "ערוך",
 			"DELETE": "מחק"
-		}
+		},
+		"CANDIDATE_STATISTIC": "Statistic"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -320,6 +322,7 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
+			"TASK_VIEW_MODE": "Task view mode",
 			"SELECT_STATUS": "Select Status",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
@@ -416,7 +419,7 @@
 		"DUPLICATE": "Duplicate",
 		"DATE": "תאריך",
 		"PICK_DATE": "תבחר תאריך",
-		"ALL_CLIENTS": "כל הלקוחות",
+		"ALL_CONTACTS": "All Contacts",
 		"ALL_VENDORS": "Vendor / Merchant",
 		"ALL_CATEGORIES": "כל הקטגוריות",
 		"CATEGORY_NAME": "שם קטגוריה",
@@ -726,7 +729,7 @@
 		"ADD_NEW_OBJECTIVE": "Add new Objective",
 		"EDIT_OBJECTIVE": "Edit Objective",
 		"SESSION": "Session",
-		"GOAL_SETTINGS": "Goal Settings",
+		"GOAL_SETTINGS": "Goals Settings",
 		"NO_DESCRIPTION": "No Description",
 		"PROGRESS": "Progress",
 		"UPDATES": "Updates",
@@ -782,6 +785,7 @@
 				"DEADLINE": "Deadline",
 				"STATUS": "עבודה",
 				"KPI_SHOULD_BE": "This KPI should be",
+				"KPI_METRIC": "KPI Metric",
 				"CURRENT_VALUE": "Current Value",
 				"OBJECTIVE": "Objectives",
 				"KEY_RESULT": "Key Results"
@@ -800,6 +804,20 @@
 		},
 		"BUTTONS": {
 			"ADD_TIME_FRAME": "Add Time Frame"
+		},
+		"HELPER_TEXT": {
+			"OBJECTIVE_GENERAL": "An <b>Objective</b> is a description of a goal to be achieved in the future.",
+			"OBJECTIVE_TITLE": "<p>Create an ambitious title that best describes your goal.</p><p>The title should not contain any metric</p>eg.<ul><li>Generate more revenue than last year</li><li>Become market leader</li><li>Increase website engagement</li></ul>",
+			"OBJECTIVE_DESCRIPTION": "Write a short description to give some context to your Objective",
+			"OBJECTIVE_LEVEL": "The group to which this Objective belongs to.",
+			"OBJECTIVE_OWNER": "The group/ individual responsible for completing the Objective.",
+			"OBJECTIVE_LEAD": "The person responsible for organizing and planning that is needed to achieve the Objective.",
+			"OBJECTIVE_TIMEFRAME": "Time Frame for which this Objective is created. If a time frame doesn't exist, create one here.",
+			"KPI_GENERAL": "Organizations use <b> Key Performance Indicators (KPIs) </b> to evaluate their success at reaching targets. KPIs can be used as measurable metrics for Key results.",
+			"KPI_NAME": "<p>Name your new KPI</p><p>Examples for good KPI title</p><ul><li># of Followers</li><li>Annual Recurring Revenue</li><li>Customer Lifetime Value</li></ul>",
+			"KPI_DESCRIPTION": "Write a short description to give some context to your KPI",
+			"KPI_METRIC": "KPI measurable unit",
+			"KPI_LEAD": "Person who is responsible for updating the values of this KPI"
 		}
 	},
 	"KEY_RESULT_PAGE": {
@@ -860,6 +878,11 @@
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
 				"DESCRIPTION": "A short desciption to give some context about the Key Result"
 			}
+		},
+		"HELPER_TEXT": {
+			"KEY_RESULT_GENERAL": "A <b>Key Result</b> is how you plan to measure that you have achieved your objective .",
+			"KEY_RESULT_OWNER": "The person responsible for completing the Key Result.",
+			"KEY_RESULT_LEAD": "The person responsible for organizing and planning that is needed to achieve the Key Result."
 		}
 	},
 	"CANDIDATES_PAGE": {
@@ -980,14 +1003,21 @@
 			"SEARCH_BY_CANDIDATE": "Search by candidate's name",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating",
-			"RESET_FILTERS": "Reset filters"
+			"RESET_FILTERS": "Reset filters",
+			"TITLE": "Title",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Location",
+			"NOTES": "הערות",
+			"ACTIONS": "Actions",
+			"UPDATED": "Updated",
+			"CANDIDATE": "Candidate"
 		},
 		"STATISTIC": {
-			"CANDIDATE_STATISTICS": "Candidates statistic",
-			"CANDIDATE_RATING": "Candidate's rating",
-			"INTERVIEWER_ASSESSMENT": "Candidate's rating per interview",
+			"STATISTICS": "Statistic",
+			"RATING": "Overall rating",
+			"INTERVIEWER_ASSESSMENT": "Rating per interview",
 			"CRITERIONS_RATING": "Criterion's rating per interview",
-			"CANDIDATE_CRITERIONS_RATING": "Criterion's rating from all feedbacks",
+			"CANDIDATE_CRITERIONS_RATING": "Average criterion's rating",
 			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview",
 			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer",
@@ -1072,13 +1102,21 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_MODIFY_TIME_INFO": "Allow employee to modify manual time.",
 				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_DELETE_TIME_INFO": "Allow employee to delete time.",
 				"ALLOW_MANUAL_TIME": "Allow Manual Time",
+				"ALLOW_MANUAL_TIME_INFO": "Allow employee to add manual time.",
 				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_REASON_INFO": "Reason of the add manual time or edit time logs.",
 				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_DESCRIPTION_INFO": "Description of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
 				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_PROJECT_INFO": "Project of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
 				"REQUIRE_TASK": "Require Task",
-				"REQUIRE_CLIENT": "Require Client"
+				"REQUIRE_TASK_INFO": "Task of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
+				"REQUIRE_CLIENT": "Require Client",
+				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time."
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -1475,11 +1513,7 @@
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"CHAT": "Чат с нас",
 		"FAQ": "Въпроси и Отговори",
-		"HELP": "עזרה",
-		"MANAGE_INTERVIEWS": "Manage interviews",
-		"MANAGE_INVITES": "Manage invites",
-		"CANDIDATE_STATISTIC": "Candidates statistic",
-		"CANDIDATE_CRITERIONS": "Candidates criterions"
+		"HELP": "עזרה"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "שם פרטי",
@@ -1539,7 +1573,7 @@
 		"INVOICES_SELECT_TAX": "Tax",
 		"INVOICES_SELECT_TERMS": "Terms",
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
-		"INVOICES_SELECT_CLIENT": "לקוחות",
+		"INVOICES_SELECT_CONTACT": "Contact",
 		"ADD_INVOICE": "Add Invoice",
 		"ADD_ESTIMATE": "Add Estimate",
 		"EDIT_INVOICE": "Edit Invoice",
@@ -1673,7 +1707,7 @@
 	},
 	"PAYMENTS_PAGE": {
 		"HEADER": "Payments",
-		"CLIENT": "לקוחות",
+		"CONTACT": "Contact",
 		"AMOUNT": "כמות",
 		"PAYMENT_DATE": "Payment Date",
 		"RECORDED_BY": "Recorded By",
@@ -1809,7 +1843,7 @@
 			"OBJECTIVE_UPDATED": "Objective updated",
 			"KEY_RESULT_ADDED": "Key Result added",
 			"KEY_RESULT_DELETED": "Key Result deleted",
-			"KEY_RESULT_UPDATED": "Key Result upadated",
+			"KEY_RESULT_UPDATED": "Key Result updated",
 			"TIME_FRAME_DELETED": "Time Frame deleted",
 			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated",
 			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
@@ -1837,6 +1871,12 @@
 			"EDIT_INCOME": "Income edited for {{ name }}",
 			"DELETE_INCOME": "Income deleted for {{ name }}",
 			"INCOME_ERROR": "{{ error }}"
+		},
+		"INVOICE": {
+			"ADD_INVOICE": "Invoice added for {{ name }}",
+			"EDIT_INVOICE": "Invoice edited for {{ name }}",
+			"DELETE_INVOICE": "Invoice deleted for {{ name }}",
+			"INVOICE_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
 			"ADD_EXPENSE": "Expense added for {{ name }}",
@@ -1982,11 +2022,21 @@
 		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"SELECT_CLIENT": "Select Client",
 		"DATE": "תאריך",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
 		"DESCRIPTION": "Description",
-		"ADD_TIME_SUCCESS": "Time Successfully added"
+		"ADD_TIME_SUCCESS": "Time Successfully added",
+		"VALIDATION": {
+			"CLIENT_REQUIRED": "Please select client",
+			"PROJECT_REQUIRED": "Please select project",
+			"TASK_REQUIRED": "Please select task",
+			"DESCRIPTION_REQUIRED": "Description is required"
+		},
+		"VIEW_TIMESHEET": "View timesheet",
+		"ADD_TIME": "Add Time",
+		"TODAY": "היום"
 	},
 	"TIMESHEET": {
 		"TODAY": "היום",
@@ -2014,8 +2064,7 @@
 		"CLOSE": "סוֹף",
 		"DELETE": "מחק",
 		"IMMUTABLE_TIME": "Immutable Time",
-		"ADD_TIME ": "Add Time",
-		"BULK_ACTION ": "Bulk action",
+		"BULK_ACTION": "Bulk action",
 		"LOG_TYPE": "Log type",
 		"TOTAL_TIME": "Total Time",
 		"ACTIVITES": "Activites",
@@ -2030,17 +2079,21 @@
 		"ACTION": "Action",
 		"EMPLOYEE": "עובד",
 		"DURATION": "Duration",
+		"ORGANIZATION_CONTACT": "לקוחות",
+		"NO_ORGANIZATION_CONTACT": "No Client",
 		"PROJECT": "פרויקטים",
 		"NO_PROJECT": "No Project",
 		"NO_TIMELOG": "No timelogs found",
 		"TODO": "To-do",
 		"NO_TODO": "No To-do",
 		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
+		"REASON": "Reason",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",
 			"PROJECT": "Please selct project",
-			"EMPLOYEE": "Please selct employee"
+			"EMPLOYEE": "Please selct employee",
+			"REASON": "Please selct reason"
 		}
 	},
 	"ACTIVITY": {
@@ -2088,7 +2141,9 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
-		"RECURRING_AVAILABILITY": "Recurring Availability"
+		"RECURRING_AVAILABILITY": "Recurring Availability",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availabity for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those sepcific dates only.",
+		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
 	},
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENT": "Book Appointment",

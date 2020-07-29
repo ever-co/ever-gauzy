@@ -51,7 +51,7 @@ export const createRandomTask = async (
 	});
 
 	labels = _.uniq(labels, (label) => label.name);
-	const tags: Tag[] = await findOrCreateTags(connection, labels);
+	const tags: Tag[] = await createTags(connection, labels);
 
 	issues.forEach((issue) => {
 		let status = TaskStatusEnum.TODO;
@@ -81,29 +81,20 @@ export const createRandomTask = async (
 	await connection.manager.save(tasks);
 };
 
-export async function findOrCreateTags(connection: Connection, labels) {
+export async function createTags(connection: Connection, labels) {
 	if (labels.length === 0) {
 		return [];
 	}
-	const tags: Tag[] = labels.map((label) => ({
-		name: label.name,
-		description: label.description,
-		color: label.color
-		// organization
-		// tenant
-	}));
-	await connection
-		.getRepository(Tag)
-		.createQueryBuilder()
-		.insert()
-		.values(tags)
-		.onConflict('("name") DO NOTHING')
-		.returning('*')
-		.execute();
 
-	const insertedTags = await connection
-		.getRepository(Tag)
-		.createQueryBuilder()
-		.getMany();
+	const tags: Tag[] = labels.map(
+		(label) =>
+			new Tag({
+				name: label.name,
+				description: label.description,
+				color: label.color
+			})
+	);
+
+	const insertedTags = await connection.getRepository(Tag).save(tags);
 	return insertedTags;
 }
