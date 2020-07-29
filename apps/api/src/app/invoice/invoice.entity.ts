@@ -145,7 +145,7 @@ export class Invoice extends Base implements IInvoice {
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
-	clientId?: string;
+	organizationContactId?: string;
 
 	@ApiPropertyOptional({ type: Organization })
 	@ManyToOne((type) => Organization)
@@ -155,7 +155,7 @@ export class Invoice extends Base implements IInvoice {
 	@ApiPropertyOptional({ type: OrganizationContact })
 	@ManyToOne((type) => OrganizationContact)
 	@JoinColumn()
-	toClient?: OrganizationContact;
+	toContact?: OrganizationContact;
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {

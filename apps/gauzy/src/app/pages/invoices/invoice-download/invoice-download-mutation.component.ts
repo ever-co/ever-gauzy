@@ -66,7 +66,7 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 		docDefinition = await generatePdf(
 			this.invoice,
 			this.invoice.fromOrganization,
-			this.invoice.toClient,
+			this.invoice.toContact,
 			service
 		);
 

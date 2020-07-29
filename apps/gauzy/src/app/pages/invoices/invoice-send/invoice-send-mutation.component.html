@@ -7,7 +7,7 @@
 			<span *ngIf="isEstimate">{{
 				'INVOICES_PAGE.SEND.CONFIRMATION_ESTIMATE' | translate
 			}}</span>
-			{{ invoice.toClient.name }} ?
+			{{ invoice.toContact.name }} ?
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
@@ -25,7 +25,7 @@
 			<span *ngIf="isEstimate">{{
 				'INVOICES_PAGE.SEND.ALREADY_SENT_ESTIMATE' | translate
 			}}</span>
-			{{ invoice.toClient.name }}.
+			{{ invoice.toContact.name }}.
 		</span>
 	</nb-card-body>
 	<nb-card-footer class="text-right">

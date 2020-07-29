@@ -108,7 +108,7 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	projects?: OrganizationProjects[];
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
-	@OneToMany((type) => Invoice, (invoices) => invoices.toClient)
+	@OneToMany((type) => Invoice, (invoices) => invoices.toContact)
 	@JoinColumn()
 	invoices?: Invoice[];
 

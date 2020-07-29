@@ -2,9 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Invoice, InvoiceFindInput, InvoiceUpdateInput } from '@gauzy/models';
 import { first } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable()
 export class InvoicesService {
+	private source = new BehaviorSubject(false);
+	currentData = this.source.asObservable();
+
 	constructor(private http: HttpClient) {}
 
 	getAll(
@@ -93,5 +97,9 @@ export class InvoicesService {
 			})
 			.pipe(first())
 			.toPromise();
+	}
+
+	changeValue(message: boolean) {
+		this.source.next(message);
 	}
 }

@@ -146,19 +146,19 @@
 				<div class="col-sm-3">
 					<label for="inputInvoiceNumber" class="label"
 						>{{
-							'INVOICES_PAGE.INVOICES_SELECT_CLIENT' | translate
+							'INVOICES_PAGE.INVOICES_SELECT_CONTACT' | translate
 						}}
 					</label>
 					<ng-select
-						[addTag]="addNewClient"
-						[items]="clients"
+						[addTag]="addNewOrganizationContact"
+						[items]="organizationContacts"
 						bindName="name"
-						placeholder="{{ 'POP_UPS.ALL_CLIENTS' | translate }}"
-						[(ngModel)]="client"
-						formControlName="client"
-						id="inputClient"
-						(change)="selectClient($event)"
-						[searchFn]="searchClient"
+						placeholder="{{ 'POP_UPS.ALL_CONTACTS' | translate }}"
+						[(ngModel)]="organizationContact"
+						formControlName="organizationContact"
+						id="inputOrganizationContact"
+						(change)="selectOrganizationContact($event)"
+						[searchFn]="searchOrganizationContact"
 					>
 						<ng-template
 							ng-option-tmp
@@ -666,12 +666,12 @@
 		</button>
 		<button
 			class="mr-3"
-			(click)="sendToClient()"
+			(click)="sendToContact()"
 			status="success"
 			[disabled]="disableSaveButton || form.invalid"
 			nbButton
 		>
-			{{ 'BUTTONS.SAVE_AND_SEND_CLIENT' | translate }}
+			{{ 'BUTTONS.SAVE_AND_SEND_CONTACT' | translate }}
 		</button>
 		<button
 			class="mr-3"

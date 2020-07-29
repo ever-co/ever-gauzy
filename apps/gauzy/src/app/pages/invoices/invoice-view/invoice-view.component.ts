@@ -53,7 +53,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
 			'invoiceItems',
 			'fromOrganization',
-			'toClient'
+			'toContact'
 		]);
 		this.invoice = invoice;
 	}
@@ -86,7 +86,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		docDefinition = await generatePdf(
 			this.invoice,
 			this.invoice.fromOrganization,
-			this.invoice.toClient,
+			this.invoice.toContact,
 			service
 		);
 
