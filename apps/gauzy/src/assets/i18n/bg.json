@@ -55,7 +55,7 @@
 		"CONVERT_TO_INVOICE": "Convert to invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
-		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
+		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
 		"EVENT_TYPES": "Event Types",
 		"SPRINT": {
@@ -419,7 +419,7 @@
 		"DUPLICATE": "Дублирай",
 		"DATE": "Дата",
 		"PICK_DATE": "Изберете дата",
-		"ALL_CLIENTS": "Всички клиенти",
+		"ALL_CONTACTS": "All Contacts",
 		"ALL_VENDORS": "Търговец",
 		"ALL_CATEGORIES": "Всички категории",
 		"CATEGORY_NAME": "Име на категория",
@@ -1553,7 +1553,7 @@
 		"INVOICES_SELECT_TAX": "Tax",
 		"INVOICES_SELECT_TERMS": "Terms",
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
-		"INVOICES_SELECT_CLIENT": "Клиент",
+		"INVOICES_SELECT_CONTACT": "Contact",
 		"ADD_INVOICE": "Add Invoice",
 		"ADD_ESTIMATE": "Add Estimate",
 		"EDIT_INVOICE": "Edit Invoice",
@@ -1687,7 +1687,7 @@
 	},
 	"PAYMENTS_PAGE": {
 		"HEADER": "Payments",
-		"CLIENT": "Клиент",
+		"CONTACT": "Contact",
 		"AMOUNT": "Сума",
 		"PAYMENT_DATE": "Payment Date",
 		"RECORDED_BY": "Recorded By",
@@ -1851,6 +1851,12 @@
 			"EDIT_INCOME": "Доход обновен за",
 			"DELETE_INCOME": "Доход изтрит за",
 			"INCOME_ERROR": "{{ error }}"
+		},
+		"INVOICE": {
+			"ADD_INVOICE": "Invoice added for {{ name }}",
+			"EDIT_INVOICE": "Invoice edited for {{ name }}",
+			"DELETE_INVOICE": "Invoice deleted for {{ name }}",
+			"INVOICE_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
 			"ADD_EXPENSE": "Разход добавен за",
