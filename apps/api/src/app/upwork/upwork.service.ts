@@ -396,26 +396,26 @@ export class UpworkService {
 		let integratedTimeSlots = [];
 
 		for await (const timeSlot of timeSlots) {
+			const {
+				keyboard_events_count,
+				mouse_events_count,
+				cell_time
+			} = timeSlot;
 			const gauzyTimeSlot = await this.commandBus.execute(
 				new TimeSlotCreateCommand({
 					employeeId,
 					startedAt: new Date(
-						moment
-							.unix(timeSlot.cell_time)
-							.format('YYYY-MM-DD HH:mm:ss')
+						moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')
 					),
-					keyboard: timeSlot.keyboard_events_count,
-					mouse: timeSlot.mouse_events_count,
+					keyboard: keyboard_events_count,
+					mouse: mouse_events_count,
 					time_slot: new Date(
-						moment
-							.unix(timeSlot.cell_time)
-							.format('YYYY-MM-DD HH:mm:ss')
+						moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')
 					),
 					overall: 0,
 					duration: 0
 				})
 			);
-
 			const integratedSlot = await this.commandBus.execute(
 				new IntegrationMapSyncEntityCommand({
 					gauzyId: gauzyTimeSlot.id,
@@ -424,7 +424,6 @@ export class UpworkService {
 					entity: IntegrationEntity.TIME_SLOT
 				})
 			);
-
 			integratedTimeSlots = integratedTimeSlots.concat(integratedSlot);
 		}
 
@@ -596,6 +595,10 @@ export class UpworkService {
 						}
 					});
 
+					if (!findTimeSlot) {
+						return;
+					}
+
 					const { time, mouse, keyboard } = minute;
 					const gauzyTimeSlotMinute = await this.commandBus.execute(
 						new TimeSlotMinuteCreateCommand({
@@ -607,7 +610,6 @@ export class UpworkService {
 							timeSlot: findTimeSlot
 						})
 					);
-
 					return gauzyTimeSlotMinute;
 				})
 			);
@@ -967,7 +969,7 @@ export class UpworkService {
 							amount,
 							category,
 							valueDate: new Date(
-								moment(date).format('YYYY-MM-DD hh:mm:ss')
+								moment(date).format('YYYY-MM-DD HH:mm:ss')
 							),
 							vendor,
 							notes: description,
@@ -1044,7 +1046,7 @@ export class UpworkService {
 						clientId,
 						amount: parseFloat(hours) * parseFloat(assignment_rate),
 						valueDate: new Date(
-							moment(worked_on).format('YYYY-MM-DD hh:mm:ss')
+							moment(worked_on).format('YYYY-MM-DD HH:mm:ss')
 						),
 						notes,
 						tags: [],
