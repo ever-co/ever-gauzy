@@ -198,9 +198,10 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		}
 
 		request.startedAt = moment(request.startedAt)
-			.set('minute', 0)
+			//.set('minute', 0)
 			.set('millisecond', 0)
 			.toDate();
+
 		let timeSlot = await this.timeSlotRepository.findOne({
 			where: {
 				employeeId: request.employeeId,
@@ -227,7 +228,7 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		timeSlot = await this.timeSlotRepository.findOne(timeSlot.id, {
 			relations: ['timeLogs', 'screenshots', 'activites']
 		});
-		// console.log(timeSlot);
+
 		return timeSlot;
 	}
 
@@ -252,12 +253,12 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		if (timeSlot) {
 			if (request.startedAt) {
 				request.startedAt = moment(request.startedAt)
-					.set('minute', 0)
+					//.set('minute', 0)
 					.set('millisecond', 0)
 					.toDate();
 			}
-			let newActivites = [];
 
+			let newActivites = [];
 			if (request.activites) {
 				newActivites = request.activites.map((activity) => {
 					activity = new Activity(activity);
@@ -281,17 +282,26 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	/*
-	 *create time slot minute activity for spacific timeslot
+	 *create time slot minute activity for specific timeslot
 	 */
 	async createTimeSlotMinute({ keyboard, mouse, datetime, timeSlot }) {
 		const timeMinute = await this.timeSlotMinuteRepository.findOne({
 			where: {
-				timeSlot: timeSlot,
+				timeSlot,
 				datetime
 			}
 		});
 
-		if (!timeMinute) {
+		if (timeMinute) {
+			const request = {
+				keyboard,
+				mouse,
+				datetime,
+				timeSlot,
+				timeSlotId: timeMinute.id
+			};
+			return await this.updateTimeSlotMinute(timeMinute.id, request);
+		} else {
 			return await this.timeSlotMinuteRepository.save({
 				keyboard,
 				mouse,
@@ -299,9 +309,31 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 				timeSlot
 			});
 		}
-
-		return timeMinute;
 	}
+
+	/*
+	 * Update timeslot minute activity for specific timeslot
+	 */
+	async updateTimeSlotMinute(id: string, request: TimeSlotMinute) {
+		let timeMinute = await this.timeSlotMinuteRepository.findOne({
+			where: {
+				id: id
+			}
+		});
+
+		if (timeMinute) {
+			delete request.timeSlotId;
+			await this.timeSlotMinuteRepository.update(id, request);
+
+			timeMinute = await this.timeSlotMinuteRepository.findOne(id, {
+				relations: ['timeSlot']
+			});
+			return timeMinute;
+		} else {
+			return null;
+		}
+	}
+
 	async deleteTimeSlot(ids: string[]) {
 		const timeSlots = await this.timeSlotRepository.find({
 			where: { id: In(ids) },

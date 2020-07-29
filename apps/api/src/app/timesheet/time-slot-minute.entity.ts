@@ -23,7 +23,7 @@ export class TimeSlotMinute extends Base implements ITimeSlotMinute {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: TimeSlotMinute) => activity.timeSlot)
 	@Column()
-	readonly timeSlotId: string;
+	timeSlotId: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
