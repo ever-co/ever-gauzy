@@ -4,12 +4,11 @@ import { Component, Input } from '@angular/core';
 	selector: 'ga-interview-date',
 	template: `
 		<div class="start-column">
-			<strong>{{ rowData?.startTime | date: 'shortDate' }} </strong>
-			<span>
-				{{ rowData?.startTime | date: 'shortTime' }}-{{
-					rowData?.endTime | date: 'shortTime'
-				}}
-			</span>
+			<strong style="text-align:center;"
+				>{{ rowData?.startTime | date: 'shortDate' }}
+			</strong>
+			<span> {{ rowData?.startTime | date: 'shortTime' }}</span>
+			<span>{{ rowData?.endTime | date: 'shortTime' }} </span>
 		</div>
 	`,
 	styles: [
@@ -18,7 +17,7 @@ import { Component, Input } from '@angular/core';
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
-				align-items: flex-start;
+				align-items: center;
 			}
 		`
 	]
