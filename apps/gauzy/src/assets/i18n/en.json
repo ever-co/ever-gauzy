@@ -536,7 +536,6 @@
 		"TIMESHEETS": "Timesheets",
 		"SCHEDULES": "Schedules",
 		"EMAIL_TEMPLATES": "Email Templates",
-		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
 		"GOALS": "Goals",
 		"TIME_REPORTS": "Time Reports",
@@ -545,8 +544,7 @@
 		"CUSTOM_SMTP": "Custom SMTP",
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
-		"PAYMENTS": "Payments",
-		"EXPENSE_RECURRING": "Expense Recurring"
+		"PAYMENTS": "Payments"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -1055,6 +1053,9 @@
 		"LOCATION": "Location",
 		"SETTINGS": "Settings",
 		"ROLES": "Roles",
+		"HELP_CENTER": "Help Center",
+		"DOCUMENTS": "Documents",
+		"EXPENSE_RECURRING": "Expense Recurring",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CONTACT": "Invite Contact",
@@ -1065,7 +1066,6 @@
 		"LEVEL_NAME": "Level name",
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
-		"DOCUMENTS": "Documents",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "Client",

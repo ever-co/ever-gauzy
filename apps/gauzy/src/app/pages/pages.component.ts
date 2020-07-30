@@ -372,12 +372,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Vendors',
 					icon: 'car-outline',
-					link: `/pages/organizations/`,
+					link: '/pages/organization/vendors',
 					data: {
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/vendors',
 						translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
 					}
 				},
@@ -434,11 +432,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'file-text-outline',
 					link: `/pages/organization/documents`,
 					data: {
-						// organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						// urlPrefix: `/pages/organizations/edit/`,
-						// urlPostfix: '/settings/documents',
-						translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS' ///menu
+						translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS'
 					}
 				},
 				{
@@ -446,7 +441,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'flip-outline',
 					link: '/pages/organization/expense-recurring',
 					data: {
-						translationKey: 'MENU.EXPENSE_RECURRING'
+						translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING'
 					}
 				},
 				{
@@ -454,7 +449,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'question-mark-circle-outline',
 					link: '/pages/organization/help-center',
 					data: {
-						translationKey: 'MENU.HELP_CENTER'
+						translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER'
 					}
 				}
 			]

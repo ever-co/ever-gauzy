@@ -274,6 +274,13 @@ const routes: Routes = [
 							import('./documents/documents.module').then(
 								(m) => m.DocumentsModule
 							)
+					},
+					{
+						path: 'vendors',
+						loadChildren: () =>
+							import('./vendors/vendors.module').then(
+								(m) => m.VendorsModule
+							)
 					}
 				]
 			},

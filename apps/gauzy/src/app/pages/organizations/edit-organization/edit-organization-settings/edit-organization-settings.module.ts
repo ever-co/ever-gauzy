@@ -54,7 +54,6 @@ import { EditOrganizationProjectsComponent } from './edit-organization-projects/
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
 import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
 import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
-import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization-employment-types/edit-organization-employment-types.component';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { EditOrganizationExpenseCategoriesComponent } from './edit-organization-expense-categories/edit-organization-expense-categories.component';
@@ -125,7 +124,6 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EditOrganizationLocationComponent,
 		OrganizationListComponent,
 		EditOrganizationDepartmentsComponent,
-		EditOrganizationVendorsComponent,
 		EditOrganizationExpenseCategoriesComponent,
 		EditOrganizationPositionsComponent,
 		EditOrganizationPositionsComponent,

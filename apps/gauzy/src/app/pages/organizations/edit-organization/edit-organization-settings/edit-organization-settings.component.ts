@@ -107,12 +107,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 			// 	route: this.getRoute('positions')
 			// },
 			// {
-			// 	title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
-			// 	icon: 'car-outline',
-			// 	responsive: true,
-			// 	route: this.getRoute('vendors')
-			// },
-			// {
 			// 	title: this.getTranslation(
 			// 		'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES'
 			// 	),
@@ -146,12 +140,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 			// 	responsive: true,
 			// 	route: this.getRoute('employment-types')
 			// },
-			// {
-			// 	title: this.getTranslation('ORGANIZATIONS_PAGE.DOCUMENTS'), ---------
-			// 	icon: 'file-text-outline',
-			// 	responsive: true,
-			// 	route: this.getRoute('documents')
-			// }
 		];
 	}
 

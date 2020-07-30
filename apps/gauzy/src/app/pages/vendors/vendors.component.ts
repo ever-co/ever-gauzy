@@ -10,10 +10,10 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
 @Component({
-	selector: 'ga-edit-org-vendors',
-	templateUrl: './edit-organization-vendors.component.html'
+	selector: 'ga-vendors',
+	templateUrl: './vendors.component.html'
 })
-export class EditOrganizationVendorsComponent extends TranslationBaseComponent
+export class VendorsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
