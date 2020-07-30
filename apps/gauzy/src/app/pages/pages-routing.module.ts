@@ -240,6 +240,14 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'expense-recurring',
+						loadChildren: () =>
+							import(
+								'./expense-recurring/expense-recurring.module'
+							).then((m) => m.ExpenseRecurringModule)
+					},
+
+					{
 						path: 'help-center',
 						loadChildren: () =>
 							import('./help-center/help-center.module').then(

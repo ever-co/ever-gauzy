@@ -545,7 +545,8 @@
 		"CUSTOM_SMTP": "Custom SMTP",
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
-		"PAYMENTS": "Payments"
+		"PAYMENTS": "Payments",
+		"EXPENSE_RECURRING": "Expense Recurring"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",

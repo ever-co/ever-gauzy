@@ -1,8 +1,8 @@
-<nb-card class="org-edit" [nbSpinner]="loading" nbSpinnerStatus="primary">
+<nb-card class="org-edit">
 	<nb-card-header class="header">
 		<div
 			class="header-container"
-			*ngIf="selectedDate && selectedOrgFromHeader; else noName"
+			*ngIf="selectedOrgFromHeader; else noName"
 		>
 			<div class="org-info">
 				<img
@@ -55,55 +55,6 @@
 			<h6>{{ 'POP_UPS.SELECT_ORGANZIATION' | translate }}</h6>
 		</ng-template>
 	</nb-card-header>
-	<nb-card-body
-		class="settings-body"
-		*ngIf="selectedDate && selectedOrgFromHeader"
-	>
-		<div class="body-header">
-			<div>
-				<span class="setting-name">
-					{{ 'POP_UPS.RECURRING_EXPENSES' | translate }}
-				</span>
-			</div>
-			<div>
-				<span>
-					<button
-						*ngIf="hasEditPermission || hasEditExpensePermission"
-						(click)="addOrganizationRecurringExpense()"
-						nbButton
-						status="success"
-					>
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-						>{{ 'BUTTONS.ADD' | translate }}
-					</button>
-				</span>
-			</div>
-		</div>
 
-		<div
-			*ngIf="
-				selectedOrgRecurringExpense &&
-				selectedOrgRecurringExpense.length > 0
-			"
-			class="sub-header header-content"
-		>
-			<div class="row header-info">
-				<div class="col">{{ 'POP_UPS.CATEGORY_NAME' | translate }}</div>
-				<div class="col">{{ 'POP_UPS.DATE' | translate }}</div>
-				<div class="col">{{ 'POP_UPS.EXPENSE_VALUE' | translate }}</div>
-			</div>
-		</div>
-
-		<ga-recurring-expense-block
-			*ngFor="let expense of selectedOrgRecurringExpense; let i = index"
-			(editRecurringExpense)="editOrganizationRecurringExpense(i)"
-			(deleteRecurringExpense)="deleteOrgRecurringExpense(i)"
-			(fetchRecurringExpenseHistory)="fetchHistory(i)"
-			[fetchedHistories]="fetchedHistories[i]"
-			[recurringExpense]="expense"
-			[splitExpense]="expense.splitExpense"
-			[selectedOrganization]="selectedOrg"
-		>
-		</ga-recurring-expense-block>
-	</nb-card-body>
+	<nb-card-body> </nb-card-body>
 </nb-card>
