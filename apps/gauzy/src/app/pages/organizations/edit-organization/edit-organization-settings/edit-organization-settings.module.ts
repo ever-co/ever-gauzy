@@ -62,10 +62,7 @@ import { OrganizationExpenseCategoriesService } from '../../../../@core/services
 import { InviteService } from '../../../../@core/services/invite.service';
 import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization-employee-levels/edit-organization-employee-level.component';
-import { EditOrganizationDocuments } from './edit-organization-documents/edit-organization-documents/edit-organization-documents';
-import { UploadDocumentComponent } from './edit-organization-documents/upload-document/upload-document.component';
 import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-input/file-uploader-input.module';
-import { TasksSprintSettingsViewComponent } from '../../../tasks/components/task/task-settings/project-view/tasks-sprint-settings-view/tasks-sprint-settings-view.component';
 import { SharedModule } from '../../../../@shared/shared.module';
 
 @NgModule({
@@ -141,10 +138,9 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EditOrganizationContactMutationComponent,
 		EditOrganizationProjectsMutationComponent,
 		EditOrganizationEmploymentTypes,
-		EditOrganizationDocuments,
 		InviteContactComponent,
-		UploadDocumentComponent,
 		EditOrganizationEmployeeLevelComponent
-	]
+	],
+	exports: [EditOrganizationSettingsComponent]
 })
 export class EditOrganizationSettingsModule {}

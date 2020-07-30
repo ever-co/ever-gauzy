@@ -22,6 +22,7 @@ import {
 import { Store } from '../../@core/services/store.service';
 
 @Component({
+	selector: 'ga-expense-recurring',
 	templateUrl: './expense-recurring.component.html',
 	styleUrls: [
 		'./expense-recurring.component.scss',

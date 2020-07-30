@@ -23,32 +23,6 @@
 					</span>
 				</div>
 			</div>
-
-			<div *ngIf="hasEditPermission" class="org-info">
-				<div class="org-details edit-icon">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="36"
-						height="36"
-						viewBox="0 0 36 36"
-					>
-						<circle
-							cx="18"
-							cy="18"
-							r="18"
-							fill="#0091FF"
-							fill-rule="evenodd"
-						/>
-					</svg>
-					<nb-icon
-						class="ml-2 open"
-						icon="edit-outline"
-						(click)="editOrg()"
-						[options]="{ color: 'white' }"
-					>
-					</nb-icon>
-				</div>
-			</div>
 		</div>
 
 		<ng-template #noName>
@@ -56,5 +30,7 @@
 		</ng-template>
 	</nb-card-header>
 
-	<nb-card-body> </nb-card-body>
+	<nb-card-body>
+		<ngx-edit-organization-settings></ngx-edit-organization-settings
+	></nb-card-body>
 </nb-card>

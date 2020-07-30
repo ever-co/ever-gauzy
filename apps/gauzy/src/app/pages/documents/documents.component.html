@@ -7,24 +7,23 @@
 			*ngIf="!showAddCard"
 			(click)="showCard()"
 		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD'
-			| translate }}
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 		<div *ngIf="showAddCard" class="row documents-card m-0">
 			<form class="col-3" [formGroup]="form" *ngIf="form">
 				<div formArrayName="documents">
 					<div
 						*ngFor="
-								let document of form.controls.documents?.controls;
-								let i = index
-							"
+							let document of form.controls.documents?.controls;
+							let i = index
+						"
 					>
 						<div [formGroupName]="i" class="documents-add-card">
 							<div class="col-12 add-card-wrapp">
-								<label for="documentName" class="label"
-									>{{ 'FORM.LABELS.DOCUMENT_NAME' | translate
-									}}</label
-								>
+								<label for="documentName" class="label">{{
+									'FORM.LABELS.DOCUMENT_NAME' | translate
+								}}</label>
 								<input
 									id="documentName"
 									#addInput
@@ -33,9 +32,9 @@
 									formControlName="name"
 									type="text"
 									placeholder="{{
-											'FORM.PLACEHOLDERS.DOCUMENT_NAME'
-												| translate
-										}}"
+										'FORM.PLACEHOLDERS.DOCUMENT_NAME'
+											| translate
+									}}"
 									fullWidth
 								/>
 							</div>
@@ -79,10 +78,9 @@
 	</nb-card-header>
 	<nb-card-body *ngIf="documentList?.length">
 		<div class="ml-3 mb-4">
-			<strong
-				>{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.DOCUMENTS' | translate
-				}}</strong
-			>
+			<strong>{{
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.DOCUMENTS' | translate
+			}}</strong>
 		</div>
 
 		<nb-card *ngFor="let document of documentList; let i = index">

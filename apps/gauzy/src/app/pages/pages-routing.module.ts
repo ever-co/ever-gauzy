@@ -267,6 +267,13 @@ const routes: Routes = [
 							import(
 								'./equipment-sharing/equipment-sharing.module'
 							).then((m) => m.EquipmentSharingModule)
+					},
+					{
+						path: 'documents',
+						loadChildren: () =>
+							import('./documents/documents.module').then(
+								(m) => m.DocumentsModule
+							)
 					}
 				]
 			},

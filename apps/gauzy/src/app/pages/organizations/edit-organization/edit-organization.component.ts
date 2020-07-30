@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Organization, PermissionsEnum } from '@gauzy/models';
+import { Organization } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
@@ -21,7 +21,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	selectedOrg: Organization;
 	selectedOrgFromHeader: Organization;
 	employeesCount: number;
-	hasEditPermission = false;
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -36,14 +35,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ALL_ORG_EDIT
-				);
-			});
-
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (params) => {
@@ -70,13 +61,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 					});
 			});
 	}
-
-	editOrg() {
-		this.router.navigate([
-			'/pages/organizations/edit/' + this.selectedOrg.id + '/settings'
-		]);
-	}
-
 	editPublicPage() {
 		this.router.navigate([
 			'/share/organization/' + this.selectedOrg.profile_link

@@ -15,7 +15,6 @@ import { EditOrganizationMainComponent } from './edit-organization/edit-organiza
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit-organization-settings/edit-organization-employee-levels/edit-organization-employee-level.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization/edit-organization-settings/edit-organization-employment-types/edit-organization-employment-types.component';
 import { EditOrganizationExpenseCategoriesComponent } from './edit-organization/edit-organization-settings/edit-organization-expense-categories/edit-organization-expense-categories.component';
-import { EditOrganizationDocuments } from './edit-organization/edit-organization-settings/edit-organization-documents/edit-organization-documents/edit-organization-documents';
 
 const routes: Routes = [
 	{
@@ -24,11 +23,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'edit/:id',
-		component: EditOrganizationComponent
-	},
-	{
-		path: 'edit/:id/settings',
-		component: EditOrganizationSettingsComponent,
+		component: EditOrganizationComponent,
 		children: [
 			{
 				path: '',
@@ -44,51 +39,74 @@ const routes: Routes = [
 				component: EditOrganizationLocationComponent
 			},
 			{
-				path: 'departments',
-				component: EditOrganizationDepartmentsComponent
-			},
-			{
-				path: 'contacts',
-				component: EditOrganizationContactComponent
-			},
-			{
-				path: 'positions',
-				component: EditOrganizationPositionsComponent
-			},
-			{
-				path: 'vendors',
-				component: EditOrganizationVendorsComponent
-			},
-			{
-				path: 'expense-categories',
-				component: EditOrganizationExpenseCategoriesComponent
-			},
-			{
-				path: 'projects',
-				component: EditOrganizationProjectsComponent
-			},
-			{
-				path: 'teams',
-				component: EditOrganizationTeamsComponent
-			},
-			{
 				path: 'settings',
 				component: EditOrganizationOtherSettingsComponent
-			},
-			{
-				path: 'employment-types',
-				component: EditOrganizationEmploymentTypes
-			},
-			{
-				path: 'employeeLevels',
-				component: EditOrganizationEmployeeLevelComponent
-			},
-			{
-				path: 'documents',
-				component: EditOrganizationDocuments
 			}
 		]
 	}
+	// {
+	// 	path: 'edit/:id/settings',
+	// 	component: EditOrganizationSettingsComponent,
+	// 	children: [
+	// 		{
+	// 			path: '',
+	// 			redirectTo: 'main',
+	// 			pathMatch: 'full'
+	// 		},
+	// 		{
+	// 			path: 'main',
+	// 			component: EditOrganizationMainComponent
+	// 		},
+	// 		{
+	// 			path: 'location',
+	// 			component: EditOrganizationLocationComponent
+	// 		},
+	// 		{
+	// 			path: 'departments',
+	// 			component: EditOrganizationDepartmentsComponent
+	// 		},
+	// 		{
+	// 			path: 'contacts',
+	// 			component: EditOrganizationContactComponent
+	// 		},
+	// 		{
+	// 			path: 'positions',
+	// 			component: EditOrganizationPositionsComponent
+	// 		},
+	// 		{
+	// 			path: 'vendors',
+	// 			component: EditOrganizationVendorsComponent
+	// 		},
+	// 		{
+	// 			path: 'expense-categories',
+	// 			component: EditOrganizationExpenseCategoriesComponent
+	// 		},
+	// 		{
+	// 			path: 'projects',
+	// 			component: EditOrganizationProjectsComponent
+	// 		},
+	// 		{
+	// 			path: 'teams',
+	// 			component: EditOrganizationTeamsComponent
+	// 		},
+	// 		{
+	// 			path: 'settings',
+	// 			component: EditOrganizationOtherSettingsComponent
+	// 		},
+	// 		{
+	// 			path: 'employment-types',
+	// 			component: EditOrganizationEmploymentTypes
+	// 		},
+	// 		{
+	// 			path: 'employeeLevels',
+	// 			component: EditOrganizationEmployeeLevelComponent
+	// 		},
+	// 		{
+	// 			path: 'documents',
+	// 			component: EditOrganizationDocuments --------
+	// 		}
+	// 	]
+	// }
 ];
 
 @NgModule({

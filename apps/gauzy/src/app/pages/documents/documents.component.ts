@@ -1,5 +1,4 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { UploadDocumentComponent } from '../upload-document/upload-document.component';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
@@ -9,12 +8,13 @@ import { OrganizationDocumentsService } from 'apps/gauzy/src/app/@core/services/
 import { first } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { UploadDocumentComponent } from './upload-document/upload-document.component';
 
 @Component({
-	selector: 'ga-edit-organization-documents',
-	templateUrl: './edit-organization-documents.html'
+	selector: 'ga-documents',
+	templateUrl: './documents.component.html'
 })
-export class EditOrganizationDocuments implements OnInit, OnDestroy {
+export class DocumentsComponent implements OnInit, OnDestroy {
 	@ViewChild('uploadDoc')
 	uploadDoc: UploadDocumentComponent;
 
