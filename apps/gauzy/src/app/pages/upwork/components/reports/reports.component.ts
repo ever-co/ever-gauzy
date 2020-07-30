@@ -51,7 +51,13 @@ export class ReportsComponent extends TranslationBaseComponent
 				},
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
-					type: 'string'
+					type: 'string',
+					valuePrepareFunction: (value, item) => {
+						if (item.hasOwnProperty('vendor')) {
+							return item.vendor ? item.vendor.name : null;
+						}
+						return value;
+					}
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.AMOUNT'),
@@ -64,13 +70,11 @@ export class ReportsComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'string'
 				},
-				employeeName: {
+				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'string',
-					valuePrepareFunction: (value) => {
-						const user = value.employee
-							? value.employee.user
-							: null;
+					valuePrepareFunction: (item) => {
+						const user = item.user || null;
 						if (user) {
 							return `${user.firstName} ${user.lastName}`;
 						}
