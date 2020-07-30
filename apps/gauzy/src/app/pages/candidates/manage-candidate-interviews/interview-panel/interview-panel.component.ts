@@ -239,6 +239,10 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 						});
 					}
 				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
 			}
 		};
 	}
