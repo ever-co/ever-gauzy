@@ -26,6 +26,23 @@ export class ApprovalPolicyService {
 			.toPromise();
 	}
 
+	getForRequestApproval(
+		relations?: string[],
+		findInput?: ApprovalPolicy
+	): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
+
+		return this.http
+			.get<{ items: ApprovalPolicy[]; total: number }>(
+				`${this.APPROVAL_POLICY_URL}/requestapproval`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`${this.APPROVAL_POLICY_URL}/${id}`)

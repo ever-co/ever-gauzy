@@ -5,7 +5,7 @@ export interface ApprovalPolicy extends IBaseEntityModel {
 	tenantId?: string;
 	name?: string;
 	description?: string;
-	nameConst?: string;
+	approvalType?: string;
 }
 
 export interface ApprovalPolicyCreateInput extends IBaseEntityModel {
@@ -13,7 +13,7 @@ export interface ApprovalPolicyCreateInput extends IBaseEntityModel {
 	tenantId?: string;
 	name?: string;
 	description?: string;
-	nameConst?: string;
+	approvalType?: string;
 }
 
 export interface ApprovalPolicyUpdateInput extends IBaseEntityModel {
@@ -21,7 +21,7 @@ export interface ApprovalPolicyUpdateInput extends IBaseEntityModel {
 	tenantId?: string;
 	name?: string;
 	description?: string;
-	nameConst?: string;
+	approvalType?: string;
 }
 
 export interface ApprovalPolicyFindInput extends IBaseEntityModel {
@@ -29,7 +29,7 @@ export interface ApprovalPolicyFindInput extends IBaseEntityModel {
 	tenantId?: string;
 	name?: string;
 	description?: string;
-	nameConst?: string;
+	nameConstapprovalType?: string;
 }
 
 export enum ApprovalPolicyTypesEnum {
@@ -42,3 +42,9 @@ export const ApprovalPolicyConst = {
 	TIME_OFF: 'TIME_OFF',
 	EQUIPMENT_SHARING: 'EQUIPMENT_SHARING'
 };
+
+export enum ApprovalPolicyTypesStringEnum {
+	TIME_OFF = 'TIME_OFF',
+	EQUIPMENT_SHARING = 'EQUIPMENT_SHARING',
+	BUSINESS_TRIP = 'EQUIPMENT_SHARING'
+}

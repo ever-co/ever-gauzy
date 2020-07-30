@@ -195,7 +195,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 	async loadApprovalPolicies() {
 		this.approvalPolicies = (
-			await this.approvalPolicyService.getAll([], {
+			await this.approvalPolicyService.getForRequestApproval([], {
 				organizationId: this.selectedOrgId
 			})
 		).items.filter((policy) => {

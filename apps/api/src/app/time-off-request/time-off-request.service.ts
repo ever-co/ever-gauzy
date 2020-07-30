@@ -1,33 +1,82 @@
-import { Injectable } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	NotFoundException,
+	ConflictException
+} from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TimeOffRequest } from './time-off-request.entity';
 import { CrudService } from '../core/crud/crud.service';
-import { TimeOffCreateInput as ITimeOffCreateInput } from '@gauzy/models';
+import {
+	TimeOffCreateInput as ITimeOffCreateInput,
+	RequestApprovalStatusTypesEnum,
+	ApprovalPolicyConst,
+	StatusTypesEnum,
+	StatusTypesMapRequestApprovalEnum
+} from '@gauzy/models';
+import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
+import { RequestApproval } from '../request-approval/request-approval.entity';
+import { RequestContext } from '../core/context';
 
 @Injectable()
 export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 	constructor(
 		@InjectRepository(TimeOffRequest)
-		private readonly timeOfRequestRepository: Repository<TimeOffRequest>
+		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+		@InjectRepository(RequestApproval)
+		private readonly requestApprovalRepository: Repository<RequestApproval>,
+		@InjectRepository(ApprovalPolicy)
+		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>
 	) {
-		super(timeOfRequestRepository);
+		super(timeOffRequestRepository);
 	}
 
 	async create(entity: ITimeOffCreateInput): Promise<TimeOffRequest> {
-		const request = new TimeOffRequest();
-		Object.assign(request, entity);
+		try {
+			const request = new TimeOffRequest();
+			Object.assign(request, entity);
 
-		return await this.timeOfRequestRepository.save(request);
+			const timeOffRequestSaved = await this.timeOffRequestRepository.save(
+				request
+			);
+
+			const requestApproval = new RequestApproval();
+			requestApproval.requestId = timeOffRequestSaved.id;
+			requestApproval.status = timeOffRequestSaved.status
+				? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status]
+				: RequestApprovalStatusTypesEnum.REQUESTED;
+
+			const approvalPolicy = await this.approvalPolicyRepository.findOne({
+				where: {
+					organizationId: timeOffRequestSaved.organizationId,
+					approvalType: ApprovalPolicyConst.TIME_OFF
+				}
+			});
+
+			if (approvalPolicy) {
+				requestApproval.approvalPolicyId = approvalPolicy.id;
+			}
+			requestApproval.createdBy = RequestContext.currentUser().id;
+			requestApproval.createdByName = RequestContext.currentUser().name;
+			requestApproval.name = 'Request time off';
+			requestApproval.min_count = 1;
+
+			await this.requestApprovalRepository.save(requestApproval);
+			return timeOffRequestSaved;
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
 	}
 
 	async getAllTimeOffRequests(relations, findInput?, filterDate?) {
-		const allRequests = await this.timeOfRequestRepository.find({
+		const allRequests = await this.timeOffRequestRepository.find({
 			where: findInput['organziationId'],
 			relations
 		});
 		let items = [];
-		const total = await this.timeOfRequestRepository.count();
+		const total = await this.timeOffRequestRepository.count();
 
 		if (findInput['employeeId']) {
 			allRequests.forEach((request) => {
@@ -56,5 +105,36 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 		}
 
 		return { items, total };
+	}
+
+	async updateStatusTimeOffByAdmin(
+		id: string,
+		status: string
+	): Promise<TimeOffRequest> {
+		try {
+			const [timeOffRequest, requestApproval] = await Promise.all([
+				await this.timeOffRequestRepository.findOne(id),
+				await this.requestApprovalRepository.findOne({
+					requestId: id
+				})
+			]);
+
+			if (!timeOffRequest) {
+				throw new NotFoundException('Request time off not found');
+			}
+			if (timeOffRequest.status === StatusTypesEnum.REQUESTED) {
+				timeOffRequest.status = status;
+				if (requestApproval) {
+					requestApproval.status =
+						StatusTypesMapRequestApprovalEnum[status];
+					await this.requestApprovalRepository.save(requestApproval);
+				}
+			} else {
+				throw new ConflictException('Request time off is Conflict');
+			}
+			return await this.timeOffRequestRepository.save(timeOffRequest);
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
 	}
 }
