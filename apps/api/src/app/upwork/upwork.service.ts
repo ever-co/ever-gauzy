@@ -68,7 +68,6 @@ import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.commant';
 import { IPagination } from '../core';
-import { IntegrationMap } from '../integration-map/integration-map.entity';
 
 @Injectable()
 export class UpworkService {
@@ -973,7 +972,8 @@ export class UpworkService {
 							),
 							vendor,
 							notes: description,
-							typeOfExpense: subtype
+							typeOfExpense: subtype,
+							currency: CurrenciesEnum.USD
 						})
 					);
 
@@ -1050,7 +1050,8 @@ export class UpworkService {
 						),
 						notes,
 						tags: [],
-						reference: contractId
+						reference: contractId,
+						currency: CurrenciesEnum.USD
 					})
 				);
 
@@ -1301,9 +1302,10 @@ export class UpworkService {
 	 */
 	async getReportsForFreelancer(
 		integrationId,
-		data
-	): Promise<IPagination<IntegrationMap>> {
-		const integrationMap = await this._integrationMapService.findAll({
+		filter,
+		relations
+	): Promise<IPagination<any>> {
+		const { items, total } = await this._integrationMapService.findAll({
 			where: {
 				integration: {
 					id: integrationId
@@ -1315,11 +1317,18 @@ export class UpworkService {
 			}
 		});
 
-		const gauzyIds = _.pluck(integrationMap.items, 'gauzyId');
+		const reports = {
+			items: [],
+			total
+		};
+		if (items.length === 0) {
+			return reports;
+		}
 
+		const gauzyIds = _.pluck(items, 'gauzyId');
 		const {
 			dateRange: { start, end }
-		} = data;
+		} = filter;
 		const income = await this._incomeService.findAll({
 			where: {
 				id: In(gauzyIds),
@@ -1327,7 +1336,8 @@ export class UpworkService {
 					moment(start).format('YYYY-MM-DD hh:mm:ss'),
 					moment(end).format('YYYY-MM-DD hh:mm:ss')
 				)
-			}
+			},
+			relations: relations.income
 		});
 		const expense = await this._expenseService.findAll({
 			where: {
@@ -1336,15 +1346,14 @@ export class UpworkService {
 					moment(start).format('YYYY-MM-DD hh:mm:ss'),
 					moment(end).format('YYYY-MM-DD hh:mm:ss')
 				)
-			}
+			},
+			relations: relations.expense
 		});
 
-		const reports = {
-			items: [],
-			total: income.total + expense.total
-		};
+		reports.total = income.total + expense.total;
 		reports.items = reports.items.concat(income.items);
 		reports.items = reports.items.concat(expense.items);
+
 		reports.items = _.sortBy(reports.items, function (o) {
 			return o.valueDate;
 		}).reverse();

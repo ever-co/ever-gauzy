@@ -3,9 +3,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/internal/operators/takeUntil';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { UpworkStoreService } from '../../../../@core/services/upwork-store.service';
 import { IncomeExpenseAmountComponent } from 'apps/gauzy/src/app/@shared/table-components/income-amount/income-amount.component';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
+import { UpworkStoreService } from '../../../../@core/services/upwork-store.service';
 
 @Component({
 	selector: 'ngx-reports',
@@ -49,14 +49,6 @@ export class ReportsComponent extends TranslationBaseComponent
 					renderComponent: DateViewComponent,
 					filter: false
 				},
-				// type: {
-				// 	title: this.getTranslation('SM_TABLE.TRANSACTION_TYPE'),
-				// 	type: 'string'
-				// },
-				notes: {
-					title: this.getTranslation('SM_TABLE.NOTES'),
-					type: 'string'
-				},
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
 					type: 'string'
@@ -67,6 +59,22 @@ export class ReportsComponent extends TranslationBaseComponent
 					width: '15%',
 					filter: false,
 					renderComponent: IncomeExpenseAmountComponent
+				},
+				notes: {
+					title: this.getTranslation('SM_TABLE.NOTES'),
+					type: 'string'
+				},
+				employeeName: {
+					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
+					type: 'string',
+					valuePrepareFunction: (value) => {
+						const user = value.employee
+							? value.employee.user
+							: null;
+						if (user) {
+							return `${user.firstName} ${user.lastName}`;
+						}
+					}
 				}
 			},
 			pager: {
