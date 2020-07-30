@@ -253,6 +253,26 @@ import { createRandomEmployeeAppointment } from '../../employee-appointment/empl
 import { createRandomDeal } from '../../deal/deal.seed';
 import { createRandomIntegrationSetting } from '../../integration-setting/integration-setting.seed';
 import { createRandomIntegrationTenant } from '../../integration-tenant/integration-tenant.seed';
+import { IntegrationTenant } from '../../integration-tenant/integration-tenant.entity';
+import { Pipeline } from '../../pipeline/pipeline.entity';
+import { AvailabilitySlots } from '../../availability-slots/availability-slots.entity';
+import { IntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.entity';
+import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
+import { GoalTimeFrame } from '../../goal-time-frame/goal-time-frame.entity';
+import { KeyResult } from '../../keyresult/keyresult.entity';
+import { Goal } from '../../goal/goal.entity';
+import { GoalKPI } from '../../goal-kpi/goal-kpi.entity';
+import { KeyResultUpdate } from '../../keyresult-update/keyresult-update.entity';
+import { IntegrationSetting } from '../../integration-setting/integration-setting.entity';
+import { Deal } from '../../deal/deal.entity';
+import { OrganizationDocuments } from '../../organization-documents/organization-documents.entity';
+import { TimeOffRequest } from '../../time-off-request/time-off-request.entity';
+import { createRandomIntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.seed';
+import { createRandomIntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.seed';
+import { createRandomRequestApprovalTeam } from '../../request-approval-team/request-approval-team.seed';
+import { createRandomRequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.seed';
+import { createRandomPayment } from '../../payment/payment.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -333,7 +353,23 @@ const allEntities = [
 	TimeLog,
 	HelpCenterArticle,
 	IntegrationType,
-	Integration
+	Integration,
+  IntegrationTenant,
+  Pipeline,
+  AvailabilitySlots,
+  IntegrationEntitySetting,
+  IntegrationEntitySettingTiedEntity,
+  PipelineStage,
+  GoalTimeFrame,
+  KeyResult,
+  Goal,
+  GoalKPI,
+  KeyResultUpdate,
+  IntegrationSetting,
+  Deal,
+  OrganizationDocuments,
+  TimeOffRequest
+
 ];
 
 const randomSeedConfig = {
@@ -1226,6 +1262,25 @@ export class SeedDataService {
 		await this.tryExecute(
 			createRandomIntegrationSetting(this.connection, tenants)
 		);
+
+    await this.tryExecute(
+      createRandomPayment(this.connection, tenants, tenantUsersMap, tenantOrganizationsMap)
+    );
+
+
+    await this.tryExecute(
+      createRandomRequestApprovalEmployee(this.connection, tenants, tenantEmployeeMap, tenantOrganizationsMap)
+    );
+    await this.tryExecute(
+      createRandomRequestApprovalTeam(this.connection, tenants, tenantEmployeeMap, tenantOrganizationsMap)
+    );
+
+    await this.tryExecute(
+      createRandomIntegrationEntitySetting(this.connection, tenants)
+    );
+    await this.tryExecute(
+      createRandomIntegrationEntitySettingTiedEntity(this.connection, tenants)
+    );
 
 		await this.tryExecute(
 			createRandomCandidateCriterionRating(

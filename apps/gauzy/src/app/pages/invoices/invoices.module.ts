@@ -15,7 +15,10 @@ import {
 	NbSpinnerModule,
 	NbToggleModule,
 	NbContextMenuModule,
-	NbMenuModule
+	NbMenuModule,
+	NbAccordionModule,
+	NbPopoverModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -98,6 +101,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbToggleModule,
 		NbContextMenuModule,
 		NbMenuModule,
+		NbTabsetModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

@@ -21,6 +21,7 @@ export class EditKpiComponent extends TranslationBaseComponent
 	employees: Employee[];
 	selectedKPI: KPI;
 	type: string;
+	helper = '';
 	kpiOperatorEnum = KpiOperatorEnum;
 	kpiMetricEnum = KpiMetricEnum;
 	private _ngDestroy$ = new Subject<void>();
@@ -62,6 +63,10 @@ export class EditKpiComponent extends TranslationBaseComponent
 				lead: !!this.selectedKPI.lead ? this.selectedKPI.lead.id : null
 			});
 		}
+	}
+
+	helperText(event) {
+		this.helper = !!event ? event.target.id : '';
 	}
 
 	async saveKeyResult() {

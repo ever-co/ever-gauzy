@@ -134,26 +134,24 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 #### Developers (alphabetical order)
 
 -   Aleksandar Tasev ([AlexTasev](https://github.com/AlexTasev))
--   Aleksander Savov ([sunk0](https://github.com/sunk0))
 -   Alish Meklyov ([Alish](https://github.com/AlishMekliov931))
 -   Blagovest Gerov ([BlagovestGerov](https://github.com/BlagovestGerov))
 -   Boyan Stanchev ([boyanstanchev](https://github.com/boyanstanchev))
 -   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
--   Lubomir Petrov ([lpetrv](https://github.com/lpetrv))
+-   Martin Asenov ([goofy5752](https://github.com/goofy5752))
+-   Pavel Denchev ([PavelDenchev](https://github.com/PavelDenchev))
 -   Tsvetelina Yordanova ([tsvetelina-e-y](https://github.com/tsvetelina-e-y))
+-   Valentin Peshev ([valiopld](https://github.com/valiopld))
 -   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
 #### Designers & QA
 
 -   [Julia Konviser](https://www.linkedin.com/in/julia-konviser-8b917552) (Graphic Designer, QA)
+-   [Yordan Genovski](https://services.ever.co/teammembers/yordan-genovski) (UX/UI/Product Designer)
 
 ### Contributors
-
--   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
--   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
--   Nikolay Monov ([ntmonov](https://github.com/ntmonov))
 
 View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
 

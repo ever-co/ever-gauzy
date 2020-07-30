@@ -1,4 +1,4 @@
-<nb-card size="large" class="max-width-40vw">
+<nb-card size="large" class="max-width-50vw">
 	<nb-card-header>
 		{{
 			(!!data
@@ -14,403 +14,548 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="keyResultsForm">
-			<label for="key-result-title" class="label">
-				{{ 'FORM.LABELS.NAME' | translate }}
-			</label>
-			<input
-				type="text"
-				id="key-result-title"
-				nbInput
-				fullWidth
-				formControlName="name"
-				placeholder="{{
-					'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.NAME' | translate
-				}}"
-			/>
-
-			<label for="key-result-description" class="label mt-3">
-				{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
-			</label>
-			<textarea
-				id="key-result-description"
-				nbInput
-				fullWidth
-				formControlName="description"
-				placeholder="{{
-					'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.DESCRIPTION' | translate
-				}}"
-			></textarea>
-
-			<label for="key-result-type" class="label mt-3">
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE' | translate }}
-			</label>
-			<nb-select
-				(selectedChange)="taskTypeValidators()"
-				id="key-result-type"
-				fullWidth
-				formControlName="type"
-			>
-				<nb-option
-					*ngFor="let type of keyResultTypeEnum | keyvalue"
-					[hidden]="
-						type.value == keyResultTypeEnum.KPI
-							? !settings.krTypeKPI
-							: type.value == keyResultTypeEnum.TASK
-							? !settings.krTypeTask
-							: false
-					"
-					[value]="type.value"
-				>
-					{{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}
-				</nb-option>
-			</nb-select>
-			<div
-				class="row"
-				*ngIf="keyResultsForm.value.type === keyResultTypeEnum.TASK"
-			>
-				<div class="col-md-6">
-					<label class="label mt-3" for="project-selector">{{
-						'KEY_RESULT_PAGE.FORM.LABELS.SELECT_PROJECT' | translate
-					}}</label>
-					<ga-project-selector
-						id="project-selector"
-						formControlName="projectId"
-					>
-					</ga-project-selector>
-				</div>
-				<div class="col-md-6">
-					<label class="label mt-3" for="task-selector">{{
-						'KEY_RESULT_PAGE.FORM.LABELS.SELECT_TASK' | translate
-					}}</label>
-					<ga-task-selector
-						id="task-selector"
-						formControlName="taskId"
-						[(projectId)]="keyResultsForm.value.projectId"
-					>
-					</ga-task-selector>
-				</div>
-			</div>
-			<div *ngIf="keyResultsForm.value.type === keyResultTypeEnum.KPI">
-				<label for="kpi" class="label mt-3">
-					{{ 'KEY_RESULT_PAGE.FORM.LABELS.SELECT_KPI' | translate }}
-				</label>
-				<nb-select
-					*ngIf="KPIs.length > 0"
-					id="kpi"
-					fullWidth
-					formControlName="kpiId"
-				>
-					<nb-option *ngFor="let kpi of KPIs" [value]="kpi.id">
-						{{ kpi.name }}
-					</nb-option>
-				</nb-select>
-				<p *ngIf="KPIs.length === 0">
-					<button
-						nbButton
-						status="primary"
-						id="kpi"
-						(click)="openEditKPI()"
-					>
-						Add KPI
-					</button>
-				</p>
-			</div>
-			<div class="row mt-2">
-				<div class="col-md-6">
-					<label
-						*ngIf="
-							keyResultsForm.value.type ==
-								keyResultTypeEnum.NUMBER ||
-							keyResultsForm.value.type ==
-								keyResultTypeEnum.CURRENCY
-						"
-						for="initial-value"
-						class="label"
-					>
-						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
-								| translate
-						}}
+			<div class="row">
+				<div class="col-md-7">
+					<label for="key-result-title" class="label">
+						{{ 'FORM.LABELS.NAME' | translate }}
 					</label>
 					<input
-						type="number"
-						id="initial-value"
-						*ngIf="
-							keyResultsForm.value.type ==
-								keyResultTypeEnum.NUMBER ||
-							keyResultsForm.value.type ==
-								keyResultTypeEnum.CURRENCY
-						"
+						type="text"
+						id="key-result-title"
 						nbInput
 						fullWidth
-						formControlName="initialValue"
-						placeholder="						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
-								| translate
-						}}"
-					/>
-				</div>
-
-				<div class="col-md-6">
-					<label
-						*ngIf="
-							keyResultsForm.value.type ==
-								keyResultTypeEnum.NUMBER ||
-							keyResultsForm.value.type ==
-								keyResultTypeEnum.CURRENCY
-						"
-						for="target-value"
-						class="label"
-					>
-						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
-								| translate
-						}}
-					</label>
-					<input
-						type="number"
-						id="target-value"
-						*ngIf="
-							keyResultsForm.value.type ==
-								keyResultTypeEnum.NUMBER ||
-							keyResultsForm.value.type ==
-								keyResultTypeEnum.CURRENCY
-						"
-						nbInput
-						fullWidth
-						formControlName="targetValue"
+						formControlName="name"
 						placeholder="{{
-							'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
-								| translate
+							'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.NAME' | translate
 						}}"
 					/>
+				</div>
+				<div class="col-md-5 position-relative mt-3">
+					<p
+						*ngIf="helperText == ''"
+						class="mt-3 position-absolute"
+						innerHtml="{{
+							'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_GENERAL'
+								| translate
+						}}"
+					></p>
 				</div>
 			</div>
 
-			<label for="key-result-owner" class="label mt-3">
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
-			</label>
-			<ga-employee-multi-select
-				[multiple]="false"
-				[allEmployees]="employees"
-				[selectedEmployeeIds]="keyResultsForm.value.owner"
-				[label]="false"
-				(selectedChange)="selectEmployee($event, 'owner')"
-				id="key-result-owner"
-				placeholder="{{
-					'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate
-				}}"
-				class="header-selector employee-selector"
-			></ga-employee-multi-select>
-
-			<label for="key-result-Lead" class="label mt-3">
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}
-			</label>
-			<ga-employee-multi-select
-				[multiple]="false"
-				[allEmployees]="employees"
-				[selectedEmployeeIds]="keyResultsForm.value.lead"
-				[label]="false"
-				(selectedChange)="selectEmployee($event, 'lead')"
-				id="key-result-Lead"
-				placeholder="{{
-					'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate
-				}}"
-				class="header-selector employee-selector"
-			></ga-employee-multi-select>
-
-			<label for="key-result-deadline" class="label mt-3">
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}
-			</label>
-			<nb-select
-				(selectedChange)="deadlineValidators()"
-				id="key-result-deadline"
-				fullWidth
-				formControlName="deadline"
-			>
-				<nb-option
-					*ngFor="let deadline of keyResultDeadlineEnum | keyvalue"
-					[value]="deadline.value"
-				>
-					{{ 'KEY_RESULT_PAGE.DEADLINE.' + deadline.key | translate }}
-				</nb-option>
-			</nb-select>
-			<div class="row mt-3">
-				<div
-					class="col-md-6"
-					*ngIf="
-						keyResultsForm.value.deadline ==
-						keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE
-					"
-				>
-					<label for="soft-deadline" class="label">
-						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE'
-								| translate
-						}}
+			<div class="row">
+				<div class="col-md-7">
+					<label for="key-result-description" class="label mt-3">
+						{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
 					</label>
-					<input
+					<textarea
+						id="key-result-description"
 						nbInput
-						id="soft-deadline"
 						fullWidth
+						formControlName="description"
 						placeholder="{{
-							'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE'
+							'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.DESCRIPTION'
 								| translate
 						}}"
-						[nbDatepicker]="softDeadlinePicker"
-						formControlName="softDeadline"
-					/>
-					<nb-datepicker
-						#softDeadlinePicker
-						[min]="minDate"
-						[max]="
-							keyResultsForm.value.hardDeadline
-								? keyResultsForm.value.hardDeadline
-								: null
-						"
-					></nb-datepicker>
+					></textarea>
 				</div>
-				<div
-					class="col-md-6"
-					*ngIf="
-						keyResultsForm.value.deadline ==
-							keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE ||
-						keyResultsForm.value.deadline ==
-							keyResultDeadlineEnum.HARD_DEADLINE
-					"
-				>
-					<label for="hard-deadline" class="label">
-						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE'
-								| translate
-						}}
-					</label>
-					<input
-						nbInput
-						id="hard-deadline"
-						fullWidth
-						placeholder="{{
-							'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE'
-								| translate
-						}}"
-						[nbDatepicker]="hardDeadlinePicker"
-						formControlName="hardDeadline"
-					/>
-					<nb-datepicker
-						#hardDeadlinePicker
-						[min]="
-							keyResultsForm.value.softDeadline
-								? keyResultsForm.value.softDeadline
-								: minDate
-						"
-					></nb-datepicker>
-				</div>
+				<div class="col-md-5 position-relative mt-3"></div>
 			</div>
-			<div class="row mt-3">
-				<div class="col-md-3 d-flex flex-column">
-					<label for="updated-value" class="label mt-1">
+
+			<div class="row">
+				<div class="col-md-7">
+					<label for="key-result-type" class="label mt-3">
 						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE'
+							'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE'
 								| translate
 						}}
-					</label>
-					<nb-toggle
-						class="ml-2"
-						id="updated-value"
-						formControlName="assignAsObjective"
-						status="primary"
-					>
-					</nb-toggle>
-				</div>
-				<div
-					*ngIf="!!keyResultsForm.value.assignAsObjective"
-					class="col-md-5"
-				>
-					<label for="objective-level" class="label">
-						{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
 					</label>
 					<nb-select
-						id="objective-level"
-						formControlName="level"
-						placeholder="{{
-							'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL' | translate
-						}}"
-						[selected]="keyResultsForm.value.level"
-						(selectedChange)="
-							$event === goalLevelEnum.TEAM ? getTeams() : null
-						"
+						(selectedChange)="taskTypeValidators()"
+						id="key-result-type"
 						fullWidth
+						formControlName="type"
 					>
 						<nb-option
-							*ngFor="let level of goalLevelEnum | keyvalue"
-							[value]="level.value"
-							[attr.disabled]="
-								!hideOrg
-									? false
-									: keyResultsForm.value.level ===
-									  goalLevelEnum.ORGANIZATION
-									? true
-									: level.value === goalLevelEnum.ORGANIZATION
-									? true
+							*ngFor="let type of keyResultTypeEnum | keyvalue"
+							[hidden]="
+								type.value == keyResultTypeEnum.KPI
+									? !settings.krTypeKPI
+									: type.value == keyResultTypeEnum.TASK
+									? !settings.krTypeTask
 									: false
 							"
+							[value]="type.value"
 						>
-							{{ 'GOALS_PAGE.LEVELS.' + level.key | translate }}
+							{{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}
 						</nb-option>
 					</nb-select>
 				</div>
-				<div class="col-md-4" *ngIf="!!keyResultsForm.value.level">
-					<label for="objective-owner" class="label">
+				<div class="col-md-5 position-relative mt-3"></div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-7">
+					<div
+						class="row"
+						*ngIf="
+							keyResultsForm.value.type === keyResultTypeEnum.TASK
+						"
+					>
+						<div class="col-md-6">
+							<label class="label mt-3" for="project-selector">{{
+								'KEY_RESULT_PAGE.FORM.LABELS.SELECT_PROJECT'
+									| translate
+							}}</label>
+							<ga-project-selector
+								id="project-selector"
+								formControlName="projectId"
+							>
+							</ga-project-selector>
+						</div>
+						<div class="col-md-6">
+							<label class="label mt-3" for="task-selector">{{
+								'KEY_RESULT_PAGE.FORM.LABELS.SELECT_TASK'
+									| translate
+							}}</label>
+							<ga-task-selector
+								id="task-selector"
+								formControlName="taskId"
+								[(projectId)]="keyResultsForm.value.projectId"
+							>
+							</ga-task-selector>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-5 position-relative mt-3"></div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-7">
+					<div
+						*ngIf="
+							keyResultsForm.value.type === keyResultTypeEnum.KPI
+						"
+					>
+						<label for="kpi" class="label mt-3">
+							{{
+								'KEY_RESULT_PAGE.FORM.LABELS.SELECT_KPI'
+									| translate
+							}}
+						</label>
+						<nb-select
+							*ngIf="KPIs.length > 0"
+							id="kpi"
+							fullWidth
+							formControlName="kpiId"
+						>
+							<nb-option
+								*ngFor="let kpi of KPIs"
+								[value]="kpi.id"
+							>
+								{{ kpi.name }}
+							</nb-option>
+						</nb-select>
+						<p *ngIf="KPIs.length === 0">
+							<button
+								nbButton
+								status="primary"
+								id="kpi"
+								(click)="openEditKPI()"
+							>
+								Add KPI
+							</button>
+						</p>
+					</div>
+				</div>
+				<div class="col-md-5 position-relative mt-3"></div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-7">
+					<div class="row mt-2">
+						<div class="col-md-6">
+							<label
+								*ngIf="
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.NUMBER ||
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.CURRENCY
+								"
+								for="initial-value"
+								class="label"
+							>
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+										| translate
+								}}
+							</label>
+							<input
+								type="number"
+								id="initial-value"
+								*ngIf="
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.NUMBER ||
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.CURRENCY
+								"
+								nbInput
+								fullWidth
+								formControlName="initialValue"
+								placeholder="						{{
+									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+										| translate
+								}}"
+							/>
+						</div>
+
+						<div class="col-md-6">
+							<label
+								*ngIf="
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.NUMBER ||
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.CURRENCY
+								"
+								for="target-value"
+								class="label"
+							>
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+										| translate
+								}}
+							</label>
+							<input
+								type="number"
+								id="target-value"
+								*ngIf="
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.NUMBER ||
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.CURRENCY
+								"
+								nbInput
+								fullWidth
+								formControlName="targetValue"
+								placeholder="{{
+									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-5 position-relative mt-3"></div>
+			</div>
+
+			<div class="row">
+				<div
+					class="col-md-7"
+					(mouseenter)="helperText = 'key-result-owner'"
+					(mouseleave)="helperText = ''"
+				>
+					<label for="key-result-owner" class="label mt-3">
 						{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
 					</label>
 					<ga-employee-multi-select
-						*ngIf="
-							keyResultsForm.value.level ===
-							goalLevelEnum.EMPLOYEE
-						"
 						[multiple]="false"
 						[allEmployees]="employees"
 						[selectedEmployeeIds]="keyResultsForm.value.owner"
 						[label]="false"
-						(selectedChange)="
-							selectEmployee($event, 'alignedGoalOwner')
-						"
+						(selectedChange)="selectEmployee($event, 'owner')"
 						id="key-result-owner"
 						placeholder="{{
-							'GOALS_PAGE.FORM.LABELS.OWNER' | translate
+							'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate
 						}}"
 						class="header-selector employee-selector"
 					></ga-employee-multi-select>
-					<nb-select
-						fullWidth
-						placeholder="{{
-							'GOALS_PAGE.FORM.LABELS.OWNER' | translate
-						}}"
-						*ngIf="
-							keyResultsForm.value.level === goalLevelEnum.TEAM
-						"
-						formControlName="alignedGoalOwner"
+				</div>
+				<div class="col-md-5 position-relative mt-3 helper-text">
+					<div
+						class="mt-3 position-absolute"
+						*ngIf="helperText == 'key-result-owner'"
 					>
-						<nb-option *ngFor="let team of teams" [value]="team.id">
-							{{ team.name }}
-						</nb-option>
-					</nb-select>
-					<nb-select
-						fullWidth
+						<p>
+							{{
+								'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_OWNER'
+									| translate
+							}}
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div
+					class="col-md-7"
+					(mouseenter)="helperText = 'key-result-lead'"
+					(mouseleave)="helperText = ''"
+				>
+					<label for="key-result-lead" class="label mt-3">
+						{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}
+					</label>
+					<ga-employee-multi-select
+						[multiple]="false"
+						[allEmployees]="employees"
+						[selectedEmployeeIds]="keyResultsForm.value.lead"
+						[label]="false"
+						(selectedChange)="selectEmployee($event, 'lead')"
+						id="key-result-lead"
 						placeholder="{{
-							'GOALS_PAGE.FORM.LABELS.OWNER' | translate
+							'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate
 						}}"
-						*ngIf="
-							keyResultsForm.value.level ===
-							goalLevelEnum.ORGANIZATION
-						"
-						formControlName="alignedGoalOwner"
+						class="header-selector employee-selector"
+					></ga-employee-multi-select>
+				</div>
+				<div class="col-md-5 position-relative mt-3 helper-text">
+					<div
+						class="mt-3 position-absolute"
+						*ngIf="helperText == 'key-result-lead'"
 					>
-						<nb-option [value]="orgId">
-							{{ orgName }}
+						<p>
+							{{
+								'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_LEAD'
+									| translate
+							}}
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-7">
+					<label for="key-result-deadline" class="label mt-3">
+						{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}
+					</label>
+					<nb-select
+						(selectedChange)="deadlineValidators()"
+						id="key-result-deadline"
+						fullWidth
+						formControlName="deadline"
+					>
+						<nb-option
+							*ngFor="
+								let deadline of keyResultDeadlineEnum | keyvalue
+							"
+							[value]="deadline.value"
+						>
+							{{
+								'KEY_RESULT_PAGE.DEADLINE.' + deadline.key
+									| translate
+							}}
 						</nb-option>
 					</nb-select>
 				</div>
+				<div class="col-md-5 position-relative mt-3"></div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-7">
+					<div class="row mt-3">
+						<div
+							class="col-md-6"
+							*ngIf="
+								keyResultsForm.value.deadline ==
+								keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE
+							"
+						>
+							<label for="soft-deadline" class="label">
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE'
+										| translate
+								}}
+							</label>
+							<input
+								nbInput
+								id="soft-deadline"
+								fullWidth
+								placeholder="{{
+									'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE'
+										| translate
+								}}"
+								[nbDatepicker]="softDeadlinePicker"
+								formControlName="softDeadline"
+							/>
+							<nb-datepicker
+								#softDeadlinePicker
+								[min]="minDate"
+								[max]="
+									keyResultsForm.value.hardDeadline
+										? keyResultsForm.value.hardDeadline
+										: null
+								"
+							></nb-datepicker>
+						</div>
+						<div
+							class="col-md-6"
+							*ngIf="
+								keyResultsForm.value.deadline ==
+									keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE ||
+								keyResultsForm.value.deadline ==
+									keyResultDeadlineEnum.HARD_DEADLINE
+							"
+						>
+							<label for="hard-deadline" class="label">
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE'
+										| translate
+								}}
+							</label>
+							<input
+								nbInput
+								id="hard-deadline"
+								fullWidth
+								placeholder="{{
+									'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE'
+										| translate
+								}}"
+								[nbDatepicker]="hardDeadlinePicker"
+								formControlName="hardDeadline"
+							/>
+							<nb-datepicker
+								#hardDeadlinePicker
+								[min]="
+									keyResultsForm.value.softDeadline
+										? keyResultsForm.value.softDeadline
+										: minDate
+								"
+							></nb-datepicker>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-5 position-relative mt-3"></div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-7">
+					<div class="row mt-3">
+						<div class="col-md-3 d-flex flex-column">
+							<label for="updated-value" class="label mt-1">
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE'
+										| translate
+								}}
+							</label>
+							<nb-toggle
+								class="ml-2"
+								id="updated-value"
+								formControlName="assignAsObjective"
+								status="primary"
+							>
+							</nb-toggle>
+						</div>
+						<div
+							*ngIf="!!keyResultsForm.value.assignAsObjective"
+							class="col-md-5"
+						>
+							<label for="objective-level" class="label">
+								{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
+							</label>
+							<nb-select
+								id="objective-level"
+								formControlName="level"
+								placeholder="{{
+									'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL'
+										| translate
+								}}"
+								[selected]="keyResultsForm.value.level"
+								(selectedChange)="
+									$event === goalLevelEnum.TEAM
+										? getTeams()
+										: null
+								"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="
+										let level of goalLevelEnum | keyvalue
+									"
+									[value]="level.value"
+									[hidden]="
+										hideOrg
+											? level.value ===
+											  goalLevelEnum.ORGANIZATION
+											: false || hideEmployee
+											? level.value ===
+											  goalLevelEnum.EMPLOYEE
+											: false || hideTeam
+											? level.value === goalLevelEnum.TEAM
+											: false
+									"
+								>
+									{{
+										'GOALS_PAGE.LEVELS.' + level.key
+											| translate
+									}}
+								</nb-option>
+							</nb-select>
+						</div>
+						<div
+							class="col-md-4"
+							*ngIf="!!keyResultsForm.value.level"
+						>
+							<label for="objective-owner" class="label">
+								{{
+									'KEY_RESULT_PAGE.FORM.LABELS.OWNER'
+										| translate
+								}}
+							</label>
+							<ga-employee-multi-select
+								*ngIf="
+									keyResultsForm.value.level ===
+									goalLevelEnum.EMPLOYEE
+								"
+								[multiple]="false"
+								[allEmployees]="employees"
+								[selectedEmployeeIds]="
+									keyResultsForm.value.owner
+								"
+								[label]="false"
+								(selectedChange)="
+									selectEmployee($event, 'alignedGoalOwner')
+								"
+								id="key-result-owner"
+								placeholder="{{
+									'GOALS_PAGE.FORM.LABELS.OWNER' | translate
+								}}"
+								class="header-selector employee-selector"
+							></ga-employee-multi-select>
+							<nb-select
+								fullWidth
+								placeholder="{{
+									'GOALS_PAGE.FORM.LABELS.OWNER' | translate
+								}}"
+								*ngIf="
+									keyResultsForm.value.level ===
+									goalLevelEnum.TEAM
+								"
+								formControlName="alignedGoalOwner"
+							>
+								<nb-option
+									*ngFor="let team of teams"
+									[value]="team.id"
+								>
+									{{ team.name }}
+								</nb-option>
+							</nb-select>
+							<nb-select
+								fullWidth
+								placeholder="{{
+									'GOALS_PAGE.FORM.LABELS.OWNER' | translate
+								}}"
+								*ngIf="
+									keyResultsForm.value.level ===
+									goalLevelEnum.ORGANIZATION
+								"
+								formControlName="alignedGoalOwner"
+							>
+								<nb-option [value]="orgId">
+									{{ orgName }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-5 position-relative mt-3"></div>
 			</div>
 		</form>
 	</nb-card-body>

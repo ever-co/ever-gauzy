@@ -45,6 +45,7 @@ export const createDefaultGoals = async (
 				goal.name.split('-', 4)[3]
 			}`;
 			goal.organization = organization;
+			goal.organizationId = organization.id;
 			defaultGoals.push(goal);
 		}
 	});
@@ -60,22 +61,24 @@ export const updateDefaultGoalProgress = async (
 	const goals: Goal[] = await connection.manager.find(Goal, {
 		relations: ['keyResults']
 	});
-	goals.forEach(async (goal) => {
-		const progressTotal = goal.keyResults.reduce(
-			(a, b) => a + b.progress * +b.weight,
-			0
-		);
-		const weightTotal = goal.keyResults.reduce((a, b) => a + +b.weight, 0);
-		const goalProgress = Math.round(progressTotal / weightTotal);
-		await connection.manager.update(
-			Goal,
-			{ id: goal.id },
-			{
-				progress: goalProgress
-			}
-		);
-	});
-	return goals;
+	if (goals && goals.length>0) {
+    goals.forEach(async (goal) => {
+      const progressTotal = goal.keyResults.reduce(
+        (a, b) => a + b.progress * +b.weight,
+        0
+      );
+      const weightTotal = goal.keyResults.reduce((a, b) => a + +b.weight, 0);
+      const goalProgress = Math.round(progressTotal / weightTotal);
+      await connection.manager.update(
+        Goal,
+        { id: goal.id },
+        {
+          progress: goalProgress
+        }
+      );
+    });
+    return goals;
+  }
 };
 
 const insertDefaultGoals = async (
