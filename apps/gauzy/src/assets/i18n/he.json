@@ -661,7 +661,8 @@
 	"INCOME_PAGE": {
 		"INCOME": "הכנסה",
 		"BONUS_HELP": "If set, company % fee will NOT be applied to the Bonus Income",
-		"BONUS_TOOLTIP": "This is a direct bonus"
+		"BONUS_TOOLTIP": "This is a direct bonus",
+		"EMPLOYEES_GENERATE_INCOME": "Employees that generate income"
 	},
 	"EXPENSES_PAGE": {
 		"EXPENSES": "הוצאות",
@@ -670,7 +671,8 @@
 			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
-			"ATTACH_A_RECEIPT": "Attach a receipt"
+			"ATTACH_A_RECEIPT": "Attach a receipt",
+			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense"
 		},
 		"DEFAULT_CATEGORY": {
 			"SALARY": "Salary",
