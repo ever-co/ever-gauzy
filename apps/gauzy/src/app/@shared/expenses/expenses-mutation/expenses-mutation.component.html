@@ -9,17 +9,6 @@
 		<ng-template #headerAdd>
 			<h4>{{ 'POP_UPS.ADD_EXPENSE' | translate }}</h4>
 		</ng-template>
-		<ga-employee-selector
-			#employeeSelector
-			fullWidth
-			[hidden]="expense && !duplicate"
-			[skipGlobalChange]="true"
-			class="employees"
-			placeholder="Organization"
-			[defaultSelected]="false"
-			(selectionChanged)="onEmployeeChange($event)"
-			[selectedDate]="valueDate.value"
-		></ga-employee-selector>
 		<span
 			*ngIf="showTooltip"
 			class="help-text"
@@ -54,6 +43,27 @@
 					)
 				"
 			></div>
+			<div class="row employees">
+				<div class="col-sm-6">
+					<label class="label" for="status">
+						{{
+							'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE'
+								| translate
+						}}
+					</label>
+					<ga-employee-selector
+						#employeeSelector
+						fullWidth
+						[hidden]="expense && !duplicate"
+						[skipGlobalChange]="true"
+						class="employees"
+						placeholder="Organization"
+						[defaultSelected]="false"
+						(selectionChanged)="onEmployeeChange($event)"
+						[selectedDate]="valueDate.value"
+					></ga-employee-selector>
+				</div>
+			</div>
 			<div class="row">
 				<div class="col-sm-6">
 					<input
