@@ -26,7 +26,7 @@ import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 })
 export class PipelinesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	public smartTableSettings = {
+	smartTableSettings = {
 		actions: false,
 		noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
 		columns: {
@@ -43,11 +43,11 @@ export class PipelinesComponent extends TranslationBaseComponent
 		}
 	};
 
-	public pipelines = new LocalDataSource([] as Pipeline[]);
-	public CAN_EDIT_SALES_PIPELINES = false;
-	public organizationId: string;
-	public pipeline: Pipeline;
-	public name: string;
+	pipelines = new LocalDataSource([] as Pipeline[]);
+	CAN_EDIT_SALES_PIPELINES = false;
+	organizationId: string;
+	pipeline: Pipeline;
+	name: string;
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
 	private permissionSubscription: Subscription;
 	viewComponentName: ComponentEnum;
@@ -55,7 +55,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 	pipelineData: Pipeline[];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
-	public constructor(
+	constructor(
 		private usersOrganizationsService: UsersOrganizationsService,
 		private pipelinesService: PipelinesService,
 		private nbToastrService: NbToastrService,
@@ -80,7 +80,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 		this.setView();
 	}
 
-	public ngOnInit(): void {
+	ngOnInit() {
 		this.permissionSubscription = this.store.userRolePermissions$.subscribe(
 			() => {
 				this.CAN_EDIT_SALES_PIPELINES = this.store.hasPermission(
@@ -115,7 +115,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 			});
 	}
 
-	public async updatePipelines(): Promise<void> {
+	async updatePipelines(): Promise<void> {
 		const { organizationId: value } = this;
 		const organizationId = value || void 0;
 
@@ -128,7 +128,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 			});
 	}
 
-	public filterPipelines(): void {
+	filterPipelines(): void {
 		setTimeout(() => {
 			const { name: search = '' } = this;
 
@@ -141,7 +141,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 		});
 	}
 
-	public async deletePipeline(): Promise<void> {
+	async deletePipeline(): Promise<void> {
 		const canProceed: 'ok' = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -159,14 +159,14 @@ export class PipelinesComponent extends TranslationBaseComponent
 		}
 	}
 
-	public async createPipeline(): Promise<void> {
+	async createPipeline(): Promise<void> {
 		const { name, organizationId } = this;
 
 		await this.goto({ pipeline: { name, organizationId } });
 		delete this.name;
 	}
 
-	public async editPipeline(): Promise<void> {
+	async editPipeline(): Promise<void> {
 		const { pipeline } = this;
 
 		await this.goto({ pipeline });
@@ -193,7 +193,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 		}
 	}
 
-	public ngOnDestroy(): void {
+	ngOnDestroy(): void {
 		this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
 		this.permissionSubscription.unsubscribe();
 		clearTimeout();
