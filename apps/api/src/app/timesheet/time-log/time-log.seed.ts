@@ -16,6 +16,11 @@ export const createRandomTimeLogs = async (
 	timeSheets: Timesheet[],
 	defaultProjects: OrganizationProjects[]
 ) => {
+	timeSheets = await connection
+		.getRepository(Timesheet)
+		.createQueryBuilder()
+		.getMany();
+
 	const allEmployees = await connection
 		.getRepository(Employee)
 		.createQueryBuilder()

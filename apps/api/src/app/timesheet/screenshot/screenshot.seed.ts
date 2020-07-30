@@ -6,7 +6,7 @@ import { Screenshot } from '../screenshot.entity';
 import * as moment from 'moment';
 
 let fileList: string[] = [];
-const dir = path.join(
+let dir = path.join(
 	process.cwd(),
 	'apps',
 	'api',
@@ -27,6 +27,8 @@ const destDir = path.join(
 );
 
 export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
+	await getlist();
+
 	const screenshots: Screenshot[] = [];
 	// for (let index = 0; index < faker.random.number(3); index++) {
 	const screenshot = new Screenshot();
@@ -61,4 +63,18 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 	screenshots.push(screenshot);
 	// }
 	return screenshots;
+};
+
+const getlist = function () {
+	return new Promise((resolve, reject) => {
+		dir = path.join(process.cwd(), 'src', 'assets', 'seed', 'screenshots');
+		fs.readdir(dir, function (err, items) {
+			if (err) {
+				reject();
+			} else {
+				fileList = items;
+				resolve();
+			}
+		});
+	});
 };
