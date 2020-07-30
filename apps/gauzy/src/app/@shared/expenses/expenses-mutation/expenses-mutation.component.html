@@ -45,7 +45,11 @@
 			></div>
 			<div class="row employees">
 				<div class="col-sm-6">
-					<label class="label" for="status">
+					<label
+						class="label"
+						for="status"
+						[hidden]="expense && !duplicate"
+					>
 						{{
 							'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE'
 								| translate
