@@ -56,6 +56,7 @@ import { OrganizationsService } from '../@core/services/organizations.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { LanguagesService } from '../@core/services/languages.service';
 import { LayoutSelectorComponent } from './components/layout-selector/layout-selector.component';
+import { BackComponent } from './components/back/back.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -96,7 +97,8 @@ const COMPONENTS = [
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	ThemeSettingsComponent,
-	LayoutSelectorComponent
+	LayoutSelectorComponent,
+	BackComponent
 ];
 const PIPES = [
 	CapitalizePipe,

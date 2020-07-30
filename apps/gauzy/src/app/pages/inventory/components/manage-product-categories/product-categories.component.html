@@ -2,14 +2,7 @@
 	<nb-card-header>
 		<div class="main-header">
 			<div class="top-nav">
-				<button
-					(click)="goBack()"
-					nbButton
-					status="primary"
-					class="mr-4"
-				>
-					<nb-icon icon="arrow-back-outline"></nb-icon>
-				</button>
+				<ga-back-selector></ga-back-selector>
 				<h4>{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}</h4>
 			</div>
 			<div>
