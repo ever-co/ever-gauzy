@@ -155,14 +155,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 		];
 	}
 
-	goBack() {
-		const currentURL = window.location.href;
-		window.location.href = currentURL.substring(
-			0,
-			currentURL.indexOf('/settings')
-		);
-	}
-
 	private async _loadOrganization(id: string) {
 		try {
 			this.organization = await this.organizationService

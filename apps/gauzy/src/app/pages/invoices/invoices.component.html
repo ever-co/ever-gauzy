@@ -144,21 +144,24 @@
 						</div>
 						<div class="col-sm-3">
 							<div class="form-group">
-								<label for="inputClientName" class="label">
+								<label
+									for="inputOrganizationContact"
+									class="label"
+								>
 									<span>{{
-										'INVOICES_PAGE.INVOICES_SELECT_CLIENT'
+										'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
 											| translate
 									}}</span>
 								</label>
 								<ng-select
-									[items]="clients"
+									[items]="organizationContacts"
 									bindName="name"
 									placeholder="{{
-										'POP_UPS.ALL_CLIENTS' | translate
+										'POP_UPS.ALL_CONTACTS' | translate
 									}}"
-									formControlName="client"
-									id="inputClient"
-									[searchFn]="searchClient"
+									formControlName="organizationContact"
+									id="inputOrganizationContact"
+									[searchFn]="searchContact"
 								>
 									<ng-template
 										ng-option-tmp
