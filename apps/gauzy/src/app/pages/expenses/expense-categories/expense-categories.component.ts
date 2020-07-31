@@ -1,8 +1,5 @@
-import { IOrganizationExpenseCategory } from './../../../../../../../../../libs/models/src/lib/organization-expense-category.model';
 import { Component, OnInit } from '@angular/core';
 import { NbToastrService } from '@nebular/theme';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -10,13 +7,14 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
 import { Tag } from '@gauzy/models';
+import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
-	selector: 'ga-edit-org-expense-categories',
-	templateUrl: './edit-organization-expense-categories.component.html'
+	selector: 'ga-expense-categories',
+	templateUrl: './expense-categories.component.html'
 })
-export class EditOrganizationExpenseCategoriesComponent
-	extends TranslationBaseComponent
+export class ExpenseCategoriesComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 	expenseCategoryId: string;
@@ -32,7 +30,7 @@ export class EditOrganizationExpenseCategoriesComponent
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
 		private readonly toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore,
+		private store: Store,
 		readonly translateService: TranslateService,
 		private errorHandlingService: ErrorHandlingService
 	) {
@@ -40,7 +38,7 @@ export class EditOrganizationExpenseCategoriesComponent
 	}
 
 	ngOnInit(): void {
-		this.organizationEditStore.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {

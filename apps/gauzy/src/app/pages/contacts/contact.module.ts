@@ -65,21 +65,6 @@ const COMPONENTS = [
 			}
 		}),
 		NbToggleModule
-		// NbBadgeModule,
-		// TableComponentsModule,
-		// NbSpinnerModule,
-		// NbActionsModule,
-		// ColorPickerModule,
-		// Ng2SmartTableModule,
-		// OrganizationsMutationModule,
-		// UserFormsModule,
-		// ImageUploaderModule,
-		// RemoveLodashModule,
-		// NbListModule,
-		// NbTabsetModule,
-		// NbRouteTabsetModule,
-		// NbDatepickerModule,
-		// EmployeeSelectorsModule
 	],
 
 	declarations: [...COMPONENTS],

@@ -63,9 +63,20 @@
 		</div>
 
 		<nb-card *ngFor="let v of expenseCategories">
-			<nb-card-body>
+			<nb-card-body
+				style="
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+				"
+			>
 				<!-- {{ selectedExpenseCategory === v ? '' : v.name }} -->
-				<ga-notes-with-tags [rowData]="v"> </ga-notes-with-tags>
+				<ga-notes-with-tags
+					[rowData]="v"
+					*ngIf="v !== selectedExpenseCategory"
+				>
+				</ga-notes-with-tags>
+
 				<div
 					*ngIf="showEditDiv && v === selectedExpenseCategory"
 					class="row m-0"
@@ -127,7 +138,7 @@
 				>
 					<nb-action
 						(click)="showEditCard(v)"
-						class="d-inline pr-0"
+						class="d-inline pr-0 mr-3"
 						icon="edit"
 					></nb-action>
 					<nb-action
