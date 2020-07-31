@@ -47,8 +47,6 @@ import { EditOrganizationLocationComponent } from './edit-organization-location/
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationPositionsComponent } from './edit-organization-positions/edit-organization-positions.component';
-import { EditOrganizationProjectsMutationComponent } from './edit-organization-projects/edit-organization-projects-mutation/edit-organization-projects-mutation.component';
-import { EditOrganizationProjectsComponent } from './edit-organization-projects/edit-organization-projects.component';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
 import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
 import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
@@ -125,12 +123,10 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EditOrganizationPositionsComponent,
 		EditOrganizationPositionsComponent,
 		EditOrganizationContactComponent,
-		EditOrganizationProjectsComponent,
 		EditOrganizationTeamsComponent,
 		EditOrganizationTeamsMutationComponent,
 		EditOrganizationOtherSettingsComponent,
 		EditOrganizationContactMutationComponent,
-		EditOrganizationProjectsMutationComponent,
 		EditOrganizationEmploymentTypes,
 		InviteContactComponent,
 		EditOrganizationEmployeeLevelComponent

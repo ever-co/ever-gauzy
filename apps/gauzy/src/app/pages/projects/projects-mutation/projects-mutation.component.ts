@@ -11,20 +11,19 @@ import {
 	ProjectOwnerEnum,
 	TaskListTypeEnum
 } from '@gauzy/models';
-import { OrganizationContactService } from '../../../../../../@core/services/organization-contact.service';
-import { Store } from '../../../../../../@core/services/store.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
-import { ErrorHandlingService } from '../../../../../../@core/services/error-handling.service';
 import { Router } from '@angular/router';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { Store } from '../../../@core/services/store.service';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 
 @Component({
-	selector: 'ga-edit-organization-projects-mutation',
-	templateUrl: './edit-organization-projects-mutation.component.html'
+	selector: 'ga-projects-mutation',
+	templateUrl: './projects-mutation.component.html'
 })
-export class EditOrganizationProjectsMutationComponent
-	extends TranslationBaseComponent
+export class ProjectsMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
 	employees: Employee[];

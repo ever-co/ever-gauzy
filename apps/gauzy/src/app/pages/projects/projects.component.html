@@ -9,7 +9,7 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<ga-edit-organization-projects-mutation
+		<ga-projects-mutation
 			*ngIf="showAddCard"
 			[employees]="employees"
 			[organization]="organization"
@@ -18,7 +18,7 @@
 			(canceled)="cancel()"
 			(addOrEditProject)="addOrEditProject($event)"
 		>
-		</ga-edit-organization-projects-mutation>
+		</ga-projects-mutation>
 	</nb-card-header>
 	<nb-card-body class="project-list" *ngIf="projects?.length">
 		<ga-entity-with-members-card

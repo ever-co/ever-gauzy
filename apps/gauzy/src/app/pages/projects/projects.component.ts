@@ -8,23 +8,22 @@ import {
 	PermissionsEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { EmployeesService } from '../../../../../@core/services';
-import { OrganizationContactService } from '../../../../../@core/services/organization-contact.service';
-import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { OrganizationProjectsService } from '../../../../../@core/services/organization-projects.service';
-import { Store } from '../../../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { Store } from '../../@core/services/store.service';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
+import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
+import { EmployeesService } from '../../@core/services';
 
 @Component({
-	selector: 'ga-edit-org-projects',
-	templateUrl: './edit-organization-projects.component.html',
-	styleUrls: ['./edit-organization-projects.component.scss']
+	selector: 'ga-projects',
+	templateUrl: './projects.component.html',
+	styleUrls: ['./projects.component.scss']
 })
-export class EditOrganizationProjectsComponent extends TranslationBaseComponent
+export class ProjectsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -41,7 +40,6 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private store: Store,
-		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute
@@ -50,7 +48,7 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.organizationEditStore.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {

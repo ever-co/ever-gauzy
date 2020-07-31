@@ -109,12 +109,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 			// 	route: this.getRoute('expense-categories')
 			// },
 			// {
-			// 	title: this.getTranslation('ORGANIZATIONS_PAGE.PROJECTS'),
-			// 	icon: 'book-outline',
-			// 	responsive: true,
-			// 	route: this.getRoute('projects')
-			// },
-			// {
 			// 	title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS'),
 			// 	icon: 'people-outline',
 			// 	responsive: true,
