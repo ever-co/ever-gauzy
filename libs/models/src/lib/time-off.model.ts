@@ -78,3 +78,9 @@ export enum StatusTypesEnum {
 	DENIED = 'Denied',
 	ALL = 'All'
 }
+
+export enum StatusTypesMapRequestApprovalEnum {
+	Requested = 1,
+	Approved = 2,
+	Denied = 3
+}

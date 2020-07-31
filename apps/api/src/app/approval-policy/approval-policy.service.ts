@@ -2,7 +2,7 @@ import { CrudService, IPagination } from '../core';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository, Not, Equal } from 'typeorm';
+import { FindManyOptions, Repository, Not, In } from 'typeorm';
 import {
 	ApprovalPolicy as IApprovalPolicy,
 	ApprovalPolicyCreateInput as IApprovalPolicyCreateInput,
@@ -27,29 +27,36 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 		return { items, total };
 	}
 
-	async findApprovalPoliciesForRequestApproval(): Promise<
-		IPagination<IApprovalPolicy>
-	> {
+	async findApprovalPoliciesForRequestApproval(
+		organizationId?: string,
+		relations?: string[]
+	): Promise<IPagination<IApprovalPolicy>> {
+		console.log('organizationId', organizationId);
+		console.log('relations', relations);
+
 		const total = await this.approvalPolicyRepository.count({
-			where: [
-				{
-					nameConst: Not(Equal(ApprovalPolicyConst.EQUIPMENT_SHARING))
-				},
-				{
-					nameConst: Not(Equal(ApprovalPolicyConst.TIME_OFF))
-				}
-			]
+			where: {
+				approvalType: Not(
+					In([
+						ApprovalPolicyConst.EQUIPMENT_SHARING,
+						ApprovalPolicyConst.TIME_OFF
+					])
+				),
+				organizationId
+			}
 		});
 
 		const items = await this.approvalPolicyRepository.find({
-			where: [
-				{
-					nameConst: Not(Equal(ApprovalPolicyConst.EQUIPMENT_SHARING))
-				},
-				{
-					nameConst: Not(Equal(ApprovalPolicyConst.TIME_OFF))
-				}
-			]
+			where: {
+				approvalType: Not(
+					In([
+						ApprovalPolicyConst.EQUIPMENT_SHARING,
+						ApprovalPolicyConst.TIME_OFF
+					])
+				),
+				organizationId
+			},
+			relations
 		});
 
 		return { items, total };
@@ -63,7 +70,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = entity.tenantId;
 			approvalPolicy.description = entity.description;
-			approvalPolicy.nameConst = entity.name
+			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
 			return this.approvalPolicyRepository.save(approvalPolicy);
@@ -84,7 +91,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = entity.tenantId;
 			approvalPolicy.description = entity.description;
-			approvalPolicy.nameConst = entity.name
+			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
 			return this.approvalPolicyRepository.save(approvalPolicy);
