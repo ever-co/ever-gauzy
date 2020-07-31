@@ -26,6 +26,7 @@ export interface KeyResult extends IBaseEntityModel {
 	name: string;
 	description?: string;
 	type: string;
+	unit?: string;
 	targetValue?: number;
 	initialValue?: number;
 	update: number;
@@ -55,6 +56,15 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 	progress: number;
 	update: number;
 	status: string;
+}
+
+export enum KeyResultNumberUnitsEnum {
+	SALES = 'sales',
+	VISITORS = 'visitors',
+	PEOPLE = 'people',
+	ITEMS = 'items',
+	CLIENTS = 'clients',
+	PUBLICATIONS = 'publications'
 }
 
 export enum KeyResultWeightEnum {

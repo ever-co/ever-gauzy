@@ -20,7 +20,9 @@ import {
 	RolesEnum,
 	Goal,
 	KPI,
-	GoalGeneralSetting
+	GoalGeneralSetting,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
@@ -29,6 +31,7 @@ import { GoalService } from '../../../@core/services/goal.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
 import { EditKpiComponent } from '../../goal-settings/edit-kpi/edit-kpi.component';
+import { endOfTomorrow } from 'date-fns';
 
 @Component({
 	selector: 'ga-edit-keyresults',
@@ -43,6 +46,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	settings: GoalGeneralSetting;
 	orgId: string;
 	orgName: string;
+	currenciesEnum = CurrenciesEnum;
+	numberUnitsEnum = KeyResultNumberUnitsEnum;
 	helperText = '';
 	teams: OrganizationTeam[] = [];
 	hideOrg = false;
@@ -53,7 +58,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	keyResultTypeEnum = KeyResultTypeEnum;
 	goalDeadline: string;
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
-	minDate = new Date();
+	minDate = endOfTomorrow();
 	KPIs: Array<KPI>;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
@@ -70,13 +75,11 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		this.minDate = new Date(
-			this.minDate.setDate(this.minDate.getDate() + 1)
-		);
 		this.keyResultsForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
 			type: [this.keyResultTypeEnum.NUMBER, Validators.required],
+			unit: [''],
 			targetValue: [1],
 			initialValue: [0],
 			owner: [null, Validators.required],

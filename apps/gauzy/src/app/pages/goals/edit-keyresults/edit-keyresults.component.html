@@ -1,4 +1,4 @@
-<nb-card size="large" class="max-width-50vw">
+<nb-card size="large" class="max-width-60vw">
 	<nb-card-header>
 		{{
 			(!!data
@@ -170,77 +170,106 @@
 				<div class="col-md-5 position-relative mt-3"></div>
 			</div>
 
-			<div class="row">
+			<div
+				class="row"
+				*ngIf="
+					keyResultsForm.value.type == keyResultTypeEnum.NUMBER ||
+					keyResultsForm.value.type == keyResultTypeEnum.CURRENCY
+				"
+			>
 				<div class="col-md-7">
 					<div class="row mt-2">
-						<div class="col-md-6">
-							<label
-								*ngIf="
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								for="initial-value"
-								class="label"
-							>
+						<div class="col-md-4">
+							<label for="initial-value" class="label">
 								{{
 									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
 										| translate
 								}}
 							</label>
-							<input
-								type="number"
-								id="initial-value"
-								*ngIf="
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								nbInput
-								fullWidth
-								formControlName="initialValue"
-								placeholder="						{{
-									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
-										| translate
-								}}"
-							/>
+							<nb-form-field>
+								<span nbSuffix>{{
+									keyResultsForm.value.unit
+								}}</span>
+								<input
+									type="number"
+									id="initial-value"
+									nbInput
+									fullWidth
+									formControlName="initialValue"
+									placeholder="{{
+										'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
+											| translate
+									}}"
+								/>
+							</nb-form-field>
 						</div>
 
-						<div class="col-md-6">
-							<label
-								*ngIf="
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								for="target-value"
-								class="label"
-							>
+						<div class="col-md-4">
+							<label for="target-value" class="label">
 								{{
 									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
 										| translate
 								}}
 							</label>
-							<input
-								type="number"
-								id="target-value"
+							<nb-form-field>
+								<span nbSuffix>{{
+									keyResultsForm.value.unit
+								}}</span>
+								<input
+									class="d-flex space-between"
+									type="number"
+									id="target-value"
+									nbInput
+									fullWidth
+									formControlName="targetValue"
+									placeholder="{{
+										'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
+											| translate
+									}}"
+								/>
+							</nb-form-field>
+						</div>
+						<div class="col-md-4">
+							<label for="unit" class="label">
+								Unit
+							</label>
+							<nb-select
+								fullWidth
+								formControlName="unit"
 								*ngIf="
 									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.CURRENCY
+									keyResultTypeEnum.CURRENCY
 								"
-								nbInput
+								id="unit"
+								nbSuffix
+							>
+								<nb-option
+									[value]="currency.value"
+									*ngFor="
+										let currency of currenciesEnum
+											| keyvalue
+									"
+									>{{ currency.value }}</nb-option
+								>
+							</nb-select>
+							<nb-select
 								fullWidth
-								formControlName="targetValue"
-								placeholder="{{
-									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
-										| translate
-								}}"
-							/>
+								formControlName="unit"
+								*ngIf="
+									keyResultsForm.value.type ==
+									keyResultTypeEnum.NUMBER
+								"
+								id="unit"
+								nbSuffix
+							>
+								<nb-option
+									[value]="unit.value"
+									*ngFor="
+										let unit of numberUnitsEnum | keyvalue
+									"
+									>{{ unit.value }}</nb-option
+								>
+							</nb-select>
 						</div>
 					</div>
 				</div>
