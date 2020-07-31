@@ -1,5 +1,5 @@
 <form [formGroup]="form" (ngSubmit)="persist()">
-	<nb-card>
+	<nb-card style="width: 750px;">
 		<nb-card-header>
 			<h4
 				*ngIf="pipeline.id"
@@ -11,33 +11,55 @@
 			></h4>
 		</nb-card-header>
 		<nb-card-body>
-			<nb-form-field>
-				<input
-					type="text"
-					nbInput
-					formControlName="name"
-					fullWidth
-					[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
-				/>
-			</nb-form-field>
-
-			<br />
-			<nb-form-field>
-				<textarea
-					nbInput
-					formControlName="description"
-					fullWidth
-					[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
-				></textarea>
-			</nb-form-field>
-
-			<ga-stage-form
-				formArrayName="stages"
-				[pipelineId]="pipeline.id"
-				[values]="pipeline.stages"
-			></ga-stage-form>
+			<div class="row">
+				<div class="col">
+					<nb-form-field>
+						<label for="name" class="label">{{
+							'FORM.PLACEHOLDERS.NAME' | translate
+						}}</label>
+						<input
+							type="text"
+							nbInput
+							formControlName="name"
+							fullWidth
+							[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
+						/>
+					</nb-form-field>
+					<br />
+					<nb-form-field>
+						<label for="description" class="label">{{
+							'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+						}}</label>
+						<textarea
+							nbInput
+							formControlName="description"
+							fullWidth
+							fullHeight
+							[placeholder]="
+								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+							"
+						></textarea>
+					</nb-form-field>
+				</div>
+				<div class="col">
+					<ga-stage-form
+						formArrayName="stages"
+						[pipelineId]="pipeline.id"
+						[values]="pipeline.stages"
+					></ga-stage-form>
+				</div>
+			</div>
 		</nb-card-body>
 		<nb-card-footer class="text-right">
+			<button
+				(click)="dialogRef.close()"
+				status="danger"
+				class="mr-3"
+				nbButton
+			>
+				<nb-icon pack="eva" icon="close-outline"></nb-icon>
+				<span [innerHTML]="'BUTTONS.CANCEL' | translate"></span>
+			</button>
 			<button
 				*ngIf="pipeline.id"
 				type="submit"

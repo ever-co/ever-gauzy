@@ -6,18 +6,6 @@
 					| translate
 			}}
 		</h5>
-		<ga-employee-selector
-			#employeeSelector
-			placeholder="Organization"
-			[defaultSelected]="false"
-			[showAllEmployeesOption]="false"
-			[hidden]="income"
-			[skipGlobalChange]="true"
-			class="employees"
-			[selectedDate]="valueDate"
-		>
-		</ga-employee-selector>
-
 		<nb-icon
 			class="ml-auto mt-1 close"
 			(click)="close()"
@@ -26,6 +14,26 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form" *ngIf="form">
+			<div class="row employees">
+				<div class="col-sm-6">
+					<label class="label" for="status" [hidden]="income">
+						{{
+							'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate
+						}}
+					</label>
+					<ga-employee-selector
+						#employeeSelector
+						placeholder="Organization"
+						[defaultSelected]="false"
+						[showAllEmployeesOption]="false"
+						[hidden]="income"
+						[skipGlobalChange]="true"
+						class="employees"
+						[selectedDate]="valueDate"
+					>
+					</ga-employee-selector>
+				</div>
+			</div>
 			<div class="row">
 				<div class="col-sm-6">
 					<input
