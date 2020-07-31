@@ -8,25 +8,26 @@ import { NbDialogRef } from '@nebular/theme';
 
 @Component({
 	templateUrl: './pipeline-form.component.html',
-	selector: 'ga-pipeline-form'
+	selector: 'ga-pipeline-form',
+	styles: ['./pipeline-form.component.scss']
 })
 export class PipelineFormComponent implements OnInit {
 	@Input()
-	public pipeline: PipelineCreateInput & { id?: string };
+	pipeline: PipelineCreateInput & { id?: string };
 
-	public userOrganizations: UserOrganization[];
-	public form: FormGroup;
-	public icon: string;
+	userOrganizations: UserOrganization[];
+	form: FormGroup;
+	icon: string;
 
-	public constructor(
-		private dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
+	constructor(
+		public dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
 		private usersOrganizationsService: UsersOrganizationsService,
 		private pipelinesService: PipelinesService,
 		private fb: FormBuilder,
 		private store: Store
 	) {}
 
-	public ngOnInit(): void {
+	ngOnInit(): void {
 		const { id } = this.pipeline;
 		const { userId } = this.store;
 
@@ -45,7 +46,7 @@ export class PipelineFormComponent implements OnInit {
 		});
 	}
 
-	public persist(): void {
+	persist(): void {
 		const {
 			value,
 			value: { id }

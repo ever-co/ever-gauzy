@@ -53,6 +53,36 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		});
 	}
 
+	@ApiOperation({
+		summary:
+			'Find all approval policies except time off and equipment sharing policy.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: ApprovalPolicy
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
+	@Get('/requestapproval')
+	findApprovalPoliciesForRequestApproval(@Query('data') data: string): any {
+		const { findInput, relations } = JSON.parse(data);
+
+		let organizationId = '';
+		if (findInput['organizationId']) {
+			organizationId = findInput['organizationId'];
+		}
+
+		return this.approvalPolicyService.findApprovalPoliciesForRequestApproval(
+			organizationId,
+			relations
+		);
+	}
+
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

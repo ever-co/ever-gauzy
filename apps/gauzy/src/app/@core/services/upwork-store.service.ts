@@ -115,9 +115,13 @@ export class UpworkStoreService {
 	 * Get upwork income/expense reports
 	 */
 	loadReports(): void {
+		const relations: object = {
+			income: ['employee', 'employee.user'],
+			expense: ['employee', 'employee.user', 'vendor']
+		};
 		const dateRange = this._dateRangeActivity$.getValue();
 		const integrationId = this._selectedIntegrationId$.getValue();
-		const data = JSON.stringify({ dateRange });
+		const data = JSON.stringify({ relations, filter: { dateRange } });
 
 		this._us
 			.getAllReports({ integrationId, data })
