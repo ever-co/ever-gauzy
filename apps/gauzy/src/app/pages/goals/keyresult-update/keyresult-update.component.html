@@ -13,7 +13,7 @@
 		<h6>{{ keyResult.name }}</h6>
 		<div
 			*ngIf="
-				keyResult.type == keyResultTypeEnum.NUMBER ||
+				keyResult.type == keyResultTypeEnum.NUMERICAL ||
 				keyResult.type == keyResultTypeEnum.KPI ||
 				keyResult.type == keyResultTypeEnum.CURRENCY
 			"
@@ -51,7 +51,7 @@
 			</label>
 			<input
 				*ngIf="
-					keyResult.type == keyResultTypeEnum.NUMBER ||
+					keyResult.type == keyResultTypeEnum.NUMERICAL ||
 					keyResult.type == keyResultTypeEnum.KPI ||
 					keyResult.type == keyResultTypeEnum.CURRENCY
 				"

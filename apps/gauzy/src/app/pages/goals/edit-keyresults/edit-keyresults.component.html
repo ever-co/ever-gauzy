@@ -173,7 +173,7 @@
 			<div
 				class="row"
 				*ngIf="
-					keyResultsForm.value.type == keyResultTypeEnum.NUMBER ||
+					keyResultsForm.value.type == keyResultTypeEnum.NUMERICAL ||
 					keyResultsForm.value.type == keyResultTypeEnum.CURRENCY
 				"
 			>
@@ -253,7 +253,8 @@
 								"
 								*ngIf="
 									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER && !createNew
+										keyResultTypeEnum.NUMERICAL &&
+									!createNew
 								"
 								id="unit"
 								nbSuffix

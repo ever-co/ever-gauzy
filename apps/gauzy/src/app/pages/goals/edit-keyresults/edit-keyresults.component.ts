@@ -79,7 +79,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		this.keyResultsForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			type: [this.keyResultTypeEnum.NUMBER, Validators.required],
+			type: [this.keyResultTypeEnum.NUMERICAL, Validators.required],
 			unit: [''],
 			targetValue: [1],
 			initialValue: [0],

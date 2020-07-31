@@ -77,31 +77,130 @@
 			<div class="row">
 				<div
 					class="col-md-7"
-					(mouseenter)="helper = 'kpi-metric'"
+					(mouseenter)="helper = 'kpi-type'"
 					(mouseleave)="helperText(null)"
 				>
-					<label for="kpi-metric" class="label mt-3">
-						{{ 'GOALS_PAGE.FORM.LABELS.KPI_METRIC' | translate }}
-					</label>
-					<nb-select
-						id="kpi-metric"
-						fullWidth
-						formControlName="metric"
-					>
-						<nb-option
-							*ngFor="let metric of kpiMetricEnum | keyvalue"
-							[value]="metric.value"
-							>{{
-								'GOALS_PAGE.KPI_METRIC.' + metric.key
-									| translate
-							}}</nb-option
+					<div class="row">
+						<div
+							[ngClass]="{
+								'col-md-6':
+									kpiForm.value.type ==
+										kpiMetricEnum.NUMERICAL ||
+									kpiForm.value.type ==
+										kpiMetricEnum.CURRENCY,
+								'col-md-12':
+									kpiForm.value.type !=
+										kpiMetricEnum.NUMERICAL &&
+									kpiForm.value.type != kpiMetricEnum.CURRENCY
+							}"
 						>
-					</nb-select>
+							<label for="kpi-type" class="label mt-3">
+								{{
+									'GOALS_PAGE.FORM.LABELS.KPI_METRIC'
+										| translate
+								}}
+							</label>
+							<nb-select
+								id="kpi-type"
+								fullWidth
+								formControlName="type"
+							>
+								<nb-option
+									*ngFor="
+										let type of kpiMetricEnum | keyvalue
+									"
+									[value]="type.value"
+									>{{
+										'GOALS_PAGE.KPI_METRIC.' + type.key
+											| translate
+									}}</nb-option
+								>
+							</nb-select>
+						</div>
+						<div
+							class="col-md-6"
+							*ngIf="
+								kpiForm.value.type == kpiMetricEnum.NUMERICAL ||
+								kpiForm.value.type == kpiMetricEnum.CURRENCY
+							"
+						>
+							<label for="unit" class="label mt-3">
+								Unit
+							</label>
+							<nb-select
+								fullWidth
+								formControlName="unit"
+								*ngIf="
+									kpiForm.value.type == kpiMetricEnum.CURRENCY
+								"
+								id="unit"
+								nbSuffix
+							>
+								<nb-option
+									[value]="currency.value"
+									*ngFor="
+										let currency of currenciesEnum
+											| keyvalue
+									"
+									>{{ currency.value }}</nb-option
+								>
+							</nb-select>
+							<nb-select
+								fullWidth
+								formControlName="unit"
+								(selectedChange)="
+									kpiForm.value.unit == 'create-new'
+										? (createNew = !createNew)
+										: null
+								"
+								*ngIf="
+									kpiForm.value.type ==
+										kpiMetricEnum.NUMERICAL && !createNew
+								"
+								id="unit"
+								nbSuffix
+							>
+								<nb-option
+									[value]="unit"
+									*ngFor="let unit of numberUnitsEnum"
+									>{{ unit }}
+								</nb-option>
+								<nb-option
+									value="create-new"
+									class="bg-secondary text-light"
+								>
+									+ create new
+								</nb-option>
+							</nb-select>
+							<nb-form-field *ngIf="createNew">
+								<input
+									type="text"
+									formControlName="unit"
+									nbInput
+									fullWidth
+								/>
+								<nb-icon
+									nbSuffix
+									icon="checkmark-outline"
+									status="success"
+									(click)="createNewUnit()"
+								>
+								</nb-icon>
+								<nb-icon
+									nbSuffix
+									icon="close-outline"
+									status="danger"
+									(click)="createNew = !createNew"
+								>
+								</nb-icon>
+							</nb-form-field>
+						</div>
+					</div>
 				</div>
 				<div class="col-md-5 mt-3 position-relative">
 					<div
 						class="mt-3 position-absolute"
-						*ngIf="helper === 'kpi-metric'"
+						*ngIf="helper === 'kpi-type'"
 					>
 						<p>
 							{{
@@ -168,7 +267,6 @@
 								}}"
 							/>
 						</div>
-
 						<div class="col-md-4">
 							<label for="kpi-operator" class="label">
 								{{
@@ -190,8 +288,8 @@
 									>{{
 										'GOALS_PAGE.KPI_OPERATOR.' +
 											operator.key | translate
-									}}</nb-option
-								>
+									}}
+								</nb-option>
 							</nb-select>
 						</div>
 						<div class="col-md-4">

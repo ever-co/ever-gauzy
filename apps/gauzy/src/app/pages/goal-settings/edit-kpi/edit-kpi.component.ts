@@ -6,7 +6,14 @@ import { NbDialogRef } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, KpiMetricEnum, KpiOperatorEnum, KPI } from '@gauzy/models';
+import {
+	Employee,
+	KpiMetricEnum,
+	KpiOperatorEnum,
+	KPI,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
+} from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 
@@ -22,8 +29,11 @@ export class EditKpiComponent extends TranslationBaseComponent
 	selectedKPI: KPI;
 	type: string;
 	helper = '';
+	currenciesEnum = CurrenciesEnum;
+	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	kpiOperatorEnum = KpiOperatorEnum;
 	kpiMetricEnum = KpiMetricEnum;
+	createNew = false;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private fb: FormBuilder,
@@ -40,14 +50,15 @@ export class EditKpiComponent extends TranslationBaseComponent
 		this.kpiForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			metric: [KpiMetricEnum.NUMBER, Validators.required],
+			type: [KpiMetricEnum.NUMERICAL, Validators.required],
 			currentValue: [0],
 			targetValue: [1],
 			lead: ['', Validators.required],
 			operator: [
 				KpiOperatorEnum.GREATER_THAN_EQUAL_TO,
 				Validators.required
-			]
+			],
+			unit: ['']
 		});
 		this.employeeService
 			.getAll(['user'])
@@ -97,6 +108,13 @@ export class EditKpiComponent extends TranslationBaseComponent
 		} else {
 			this.kpiForm.patchValue({ owner: event });
 		}
+	}
+
+	createNewUnit() {
+		if (this.kpiForm.value.unit !== ' ') {
+			this.numberUnitsEnum.push(this.kpiForm.value.unit);
+		}
+		this.createNew = false;
 	}
 
 	closeDialog(data) {

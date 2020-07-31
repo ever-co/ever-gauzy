@@ -777,8 +777,9 @@
 			"LESSER_THAN_EQUAL_TO": "Lesser than or equal to"
 		},
 		"KPI_METRIC": {
-			"NUMBER": "Number",
-			"PERCENTAGE": "Percentage"
+			"NUMERICAL": "Numerical",
+			"PERCENTAGE": "Percentage",
+			"CURRENCY": "Currency"
 		},
 		"TOOLTIPS": {
 			"PROGRESS": "Overall progress of this Objective based on its Key result's progress",
@@ -853,7 +854,7 @@
 			"TIME_FRAME_NOT_STARTED": "You can't update this key result now. The Time Frame for this key result starts on {{ date }}. Then you'll be able to update it"
 		},
 		"TYPE": {
-			"NUMBER": "Number",
+			"NUMERICAL": "Numerical",
 			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "Currency",
 			"TASK": "Task",

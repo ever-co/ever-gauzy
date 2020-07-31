@@ -78,7 +78,7 @@ export interface GoalFindInput extends IBaseEntityModel {
 }
 
 export enum KeyResultTypeEnum {
-	NUMBER = 'Number',
+	NUMERICAL = 'Numerical',
 	TRUE_OR_FALSE = 'True/False',
 	CURRENCY = 'Currency',
 	TASK = 'Task',
