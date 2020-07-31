@@ -12,11 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { VendorsComponent } from './vendors.component';
-import { OrganizationVendorsService } from '../../@core/services/organization-vendors.service';
-import { VendorsRoutingModule } from './vendors-routing.module';
+import { PositionsComponent } from './positions.component';
+import { PositionsRoutingModule } from './positions-routing.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { OrganizationPositionsService } from '../../@core/services/organization-positions';
+import { SharedModule } from '../../@shared/shared.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -24,6 +25,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		SharedModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,
@@ -33,7 +35,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TagsColorInputModule,
 		NbActionsModule,
 		TableComponentsModule,
-		VendorsRoutingModule,
+		PositionsRoutingModule,
+		TagsColorInputModule,
+		NbActionsModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
@@ -43,8 +47,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [VendorsComponent],
+	declarations: [PositionsComponent],
 	entryComponents: [],
-	providers: [OrganizationVendorsService]
+	providers: [OrganizationPositionsService]
 })
-export class VendorsModule {}
+export class PositionsModule {}

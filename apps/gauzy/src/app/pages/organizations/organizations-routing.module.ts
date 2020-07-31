@@ -34,29 +34,6 @@ const routes: Routes = [
 			}
 		]
 	}
-	// 		{
-	// 			path: 'positions',
-	// 			component: EditOrganizationPositionsComponent
-	// 		},
-	//
-	// 		{
-	// 			path: 'expense-categories',
-	// 			component: EditOrganizationExpenseCategoriesComponent
-	// 		},
-	// 		{
-	// 			path: 'teams',
-	// 			component: EditOrganizationTeamsComponent
-	// 		},
-	// 		{
-	// 			path: 'employment-types',
-	// 			component: EditOrganizationEmploymentTypes
-	// 		},
-	// 		{
-	// 			path: 'employeeLevels',
-	// 			component: EditOrganizationEmployeeLevelComponent
-	// 		}
-	// 	]
-	// }
 ];
 
 @NgModule({

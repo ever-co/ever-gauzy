@@ -8,27 +8,24 @@ import {
 	RolesEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { EmployeesService } from '../../../../../@core/services';
-import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { OrganizationTeamsService } from '../../../../../@core/services/organization-teams.service';
-import { DeleteConfirmationComponent } from '../../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Store } from '../../@core/services/store.service';
+import { EmployeesService } from '../../@core/services';
+import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
-	selector: 'ga-edit-org-teams',
-	templateUrl: './edit-organization-teams.component.html',
-	styleUrls: ['./edit-organization-teams.component.scss']
+	selector: 'ga-teams',
+	templateUrl: './teams.component.html',
+	styleUrls: ['./teams.component.scss']
 })
-export class EditOrganizationTeamsComponent extends TranslationBaseComponent
-	implements OnInit {
+export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
-
 	selectedOrg: Organization;
-
 	organizationId: string;
 	showAddCard: boolean;
 	teams: OrganizationTeam[];
@@ -42,7 +39,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		private employeesService: EmployeesService,
 		private readonly toastrService: NbToastrService,
 		private dialogService: NbDialogService,
-		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly store: Store,
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute,
 		private router: Router
@@ -51,7 +48,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
-		this.organizationEditStore.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {

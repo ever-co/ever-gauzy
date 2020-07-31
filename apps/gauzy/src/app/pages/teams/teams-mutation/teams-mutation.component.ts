@@ -2,10 +2,10 @@ import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { OrganizationTeam, Employee, Tag } from '@gauzy/models';
 
 @Component({
-	selector: 'ga-edit-organization-teams-mutation',
-	templateUrl: './edit-organization-teams-mutation.component.html'
+	selector: 'ga-teams-mutation',
+	templateUrl: './teams-mutation.component.html'
 })
-export class EditOrganizationTeamsMutationComponent implements OnInit {
+export class TeamsMutationComponent implements OnInit {
 	@Input()
 	employees: Employee[];
 	@Input()

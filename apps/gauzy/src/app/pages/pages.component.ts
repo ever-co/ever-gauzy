@@ -387,12 +387,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Positions',
 					icon: 'award-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/positions`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/positions',
 						translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
 					}
 				},
@@ -408,12 +405,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Teams',
 					icon: 'people-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/teams`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/teams',
 						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
 					}
 				},

@@ -43,10 +43,7 @@ import { OrganizationListComponent } from '../organization-list/organization-lis
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
-import { EditOrganizationPositionsComponent } from './edit-organization-positions/edit-organization-positions.component';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
-import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
-import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization-employment-types/edit-organization-employment-types.component';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { OrganizationExpenseCategoriesService } from '../../../../@core/services/organization-expense-categories.service';
@@ -115,10 +112,6 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EditOrganizationMainComponent,
 		EditOrganizationLocationComponent,
 		OrganizationListComponent,
-		EditOrganizationPositionsComponent,
-		EditOrganizationPositionsComponent,
-		EditOrganizationTeamsComponent,
-		EditOrganizationTeamsMutationComponent,
 		EditOrganizationOtherSettingsComponent,
 		EditOrganizationEmploymentTypes,
 		EditOrganizationEmployeeLevelComponent

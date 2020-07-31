@@ -71,6 +71,20 @@ const routes: Routes = [
 							import('./payments/payments.module').then(
 								(m) => m.PaymentsModule
 							)
+					},
+					{
+						path: 'teams',
+						loadChildren: () =>
+							import('./teams/teams.module').then(
+								(m) => m.TeamsModule
+							)
+					},
+					{
+						path: 'positions',
+						loadChildren: () =>
+							import('./positions/positions.module').then(
+								(m) => m.PositionsModule
+							)
 					}
 				]
 			},

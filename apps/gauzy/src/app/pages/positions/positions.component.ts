@@ -1,45 +1,37 @@
 import { Component, OnInit } from '@angular/core';
 import { OrganizationPositions, Tag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
-	selector: 'ga-edit-org-positions',
-	templateUrl: './edit-organization-positions.component.html'
+	selector: 'ga-positions',
+	templateUrl: './positions.component.html'
 })
-export class EditOrganizationPositionsComponent extends TranslationBaseComponent
+export class PositionsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
-
 	organizationId: string;
-
 	showAddCard: boolean;
-
 	positions: OrganizationPositions[];
-
 	selectedPosition: OrganizationPositions;
-
 	showEditDiv: boolean;
-
 	positionsExist: boolean;
 	tags: Tag[] = [];
-
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly store: Store,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
-
 	ngOnInit(): void {
-		this.organizationEditStore.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
@@ -48,7 +40,6 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 				}
 			});
 	}
-
 	async removePosition(id: string, name: string) {
 		await this.organizationPositionsService.delete(id);
 
@@ -75,7 +66,6 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 		this.showEditDiv = !this.showEditDiv;
 		this.tags = [];
 	}
-
 	private async addPosition(name: string) {
 		if (name) {
 			await this.organizationPositionsService.create({
@@ -108,12 +98,10 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 			);
 		}
 	}
-
 	cancel() {
 		this.showEditDiv = !this.showEditDiv;
 		this.selectedPosition = null;
 	}
-
 	showEditCard(position: OrganizationPositions) {
 		this.tags = position.tags;
 		this.showEditDiv = true;
@@ -137,7 +125,6 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 			}
 		}
 	}
-
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
