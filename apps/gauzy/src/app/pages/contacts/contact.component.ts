@@ -7,22 +7,22 @@ import {
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeesService } from '../../../../../@core/services';
-import { OrganizationContactService } from '../../../../../@core/services/organization-contact.service';
-import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { OrganizationProjectsService } from '../../../../../@core/services/organization-projects.service';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { ActivatedRoute } from '@angular/router';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { EmployeesService } from '../../@core/services';
+import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
-	selector: 'ga-edit-org-contact',
-	templateUrl: './edit-organization-contact.component.html',
-	styleUrls: ['./edit-organization-contact.component.scss']
+	selector: 'ga-contact',
+	templateUrl: './contact.component.html',
+	styleUrls: ['./contact.component.scss']
 })
-export class EditOrganizationContactComponent extends TranslationBaseComponent
+export class ContactComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -44,7 +44,7 @@ export class EditOrganizationContactComponent extends TranslationBaseComponent
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly store: Store,
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
@@ -54,7 +54,7 @@ export class EditOrganizationContactComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.organizationEditStore.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {

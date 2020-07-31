@@ -14,7 +14,7 @@
 			<nb-icon class="mr-1" icon="email-outline"></nb-icon
 			>{{ 'BUTTONS.INVITE' | translate }}
 		</button>
-		<ga-edit-organization-contact-mutation
+		<ga-contact-mutation
 			*ngIf="showAddCard"
 			[employees]="employees"
 			[organizationId]="organizationId"
@@ -27,7 +27,7 @@
 				addOrEditOrganizationContact($event)
 			"
 		>
-		</ga-edit-organization-contact-mutation>
+		</ga-contact-mutation>
 	</nb-card-header>
 
 	<nb-card-body class="contact-list" *ngIf="organizationContact?.length">

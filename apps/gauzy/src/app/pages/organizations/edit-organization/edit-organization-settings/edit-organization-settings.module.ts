@@ -40,9 +40,6 @@ import {
 	ThemeModule
 } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
-import { EditOrganizationContactMutationComponent } from './edit-organization-contacts/edit-organization-contact-mutation/edit-organization-contact-mutation.component';
-import { EditOrganizationContactComponent } from './edit-organization-contacts/edit-organization-contact.component';
-import { InviteContactComponent } from './edit-organization-contacts/invite-contact/invite-contact.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
@@ -113,7 +110,7 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EmployeeStore,
 		InviteService
 	],
-	entryComponents: [InviteContactComponent],
+	entryComponents: [],
 	declarations: [
 		EditOrganizationSettingsComponent,
 		EditOrganizationMainComponent,
@@ -122,13 +119,10 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EditOrganizationExpenseCategoriesComponent,
 		EditOrganizationPositionsComponent,
 		EditOrganizationPositionsComponent,
-		EditOrganizationContactComponent,
 		EditOrganizationTeamsComponent,
 		EditOrganizationTeamsMutationComponent,
 		EditOrganizationOtherSettingsComponent,
-		EditOrganizationContactMutationComponent,
 		EditOrganizationEmploymentTypes,
-		InviteContactComponent,
 		EditOrganizationEmployeeLevelComponent
 	],
 	exports: [EditOrganizationSettingsComponent]

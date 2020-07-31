@@ -81,12 +81,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('location')
 			},
 			// {
-			// 	title: this.getTranslation('ORGANIZATIONS_PAGE.CONTACTS'),
-			// 	icon: 'briefcase-outline',
-			// 	responsive: true,
-			// 	route: this.getRoute('contacts')
-			// },
-			// {
 			// 	title: this.getTranslation(
 			// 		'ORGANIZATIONS_PAGE.LEVEL_OF_EMPLOYEE'
 			// 	),

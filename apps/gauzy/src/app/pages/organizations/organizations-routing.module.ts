@@ -34,15 +34,6 @@ const routes: Routes = [
 			}
 		]
 	}
-
-	// 		{
-	// 			path: 'departments',
-	// 			component: EditOrganizationDepartmentsComponent
-	// 		},
-	// 		{
-	// 			path: 'contacts',
-	// 			component: EditOrganizationContactComponent
-	// 		},
 	// 		{
 	// 			path: 'positions',
 	// 			component: EditOrganizationPositionsComponent
@@ -51,10 +42,6 @@ const routes: Routes = [
 	// 		{
 	// 			path: 'expense-categories',
 	// 			component: EditOrganizationExpenseCategoriesComponent
-	// 		},
-	// 		{
-	// 			path: 'projects',
-	// 			component: EditOrganizationProjectsComponent
 	// 		},
 	// 		{
 	// 			path: 'teams',

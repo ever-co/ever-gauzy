@@ -295,6 +295,13 @@ const routes: Routes = [
 							import('./projects/projects.module').then(
 								(m) => m.ProjectsModule
 							)
+					},
+					{
+						path: 'contacts',
+						loadChildren: () =>
+							import('./contacts/contact.module').then(
+								(m) => m.ContactModule
+							)
 					}
 				]
 			},

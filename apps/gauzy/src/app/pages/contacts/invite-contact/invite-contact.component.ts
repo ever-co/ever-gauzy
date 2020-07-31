@@ -1,12 +1,12 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
 import { FormBuilder, Validators } from '@angular/forms';
-import { OrganizationContactService } from '../../../../../../@core/services/organization-contact.service';
 import { OrganizationContact } from '@gauzy/models';
-import { UsersService } from '../../../../../../@core/services';
-import { InviteService } from '../../../../../../@core/services/invite.service';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
+import { UsersService } from '../../../@core/services';
+import { InviteService } from '../../../@core/services/invite.service';
 
 @Component({
 	selector: 'ga-invite-contact',

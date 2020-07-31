@@ -6,19 +6,18 @@ import {
 	OrganizationProjects,
 	Tag
 } from '@gauzy/models';
-import { OrganizationProjectsService } from '../../../../../../@core/services/organization-projects.service';
-import { Store } from '../../../../../../@core/services/store.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from '../../../../../../@core/services/error-handling.service';
-import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
-	selector: 'ga-edit-organization-contact-mutation',
-	templateUrl: './edit-organization-contact-mutation.component.html'
+	selector: 'ga-contact-mutation',
+	templateUrl: './contact-mutation.component.html'
 })
-export class EditOrganizationContactMutationComponent
-	extends TranslationBaseComponent
+export class ContactMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
 	employees: Employee[];

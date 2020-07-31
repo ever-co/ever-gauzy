@@ -360,12 +360,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Contacts',
 					icon: 'book-open-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/contacts`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/contacts',
 						translationKey: 'ORGANIZATIONS_PAGE.CONTACTS'
 					}
 				},

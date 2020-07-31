@@ -16,7 +16,6 @@ import {
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-
 import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
 import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
