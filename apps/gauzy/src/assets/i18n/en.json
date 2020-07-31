@@ -780,6 +780,11 @@
 			"NUMBER": "Number",
 			"PERCENTAGE": "Percentage"
 		},
+		"TOOLTIPS": {
+			"PROGRESS": "Overall progress of this Objective based on its Key result's progress",
+			"DETAILS": "Objective Details",
+			"EDIT": "Edit Objective"
+		},
 		"FORM": {
 			"LABELS": {
 				"LEVEL": "Level",
@@ -858,6 +863,12 @@
 			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
 			"HARD_DEADLINE": "Hard Deadline",
 			"HARD_AND_SOFT_DEADLINE": "Hard and Soft Deadline"
+		},
+		"TOOLTIPS": {
+			"PROGRESS": "This Key result's progress contributes to {{weight}}% of the Objective's progress",
+			"DETAILS": "Key Result Details",
+			"EDIT": "Edit Key Result",
+			"WEIGHT": "Edit Weight/Type"
 		},
 		"FORM": {
 			"LABELS": {
