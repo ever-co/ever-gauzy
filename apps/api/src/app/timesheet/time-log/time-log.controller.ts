@@ -126,8 +126,7 @@ export class TimeLogController extends CrudController<TimeLog> {
 		@Param('id') id: string,
 		@Body() entity: IManualTimeInput
 	): Promise<TimeLog> {
-		entity.id = id;
-		return this.timeLogService.updateManualTime(entity);
+		return this.timeLogService.updateTime(id, entity);
 	}
 
 	@ApiOperation({ summary: 'Delete time log' })

@@ -95,6 +95,8 @@ export class TimeLogUpdateHandler
 				new TimesheetRecalculateCommand(timeLog.timesheetId)
 			);
 		}
+		timeLog.timeSlots = updateTimeSlots;
+		this.timeLogRepository.save(timeLog);
 
 		return timeLog;
 	}

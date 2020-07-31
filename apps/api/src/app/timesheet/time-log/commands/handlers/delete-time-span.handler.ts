@@ -5,9 +5,9 @@ import { Repository } from 'typeorm';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import * as _ from 'underscore';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
-import * as moment from 'moment';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
+import { moment } from '../../../../core/moment';
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler
@@ -24,12 +24,23 @@ export class DeleteTimeSpanHandler
 
 		const { start, end } = newTime;
 
-		console.log('deleteTimeSpan', {
-			startedAt: timeLog.startedAt,
-			stoppedAt: timeLog.stoppedAt,
-			start,
-			end
-		});
+		const newTimeRange = moment.range(start, end);
+		const dbTimeRange = moment.range(timeLog.startedAt, timeLog.stoppedAt);
+
+		/* Check is overlaping time or not.
+		 */
+		if (!newTimeRange.overlaps(dbTimeRange, { adjacent: false })) {
+			console.log(
+				'deleteTimeSpan not overlaping',
+				newTimeRange,
+				dbTimeRange
+			);
+			// await this.commandBus.execute(
+			// 	new TimeLogDeleteCommand(timeLog, false)
+			// );
+			return false;
+		}
+
 		if (
 			moment(timeLog.startedAt).isBetween(
 				moment(start),
@@ -116,14 +127,18 @@ export class DeleteTimeSpanHandler
 					reamingDueration
 				);
 				if (reamingDueration > 0) {
-					await this.timeLogRepository.update(
+					timeLog.timeSlots = await this.timeSlotService.getTimeSlots(
 						{
-							id: timeLog.id
-						},
-						{
-							stoppedAt: start
+							startDate: timeLog.startedAt,
+							endDate: moment(timeLog.stoppedAt)
+								.subtract(1, 'second')
+								.toDate()
 						}
 					);
+
+					timeLog.stoppedAt = start;
+
+					await this.timeLogRepository.save(timeLog);
 				} else {
 					/* Delete if reaming dueration 0 seconds */
 					await this.commandBus.execute(
@@ -132,15 +147,15 @@ export class DeleteTimeSpanHandler
 				}
 			} else {
 				/* Split database time in two entries.
-				 * 		New Start time				New Stop time
+				 * 		New Start time (start)			New Stop time (end)
 				 *  			|----------------------------|
-				 * DB Start Time									DB Stop Time
+				 * DB Start Time (startedAt)					DB Stop Time (stoppedAt)
 				 *  |--------------------------------------------------|
 				 */
 				console.log(
 					'deleteTimeSpan Split database time in two entries'
 				);
-				const reamingDueration = moment(end).diff(
+				const reamingDueration = moment(start).diff(
 					moment(timeLog.startedAt),
 					'seconds'
 				);
@@ -148,15 +163,26 @@ export class DeleteTimeSpanHandler
 					'deleteTimeSpan reamingDueration',
 					reamingDueration
 				);
+
+				const timeLogClone: TimeLog = _.omit(timeLog, [
+					'createdAt',
+					'updatedAt',
+					'id'
+				]);
+
 				if (reamingDueration > 0) {
-					await this.timeLogRepository.update(
+					timeLog.stoppedAt = start;
+
+					timeLog.timeSlots = await this.timeSlotService.getTimeSlots(
 						{
-							id: timeLog.id
-						},
-						{
-							stoppedAt: start
+							startDate: timeLog.startedAt,
+							endDate: moment(timeLog.stoppedAt)
+								.subtract(1, 'second')
+								.toDate()
 						}
 					);
+
+					await this.timeLogRepository.save(timeLog);
 				} else {
 					/* Delete if reaming dueration 0 seconds */
 					await this.commandBus.execute(
@@ -170,25 +196,32 @@ export class DeleteTimeSpanHandler
 					end
 				);
 
-				const newLog = _.omit(timeLog, [
-					'createdAt',
-					'updatedAt',
-					'id'
-				]);
+				const newLog = timeLogClone;
 				newLog.startedAt = end;
-				const newLogreamingDueration = moment(newLog.stoppedAt).diff(
+
+				// const range = moment.range(newLog.startedAt, newLog.stoppedAt)
+				// console.log(range, Array.from(range.by('minutes', { step: 10, excludeEnd: true })).map(m => m.format('YYYY-MM-DD HH:mm:ss')));
+
+				newLog.timeSlots = await this.timeSlotService.getTimeSlots({
+					startDate: newLog.startedAt,
+					endDate: moment(newLog.stoppedAt)
+						.subtract(1, 'second')
+						.toDate()
+				});
+
+				const newLogReamingDueration = moment(newLog.stoppedAt).diff(
 					moment(newLog.startedAt),
 					'seconds'
 				);
 
 				console.log(
-					'deleteTimeSpan newLogreamingDueration',
-					newLogreamingDueration,
+					'deleteTimeSpan newLogReamingDueration',
+					newLogReamingDueration,
 					newLog
 				);
 				/* Insert if reaming dueration is more 0 seconds */
-				if (newLogreamingDueration > 0) {
-					await this.timeLogRepository.insert(newLog);
+				if (newLogReamingDueration > 0) {
+					await this.timeLogRepository.save(newLog);
 				}
 			}
 		}

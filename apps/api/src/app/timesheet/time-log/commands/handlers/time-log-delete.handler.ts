@@ -65,7 +65,7 @@ export class TimeLogDeleteHandler
 		try {
 			await Promise.all(timesheetPromises);
 		} catch (error) {
-			console.log(error);
+			console.log('TimeLogDeleteHandler', { error });
 		}
 
 		return deleteResult;

@@ -298,6 +298,7 @@ export interface IManualTimeInput {
 	projectId?: string;
 	taskId?: string;
 	organizationContactId?: string;
+	logType?: TimeLogType;
 	description?: string;
 	reason?: string;
 	startedAt?: Date;

@@ -1,15 +1,9 @@
-import {
-	Injectable,
-	BadRequestException,
-	forwardRef,
-	Inject
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
-	TimeLogType,
 	IManualTimeInput,
 	IGetTimeLogInput,
 	PermissionsEnum,
@@ -19,7 +13,6 @@ import {
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { CrudService } from '../../core';
-import { TimeSlotService } from '../time-slot/time-slot.service';
 import { Organization } from '../../organization/organization.entity';
 import { Employee } from '../../employee/employee.entity';
 import { CommandBus } from '@nestjs/cqrs';
@@ -32,9 +25,6 @@ import { DeleteTimeSpanCommand } from './commands/delete-time-span.command';
 export class TimeLogService extends CrudService<TimeLog> {
 	constructor(
 		private commandBus: CommandBus,
-
-		@Inject(forwardRef(() => TimeSlotService))
-		private readonly timeSlotService: TimeSlotService,
 
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
@@ -152,6 +142,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
+		console.log('addManualTime', request);
 		if (!request.startedAt || !request.stoppedAt) {
 			throw new BadRequestException(
 				'Please select valid Date, start time and end time'
@@ -191,10 +182,14 @@ export class TimeLogService extends CrudService<TimeLog> {
 			);
 		}
 
-		return await this.commandBus.execute(new TimeLogCreateCommand(request));
+		const timelog = await this.commandBus.execute(
+			new TimeLogCreateCommand(request)
+		);
+		console.log(timelog);
+		return timelog;
 	}
 
-	async updateManualTime(request: IManualTimeInput): Promise<TimeLog> {
+	async updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
 		if (!request.startedAt || !request.stoppedAt) {
 			throw new BadRequestException(
 				'Please select valid Date start and end time'
@@ -217,37 +212,28 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}
 
 		const timeLog = await this.timeLogRepository.findOne(request.id);
-		const confict = await this.checkConfictTime({
-			employeeId: timeLog.employeeId,
-			startDate: request.startedAt,
-			endDate: request.stoppedAt,
-			...(request.id ? { ignoreId: request.id } : {})
-		});
+		if (request.startedAt || request.stoppedAt) {
+			const confict = await this.checkConfictTime({
+				employeeId: timeLog.employeeId,
+				startDate: request.startedAt || timeLog.startedAt,
+				endDate: request.stoppedAt || timeLog.stoppedAt,
+				...(id ? { ignoreId: id } : {})
+			});
 
-		const times: IDateRange = {
-			start: new Date(request.startedAt),
-			end: new Date(request.stoppedAt)
-		};
-		for (let index = 0; index < confict.length; index++) {
-			await this.commandBus.execute(
-				new DeleteTimeSpanCommand(times, confict[index])
-			);
+			const times: IDateRange = {
+				start: new Date(request.startedAt),
+				end: new Date(request.stoppedAt)
+			};
+
+			for (let index = 0; index < confict.length; index++) {
+				await this.commandBus.execute(
+					new DeleteTimeSpanCommand(times, confict[index])
+				);
+			}
 		}
 
 		await this.commandBus.execute(
-			new TimeLogUpdateCommand(
-				{
-					startedAt: request.startedAt,
-					stoppedAt: request.stoppedAt,
-					projectId: request.projectId || null,
-					taskId: request.taskId || null,
-					clientId: request.clientId || null,
-					logType: TimeLogType.MANUAL,
-					description: request.description || '',
-					isBillable: request.isBillable || false
-				},
-				timeLog
-			)
+			new TimeLogUpdateCommand(request, timeLog)
 		);
 
 		return await this.timeLogRepository.findOne(request.id);
