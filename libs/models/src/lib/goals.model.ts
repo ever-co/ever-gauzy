@@ -63,8 +63,7 @@ export enum KeyResultNumberUnitsEnum {
 	VISITORS = 'visitors',
 	PEOPLE = 'people',
 	ITEMS = 'items',
-	CLIENTS = 'clients',
-	PUBLICATIONS = 'publications'
+	CLIENTS = 'clients'
 }
 
 export enum KeyResultWeightEnum {

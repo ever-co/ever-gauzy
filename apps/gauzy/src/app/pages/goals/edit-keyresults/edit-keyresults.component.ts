@@ -47,11 +47,12 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	orgId: string;
 	orgName: string;
 	currenciesEnum = CurrenciesEnum;
-	numberUnitsEnum = KeyResultNumberUnitsEnum;
+	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	helperText = '';
 	teams: OrganizationTeam[] = [];
 	hideOrg = false;
 	hideTeam = false;
+	createNew = false;
 	hideEmployee = false;
 	goalLevelEnum = GoalLevelEnum;
 	softDeadline: FormControl;
@@ -105,6 +106,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				this.employees = employees.items;
 			});
 		if (!!this.data) {
+			if (!this.numberUnitsEnum.find((unit) => unit === this.data.unit)) {
+				this.numberUnitsEnum.push(this.data.unit);
+			}
 			this.keyResultsForm.patchValue(this.data);
 			this.keyResultsForm.patchValue({
 				softDeadline: this.data.softDeadline
@@ -114,7 +118,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					? new Date(this.data.hardDeadline)
 					: null,
 				lead: !!this.data.lead ? this.data.lead.id : null,
-				owner: this.data.owner.id
+				owner: this.data.owner.id,
+				unit: this.data.unit
 			});
 		}
 		if (
@@ -318,6 +323,13 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				weight: KeyResultWeightEnum.DEFAULT
 			});
 		}
+	}
+
+	createNewUnit() {
+		if (this.keyResultsForm.value.unit !== ' ') {
+			this.numberUnitsEnum.push(this.keyResultsForm.value.unit);
+		}
+		this.createNew = false;
 	}
 
 	closeDialog(data = null) {
