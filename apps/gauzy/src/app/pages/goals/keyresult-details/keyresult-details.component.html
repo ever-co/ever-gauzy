@@ -42,7 +42,9 @@
 									| translate
 							}}
 						</div>
-						<div class="col-md-6">{{ keyResult.initialValue }}</div>
+						<div class="col-md-6">
+							{{ keyResult.initialValue }} {{ keyResult.unit }}
+						</div>
 					</div>
 					<div class="row mt-2">
 						<div class="col-md-6 font-weight-bold">
@@ -51,7 +53,9 @@
 									| translate
 							}}
 						</div>
-						<div class="col-md-6">{{ keyResult.targetValue }}</div>
+						<div class="col-md-6">
+							{{ keyResult.targetValue }} {{ keyResult.unit }}
+						</div>
 					</div>
 					<div class="row mt-2">
 						<div class="col-md-6 font-weight-bold">

@@ -23,7 +23,8 @@ export interface GoalGeneralSetting extends IBaseEntityModel {
 export interface KPI extends IBaseEntityModel {
 	name: string;
 	description: string;
-	metric: string;
+	type: string;
+	unit?: string;
 	currentValue: number;
 	targetValue: number;
 	lead?: Employee;
@@ -36,8 +37,9 @@ export enum TimeFrameStatusEnum {
 }
 
 export enum KpiMetricEnum {
-	NUMBER = 'number',
-	PERCENTAGE = 'percentage'
+	NUMERICAL = 'Numerical',
+	PERCENTAGE = 'Percentage',
+	CURRENCY = 'Currency'
 }
 
 export enum KpiOperatorEnum {

@@ -47,6 +47,11 @@ export class KeyResult extends TenantBase implements IKeyResult {
 	@IsOptional()
 	initialValue: number;
 
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
+	@IsOptional()
+	unit?: string;
+
 	@ApiProperty({ type: Number })
 	@Column()
 	update: number;

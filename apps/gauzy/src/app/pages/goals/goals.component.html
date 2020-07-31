@@ -111,6 +111,9 @@
 						>{{ goal.name }}
 						<span class="ml-auto float-right col-md-4 text-center"
 							><nb-progress-bar
+								nbTooltip="{{
+									'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate
+								}}"
 								class="ml-4"
 								[value]="goal.progress"
 								[status]="
@@ -129,13 +132,17 @@
 							size="small"
 						>
 							<nb-action
-								nbTooltip="Objective Details"
+								nbTooltip="{{
+									'GOALS_PAGE.TOOLTIPS.DETAILS' | translate
+								}}"
 								icon="eye"
 								(click)="openGoalDetials(goal)"
 							></nb-action>
 							<nb-action
 								icon="edit"
-								nbTooltip="Edit Objective"
+								nbTooltip="{{
+									'GOALS_PAGE.TOOLTIPS.EDIT' | translate
+								}}"
 								(click)="createObjective(goal, index)"
 							></nb-action>
 						</nb-actions>
@@ -147,17 +154,25 @@
 						{{ keyResult.name }}
 						<nb-actions class="ml-auto float-right" size="small">
 							<nb-action
-								nbTooltip="Key Result Details"
+								nbTooltip="{{
+									'KEY_RESULT_PAGE.TOOLTIPS.DETAILS'
+										| translate
+								}}"
 								icon="eye"
 								(click)="openKeyResultDetails(index, keyResult)"
 							></nb-action>
 							<nb-action
-								nbTooltip="Edit Key Result"
+								nbTooltip="{{
+									'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate
+								}}"
 								icon="edit"
 								(click)="addKeyResult(index, keyResult)"
 							></nb-action>
 							<nb-action
-								nbTooltip="Edit Weight/Type"
+								nbTooltip="{{
+									'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT'
+										| translate
+								}}"
 								icon="percent"
 								(click)="
 									openKeyResultParameters(index, keyResult)
@@ -166,6 +181,16 @@
 						</nb-actions>
 						<span class="ml-auto float-right col-md-4 text-center"
 							><nb-progress-bar
+								nbTooltip="{{
+									'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
+										| translate
+											: {
+													weight: calculateKeyResultWeight(
+														keyResult.weight,
+														goal
+													)
+											  }
+								}}"
 								class="ml-3"
 								[value]="keyResult.progress"
 								[status]="
