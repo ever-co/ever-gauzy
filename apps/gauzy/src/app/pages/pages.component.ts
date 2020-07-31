@@ -374,7 +374,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'car-outline',
 					link: '/pages/organization/vendors',
 					data: {
-						organizationShortcut: true,
+						// organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
 					}
@@ -406,12 +406,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Departments',
 					icon: 'briefcase-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/departments`,
 					data: {
-						organizationShortcut: true,
+						// organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/departments',
 						translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
 					}
 				},

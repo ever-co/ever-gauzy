@@ -63,8 +63,15 @@
 		</div>
 
 		<nb-card *ngFor="let v of vendors">
-			<nb-card-body>
-				<ga-notes-with-tags [rowData]="v"> </ga-notes-with-tags>
+			<nb-card-body
+				style="
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+				"
+			>
+				<ga-notes-with-tags [rowData]="v" *ngIf="v !== selectedVendor">
+				</ga-notes-with-tags>
 				<div
 					*ngIf="showEditDiv && v === selectedVendor"
 					class="row align-items-end"
@@ -90,7 +97,7 @@
 						[isOrgLevel]="true"
 					>
 					</ga-tags-color-input>
-					<span class="col-2 pl-2 pr-1">
+					<span class="col-2 pl-2 pr-1 ml-6">
 						<button
 							class="w-100"
 							(click)="
@@ -121,7 +128,7 @@
 				>
 					<nb-action
 						(click)="showEditCard(v)"
-						class="d-inline pr-0"
+						class="d-inline pr-0 mr-3"
 						icon="edit"
 					></nb-action>
 					<nb-action

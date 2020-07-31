@@ -2,11 +2,11 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Employee, OrganizationDepartment, Tag } from '@gauzy/models';
 
 @Component({
-	selector: 'ga-edit-organization-departments-mutation',
-	templateUrl: './edit-organization-departments-mutation.component.html',
-	styleUrls: ['./edit-organization-departments-mutation.component.scss']
+	selector: 'ga-departments-mutation',
+	templateUrl: './departments-mutation.component.html',
+	styleUrls: ['./departments-mutation.component.scss']
 })
-export class EditOrganizationDepartmentsMutationComponent implements OnInit {
+export class DepartmentsMutationComponent implements OnInit {
 	@Input()
 	employees: Employee[];
 	@Input()
@@ -29,7 +29,6 @@ export class EditOrganizationDepartmentsMutationComponent implements OnInit {
 			this.selectedEmployeeIds = this.department.members.map(
 				(member) => member.id
 			);
-
 			this.name = this.department.name;
 			this.tags = this.department.tags;
 		}

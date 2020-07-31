@@ -281,6 +281,13 @@ const routes: Routes = [
 							import('./vendors/vendors.module').then(
 								(m) => m.VendorsModule
 							)
+					},
+					{
+						path: 'departments',
+						loadChildren: () =>
+							import('./departments/departments.module').then(
+								(m) => m.DepartmentsModule
+							)
 					}
 				]
 			},

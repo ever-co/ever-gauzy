@@ -5,7 +5,8 @@ import {
 	NbButtonModule,
 	NbInputModule,
 	NbIconModule,
-	NbDialogModule
+	NbDialogModule,
+	NbActionsModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -13,6 +14,11 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { VendorsComponent } from './vendors.component';
 import { OrganizationVendorsService } from '../../@core/services/organization-vendors.service';
+import { VendorsRoutingModule } from './vendors-routing.module';
+import { OrganizationEditStore } from '../../@core/services/organization-edit-store.service';
+import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -26,6 +32,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
+		TagsColorInputModule,
+		NbActionsModule,
+		TableComponentsModule,
+		VendorsRoutingModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
@@ -37,6 +47,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [VendorsComponent],
 	entryComponents: [],
-	providers: [OrganizationVendorsService]
+	providers: [OrganizationVendorsService, OrganizationEditStore]
 })
 export class VendorsModule {}

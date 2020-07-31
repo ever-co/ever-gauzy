@@ -9,7 +9,7 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<ga-edit-organization-departments-mutation
+		<ga-departments-mutation
 			*ngIf="showAddCard"
 			[employees]="employees"
 			[organizationId]="organizationId"
@@ -17,7 +17,7 @@
 			(canceled)="cancel()"
 			(addOrEditDepartment)="addOrEditDepartment($event)"
 		>
-		</ga-edit-organization-departments-mutation>
+		</ga-departments-mutation>
 	</nb-card-header>
 
 	<nb-card-body class="card-container" *ngIf="departments?.length">

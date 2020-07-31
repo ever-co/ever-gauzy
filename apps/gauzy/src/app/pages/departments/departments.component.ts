@@ -8,26 +8,23 @@ import {
 import { NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
-	selector: 'ga-edit-org-departments',
-	templateUrl: './edit-organization-departments.component.html',
-	styleUrls: ['./edit-organization-departments.component.scss']
+	selector: 'ga-departments',
+	templateUrl: './departments.component.html',
+	styleUrls: ['./departments.component.scss']
 })
-export class EditOrganizationDepartmentsComponent
-	extends TranslationBaseComponent
+export class DepartmentsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	organizationId: string;
-
 	showAddCard: boolean;
-
 	departments: OrganizationDepartment[];
 	employees: Employee[] = [];
 	departmentToEdit: OrganizationDepartment;
@@ -36,15 +33,15 @@ export class EditOrganizationDepartmentsComponent
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly employeesService: EmployeesService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.organizationEditStore.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
@@ -64,7 +61,6 @@ export class EditOrganizationDepartmentsComponent
 		if (!this.organizationId) {
 			return;
 		}
-
 		const { items } = await this.employeesService
 			.getAll(['user'], { organization: { id: this.organizationId } })
 			.pipe(first())
