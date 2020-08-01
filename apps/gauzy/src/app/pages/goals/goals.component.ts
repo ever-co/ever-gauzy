@@ -454,6 +454,11 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
+	calculateKeyResultWeight(weight, goal) {
+		const weightSum = goal.keyResults.reduce((a, b) => a + +b.weight, 0);
+		return Math.round(+weight * (100 / weightSum));
+	}
+
 	async keyResultUpdate(index, selectedKeyResult: KeyResult) {
 		const keyResultDialog = this.dialogService.open(
 			KeyResultUpdateComponent,

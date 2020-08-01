@@ -26,6 +26,7 @@ export interface KeyResult extends IBaseEntityModel {
 	name: string;
 	description?: string;
 	type: string;
+	unit?: string;
 	targetValue?: number;
 	initialValue?: number;
 	update: number;
@@ -57,6 +58,14 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 	status: string;
 }
 
+export enum KeyResultNumberUnitsEnum {
+	SALES = 'sales',
+	VISITORS = 'visitors',
+	PEOPLE = 'people',
+	ITEMS = 'items',
+	CLIENTS = 'clients'
+}
+
 export enum KeyResultWeightEnum {
 	DEFAULT = '1',
 	INCREASE_BY_2X = '2',
@@ -69,7 +78,7 @@ export interface GoalFindInput extends IBaseEntityModel {
 }
 
 export enum KeyResultTypeEnum {
-	NUMBER = 'Number',
+	NUMERICAL = 'Numerical',
 	TRUE_OR_FALSE = 'True/False',
 	CURRENCY = 'Currency',
 	TASK = 'Task',

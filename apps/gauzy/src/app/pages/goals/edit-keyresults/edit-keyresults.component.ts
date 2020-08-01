@@ -20,7 +20,9 @@ import {
 	RolesEnum,
 	Goal,
 	KPI,
-	GoalGeneralSetting
+	GoalGeneralSetting,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
@@ -29,6 +31,7 @@ import { GoalService } from '../../../@core/services/goal.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
 import { EditKpiComponent } from '../../goal-settings/edit-kpi/edit-kpi.component';
+import { endOfTomorrow } from 'date-fns';
 
 @Component({
 	selector: 'ga-edit-keyresults',
@@ -43,17 +46,20 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	settings: GoalGeneralSetting;
 	orgId: string;
 	orgName: string;
+	currenciesEnum = CurrenciesEnum;
+	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	helperText = '';
 	teams: OrganizationTeam[] = [];
 	hideOrg = false;
 	hideTeam = false;
+	createNew = false;
 	hideEmployee = false;
 	goalLevelEnum = GoalLevelEnum;
 	softDeadline: FormControl;
 	keyResultTypeEnum = KeyResultTypeEnum;
 	goalDeadline: string;
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
-	minDate = new Date();
+	minDate = endOfTomorrow();
 	KPIs: Array<KPI>;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
@@ -70,13 +76,11 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		this.minDate = new Date(
-			this.minDate.setDate(this.minDate.getDate() + 1)
-		);
 		this.keyResultsForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			type: [this.keyResultTypeEnum.NUMBER, Validators.required],
+			type: [this.keyResultTypeEnum.NUMERICAL, Validators.required],
+			unit: [''],
 			targetValue: [1],
 			initialValue: [0],
 			owner: [null, Validators.required],
@@ -102,6 +106,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				this.employees = employees.items;
 			});
 		if (!!this.data) {
+			if (!this.numberUnitsEnum.find((unit) => unit === this.data.unit)) {
+				this.numberUnitsEnum.push(this.data.unit);
+			}
 			this.keyResultsForm.patchValue(this.data);
 			this.keyResultsForm.patchValue({
 				softDeadline: this.data.softDeadline
@@ -111,7 +118,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					? new Date(this.data.hardDeadline)
 					: null,
 				lead: !!this.data.lead ? this.data.lead.id : null,
-				owner: this.data.owner.id
+				owner: this.data.owner.id,
+				unit: this.data.unit
 			});
 		}
 		if (
@@ -315,6 +323,13 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				weight: KeyResultWeightEnum.DEFAULT
 			});
 		}
+	}
+
+	createNewUnit() {
+		if (this.keyResultsForm.value.unit !== ' ') {
+			this.numberUnitsEnum.push(this.keyResultsForm.value.unit);
+		}
+		this.createNew = false;
 	}
 
 	closeDialog(data = null) {

@@ -9,6 +9,8 @@ import { sign } from 'jsonwebtoken';
 import { environment as env } from '@env-api/environment';
 import { User } from '../user/user.entity';
 
+import * as moment from 'moment';
+
 export const createRandomEmployeeInviteSent = async (
 	connection: Connection,
 	tenants: Tenant[],
@@ -21,7 +23,7 @@ export const createRandomEmployeeInviteSent = async (
 
 	for (const tenant of tenants) {
 		const role = await connection.getRepository(Role).find({
-			where: [{ tenant: tenant }, { name: RolesEnum.EMPLOYEE }]
+			where: [{ tenant: tenant, name: RolesEnum.EMPLOYEE}]
 		});
 		const orgs = tenantOrganizationsMap.get(tenant);
 		const admins = tenantSuperAdminMap.get(tenant);
@@ -29,7 +31,7 @@ export const createRandomEmployeeInviteSent = async (
 			for (let i = 0; i < noOfInvitesPerOrganization; i++) {
 				let invitee = new Invite();
 				invitee.email = faker.internet.email();
-				invitee.expireDate = faker.date.future();
+				invitee.expireDate = faker.date.between(new Date(), moment(new Date()).add(30, 'days').toDate());
 				invitee.invitedBy = faker.random.arrayElement(admins);
 				invitee.organizationId = org.id;
 				invitee.organization = org;

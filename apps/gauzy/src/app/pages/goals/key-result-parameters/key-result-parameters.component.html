@@ -127,7 +127,7 @@
 							<label
 								*ngIf="
 									typeForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
+										keyResultTypeEnum.NUMERICAL ||
 									typeForm.value.type ==
 										keyResultTypeEnum.CURRENCY
 								"
@@ -144,7 +144,7 @@
 								id="initial-value"
 								*ngIf="
 									typeForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
+										keyResultTypeEnum.NUMERICAL ||
 									typeForm.value.type ==
 										keyResultTypeEnum.CURRENCY
 								"
@@ -162,7 +162,7 @@
 							<label
 								*ngIf="
 									typeForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
+										keyResultTypeEnum.NUMERICAL ||
 									typeForm.value.type ==
 										keyResultTypeEnum.CURRENCY
 								"
@@ -179,7 +179,7 @@
 								id="target-value"
 								*ngIf="
 									typeForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
+										keyResultTypeEnum.NUMERICAL ||
 									typeForm.value.type ==
 										keyResultTypeEnum.CURRENCY
 								"
@@ -228,7 +228,7 @@
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
-	<nb-card-footer>
+	<nb-card-footer class="text-right">
 		<button class="mr-3" nbButton (click)="closeDialog(null)">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>

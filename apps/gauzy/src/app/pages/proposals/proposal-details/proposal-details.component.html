@@ -1,16 +1,23 @@
 <nb-card>
-	<nb-card-header>
-		<h4>
-			{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
-		</h4>
-		<button nbButton (click)="edit()" status="info" class="mr-2">
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-			>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.EDIT' | translate }}
-		</button>
+	<nb-card-header class="header-selector-wrapper">
+		<div class="header-selector-wrapper">
+			<ngx-back-navigation></ngx-back-navigation>
+			<h4>
+				{{
+					'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS'
+						| translate
+				}}
+			</h4>
+		</div>
+		<div>
+			<button nbButton (click)="edit()" status="info" class="mr-2">
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.EDIT' | translate }}
+			</button>
+		</div>
 	</nb-card-header>
 
 	<nb-card-body class="card-container">
-		<ngx-back-navigation class="d-block"></ngx-back-navigation>
 		<div class="wrapper-top">
 			<nb-card class="prop-card">
 				<h6>
@@ -25,7 +32,9 @@
 							| translate
 					}}
 				</h6>
-				<p [innerHTML]="jobPostLink"></p>
+				<a *ngIf="jobPostLink" href="jobPostLink" target="_blank"
+					>View Job Post</a
+				>
 			</nb-card>
 			<nb-card class="prop-card">
 				<h6>
@@ -51,10 +60,17 @@
 							| translate
 					}}
 				</h6>
-				<ga-notes-with-tags
-					style="padding-bottom: 15px; padding-left: 15px;"
-					[rowData]="proposal"
-				></ga-notes-with-tags>
+				<div class="px-5" [innerHTML]="jobPostContent"></div>
+				<div class="tags px-5">
+					<nb-badge
+						*ngFor="let tag of proposal?.tags"
+						class="color"
+						position="centered"
+						[style.background]="tag.color"
+						text="{{ tag.name }}"
+					>
+					</nb-badge>
+				</div>
 			</nb-card>
 			<nb-card class="prop-card">
 				<h6>

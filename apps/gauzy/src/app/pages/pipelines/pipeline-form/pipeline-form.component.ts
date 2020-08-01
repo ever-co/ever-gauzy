@@ -8,8 +8,7 @@ import { NbDialogRef } from '@nebular/theme';
 
 @Component({
 	templateUrl: './pipeline-form.component.html',
-	selector: 'ga-pipeline-form',
-	styles: ['./pipeline-form.component.scss']
+	selector: 'ga-pipeline-form'
 })
 export class PipelineFormComponent implements OnInit {
 	@Input()

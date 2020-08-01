@@ -67,6 +67,7 @@ import { InvoicePaymentOverdueComponent } from './table-components/invoice-payme
 import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-apply-tax-discount.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { InvoiceExpensesSelectorComponent } from './table-components/invoice-expense-selector.component';
+import { BackNavigationModule } from '../../@shared/back-navigation';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -102,6 +103,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbContextMenuModule,
 		NbMenuModule,
 		NbTabsetModule,
+		BackNavigationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

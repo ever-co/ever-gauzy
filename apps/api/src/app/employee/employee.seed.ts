@@ -4,7 +4,8 @@ import { Employee } from './employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
 import { date as fakerDate } from 'faker';
-import { ISeedUsers, LanguagesEnum } from '@gauzy/models';
+import { CurrenciesEnum, ISeedUsers, LanguagesEnum, PayPeriodEnum } from '@gauzy/models';
+import * as faker from 'faker';
 
 export const createDefaultEmployees = async (
 	connection: Connection,
@@ -290,6 +291,13 @@ export const createDefaultEmployees = async (
 			defaultEmployees.filter((e) => e.email === employee.user.email)[0]
 				.endWork
 		);
+
+    // TODO: check below value as its correct or not, and into frontend too
+    employee.payPeriod = faker.random.arrayElement(Object.keys(PayPeriodEnum));
+    employee.billRateValue = faker.random.number(100);
+    employee.billRateCurrency = faker.random.arrayElement(Object.keys(CurrenciesEnum));
+    employee.reWeeklyLimit = faker.random.number(40);
+
 		await insertEmployee(connection, employee);
 		employees.push(employee);
 		counter++;
@@ -323,6 +331,10 @@ export const createRandomEmployees = async (
 					employee.endWork = null;
 					employee.startedWorkOn = fakerDate.past(index % 5);
 					employee.tenant = tenant;
+          			employee.payPeriod = faker.random.arrayElement(Object.keys(PayPeriodEnum));
+          			employee.billRateValue = faker.random.number(100);
+          			employee.billRateCurrency = faker.random.arrayElement(Object.keys(CurrenciesEnum));
+          			employee.reWeeklyLimit = faker.random.number(40);
 
 					if (employee.user) {
 						employees.push(employee);

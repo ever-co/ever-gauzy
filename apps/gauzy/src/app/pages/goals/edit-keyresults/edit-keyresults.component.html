@@ -1,4 +1,4 @@
-<nb-card size="large" class="max-width-50vw">
+<nb-card size="large" class="max-width-60vw">
 	<nb-card-header>
 		{{
 			(!!data
@@ -170,20 +170,17 @@
 				<div class="col-md-5 position-relative mt-3"></div>
 			</div>
 
-			<div class="row">
+			<div
+				class="row"
+				*ngIf="
+					keyResultsForm.value.type == keyResultTypeEnum.NUMERICAL ||
+					keyResultsForm.value.type == keyResultTypeEnum.CURRENCY
+				"
+			>
 				<div class="col-md-7">
 					<div class="row mt-2">
-						<div class="col-md-6">
-							<label
-								*ngIf="
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								for="initial-value"
-								class="label"
-							>
+						<div class="col-md-4">
+							<label for="initial-value" class="label">
 								{{
 									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
 										| translate
@@ -192,47 +189,28 @@
 							<input
 								type="number"
 								id="initial-value"
-								*ngIf="
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
 								nbInput
 								fullWidth
 								formControlName="initialValue"
-								placeholder="						{{
+								placeholder="{{
 									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
 										| translate
 								}}"
 							/>
 						</div>
 
-						<div class="col-md-6">
-							<label
-								*ngIf="
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								for="target-value"
-								class="label"
-							>
+						<div class="col-md-4">
+							<label for="target-value" class="label">
 								{{
 									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
 										| translate
 								}}
 							</label>
+
 							<input
+								class="d-flex space-between"
 								type="number"
 								id="target-value"
-								*ngIf="
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
 								nbInput
 								fullWidth
 								formControlName="targetValue"
@@ -241,6 +219,80 @@
 										| translate
 								}}"
 							/>
+						</div>
+						<div class="col-md-4">
+							<label for="unit" class="label">
+								Unit
+							</label>
+							<nb-select
+								fullWidth
+								formControlName="unit"
+								*ngIf="
+									keyResultsForm.value.type ==
+									keyResultTypeEnum.CURRENCY
+								"
+								id="unit"
+								nbSuffix
+							>
+								<nb-option
+									[value]="currency.value"
+									*ngFor="
+										let currency of currenciesEnum
+											| keyvalue
+									"
+									>{{ currency.value }}</nb-option
+								>
+							</nb-select>
+							<nb-select
+								fullWidth
+								formControlName="unit"
+								(selectedChange)="
+									keyResultsForm.value.unit == 'create-new'
+										? (createNew = !createNew)
+										: null
+								"
+								*ngIf="
+									keyResultsForm.value.type ==
+										keyResultTypeEnum.NUMERICAL &&
+									!createNew
+								"
+								id="unit"
+								nbSuffix
+							>
+								<nb-option
+									[value]="unit"
+									*ngFor="let unit of numberUnitsEnum"
+									>{{ unit }}
+								</nb-option>
+								<nb-option
+									value="create-new"
+									class="bg-secondary text-light"
+								>
+									+ create new
+								</nb-option>
+							</nb-select>
+							<nb-form-field *ngIf="createNew">
+								<input
+									type="text"
+									formControlName="unit"
+									nbInput
+									fullWidth
+								/>
+								<nb-icon
+									nbSuffix
+									icon="checkmark-outline"
+									status="success"
+									(click)="createNewUnit()"
+								>
+								</nb-icon>
+								<nb-icon
+									nbSuffix
+									icon="close-outline"
+									status="danger"
+									(click)="createNew = !createNew"
+								>
+								</nb-icon>
+							</nb-form-field>
 						</div>
 					</div>
 				</div>
@@ -559,7 +611,7 @@
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card-footer>
+	<nb-card-footer class="text-right">
 		<button class="mr-3" nbButton (click)="closeDialog()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>

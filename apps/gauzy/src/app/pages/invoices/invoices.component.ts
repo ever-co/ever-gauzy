@@ -66,7 +66,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	columns = Object.values(InvoiceColumnsEnum);
 	currencies = Object.values(CurrenciesEnum);
 	form: FormGroup;
-	clients: OrganizationContact[];
+	organizationContacts: OrganizationContact[];
 	duplicate: boolean;
 
 	private _ngDestroy$ = new Subject<void>();
@@ -119,7 +119,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	initializeForm() {
 		this.form = this.fb.group({
 			invoiceNumber: [],
-			client: [],
+			organizationContact: [],
 			invoiceDate: [],
 			dueDate: [],
 			totalValue: [],
@@ -450,6 +450,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 								isEstimate: this.isEstimate
 							}
 						);
+						const res = await this.organizationContactService.getAll(
+							[],
+							{
+								organizationId: org.id
+							}
+						);
+
+						if (res) {
+							this.organizationContacts = res.items;
+						}
 						const invoiceVM: Invoice[] = items.map((i) => {
 							return {
 								id: i.id,
@@ -661,8 +671,9 @@ export class InvoicesComponent extends TranslationBaseComponent
 			(invoice) =>
 				(searchObj.invoiceNumber === null ||
 					searchObj.invoiceNumber === +invoice.invoiceNumber) &&
-				(searchObj.client === null ||
-					searchObj.client.id === invoice.toContact.id) &&
+				(searchObj.organizationContact === null ||
+					searchObj.organizationContact.id ===
+						invoice.toContact.id) &&
 				(searchObj.invoiceDate === null ||
 					searchObj.invoiceDate.toString().slice(0, 15) ===
 						new Date(invoice.invoiceDate)
@@ -703,7 +714,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.tags = [];
 	}
 
-	searchClient(term: string, item: any) {
+	searchContact(term: string, item: any) {
 		if (item.name) {
 			return item.name.toLowerCase().includes(term.toLowerCase());
 		}

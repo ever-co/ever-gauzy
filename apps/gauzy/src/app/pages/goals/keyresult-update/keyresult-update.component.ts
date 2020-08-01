@@ -43,7 +43,7 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 			newStatus: this.keyResult.status
 		});
 		if (
-			this.keyResult.type === KeyResultTypeEnum.NUMBER ||
+			this.keyResult.type === KeyResultTypeEnum.NUMERICAL ||
 			this.keyResult.type === KeyResultTypeEnum.CURRENCY ||
 			this.keyResult.type === KeyResultTypeEnum.KPI
 		) {
@@ -65,7 +65,7 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 
 	async updateKeyResult() {
 		if (
-			this.keyResult.type === KeyResultTypeEnum.NUMBER ||
+			this.keyResult.type === KeyResultTypeEnum.NUMERICAL ||
 			this.keyResult.type === KeyResultTypeEnum.CURRENCY
 		) {
 			this.keyResult.update = this.keyResultUpdateForm.value.newValueNumber;
