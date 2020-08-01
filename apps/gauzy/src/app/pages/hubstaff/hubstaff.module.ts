@@ -24,6 +24,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
+import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -53,6 +54,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbToggleModule,
 		ThemeModule,
 		NbDatepickerModule,
+		BackNavigationModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

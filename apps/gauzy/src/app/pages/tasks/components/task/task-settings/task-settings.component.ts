@@ -1,11 +1,9 @@
 import { Component } from '@angular/core';
 import { Task, OrganizationProjects, TaskListTypeEnum } from '@gauzy/models';
-import { uniqWith, isEqual } from 'lodash';
 import { Observable } from 'rxjs';
 import { map, tap, switchMap, filter, take } from 'rxjs/operators';
-import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
+import { TasksStoreService } from '../../../../../@core/services/tasks-store.service';
 import { ActivatedRoute } from '@angular/router';
-import { Location } from '@angular/common';
 
 @Component({
 	selector: 'ngx-task-settings',
@@ -19,8 +17,7 @@ export class TaskSettingsComponent {
 
 	constructor(
 		private _store: TasksStoreService,
-		private route: ActivatedRoute,
-		private location: Location
+		private route: ActivatedRoute
 	) {
 		this.tasks$ = this._store.tasks$;
 
@@ -54,9 +51,5 @@ export class TaskSettingsComponent {
 				take(1)
 			)
 			.subscribe();
-	}
-
-	goBack(): void {
-		this.location.back();
 	}
 }
