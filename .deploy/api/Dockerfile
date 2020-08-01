@@ -67,5 +67,5 @@ ENV API_PORT 3000
 ENV DB_PORT 5432
 
 EXPOSE ${API_PORT:-3000}
-CMD [ "node", "main.js" ]
+CMD [ "./node_modules/bin/pm2/pm2-runtime", "main.js" ]
 ENTRYPOINT [ "./entrypoint" ]
