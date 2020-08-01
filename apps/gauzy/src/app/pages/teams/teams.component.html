@@ -1,0 +1,143 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<button
+			*ngIf="!showAddCard"
+			(click)="showAddCard = !showAddCard; this.loadTeams()"
+			nbButton
+			status="success"
+		>
+			<nb-icon class="mr-2" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+
+		<ga-teams-mutation
+			*ngIf="showAddCard"
+			[employees]="employees"
+			[organizationId]="organizationId"
+			[team]="teamToEdit"
+			(canceled)="cancel()"
+			(addOrEditTeam)="addOrEditTeam($event)"
+		></ga-teams-mutation>
+	</nb-card-header>
+	<nb-card-body class="card-container" *ngIf="teams">
+		<nb-card
+			style="padding: 0 !important;"
+			class="card-body"
+			*ngFor="let team of teams"
+		>
+			<nb-card-header style="padding: 0.5rem;">
+				<div class="header-container">
+					<ga-notes-with-tags [rowData]="team"> </ga-notes-with-tags>
+					<div class="members-count">
+						{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
+						{{ team.members.length }}
+					</div>
+				</div>
+			</nb-card-header>
+
+			<nb-card-body class="team-card">
+				<nb-card *ngIf="team.managers.length">
+					<nb-card-header>
+						<div>
+							{{
+								'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'
+									| translate
+							}}
+						</div>
+					</nb-card-header>
+					<nb-card-body>
+						<div
+							class="name-container"
+							*ngFor="let manager of team.managers"
+							(click)="openEmployees(manager.employee.id)"
+						>
+							<div class="image-container">
+								<img [src]="manager.employee.user.imageUrl" />
+							</div>
+							<span
+								>{{ manager.employee.user.firstName }}
+								{{ manager.employee.user.lastName }}
+								<div class="tags-container">
+									<nb-badge
+										*ngFor="
+											let tag of getTagsByEmployeeId(
+												manager.employee.id
+											)
+										"
+										class="tags"
+										position="centered"
+										[style.background]="tag.color"
+										text="{{ tag.name }}"
+									>
+									</nb-badge>
+								</div>
+							</span>
+						</div>
+					</nb-card-body>
+				</nb-card>
+				<nb-card *ngIf="team.members.length">
+					<nb-card-header>
+						<div>
+							{{
+								'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
+									| translate
+							}}
+						</div>
+					</nb-card-header>
+					<nb-card-body>
+						<div
+							class="name-container"
+							*ngFor="let member of team.members"
+							(click)="openEmployees(member.employee.id)"
+						>
+							<div class="image-container">
+								<img [src]="member.employee.user.imageUrl" />
+							</div>
+							<span
+								>{{ member.employee.user.firstName }}
+								{{ member.employee.user.lastName }}
+								<div class="tags-container">
+									<nb-badge
+										*ngFor="
+											let tag of getTagsByEmployeeId(
+												member.employee.id
+											)
+										"
+										class="tags"
+										position="centered"
+										[style.background]="tag.color"
+										text="{{ tag.name }}"
+									>
+									</nb-badge>
+								</div>
+							</span>
+						</div>
+					</nb-card-body>
+				</nb-card>
+
+				<div class="button-container">
+					<button
+						nbButton
+						class="mr-2"
+						status="info"
+						size="tiny"
+						(click)="editTeam(team)"
+					>
+						<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+						>{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+					<button
+						size="tiny"
+						class="mr-2"
+						nbButton
+						(click)="removeTeam(team.id, team.name)"
+						status="danger"
+					>
+						<nb-icon class="mr-2" icon="trash-2-outline"></nb-icon
+						>{{ 'BUTTONS.DELETE' | translate }}
+					</button>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

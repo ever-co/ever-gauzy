@@ -40,31 +40,17 @@ import {
 	ThemeModule
 } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
-import { EditOrganizationContactMutationComponent } from './edit-organization-contacts/edit-organization-contact-mutation/edit-organization-contact-mutation.component';
-import { EditOrganizationContactComponent } from './edit-organization-contacts/edit-organization-contact.component';
-import { InviteContactComponent } from './edit-organization-contacts/invite-contact/invite-contact.component';
-import { EditOrganizationDepartmentsMutationComponent } from './edit-organization-departments/edit-organization-departments-mutation/edit-organization-departments-mutation.component';
-import { EditOrganizationDepartmentsComponent } from './edit-organization-departments/edit-organization-departments.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
-import { EditOrganizationPositionsComponent } from './edit-organization-positions/edit-organization-positions.component';
-import { EditOrganizationProjectsMutationComponent } from './edit-organization-projects/edit-organization-projects-mutation/edit-organization-projects-mutation.component';
-import { EditOrganizationProjectsComponent } from './edit-organization-projects/edit-organization-projects.component';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
-import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
-import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
-import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization-employment-types/edit-organization-employment-types.component';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { EditOrganizationExpenseCategoriesComponent } from './edit-organization-expense-categories/edit-organization-expense-categories.component';
 import { OrganizationExpenseCategoriesService } from '../../../../@core/services/organization-expense-categories.service';
 import { InviteService } from '../../../../@core/services/invite.service';
 import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization-employee-levels/edit-organization-employee-level.component';
-import { EditOrganizationDocuments } from './edit-organization-documents/edit-organization-documents/edit-organization-documents';
-import { UploadDocumentComponent } from './edit-organization-documents/upload-document/upload-document.component';
-import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
+import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
 
 @NgModule({
@@ -120,30 +106,16 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EmployeeStore,
 		InviteService
 	],
-	entryComponents: [InviteContactComponent],
+	entryComponents: [],
 	declarations: [
 		EditOrganizationSettingsComponent,
 		EditOrganizationMainComponent,
 		EditOrganizationLocationComponent,
 		OrganizationListComponent,
-		EditOrganizationDepartmentsComponent,
-		EditOrganizationVendorsComponent,
-		EditOrganizationExpenseCategoriesComponent,
-		EditOrganizationPositionsComponent,
-		EditOrganizationPositionsComponent,
-		EditOrganizationContactComponent,
-		EditOrganizationProjectsComponent,
-		EditOrganizationTeamsComponent,
-		EditOrganizationTeamsMutationComponent,
 		EditOrganizationOtherSettingsComponent,
-		EditOrganizationDepartmentsMutationComponent,
-		EditOrganizationContactMutationComponent,
-		EditOrganizationProjectsMutationComponent,
 		EditOrganizationEmploymentTypes,
-		EditOrganizationDocuments,
-		InviteContactComponent,
-		UploadDocumentComponent,
 		EditOrganizationEmployeeLevelComponent
-	]
+	],
+	exports: [EditOrganizationSettingsComponent]
 })
 export class EditOrganizationSettingsModule {}

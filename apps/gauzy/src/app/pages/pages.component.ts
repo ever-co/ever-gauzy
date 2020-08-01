@@ -360,85 +360,72 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Contacts',
 					icon: 'book-open-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/contacts`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/contacts',
 						translationKey: 'ORGANIZATIONS_PAGE.CONTACTS'
 					}
 				},
 				{
 					title: 'Vendors',
 					icon: 'car-outline',
-					link: `/pages/organizations/`,
+					link: '/pages/organization/vendors',
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/vendors',
 						translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
 					}
 				},
 				{
 					title: 'Projects',
 					icon: 'book-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/projects`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/projects',
 						translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
 					}
 				},
 				{
 					title: 'Positions',
 					icon: 'award-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/positions`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/positions',
 						translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
 					}
 				},
 				{
 					title: 'Departments',
 					icon: 'briefcase-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/departments`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/departments',
 						translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
 					}
 				},
 				{
 					title: 'Teams',
 					icon: 'people-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/teams`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/teams',
 						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
 					}
 				},
 				{
 					title: 'Documents',
 					icon: 'file-text-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/documents`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/documents',
 						translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS'
+					}
+				},
+				{
+					title: 'Expense Recurring',
+					icon: 'flip-outline',
+					link: '/pages/organization/expense-recurring',
+					data: {
+						translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING'
 					}
 				},
 				{
@@ -446,7 +433,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'question-mark-circle-outline',
 					link: '/pages/organization/help-center',
 					data: {
-						translationKey: 'MENU.HELP_CENTER'
+						translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER'
 					}
 				}
 			]

@@ -1,28 +1,29 @@
 .main-form {
-	width: 100%;
+  width: 100%;
+  margin-top: 2rem;
 }
 
 .content {
-	display: flex;
-	padding: 50px 0px;
+  display: flex;
+  padding: 50px 0px;
 }
 
 .invite-toggle {
-	nb-toggle {
-		display: flex;
-		::ng-deep .toggle-label {
-			display: flex;
-			justify-content: space-between;
-			flex-grow: 1;
-		}
-	}
+  nb-toggle {
+    display: flex;
+    ::ng-deep .toggle-label {
+      display: flex;
+      justify-content: space-between;
+      flex-grow: 1;
+    }
+  }
 }
 #temporary {
-	padding-bottom: 215px;
+  padding-bottom: 215px;
 }
 
 :host {
-	nb-card-body {
-		overflow: visible;
-	}
+  nb-card-body {
+    overflow: visible;
+  }
 }

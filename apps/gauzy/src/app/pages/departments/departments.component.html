@@ -1,0 +1,33 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			*ngIf="!showAddCard"
+			(click)="showAddCard = !showAddCard"
+			nbButton
+			status="success"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<ga-departments-mutation
+			*ngIf="showAddCard"
+			[employees]="employees"
+			[organizationId]="organizationId"
+			[department]="departmentToEdit"
+			(canceled)="cancel()"
+			(addOrEditDepartment)="addOrEditDepartment($event)"
+		>
+		</ga-departments-mutation>
+	</nb-card-header>
+
+	<nb-card-body class="card-container" *ngIf="departments?.length">
+		<ga-entity-with-members-card
+			*ngFor="let d of departments"
+			[entityWithMembers]="d"
+			(remove)="removeDepartment(d.id, d.name)"
+			(edit)="editDepartment(d)"
+			class="member-card"
+		>
+		</ga-entity-with-members-card>
+	</nb-card-body>
+</nb-card>
