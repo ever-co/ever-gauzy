@@ -16,7 +16,6 @@ import { takeUntil, first } from 'rxjs/operators';
 import { ImageRowComponent } from '../table-components/image-row.component';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Location } from '@angular/common';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
@@ -46,7 +45,6 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private productCategoryService: ProductCategoryService,
 		private toastrService: NbToastrService,
-		private location: Location,
 		private router: Router,
 		private store: Store
 	) {
@@ -204,10 +202,6 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		}
 		this.disableButton = !isSelected;
 		this.selectedProductCategory = selectedProductCategory;
-	}
-
-	goBack() {
-		this.location.back();
 	}
 
 	ngOnDestroy(): void {

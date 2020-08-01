@@ -47,7 +47,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			weight: [KeyResultWeightEnum.DEFAULT, Validators.required]
 		});
 		this.typeForm = this.fb.group({
-			type: [KeyResultTypeEnum.NUMBER, Validators.required],
+			type: [KeyResultTypeEnum.NUMERICAL, Validators.required],
 			targetValue: [1],
 			initialValue: [0],
 			projectId: [null],

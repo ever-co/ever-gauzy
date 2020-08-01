@@ -1,11 +1,13 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
-		<ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
-		<div class="header-title">
+		<div class="header-selector-wrapper">
+			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				{{ 'INVITE_PAGE.' + invitationType + '.MANAGE' | translate }}
 				{{ organizationName }}
 			</h4>
+		</div>
+		<div>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>

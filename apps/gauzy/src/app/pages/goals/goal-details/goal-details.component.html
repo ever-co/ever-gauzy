@@ -41,6 +41,7 @@
 			<div class="col-md-8">
 				<nb-progress-bar
 					class="ml-3"
+					nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
 					[value]="goal.progress"
 					[status]="
 						goal.progress < 50
@@ -73,6 +74,15 @@
 							</div>
 							<div class="col-md-2">
 								<nb-progress-bar
+									nbTooltip="{{
+										'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
+											| translate
+												: {
+														weight: calculateKeyResultWeight(
+															keyResult.weight
+														)
+												  }
+									}}"
 									class="mt-1"
 									[status]="
 										keyResult.progress < 50
@@ -89,6 +99,10 @@
 							<div class="col-md-2">
 								<nb-actions>
 									<nb-action
+										nbTooltip="{{
+											'KEY_RESULT_PAGE.TOOLTIPS.DETAILS'
+												| translate
+										}}"
 										(click)="keyResultDetails(i, keyResult)"
 										icon="eye"
 									></nb-action>

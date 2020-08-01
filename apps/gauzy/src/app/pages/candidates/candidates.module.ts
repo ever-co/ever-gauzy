@@ -89,7 +89,6 @@ import { CandidateRatingChartComponent } from './candidate-statistic/candidate-s
 import { InterviewRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/interview-rating-chart/interview-rating-chart.component';
 import { AverageCriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/average-criterions-rating-chart/average-criterions-rating-chart.component';
 import { InterviewStarRatingComponent } from './manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
-import { InterviewCandidatePictureNameComponent } from './manage-candidate-interviews/interview-panel/table-components/candidate/candidate.component';
 import { InterviewCriterionsTableComponent } from './manage-candidate-interviews/interview-panel/table-components/criterions/criterions.component';
 import { InterviewDateTableComponent } from './manage-candidate-interviews/interview-panel/table-components/date/date.component';
 import { InterviewersTableComponent } from './manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
@@ -131,7 +130,6 @@ const COMPONENTS = [
 	InterviewCriterionsComponent,
 	CandidateTechnologiesComponent,
 	CandidatePersonalQualitiesComponent,
-	InterviewCandidatePictureNameComponent,
 	InterviewStarRatingComponent,
 	InterviewCriterionsTableComponent,
 	InterviewDateTableComponent,

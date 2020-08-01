@@ -1,14 +1,17 @@
 <nb-card>
 	<nb-card-header class="header-selector-wrapper">
-		<h4>
-			<span>
-				{{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }}
-			</span>
-			|
-			<span>
-				{{ pipeline?.name }}
-			</span>
-		</h4>
+		<div class="header-selector-wrapper">
+			<ngx-back-navigation></ngx-back-navigation>
+			<h4>
+				<span>
+					{{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }}
+				</span>
+				|
+				<span>
+					{{ pipeline?.name }}
+				</span>
+			</h4>
+		</div>
 		<ga-layout-selector
 			componentName="{{ viewComponentName }}"
 		></ga-layout-selector>

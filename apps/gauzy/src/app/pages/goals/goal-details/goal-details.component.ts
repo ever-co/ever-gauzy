@@ -77,6 +77,14 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 		}
 	}
 
+	calculateKeyResultWeight(weight) {
+		const weightSum = this.goal.keyResults.reduce(
+			(a, b) => a + +b.weight,
+			0
+		);
+		return Math.round(+weight * (100 / weightSum));
+	}
+
 	async keyResultDetails(index, selectedKeyResult) {
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,

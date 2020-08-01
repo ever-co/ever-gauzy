@@ -18,36 +18,36 @@ import { first } from 'rxjs/operators';
 })
 export class StageFormComponent implements OnInit {
 	@Input('values')
-	public stages: PipelineStageUpdateInput[];
+	stages: PipelineStageUpdateInput[];
 
 	@Input()
-	public pipelineId: string;
+	pipelineId: string;
 
-	public control: FormArray;
+	control: FormArray;
 
-	public isAdding = false;
+	isAdding = false;
 
-	public constructor(
+	constructor(
 		private readonly controlContainer: ControlContainer,
 		private dialogService: NbDialogService,
 		private fb: FormBuilder
 	) {}
 
-	public ngOnInit(): void {
+	ngOnInit(): void {
 		this.control = this.controlContainer.control as FormArray;
 		this.stages?.forEach(({ id, name, description }) => {
 			this.pushNewStage({ id, name, description });
 		});
 	}
 
-	public reorder(event: CdkDragDrop<FormGroup>) {
+	reorder(event: CdkDragDrop<FormGroup>) {
 		const index = this.control.controls.indexOf(event.item.data);
 
 		this.control.removeAt(index);
 		this.control.insert(event.currentIndex, event.item.data);
 	}
 
-	public pushNewStage(
+	pushNewStage(
 		{
 			id,
 			name,

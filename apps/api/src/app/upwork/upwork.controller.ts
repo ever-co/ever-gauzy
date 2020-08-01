@@ -26,6 +26,7 @@ import {
 } from '@gauzy/models';
 import { Expense } from '../expense/expense.entity';
 import { Income } from '../income/income.entity';
+import { IPagination } from '../core';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller()
@@ -213,11 +214,12 @@ export class UpworkController {
 	async getReports(
 		@Param('integrationId') integrationId: string,
 		@Query('data') data: string
-	): Promise<any> {
-		const getReportFilterDto: any = JSON.parse(data);
+	): Promise<IPagination<any>> {
+		const { relations, filter } = JSON.parse(data);
 		return await this._upworkService.getReportsForFreelancer(
 			integrationId,
-			getReportFilterDto
+			filter,
+			relations
 		);
 	}
 }

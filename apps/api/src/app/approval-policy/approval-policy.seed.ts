@@ -16,7 +16,7 @@ export const createDefaultApprovalPolicyForOrg = async (
 		defaultApprovalPolicy.name = 'Default Approval Policy';
 		defaultApprovalPolicy.organizationId = org.id;
 		defaultApprovalPolicy.description = 'Default approval policy';
-		defaultApprovalPolicy.nameConst = 'DEFAULT_APPROVAL_POLICY';
+		defaultApprovalPolicy.approvalType = 'DEFAULT_APPROVAL_POLICY';
 		defaultApprovalPolicy.tenantId = org.tenant.id;
 		promises.push(insertDefaultPolicy(connection, defaultApprovalPolicy));
 	});
@@ -63,7 +63,7 @@ export const createRandomApprovalPolicyForOrg = async (
 				policy.tenant = tenant;
 				policy.organization = org;
 				policy.tenantId = tenant.id;
-				policy.nameConst = name.replace(/\s+/g, '_').toUpperCase();
+				policy.approvalType = name.replace(/\s+/g, '_').toUpperCase();
 				policies.push(policy);
 			});
 		});

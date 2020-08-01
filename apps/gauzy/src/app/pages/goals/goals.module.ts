@@ -22,7 +22,8 @@ import {
 	NbListModule,
 	NbPopoverModule,
 	NbAlertModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbFormFieldModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -81,6 +82,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbPopoverModule,
 		NbAlertModule,
 		NbTooltipModule,
+		NbFormFieldModule,
 		ChartModule,
 		GoalSettingsModule,
 		ProjectSelectModule,

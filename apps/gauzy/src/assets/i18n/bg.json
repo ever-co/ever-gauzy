@@ -661,7 +661,8 @@
 	"INCOME_PAGE": {
 		"INCOME": "Доход",
 		"BONUS_HELP": "Ако е зададено, процента такса от компанията няма да бъде добавен към бонуса",
-		"BONUS_TOOLTIP": "Това е директен бонус"
+		"BONUS_TOOLTIP": "Това е директен бонус",
+		"EMPLOYEES_GENERATE_INCOME": "Employees that generate income"
 	},
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Разходи",
@@ -670,7 +671,8 @@
 			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Възложи на",
 			"INCLUDE_TAXES": "Включете такси",
-			"ATTACH_A_RECEIPT": "Приложете разписка"
+			"ATTACH_A_RECEIPT": "Приложете разписка",
+			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense"
 		},
 		"DEFAULT_CATEGORY": {
 			"SALARY": "Заплата",
@@ -775,8 +777,14 @@
 			"LESSER_THAN_EQUAL_TO": "Lesser than or equal to"
 		},
 		"KPI_METRIC": {
-			"NUMBER": "Number",
-			"PERCENTAGE": "Percentage"
+			"NUMERICAL": "Numerical",
+			"PERCENTAGE": "Percentage",
+			"CURRENCY": "Валута"
+		},
+		"TOOLTIPS": {
+			"PROGRESS": "Overall progress of this Objective based on its Key result's progress",
+			"DETAILS": "Objective Details",
+			"EDIT": "Edit Objective"
 		},
 		"FORM": {
 			"LABELS": {
@@ -846,7 +854,7 @@
 			"TIME_FRAME_NOT_STARTED": "You can't update this key result now. The Time Frame for this key result starts on {{ date }}. Then you'll be able to update it"
 		},
 		"TYPE": {
-			"NUMBER": "Number",
+			"NUMERICAL": "Numerical",
 			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "Валута",
 			"TASK": "Задача",
@@ -856,6 +864,12 @@
 			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
 			"HARD_DEADLINE": "Hard Deadline",
 			"HARD_AND_SOFT_DEADLINE": "Hard and Soft Deadline"
+		},
+		"TOOLTIPS": {
+			"PROGRESS": "This Key result's progress contributes to {{weight}}% of the Objective's progress",
+			"DETAILS": "Key Result Details",
+			"EDIT": "Edit Key Result",
+			"WEIGHT": "Edit Weight/Type"
 		},
 		"FORM": {
 			"LABELS": {
