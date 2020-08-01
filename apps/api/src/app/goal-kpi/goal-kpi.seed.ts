@@ -4,7 +4,9 @@ import {
 	Employee,
 	KpiMetricEnum,
 	Organization,
-	KpiOperatorEnum
+	KpiOperatorEnum,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
 import { GoalKPI } from './goal-kpi.entity';
 import * as faker from 'faker';
@@ -40,6 +42,15 @@ export const createRandomGoalKpi = async (
 				goalkpi.operator = faker.random.arrayElement(
 					Object.values(KpiOperatorEnum)
 				);
+				if (goalkpi.type === KpiMetricEnum.CURRENCY) {
+					goalkpi.unit = faker.random.arrayElement(
+						Object.values(CurrenciesEnum)
+					);
+				} else if (goalkpi.type === KpiMetricEnum.NUMERICAL) {
+					goalkpi.unit = faker.random.arrayElement(
+						Object.values(KeyResultNumberUnitsEnum)
+					);
+				}
 				goalkpi.lead = employee;
 				goalkpi.currentValue = Math.floor(Math.random() * 9999) + 1;
 				goalkpi.targetValue =
@@ -47,6 +58,7 @@ export const createRandomGoalKpi = async (
 						Math.random() * (99999 - goalkpi.currentValue + 1)
 					) + goalkpi.currentValue;
 				goalkpi.organization = tenantOrg;
+				goalkpi.tenant = tenant;
 				GoalKpis.push(goalkpi);
 			}
 		}
