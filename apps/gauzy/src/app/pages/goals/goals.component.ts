@@ -158,7 +158,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				if (!!this.selectedFilter && this.selectedFilter !== 'all') {
 					this.filterGoals(this.selectedFilter);
 				} else {
-					this.createTimeFrameGroups(this.goals);
+					this.createGroups(this.goals);
 				}
 				this.loading = false;
 			});
@@ -191,7 +191,7 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	createTimeFrameGroups(goals) {
+	createGroups(goals) {
 		this.goalTimeFrames = [];
 		goals.forEach((goal) => {
 			if (this.goalTimeFrames.length < 1) {
@@ -204,6 +204,9 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.goalTimeFrames.push(goal.deadline);
 			}
 		});
+		this.goalLevels = this.goalLevels.filter((goalLevel) =>
+			goals.find((goal) => goal.level === goalLevel)
+		);
 		this.goalTimeFrames.sort((a, b) => a.localeCompare(b));
 	}
 
@@ -311,10 +314,13 @@ export class GoalsComponent extends TranslationBaseComponent
 		} else {
 			this.goals = this.allGoals;
 			this.goalLevels = [...Object.values(GoalLevelEnum)];
+			this.goalLevels = this.goalLevels.filter((goalLevel) =>
+				this.goals.find((goal) => goal.level === goalLevel)
+			);
 		}
 		this.noGoals = this.goals.length > 0 ? false : true;
 		if (this.goals.length > 0) {
-			this.createTimeFrameGroups(this.goals);
+			this.createGroups(this.goals);
 		} else {
 			this.goalLevels = [];
 			this.goalTimeFrames = [];
@@ -357,6 +363,7 @@ export class GoalsComponent extends TranslationBaseComponent
 							),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
+						this.loadPage();
 					}
 				});
 			} else {
@@ -370,19 +377,19 @@ export class GoalsComponent extends TranslationBaseComponent
 					await this.goalService
 						.createGoal(data)
 						.then(async (val) => {
-							await this.goalService.getAllGoals();
+							//await this.goalService.getAllGoals();
 							this.toastrService.primary(
 								this.getTranslation(
 									'TOASTR.MESSAGE.OBJECTIVE_ADDED'
 								),
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
+							this.loadPage();
 						});
 				} catch (error) {
 					this.errorHandler.handleError(error);
 				}
 			}
-			this.loadPage();
 		}
 	}
 
