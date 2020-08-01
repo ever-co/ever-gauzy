@@ -5,6 +5,7 @@ import { CurrenciesEnum, Organization, Employee } from '@gauzy/models';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
 import { Tenant } from '../tenant/tenant.entity';
+import * as moment from 'moment';
 
 export const createDefaultIncomes = async (
 	connection: Connection,
@@ -95,7 +96,10 @@ export const createRandomIncomes = async (
 					.toString();
 				income.currency =
 					employee.organization.currency || currencies[0];
-				income.valueDate = faker.date.recent(150);
+				income.valueDate = faker.date.between(
+					new Date(),
+					moment(new Date()).add(3, 'months').toDate()
+				);
 				income.notes = notesArray[currentIndex];
 
 				randomIncomes.push(income);
