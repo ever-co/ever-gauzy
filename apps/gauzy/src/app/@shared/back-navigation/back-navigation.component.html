@@ -1,4 +1,11 @@
-<div class="navigate" (click)="goBack()">
-	<nb-icon icon="arrow-back-outline"></nb-icon>
-	<span>{{ 'BUTTONS.BACK' | translate }}</span>
+<div style="display: inline;">
+	<button
+		style="padding: 0.4rem; margin: 3px;"
+		(click)="goBack()"
+		nbButton
+		status="primary"
+		class="mr-4"
+	>
+		<nb-icon icon="arrow-back-outline"></nb-icon>
+	</button>
 </div>

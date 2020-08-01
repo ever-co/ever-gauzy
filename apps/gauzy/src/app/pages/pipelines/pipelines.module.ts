@@ -25,6 +25,7 @@ import { DealsService } from '../../@core/services/deals.service';
 import { PipelineDealExcerptComponent } from './pipeline-deals/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { ThemeModule } from '../../@theme/theme.module';
+import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 
 @NgModule({
 	declarations: [
@@ -61,7 +62,8 @@ import { ThemeModule } from '../../@theme/theme.module';
 		NbIconModule,
 		FormsModule,
 		CardGridModule,
-		ThemeModule
+		ThemeModule,
+		BackNavigationModule
 	]
 })
 export class PipelinesModule {}

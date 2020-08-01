@@ -231,6 +231,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
+	manageCategories() {
+		this.router.navigate(['/pages/accounting/expenses/categories']);
+	}
+
 	canShowTable() {
 		if (this.expensesTable) {
 			this.expensesTable.grid.dataSet.willSelect = 'false';

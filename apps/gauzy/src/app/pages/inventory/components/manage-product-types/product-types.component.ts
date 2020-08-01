@@ -13,7 +13,6 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { first, takeUntil } from 'rxjs/operators';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Location } from '@angular/common';
 import { IconRowComponent } from '../table-components/icon-row.component';
 import { Store } from '../../../../@core/services/store.service';
 import { Subject } from 'rxjs';
@@ -45,7 +44,6 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private productTypeService: ProductTypeService,
 		private toastrService: NbToastrService,
-		private location: Location,
 		private router: Router,
 		private store: Store
 	) {
@@ -196,10 +194,6 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		}
 		this.disableButton = !isSelected;
 		this.selectedProductType = selectedProductType;
-	}
-
-	goBack() {
-		this.location.back();
 	}
 
 	ngOnDestroy() {

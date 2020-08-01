@@ -71,6 +71,20 @@ const routes: Routes = [
 							import('./payments/payments.module').then(
 								(m) => m.PaymentsModule
 							)
+					},
+					{
+						path: 'teams',
+						loadChildren: () =>
+							import('./teams/teams.module').then(
+								(m) => m.TeamsModule
+							)
+					},
+					{
+						path: 'positions',
+						loadChildren: () =>
+							import('./positions/positions.module').then(
+								(m) => m.PositionsModule
+							)
 					}
 				]
 			},
@@ -240,6 +254,14 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'expense-recurring',
+						loadChildren: () =>
+							import(
+								'./expense-recurring/expense-recurring.module'
+							).then((m) => m.ExpenseRecurringModule)
+					},
+
+					{
 						path: 'help-center',
 						loadChildren: () =>
 							import('./help-center/help-center.module').then(
@@ -259,6 +281,41 @@ const routes: Routes = [
 							import(
 								'./equipment-sharing/equipment-sharing.module'
 							).then((m) => m.EquipmentSharingModule)
+					},
+					{
+						path: 'documents',
+						loadChildren: () =>
+							import('./documents/documents.module').then(
+								(m) => m.DocumentsModule
+							)
+					},
+					{
+						path: 'vendors',
+						loadChildren: () =>
+							import('./vendors/vendors.module').then(
+								(m) => m.VendorsModule
+							)
+					},
+					{
+						path: 'departments',
+						loadChildren: () =>
+							import('./departments/departments.module').then(
+								(m) => m.DepartmentsModule
+							)
+					},
+					{
+						path: 'projects',
+						loadChildren: () =>
+							import('./projects/projects.module').then(
+								(m) => m.ProjectsModule
+							)
+					},
+					{
+						path: 'contacts',
+						loadChildren: () =>
+							import('./contacts/contact.module').then(
+								(m) => m.ContactModule
+							)
 					}
 				]
 			},

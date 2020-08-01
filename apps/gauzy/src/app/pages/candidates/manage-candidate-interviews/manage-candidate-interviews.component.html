@@ -1,13 +1,15 @@
 <nb-card>
-	<nb-card-header
-		><ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
+	<nb-card-header class="header">
 		<div class="header">
+			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				{{
 					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.MANAGE_INTERVIEWS'
 						| translate
 				}}
 			</h4>
+		</div>
+		<div>
 			<button nbButton status="primary" (click)="add()">
 				<nb-icon icon="plus-outline"></nb-icon>
 				{{

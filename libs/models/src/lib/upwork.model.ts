@@ -61,3 +61,8 @@ export interface IUpworkApiConfig {
 	accessToken: string;
 	accessSecret: string;
 }
+
+export interface IUpworkDateRange {
+	start: Date;
+	end: Date;
+}

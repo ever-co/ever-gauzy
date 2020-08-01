@@ -1,18 +1,3 @@
-<nb-card>
-	<nb-card-header>
-		<h4>
-			{{ 'ORGANIZATIONS_PAGE.EDIT.HEADER' | translate }}
-			{{ organization?.name }}
-		</h4>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="navigate" (click)="goBack()">
-			<nb-icon icon="arrow-back-outline"></nb-icon>
-			<span>{{ 'BUTTONS.BACK' | translate }}</span>
-		</div>
-		<div *ngIf="organization" class="org-settings">
-			<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
-		</div>
-	</nb-card-body>
-	<nb-card-footer> </nb-card-footer>
-</nb-card>
+<div *ngIf="organization" class="org-settings">
+	<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
+</div>

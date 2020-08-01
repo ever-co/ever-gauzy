@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BackNavigationComponent } from './back-navigation.component';
-import { NbIconModule } from '@nebular/theme';
+import { NbIconModule, NbButtonModule } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/selectors.module';
 import { HttpClient } from '@angular/common/http';
@@ -12,6 +12,8 @@ import { HttpClient } from '@angular/common/http';
 	imports: [
 		NbIconModule,
 		CommonModule,
+		NbIconModule,
+		NbButtonModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
