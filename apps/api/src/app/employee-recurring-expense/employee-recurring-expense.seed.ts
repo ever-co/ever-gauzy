@@ -1,8 +1,9 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee, RecurringExpenseDefaultCategoriesEnum } from '@gauzy/models';
+import { CurrenciesEnum, Employee, RecurringExpenseDefaultCategoriesEnum } from '@gauzy/models';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import * as faker from 'faker';
+import * as moment from 'moment';
 
 export const createRandomEmployeeRecurringExpense = async (
 	connection: Connection,
@@ -22,9 +23,9 @@ export const createRandomEmployeeRecurringExpense = async (
 	for (const tenant of tenants) {
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 
-		for (const tenantEmployee of tenantEmployees) {
-			const employee = new EmployeeRecurringExpense();
-			employee.employeeId = tenantEmployee.id;
+    for (const [index, tenantEmployee] of tenantEmployees.entries()) {
+      const employee = new EmployeeRecurringExpense();
+      employee.employeeId = tenantEmployee.id;
 
 			const startDate = faker.date.past();
 			employee.startDay = startDate.getDate();
@@ -32,22 +33,21 @@ export const createRandomEmployeeRecurringExpense = async (
 			employee.startYear = startDate.getFullYear();
 			employee.startDate = startDate;
 
-			/* TODO: fix endDate generation for some entities only, most should not have end date really
 
-      const endDate = faker.date.past();
-      employee.endDay = endDate.getDate();
-      employee.endMonth = endDate.getMonth();
-      employee.endYear = endDate.getFullYear();
-      employee.endDate = endDate;
+      // TODO: fix endDate generation for some entities only, most should not have end date really
+      if (index % 2 === 0) {  // new changes
+        const endDate = faker.date.between(new Date(startDate), moment(startDate).add(4, 'months').toDate());
+        employee.endDay = endDate.getDate();
+        employee.endMonth = endDate.getMonth();
+        employee.endYear = endDate.getFullYear();
+        employee.endDate = endDate;
+      }
+      // TODO: seed with random Categories from that enum, but make sure that SALARY exists in most of employees anyway (except contractors)
+      employee.categoryName =
+        RecurringExpenseDefaultCategoriesEnum.SALARY;
 
-      */
-
-			// TODO: seed with random Categories from that enum, but make sure that SALARY exists in most of employees anyway (except contractors)
-			employee.categoryName =
-				RecurringExpenseDefaultCategoriesEnum.SALARY;
-
-			employee.value = Math.floor(Math.random() * 999) + 1;
-			employee.currency = currency[Math.floor(Math.random() * 2)];
+      employee.value = faker.random.number(999);   // new changes
+      employee.currency = CurrenciesEnum.USD;   // new changes
 
 			// TODO: some expenses should have a parent if they change "over time"
 			employee.parentRecurringExpenseId = null;

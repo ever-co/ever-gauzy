@@ -156,7 +156,7 @@ import {
 import { Equipment } from '../../equipment/equipment.entity';
 import { Contact } from '../../contact/contact.entity';
 
-import { createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
+import { createDefaultTimeSheet, createRandomTimesheet } from '../../timesheet/timesheet/timesheet.seed';
 import { createRandomTask } from '../../tasks/task.seed';
 import {
 	createDefaultOrganizationProjects,
@@ -212,9 +212,9 @@ import {
 	createRandomEquipments
 } from '../../equipment/equipment.seed';
 import { createRandomEquipmentSharing } from '../../equipment-sharing/equipment-sharing.seed';
-import { createRandomProposals } from '../../proposal/proposal.seed';
+import { createDefaultProposals, createRandomProposals } from '../../proposal/proposal.seed';
 import { createRandomInvoiceItem } from '../../invoice-item/invoice-item.seed';
-import { createRandomInvoice } from '../../invoice/invoice.seed';
+import { createDefaultInvoice, createRandomInvoice } from '../../invoice/invoice.seed';
 import {
 	createCandidateSkills,
 	createRandomCandidateSkills
@@ -731,6 +731,9 @@ export class SeedDataService {
 		await this.tryExecute(
 			createDefaultIntegrations(this.connection, integrationTypes)
 		);
+    await this.tryExecute(createDefaultTimeSheet(this.connection,this.defaultEmployees,this.defaultProjects,5));
+    await this.tryExecute(createDefaultProposals(this.connection,this.defaultEmployees,this.organizations,10));
+		await this.tryExecute(createDefaultInvoice(this.connection,this.organizations,10));
 	}
 
 	/**
@@ -1032,7 +1035,7 @@ export class SeedDataService {
 			createRandomTask(this.connection, this.defaultProjects)
 		);
 		await this.tryExecute(
-			createRandomTimesheet(this.connection, this.defaultProjects)
+			createRandomTimesheet(this.connection, this.defaultProjects,20)
 		);
 
 		await this.tryExecute(
