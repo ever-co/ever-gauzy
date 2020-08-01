@@ -14,13 +14,9 @@ import { Screenshot } from '../screenshot.entity';
 export const createRandomTimeLogs = async (
 	connection: Connection,
 	timeSheets: Timesheet[],
-	defaultProjects: OrganizationProjects[]
+	defaultProjects: OrganizationProjects[],
+  	noOfTimeLogsPerTimeSheet
 ) => {
-	timeSheets = await connection
-		.getRepository(Timesheet)
-		.createQueryBuilder()
-		.getMany();
-
 	const allEmployees = await connection
 		.getRepository(Employee)
 		.createQueryBuilder()
@@ -108,9 +104,11 @@ export const createRandomTimeLogs = async (
 					).map((timeSlot) => {
 						timeSlot.employee = timelog.employee;
 						if (logType === TimeLogType.TRACKED) {
-							screenshotsPromise.push(
-								createRandomScreenshot(timeSlot)
-							);
+						  for(let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
+                screenshotsPromise.push(
+                  createRandomScreenshot(timeSlot)
+                );
+              }
 						}
 						return timeSlot;
 					});
