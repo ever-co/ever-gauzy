@@ -1,7 +1,10 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
-		<div class="main-header">
+	<nb-card-header class="header-selector-wrapper">
+		<div class="header-selector-wrapper">
+			<ngx-back-navigation></ngx-back-navigation>
 			<h4>{{ 'APPROVAL_POLICY_PAGE.HEADER' | translate }}</h4>
+		</div>
+		<div>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>

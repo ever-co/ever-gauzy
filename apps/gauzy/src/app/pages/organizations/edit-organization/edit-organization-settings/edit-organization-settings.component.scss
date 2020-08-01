@@ -17,6 +17,10 @@ nb-card-body {
   overflow-y: hidden; //prevent extra scroll bar
 }
 
+.header {
+  display: flex;
+}
+
 :host ::ng-deep {
   nb-route-tabset {
     ul.route-tabset {

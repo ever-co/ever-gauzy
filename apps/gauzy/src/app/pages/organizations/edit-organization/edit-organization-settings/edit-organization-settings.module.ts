@@ -64,8 +64,7 @@ import { TableComponentsModule } from '../../../../@shared/table-components/tabl
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization-employee-levels/edit-organization-employee-level.component';
 import { EditOrganizationDocuments } from './edit-organization-documents/edit-organization-documents/edit-organization-documents';
 import { UploadDocumentComponent } from './edit-organization-documents/upload-document/upload-document.component';
-import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-input/file-uploader-input.module';
-import { TasksSprintSettingsViewComponent } from '../../../tasks/components/task/task-settings/project-view/tasks-sprint-settings-view/tasks-sprint-settings-view.component';
+import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
 
 @NgModule({

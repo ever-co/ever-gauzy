@@ -25,6 +25,7 @@ import { EquipmentSharingActionComponent } from './table-components/equipment-sh
 import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
+import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -45,6 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TableComponentsModule,
 		NbDatepickerModule,
 		CardGridModule,
+		BackNavigationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

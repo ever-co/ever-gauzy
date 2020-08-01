@@ -1,16 +1,23 @@
 <nb-card>
-	<nb-card-header>
-		<h4>
-			{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
-		</h4>
-		<button nbButton (click)="edit()" status="info" class="mr-2">
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-			>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.EDIT' | translate }}
-		</button>
+	<nb-card-header class="header-selector-wrapper">
+		<div class="header-selector-wrapper">
+			<ngx-back-navigation></ngx-back-navigation>
+			<h4>
+				{{
+					'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS'
+						| translate
+				}}
+			</h4>
+		</div>
+		<div>
+			<button nbButton (click)="edit()" status="info" class="mr-2">
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.EDIT' | translate }}
+			</button>
+		</div>
 	</nb-card-header>
 
 	<nb-card-body class="card-container">
-		<ngx-back-navigation class="d-block"></ngx-back-navigation>
 		<div class="wrapper-top">
 			<nb-card class="prop-card">
 				<h6>

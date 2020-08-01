@@ -407,7 +407,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 						jobPostUrl: i.jobPostUrl,
 						jobTitle: i.jobPostContent
 							.toString()
-							.replace(/<[^>]+>/g, '')
+							.replace(/<[^>]*(>|$)|&nbsp;/g, '')
 							.split(/[\s,\n]+/)
 							.slice(0, 3)
 							.join(' '),
