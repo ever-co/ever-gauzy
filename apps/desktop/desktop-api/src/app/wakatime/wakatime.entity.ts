@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
-@Entity({ name: 'user_agent' })
+@Entity({ name: 'heartbeats' })
+@Unique(['time', 'entities']) // named; multiple fields
 export class Wakatime {
 	@PrimaryGeneratedColumn()
 	id: number;
@@ -8,12 +9,45 @@ export class Wakatime {
 	@Column()
 	user_agent: string;
 
-	@Column()
+	@Column({ nullable: true })
 	type: string;
 
-	@Column()
+	@Column({ nullable: true })
 	employeeId: string;
 
 	@Column({ type: 'real' })
 	time: number;
+
+	@Column({ nullable: true })
+	categories: string;
+
+	@Column({ nullable: true })
+	dependencies: string;
+
+	@Column({ nullable: true })
+	languages: string;
+
+	@Column({ nullable: true })
+	machine: string;
+
+	@Column({ nullable: true })
+	projects: string;
+
+	@Column({ nullable: true })
+	branches: string;
+
+	@Column({ nullable: true })
+	operating_systems: string;
+
+	@Column({ nullable: true })
+	entities: string;
+
+	@Column({ nullable: true })
+	editors: string;
+
+	@Column({ nullable: true })
+	lines: string;
+
+	@Column()
+	is_write: boolean;
 }

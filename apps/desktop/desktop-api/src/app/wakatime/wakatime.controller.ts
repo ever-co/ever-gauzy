@@ -7,15 +7,17 @@ export class WakatimeController {
 	constructor(private readonly wakatimeService: WakatimeService) {}
 
 	@Get('summaries')
-	getData(@Query() query) {
-		console.log('query', query);
-		return [];
+	async getData(@Query() query) {
+		const result = await this.wakatimeService.getSummaries(query);
+		return result;
 	}
 
 	@Post('heartbeats.bulk')
-	saveData(@Body() payload, @Headers() headers) {
-		console.log('headers', headers);
-		console.log('payload', payload);
-		return {};
+	async saveData(@Body() payload, @Headers() headers) {
+		const result = await this.wakatimeService.parameterSanitize(
+			payload,
+			headers
+		);
+		return result;
 	}
 }
