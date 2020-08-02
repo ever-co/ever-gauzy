@@ -155,6 +155,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 				(eq) => eq.id === this.form.value['equipment']
 			),
 			createdBy: '',
+			createdByName: '',
 			approvalPolicyId: this.form.value['approvalPolicy'],
 			employees: this.employees.filter((emp) => {
 				return this.selectedEmployees.includes(emp.id);
@@ -172,6 +173,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 		if (this.equipmentSharing) {
 			shareRequest.createdBy = this.equipmentSharing.createdBy;
+			shareRequest.createdByName = this.equipmentSharing.createdByName;
 			equipmentSharing = await this.equipmentSharingService.update(
 				this.equipmentSharing.id,
 				shareRequest

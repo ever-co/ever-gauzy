@@ -39,9 +39,6 @@ import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
 import {
-	TimesheetGetCommand,
-	TimesheetCreateCommand,
-	TimeLogCreateCommand,
 	TimeSlotCreateCommand,
 	ScreenshotCreateCommand,
 	TimeSlotMinuteCreateCommand
@@ -65,6 +62,9 @@ import { ExpenseCreateCommand } from '../expense/commands/expense.create.command
 import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.commant';
 import { IPagination } from '../core';
 import { UpworkReportService } from './upwork-report.service';
+import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';
+import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
+
 
 @Injectable()
 export class UpworkService {
@@ -348,31 +348,34 @@ export class UpworkService {
 	}
 
 	async syncTimeLog(timeLog) {
-		let timesheet = await this.commandBus.execute(
-			new TimesheetGetCommand({
-				where: { employeeId: timeLog.employeeId }
-			})
+		const timesheet = await this.commandBus.execute(
+			new TimesheetFirstOrCreateCommand(
+				moment(timeLog.startDate).toDate(),
+				timeLog.employeeId
+			)
 		);
 
-		if (!timesheet) {
-			timesheet = await this.commandBus.execute(
-				new TimesheetCreateCommand({
-					startedAt: timeLog.startDate,
-					employeeId: timeLog.employeeId,
-					mouse: timeLog.mouse_events_count,
-					keyboard: timeLog.keyboard_events_count,
-					duration: timeLog.duration
-				})
-			);
-		}
+		// if (!timesheet) {
+		// 	timesheet = await this.commandBus.execute(
+		// 		new TimesheetCreateCommand({
+		// 			startedAt: timeLog.startDate,
+		// 			employeeId: timeLog.employeeId,
+		// 			mouse: timeLog.mouse_events_count,
+		// 			keyboard: timeLog.keyboard_events_count,
+		// 			duration: timeLog.duration
+		// 		})
+		// 	);
+		// }
 
 		const gauzyTimeLog = await this.commandBus.execute(
 			new TimeLogCreateCommand({
 				projectId: timeLog.projectId,
 				employeeId: timeLog.employeeId,
 				logType: timeLog.logType,
-				duration: timeLog.duration,
 				startedAt: timeLog.startDate,
+				stoppedAt: moment(timeLog.startedAt)
+					.add(timeLog.duration, 'seconds')
+					.toDate(),
 				timesheetId: timesheet.id
 			})
 		);

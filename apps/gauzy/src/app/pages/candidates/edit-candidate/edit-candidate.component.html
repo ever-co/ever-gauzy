@@ -1,22 +1,23 @@
 <nb-card class="employee-edit">
-	<nb-card-header class="header"
-		><ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
+	<nb-card-header class="header">
 		<div class="header-container">
-			<div class="employee-info">
-				<img
-					class="employee-image"
-					[src]="selectedCandidate?.user.imageUrl"
-					alt="Candidate Avatar"
-				/>
+			<div style="display: flex;">
+				<ngx-back-navigation></ngx-back-navigation>
+				<div class="employee-info">
+					<img
+						class="employee-image"
+						[src]="selectedCandidate?.user.imageUrl"
+						alt="Candidate Avatar"
+					/>
 
-				<div class="employee-details">
-					<span class="employee-name"
-						>{{ selectedCandidate?.user.firstName }}
-						{{ selectedCandidate?.user.lastName }}</span
-					>
+					<div class="employee-details">
+						<span class="employee-name"
+							>{{ selectedCandidate?.user.firstName }}
+							{{ selectedCandidate?.user.lastName }}</span
+						>
+					</div>
 				</div>
 			</div>
-
 			<div class="employee-info">
 				<div class="employee-details">
 					<div

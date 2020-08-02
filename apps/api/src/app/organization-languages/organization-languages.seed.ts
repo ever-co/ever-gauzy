@@ -3,8 +3,31 @@ import { OrganizationLanguages } from './organization-languages.entity';
 import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '@gauzy/models';
-import * as _ from 'underscore';
 import { Language } from '../language/language.entity';
+
+export const createDefaultOrganizationLanguage = async (
+	connection: Connection,
+	defaultOrganizations: Organization[]
+): Promise<OrganizationLanguages[]> => {
+	let mapOrganizationLanguage: OrganizationLanguages[] = [];
+
+	const allLanguage = await connection.manager.find(Language, {});
+
+	for (const defaultOrganization of defaultOrganizations) {
+		const language = faker.random.arrayElement(allLanguage);
+		let organization = new OrganizationLanguages();
+
+		organization.organization = defaultOrganization;
+		organization.language = language;
+		organization.name = faker.company.companyName();
+		organization.level = faker.name.jobArea();
+
+		mapOrganizationLanguage.push(organization);
+	}
+
+	await insertRandomOrganizationLanguage(connection, mapOrganizationLanguage);
+	return mapOrganizationLanguage;
+};
 
 export const createRandomOrganizationLanguage = async (
 	connection: Connection,

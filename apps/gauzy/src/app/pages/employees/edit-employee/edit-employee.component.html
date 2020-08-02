@@ -9,24 +9,26 @@
 				else noName
 			"
 		>
-			<div class="employee-info">
-				<img
-					class="employee-image"
-					[src]="selectedEmployee.user.imageUrl"
-					alt="Employee Avatar"
-				/>
+			<div style="display: flex;">
+				<ngx-back-navigation></ngx-back-navigation>
+				<div class="employee-info">
+					<img
+						class="employee-image"
+						[src]="selectedEmployee.user.imageUrl"
+						alt="Employee Avatar"
+					/>
 
-				<div class="employee-details">
-					<span class="employee-name"
-						>{{ selectedEmployee.user.firstName }}
-						{{ selectedEmployee.user.lastName }}</span
-					>
-					<div class="employee-position">
-						{{ selectedEmployee.organizationPosition?.name }}
+					<div class="employee-details">
+						<span class="employee-name"
+							>{{ selectedEmployee.user.firstName }}
+							{{ selectedEmployee.user.lastName }}</span
+						>
+						<div class="employee-position">
+							{{ selectedEmployee.organizationPosition?.name }}
+						</div>
 					</div>
 				</div>
 			</div>
-
 			<div class="employee-info">
 				<div class="employee-details">
 					<div
@@ -82,8 +84,6 @@
 			selectedEmployeeFromHeader.id
 		"
 	>
-		<ngx-back-navigation class="d-block"></ngx-back-navigation>
-
 		<div class="body-header">
 			<div>
 				<span class="setting-name">

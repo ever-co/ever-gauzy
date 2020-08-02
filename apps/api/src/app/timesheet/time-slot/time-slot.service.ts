@@ -3,14 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, Between, In } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { TimeSlot } from '../time-slot.entity';
-import * as moment from 'moment';
+import { moment } from '../../core/moment';
+import * as _ from 'underscore';
 import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
-import { TimeLogService } from '../time-log/time-log.service';
 import { generateTimeSlots } from './utils';
 import { Activity } from '../activity.entity';
-import { TimeLog } from '../time-log.entity';
+import { DeleteTimeSpanCommand } from '../time-log/commands/delete-time-span.command';
+import { CommandBus } from '@nestjs/cqrs';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
@@ -21,9 +22,7 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		private readonly activityRepository: Repository<Activity>,
 		@InjectRepository(TimeSlotMinute)
 		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
-		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
-		private readonly timeLogService: TimeLogService
+		private readonly commandBus: CommandBus
 	) {
 		super(timeSlotRepository);
 	}
@@ -130,32 +129,69 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		return logs;
 	}
 
-	bulkCreateOrUpdate(slots) {
+	async bulkCreateOrUpdate(slots) {
 		if (slots.length === 0) {
-			return null;
+			return [];
 		}
-		return this.timeSlotRepository
-			.createQueryBuilder()
-			.insert()
-			.values(slots)
-			.onConflict(
-				'("employeeId", "startedAt") DO UPDATE SET "keyboard" = EXCLUDED.keyboard, "mouse" = EXCLUDED.mouse, "overall" = EXCLUDED.overall'
-			)
-			.returning('*')
-			.execute();
+
+		const insertedSlots = await this.timeSlotRepository.find({
+			where: {
+				startedAt: In(_.pluck(slots, 'startedAt'))
+			}
+		});
+
+		if (insertedSlots.length > 0) {
+			slots = slots.map((slot) => {
+				const oldSlot = insertedSlots.find(
+					(insertedSlot) =>
+						moment(insertedSlot.startedAt).format(
+							'YYYY-MM-DD HH:mm'
+						) === moment(slot.startedAt).format('YYYY-MM-DD HH:mm')
+				);
+				if (oldSlot) {
+					oldSlot.keyboard = slot.keyboard;
+					oldSlot.mouse = slot.mouse;
+					oldSlot.overall = slot.overall;
+					return oldSlot;
+				} else {
+					return slot;
+				}
+			});
+		}
+
+		await this.timeSlotRepository.save(slots);
+		return slots;
 	}
 
-	bulkCreate(slots) {
+	async bulkCreate(slots) {
 		if (slots.length === 0) {
-			return null;
+			return [];
 		}
-		return this.timeSlotRepository
-			.createQueryBuilder()
-			.insert()
-			.values(slots)
-			.onConflict('("employeeId", "startedAt") DO NOTHING')
-			.returning('*')
-			.execute();
+
+		const insertedSlots = await this.timeSlotRepository.find({
+			where: {
+				startedAt: In(_.pluck(slots, 'startedAt'))
+			}
+		});
+
+		if (insertedSlots.length > 0) {
+			slots = slots.filter(
+				(slot) =>
+					!insertedSlots.find(
+						(insertedSlot) =>
+							moment(insertedSlot.startedAt).format(
+								'YYYY-MM-DD HH:mm'
+							) ===
+							moment(slot.startedAt).format('YYYY-MM-DD HH:mm')
+					)
+			);
+		}
+
+		if (slots.length > 0) {
+			await this.timeSlotRepository.save(slots);
+		}
+		slots = insertedSlots.concat(slots);
+		return slots;
 	}
 
 	async rangeDelete(employeeId: string, start: Date, stop: Date) {
@@ -336,30 +372,38 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 
 	async deleteTimeSlot(ids: string[]) {
 		const timeSlots = await this.timeSlotRepository.find({
-			where: { id: In(ids) },
-			relations: ['timeLogs']
+			where: { id: In(ids) }
 		});
-
-		let promises = [];
-		timeSlots.forEach((timeSlot) => {
-			if (timeSlot.timeLogs.length > 0) {
+		console.log({ timeSlots });
+		for (let i = 0; i < ids.length; i++) {
+			const timeSlot = await this.timeSlotRepository.findOne({
+				where: {
+					startedAt: timeSlots[i].startedAt
+				},
+				relations: ['timeLogs']
+			});
+			console.log('deleteTimeSlot', ids[i], { timeSlot });
+			if (timeSlot && timeSlot.timeLogs.length > 0) {
 				const deleteSlotPromise = timeSlot.timeLogs.map(
 					async (timeLog) => {
-						await this.timeLogService.deleteTimeSpan(
-							{
-								start: timeSlot.startedAt,
-								end: timeSlot.stoppedAt
-							},
-							timeLog
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(
+								{
+									start: timeSlot.startedAt,
+									end: timeSlot.stoppedAt
+								},
+								timeLog
+							)
 						);
 						return;
 					}
 				);
-				promises = promises.concat(deleteSlotPromise);
+
+				await Promise.all(deleteSlotPromise);
 			}
-		});
-		await Promise.all(promises);
-		await this.timeSlotRepository.delete({ id: In(ids) });
+
+			// await this.timeSlotRepository.delete({ id: In(ids) });
+		}
 		return true;
 	}
 }
