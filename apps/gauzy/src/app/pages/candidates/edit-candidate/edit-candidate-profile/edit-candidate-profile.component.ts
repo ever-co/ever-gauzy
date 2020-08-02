@@ -4,7 +4,8 @@ import { ActivatedRoute, Params } from '@angular/router';
 import {
 	Candidate,
 	CandidateUpdateInput,
-	UserUpdateInput
+	UserUpdateInput,
+	ICandidateInterview
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -13,8 +14,10 @@ import { first, takeUntil } from 'rxjs/operators';
 import { CandidatesService } from '../../../../@core/services/candidates.service';
 import { CandidateStore } from '../../../../@core/services/candidate-store.service';
 import { UsersService } from '../../../../@core/services';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
+import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
 
 @Component({
 	selector: 'ga-edit-candidate-profile',
@@ -32,6 +35,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	selectedCandidate: Candidate;
 	candidateName = 'Candidate';
 	tabs: any[];
+	interviewList: ICandidateInterview[];
 
 	constructor(
 		private route: ActivatedRoute,
@@ -41,6 +45,8 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 		private userService: UsersService,
 		private toastrService: NbToastrService,
 		private errorHandler: ErrorHandlingService,
+		private dialogService: NbDialogService,
+		private readonly candidateInterviewService: CandidateInterviewService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -66,8 +72,48 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				this.submitCandidateForm(value);
 			});
 
+		this.route.params
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (params) => {
+				const id = params.id;
+
+				const { items } = await this.candidatesService
+					.getAll(['user'], { id })
+					.pipe(first())
+					.toPromise();
+
+				this.selectedCandidate = items[0];
+				this.loadInterview();
+				const checkUsername = this.selectedCandidate.user.username;
+				this.candidateName = checkUsername
+					? checkUsername
+					: 'Candidate';
+			});
+
 		this.loadTabs();
 		this._applyTranslationOnTabs();
+	}
+
+	private async loadInterview() {
+		const interviews = await this.candidateInterviewService.getAll(
+			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
+			{ candidateId: this.selectedCandidate.id }
+		);
+
+		if (interviews) {
+			this.interviewList = interviews.items;
+		}
+	}
+	async interviewInfo() {
+		if (this.interviewList.length > 0) {
+			this.dialogService.open(CandidateInterviewInfoComponent, {
+				context: {
+					interviewList: this.interviewList,
+					selectedCandidate: this.selectedCandidate,
+					isSlider: true
+				}
+			});
+		}
 	}
 
 	getRoute(tab: string): string {

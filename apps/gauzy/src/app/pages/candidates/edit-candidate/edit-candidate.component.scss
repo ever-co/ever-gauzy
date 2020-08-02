@@ -33,15 +33,24 @@
   margin-left: 9px;
 }
 
+.edit-icon {
+  margin-left: 30px;
+  position: relative;
+  width: 36px;
+
+  svg {
+    position: absolute;
+  }
+
+  nb-icon {
+    position: absolute;
+  }
+}
+
 .header {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: stretch;
   padding: 1rem;
-}
-
-.navigation {
-  height: 30px;
-  margin-bottom: 5px;
 }

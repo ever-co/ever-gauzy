@@ -178,7 +178,9 @@ export class CandidatesComponent extends TranslationBaseComponent
 			});
 		}
 		this.router.navigate([
-			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
+			'/pages/employees/candidates/edit/' +
+				this.selectedCandidate.id +
+				'/profile'
 		]);
 	}
 	async archive(selectedItem?: CandidateViewModel) {
