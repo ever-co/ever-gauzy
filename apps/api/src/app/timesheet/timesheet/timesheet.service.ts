@@ -12,34 +12,24 @@ import {
 	PermissionsEnum
 } from '@gauzy/models';
 import { RequestContext } from '../../core/context';
+import { CommandBus } from '@nestjs/cqrs';
+import { TimesheetFirstOrCreateCommand } from './commands/timesheet-first-or-create.command';
 
 @Injectable()
 export class TimeSheetService extends CrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
-		private readonly timeSheetRepository: Repository<Timesheet>
+		private readonly timeSheetRepository: Repository<Timesheet>,
+		private readonly commandBus: CommandBus
 	) {
 		super(timeSheetRepository);
 	}
 
 	async createOrFindTimeSheet(employeeId, date: Date = new Date()) {
-		const from_date = moment(date).startOf('week');
-		const to_date = moment(date).endOf('week');
+		const timesheet = await this.commandBus.execute(
+			new TimesheetFirstOrCreateCommand(date, employeeId)
+		);
 
-		let timesheet = await this.timeSheetRepository.findOne({
-			where: {
-				startedAt: Between(from_date, to_date),
-				employeeId: employeeId
-			}
-		});
-
-		if (!timesheet) {
-			timesheet = await this.timeSheetRepository.save({
-				employeeId: employeeId,
-				startedAt: from_date.toISOString(),
-				stoppedAt: to_date.toISOString()
-			});
-		}
 		return timesheet;
 	}
 

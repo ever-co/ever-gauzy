@@ -39,7 +39,7 @@ export const createRandomTimeLogs = async (
 	) {
 		const employees = _.chain(allEmployees)
 			.shuffle()
-			.take(faker.random.number({ min: 5, max: 10 }))
+			//.take(faker.random.number({ min: 10, max: allEmployees.length }))
 			.values()
 			.value();
 
@@ -59,7 +59,7 @@ export const createRandomTimeLogs = async (
 
 			const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
 				.shuffle()
-				.take(faker.random.number({ min: 2, max: 4 }))
+				.take(faker.random.number({ min: 3, max: 5 }))
 				.values()
 				.value();
 

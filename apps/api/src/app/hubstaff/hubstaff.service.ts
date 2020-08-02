@@ -39,7 +39,6 @@ import { UserService } from '../user/user.service';
 import { EmployeeGetCommand } from '../employee/commands/employee.get.command';
 import * as moment from 'moment';
 import {
-	TimeLogCreateCommand,
 	TimeSlotCreateCommand,
 	TimesheetGetCommand,
 	TimesheetCreateCommand,
@@ -49,6 +48,7 @@ import {
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
 import { TenantService } from '../tenant/tenant.service';
+import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
 
 @Injectable()
 export class HubstaffService {

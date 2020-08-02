@@ -21,6 +21,8 @@ import { TimeSheetController } from './timesheet/timesheet.controller';
 import { TimeSlotController } from './time-slot/time-slot.controller';
 import { ScreenshotController } from './screenshot/screenshot.controller';
 import { ActivityController } from './activity/activity.controller';
+import { TimesheetCommandHandlers } from './timesheet/commands/handlers';
+import { TimeLogCommandHandlers } from './time-log/commands/handlers';
 
 @Module({
 	controllers: [
@@ -50,6 +52,8 @@ import { ActivityController } from './activity/activity.controller';
 		ScreenshotService,
 		TimeLogService,
 		TimeSlotService,
+		...TimeLogCommandHandlers,
+		...TimesheetCommandHandlers,
 		...CommandHandlers
 	],
 	exports: [
