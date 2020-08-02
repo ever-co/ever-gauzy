@@ -28,7 +28,7 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 	selector: 'ngx-edit-employee',
 	templateUrl: './edit-employee.component.html',
 	styleUrls: [
-		'../../organizations/edit-organization/edit-organization.component.scss',
+		'./edit-employee.component.scss',
 		'../../dashboard/dashboard.component.scss'
 	]
 })
