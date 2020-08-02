@@ -8,7 +8,6 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands/timesheet-first-or-create.command';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import * as moment from 'moment';
-import * as _ from 'underscore';
 
 @CommandHandler(TimeLogCreateCommand)
 export class TimeLogCreateHandler

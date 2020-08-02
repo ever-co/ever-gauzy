@@ -11,7 +11,6 @@ import {
 	IDateRange
 } from '@gauzy/models';
 import * as moment from 'moment';
-import * as _ from 'underscore';
 import { CrudService } from '../../core';
 import { Organization } from '../../organization/organization.entity';
 import { Employee } from '../../employee/employee.entity';
