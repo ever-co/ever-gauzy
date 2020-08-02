@@ -30,14 +30,7 @@ export class DeleteTimeSpanHandler
 		/* Check is overlaping time or not.
 		 */
 		if (!newTimeRange.overlaps(dbTimeRange, { adjacent: false })) {
-			console.log(
-				'deleteTimeSpan not overlaping',
-				newTimeRange,
-				dbTimeRange
-			);
-			// await this.commandBus.execute(
-			// 	new TimeLogDeleteCommand(timeLog, false)
-			// );
+			console.log('not overlaping', newTimeRange, dbTimeRange);
 			return false;
 		}
 
@@ -63,9 +56,7 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time				DB Stop Time
 				 *  			|----------------------------|
 				 */
-				console.log(
-					'deleteTimeSpan Delete time log because overlap entire time'
-				);
+				console.log('Delete time log because overlap entire time');
 
 				await this.commandBus.execute(
 					new TimeLogDeleteCommand(timeLog, true)
@@ -77,14 +68,10 @@ export class DeleteTimeSpanHandler
 				 * 						DB Start Time							DB Stop Time
 				 *  							|---------------------------------------|
 				 */
-				console.log('deleteTimeSpan Update start time');
+				console.log('Update start time');
 				const reamingDueration = moment(timeLog.stoppedAt).diff(
 					moment(end),
 					'seconds'
-				);
-				console.log(
-					'deleteTimeSpan reamingDueration',
-					reamingDueration
 				);
 				if (reamingDueration > 0) {
 					await this.commandBus.execute(
@@ -117,28 +104,21 @@ export class DeleteTimeSpanHandler
 				 * DB Start Time			DB Stop Time
 				 *  	|-----------------------|
 				 */
-				console.log('deleteTimeSpan Update stopped time');
+				console.log('Update stopped time');
 				const reamingDueration = moment(end).diff(
 					moment(timeLog.startedAt),
 					'seconds'
 				);
-				console.log(
-					'deleteTimeSpan reamingDueration',
-					reamingDueration
-				);
+
 				if (reamingDueration > 0) {
-					timeLog.timeSlots = await this.timeSlotService.getTimeSlots(
-						{
-							startDate: timeLog.startedAt,
-							endDate: moment(timeLog.stoppedAt)
-								.subtract(1, 'second')
-								.toDate()
-						}
+					await this.commandBus.execute(
+						new TimeLogUpdateCommand(
+							{
+								stoppedAt: start
+							},
+							timeLog
+						)
 					);
-
-					timeLog.stoppedAt = start;
-
-					await this.timeLogRepository.save(timeLog);
 				} else {
 					/* Delete if reaming dueration 0 seconds */
 					await this.commandBus.execute(
@@ -152,18 +132,11 @@ export class DeleteTimeSpanHandler
 				 * DB Start Time (startedAt)					DB Stop Time (stoppedAt)
 				 *  |--------------------------------------------------|
 				 */
-				console.log(
-					'deleteTimeSpan Split database time in two entries'
-				);
+				console.log('Split database time in two entries');
 				const reamingDueration = moment(start).diff(
 					moment(timeLog.startedAt),
 					'seconds'
 				);
-				console.log(
-					'deleteTimeSpan reamingDueration',
-					reamingDueration
-				);
-
 				const timeLogClone: TimeLog = _.omit(timeLog, [
 					'createdAt',
 					'updatedAt',
@@ -214,11 +187,6 @@ export class DeleteTimeSpanHandler
 					'seconds'
 				);
 
-				console.log(
-					'deleteTimeSpan newLogReamingDueration',
-					newLogReamingDueration,
-					newLog
-				);
 				/* Insert if reaming dueration is more 0 seconds */
 				if (newLogReamingDueration > 0) {
 					await this.timeLogRepository.save(newLog);

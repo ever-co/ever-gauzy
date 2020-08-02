@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, Between, In } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { TimeSlot } from '../time-slot.entity';
-import * as moment from 'moment';
+import { moment } from '../../core/moment';
 import * as _ from 'underscore';
 import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
@@ -371,11 +371,18 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async deleteTimeSlot(ids: string[]) {
+		const timeSlots = await this.timeSlotRepository.find({
+			where: { id: In(ids) }
+		});
+		console.log({ timeSlots });
 		for (let i = 0; i < ids.length; i++) {
-			const timeSlot = await this.timeSlotRepository.findOne(ids[i], {
+			const timeSlot = await this.timeSlotRepository.findOne({
+				where: {
+					startedAt: timeSlots[i].startedAt
+				},
 				relations: ['timeLogs']
 			});
-
+			console.log('deleteTimeSlot', ids[i], { timeSlot });
 			if (timeSlot && timeSlot.timeLogs.length > 0) {
 				const deleteSlotPromise = timeSlot.timeLogs.map(
 					async (timeLog) => {
@@ -391,10 +398,11 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 						return;
 					}
 				);
+
 				await Promise.all(deleteSlotPromise);
 			}
 
-			await this.timeSlotRepository.delete({ id: In(ids) });
+			// await this.timeSlotRepository.delete({ id: In(ids) });
 		}
 		return true;
 	}
