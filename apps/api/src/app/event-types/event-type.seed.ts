@@ -54,3 +54,53 @@ export const createRandomEventType = async (
 
 	await connection.manager.save(eventTypes);
 };
+
+export const createDefaultEventTypes = async (
+	connection: Connection,
+	orgs: Organization[]
+): Promise<void> => {
+	const eventTypes: EventType[] = [];
+
+	orgs.forEach((org) => {
+		const eventType = new EventType();
+		eventType.title = '15 Minutes Event';
+		eventType.description = 'This is a default event type.';
+		eventType.duration = 15;
+		eventType.durationUnit = 'Minute(s)';
+		eventType.isActive = true;
+		eventType.organization = org;
+		eventTypes.push(eventType);
+
+		const eventTypeOne = new EventType();
+		eventTypeOne.title = '30 Minutes Event';
+		eventTypeOne.description = 'This is a default event type.';
+		eventTypeOne.duration = 30;
+		eventTypeOne.durationUnit = 'Minute(s)';
+		eventTypeOne.isActive = true;
+		eventTypeOne.organization = org;
+		eventTypes.push(eventTypeOne);
+
+		const eventTypeTwo = new EventType();
+		eventTypeTwo.title = '60 Minutes Event';
+		eventTypeTwo.description = 'This is a default event type.';
+		eventTypeTwo.duration = 60;
+		eventTypeTwo.durationUnit = 'Minute(s)';
+		eventTypeTwo.isActive = true;
+		eventTypeTwo.organization = org;
+		eventTypes.push(eventTypeTwo);
+	});
+
+	await insertEventTypes(connection, eventTypes);
+};
+
+const insertEventTypes = async (
+	connection: Connection,
+	eventTypes: EventType[]
+): Promise<void> => {
+	await connection
+		.createQueryBuilder()
+		.insert()
+		.into(EventType)
+		.values(eventTypes)
+		.execute();
+};
