@@ -290,6 +290,10 @@ import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-sett
 import { EstimateEmail } from '../../estimate-email/estimate-email.entity';
 import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
 import { IntegrationMap } from '../../integration-map/integration-map.entity';
+import {
+	createDefaultEventTypes,
+	createRandomEventType
+} from '../../event-types/event-type.seed';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -797,6 +801,9 @@ export class SeedDataService {
 		);
 		await this.tryExecute(
 			createDefaultInvoice(this.connection, this.organizations, 50)
+		);
+		await this.tryExecute(
+			createDefaultEventTypes(this.connection, this.organizations)
 		);
 	}
 
@@ -1331,6 +1338,15 @@ export class SeedDataService {
 				this.connection,
 				tenants,
 				tenantCandidatesMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomEventType(
+				this.connection,
+				tenants,
+				tenantEmployeeMap,
+				tenantOrganizationsMap
 			)
 		);
 	}

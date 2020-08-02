@@ -55,6 +55,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 	calendarOptions: OptionsInput;
 
 	private _ngDestroy$ = new Subject<void>();
+	private firstLoad: boolean = true;
 	recurringAvailabilityMode: boolean = false;
 	_selectedOrganizationId: string;
 	selectedEmployeeId: string;
@@ -133,8 +134,10 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			this.calendarOptions.hiddenDays = [];
 		}
 
+		this.calendarEvents = [];
 		this.selectedEmployeeId =
-			this.store.selectedEmployee && this.store.selectedEmployee.id;
+			this.selectedEmployeeId ||
+			(this.store.selectedEmployee && this.store.selectedEmployee.id);
 
 		this.store.user$.subscribe(() => {
 			this.canChangeSelectedEmployee = this.store.hasPermission(
@@ -147,10 +150,10 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					this.fetchAvailableSlots(
+						this.selectedEmployeeId ? false : true
+					);
 				}
-				this.fetchAvailableSlots(
-					this.selectedEmployeeId ? false : true
-				);
 			});
 	}
 
@@ -158,42 +161,54 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 		if (this.calendar && !this.recurringAvailabilityMode) {
 			const currentStart = this.calendar.getApi().view.currentStart;
 			const currentEnd = this.calendar.getApi().view.currentEnd;
-			const hideDays = moment().isBetween(currentStart, currentEnd, 'day')
+			const hideDays = moment().isBetween(
+				currentStart,
+				currentEnd,
+				'day',
+				'[]'
+			)
 				? this.hiddenDays
 				: [];
 			this.calendar.getApi().setOption('hiddenDays', hideDays);
-			this.headerToolbarOptions.left = moment(currentStart).isBefore(
-				moment(),
-				'day'
-			)
+			this.headerToolbarOptions.left = moment(
+				currentStart
+			).isSameOrBefore(moment(), 'day')
 				? 'next'
 				: 'prev,next';
 			this.calendar
 				.getApi()
 				.setOption('headerToolbar', this.headerToolbarOptions);
 
-			const isDayOff = this.timeOff.find(
-				(o) =>
-					o.status === 'Approved' &&
-					moment(config.date).isBetween(o.start, o.end, 'date', '[]')
-			);
-			isDayOff &&
-				this._prepareEvent(
-					{
-						startTime: config.date,
-						endTime: config.date,
-						allDay: true
-					},
-					isDayOff
-				);
+			this.renderTimeOff(config.date);
 		}
 	}
 
+	renderTimeOff(date) {
+		const isDayOff = this.timeOff.find(
+			(o) =>
+				o.status === 'Approved' &&
+				moment(date).isBetween(o.start, o.end, 'date', '[]')
+		);
+
+		isDayOff &&
+			this._prepareEvent(
+				{
+					startTime: date,
+					endTime: date,
+					allDay: true
+				},
+				isDayOff
+			);
+	}
+
 	onEmployeeChange(selectedEmployee: SelectedEmployee) {
+		if (this.firstLoad) return;
+		this.calendarEvents = [];
 		if (selectedEmployee && selectedEmployee.id) {
 			this.selectedEmployeeId = selectedEmployee.id;
 			this.fetchAvailableSlots(false);
 		} else {
+			this.selectedEmployeeId = null;
 			if (this._selectedOrganizationId) {
 				this.fetchAvailableSlots(true);
 			}
@@ -275,7 +290,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 		const data = await this.timeOffService
 			.getAllTimeOffRecords(['employees', 'employees.user'], {
 				organizationId: this._selectedOrganizationId,
-				employeeId: this.selectedEmployeeId
+				employeeId: this.selectedEmployeeId || ''
 			})
 			.pipe(first())
 			.toPromise();
@@ -285,8 +300,6 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 
 	async fetchAvailableSlots(isOrganizationId) {
 		let findObj;
-		this.calendarEvents = [];
-
 		if (isOrganizationId) {
 			findObj = {
 				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
@@ -312,6 +325,15 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				findObj
 			);
 			const start = this.calendar.getApi().view.currentStart;
+			const end = this.calendar.getApi().view.currentEnd;
+			let date = moment(start);
+
+			if (!this.recurringAvailabilityMode) {
+				while (moment(end).diff(date, 'day') > 0) {
+					this.renderTimeOff(new Date(date.format()));
+					date = date.add(1, 'day');
+				}
+			}
 
 			if (this.recurringAvailabilityMode) {
 				for (let o of slots.items) {
@@ -341,6 +363,8 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			for (let o of slots.items) {
 				this._prepareEvent(o);
 			}
+			this.calendar.getApi().refetchEvents();
+			this.firstLoad = false;
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.AVAILABILITY_SLOTS.ERROR', {
@@ -369,6 +393,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			start: eventStartTime,
 			end: eventEndTime,
 			allDay: slot.allDay,
+			color: isDayOff ? 'red' : 'seablue',
 			extendedProps: {
 				id: slot.id,
 				isDayOff: isDayOff ? true : false
