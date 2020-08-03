@@ -75,7 +75,7 @@
 						</div>
 					</nb-card-body>
 				</nb-card>
-				<nb-card *ngIf="team.members.length">
+				<nb-card *ngIf="team.members.length" class="team-members">
 					<nb-card-header>
 						<div>
 							{{
@@ -118,17 +118,15 @@
 				<div class="button-container">
 					<button
 						nbButton
-						class="mr-2"
 						status="info"
-						size="tiny"
 						(click)="editTeam(team)"
+						size="small"
 					>
 						<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 						>{{ 'BUTTONS.EDIT' | translate }}
 					</button>
 					<button
-						size="tiny"
-						class="mr-2"
+						size="small"
 						nbButton
 						(click)="removeTeam(team.id, team.name)"
 						status="danger"
