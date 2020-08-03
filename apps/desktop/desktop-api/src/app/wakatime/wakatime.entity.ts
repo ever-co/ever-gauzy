@@ -6,7 +6,7 @@ export class Wakatime {
 	@PrimaryGeneratedColumn()
 	id: number;
 
-	@Column()
+	@Column({ nullable: true })
 	user_agent: string;
 
 	@Column({ nullable: true })
@@ -39,7 +39,7 @@ export class Wakatime {
 	@Column({ nullable: true })
 	operating_systems: string;
 
-	@Column({ nullable: true })
+	@Column()
 	entities: string;
 
 	@Column({ nullable: true })
@@ -48,6 +48,6 @@ export class Wakatime {
 	@Column({ nullable: true })
 	lines: string;
 
-	@Column()
+	@Column({ nullable: true })
 	is_write: boolean;
 }

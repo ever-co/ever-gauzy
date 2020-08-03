@@ -49,8 +49,16 @@ export class WakatimeService {
 			.execute();
 	}
 
+	save(wakatime: Wakatime) {
+		console.log(wakatime);
+		return this.wakatimeRepository.save(wakatime);
+	}
+
 	parameterSanitize(payload, headers) {
 		const params = [];
+		if (!Array.isArray(payload)) {
+			payload = [payload];
+		}
 		payload.forEach((element) => {
 			params.push({
 				type: element.type,
@@ -70,25 +78,31 @@ export class WakatimeService {
 				user_agent: this._extractAgent(element.user_agent, 'agents')
 			});
 		});
-		return this.bulkSave(params);
+		if (params.length > 1) {
+			return this.bulkSave(params);
+		} else {
+			return this.save(params[0]);
+		}
 	}
 
 	_extractAgent(userAgent, field) {
-		const agents = userAgent.split(' ');
 		let value = null;
-		switch (field) {
-			case 'os':
-				value = agents[1].split('(')[1].split('-')[0];
-				break;
-			case 'editors':
-				value = agents[3].split('/')[0];
-				break;
-			case 'agents':
-				value = agents[4].split('/')[0];
-				break;
-			default:
-				break;
-		}
+		try {
+			const agents = userAgent.split(' ');
+			switch (field) {
+				case 'os':
+					value = agents[1].split('(')[1].split('-')[0];
+					break;
+				case 'editors':
+					value = agents[3].split('/')[0];
+					break;
+				case 'agents':
+					value = agents[4].split('/')[0];
+					break;
+				default:
+					break;
+			}
+		} catch (error) {}
 
 		return value;
 	}

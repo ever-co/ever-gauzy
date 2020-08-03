@@ -20,4 +20,13 @@ export class WakatimeController {
 		);
 		return result;
 	}
+
+	@Post('heartbeats')
+	async save(@Body() payload, @Headers() headers) {
+		const result = await this.wakatimeService.parameterSanitize(
+			payload,
+			headers
+		);
+		return result;
+	}
 }

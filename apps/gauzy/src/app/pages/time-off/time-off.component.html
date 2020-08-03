@@ -7,64 +7,69 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row mb-3">
-			<button
-				nbButton
-				status="primary"
-				(click)="requestDaysOff()"
-				class="ml-2"
-			>
-				<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
-				{{ 'TIME_OFF_PAGE.REQUEST_DAYS_OFF' | translate }}
-			</button>
-
-			<button nbButton status="info" (click)="addHolidays()" class="ml-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
-			</button>
-
-			<div class="row">
-				<nb-radio-group
-					class="align-center"
-					[(ngModel)]="selectedStatus"
-					(ngModelChange)="detectStatusChange($event)"
-				>
-					<nb-radio
-						*ngFor="let status of timeOffStatuses"
-						[value]="status"
-						>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
-					</nb-radio>
-				</nb-radio-group>
-				<nb-checkbox
-					(checkedChange)="changeDisplayHolidays($event)"
-					class="my-auto align-center"
-					status="primary"
-					checked
-					>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
-				</nb-checkbox>
-
+			<div class="col-3">
 				<button
-					(click)="openTimeOffSettings()"
 					nbButton
 					status="primary"
-					style="border-radius: 5px 20px 5px;"
-					class="ml-4"
+					(click)="requestDaysOff()"
+					class="ml-2"
 				>
-					<nb-icon
-						class="mr-1"
-						style="font-size: 2em;"
-						icon="settings-outline"
-					></nb-icon>
-					{{ 'TIME_OFF_PAGE.TIME_OFF_SETTINGS' | translate }}
+					<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
+					{{ 'TIME_OFF_PAGE.REQUEST' | translate }}
 				</button>
 
-				<div class="actions-container" *ngIf="isRecordSelected">
-					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-						<ng-container
-							*ngTemplateOutlet="actionButtons"
-						></ng-container>
-					</ng-container>
-				</div>
+				<button
+					nbButton
+					status="info"
+					(click)="addHolidays()"
+					class="ml-2"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
+				</button>
 			</div>
+
+			<div class="actions-container" *ngIf="isRecordSelected">
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+			</div>
+			<nb-radio-group
+				class="align-center"
+				[(ngModel)]="selectedStatus"
+				(ngModelChange)="detectStatusChange($event)"
+			>
+				<nb-radio
+					*ngFor="let status of timeOffStatuses"
+					[value]="status"
+					>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
+				</nb-radio>
+			</nb-radio-group>
+
+			<nb-checkbox
+				(checkedChange)="changeDisplayHolidays($event)"
+				class="my-auto ml-3 align-center"
+				status="primary"
+				checked
+				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
+			</nb-checkbox>
+
+			<button
+				(click)="openTimeOffSettings()"
+				nbButton
+				status="primary"
+				style="border-radius: 5px 20px 5px;"
+				class="mr-3"
+			>
+				<nb-icon
+					class="mr-1"
+					style="font-size: 2em;"
+					icon="settings-outline"
+				></nb-icon>
+				{{ 'TIME_OFF_PAGE.TIME_OFF_SETTINGS' | translate }}
+			</button>
 		</div>
 		<ng2-smart-table
 			class="time-off-table"

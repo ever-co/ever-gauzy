@@ -5,7 +5,8 @@ import {
 	RequestApproval,
 	Employee,
 	OrganizationTeam,
-	ApprovalPolicy
+	ApprovalPolicy,
+	RequestApprovalCreateInput
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,10 +16,12 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
+import { RequestApprovalService } from '../../@core/services/request-approval.service';
 
 @Component({
 	selector: 'ngx-approval-mutation',
-	templateUrl: './approvals-mutation.component.html'
+	templateUrl: './approvals-mutation.component.html',
+	styleUrls: ['./approvals-mutation.component.scss']
 })
 export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -38,6 +41,7 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	constructor(
 		public dialogRef: NbDialogRef<RequestApprovalMutationComponent>,
 		private approvalPolicyService: ApprovalPolicyService,
+		private requestApprovalService: RequestApprovalService,
 		private employeesService: EmployeesService,
 		private organizationTeamsService: OrganizationTeamsService,
 		private fb: FormBuilder,
@@ -191,7 +195,18 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 		if (!this.form.get('id').value) {
 			delete this.form.value['id'];
 		}
-		this.closeDialog(this.form.value);
+		const requestApproval: RequestApprovalCreateInput = {
+			name: this.form.value['name'],
+			approvalPolicyId: this.form.value['approvalPolicyId'],
+			min_count: this.form.value['min_count'],
+			employeeApprovals: this.form.value['employees'],
+			teams: this.form.value['teams'],
+			id: this.form.value['id']
+		};
+
+		let result: RequestApproval;
+		result = await this.requestApprovalService.save(requestApproval);
+		this.closeDialog(result);
 	}
 
 	onMembersSelected(members: string[]) {
