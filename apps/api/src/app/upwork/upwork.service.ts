@@ -65,7 +65,6 @@ import { UpworkReportService } from './upwork-report.service';
 import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';
 import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
 
-
 @Injectable()
 export class UpworkService {
 	private _upworkApi: UpworkApi;

@@ -287,7 +287,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	}
 
 	async editTimeFrame(source, selectedItem?: any) {
-		this.predefinedTimeFrames = this.predefinedTimeFrames.filter(
+		const prdefTimeFrames = this.predefinedTimeFrames.filter(
 			(timeFrame) => {
 				return (
 					this.goalTimeFrames.findIndex(
@@ -310,7 +310,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 			context: {
 				timeFrame: this.selectedTimeFrame,
 				type: source,
-				predefinedTimeFrames: this.predefinedTimeFrames
+				predefinedTimeFrames: prdefTimeFrames
 			},
 			closeOnBackdropClick: false
 		});

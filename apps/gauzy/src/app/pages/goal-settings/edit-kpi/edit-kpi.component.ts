@@ -67,6 +67,13 @@ export class EditKpiComponent extends TranslationBaseComponent
 				this.employees = employees.items;
 			});
 		if (!!this.selectedKPI) {
+			if (
+				!this.numberUnitsEnum.find(
+					(unit) => unit === this.selectedKPI.unit
+				)
+			) {
+				this.numberUnitsEnum.push(this.selectedKPI.unit);
+			}
 			this.kpiForm.patchValue({
 				...this.selectedKPI
 			});

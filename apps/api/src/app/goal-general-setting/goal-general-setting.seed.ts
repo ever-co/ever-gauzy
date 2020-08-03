@@ -17,8 +17,8 @@ export const createDefaultGeneralGoalSetting = async (
 			employeeCanCreateObjective: true,
 			canOwnObjectives: GoalOwnershipEnum.EMPLOYEES_AND_TEAMS,
 			canOwnKeyResult: GoalOwnershipEnum.EMPLOYEES_AND_TEAMS,
-			krTypeKPI: false,
-			krTypeTask: false,
+			krTypeKPI: true,
+			krTypeTask: true,
 			organization: organization,
 			tenant: tenant
 		});

@@ -35,39 +35,49 @@
 					</div>
 				</div>
 				<div class="p-3">
-					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">
+					<div
+						class="row mt-2"
+						*ngIf="
+							keyResult.type !== keyResultTypeEnum.TRUE_OR_FALSE
+						"
+					>
+						<div class="col-md-4 font-weight-bold">
 							{{
 								'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
 									| translate
 							}}
 						</div>
-						<div class="col-md-6">
+						<div class="col-md-8">
 							{{ keyResult.initialValue }} {{ keyResult.unit }}
 						</div>
 					</div>
-					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">
+					<div
+						class="row mt-2"
+						*ngIf="
+							keyResult.type !== keyResultTypeEnum.TRUE_OR_FALSE
+						"
+					>
+						<div class="col-md-4 font-weight-bold">
 							{{
 								'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
 									| translate
 							}}
 						</div>
-						<div class="col-md-6">
+						<div class="col-md-8">
 							{{ keyResult.targetValue }} {{ keyResult.unit }}
 						</div>
 					</div>
 					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">
+						<div class="col-md-4 font-weight-bold">
 							{{ 'GOALS_PAGE.PROGRESS' | translate }}
 						</div>
-						<div class="col-md-6">{{ keyResult.progress }} %</div>
+						<div class="col-md-8">{{ keyResult.progress }} %</div>
 					</div>
 					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">
+						<div class="col-md-4 font-weight-bold">
 							{{ 'GOALS_PAGE.GOAL' | translate }}
 						</div>
-						<div class="col-md-6">{{ keyResult.goal.name }}</div>
+						<div class="col-md-8">{{ keyResult.goal.name }}</div>
 					</div>
 				</div>
 			</div>
