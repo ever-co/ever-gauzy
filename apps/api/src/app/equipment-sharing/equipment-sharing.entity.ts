@@ -17,7 +17,6 @@ import { IsDate, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { Equipment } from '../equipment/equipment.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {

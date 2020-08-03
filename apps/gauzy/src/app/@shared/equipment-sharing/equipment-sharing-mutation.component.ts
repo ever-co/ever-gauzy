@@ -12,8 +12,7 @@ import {
 	RequestApprovalStatusTypesEnum,
 	RequestApprovalStatus,
 	Employee,
-	OrganizationTeam,
-	ApprovalPolicy
+	OrganizationTeam
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';

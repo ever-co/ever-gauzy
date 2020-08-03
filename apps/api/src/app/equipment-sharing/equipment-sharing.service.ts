@@ -200,7 +200,7 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 			}
 			return await this.equipmentSharingRepository.save(equipmentSharing);
 		} catch (err) {
-			throw err;
+			throw new BadRequestException(err);
 		}
 	}
 }
