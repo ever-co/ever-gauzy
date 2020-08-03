@@ -104,9 +104,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
-					if (this.loading) {
-						this._loadTableData(this._selectedOrganizationId);
-					}
+					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 
@@ -289,7 +287,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 		if (this.timeOffTable) {
 			this.timeOffTable.grid.dataSet.willSelect = false;
 		}
-		this.isRecordSelected = true;
+		this.isRecordSelected = isSelected ? true : false;
 		this.selectedTimeOffRecord = selectedTimeOffRecord;
 	}
 
@@ -313,7 +311,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED'
 						);
-						this._loadTableData();
+						this._loadTableData(this._selectedOrganizationId);
+						this.selectRecord({
+							isSelected: false,
+							data: null
+						});
 					},
 					() =>
 						this.toastrService.danger(
@@ -325,6 +327,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 				'TIME_OFF_PAGE.NOTIFICATIONS.APPROVED_NO_CHANGES',
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
+			this._loadTableData(this._selectedOrganizationId);
+			this.selectRecord({
+				isSelected: false,
+				data: null
+			});
 		}
 	}
 
@@ -348,7 +355,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED'
 						);
-						this._loadTableData();
+						this._loadTableData(this._selectedOrganizationId);
+						this.selectRecord({
+							isSelected: false,
+							data: null
+						});
 					},
 					() =>
 						this.toastrService.danger(
@@ -385,7 +396,13 @@ export class TimeOffComponent extends TranslationBaseComponent
 								this.toastrService.success(
 									'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DELETED'
 								);
-								this._loadTableData();
+								this._loadTableData(
+									this._selectedOrganizationId
+								);
+								this.selectRecord({
+									isSelected: false,
+									data: null
+								});
 							},
 							() =>
 								this.toastrService.danger(
@@ -430,7 +447,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
 						);
-						this._loadTableData();
+						this._loadTableData(this._selectedOrganizationId);
+						this.selectRecord({
+							isSelected: false,
+							data: null
+						});
 					},
 					() =>
 						this.toastrService.danger(

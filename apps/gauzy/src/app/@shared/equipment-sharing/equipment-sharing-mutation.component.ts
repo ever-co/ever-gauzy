@@ -21,7 +21,6 @@ import { EquipmentSharingService } from '../../@core/services/equipment-sharing.
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
@@ -49,7 +48,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		private fb: FormBuilder,
 		readonly translationService: TranslateService,
 		private employeesService: EmployeesService,
-		public approvalPolicyService: ApprovalPolicyService,
 		private organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translationService);
@@ -62,12 +60,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	requestStatus: number;
 	participants = 'employees';
 
-	approvalPolicies: ApprovalPolicy[] = [];
 	teams: OrganizationTeam[];
 	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
-	selectedApprovalPolicy: string;
 
 	requestStatuses = Object.values(RequestApprovalStatus);
 
@@ -89,7 +85,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.loadSelectedOrganization();
 		this.loadEmployees();
 		this.loadTeams();
-		this.loadApprovalPolicies();
 		this.loadRequestStatus();
 		this.validateForm();
 	}
@@ -107,11 +102,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			equipment: [
 				this.equipmentSharing ? this.equipmentSharing.equipmentId : '',
 				Validators.required
-			],
-			approvalPolicy: [
-				this.equipmentSharing
-					? this.equipmentSharing.approvalPolicyId
-					: ''
 			],
 			employees: [
 				this.equipmentSharing
@@ -156,7 +146,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			),
 			createdBy: '',
 			createdByName: '',
-			approvalPolicyId: this.form.value['approvalPolicy'],
 			employees: this.employees.filter((emp) => {
 				return this.selectedEmployees.includes(emp.id);
 			}),
@@ -180,7 +169,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			);
 		} else {
 			equipmentSharing = await this.equipmentSharingService.create(
-				shareRequest
+				shareRequest,
+				this.selectedOrgId
 			);
 		}
 
@@ -193,19 +183,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 	async loadEquipmentItems() {
 		this.equipmentItems = (await this.equipmentService.getAll()).items;
-	}
-
-	async loadApprovalPolicies() {
-		this.approvalPolicies = (
-			await this.approvalPolicyService.getForRequestApproval([], {
-				organizationId: this.selectedOrgId
-			})
-		).items.filter((policy) => {
-			return (
-				policy.organizationId === this.selectedOrgId ||
-				this.selectedOrgId === ''
-			);
-		});
 	}
 
 	async loadEmployees() {
@@ -264,10 +241,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		} else {
 			this.requestStatus = RequestApprovalStatusTypesEnum.REQUESTED;
 		}
-	}
-
-	onApprovalPolicySelected(approvalPolicySelection: string) {
-		this.selectedApprovalPolicy = approvalPolicySelection;
 	}
 
 	onEmployeesSelected(employeeSelection: string[]) {

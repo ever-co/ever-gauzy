@@ -10,7 +10,7 @@ import {
 import { Base } from '../core/entities/base';
 import {
 	EquipmentSharing as IEquipmentSharing,
-	ApprovalPolicyTypesEnum
+	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsString } from 'class-validator';
@@ -53,7 +53,7 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@Column({ nullable: true })
 	shareEndDay: Date;
 
-	@IsEnum(ApprovalPolicyTypesEnum)
+	@IsEnum(RequestApprovalStatusTypesEnum)
 	@IsNotEmpty()
 	@Column()
 	status: number;
@@ -69,20 +69,6 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 		name: 'equipment_shares_teams'
 	})
 	teams: OrganizationTeam[];
-
-	@ApiProperty({ type: ApprovalPolicy })
-	@ManyToOne((type) => ApprovalPolicy, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	approvalPolicy: ApprovalPolicy;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((policy: EquipmentSharing) => policy.approvalPolicy)
-	@IsString()
-	@Column({ nullable: true })
-	approvalPolicyId: string;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@IsString()

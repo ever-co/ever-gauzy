@@ -115,18 +115,6 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					),
 					type: 'string'
 				},
-				approvalPolicy: {
-					title: this.getTranslation(
-						'EQUIPMENT_SHARING_PAGE.APPROVAL_POLICY'
-					),
-					type: 'function',
-					valuePrepareFunction: (approvalPolicy: any) => {
-						if (approvalPolicy && approvalPolicy.name) {
-							return approvalPolicy.name;
-						}
-						return '-';
-					}
-				},
 				shareRequestDay: {
 					title: this.getTranslation(
 						'EQUIPMENT_SHARING_PAGE.SHARE_REQUIEST_DATE'
