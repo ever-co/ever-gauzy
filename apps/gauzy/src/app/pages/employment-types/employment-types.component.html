@@ -11,16 +11,19 @@
 		</button>
 		<div *ngIf="showAddCard" class="row">
 			<div class="col-sm-3 d-flex flex-column justify-content-end">
-				<label class="label" for="add-vendor">{{
-					'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
+				<label class="label">{{
+					'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME' | translate
 				}}</label>
 				<input
 					#addInput="ngModel"
-					nbInput
-					type="text"
-					[placeholder]="'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate"
 					[ngModel]="add"
 					required
+					nbInput
+					type="text"
+					(keyup)="onKeyEnter($event)"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME' | translate
+					}}"
 				/>
 			</div>
 			<ga-tags-color-input
@@ -33,7 +36,7 @@
 			<span class="col-sm-3" style="margin-top: 29px;"
 				><button
 					class="w-100"
-					(click)="addEmployeeLevel(addInput.value)"
+					(click)="addEmploymentType(addInput.value)"
 					nbButton
 					status="success"
 					[disabled]="addInput.invalid"
@@ -53,31 +56,38 @@
 			>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="employeeLevels?.length">
+
+	<nb-card-body *ngIf="organizationEmploymentTypes?.length">
 		<div class="ml-3 mb-4">
 			<strong>{{
-				'ORGANIZATIONS_PAGE.LEVEL_OF_EMPLOYEE' | translate
+				'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES' | translate
 			}}</strong>
 		</div>
 
-		<nb-card *ngFor="let e of employeeLevels">
+		<nb-card *ngFor="let employmentType of organizationEmploymentTypes">
 			<nb-card-body>
-				<!-- {{ selectedEmployeeLevel === e ? '' : e.level }} -->
-				<ga-notes-with-tags [rowData]="e"> </ga-notes-with-tags>
+				<ga-notes-with-tags
+					[rowData]="employmentType"
+					*ngIf="employmentType !== selectedOrgEmplType"
+				>
+				</ga-notes-with-tags>
 				<div
-					*ngIf="showEditDiv && e === selectedEmployeeLevel"
+					*ngIf="
+						showEditDiv && employmentType === selectedOrgEmplType
+					"
 					class="row m-0"
 				>
 					<div class="col-3 d-flex flex-column justify-content-end">
 						<label class="label">{{
-							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
+							'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME'
+								| translate
 						}}</label>
 						<input
+							#editInput="ngModel"
+							required
 							nbInput
 							type="text"
-							[(ngModel)]="e.level"
-							#level="ngModel"
-							required
+							[(ngModel)]="employmentType.name"
 						/>
 					</div>
 					<ga-tags-color-input
@@ -92,10 +102,15 @@
 					>
 						<button
 							class="w-100"
-							(click)="editEmployeeLevel(e.id, level.value)"
+							(click)="
+								editOrgEmplType(
+									employmentType.id,
+									editInput.value
+								)
+							"
 							nbButton
 							status="success"
-							[disabled]="level.invalid"
+							[disabled]="editInput.invalid"
 						>
 							{{ 'BUTTONS.UPDATE' | translate }}
 						</button></span
@@ -114,17 +129,22 @@
 					>
 				</div>
 				<nb-actions
-					*ngIf="e !== selectedEmployeeLevel"
 					class="float-right"
 					e="medium"
+					*ngIf="employmentType !== selectedOrgEmplType"
 				>
 					<nb-action
-						(click)="showEditCard(e)"
+						(click)="showEditCard(employmentType)"
 						class="d-inline pr-0"
 						icon="edit"
 					></nb-action>
 					<nb-action
-						(click)="removeEmployeeLevel(e.id, e.level)"
+						(click)="
+							deleteEmploymentType(
+								employmentType.id,
+								employmentType.name
+							)
+						"
 						class="d-inline pr-0"
 						icon="close"
 					></nb-action>

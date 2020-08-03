@@ -14,10 +14,9 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { OrganizationPositionsService } from '../../@core/services/organization-positions';
 import { SharedModule } from '../../@shared/shared.module';
-import { PositionsRoutingModule } from './positions-routing.module';
-import { PositionsComponent } from './positions.component';
+import { EmployeeLevelComponent } from './employee-level.component';
+import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -30,12 +29,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
+		EmployeeLevelRoutingModule,
 		NbInputModule,
 		NbIconModule,
 		TagsColorInputModule,
 		NbActionsModule,
 		TableComponentsModule,
-		PositionsRoutingModule,
 		TagsColorInputModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
@@ -47,8 +46,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [PositionsComponent],
+	declarations: [EmployeeLevelComponent],
 	entryComponents: [],
-	providers: [OrganizationPositionsService]
+	providers: []
 })
-export class PositionsModule {}
+export class EmployeeLevelModule {}

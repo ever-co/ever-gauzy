@@ -80,29 +80,12 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				responsive: true,
 				route: this.getRoute('location')
 			},
-			// {
-			// 	title: this.getTranslation(
-			// 		'ORGANIZATIONS_PAGE.LEVEL_OF_EMPLOYEE'
-			// 	),
-			// 	icon: 'award-outline',
-			// 	responsive: true,
-			// 	route: this.getRoute('employeeLevels')
-			// },
-
 			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.SETTINGS'),
 				icon: 'settings-outline',
 				responsive: true,
 				route: this.getRoute('settings')
 			}
-			// {
-			// 	title: this.getTranslation(
-			// 		'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES'
-			// 	),
-			// 	icon: 'settings-outline',
-			// 	responsive: true,
-			// 	route: this.getRoute('employment-types')
-			// },
 		];
 	}
 
