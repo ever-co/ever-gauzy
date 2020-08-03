@@ -152,15 +152,15 @@ export class GoalsComponent extends TranslationBaseComponent
 				findObj
 			)
 			.then((goals) => {
-				this.noGoals = goals.items.length > 0 ? false : true;
-				this.goals = goals.items;
-				this.allGoals = goals.items;
-				if (!!this.selectedFilter && this.selectedFilter !== 'all') {
-					this.filterGoals(this.selectedFilter);
-				} else {
-					this.createGroups(this.goals);
+				if (goals) {
+					this.noGoals = goals.items.length > 0 ? false : true;
+					this.goals = goals.items;
+					this.allGoals = goals.items;
+					if (!!this.selectedFilter) {
+						this.filterGoals(this.selectedFilter, this.allGoals);
+					}
+					this.loading = false;
 				}
-				this.loading = false;
 			});
 	}
 
@@ -278,7 +278,9 @@ export class GoalsComponent extends TranslationBaseComponent
 	groupBy(group) {
 		this.loading = true;
 		this.objectiveGroup = group;
-		this.popover.hide();
+		if (this.popover?.isShown) {
+			this.popover.hide();
+		}
 		this.loading = false;
 	}
 
@@ -294,25 +296,27 @@ export class GoalsComponent extends TranslationBaseComponent
 		return Math.round(progressTotal / weightTotal);
 	}
 
-	filterGoals(selection) {
+	filterGoals(selection, allGoals) {
 		this.loading = true;
-		this.popover.hide();
+		if (this.popover?.isShown) {
+			this.popover.hide();
+		}
 		this.selectedFilter = selection;
 		if (selection !== 'all') {
 			if (selection === 'employee' && !!this.employee) {
-				this.goals = this.allGoals.filter((goal) =>
+				this.goals = allGoals.filter((goal) =>
 					this.employee.id == null
 						? goal.level.toLowerCase() === selection
 						: goal.ownerEmployee.id === this.employee.id
 				);
 			} else {
-				this.goals = this.allGoals.filter(
+				this.goals = allGoals.filter(
 					(goal) => goal.level.toLowerCase() === selection
 				);
 			}
 			this.goalLevels = [GoalLevelEnum[selection.toUpperCase()]];
 		} else {
-			this.goals = this.allGoals;
+			this.goals = allGoals;
 			this.goalLevels = [...Object.values(GoalLevelEnum)];
 			this.goalLevels = this.goalLevels.filter((goalLevel) =>
 				this.goals.find((goal) => goal.level === goalLevel)
@@ -384,7 +388,7 @@ export class GoalsComponent extends TranslationBaseComponent
 								),
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
-							this.loadPage();
+							await this.loadPage();
 						});
 				} catch (error) {
 					this.errorHandler.handleError(error);

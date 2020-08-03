@@ -104,7 +104,6 @@
 						placeholder="{{
 							'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL' | translate
 						}}"
-						[selected]="objectiveForm.value.level"
 						(selectedChange)="
 							$event === goalLevelEnum.TEAM ? getTeams() : null
 						"

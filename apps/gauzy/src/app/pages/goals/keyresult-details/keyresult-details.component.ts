@@ -37,6 +37,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	keyResult: KeyResult;
 	updates: KeyResultUpdates[];
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
+	keyResultTypeEnum = KeyResultTypeEnum;
 	isUpdatable = true;
 	startDate: Date;
 	today = new Date();
