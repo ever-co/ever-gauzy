@@ -400,7 +400,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
 					}
 				},
-
 				{
 					title: 'Departments',
 					icon: 'briefcase-outline',
@@ -413,7 +412,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Teams',
 					icon: 'people-outline',
-					link: `/pages/organization/teams`,
+					link: `/pages/accounting/teams`,
 					data: {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
