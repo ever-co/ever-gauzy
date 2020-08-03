@@ -69,7 +69,7 @@
 		"postinstall": "install-app-deps",
 		"postinstall.electron": "node tools/electron/postinstall",
 		"postinstall.web": "node tools/web/postinstall",
-		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run prepare:desktop && ng build desktop --prod --base-href ./ && ng build desktop-api --prod && npm run build:desktop:ui",
+		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run prepare:desktop && ng build desktop --prod --base-href ./ && ng build desktop-api --prod && ng build api-desktop --prod && npm run build:desktop:ui",
 		"build:desktop:local": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && electron dist/apps/desktop",
 		"build:desktop:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --linux",
 		"build:desktop:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --windows",

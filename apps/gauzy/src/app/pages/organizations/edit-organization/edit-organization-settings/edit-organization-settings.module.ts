@@ -44,12 +44,10 @@ import { EditOrganizationLocationComponent } from './edit-organization-location/
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
-import { EditOrganizationEmploymentTypes } from './edit-organization-employment-types/edit-organization-employment-types.component';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { OrganizationExpenseCategoriesService } from '../../../../@core/services/organization-expense-categories.service';
 import { InviteService } from '../../../../@core/services/invite.service';
 import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
-import { EditOrganizationEmployeeLevelComponent } from './edit-organization-employee-levels/edit-organization-employee-level.component';
 import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
 
@@ -112,9 +110,7 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EditOrganizationMainComponent,
 		EditOrganizationLocationComponent,
 		OrganizationListComponent,
-		EditOrganizationOtherSettingsComponent,
-		EditOrganizationEmploymentTypes,
-		EditOrganizationEmployeeLevelComponent
+		EditOrganizationOtherSettingsComponent
 	],
 	exports: [EditOrganizationSettingsComponent]
 })

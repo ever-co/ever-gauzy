@@ -1,19 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { EmployeeLevelInput, Tag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
-	selector: 'ga-edit-org-employee-level',
-	templateUrl: './edit-organization-employee-level.component.html'
+	selector: 'ga-employee-level',
+	templateUrl: './employee-level.component.html'
 })
-export class EditOrganizationEmployeeLevelComponent
-	extends TranslationBaseComponent
+export class EmployeeLevelComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -29,14 +28,14 @@ export class EditOrganizationEmployeeLevelComponent
 	constructor(
 		private readonly employeeLevelService: EmployeeLevelService,
 		private readonly toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly store: Store,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.organizationEditStore.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
