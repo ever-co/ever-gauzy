@@ -21,11 +21,11 @@ import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/key
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
 import { Store } from '../../../@core/services/store.service';
-import { TaskDialogComponent } from '../../tasks/components/task-dialog/task-dialog.component';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
+import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -148,7 +148,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 
 	async keyResultUpdate() {
 		if (this.keyResult.type === KeyResultTypeEnum.TASK) {
-			const taskDialog = this.dialogService.open(TaskDialogComponent, {
+			const taskDialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.task
 				},

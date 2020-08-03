@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import {
 	Task,
 	OrganizationProjects,
@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { first } from 'rxjs/operators';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
+import { TasksService } from '../../../@core/services/tasks.service';
 
 const initialTaskValue = {
 	title: '',
@@ -31,11 +32,11 @@ const initialTaskValue = {
 };
 
 @Component({
-	selector: 'ngx-task-dialog',
-	templateUrl: './task-dialog.component.html',
-	styleUrls: ['./task-dialog.component.scss']
+	selector: 'ngx-add-task-dialog',
+	templateUrl: './add-task-dialog.component.html',
+	styleUrls: ['./add-task-dialog.component.scss']
 })
-export class TaskDialogComponent extends TranslationBaseComponent
+export class AddTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
@@ -50,8 +51,11 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	tags: Tag[] = [];
 	participants = 'employees';
 
+	@Input() createTask = false;
+	@Input() task: Partial<Task> = {};
+
 	constructor(
-		public dialogRef: NbDialogRef<TaskDialogComponent>,
+		public dialogRef: NbDialogRef<AddTaskDialogComponent>,
 		private fb: FormBuilder,
 		private store: Store,
 		private _organizationsStore: Store,
@@ -60,6 +64,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private errorHandler: ErrorHandlingService,
 		private employeesService: EmployeesService,
+		private tasksService: TasksService,
 		private organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translateService);
@@ -69,7 +74,10 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		this.loadProjects();
 		this.loadEmployees();
 		this.loadTeams();
-		this.initializeForm(this.selectedTask || initialTaskValue);
+
+		console.log(Object.assign({}, initialTaskValue, this.task));
+
+		this.initializeForm(Object.assign({}, initialTaskValue, this.task));
 	}
 
 	private async loadProjects() {
@@ -161,7 +169,34 @@ export class TaskDialogComponent extends TranslationBaseComponent
 						.map((id) => this.teams.find((e) => e.id === id))
 						.filter((e) => !!e)
 				);
-			this.dialogRef.close(this.form.value);
+
+			if (this.form.valid) {
+				const {
+					estimateDays,
+					estimateHours,
+					estimateMinutes
+				} = this.form.value;
+
+				const estimate =
+					estimateDays * 24 * 60 * 60 +
+					estimateHours * 60 * 60 +
+					estimateMinutes * 60;
+
+				estimate
+					? (this.form.value.estimate = estimate)
+					: (this.form.value.estimate = null);
+				if (this.createTask) {
+					this.tasksService
+						.createTask(this.form.value)
+						.toPromise()
+						.then((task) => {
+							this.dialogRef.close(task);
+						});
+				}
+			}
+			if (!this.createTask) {
+				this.dialogRef.close(this.form.value);
+			}
 		}
 	}
 

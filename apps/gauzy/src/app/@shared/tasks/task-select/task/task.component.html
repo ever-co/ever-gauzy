@@ -1,0 +1,26 @@
+<div (click)="$event.stopPropagation()">
+	<ng-select
+		[addTag]="createNew"
+		[disabled]="disabled"
+		[clearable]="true"
+		[items]="tasks"
+		[(ngModel)]="taskId"
+		[placeholder]="'TIMER_TRACKER.SELECT_TASK' | translate"
+		bindValue="id"
+		bindLabel="title"
+	>
+		<!-- <ng-template [ngIf]="allowAddNew"> -->
+		<!-- <ng-template ng-notfound-tmp> -->
+		<!-- <ng-template ng-footer-tmp>
+				<button
+					*ngIf="allowAddNew"
+					class="btn btn-default create-new w-100"
+					type="button"
+					(click)="createNew()"
+				>
+					Create New
+				</button>
+			</ng-template> -->
+		<!-- </ng-template> -->
+	</ng-select>
+</div>
