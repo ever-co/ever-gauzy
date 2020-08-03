@@ -123,7 +123,7 @@
 						<div class="org-year-found">
 							<h5
 								*ngIf="organization.registrationDate"
-								class="org-title"
+								class="org-title label-text"
 								[textContent]="
 									('PUBLIC_PAGE.YEAR_FOUNDED' | translate) +
 									': ' +
@@ -136,7 +136,7 @@
 						<div class="org-size">
 							<h5
 								*ngIf="organization.totalEmployees"
-								class="org-title"
+								class="org-title label-text"
 								[textContent]="
 									('PUBLIC_PAGE.COMPANY_SIZE' | translate) +
 									': ' +
@@ -149,7 +149,7 @@
 							*ngIf="organization.show_clients_count"
 						>
 							<h5
-								class="org-title"
+								class="org-title label-text"
 								[textContent]="
 									('PUBLIC_PAGE.TOTAL_CLIENTS' | translate) +
 									': ' +
@@ -161,7 +161,7 @@
 							class="org-client-focus"
 							*ngIf="organization.client_focus"
 						>
-							<h5 class="org-title">
+							<h5 class="org-title label-text">
 								{{ 'PUBLIC_PAGE.CLIENT_FOCUS' | translate }}:
 								<span
 									class="client-focus"
@@ -177,7 +177,7 @@
 						<div class="row" *ngIf="this.organization.show_profits">
 							<div class="col">
 								<div class="org-year-found">
-									<h5 class="org-title org-key">
+									<h5 class="org-title org-key label-text">
 										{{ 'PUBLIC_PAGE.PROFITS' | translate }}
 										:
 									</h5>
@@ -199,7 +199,7 @@
 			<nb-tabset class="o__p__s">
 				<nb-tab tabTitle="Profile" class="o__p__s__t">
 					<div
-						class="row"
+						class="row mb-3"
 						*ngIf="
 							this.organization.show_projects_count &&
 							total_projects
@@ -207,11 +207,11 @@
 					>
 						<div class="col">
 							<div class="org-year-found">
-								<h5 class="org-title org-key">
+								<h5 class="org-title org-key label-text">
 									{{
-										'PUBLIC_PAGE.TOTAL_PROJECTS' | translate
-									}}
-									:
+										'PUBLIC_PAGE.TOTAL_PROJECTS'
+											| translate
+									}}:
 								</h5>
 								<span
 									class="org-value"
@@ -221,7 +221,7 @@
 						</div>
 					</div>
 					<div
-						class="row"
+						class="row mb-3"
 						*ngIf="
 							this.organization.show_minimum_project_size &&
 							minimum_project_size
@@ -229,12 +229,11 @@
 					>
 						<div class="col">
 							<div class="org-year-found">
-								<h5 class="org-title org-key">
+								<h5 class="org-title org-key label-text">
 									{{
 										'PUBLIC_PAGE.MINIMUM_PROJECT_SIZE'
 											| translate
-									}}
-									:
+									}}:
 								</h5>
 								<span
 									class="org-value"
@@ -244,14 +243,15 @@
 						</div>
 					</div>
 					<div
-						class="row"
+						class="row mb-3"
 						*ngIf="this.organization.show_income && total_income"
 					>
 						<div class="col">
 							<div class="org-year-found">
-								<h5 class="org-title org-key">
-									{{ 'PUBLIC_PAGE.TOTAL_INCOME' | translate }}
-									:
+								<h5 class="org-title org-key label-text">
+									{{
+										'PUBLIC_PAGE.TOTAL_INCOME' | translate
+									}}:
 								</h5>
 								<span
 									class="org-value"
@@ -265,19 +265,18 @@
 						</div>
 					</div>
 					<div
-						class="row"
+						class="row mb-3"
 						*ngIf="
 							this.organization.show_bonuses_paid && bonuses_paid
 						"
 					>
 						<div class="col">
 							<div class="org-year-found">
-								<h5 class="org-title org-key">
+								<h5 class="org-title org-key label-text">
 									{{
 										'PUBLIC_PAGE.TOTAL_BONUSES_PAID'
 											| translate
-									}}
-									:
+									}}:
 								</h5>
 								<span
 									class="org-value"
@@ -290,11 +289,11 @@
 							</div>
 						</div>
 					</div>
-					<div class="row" *ngIf="languageExist">
+					<div class="row mb-3" *ngIf="languageExist">
 						<div class="col">
 							<div class="org-year-found">
-								<h5 class="org-title org-key">
-									{{ 'PUBLIC_PAGE.LANGUAGES' | translate }} :
+								<h5 class="org-title org-key label-text">
+									{{ 'PUBLIC_PAGE.LANGUAGES' | translate }}:
 								</h5>
 								<span class="org-value">
 									<span
@@ -316,11 +315,11 @@
 							</div>
 						</div>
 					</div>
-					<div class="row" *ngIf="awardExist">
+					<div class="row mb-3" *ngIf="awardExist">
 						<div class="col">
 							<div class="org-year-found">
-								<h5 class="org-title org-key">
-									{{ 'PUBLIC_PAGE.AWARDS' | translate }} :
+								<h5 class="org-title org-key label-text">
+									{{ 'PUBLIC_PAGE.AWARDS' | translate }}:
 								</h5>
 								<span class="org-value">
 									<span
@@ -339,11 +338,11 @@
 							</div>
 						</div>
 					</div>
-					<div class="row" *ngIf="employees">
+					<div class="row mb-3" *ngIf="employees.length > 0">
 						<div class="col">
 							<div class="org-year-found">
-								<h5 class="org-title org-key">
-									{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }} :
+								<h5 class="org-title org-key label-text">
+									{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }}:
 								</h5>
 								<span
 									class="org-value"
@@ -353,29 +352,42 @@
 							</div>
 						</div>
 					</div>
-					<div class="section_block"></div>
-					<div class="row" *ngIf="organization.short_description">
+					<div
+						class="row wrapper mb-3"
+						*ngIf="organization.short_description"
+					>
 						<div class="col">
-							<p
+							<h5 class="org-title org-key label-text">
+								{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
+							</h5>
+							<div
 								class="org-banner"
 								[textContent]="organization.short_description"
-							></p>
+							></div>
 						</div>
 					</div>
 					<div class="row" *ngIf="organization.overview">
-						<div class="col org-overview">
-							<div [outerHTML]="organization.overview"></div>
+						<div class="col">
+							<h5 class="org-title org-key label-text">
+								{{ 'PUBLIC_PAGE.OVERVIEW' | translate }}:
+							</h5>
+							<div class="org-overview">
+								<div [outerHTML]="organization.overview"></div>
+							</div>
 						</div>
 					</div>
-					<div class="row" *ngIf="organization.skills">
+					<div
+						class="row mb-3"
+						*ngIf="organization.skills.length > 0"
+					>
 						<div class="col">
 							<div class="org-skills">
-								<p class="org-title org-key">
-									{{ 'PUBLIC_PAGE.SKILLS' | translate }}
+								<p class="org-title org-key label-text">
+									{{ 'PUBLIC_PAGE.SKILLS' | translate }}:
 								</p>
 								<ul class="org-value">
 									<li
-										class="org_list_data"
+										class="org_list_data mt-2"
 										*ngFor="
 											let skill of organization.skills;
 											let i = index
