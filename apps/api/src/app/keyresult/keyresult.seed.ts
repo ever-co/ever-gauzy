@@ -7,7 +7,9 @@ import { KeyResult } from './keyresult.entity';
 import {
 	KeyResultDeadlineEnum,
 	KeyResultTypeEnum,
-	KeyResultWeightEnum
+	KeyResultWeightEnum,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
@@ -75,6 +77,15 @@ export const createDefaultKeyResults = async (
 						min: 150,
 						max: 500
 					});
+				}
+				if (keyResult.type === KeyResultTypeEnum.CURRENCY) {
+					keyResult.unit = faker.random.arrayElement(
+						Object.values(CurrenciesEnum)
+					);
+				} else if (keyResult.type === KeyResultTypeEnum.NUMERICAL) {
+					keyResult.unit = faker.random.arrayElement(
+						Object.values(KeyResultNumberUnitsEnum)
+					);
 				}
 				keyResult.progress = 0;
 				keyResult.name = `Keyresult-${keyResult.type}-${keyResult.deadline}`;
