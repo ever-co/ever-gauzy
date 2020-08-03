@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { Subject } from 'rxjs';
-import { TasksService } from '../../../@core/services/tasks.service';
 import { Task } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
+import { TasksService } from 'apps/gauzy/src/app/@core/services/tasks.service';
 
 @Component({
 	selector: 'ga-task-selector',
@@ -27,6 +27,8 @@ export class TaskSelectorComponent
 	val: any;
 
 	@Input() disabled = false;
+
+	@Input() allowAddNew = true;
 
 	@Input()
 	public get projectId() {
@@ -81,6 +83,8 @@ export class TaskSelectorComponent
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
+
+	createNew() {}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

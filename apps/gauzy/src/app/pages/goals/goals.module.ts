@@ -42,7 +42,7 @@ import { ChartModule } from 'angular2-chartjs';
 import { GoalSettingsModule } from '../goal-settings/goal-settings.module';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
-import { TaskSelectModule } from '../../@shared/task-select/task-select.module';
+import { TaskSelectModule } from '../../@shared/tasks/task-select/task-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');

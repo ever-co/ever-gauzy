@@ -1,9 +1,15 @@
 <div class="header">
-	<div class="add_time">
-		<button nbButton status="primary" (click)="openAdd()">
-			<nb-icon icon="plus-outline"></nb-icon>
-			{{ 'TIMESHEET.ADD_TIME' | translate }}
-		</button>
+	<div class="text-right mb-3">
+		<ng-template
+			[ngxPermissionsOnly]="[
+				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+			]"
+		>
+			<button nbButton status="primary" (click)="openAdd()">
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'TIMESHEET.ADD_TIME' | translate }}
+			</button>
+		</ng-template>
 	</div>
 </div>
 

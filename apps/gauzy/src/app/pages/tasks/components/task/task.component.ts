@@ -21,7 +21,6 @@ import {
 	ComponentLayoutStyleEnum,
 	TaskListTypeEnum
 } from '@gauzy/models';
-import { TaskDialogComponent } from '../task-dialog/task-dialog.component';
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -40,6 +39,7 @@ import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/se
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { StatusViewComponent } from 'apps/gauzy/src/app/@shared/table-components/status-view/status-view.component';
+import { TaskDialogComponent } from 'apps/gauzy/src/app/@shared/tasks/task-dialog/task-dialog.component';
 
 @Component({
 	selector: 'ngx-task',
