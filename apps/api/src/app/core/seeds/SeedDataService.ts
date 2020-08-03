@@ -245,7 +245,7 @@ import { createRandomCandidateInterview } from '../../candidate-interview/candid
 import { createRandomAwards } from '../../organization-awards/organization-awards.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 import { createRandomCandidateCriterionRating } from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
-import { createRandomGoalKpi } from '../../goal-kpi/goal-kpi.seed';
+import { createDefaultGoalKpi } from '../../goal-kpi/goal-kpi.seed';
 import { createRandomEmployeeSetting } from '../../employee-setting/employee-setting.seed';
 import { createRandomEmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.seed';
 import { createRandomCandidateInterviewers } from '../../candidate-interviewers/candidate-interviewers.seed';
@@ -752,6 +752,15 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			createDefaultGoalKpi(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				this.defaultEmployees
+			)
+		);
+
+		await this.tryExecute(
 			createDefaultKeyResultUpdates(
 				this.connection,
 				this.tenant,
@@ -1193,15 +1202,6 @@ export class SeedDataService {
 			createRandomEmployeeSetting(
 				this.connection,
 				tenants,
-				tenantEmployeeMap
-			)
-		);
-
-		await this.tryExecute(
-			createRandomGoalKpi(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap,
 				tenantEmployeeMap
 			)
 		);

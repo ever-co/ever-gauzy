@@ -8,6 +8,29 @@ import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { GoalLevelEnum } from '@gauzy/models';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 
+const defaultGoalData = [
+	{
+		name: 'Improve product performance',
+		level: 'Organization'
+	},
+	{
+		name: 'Successfully launch version 2 of our main product',
+		level: 'Organization'
+	},
+	{
+		name: 'Redesign and launch our new landing page',
+		level: 'Team'
+	},
+	{
+		name: 'Increase quality of releases and make sure they are timely',
+		level: 'Team'
+	},
+	{
+		name: 'Identify problems with current user interface',
+		level: 'Employee'
+	}
+];
+
 export const createDefaultGoals = async (
 	connection: Connection,
 	tenant: Tenant,
@@ -15,7 +38,6 @@ export const createDefaultGoals = async (
 	employees: Employee[]
 ): Promise<Goal[]> => {
 	const defaultGoals = [];
-	const nameType = ['Organization', 'Employee', 'Team'];
 	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
 		GoalTimeFrame
 	);
@@ -23,14 +45,12 @@ export const createDefaultGoals = async (
 		OrganizationTeam
 	);
 
-	organizations.forEach((organization) => {
-		for (let i = 0; i < faker.random.number({ min: 4, max: 7 }); i++) {
+	organizations.forEach((organization, index) => {
+		defaultGoalData.forEach((goalData) => {
 			const goal = new Goal();
-			goal.name = `${faker.random.arrayElement(nameType)}- Objective -${
-				faker.random.arrayElement(goalTimeFrames).name
-			}`;
+			goal.name = goalData.name;
 			goal.progress = 0;
-			goal.level = goal.name.split('-', 1)[0];
+			goal.level = goalData.level;
 			if (goal.level === GoalLevelEnum.EMPLOYEE) {
 				goal.ownerEmployee = faker.random.arrayElement(employees);
 			} else if (goal.level === GoalLevelEnum.TEAM) {
@@ -41,13 +61,11 @@ export const createDefaultGoals = async (
 			goal.lead = faker.random.arrayElement(employees);
 			goal.tenant = tenant;
 			goal.description = ' ';
-			goal.deadline = `${goal.name.split('-', 4)[2]}-${
-				goal.name.split('-', 4)[3]
-			}`;
+			goal.deadline = faker.random.arrayElement(goalTimeFrames).name;
 			goal.organization = organization;
 			goal.organizationId = organization.id;
 			defaultGoals.push(goal);
-		}
+		});
 	});
 
 	await insertDefaultGoals(connection, defaultGoals);
@@ -61,24 +79,29 @@ export const updateDefaultGoalProgress = async (
 	const goals: Goal[] = await connection.manager.find(Goal, {
 		relations: ['keyResults']
 	});
-	if (goals && goals.length>0) {
-    goals.forEach(async (goal) => {
-      const progressTotal = goal.keyResults.reduce(
-        (a, b) => a + b.progress * +b.weight,
-        0
-      );
-      const weightTotal = goal.keyResults.reduce((a, b) => a + +b.weight, 0);
-      const goalProgress = Math.round(progressTotal / weightTotal);
-      await connection.manager.update(
-        Goal,
-        { id: goal.id },
-        {
-          progress: goalProgress
-        }
-      );
-    });
-    return goals;
-  }
+	if (goals && goals.length > 0) {
+		goals.forEach(async (goal) => {
+			if (goal.keyResults && goal.keyResults.length > 0) {
+				const progressTotal = goal.keyResults.reduce(
+					(a, b) => a + b.progress * +b.weight,
+					0
+				);
+				const weightTotal = goal.keyResults.reduce(
+					(a, b) => a + +b.weight,
+					0
+				);
+				const goalProgress = Math.round(progressTotal / weightTotal);
+				await connection.manager.update(
+					Goal,
+					{ id: goal.id },
+					{
+						progress: goalProgress
+					}
+				);
+			}
+		});
+		return goals;
+	}
 };
 
 const insertDefaultGoals = async (

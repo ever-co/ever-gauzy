@@ -1,68 +1,60 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import {
-	Employee,
-	KpiMetricEnum,
-	Organization,
-	KpiOperatorEnum,
-	CurrenciesEnum,
-	KeyResultNumberUnitsEnum
-} from '@gauzy/models';
+import { Employee, Organization } from '@gauzy/models';
 import { GoalKPI } from './goal-kpi.entity';
 import * as faker from 'faker';
 
-export const createRandomGoalKpi = async (
+const goalKPIData = [
+	{
+		id: 'a77d9bd8-0baa-4548-b153-e9f2bae51760',
+		name: 'Average response time',
+		description: '',
+		type: 'Numerical',
+		unit: 'ms',
+		operator: '<=',
+		currentValue: 1000,
+		targetValue: 500
+	},
+	{
+		id: '85f89379-f181-4f72-b722-d924df63c7ea',
+		name: '# of Priority bugs in production',
+		description: '',
+		type: 'Numerical',
+		unit: 'bugs',
+		operator: '<=',
+		currentValue: 15,
+		targetValue: 2
+	}
+];
+
+export const createDefaultGoalKpi = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantEmployeeMap: Map<Tenant, Employee[]>
+	tenant: Tenant,
+	organizations: Organization[],
+	employees: Employee[]
 ): Promise<GoalKPI[]> => {
-	if (!tenantOrganizationsMap) {
-		console.warn(
-			'Warning: tenantCandidatesMap not found, Goal Kpi not be created'
-		);
-		return;
-	}
+	const GoalKpis: GoalKPI[] = [];
 
-	let GoalKpis: GoalKPI[] = [];
-
-	for (const tenant of tenants) {
-		const tenantEOrganization = tenantOrganizationsMap.get(tenant);
-
-		for (const tenantOrg of tenantEOrganization) {
-			let tenantEmployee = tenantEmployeeMap.get(tenant);
-
-			for (const employee of tenantEmployee) {
-				let goalkpi = new GoalKPI();
-				goalkpi.name = faker.name.findName();
-				goalkpi.description = faker.name.jobDescriptor();
-				goalkpi.type = faker.random.arrayElement(
-					Object.values(KpiMetricEnum)
-				);
-				goalkpi.operator = faker.random.arrayElement(
-					Object.values(KpiOperatorEnum)
-				);
-				if (goalkpi.type === KpiMetricEnum.CURRENCY) {
-					goalkpi.unit = faker.random.arrayElement(
-						Object.values(CurrenciesEnum)
-					);
-				} else if (goalkpi.type === KpiMetricEnum.NUMERICAL) {
-					goalkpi.unit = faker.random.arrayElement(
-						Object.values(KeyResultNumberUnitsEnum)
-					);
-				}
-				goalkpi.lead = employee;
-				goalkpi.currentValue = Math.floor(Math.random() * 9999) + 1;
-				goalkpi.targetValue =
-					Math.floor(
-						Math.random() * (99999 - goalkpi.currentValue + 1)
-					) + goalkpi.currentValue;
-				goalkpi.organization = tenantOrg;
-				goalkpi.tenant = tenant;
-				GoalKpis.push(goalkpi);
+	organizations.forEach((organization, index) => {
+		goalKPIData.forEach((goalKPI) => {
+			const goalkpi = new GoalKPI();
+			if (index === 0) {
+				goalkpi.id = goalKPI.id;
 			}
-		}
-	}
+			goalkpi.name = goalKPI.name;
+			goalkpi.description = ' ';
+			goalkpi.type = goalKPI.type;
+			goalkpi.operator = goalKPI.operator;
+			goalkpi.unit = goalKPI.unit;
+			goalkpi.lead = faker.random.arrayElement(employees);
+			goalkpi.currentValue = goalKPI.currentValue;
+			goalkpi.targetValue = goalKPI.targetValue;
+			goalkpi.organization = organization;
+			goalkpi.tenant = tenant;
+			GoalKpis.push(goalkpi);
+		});
+	});
+
 	await insertRandomGoalKpi(connection, GoalKpis);
 	return GoalKpis;
 };
