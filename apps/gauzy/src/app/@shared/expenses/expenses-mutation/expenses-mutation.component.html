@@ -67,12 +67,28 @@
 						[selectedDate]="valueDate.value"
 					></ga-employee-selector>
 				</div>
+				<div class="col-sm-6 categories">
+					<div class="form-group">
+						<ng-select
+							[items]="expenseCategories"
+							[searchable]="true"
+							[addTag]="addNewCategory"
+							bindLabel="name"
+							formControlName="category"
+							placeholder="{{
+								'POP_UPS.ALL_CATEGORIES' | translate
+							}}"
+						>
+						</ng-select>
+					</div>
+				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-6">
 					<input
 						formControlName="valueDate"
 						nbInput
+						class="datepicker"
 						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 						[nbDatepicker]="formpicker"
 						[ngClass]="{
@@ -137,29 +153,17 @@
 						>
 					</nb-select>
 				</div>
-				<div class="col-sm-6">
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
 					<div class="form-group">
-						<ng-select
-							[items]="expenseCategories"
-							[searchable]="true"
-							[addTag]="addNewCategory"
-							bindLabel="name"
-							formControlName="category"
-							placeholder="{{
-								'POP_UPS.ALL_CATEGORIES' | translate
-							}}"
-						>
-						</ng-select>
-					</div>
-				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<input
+						<textarea
 							nbInput
+							class="textarea"
 							type="text"
 							formControlName="purpose"
 							placeholder="{{ 'POP_UPS.PURPOSE' | translate }}"
-						/>
+						></textarea>
 					</div>
 				</div>
 			</div>
@@ -257,38 +261,6 @@
 					</div>
 				</div>
 			</div>
-
-			<div class="mt-3 text-left">
-				<button
-					nbButton
-					size="tiny"
-					status="info"
-					(click)="showNotesInput()"
-					*ngIf="!showNotes"
-					class="mr-3 mb-3"
-				>
-					{{ 'BUTTONS.ADD_NOTE' | translate }}
-				</button>
-				<button
-					nbButton
-					size="tiny"
-					status="info"
-					(click)="includeTaxes()"
-					*ngIf="!showTaxesInput"
-					class="mr-3 mb-3"
-				>
-					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
-				</button>
-				<button
-					nbButton
-					size="tiny"
-					status="info"
-					(click)="attachReceipt()"
-					class="mr-3 mb-3"
-				>
-					{{ 'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT' | translate }}
-				</button>
-			</div>
 			<div class="row" *ngIf="showNotes">
 				<div class="col">
 					<div class="form-group">
@@ -368,6 +340,37 @@
 						/>
 					</div>
 				</div>
+			</div>
+			<div class="mt-3 text-left">
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="showNotesInput()"
+					*ngIf="!showNotes"
+					class="mr-3 mb-3"
+				>
+					{{ 'BUTTONS.ADD_NOTE' | translate }}
+				</button>
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="includeTaxes()"
+					*ngIf="!showTaxesInput"
+					class="mr-3 mb-3"
+				>
+					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
+				</button>
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="attachReceipt()"
+					class="mr-3 mb-3"
+				>
+					{{ 'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT' | translate }}
+				</button>
 			</div>
 		</form>
 	</nb-card-body>

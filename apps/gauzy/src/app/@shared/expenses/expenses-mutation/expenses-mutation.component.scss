@@ -15,7 +15,6 @@
       margin-left: 20px;
       padding-left: 20px;
       border-left: 1px solid #edf1f7;
-
       width: 220px;
     }
     .help-text {
@@ -28,6 +27,29 @@
       cursor: pointer;
     }
   }
+}
+
+.categories {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  .form-group {
+    margin-bottom: 0;
+    width: 100%;
+  }
+}
+
+.datepicker {
+  width: 100%;
+}
+
+.textarea {
+  min-height: 5.5rem;
+  resize: none;
+  width: 28.5rem !important;
+  max-width: 28.5rem !important;
 }
 
 nb-radio-group {
