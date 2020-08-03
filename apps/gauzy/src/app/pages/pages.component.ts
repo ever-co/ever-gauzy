@@ -400,7 +400,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
 					}
 				},
-
 				{
 					title: 'Departments',
 					icon: 'briefcase-outline',

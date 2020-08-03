@@ -2,11 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	RequestApproval,
-	ComponentLayoutStyleEnum,
-	RequestApprovalCreateInput
-} from '@gauzy/models';
+import { RequestApproval, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -261,32 +257,17 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			dialog = this.dialogService.open(RequestApprovalMutationComponent);
 		}
 		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
-
 		this.selectedRequestApproval = null;
 		this.disableButton = true;
 		if (requestApproval) {
-			const params: RequestApprovalCreateInput = {
-				name: requestApproval.name || '',
-				approvalPolicyId: requestApproval.approvalPolicyId || '',
-				employeeApprovals: requestApproval.employees || [],
-				teams: requestApproval.teams || [],
-				min_count: requestApproval.min_count || '',
-				id: undefined
-			};
-			if (requestApproval.id) {
-				params.id = requestApproval.id;
-			}
-			const isSuccess = await this.approvalRequestService.save(params);
-			if (isSuccess) {
-				this.toastrService.primary(
-					this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_SAVED'
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-			}
-			this.loadSettings();
+			this.toastrService.primary(
+				this.getTranslation(
+					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_SAVED'
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 		}
+		this.loadSettings();
 	}
 
 	async delete(selectedItem?: RequestApproval) {

@@ -143,18 +143,19 @@ h5.org-title {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
+  color: #222b45;
 }
 
 h5.org-title.org-key {
   float: left;
   display: block;
-  line-height: 2rem;
+  line-height: 1.3rem;
+  padding-right: 0.2rem;
 }
 
 .org-skills p.org-title.org-key {
   color: #222b45;
-  line-height: 2rem;
-  text-transform: uppercase;
+  line-height: 1.3rem;
   font-size: 16px;
   font-weight: 600;
   clear: both;
@@ -162,14 +163,14 @@ h5.org-title.org-key {
 
 ul.org-value {
   clear: both;
-  line-height: 2rem;
+  line-height: 1.3rem;
   margin: 0;
   padding: 0;
 }
 
 span.org-value {
   float: left;
-  line-height: 2rem;
+  line-height: 1.3rem;
   padding-left: 10px;
 }
 
@@ -389,4 +390,18 @@ p,
 
 .clearfix:after {
   clear: both;
+}
+
+.label-text {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #222b45;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
 }

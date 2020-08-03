@@ -1,19 +1,14 @@
 <nb-card>
-	<nb-card-header>{{ 'FORM.LABELS.ADD_TEAM' | translate }}</nb-card-header>
+	<nb-card-header>
+		<span *ngIf="!team">
+			{{ 'FORM.LABELS.ADD_TEAM' | translate }}
+		</span>
+		<span *ngIf="team">
+			{{ 'FORM.LABELS.EDIT_TEAM' | translate }}
+		</span>
+	</nb-card-header>
+
 	<nb-card-body>
-		<div class="form-group">
-			<button
-				class="mr-2"
-				(click)="addOrEditTeams()"
-				nbButton
-				status="success"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-			<button (click)="cancel()" nbButton status="danger">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-		</div>
 		<form>
 			<div class="row">
 				<div class="form-group col-6">
@@ -101,5 +96,25 @@
 				</div>
 			</div>
 		</form>
+		<div
+			class="form-group"
+			style="
+				display: flex;
+				flex-direction: row;
+				justify-content: flex-end;
+			"
+		>
+			<button
+				class="mr-2"
+				(click)="addOrEditTeams()"
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button (click)="cancel()" nbButton status="danger">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+		</div>
 	</nb-card-body>
 </nb-card>
