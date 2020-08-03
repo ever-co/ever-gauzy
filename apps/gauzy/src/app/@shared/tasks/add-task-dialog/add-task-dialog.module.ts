@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { TaskDialogComponent } from './task-dialog.component';
+import { AddTaskDialogComponent } from './add-task-dialog.component';
 import {
 	NbToastrModule,
 	NbDialogModule,
@@ -19,9 +19,9 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 
 @NgModule({
-	declarations: [TaskDialogComponent],
-	exports: [TaskDialogComponent],
-	entryComponents: [TaskDialogComponent],
+	declarations: [AddTaskDialogComponent],
+	exports: [AddTaskDialogComponent],
+	entryComponents: [AddTaskDialogComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -42,4 +42,4 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 		NbButtonModule
 	]
 })
-export class TaskDialogModule {}
+export class AddTaskDialogModule {}

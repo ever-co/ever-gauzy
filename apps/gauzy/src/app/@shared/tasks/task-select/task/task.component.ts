@@ -3,6 +3,9 @@ import { Subject } from 'rxjs';
 import { Task } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from 'apps/gauzy/src/app/@core/services/tasks.service';
+import { NbDialogService } from '@nebular/theme';
+import { AddTaskDialogComponent } from '../../add-task-dialog/add-task-dialog.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-task-selector',
@@ -19,7 +22,6 @@ export class TaskSelectorComponent
 	implements OnInit, OnDestroy, ControlValueAccessor {
 	tasks: Task[];
 
-	private _ngDestroy$ = new Subject<void>();
 	private _projectId;
 
 	onChange: any = () => {};
@@ -27,7 +29,6 @@ export class TaskSelectorComponent
 	val: any;
 
 	@Input() disabled = false;
-
 	@Input() allowAddNew = true;
 
 	@Input()
@@ -50,7 +51,10 @@ export class TaskSelectorComponent
 		return this.val;
 	}
 
-	constructor(private tasksService: TasksService) {}
+	constructor(
+		private tasksService: TasksService,
+		private dialogService: NbDialogService
+	) {}
 
 	ngOnInit() {}
 
@@ -84,10 +88,25 @@ export class TaskSelectorComponent
 		this.disabled = isDisabled;
 	}
 
-	createNew() {}
+	createNew = (name: string) => {
+		this.dialogService
+			.open(AddTaskDialogComponent, {
+				context: {
+					createTask: true,
+					task: {
+						title: name,
+						projectId: this.projectId
+					}
+				}
+			})
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((task) => {
+				if (task) {
+					this.tasks = this.tasks.concat(task);
+					this.taskId = task.id;
+				}
+			});
+	};
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

@@ -42,7 +42,7 @@ import { TasksSprintViewComponent } from './components/task/tasks-layouts/tasks-
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprint-view/task/task.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TaskDialogModule } from '../../@shared/tasks/task-dialog/task-dialog.module';
+import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -84,7 +84,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		UserFormsModule,
 		CardGridModule,
-		TaskDialogModule,
+		AddTaskDialogModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

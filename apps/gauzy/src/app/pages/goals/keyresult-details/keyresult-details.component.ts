@@ -25,7 +25,7 @@ import { TasksService } from '../../../@core/services/tasks.service';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
-import { TaskDialogComponent } from '../../../@shared/tasks/task-dialog/task-dialog.component';
+import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -147,7 +147,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 
 	async keyResultUpdate() {
 		if (this.keyResult.type === KeyResultTypeEnum.TASK) {
-			const taskDialog = this.dialogService.open(TaskDialogComponent, {
+			const taskDialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.task
 				},

@@ -39,7 +39,7 @@ import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/se
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { StatusViewComponent } from 'apps/gauzy/src/app/@shared/table-components/status-view/status-view.component';
-import { TaskDialogComponent } from 'apps/gauzy/src/app/@shared/tasks/task-dialog/task-dialog.component';
+import { AddTaskDialogComponent } from 'apps/gauzy/src/app/@shared/tasks/add-task-dialog/add-task-dialog.component';
 
 @Component({
 	selector: 'ngx-task',
@@ -309,7 +309,7 @@ export class TaskComponent extends TranslationBaseComponent
 	async createTaskDialog() {
 		let dialog;
 		if (this.isTasksPage()) {
-			dialog = this.dialogService.open(TaskDialogComponent, {
+			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {}
 			});
 		} else if (this.isMyTasksPage()) {
@@ -349,7 +349,7 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 		let dialog;
 		if (this.isTasksPage()) {
-			dialog = this.dialogService.open(TaskDialogComponent, {
+			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.selectedTask
 				}
@@ -396,7 +396,7 @@ export class TaskComponent extends TranslationBaseComponent
 		});
 		let dialog;
 		if (this.isTasksPage()) {
-			dialog = this.dialogService.open(TaskDialogComponent, {
+			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.selectedTask
 				}
