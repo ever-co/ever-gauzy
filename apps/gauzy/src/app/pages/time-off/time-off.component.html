@@ -6,23 +6,30 @@
 		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row mb-3">
-			<button
-				nbButton
-				status="primary"
-				(click)="requestDaysOff()"
-				class="ml-2"
-			>
-				<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
-				{{ 'TIME_OFF_PAGE.REQUEST_DAYS_OFF' | translate }}
-			</button>
+		<div class="row">
+			<div class="col-4">
+				<button
+					nbButton
+					status="primary"
+					(click)="requestDaysOff()"
+					class="ml-2"
+				>
+					<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
+					{{ 'TIME_OFF_PAGE.REQUEST' | translate }}
+				</button>
 
-			<button nbButton status="info" (click)="addHolidays()" class="ml-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
-			</button>
+				<button
+					nbButton
+					status="info"
+					(click)="addHolidays()"
+					class="ml-2"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
+				</button>
+			</div>
 
-			<div class="row">
+			<div class="col-8">
 				<nb-radio-group
 					class="align-center"
 					[(ngModel)]="selectedStatus"
@@ -57,12 +64,14 @@
 					{{ 'TIME_OFF_PAGE.TIME_OFF_SETTINGS' | translate }}
 				</button>
 
-				<div class="actions-container" *ngIf="isRecordSelected">
-					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-						<ng-container
-							*ngTemplateOutlet="actionButtons"
-						></ng-container>
-					</ng-container>
+				<div class="col">
+					<div class="actions-container" *ngIf="isRecordSelected">
+						<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+							<ng-container
+								*ngTemplateOutlet="actionButtons"
+							></ng-container>
+						</ng-container>
+					</div>
 				</div>
 			</div>
 		</div>
