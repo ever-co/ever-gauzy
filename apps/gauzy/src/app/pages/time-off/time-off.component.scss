@@ -4,6 +4,11 @@ nb-radio-group {
   margin: 0em 5em 0 5em;
 }
 
+.row {
+  display: flex;
+  justify-content: space-between;
+}
+
 .edit-icon {
   margin-left: 30px;
   position: relative;
@@ -95,12 +100,14 @@ nb-radio-group {
   padding: 5px;
   background-color: #ff3d71;
   margin-bottom: 5px;
+  border-radius: 0.25rem;
 }
 
 .badge-success {
   text-align: center;
   padding: 5px;
   background-color: #00d68f;
+  border-radius: 0.25rem;
 }
 
 .badge-warning {
@@ -108,4 +115,5 @@ nb-radio-group {
   padding: 5px;
   background-color: #fa0;
   color: #fff;
+  border-radius: 0.25rem;
 }

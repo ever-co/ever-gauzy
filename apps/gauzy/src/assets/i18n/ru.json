@@ -1292,7 +1292,7 @@
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Время выключено",
-		"REQUEST_DAYS_OFF": "Запросить выходные",
+		"REQUEST": "Запросить",
 		"ADD_HOLIDAYS": "Добавить выходные",
 		"DISPLAY_HOLIDAYS": "Показать Праздники",
 		"HOLIDAY_NAME": "Название выходного дня",

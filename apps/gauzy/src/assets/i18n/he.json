@@ -1292,7 +1292,7 @@
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
-		"REQUEST_DAYS_OFF": "Request Days Off",
+		"REQUEST": "Request",
 		"ADD_HOLIDAYS": "Add Holidays",
 		"DISPLAY_HOLIDAYS": "Display Holidays",
 		"HOLIDAY_NAME": "Holiday name",
