@@ -387,7 +387,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Positions',
 					icon: 'award-outline',
-					link: `/pages/organization/positions`,
+					link: `/pages/accounting/positions`,
 					data: {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
@@ -405,7 +405,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Teams',
 					icon: 'people-outline',
-					link: `/pages/organization/teams`,
+					link: `/pages/accounting/teams`,
 					data: {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
