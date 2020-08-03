@@ -6,11 +6,6 @@ import { WakatimeModule } from './wakatime/wakatime.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { app } from 'electron';
 import { Wakatime } from './wakatime/wakatime.entity';
-import { Projects } from './wakatime/projects.entity';
-import { Languages } from './wakatime/language.entity';
-import { Machine } from './wakatime/machine.entity';
-import { Branches } from './wakatime/branches.entity';
-import { Os } from './wakatime/os.entity';
 
 console.log(__dirname);
 @Module({
@@ -23,7 +18,7 @@ console.log(__dirname);
 			keepConnectionAlive: true,
 			logging: true,
 			synchronize: true,
-			entities: [Wakatime, Projects, Languages, Machine, Branches, Os]
+			entities: [Wakatime]
 		}),
 		RouterModule.forRoutes([
 			{

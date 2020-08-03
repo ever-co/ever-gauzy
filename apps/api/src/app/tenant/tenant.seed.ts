@@ -31,7 +31,7 @@ export const createRandomTenants = async (
 
 	await insertTenants(connection, randomTenants);
 
-	randomTenants.push(defaultTenantInserted);
+	// randomTenants.push(defaultTenantInserted);
 
 	return randomTenants;
 };

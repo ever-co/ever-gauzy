@@ -20,12 +20,9 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
-			.get(
-				`${values.apiHost}/api/tasks/team?data={"employeeId": "${values.employeeId}"}`,
-				{
-					headers: headers
-				}
-			)
+			.get(`${values.apiHost}/api/tasks/me`, {
+				headers: headers
+			})
 			.pipe()
 			.toPromise();
 	}

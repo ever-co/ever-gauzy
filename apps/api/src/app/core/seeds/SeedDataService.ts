@@ -254,13 +254,17 @@ import { createRandomPipeline } from '../../pipeline/pipeline.seed';
 import { createRandomOrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.seed';
 import { createRandomHelpCenterAuthor } from '../../help-center-author/help-center-author.seed';
 import { createRandomHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
-import { createRandomOrganizationLanguage } from '../../organization-languages/organization-languages.seed';
+import {
+	createDefaultOrganizationLanguage,
+	createRandomOrganizationLanguage
+} from '../../organization-languages/organization-languages.seed';
 import { createRandomOrganizationSprint } from '../../organization-sprint/organization-sprint.seed';
 import { createRandomOrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.seed';
 import { createRandomAppointmentEmployees } from '../../appointment-employees/appointment-employees.seed';
 import { createRandomEmployeeAppointment } from '../../employee-appointment/employee-appointment.seed';
 import { createRandomDeal } from '../../deal/deal.seed';
 import { createRandomIntegrationSetting } from '../../integration-setting/integration-setting.seed';
+import { createRandomIntegrationMap } from '../../integration-map/integration-map.seed';
 import { createRandomIntegrationTenant } from '../../integration-tenant/integration-tenant.seed';
 import { IntegrationTenant } from '../../integration-tenant/integration-tenant.entity';
 import { Pipeline } from '../../pipeline/pipeline.entity';
@@ -282,15 +286,30 @@ import { createRandomIntegrationEntitySetting } from '../../integration-entity-s
 import { createRandomRequestApprovalTeam } from '../../request-approval-team/request-approval-team.seed';
 import { createRandomRequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.seed';
 import { createRandomPayment } from '../../payment/payment.seed';
+import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-setting.entity';
+import { EstimateEmail } from '../../estimate-email/estimate-email.entity';
+import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
+import { IntegrationMap } from '../../integration-map/integration-map.entity';
+import {
+	createDefaultEventTypes,
+	createRandomEventType
+} from '../../event-types/event-type.seed';
 
 const allEntities = [
+	AvailabilitySlots,
 	TimeOffPolicy,
+	TimeOffRequest,
 	Proposal,
 	Invite,
 	EmployeeRecurringExpense,
 	OrganizationRecurringExpense,
 	ExpenseCategory,
+	GoalGeneralSetting,
+	GoalKPI,
+	GoalTimeFrame,
+	Goal,
 	EquipmentSharing,
+	EstimateEmail,
 	User,
 	Employee,
 	Candidate,
@@ -299,11 +318,14 @@ const allEntities = [
 	Income,
 	Invoice,
 	InvoiceItem,
+	KeyResult,
+	KeyResultUpdate,
 	Expense,
 	EmployeeSetting,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
 	OrganizationContact,
+	OrganizationDocuments,
 	OrganizationVendor,
 	OrganizationDepartment,
 	OrganizationPositions,
@@ -318,6 +340,7 @@ const allEntities = [
 	Timesheet,
 	UserOrganization,
 	Country,
+	Deal,
 	RolePermissions,
 	Tenant,
 	Email,
@@ -352,6 +375,8 @@ const allEntities = [
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
 	Payment,
+	Pipeline,
+	PipelineStage,
 	EventType,
 	CandidateInterviewers,
 	CandidateInterview,
@@ -361,6 +386,7 @@ const allEntities = [
 	TimeSlotMinute,
 	TimeLog,
 	HelpCenterArticle,
+	HelpCenterAuthor,
 	IntegrationType,
 	Integration,
 	IntegrationTenant,
@@ -377,7 +403,13 @@ const allEntities = [
 	IntegrationSetting,
 	Deal,
 	OrganizationDocuments,
-	TimeOffRequest
+	TimeOffRequest,
+	IntegrationEntitySetting,
+	IntegrationEntitySettingTiedEntity,
+	IntegrationMap,
+	IntegrationSetting,
+	IntegrationTenant,
+	Integration
 ];
 
 const randomSeedConfig = {
@@ -398,7 +430,8 @@ const randomSeedConfig = {
 	proposalsSharingPerOrganizations: 30, // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
 	contacts: 50, // The number of random contacts to be seeded.
 	noOfHelpCenterArticle: 10, // The number of random Help Center Articles.
-	availabilitySlotsPerOrganization: 50 // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
+	availabilitySlotsPerOrganization: 50, // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
+	noOfTimeLogsPerTimeSheet: 5 // No of time logs entry per time sheets
 };
 
 @Injectable()
@@ -537,6 +570,13 @@ export class SeedDataService {
 			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
 		});
 
+		//User level data that needs connection, tenant, organization, role, users
+		this.defaultEmployees = await createDefaultEmployees(this.connection, {
+			tenant: this.tenant,
+			org: this.organizations[0],
+			users: defaultEmployeeUsers
+		});
+
 		await this.tryExecute(
 			createDefaultGeneralGoalSetting(
 				this.connection,
@@ -552,12 +592,8 @@ export class SeedDataService {
 			})
 		);
 
-		//User level data that needs connection, tenant, organization, role, users
-		const defaultEmployees = await createDefaultEmployees(this.connection, {
-			tenant: this.tenant,
-			org: this.organizations[0],
-			users: defaultEmployeeUsers
-		});
+		await this.tryExecute(createSkills(this.connection));
+		await this.tryExecute(createLanguages(this.connection));
 	}
 
 	/**
@@ -744,19 +780,29 @@ export class SeedDataService {
 				this.connection,
 				this.defaultEmployees,
 				this.defaultProjects,
-				5
+				randomSeedConfig.noOfTimeLogsPerTimeSheet
 			)
 		);
+
 		await this.tryExecute(
 			createDefaultProposals(
 				this.connection,
 				this.defaultEmployees,
 				this.organizations,
-				10
+				randomSeedConfig.proposalsSharingPerOrganizations || 30
 			)
 		);
 		await this.tryExecute(
-			createDefaultInvoice(this.connection, this.organizations, 10)
+			createDefaultOrganizationLanguage(
+				this.connection,
+				this.organizations
+			)
+		);
+		await this.tryExecute(
+			createDefaultInvoice(this.connection, this.organizations, 50)
+		);
+		await this.tryExecute(
+			createDefaultEventTypes(this.connection, this.organizations)
 		);
 	}
 
@@ -868,14 +914,6 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			createRandomCandidateEducations(
-				this.connection,
-				tenants,
-				tenantCandidatesMap
-			)
-		);
-
-		await this.tryExecute(
 			createRandomCandidateExperience(
 				this.connection,
 				tenants,
@@ -922,13 +960,6 @@ export class SeedDataService {
 				tenantEmployeeMap,
 				organizationVendorsMap,
 				categoriesMap
-			)
-		);
-
-		await this.tryExecute(
-			createRandomContacts(
-				this.connection,
-				randomSeedConfig.contacts || 10
 			)
 		);
 
@@ -1000,8 +1031,6 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(createSkills(this.connection));
-		await this.tryExecute(createLanguages(this.connection));
 		await this.tryExecute(createTags(this.connection));
 
 		const tags = await this.tryExecute(
@@ -1099,25 +1128,16 @@ export class SeedDataService {
 				tenantEmployeeMap
 			)
 		);
-
+		await this.tryExecute(
+			createRandomPayment(
+				this.connection,
+				tenants,
+				tenantUsersMap,
+				tenantOrganizationsMap
+			)
+		);
 		await this.tryExecute(
 			createRandomCandidateEducations(
-				this.connection,
-				tenants,
-				tenantCandidatesMap
-			)
-		);
-
-		await this.tryExecute(
-			createRandomCandidateExperience(
-				this.connection,
-				tenants,
-				tenantCandidatesMap
-			)
-		);
-
-		await this.tryExecute(
-			createRandomCandidateSkills(
 				this.connection,
 				tenants,
 				tenantCandidatesMap
@@ -1153,14 +1173,6 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			createRandomCandidateEducations(
-				this.connection,
-				tenants,
-				tenantCandidatesMap
-			)
-		);
-
-		await this.tryExecute(
 			createRandomCandidateInterviewers(
 				this.connection,
 				tenants,
@@ -1191,22 +1203,6 @@ export class SeedDataService {
 				tenants,
 				tenantOrganizationsMap,
 				tenantEmployeeMap
-			)
-		);
-
-		await this.tryExecute(
-			createRandomPipeline(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute(
-			createRandomPipelineStage(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
 			)
 		);
 
@@ -1274,6 +1270,23 @@ export class SeedDataService {
 				tenantOrganizationsMap
 			)
 		);
+
+		await this.tryExecute(
+			createRandomPipeline(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomPipelineStage(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
 		await this.tryExecute(
 			createRandomDeal(
 				this.connection,
@@ -1289,13 +1302,16 @@ export class SeedDataService {
 		await this.tryExecute(
 			createRandomIntegrationSetting(this.connection, tenants)
 		);
-
 		await this.tryExecute(
-			createRandomPayment(
+			createRandomIntegrationMap(this.connection, tenants)
+		);
+		await this.tryExecute(
+			createRandomIntegrationEntitySetting(this.connection, tenants)
+		);
+		await this.tryExecute(
+			createRandomIntegrationEntitySettingTiedEntity(
 				this.connection,
-				tenants,
-				tenantUsersMap,
-				tenantOrganizationsMap
+				tenants
 			)
 		);
 
@@ -1317,20 +1333,19 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			createRandomIntegrationEntitySetting(this.connection, tenants)
-		);
-		await this.tryExecute(
-			createRandomIntegrationEntitySettingTiedEntity(
-				this.connection,
-				tenants
-			)
-		);
-
-		await this.tryExecute(
 			createRandomCandidateCriterionRating(
 				this.connection,
 				tenants,
 				tenantCandidatesMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomEventType(
+				this.connection,
+				tenants,
+				tenantEmployeeMap,
+				tenantOrganizationsMap
 			)
 		);
 	}

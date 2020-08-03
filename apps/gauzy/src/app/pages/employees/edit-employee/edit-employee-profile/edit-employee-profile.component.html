@@ -1,5 +1,6 @@
 <nb-card>
-	<nb-card-header>
+	<nb-card-header style="display: flex;">
+		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
 			{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HEADER' | translate }}
 			<span
@@ -33,8 +34,6 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<ngx-back-navigation class="d-block"></ngx-back-navigation>
-
 		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
 	</nb-card-body>
 </nb-card>

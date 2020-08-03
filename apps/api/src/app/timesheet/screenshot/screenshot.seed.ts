@@ -53,6 +53,7 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 		);
 	});
 	screenshot.fullUrl = file;
+	screenshot.file = sourceFile;
 	screenshot.timeSlot = timeSlot;
 	screenshot.thumbUrl = file;
 	screenshot.recordedAt = faker.date.between(
