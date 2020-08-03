@@ -293,6 +293,22 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Employee Levels',
+					icon: 'bar-chart-outline',
+					link: `/pages/employees/employee-level`,
+					data: {
+						translationKey: 'MENU.EMPLOYEE_LEVEL'
+					}
+				},
+				{
+					title: 'Positions',
+					icon: 'award-outline',
+					link: `/pages/employees/positions`,
+					data: {
+						translationKey: 'MENU.POSITIONS'
+					}
+				},
+				{
 					title: 'Time Off',
 					icon: 'eye-off-2-outline',
 					link: '/pages/employees/time-off',
@@ -384,15 +400,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
 					}
 				},
-				{
-					title: 'Positions',
-					icon: 'award-outline',
-					link: `/pages/organization/positions`,
-					data: {
-						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
-					}
-				},
+
 				{
 					title: 'Departments',
 					icon: 'briefcase-outline',
@@ -418,6 +426,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS'
+					}
+				},
+				{
+					title: 'Employment Types',
+					icon: 'layers-outline',
+					link: `/pages/organization/employment-types`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE'
 					}
 				},
 				{

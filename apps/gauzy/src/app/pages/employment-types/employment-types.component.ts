@@ -9,16 +9,16 @@ import {
 	Tag
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
-import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { OrganizationEmploymentTypesService } from '../../../../../@core/services/organization-employment-types.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { Store } from '../../@core/services/store.service';
+import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 
 @Component({
-	selector: 'ga-edit-org-employment-types',
-	templateUrl: './edit-organization-employment-types.component.html'
+	selector: 'ga-employment-types',
+	templateUrl: './employment-types.component.html'
 })
-export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
+export class EmploymentTypesComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
@@ -33,7 +33,7 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 	constructor(
 		private fb: FormBuilder,
 		private readonly toastrService: NbToastrService,
-		private organizationEditStore: OrganizationEditStore,
+		private store: Store,
 		private organizationEmploymentTypesService: OrganizationEmploymentTypesService,
 		readonly translateService: TranslateService
 	) {
@@ -49,7 +49,7 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 		this.form = this.fb.group({
 			name: ['', Validators.required]
 		});
-		this.organizationEditStore.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => {
 				this.organization = data;

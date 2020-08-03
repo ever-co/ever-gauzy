@@ -71,20 +71,6 @@ const routes: Routes = [
 							import('./payments/payments.module').then(
 								(m) => m.PaymentsModule
 							)
-					},
-					{
-						path: 'teams',
-						loadChildren: () =>
-							import('./teams/teams.module').then(
-								(m) => m.TeamsModule
-							)
-					},
-					{
-						path: 'positions',
-						loadChildren: () =>
-							import('./positions/positions.module').then(
-								(m) => m.PositionsModule
-							)
 					}
 				]
 			},
@@ -221,6 +207,20 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'positions',
+						loadChildren: () =>
+							import('./positions/positions.module').then(
+								(m) => m.PositionsModule
+							)
+					},
+					{
+						path: 'employee-level',
+						loadChildren: () =>
+							import(
+								'./employee-levels/employee-level.module'
+							).then((m) => m.EmployeeLevelModule)
+					},
+					{
 						path: 'candidates',
 						loadChildren: () =>
 							import('./candidates/candidates.module').then(
@@ -290,6 +290,13 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'employment-types',
+						loadChildren: () =>
+							import(
+								'./employment-types/employment-types.module'
+							).then((m) => m.EmploymentTypesModule)
+					},
+					{
 						path: 'vendors',
 						loadChildren: () =>
 							import('./vendors/vendors.module').then(
@@ -315,6 +322,13 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./contacts/contact.module').then(
 								(m) => m.ContactModule
+							)
+					},
+					{
+						path: 'teams',
+						loadChildren: () =>
+							import('./teams/teams.module').then(
+								(m) => m.TeamsModule
 							)
 					}
 				]
