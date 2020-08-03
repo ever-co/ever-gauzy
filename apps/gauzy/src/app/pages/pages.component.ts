@@ -412,7 +412,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Teams',
 					icon: 'people-outline',
-					link: `/pages/accounting/teams`,
+					link: `/pages/organization/teams`,
 					data: {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
