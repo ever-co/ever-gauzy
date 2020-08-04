@@ -39,6 +39,10 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 				.leftJoinAndSelect('equipment_sharing.teams', 'teams')
 				.innerJoinAndSelect('equipment_sharing.equipment', 'equipment')
 				.leftJoinAndSelect(
+					'equipment_sharing.equipmentSharingPolicy',
+					'equipmentSharingPolicy'
+				)
+				.leftJoinAndSelect(
 					'request_approval',
 					'request_approval',
 					'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'

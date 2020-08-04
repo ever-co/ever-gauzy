@@ -108,6 +108,7 @@ import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileStorage } from './core/file-storage';
 import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
+import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipment-sharing-policy.module';
 
 @Module({
 	imports: [
@@ -325,6 +326,10 @@ import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-se
 						module: EquipmentSharingModule
 					},
 					{
+						path: '/equipment-sharing-policy',
+						module: EquipmentSharingPolicyModule
+					},
+					{
 						path: '/organization-employment-type',
 						module: OrganizationEmploymentTypeModule
 					},
@@ -485,6 +490,7 @@ import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-se
 		TimeOffPolicyModule,
 		TimeOffRequestModule,
 		ApprovalPolicyModule,
+		EquipmentSharingPolicyModule,
 		RequestApprovalModule,
 		RolePermissionsModule,
 		HelpCenterArticleModule,
