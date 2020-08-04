@@ -280,7 +280,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.TEAM'),
 				icon: 'people-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/teams`,
+				link: `pages/organization/teams`,
 				hidden: !this.hasPermissionTeamEdit
 			},
 			{
@@ -292,13 +292,13 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTACT'),
 				icon: 'person-done-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/contacts`,
+				link: `pages/organization/contacts`,
 				hidden: !this.hasPermissionContactEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
 				icon: 'color-palette-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/projects`,
+				link: `pages/organization/projects`,
 				hidden: !this.hasPermissionProjEdit
 			},
 			// TODO: divider
