@@ -6,7 +6,7 @@ import { FindManyOptions, Repository, Not, In } from 'typeorm';
 import {
 	ApprovalPolicy as IApprovalPolicy,
 	ApprovalPolicyCreateInput as IApprovalPolicyCreateInput,
-	ApprovalPolicyConst
+	ApprovalPolicyTypesStringEnum
 } from '@gauzy/models';
 
 @Injectable()
@@ -38,8 +38,8 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			where: {
 				approvalType: Not(
 					In([
-						ApprovalPolicyConst.EQUIPMENT_SHARING,
-						ApprovalPolicyConst.TIME_OFF
+						ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
+						ApprovalPolicyTypesStringEnum.TIME_OFF
 					])
 				),
 				organizationId
@@ -50,8 +50,8 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			where: {
 				approvalType: Not(
 					In([
-						ApprovalPolicyConst.EQUIPMENT_SHARING,
-						ApprovalPolicyConst.TIME_OFF
+						ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
+						ApprovalPolicyTypesStringEnum.TIME_OFF
 					])
 				),
 				organizationId

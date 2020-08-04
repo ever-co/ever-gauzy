@@ -1393,7 +1393,7 @@
 		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на оборудование",
 		"REQUEST": "Запросить",
 		"EQUIPMENT_NAME": "Название оборудования",
-		"APPROVAL_POLICY": "Утверждающая политика",
+		"EQUIPMENT_SHARING_POLICY": "Утверждающая политика",
 		"SHARE_REQUIEST_DATE": "Поделиться датой запроса",
 		"SHARE_START_DATE": "Поделиться датой начала",
 		"SHARE_END_DATE": "Поделиться датой окончания",
@@ -1412,6 +1412,19 @@
 		"REFUSE": "Отклонить",
 		"APPROVAL_SUCCESS": "Запрос успешно одобрен",
 		"REFUSE_SUCCESS": "Запрос отменен"
+	},
+	"EQUIPMENT_SHARING_POLICY_PAGE": {
+		"HEADER": "Equipment Sharing Policy",
+		"ADD_EQUIPMENT_SHARING_POLICY": "Add Equipment Sharing Policy",
+		"EDIT_EQUIPMENT_SHARING_POLICY": "Edit Equipment Sharing Policy",
+		"DELETE_EQUIPMENT_SHARING_POLICY": "Delete Equipment Sharing Policy",
+		"REQUEST": "Request",
+		"EQUIPMENT_SHARING_POLICY_NAME": "Equipment Sharing Policy name",
+		"EQUIPMENT_SHARING_POLICY_ORG": "Equipment Sharing Policy organization",
+		"EQUIPMENT_SHARING_POLICY_DESCRIPTION": "Equipment Sharing Policy description",
+		"REQUEST_SAVED": "Policy saved",
+		"REQUEST_DELETED": "Policy deleted",
+		"ACTIONS": "Actions"
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Инвентаризация",

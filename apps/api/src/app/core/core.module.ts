@@ -107,6 +107,7 @@ import { OrganizationSprint } from '../organization-sprint/organization-sprint.e
 import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 import { OrganizationDocuments } from '../organization-documents/organization-documents.entity';
 import { GoalGeneralSetting } from '../goal-general-setting/goal-general-setting.entity';
+import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
 
 const entities = [
 	Invite,
@@ -195,6 +196,7 @@ const entities = [
 	RequestApprovalEmployee,
 	RequestApprovalTeam,
 	ApprovalPolicy,
+	EquipmentSharingPolicy,
 	EmployeeAppointment,
 	AppointmentEmployees,
 	EventType,

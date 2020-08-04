@@ -12,9 +12,9 @@ import { CrudService } from '../core/crud/crud.service';
 import {
 	TimeOffCreateInput as ITimeOffCreateInput,
 	RequestApprovalStatusTypesEnum,
-	ApprovalPolicyConst,
 	StatusTypesEnum,
-	StatusTypesMapRequestApprovalEnum
+	StatusTypesMapRequestApprovalEnum,
+	ApprovalPolicyTypesStringEnum
 } from '@gauzy/models';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
@@ -51,7 +51,7 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 			const approvalPolicy = await this.approvalPolicyRepository.findOne({
 				where: {
 					organizationId: timeOffRequestSaved.organizationId,
-					approvalType: ApprovalPolicyConst.TIME_OFF
+					approvalType: ApprovalPolicyTypesStringEnum.TIME_OFF
 				}
 			});
 
@@ -71,40 +71,48 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 	}
 
 	async getAllTimeOffRequests(relations, findInput?, filterDate?) {
-		const allRequests = await this.timeOffRequestRepository.find({
-			where: findInput['organziationId'],
-			relations
-		});
-		let items = [];
-		const total = await this.timeOffRequestRepository.count();
+		try {
+			const allRequests = await this.timeOffRequestRepository.find({
+				where: {
+					organizationId: findInput['organizationId']
+				},
+				relations
+			});
+			let items = [];
+			const total = await this.timeOffRequestRepository.count();
 
-		if (findInput['employeeId']) {
-			allRequests.forEach((request) => {
-				request.employees.forEach((e) => {
-					if (e.id === findInput['employeeId']) {
-						items.push(request);
-					}
+			if (findInput['employeeId']) {
+				allRequests.forEach((request) => {
+					request.employees.forEach((e) => {
+						if (e.id === findInput['employeeId']) {
+							items.push(request);
+						}
+					});
+					if (request.employees.length === 0) items.push(request);
 				});
-				if (request.employees.length === 0) items.push(request);
-			});
-		} else {
-			items = allRequests;
+			} else {
+				items = allRequests;
+			}
+
+			if (filterDate) {
+				const dateObject = new Date(filterDate);
+
+				const month = dateObject.getMonth() + 1;
+				const year = dateObject.getFullYear();
+
+				items = [...items].filter((i) => {
+					const currentItemMonth = i.start.getMonth() + 1;
+					const currentItemYear = i.start.getFullYear();
+					return (
+						currentItemMonth === month && currentItemYear === year
+					);
+				});
+			}
+
+			return { items, total };
+		} catch (err) {
+			throw new BadRequestException(err);
 		}
-
-		if (filterDate) {
-			const dateObject = new Date(filterDate);
-
-			const month = dateObject.getMonth() + 1;
-			const year = dateObject.getFullYear();
-
-			items = [...items].filter((i) => {
-				const currentItemMonth = i.start.getMonth() + 1;
-				const currentItemYear = i.start.getFullYear();
-				return currentItemMonth === month && currentItemYear === year;
-			});
-		}
-
-		return { items, total };
 	}
 
 	async updateStatusTimeOffByAdmin(

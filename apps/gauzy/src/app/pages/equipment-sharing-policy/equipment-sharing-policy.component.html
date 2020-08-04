@@ -1,21 +1,10 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="main-header">
-		<div class="main-header">
+	<nb-card-header class="header-selector-wrapper">
+		<div class="header-selector-wrapper">
 			<ngx-back-navigation></ngx-back-navigation>
-			<h4>{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}</h4>
+			<h4>{{ 'EQUIPMENT_SHARING_POLICY_PAGE.HEADER' | translate }}</h4>
 		</div>
-		<div class="main-header">
-			<button
-				style="margin-right: 9px;"
-				nbButton
-				status="primary"
-				(click)="manageAppropvalPolicy()"
-			>
-				{{
-					'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
-						| translate
-				}}
-			</button>
+		<div>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>
@@ -24,9 +13,9 @@
 
 	<nb-card-body>
 		<div class="mb-3">
-			<button nbButton status="success" class="mr-2" (click)="save(true)">
+			<button (click)="save()" nbButton status="success" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.REQUEST' | translate }}
+				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
@@ -35,18 +24,18 @@
 
 		<ng2-smart-table
 			class="tags-table"
+			(userRowSelect)="selectEquipmentSharingPolicy($event)"
 			[settings]="settingsSmartTable"
-			(userRowSelect)="selectEquipmentSharing($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			#equipmentSharingTable
+			#equipmentSharingPolicyTable
 		>
 		</ng2-smart-table>
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
-			[source]="equipmentsData"
+			[source]="equipmentSharingPolicyData"
 			[buttonTemplate]="actionButtons"
 		></ga-card-grid>
 	</nb-card-body>
@@ -57,22 +46,22 @@
 	let-selectedItem="selectedItem"
 >
 	<button
+		(click)="save(selectedItem)"
 		nbButton
 		status="info"
 		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
-		(click)="save(false, selectedItem)"
 		[size]="buttonSize || 'medium'"
 	>
 		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
+		(click)="delete(selectedItem)"
 		nbButton
 		status="danger"
 		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
-		(click)="delete(selectedItem)"
 		[size]="buttonSize || 'medium'"
 	>
 		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>

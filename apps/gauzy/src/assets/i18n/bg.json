@@ -1393,7 +1393,7 @@
 		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
 		"REQUEST": "Request",
 		"EQUIPMENT_NAME": "Equipment name",
-		"APPROVAL_POLICY": "Approval policy",
+		"EQUIPMENT_SHARING_POLICY": "Equipment Sharing Policy",
 		"SHARE_REQUIEST_DATE": "Share request date",
 		"SHARE_START_DATE": "Share start date",
 		"SHARE_END_DATE": "Share end date",
@@ -1412,6 +1412,19 @@
 		"REFUSE": "Refuse",
 		"APPROVAL_SUCCESS": "Request Approval Success",
 		"REFUSE_SUCCESS": "Request Refuse Success"
+	},
+	"EQUIPMENT_SHARING_POLICY_PAGE": {
+		"HEADER": "Equipment Sharing Policy",
+		"ADD_EQUIPMENT_SHARING_POLICY": "Add Equipment Sharing Policy",
+		"EDIT_EQUIPMENT_SHARING_POLICY": "Edit Equipment Sharing Policy",
+		"DELETE_EQUIPMENT_SHARING_POLICY": "Delete Equipment Sharing Policy",
+		"REQUEST": "Request",
+		"EQUIPMENT_SHARING_POLICY_NAME": "Equipment Sharing Policy name",
+		"EQUIPMENT_SHARING_POLICY_ORG": "Equipment Sharing Policy organization",
+		"EQUIPMENT_SHARING_POLICY_DESCRIPTION": "Equipment Sharing Policy description",
+		"REQUEST_SAVED": "Policy saved",
+		"REQUEST_DELETED": "Policy deleted",
+		"ACTIONS": "Actions"
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Inventory",

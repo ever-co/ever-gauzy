@@ -13,7 +13,7 @@ import {
 	RequestApprovalStatus,
 	Employee,
 	OrganizationTeam,
-	ApprovalPolicy
+	EquipmentSharingPolicy
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,10 +21,10 @@ import { EquipmentSharingService } from '../../@core/services/equipment-sharing.
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
+import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 
 export interface RequestEmployee {
 	id: string;
@@ -49,8 +49,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		private fb: FormBuilder,
 		readonly translationService: TranslateService,
 		private employeesService: EmployeesService,
-		public approvalPolicyService: ApprovalPolicyService,
-		private organizationTeamsService: OrganizationTeamsService
+		private organizationTeamsService: OrganizationTeamsService,
+		private equipmentSharingPolicyService: EquipmentSharingPolicyService
 	) {
 		super(translationService);
 	}
@@ -62,13 +62,12 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	requestStatus: number;
 	participants = 'employees';
 
-	approvalPolicies: ApprovalPolicy[] = [];
 	teams: OrganizationTeam[];
 	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
-	selectedApprovalPolicy: string;
-
+	equipmentSharingPolicies: EquipmentSharingPolicy[] = [];
+	selectedEquipmentSharingPolicy: string;
 	requestStatuses = Object.values(RequestApprovalStatus);
 
 	private _ngDestroy$ = new Subject<void>();
@@ -89,7 +88,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.loadSelectedOrganization();
 		this.loadEmployees();
 		this.loadTeams();
-		this.loadApprovalPolicies();
+		this.loadEquipmentSharingPolicy();
 		this.loadRequestStatus();
 		this.validateForm();
 	}
@@ -108,9 +107,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 				this.equipmentSharing ? this.equipmentSharing.equipmentId : '',
 				Validators.required
 			],
-			approvalPolicy: [
-				this.equipmentSharing
-					? this.equipmentSharing.approvalPolicyId
+			equipmentSharingPolicyId: [
+				this.equipmentSharing &&
+				this.equipmentSharing.equipmentSharingPolicyId
+					? this.equipmentSharing.equipmentSharingPolicyId
 					: ''
 			],
 			employees: [
@@ -148,6 +148,18 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		});
 	}
 
+	async loadEquipmentSharingPolicy() {
+		this.equipmentSharingPolicies = (
+			await this.equipmentSharingPolicyService.getAll([], {
+				organizationId: this.selectedOrgId
+			})
+		).items;
+	}
+
+	onEquipmentSharingPolicySelected(equipmentSharingPolicy: string) {
+		this.selectedEquipmentSharingPolicy = equipmentSharingPolicy;
+	}
+
 	async onSaveRequest() {
 		const shareRequest = {
 			equipmentId: this.form.value['equipment'],
@@ -156,7 +168,9 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			),
 			createdBy: '',
 			createdByName: '',
-			approvalPolicyId: this.form.value['approvalPolicy'],
+			equipmentSharingPolicyId: this.form.value[
+				'equipmentSharingPolicyId'
+			],
 			employees: this.employees.filter((emp) => {
 				return this.selectedEmployees.includes(emp.id);
 			}),
@@ -180,7 +194,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			);
 		} else {
 			equipmentSharing = await this.equipmentSharingService.create(
-				shareRequest
+				shareRequest,
+				this.selectedOrgId
 			);
 		}
 
@@ -193,19 +208,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 	async loadEquipmentItems() {
 		this.equipmentItems = (await this.equipmentService.getAll()).items;
-	}
-
-	async loadApprovalPolicies() {
-		this.approvalPolicies = (
-			await this.approvalPolicyService.getForRequestApproval([], {
-				organizationId: this.selectedOrgId
-			})
-		).items.filter((policy) => {
-			return (
-				policy.organizationId === this.selectedOrgId ||
-				this.selectedOrgId === ''
-			);
-		});
 	}
 
 	async loadEmployees() {
@@ -264,10 +266,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		} else {
 			this.requestStatus = RequestApprovalStatusTypesEnum.REQUESTED;
 		}
-	}
-
-	onApprovalPolicySelected(approvalPolicySelection: string) {
-		this.selectedApprovalPolicy = approvalPolicySelection;
 	}
 
 	onEmployeesSelected(employeeSelection: string[]) {

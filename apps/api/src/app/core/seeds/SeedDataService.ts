@@ -294,6 +294,11 @@ import {
 	createDefaultEventTypes,
 	createRandomEventType
 } from '../../event-types/event-type.seed';
+import {
+	createDefaultEquipmentSharingPolicyForOrg,
+	createRandomEquipmentSharingPolicyForOrg
+} from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
+import { EquipmentSharingPolicy } from '../../equipment-sharing-policy/equipment-sharing-policy.entity';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -371,6 +376,7 @@ const allEntities = [
 	RequestApprovalTeam,
 	RequestApproval,
 	ApprovalPolicy,
+	EquipmentSharingPolicy,
 	RequestApprovalEmployee,
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
@@ -778,6 +784,12 @@ export class SeedDataService {
 			})
 		);
 
+		await this.tryExecute(
+			createDefaultEquipmentSharingPolicyForOrg(this.connection, {
+				orgs: this.organizations
+			})
+		);
+
 		const integrationTypes = await this.tryExecute(
 			createDefaultIntegrationTypes(this.connection)
 		);
@@ -1025,6 +1037,14 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			createRandomApprovalPolicyForOrg(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomEquipmentSharingPolicyForOrg(
 				this.connection,
 				tenants,
 				tenantOrganizationsMap
