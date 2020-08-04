@@ -593,27 +593,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Import/Export',
 					icon: 'flip-outline',
+					link: '/pages/settings/import-export/export',
 					data: {
 						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
-					},
-					children: [
-						{
-							title: 'Export',
-							icon: 'download-outline',
-							link: '/pages/settings/import-export/export',
-							data: {
-								translationKey: 'MENU.IMPORT_EXPORT.EXPORT'
-							}
-						},
-						{
-							title: 'Import',
-							icon: 'upload-outline',
-							link: '/pages/settings/import-export/import',
-							data: {
-								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'
-							}
-						}
-					]
+					}
 				},
 				{
 					title: 'Payment Gateways',

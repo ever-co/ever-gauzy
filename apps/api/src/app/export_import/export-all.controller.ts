@@ -1,4 +1,11 @@
-import { Controller, HttpStatus, Get, Res, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Res,
+	UseGuards,
+	Query
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ExportAllService } from './export-all.service';
 import { OnDestroy } from '@angular/core';
@@ -32,6 +39,27 @@ export class ExportAllController implements OnDestroy {
 	@Get('template')
 	async downloadTemplate(@Res() res) {
 		await this.exportService.downloadTemplate(res);
+	}
+
+	@ApiOperation({ summary: 'Find exports by name' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found specific tables'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('filter')
+	async exportByName(@Query('data') data: string, @Res() res): Promise<any> {
+		const { names } = JSON.parse(data);
+
+		await this.exportService.createFolders();
+		await this.exportService.exportSpecificTables(names);
+		await this.exportService.archiveAndDownload();
+		await this.exportService.downloadToUser(res);
+		await this.exportService.deleteCsvFiles();
+		this.exportService.deleteArchive();
 	}
 
 	ngOnDestroy() {}
