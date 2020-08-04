@@ -10,19 +10,51 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
+		<div class="mb-3">
+			<button
+				nbButton
+				status="success"
+				(click)="recordPayment()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<button
+				nbButton
+				[disabled]="disableButton"
+				status="info"
+				(click)="editPayment()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				[disabled]="disableButton"
+				status="danger"
+				(click)="deletePayment()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
 		<ng2-smart-table
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
+			(userRowSelect)="selectPayment($event)"
 			#paymentsTable
 		>
 		</ng2-smart-table>
-		<ga-card-grid
+		<!-- <ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
 			[source]="paymentsData"
 			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+		></ga-card-grid> -->
 	</nb-card-body>
 </nb-card>
