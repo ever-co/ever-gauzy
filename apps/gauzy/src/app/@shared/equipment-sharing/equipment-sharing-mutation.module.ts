@@ -19,7 +19,7 @@ import { EquipmentSharingService } from '../../@core/services/equipment-sharing.
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
+import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 
 @NgModule({
 	imports: [
@@ -50,7 +50,7 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 		EquipmentSharingService,
 		Store,
 		EquipmentService,
-		ApprovalPolicyService
+		EquipmentSharingPolicyService
 	]
 })
 export class EquipmentSharingMutationModule {}

@@ -245,7 +245,7 @@ import { createRandomCandidateInterview } from '../../candidate-interview/candid
 import { createRandomAwards } from '../../organization-awards/organization-awards.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 import { createRandomCandidateCriterionRating } from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
-import { createRandomGoalKpi } from '../../goal-kpi/goal-kpi.seed';
+import { createDefaultGoalKpi } from '../../goal-kpi/goal-kpi.seed';
 import { createRandomEmployeeSetting } from '../../employee-setting/employee-setting.seed';
 import { createRandomEmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.seed';
 import { createRandomCandidateInterviewers } from '../../candidate-interviewers/candidate-interviewers.seed';
@@ -294,6 +294,11 @@ import {
 	createDefaultEventTypes,
 	createRandomEventType
 } from '../../event-types/event-type.seed';
+import {
+	createDefaultEquipmentSharingPolicyForOrg,
+	createRandomEquipmentSharingPolicyForOrg
+} from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
+import { EquipmentSharingPolicy } from '../../equipment-sharing-policy/equipment-sharing-policy.entity';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -371,6 +376,7 @@ const allEntities = [
 	RequestApprovalTeam,
 	RequestApproval,
 	ApprovalPolicy,
+	EquipmentSharingPolicy,
 	RequestApprovalEmployee,
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
@@ -578,6 +584,14 @@ export class SeedDataService {
 		});
 
 		await this.tryExecute(
+			createDefaultGeneralGoalSetting(
+				this.connection,
+				this.tenant,
+				this.organizations
+			)
+		);
+
+		await this.tryExecute(
 			createDefaultTimeOffPolicy(this.connection, {
 				org: this.organizations[0],
 				employees: this.defaultEmployees
@@ -725,14 +739,6 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			createDefaultGeneralGoalSetting(
-				this.connection,
-				this.tenant,
-				this.organizations
-			)
-		);
-
 		const goals = await this.tryExecute(
 			createDefaultGoals(
 				this.connection,
@@ -748,6 +754,15 @@ export class SeedDataService {
 				this.tenant,
 				this.defaultEmployees,
 				goals
+			)
+		);
+
+		await this.tryExecute(
+			createDefaultGoalKpi(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				this.defaultEmployees
 			)
 		);
 
@@ -769,13 +784,18 @@ export class SeedDataService {
 			})
 		);
 
+		await this.tryExecute(
+			createDefaultEquipmentSharingPolicyForOrg(this.connection, {
+				orgs: this.organizations
+			})
+		);
+
 		const integrationTypes = await this.tryExecute(
 			createDefaultIntegrationTypes(this.connection)
 		);
 		await this.tryExecute(
 			createDefaultIntegrations(this.connection, integrationTypes)
 		);
-
 		await this.tryExecute(
 			createDefaultTimeSheet(
 				this.connection,
@@ -1024,6 +1044,14 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			createRandomEquipmentSharingPolicyForOrg(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
 			createRandomRequestApproval(
 				this.connection,
 				tenants,
@@ -1194,15 +1222,6 @@ export class SeedDataService {
 			createRandomEmployeeSetting(
 				this.connection,
 				tenants,
-				tenantEmployeeMap
-			)
-		);
-
-		await this.tryExecute(
-			createRandomGoalKpi(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap,
 				tenantEmployeeMap
 			)
 		);

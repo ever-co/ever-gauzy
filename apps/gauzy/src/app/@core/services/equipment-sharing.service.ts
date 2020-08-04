@@ -41,10 +41,13 @@ export class EquipmentSharingService {
 			.toPromise();
 	}
 
-	create(equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
+	create(
+		equipmentSharing: EquipmentSharing,
+		id: string
+	): Promise<EquipmentSharing> {
 		return this.http
 			.post<EquipmentSharing>(
-				this.EQUIPMENT_SHARING_URL,
+				`${this.EQUIPMENT_SHARING_URL}/organization/${id}`,
 				equipmentSharing
 			)
 			.pipe(first())

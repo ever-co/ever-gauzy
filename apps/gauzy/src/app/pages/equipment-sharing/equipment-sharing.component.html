@@ -11,7 +11,10 @@
 				status="primary"
 				(click)="manageAppropvalPolicy()"
 			>
-				{{ 'EQUIPMENT_SHARING_PAGE.APPROVAL_POLICY' | translate }}
+				{{
+					'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
+						| translate
+				}}
 			</button>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"

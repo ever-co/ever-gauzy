@@ -231,6 +231,7 @@
 									keyResultsForm.value.type ==
 									keyResultTypeEnum.CURRENCY
 								"
+								[selected]="currenciesEnum.BGN"
 								id="unit"
 								nbSuffix
 							>
@@ -246,6 +247,7 @@
 							<nb-select
 								fullWidth
 								formControlName="unit"
+								[selected]="numberUnitsEnum[0]"
 								(selectedChange)="
 									keyResultsForm.value.unit == 'create-new'
 										? (createNew = !createNew)

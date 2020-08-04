@@ -15,7 +15,7 @@ export const createRandomTimeLogs = async (
 	connection: Connection,
 	timeSheets: Timesheet[],
 	defaultProjects: OrganizationProjects[],
-  	noOfTimeLogsPerTimeSheet
+	noOfTimeLogsPerTimeSheet
 ) => {
 	const allEmployees = await connection
 		.getRepository(Employee)
@@ -104,11 +104,11 @@ export const createRandomTimeLogs = async (
 					).map((timeSlot) => {
 						timeSlot.employee = timelog.employee;
 						if (logType === TimeLogType.TRACKED) {
-						  for(let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
-                screenshotsPromise.push(
-                  createRandomScreenshot(timeSlot)
-                );
-              }
+							for (let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
+								screenshotsPromise.push(
+									createRandomScreenshot(timeSlot)
+								);
+							}
 						}
 						return timeSlot;
 					});

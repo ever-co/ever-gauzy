@@ -67,7 +67,7 @@
 				<ng-template class="p-2" #filterPopover>
 					<nb-list>
 						<nb-list-item
-							(click)="filterGoals(filter.value)"
+							(click)="filterGoals(filter.value, allGoals)"
 							[ngStyle]="{
 								'font-weight':
 									selectedFilter === filter.value

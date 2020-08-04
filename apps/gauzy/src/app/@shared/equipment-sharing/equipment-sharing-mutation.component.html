@@ -62,9 +62,11 @@
 			<div class="row">
 				<div class="col-sm-12 mb-3">
 					<nb-select
-						formControlName="approvalPolicy"
-						[selected]="selectedApprovalPolicy"
-						(selectedChange)="onApprovalPolicySelected($event)"
+						formControlName="equipmentSharingPolicyId"
+						[selected]="selectedEquipmentSharingPolicy"
+						(selectedChange)="
+							onEquipmentSharingPolicySelected($event)
+						"
 						fullWidth
 						placeholder="{{
 							'FORM.PLACEHOLDERS.CHOOSE_APPROVAL_POLICY'
@@ -72,10 +74,10 @@
 						}}"
 					>
 						<nb-option
-							*ngFor="let approvalPolicy of approvalPolicies"
-							[value]="approvalPolicy.id"
+							*ngFor="let policy of equipmentSharingPolicies"
+							[value]="policy.id"
 						>
-							{{ approvalPolicy.name }}</nb-option
+							{{ policy.name }}</nb-option
 						>
 					</nb-select>
 				</div>
