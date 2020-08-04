@@ -1608,6 +1608,8 @@
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Значение скидки",
 		"INVOICES_SELECT_PAID": "Оплачено",
 		"INVOICES_SELECT_TAX": "Налог",
+		"INVOICES_TAXES": "Налоги",
+		"INVOICES_DISCOUNT": "Скидка",
 		"INVOICES_SELECT_TERMS": "Условия",
 		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
 		"INVOICES_SELECT_CONTACT": "Контакт",
