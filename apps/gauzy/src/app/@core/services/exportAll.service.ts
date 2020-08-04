@@ -16,4 +16,12 @@ export class ExportAllService {
 			responseType: 'blob'
 		});
 	}
+
+	downloadSpecificData(names: string[]) {
+		const data = JSON.stringify({ names });
+		return this.http.get(`/api/download/filter`, {
+			responseType: 'blob',
+			params: { data }
+		});
+	}
 }
