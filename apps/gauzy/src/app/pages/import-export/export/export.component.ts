@@ -2,13 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ExportAllService } from '../../../@core/services/exportAll.service';
 import { saveAs } from 'file-saver';
 import { Router } from '@angular/router';
-import {
-	FormArray,
-	FormBuilder,
-	FormGroup,
-	FormControl,
-	FormArrayName
-} from '@angular/forms';
+import { FormArray, FormGroup, FormControl } from '@angular/forms';
 import * as _ from 'lodash';
 @Component({
 	selector: 'ngx-download',
