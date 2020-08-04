@@ -286,7 +286,7 @@ const routes: Routes = [
 						path: 'equipment-sharing-policy',
 						loadChildren: () =>
 							import(
-								'./equipment-sharing-Policy/equipment-sharing-policy.module'
+								'./equipment-sharing-policy/equipment-sharing-policy.module'
 							).then((m) => m.EquipmentSharingPolicyModule)
 					},
 					{
