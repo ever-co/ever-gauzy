@@ -44,3 +44,54 @@
 :host ::ng-deep ng2-smart-table .ng2-smart-actions {
   width: 5%;
 }
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+
+  .block-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    .block {
+      width: 49%;
+    }
+  }
+}
+.footer-block-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  .footer-block {
+    width: 100%;
+  }
+}
+
+.terms-textarea {
+  width: 98%;
+}
+
+.group {
+  border: 1px #edf1f7 solid;
+  border-radius: 1rem;
+}
+
+.row {
+  margin-bottom: 6px;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
