@@ -53,17 +53,18 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.bonusPercentage = 10;
 		defaultOrganization.registrationDate = faker.date.past(5);
 
-    	defaultOrganization.overview = faker.name.jobDescriptor();
-    	defaultOrganization.short_description = faker.name.jobDescriptor();
-    	defaultOrganization.client_focus = faker.name.jobDescriptor();
-    	defaultOrganization.show_profits = false;
-    	defaultOrganization.show_bonuses_paid = false;
-    	defaultOrganization.show_income = false;
-    	defaultOrganization.show_total_hours = false;
-    	defaultOrganization.show_projects_count = true;
-    	defaultOrganization.show_minimum_project_size = true;
-    	defaultOrganization.show_clients_count = true;
-    	defaultOrganization.banner = faker.name.jobDescriptor();
+		defaultOrganization.overview = faker.name.jobDescriptor();
+		defaultOrganization.short_description = faker.name.jobDescriptor();
+		defaultOrganization.client_focus = faker.name.jobDescriptor();
+		defaultOrganization.show_profits = false;
+		defaultOrganization.show_bonuses_paid = false;
+		defaultOrganization.show_income = false;
+		defaultOrganization.show_total_hours = false;
+		defaultOrganization.show_projects_count = true;
+		defaultOrganization.show_minimum_project_size = true;
+		defaultOrganization.show_clients_count = true;
+		defaultOrganization.show_employees_count = true;
+		defaultOrganization.banner = faker.name.jobDescriptor();
 
 		defaultOrganizations.push(defaultOrganization);
 	});
@@ -119,7 +120,8 @@ export const createRandomOrganizations = async (
 				organization.show_projects_count = true;
 				organization.show_minimum_project_size = true;
 				organization.show_clients_count = true;
-        		organization.banner = faker.name.jobDescriptor();
+				organization.show_employees_count = true;
+				organization.banner = faker.name.jobDescriptor();
 
 				const { bonusType, bonusPercentage } = randomBonus();
 				organization.bonusType = bonusType;

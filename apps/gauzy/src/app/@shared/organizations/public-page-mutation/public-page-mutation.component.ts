@@ -129,6 +129,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 					.show_minimum_project_size,
 				show_projects_count: this.organization.show_projects_count,
 				show_clients_count: this.organization.show_clients_count,
+				show_employees_count: this.organization.show_employees_count,
 				client_focus: [],
 				skills: this.organization.skills,
 				languages: []
