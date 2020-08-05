@@ -115,3 +115,70 @@ const insertDefaultGoals = async (
 		.values(defaultGoals)
 		.execute();
 };
+
+export const createRandomGoal = async (
+	connection: Connection,
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenantEmployeeMap: Map<Tenant, Employee[]>
+): Promise<Goal[]> => {
+	if (!tenantOrganizationsMap) {
+		console.warn(
+			'Warning: tenantOrganizationsMap not found, Random Goal will not be created'
+		);
+		return;
+	}
+	if (!tenantEmployeeMap) {
+		console.warn(
+			'Warning: tenantEmployeeMap not found, Random Goal will not be created'
+		);
+		return;
+	}
+
+	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
+		GoalTimeFrame
+	);
+
+	const goals: Goal[] = [];
+
+	for (const tenant of tenants) {
+		const tenantOrgs = tenantOrganizationsMap.get(tenant);
+		const tenantEmployees = tenantEmployeeMap.get(tenant);
+		for (const tenantOrg of tenantOrgs) {
+			const organizationTeams = await connection.manager.find(
+				OrganizationTeam,
+				{
+					where: [{ organizationId: tenantOrg.id }]
+				}
+			);
+
+			const goal = new Goal();
+
+			goal.name = faker.name.jobTitle();
+			goal.progress = 0;
+			goal.level = faker.random.arrayElement([
+				'Organization',
+				'Team',
+				'Employee'
+			]);
+			if (goal.level === GoalLevelEnum.EMPLOYEE) {
+				goal.ownerEmployee = faker.random.arrayElement(tenantEmployees);
+			} else if (goal.level === GoalLevelEnum.TEAM) {
+				goal.ownerTeam = faker.random.arrayElement(organizationTeams);
+			} else if (goal.level === GoalLevelEnum.ORGANIZATION) {
+				goal.ownerOrg = tenantOrg;
+			}
+			goal.lead = faker.random.arrayElement(tenantEmployees);
+			goal.tenant = tenant;
+			goal.description = faker.name.jobDescriptor();
+			goal.deadline = faker.random.arrayElement(goalTimeFrames).name;
+			goal.organization = tenantOrg;
+			goal.organizationId = tenantOrg.id;
+
+			goals.push(goal);
+		}
+	}
+
+	await connection.manager.save(goals);
+	return goals;
+};
