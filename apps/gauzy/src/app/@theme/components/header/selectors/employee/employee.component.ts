@@ -124,13 +124,13 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	searchEmployee(term: string, item: any) {
 		if (item.firstName && item.lastName) {
 			return (
-				item.firstName.toLowerCase().includes(term) ||
-				item.lastName.toLowerCase().includes(term)
+				item.firstName.toLowerCase().includes(term.toLowerCase()) ||
+				item.lastName.toLowerCase().includes(term.toLowerCase())
 			);
 		} else if (item.firstName) {
-			return item.firstName.toLowerCase().includes(term);
+			return item.firstName.toLowerCase().includes(term.toLowerCase());
 		} else if (item.lastName) {
-			return item.lastName.toLowerCase().includes(term);
+			return item.lastName.toLowerCase().includes(term.toLowerCase());
 		}
 	}
 
