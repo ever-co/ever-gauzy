@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -10,6 +10,8 @@ import * as timezone from 'moment-timezone';
 export class TimezoneSelectorComponent extends TranslationBaseComponent
 	implements OnInit {
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
+
+	@Input('selectedTimezone')
 	selectedTimezone;
 	constructor(
 		public dialogRef: NbDialogRef<TimezoneSelectorComponent>,
