@@ -5,17 +5,6 @@
 			<h4>{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}</h4>
 		</div>
 		<div class="main-header">
-			<button
-				style="margin-right: 9px;"
-				nbButton
-				status="primary"
-				(click)="manageAppropvalPolicy()"
-			>
-				{{
-					'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
-						| translate
-				}}
-			</button>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>
@@ -31,6 +20,17 @@
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
+			<button
+				class="float-right"
+				nbButton
+				status="primary"
+				(click)="manageAppropvalPolicy()"
+			>
+				{{
+					'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
+						| translate
+				}}
+			</button>
 		</div>
 
 		<ng2-smart-table
