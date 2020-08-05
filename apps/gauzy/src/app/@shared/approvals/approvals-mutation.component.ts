@@ -6,7 +6,8 @@ import {
 	Employee,
 	OrganizationTeam,
 	ApprovalPolicy,
-	RequestApprovalCreateInput
+	RequestApprovalCreateInput,
+	ApprovalPolicyTypesStringEnum
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -97,6 +98,19 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 				this.organizationId === ''
 			);
 		});
+
+		if (this.requestApproval) {
+			if (this.requestApproval.approvalPolicy) {
+				switch (this.requestApproval.approvalPolicy.approvalType) {
+					case ApprovalPolicyTypesStringEnum.TIME_OFF:
+					case ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING:
+						this.approvalPolicies.push(
+							this.requestApproval.approvalPolicy
+						);
+						break;
+				}
+			}
+		}
 	}
 
 	loadSelectedOrganization() {
@@ -162,6 +176,17 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 					: null
 			]
 		});
+
+		if (this.requestApproval) {
+			if (this.requestApproval.approvalPolicy) {
+				switch (this.requestApproval.approvalPolicy.approvalType) {
+					case ApprovalPolicyTypesStringEnum.TIME_OFF:
+					case ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING:
+						this.form.get('approvalPolicyId').disable();
+						break;
+				}
+			}
+		}
 	}
 
 	async closeDialog(requestApproval?: RequestApproval) {

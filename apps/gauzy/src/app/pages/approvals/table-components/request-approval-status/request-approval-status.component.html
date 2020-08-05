@@ -1,3 +1,11 @@
-<div>
-	{{ value }}
+<div class="text-center d-block" *ngIf="value">
+	<div class="badge-danger" *ngIf="value == 'Refused'">
+		{{ value }}
+	</div>
+	<div class="badge-success" *ngIf="value == 'Approved'">
+		{{ value }}
+	</div>
+	<div class="badge-warning" *ngIf="value == 'Requested'">
+		{{ value }}
+	</div>
 </div>
