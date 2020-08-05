@@ -159,59 +159,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 			});
 	}
 
-	async getEmployeeStatistics(id) {
-		this.statistics = await this.employeeStatisticsService.getStatisticsByEmployeeId(
-			id
-		);
-
-		const dateNow = new Date();
-
-		this.incomeStatistics = this.statistics.incomeStatistics;
-		this.expenseStatistics = this.statistics.expenseStatistics;
-		this.profitStatistics = this.statistics.profitStatistics;
-		this.bonusStatistics = this.statistics.bonusStatistics;
-
-		this.bonusForSelectedMonth = this.bonusStatistics[
-			Math.abs(11 - dateNow.getMonth() - 1)
-		];
-
-		if (
-			this.expenseStatistics.filter(Number).reduce((a, b) => a + b, 0) !==
-			0
-		) {
-			this.averageExpense =
-				this.expenseStatistics
-					.filter(Number)
-					.reduce((a, b) => a + b, 0) /
-				this.expenseStatistics.filter(Number).length;
-		} else {
-			this.averageExpense = 0;
-		}
-
-		if (
-			this.incomeStatistics.filter(Number).reduce((a, b) => a + b, 0) !==
-			0
-		) {
-			this.averageIncome =
-				this.incomeStatistics
-					.filter(Number)
-					.reduce((a, b) => a + b, 0) /
-				this.incomeStatistics.filter(Number).length;
-		} else {
-			this.averageIncome = 0;
-		}
-
-		if (
-			this.bonusStatistics.filter(Number).reduce((a, b) => a + b, 0) !== 0
-		) {
-			this.averageBonus =
-				this.bonusStatistics.filter(Number).reduce((a, b) => a + b, 0) /
-				this.bonusStatistics.filter(Number).length;
-		} else {
-			this.averageBonus = 0;
-		}
-	}
-
 	selectEmployeeTmp({ isSelected, data }) {
 		const selectedEmployee = isSelected ? data : null;
 		if (this.employeesTable) {
@@ -396,9 +343,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 		let employeesVm = [];
 		const result = [];
-
 		for (const emp of items) {
-			await this.getEmployeeStatistics(emp.id);
 			result.push({
 				fullName: `${emp.user.firstName} ${emp.user.lastName}`,
 				email: emp.user.email,
@@ -416,9 +361,9 @@ export class EmployeesComponent extends TranslationBaseComponent
 				tags: emp.tags,
 				// TODO: laod real bonus and bonusDate
 				bonus: this.bonusForSelectedMonth,
-				averageIncome: Math.floor(this.averageIncome),
-				averageExpenses: Math.floor(this.averageExpense),
-				averageBonus: Math.floor(this.averageBonus),
+				averageIncome: Math.floor(emp.averageIncome),
+				averageExpenses: Math.floor(emp.averageExpenses),
+				averageBonus: Math.floor(emp.averageBonus),
 				bonusDate: Date.now(),
 				startedWorkOn: emp.startedWorkOn
 			});
@@ -487,15 +432,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageBonusComponent
-				},
-				bonus: {
-					title: `${this.getTranslation('SM_TABLE.BONUS')} (${
-						this.month
-					} ${this.year})`,
-					type: 'custom',
-					filter: false,
-					class: 'text-center',
-					renderComponent: EmployeeBonusComponent
 				},
 				workStatus: {
 					title: this.getTranslation('SM_TABLE.WORK_STATUS'),

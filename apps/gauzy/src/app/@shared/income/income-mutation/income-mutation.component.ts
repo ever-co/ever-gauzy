@@ -10,7 +10,8 @@ import {
 	Income,
 	OrganizationSelectInput,
 	Tag,
-	OrganizationContact
+	OrganizationContact,
+	EmployeeStatistics
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -21,6 +22,8 @@ import { OrganizationContactService } from '../../../@core/services/organization
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { EmployeesService } from '../../../@core/services';
+import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 
 @Component({
 	selector: 'ngx-income-mutation',
@@ -42,6 +45,9 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 	clients: Object[] = [];
 	tags: Tag[] = [];
+
+	averageIncome = 0;
+	averageBonus = 0;
 
 	fakeClients = [
 		{
@@ -110,7 +116,9 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		private organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private employeeStatisticsService: EmployeeStatisticsService,
+		private employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -134,7 +142,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		});
 	}
 
-	addOrEditIncome() {
+	async addOrEditIncome() {
 		if (this.form.valid) {
 			this.dialogRef.close(
 				Object.assign(
@@ -142,7 +150,30 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 					this.form.value
 				)
 			);
+			await this.getEmployeeStatistics(
+				this.employeeSelector.selectedEmployee.id
+			);
+			this.employeesService.update(
+				this.employeeSelector.selectedEmployee.id,
+				{
+					averageIncome: this.averageIncome,
+					averageBonus: this.averageBonus
+				}
+			);
 		}
+	}
+	async getEmployeeStatistics(id) {
+		const statistics = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+			id
+		);
+		this.averageIncome = this.countStatistic(statistics.incomeStatistics);
+		this.averageBonus = this.countStatistic(statistics.bonusStatistics);
+	}
+	countStatistic(data: number[]) {
+		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
+			? data.filter(Number).reduce((a, b) => a + b, 0) /
+					data.filter(Number).length
+			: 0;
 	}
 
 	addNewClient = (name: string): Promise<OrganizationContact> => {
