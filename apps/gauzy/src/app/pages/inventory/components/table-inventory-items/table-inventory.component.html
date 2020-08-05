@@ -4,7 +4,7 @@
 			<h4>{{ 'INVENTORY_PAGE.HEADER' | translate }}</h4>
 			<div class="header-selector-wrapper">
 				<div style="margin-right: 9px;">
-					<button
+					<!-- <button
 						nbButton
 						status="primary"
 						(click)="manageProductTypes()"
@@ -19,7 +19,7 @@
 					>
 						<nb-icon icon="edit-outline"></nb-icon>
 						{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
-					</button>
+					</button> -->
 				</div>
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
@@ -42,6 +42,25 @@
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
+			<button
+				class="float-right"
+				nbButton
+				status="primary"
+				(click)="manageProductTypes()"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
+			</button>
+			<button
+				class="float-right"
+				style="margin-right: 9px;"
+				nbButton
+				status="primary"
+				(click)="manageProductCategories()"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
+			</button>
 		</div>
 
 		<ng2-smart-table

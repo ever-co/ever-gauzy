@@ -3,14 +3,14 @@
 		<div class="main-header">
 			<h4>{{ 'EQUIPMENT_PAGE.HEADER' | translate }}</h4>
 			<div class="main-header">
-				<button
+				<!-- <button
 					style="margin-right: 9px;"
 					nbButton
 					status="primary"
 					(click)="manageEquipmentSharing()"
 				>
 					{{ 'MENU.EQUIPMENT_SHARING' | translate }}
-				</button>
+				</button> -->
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
@@ -27,6 +27,14 @@
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
+			<button
+				class="float-right"
+				nbButton
+				status="primary"
+				(click)="manageEquipmentSharing()"
+			>
+				{{ 'MENU.EQUIPMENT_SHARING' | translate }}
+			</button>
 		</div>
 
 		<ng2-smart-table
