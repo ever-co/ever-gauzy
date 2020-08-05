@@ -1,18 +1,35 @@
 $center: center;
 
 .import_export_wrapper {
-	display: flex;
-	justify-content: $center;
-	align-items: $center;
-	height: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: $center;
+  padding: 1rem;
+  height: 100%;
 }
 .button-import {
-	margin-left: 20%;
+  margin-left: 20%;
 }
 .radio-buttons-group {
-	margin-left: 5%;
+  margin-left: 5%;
 }
 .info-text {
-	color: #3366ff;
-	font-weight: 600;
+  color: #3366ff;
+  font-weight: 600;
+}
+.export-checkbox {
+  padding-left: 10rem;
+}
+.checkbox {
+  width: 30%;
+  float: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.checkboxes {
+  width: 1rem;
+  height: 1rem;
+  padding: 2rem;
+  margin-top: 1rem;
 }

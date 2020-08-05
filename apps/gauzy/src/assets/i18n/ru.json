@@ -1393,7 +1393,7 @@
 		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на оборудование",
 		"REQUEST": "Запросить",
 		"EQUIPMENT_NAME": "Название оборудования",
-		"APPROVAL_POLICY": "Утверждающая политика",
+		"EQUIPMENT_SHARING_POLICY": "Совместное использование снаряжения",
 		"SHARE_REQUIEST_DATE": "Поделиться датой запроса",
 		"SHARE_START_DATE": "Поделиться датой начала",
 		"SHARE_END_DATE": "Поделиться датой окончания",
@@ -1412,6 +1412,19 @@
 		"REFUSE": "Отклонить",
 		"APPROVAL_SUCCESS": "Запрос успешно одобрен",
 		"REFUSE_SUCCESS": "Запрос отменен"
+	},
+	"EQUIPMENT_SHARING_POLICY_PAGE": {
+		"HEADER": "Совместное использование снаряжения",
+		"ADD_EQUIPMENT_SHARING_POLICY": "Добавить правила совместного использования снаряжения",
+		"EDIT_EQUIPMENT_SHARING_POLICY": "Редактировать правила совместного использования снаряжения",
+		"DELETE_EQUIPMENT_SHARING_POLICY": "Удалить политику совместного использования снаряжения",
+		"REQUEST": "Запросить",
+		"EQUIPMENT_SHARING_POLICY_NAME": "Название политики совместного использования снаряжения",
+		"EQUIPMENT_SHARING_POLICY_ORG": "Организация Совместного использования Оборудования",
+		"EQUIPMENT_SHARING_POLICY_DESCRIPTION": "Описание политики совместного использования снаряжения",
+		"REQUEST_SAVED": "Политика сохранена",
+		"REQUEST_DELETED": "Политика удалена",
+		"ACTIONS": "Действия"
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Инвентаризация",
@@ -1595,6 +1608,8 @@
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Значение скидки",
 		"INVOICES_SELECT_PAID": "Оплачено",
 		"INVOICES_SELECT_TAX": "Налог",
+		"INVOICES_TAXES": "Налоги",
+		"INVOICES_DISCOUNT": "Скидка",
 		"INVOICES_SELECT_TERMS": "Условия",
 		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
 		"INVOICES_SELECT_CONTACT": "Контакт",

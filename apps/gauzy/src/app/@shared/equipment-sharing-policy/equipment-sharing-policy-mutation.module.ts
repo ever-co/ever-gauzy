@@ -8,17 +8,14 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbCheckboxModule,
-	NbDatepickerModule,
 	NbRadioModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
 import { ThemeModule } from '../../@theme/theme.module';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
-import { Store } from '../../@core/services/store.service';
-import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
-import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
-import { EquipmentService } from '../../@core/services/equipment.service';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { EquipmentSharingPolicyMutationComponent } from './equipment-sharing-policy-mutation.component';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 
 @NgModule({
@@ -29,13 +26,11 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 		NbIconModule,
 		NbCheckboxModule,
 		ReactiveFormsModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
-		NbDatepickerModule,
-		NgSelectModule,
 		NbRadioModule,
+		NgSelectModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -44,13 +39,8 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 			}
 		})
 	],
-	declarations: [EquipmentSharingMutationComponent],
+	declarations: [EquipmentSharingPolicyMutationComponent],
 	entryComponents: [],
-	providers: [
-		EquipmentSharingService,
-		Store,
-		EquipmentService,
-		EquipmentSharingPolicyService
-	]
+	providers: [EquipmentSharingPolicyService]
 })
-export class EquipmentSharingMutationModule {}
+export class EquipmentSharingPolicyMutationModule {}

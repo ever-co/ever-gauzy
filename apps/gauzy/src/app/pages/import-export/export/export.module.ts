@@ -7,7 +7,7 @@ import {
 	NbIconModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ExportComponent } from './export.component';
 import { ExportRoutingModule } from './export-routing.module';
 
@@ -32,6 +32,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbInputModule,
 		NbRadioModule,
+		ReactiveFormsModule,
+		FormsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
