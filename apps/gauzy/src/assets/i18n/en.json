@@ -596,7 +596,8 @@
 			"SYNCED_CONTRACTS": "Synced Contracts",
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
-			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities"
+			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
+			"DATE_RANGE_PLACEHOLDER": "Choose date between"
 		},
 		"COMING_SOON": "Coming soon"
 	},
