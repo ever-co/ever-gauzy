@@ -10,8 +10,7 @@ import {
 	Income,
 	OrganizationSelectInput,
 	Tag,
-	OrganizationContact,
-	EmployeeStatistics
+	OrganizationContact
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';

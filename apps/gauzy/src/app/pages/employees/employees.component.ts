@@ -27,7 +27,6 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
 import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
 import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
-import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
