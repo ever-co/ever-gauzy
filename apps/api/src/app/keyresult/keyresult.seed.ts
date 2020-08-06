@@ -323,7 +323,6 @@ const insertDefaultKeyResults = async (
 export const createRandomKeyResult = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
 	tenantEmployeeMap: Map<Tenant, Employee[]>,
 	goals
 ): Promise<KeyResult[]> => {
@@ -333,21 +332,11 @@ export const createRandomKeyResult = async (
 		);
 		return;
 	}
-	if (!tenantOrganizationsMap) {
-		console.warn(
-			'Warning: tenantOrganizationsMap not found, Random KeyResult will not be created'
-		);
-		return;
-	}
-
-	console.log('createRandomKeyResult');
 
 	const keyResults: KeyResult[] = [];
 
 	for (const tenant of tenants) {
-		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		for (const tenantOrg of tenantOrgs) {
 			for (const goal of goals) {
 				const keyResult = new KeyResult();
 
@@ -413,10 +402,6 @@ export const createRandomKeyResult = async (
 
 				keyResults.push(keyResult);
 			}
-		}
 	}
-
-	console.log('keyResults', keyResults.length);
-
 	await connection.manager.save(keyResults);
 };

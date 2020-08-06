@@ -1273,7 +1273,7 @@
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"APPROVAL_REQUEST_ACTIONS": "Действия",
 		"CREATED_BY": "Создано",
-		"APPROVAL": "Одобрение",
+		"APPROVE": "Одобрить",
 		"REFUSE": "Отклонить",
 		"HEADER": "Запрос на утверждение",
 		"EMPLOYEES": "Сотрудники",
@@ -1299,11 +1299,13 @@
 		"HEADER": "Время выключено",
 		"REQUEST": "Запросить",
 		"REQUEST_TIME_OFF": "Время запроса выключено",
+		"EDIT": "Редактировать",
 		"ADD_HOLIDAYS": "Добавить выходные",
 		"DISPLAY_HOLIDAYS": "Показать Праздники",
 		"HOLIDAY_NAME": "Название выходного дня",
 		"SELECT_EMPLOYEES": "Выберите сотрудников",
 		"SETTINGS": "Настройки",
+		"EDI": "Редактировать запись отключения времени",
 		"SELECT_HOLIDAY_NAME": "Выберите название праздника",
 		"ADD_OR_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 		"SELECT_TIME_OFF_POLICY": "Временная политика Seletc",
@@ -1315,9 +1317,10 @@
 			"ALL": "Все"
 		},
 		"ACTIONS": {
-			"APPROVE_DAYS_OFF_REQUEST": "Одобрить запрос на отключение",
-			"DENY_DAYS_OFF_REQUEST": "Отклонить время ожидания запроса",
-			"DELETE_DAYS_OFF_REQUEST": "Удалить время отключения запроса"
+			"EDIT": "Редактировать запись отключения времени",
+			"APPROVE_DAYS_OFF_REQUEST": "Одобрить запрос на отключение времени",
+			"DENY_DAYS_OFF_REQUEST": "Отклонить запрос",
+			"DELETE_DAYS_OFF_REQUEST": "Удалить запрос на отключение"
 		},
 		"POLICY": {
 			"HEADER": "Время выкл. политики",
@@ -1339,7 +1342,9 @@
 			"REQUEST_DELETED": "Запрос на отключение успешно удален",
 			"ERR_LOAD_RECORDS": "Не удается загрузить записи",
 			"ERR_DELETE_REQUEST": "Не удается удалить запрос на отключение",
-			"ERR_CREATE_RECORD": "Невозможно создать запись"
+			"ERR_CREATE_RECORD": "Невозможно создать запись",
+			"REQUEST_UPDATED": "Запрос Time Off успешно обновлен",
+			"ERR_UPDATE_RECORD": "Не удается обновить время отключения записи"
 		}
 	},
 	"TAGS_PAGE": {
