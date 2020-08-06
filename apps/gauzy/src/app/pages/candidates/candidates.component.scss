@@ -96,18 +96,21 @@
   padding: 5px;
   background-color: #ff3d71;
   margin-bottom: 5px;
+  border-radius: 0.25rem;
 }
 
 .badge-success {
   text-align: center;
   padding: 5px;
   background-color: #00d68f;
+  border-radius: 0.25rem;
 }
 
 .badge-primary {
   text-align: center;
   padding: 5px;
   background-color: #0095ff;
+  border-radius: 0.25rem;
 }
 
 .badge-warning {
@@ -115,6 +118,7 @@
   padding: 5px;
   background-color: #fa0;
   color: #fff;
+  border-radius: 0.25rem;
 }
 
 .rating {
