@@ -31,6 +31,7 @@ import { TenantBase } from '../core/entities/tenant-base';
 import { Organization } from '../organization/organization.entity';
 import { Task } from '../tasks/task.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
+import { Payment } from '../payment/payment.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends TenantBase
@@ -138,4 +139,11 @@ export class OrganizationProjects extends TenantBase
 	@IsEnum(TaskListTypeEnum)
 	@Column({ default: TaskListTypeEnum.GRID })
 	taskListType: string;
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payment) => payment.project, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: Payment[];
 }

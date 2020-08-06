@@ -77,7 +77,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				this.selectedDate = date;
 
 				if (this.selectedEmployeeId) {
-					this._loadTableData();
+					this._loadTableData(this._selectedOrganizationId);
 				} else {
 					if (this._selectedOrganizationId) {
 						this._loadTableData(this._selectedOrganizationId);
@@ -90,7 +90,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
-					this._loadTableData();
+					this._loadTableData(this._selectedOrganizationId);
 				} else {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
@@ -117,7 +117,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 
 		this._loadSmartTableSettings();
-		this._loadTableData();
+		this._loadTableData(this._selectedOrganizationId);
 	}
 
 	setView() {
@@ -432,8 +432,10 @@ export class TimeOffComponent extends TranslationBaseComponent
 			})
 			.onClose.pipe(first())
 			.subscribe((res) => {
-				this.timeOffRequest = res;
-				this._createRecord();
+				if (res) {
+					this.timeOffRequest = res;
+					this._createRecord();
+				}
 			});
 	}
 
@@ -444,9 +446,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 			})
 			.onClose.pipe(first())
 			.subscribe((res) => {
-				const requestId = this.selectedTimeOffRecord.id;
-				this.timeOffRequest = res;
-				this._updateRecord(requestId);
+				if (res) {
+					const requestId = this.selectedTimeOffRecord.id;
+					this.timeOffRequest = res;
+					this._updateRecord(requestId);
+				}
 			});
 	}
 

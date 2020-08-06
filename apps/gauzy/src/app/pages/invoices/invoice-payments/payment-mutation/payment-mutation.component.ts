@@ -6,7 +6,10 @@ import {
 	CurrenciesEnum,
 	Payment,
 	PaymentMethodEnum,
-	Organization
+	Organization,
+	OrganizationContact,
+	OrganizationProjects,
+	Tag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
@@ -39,6 +42,11 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	currencies = Object.values(CurrenciesEnum);
 	paymentMethods = Object.values(PaymentMethodEnum);
 	currencyString: string;
+	organizationContact: OrganizationContact;
+	organizationContacts: OrganizationContact[];
+	project: OrganizationProjects;
+	projects: OrganizationProjects[];
+	tags: Tag[] = [];
 	get currency() {
 		return this.form.get('currency');
 	}
@@ -72,7 +80,9 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 					this.payment.paymentMethod,
 					Validators.required
 				],
-				invoice: [this.payment.invoice]
+				invoice: [this.payment.invoice],
+				contact: [this.payment.contact],
+				project: [this.payment.project]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -84,7 +94,9 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 				paymentDate: [new Date(), Validators.required],
 				note: ['', Validators.required],
 				paymentMethod: ['', Validators.required],
-				invoice: []
+				invoice: [],
+				contact: [],
+				project: []
 			});
 		}
 	}
@@ -115,7 +127,12 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 				: null,
 			recordedBy: this.store.user,
 			userId: this.store.userId,
-			paymentMethod: paymentData.paymentMethod
+			paymentMethod: paymentData.paymentMethod,
+			contact: paymentData.contact,
+			contactId: paymentData.contact ? paymentData.contact.id : null,
+			project: paymentData.project,
+			projectId: paymentData.project ? paymentData.project.id : null,
+			tags: this.tags
 		};
 
 		if (this.invoice) {
@@ -154,6 +171,24 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		}
 
 		return d1 > d2;
+	}
+
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.tags = currentTagSelection;
+	}
+
+	searchOrganizationContact(term: string, item: any) {
+		if (item.name) {
+			return item.name.toLowerCase().includes(term.toLowerCase());
+		}
+	}
+
+	selectOrganizationContact($event) {
+		this.organizationContact = $event;
+	}
+
+	selectProject($event) {
+		this.project = $event;
 	}
 
 	cancel() {

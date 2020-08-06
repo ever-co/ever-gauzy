@@ -32,6 +32,84 @@
 						</nb-select>
 					</div>
 				</div>
+				<div class="col-sm-6">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					>
+					</ga-tags-color-input>
+				</div>
+			</div>
+			<div class="row" *ngIf="!invoice">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputInvoiceNumber" class="label">
+							{{
+								'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
+									| translate
+							}}
+						</label>
+						<ng-select
+							[items]="organizationContacts"
+							bindName="name"
+							placeholder="{{
+								'POP_UPS.ALL_CONTACTS' | translate
+							}}"
+							formControlName="contact"
+							id="inputOrganizationContact"
+							(change)="selectOrganizationContact($event)"
+							[searchFn]="searchOrganizationContact"
+						>
+							<ng-template
+								ng-option-tmp
+								let-item="item"
+								let-index="index"
+							>
+								{{ item.name }}
+							</ng-template>
+							<ng-template ng-label-tmp let-item="item">
+								<div class="selector-template">
+									<span>{{ item.name }}</span>
+								</div>
+							</ng-template>
+						</ng-select>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">
+							{{
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
+									| translate
+							}}
+						</label>
+						<ng-select
+							[(items)]="projects"
+							bindName="name"
+							placeholder="{{
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
+									| translate
+							}}"
+							formControlName="project"
+							id="inputProject"
+							(change)="selectProject($event)"
+						>
+							<ng-template
+								ng-option-tmp
+								let-item="item"
+								let-index="index"
+							>
+								{{ item.name }}
+							</ng-template>
+							<ng-template ng-label-tmp let-item="item">
+								<div class="selector-template">
+									<span>{{ item.name }}</span>
+								</div>
+							</ng-template>
+						</ng-select>
+					</div>
+				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-6">
