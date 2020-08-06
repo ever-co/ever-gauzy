@@ -241,7 +241,7 @@ export class IncomeComponent extends TranslationBaseComponent
 							isBonus: result.isBonus,
 							tags: result.tags
 						});
-						if (result.employee.id) {
+						if (result.employee) {
 							await this.getEmployeeStatistics(
 								result.employee.id
 							);
