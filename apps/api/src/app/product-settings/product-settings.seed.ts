@@ -18,7 +18,6 @@ export const createRandomProductVariantSettings = async (
 		);
 		return;
 	}
-	console.log('========createRandomProductVariantSettings=========');
 	const productVariantSettings: ProductVariantSettings[] = [];
 
 	for (const tenant of tenants) {

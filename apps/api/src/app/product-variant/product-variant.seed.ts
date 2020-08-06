@@ -22,8 +22,6 @@ export const createRandomProductVariant = async (
 		return;
 	}
 
-	console.log('========createRandomProductVariant=========');
-
 	const productVariants: ProductVariant[] = [];
 
 	for (const tenant of tenants) {
