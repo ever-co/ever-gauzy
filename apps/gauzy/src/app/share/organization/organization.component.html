@@ -414,7 +414,7 @@
 										class="search-result"
 									>
 										<div class="avatar has-aura">
-											<a href="javascript:void(0)">
+											<a [routerLink]="[employee.id]">
 												<img
 													src="{{
 														employee.user.imageUrl
@@ -425,7 +425,7 @@
 										<div class="main-details">
 											<a
 												class="name margin-right-10"
-												href="#"
+												[routerLink]="[employee.id]"
 											>
 												{{
 													employee.user.firstName +

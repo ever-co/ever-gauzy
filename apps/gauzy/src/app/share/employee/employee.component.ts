@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ngx-employee',
@@ -30,7 +31,12 @@ export class EmployeeComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.employee$ = this.activatedRoute.data.pipe(
-			map(({ employee }) => employee)
+			map(({ employee }) => ({
+				...employee,
+				startedWorkOn: employee.startedWorkOn
+					? moment(employee.startedWorkOn).format('MM-DD-YYYY')
+					: undefined
+			}))
 		);
 
 		this.hasEditPermission$ = this.store.userRolePermissions$.pipe(

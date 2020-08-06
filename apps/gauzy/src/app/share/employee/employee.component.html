@@ -94,7 +94,7 @@
 			<nb-tab tabTitle="Profile" class="o__p__s__t">
 				<div class="employee-profile-item">
 					<h5 class="employee-profile-item-title">
-						Organization:
+						{{ 'MENU.ORGANIZATION' | translate }}:
 					</h5>
 					<span>
 						{{ employee.organization.name }}
@@ -102,7 +102,7 @@
 				</div>
 				<div class="employee-profile-item">
 					<h5 class="employee-profile-item-title">
-						Active:
+						{{ 'PUBLIC_PAGE.ACTIVE' | translate }}:
 					</h5>
 					<span>
 						{{ employee.isActive ? 'Yes' : 'No' }}
@@ -110,7 +110,7 @@
 				</div>
 				<div class="employee-profile-item">
 					<h5 class="employee-profile-item-title">
-						Started Work On:
+						{{ 'PUBLIC_PAGE.STARTED_WORK_ON' | translate }}:
 					</h5>
 					<span>
 						{{ employee.startedWorkOn }}
@@ -118,7 +118,7 @@
 				</div>
 				<div class="employee-profile-item">
 					<h5 class="employee-profile-item-title">
-						Rate:
+						{{ 'PUBLIC_PAGE.RATE' | translate }}:
 					</h5>
 					<span>
 						{{ employee.billRateValue }}
