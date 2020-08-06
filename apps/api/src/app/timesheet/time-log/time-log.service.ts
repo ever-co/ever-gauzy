@@ -52,9 +52,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 
 		const logs = await this.timeLogRepository.find({
 			join: {
-				alias: 'time_logs',
+				alias: 'timeLogs',
 				innerJoin: {
-					employee: 'time_logs.employee'
+					employee: 'timeLogs.employee'
 				}
 			},
 			relations: [
