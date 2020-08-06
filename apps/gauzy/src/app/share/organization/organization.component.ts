@@ -52,9 +52,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 	hoverState: boolean;
 	languageExist: boolean;
 	awardExist: boolean;
-	imageUpdateButton: boolean = false;
+	imageUpdateButton = false;
 	moment = moment;
-	timeSheets: Timesheet[];
 
 	constructor(
 		private route: ActivatedRoute,
@@ -67,7 +66,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private organizationContactService: OrganizationContactService,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private organizationProjectsService: OrganizationProjectsService,
-		private timesheetService: TimesheetService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -112,9 +110,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 					}
 					if (!!this.organization.show_projects_count) {
 						await this.getProjectCount();
-					}
-					if (!!this.organization.show_total_hours) {
-						await this.getTimeSheets();
 					}
 					await this.getEmployees();
 				} catch (error) {
@@ -174,7 +169,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 
 	private async getEmployees() {
 		const employees = await this.employeesService
-			.getAll(['user'], {
+			.getAllPublic(['user'], {
 				organization: {
 					id: this.organization.id
 				}
@@ -187,17 +182,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 		if (typeof this.organization.totalEmployees !== 'number') {
 			this.organization.totalEmployees = employees.total;
 		}
-	}
-
-	private async getTimeSheets() {
-		const request: IGetTimesheetInput = {
-			organizationId: this.organization.id
-		};
-		this.loading = true;
-		this.timeSheets = await this.timesheetService
-			.getTimeSheets(request)
-			.then((logs) => logs)
-			.finally(() => (this.loading = false));
 	}
 
 	private async getEmployeeStatistics() {

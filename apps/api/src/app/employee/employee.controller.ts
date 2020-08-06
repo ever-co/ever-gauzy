@@ -32,7 +32,6 @@ import { ITryRequest } from '../core/crud/try-request';
 import { Request } from 'express';
 
 @ApiTags('Employee')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
@@ -58,6 +57,7 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UseGuards(AuthGuard('jwt'))
 	async update(
 		@Param('id') id: string,
 		@Body() entity: Employee
@@ -86,7 +86,32 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get()
+	@UseGuards(AuthGuard('jwt'))
 	async findAllEmployees(
+		@Query('data') data: string
+	): Promise<IPagination<Employee>> {
+		const { relations, findInput } = JSON.parse(data);
+		return this.employeeService.findAll({ where: findInput, relations });
+	}
+
+	@ApiOperation({
+		summary: 'Find all public information employees in the same tenant.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employees in the tenant',
+		type: Employee
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('public')
+	/**
+	 * TODO: This is a public service, the response should only contain
+	 * those fields (columns) of an employee that can be shown to the public
+	 */
+	async findAllEmployeesPublicData(
 		@Query('data') data: string
 	): Promise<IPagination<Employee>> {
 		const { relations, findInput } = JSON.parse(data);
@@ -104,6 +129,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('/working')
+	@UseGuards(AuthGuard('jwt'))
 	async findAllWorkingEmployees(
 		@Query('data') data: string
 	): Promise<IPagination<Employee>> {
@@ -128,6 +154,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get(':id')
+	@UseGuards(AuthGuard('jwt'))
 	async findById(
 		@Param('id') id: string,
 		@Query('data', ParseJsonPipe) data?: any
@@ -156,6 +183,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('/user/:userId')
+	@UseGuards(AuthGuard('jwt'))
 	async findByUserId(
 		@Param('userId') userId: string,
 		@Query('data', ParseJsonPipe) data?: any
@@ -183,6 +211,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/create')
+	@UseGuards(AuthGuard('jwt'))
 	async create(
 		@Body() entity: IEmployeeCreateInput,
 		@Req() request: Request,
@@ -211,6 +240,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/createBulk')
+	@UseGuards(AuthGuard('jwt'))
 	async createBulk(
 		@Body() input: IEmployeeCreateInput[],
 		@I18nLang() languageCode: LanguagesEnum,
