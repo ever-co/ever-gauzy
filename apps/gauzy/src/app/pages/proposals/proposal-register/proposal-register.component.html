@@ -29,28 +29,7 @@
 					<div class="form-group">
 						<label class="label"
 							>{{
-								'PROPOSALS_PAGE.REGISTER.JOB_POST_URL'
-									| translate
-							}}
-						</label>
-						<input
-							nbInput
-							fullWidth
-							type="text"
-							placeholder="{{
-								'PROPOSALS_PAGE.REGISTER.JOB_POST_URL'
-									| translate
-							}}"
-							formControlName="jobPostUrl"
-							autocomplete="on"
-						/>
-					</div>
-				</div>
-				<div class="col-sm-3">
-					<div class="form-group">
-						<label class="label"
-							>{{
-								'PROPOSALS_PAGE.REGISTER.PICK_A_DATE'
+								'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE'
 									| translate
 							}}
 						</label>
@@ -59,7 +38,7 @@
 							nbInput
 							fullWidth
 							placeholder="{{
-								'PROPOSALS_PAGE.REGISTER.PICK_A_DATE'
+								'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE'
 									| translate
 							}}"
 							[nbDatepicker]="formpicker"
@@ -75,6 +54,23 @@
 					>
 					</ga-tags-color-input>
 				</div>
+			</div>
+			<div class="form-group">
+				<label class="label"
+					>{{ 'PROPOSALS_PAGE.REGISTER.JOB_POST_URL' | translate }}
+				</label>
+				<input
+					nbInput
+					fullWidth
+					type="text"
+					placeholder="{{
+						'PROPOSALS_PAGE.REGISTER.JOB_POST_URL' | translate
+					}}"
+					formControlName="jobPostUrl"
+					autocomplete="on"
+				/>
+			</div>
+			<div class="row">
 				<div class="col-xl-6">
 					<nb-card>
 						<nb-card-header>
