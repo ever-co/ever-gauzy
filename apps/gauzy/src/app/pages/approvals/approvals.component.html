@@ -41,12 +41,72 @@
 			#requestApprovalTable
 		>
 		</ng2-smart-table>
-		<ga-card-grid
-			[settings]="settingsSmartTable"
-			[source]="requestApprovalData"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<li class="flex-item" *ngFor="let x of requestApprovalData">
+				<div class="info-line">
+					<span class="info-meta">Name</span>
+					<span class="info-value">{{ x.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Min Count</span>
+					<span class="info-value">{{ x.min_count }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Approval Policy</span>
+					<span class="info-value">{{ x.approvalPolicy.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Created By</span>
+					<span class="info-value">{{ x.createdByName }}</span>
+				</div>
+				<div class="info-line" [ngSwitch]="x.status">
+					<span class="info-meta">Status</span>
+					<span class="badge-warning" *ngSwitchCase="1">{{
+						'Requested'
+					}}</span>
+					<span class="badge-success" *ngSwitchCase="2">{{
+						'Approved'
+					}}</span>
+					<span class="badge-danger" *ngSwitchCase="3">{{
+						'Refused'
+					}}</span>
+				</div>
+				<div class="info-line" style="height: 56px;">
+					<span class="info-meta">Action</span>
+					<div *ngIf="x.status === 1">
+						<button
+							nbButton
+							status="success"
+							(click)="approval(x)"
+							class="mr-3"
+							[size]="'tiny'"
+						>
+							{{ 'APPROVAL_REQUEST_PAGE.APPROVAL' | translate }}
+						</button>
+						<button
+							nbButton
+							status="danger"
+							(click)="refuse(x)"
+							[size]="'tiny'"
+						>
+							{{ 'APPROVAL_REQUEST_PAGE.REFUSE' | translate }}
+						</button>
+					</div>
+				</div>
+				<nb-card-footer class="card-footer">
+					<ng-container
+						*ngTemplateOutlet="
+							actionButtons;
+							context: {
+								buttonSize: 'tiny',
+								selectedItem: x
+							}
+						"
+					>
+					</ng-container>
+				</nb-card-footer>
+			</li>
+		</ul>
 	</nb-card-body>
 </nb-card>
 <ng-template
