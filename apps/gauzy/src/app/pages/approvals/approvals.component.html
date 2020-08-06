@@ -61,13 +61,13 @@
 				</div>
 				<div class="info-line" [ngSwitch]="x.status">
 					<span class="info-meta">Status</span>
-					<span class="badge-warning" *ngSwitchCase="1">{{
+					<span class="badge-warning-card" *ngSwitchCase="1">{{
 						'Requested'
 					}}</span>
-					<span class="badge-success" *ngSwitchCase="2">{{
+					<span class="badge-success-card" *ngSwitchCase="2">{{
 						'Approved'
 					}}</span>
-					<span class="badge-danger" *ngSwitchCase="3">{{
+					<span class="badge-danger-card" *ngSwitchCase="3">{{
 						'Refused'
 					}}</span>
 				</div>
@@ -81,7 +81,7 @@
 							class="mr-3"
 							[size]="'tiny'"
 						>
-							{{ 'APPROVAL_REQUEST_PAGE.APPROVAL' | translate }}
+							{{ 'APPROVAL_REQUEST_PAGE.APPROVE' | translate }}
 						</button>
 						<button
 							nbButton

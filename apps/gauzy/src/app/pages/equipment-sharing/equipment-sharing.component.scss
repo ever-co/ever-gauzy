@@ -59,26 +59,26 @@
 
 /* Status */
 
-.badge-danger {
+.badge-danger-card {
   text-align: center;
   padding: 10px;
-  background-color: #dc3545;
-  margin-bottom: 5px;
-  border-radius: 13px;
-}
-
-.badge-success {
-  text-align: center;
-  padding: 10px;
-  background-color: #28a745;
-  border-radius: 13px;
+  background-color: #ff3d71;
+  border-radius: 0.45rem;
   color: #fff;
 }
 
-.badge-warning {
+.badge-success-card {
   text-align: center;
   padding: 10px;
-  background-color: #ffc107;
-  border-radius: 13px;
+  background-color: #00d68f;
+  border-radius: 0.45rem;
+  color: #fff;
+}
+
+.badge-warning-card {
+  text-align: center;
+  padding: 10px;
+  background-color: #fa0;
+  border-radius: 0.45rem;
   color: #fff;
 }

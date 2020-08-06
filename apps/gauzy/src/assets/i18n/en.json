@@ -1273,7 +1273,7 @@
 		"APPROVAL_REQUEST_STATUS": "Status",
 		"APPROVAL_REQUEST_ACTIONS": "Actions",
 		"CREATED_BY": "Created By",
-		"APPROVAL": "Approval",
+		"APPROVE": "Approve",
 		"REFUSE": "Refuse",
 		"HEADER": "Approval Request",
 		"EMPLOYEES": "Employees",
