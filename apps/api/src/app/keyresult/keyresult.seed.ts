@@ -340,8 +340,6 @@ export const createRandomKeyResult = async (
 		return;
 	}
 
-	console.log('createRandomKeyResult');
-
 	const keyResults: KeyResult[] = [];
 
 	for (const tenant of tenants) {
@@ -415,8 +413,5 @@ export const createRandomKeyResult = async (
 			}
 		}
 	}
-
-	console.log('keyResults', keyResults.length);
-
 	await connection.manager.save(keyResults);
 };

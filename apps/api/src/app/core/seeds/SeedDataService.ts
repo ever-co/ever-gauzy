@@ -124,10 +124,6 @@ import { Tenant } from './../../tenant/tenant.entity';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { ProductType } from '../../product-type/product-type.entity';
 import { CandidateEducation } from '../../candidate-education/candidate-education.entity';
-import {
-	createDefaultProductTypes,
-	createRandomProductType
-} from '../../product-type/product-type.seed';
 import { Product } from '../../product/product.entity';
 import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
@@ -144,7 +140,7 @@ import { AppointmentEmployees } from '../../appointment-employees/appointment-em
 import { ProductOption } from '../../product-option/product-option.entity';
 import { HelpCenter } from '../../help-center/help-center.entity';
 import { createHelpCenter } from '../../help-center/help-center.seed';
-import { createDefaultProducts } from '../../product/product.seed';
+import { createDefaultProducts, createRandomProduct } from '../../product/product.seed';
 import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
 import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
 import {
@@ -292,7 +288,7 @@ import { createRandomIntegrationEntitySettingTiedEntity } from '../../integratio
 import { createRandomIntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.seed';
 import { createRandomRequestApprovalTeam } from '../../request-approval-team/request-approval-team.seed';
 import { createRandomRequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.seed';
-import { createRandomPayment } from '../../payment/payment.seed';
+import { createDefaultPayment, createRandomPayment } from '../../payment/payment.seed';
 import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-setting.entity';
 import { EstimateEmail } from '../../estimate-email/estimate-email.entity';
 import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
@@ -310,6 +306,8 @@ import { createRandomProductOption } from '../../product-option/product-option.s
 import { createRandomProductVariantSettings } from '../../product-settings/product-settings.seed';
 import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
 import { createRandomProductVariantPrice } from '../../product-variant-price/product-variant-price.seed';
+import { createCategories, createRandomCategories } from '../../product-category/category.seed';
+import { createDefaultProductType, createRandomProductType } from '../../product-type/type.seed';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -629,16 +627,16 @@ export class SeedDataService {
 		);
 
 		//todo :  Need to fix error of seeding Product Category
-		// await this.tryExecute(
-		// 	createDefaultProductCategories(
-		// 		this.connection,
-		//     this.organizations
-		// 	)
-		// );
-		//
-		// await this.tryExecute(
-		// 	createDefaultProductTypes(this.connection, this.organizations)
-		// );
+		await this.tryExecute(
+      createCategories(
+				this.connection,
+		    this.organizations
+			)
+		);
+
+		await this.tryExecute(
+			createDefaultProductType(this.connection, this.organizations)
+		);
 
 		await this.tryExecute(createRandomContacts(this.connection, 5));
 
@@ -836,6 +834,9 @@ export class SeedDataService {
 			createDefaultInvoice(this.connection, this.organizations, 50)
 		);
 		await this.tryExecute(
+      createDefaultPayment(this.connection, this.tenant, this.defaultEmployees, this.organizations)
+		);
+		await this.tryExecute(
 			createDefaultEventTypes(this.connection, this.organizations)
 		);
 	}
@@ -862,10 +863,21 @@ export class SeedDataService {
 			randomSeedConfig.organizationsPerTenant || 1
 		);
 
-		// todo: need to fix this function
-		// await this.tryExecute(
-		//   createRandomProductType(this.connection, tenants, tenantOrganizationsMap)
-		// );
+    await this.tryExecute(
+      createRandomCategories(
+        this.connection,
+        tenants,
+        tenantOrganizationsMap
+      )
+    );
+
+		await this.tryExecute(
+		  createRandomProductType(this.connection, tenants, tenantOrganizationsMap)
+		);
+
+		await this.tryExecute(
+      createRandomProduct(this.connection, tenants, tenantOrganizationsMap)
+		);
 
 		await this.tryExecute(
 			createRandomOrganizationDocuments(
@@ -1248,7 +1260,6 @@ export class SeedDataService {
 			createRandomPayment(
 				this.connection,
 				tenants,
-				tenantUsersMap,
 				tenantEmployeeMap,
 				tenantOrganizationsMap
 			)

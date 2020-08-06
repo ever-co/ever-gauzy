@@ -43,8 +43,6 @@ export const createRandomOrganizationDocuments = async (
 		return;
 	}
 
-	console.log('createRandomOrganizationDocuments');
-
 	const organizationDocuments: OrganizationDocuments[] = [];
 	let json = {
 		'Paid Days off Request':
@@ -56,7 +54,6 @@ export const createRandomOrganizationDocuments = async (
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
-			console.log('tenantOrg', tenantOrg.id);
 			const organizationDocument = new OrganizationDocuments();
 
 			organizationDocument.name = faker.random.arrayElement([
