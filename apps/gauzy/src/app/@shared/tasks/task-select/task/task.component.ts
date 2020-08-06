@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
-import { Subject } from 'rxjs';
 import { Task } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from 'apps/gauzy/src/app/@core/services/tasks.service';
