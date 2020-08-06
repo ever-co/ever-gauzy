@@ -9,6 +9,7 @@ import {
 	DiscountTaxTypeEnum,
 	InvoiceTypeEnum
 } from '@gauzy/models';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 export const createDefaultInvoice = async (
   connection: Connection,
@@ -21,6 +22,9 @@ export const createDefaultInvoice = async (
     const tags = await connection.manager.find(Tag, {
       where: [{ organization: organization }]
     });
+    const OrganizationContacts = await connection.manager.find(OrganizationContact, {
+      where: [{ organizationId: organization.id }]
+    });
     for (let i = 0; i < noOfInvoicePerOrganization; i++) {
       let invoice = new Invoice();
       // let invoiceItem = faker.random.arrayElement(invoiceItems);
@@ -31,6 +35,8 @@ export const createDefaultInvoice = async (
         max: 9999999
       });
       invoice.dueDate = faker.date.recent(50);
+      invoice.organizationContactId = faker.random.arrayElement(OrganizationContacts).id;
+      invoice.toContact = faker.random.arrayElement(OrganizationContacts);
       invoice.currency = faker.random.arrayElement(
         Object.values(CurrenciesEnum)
       );
@@ -81,6 +87,9 @@ export const createRandomInvoice = async (
 			const tags = await connection.manager.find(Tag, {
 				where: [{ organization: organization }]
 			});
+      const OrganizationContacts = await connection.manager.find(OrganizationContact, {
+        where: [{ organizationId: organization.id }]
+      });
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 				let invoice = new Invoice();
 				// let invoiceItem = faker.random.arrayElement(invoiceItems);
@@ -91,7 +100,9 @@ export const createRandomInvoice = async (
 					max: 9999999
 				});
 				invoice.dueDate = faker.date.recent(50);
-				invoice.currency = faker.random.arrayElement(
+        invoice.organizationContactId = faker.random.arrayElement(OrganizationContacts).id;
+        invoice.toContact = faker.random.arrayElement(OrganizationContacts);
+        invoice.currency = faker.random.arrayElement(
 					Object.values(CurrenciesEnum)
 				);
 				invoice.discountValue = faker.random.number({

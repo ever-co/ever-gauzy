@@ -338,7 +338,10 @@
 							</div>
 						</div>
 					</div>
-					<div class="row mb-3" *ngIf="employees.length > 0">
+					<div
+						class="row mb-3"
+						*ngIf="organization.show_employees_count"
+					>
 						<div class="col">
 							<div class="org-year-found">
 								<h5 class="org-title org-key label-text">
@@ -346,7 +349,7 @@
 								</h5>
 								<span
 									class="org-value"
-									[textContent]="employees.length"
+									[textContent]="total_employees"
 								>
 								</span>
 							</div>

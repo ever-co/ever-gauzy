@@ -10,7 +10,7 @@ import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-m
 import { Tag } from './tag-entity.model';
 import { Task } from './task-entity.model';
 import { ITenant } from './tenant.model';
-import { OrganizationSprint } from '@gauzy/models';
+import { OrganizationSprint, Payment } from '@gauzy/models';
 
 export interface OrganizationProjects extends IBaseEntityWithMembers {
 	name: string;
@@ -29,6 +29,7 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	tenant: ITenant;
 	organizationSprints?: OrganizationSprint[];
 	taskListType: string;
+	payments?: Payment[];
 }
 
 export enum TaskListTypeEnum {

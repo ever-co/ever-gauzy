@@ -632,6 +632,24 @@
 								</nb-toggle>
 							</div>
 						</div>
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<label class="check" for="showEmployeesCount">{{
+									'POP_UPS.EMPLOYEES_COUNT' | translate
+								}}</label>
+								<nb-toggle
+									class="nb_toggle"
+									id="showEmployeesCount"
+									[(checked)]="
+										organization.show_employees_count
+									"
+									(change)="
+										changeShowAction('show_employees_count')
+									"
+								>
+								</nb-toggle>
+							</div>
+						</div>
 					</div>
 				</nb-tab>
 			</nb-tabset>

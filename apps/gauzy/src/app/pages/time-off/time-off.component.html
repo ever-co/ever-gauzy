@@ -68,7 +68,7 @@
 					style="font-size: 2em;"
 					icon="settings-outline"
 				></nb-icon>
-				{{ 'TIME_OFF_PAGE.TIME_OFF_SETTINGS' | translate }}
+				{{ 'TIME_OFF_PAGE.SETTINGS' | translate }}
 			</button>
 		</div>
 		<ng2-smart-table
@@ -152,6 +152,21 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
+	<button
+		(click)="updateTimeOffRecord()"
+		*ngIf="!selectedTimeOffRecord?.isHoliday"
+		nbButton
+		status="primary"
+		class="ml-4"
+		[size]="buttonSize || 'medium'"
+		nbTooltip="{{
+			'TIME_OFF_PAGE.ACTIONS.EDIT' | translate
+		}}"
+		nbTooltipTrigger="hover"
+	>
+		<nb-icon class="mx-2" icon="edit-outline"></nb-icon>
+	</button>
+
 	<button
 		(click)="approveDaysOff(selectedItem)"
 		nbButton

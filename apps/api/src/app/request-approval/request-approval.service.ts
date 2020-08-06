@@ -11,7 +11,9 @@ import { FindManyOptions, Repository } from 'typeorm';
 import {
 	RequestApproval as IRequestApproval,
 	RequestApprovalStatusTypesEnum,
-	RequestApprovalCreateInput as IRequestApprovalCreateInput
+	RequestApprovalCreateInput as IRequestApprovalCreateInput,
+	ApprovalPolicyTypesStringEnum,
+	StatusTypesMapRequestApprovalEnum
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
@@ -19,6 +21,8 @@ import { RequestContext } from '../core/context';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
 import { OrganizationTeamService } from '../organization-team/organization-team.service';
+import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
+import { EquipmentSharing } from '../equipment-sharing';
 
 @Injectable()
 export class RequestApprovalService extends CrudService<RequestApproval> {
@@ -31,6 +35,12 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<
 			OrganizationTeam
+		>,
+		@InjectRepository(TimeOffRequest)
+		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+		@InjectRepository(EquipmentSharing)
+		private readonly equipmentSharingRepository: Repository<
+			EquipmentSharing
 		>
 	) {
 		super(requestApprovalRepository);
@@ -270,7 +280,10 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 	): Promise<RequestApproval> {
 		try {
 			const requestApproval = await this.requestApprovalRepository.findOne(
-				id
+				id,
+				{
+					relations: ['approvalPolicy']
+				}
 			);
 
 			if (!requestApproval) {
@@ -287,6 +300,35 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			}
 
 			requestApproval.status = status;
+
+			if (
+				requestApproval.approvalPolicy &&
+				requestApproval.approvalPolicy.approvalType ===
+					ApprovalPolicyTypesStringEnum.TIME_OFF
+			) {
+				const timeOffRequest = await this.timeOffRequestRepository.findOne(
+					requestApproval.requestId
+				);
+				if (timeOffRequest) {
+					timeOffRequest.status =
+						StatusTypesMapRequestApprovalEnum[status];
+					await this.timeOffRequestRepository.save(timeOffRequest);
+				}
+			} else if (
+				requestApproval.approvalPolicy &&
+				requestApproval.approvalPolicy.approvalType ===
+					ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING
+			) {
+				const equipmentSharing = await this.equipmentSharingRepository.findOne(
+					requestApproval.requestId
+				);
+				if (equipmentSharing) {
+					equipmentSharing.status = status;
+					await this.equipmentSharingRepository.save(
+						equipmentSharing
+					);
+				}
+			}
 
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err /*: WriteError*/) {

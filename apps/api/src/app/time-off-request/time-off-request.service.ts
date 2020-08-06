@@ -115,6 +115,11 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 		}
 	}
 
+	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
+		await this.timeOffRequestRepository.delete(id);
+		return await this.timeOffRequestRepository.save(timeOffRequest);
+	}
+
 	async updateStatusTimeOffByAdmin(
 		id: string,
 		status: string

@@ -37,6 +37,8 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { IOrganizationExpenseCategory } from '../../../../../../../libs/models/src/lib/organization-expense-category.model';
 import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
+import { EmployeesService } from '../../../@core/services';
+import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 
 @Component({
 	selector: 'ga-expenses-mutation',
@@ -79,6 +81,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	notes: AbstractControl;
 	showTooltip = false;
 	disableStatuses = false;
+	averageExpense = 0;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -88,11 +91,13 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		private organizationVendorsService: OrganizationVendorsService,
 		private store: Store,
 		private readonly organizationContactService: OrganizationContactService,
+		private employeesService: EmployeesService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly expenseCategoriesStore: OrganizationExpenseCategoriesService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private employeeStatisticsService: EmployeeStatisticsService
 	) {
 		super(translateService);
 	}
@@ -125,7 +130,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.vendors = vendors;
 	}
 
-	addOrEditExpense() {
+	async addOrEditExpense() {
 		if (
 			this.form.value.typeOfExpense === 'Billable to Contact' &&
 			!this.form.value.organizationContact
@@ -166,6 +171,29 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				this.form.value
 			)
 		);
+		await this.getEmployeeStatistics(
+			this.employeeSelector.selectedEmployee.id
+		);
+		this.employeesService.update(
+			this.employeeSelector.selectedEmployee.id,
+			{
+				averageExpenses: this.averageExpense
+			}
+		);
+	}
+
+	async getEmployeeStatistics(id) {
+		const statistics = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+			id
+		);
+		this.averageExpense = this.countStatistic(statistics.expenseStatistics);
+	}
+
+	countStatistic(data: number[]) {
+		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
+			? data.filter(Number).reduce((a, b) => a + b, 0) /
+					data.filter(Number).length
+			: 0;
 	}
 
 	addNewCategory = async (

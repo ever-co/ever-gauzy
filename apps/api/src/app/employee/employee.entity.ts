@@ -200,4 +200,22 @@ export class Employee extends TenantBase implements IEmployee {
 		(requestApprovals) => requestApprovals.employee
 	)
 	requestApprovals?: RequestApprovalEmployee[];
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	averageIncome?: number;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	averageBonus?: number;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	averageExpenses?: number;
 }

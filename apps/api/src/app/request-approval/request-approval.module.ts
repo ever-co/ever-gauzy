@@ -14,6 +14,8 @@ import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
 import { OrganizationTeamEmployeeModule } from '../organization-team-employee/organization-team-employee.module';
+import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
+import { EquipmentSharing } from '../equipment-sharing';
 
 @Module({
 	imports: [
@@ -23,7 +25,9 @@ import { OrganizationTeamEmployeeModule } from '../organization-team-employee/or
 			Employee,
 			OrganizationTeam,
 			Role,
-			Organization
+			Organization,
+			TimeOffRequest,
+			EquipmentSharing
 		]),
 		OrganizationTeamEmployeeModule
 	],

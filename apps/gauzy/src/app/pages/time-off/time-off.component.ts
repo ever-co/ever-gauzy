@@ -77,7 +77,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				this.selectedDate = date;
 
 				if (this.selectedEmployeeId) {
-					this._loadTableData();
+					this._loadTableData(this._selectedOrganizationId);
 				} else {
 					if (this._selectedOrganizationId) {
 						this._loadTableData(this._selectedOrganizationId);
@@ -90,7 +90,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
-					this._loadTableData();
+					this._loadTableData(this._selectedOrganizationId);
 				} else {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
@@ -117,7 +117,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 
 		this._loadSmartTableSettings();
-		this._loadTableData();
+		this._loadTableData(this._selectedOrganizationId);
 	}
 
 	setView() {
@@ -432,8 +432,25 @@ export class TimeOffComponent extends TranslationBaseComponent
 			})
 			.onClose.pipe(first())
 			.subscribe((res) => {
-				this.timeOffRequest = res;
-				this._createRecord();
+				if (res) {
+					this.timeOffRequest = res;
+					this._createRecord();
+				}
+			});
+	}
+
+	updateTimeOffRecord() {
+		this.dialogService
+			.open(TimeOffRequestMutationComponent, {
+				context: { type: this.selectedTimeOffRecord }
+			})
+			.onClose.pipe(first())
+			.subscribe((res) => {
+				if (res) {
+					const requestId = this.selectedTimeOffRecord.id;
+					this.timeOffRequest = res;
+					this._updateRecord(requestId);
+				}
 			});
 	}
 
@@ -459,6 +476,23 @@ export class TimeOffComponent extends TranslationBaseComponent
 						)
 				);
 		}
+	}
+
+	private _updateRecord(id: string) {
+		this.timeOffService
+			.updateRequest(id, this.timeOffRequest)
+			.pipe(first())
+			.subscribe(
+				() => {
+					this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED');
+					this._loadTableData(this._selectedOrganizationId);
+					this.selectRecord({
+						isSelected: false,
+						data: null
+					});
+				},
+				() => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD')
+			);
 	}
 
 	changeDisplayHolidays(checked: boolean) {
