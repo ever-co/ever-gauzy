@@ -61,13 +61,13 @@
 				</div>
 				<div class="info-line" [ngSwitch]="x.status">
 					<span class="info-meta">Status</span>
-					<span class="info-value" *ngSwitchCase="1">{{
+					<span class="badge-warning" *ngSwitchCase="1">{{
 						'Requested'
 					}}</span>
-					<span class="info-value" *ngSwitchCase="2">{{
+					<span class="badge-success" *ngSwitchCase="2">{{
 						'Approved'
 					}}</span>
-					<span class="info-value" *ngSwitchCase="3">{{
+					<span class="badge-danger" *ngSwitchCase="3">{{
 						'Refused'
 					}}</span>
 				</div>

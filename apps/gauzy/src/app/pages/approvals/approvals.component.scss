@@ -120,3 +120,29 @@
   justify-content: space-around;
   display: flex;
 }
+
+/* Status */
+
+.badge-danger {
+  text-align: center;
+  padding: 10px;
+  background-color: #dc3545;
+  margin-bottom: 5px;
+  border-radius: 13px;
+}
+
+.badge-success {
+  text-align: center;
+  padding: 10px;
+  background-color: #28a745;
+  border-radius: 13px;
+  color: #fff;
+}
+
+.badge-warning {
+  text-align: center;
+  padding: 10px;
+  background-color: #ffc107;
+  border-radius: 13px;
+  color: #fff;
+}
