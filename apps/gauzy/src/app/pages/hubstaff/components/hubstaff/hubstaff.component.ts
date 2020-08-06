@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { HubstaffService } from 'apps/gauzy/src/app/@core/services/hubstaff.service';
@@ -22,7 +23,8 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 @Component({
 	selector: 'ngx-hubstaff',
 	templateUrl: './hubstaff.component.html',
-	styleUrls: ['./hubstaff.component.scss']
+	styleUrls: ['./hubstaff.component.scss'],
+	providers: [TitleCasePipe]
 })
 export class HubstaffComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -46,7 +48,8 @@ export class HubstaffComponent extends TranslationBaseComponent
 		private _errorHandlingService: ErrorHandlingService,
 		private toastrService: ToastrService,
 		private _dialogService: NbDialogService,
-		private _store: Store
+		private _store: Store,
+		private _titlecasePipe: TitleCasePipe
 	) {
 		super(translateService);
 	}
@@ -103,7 +106,9 @@ export class HubstaffComponent extends TranslationBaseComponent
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string',
-					filter: false
+					valuePrepareFunction: (data: string) => {
+						return this._titlecasePipe.transform(data);
+					}
 				}
 			}
 		};
