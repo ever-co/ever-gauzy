@@ -122,27 +122,45 @@
 }
 
 /* Status */
+.badge-danger-card {
+  text-align: center;
+  padding: 9px;
+  background-color: #ff3d71;
+  border-radius: 0.75rem;
+  color: #fff;
+}
+
+.badge-success-card {
+  color: #fff;
+  padding: 9px;
+  background-color: #00d68f;
+  border-radius: 0.75rem;
+}
+
+.badge-warning-card {
+  padding: 9px;
+  background-color: #fa0;
+  color: #fff;
+  border-radius: 0.75rem;
+}
 
 .badge-danger {
   text-align: center;
-  padding: 10px;
-  background-color: #dc3545;
-  margin-bottom: 5px;
-  border-radius: 13px;
+  padding: 5px;
+  background-color: #ff3d71;
+  border-radius: 0.45rem;
 }
 
 .badge-success {
-  text-align: center;
-  padding: 10px;
-  background-color: #28a745;
-  border-radius: 13px;
   color: #fff;
+  padding: 5px;
+  background-color: #00d68f;
+  border-radius: 0.45rem;
 }
 
 .badge-warning {
-  text-align: center;
-  padding: 10px;
-  background-color: #ffc107;
-  border-radius: 13px;
+  padding: 5px;
+  background-color: #fa0;
   color: #fff;
+  border-radius: 0.45rem;
 }
