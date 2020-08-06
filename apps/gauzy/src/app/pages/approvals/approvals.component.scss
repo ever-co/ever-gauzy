@@ -125,24 +125,48 @@
 
 .badge-danger {
   text-align: center;
-  padding: 10px;
-  background-color: #dc3545;
+  padding: 5px;
+  background-color: #ff3d71;
   margin-bottom: 5px;
-  border-radius: 13px;
+  border-radius: 0.45rem;
 }
 
 .badge-success {
   text-align: center;
-  padding: 10px;
-  background-color: #28a745;
-  border-radius: 13px;
+  padding: 5px;
+  background-color: #00d68f;
+  border-radius: 0.45rem;
   color: #fff;
 }
 
 .badge-warning {
   text-align: center;
+  padding: 5px;
+  background-color: #fa0;
+  border-radius: 0.45rem;
+  color: #fff;
+}
+
+.badge-danger-card {
+  text-align: center;
   padding: 10px;
-  background-color: #ffc107;
-  border-radius: 13px;
+  background-color: #ff3d71;
+  border-radius: 0.45rem;
+  color: #fff;
+}
+
+.badge-success-card {
+  text-align: center;
+  padding: 10px;
+  background-color: #00d68f;
+  border-radius: 0.45rem;
+  color: #fff;
+}
+
+.badge-warning-card {
+  text-align: center;
+  padding: 10px;
+  background-color: #fa0;
+  border-radius: 0.45rem;
   color: #fff;
 }
