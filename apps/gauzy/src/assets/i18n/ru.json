@@ -596,7 +596,8 @@
 			"SYNCED_CONTRACTS": "Синхронизированные контракты",
 			"SELECT_DATE": "Выберите дату",
 			"ONLY_CONTRACTS": "Только контракты",
-			"CONTRACTS_RELATED_DATA": "Синхронизированные Контракты"
+			"CONTRACTS_RELATED_DATA": "Синхронизированные Контракты",
+			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
 		},
 		"COMING_SOON": "Скоро появится"
 	},
@@ -1302,7 +1303,7 @@
 		"DISPLAY_HOLIDAYS": "Показать Праздники",
 		"HOLIDAY_NAME": "Название выходного дня",
 		"SELECT_EMPLOYEES": "Выберите сотрудников",
-		"TIME_OFF_SETTINGS": "Настройки таймера",
+		"SETTINGS": "Настройки",
 		"SELECT_HOLIDAY_NAME": "Выберите название праздника",
 		"ADD_OR_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 		"SELECT_TIME_OFF_POLICY": "Временная политика Seletc",

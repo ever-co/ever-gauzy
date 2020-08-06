@@ -72,6 +72,26 @@ export class TagsComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 	}
 
+	search(e) {
+		const searchText = e.target.value;
+		if (searchText) {
+			const searchedTags = this.allTags.filter(
+				(tag) =>
+					(tag.name &&
+						tag.name
+							.toLowerCase()
+							.includes(searchText.toLowerCase())) ||
+					(tag.description &&
+						tag.description
+							.toLowerCase()
+							.includes(searchText.toLowerCase()))
+			);
+			this.smartTableSource.load(searchedTags);
+		} else {
+			this.smartTableSource.load(this.allTags);
+		}
+	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.TAGS;
 		this.store
@@ -199,6 +219,7 @@ export class TagsComponent extends TranslationBaseComponent
 			if (tagsByOrgLevel.length) {
 				const result = await this.tagsService.getTagUsageCount(orgId);
 				this.allTags = result.concat(tagsByTenantLevel);
+				this.allTags.map((t) => !t.counter && (t.counter = 0));
 				this._generateUniqueTags(this.allTags);
 				this.tagsData = this.allTags;
 				this.smartTableSource.load(this.allTags);

@@ -437,6 +437,19 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 	}
 
+	updateTimeOffRecord() {
+		this.dialogService
+			.open(TimeOffRequestMutationComponent, {
+				context: { type: this.selectedTimeOffRecord }
+			})
+			.onClose.pipe(first())
+			.subscribe((res) => {
+				const requestId = this.selectedTimeOffRecord.id;
+				this.timeOffRequest = res;
+				this._updateRecord(requestId);
+			});
+	}
+
 	private _createRecord() {
 		if (this.timeOffRequest) {
 			this.timeOffService
@@ -459,6 +472,23 @@ export class TimeOffComponent extends TranslationBaseComponent
 						)
 				);
 		}
+	}
+
+	private _updateRecord(id: string) {
+		this.timeOffService
+			.updateRequest(id, this.timeOffRequest)
+			.pipe(first())
+			.subscribe(
+				() => {
+					this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED');
+					this._loadTableData(this._selectedOrganizationId);
+					this.selectRecord({
+						isSelected: false,
+						data: null
+					});
+				},
+				() => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD')
+			);
 	}
 
 	changeDisplayHolidays(checked: boolean) {
