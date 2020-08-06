@@ -279,10 +279,12 @@ export class ExpensesComponent extends TranslationBaseComponent
 				employeeId: formData.employee ? formData.employee.id : null,
 				orgId: this.store.selectedOrganization.id
 			});
-			await this.getEmployeeStatistics(formData.employee.id);
-			this.employeesService.update(formData.employee.id, {
-				averageExpenses: this.averageExpense
-			});
+			if (formData.employee.id) {
+				await this.getEmployeeStatistics(formData.employee.id);
+				this.employeesService.update(formData.employee.id, {
+					averageExpenses: this.averageExpense
+				});
+			}
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: formData.employee

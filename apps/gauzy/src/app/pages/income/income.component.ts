@@ -241,11 +241,16 @@ export class IncomeComponent extends TranslationBaseComponent
 							isBonus: result.isBonus,
 							tags: result.tags
 						});
-						await this.getEmployeeStatistics(result.employee.id);
-						this.employeesService.update(result.employee.id, {
-							averageIncome: this.averageIncome,
-							averageBonus: this.averageBonus
-						});
+						if (result.employee.id) {
+							await this.getEmployeeStatistics(
+								result.employee.id
+							);
+							this.employeesService.update(result.employee.id, {
+								averageIncome: this.averageIncome,
+								averageBonus: this.averageBonus
+							});
+						}
+
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.ADD_INCOME', {
 								name: result.employee
