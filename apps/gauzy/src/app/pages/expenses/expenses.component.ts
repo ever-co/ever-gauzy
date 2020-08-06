@@ -306,6 +306,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 				if (formData) {
 					const completedForm = this.getFormData(formData);
 					this.addExpense(completedForm, formData);
+					this.expenseCategoriesStore.loadAll();
 				}
 			});
 	}

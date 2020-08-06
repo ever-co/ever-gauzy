@@ -1,7 +1,11 @@
-import { Connection } from 'typeorm';
-import { Organization } from '@gauzy/models';
-import { ProductType } from './product-type.entity';
 import * as seed from './product-type.seed.json';
+import { Connection } from 'typeorm';
+import { Tenant } from '../tenant/tenant.entity';
+import { Organization, ProductTypesIconsEnum } from '@gauzy/models';
+import { ProductType } from './product-type.entity';
+import * as faker from 'faker';
+import { ProductCategory } from '../product-category/product-category.entity';
+import { Product } from '../product/product.entity';
 import { ProductTypeTranslation } from './product-type-translation.entity';
 
 export const createDefaultProductTypes = async (
@@ -37,5 +41,54 @@ const insertProductTypes = async (
 	connection: Connection,
 	productTypes: ProductType[]
 ): Promise<void> => {
+	await connection.manager.save(productTypes);
+};
+
+export const createRandomProductType = async (
+	connection: Connection,
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>
+): Promise<ProductType[]> => {
+	if (!tenantOrganizationsMap) {
+		console.warn(
+			'Warning: tenantOrganizationsMap not found, ProductType will not be created'
+		);
+		return;
+	}
+
+	console.log('createRandomProductType');
+
+	const productTypes: ProductType[] = [];
+
+	for (const tenant of tenants) {
+		const tenantOrgs = tenantOrganizationsMap.get(tenant);
+		for (const tenantOrg of tenantOrgs) {
+			const productCategories = await connection.manager.find(
+				ProductCategory,
+				{
+					where: [{ organization: tenantOrg }]
+				}
+			);
+			for (const productCategory of productCategories) {
+				const products = await connection.manager.find(Product, {
+					where: [{ category: productCategory }]
+				});
+
+				const productType = new ProductType();
+
+				const productTypeTranslation: ProductTypeTranslation[] = [];
+
+				productType.icon = faker.random.arrayElement(
+					Object.keys(ProductTypesIconsEnum)
+				);
+				productType.products = products;
+				productType.organization = tenantOrg;
+				productType.translations = productTypeTranslation;
+
+				productTypes.push(productType);
+			}
+		}
+	}
+
 	await connection.manager.save(productTypes);
 };

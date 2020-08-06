@@ -48,7 +48,10 @@
 						></ng-container>
 					</ng-container>
 
-					<ngx-search-input class="search"></ngx-search-input>
+					<ngx-search-input
+						(search)="search($event)"
+						class="search"
+					></ngx-search-input>
 				</div>
 
 				<ng2-smart-table

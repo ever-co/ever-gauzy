@@ -597,7 +597,7 @@
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
-			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+			"DATE_RANGE_PLACEHOLDER": "Изберете дата между"
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -1304,8 +1304,7 @@
 		"DISPLAY_HOLIDAYS": "Display Holidays",
 		"HOLIDAY_NAME": "Holiday name",
 		"SELECT_EMPLOYEES": "Select Employees",
-		"SETTINGS": "Настройки",
-		"EDI": "Edit Time Off record",
+		"SETTINGS": "Settings",
 		"SELECT_HOLIDAY_NAME": "Select Holiday name",
 		"ADD_OR_REMOVE_EMPLOYEES": "Добави или премахни служители",
 		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy",
