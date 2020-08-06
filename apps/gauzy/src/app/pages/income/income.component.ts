@@ -241,7 +241,11 @@ export class IncomeComponent extends TranslationBaseComponent
 							isBonus: result.isBonus,
 							tags: result.tags
 						});
-
+						await this.getEmployeeStatistics(result.employee.id);
+						this.employeesService.update(result.employee.id, {
+							averageIncome: this.averageIncome,
+							averageBonus: this.averageBonus
+						});
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.ADD_INCOME', {
 								name: result.employee
@@ -319,13 +323,16 @@ export class IncomeComponent extends TranslationBaseComponent
 								tags: result.tags
 							}
 						);
-						// await this.getEmployeeStatistics(
-						// 	this.selectedEmployeeId
-						// );
-						// this.employeesService.update(this.selectedEmployeeId, {
-						// 	averageIncome: this.averageIncome,
-						// 	averageBonus: this.averageBonus
-						// });
+						await this.getEmployeeStatistics(
+							this.selectedIncome.employee.id
+						);
+						this.employeesService.update(
+							this.selectedIncome.employee.id,
+							{
+								averageIncome: this.averageIncome,
+								averageBonus: this.averageBonus
+							}
+						);
 
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.EDIT_INCOME', {
@@ -365,6 +372,16 @@ export class IncomeComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.incomeService.delete(this.selectedIncome.id);
+						await this.getEmployeeStatistics(
+							this.selectedIncome.employee.id
+						);
+						this.employeesService.update(
+							this.selectedIncome.employee.id,
+							{
+								averageIncome: this.averageIncome,
+								averageBonus: this.averageBonus
+							}
+						);
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
 								name: this.employeeName

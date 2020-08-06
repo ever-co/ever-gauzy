@@ -30,6 +30,8 @@ import { IncomeExpenseAmountComponent } from '../../@shared/table-components/inc
 import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
+import { EmployeesService } from '../../@core/services';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -81,6 +83,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 	private _selectedOrganizationId: string;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
+	averageExpense = 0;
 	@ViewChild('expensesTable') expensesTable;
 
 	loadSettingsSmartTable() {
@@ -138,7 +141,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService,
 		private expenseCategoriesStore: ExpenseCategoriesStoreService,
-		private readonly router: Router
+		private readonly router: Router,
+		private employeeStatisticsService: EmployeeStatisticsService,
+		private employeesService: EmployeesService
 	) {
 		super(translateService);
 		this.setView();
@@ -203,7 +208,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 					}
 				}
 			});
-
 		this.route.queryParamMap
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
@@ -275,7 +279,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 				employeeId: formData.employee ? formData.employee.id : null,
 				orgId: this.store.selectedOrganization.id
 			});
-
+			await this.getEmployeeStatistics(formData.employee.id);
+			this.employeesService.update(formData.employee.id, {
+				averageExpenses: this.averageExpense
+			});
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: formData.employee
@@ -298,7 +305,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
 		}
-
 		this.dialogService
 			.open(ExpensesMutationComponent)
 			.onClose.pipe(takeUntil(this._ngDestroy$))
@@ -331,6 +337,15 @@ export class ExpensesComponent extends TranslationBaseComponent
 						await this.expenseService.update(
 							formData.id,
 							this.getFormData(formData)
+						);
+						await this.getEmployeeStatistics(
+							this.selectedExpense.employee.id
+						);
+						this.employeesService.update(
+							this.selectedExpense.employee.id,
+							{
+								averageExpenses: this.averageExpense
+							}
 						);
 						this.toastrService.primary(
 							this.getTranslation(
@@ -404,7 +419,15 @@ export class ExpensesComponent extends TranslationBaseComponent
 						await this.expenseService.delete(
 							this.selectedExpense.id
 						);
-
+						await this.getEmployeeStatistics(
+							this.selectedExpense.employee.id
+						);
+						this.employeesService.update(
+							this.selectedExpense.employee.id,
+							{
+								averageExpenses: this.averageExpense
+							}
+						);
 						this.toastrService.primary(
 							this.getTranslation(
 								'NOTES.EXPENSES.DELETE_EXPENSE',
@@ -427,7 +450,18 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}
 			});
 	}
-
+	async getEmployeeStatistics(id) {
+		const statistics = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+			id
+		);
+		this.averageExpense = this.countStatistic(statistics.expenseStatistics);
+	}
+	countStatistic(data: number[]) {
+		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
+			? data.filter(Number).reduce((a, b) => a + b, 0) /
+					data.filter(Number).length
+			: 0;
+	}
 	selectExpense({ isSelected, data }) {
 		const selectedExpense = isSelected ? data : null;
 		if (this.expensesTable) {
