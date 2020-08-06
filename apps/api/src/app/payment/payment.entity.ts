@@ -27,6 +27,8 @@ import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Organization } from '../organization/organization.entity';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 @Entity('payment')
 export class Payment extends Base implements IPayment {
@@ -112,6 +114,32 @@ export class Payment extends Base implements IPayment {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((payment: Payment) => payment.tenant)
 	readonly tenantId?: string;
+
+	@ApiPropertyOptional({ type: OrganizationProjects })
+	@ManyToOne((type) => OrganizationProjects, (project) => project.payments, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	project?: OrganizationProjects;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	projectId?: string;
+
+	@ApiPropertyOptional({ type: OrganizationContact })
+	@ManyToOne((type) => OrganizationContact, (contact) => contact.payments, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	contact?: OrganizationContact;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	contactId?: string;
 
 	@ManyToMany(() => Tag, (tag) => tag.payment)
 	@JoinTable({

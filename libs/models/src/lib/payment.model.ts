@@ -4,6 +4,8 @@ import { Invoice } from './invoice.model';
 import { ITenant } from './tenant.model';
 import { Tag } from '..';
 import { User } from './user.model';
+import { OrganizationContact } from './organization-contact.model';
+import { OrganizationProjects } from './organization-projects.model';
 
 export interface Payment extends IBaseEntityModel {
 	invoice?: Invoice;
@@ -20,6 +22,10 @@ export interface Payment extends IBaseEntityModel {
 	currency?: string;
 	overdue?: boolean;
 	paymentMethod?: string;
+	contact?: OrganizationContact;
+	contactId?: string;
+	project?: OrganizationProjects;
+	projectId?: string;
 }
 
 export interface PaymentUpdateInput {
