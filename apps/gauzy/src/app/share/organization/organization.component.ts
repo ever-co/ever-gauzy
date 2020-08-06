@@ -9,9 +9,7 @@ import {
 	Organization,
 	OrganizationAwards,
 	OrganizationLanguages,
-	PermissionsEnum,
-	Timesheet,
-	IGetTimesheetInput
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -23,7 +21,6 @@ import * as moment from 'moment';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
-import { TimesheetService } from '../../@shared/timesheet/timesheet.service';
 
 @Component({
 	selector: 'ngx-organization',
