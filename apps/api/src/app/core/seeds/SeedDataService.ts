@@ -1003,7 +1003,6 @@ export class SeedDataService {
 			createRandomKeyResult(
 				this.connection,
 				tenants,
-				tenantOrganizationsMap,
 				tenantEmployeeMap,
 				randomGoals
 			)
