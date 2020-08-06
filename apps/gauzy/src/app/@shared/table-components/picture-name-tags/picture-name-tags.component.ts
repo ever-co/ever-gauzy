@@ -60,6 +60,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/models';
 			img {
 				height: 100%;
 				max-width: 70px;
+				border-radius: 50%;
 			}
 
 			.tags-right {
