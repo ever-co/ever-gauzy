@@ -26,7 +26,7 @@ export class ReportsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 	reports$: Observable<any> = this._upworkStoreService.reports$;
 	settingsSmartTable: object;
-	maxDate: Date = new Date();
+	today: Date = new Date();
 	defaultDateRange$;
 	displayDate: any;
 	updateReports$: Subject<any> = new Subject();
@@ -57,7 +57,6 @@ export class ReportsComponent extends TranslationBaseComponent
 			.subscribe(() => {
 				this._getReport();
 			});
-		this.updateReports$.next();
 	}
 
 	ngOnDestroy(): void {}
@@ -110,10 +109,22 @@ export class ReportsComponent extends TranslationBaseComponent
 				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'string',
+					filter: true,
 					valuePrepareFunction: (item) => {
 						const user = item.user || null;
 						if (user) {
 							return `${user.firstName} ${user.lastName}`;
+						}
+					},
+					filterFunction(cell?: any, search?: string): boolean {
+						if (
+							cell.user.firstName.indexOf(search) >= 0 ||
+							cell.user.lastName.indexOf(search) >= 0 ||
+							search === ''
+						) {
+							return true;
+						} else {
+							return false;
 						}
 					}
 				}
@@ -138,7 +149,12 @@ export class ReportsComponent extends TranslationBaseComponent
 	 */
 	private _setDefaultRange(): void {
 		this.defaultDateRange$ = this._upworkStoreService.dateRangeActivity$.pipe(
-			tap((dateRange) => (this.selectedDateRange = dateRange)),
+			tap(
+				(dateRange) => (
+					(this.selectedDateRange = dateRange),
+					this.updateReports$.next()
+				)
+			),
 			tap(
 				(dateRange) =>
 					(this.displayDate = `${moment(dateRange.start).format(
@@ -161,8 +177,11 @@ export class ReportsComponent extends TranslationBaseComponent
 		}
 	}
 
-	public previousMonth() {
-		const { start, end } = this.selectedDateRange;
+	/*
+	 * Previous month calendar
+	 */
+	public previousMonth(): void {
+		const { start, end }: IUpworkDateRange = this.selectedDateRange;
 		this.selectedDateRange = {
 			start: new Date(
 				moment(start).subtract(1, 'months').format('YYYY-MM-DD')
@@ -171,9 +190,38 @@ export class ReportsComponent extends TranslationBaseComponent
 				moment(end).subtract(1, 'months').format('YYYY-MM-DD')
 			)
 		};
+		this._upworkStoreService.setFilterDateRange(this.selectedDateRange);
 	}
 
-	public nextMonth() {
-		console.log(this.selectedDateRange);
+	/*
+	 * Next month calendar
+	 */
+	public nextMonth(): void {
+		const { start, end }: IUpworkDateRange = this.selectedDateRange;
+		this.selectedDateRange = {
+			start: new Date(
+				moment(start).add(1, 'months').format('YYYY-MM-DD')
+			),
+			end: new Date(moment(end).add(1, 'months').format('YYYY-MM-DD'))
+		};
+		if (this.selectedDateRange.start > this.today) {
+			this.selectedDateRange.start = new Date(
+				moment(this.today).subtract(1, 'months').format('YYYY-MM-DD')
+			);
+		}
+		if (this.selectedDateRange.end > this.today) {
+			this.selectedDateRange.end = this.today;
+		}
+		this._upworkStoreService.setFilterDateRange(this.selectedDateRange);
+	}
+
+	/*
+	 * Disable next month button
+	 */
+	public isNextButtonDisabled(): boolean {
+		return moment(this.selectedDateRange.end).isSameOrAfter(
+			this.today,
+			'day'
+		);
 	}
 }
