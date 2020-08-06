@@ -60,6 +60,28 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 		return this.requestService.create(entity);
 	}
 
+	@ApiOperation({ summary: 'Time off request update' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found request time off',
+		type: TimeOffRequest
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	async timeOffRequestUpdate(
+		@Param('id') id: string,
+		@Body() entity: ITimeOffCreateInput,
+	): Promise<TimeOffRequest> {
+		return this.requestService.updateTimeOffByAdmin(
+			id,
+			entity
+		);
+	}
+
 	@ApiOperation({ summary: 'Time off request approved' })
 	@ApiResponse({
 		status: HttpStatus.OK,
