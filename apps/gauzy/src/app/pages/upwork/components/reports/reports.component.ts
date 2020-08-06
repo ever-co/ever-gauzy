@@ -1,11 +1,21 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	ChangeDetectorRef,
+	AfterViewInit
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/internal/operators/takeUntil';
+import { tap } from 'rxjs/internal/operators/tap';
+import { debounceTime } from 'rxjs/internal/operators/debounceTime';
+import { untilDestroyed } from 'ngx-take-until-destroy';
+import * as moment from 'moment';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from 'apps/gauzy/src/app/@shared/table-components/income-amount/income-amount.component';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { UpworkStoreService } from '../../../../@core/services/upwork-store.service';
+import { IUpworkDateRange } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-reports',
@@ -13,30 +23,57 @@ import { UpworkStoreService } from '../../../../@core/services/upwork-store.serv
 	styleUrls: ['./reports.component.scss']
 })
 export class ReportsComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	private _ngDestroy$: Subject<void> = new Subject();
+	implements OnInit, OnDestroy, AfterViewInit {
 	reports$: Observable<any> = this._upworkStoreService.reports$;
 	settingsSmartTable: object;
+	maxDate: Date = new Date();
+	defaultDateRange$;
+	displayDate: any;
+	updateReports$: Subject<any> = new Subject();
+
+	private _selectedDateRange: IUpworkDateRange;
+	public get selectedDateRange(): IUpworkDateRange {
+		return this._selectedDateRange;
+	}
+	public set selectedDateRange(range: IUpworkDateRange) {
+		this._selectedDateRange = range;
+	}
 
 	constructor(
+		private readonly cdr: ChangeDetectorRef,
 		public translateService: TranslateService,
 		private readonly _upworkStoreService: UpworkStoreService
 	) {
 		super(translateService);
 	}
 
-	ngOnInit() {
-		this._upworkStoreService.loadReports();
+	ngOnInit(): void {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
+		this._setDefaultRange();
+
+		this.updateReports$
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe(() => {
+				this._getReport();
+			});
+		this.updateReports$.next();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	ngOnDestroy(): void {}
+
+	ngAfterViewInit(): void {
+		this.cdr.detectChanges();
 	}
 
-	private _loadSettingsSmartTable() {
+	private _getReport(): void {
+		this._upworkStoreService
+			.loadReports()
+			.pipe(untilDestroyed(this))
+			.subscribe();
+	}
+
+	private _loadSettingsSmartTable(): void {
 		this.settingsSmartTable = {
 			actions: false,
 			mode: 'external',
@@ -88,11 +125,55 @@ export class ReportsComponent extends TranslationBaseComponent
 		};
 	}
 
-	private _applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable(): void {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this._loadSettingsSmartTable();
 			});
+	}
+
+	/*
+	 * Set 1 month default daterange for filter
+	 */
+	private _setDefaultRange(): void {
+		this.defaultDateRange$ = this._upworkStoreService.dateRangeActivity$.pipe(
+			tap((dateRange) => (this.selectedDateRange = dateRange)),
+			tap(
+				(dateRange) =>
+					(this.displayDate = `${moment(dateRange.start).format(
+						'MMM D, YYYY'
+					)} - ${moment(dateRange.end).format('MMM D, YYYY')}`)
+			)
+		);
+	}
+
+	/*
+	 * Onchange date range for filter'
+	 */
+	public handleRangeChange({ start, end }: IUpworkDateRange): void {
+		if (
+			moment(start, 'YYYY-MM-DD').isValid() &&
+			moment(end, 'YYYY-MM-DD').isValid()
+		) {
+			this._upworkStoreService.setFilterDateRange({ start, end });
+			this.updateReports$.next();
+		}
+	}
+
+	public previousMonth() {
+		const { start, end } = this.selectedDateRange;
+		this.selectedDateRange = {
+			start: new Date(
+				moment(start).subtract(1, 'months').format('YYYY-MM-DD')
+			),
+			end: new Date(
+				moment(end).subtract(1, 'months').format('YYYY-MM-DD')
+			)
+		};
+	}
+
+	public nextMonth() {
+		console.log(this.selectedDateRange);
 	}
 }

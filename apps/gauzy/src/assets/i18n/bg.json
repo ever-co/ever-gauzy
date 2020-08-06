@@ -466,6 +466,7 @@
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"PROJECTS_COUNT": "Projects Count",
 		"CLIENTS_COUNT": "Clients Count",
+		"EMPLOYEES_COUNT": "Employees Count",
 		"DETAILS": "Детайли",
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
@@ -595,7 +596,8 @@
 			"SYNCED_CONTRACTS": "Synced Contracts",
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
-			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities"
+			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
+			"DATE_RANGE_PLACEHOLDER": "Изберете дата между"
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -1301,7 +1303,7 @@
 		"DISPLAY_HOLIDAYS": "Display Holidays",
 		"HOLIDAY_NAME": "Holiday name",
 		"SELECT_EMPLOYEES": "Select Employees",
-		"TIME_OFF_SETTINGS": "Time Off Settings",
+		"SETTINGS": "Settings",
 		"SELECT_HOLIDAY_NAME": "Select Holiday name",
 		"ADD_OR_REMOVE_EMPLOYEES": "Добави или премахни служители",
 		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy",

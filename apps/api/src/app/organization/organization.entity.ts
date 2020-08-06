@@ -242,6 +242,11 @@ export class Organization extends TenantBase implements IOrganization {
 	@Column({ nullable: true })
 	show_clients_count?: boolean;
 
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_employees_count?: boolean;
+
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ nullable: true })

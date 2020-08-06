@@ -122,10 +122,12 @@ import { Skill } from './../../skills/skill.entity';
 import { Language } from './../../language/language.entity';
 import { Tenant } from './../../tenant/tenant.entity';
 import { ProductCategory } from '../../product-category/product-category.entity';
-import { createDefaultProductCategories } from '../../product-category/product-category.seed';
 import { ProductType } from '../../product-type/product-type.entity';
 import { CandidateEducation } from '../../candidate-education/candidate-education.entity';
-import { createDefaultProductTypes } from '../../product-type/product-type.seed';
+import {
+	createDefaultProductTypes,
+	createRandomProductType
+} from '../../product-type/product-type.seed';
 import { Product } from '../../product/product.entity';
 import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
@@ -187,10 +189,12 @@ import { Integration } from '../../integration/integration.entity';
 import { createDefaultTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
 import {
 	createDefaultGoals,
+	createRandomGoal,
 	updateDefaultGoalProgress
 } from '../../goal/goal.seed';
 import {
 	createDefaultKeyResults,
+	createRandomKeyResult,
 	updateDefaultKeyResultProgress
 } from '../../keyresult/keyresult.seed';
 import { createDefaultKeyResultUpdates } from '../../keyresult-update/keyresult-update.seed';
@@ -209,7 +213,10 @@ import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import { createRandomEmployeeTimeOff } from '../../time-off-request/time-off-request.seed';
-import { createOrganizationDocuments } from '../../organization-documents/organization-documents.seed';
+import {
+	createOrganizationDocuments,
+	createRandomOrganizationDocuments
+} from '../../organization-documents/organization-documents.seed';
 import {
 	createDefaultEquipments,
 	createRandomEquipments
@@ -299,6 +306,10 @@ import {
 	createRandomEquipmentSharingPolicyForOrg
 } from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
 import { EquipmentSharingPolicy } from '../../equipment-sharing-policy/equipment-sharing-policy.entity';
+import { createRandomProductOption } from '../../product-option/product-option.seed';
+import { createRandomProductVariantSettings } from '../../product-settings/product-settings.seed';
+import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
+import { createRandomProductVariantPrice } from '../../product-variant-price/product-variant-price.seed';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -437,7 +448,9 @@ const randomSeedConfig = {
 	contacts: 50, // The number of random contacts to be seeded.
 	noOfHelpCenterArticle: 10, // The number of random Help Center Articles.
 	availabilitySlotsPerOrganization: 50, // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
-	noOfTimeLogsPerTimeSheet: 5 // No of time logs entry per time sheets
+	noOfTimeLogsPerTimeSheet: 5, // No of time logs entry per time sheets
+	numberOfOptionPerProduct: 5, // number of product options per product
+	numberOfVariantPerProduct: 5 // number of product variant per product
 };
 
 @Injectable()
@@ -849,6 +862,19 @@ export class SeedDataService {
 			randomSeedConfig.organizationsPerTenant || 1
 		);
 
+		// todo: need to fix this function
+		// await this.tryExecute(
+		//   createRandomProductType(this.connection, tenants, tenantOrganizationsMap)
+		// );
+
+		await this.tryExecute(
+			createRandomOrganizationDocuments(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
 		const tenantSuperAdminsMap = await createRandomSuperAdminUsers(
 			this.connection,
 			roles,
@@ -897,6 +923,40 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			createRandomProductOption(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				randomSeedConfig.numberOfOptionPerProduct || 5
+			)
+		);
+
+		await this.tryExecute(
+			createRandomProductVariant(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				randomSeedConfig.numberOfVariantPerProduct || 5
+			)
+		);
+
+		await this.tryExecute(
+			createRandomProductVariantPrice(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomProductVariantSettings(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
 			createRandomCandidateSources(
 				this.connection,
 				tenants,
@@ -915,6 +975,25 @@ export class SeedDataService {
 				tenantEmployeeMap,
 				tenantOrganizationsMap,
 				roles
+			)
+		);
+
+		const randomGoals = await this.tryExecute(
+			createRandomGoal(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				tenantEmployeeMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomKeyResult(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				tenantEmployeeMap,
+				randomGoals
 			)
 		);
 
@@ -1029,6 +1108,14 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			seedRandomOrganizationPosition(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			createRandomApprovalPolicyForOrg(
 				this.connection,
 				tenants,
 				tenantOrganizationsMap
@@ -1162,6 +1249,7 @@ export class SeedDataService {
 				this.connection,
 				tenants,
 				tenantUsersMap,
+				tenantEmployeeMap,
 				tenantOrganizationsMap
 			)
 		);
