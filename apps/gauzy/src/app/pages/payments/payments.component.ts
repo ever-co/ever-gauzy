@@ -11,7 +11,9 @@ import {
 	ComponentLayoutStyleEnum,
 	Invoice,
 	Organization,
-	OrganizationSelectInput
+	OrganizationSelectInput,
+	OrganizationContact,
+	OrganizationProjects
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { InvoicePaymentOverdueComponent } from '../invoices/table-components/invoice-payment-overdue.component';
@@ -22,6 +24,8 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 @Component({
 	selector: 'ngx-payments',
@@ -41,6 +45,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 		private router: Router,
 		private invoicesService: InvoicesService,
 		private organizationsService: OrganizationsService,
+		private organizationProjectsService: OrganizationProjectsService,
 		private toastrService: NbToastrService
 	) {
 		super(translateService);
@@ -59,6 +64,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 	organization: Organization;
 	disableButton = true;
 	currency: string;
+	organizationContacts: OrganizationContact[];
+	projects: OrganizationProjects[];
 
 	ngOnInit() {
 		this.loadSmartTable();
@@ -101,7 +108,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 					this.invoices = invoices.items;
 					this.selectedPayment = null;
 					const { items } = await this.paymentService.getAll(
-						['invoice', 'recordedBy'],
+						['invoice', 'recordedBy', 'contact', 'project', 'tags'],
 						{
 							organizationId: org.id
 						}
@@ -114,6 +121,22 @@ export class PaymentsComponent extends TranslationBaseComponent
 							payment.invoice.toContact = organizationContact;
 						}
 					}
+					const res = await this.organizationContactService.getAll(
+						[],
+						{
+							organizationId: org.id
+						}
+					);
+
+					if (res) {
+						this.organizationContacts = res.items;
+					}
+
+					const projects = await this.organizationProjectsService.getAll(
+						[],
+						{ organizationId: org.id }
+					);
+					this.projects = projects.items;
 					this.smartTableSource.load(items);
 				}
 			});
@@ -125,7 +148,9 @@ export class PaymentsComponent extends TranslationBaseComponent
 				context: {
 					invoices: this.invoices,
 					organization: this.organization,
-					currencyString: this.currency
+					currencyString: this.currency,
+					organizationContacts: this.organizationContacts,
+					projects: this.projects
 				}
 			})
 			.onClose.pipe(first())
@@ -144,7 +169,10 @@ export class PaymentsComponent extends TranslationBaseComponent
 				context: {
 					invoices: this.invoices,
 					organization: this.organization,
-					payment: this.selectedPayment
+					payment: this.selectedPayment,
+					organizationContacts: this.organizationContacts,
+					projects: this.projects,
+					tags: this.selectedPayment.tags
 				}
 			})
 			.onClose.pipe(first())
@@ -180,27 +208,32 @@ export class PaymentsComponent extends TranslationBaseComponent
 				amount: {
 					title: this.getTranslation('PAYMENTS_PAGE.AMOUNT'),
 					type: 'text',
-					filter: false
+					filter: false,
+					width: '9%'
 				},
 				paymentDate: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
 					type: 'text',
+					width: '9%',
 					valuePrepareFunction: (cell, row) => {
 						return `${cell.slice(0, 10)}`;
 					}
 				},
 				paymentMethod: {
 					title: 'Payment Method',
-					type: 'text'
+					type: 'text',
+					width: '9%'
 				},
 				currency: {
 					title: 'Currency',
-					type: 'text'
+					type: 'text',
+					width: '9%'
 				},
 				recordedBy: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
 					type: 'text',
 					filter: false,
+					width: '9%',
 					valuePrepareFunction: (cell, row) => {
 						if (cell.firstName && cell.lastName) {
 							return `${cell.firstName} ${cell.lastName}`;
@@ -212,30 +245,52 @@ export class PaymentsComponent extends TranslationBaseComponent
 				note: {
 					title: this.getTranslation('PAYMENTS_PAGE.NOTE'),
 					type: 'text',
-					filter: false
+					filter: false,
+					width: '9%'
+				},
+				organizationContactName: {
+					title: this.getTranslation('PAYMENTS_PAGE.CONTACT'),
+					type: 'text',
+					width: '9%',
+					valuePrepareFunction: (cell, row) => {
+						if (row.invoice) {
+							return row.invoice.toContact.name;
+						} else if (row.contact) {
+							return row.contact.name;
+						}
+					}
+				},
+				projectName: {
+					title: 'Project',
+					type: 'text',
+					width: '9%',
+					valuePrepareFunction: (cell, row) => {
+						if (row.project) {
+							return row.project.name;
+						}
+					}
+				},
+				tags: {
+					title: 'Tags',
+					type: 'custom',
+					width: '9%',
+					renderComponent: NotesWithTagsComponent
 				},
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'text',
 					filter: false,
+					width: '9%',
 					valuePrepareFunction: (cell, row) => {
 						if (row.invoice) {
 							return row.invoice.invoiceNumber;
 						}
 					}
 				},
-				organizationContactName: {
-					title: this.getTranslation('PAYMENTS_PAGE.CONTACT'),
-					type: 'text',
-					valuePrepareFunction: (cell, row) => {
-						if (row.invoice) {
-							return row.invoice.toContact.name;
-						}
-					}
-				},
 				overdue: {
 					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
 					type: 'custom',
+					width: '9%',
 					renderComponent: InvoicePaymentOverdueComponent
 				}
 			}

@@ -30,6 +30,7 @@ import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 import { Contact } from '../contact/contact.entity';
 import { Base } from '../core/entities/base';
+import { Payment } from '../payment/payment.entity';
 
 @Entity('organization_contact')
 export class OrganizationContact extends Base implements IOrganizationContact {
@@ -129,4 +130,11 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	@IsOptional()
 	@Column({ nullable: true })
 	contactType: string;
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payment) => payment.contact, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: Payment[];
 }
