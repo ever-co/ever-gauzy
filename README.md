@@ -81,14 +81,18 @@ Note: together with Gauzy, Docker Compose will run following:
 -   Install and run latest [PostgreSQL](https://www.postgresql.org) (optionally, other DB can be configured manually).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
 -   Install NPM packages with `yarn install`
+-   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`
 -   Run API with `yarn start:api` (by default runs on <http://localhost:3000/api>)
 -   Run Gauzy front-end with `yarn start`
 -   Open <http://localhost:4200> in your browser
 -   Login with email `admin@ever.co` and password: `admin`
 -   Enjoy
 
-Note: during the first API start, DB will be automatically seed with initial data if no users found.
-You can run seed any moment manually (e.g. if you changed entities schemas) with `yarn run seed` command to re-initialize DB (warning: unsafe for production!).
+Notes:
+
+-   during the first API start, DB will be automatically seed with minimum set of initial data if no users found.
+-   you can run seed any moment manually (e.g. if you changed entities schemas) with `yarn seed` command to re-initialize DB (warning: unsafe for production!).
+-   it is possible to run generation of extremely large amount of fake data for demo purposes / testing with `yarn seed:all` (warning: takes ~10 min to complete)
 
 ### Production
 
@@ -101,7 +105,7 @@ Note: it's WIP, currently supports AWS EKS (Kubernetes) and Fargate Clusters (fo
 -   [TypeScript](https://www.typescriptlang.org)
 -   [Node.js](https://nodejs.org)
 -   [Nx](https://nx.dev)
--   [Angular 8](https://angular.io)
+-   [Angular](https://angular.io)
 -   [Nest](https://github.com/nestjs/nest)
 -   [RxJS](http://reactivex.io/rxjs)
 -   [TypeORM](https://github.com/typeorm/typeorm)

@@ -1,3 +1,4 @@
+import { ContactType } from './../../../../../../../libs/models/src/lib/organization-contact.model';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -33,6 +34,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	@Output()
 	addOrEditOrganizationContact = new EventEmitter();
 
+	defaultSelectedType = 'Client';
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];
@@ -170,6 +172,10 @@ export class ContactMutationComponent extends TranslationBaseComponent
 
 	async submitForm() {
 		if (this.form.valid) {
+			let contactType = this.form.value['contactType'].$ngOptionLabel;
+			if (contactType === undefined) {
+				contactType = 'Client';
+			}
 			this.addOrEditOrganizationContact.emit({
 				tags: this.tags,
 				id: this.organizationContact
@@ -183,7 +189,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				city: this.form.value['city'],
 				address: this.form.value['address'],
 				projects: this.form.value['selectProjects'].projectId,
-				contactType: this.form.value['contactType'].$ngOptionLabel,
+				contactType: contactType,
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e)
