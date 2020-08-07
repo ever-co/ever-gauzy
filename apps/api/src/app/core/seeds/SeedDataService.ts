@@ -205,7 +205,7 @@ import {
 	createTags
 } from '../../tags/tag.seed';
 import { createRandomEmailSent } from '../../email/email.seed';
-import { createRandomEmployeeInviteSent } from '../../invite/invite.seed';
+import { createDefaultEmployeeInviteSent, createRandomEmployeeInviteSent } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import { createRandomEmployeeTimeOff } from '../../time-off-request/time-off-request.seed';
@@ -459,6 +459,7 @@ export class SeedDataService {
 	defaultProjects: OrganizationProjects[] | void;
 	tenant: Tenant;
 	roles: Role[];
+  superAdminUsers: User[];
 	defaultCandidateUsers: User[];
 	defaultEmployees: Employee[];
 
@@ -569,7 +570,7 @@ export class SeedDataService {
 
 		this.organizations = defaultOrganizations;
 
-		const superAdminUsers = await createDefaultSuperAdminUsers(
+		this.superAdminUsers = await createDefaultSuperAdminUsers(
 			this.connection,
 			this.roles,
 			this.tenant
@@ -584,7 +585,7 @@ export class SeedDataService {
 
 		await createDefaultUsersOrganizations(this.connection, {
 			organizations: this.organizations,
-			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
+			users: [...defaultEmployeeUsers, ...adminUsers, ...this.superAdminUsers]
 		});
 
 		//User level data that needs connection, tenant, organization, role, users
@@ -593,6 +594,15 @@ export class SeedDataService {
 			org: this.organizations[0],
 			users: defaultEmployeeUsers
 		});
+
+    await this.tryExecute(
+      createDefaultEmployeeInviteSent(
+        this.connection,
+        this.tenant,
+        this.organizations,
+        this.superAdminUsers
+      )
+    );
 
 		await this.tryExecute(
 			createDefaultGeneralGoalSetting(
