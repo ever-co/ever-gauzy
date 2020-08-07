@@ -43,4 +43,11 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		}
 		return await this.findAll(filter || {});
 	}
+
+	public countStatistic(data: number[]) {
+		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
+			? data.filter(Number).reduce((a, b) => a + b, 0) /
+					data.filter(Number).length
+			: 0;
+	}
 }

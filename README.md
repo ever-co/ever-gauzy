@@ -89,9 +89,10 @@ Note: together with Gauzy, Docker Compose will run following:
 -   Enjoy
 
 Notes:
-- during the first API start, DB will be automatically seed with minimum set of initial data if no users found.
-- you can run seed any moment manually (e.g. if you changed entities schemas) with `yarn seed` command to re-initialize DB (warning: unsafe for production!).
-- it is possible to run generation of extremely large amount of fake data for demo purposes / testing with `yarn seed:all` (warning: takes ~10 min to complete)
+
+-   during the first API start, DB will be automatically seed with minimum set of initial data if no users found.
+-   you can run seed any moment manually (e.g. if you changed entities schemas) with `yarn seed` command to re-initialize DB (warning: unsafe for production!).
+-   it is possible to run generation of extremely large amount of fake data for demo purposes / testing with `yarn seed:all` (warning: takes ~10 min to complete)
 
 ### Production
 

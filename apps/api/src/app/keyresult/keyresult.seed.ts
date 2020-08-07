@@ -336,71 +336,70 @@ export const createRandomKeyResult = async (
 
 	for (const tenant of tenants) {
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-			for (const goal of goals) {
-				const keyResult = new KeyResult();
+		for (const goal of goals) {
+			const keyResult = new KeyResult();
 
-				keyResult.deadline = faker.random.arrayElement(
-					Object.keys(KeyResultDeadlineEnum)
-				);
+			keyResult.deadline = faker.random.arrayElement(
+				Object.keys(KeyResultDeadlineEnum)
+			);
+			if (
+				keyResult.deadline !== KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+			) {
+				keyResult.hardDeadline = moment(new Date())
+					.add(1, 'days')
+					.toDate();
+				keyResult.softDeadline = null;
 				if (
-					keyResult.deadline !==
-					KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+					keyResult.deadline ===
+					KeyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE
 				) {
-					keyResult.hardDeadline = moment(new Date())
-						.add(1, 'days')
+					keyResult.softDeadline = moment(new Date())
+						.add(3, 'days')
 						.toDate();
-					keyResult.softDeadline = null;
-					if (
-						keyResult.deadline ===
-						KeyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE
-					) {
-						keyResult.softDeadline = moment(new Date())
-							.add(3, 'days')
-							.toDate();
-					}
-				} else {
-					keyResult.hardDeadline = null;
-					keyResult.softDeadline = null;
 				}
-				keyResult.owner = faker.random.arrayElement(tenantEmployees);
-				keyResult.lead = faker.random.arrayElement(tenantEmployees);
-				keyResult.type = faker.random.arrayElement(
-					Object.keys(KeyResultTypeEnum)
-				);
-
-				if (keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
-					keyResult.initialValue = 0;
-					keyResult.targetValue = 1;
-				} else {
-					keyResult.targetValue = faker.random.number(5000);
-					keyResult.initialValue = faker.random.number(
-						keyResult.targetValue
-					);
-				}
-
-				keyResult.unit = faker.random.arrayElement([
-					'signups',
-					'publications',
-					'interviews',
-					'people',
-					'%'
-				]);
-
-				keyResult.progress = 0;
-				keyResult.name = faker.name.jobTitle();
-				keyResult.goal = goal;
-				keyResult.tenant = tenant;
-				keyResult.update = keyResult.initialValue;
-				keyResult.status = 'none';
-				keyResult.description = ' ';
-				keyResult.weight = faker.random.arrayElement([
-					KeyResultWeightEnum.DEFAULT,
-					KeyResultWeightEnum.INCREASE_BY_2X,
-					KeyResultWeightEnum.INCREASE_BY_4X
-				]);
-
-				keyResults.push(keyResult);
+			} else {
+				keyResult.hardDeadline = null;
+				keyResult.softDeadline = null;
 			}
+			keyResult.owner = faker.random.arrayElement(tenantEmployees);
+			keyResult.lead = faker.random.arrayElement(tenantEmployees);
+			keyResult.type = faker.random.arrayElement(
+				Object.keys(KeyResultTypeEnum)
+			);
+
+			if (keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
+				keyResult.initialValue = 0;
+				keyResult.targetValue = 1;
+			} else {
+				keyResult.targetValue = faker.random.number(5000);
+				keyResult.initialValue = faker.random.number(
+					keyResult.targetValue
+				);
+			}
+
+			keyResult.unit = faker.random.arrayElement([
+				'signups',
+				'publications',
+				'interviews',
+				'people',
+				'%'
+			]);
+
+			keyResult.progress = 0;
+			keyResult.name = faker.name.jobTitle();
+			keyResult.goal = goal;
+			keyResult.tenant = tenant;
+			keyResult.update = keyResult.initialValue;
+			keyResult.status = 'none';
+			keyResult.description = ' ';
+			keyResult.weight = faker.random.arrayElement([
+				KeyResultWeightEnum.DEFAULT,
+				KeyResultWeightEnum.INCREASE_BY_2X,
+				KeyResultWeightEnum.INCREASE_BY_4X
+			]);
+
+			keyResults.push(keyResult);
+		}
 	}
 	await connection.manager.save(keyResults);
 };

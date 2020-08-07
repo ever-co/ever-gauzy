@@ -6,78 +6,77 @@ import { ProductTypeTranslation } from './product-type-translation.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
 export const createDefaultProductType = async (
-  connection: Connection,
-  organizations: Organization[]
+	connection: Connection,
+	organizations: Organization[]
 ): Promise<ProductType[]> => {
+	const seedProductTypes = [];
 
-  const seedProductTypes = [];
+	organizations.forEach(async (organization) => {
+		seed.forEach((seedProductType) => {
+			const newType = new ProductType();
 
-  organizations.forEach(async (organization) => {
-    seed.forEach((seedProductType) => {
-      const newType = new ProductType();
+			newType.icon = seedProductType.icon;
+			newType.organization = organization;
+			newType.translations = [];
 
-      newType.icon = seedProductType.icon;
-      newType.organization = organization;
-      newType.translations = [];
+			seedProductType.translations.forEach((translation) => {
+				const newTranslation = new ProductTypeTranslation();
+				Object.assign(newTranslation, translation);
+				newType.translations.push(newTranslation);
+			});
 
-      seedProductType.translations.forEach((translation) => {
-        const newTranslation = new ProductTypeTranslation();
-        Object.assign(newTranslation, translation);
-        newType.translations.push(newTranslation);
-      });
+			seedProductTypes.push(newType);
+		});
+	});
 
-      seedProductTypes.push(newType);
-    });
-  });
+	await insertProductTypes(connection, seedProductTypes);
 
-  await insertProductTypes(connection, seedProductTypes);
-
-  return seedProductTypes;
+	return seedProductTypes;
 };
 
 const insertProductTypes = async (
-  connection: Connection,
-  productTypes: ProductType[]
+	connection: Connection,
+	productTypes: ProductType[]
 ): Promise<void> => {
-  await connection.manager.save(productTypes);
+	await connection.manager.save(productTypes);
 };
 
 export const createRandomProductType = async (
-  connection: Connection,
-  tenants: Tenant[],
-  tenantOrganizationsMap: Map<Tenant, Organization[]>
+	connection: Connection,
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>
 ): Promise<ProductType[]> => {
-  if (!tenantOrganizationsMap) {
-    console.warn(
-      'Warning: tenantOrganizationsMap not found, Random Product Type will not be created'
-    );
-    return;
-  }
+	if (!tenantOrganizationsMap) {
+		console.warn(
+			'Warning: tenantOrganizationsMap not found, Random Product Type will not be created'
+		);
+		return;
+	}
 
-  const productTypes: ProductType[] = [];
+	const productTypes: ProductType[] = [];
 
-  for (const tenant of tenants) {
-    const tenantOrgs = tenantOrganizationsMap.get(tenant);
-    for (const tenantOrg of tenantOrgs) {
-      for (const seedProductType of seed) {
-        const productType = new ProductType();
+	for (const tenant of tenants) {
+		const tenantOrgs = tenantOrganizationsMap.get(tenant);
+		for (const tenantOrg of tenantOrgs) {
+			for (const seedProductType of seed) {
+				const productType = new ProductType();
 
-        productType.icon = seedProductType.icon;
-        productType.organization = tenantOrg;
-        productType.translations = [];
+				productType.icon = seedProductType.icon;
+				productType.organization = tenantOrg;
+				productType.translations = [];
 
-        seedProductType.translations.forEach((translation) => {
-          const newTranslation = new ProductTypeTranslation();
-          Object.assign(newTranslation, translation);
-          productType.translations.push(newTranslation);
-        });
+				seedProductType.translations.forEach((translation) => {
+					const newTranslation = new ProductTypeTranslation();
+					Object.assign(newTranslation, translation);
+					productType.translations.push(newTranslation);
+				});
 
-        productTypes.push(productType);
-      }
-    }
-  }
+				productTypes.push(productType);
+			}
+		}
+	}
 
-  await connection.manager.save(productTypes);
+	await connection.manager.save(productTypes);
 
-  return productTypes;
+	return productTypes;
 };

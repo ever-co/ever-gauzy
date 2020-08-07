@@ -14,13 +14,29 @@ import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
 import { QueryHandlers } from './queries/handlers';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
+import { EmployeeStatisticsService } from '../employee-statistics/employee-statistics.service';
+import { EmployeeStatisticsModule } from '../employee-statistics';
+import { IncomeService } from '../income/income.service';
+import {
+	EmployeeRecurringExpenseService,
+	EmployeeRecurringExpense
+} from '../employee-recurring-expense';
+import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
+import { IncomeModule } from '../income/income.module';
+import { Income } from '../income/income.entity';
+import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 
 @Module({
 	imports: [
 		UserModule,
+		EmployeeStatisticsModule,
+		IncomeModule,
 		TypeOrmModule.forFeature([
 			Expense,
 			Employee,
+			EmployeeRecurringExpense,
+			OrganizationRecurringExpense,
+			Income,
 			Organization,
 			User,
 			ExpenseCategory
@@ -32,7 +48,11 @@ import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 		ExpenseService,
 		EmployeeService,
 		OrganizationService,
+		EmployeeStatisticsService,
 		UserService,
+		IncomeService,
+		EmployeeRecurringExpenseService,
+		OrganizationRecurringExpenseService,
 		...CommandHandlers,
 		...QueryHandlers
 	],

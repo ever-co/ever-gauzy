@@ -145,36 +145,14 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		if (this.form.valid) {
 			this.dialogRef.close(
 				Object.assign(
-					{ employee: this.employeeSelector.selectedEmployee },
+					{
+						employee: this.employeeSelector.selectedEmployee
+					},
 					this.form.value
 				)
 			);
-			await this.getEmployeeStatistics(
-				this.employeeSelector.selectedEmployee.id
-			);
-			this.employeesService.update(
-				this.employeeSelector.selectedEmployee.id,
-				{
-					averageIncome: this.averageIncome,
-					averageBonus: this.averageBonus
-				}
-			);
 		}
 	}
-	async getEmployeeStatistics(id) {
-		const statistics = await this.employeeStatisticsService.getStatisticsByEmployeeId(
-			id
-		);
-		this.averageIncome = this.countStatistic(statistics.incomeStatistics);
-		this.averageBonus = this.countStatistic(statistics.bonusStatistics);
-	}
-	countStatistic(data: number[]) {
-		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
-			? data.filter(Number).reduce((a, b) => a + b, 0) /
-					data.filter(Number).length
-			: 0;
-	}
-
 	addNewClient = (name: string): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
