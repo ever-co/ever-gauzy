@@ -39,19 +39,25 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 	);
 
 	fs.mkdirSync(path.join(baseDir, destDir), { recursive: true });
-	const file = await new Promise<string>((resolve, reject) => {
+	/*const file = await new Promise<string>((resolve, reject) => {
+	  console.log('path.join(dir, sourceFile),', path.join(dir, sourceFile),);
+	  console.log('path.join(baseDir, destFile),', path.join(baseDir, destFile),);
 		fs.copyFile(
 			path.join(dir, sourceFile),
 			path.join(baseDir, destFile),
 			(err) => {
 				if (err) {
-					reject(err);
-					return;
+					// reject(err);
+					// return;
+          console.log('resolve empty');
+          resolve('');
 				}
 				resolve(destFile);
 			}
 		);
-	});
+	});*/
+  let file = sourceFile;
+
 	screenshot.fullUrl = file;
 	screenshot.file = sourceFile;
 	screenshot.timeSlot = timeSlot;
@@ -61,6 +67,8 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 		timeSlot.stoppedAt
 	);
 	screenshot.deletedAt = null;
+
+
 	screenshots.push(screenshot);
 	// }
 	return screenshots;
