@@ -3,17 +3,6 @@
 		<div class="header-selector-wrapper">
 			<h4>{{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }}</h4>
 			<div class="header-selector-wrapper">
-				<div style="margin-right: 9px;">
-					<button
-						nbButton
-						status="primary"
-						(click)="manageAppropvalPolicy()"
-					>
-						{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate
-						}}
-					</button>
-				</div>
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
@@ -29,6 +18,14 @@
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
+			<button
+				class="float-right"
+				nbButton
+				status="primary"
+				(click)="manageAppropvalPolicy()"
+			>
+				{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
+			</button>
 		</div>
 
 		<ng2-smart-table
