@@ -7,6 +7,7 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 import { NbSpinnerModule, NbProgressBarModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { ActivityItemModule } from 'apps/gauzy/src/app/@shared/timesheet/activities/activity-item/activity-item.module';
 
 @NgModule({
 	declarations: [AppUrlActivityComponent],
@@ -15,9 +16,9 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 		AppUrlActivityRoutingModule,
 		FiltersModule,
 		NbSpinnerModule,
-		NbProgressBarModule,
 		TranslateModule,
-		SharedModule
+		SharedModule,
+		ActivityItemModule
 	]
 })
 export class AppUrlActivityModule {}

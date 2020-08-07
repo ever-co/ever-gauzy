@@ -1,7 +1,97 @@
 <nb-card>
 	<nb-card-header>Time Tracking</nb-card-header>
 	<nb-card-body>
-		This tab will show activity percentage, money spent, projects worked,
-		list of projects with no. of hours for each one etc.
+		<div class="row">
+			<div class="col-sm-6">
+				<nb-card>
+					<nb-card-header>Recent Activities</nb-card-header>
+					<nb-card-body>
+						<div
+							class="row"
+							*ngFor="
+								let timeSlotEmployee of timeSlotEmployees;
+								let i = index
+							"
+						>
+							<div class="col">
+								<div
+									class="hour-lable mt-3"
+									[ngClass]="{ 'border-top pt-3': i != 0 }"
+								>
+									<h6>{{ timeSlotEmployee.user.name }}</h6>
+								</div>
+
+								<div
+									class="row my-3 align-items-center justify-content-center"
+								>
+									<div
+										class="col"
+										*ngFor="
+											let timeSlot of timeSlotEmployee.timeSlots
+										"
+									>
+										<ngx-screenshots-item
+											[timeSlot]="timeSlot"
+										>
+										</ngx-screenshots-item>
+									</div>
+								</div>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-sm-6">
+				<nb-card>
+					<nb-card-header>Projects</nb-card-header>
+					<nb-card-body>
+						<div
+							*ngFor="
+								let recentActivity of projects;
+								let i = index
+							"
+						>
+							<ngx-activity-item
+								[item]="recentActivity"
+							></ngx-activity-item>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-sm-6">
+				<nb-card>
+					<nb-card-header>Members</nb-card-header>
+					<nb-card-body>
+						<div
+							*ngFor="
+								let recentActivity of members;
+								let i = index
+							"
+						>
+							<ngx-activity-item
+								[item]="recentActivity"
+							></ngx-activity-item>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-sm-6">
+				<nb-card>
+					<nb-card-header>Apps & Urls</nb-card-header>
+					<nb-card-body>
+						<div
+							*ngFor="
+								let recentActivity of recentActivities;
+								let i = index
+							"
+						>
+							<ngx-activity-item
+								[item]="recentActivity"
+							></ngx-activity-item>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
 	</nb-card-body>
 </nb-card>

@@ -1,19 +1,24 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { TimesheetService } from '../../../@shared/timesheet/timesheet.service';
 
 @Component({
 	selector: 'ga-time-tracking',
 	templateUrl: './time-tracking.component.html'
 })
 export class TimeTrackingComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+	timeSlotEmployees = [];
+	recentActivities = [];
+	projects = [];
+	members = [];
 
-	constructor() {}
+	constructor(private timesheetService: TimesheetService) {}
 
-	async ngOnInit() {}
-
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	ngOnInit() {
+		// this.timesheetService.getTimeSlotsStatic().then((resp) => {
+		// 	console.log(resp);
+		// 	this.timeSlotEmployees = resp;
+		// });
 	}
+
+	ngOnDestroy() {}
 }
