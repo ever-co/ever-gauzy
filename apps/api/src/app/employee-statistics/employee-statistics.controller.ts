@@ -21,7 +21,6 @@ import { MonthAggregatedEmployeeStatisticsQuery } from './queries/month-aggregat
 import { EmployeeStatisticsHistoryQuery } from './queries/employee-statistics-history.query';
 import { AuthGuard } from '@nestjs/passport';
 
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(
@@ -61,6 +60,7 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/months/:id')
+	@UseGuards(AuthGuard('jwt'))
 	async findAllByEmloyeeId(
 		@Param('id') id: string,
 		@Query('data') data?: string
@@ -82,6 +82,7 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/months')
+	@UseGuards(AuthGuard('jwt'))
 	async findAggregatedStatisticsByEmployeeId(
 		@Query('data') data?: string
 	): Promise<MonthAggregatedEmployeeStatistics> {
@@ -106,6 +107,7 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/history')
+	@UseGuards(AuthGuard('jwt'))
 	async findEmployeeStatisticsHistory(
 		@Query('data') data?: string
 	): Promise<EmployeeStatisticsHistory[]> {

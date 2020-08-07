@@ -27,7 +27,6 @@ import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Projects')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationProjectsController extends CrudController<
 	OrganizationProjects
@@ -97,6 +96,7 @@ export class OrganizationProjectsController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'))
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
@@ -123,6 +123,7 @@ export class OrganizationProjectsController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'))
 	// @UseGuards(PermissionGuard)
 	// @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put(':id')
