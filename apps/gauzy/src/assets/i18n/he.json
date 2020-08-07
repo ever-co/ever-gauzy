@@ -1224,7 +1224,10 @@
 		"TOTAL_PROJECTS": "Total Projects",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"EMPLOYEES": "עובדים",
-		"PROFITS": "Profits"
+		"PROFITS": "Profits",
+		"RATE": "ציון",
+		"ACTIVE": "פעיל",
+		"STARTED_WORK_ON": "Started work on"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
