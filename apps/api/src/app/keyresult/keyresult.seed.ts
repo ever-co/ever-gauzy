@@ -10,7 +10,6 @@ import {
 } from '@gauzy/models';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { compareAsc } from 'date-fns';
-import { Organization } from '../organization/organization.entity';
 import * as moment from 'moment';
 
 const keyResultDefaultData = [
