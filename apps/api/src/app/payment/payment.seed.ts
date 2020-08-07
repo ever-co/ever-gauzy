@@ -11,6 +11,7 @@ import * as faker from 'faker';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
+import * as moment from 'moment';
 
 export const createDefaultPayment = async (
   connection: Connection,
@@ -30,20 +31,13 @@ export const createDefaultPayment = async (
       where: [{ organizationId: tenantOrg.id }]
     });
     for (const invoice of invoices) {
-      const tags = await connection.manager.find(Tag, {
-        where: [{ organization: tenantOrg }]
-      });
-
       const payment = new Payment();
 
       payment.invoiceId = invoice.id;
       payment.invoice = invoice;
       payment.organization = tenantOrg;
       payment.organizationId = tenantOrg.id;
-      payment.paymentDate = faker.date.between(
-        2019,
-        faker.date.recent()
-      );
+      payment.paymentDate = faker.date.between(new Date(),moment(new Date()).add(1, 'month').toDate());
       payment.amount = faker.random.number({
         min: 1000,
         max: 100000
@@ -57,7 +51,8 @@ export const createDefaultPayment = async (
       );
       payment.overdue = faker.random.boolean();
       payment.tenant = tenant;
-      payment.tags = tags;
+      payment.tags = invoice.tags;
+
 
       // TODO: which user we need to set here, employee?
       payment.userId = faker.random.arrayElement(employees).id;

@@ -10,6 +10,7 @@ import {
 	InvoiceTypeEnum
 } from '@gauzy/models';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import * as _ from 'underscore';
 
 export const createDefaultInvoice = async (
   connection: Connection,
@@ -27,8 +28,12 @@ export const createDefaultInvoice = async (
     });
     for (let i = 0; i < noOfInvoicePerOrganization; i++) {
       let invoice = new Invoice();
-      // let invoiceItem = faker.random.arrayElement(invoiceItems);
-      invoice.tags = [faker.random.arrayElement(tags)];
+
+      invoice.tags = _.chain(tags)
+        .shuffle()
+        .take(faker.random.number({ min: 1, max: 3 }))
+        .values()
+        .value();
       invoice.invoiceDate = faker.date.past(0.2);
       invoice.invoiceNumber = faker.random.number({
         min: 1,
@@ -93,7 +98,11 @@ export const createRandomInvoice = async (
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 				let invoice = new Invoice();
 				// let invoiceItem = faker.random.arrayElement(invoiceItems);
-				invoice.tags = [faker.random.arrayElement(tags)];
+        invoice.tags = _.chain(tags)
+          .shuffle()
+          .take(faker.random.number({ min: 1, max: 3 }))
+          .values()
+          .value();
 				invoice.invoiceDate = faker.date.past(0.2);
 				invoice.invoiceNumber = faker.random.number({
 					min: 1,
