@@ -48,6 +48,7 @@ export enum PermissionsEnum {
 	ALL_ORG_EDIT = 'ALL_ORG_EDIT',
 	POLICY_VIEW = 'POLICY_VIEW',
 	POLICY_EDIT = 'POLICY_EDIT',
+	TIME_OFF_EDIT = 'TIME_OFF_EDIT',
 	REQUEST_APPROVAL_VIEW = 'REQUEST_APPROVAL_VIEW',
 	REQUEST_APPROVAL_EDIT = 'REQUEST_APPROVAL_EDIT',
 	APPROVAL_POLICY_VIEW = 'APPROVALS_POLICY_VIEW',
@@ -92,6 +93,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_INVITE_EDIT,
 		PermissionsEnum.POLICY_VIEW,
 		PermissionsEnum.POLICY_EDIT,
+		PermissionsEnum.TIME_OFF_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
@@ -139,6 +141,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
+		PermissionsEnum.TIME_OFF_EDIT,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
 		PermissionsEnum.REQUEST_APPROVAL_VIEW
 	]
