@@ -10,72 +10,72 @@ import {
 	InvoiceTypeEnum
 } from '@gauzy/models';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import * as _ from 'underscore';
 
 export const createDefaultInvoice = async (
-	connection: Connection,
-	defaultOrganizations: Organization[],
-	noOfInvoicePerOrganization: number
+  connection: Connection,
+  defaultOrganizations: Organization[],
+  noOfInvoicePerOrganization: number
 ) => {
-	let invoices: Invoice[] = [];
+  let invoices: Invoice[] = [];
 
-	for (const organization of defaultOrganizations) {
-		const tags = await connection.manager.find(Tag, {
-			where: [{ organization: organization }]
-		});
-		const OrganizationContacts = await connection.manager.find(
-			OrganizationContact,
-			{
-				where: [{ organizationId: organization.id }]
-			}
-		);
-		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
-			let invoice = new Invoice();
-			// let invoiceItem = faker.random.arrayElement(invoiceItems);
-			invoice.tags = [faker.random.arrayElement(tags)];
-			invoice.invoiceDate = faker.date.past(0.2);
-			invoice.invoiceNumber = faker.random.number({
-				min: 1,
-				max: 9999999
-			});
-			invoice.dueDate = faker.date.recent(50);
-			invoice.organizationContactId = faker.random.arrayElement(
-				OrganizationContacts
-			).id;
-			invoice.toContact = faker.random.arrayElement(OrganizationContacts);
-			invoice.currency = faker.random.arrayElement(
-				Object.values(CurrenciesEnum)
-			);
-			invoice.discountValue = faker.random.number({
-				min: 1,
-				max: 10
-			});
-			invoice.paid = faker.random.boolean();
-			invoice.tax = faker.random.number({ min: 1, max: 10 });
-			invoice.tax2 = faker.random.number({ min: 1, max: 10 });
-			invoice.terms = 'Term and Setting Applied';
-			invoice.isEstimate = faker.random.boolean();
-			if (invoice.isEstimate) {
-				invoice.isAccepted = faker.random.boolean();
-			}
-			invoice.discountType = faker.random.arrayElement(
-				Object.values(DiscountTaxTypeEnum)
-			);
-			invoice.taxType = faker.random.arrayElement(
-				Object.values(DiscountTaxTypeEnum)
-			);
-			invoice.tax2Type = faker.random.arrayElement(
-				Object.values(DiscountTaxTypeEnum)
-			);
-			invoice.invoiceType = faker.random.arrayElement(
-				Object.values(InvoiceTypeEnum)
-			);
-			invoice.organizationId = organization.id;
-			invoice.status = 'Active';
-			invoices.push(invoice);
-		}
-	}
+  for (const organization of defaultOrganizations) {
+    const tags = await connection.manager.find(Tag, {
+      where: [{ organization: organization }]
+    });
+    const OrganizationContacts = await connection.manager.find(OrganizationContact, {
+      where: [{ organizationId: organization.id }]
+    });
+    for (let i = 0; i < noOfInvoicePerOrganization; i++) {
+      let invoice = new Invoice();
 
-	await connection.manager.save(invoices);
+      invoice.tags = _.chain(tags)
+        .shuffle()
+        .take(faker.random.number({ min: 1, max: 3 }))
+        .values()
+        .value();
+      invoice.invoiceDate = faker.date.past(0.2);
+      invoice.invoiceNumber = faker.random.number({
+        min: 1,
+        max: 9999999
+      });
+      invoice.dueDate = faker.date.recent(50);
+      invoice.organizationContactId = faker.random.arrayElement(OrganizationContacts).id;
+      invoice.toContact = faker.random.arrayElement(OrganizationContacts);
+      invoice.currency = faker.random.arrayElement(
+        Object.values(CurrenciesEnum)
+      );
+      invoice.discountValue = faker.random.number({
+        min: 1,
+        max: 10
+      });
+      invoice.paid = faker.random.boolean();
+      invoice.tax = faker.random.number({ min: 1, max: 10 });
+      invoice.tax2 = faker.random.number({ min: 1, max: 10 });
+      invoice.terms = 'Term and Setting Applied';
+      invoice.isEstimate = faker.random.boolean();
+      if (invoice.isEstimate) {
+        invoice.isAccepted = faker.random.boolean();
+      }
+      invoice.discountType = faker.random.arrayElement(
+        Object.values(DiscountTaxTypeEnum)
+      );
+      invoice.taxType = faker.random.arrayElement(
+        Object.values(DiscountTaxTypeEnum)
+      );
+      invoice.tax2Type = faker.random.arrayElement(
+        Object.values(DiscountTaxTypeEnum)
+      );
+      invoice.invoiceType = faker.random.arrayElement(
+        Object.values(InvoiceTypeEnum)
+      );
+      invoice.organizationId = organization.id;
+      invoice.status = 'Active';
+      invoices.push(invoice);
+    }
+  }
+
+  await connection.manager.save(invoices);
 };
 
 export const createRandomInvoice = async (
@@ -92,29 +92,26 @@ export const createRandomInvoice = async (
 			const tags = await connection.manager.find(Tag, {
 				where: [{ organization: organization }]
 			});
-			const OrganizationContacts = await connection.manager.find(
-				OrganizationContact,
-				{
-					where: [{ organizationId: organization.id }]
-				}
-			);
+      const OrganizationContacts = await connection.manager.find(OrganizationContact, {
+        where: [{ organizationId: organization.id }]
+      });
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 				let invoice = new Invoice();
 				// let invoiceItem = faker.random.arrayElement(invoiceItems);
-				invoice.tags = [faker.random.arrayElement(tags)];
+        invoice.tags = _.chain(tags)
+          .shuffle()
+          .take(faker.random.number({ min: 1, max: 3 }))
+          .values()
+          .value();
 				invoice.invoiceDate = faker.date.past(0.2);
 				invoice.invoiceNumber = faker.random.number({
 					min: 1,
 					max: 9999999
 				});
 				invoice.dueDate = faker.date.recent(50);
-				invoice.organizationContactId = faker.random.arrayElement(
-					OrganizationContacts
-				).id;
-				invoice.toContact = faker.random.arrayElement(
-					OrganizationContacts
-				);
-				invoice.currency = faker.random.arrayElement(
+        invoice.organizationContactId = faker.random.arrayElement(OrganizationContacts).id;
+        invoice.toContact = faker.random.arrayElement(OrganizationContacts);
+        invoice.currency = faker.random.arrayElement(
 					Object.values(CurrenciesEnum)
 				);
 				invoice.discountValue = faker.random.number({

@@ -39,7 +39,7 @@
 		"@nestjs/serve-static": "^2.1.3",
 		"bcrypt": "^4.0.1",
 		"cache-manager": "^3.3.0",
-		"class-transformer": "^0.2.3",
+		"class-transformer": "^0.3.1",
 		"class-validator": "^0.12.2",
 		"cli-ux": "^5.4.5",
 		"cls-hooked": "^4.2.2",

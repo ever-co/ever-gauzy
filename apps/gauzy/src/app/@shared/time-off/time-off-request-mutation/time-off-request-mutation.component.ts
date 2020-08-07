@@ -58,7 +58,6 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			this._getAllHolidays();
 		} else if (this.type.hasOwnProperty('id')) {
 			this.isEditMode = true;
-
 			this.selectedEmployee = this.type['employees'][0];
 			this.policy = this.type['policy'];
 			this.startDate = this.type['start'];

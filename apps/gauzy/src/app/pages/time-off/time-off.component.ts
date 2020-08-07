@@ -90,6 +90,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
+					this.isRecordSelected = false;
 					this._loadTableData(this._selectedOrganizationId);
 				} else {
 					if (this._selectedOrganizationId) {
@@ -145,7 +146,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'html'
 				},
-				policy: {
+				policyName: {
 					title: this.getTranslation('SM_TABLE.POLICY'),
 					type: 'string',
 					class: 'text-center'
@@ -228,7 +229,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 							...result,
 							fullName: employeeName,
 							imageUrl: employeeImage,
-							policy: result.policy.name,
+							policyName: result.policy.name,
 							description: extendedDescription
 						});
 					});
@@ -440,6 +441,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	updateTimeOffRecord() {
+		this._removeDocUrl();
+		
 		this.dialogService
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: this.selectedTimeOffRecord }
@@ -493,6 +496,12 @@ export class TimeOffComponent extends TranslationBaseComponent
 				},
 				() => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD')
 			);
+	}
+
+	private _removeDocUrl() {
+		const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
+		const nativeDescription = this.selectedTimeOffRecord.description;
+		this.selectedTimeOffRecord.description = nativeDescription.substr(index+1);
 	}
 
 	changeDisplayHolidays(checked: boolean) {
