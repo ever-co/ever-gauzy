@@ -4,7 +4,7 @@ import {
 	Organization,
 	TimeSlot,
 	IGetTimeSlotInput,
-	TimeLog
+	ScreenshotMap
 } from '@gauzy/models';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { debounceTime } from 'rxjs/operators';
@@ -14,15 +14,8 @@ import { toUTC, toLocal } from 'libs/utils';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { untilDestroyed } from 'ngx-take-until-destroy';
-import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
-
-export interface ScreenshotMap {
-	startTime: string;
-	endTime: string;
-	timeSlots: TimeSlot[];
-}
 
 @Component({
 	selector: 'ngx-screenshot',
@@ -68,18 +61,6 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
-	prgressStatus(value) {
-		if (value <= 25) {
-			return 'danger';
-		} else if (value <= 50) {
-			return 'warning';
-		} else if (value <= 75) {
-			return 'info';
-		} else {
-			return 'success';
-		}
-	}
-
 	async getLogs() {
 		if (!this.organization) {
 			return;
@@ -107,22 +88,6 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			.finally(() => (this.loading = false));
 	}
 
-	viewInfo(timeSlot) {
-		if (timeSlot.timeLogs.length > 0) {
-			const findOptions = {
-				relations: ['employee', 'employee.user', 'project', 'task']
-			};
-			this.timesheetService
-				.getTimeLog(timeSlot.timeLogs[0].id, findOptions)
-				.then((timeLog: TimeLog) => {
-					this.nbDialogService.open(ViewTimeLogModalComponent, {
-						context: { timeLog },
-						dialogClass: 'view-log-dialog'
-					});
-				});
-		}
-	}
-
 	toggleSelect(slotId?: string) {
 		if (slotId) {
 			this.selectedIds[slotId] = !this.selectedIds[slotId];
@@ -148,25 +113,8 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			this.selectedIdsCount === Object.values(this.selectedIds).length;
 	}
 
-	deleteSlot(timeSlot) {
-		this.nbDialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((type) => {
-				if (type === 'ok') {
-					this.timesheetService
-						.deleteTimeSlots([timeSlot.id])
-						.then(() => {
-							this.orignalTimeSlots = this.orignalTimeSlots.filter(
-								(orignalTimeSlot) =>
-									timeSlot.id !== orignalTimeSlot.id
-							);
-							this.timeSlots = this.groupTimeSlots(
-								this.orignalTimeSlots
-							);
-						});
-				}
-			});
+	deleteSlot() {
+		this.updateLogs$.next();
 	}
 
 	deleteSlots() {
@@ -181,13 +129,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						.values()
 						.value();
 					this.timesheetService.deleteTimeSlots(ids).then(() => {
-						this.orignalTimeSlots = this.orignalTimeSlots.filter(
-							(orignalTimeSlot) =>
-								ids.indexOf(orignalTimeSlot.id) === -1
-						);
-						this.timeSlots = this.groupTimeSlots(
-							this.orignalTimeSlots
-						);
+						this.updateLogs$.next();
 					});
 				}
 			});

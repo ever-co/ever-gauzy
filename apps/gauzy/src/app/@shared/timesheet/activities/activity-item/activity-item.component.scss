@@ -1,0 +1,17 @@
+:host {
+  .percentage-col {
+    width: 90px;
+  }
+  ::ng-deep {
+    nb-progress-bar {
+      .progress-container {
+        height: 5px !important;
+      }
+      .progress-value {
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+}

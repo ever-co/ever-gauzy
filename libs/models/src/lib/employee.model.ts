@@ -15,6 +15,7 @@ import { OrganizationEmploymentType } from './organization-employment-type.model
 import { RequestApprovalEmployee } from './request-approval-employee.model';
 
 export interface Employee extends IContact, IBaseEntityModel {
+	[x: string]: any;
 	endWork?: any;
 	startedWorkOn?: any;
 	user: User;
