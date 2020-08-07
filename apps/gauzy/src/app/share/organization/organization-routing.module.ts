@@ -6,6 +6,11 @@ const routes: Routes = [
 	{
 		path: '',
 		component: OrganizationComponent
+	},
+	{
+		path: ':employeeId',
+		loadChildren: () =>
+			import('../employee/employee.module').then((m) => m.EmployeeModule)
 	}
 ];
 

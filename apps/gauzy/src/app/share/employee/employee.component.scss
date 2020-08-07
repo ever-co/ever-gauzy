@@ -1,0 +1,107 @@
+.employee-card {
+  display: flex;
+}
+.employee-photo-wrapper {
+  display: flex;
+  flex-flow: column;
+  margin-right: 35px;
+}
+
+img.employee-image {
+  object-fit: cover;
+  object-position: center;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
+}
+
+.employee-photo {
+  margin-bottom: 15px;
+  position: relative;
+
+  div {
+    pointer-events: none;
+    background: black;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    border-radius: 13px;
+  }
+
+  img {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
+  }
+
+  input {
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    position: absolute;
+    z-index: 3;
+    cursor: pointer;
+  }
+
+  svg {
+    z-index: 2;
+    transition: opacity 0.2s ease-in;
+    opacity: 0.3;
+    position: absolute;
+    top: calc(50% - 68px / 2);
+    left: calc(50% - 68px / 2);
+  }
+}
+
+button.save_image {
+  top: 125px;
+  position: absolute;
+  left: 50px;
+  z-index: 9999;
+  padding: 5px 15px;
+  font-size: 12px;
+}
+
+.employee-profile-item-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 5px 0;
+  color: #222b45;
+}
+
+.employee-profile-item {
+  height: 35px;
+  display: flex;
+  align-items: center;
+}
+
+.tag {
+  border-radius: 25px;
+  border: 1px solid #ced9ee;
+  color: #3c495a;
+  display: inline-block;
+  padding: 6px 12px 5px;
+  font-size: 12px;
+}
+
+.tag.tag-sm {
+  font-weight: normal;
+  font-size: 12px;
+  margin-bottom: 15px;
+}
+
+.o__p__s__t {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.skill-items {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  > li {
+    margin-right: 5px;
+  }
+}

@@ -61,10 +61,13 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 					});
 			});
 	}
+
+	//Open the public page in a new tab
 	editPublicPage() {
-		this.router.navigate([
-			'/share/organization/' + this.selectedOrg.profile_link
-		]);
+		window.open(
+			'/share/organization/' + this.selectedOrg.profile_link,
+			'_blank'
+		);
 	}
 
 	ngOnDestroy() {

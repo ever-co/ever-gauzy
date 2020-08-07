@@ -201,6 +201,21 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		};
 	}
 
+	approval(rowData) {
+		const params = {
+			isApproval: true,
+			data: rowData
+		};
+		this.handleEvent(params);
+	}
+	refuse(rowData) {
+		const params = {
+			isApproval: false,
+			data: rowData
+		};
+		this.handleEvent(params);
+	}
+
 	async handleEvent(params: any) {
 		if (params.isApproval) {
 			const request = await this.approvalRequestService.approvalRequestByAdmin(

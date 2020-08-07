@@ -29,6 +29,7 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 import { Skill } from '../skills/skill.entity';
 import { Contact } from '../contact/contact.entity';
 import { TenantBase } from '../core/entities/tenant-base';
+import { TimeLog } from '../timesheet/time-log.entity';
 
 @Entity('employee')
 export class Employee extends TenantBase implements IEmployee {
@@ -146,6 +147,9 @@ export class Employee extends TenantBase implements IEmployee {
 		(organizationTeamEmployee) => organizationTeamEmployee.employee
 	)
 	teams?: OrganizationTeam[];
+
+	@OneToMany((type) => TimeLog, (timeLog) => timeLog.employee)
+	timelogs?: TimeLog[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

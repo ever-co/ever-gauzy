@@ -29,7 +29,10 @@
 					</ga-employee-selector>
 					<div class="datepicker-wrapper">
 						<label for="dueDate" class="label">
-							{{ 'UPWORK_PAGE.SELECT_DATE' | translate }}
+							{{
+								'INTEGRATIONS.UPWORK_PAGE.SELECT_DATE'
+									| translate
+							}}
 						</label>
 						<input
 							type="text"
@@ -43,6 +46,7 @@
 							fullWidth
 							[disabled]="contractsSettings.onlyContracts"
 						/>
+
 						<nb-datepicker
 							#taskDueDatePicker
 							[max]="entity.datePicker.max"

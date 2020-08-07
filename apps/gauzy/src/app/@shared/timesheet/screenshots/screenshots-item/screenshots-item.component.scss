@@ -1,0 +1,95 @@
+:host {
+  ::ng-deep {
+    nb-progress-bar.size-tiny .progress-container {
+      height: 4px;
+    }
+  }
+  .curser-pointer {
+    cursor: pointer;
+  }
+  .activity {
+    .image-contaer {
+      background: rgba($color: #000000, $alpha: 0.1);
+      min-height: 130px;
+      position: relative;
+      .hover {
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba($color: #000000, $alpha: 0.7);
+        opacity: 0;
+        z-index: 9;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s;
+      }
+      .view-button {
+        height: 100%;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+      }
+
+      &.select-mode {
+        .hover {
+          justify-content: normal;
+        }
+        .select-hidden {
+          display: none;
+        }
+      }
+
+      &.select-mode,
+      &:hover {
+        .hover {
+          opacity: 1;
+        }
+      }
+
+      .no-image {
+        padding: 8px;
+        background: rgba($color: #000000, $alpha: 0.6);
+        color: #fff;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 5px;
+        text-align: center;
+      }
+
+      img {
+        width: 100%;
+        height: 130px;
+        object-fit: cover;
+        &.default-image {
+          object-fit: contain;
+        }
+      }
+    }
+  }
+  .selecte-items-action {
+    max-width: 500px;
+    width: 90%;
+    position: fixed;
+    bottom: 0;
+    display: flex;
+    flex-direction: row;
+    left: 0;
+    right: 0;
+    margin: auto;
+    z-index: 99;
+  }
+  ::ng-deep {
+    .progress-value {
+      span {
+        display: none;
+      }
+    }
+  }
+}

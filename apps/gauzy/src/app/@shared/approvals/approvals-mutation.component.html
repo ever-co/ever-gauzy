@@ -90,13 +90,28 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6 mb-3">
+				<div class="col-sm-12 mb-3">
+					<nb-radio-group
+						(valueChange)="onParticipantsChange($event)"
+						[value]="participants"
+					>
+						<nb-radio [value]="'employees'">Employees </nb-radio>
+						<nb-radio [value]="'teams'">Teams </nb-radio>
+					</nb-radio-group>
+				</div>
+			</div>
+			<div class="row">
+				<div
+					class="col-sm-12 mb-3"
+					*ngIf="participants === 'employees'"
+				>
 					<label for="employees" class="label">
 						{{ 'APPROVAL_REQUEST_PAGE.EMPLOYEES' | translate }}
 					</label>
 					<nb-select
 						formControlName="employees"
 						multiple
+						[selected]="selectedEmployees"
 						[(ngModel)]="selectedEmployees"
 						(selectedChange)="onEmployeesSelected($event)"
 						fullWidth
@@ -120,13 +135,14 @@
 						>
 					</nb-select>
 				</div>
-				<div class="col-sm-6 mb-3">
+				<div class="col-sm-12 mb-3" *ngIf="participants === 'teams'">
 					<label for="teams" class="label">
 						{{ 'APPROVAL_REQUEST_PAGE.TEAMS' | translate }}
 					</label>
 					<nb-select
 						formControlName="teams"
 						multiple
+						[selected]="selectedTeams"
 						[(ngModel)]="selectedTeams"
 						(selectedChange)="onTeamsSelected($event)"
 						fullWidth

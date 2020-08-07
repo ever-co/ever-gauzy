@@ -21,12 +21,12 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent
 
 	constructor(
 		private _us: UpworkStoreService,
-		private translate: TranslateService,
+		public translateService: TranslateService,
 		private _toastr: NbToastrService,
 		public dialogRef: NbDialogRef<SyncDataSelectionComponent>,
 		private errorHandlingService: ErrorHandlingService
 	) {
-		super(translate);
+		super(translateService);
 	}
 
 	ngOnInit(): void {}

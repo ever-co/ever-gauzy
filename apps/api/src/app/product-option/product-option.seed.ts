@@ -19,8 +19,6 @@ export const createRandomProductOption = async (
 		return;
 	}
 
-	console.log('========createRandomProductOption=========');
-
 	const productOptions: ProductOption[] = [];
 
 	for (const tenant of tenants) {
@@ -32,16 +30,10 @@ export const createRandomProductOption = async (
 					where: [{ organization: tenantOrg }]
 				}
 			);
-			console.log('========productCategories=========');
-			console.log(productCategories);
-			console.log('========productCategories=========');
 			for (const productCategory of productCategories) {
 				const products = await connection.manager.find(Product, {
 					where: [{ category: productCategory }]
 				});
-				console.log('========products=========');
-				console.log(products);
-				console.log('========products=========');
 				for (const product of products) {
 					for (let i = 0; i <= numberOfOptionPerProduct; i++) {
 						const productOption = new ProductOption();

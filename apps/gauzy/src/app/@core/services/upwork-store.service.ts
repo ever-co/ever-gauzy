@@ -177,7 +177,7 @@ export class UpworkStoreService {
 		this.employeeId = employeeId;
 	}
 
-	setFilterDateRange({ start, end }) {
+	setFilterDateRange({ start, end }: IUpworkDateRange) {
 		this._dateRangeActivity$.next({
 			start: start || DEFAULT_DATE_RANGE.start,
 			end: end || DEFAULT_DATE_RANGE.end
