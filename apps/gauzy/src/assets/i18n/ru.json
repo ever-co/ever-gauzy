@@ -1224,7 +1224,10 @@
 		"TOTAL_PROJECTS": "Всего проектов",
 		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
 		"EMPLOYEES": "Сотрудники",
-		"PROFITS": "Прибыль"
+		"PROFITS": "Прибыль",
+		"RATE": "Ставка",
+		"ACTIVE": "Активный",
+		"STARTED_WORK_ON": "Начата работа над"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
@@ -1273,7 +1276,7 @@
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"APPROVAL_REQUEST_ACTIONS": "Действия",
 		"CREATED_BY": "Создано",
-		"APPROVAL": "Одобрение",
+		"APPROVE": "Одобрить",
 		"REFUSE": "Отклонить",
 		"HEADER": "Запрос на утверждение",
 		"EMPLOYEES": "Сотрудники",
@@ -1305,6 +1308,7 @@
 		"HOLIDAY_NAME": "Название выходного дня",
 		"SELECT_EMPLOYEES": "Выберите сотрудников",
 		"SETTINGS": "Настройки",
+		"EDI": "Редактировать запись отключения времени",
 		"SELECT_HOLIDAY_NAME": "Выберите название праздника",
 		"ADD_OR_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 		"SELECT_TIME_OFF_POLICY": "Временная политика Seletc",
