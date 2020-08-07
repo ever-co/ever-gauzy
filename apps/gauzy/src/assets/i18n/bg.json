@@ -1224,7 +1224,10 @@
 		"TOTAL_PROJECTS": "Total Projects",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"EMPLOYEES": "Служители",
-		"PROFITS": "Profits"
+		"PROFITS": "Profits",
+		"RATE": "Почасово",
+		"ACTIVE": "Активен",
+		"STARTED_WORK_ON": "Started work on"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",

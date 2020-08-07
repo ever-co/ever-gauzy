@@ -1224,7 +1224,10 @@
 		"TOTAL_PROJECTS": "Всего проектов",
 		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
 		"EMPLOYEES": "Сотрудники",
-		"PROFITS": "Прибыль"
+		"PROFITS": "Прибыль",
+		"RATE": "Ставка",
+		"ACTIVE": "Активный",
+		"STARTED_WORK_ON": "Начата работа над"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
