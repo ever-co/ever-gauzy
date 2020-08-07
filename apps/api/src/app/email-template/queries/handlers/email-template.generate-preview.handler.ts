@@ -27,7 +27,17 @@ export class EmailTemplateGeneratePreviewHandler
 			organizationName: 'Organization',
 			email: 'user@domain.com',
 			name: 'John Doe',
-			role: 'USER_ROLE'
+			role: 'USER_ROLE',
+      host: 'Alish Meklyov',
+      hostEmail: '(alish@ever.com)',
+      agenda: 'This booking is for gauzy call',
+      description: 'This is a test appointment booking',
+      participantEmails: 'kdashora@gmail.com,testmail@hotmail.com',
+      location: 'zoom.us',
+      duration: 'Fri, Jul 24, 2020 6:00 AM - Fri, Jul 24, 2020 6:15 AM',
+      candidateName: 'Alex',
+      date:'Thursday, August 27, 2020',
+      interviewerName:'John Doe',
 		});
 		return { html };
 	}
