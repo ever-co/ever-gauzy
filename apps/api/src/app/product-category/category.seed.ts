@@ -57,10 +57,9 @@ export const createRandomCategories = async (
   for (const tenant of tenants) {
     const tenantOrgs = tenantOrganizationsMap.get(tenant);
     for (const tenantOrg of tenantOrgs) {
-      let image = faker.image.abstract();
       for (const seedProductCategory of seed) {
         const newCategory = new ProductCategory();
-        image =
+        let image =
           faker.image[seedProductCategory.fakerImageCategory]() ||
           faker.image.abstract();
 

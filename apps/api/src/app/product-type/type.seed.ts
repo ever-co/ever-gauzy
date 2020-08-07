@@ -4,8 +4,6 @@ import { ProductType } from './product-type.entity';
 import * as seed from './product-type.seed.json';
 import { ProductTypeTranslation } from './product-type-translation.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import * as faker from 'faker';
-import { ProductTypesIconsEnum } from '@gauzy/models';
 
 export const createDefaultProductType = async (
   connection: Connection,
