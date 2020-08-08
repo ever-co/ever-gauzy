@@ -14,8 +14,7 @@ import {
 	Post,
 	Query,
 	UseGuards,
-	Delete,
-	BadRequestException
+	Delete
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
