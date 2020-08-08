@@ -1,8 +1,8 @@
-import { CandidateExperience } from './../../candidate-experience/candidate-experience.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
+import { CandidateExperience } from './../../candidate-experience/candidate-experience.entity';
 import { Injectable } from '@nestjs/common';
 import {
 	Connection,
@@ -451,7 +451,7 @@ const randomSeedConfig = {
 	emailsPerOrganization: 30, // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
 	invitePerOrganization: 30, // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
 	requestApprovalPerOrganization: 20, // No of random request to approve seeded will be  (requestApprovalPerOrganization * organizationsPerTenant * tenants)
-	employeeTimeOffPerOrganization: 10, // No of timeoff request to approve seeded will be  (employeeTimeOffPerOrganization * organizationsPerTenant * tenants)
+	employeeTimeOffPerOrganization: 10, // No of time off request to approve seeded will be  (employeeTimeOffPerOrganization * organizationsPerTenant * tenants)
 	equipmentPerTenant: 20, // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
 	equipmentSharingPerTenant: 20, // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
 	proposalsSharingPerOrganizations: 30, // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
@@ -471,7 +471,7 @@ export class SeedDataService {
 	defaultProjects: OrganizationProjects[] | void;
 	tenant: Tenant;
 	roles: Role[];
-  superAdminUsers: User[];
+	superAdminUsers: User[];
 	defaultCandidateUsers: User[];
 	defaultEmployees: Employee[];
 
@@ -486,7 +486,7 @@ export class SeedDataService {
 
 		if (!this.connection || !this.connection.isConnected) {
 			try {
-				this.log(chalk.green('🏃‍CONNECTING TO DATABASE...'));
+				this.log(chalk.green(`CONNECTING TO DATABASE ...`));
 
 				this.connection = await createConnection({
 					...env.database,
@@ -495,7 +495,7 @@ export class SeedDataService {
 			} catch (error) {
 				this.handleError(error, 'Unable to connect to database');
 			}
-		}
+		}		
 	}
 
 	/**
