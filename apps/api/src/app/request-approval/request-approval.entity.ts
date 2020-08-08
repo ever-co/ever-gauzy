@@ -12,7 +12,9 @@ import {
 	OneToMany,
 	RelationId,
 	ManyToOne,
-	JoinColumn
+	JoinColumn,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { RequestApproval as IRequestApproval } from '@gauzy/models';
@@ -21,6 +23,7 @@ import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('request_approval')
 export class RequestApproval extends Base implements IRequestApproval {
@@ -87,4 +90,11 @@ export class RequestApproval extends Base implements IRequestApproval {
 	@IsString()
 	@Column({ nullable: true })
 	requestId: string;
+
+	@ApiProperty()
+	@ManyToMany((type) => Tag, (tag) => tag.requestApproval)
+	@JoinTable({
+		name: 'request-approval-tag'
+	})
+	tags?: Tag[];
 }

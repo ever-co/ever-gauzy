@@ -4,6 +4,7 @@ import { Employee } from './employee.model';
 import { OrganizationTeam } from './organization-team-model';
 import { RequestApprovalTeam } from './request-approval-team.model';
 import { ApprovalPolicy } from './approval-policy.model';
+import { Tag } from './tag-entity.model';
 
 export interface RequestApproval extends IBaseEntityModel {
 	employeeApprovals?: RequestApprovalEmployee[];
@@ -15,6 +16,7 @@ export interface RequestApproval extends IBaseEntityModel {
 	status?: number;
 	approvalPolicyId?: string;
 	approvalPolicy?: ApprovalPolicy;
+	tags?: Tag[];
 }
 
 export interface RequestApprovalCreateInput extends IBaseEntityModel {
@@ -26,6 +28,7 @@ export interface RequestApprovalCreateInput extends IBaseEntityModel {
 	min_count?: number;
 	status?: number;
 	approvalPolicyId?: string;
+	tags?: Tag[];
 }
 
 export enum RequestApprovalStatusTypesEnum {

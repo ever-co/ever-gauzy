@@ -24,6 +24,7 @@ import { OrganizationDepartment } from '../organization-department/organization-
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Product } from '../product/product.entity';
 import { Payment } from '../payment/payment.entity';
+import { RequestApproval } from '../request-approval/request-approval.entity';
 
 @Entity('tag')
 export class Tag extends Base implements ITag {
@@ -130,4 +131,10 @@ export class Tag extends Base implements ITag {
 
 	@ManyToMany((type) => Payment, (payment) => payment.tags)
 	payment?: Payment[];
+
+	@ManyToMany(
+		(type) => RequestApproval,
+		(requestApproval) => requestApproval.tags
+	)
+	requestApproval?: RequestApproval[];
 }
