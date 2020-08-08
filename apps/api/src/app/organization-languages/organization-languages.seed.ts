@@ -5,28 +5,36 @@ import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '@gauzy/models';
 import { Language } from '../language/language.entity';
 
+const defaultLanguageLevel = {
+  Bulgarian: 'Native or Bilingual',
+  Russian: 'Native or Bilingual',
+  Ukrainian: 'Native or Bilingual',
+  English: 'Fluent',
+  Hebrew: 'Conversational'
+};
 export const createDefaultOrganizationLanguage = async (
-	connection: Connection,
-	defaultOrganizations: Organization[]
+  connection: Connection,
+  defaultOrganizations: Organization[]
 ): Promise<OrganizationLanguages[]> => {
-	let mapOrganizationLanguage: OrganizationLanguages[] = [];
+  let mapOrganizationLanguage: OrganizationLanguages[] = [];
 
-	const allLanguage = await connection.manager.find(Language, {});
+  const allLanguage = await connection.manager.find(Language, {});
 
-	for (const defaultOrganization of defaultOrganizations) {
-		const language = faker.random.arrayElement(allLanguage);
-		let organization = new OrganizationLanguages();
+  for (const defaultOrganization of defaultOrganizations) {
+    for (const language of allLanguage) {
+      let organization = new OrganizationLanguages();
 
-		organization.organization = defaultOrganization;
-		organization.language = language;
-		organization.name = faker.company.companyName();
-		organization.level = faker.name.jobArea();
+      organization.organization = defaultOrganization;
+      organization.language = language;
+      organization.name = language.name;
+      organization.level = (defaultLanguageLevel[language.name]) ? defaultLanguageLevel[language.name] : 'intermediate';
 
-		mapOrganizationLanguage.push(organization);
-	}
+      mapOrganizationLanguage.push(organization);
+    }
+  }
 
-	await insertRandomOrganizationLanguage(connection, mapOrganizationLanguage);
-	return mapOrganizationLanguage;
+  await insertRandomOrganizationLanguage(connection, mapOrganizationLanguage);
+  return mapOrganizationLanguage;
 };
 
 export const createRandomOrganizationLanguage = async (
@@ -54,10 +62,10 @@ export const createRandomOrganizationLanguage = async (
 
 			organization.organization = tenantOrg;
 			organization.language = language;
-			organization.name = faker.company.companyName();
-			organization.level = faker.name.jobArea();
+			organization.name = language.name;
+      organization.level = (defaultLanguageLevel[language.name]) ? defaultLanguageLevel[language.name] : 'intermediate';
 
-			mapOrganizationLanguage.push(organization);
+      mapOrganizationLanguage.push(organization);
 		}
 	}
 
