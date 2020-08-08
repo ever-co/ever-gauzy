@@ -26,6 +26,7 @@
 		"postgres",
 		"prebuild",
 		"pulumi",
+		"timesheets",
 		"toastr",
 		"typeorm",
 		"uploader",
