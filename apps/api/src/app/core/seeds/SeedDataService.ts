@@ -248,7 +248,7 @@ import { createRandomAvailabilitySlots } from '../../availability-slots/availabi
 import { createRandomCandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
 import { createRandomCandidateTechnologies } from '../../candidate-technologies/candidate-technologies.seed';
 import { createRandomCandidateInterview } from '../../candidate-interview/candidate-interview.seed';
-import { createRandomAwards } from '../../organization-awards/organization-awards.seed';
+import { createDefaultAwards, createRandomAwards } from '../../organization-awards/organization-awards.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
 import { createRandomCandidateCriterionRating } from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
 import { createDefaultGoalKpi } from '../../goal-kpi/goal-kpi.seed';
@@ -747,14 +747,14 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			createDefaultIncomes(this.connection, {
-				org: this.organizations[0],
+        organizations: this.organizations,
 				employees: this.defaultEmployees
 			})
 		);
 
 		await this.tryExecute(
 			createDefaultExpenses(this.connection, {
-				org: this.organizations[0],
+        organizations: this.organizations,
 				employees: this.defaultEmployees,
 				categories,
 				organizationVendors
@@ -845,6 +845,12 @@ export class SeedDataService {
 		);
 		await this.tryExecute(
 			createDefaultOrganizationLanguage(
+				this.connection,
+				this.organizations
+			)
+		);
+		await this.tryExecute(
+      createDefaultAwards(
 				this.connection,
 				this.organizations
 			)
