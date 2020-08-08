@@ -1,20 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CommandBus } from '@nestjs/cqrs';
 import { Repository, FindManyOptions, Between } from 'typeorm';
 import { Expense } from './expense.entity';
 import { IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
-import { EmployeeService } from '../employee/employee.service';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
 		@InjectRepository(Expense)
-		private readonly expenseRepository: Repository<Expense>,
-		private readonly employeeService: EmployeeService,
-		private commandBus: CommandBus
+		private readonly expenseRepository: Repository<Expense>
 	) {
 		super(expenseRepository);
 	}
