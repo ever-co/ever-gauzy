@@ -118,7 +118,9 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 					disabled: true
 				}
 			],
-			startDate: [this.project ? this.project.startDate : null],
+			startDate: [
+				this.project ? new Date(this.project.startDate) : new Date()
+			],
 			endDate: [this.project ? this.project.endDate : null],
 			owner: [this.project ? this.project.owner : 'CLIENT'],
 			taskViewMode: [this.project ? this.project.taskListType : 'GRID']

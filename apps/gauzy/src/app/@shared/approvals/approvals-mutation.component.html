@@ -155,6 +155,14 @@
 						>
 					</nb-select>
 				</div>
+				<div class="col-sm-6 mb-3">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					>
+					</ga-tags-color-input>
+				</div>
 			</div>
 
 			<input type="hidden" formControlName="id" />

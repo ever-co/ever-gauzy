@@ -133,7 +133,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 						relations: [
 							'approvalPolicy',
 							'employeeApprovals',
-							'teamApprovals'
+							'teamApprovals',
+							'tags'
 						]
 					}
 				);
@@ -157,7 +158,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = entity.name;
 			requestApproval.min_count = entity.min_count;
-
+			requestApproval.tags = entity.tags;
 			if (entity.employeeApprovals) {
 				const employees = await this.employeeRepository.findByIds(
 					entity.employeeApprovals,
@@ -216,7 +217,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
 			requestApproval.min_count = entity.min_count;
-
+			requestApproval.tags = entity.tags;
 			await this.repository
 				.createQueryBuilder()
 				.delete()
