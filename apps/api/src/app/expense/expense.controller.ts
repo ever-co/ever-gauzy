@@ -38,7 +38,7 @@ import { ExpenseUpdateCommand } from './commands/expense.update.command';
 @Controller()
 export class ExpenseController extends CrudController<Expense> {
 	constructor(
-		private readonly expenseService: ExpenseService,		
+		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus
