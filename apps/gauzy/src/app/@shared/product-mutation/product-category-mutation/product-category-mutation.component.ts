@@ -32,7 +32,7 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 
 	private _ngDestroy$ = new Subject<void>();
 
-	languages: Array<string>;
+	languages: Array<object>;
 	translations = [];
 	activeTranslation: ProductCategoryTranslation;
 
@@ -56,8 +56,14 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 		this.setActiveTranslation();
 
 		this._initializeForm();
-		this.languages = this.translateService.getLangs();
-
+		this.languages = this.translateService
+			.getLangs()
+			.map((l) => ({
+				code: l,
+				title: Object.keys(LanguagesEnum).find(
+					(lang) => LanguagesEnum[lang] === l
+				)
+			}));
 		this.form.valueChanges
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((formValue) => {
