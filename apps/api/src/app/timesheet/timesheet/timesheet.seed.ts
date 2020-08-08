@@ -1,10 +1,6 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import {
-	TimesheetStatus,
-	OrganizationProjects,
-	Organization
-} from '@gauzy/models';
+import { TimesheetStatus, OrganizationProjects } from '@gauzy/models';
 import { Timesheet } from '../timesheet.entity';
 import { Employee } from '../../employee/employee.entity';
 import * as moment from 'moment';

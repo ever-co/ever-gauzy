@@ -7,7 +7,6 @@ import { IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { EmployeeService } from '../employee/employee.service';
 import { startOfMonth, endOfMonth } from 'date-fns';
-import { ExpenseCreateCommand } from './commands/expense.create.command';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {

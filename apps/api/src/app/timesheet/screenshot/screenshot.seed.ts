@@ -33,7 +33,8 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 	// for (let index = 0; index < faker.random.number(3); index++) {
 	const screenshot = new Screenshot();
 	const sourceFile = faker.random.arrayElement(fileList);
-	const destFile = path.join(
+
+	path.join(
 		destDir,
 		'screenshot-' + moment().unix() + faker.random.number(999) + '.jpg'
 	);
@@ -56,7 +57,7 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 			}
 		);
 	});*/
-  let file = sourceFile;
+	const file = sourceFile;
 
 	screenshot.fullUrl = file;
 	screenshot.file = sourceFile;
@@ -67,7 +68,6 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 		timeSlot.stoppedAt
 	);
 	screenshot.deletedAt = null;
-
 
 	screenshots.push(screenshot);
 	// }
