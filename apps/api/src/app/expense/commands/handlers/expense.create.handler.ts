@@ -16,29 +16,7 @@ export class ExpenseCreateHandler
 		private readonly employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
-	public async execute(command: ExpenseCreateCommand): Promise<any> {
-		const expense = await this.createExpense(command);
-		let averageExpense = 0;
-		if (expense) {
-			const id = expense.employeeId;
-			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
-				expense.employeeId
-			);
-
-			averageExpense = this.expenseService.countStatistic(
-				stat.expenseStatistics
-			);
-
-			return await this.employeeService.create({
-				id,
-				averageExpenses: averageExpense
-			});
-		}
-	}
-
-	public async createExpense(
-		command: ExpenseCreateCommand
-	): Promise<Expense> {
+	public async execute(command: ExpenseCreateCommand): Promise<Expense> {
 		const { input } = command;
 		const expense = new Expense();
 		const employee = input.employeeId

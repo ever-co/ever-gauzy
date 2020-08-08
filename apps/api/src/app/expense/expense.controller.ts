@@ -14,7 +14,8 @@ import {
 	Post,
 	Query,
 	UseGuards,
-	Delete
+	Delete,
+	BadRequestException
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
@@ -32,6 +33,8 @@ import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.quer
 import { ParseJsonPipe } from '../shared';
 import { ExpenseDeleteCommand } from './commands/expense.delete.command';
 import { ExpenseUpdateCommand } from './commands/expense.update.command';
+import { EmployeeStatisticsService } from '../employee-statistics/employee-statistics.service';
+import { Employee } from '../employee/employee.entity';
 
 @ApiTags('Expense')
 @UseGuards(AuthGuard('jwt'))
@@ -39,6 +42,7 @@ import { ExpenseUpdateCommand } from './commands/expense.update.command';
 export class ExpenseController extends CrudController<Expense> {
 	constructor(
 		private readonly expenseService: ExpenseService,
+		private readonly _employeeStatisticsService: EmployeeStatisticsService,
 		private readonly employeeService: EmployeeService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus
@@ -169,8 +173,31 @@ export class ExpenseController extends CrudController<Expense> {
 	async create(
 		@Body() entity: IExpenseCreateInput,
 		...options: any[]
-	): Promise<Expense> {
-		return this.commandBus.execute(new ExpenseCreateCommand(entity));
+	): Promise<any> {
+		try {
+			const expense = await this.commandBus.execute(
+				new ExpenseCreateCommand(entity)
+			);
+
+			let averageExpense = 0;
+			if (expense) {
+				const { employeeId } = expense;
+				const stat = await this._employeeStatisticsService.getStatisticsByEmployeeId(
+					employeeId
+				);
+
+				averageExpense = this.expenseService.countStatistic(
+					stat.expenseStatistics
+				);
+
+				return await this.employeeService.create({
+					id: employeeId,
+					averageExpenses: averageExpense
+				});
+			}
+		} catch (error) {
+			throw new BadRequestException('Cannot create expense');
+		}
 	}
 
 	@ApiOperation({
