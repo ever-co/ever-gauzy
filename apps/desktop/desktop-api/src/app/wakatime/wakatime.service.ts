@@ -50,8 +50,12 @@ export class WakatimeService {
 	}
 
 	save(wakatime: Wakatime) {
-		console.log(wakatime);
-		return this.wakatimeRepository.save(wakatime);
+		return this.wakatimeRepository
+			.createQueryBuilder()
+			.insert()
+			.values(wakatime)
+			.onConflict(`("time", "entities") do nothing`)
+			.execute();
 	}
 
 	parameterSanitize(payload, headers) {
