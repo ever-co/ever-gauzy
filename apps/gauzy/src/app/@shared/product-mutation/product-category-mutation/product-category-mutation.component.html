@@ -17,45 +17,6 @@
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row mb-2">
-				<div class="col-sm-8 mb-2 pr-4 col-left">
-					<div class="form-group mb-3">
-						<label class="label" for="lang">
-							{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
-						</label>
-						<nb-select
-							id="lang"
-							[placeholder]="
-								'INVENTORY_PAGE.LANGUAGE' | translate
-							"
-							class="d-block"
-							size="medium"
-							fullWidth="true"
-							[selected]="selectedLanguage"
-							(selectedChange)="onLangChange($event)"
-						>
-							<nb-option
-								*ngFor="let lang of languages"
-								[value]="lang"
-							>
-								{{ lang }}
-							</nb-option>
-						</nb-select>
-					</div>
-					<div class="form-group">
-						<label class="label" for="nameInput">
-							{{ 'INVENTORY_PAGE.NAME' | translate }}
-						</label>
-						<input
-							fullWidth
-							id="nameInput"
-							type="text"
-							nbInput
-							formControlName="name"
-							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
-						/>
-					</div>
-				</div>
-
 				<div class="col-md-4">
 					<div class="category-img">
 						<ngx-image-uploader
@@ -110,8 +71,47 @@
 							*ngIf="form && form.get('imageUrl').value"
 							[src]="form.get('imageUrl').value"
 							alt="Category Image"
+							class="uploadimage"
 							(mouseenter)="hoverState = true"
 							(mouseleave)="hoverState = false"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-8 mb-2 pr-4 col-left">
+					<div class="form-group mb-3">
+						<label class="label" for="lang">
+							{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
+						</label>
+						<nb-select
+							id="lang"
+							[placeholder]="
+								'INVENTORY_PAGE.LANGUAGE' | translate
+							"
+							class="d-block"
+							size="medium"
+							fullWidth="true"
+							[selected]="selectedLanguage"
+							(selectedChange)="onLangChange($event)"
+						>
+							<nb-option
+								*ngFor="let lang of languages"
+								[value]="lang.code"
+							>
+								{{ lang.title }}
+							</nb-option>
+						</nb-select>
+					</div>
+					<div class="form-group">
+						<label class="label" for="nameInput">
+							{{ 'INVENTORY_PAGE.NAME' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="nameInput"
+							type="text"
+							nbInput
+							formControlName="name"
+							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
 						/>
 					</div>
 				</div>
@@ -141,7 +141,7 @@
 			class="mr-3"
 			nbButton
 		>
-			{{ 'BUTTONS.CLOSE' | translate }}
+			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button status="success" nbButton (click)="onSaveRequest()">
 			{{ 'BUTTONS.SAVE' | translate }}
