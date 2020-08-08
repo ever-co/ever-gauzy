@@ -172,31 +172,8 @@ export class ExpenseController extends CrudController<Expense> {
 	async create(
 		@Body() entity: IExpenseCreateInput,
 		...options: any[]
-	): Promise<any> {
-		try {
-			const expense = await this.commandBus.execute(
-				new ExpenseCreateCommand(entity)
-			);
-
-			let averageExpense = 0;
-			if (expense) {
-				const { employeeId } = expense;
-				const stat = await this._employeeStatisticsService.getStatisticsByEmployeeId(
-					employeeId
-				);
-
-				averageExpense = this.expenseService.countStatistic(
-					stat.expenseStatistics
-				);
-
-				return await this.employeeService.create({
-					id: employeeId,
-					averageExpenses: averageExpense
-				});
-			}
-		} catch (error) {
-			throw new BadRequestException('Cannot create expense');
-		}
+	): Promise<Expense> {
+		return this.commandBus.execute(new ExpenseCreateCommand(entity));
 	}
 
 	@ApiOperation({
