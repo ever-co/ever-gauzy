@@ -34,7 +34,6 @@ import { ParseJsonPipe } from '../shared';
 import { ExpenseDeleteCommand } from './commands/expense.delete.command';
 import { ExpenseUpdateCommand } from './commands/expense.update.command';
 import { EmployeeStatisticsService } from '../employee-statistics/employee-statistics.service';
-import { Employee } from '../employee/employee.entity';
 
 @ApiTags('Expense')
 @UseGuards(AuthGuard('jwt'))
