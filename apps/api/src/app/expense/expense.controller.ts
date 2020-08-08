@@ -32,15 +32,13 @@ import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.quer
 import { ParseJsonPipe } from '../shared';
 import { ExpenseDeleteCommand } from './commands/expense.delete.command';
 import { ExpenseUpdateCommand } from './commands/expense.update.command';
-import { EmployeeStatisticsService } from '../employee-statistics/employee-statistics.service';
 
 @ApiTags('Expense')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ExpenseController extends CrudController<Expense> {
 	constructor(
-		private readonly expenseService: ExpenseService,
-		private readonly _employeeStatisticsService: EmployeeStatisticsService,
+		private readonly expenseService: ExpenseService,		
 		private readonly employeeService: EmployeeService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus
