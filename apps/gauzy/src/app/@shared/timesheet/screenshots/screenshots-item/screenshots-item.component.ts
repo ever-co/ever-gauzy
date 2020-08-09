@@ -13,6 +13,7 @@ import { TimesheetService } from '../../timesheet.service';
 import { DeleteConfirmationComponent } from '../../../user/forms/delete-confirmation/delete-confirmation.component';
 import { GalleryItem } from '../../../gallery/gallery.directive';
 import { ViewTimeLogModalComponent } from '../../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import { toLocal } from 'libs/utils';
 
 @Component({
 	selector: 'ngx-screenshots-item',
@@ -20,8 +21,9 @@ import { ViewTimeLogModalComponent } from '../../view-time-log-modal/view-time-l
 	styleUrls: ['./screenshots-item.component.scss']
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
+	private _timeSlot: TimeSlot;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	@Input() timeSlot: TimeSlot;
+
 	@Input() selectionMode = false;
 	@Input() galleryItems: GalleryItem[] = [];
 	@Input() isSelected: boolean;
@@ -29,6 +31,17 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	@Output() delete: EventEmitter<any> = new EventEmitter();
 	@Output() toggle: EventEmitter<any> = new EventEmitter();
 
+	@Input()
+	public get timeSlot(): TimeSlot {
+		return this._timeSlot;
+	}
+	public set timeSlot(timeSlot: TimeSlot) {
+		if (timeSlot) {
+			timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
+			timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
+		}
+		this._timeSlot = timeSlot;
+	}
 	constructor(
 		private nbDialogService: NbDialogService,
 		private timesheetService: TimesheetService
