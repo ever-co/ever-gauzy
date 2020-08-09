@@ -15,7 +15,7 @@ import { CrudController } from '../../core/crud/crud.controller';
 import { TimeSlotService } from './time-slot.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { IGetTimeSlotInput, IGetTimeSlotStatistics } from '@gauzy/models';
+import { IGetTimeSlotInput } from '@gauzy/models';
 import { FindOneOptions } from 'typeorm';
 
 @ApiTags('TimeSlot')
@@ -35,21 +35,6 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 	@Get('/')
 	async getAll(@Query() entity: IGetTimeSlotInput): Promise<TimeSlot[]> {
 		return this.timeSlotService.getTimeSlots(entity);
-	}
-
-	@ApiOperation({ summary: 'Get timesheet' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Get screenshots statistics'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@Get('/statistics')
-	async get(@Query() entity: IGetTimeSlotStatistics) {
-		return this.timeSlotService.getStatistics(entity);
 	}
 
 	@ApiOperation({ summary: 'Get Time Slots' })

@@ -20,6 +20,7 @@ import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { User } from '../user/user.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
+import { TimeLog } from '../timesheet/time-log.entity';
 
 @Entity('task')
 export class Task extends Base implements ITask {
@@ -59,6 +60,9 @@ export class Task extends Base implements ITask {
 	})
 	@JoinColumn()
 	project?: OrganizationProjects;
+
+	@OneToMany((type) => TimeLog, (timeLog) => timeLog.task)
+	timeLogs?: TimeLog[];
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((task: Task) => task.project)

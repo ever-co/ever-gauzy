@@ -6,20 +6,12 @@ import { TimeSlot } from '../time-slot.entity';
 import { moment } from '../../core/moment';
 import * as _ from 'underscore';
 import { RequestContext } from '../../core/context/request-context';
-import {
-	PermissionsEnum,
-	IGetTimeSlotInput,
-	IGetTimeSlotStatistics,
-	Employee as IEmployee
-} from '@gauzy/models';
+import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
 import { generateTimeSlots } from './utils';
 import { Activity } from '../activity.entity';
 import { DeleteTimeSpanCommand } from '../time-log/commands/delete-time-span.command';
 import { CommandBus } from '@nestjs/cqrs';
-import { Employee } from '../../employee/employee.entity';
-import { Screenshot } from '../screenshot.entity';
-import { TimeLog } from '../time-log.entity';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
@@ -28,8 +20,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		private readonly timeSlotRepository: Repository<TimeSlot>,
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
 		@InjectRepository(TimeSlotMinute)
 		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
 		private readonly commandBus: CommandBus
@@ -137,57 +127,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			}
 		});
 		return logs;
-	}
-
-	async getStatistics(request: IGetTimeSlotStatistics) {
-		let employees: Employee[] = [];
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			employees = await this.employeeRepository
-				.createQueryBuilder()
-				.leftJoin(TimeLog, 'timeLog')
-				.orderBy('timeLog.startedAt', 'DESC')
-				.take(3)
-				.getMany();
-
-			// .find({
-			// 	join: {
-			// 		alias: 'employees',
-			// 		innerJoin: {
-			// 			time_logs: 'employees.time_logs'
-			// 		},
-			// 	},
-			// 	take: 3,
-			// 	// order: {
-			// 	// 	"timelogs.createdAt": 'ASC'
-			// 	// },
-			// })
-		} else {
-			const user = RequestContext.currentUser();
-			employees = await this.employeeRepository.find({
-				id: user.employeeId
-			});
-		}
-
-		for (let index = 0; index < employees.length; index++) {
-			const employee: IEmployee = employees[index];
-			employee.timeSlots = await this.timeSlotRepository.find({
-				where: {
-					employeeId: employee.id
-				},
-				take: 3,
-				order: {
-					createdAt: 'DESC'
-				}
-			});
-		}
-
-		console.log(employees);
-
-		return employees;
 	}
 
 	async bulkCreateOrUpdate(slots) {
