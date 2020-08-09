@@ -123,9 +123,11 @@ export class TaskComponent extends TranslationBaseComponent
 		this.projects$ = this.availableTasks$.pipe(
 			map((tasks: Task[]): OrganizationProjects[] => {
 				return uniqBy(
-					tasks.map(
-						(task: Task): OrganizationProjects => task.project
-					),
+					tasks
+						.filter((t) => t.project)
+						.map(
+							(task: Task): OrganizationProjects => task.project
+						),
 					'id'
 				);
 			})
@@ -351,7 +353,7 @@ export class TaskComponent extends TranslationBaseComponent
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
+					task: this.selectedTask
 				}
 			});
 		} else if (this.isMyTasksPage()) {
@@ -398,7 +400,7 @@ export class TaskComponent extends TranslationBaseComponent
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
+					task: this.selectedTask
 				}
 			});
 		} else if (this.isMyTasksPage()) {
