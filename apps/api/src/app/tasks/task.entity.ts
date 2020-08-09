@@ -62,7 +62,7 @@ export class Task extends Base implements ITask {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((task: Task) => task.project)
-	@Column()
+	@Column({ nullable: true })
 	readonly projectId?: string;
 
 	@ManyToMany((type) => Employee, { cascade: ['update'] })

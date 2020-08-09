@@ -22,7 +22,7 @@ import { TasksService } from '../../../@core/services/tasks.service';
 const initialTaskValue = {
 	title: '',
 	project: null,
-	status: '',
+	status: 'Todo',
 	members: null,
 	teams: null,
 	estimate: null,

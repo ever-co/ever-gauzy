@@ -36,7 +36,9 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-6">
-					<label>{{ 'POP_UPS.PICK_DATE' | translate }}</label>
+					<label class="label">{{
+						'POP_UPS.PICK_DATE' | translate
+					}}</label>
 					<input
 						formControlName="valueDate"
 						nbInput
@@ -56,7 +58,9 @@
 
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label>{{ 'POP_UPS.ALL_CONTACTS' | translate }}</label>
+						<label class="label">{{
+							'POP_UPS.ALL_CONTACTS' | translate
+						}}</label>
 						<ng-select
 							[addTag]="addNewClient"
 							[items]="clients"
@@ -75,7 +79,9 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label>{{ 'POP_UPS.AMOUNT' | translate }}</label>
+						<label class="label">{{
+							'POP_UPS.AMOUNT' | translate
+						}}</label>
 						<input
 							nbInput
 							type="number"
@@ -96,7 +102,9 @@
 					</div>
 				</div>
 				<div class="col-sm-6">
-					<label>{{ 'FORM.LABELS.CURRENCY' | translate }}</label>
+					<label class="label">{{
+						'FORM.LABELS.CURRENCY' | translate
+					}}</label>
 					<nb-select class="d-block" formControlName="currency">
 						<nb-option
 							*ngFor="let currency of currencies"
@@ -124,6 +132,7 @@
 					<div class="form-group">
 						<nb-checkbox formControlName="isBonus">
 							<span
+								class="label"
 								nbTooltip="{{
 									'INCOME_PAGE.BONUS_HELP' | translate
 								}}"
@@ -138,7 +147,9 @@
 
 			<div class="row">
 				<div class="col">
-					<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
+					<label class="label">{{
+						'TIMER_TRACKER.DESCRIPTION' | translate
+					}}</label>
 					<div class="form-group">
 						<textarea
 							nbInput
