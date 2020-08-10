@@ -1,33 +1,61 @@
 <nb-card>
-	<nb-card-body>
+	<nb-card-header>
 		<span class="info-text">{{
 			'MENU.IMPORT_EXPORT.EXPORT_MESSAGE' | translate
 		}}</span>
-	</nb-card-body>
-</nb-card>
+	</nb-card-header>
 
-<div class="import_export_wrapper">
-	<button
-		class="button-export"
-		nbButton
-		outline
-		status="primary"
-		size="large"
-		(click)="onDownloadAll()"
-	>
-		<nb-icon icon="arrow-circle-down-outline"></nb-icon
-		>{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
-	</button>
-	<button
-		style="margin-left: 1%"
-		class="button-export"
-		nbButton
-		outline
-		status="primary"
-		size="large"
-		(click)="onDownloadTemplates()"
-	>
-		<nb-icon icon="file-text-outline"></nb-icon>
-		{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
-	</button>
-</div>
+	<form [formGroup]="form" (ngSubmit)="onSubmit()">
+		<div class="import_export_wrapper">
+			<button
+				class="button-export"
+				nbButton
+				shape="round"
+				size="large"
+				(click)="onDownloadTemplates()"
+			>
+				<nb-icon icon="file-text-outline"></nb-icon>
+				{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
+			</button>
+			<button
+				nbButton
+				style="margin-left: 1%;"
+				shape="round"
+				status="info"
+				size="large"
+				type="submit"
+				value="Export"
+			>
+				<nb-icon icon="download-outline"></nb-icon>
+				{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+			</button>
+			<button
+				style="margin-left: 1%;"
+				class="button-export"
+				nbButton
+				shape="round"
+				status="success"
+				size="large"
+				(click)="importPage()"
+			>
+				<nb-icon icon="upload-outline"></nb-icon>
+				{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
+			</button>
+		</div>
+		<hr />
+		<div class="export-checkbox">
+			<div
+				class="checkbox"
+				*ngFor="let data of getControls(); let i = index"
+			>
+				<input
+					class="checkboxes"
+					type="checkbox"
+					[formControl]="data"
+					(change)="onCheckboxChange(data, files[i].name)"
+				/>
+				{{ files[i].name }}
+			</div>
+		</div>
+	</form>
+</nb-card>

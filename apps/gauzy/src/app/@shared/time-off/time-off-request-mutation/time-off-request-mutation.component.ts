@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
-import { Employee, TimeOffPolicy } from '@gauzy/models';
+import { Employee, TimeOffPolicy, TimeOff } from '@gauzy/models';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
 import { TimeOffService } from '../../../@core/services/time-off.service';
@@ -29,7 +29,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
-	@Input() type: string;
+	@Input() type: TimeOff | string;
 
 	form: FormGroup;
 	policies: TimeOffPolicy[] = [];
@@ -50,11 +50,19 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	requestDate: Date;
 	invalidInterval: boolean;
 	isHoliday = false;
+	isEditMode = false;
 
 	ngOnInit() {
 		if (this.type === 'holiday') {
 			this.isHoliday = true;
 			this._getAllHolidays();
+		} else if (this.type.hasOwnProperty('id')) {
+			this.isEditMode = true;
+			this.selectedEmployee = this.type['employees'][0];
+			this.policy = this.type['policy'];
+			this.startDate = this.type['start'];
+			this.endDate = this.type['end'];
+			this.description = this.type['description'];
 		}
 
 		this._initializeForm();

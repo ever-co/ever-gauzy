@@ -77,7 +77,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				this.selectedDate = date;
 
 				if (this.selectedEmployeeId) {
-					this._loadTableData();
+					this._loadTableData(this._selectedOrganizationId);
 				} else {
 					if (this._selectedOrganizationId) {
 						this._loadTableData(this._selectedOrganizationId);
@@ -90,7 +90,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
-					this._loadTableData();
+					this.isRecordSelected = false;
+					this._loadTableData(this._selectedOrganizationId);
 				} else {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
@@ -104,9 +105,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
-					if (this.loading) {
-						this._loadTableData(this._selectedOrganizationId);
-					}
+					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 
@@ -119,7 +118,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 
 		this._loadSmartTableSettings();
-		this._loadTableData();
+		this._loadTableData(this._selectedOrganizationId);
 	}
 
 	setView() {
@@ -147,7 +146,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'html'
 				},
-				policy: {
+				policyName: {
 					title: this.getTranslation('SM_TABLE.POLICY'),
 					type: 'string',
 					class: 'text-center'
@@ -230,7 +229,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 							...result,
 							fullName: employeeName,
 							imageUrl: employeeImage,
-							policy: result.policy.name,
+							policyName: result.policy.name,
 							description: extendedDescription
 						});
 					});
@@ -289,7 +288,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 		if (this.timeOffTable) {
 			this.timeOffTable.grid.dataSet.willSelect = false;
 		}
-		this.isRecordSelected = true;
+		this.isRecordSelected = isSelected ? true : false;
 		this.selectedTimeOffRecord = selectedTimeOffRecord;
 	}
 
@@ -313,7 +312,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED'
 						);
-						this._loadTableData();
+						this._loadTableData(this._selectedOrganizationId);
+						this.selectRecord({
+							isSelected: false,
+							data: null
+						});
 					},
 					() =>
 						this.toastrService.danger(
@@ -325,6 +328,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 				'TIME_OFF_PAGE.NOTIFICATIONS.APPROVED_NO_CHANGES',
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
+			this._loadTableData(this._selectedOrganizationId);
+			this.selectRecord({
+				isSelected: false,
+				data: null
+			});
 		}
 	}
 
@@ -348,7 +356,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED'
 						);
-						this._loadTableData();
+						this._loadTableData(this._selectedOrganizationId);
+						this.selectRecord({
+							isSelected: false,
+							data: null
+						});
 					},
 					() =>
 						this.toastrService.danger(
@@ -385,7 +397,13 @@ export class TimeOffComponent extends TranslationBaseComponent
 								this.toastrService.success(
 									'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DELETED'
 								);
-								this._loadTableData();
+								this._loadTableData(
+									this._selectedOrganizationId
+								);
+								this.selectRecord({
+									isSelected: false,
+									data: null
+								});
 							},
 							() =>
 								this.toastrService.danger(
@@ -415,8 +433,27 @@ export class TimeOffComponent extends TranslationBaseComponent
 			})
 			.onClose.pipe(first())
 			.subscribe((res) => {
-				this.timeOffRequest = res;
-				this._createRecord();
+				if (res) {
+					this.timeOffRequest = res;
+					this._createRecord();
+				}
+			});
+	}
+
+	updateTimeOffRecord() {
+		this._removeDocUrl();
+		
+		this.dialogService
+			.open(TimeOffRequestMutationComponent, {
+				context: { type: this.selectedTimeOffRecord }
+			})
+			.onClose.pipe(first())
+			.subscribe((res) => {
+				if (res) {
+					const requestId = this.selectedTimeOffRecord.id;
+					this.timeOffRequest = res;
+					this._updateRecord(requestId);
+				}
 			});
 	}
 
@@ -430,7 +467,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
 						);
-						this._loadTableData();
+						this._loadTableData(this._selectedOrganizationId);
+						this.selectRecord({
+							isSelected: false,
+							data: null
+						});
 					},
 					() =>
 						this.toastrService.danger(
@@ -438,6 +479,29 @@ export class TimeOffComponent extends TranslationBaseComponent
 						)
 				);
 		}
+	}
+
+	private _updateRecord(id: string) {
+		this.timeOffService
+			.updateRequest(id, this.timeOffRequest)
+			.pipe(first())
+			.subscribe(
+				() => {
+					this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED');
+					this._loadTableData(this._selectedOrganizationId);
+					this.selectRecord({
+						isSelected: false,
+						data: null
+					});
+				},
+				() => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD')
+			);
+	}
+
+	private _removeDocUrl() {
+		const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
+		const nativeDescription = this.selectedTimeOffRecord.description;
+		this.selectedTimeOffRecord.description = nativeDescription.substr(index+1);
 	}
 
 	changeDisplayHolidays(checked: boolean) {

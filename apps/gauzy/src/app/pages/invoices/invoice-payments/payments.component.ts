@@ -113,37 +113,45 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 	}
 
 	async recordPayment() {
-		this.dialogService
+		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice
 				}
 			})
-			.onClose.subscribe(async () => {
-				this.totalPaid = 0;
-				await this.loadSettings();
-				await this.updateInvoiceStatus(
-					+this.invoice.totalValue,
-					this.totalPaid
-				);
-			});
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.paymentService.add(result);
+			this.totalPaid = 0;
+			await this.loadSettings();
+			await this.updateInvoiceStatus(
+				+this.invoice.totalValue,
+				this.totalPaid
+			);
+		}
 	}
 
 	async editPayment() {
-		this.dialogService
+		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice,
 					payment: this.selectedPayment
 				}
 			})
-			.onClose.subscribe(async () => {
-				await this.loadSettings();
-				await this.updateInvoiceStatus(
-					+this.invoice.totalValue,
-					this.totalPaid
-				);
-			});
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.paymentService.update(result.id, result);
+			await this.loadSettings();
+			await this.updateInvoiceStatus(
+				+this.invoice.totalValue,
+				this.totalPaid
+			);
+		}
 	}
 
 	async deletePayment() {

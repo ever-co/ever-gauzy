@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
 				{{ 'INVOICES_PAGE.PAYMENTS.OVERDUE' | translate }}
 			</div>
 		</div>
-		<div class="text-center d-block" *ngIf="!rowData.overdue">
+		<div class="text-center d-block" *ngIf="rowData.overdue === false">
 			<div class="badge-success">
 				{{ 'INVOICES_PAGE.PAYMENTS.ON_TIME' | translate }}
 			</div>

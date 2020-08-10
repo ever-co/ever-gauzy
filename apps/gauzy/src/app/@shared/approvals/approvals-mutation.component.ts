@@ -6,7 +6,9 @@ import {
 	Employee,
 	OrganizationTeam,
 	ApprovalPolicy,
-	RequestApprovalCreateInput
+	RequestApprovalCreateInput,
+	ApprovalPolicyTypesStringEnum,
+	Tag
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,6 +38,8 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	teams: OrganizationTeam[];
 	selectedEmployees: string[] = [];
 	selectedApprovalPolicy: string[] = [];
+	tags: Tag[] = [];
+
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -97,6 +101,19 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 				this.organizationId === ''
 			);
 		});
+
+		if (this.requestApproval) {
+			if (this.requestApproval.approvalPolicy) {
+				switch (this.requestApproval.approvalPolicy.approvalType) {
+					case ApprovalPolicyTypesStringEnum.TIME_OFF:
+					case ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING:
+						this.approvalPolicies.push(
+							this.requestApproval.approvalPolicy
+						);
+						break;
+				}
+			}
+		}
 	}
 
 	loadSelectedOrganization() {
@@ -160,8 +177,25 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 				this.requestApproval && this.requestApproval.id
 					? this.requestApproval.id
 					: null
-			]
+			],
+			tags:
+				this.requestApproval && this.requestApproval.tags
+					? [this.requestApproval.tags]
+					: []
 		});
+
+		this.tags = this.form.get('tags').value || [];
+
+		if (this.requestApproval) {
+			if (this.requestApproval.approvalPolicy) {
+				switch (this.requestApproval.approvalPolicy.approvalType) {
+					case ApprovalPolicyTypesStringEnum.TIME_OFF:
+					case ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING:
+						this.form.get('approvalPolicyId').disable();
+						break;
+				}
+			}
+		}
 	}
 
 	async closeDialog(requestApproval?: RequestApproval) {
@@ -201,12 +235,17 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 			min_count: this.form.value['min_count'],
 			employeeApprovals: this.form.value['employees'],
 			teams: this.form.value['teams'],
-			id: this.form.value['id']
+			id: this.form.value['id'],
+			tags: this.form.get('tags').value
 		};
 
 		let result: RequestApproval;
 		result = await this.requestApprovalService.save(requestApproval);
 		this.closeDialog(result);
+	}
+
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.form.get('tags').setValue(currentTagSelection);
 	}
 
 	onMembersSelected(members: string[]) {

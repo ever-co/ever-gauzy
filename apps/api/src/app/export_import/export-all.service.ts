@@ -603,6 +603,18 @@ export class ExportAllService implements OnDestroy {
 		});
 	}
 
+	async exportSpecificTables(names: string[]) {
+		return new Promise(async (resolve, reject) => {
+			for (let i = 1; i < this.services.length; i++) {
+				const name = names.find((n) => this.services[i].nameFile === n);
+				if (name) {
+					await this.getAsCsv(i);
+				}
+			}
+			resolve();
+		});
+	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

@@ -2,9 +2,13 @@
 	<nb-card-header>
 		<h5>
 			{{
-				(isHoliday
+				(isHoliday && !isEditMode
 					? 'TIME_OFF_PAGE.ADD_HOLIDAYS'
-					: 'TIME_OFF_PAGE.REQUEST_TIME_OFF'
+					: isEditMode
+					? 'TIME_OFF_PAGE.ACTIONS.EDIT'
+					: !isEditMode && !isHoliday
+					? 'TIME_OFF_PAGE.REQUEST_TIME_OFF'
+					: ''
 				) | translate
 			}}
 		</h5>

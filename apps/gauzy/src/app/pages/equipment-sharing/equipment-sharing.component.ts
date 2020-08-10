@@ -20,6 +20,7 @@ import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { EquipmentSharingPolicyComponent } from './table-components/equipment-sharing-policy/equipment-sharing-policy.component';
 
 export interface SelectedEquipmentSharing {
 	data: EquipmentSharing;
@@ -115,17 +116,13 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					),
 					type: 'string'
 				},
-				approvalPolicy: {
+				equipmentSharingPolicy: {
 					title: this.getTranslation(
-						'EQUIPMENT_SHARING_PAGE.APPROVAL_POLICY'
+						'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
 					),
-					type: 'function',
-					valuePrepareFunction: (approvalPolicy: any) => {
-						if (approvalPolicy && approvalPolicy.name) {
-							return approvalPolicy.name;
-						}
-						return '-';
-					}
+					type: 'custom',
+					renderComponent: EquipmentSharingPolicyComponent,
+					filter: false
 				},
 				shareRequestDay: {
 					title: this.getTranslation(
@@ -177,6 +174,21 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 				}
 			}
 		};
+	}
+
+	approval(rowData) {
+		const params = {
+			isApproval: true,
+			data: rowData
+		};
+		this.handleEvent(params);
+	}
+	refuse(rowData) {
+		const params = {
+			isApproval: false,
+			data: rowData
+		};
+		this.handleEvent(params);
 	}
 
 	async handleEvent(params) {
@@ -313,6 +325,6 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	}
 
 	manageAppropvalPolicy() {
-		this.router.navigate(['/pages/organization/approval-policy']);
+		this.router.navigate(['/pages/organization/equipment-sharing-policy']);
 	}
 }

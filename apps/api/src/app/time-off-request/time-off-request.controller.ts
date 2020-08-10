@@ -1,26 +1,16 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query,
-	Put,
-	Param,
-	HttpCode
-} from '@nestjs/common';
+import {Controller, UseGuards, HttpStatus, Post, Body, Get, Query, Put, Param, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { TimeOffRequest } from './time-off-request.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { TimeOffRequestService } from './time-off-request.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators/permissions';
 import {
 	TimeOffCreateInput as ITimeOffCreateInput,
 	StatusTypesEnum
 } from '@gauzy/models';
-import { TimeOff as ITimeOff } from '@gauzy/models';
+import { TimeOff as ITimeOff, PermissionsEnum } from '@gauzy/models';
 import { IPagination } from '../core';
 
 @ApiTags('TimeOffRequest')
@@ -60,7 +50,7 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 		return this.requestService.create(entity);
 	}
 
-	@ApiOperation({ summary: 'Time off request approved' })
+	@ApiOperation({ summary: 'Time off request update' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found request time off',
@@ -71,6 +61,34 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
+	@Put(':id')
+	async timeOffRequestUpdate(
+		@Param('id') id: string,
+		@Body() entity: ITimeOffCreateInput,
+	): Promise<TimeOffRequest> {
+		return this.requestService.updateTimeOffByAdmin(
+			id,
+			entity
+		);
+	}
+
+	@ApiOperation({ summary: 'Time off request approved' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found request time off',
+		type: TimeOffRequest
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put('approval/:id')
 	async timeOffRequestApproved(
 		@Param('id') id: string
@@ -91,6 +109,8 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('denied/:id')
 	async timeOffRequestDenied(

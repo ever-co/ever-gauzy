@@ -21,6 +21,8 @@ import { OrganizationContactService } from '../../../@core/services/organization
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { EmployeesService } from '../../../@core/services';
+import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 
 @Component({
 	selector: 'ngx-income-mutation',
@@ -42,6 +44,9 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 	clients: Object[] = [];
 	tags: Tag[] = [];
+
+	averageIncome = 0;
+	averageBonus = 0;
 
 	fakeClients = [
 		{
@@ -110,7 +115,9 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		private organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private employeeStatisticsService: EmployeeStatisticsService,
+		private employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -134,17 +141,18 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		});
 	}
 
-	addOrEditIncome() {
+	async addOrEditIncome() {
 		if (this.form.valid) {
 			this.dialogRef.close(
 				Object.assign(
-					{ employee: this.employeeSelector.selectedEmployee },
+					{
+						employee: this.employeeSelector.selectedEmployee
+					},
 					this.form.value
 				)
 			);
 		}
 	}
-
 	addNewClient = (name: string): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(

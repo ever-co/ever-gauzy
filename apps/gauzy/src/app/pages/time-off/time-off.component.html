@@ -29,7 +29,7 @@
 				</button>
 			</div>
 
-			<div class="actions-container" *ngIf="isRecordSelected">
+			<div class="actions-container" *ngIf="isRecordSelected && hasEditPermission">
 				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
@@ -50,7 +50,7 @@
 
 			<nb-checkbox
 				(checkedChange)="changeDisplayHolidays($event)"
-				class="my-auto ml-3 align-center"
+				class="my-auto mx-3 align-center"
 				status="primary"
 				checked
 				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
@@ -58,6 +58,7 @@
 
 			<button
 				(click)="openTimeOffSettings()"
+				*ngIf="hasEditPermission"
 				nbButton
 				status="primary"
 				style="border-radius: 5px 20px 5px;"
@@ -68,7 +69,7 @@
 					style="font-size: 2em;"
 					icon="settings-outline"
 				></nb-icon>
-				{{ 'TIME_OFF_PAGE.TIME_OFF_SETTINGS' | translate }}
+				{{ 'TIME_OFF_PAGE.SETTINGS' | translate }}
 			</button>
 		</div>
 		<ng2-smart-table
@@ -97,7 +98,7 @@
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Policy</span>
-					<span class="info-value">{{ x.policy }}</span>
+					<span class="info-value">{{ x.policy.name }}</span>
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Start Date</span>
@@ -152,6 +153,21 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
+	<button
+		(click)="updateTimeOffRecord()"
+		*ngIf="!selectedTimeOffRecord?.isHoliday"
+		nbButton
+		status="primary"
+		class="ml-4"
+		[size]="buttonSize || 'medium'"
+		nbTooltip="{{
+			'TIME_OFF_PAGE.ACTIONS.EDIT' | translate
+		}}"
+		nbTooltipTrigger="hover"
+	>
+		<nb-icon class="mx-2" icon="edit-outline"></nb-icon>
+	</button>
+
 	<button
 		(click)="approveDaysOff(selectedItem)"
 		nbButton

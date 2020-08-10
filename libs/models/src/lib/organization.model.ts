@@ -32,6 +32,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
 	show_clients_count?: boolean;
+	show_employees_count?: boolean;
 	overview: string;
 	skills: Skill[];
 	currency: string;
@@ -93,6 +94,7 @@ export interface OrganizationCreateInput extends IContact {
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
 	show_clients_count?: boolean;
+	show_employees_count?: boolean;
 	defaultValueDateType: DefaultValueDateTypeEnum;
 	dateFormat?: string;
 	timeZone?: string;

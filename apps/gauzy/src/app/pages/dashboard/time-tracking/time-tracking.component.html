@@ -1,7 +1,125 @@
 <nb-card>
 	<nb-card-header>Time Tracking</nb-card-header>
 	<nb-card-body>
-		This tab will show activity percentage, money spent, projects worked,
-		list of projects with no. of hours for each one etc.
+		<div class="row">
+			<div class="col-sm-6">
+				<nb-card>
+					<nb-card-header>Recent Activities</nb-card-header>
+					<nb-card-body
+						[nbSpinner]="timeSlotLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<div
+							class="row"
+							*ngFor="let timeSlotEmployee of timeSlotEmployees"
+						>
+							<div class="col">
+								<div class="hour-lable mt-3">
+									<h6>{{ timeSlotEmployee?.user?.name }}</h6>
+								</div>
+
+								<div
+									class="row my-3 align-items-center justify-content-center"
+								>
+									<div
+										class="col"
+										*ngFor="
+											let timeSlot of timeSlotEmployee.timeSlots
+										"
+									>
+										<ngx-screenshots-item
+											[timeSlot]="timeSlot"
+										>
+										</ngx-screenshots-item>
+									</div>
+								</div>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+
+				<nb-card class="mt-4">
+					<nb-card-header>Tasks</nb-card-header>
+					<nb-list
+						[nbSpinner]="tasksLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-list-item
+							*ngFor="let task of tasks; let index = index"
+						>
+							<div class="row w-100">
+								<div class="col">
+									{{ task.title }}
+								</div>
+								<div class="col-auto">
+									{{ task.duration | durationFormat }}
+								</div>
+							</div>
+						</nb-list-item>
+					</nb-list>
+				</nb-card>
+			</div>
+
+			<div class="col-sm-6">
+				<nb-card>
+					<nb-card-header>Projects</nb-card-header>
+					<nb-list
+						[nbSpinner]="projectsLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-list-item *ngFor="let project of projects">
+							<div class="row w-100">
+								<div class="col">
+									{{ project.name }}
+								</div>
+								<div class="col-auto">
+									{{ project.duration | durationFormat }}
+								</div>
+							</div>
+						</nb-list-item>
+					</nb-list>
+				</nb-card>
+
+				<nb-card class="mt-4">
+					<nb-card-header>Apps & Urls</nb-card-header>
+					<nb-list
+						[nbSpinner]="projectsLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-list-item *ngFor="let activity of activities">
+							<div class="w-100">
+								<ngx-activity-item
+									[item]="activity"
+								></ngx-activity-item>
+							</div>
+						</nb-list-item>
+					</nb-list>
+				</nb-card>
+
+				<nb-card class="mt-4">
+					<nb-card-header>Members</nb-card-header>
+					<nb-list
+						[nbSpinner]="memberLoading"
+						nbSpinnerSize="giant"
+						nbSpinnerStatus="primary"
+					>
+						<nb-list-item *ngFor="let member of members">
+							<div class="row w-100">
+								<div class="col">
+									{{ member?.name }}
+								</div>
+								<div class="col-auto">
+									{{ member?.duration | durationFormat }}
+								</div>
+							</div>
+						</nb-list-item>
+					</nb-list>
+				</nb-card>
+			</div>
+		</div>
 	</nb-card-body>
 </nb-card>

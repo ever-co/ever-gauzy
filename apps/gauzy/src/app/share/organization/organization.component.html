@@ -338,7 +338,10 @@
 							</div>
 						</div>
 					</div>
-					<div class="row mb-3" *ngIf="employees.length > 0">
+					<div
+						class="row mb-3"
+						*ngIf="organization.show_employees_count"
+					>
 						<div class="col">
 							<div class="org-year-found">
 								<h5 class="org-title org-key label-text">
@@ -346,7 +349,7 @@
 								</h5>
 								<span
 									class="org-value"
-									[textContent]="employees.length"
+									[textContent]="total_employees"
 								>
 								</span>
 							</div>
@@ -414,7 +417,7 @@
 										class="search-result"
 									>
 										<div class="avatar has-aura">
-											<a href="javascript:void(0)">
+											<a [routerLink]="[employee.id]">
 												<img
 													src="{{
 														employee.user.imageUrl
@@ -425,7 +428,7 @@
 										<div class="main-details">
 											<a
 												class="name margin-right-10"
-												href="#"
+												[routerLink]="[employee.id]"
 											>
 												{{
 													employee.user.firstName +

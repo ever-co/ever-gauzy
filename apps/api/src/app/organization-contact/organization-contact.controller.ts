@@ -22,7 +22,6 @@ import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Contact')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationContactController extends CrudController<
 	OrganizationContact
@@ -94,6 +93,7 @@ export class OrganizationContactController extends CrudController<
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
+	@UseGuards(AuthGuard('jwt'))
 	async updateEmployee(
 		@Body() entity: EditEntityByMemberInput
 	): Promise<any> {

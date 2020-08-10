@@ -79,6 +79,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	notes: AbstractControl;
 	showTooltip = false;
 	disableStatuses = false;
+	averageExpense = 0;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -125,7 +126,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.vendors = vendors;
 	}
 
-	addOrEditExpense() {
+	async addOrEditExpense() {
 		if (
 			this.form.value.typeOfExpense === 'Billable to Contact' &&
 			!this.form.value.organizationContact
@@ -167,7 +168,6 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			)
 		);
 	}
-
 	addNewCategory = async (
 		name: string
 	): Promise<IOrganizationExpenseCategory> => {

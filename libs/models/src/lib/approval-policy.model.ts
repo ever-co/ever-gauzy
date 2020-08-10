@@ -38,11 +38,6 @@ export enum ApprovalPolicyTypesEnum {
 	BUSINESS_TRIP = 3
 }
 
-export const ApprovalPolicyConst = {
-	TIME_OFF: 'TIME_OFF',
-	EQUIPMENT_SHARING: 'EQUIPMENT_SHARING'
-};
-
 export enum ApprovalPolicyTypesStringEnum {
 	TIME_OFF = 'TIME_OFF',
 	EQUIPMENT_SHARING = 'EQUIPMENT_SHARING',

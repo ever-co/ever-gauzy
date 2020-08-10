@@ -10,14 +10,14 @@ import {
 import { Base } from '../core/entities/base';
 import {
 	EquipmentSharing as IEquipmentSharing,
-	ApprovalPolicyTypesEnum
+	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { Equipment } from '../equipment/equipment.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
+import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
@@ -53,7 +53,7 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@Column({ nullable: true })
 	shareEndDay: Date;
 
-	@IsEnum(ApprovalPolicyTypesEnum)
+	@IsEnum(RequestApprovalStatusTypesEnum)
 	@IsNotEmpty()
 	@Column()
 	status: number;
@@ -70,20 +70,6 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	})
 	teams: OrganizationTeam[];
 
-	@ApiProperty({ type: ApprovalPolicy })
-	@ManyToOne((type) => ApprovalPolicy, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	approvalPolicy: ApprovalPolicy;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((policy: EquipmentSharing) => policy.approvalPolicy)
-	@IsString()
-	@Column({ nullable: true })
-	approvalPolicyId: string;
-
 	@ApiProperty({ type: String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
@@ -93,4 +79,18 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@IsString()
 	@Column({ nullable: true })
 	createdByName: string;
+
+	@ApiProperty({ type: EquipmentSharingPolicy })
+	@ManyToOne((type) => EquipmentSharingPolicy, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	equipmentSharingPolicy: EquipmentSharingPolicy;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((policy: EquipmentSharing) => policy.equipmentSharingPolicy)
+	@IsString()
+	@Column({ nullable: true })
+	equipmentSharingPolicyId: string;
 }

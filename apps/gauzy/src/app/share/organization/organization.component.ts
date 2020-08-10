@@ -9,9 +9,7 @@ import {
 	Organization,
 	OrganizationAwards,
 	OrganizationLanguages,
-	PermissionsEnum,
-	Timesheet,
-	IGetTimesheetInput
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -20,11 +18,9 @@ import { PublicPageMutationComponent } from '../../@shared/organizations/public-
 import { OrganizationLanguagesService } from '../../@core/services/organization-languages.service';
 import { OrganizationAwardsService } from '../../@core/services/organization-awards.service';
 import * as moment from 'moment';
-import { IncomeService } from '../../@core/services/income.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
-import { TimesheetService } from '../../@shared/timesheet/timesheet.service';
 
 @Component({
 	selector: 'ngx-organization',
@@ -46,15 +42,15 @@ export class OrganizationComponent extends TranslationBaseComponent
 	profits = 0;
 	minimum_project_size = 0;
 	total_projects = 0;
+	total_employees = 0;
 	employee_bonuses = [];
 	employees = [];
 	imageUrl: string;
 	hoverState: boolean;
 	languageExist: boolean;
 	awardExist: boolean;
-	imageUpdateButton: boolean = false;
+	imageUpdateButton = false;
 	moment = moment;
-	timeSheets: Timesheet[];
 
 	constructor(
 		private route: ActivatedRoute,
@@ -64,11 +60,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private employeesService: EmployeesService,
 		private organization_language_service: OrganizationLanguagesService,
 		private organizationAwardsService: OrganizationAwardsService,
-		private incomeService: IncomeService,
 		private organizationContactService: OrganizationContactService,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private organizationProjectsService: OrganizationProjectsService,
-		private timesheetService: TimesheetService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -108,11 +102,11 @@ export class OrganizationComponent extends TranslationBaseComponent
 					if (!!this.organization.show_clients_count) {
 						await this.getClientsCount();
 					}
+					if (!!this.organization.show_employees_count) {
+						await this.getEmployees();
+					}
 					if (!!this.organization.show_projects_count) {
 						await this.getProjectCount();
-					}
-					if (!!this.organization.show_total_hours) {
-						await this.getTimeSheets();
 					}
 					await this.getEmployees();
 				} catch (error) {
@@ -172,7 +166,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 
 	private async getEmployees() {
 		const employees = await this.employeesService
-			.getAll(['user'], {
+			.getAllPublic(['user'], {
 				organization: {
 					id: this.organization.id
 				}
@@ -180,21 +174,11 @@ export class OrganizationComponent extends TranslationBaseComponent
 			.pipe(first())
 			.toPromise();
 		this.employees = employees.items;
+		this.total_employees = employees.total;
 
 		if (typeof this.organization.totalEmployees !== 'number') {
 			this.organization.totalEmployees = employees.total;
 		}
-	}
-
-	private async getTimeSheets() {
-		const request: IGetTimesheetInput = {
-			organizationId: this.organization.id
-		};
-		this.loading = true;
-		this.timeSheets = await this.timesheetService
-			.getTimeSheets(request)
-			.then((logs) => logs)
-			.finally(() => (this.loading = false));
 	}
 
 	private async getEmployeeStatistics() {

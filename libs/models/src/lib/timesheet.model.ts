@@ -275,6 +275,12 @@ export interface Screenshot extends IBaseEntityModel {
 	recordedAt?: Date;
 }
 
+export interface ScreenshotMap {
+	startTime: string;
+	endTime: string;
+	timeSlots: TimeSlot[];
+}
+
 export interface TimerStatus {
 	duration: number;
 	running: boolean;

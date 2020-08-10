@@ -15,6 +15,7 @@ import { OrganizationEmploymentType } from './organization-employment-type.model
 import { RequestApprovalEmployee } from './request-approval-employee.model';
 
 export interface Employee extends IContact, IBaseEntityModel {
+	[x: string]: any;
 	endWork?: any;
 	startedWorkOn?: any;
 	user: User;
@@ -43,6 +44,9 @@ export interface Employee extends IContact, IBaseEntityModel {
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
 	requestApprovalEmployee?: RequestApprovalEmployee[];
 	contact: IContact;
+	averageIncome?: number;
+	averageExpenses?: number;
+	averageBonus?: number;
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {
@@ -66,6 +70,9 @@ export interface EmployeeUpdateInput {
 	rejectDate?: Date;
 	short_description?: string;
 	description?: string;
+	averageIncome?: number;
+	averageExpenses?: number;
+	averageBonus?: number;
 }
 
 export interface EmployeeCreateInput {

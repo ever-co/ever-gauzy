@@ -108,6 +108,8 @@ import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileStorage } from './core/file-storage';
 import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
+import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipment-sharing-policy.module';
+import * as moment from 'moment';
 
 @Module({
 	imports: [
@@ -325,6 +327,10 @@ import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-se
 						module: EquipmentSharingModule
 					},
 					{
+						path: '/equipment-sharing-policy',
+						module: EquipmentSharingPolicyModule
+					},
+					{
 						path: '/organization-employment-type',
 						module: OrganizationEmploymentTypeModule
 					},
@@ -485,6 +491,7 @@ import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-se
 		TimeOffPolicyModule,
 		TimeOffRequestModule,
 		ApprovalPolicyModule,
+		EquipmentSharingPolicyModule,
 		RequestApprovalModule,
 		RolePermissionsModule,
 		HelpCenterArticleModule,
@@ -557,4 +564,14 @@ import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-se
 	providers: [AppService, SeedDataService],
 	exports: []
 })
-export class AppModule {}
+export class AppModule {
+	constructor() {
+		// Set Monday as start of the week
+		moment.locale('en', {
+			week: {
+				dow: 1
+			}
+		});
+		moment.locale('en');
+	}
+}

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
-import { IEngagement, IUpworkApiConfig } from '@gauzy/models';
+import { IEngagement, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/models';
 import { UpworkService } from './upwork.service';
 import { tap, switchMap, map } from 'rxjs/operators';
 import { Store } from './store.service';
@@ -53,11 +53,6 @@ const contractSettings = {
 	]
 } */
 
-interface IDateRangeFilter {
-	start: Date;
-	end: Date;
-}
-
 @Injectable({
 	providedIn: 'root'
 })
@@ -87,10 +82,10 @@ export class UpworkStoreService {
 	private employeeId: string;
 
 	private _dateRangeActivity$: BehaviorSubject<
-		IDateRangeFilter
+		IUpworkDateRange
 	> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 	public dateRangeActivity$: Observable<
-		IDateRangeFilter
+		IUpworkDateRange
 	> = this._dateRangeActivity$.asObservable();
 
 	private _reports$: BehaviorSubject<any[]> = new BehaviorSubject(null);
@@ -114,22 +109,19 @@ export class UpworkStoreService {
 	/**
 	 * Get upwork income/expense reports
 	 */
-	loadReports(): void {
+	loadReports(): Observable<any> {
 		const relations: object = {
 			income: ['employee', 'employee.user'],
-			expense: ['employee', 'employee.user', 'vendor']
+			expense: ['employee', 'employee.user', 'vendor', 'category']
 		};
 		const dateRange = this._dateRangeActivity$.getValue();
 		const integrationId = this._selectedIntegrationId$.getValue();
 		const data = JSON.stringify({ relations, filter: { dateRange } });
 
-		this._us
-			.getAllReports({ integrationId, data })
-			.pipe(
-				map((reports) => reports.items),
-				tap((reports) => this._reports$.next(reports))
-			)
-			.subscribe();
+		return this._us.getAllReports({ integrationId, data }).pipe(
+			map((reports) => reports.items),
+			tap((reports) => this._reports$.next(reports))
+		);
 	}
 
 	setSelectedIntegrationId(integrationId) {
@@ -185,7 +177,7 @@ export class UpworkStoreService {
 		this.employeeId = employeeId;
 	}
 
-	setFilterDateRange({ start, end }) {
+	setFilterDateRange({ start, end }: IUpworkDateRange) {
 		this._dateRangeActivity$.next({
 			start: start || DEFAULT_DATE_RANGE.start,
 			end: end || DEFAULT_DATE_RANGE.end

@@ -15,6 +15,9 @@ export interface EmailTemplateFindInput extends IBaseEntityModel {
 
 export enum EmailTemplateNameEnum {
 	PASSWORD_RESET = 'password',
+	APPOINTMENT_CONFIRMATION = 'appointment-confirmation',
+	CANDIDATE_INTERVIEW_SCHEDULE = 'candidate-schedule-interview',
+	INTERVIEWER_INTERVIEW_SCHEDULE = 'interviewer-interview-schedule',
 	WELCOME_USER = 'welcome-user',
 	INVITE_ORGANIZATION_CLIENT = 'invite-organization-client',
 	INVITE_EMPLOYEE = 'invite-employee',

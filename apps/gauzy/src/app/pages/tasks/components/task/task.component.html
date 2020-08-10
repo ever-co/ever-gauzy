@@ -111,16 +111,12 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize">
 	<button
 		nbButton
 		status="info"
-		(click)="duplicateTaskDialog(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
+		(click)="duplicateTaskDialog(selectedTask)"
+		[disabled]="!selectedTask && disableButton"
 		class="mr-2"
 		[size]="buttonSize || 'medium'"
 	>
@@ -130,8 +126,8 @@
 	<button
 		nbButton
 		status="info"
-		(click)="editTaskDialog(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
+		(click)="editTaskDialog(selectedTask)"
+		[disabled]="!selectedTask && disableButton"
 		class="mr-2"
 		[size]="buttonSize || 'medium'"
 	>
@@ -141,8 +137,8 @@
 	<button
 		nbButton
 		status="danger"
-		(click)="deleteTask(selectedItem)"
-		[disabled]="!selectedItem && disableButton"
+		(click)="deleteTask(selectedTask)"
+		[disabled]="!selectedTask && disableButton"
 		class="mr-2"
 		[size]="buttonSize || 'medium'"
 	>

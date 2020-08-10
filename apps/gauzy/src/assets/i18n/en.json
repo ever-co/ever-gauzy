@@ -466,6 +466,7 @@
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"PROJECTS_COUNT": "Projects Count",
 		"CLIENTS_COUNT": "Clients Count",
+		"EMPLOYEES_COUNT": "Employees Count",
 		"DETAILS": "Details",
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
@@ -595,7 +596,8 @@
 			"SYNCED_CONTRACTS": "Synced Contracts",
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
-			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities"
+			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
+			"DATE_RANGE_PLACEHOLDER": "Choose date between"
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -1222,7 +1224,10 @@
 		"TOTAL_PROJECTS": "Total Projects",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"EMPLOYEES": "Employees",
-		"PROFITS": "Profits"
+		"PROFITS": "Profits",
+		"RATE": "Rate",
+		"ACTIVE": "Active",
+		"STARTED_WORK_ON": "Started work on"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -1235,6 +1240,7 @@
 			"AUTHOR": "Author",
 			"JOB_POST_URL": "Job Post URL",
 			"PICK_A_DATE": "Pick a Date",
+			"PROPOSAL_DATE": "Proposal Date",
 			"JOB_POST_CONTENT": "Job Post Content",
 			"UPLOAD": "Upload",
 			"PROPOSALS_CONTENT": "Proposal Content",
@@ -1271,7 +1277,7 @@
 		"APPROVAL_REQUEST_STATUS": "Status",
 		"APPROVAL_REQUEST_ACTIONS": "Actions",
 		"CREATED_BY": "Created By",
-		"APPROVAL": "Approval",
+		"APPROVE": "Approve",
 		"REFUSE": "Refuse",
 		"HEADER": "Approval Request",
 		"EMPLOYEES": "Employees",
@@ -1297,11 +1303,13 @@
 		"HEADER": "Time Off",
 		"REQUEST": "Request",
 		"REQUEST_TIME_OFF": "Request Time Off",
+		"EDIT": "Edit",
 		"ADD_HOLIDAYS": "Add Holidays",
 		"DISPLAY_HOLIDAYS": "Display Holidays",
 		"HOLIDAY_NAME": "Holiday name",
 		"SELECT_EMPLOYEES": "Select Employees",
-		"TIME_OFF_SETTINGS": "Time Off Settings",
+		"SETTINGS": "Settings",
+		"EDI": "Edit Time Off record",
 		"SELECT_HOLIDAY_NAME": "Select Holiday name",
 		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees",
 		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy",
@@ -1313,9 +1321,10 @@
 			"ALL": "All"
 		},
 		"ACTIONS": {
-			"APPROVE_DAYS_OFF_REQUEST": "Approve Time off Request",
-			"DENY_DAYS_OFF_REQUEST": "Deny Time off Request",
-			"DELETE_DAYS_OFF_REQUEST": "Delete Time off Request"
+			"EDIT": "Edit Time Off record",
+			"APPROVE_DAYS_OFF_REQUEST": "Approve Time Off Request",
+			"DENY_DAYS_OFF_REQUEST": "Deny Time Off Request",
+			"DELETE_DAYS_OFF_REQUEST": "Delete Time Off Request"
 		},
 		"POLICY": {
 			"HEADER": "Time Off Policy",
@@ -1337,7 +1346,9 @@
 			"REQUEST_DELETED": "Time off request successfully deleted",
 			"ERR_LOAD_RECORDS": "Unable to load time off records",
 			"ERR_DELETE_REQUEST": "Unable to delete Time off request",
-			"ERR_CREATE_RECORD": "Unable to create Time off record"
+			"ERR_CREATE_RECORD": "Unable to create Time off record",
+			"REQUEST_UPDATED": "Time Off request successfully updated",
+			"ERR_UPDATE_RECORD": "Unable to update Time off record"
 		}
 	},
 	"TAGS_PAGE": {
@@ -1393,7 +1404,7 @@
 		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
 		"REQUEST": "Request",
 		"EQUIPMENT_NAME": "Equipment name",
-		"APPROVAL_POLICY": "Approval policy",
+		"EQUIPMENT_SHARING_POLICY": "Equipment Sharing Policy",
 		"SHARE_REQUIEST_DATE": "Share request date",
 		"SHARE_START_DATE": "Share start date",
 		"SHARE_END_DATE": "Share end date",
@@ -1412,6 +1423,19 @@
 		"REFUSE": "Refuse",
 		"APPROVAL_SUCCESS": "Request Approval Success",
 		"REFUSE_SUCCESS": "Request Refuse Success"
+	},
+	"EQUIPMENT_SHARING_POLICY_PAGE": {
+		"HEADER": "Equipment Sharing Policy",
+		"ADD_EQUIPMENT_SHARING_POLICY": "Add Equipment Sharing Policy",
+		"EDIT_EQUIPMENT_SHARING_POLICY": "Edit Equipment Sharing Policy",
+		"DELETE_EQUIPMENT_SHARING_POLICY": "Delete Equipment Sharing Policy",
+		"REQUEST": "Request",
+		"EQUIPMENT_SHARING_POLICY_NAME": "Equipment Sharing Policy name",
+		"EQUIPMENT_SHARING_POLICY_ORG": "Equipment Sharing Policy organization",
+		"EQUIPMENT_SHARING_POLICY_DESCRIPTION": "Equipment Sharing Policy description",
+		"REQUEST_SAVED": "Policy saved",
+		"REQUEST_DELETED": "Policy deleted",
+		"ACTIONS": "Actions"
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Inventory",
@@ -1595,6 +1619,8 @@
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
 		"INVOICES_SELECT_PAID": "Paid",
 		"INVOICES_SELECT_TAX": "Tax",
+		"INVOICES_TAXES": "Taxes",
+		"INVOICES_DISCOUNT": "Discount",
 		"INVOICES_SELECT_TERMS": "Terms",
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
 		"INVOICES_SELECT_CONTACT": "Contact",

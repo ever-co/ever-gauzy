@@ -64,4 +64,9 @@ form {
     top: calc(50% - 68px / 2);
     left: calc(50% - 68px / 2);
   }
+
+  .uploadimage {
+    min-width: 150px;
+    min-height: 150px;
+  }
 }

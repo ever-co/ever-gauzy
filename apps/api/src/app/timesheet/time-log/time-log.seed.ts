@@ -4,7 +4,6 @@ import * as _ from 'underscore';
 import { TimeLogSourceEnum, TimeLogType, TimeSlot } from '@gauzy/models';
 import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
-import { Employee } from '../../employee/employee.entity';
 import { Timesheet } from '../timesheet.entity';
 import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
@@ -17,11 +16,6 @@ export const createRandomTimeLogs = async (
 	defaultProjects: OrganizationProjects[],
 	noOfTimeLogsPerTimeSheet
 ) => {
-	const allEmployees = await connection
-		.getRepository(Employee)
-		.createQueryBuilder()
-		.getMany();
-
 	let query = connection
 		.getRepository(OrganizationProjects)
 		.createQueryBuilder()
@@ -32,77 +26,57 @@ export const createRandomTimeLogs = async (
 
 	const projects = await query.getMany();
 
+	let timeSlots: TimeSlot[] = [];
+	const timelogs: TimeLog[] = [];
+	let screenshots: Screenshot[] = [];
+	const screenshotsPromise: Promise<Screenshot[]>[] = [];
+
 	for (
 		let timeSheetIndex = 0;
 		timeSheetIndex < timeSheets.length;
 		timeSheetIndex++
 	) {
-		const employees = _.chain(allEmployees)
+		const timesheet = timeSheets[timeSheetIndex];
+
+		const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
 			.shuffle()
-			//.take(faker.random.number({ min: 10, max: allEmployees.length }))
+			.take(faker.random.number({ min: 3, max: 5 }))
 			.values()
 			.value();
 
-		const timesheet = timeSheets[timeSheetIndex];
+		for (let index = 0; index <= randomDays.length; index++) {
+			const day = randomDays[index];
+			const date = moment(timesheet.startedAt).add(day, 'day').toDate();
 
-		let timeSlots: TimeSlot[] = [];
-		const timelogs: TimeLog[] = [];
-		let screenshots: Screenshot[] = [];
-		const screenshotsPromise: Promise<Screenshot[]>[] = [];
+			const range = dateRanges(
+				moment(date).startOf('day').toDate(),
+				moment(date).endOf('day').toDate()
+			);
 
-		for (
-			let employeeIndex = 0;
-			employeeIndex < employees.length;
-			employeeIndex++
-		) {
-			const employee = employees[employeeIndex];
+			for (let rangeIndex = 0; rangeIndex < range.length; rangeIndex++) {
+				const { startedAt, stoppedAt } = range[rangeIndex];
 
-			const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
-				.shuffle()
-				.take(faker.random.number({ min: 3, max: 5 }))
-				.values()
-				.value();
+				const project = faker.random.arrayElement(projects);
+				const task = faker.random.arrayElement(project.tasks);
 
-			for (let index = 0; index <= randomDays.length; index++) {
-				const day = randomDays[index];
-				const date = moment(timesheet.startedAt)
-					.add(day, 'day')
-					.toDate();
+				const source: TimeLogSourceEnum = faker.random.arrayElement(
+					Object.keys(TimeLogSourceEnum)
+				) as TimeLogSourceEnum;
 
-				const range = dateRanges(
-					moment(date).startOf('day').toDate(),
-					moment(date).endOf('day').toDate()
-				);
+				const timelog = new TimeLog({
+					employeeId: timesheet.employeeId
+				});
 
-				for (
-					let rangeIndex = 0;
-					rangeIndex < range.length;
-					rangeIndex++
+				let logType: TimeLogType = TimeLogType.TRACKED;
+				if (
+					source === TimeLogSourceEnum.WEB_TIMER ||
+					source === TimeLogSourceEnum.BROWSER
 				) {
-					const { startedAt, stoppedAt } = range[rangeIndex];
-
-					const project = faker.random.arrayElement(projects);
-					const task = faker.random.arrayElement(project.tasks);
-
-					const source: TimeLogSourceEnum = faker.random.arrayElement(
-						Object.keys(TimeLogSourceEnum)
-					) as TimeLogSourceEnum;
-
-					const timelog = new TimeLog();
-					timelog.employee = employee;
-
-					let logType: TimeLogType = TimeLogType.TRACKED;
-					if (
-						source === TimeLogSourceEnum.WEB_TIMER ||
-						source === TimeLogSourceEnum.BROWSER
-					) {
-						logType = TimeLogType.MANUAL;
-					}
-					const newTimeSlot = createTimeSlots(
-						startedAt,
-						stoppedAt
-					).map((timeSlot) => {
-						timeSlot.employee = timelog.employee;
+					logType = TimeLogType.MANUAL;
+				}
+				const newTimeSlot = createTimeSlots(startedAt, stoppedAt).map(
+					(timeSlot) => {
+						timeSlot.employeeId = timesheet.employeeId;
 						if (logType === TimeLogType.TRACKED) {
 							for (let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
 								screenshotsPromise.push(
@@ -111,42 +85,52 @@ export const createRandomTimeLogs = async (
 							}
 						}
 						return timeSlot;
-					});
-					timeSlots = timeSlots.concat();
+					}
+				);
+				timeSlots = timeSlots.concat(newTimeSlot);
 
-					timelog.timesheet = timesheet;
-					timelog.timeSlots = newTimeSlot;
-					timelog.project = project;
-					timelog.task = task;
-					timelog.organizationContact = project.organizationContact;
-					timelog.startedAt = startedAt;
-					timelog.stoppedAt = stoppedAt;
-					timelog.logType = logType;
-					timelog.source = source;
-					timelog.description = faker.lorem.sentence(
-						faker.random.number(10)
-					);
-					timelog.isBillable = faker.random.arrayElement([
-						true,
-						true,
-						false
-					]);
-					timelog.deletedAt = null;
-					timelogs.push(timelog);
-				}
+				timelog.timesheet = timesheet;
+				timelog.timeSlots = newTimeSlot;
+				timelog.project = project;
+				timelog.task = task;
+				timelog.organizationContact = project.organizationContact;
+				timelog.startedAt = startedAt;
+				timelog.stoppedAt = stoppedAt;
+				timelog.logType = logType;
+				timelog.source = source;
+				timelog.description = faker.lorem.sentence(
+					faker.random.number(10)
+				);
+				timelog.isBillable = faker.random.arrayElement([
+					true,
+					true,
+					false
+				]);
+				timelog.deletedAt = null;
+				timelogs.push(timelog);
 			}
 		}
+	}
 
-		await connection.manager.save(timeSlots);
+	await connection.manager.save(timeSlots);
 
-		await Promise.all(screenshotsPromise).then((data) => {
+	await Promise.all(screenshotsPromise)
+		.then((data) => {
+			console.log({ data });
 			data.forEach((row) => {
 				screenshots = screenshots.concat(row);
 			});
+		})
+		.catch((err) => {
+			console.log({ err });
 		});
 
+	try {
 		await connection.manager.save(timelogs);
 		await connection.manager.save(screenshots);
+	} catch (error) {
+		console.log({ error });
+		process.exit(0);
 	}
 };
 

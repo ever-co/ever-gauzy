@@ -29,6 +29,7 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 import { Skill } from '../skills/skill.entity';
 import { Contact } from '../contact/contact.entity';
 import { TenantBase } from '../core/entities/tenant-base';
+import { TimeLog } from '../timesheet/time-log.entity';
 
 @Entity('employee')
 export class Employee extends TenantBase implements IEmployee {
@@ -147,6 +148,9 @@ export class Employee extends TenantBase implements IEmployee {
 	)
 	teams?: OrganizationTeam[];
 
+	@OneToMany((type) => TimeLog, (timeLog) => timeLog.employee)
+	timeLogs?: TimeLog[];
+
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
@@ -200,4 +204,22 @@ export class Employee extends TenantBase implements IEmployee {
 		(requestApprovals) => requestApprovals.employee
 	)
 	requestApprovals?: RequestApprovalEmployee[];
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	averageIncome?: number;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	averageBonus?: number;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	averageExpenses?: number;
 }

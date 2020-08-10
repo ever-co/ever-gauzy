@@ -13,6 +13,20 @@ import { first } from 'rxjs/operators';
 export class EmployeesService {
 	constructor(private http: HttpClient) {}
 
+	getAllPublic(
+		relations?: string[],
+		findInput?: EmployeeFindInput
+	): Observable<{ items: Employee[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
+
+		return this.http.get<{ items: Employee[]; total: number }>(
+			`/api/employee/public`,
+			{
+				params: { data }
+			}
+		);
+	}
+
 	getAll(
 		relations?: string[],
 		findInput?: EmployeeFindInput

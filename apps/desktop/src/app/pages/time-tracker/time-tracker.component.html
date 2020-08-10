@@ -46,7 +46,9 @@
 													nbSpinnerStatus="info"
 												></p>
 												<nb-icon
-													*ngIf="awCheck"
+													*ngIf="
+														awCheck && !loadingAw
+													"
 													[icon]="iconAw"
 													[status]="statusIcon"
 												>
