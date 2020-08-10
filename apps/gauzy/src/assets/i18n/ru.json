@@ -1059,6 +1059,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
+		"POSITIONS": "Позиции",
 		"EDIT_PUBLIC_PAGE": "Изменить публичную страницу",
 		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
@@ -1072,6 +1073,7 @@
 		"ARCHIVED": "Архивирован",
 		"LOCATION": "Местоположение",
 		"SETTINGS": "Настройки",
+		"TEAMS": "Команды",
 		"ROLES": "Роли",
 		"HELP_CENTER": "Центр поддержки",
 		"DOCUMENTS": "Документы",
