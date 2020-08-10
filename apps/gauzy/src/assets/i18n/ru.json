@@ -2235,7 +2235,17 @@
 			"email-estimate": "Почтовый расчет",
 			"email-invoice": "Email Счет",
 			"invite-employee": "Пригласить сотрудника",
-			"invite-user": "Пригласить пользователя"
+			"invite-user": "Пригласить пользователя",
+			"appointment-confirmation": "Подтверждение назначения",
+			"appointment-cancellation": "Отмена Назначения",
+			"equipment": "Создание снаряжения",
+			"equipment-request": "Запрос на Снаряжение",
+			"timesheet-overview": "Обзор временных таблиц",
+			"timesheet-submit": "Сроки представления",
+			"timesheet-action": "Действия по расписанию",
+			"timesheet-delete": "Удалить лист времени",
+			"candidate-schedule-interview": "Расписание интервью Кандидата",
+			"interviewer-interview-schedule": "Расписание интервьюера"
 		},
 		"LANGUAGE_CODES": {
 			"en": "Russian",
