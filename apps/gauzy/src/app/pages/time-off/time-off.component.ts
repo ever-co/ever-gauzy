@@ -45,6 +45,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 	isRecordSelected = false;
 	displayHolidays = true;
 	hasEditPermission = false;
+	showActions = false;
 	private _ngDestroy$ = new Subject<void>();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -502,6 +503,10 @@ export class TimeOffComponent extends TranslationBaseComponent
 		const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
 		const nativeDescription = this.selectedTimeOffRecord.description;
 		this.selectedTimeOffRecord.description = nativeDescription.substr(index+1);
+	}
+
+	showAdditionalActions() {
+		this.showActions = !this.showActions;
 	}
 
 	changeDisplayHolidays(checked: boolean) {
