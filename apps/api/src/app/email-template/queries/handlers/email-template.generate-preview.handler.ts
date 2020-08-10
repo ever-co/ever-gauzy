@@ -38,6 +38,22 @@ export class EmailTemplateGeneratePreviewHandler
       candidateName: 'Alex',
       date:'Thursday, August 27, 2020',
       interviewerName:'John Doe',
+      total_hours: '16',
+      average_activates: '25',
+      log_type: 'tracked',
+      projects: ['Gauzy Web Site', 'Gauzy Platform(open-source)'],
+      project: 'Gauzy Web Site',
+      timesheet_action: 'APPROVE/REJECT',
+      equipment_status: 'APPROVE/REJECT',
+      reason: 'reason for this',
+      equipment_name: 'Fiat Freemont',
+      equipment_type: 'Car',
+      equipment_serial_number: 'CB0950AT',
+      manufactured_year: '2015',
+      initial_cost: '40000',
+      currency: 'BGN',
+      max_share_period: '5',
+      autoApproveShare: false,
 		});
 		return { html };
 	}
