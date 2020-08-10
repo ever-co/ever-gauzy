@@ -37,7 +37,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	employee: SelectedEmployee;
 	isEmployee = false;
 	selectedFilter = 'all';
-	objectiveGroup = 'level';
+	objectiveGroup = 'timeFrames';
 	goalGeneralSettings: GoalGeneralSetting;
 	goalTimeFrames: Array<string> = [];
 	filters = [

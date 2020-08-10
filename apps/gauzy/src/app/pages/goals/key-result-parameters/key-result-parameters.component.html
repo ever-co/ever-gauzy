@@ -122,18 +122,16 @@
 						</div>
 					</div>
 
-					<div class="row">
-						<div class="col-md-6">
-							<label
-								*ngIf="
-									typeForm.value.type ==
-										keyResultTypeEnum.NUMERICAL ||
-									typeForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								for="initial-value"
-								class="label"
-							>
+					<div
+						class="row"
+						*ngIf="
+							typeForm.value.type ==
+								keyResultTypeEnum.NUMERICAL ||
+							typeForm.value.type == keyResultTypeEnum.CURRENCY
+						"
+					>
+						<div class="col-md-4">
+							<label for="initial-value" class="label">
 								{{
 									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
 										| translate
@@ -142,12 +140,6 @@
 							<input
 								type="number"
 								id="initial-value"
-								*ngIf="
-									typeForm.value.type ==
-										keyResultTypeEnum.NUMERICAL ||
-									typeForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
 								nbInput
 								fullWidth
 								formControlName="initialValue"
@@ -158,17 +150,8 @@
 							/>
 						</div>
 
-						<div class="col-md-6">
-							<label
-								*ngIf="
-									typeForm.value.type ==
-										keyResultTypeEnum.NUMERICAL ||
-									typeForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								for="target-value"
-								class="label"
-							>
+						<div class="col-md-4">
+							<label for="target-value" class="label">
 								{{
 									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
 										| translate
@@ -177,12 +160,6 @@
 							<input
 								type="number"
 								id="target-value"
-								*ngIf="
-									typeForm.value.type ==
-										keyResultTypeEnum.NUMERICAL ||
-									typeForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
 								nbInput
 								fullWidth
 								formControlName="targetValue"
@@ -191,6 +168,82 @@
 										| translate
 								}}"
 							/>
+						</div>
+						<div class="col-md-4">
+							<label for="unit" class="label">
+								Unit
+							</label>
+							<nb-select
+								fullWidth
+								formControlName="unit"
+								*ngIf="
+									typeForm.value.type ==
+									keyResultTypeEnum.CURRENCY
+								"
+								[(selected)]="currenciesEnum.BGN"
+								id="unit"
+								nbSuffix
+							>
+								<nb-option
+									[value]="currency.value"
+									*ngFor="
+										let currency of currenciesEnum
+											| keyvalue
+									"
+									>{{ currency.value }}</nb-option
+								>
+							</nb-select>
+							<nb-select
+								fullWidth
+								formControlName="unit"
+								[(selected)]="numberUnitsEnum[1]"
+								(selectedChange)="
+									typeForm.value.unit == 'create-new'
+										? (createNew = !createNew)
+										: null
+								"
+								*ngIf="
+									typeForm.value.type ==
+										keyResultTypeEnum.NUMERICAL &&
+									!createNew
+								"
+								id="unit"
+								nbSuffix
+							>
+								<nb-option
+									[value]="unit"
+									*ngFor="let unit of numberUnitsEnum"
+									>{{ unit }}
+								</nb-option>
+								<nb-option
+									value="create-new"
+									class="bg-secondary text-light"
+								>
+									+ create new
+								</nb-option>
+							</nb-select>
+							<nb-form-field *ngIf="createNew">
+								<input
+									type="text"
+									formControlName="unit"
+									nbInput
+									fullWidth
+								/>
+								<nb-icon
+									nbSuffix
+									icon="checkmark-outline"
+									status="success"
+									(click)="createNewUnit()"
+								>
+								</nb-icon>
+								<nb-icon
+									nbSuffix
+									icon="close-outline"
+									status="danger"
+									(click)="createNew = !createNew"
+								>
+								</nb-icon>
+							</nb-form-field>
 						</div>
 					</div>
 					<div *ngIf="typeForm.value.type === keyResultTypeEnum.KPI">

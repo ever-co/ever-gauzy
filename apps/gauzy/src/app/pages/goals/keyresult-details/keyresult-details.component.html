@@ -48,7 +48,12 @@
 							}}
 						</div>
 						<div class="col-md-8">
-							{{ keyResult.initialValue }} {{ keyResult.unit }}
+							{{ keyResult.initialValue }}
+							{{
+								keyResult.type == keyResultTypeEnum.KPI
+									? kpi?.unit
+									: keyResult.unit
+							}}
 						</div>
 					</div>
 					<div
@@ -64,7 +69,12 @@
 							}}
 						</div>
 						<div class="col-md-8">
-							{{ keyResult.targetValue }} {{ keyResult.unit }}
+							{{ keyResult.targetValue }}
+							{{
+								keyResult.type == keyResultTypeEnum.KPI
+									? kpi?.unit
+									: keyResult.unit
+							}}
 						</div>
 					</div>
 					<div class="row mt-2">
