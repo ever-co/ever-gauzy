@@ -1059,6 +1059,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Organizations",
 		"EMPLOYEES": "Employees",
+		"POSITIONS": "Positions",
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
 		"MAIN": "Main",
@@ -1072,6 +1073,7 @@
 		"ARCHIVED": "Archived",
 		"LOCATION": "Location",
 		"SETTINGS": "Settings",
+		"TEAMS": "Teams",
 		"ROLES": "Roles",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",

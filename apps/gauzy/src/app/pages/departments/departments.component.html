@@ -1,33 +1,45 @@
 <nb-card>
 	<nb-card-header>
-		<button
-			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
-			nbButton
-			status="success"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
-		<ga-departments-mutation
-			*ngIf="showAddCard"
-			[employees]="employees"
-			[organizationId]="organizationId"
-			[department]="departmentToEdit"
-			(canceled)="cancel()"
-			(addOrEditDepartment)="addOrEditDepartment($event)"
-		>
-		</ga-departments-mutation>
+		<div class="main-header">
+			<h4>{{ 'ORGANIZATIONS_PAGE.DEPARTMENTS' | translate }}</h4>
+			<div class="main-header">
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
+			</div>
+		</div>
 	</nb-card-header>
+	<nb-card-body>
+		<div>
+			<button
+				*ngIf="!showAddCard"
+				(click)="showAddCard = !showAddCard"
+				nbButton
+				status="success"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<ga-departments-mutation
+				*ngIf="showAddCard"
+				[employees]="employees"
+				[organizationId]="organizationId"
+				[department]="departmentToEdit"
+				(canceled)="cancel()"
+				(addOrEditDepartment)="addOrEditDepartment($event)"
+			>
+			</ga-departments-mutation>
+		</div>
 
-	<nb-card-body class="card-container" *ngIf="departments?.length">
-		<ga-entity-with-members-card
-			*ngFor="let d of departments"
-			[entityWithMembers]="d"
-			(remove)="removeDepartment(d.id, d.name)"
-			(edit)="editDepartment(d)"
-			class="member-card"
-		>
-		</ga-entity-with-members-card>
+		<div class="card-container" *ngIf="departments?.length">
+			<ga-entity-with-members-card
+				*ngFor="let d of departments"
+				[entityWithMembers]="d"
+				(remove)="removeDepartment(d.id, d.name)"
+				(edit)="editDepartment(d)"
+				class="member-card"
+			>
+			</ga-entity-with-members-card>
+		</div>
 	</nb-card-body>
 </nb-card>

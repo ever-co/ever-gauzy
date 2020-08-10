@@ -8,7 +8,8 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbTooltipModule,
-	NbSelectModule
+	NbSelectModule,
+	NbActionsModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -38,6 +39,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbInputModule,
 		NbSelectModule,
 		NbIconModule,
+		NbActionsModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		FileUploaderModule,

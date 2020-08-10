@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { EmployeeLevelInput, Tag } from '@gauzy/models';
+import {
+	EmployeeLevelInput,
+	Tag,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
@@ -24,6 +29,8 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 	employeeLevels: EmployeeLevelInput[] = [];
 	selectedEmployeeLevel: EmployeeLevelInput;
 	tags: Tag[] = [];
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	constructor(
 		private readonly employeeLevelService: EmployeeLevelService,
@@ -55,7 +62,15 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 			this.employeeLevels = items;
 		}
 	}
-
+	setView() {
+		this.viewComponentName = ComponentEnum.EMPLOYEE_LEVELS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 	async addEmployeeLevel(level: string) {
 		if (level) {
 			await this.employeeLevelService.create({

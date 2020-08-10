@@ -6,13 +6,15 @@ import {
 	Employee,
 	Organization,
 	OrganizationEmploymentType,
-	Tag
+	Tag,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	selector: 'ga-employment-types',
@@ -29,6 +31,8 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	tags: Tag[] = [];
 	showEditDiv: boolean = true;
 	selectedOrgEmplType: OrganizationEmploymentType;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	constructor(
 		private fb: FormBuilder,
@@ -71,7 +75,15 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 			this.addEmploymentType($event.target.value);
 		}
 	}
-
+	setView() {
+		this.viewComponentName = ComponentEnum.EMPLOYMENT_TYPE;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 	private async addEmploymentType(name: string) {
 		if (name) {
 			const newEmploymentType = {
