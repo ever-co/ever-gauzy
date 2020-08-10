@@ -1059,6 +1059,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "ארגונים",
 		"EMPLOYEES": "עובדים",
+		"POSITIONS": "עמדות",
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
@@ -1072,6 +1073,7 @@
 		"ARCHIVED": "נשמר בארכיון",
 		"LOCATION": "Location",
 		"SETTINGS": "הגדרות",
+		"TEAMS": "Teams",
 		"ROLES": "Roles",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",
