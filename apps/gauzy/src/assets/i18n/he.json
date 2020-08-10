@@ -2235,7 +2235,17 @@
 			"email-estimate": "Email Estimate",
 			"email-invoice": "Email Invoice",
 			"invite-employee": "Invite Employee",
-			"invite-user": "Invite User"
+			"invite-user": "Invite User",
+      "appointment-confirmation": "Appointment Confirmation",
+      "appointment-cancellation": "Appointment Cancellation",
+      "equipment": "Equipment Create",
+      "equipment-request": "Equipment Request",
+      "timesheet-overview": "Time sheet overview",
+      "timesheet-submit": "Time Sheet Submit",
+      "timesheet-action": "Time Sheet Actions",
+      "timesheet-delete": "Time Sheet Delete",
+      "candidate-schedule-interview": "Candidate Interview Schedule",
+      "interviewer-interview-schedule": "Interviewer Schedule"
 		},
 		"LANGUAGE_CODES": {
 			"en": "English",

@@ -1,0 +1,59 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-image
+					width="100px"
+					src="{{host}}/assets/images/logos/logo_Gauzy.svg"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text font-size="20px" font-family="helvetica"
+					><bold>Booking Cancellation</bold></mj-text
+				>
+
+				<mj-text padding="20px 0px 20px 50px" font-size="16px" font-family="helvetica">
+					<p><bold>Host:</bold> {{host}}</p>
+          <p><bold>Agenda:</bold> {{agenda}}</p>
+          <p><bold>Description:</bold> {{description}}</p>
+          <p><bold>Participant Emails:</bold> {{emails}}</p>
+          <p><bold>Location:</bold> {{location}}</p>
+          <p><bold>Duration:</bold> {{duration}}</p>
+				</mj-text>
+        <mj-text font-size="16px" font-family="helvetica"
+					>** Your booking canceled</mj-text
+				><mj-text font-size="12px" font-family="helvetica"
+					>** An email has been sent to the host as well as to all the participants for this meeting.</mj-text
+				>
+
+        <mj-text font-size="16px" padding="20px 0px 20px 50px" font-family="helvetica">
+					<p><bold>Reschedule Appointment:</bold> {{rescheduleAppointment}}</p>
+          </mj-text>
+        <mj-button
+					href="{{cancleAppointmentUrl}}"
+					background-color="#3366ff"
+					color="white"
+				>
+					CANCEL APPOINTMENT
+				</mj-button>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text align="center" font-size="12px" font-family="helvetica"
+					>© 2019,
+					<a href="https://app.gauzy.co/." style="color:#598bff"
+						>Gauzy</a
+					>
+					by
+					<a href="https://ever.co/" style="color:#598bff"
+						>Ever Co. LTD.</a
+					>
+					All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>
