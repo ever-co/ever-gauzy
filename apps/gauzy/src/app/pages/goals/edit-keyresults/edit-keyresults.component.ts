@@ -98,13 +98,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			alignedGoalOwner: [''],
 			kpiId: [null]
 		});
-		await this.getKPI();
-		this.employeeService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
 		if (!!this.data) {
 			if (!this.numberUnitsEnum.find((unit) => unit === this.data.unit)) {
 				this.numberUnitsEnum.push(this.data.unit);
@@ -118,10 +111,18 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					? new Date(this.data.hardDeadline)
 					: null,
 				lead: !!this.data.lead ? this.data.lead.id : null,
-				owner: this.data.owner.id,
-				unit: this.data.unit
+				owner: this.data.owner.id
 			});
 		}
+
+		await this.getKPI();
+		this.employeeService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employees) => {
+				this.employees = employees.items;
+			});
+
 		if (
 			this.store.user.role.name !== RolesEnum.SUPER_ADMIN &&
 			this.store.user.role.name !== RolesEnum.MANAGER &&
@@ -132,10 +133,12 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	}
 
 	async getKPI() {
-		await this.goalSettingsService.getAllKPI().then((kpi) => {
-			const { items } = kpi;
-			this.KPIs = items;
-		});
+		await this.goalSettingsService
+			.getAllKPI({ organization: { id: this.orgId } })
+			.then((kpi) => {
+				const { items } = kpi;
+				this.KPIs = items;
+			});
 	}
 
 	async getTeams() {

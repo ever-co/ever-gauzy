@@ -229,7 +229,7 @@
 									keyResultsForm.value.type ==
 									keyResultTypeEnum.CURRENCY
 								"
-								[selected]="currenciesEnum.BGN"
+								[(selected)]="currenciesEnum.BGN"
 								id="unit"
 								nbSuffix
 							>
@@ -249,7 +249,7 @@
 								(selectedChange)="
 									keyResultsForm.value.unit == 'create-new'
 										? (createNew = !createNew)
-										: null
+										: true
 								"
 								*ngIf="
 									keyResultsForm.value.type ==
