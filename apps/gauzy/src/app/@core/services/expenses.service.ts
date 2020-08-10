@@ -86,7 +86,13 @@ export class ExpensesService {
 			.toPromise();
 	}
 
-	delete(id: string): Promise<any> {
-		return this.http.delete(`/api/expense/${id}`).pipe(first()).toPromise();
+	delete(expenseId: string, employeeId: string): Promise<any> {
+		const data = JSON.stringify({ expenseId, employeeId });
+		return this.http
+			.delete('/api/expense/deleteExpense', {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
 	}
 }

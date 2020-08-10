@@ -15,6 +15,7 @@ import { ApprovalPolicyComponent } from './table-components/approval-policy/appr
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 export interface IApprovalsData {
 	icon: string;
@@ -134,7 +135,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		} else {
 			items = (
 				await this.approvalRequestService.getAll(
-					['employeeApprovals', 'teamApprovals'],
+					['employeeApprovals', 'teamApprovals', 'tags'],
 					this.selectedOrganizationId
 				)
 			).items;
@@ -152,7 +153,8 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
 					),
-					type: 'string'
+					type: 'custom',
+					renderComponent: PictureNameTagsComponent
 				},
 				min_count: {
 					title: this.getTranslation(

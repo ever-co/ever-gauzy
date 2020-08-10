@@ -112,7 +112,7 @@ export class UpworkStoreService {
 	loadReports(): Observable<any> {
 		const relations: object = {
 			income: ['employee', 'employee.user'],
-			expense: ['employee', 'employee.user', 'vendor']
+			expense: ['employee', 'employee.user', 'vendor', 'category']
 		};
 		const dateRange = this._dateRangeActivity$.getValue();
 		const integrationId = this._selectedIntegrationId$.getValue();

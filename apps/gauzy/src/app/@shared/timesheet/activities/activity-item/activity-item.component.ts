@@ -7,7 +7,15 @@ import { TimeSlot } from '@gauzy/models';
 	styleUrls: ['./activity-item.component.scss']
 })
 export class ActivityItemComponent implements OnInit, OnDestroy {
-	@Input() item: TimeSlot;
+	private _item: TimeSlot;
+	@Input()
+	public get item(): TimeSlot {
+		return this._item;
+	}
+	public set item(value: TimeSlot) {
+		value.durationPercentage = value.durationPercentage.toFixed(1);
+		this._item = value;
+	}
 
 	constructor() {}
 

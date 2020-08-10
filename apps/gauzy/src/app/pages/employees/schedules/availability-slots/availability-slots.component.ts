@@ -88,7 +88,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 
 		let currentDay = moment().day();
 
-		while (currentDay >= 0) {
+		while (currentDay > 0) {
 			this.hiddenDays.push(currentDay--);
 		}
 

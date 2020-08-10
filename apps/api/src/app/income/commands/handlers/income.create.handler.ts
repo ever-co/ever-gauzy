@@ -4,6 +4,7 @@ import { IncomeService } from '../../income.service';
 import { Income } from '../../income.entity';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
+import { EmployeeStatisticsService } from '../../../employee-statistics';
 
 @CommandHandler(IncomeCreateCommand)
 export class IncomeCreateHandler
@@ -11,10 +12,35 @@ export class IncomeCreateHandler
 	constructor(
 		private readonly incomeService: IncomeService,
 		private readonly employeeService: EmployeeService,
-		private readonly organizationService: OrganizationService
+		private readonly organizationService: OrganizationService,
+		private readonly employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
 	public async execute(command: IncomeCreateCommand): Promise<Income> {
+		const income = await this.createIncome(command);
+		let averageIncome = 0;
+		let averageBonus = 0;
+		if (income) {
+			const id = income.employeeId;
+			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+				income.employeeId
+			);
+			averageIncome = this.incomeService.countStatistic(
+				stat.incomeStatistics
+			);
+			averageBonus = this.incomeService.countStatistic(
+				stat.bonusStatistics
+			);
+			await this.employeeService.create({
+				id,
+				averageIncome: averageIncome,
+				averageBonus: averageBonus
+			});
+		}
+		return income;
+	}
+
+	public async createIncome(command: IncomeCreateCommand): Promise<Income> {
 		const { input } = command;
 
 		const income = new Income();

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { TimeTrackingComponent } from './time-tracking.component';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '../../../@shared/shared.module';
-import { NbCardModule } from '@nebular/theme';
+import { NbCardModule, NbSpinnerModule, NbListModule } from '@nebular/theme';
 import { ScreenshotsItemModule } from '../../../@shared/timesheet/screenshots/screenshots-item/screenshots-item.module';
 import { ActivityItemModule } from '../../../@shared/timesheet/activities/activity-item/activity-item.module';
 
@@ -12,7 +12,9 @@ import { ActivityItemModule } from '../../../@shared/timesheet/activities/activi
 		SharedModule,
 		NbCardModule,
 		ScreenshotsItemModule,
-		ActivityItemModule
+		ActivityItemModule,
+		NbSpinnerModule,
+		NbListModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

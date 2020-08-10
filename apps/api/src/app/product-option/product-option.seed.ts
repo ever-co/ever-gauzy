@@ -30,11 +30,11 @@ export const createRandomProductOption = async (
 					where: [{ organization: tenantOrg }]
 				}
 			);
-      for (const productCategory of productCategories) {
-        const products = await connection.manager.find(Product, {
+			for (const productCategory of productCategories) {
+				const products = await connection.manager.find(Product, {
 					where: [{ category: productCategory }]
 				});
-       for (const product of products) {
+				for (const product of products) {
 					for (let i = 0; i <= numberOfOptionPerProduct; i++) {
 						const productOption = new ProductOption();
 

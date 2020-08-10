@@ -26,8 +26,6 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
-import { EmployeesService } from '../../@core/services';
 
 @Component({
 	templateUrl: './income.component.html',
@@ -43,9 +41,7 @@ export class IncomeComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService,
-		private readonly router: Router,
-		private employeeStatisticsService: EmployeeStatisticsService,
-		private employeesService: EmployeesService
+		private readonly router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -241,7 +237,6 @@ export class IncomeComponent extends TranslationBaseComponent
 							isBonus: result.isBonus,
 							tags: result.tags
 						});
-
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.ADD_INCOME', {
 								name: result.employee
@@ -276,19 +271,6 @@ export class IncomeComponent extends TranslationBaseComponent
 		this.disableButton = !isSelected;
 		this.selectedIncome = selectedIncome;
 	}
-	async getEmployeeStatistics(id) {
-		const statistics = await this.employeeStatisticsService.getStatisticsByEmployeeId(
-			id
-		);
-		this.averageIncome = this.countStatistic(statistics.incomeStatistics);
-		this.averageBonus = this.countStatistic(statistics.bonusStatistics);
-	}
-	countStatistic(data: number[]) {
-		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
-			? data.filter(Number).reduce((a, b) => a + b, 0) /
-					data.filter(Number).length
-			: 0;
-	}
 	async editIncome(selectedItem?: Income) {
 		if (selectedItem) {
 			this.selectIncome({
@@ -316,17 +298,10 @@ export class IncomeComponent extends TranslationBaseComponent
 								notes: result.notes,
 								currency: result.currency,
 								isBonus: result.isBonus,
-								tags: result.tags
+								tags: result.tags,
+								employeeId: this.selectedIncome.employee.id
 							}
 						);
-						// await this.getEmployeeStatistics(
-						// 	this.selectedEmployeeId
-						// );
-						// this.employeesService.update(this.selectedEmployeeId, {
-						// 	averageIncome: this.averageIncome,
-						// 	averageBonus: this.averageBonus
-						// });
-
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.EDIT_INCOME', {
 								name: this.employeeName
@@ -364,7 +339,10 @@ export class IncomeComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.incomeService.delete(this.selectedIncome.id);
+						await this.incomeService.delete(
+							this.selectedIncome.id,
+							this.selectedIncome.employee.id
+						);
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
 								name: this.employeeName

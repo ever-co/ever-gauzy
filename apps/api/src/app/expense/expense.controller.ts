@@ -13,7 +13,8 @@ import {
 	Put,
 	Post,
 	Query,
-	UseGuards
+	UseGuards,
+	Delete
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
@@ -28,6 +29,9 @@ import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
 import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.query';
+import { ParseJsonPipe } from '../shared';
+import { ExpenseDeleteCommand } from './commands/expense.delete.command';
+import { ExpenseUpdateCommand } from './commands/expense.update.command';
 
 @ApiTags('Expense')
 @UseGuards(AuthGuard('jwt'))
@@ -144,13 +148,9 @@ export class ExpenseController extends CrudController<Expense> {
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: Expense,
-		...options: any[]
+		@Body() entity: Expense
 	): Promise<any> {
-		return this.expenseService.create({
-			id,
-			...entity
-		});
+		return this.commandBus.execute(new ExpenseUpdateCommand(id, entity));
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -171,5 +171,26 @@ export class ExpenseController extends CrudController<Expense> {
 		...options: any[]
 	): Promise<Expense> {
 		return this.commandBus.execute(new ExpenseCreateCommand(entity));
+	}
+
+	@ApiOperation({
+		summary: 'Delete record'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
+	@Delete('deleteExpense')
+	async deleteExpense(@Query('data', ParseJsonPipe) data: any): Promise<any> {
+		const { expenseId = null, employeeId = null } = data;
+		return this.commandBus.execute(
+			new ExpenseDeleteCommand(employeeId, expenseId)
+		);
 	}
 }

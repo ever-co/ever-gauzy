@@ -81,6 +81,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 	private _selectedOrganizationId: string;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
+	averageExpense = 0;
 	@ViewChild('expensesTable') expensesTable;
 
 	loadSettingsSmartTable() {
@@ -203,7 +204,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 					}
 				}
 			});
-
 		this.route.queryParamMap
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
@@ -275,7 +275,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 				employeeId: formData.employee ? formData.employee.id : null,
 				orgId: this.store.selectedOrganization.id
 			});
-
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: formData.employee
@@ -298,7 +297,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
 		}
-
 		this.dialogService
 			.open(ExpensesMutationComponent)
 			.onClose.pipe(takeUntil(this._ngDestroy$))
@@ -328,10 +326,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 			.subscribe(async (formData) => {
 				if (formData) {
 					try {
-						await this.expenseService.update(
-							formData.id,
-							this.getFormData(formData)
-						);
+						await this.expenseService.update(formData.id, {
+							...this.getFormData(formData),
+							employeeId: this.selectedExpense.employee.id
+						});
 						this.toastrService.primary(
 							this.getTranslation(
 								'NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG',
@@ -402,9 +400,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.expenseService.delete(
-							this.selectedExpense.id
+							this.selectedExpense.id,
+							this.selectedExpense.employee.id
 						);
-
 						this.toastrService.primary(
 							this.getTranslation(
 								'NOTES.EXPENSES.DELETE_EXPENSE',
@@ -427,7 +425,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}
 			});
 	}
-
 	selectExpense({ isSelected, data }) {
 		const selectedExpense = isSelected ? data : null;
 		if (this.expensesTable) {

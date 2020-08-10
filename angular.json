@@ -233,7 +233,31 @@
 					"builder": "@nrwl/node:build",
 					"options": {
 						"outputPath": "dist/apps/api",
-						"main": "apps/api/src/app/core/seeds/index.ts",
+						"main": "apps/api/src/seed.ts",
+						"showCircularDependencies": false,
+						"sourceMap": true,
+						"tsConfig": "apps/api/tsconfig.app.json"
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": true,
+							"inspect": false,
+							"sourceMap": false,
+							"fileReplacements": [
+								{
+									"replace": "apps/api/src/environments/environment.ts",
+									"with": "apps/api/src/environments/environment.prod.ts"
+								}
+							]
+						}
+					}
+				},
+				"seed-all": {
+					"builder": "@nrwl/node:build",
+					"options": {
+						"outputPath": "dist/apps/api",
+						"main": "apps/api/src/seedAll.ts",
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"tsConfig": "apps/api/tsconfig.app.json"

@@ -7,79 +7,75 @@ import { ProductCategoryTranslation } from './product-category-translation.entit
 import { Tenant } from '../tenant/tenant.entity';
 
 export const createCategories = async (
-  connection: Connection,
-  organizations: Organization[]
+	connection: Connection,
+	organizations: Organization[]
 ): Promise<ProductCategory[]> => {
-  const seedProductCategories = [];
+	const seedProductCategories = [];
 
-  organizations.forEach(async (organization) => {
-    let image = faker.image.abstract();
-    seed.forEach(async (seedProductCategory) => {
-      const newCategory = new ProductCategory();
-      image =
-        faker.image[seedProductCategory.fakerImageCategory]() ||
-        faker.image.abstract();
+	organizations.forEach(async (organization) => {
+		let image = faker.image.abstract();
+		seed.forEach(async (seedProductCategory) => {
+			const newCategory = new ProductCategory();
+			image =
+				faker.image[seedProductCategory.fakerImageCategory]() ||
+				faker.image.abstract();
 
-      newCategory.imageUrl = image;
-      newCategory.organization = organization;
-      newCategory.translations = [];
+			newCategory.imageUrl = image;
+			newCategory.organization = organization;
+			newCategory.translations = [];
 
-      seedProductCategory.translations.forEach((translation) => {
-        const newTranslation = new ProductCategoryTranslation();
-        Object.assign(newTranslation, translation);
-        newCategory.translations.push(newTranslation);
-      });
-      seedProductCategories.push(newCategory);
-    });
-  });
+			seedProductCategory.translations.forEach((translation) => {
+				const newTranslation = new ProductCategoryTranslation();
+				Object.assign(newTranslation, translation);
+				newCategory.translations.push(newTranslation);
+			});
+			seedProductCategories.push(newCategory);
+		});
+	});
 
-  await insertProductCategories(connection, seedProductCategories);
+	await insertProductCategories(connection, seedProductCategories);
 
-  return seedProductCategories;
-
+	return seedProductCategories;
 };
 
 const insertProductCategories = async (
-  connection: Connection,
-  categories: ProductCategory[]
+	connection: Connection,
+	categories: ProductCategory[]
 ): Promise<void> => {
-  await connection.manager.save(categories);
+	await connection.manager.save(categories);
 };
 
 export const createRandomCategories = async (
-  connection: Connection,
-  tenants: Tenant[],
-  tenantOrganizationsMap: Map<Tenant, Organization[]>
+	connection: Connection,
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>
 ): Promise<ProductCategory[]> => {
+	const seedProductCategories = [];
 
-  const seedProductCategories = [];
+	for (const tenant of tenants) {
+		const tenantOrgs = tenantOrganizationsMap.get(tenant);
+		for (const tenantOrg of tenantOrgs) {
+			for (const seedProductCategory of seed) {
+				const newCategory = new ProductCategory();
+				let image =
+					faker.image[seedProductCategory.fakerImageCategory]() ||
+					faker.image.abstract();
 
-  for (const tenant of tenants) {
-    const tenantOrgs = tenantOrganizationsMap.get(tenant);
-    for (const tenantOrg of tenantOrgs) {
-      for (const seedProductCategory of seed) {
-        const newCategory = new ProductCategory();
-        let image =
-          faker.image[seedProductCategory.fakerImageCategory]() ||
-          faker.image.abstract();
+				newCategory.imageUrl = image;
+				newCategory.organization = tenantOrg;
+				newCategory.translations = [];
 
-        newCategory.imageUrl = image;
-        newCategory.organization = tenantOrg;
-        newCategory.translations = [];
+				seedProductCategory.translations.forEach((translation) => {
+					const newTranslation = new ProductCategoryTranslation();
+					Object.assign(newTranslation, translation);
+					newCategory.translations.push(newTranslation);
+				});
+				seedProductCategories.push(newCategory);
+			}
+		}
 
-        seedProductCategory.translations.forEach((translation) => {
-          const newTranslation = new ProductCategoryTranslation();
-          Object.assign(newTranslation, translation);
-          newCategory.translations.push(newTranslation);
-        });
-        seedProductCategories.push(newCategory);
-      }
-    }
+		await insertProductCategories(connection, seedProductCategories);
 
-
-    await insertProductCategories(connection, seedProductCategories);
-
-    return seedProductCategories;
-
-  }
+		return seedProductCategories;
+	}
 };

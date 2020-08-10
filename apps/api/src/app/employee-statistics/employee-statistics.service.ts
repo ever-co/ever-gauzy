@@ -165,7 +165,6 @@ export class EmployeeStatisticsService {
 			profitStatistics = profitStatistics.filter(Number);
 			bonusStatistics = bonusStatistics.filter(Number);
 		}
-
 		return {
 			expenseStatistics,
 			incomeStatistics,

@@ -29,7 +29,7 @@
 				</button>
 			</div>
 
-			<div class="actions-container" *ngIf="isRecordSelected">
+			<div class="actions-container" *ngIf="isRecordSelected && hasEditPermission">
 				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
@@ -50,7 +50,7 @@
 
 			<nb-checkbox
 				(checkedChange)="changeDisplayHolidays($event)"
-				class="my-auto ml-3 align-center"
+				class="my-auto mx-3 align-center"
 				status="primary"
 				checked
 				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
@@ -58,6 +58,7 @@
 
 			<button
 				(click)="openTimeOffSettings()"
+				*ngIf="hasEditPermission"
 				nbButton
 				status="primary"
 				style="border-radius: 5px 20px 5px;"
@@ -97,7 +98,7 @@
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Policy</span>
-					<span class="info-value">{{ x.policy }}</span>
+					<span class="info-value">{{ x.policy.name }}</span>
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Start Date</span>

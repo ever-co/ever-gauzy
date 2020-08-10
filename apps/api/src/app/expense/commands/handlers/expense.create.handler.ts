@@ -4,6 +4,7 @@ import { Expense } from '../../expense.entity';
 import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
+import { EmployeeStatisticsService } from '../../../employee-statistics';
 
 @CommandHandler(ExpenseCreateCommand)
 export class ExpenseCreateHandler
@@ -11,12 +12,33 @@ export class ExpenseCreateHandler
 	constructor(
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
-		private readonly organizationService: OrganizationService
+		private readonly organizationService: OrganizationService,
+		private readonly employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
 	public async execute(command: ExpenseCreateCommand): Promise<Expense> {
-		const { input } = command;
+		const expense = await this.createExpense(command);
+		let averageExpense = 0;
+		if (expense) {
+			const id = expense.employeeId;
+			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+				expense.employeeId
+			);
+			averageExpense = this.expenseService.countStatistic(
+				stat.expenseStatistics
+			);
+			await this.employeeService.create({
+				id,
+				averageExpenses: averageExpense
+			});
+		}
+		return expense;
+	}
 
+	public async createExpense(
+		command: ExpenseCreateCommand
+	): Promise<Expense> {
+		const { input } = command;
 		const expense = new Expense();
 		const employee = input.employeeId
 			? await this.employeeService.findOne(input.employeeId)
@@ -50,7 +72,6 @@ export class ExpenseCreateHandler
 		if (!expense.currency) {
 			expense.currency = organization.currency;
 		}
-
 		return await this.expenseService.create(expense);
 	}
 }

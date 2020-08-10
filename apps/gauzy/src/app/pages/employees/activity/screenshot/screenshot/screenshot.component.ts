@@ -147,7 +147,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			.map((timeSlot) => {
 				this.selectedIds[timeSlot.id] = false;
 				timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
-				timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
+				// timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
 				this.screenshotsUrls = this.screenshotsUrls.concat(
 					timeSlot.screenshots.map((screenshot) => ({
 						thumbUrl: screenshot.thumbUrl,

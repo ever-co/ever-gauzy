@@ -42,49 +42,46 @@ const insertProduct = async (
 };
 
 export const createRandomProduct = async (
-  connection: Connection,
-  tenants: Tenant[],
-  tenantOrganizationsMap: Map<Tenant, Organization[]>
+	connection: Connection,
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>
 ): Promise<Product[]> => {
-  if (!tenantOrganizationsMap) {
-    console.warn(
-      'Warning: tenantOrganizationsMap not found, Product will not be created'
-    );
-    return;
-  }
+	if (!tenantOrganizationsMap) {
+		console.warn(
+			'Warning: tenantOrganizationsMap not found, Product will not be created'
+		);
+		return;
+	}
 
-  const products: Product[] = [];
+	const products: Product[] = [];
 
-  for (const tenant of tenants) {
-    const tenantOrgs = tenantOrganizationsMap.get(tenant);
-    for (const tenantOrg of tenantOrgs) {
-      const productCategories = await connection.manager.find(
-        ProductCategory,
-        {
-          where: [{ organization: tenantOrg }]
-        }
-      );
-      const productTypes = await connection.manager.find(
-        ProductType,
-        {
-          where: [{ organization: tenantOrg }]
-        }
-      );
-      const product = new Product();
-      product.name = faker.commerce.productName();
-      product.code = faker.lorem.word();
-      product.type =
-        productTypes[Math.floor(Math.random() * productTypes.length)];
-      product.category =
-        productCategories[
-          Math.floor(Math.random() * productCategories.length)
-          ];
-      product.description = faker.lorem.words();
-      product.tenant = tenant;
+	for (const tenant of tenants) {
+		const tenantOrgs = tenantOrganizationsMap.get(tenant);
+		for (const tenantOrg of tenantOrgs) {
+			const productCategories = await connection.manager.find(
+				ProductCategory,
+				{
+					where: [{ organization: tenantOrg }]
+				}
+			);
+			const productTypes = await connection.manager.find(ProductType, {
+				where: [{ organization: tenantOrg }]
+			});
+			const product = new Product();
+			product.name = faker.commerce.productName();
+			product.code = faker.lorem.word();
+			product.type =
+				productTypes[Math.floor(Math.random() * productTypes.length)];
+			product.category =
+				productCategories[
+					Math.floor(Math.random() * productCategories.length)
+				];
+			product.description = faker.lorem.words();
+			product.tenant = tenant;
 
-      products.push(product);
-    }
-  }
+			products.push(product);
+		}
+	}
 
-  await connection.manager.save(products);
+	await connection.manager.save(products);
 };
