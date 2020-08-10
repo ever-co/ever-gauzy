@@ -1,14 +1,15 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
-import { OrganizationDocument } from '@gauzy/models';
+import { OrganizationDocument, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { OrganizationDocumentsService } from 'apps/gauzy/src/app/@core/services/organization-documents.service';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-documents',
@@ -17,7 +18,7 @@ import { UploadDocumentComponent } from './upload-document/upload-document.compo
 export class DocumentsComponent implements OnInit, OnDestroy {
 	@ViewChild('uploadDoc')
 	uploadDoc: UploadDocumentComponent;
-
+	private _ngDestroy$ = new Subject<void>();
 	organizationId: string;
 	form: FormGroup;
 	formDocument: FormGroup;
@@ -26,7 +27,8 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 	documentList: OrganizationDocument[];
 	showAddCard = false;
 	loading = false;
-
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	constructor(
 		private readonly fb: FormBuilder,
 		private dialogService: NbDialogService,
@@ -37,10 +39,9 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				this.organizationId = org.id;
-
 				this._initializeForm();
 				this._loadDocuments();
 			});
@@ -58,7 +59,15 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 			})
 		);
 	}
-
+	setView() {
+		this.viewComponentName = ComponentEnum.DOCUMENTS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 	submitForm() {
 		const documentForm = this.form.controls.documents as FormArray;
 		const formValue = { ...documentForm.value[0] };
@@ -189,5 +198,8 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 		this.form.reset();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 }

@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { IOrganizationVendor, Tag } from '@gauzy/models';
+import {
+	IOrganizationVendor,
+	Tag,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +12,7 @@ import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	selector: 'ga-vendors',
@@ -23,7 +28,8 @@ export class VendorsComponent extends TranslationBaseComponent
 	showEditDiv: boolean;
 
 	vendors: IOrganizationVendor[];
-
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedVendor: IOrganizationVendor;
 	tags: Tag[] = [];
 
@@ -57,6 +63,16 @@ export class VendorsComponent extends TranslationBaseComponent
 	cancel() {
 		this.showEditDiv = !this.showEditDiv;
 		this.selectedVendor = null;
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.VENDORS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	async removeVendor(id: string, name: string) {

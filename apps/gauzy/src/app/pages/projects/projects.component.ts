@@ -5,7 +5,8 @@ import {
 	OrganizationContact,
 	OrganizationProjects,
 	OrganizationProjectsCreateInput,
-	PermissionsEnum
+	PermissionsEnum,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +18,7 @@ import { Store } from '../../@core/services/store.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { EmployeesService } from '../../@core/services';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	selector: 'ga-projects',
@@ -34,6 +36,8 @@ export class ProjectsComponent extends TranslationBaseComponent
 	employees: Employee[] = [];
 	projectToEdit: OrganizationProjects;
 	viewPrivateProjects: boolean;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
@@ -88,7 +92,15 @@ export class ProjectsComponent extends TranslationBaseComponent
 
 		this.employees = items;
 	}
-
+	setView() {
+		this.viewComponentName = ComponentEnum.PROJECTS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 	async removeProject(id: string, name: string) {
 		await this.organizationProjectsService.delete(id);
 

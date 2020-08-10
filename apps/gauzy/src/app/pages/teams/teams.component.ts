@@ -5,7 +5,8 @@ import {
 	OrganizationTeamCreateInput,
 	OrganizationTeam,
 	Tag,
-	RolesEnum
+	RolesEnum,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +18,7 @@ import { EmployeesService } from '../../@core/services';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	selector: 'ga-teams',
@@ -33,7 +35,8 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 	teamToEdit: OrganizationTeam;
 	loading = true;
 	tags: Tag[] = [];
-
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private employeesService: EmployeesService,
@@ -66,7 +69,15 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 				}
 			});
 	}
-
+	setView() {
+		this.viewComponentName = ComponentEnum.TEAMS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 	async addOrEditTeam(team: OrganizationTeamCreateInput) {
 		if (team.name && team.name.trim().length && team.members.length) {
 			if (this.teamToEdit) {

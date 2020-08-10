@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { OrganizationPositions, Tag } from '@gauzy/models';
+import {
+	OrganizationPositions,
+	Tag,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,6 +11,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	selector: 'ga-positions',
@@ -22,6 +27,8 @@ export class PositionsComponent extends TranslationBaseComponent
 	showEditDiv: boolean;
 	positionsExist: boolean;
 	tags: Tag[] = [];
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly toastrService: NbToastrService,
@@ -55,7 +62,15 @@ export class PositionsComponent extends TranslationBaseComponent
 
 		this.loadPositions();
 	}
-
+	setView() {
+		this.viewComponentName = ComponentEnum.POSITIONS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 	async editPosition(id: string, name: string) {
 		await this.organizationPositionsService.update(id, {
 			name: name,
