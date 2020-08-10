@@ -6,6 +6,51 @@ import * as faker from 'faker';
 import * as moment from 'moment';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
 
+const agendas = ['Meeting', 'Knowledge Transfer', 'Query Solution', 'Sprint Planning'];
+
+export const createDefaultEmployeeAppointment = async (
+  connection: Connection,
+  Employees: Employee[],
+  Organizations
+): Promise<EmployeeAppointment[]> => {
+  if (!Employees) {
+    console.warn(
+      'Warning: Employees not found, Default Employee Appointment  will not be created'
+    );
+    return;
+  }
+  if (!Organizations) {
+    console.warn(
+      'Warning: tenantOrganizations not found, Default Employee Appointment  will not be created'
+    );
+    return;
+  }
+
+  const employeesAppointments: EmployeeAppointment[] = [];
+
+  for (const employee of Employees) {
+    // for (const organization of Organizations) {
+      const employeesAppointment = new EmployeeAppointment();
+
+      const Invitees = await connection.manager.find(AppointmentEmployees, {
+        where: [{ employeeId: employee.id }]
+      });
+
+      employeesAppointment.employee = employee;
+      employeesAppointment.organization = Organizations;
+      employeesAppointment.description = faker.name.jobDescriptor();
+      employeesAppointment.location = faker.address.city();
+      employeesAppointment.startDateTime = faker.date.between(new Date(), moment(new Date()).add(2, 'months').toDate());
+      employeesAppointment.endDateTime = moment(employeesAppointment.startDateTime).add(1, 'hours').toDate();
+      employeesAppointment.invitees = Invitees;
+      employeesAppointment.agenda = faker.random.arrayElement(agendas);
+
+      employeesAppointments.push(employeesAppointment);
+    // }
+  }
+  await connection.manager.save(employeesAppointments);
+};
+
 export const createRandomEmployeeAppointment = async (
   connection: Connection,
   tenants: Tenant[],
@@ -26,7 +71,6 @@ export const createRandomEmployeeAppointment = async (
   }
 
   const employeesAppointments: EmployeeAppointment[] = [];
-  const agendas =["Meeting", "Knowledge Transfer","Query Solution","Sprint Planning"];
 
   for (const tenant of tenants) {
     const tenantEmployees = tenantEmployeeMap.get(tenant);

@@ -4,6 +4,36 @@ import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '@gauzy/models';
 
+export const createDefaultPipeline = async (
+  connection: Connection,
+  tenantOrganizations
+): Promise<Pipeline[]> => {
+  if (!tenantOrganizations) {
+    console.warn(
+      'Warning: tenantOrganizations not found, Default pipeline not be created'
+    );
+    return;
+  }
+
+  let pipelines: Pipeline[] = [];
+  // for (const tenantOrg of tenantOrganizations) {
+    for (let i = 0; i <= faker.random.number(10); i++) {
+      //todo Need to update with real values
+      let pipeline = new Pipeline();
+
+      pipeline.organization = tenantOrganizations;
+      pipeline.organizationId = tenantOrganizations.id;
+      pipeline.name = faker.company.companyName();
+      pipeline.description = faker.name.jobDescriptor();
+
+      pipelines.push(pipeline);
+    }
+  // }
+
+  await insertRandomPipeline(connection, pipelines);
+  return pipelines;
+};
+
 export const createRandomPipeline = async (
 	connection: Connection,
 	tenants: Tenant[],

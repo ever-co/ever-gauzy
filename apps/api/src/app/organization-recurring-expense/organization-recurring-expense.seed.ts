@@ -10,6 +10,59 @@ import {
 import * as moment from 'moment';
 import * as _ from 'underscore';
 
+export const createDefaultOrganizationRecurringExpense = async (
+  connection: Connection,
+  defaultOrganizations
+): Promise<OrganizationRecurringExpense[]> => {
+  if (!defaultOrganizations) {
+    console.warn(
+      'Warning: defaultOrganizations not found, default organization recurring expense not be created'
+    );
+    return;
+  }
+
+  let mapOrganizationRecurringExpense: OrganizationRecurringExpense[] = [];
+  let expenseCategories = Object.keys(RecurringExpenseDefaultCategoriesEnum);
+  let currency = Object.keys(CurrenciesEnum);
+
+  // for (const tenantOrg of defaultOrganizations) {
+      for (const expenseCategory of expenseCategories) {
+        let organization = new OrganizationRecurringExpense();
+
+        let startDate = moment(new Date()).add(faker.random.number(10), 'days').toDate();
+        let endDate = moment(startDate).add(1, 'months').toDate();
+
+        organization.organization = defaultOrganizations;
+        organization.organizationId = defaultOrganizations.id;
+
+        organization.startDay = startDate.getDate();
+        organization.startMonth = startDate.getMonth() + 1;
+        organization.startYear = startDate.getFullYear();
+        organization.startDate = startDate;
+
+        organization.endDay = endDate.getDate();
+        organization.endMonth = endDate.getMonth();
+        organization.endYear = endDate.getFullYear();
+        organization.endDate = endDate;
+
+        organization.categoryName = expenseCategory;
+        organization.value = faker.random.number(9999);
+
+        organization.currency =
+          CurrenciesEnum[currency[faker.random.number(2)]];
+
+        mapOrganizationRecurringExpense.push(organization);
+      }
+    // }
+
+  await insertRandomOrganizationRecurringExpense(
+    connection,
+    mapOrganizationRecurringExpense
+  );
+  return mapOrganizationRecurringExpense;
+};
+
+
 export const createRandomOrganizationRecurringExpense = async (
 	connection: Connection,
 	tenants: Tenant[],
@@ -17,7 +70,7 @@ export const createRandomOrganizationRecurringExpense = async (
 ): Promise<OrganizationRecurringExpense[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
-			'Warning: tenantOrganizationsMap not found, organization language not be created'
+			'Warning: tenantOrganizationsMap not found, organization recurring expense not be created'
 		);
 		return;
 	}

@@ -180,7 +180,7 @@ export class InvitesComponent extends TranslationBaseComponent
 				}
 			);
 			invites = items.filter((invite) => {
-				return this.invitationType === InvitationTypeEnum.EMPLOYEE
+				return this.invitationType === InvitationTypeEnum.USER
 					? invite.role.name === RolesEnum.EMPLOYEE
 					: invite.role.name !== RolesEnum.EMPLOYEE;
 			});

@@ -4,6 +4,39 @@ import { Candidate } from '@gauzy/models';
 import * as faker from 'faker';
 import { CandidateInterview } from './candidate-interview.entity';
 
+export const createDefaultCandidateInterview = async (
+  connection: Connection,
+  Candidates
+): Promise<CandidateInterview[]> => {
+  if (!Candidates) {
+    console.warn(
+      'Warning: Candidates not found, Default Candidate Interview will not be created'
+    );
+    return;
+  }
+
+  let candidates: CandidateInterview[] = [];
+
+  for (const tenantCandidate of Candidates) {
+    for (let i = 0; i <= (Math.floor(Math.random() * 3) + 1); i++) {
+      let candidate = new CandidateInterview();
+
+      var interViewDate = faker.date.past();
+      candidate.title = faker.name.jobArea();
+      candidate.startTime = new Date(interViewDate.setHours(10));
+      candidate.endTime = new Date(interViewDate.setHours(12));
+      candidate.location = faker.address.city();
+      candidate.note = faker.lorem.words();
+      candidate.candidate = tenantCandidate;
+
+      candidates.push(candidate);
+    }
+  }
+
+  await insertRandomCandidateInterview(connection, candidates);
+  return candidates;
+};
+
 export const createRandomCandidateInterview = async (
   connection: Connection,
   tenants: Tenant[],

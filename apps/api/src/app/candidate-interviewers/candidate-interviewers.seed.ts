@@ -6,6 +6,53 @@ import { CandidateInterviewers } from './candidate-interviewers.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import * as _ from 'underscore';
 
+export const createDefaultCandidateInterviewers = async (
+  connection: Connection,
+  defaultEmployees,
+  defaultCandidates
+): Promise<CandidateInterviewers[]> => {
+
+  if(!defaultEmployees){
+    console.warn(
+      'Warning: defaultEmployees not found, Default CandidateInterviewers will not be created'
+    );
+    return;
+  }
+  if(!defaultCandidates){
+    console.warn(
+      'Warning: defaultCandidates not found, Default Candidate Interviewers will not be created'
+    );
+    return;
+  }
+
+  let candidates: CandidateInterviewers[] = [];
+
+  for (const defaultCandidate of defaultCandidates) {
+
+      const CandidateInterviews = await connection.manager.find(CandidateInterview, {
+        where: [{ candidate: defaultCandidate }]
+      });
+      for (let interview of CandidateInterviews) {
+        const employee = _.chain(defaultEmployees)
+          .shuffle()
+          .take(faker.random.number({ min: 1, max: 1 }))
+          .values()
+          .value();
+
+        let candidate = new CandidateInterviewers();
+
+        candidate.interviewId = interview.id;
+        candidate.interview = interview;
+        candidate.employeeId = employee[0].id;
+
+        candidates.push(candidate);
+      }
+    }
+
+  await insertRandomCandidateInterviewers(connection, candidates);
+  return candidates;
+};
+
 export const createRandomCandidateInterviewers = async (
   connection: Connection,
   tenants: Tenant[],

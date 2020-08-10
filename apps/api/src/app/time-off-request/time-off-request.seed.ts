@@ -10,6 +10,38 @@ import { StatusTypesEnum } from '@gauzy/models';
 
 const status = Object.values(StatusTypesEnum);
 
+export const createDefaultEmployeeTimeOff = async (
+  connection: Connection,
+  Organization,
+  Employee,
+  noOfEmployeeTimeOffRequest: number
+): Promise<TimeOffRequest[]> => {
+  let requests: TimeOffRequest[] = [];
+    // let employees = tenantEmployeeMap.get(tenant);
+    // let organizations = tenantOrganizationsMap.get(tenant);
+    // for (const organization of organizations) {
+      let policies = await connection.manager.find(TimeOffPolicy, {
+        where: [{ organizationId: Organization.id }]
+      });
+      for (let i = 0; i < noOfEmployeeTimeOffRequest; i++) {
+        let request = new TimeOffRequest();
+        request.organizationId = Organization.id;
+        request.employees = [faker.random.arrayElement(Employee)];
+        request.description = 'Time off';
+        request.isHoliday = faker.random.arrayElement([true, false]);
+        request.start = faker.date.future(0.5);
+        request.end = addDays(request.start, faker.random.number(7));
+        request.policy = faker.random.arrayElement(policies);
+        request.requestDate = faker.date.recent();
+        request.status = faker.random.arrayElement(status);
+        request.documentUrl = '';
+        requests.push(request);
+      }
+    // }
+
+  return await connection.manager.save(requests);
+};
+
 export const createRandomEmployeeTimeOff = async (
 	connection: Connection,
 	tenants: Tenant[],
