@@ -24,7 +24,8 @@ nb-radio-group {
 }
 
 .actions-container {
-  justify-content: flex-end;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
 }
 
 .main-header {
@@ -88,8 +89,15 @@ nb-radio-group {
 }
 
 .card-footer {
-  justify-content: space-around;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.aditional-actions{
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-around;
 }
 
 /* Status */
