@@ -111,7 +111,6 @@
 					>
 						<nb-option
 							*ngFor="let level of goalLevelEnum | keyvalue"
-							[value]="level.value"
 							[hidden]="
 								hideOrg
 									? level.value === goalLevelEnum.ORGANIZATION
@@ -121,6 +120,7 @@
 									? level.value === goalLevelEnum.TEAM
 									: false
 							"
+							[value]="level.value"
 							>{{
 								'GOALS_PAGE.LEVELS.' + level.key | translate
 							}}</nb-option

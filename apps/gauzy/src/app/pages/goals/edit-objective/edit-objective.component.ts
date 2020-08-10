@@ -62,14 +62,6 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			level: [GoalLevelEnum.ORGANIZATION, Validators.required],
 			deadline: ['', Validators.required]
 		});
-
-		this.getTimeFrames();
-		await this.employeeService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
 		if (!!this.data) {
 			this.objectiveForm.patchValue(this.data);
 			this.objectiveForm.patchValue({
@@ -84,6 +76,15 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				this.getTeams();
 			}
 		}
+		this.getTimeFrames();
+		await this.employeeService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employees) => {
+				this.employees = employees.items;
+			});
+
+		this.objectiveForm.controls['level'].updateValueAndValidity();
 		if (
 			this.store.user.role.name !== RolesEnum.SUPER_ADMIN &&
 			this.store.user.role.name !== RolesEnum.MANAGER &&

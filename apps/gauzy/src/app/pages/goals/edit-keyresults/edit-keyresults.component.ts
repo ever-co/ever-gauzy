@@ -98,10 +98,12 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			alignedGoalOwner: [''],
 			kpiId: [null]
 		});
+
 		if (!!this.data) {
 			if (!this.numberUnitsEnum.find((unit) => unit === this.data.unit)) {
 				this.numberUnitsEnum.push(this.data.unit);
 			}
+			await this.getKPI();
 			this.keyResultsForm.patchValue(this.data);
 			this.keyResultsForm.patchValue({
 				softDeadline: this.data.softDeadline
@@ -114,8 +116,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				owner: this.data.owner.id
 			});
 		}
-
-		await this.getKPI();
 		this.employeeService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
@@ -138,6 +138,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			.then((kpi) => {
 				const { items } = kpi;
 				this.KPIs = items;
+				this.keyResultsForm.patchValue(this.data);
 			});
 	}
 
