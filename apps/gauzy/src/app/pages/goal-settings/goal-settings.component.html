@@ -18,51 +18,69 @@
 								[formGroup]="generalSettingsForm"
 								(change)="saveGeneralSettings()"
 							>
-								<p class="font-weight-bold">
-									{{
-										'GOALS_PAGE.SETTINGS.MAX_ENTITIES'
-											| translate
-									}}
-								</p>
-								<label class="label mr-3" for="max-goals">
-									{{
-										'GOALS_PAGE.FORM.LABELS.OBJECTIVE'
-											| translate
-									}}
-								</label>
-								<input
-									nbInput
-									id="max-goals"
-									min="5"
-									formControlName="maxObjectives"
-									type="number"
-								/>
-								<label
-									class="label mr-3 ml-3"
-									for="max-key-result"
-								>
-									{{
-										'GOALS_PAGE.FORM.LABELS.KEY_RESULT'
-											| translate
-									}}
-								</label>
-								<input
-									nbInput
-									id="max-key-result"
-									formControlName="maxKeyResults"
-									min="5"
-									type="number"
-								/>
-								<p class="mt-3 font-weight-bold">
-									{{
-										'GOALS_PAGE.SETTINGS.EMPLOYEE_OBJECTIVES'
-											| translate
-									}}
-								</p>
-								<nb-toggle
-									formControlName="employeeCanCreateObjective"
-								></nb-toggle>
 								<div class="row">
+									<div class="col-md-4">
+										<p class="font-weight-bold">
+											{{
+												'GOALS_PAGE.SETTINGS.MAX_ENTITIES'
+													| translate
+											}}
+										</p>
+										<div class="row">
+											<div class="col-md-4">
+												<label
+													class="label"
+													for="max-goals"
+												>
+													{{
+														'GOALS_PAGE.FORM.LABELS.OBJECTIVE'
+															| translate
+													}}
+												</label>
+												<input
+													nbInput
+													id="max-goals"
+													min="5"
+													fullWidth
+													formControlName="maxObjectives"
+													type="number"
+												/>
+											</div>
+											<div class="col-md-4">
+												<label
+													class="label"
+													for="max-key-result"
+												>
+													{{
+														'GOALS_PAGE.FORM.LABELS.KEY_RESULT'
+															| translate
+													}}
+												</label>
+												<input
+													nbInput
+													id="max-key-result"
+													fullWidth
+													formControlName="maxKeyResults"
+													min="5"
+													type="number"
+												/>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<p class="font-weight-bold">
+											{{
+												'GOALS_PAGE.SETTINGS.EMPLOYEE_OBJECTIVES'
+													| translate
+											}}
+										</p>
+										<nb-toggle
+											formControlName="employeeCanCreateObjective"
+										></nb-toggle>
+									</div>
+								</div>
+
+								<div class="row mt-3">
 									<div class="col-md-4">
 										<p class="mt-3 font-weight-bold">
 											{{
@@ -120,7 +138,7 @@
 										</nb-select>
 									</div>
 								</div>
-								<div class="row">
+								<div class="row mt-3">
 									<div class="col-md-4">
 										<p class="mt-3 font-weight-bold">
 											{{

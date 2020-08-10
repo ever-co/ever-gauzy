@@ -6,7 +6,9 @@ import {
 	KeyResultWeightEnum,
 	KeyResultDeadlineEnum,
 	KPI,
-	GoalGeneralSetting
+	GoalGeneralSetting,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
@@ -32,6 +34,9 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	keyResultWeightEnum = KeyResultWeightEnum;
 	keyResultWeight: any;
 	KPIs: KPI[];
+	currenciesEnum = CurrenciesEnum;
+	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
+	createNew = false;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private fb: FormBuilder,
@@ -52,18 +57,27 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			initialValue: [0],
 			projectId: [null],
 			taskId: [null],
-			kpiId: ['']
+			kpiId: [''],
+			unit: ['']
 		});
 
 		await this.getKPI();
 		if (!!this.data.selectedKeyResult) {
+			if (
+				!this.numberUnitsEnum.find(
+					(unit) => unit === this.data.selectedKeyResult.unit
+				)
+			) {
+				this.numberUnitsEnum.push(this.data.selectedKeyResult.unit);
+			}
 			this.typeForm.patchValue({
 				type: this.data.selectedKeyResult.type,
 				targetValue: this.data.selectedKeyResult.targetValue,
 				initialValue: this.data.selectedKeyResult.initialValue,
 				projectId: this.data.selectedKeyResult.projectId,
 				taskId: this.data.selectedKeyResult.taskId,
-				kpiId: this.data.selectedKeyResult.kpiId
+				kpiId: this.data.selectedKeyResult.kpiId,
+				unit: this.data.selectedKeyResult.unit
 			});
 			this.weightForm.patchValue({
 				weight: this.data.selectedKeyResult.weight
@@ -121,6 +135,13 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			...this.data.selectedKeyResult
 		});
 		this.closeDialog(this.data.selectedKeyResult);
+	}
+
+	createNewUnit() {
+		if (this.typeForm.value.unit !== ' ') {
+			this.numberUnitsEnum.push(this.typeForm.value.unit);
+		}
+		this.createNew = false;
 	}
 
 	async openEditKPI() {

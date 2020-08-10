@@ -251,6 +251,9 @@ export const createDefaultKeyResults = async (
 					keyResult.initialValue = 0;
 					keyResult.targetValue = 1;
 				} else {
+					if (keyResultData.type === KeyResultTypeEnum.KPI) {
+						keyResult.kpiId = keyResultData.kpiId;
+					}
 					keyResult.initialValue = keyResultData.initialValue;
 					keyResult.targetValue = keyResultData.targetValue;
 				}
