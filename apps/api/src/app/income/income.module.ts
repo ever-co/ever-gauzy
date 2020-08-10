@@ -11,10 +11,27 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
+import { Expense } from '../expense/expense.entity';
+import {
+	EmployeeRecurringExpense,
+	EmployeeRecurringExpenseService
+} from '../employee-recurring-expense';
+import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
+import { ExpenseService } from '../expense/expense.service';
+import { EmployeeStatisticsService } from '../employee-statistics';
+import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Income, Employee, Organization, User]),
+		TypeOrmModule.forFeature([
+			Income,
+			Employee,
+			Organization,
+			User,
+			Expense,
+			EmployeeRecurringExpense,
+			OrganizationRecurringExpense
+		]),
 		CqrsModule
 	],
 	controllers: [IncomeController],
@@ -23,6 +40,10 @@ import { UserService } from '../user/user.service';
 		EmployeeService,
 		OrganizationService,
 		UserService,
+		ExpenseService,
+		EmployeeStatisticsService,
+		EmployeeRecurringExpenseService,
+		OrganizationRecurringExpenseService,
 		...CommandHandlers
 	],
 	exports: [IncomeService]
