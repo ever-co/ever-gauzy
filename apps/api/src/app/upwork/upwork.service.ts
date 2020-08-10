@@ -64,6 +64,7 @@ import { IPagination } from '../core';
 import { UpworkReportService } from './upwork-report.service';
 import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';
 import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 @Injectable()
 export class UpworkService {
@@ -791,10 +792,13 @@ export class UpworkService {
 	}
 
 	async syncEmployee({ integrationId, user, organizationId }) {
-		const { reference: userId, email } = user;
+		const { reference: userId, email, info } = user;
 		const { record } = await this._userService.findOneOrFail({
 			where: { email: email }
 		});
+
+		//upwork profile picture
+		const { portrait_100_img: imageUrl } = info;
 
 		let employee;
 		if (record) {
@@ -820,7 +824,8 @@ export class UpworkService {
 						lastName,
 						role,
 						tags: null,
-						tenant: null
+						tenant: null,
+						imageUrl
 					},
 					password: environment.defaultHubstaffUserPass,
 					organization
@@ -835,7 +840,14 @@ export class UpworkService {
 		});
 	}
 
-	async syncClient(integrationId, organizationId, client): Promise<any> {
+	/**
+	 * Sync contract client
+	 */
+	async syncClient(
+		integrationId,
+		organizationId,
+		client
+	): Promise<OrganizationContact> {
 		const { company_id: sourceId, company_name: name } = client;
 		const { record } = await this._orgClientService.findOneOrFail({
 			where: {
@@ -843,26 +855,24 @@ export class UpworkService {
 				organizationId: organizationId
 			}
 		});
-
-		if (!record) {
-			const gauzyClient = await this.commandBus.execute(
-				new OrganizationContactCreateCommand({
-					name,
-					organizationId
-				})
-			);
-
-			await this._integrationMapService.create({
-				gauzyId: gauzyClient.id,
-				integrationId,
-				sourceId,
-				entity: IntegrationEntity.CLIENT
-			});
-
-			return gauzyClient;
+		if (record) {
+			return record;
 		}
 
-		return record;
+		const gauzyClient = await this.commandBus.execute(
+			new OrganizationContactCreateCommand({
+				name,
+				organizationId
+			})
+		);
+		await this._integrationMapService.create({
+			gauzyId: gauzyClient.id,
+			integrationId,
+			sourceId,
+			entity: IntegrationEntity.CLIENT
+		});
+
+		return gauzyClient;
 	}
 
 	async syncReports(
@@ -942,7 +952,13 @@ export class UpworkService {
 					(row) => row.subtype === ExpenseCategoriesEnum.SERVICE_FEE
 				)
 				.map(async (row) => {
-					const { amount, date, description, subtype } = row;
+					const {
+						amount,
+						date,
+						description,
+						subtype,
+						reference
+					} = row;
 					const {
 						record: category
 					} = await this._expenseCategoryService.findOneOrFail({
@@ -960,6 +976,20 @@ export class UpworkService {
 						}
 					});
 
+					const {
+						record: integrationMap
+					} = await this._integrationMapService.findOneOrFail({
+						where: {
+							integrationId,
+							sourceId: reference,
+							entity: IntegrationEntity.EXPENSE
+						}
+					});
+
+					if (integrationMap) {
+						return integrationMap;
+					}
+
 					const gauzyExpense = await this.commandBus.execute(
 						new ExpenseCreateCommand({
 							employeeId,
@@ -970,17 +1000,17 @@ export class UpworkService {
 								moment(date).format('YYYY-MM-DD HH:mm:ss')
 							),
 							vendor,
+							reference,
 							notes: description,
 							typeOfExpense: subtype,
 							currency: CurrenciesEnum.USD
 						})
 					);
 
-					const { assignment__reference: sourceId } = row;
 					return await this._integrationMapService.create({
 						gauzyId: gauzyExpense.id,
 						integrationId,
-						sourceId,
+						sourceId: reference,
 						entity: IntegrationEntity.EXPENSE
 					});
 				})
@@ -1022,21 +1052,45 @@ export class UpworkService {
 			return ele;
 		});
 
-		return await Promise.all(
-			rows.map(async (row) => {
-				const {
-					company_id: clientId,
-					company_name: clientName,
-					memo: notes,
-					worked_on,
-					assignment_rate,
-					hours,
-					assignment_ref: contractId
-				} = row;
+		let integratedIncomes = [];
+		for await (const row of rows) {
+			const {
+				company_id: clientId,
+				company_name: clientName,
+				memo: notes,
+				worked_on,
+				assignment_rate,
+				hours,
+				assignment_ref: contractId
+			} = row;
 
-				//sync upwork contract client
-				await this.syncClient(integrationId, organizationId, row);
+			//sync upwork contract client
+			await this.syncClient(integrationId, organizationId, row);
 
+			const { record: income } = await this._incomeService.findOneOrFail({
+				where: {
+					employeeId,
+					clientId,
+					reference: contractId,
+					valueDate: new Date(
+						moment(worked_on).format('YYYY-MM-DD HH:mm:ss')
+					)
+				}
+			});
+
+			let integratedIncome;
+			if (income) {
+				const findIntegration = await this._integrationMapService.findOneOrFail(
+					{
+						where: {
+							gauzyId: income.id,
+							integrationId,
+							entity: IntegrationEntity.INCOME
+						}
+					}
+				);
+				integratedIncome = findIntegration.record;
+			} else {
 				const gauzyIncome = await this.commandBus.execute(
 					new IncomeCreateCommand({
 						employeeId,
@@ -1053,15 +1107,18 @@ export class UpworkService {
 						currency: CurrenciesEnum.USD
 					})
 				);
-
-				return await this._integrationMapService.create({
+				integratedIncome = await this._integrationMapService.create({
 					gauzyId: gauzyIncome.id,
 					integrationId,
 					sourceId: contractId,
 					entity: IntegrationEntity.INCOME
 				});
-			})
-		);
+			}
+
+			integratedIncomes = integratedIncomes.concat(integratedIncome);
+		}
+
+		return integratedIncomes;
 	}
 
 	/**
