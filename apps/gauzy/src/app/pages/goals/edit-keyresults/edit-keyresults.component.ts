@@ -288,6 +288,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		}
 
 		if (!!this.data) {
+			// Delete all updates and progress when keyresult type is changed.
 			if (this.data.type !== this.keyResultsForm.value.type) {
 				this.data.progress = 0;
 				this.data.update = this.keyResultsForm.value.initialValue;
