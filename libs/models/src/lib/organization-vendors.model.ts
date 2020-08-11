@@ -4,6 +4,9 @@ import { ITenant } from './tenant.model';
 
 export interface IOrganizationVendor extends IBaseEntityModel {
 	name: string;
+	phone?: string;
+	website?: string;
+	email?: string;
 	organizationId: string;
 	tags?: Tag[];
 	tenant: ITenant;
@@ -11,12 +14,18 @@ export interface IOrganizationVendor extends IBaseEntityModel {
 
 export interface IOrganizationVendorFindInput extends IBaseEntityModel {
 	name?: string;
+	phone?: string;
+	website?: string;
+	email?: string;
 	organizationId?: string;
 	tags?: Tag[];
 }
 
 export interface IOrganizationVendorCreateInput {
 	name: string;
+	phone?: string;
+	website?: string;
+	email?: string;
 	organizationId: string;
 	tags?: Tag[];
 }
