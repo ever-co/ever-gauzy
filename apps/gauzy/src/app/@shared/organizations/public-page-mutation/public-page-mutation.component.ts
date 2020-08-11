@@ -273,7 +273,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 			{
 				organizationId: this.organizationId
 			},
-			['Language']
+			['language']
 		);
 		if (res) {
 			this.organization_languages = res.items;

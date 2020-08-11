@@ -7,7 +7,7 @@ import {
 	Body,
 	Delete,
 	Param,
-	Put
+	Put, Get, Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -16,6 +16,7 @@ import { OrganizationAwards } from './organization-awards.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { IPagination } from '../core/crud';
 
 @ApiTags('Organization-Awards')
 @Controller()
@@ -86,4 +87,26 @@ export class OrganizationAwardsController extends CrudController<
 	async delete(@Param('id') id: string): Promise<any> {
 		return this.organizationAwardsService.delete(id);
 	}
+
+  @ApiOperation({
+    summary: 'Find Organization Awards.'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Found Organization Awards',
+    type: OrganizationAwards
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Record not found'
+  })
+  @Get()
+  async findAwardsByOrgId(
+    @Query('data') data: string
+  ): Promise<IPagination<OrganizationAwards>> {
+    const { findInput } = JSON.parse(data);
+    return this.organizationAwardsService.findAll({
+      where: findInput
+    });
+  }
 }

@@ -22,6 +22,12 @@ import { OrganizationContactService } from '../../@core/services/organization-co
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 
+export enum CURRENCY {
+  USD = '$',
+  BGN = 'Лв',
+  ILS = '₪',
+}
+
 @Component({
 	selector: 'ngx-organization',
 	templateUrl: './organization.component.html',
@@ -51,6 +57,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	awardExist: boolean;
 	imageUpdateButton = false;
 	moment = moment;
+  currencies = Object.values(CURRENCY);
 
 	constructor(
 		private route: ActivatedRoute,

@@ -281,8 +281,11 @@ import {
   createDefaultOrganizationRecurringExpense,
   createRandomOrganizationRecurringExpense
 } from '../../organization-recurring-expense/organization-recurring-expense.seed';
-import { createRandomHelpCenterAuthor } from '../../help-center-author/help-center-author.seed';
-import { createRandomHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
+import {
+  createDefaultHelpCenterAuthor,
+  createRandomHelpCenterAuthor
+} from '../../help-center-author/help-center-author.seed';
+import { createHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
 import {
 	createDefaultOrganizationLanguage,
 	createRandomOrganizationLanguage
@@ -630,6 +633,8 @@ export class SeedDataService {
 
 		await createRolePermissions(this.connection, this.roles, [this.tenant]);
 
+    await this.tryExecute("Contacts", createRandomContacts(this.connection, 5));
+
 		//Tenant level inserts which only need connection, tenant, roles
 		const defaultOrganizations = await createDefaultOrganizations(
 			this.connection,
@@ -717,7 +722,6 @@ export class SeedDataService {
 			createDefaultProductType(this.connection, this.organizations)
 		);
 
-		await this.tryExecute("Contacts", createRandomContacts(this.connection, 5));
 
 		await this.tryExecute("Default Organization Contacts",
 			createDefaultOrganizationContact(this.connection)
@@ -993,6 +997,20 @@ export class SeedDataService {
       createDefaultOrganizationRecurringExpense(
         this.connection,
         this.organizations[0],
+      )
+    );
+
+    await this.tryExecute("Help Center Articles",
+      createHelpCenterArticle(
+        this.connection,
+        randomSeedConfig.noOfHelpCenterArticle || 5
+      )
+    );
+
+    await this.tryExecute("Default help center author",
+      createDefaultHelpCenterAuthor(
+        this.connection,
+        this.defaultEmployees,
       )
     );
 	}
@@ -1495,13 +1513,6 @@ export class SeedDataService {
 				this.connection,
 				tenants,
 				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute("Random Help Center Articles",
-			createRandomHelpCenterArticle(
-				this.connection,
-				randomSeedConfig.noOfHelpCenterArticle || 5
 			)
 		);
 
