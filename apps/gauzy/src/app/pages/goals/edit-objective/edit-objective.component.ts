@@ -144,14 +144,6 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	selectEmployee(event, control) {
-		if (control === 'lead' && event !== '') {
-			this.objectiveForm.patchValue({ lead: event });
-		} else {
-			this.objectiveForm.patchValue({ owner: event });
-		}
-	}
-
 	saveObjective() {
 		const objectiveData = {
 			...this.objectiveForm.value

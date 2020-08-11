@@ -28,6 +28,7 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -59,6 +60,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		CardGridModule,
 		NbCheckboxModule,
 		NbToggleModule,
+		GoalCustomUnitModule,
 		NbFormFieldModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
