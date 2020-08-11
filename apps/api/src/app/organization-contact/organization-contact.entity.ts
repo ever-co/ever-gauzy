@@ -125,6 +125,36 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	})
 	members?: Employee[];
 
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	fax?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	fiscalInformation?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	website?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	address2?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	imageUrl?: string;
+
 	@ApiProperty({ type: String, enum: ContactType })
 	@IsEnum(ContactType)
 	@IsOptional()

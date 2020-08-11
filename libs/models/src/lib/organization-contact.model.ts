@@ -23,6 +23,11 @@ export interface OrganizationContact extends IContact, IBaseEntityWithMembers {
 	inviteStatus?: string;
 	tags: Tag[];
 	contact: IContact;
+	fax?: string;
+	fiscalInformation?: string;
+	website?: string;
+	address2?: string;
+	imageUrl?: string;
 }
 
 export interface OrganizationContactFindInput extends IBaseEntityModel {
@@ -31,9 +36,15 @@ export interface OrganizationContactFindInput extends IBaseEntityModel {
 	primaryEmail?: string;
 	primaryPhone?: string;
 	notes?: string;
+	fax?: string;
+	fiscalInformation?: string;
+	website?: string;
+	address2?: string;
 }
 
-export interface OrganizationContactCreateInput extends IContact, IBaseEntityModel {
+export interface OrganizationContactCreateInput
+	extends IContact,
+		IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	contactId?: string;
@@ -43,6 +54,11 @@ export interface OrganizationContactCreateInput extends IContact, IBaseEntityMod
 	phones?: string[];
 	projects?: OrganizationProjects[];
 	notes?: string;
+	fax?: string;
+	fiscalInformation?: string;
+	website?: string;
+	address2?: string;
+	imageUrl?: string;
 }
 
 export interface OrganizationContactInviteInput extends IBaseEntityModel {

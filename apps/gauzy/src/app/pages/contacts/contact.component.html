@@ -144,6 +144,54 @@
 							{{ c.contactType }}
 						</div>
 					</div>
+					<div class="info-line" *ngIf="c.fax">
+						<div class="info-meta">
+							{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}
+						</div>
+						<div class="info-value">
+							{{ c.fax }}
+						</div>
+					</div>
+					<div class="info-line" *ngIf="c.fiscalInformation">
+						<div class="info-meta">
+							{{
+								'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
+									| translate
+							}}
+						</div>
+						<div class="info-value">
+							{{ c.fiscalInformation }}
+						</div>
+					</div>
+					<div class="info-line" *ngIf="c.website">
+						<div class="info-meta">
+							{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}
+						</div>
+						<div class="info-value">
+							{{ c.website }}
+						</div>
+					</div>
+					<div class="info-line" *ngIf="c.address2">
+						<div class="info-meta">
+							{{
+								'ORGANIZATIONS_PAGE.EDIT.SECOND_ADDRESS'
+									| translate
+							}}
+						</div>
+						<div class="info-value">
+							{{ c.address2 }}
+						</div>
+					</div>
+					<div class="info-line" *ngIf="c.imageUrl">
+						<div class="info-meta">
+							{{
+								'ORGANIZATIONS_PAGE.EDIT.IMAGE_URL' | translate
+							}}
+						</div>
+						<div class="info-value">
+							{{ c.imageUrl }}
+						</div>
+					</div>
 				</div>
 			</ga-entity-with-members-card>
 		</div>

@@ -138,6 +138,25 @@ export class ContactMutationComponent extends TranslationBaseComponent
 					? this.organizationContact.contactType
 					: '',
 				Validators.required
+			],
+			fax: [this.organizationContact ? this.organizationContact.fax : ''],
+			fiscalInformation: [
+				this.organizationContact
+					? this.organizationContact.fiscalInformation
+					: ''
+			],
+			website: [
+				this.organizationContact ? this.organizationContact.website : ''
+			],
+			address2: [
+				this.organizationContact
+					? this.organizationContact.address2
+					: ''
+			],
+			imageUrl: [
+				this.organizationContact
+					? this.organizationContact.imageUrl
+					: ''
 			]
 		});
 	}
@@ -192,7 +211,12 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				contactType: contactType,
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
-					.filter((e) => !!e)
+					.filter((e) => !!e),
+				fax: this.form.value['fax'],
+				fiscalInformation: this.form.value['fiscalInformation'],
+				website: this.form.value['website'],
+				address2: this.form.value['address2'],
+				imageUrl: this.form.value['imageUrl']
 			});
 
 			this.selectedEmployeeIds = [];
@@ -205,7 +229,12 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				city: '',
 				address: '',
 				contactType: '',
-				selectProjects: []
+				selectProjects: [],
+				fax: '',
+				fiscalInformation: '',
+				website: '',
+				address2: '',
+				imageUrl: ''
 			});
 		}
 	}
