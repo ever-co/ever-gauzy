@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import { HelpCenterArticle } from './help-center-article.entity';
 import * as faker from 'faker';
 
-export const createRandomHelpCenterArticle = async (
+export const createHelpCenterArticle = async (
 	connection: Connection,
 	numberOfHelpCenterArticle
 ): Promise<HelpCenterArticle[]> => {
