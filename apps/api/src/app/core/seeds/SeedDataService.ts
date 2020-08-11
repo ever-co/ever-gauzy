@@ -1634,7 +1634,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Help Center Articles',
-			createRandomHelpCenterArticle(
+			createHelpCenterArticle(
 				this.connection,
 				randomSeedConfig.noOfHelpCenterArticle || 5
 			)
