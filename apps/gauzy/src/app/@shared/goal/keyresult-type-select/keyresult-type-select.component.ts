@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormGroup, Validators } from '@angular/forms';
 import { KeyResultTypeEnum, GoalGeneralSetting, KPI } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
@@ -11,13 +11,13 @@ import { GoalSettingsService } from '../../../@core/services/goal-settings.servi
 	templateUrl: './keyresult-type-select.component.html',
 	styleUrls: ['./keyresult-type-select.component.sass']
 })
-export class KeyresultTypeSelectComponent implements OnInit {
+export class KeyresultTypeSelectComponent {
 	@Input() parentFormGroup: FormGroup;
 	@Input() settings: GoalGeneralSetting;
 	@Input() orgId: string;
 	@Input() KPIs: Array<KPI>;
 	@Input() numberUnits: string[];
-	@Input() helperText = true;
+	@Input() enableHelperText = true;
 
 	keyResultTypeEnum = KeyResultTypeEnum;
 
@@ -25,8 +25,6 @@ export class KeyresultTypeSelectComponent implements OnInit {
 		private dialogService: NbDialogService,
 		private goalSettingsService: GoalSettingsService
 	) {}
-
-	ngOnInit(): void {}
 
 	taskTypeValidators() {
 		if (

@@ -250,7 +250,7 @@
 			<div class="row">
 				<div class="col-md-7">
 					<div class="row mt-3">
-						<div class="col-md-3 d-flex flex-column">
+						<div class="col-md-4">
 							<label for="updated-value" class="label mt-1">
 								{{
 									'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE'
@@ -258,127 +258,30 @@
 								}}
 							</label>
 							<nb-toggle
-								class="ml-2"
 								id="updated-value"
 								formControlName="assignAsObjective"
 								status="primary"
 							>
 							</nb-toggle>
 						</div>
-						<div
-							*ngIf="!!keyResultsForm.value.assignAsObjective"
-							class="col-md-5"
-						>
-							<label for="objective-level" class="label">
-								{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
-							</label>
-							<nb-select
-								id="objective-level"
-								formControlName="level"
-								placeholder="{{
-									'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL'
-										| translate
-								}}"
-								[selected]="keyResultsForm.value.level"
-								(selectedChange)="
-									$event === goalLevelEnum.TEAM
-										? getTeams()
-										: null
-								"
-								fullWidth
-							>
-								<nb-option
-									*ngFor="
-										let level of goalLevelEnum | keyvalue
-									"
-									[value]="level.value"
-									[hidden]="
-										hideOrg
-											? level.value ===
-											  goalLevelEnum.ORGANIZATION
-											: false || hideEmployee
-											? level.value ===
-											  goalLevelEnum.EMPLOYEE
-											: false || hideTeam
-											? level.value === goalLevelEnum.TEAM
-											: false
-									"
-								>
-									{{
-										'GOALS_PAGE.LEVELS.' + level.key
-											| translate
-									}}
-								</nb-option>
-							</nb-select>
-						</div>
-						<div
-							class="col-md-4"
-							*ngIf="!!keyResultsForm.value.level"
-						>
-							<label for="objective-owner" class="label">
-								{{
-									'KEY_RESULT_PAGE.FORM.LABELS.OWNER'
-										| translate
-								}}
-							</label>
-							<ga-employee-multi-select
-								*ngIf="
-									keyResultsForm.value.level ===
-									goalLevelEnum.EMPLOYEE
-								"
-								[multiple]="false"
-								[allEmployees]="employees"
-								[selectedEmployeeIds]="
-									keyResultsForm.value.owner
-								"
-								[label]="false"
-								(selectedChange)="
-									selectEmployee($event, 'alignedGoalOwner')
-								"
-								id="key-result-owner"
-								placeholder="{{
-									'GOALS_PAGE.FORM.LABELS.OWNER' | translate
-								}}"
-								class="header-selector employee-selector"
-							></ga-employee-multi-select>
-							<nb-select
-								fullWidth
-								placeholder="{{
-									'GOALS_PAGE.FORM.LABELS.OWNER' | translate
-								}}"
-								*ngIf="
-									keyResultsForm.value.level ===
-									goalLevelEnum.TEAM
-								"
-								formControlName="alignedGoalOwner"
-							>
-								<nb-option
-									*ngFor="let team of teams"
-									[value]="team.id"
-								>
-									{{ team.name }}
-								</nb-option>
-							</nb-select>
-							<nb-select
-								fullWidth
-								placeholder="{{
-									'GOALS_PAGE.FORM.LABELS.OWNER' | translate
-								}}"
-								*ngIf="
-									keyResultsForm.value.level ===
-									goalLevelEnum.ORGANIZATION
-								"
-								formControlName="alignedGoalOwner"
-							>
-								<nb-option [value]="orgId">
-									{{ orgName }}
-								</nb-option>
-							</nb-select>
-						</div>
 					</div>
 				</div>
 				<div class="col-md-5 position-relative mt-3"></div>
 			</div>
+			<ga-goal-level-select
+				[parentFormGroup]="keyResultsForm"
+				[orgId]="orgId"
+				[teams]="teams"
+				[hideOrg]="hideOrg"
+				[hideEmployee]="hideEmployee"
+				[hideTeam]="hideTeam"
+				[helperText]="helperText"
+				[employees]="employees"
+				[orgName]="orgName"
+				[alignedGoal]="true"
+				[enableHelperText]="true"
+			>
+			</ga-goal-level-select>
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
