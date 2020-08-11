@@ -20,6 +20,7 @@ export interface Product extends IBaseEntityModel {
 	type?: ProductTypeTranslatable;
 	category?: ProductCategoryTranslatable;
 	tags?: Tag[];
+	language?: string;
 }
 
 export interface IProductCreateInput {
@@ -34,6 +35,7 @@ export interface IProductCreateInput {
 	optionCreateInputs?: ProductOption[];
 	optionDeleteInputs?: ProductOption[];
 	tenant: ITenant;
+	language?: string;
 }
 
 export interface ProductFindInput {

@@ -44,7 +44,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	optionsCombinations: Array<IVariantOptionCombination> = [];
 	variants$: BehaviorSubject<ProductVariant[]> = new BehaviorSubject([]);
 
-	languages: Array<string>;
+	languages: any[];
 	tags: Tag[] = [];
 
 	private ngDestroy$ = new Subject<void>();
@@ -83,7 +83,18 @@ export class ProductFormComponent extends TranslationBaseComponent
 				}
 			});
 
-		this.languages = this.translateService.getLangs();
+		this.store.systemLanguages$
+			.pipe(takeUntil(this.ngDestroy$))
+			.subscribe((systemLanguages) => {
+				if (systemLanguages && systemLanguages.length > 0) {
+					this.languages = systemLanguages.map((item) => {
+						return {
+							value: item.code,
+							name: item.name
+						};
+					});
+				}
+			});
 	}
 
 	ngOnDestroy(): void {
@@ -114,6 +125,12 @@ export class ProductFormComponent extends TranslationBaseComponent
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [
 				this.inventoryItem ? this.inventoryItem.description : ''
+			],
+			language: [
+				this.inventoryItem && this.inventoryItem.language
+					? this.inventoryItem.language
+					: '',
+				Validators.required
 			]
 		});
 	}
@@ -183,7 +200,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 			type: this.productTypes.find((p) => {
 				return p.id === this.form.get('productTypeId').value;
 			}),
-			tenant: this.store.user.tenant
+			tenant: this.store.user.tenant,
+			language: this.form.get('language').value
 		};
 
 		if (this.inventoryItem) {
