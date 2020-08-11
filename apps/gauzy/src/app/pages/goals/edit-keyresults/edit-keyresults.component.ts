@@ -52,7 +52,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	teams: OrganizationTeam[] = [];
 	hideOrg = false;
 	hideTeam = false;
-	createNew = false;
 	hideEmployee = false;
 	goalLevelEnum = GoalLevelEnum;
 	softDeadline: FormControl;
@@ -327,13 +326,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				weight: KeyResultWeightEnum.DEFAULT
 			});
 		}
-	}
-
-	createNewUnit() {
-		if (this.keyResultsForm.value.unit !== ' ') {
-			this.numberUnitsEnum.push(this.keyResultsForm.value.unit);
-		}
-		this.createNew = false;
 	}
 
 	closeDialog(data = null) {

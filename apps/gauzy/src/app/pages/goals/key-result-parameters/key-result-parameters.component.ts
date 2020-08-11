@@ -36,7 +36,6 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	KPIs: KPI[];
 	currenciesEnum = CurrenciesEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
-	createNew = false;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private fb: FormBuilder,
@@ -135,13 +134,6 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			...this.data.selectedKeyResult
 		});
 		this.closeDialog(this.data.selectedKeyResult);
-	}
-
-	createNewUnit() {
-		if (this.typeForm.value.unit !== ' ') {
-			this.numberUnitsEnum.push(this.typeForm.value.unit);
-		}
-		this.createNew = false;
 	}
 
 	async openEditKPI() {

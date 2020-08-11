@@ -219,80 +219,10 @@
 							/>
 						</div>
 						<div class="col-md-4">
-							<label for="unit" class="label">
-								Unit
-							</label>
-							<nb-select
-								fullWidth
-								formControlName="unit"
-								*ngIf="
-									keyResultsForm.value.type ==
-									keyResultTypeEnum.CURRENCY
-								"
-								[(selected)]="currenciesEnum.BGN"
-								id="unit"
-								nbSuffix
-							>
-								<nb-option
-									[value]="currency.value"
-									*ngFor="
-										let currency of currenciesEnum
-											| keyvalue
-									"
-									>{{ currency.value }}</nb-option
-								>
-							</nb-select>
-							<nb-select
-								fullWidth
-								formControlName="unit"
-								[selected]="numberUnitsEnum[0]"
-								(selectedChange)="
-									keyResultsForm.value.unit == 'create-new'
-										? (createNew = !createNew)
-										: true
-								"
-								*ngIf="
-									keyResultsForm.value.type ==
-										keyResultTypeEnum.NUMERICAL &&
-									!createNew
-								"
-								id="unit"
-								nbSuffix
-							>
-								<nb-option
-									[value]="unit"
-									*ngFor="let unit of numberUnitsEnum"
-									>{{ unit }}
-								</nb-option>
-								<nb-option
-									value="create-new"
-									class="bg-secondary text-light"
-								>
-									+ create new
-								</nb-option>
-							</nb-select>
-							<nb-form-field *ngIf="createNew">
-								<input
-									type="text"
-									formControlName="unit"
-									nbInput
-									fullWidth
-								/>
-								<nb-icon
-									nbSuffix
-									icon="checkmark-outline"
-									status="success"
-									(click)="createNewUnit()"
-								>
-								</nb-icon>
-								<nb-icon
-									nbSuffix
-									icon="close-outline"
-									status="danger"
-									(click)="createNew = !createNew"
-								>
-								</nb-icon>
-							</nb-form-field>
+							<ga-goal-custom-unit-select
+								[parentFormGroup]="keyResultsForm"
+								[numberUnits]="numberUnitsEnum"
+							></ga-goal-custom-unit-select>
 						</div>
 					</div>
 				</div>
