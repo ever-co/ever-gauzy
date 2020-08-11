@@ -49,6 +49,10 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 ## Demos & Testing
 
+**Demos are not available at the moment as we are moving to Kubernetes and showdown old demo server!**
+
+<!---
+
 Feel free to test a Demo <http://demo.gauzy.co:4250> on our server. Login: `admin@ever.co` and password: `admin`.
 
 In the future we will have the following:
@@ -56,6 +60,8 @@ In the future we will have the following:
 -   Gauzy Platform SaaS at <https://app.gauzy.co>
 -   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev>
+
+-->
 
 ## Quick Start
 
@@ -140,7 +146,6 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 -   Aleksandar Tasev ([AlexTasev](https://github.com/AlexTasev))
 -   Alish Meklyov ([Alish](https://github.com/AlishMekliov931))
 -   Blagovest Gerov ([BlagovestGerov](https://github.com/BlagovestGerov))
--   Boyan Stanchev ([boyanstanchev](https://github.com/boyanstanchev))
 -   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
