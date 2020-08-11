@@ -13,37 +13,47 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { LocalDataSource } from 'ng2-smart-table';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 
 @Component({
 	selector: 'ga-vendors',
-	templateUrl: './vendors.component.html'
+	templateUrl: './vendors.component.html',
+	styleUrls: ['vendors.component.scss']
 })
 export class VendorsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
-
 	organizationId: string;
-
 	showAddCard: boolean;
-	showEditDiv: boolean;
-
 	vendors: IOrganizationVendor[];
 	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	selectedVendor: IOrganizationVendor;
 	tags: Tag[] = [];
-
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
+	form: FormGroup;
+	currentVendor: IOrganizationVendor;
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: NbToastrService,
+		private readonly fb: FormBuilder,
 		readonly translateService: TranslateService,
 		private errorHandlingService: ErrorHandlingService,
-		private store: Store
+		private store: Store,
+		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
+		this._initializeForm();
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -52,17 +62,22 @@ export class VendorsComponent extends TranslationBaseComponent
 					this.loadVendors();
 				}
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
-
-	showEditCard(vendor: IOrganizationVendor) {
-		this.tags = vendor.tags;
-		this.showEditDiv = true;
-		this.selectedVendor = vendor;
-	}
-
-	cancel() {
-		this.showEditDiv = !this.showEditDiv;
-		this.selectedVendor = null;
+	private _initializeForm() {
+		this.form = this.fb.group({
+			name: ['', Validators.required],
+			phone: [''],
+			email: ['', Validators.email],
+			website: [''],
+			tags: ['']
+		});
 	}
 
 	setView() {
@@ -74,46 +89,66 @@ export class VendorsComponent extends TranslationBaseComponent
 				this.dataLayoutStyle = componentLayout;
 			});
 	}
-
-	async removeVendor(id: string, name: string) {
-		try {
-			await this.organizationVendorsService.delete(id);
-
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-
-			this.loadVendors();
-		} catch (error) {
-			this.errorHandlingService.handleError(error);
-		}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				tags: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
+				},
+				phone: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.PHONE'),
+					type: 'string'
+				},
+				email: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.EMAIL'),
+					type: 'string'
+				},
+				website: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.WEBSITE'),
+					type: 'string'
+				}
+			}
+		};
 	}
 
-	async editVendor(id: string, name: string) {
-		await this.organizationVendorsService.update(id, {
-			name: name,
-			tags: this.tags
-		});
-		this.loadVendors();
-		this.toastrService.success('Successfully updated');
-		this.showEditDiv = !this.showEditDiv;
+	add() {
+		this.form.reset();
+		this.showAddCard = true;
 		this.tags = [];
 	}
-
-	private async addVendor(name: string) {
-		if (name) {
+	edit(vendor: IOrganizationVendor) {
+		this.showAddCard = true;
+		this.form.patchValue(vendor);
+		this.tags = vendor.tags;
+		this.currentVendor = vendor;
+	}
+	cancel() {
+		this.form.reset();
+		this.showAddCard = !this.showAddCard;
+		this.currentVendor = null;
+	}
+	save() {
+		if (this.currentVendor) {
+			this.updateVendor(this.currentVendor);
+			this.currentVendor = null;
+		} else {
+			this.createVendor();
+		}
+	}
+	async createVendor() {
+		if (!this.form.invalid) {
 			await this.organizationVendorsService.create({
-				name,
+				name: this.form.get('name').value,
+				phone: this.form.get('phone').value,
+				email: this.form.get('email').value,
+				website: this.form.get('website').value,
 				organizationId: this.organizationId,
 				tags: this.tags
 			});
-
 			this.toastrService.primary(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
@@ -138,12 +173,43 @@ export class VendorsComponent extends TranslationBaseComponent
 			);
 		}
 	}
+	async removeVendor(id: string, name: string) {
+		try {
+			await this.organizationVendorsService.delete(id);
 
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.loadVendors();
+		} catch (error) {
+			this.errorHandlingService.handleError(error);
+		}
+	}
+
+	async updateVendor(vendor: IOrganizationVendor) {
+		await this.organizationVendorsService.update(vendor.id, {
+			name: this.form.get('name').value,
+			phone: this.form.get('phone').value,
+			email: this.form.get('email').value,
+			website: this.form.get('website').value,
+			tags: this.tags
+		});
+		this.loadVendors();
+		this.toastrService.success('Successfully updated');
+		this.showAddCard = !this.showAddCard;
+		this.tags = [];
+	}
 	private async loadVendors() {
 		if (!this.organizationId) {
 			return;
 		}
-
 		const res = await this.organizationVendorsService.getAll(
 			{
 				organizationId: this.organizationId
@@ -152,10 +218,16 @@ export class VendorsComponent extends TranslationBaseComponent
 		);
 		if (res) {
 			this.vendors = res.items;
+			this.smartTableSource.load(res.items);
 		}
 	}
 
 	selectedTagsEvent(ev) {
 		this.tags = ev;
+	}
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 }

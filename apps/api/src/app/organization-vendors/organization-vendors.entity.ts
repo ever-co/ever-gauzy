@@ -7,7 +7,7 @@ import {
 	ManyToOne
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { IOrganizationVendor } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { TenantBase } from '../core/entities/tenant-base';
@@ -29,6 +29,24 @@ export class OrganizationVendor extends TenantBase
 	@Index()
 	@Column()
 	name: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	email?: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	phone?: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	website?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
