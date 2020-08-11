@@ -376,7 +376,34 @@
 		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
-
+	<nb-select
+		filled
+		status="info"
+		class="mr-2"
+		*ngIf="!isEstimate"
+		placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+		[(selected)]="status"
+		[disabled]="disableButton"
+		(selectedChange)="selectStatus($event)"
+	>
+		<nb-option *ngFor="let status of invoiceStatusTypes" [value]="status">
+			{{ status }}
+		</nb-option>
+	</nb-select>
+	<nb-select
+		filled
+		status="info"
+		class="mr-2"
+		*ngIf="isEstimate"
+		placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+		[(selected)]="status"
+		[disabled]="disableButton"
+		(selectedChange)="selectStatus($event)"
+	>
+		<nb-option *ngFor="let status of estimateStatusTypes" [value]="status">
+			{{ status }}
+		</nb-option>
+	</nb-select>
 	<button
 		nbButton
 		[nbContextMenu]="settingsContextMenu"
@@ -484,37 +511,6 @@
 				[value]="column"
 			>
 				{{ column }}
-			</nb-option>
-		</nb-select>
-		<label class="popover-label label">
-			{{ 'INVOICES_PAGE.SET_STATUS' | translate }}
-		</label>
-		<nb-select
-			*ngIf="!isEstimate"
-			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-			[(selected)]="status"
-			[disabled]="disableButton"
-			(selectedChange)="selectStatus($event)"
-		>
-			<nb-option
-				*ngFor="let status of invoiceStatusTypes"
-				[value]="status"
-			>
-				{{ status }}
-			</nb-option>
-		</nb-select>
-		<nb-select
-			*ngIf="isEstimate"
-			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-			[(selected)]="status"
-			[disabled]="disableButton"
-			(selectedChange)="selectStatus($event)"
-		>
-			<nb-option
-				*ngFor="let status of estimateStatusTypes"
-				[value]="status"
-			>
-				{{ status }}
 			</nb-option>
 		</nb-select>
 	</div>
