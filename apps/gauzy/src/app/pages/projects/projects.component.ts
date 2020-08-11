@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	Employee,
 	Organization,
@@ -12,13 +12,21 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { ActivatedRoute } from '@angular/router';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { EmployeesService } from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { LocalDataSource } from 'ng2-smart-table';
+import { DatePipe } from '@angular/common';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 @Component({
 	selector: 'ga-projects',
@@ -28,6 +36,10 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 export class ProjectsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
+	loading = true;
+	settingsSmartTable: object;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 
 	organization: Organization;
 	showAddCard: boolean;
@@ -36,8 +48,11 @@ export class ProjectsComponent extends TranslationBaseComponent
 	employees: Employee[] = [];
 	projectToEdit: OrganizationProjects;
 	viewPrivateProjects: boolean;
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	disableButton = true;
+	selectedProject: OrganizationProjects[];
+	smartTableSource = new LocalDataSource();
+
+	@ViewChild('projectsTable') projectsTable;
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
@@ -46,12 +61,16 @@ export class ProjectsComponent extends TranslationBaseComponent
 		private store: Store,
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -78,6 +97,13 @@ export class ProjectsComponent extends TranslationBaseComponent
 					this.loadProjects();
 				}
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
 	}
 
 	private async loadEmployees() {
@@ -93,7 +119,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 		this.employees = items;
 	}
 	setView() {
-		this.viewComponentName = ComponentEnum.PROJECTS;
+		this.viewComponentName = ComponentEnum.APPROVALS;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(takeUntil(this._ngDestroy$))
@@ -101,6 +127,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 				this.dataLayoutStyle = componentLayout;
 			});
 	}
+
 	async removeProject(id: string, name: string) {
 		await this.organizationProjectsService.delete(id);
 
@@ -166,6 +193,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 	}
 
 	private async loadProjects() {
+		this.loading = false;
 		if (!this.organization) {
 			return;
 		}
@@ -180,6 +208,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 			const canView = [];
 			if (this.viewPrivateProjects) {
 				this.projects = res.items;
+				this.smartTableSource.load(res.items);
 			} else {
 				res.items.forEach((item) => {
 					if (item.public) {
@@ -195,6 +224,97 @@ export class ProjectsComponent extends TranslationBaseComponent
 				this.projects = canView;
 			}
 		}
+	}
+
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				name: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.ORGANIZATIONS'
+					),
+					type: 'custom',
+					renderComponent: PictureNameTagsComponent
+				},
+				organizationContactId: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.CONTACT'
+					),
+					type: 'string'
+				},
+				startDate: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.START_DATE'
+					),
+					type: 'date',
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					class: 'text-center'
+				},
+				endDate: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.END_DATE'
+					),
+					type: 'date',
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					class: 'text-center'
+				},
+				billing: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.BILLING'
+					),
+					type: 'string',
+					filter: false
+				},
+				currency: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.CURRENCY'
+					),
+					type: 'string',
+					filter: false
+				},
+				owner: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.OWNER'),
+					type: 'string',
+					filter: false
+				}
+			}
+		};
+	}
+
+	async selectProject({ isSelected, data }) {
+		const selectedProject = isSelected ? data : null;
+		if (this.projectsTable) {
+			this.projectsTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedProject = selectedProject;
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
+	}
+
+	async deleteProject(project) {
+		await this.organizationProjectsService.delete(project.id);
+
+		this.toastrService.primary(
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
+				{
+					name: project.name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+
+		this.loadProjects();
 	}
 
 	private async loadOrganizationContacts() {

@@ -37,6 +37,9 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	@Output()
 	addOrEditProject = new EventEmitter();
 
+	@Input()
+	organizationContacts: Object[] = [];
+
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];
@@ -46,7 +49,6 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	public: Boolean = true;
 	tags: Tag[] = [];
 	organizationId: string;
-	organizationContacts: Object[] = [];
 	owners: string[] = Object.values(ProjectOwnerEnum);
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	showSprintManage = false;
