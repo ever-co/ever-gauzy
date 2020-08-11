@@ -19,8 +19,11 @@ export const createDefaultEmployeeInviteSent = async (
   const totalInvites: Invite[] = [];
   const invitationStatus = Object.values(InviteStatusEnum);
 
-  const role = await connection.getRepository(Role).find({
+  const employeeRole = await connection.getRepository(Role).find({
     where: [{ tenant: tenant, name: RolesEnum.EMPLOYEE }]
+  });
+  const candidateRole = await connection.getRepository(Role).find({
+    where: [{ tenant: tenant, name: RolesEnum.CANDIDATE }]
   });
   Organizations.forEach((org) => {
     for (let i = 0; i < 10; i++) {
@@ -30,7 +33,7 @@ export const createDefaultEmployeeInviteSent = async (
       invitee.invitedBy = faker.random.arrayElement(SuperAdmin);
       invitee.organizationId = org.id;
       invitee.organization = org;
-      invitee.role = role[0];
+      invitee.role = faker.random.arrayElement([employeeRole[0], candidateRole[0]]);
       invitee.status = faker.random.arrayElement(invitationStatus);
       invitee.token = createToken(invitee.email);
       totalInvites.push(invitee);
@@ -51,9 +54,12 @@ export const createRandomEmployeeInviteSent = async (
 	const invitationStatus = Object.values(InviteStatusEnum);
 
 	for (const tenant of tenants) {
-		const role = await connection.getRepository(Role).find({
-			where: [{ tenant: tenant, name: RolesEnum.EMPLOYEE}]
-		});
+    const employeeRole = await connection.getRepository(Role).find({
+      where: [{ tenant: tenant, name: RolesEnum.EMPLOYEE }]
+    });
+    const candidateRole = await connection.getRepository(Role).find({
+      where: [{ tenant: tenant, name: RolesEnum.CANDIDATE }]
+    });
 		const orgs = tenantOrganizationsMap.get(tenant);
 		const admins = tenantSuperAdminMap.get(tenant);
 		orgs.forEach((org) => {
@@ -64,7 +70,7 @@ export const createRandomEmployeeInviteSent = async (
 				invitee.invitedBy = faker.random.arrayElement(admins);
 				invitee.organizationId = org.id;
 				invitee.organization = org;
-				invitee.role = role[0];
+        invitee.role = faker.random.arrayElement([employeeRole[0], candidateRole[0]]);
 				invitee.status = faker.random.arrayElement(invitationStatus);
 				invitee.token = createToken(invitee.email);
 				totalInvites.push(invitee);

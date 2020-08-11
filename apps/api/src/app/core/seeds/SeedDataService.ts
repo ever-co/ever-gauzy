@@ -287,8 +287,11 @@ import {
 	createDefaultOrganizationRecurringExpense,
 	createRandomOrganizationRecurringExpense
 } from '../../organization-recurring-expense/organization-recurring-expense.seed';
-import { createRandomHelpCenterAuthor } from '../../help-center-author/help-center-author.seed';
-import { createRandomHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
+import {
+  createDefaultHelpCenterAuthor,
+  createRandomHelpCenterAuthor
+} from '../../help-center-author/help-center-author.seed';
+import { createHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
 import {
 	createDefaultOrganizationLanguage,
 	createRandomOrganizationLanguage
@@ -644,6 +647,8 @@ export class SeedDataService {
 
 		await createRolePermissions(this.connection, this.roles, [this.tenant]);
 
+    await this.tryExecute("Contacts", createRandomContacts(this.connection, 5));
+
 		//Tenant level inserts which only need connection, tenant, roles
 		const defaultOrganizations = await createDefaultOrganizations(
 			this.connection,
@@ -736,11 +741,6 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Product Types',
 			createDefaultProductType(this.connection, this.organizations)
-		);
-
-		await this.tryExecute(
-			'Contacts',
-			createRandomContacts(this.connection, 5)
 		);
 
 		await this.tryExecute(
@@ -992,6 +992,7 @@ export class SeedDataService {
 				this.organizations
 			)
 		);
+
 		await this.tryExecute(
 			'Default Event Types',
 			createDefaultEventTypes(this.connection, this.organizations)
@@ -1010,6 +1011,7 @@ export class SeedDataService {
 				this.organizations[0]
 			)
 		);
+
 		await this.tryExecute(
 			'Default Organization Position',
 			seedDefaultOrganizationPosition(
@@ -1059,6 +1061,20 @@ export class SeedDataService {
 				this.organizations[0]
 			)
 		);
+
+    await this.tryExecute("Help Center Articles",
+      createHelpCenterArticle(
+        this.connection,
+        randomSeedConfig.noOfHelpCenterArticle || 5
+      )
+    );
+
+    await this.tryExecute("Default Help Center Author",
+      createDefaultHelpCenterAuthor(
+        this.connection,
+        this.defaultEmployees,
+      )
+    );        
 	}
 
 	/**
@@ -1625,7 +1641,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Random Organization Sprints',
+			'Random Organization Sprints',		
 			createRandomOrganizationSprint(
 				this.connection,
 				tenants,
