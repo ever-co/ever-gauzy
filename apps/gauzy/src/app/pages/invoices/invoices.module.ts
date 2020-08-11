@@ -16,7 +16,6 @@ import {
 	NbToggleModule,
 	NbContextMenuModule,
 	NbMenuModule,
-	NbAccordionModule,
 	NbPopoverModule,
 	NbTabsetModule
 } from '@nebular/theme';
@@ -104,6 +103,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbMenuModule,
 		NbTabsetModule,
 		BackNavigationModule,
+		NbPopoverModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

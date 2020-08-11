@@ -4,3 +4,28 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.popover-container {
+  display: flex;
+  flex-direction: column;
+  border: solid 1px #919191;
+  padding: 0 50px;
+  padding-bottom: 20px;
+}
+
+.popover-label {
+  margin: 10px auto;
+}
+
+.popover-select {
+  margin: 0 auto;
+}
+
+.settings-button {
+  width: 100%;
+  text-align: right;
+}
+
+.actions-container {
+  display: flex;
+}
