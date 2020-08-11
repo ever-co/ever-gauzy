@@ -170,7 +170,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				data: {
 					selectedKeyResult: keyResult,
 					allKeyResults: this.goals[index].keyResults,
-					settings: this.goalGeneralSettings
+					settings: this.goalGeneralSettings,
+					orgId: this.selectedOrganizationId
 				}
 			},
 			closeOnBackdropClick: false

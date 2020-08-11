@@ -44,6 +44,7 @@ import { KeyResultParametersComponent } from './key-result-parameters/key-result
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 import { TaskSelectModule } from '../../@shared/tasks/task-select/task-select.module';
 import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
+import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -88,6 +89,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		GoalSettingsModule,
 		ProjectSelectModule,
 		GoalCustomUnitModule,
+		KeyresultTypeSelectModule,
 		TaskSelectModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({

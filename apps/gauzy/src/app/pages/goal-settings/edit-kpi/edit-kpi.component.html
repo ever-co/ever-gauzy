@@ -80,7 +80,7 @@
 					(mouseenter)="helper = 'kpi-type'"
 					(mouseleave)="helperText(null)"
 				>
-					<div class="row">
+					<div class="row mt-3">
 						<div
 							[ngClass]="{
 								'col-md-6':
@@ -94,7 +94,7 @@
 									kpiForm.value.type != kpiMetricEnum.CURRENCY
 							}"
 						>
-							<label for="kpi-type" class="label mt-3">
+							<label for="kpi-type" class="label">
 								{{
 									'GOALS_PAGE.FORM.LABELS.KPI_METRIC'
 										| translate

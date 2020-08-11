@@ -13,10 +13,9 @@ import {
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { EditKpiComponent } from '../../goal-settings/edit-kpi/edit-kpi.component';
 
 @Component({
 	selector: 'ga-key-result-parameters',
@@ -29,6 +28,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 		selectedKeyResult: KeyResult;
 		allKeyResults: KeyResult[];
 		settings: GoalGeneralSetting;
+		orgId: string;
 	};
 	keyResultTypeEnum = KeyResultTypeEnum;
 	keyResultWeightEnum = KeyResultWeightEnum;
@@ -107,10 +107,12 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	}
 
 	async getKPI() {
-		await this.goalSettingsService.getAllKPI().then((kpi) => {
-			const { items } = kpi;
-			this.KPIs = items;
-		});
+		await this.goalSettingsService
+			.getAllKPI({ organization: { id: this.data.orgId } })
+			.then((kpi) => {
+				const { items } = kpi;
+				this.KPIs = items;
+			});
 	}
 
 	async updateKeyResult() {
@@ -134,36 +136,6 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			...this.data.selectedKeyResult
 		});
 		this.closeDialog(this.data.selectedKeyResult);
-	}
-
-	async openEditKPI() {
-		const dialog = this.dialogService.open(EditKpiComponent, {
-			context: {
-				type: 'add'
-			}
-		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
-		if (!!response) {
-			await this.getKPI();
-		}
-	}
-
-	taskTypeValidators() {
-		if (this.typeForm.get('type').value === this.keyResultTypeEnum.TASK) {
-			this.typeForm.controls['projectId'].setValidators([
-				Validators.required
-			]);
-			this.typeForm.controls['taskId'].setValidators([
-				Validators.required
-			]);
-		} else {
-			this.typeForm.controls['projectId'].clearValidators();
-			this.typeForm.patchValue({ projectId: undefined });
-			this.typeForm.controls['taskId'].clearValidators();
-			this.typeForm.patchValue({ taskId: undefined });
-		}
-		this.typeForm.controls['projectId'].updateValueAndValidity();
-		this.typeForm.controls['taskId'].updateValueAndValidity();
 	}
 
 	closeDialog(data) {
