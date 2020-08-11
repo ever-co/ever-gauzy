@@ -114,6 +114,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				lead: !!this.data.lead ? this.data.lead.id : null,
 				owner: this.data.owner.id
 			});
+		} else {
+			await this.getKPI();
 		}
 		this.employeeService
 			.getAll(['user'])
@@ -137,7 +139,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			.then((kpi) => {
 				const { items } = kpi;
 				this.KPIs = items;
-				this.keyResultsForm.patchValue(this.data);
 			});
 	}
 

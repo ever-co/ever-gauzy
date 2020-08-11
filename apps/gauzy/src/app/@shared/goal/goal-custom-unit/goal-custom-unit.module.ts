@@ -4,7 +4,8 @@ import { GoalCustomUnitSelectComponent } from './goal-custom-unit-select.compone
 import {
 	NbSelectModule,
 	NbFormFieldModule,
-	NbIconModule
+	NbIconModule,
+	NbInputModule
 } from '@nebular/theme';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
@@ -18,7 +19,8 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 		NbFormFieldModule,
 		NbIconModule,
 		ReactiveFormsModule,
-		FormsModule
+		FormsModule,
+		NbInputModule
 	]
 })
 export class GoalCustomUnitModule {}
