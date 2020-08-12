@@ -22,6 +22,7 @@
 						fullWidth
 						type="text"
 						formControlName="title"
+						placeholder="{{ 'SM_TABLE.TITLE' | translate }}"
 					/>
 				</label>
 			</nb-form-field>
@@ -38,6 +39,25 @@
 							[value]="stage.id"
 						>
 							{{ stage.name }}
+						</nb-option>
+					</nb-select>
+				</label>
+			</nb-form-field>
+			<nb-form-field>
+				<label>
+					<span nbprefix>
+						{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABLITY' | translate }}
+					</span>
+					<nb-select
+						fullWidth
+						formControlName="probability"
+						placeholder="(0-low / 5-high)"
+					>
+						<nb-option
+							*ngFor="let pr of probabilities"
+							[value]="pr"
+						>
+							{{ pr }}
 						</nb-option>
 					</nb-select>
 				</label>

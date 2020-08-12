@@ -31,29 +31,32 @@ export class PipelinesComponent extends TranslationBaseComponent
 		noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
 		columns: {
 			name: {
-				filter: false,
-				editor: false,
+				type: 'string',
 				title: this.getTranslation('SM_TABLE.NAME')
 			},
 			description: {
+				type: 'string',
+				title: this.getTranslation('SM_TABLE.DESCRIPTION')
+			},
+			status: {
 				filter: false,
 				editor: false,
-				title: this.getTranslation('SM_TABLE.DESCRIPTION')
+				title: this.getTranslation('SM_TABLE.STATUS')
 			}
 		}
 	};
 
-	pipelines = new LocalDataSource([] as Pipeline[]);
-	CAN_EDIT_SALES_PIPELINES = false;
-	organizationId: string;
-	pipeline: Pipeline;
-	name: string;
-	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
-	private permissionSubscription: Subscription;
-	viewComponentName: ComponentEnum;
-	private _ngDestroy$ = new Subject<void>();
 	pipelineData: Pipeline[];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	pipelines = new LocalDataSource([] as Pipeline[]);
+	viewComponentName: ComponentEnum;
+	pipeline: Pipeline;
+	organizationId: string;
+	name: string;
+	CAN_EDIT_SALES_PIPELINES = false;
+	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
+	private permissionSubscription: Subscription;
+	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private usersOrganizationsService: UsersOrganizationsService,

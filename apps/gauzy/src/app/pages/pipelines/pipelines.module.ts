@@ -8,7 +8,8 @@ import {
 	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
-	NbSelectModule
+	NbSelectModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { PipelinesRouting } from './pipelines.routing';
 import { TranslateModule } from '@ngx-translate/core';
@@ -22,10 +23,10 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
 import { DealsService } from '../../@core/services/deals.service';
-import { PipelineDealExcerptComponent } from './pipeline-deals/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { PipelineDealExcerptComponent } from './table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 
 @NgModule({
 	declarations: [
@@ -57,6 +58,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 		NbButtonModule,
 		NbSelectModule,
 		NbInputModule,
+		NbCheckboxModule,
 		CommonModule,
 		NbCardModule,
 		NbIconModule,

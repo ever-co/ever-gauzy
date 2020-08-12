@@ -10,7 +10,6 @@ import {
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { PipelineDealExcerptComponent } from './pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DealsService } from '../../../@core/services/deals.service';
@@ -18,7 +17,8 @@ import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { PipelineDealCreatedByComponent } from './pipeline-deal-created-by/pipeline-deal-created-by';
+import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
+import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 
 @Component({
 	selector: 'ga-pipeline-deals',

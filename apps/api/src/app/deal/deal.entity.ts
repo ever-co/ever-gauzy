@@ -2,7 +2,7 @@ import { Deal as IDeal } from '@gauzy/models';
 import { User } from '../user/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, Min, Max, IsInt } from 'class-validator';
 import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 
@@ -36,4 +36,11 @@ export class Deal extends TenantBase implements IDeal {
 	@IsString()
 	@Column()
 	public stageId: string;
+
+	@ApiProperty({ type: Number })
+	@IsInt()
+	@Min(0)
+	@Max(5)
+	@Column()
+	public probability?: number;
 }

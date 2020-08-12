@@ -59,6 +59,7 @@ export const createRandomPipeline = async (
 				pipeline.organizationId = tenantOrg.id;
 				pipeline.name = faker.company.companyName();
 				pipeline.description = faker.name.jobDescriptor();
+				pipeline.isActive = faker.random.boolean();
 
 				pipelines.push(pipeline);
 			}
