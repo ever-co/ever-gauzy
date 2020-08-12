@@ -83,7 +83,6 @@ export class DocumentsComponent extends TranslationBaseComponent
 			});
 	}
 	async loadSmartTable() {
-		console.log(this.smartTableSource);
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
