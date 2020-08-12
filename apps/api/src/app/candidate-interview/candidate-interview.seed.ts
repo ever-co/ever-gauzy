@@ -18,22 +18,9 @@ export const createDefaultCandidateInterview = async (
   let candidates: CandidateInterview[] = [];
 
   for (const tenantCandidate of Candidates) {
-    for (let i = 0; i <= (Math.floor(Math.random() * 3) + 1); i++) {
-      let candidate = new CandidateInterview();
-
-      var interViewDate = faker.date.past();
-      candidate.title = faker.name.jobArea();
-      candidate.startTime = new Date(interViewDate.setHours(10));
-      candidate.endTime = new Date(interViewDate.setHours(12));
-      candidate.location = faker.address.city();
-      candidate.note = faker.lorem.words();
-      candidate.candidate = tenantCandidate;
-
-      candidates.push(candidate);
-    }
+    candidates = await dataOperation(connection,candidates,tenantCandidate);
   }
 
-  await insertRandomCandidateInterview(connection, candidates);
   return candidates;
 };
 
@@ -54,33 +41,27 @@ export const createRandomCandidateInterview = async (
   for (const tenant of tenants) {
     let tenantCandidates = tenantCandidatesMap.get(tenant);
     for (const tenantCandidate of tenantCandidates) {
-      for (let i = 0; i <= (Math.floor(Math.random() * 3) + 1); i++) {
-        let candidate = new CandidateInterview();
-
-        var interViewDate = faker.date.past();
-        candidate.title = faker.name.jobArea();
-        candidate.startTime = new Date(interViewDate.setHours(10));
-        candidate.endTime = new Date(interViewDate.setHours(12));
-        candidate.location = faker.address.city();
-        candidate.note = faker.lorem.words();
-        candidate.candidate = tenantCandidate;
-
-        candidates.push(candidate);
-      }
+      candidates = await dataOperation(connection,candidates,tenantCandidate);
     }
   }
-  await insertRandomCandidateInterview(connection, candidates);
   return candidates;
 };
 
-const insertRandomCandidateInterview = async (
-  connection: Connection,
-  Candidates: CandidateInterview[]
-) => {
-  await connection
-    .createQueryBuilder()
-    .insert()
-    .into(CandidateInterview)
-    .values(Candidates)
-    .execute();
-};
+const dataOperation = async (connection: Connection, candidates, tenantCandidate)=>{
+  for (let i = 0; i <= (Math.floor(Math.random() * 3) + 1); i++) {
+    let candidate = new CandidateInterview();
+
+    var interViewDate = faker.date.past();
+
+    candidate.title = faker.name.jobArea();
+    candidate.startTime = new Date(interViewDate.setHours(10));
+    candidate.endTime = new Date(interViewDate.setHours(12));
+    candidate.location = faker.address.city();
+    candidate.note = faker.lorem.words();
+    candidate.candidate = tenantCandidate;
+
+    candidates.push(candidate);
+  }
+  await connection.manager.save(candidates);
+  return candidates;
+}

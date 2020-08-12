@@ -212,7 +212,7 @@ import {
 	createRandomOrganizationTags,
 	createTags
 } from '../../tags/tag.seed';
-import { createRandomEmailSent } from '../../email/email.seed';
+import { createDefaultEmailSent, createRandomEmailSent } from '../../email/email.seed';
 import {
 	createDefaultEmployeeInviteSent,
 	createRandomEmployeeInviteSent
@@ -258,9 +258,18 @@ import {
 	createRandomOrganizationContact,
 	createDefaultOrganizationContact
 } from '../../organization-contact/organization-contact.seed';
-import { createRandomAvailabilitySlots } from '../../availability-slots/availability-slots.seed';
-import { createRandomCandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
-import { createRandomCandidateTechnologies } from '../../candidate-technologies/candidate-technologies.seed';
+import {
+  createDefaultAvailabilitySlots,
+  createRandomAvailabilitySlots
+} from '../../availability-slots/availability-slots.seed';
+import {
+  createDefaultCandidatePersonalQualities,
+  createRandomCandidatePersonalQualities
+} from '../../candidate-personal-qualities/candidate-personal-qualities.seed';
+import {
+  createDefaultCandidateTechnologies,
+  createRandomCandidateTechnologies
+} from '../../candidate-technologies/candidate-technologies.seed';
 import {
 	createDefaultCandidateInterview,
 	createRandomCandidateInterview
@@ -270,7 +279,10 @@ import {
 	createRandomAwards
 } from '../../organization-awards/organization-awards.seed';
 import { createDefaultGeneralGoalSetting } from '../../goal-general-setting/goal-general-setting.seed';
-import { createRandomCandidateCriterionRating } from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
+import {
+  createDefaultCandidateCriterionRating,
+  createRandomCandidateCriterionRating
+} from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
 import { createDefaultGoalKpi } from '../../goal-kpi/goal-kpi.seed';
 import { createRandomEmployeeSetting } from '../../employee-setting/employee-setting.seed';
 import { createRandomEmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.seed';
@@ -641,6 +653,10 @@ export class SeedDataService {
 	/** Populate Database with Basic Default Data **/
 	private async seedBasicDefaultData() {
 		//Platform level data
+
+    await this.tryExecute('Skills', createSkills(this.connection));
+    await this.tryExecute('Languages', createLanguages(this.connection));
+
 		this.tenant = await createDefaultTenants(this.connection);
 
 		this.roles = await createRoles(this.connection, [this.tenant]);
@@ -712,9 +728,6 @@ export class SeedDataService {
 				employees: this.defaultEmployees
 			})
 		);
-
-		await this.tryExecute('Skills', createSkills(this.connection));
-		await this.tryExecute('Languages', createLanguages(this.connection));
 	}
 
 	/**
@@ -830,6 +843,20 @@ export class SeedDataService {
 			'Candidate Documents',
 			createCandidateDocuments(this.connection, defaultCandidates)
 		);
+    await this.tryExecute(
+      'Default candidate interview',
+      createDefaultCandidateInterview(this.connection, defaultCandidates)
+    );
+
+    await this.tryExecute(
+      'Default candidate interviewers',
+      createDefaultCandidateInterviewers(
+        this.connection,
+        this.defaultEmployees,
+        defaultCandidates
+      )
+    );
+
 		await this.tryExecute(
 			'Candidate Feedbacks',
 			createCandidateFeedbacks(this.connection, defaultCandidates)
@@ -1031,15 +1058,25 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Default candidate interview',
-			createDefaultCandidateInterview(this.connection, defaultCandidates)
+			'Default Candidate Personal Qualities',
+      createDefaultCandidatePersonalQualities(
+				this.connection,
+				defaultCandidates
+			)
 		);
 
 		await this.tryExecute(
-			'Default candidate interviewers',
-			createDefaultCandidateInterviewers(
+			'Default Candidate Technologies',
+      createDefaultCandidateTechnologies(
 				this.connection,
-				this.defaultEmployees,
+				defaultCandidates
+			)
+		);
+
+		await this.tryExecute(
+			'Default Candidate Criterion Rating',
+      createDefaultCandidateCriterionRating(
+				this.connection,
 				defaultCandidates
 			)
 		);
@@ -1074,7 +1111,25 @@ export class SeedDataService {
         this.connection,
         this.defaultEmployees,
       )
-    );        
+    );
+
+    await this.tryExecute("Default Availability Slots",
+      createDefaultAvailabilitySlots(
+        this.connection,
+        this.organizations[0],
+        this.defaultEmployees,
+        randomSeedConfig.availabilitySlotsPerOrganization || 20
+      )
+    );
+
+    await this.tryExecute(
+      'default Email Sent',
+      createDefaultEmailSent(
+        this.connection,
+        this.organizations[0],
+        randomSeedConfig.emailsPerOrganization || 20
+      )
+    );
 	}
 
 	/**
@@ -1269,15 +1324,6 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Candidate Documents',
 			createRandomCandidateDocuments(
-				this.connection,
-				tenants,
-				tenantCandidatesMap
-			)
-		);
-
-		await this.tryExecute(
-			'Random Candidate Feedbacks',
-			createRandomCandidateFeedbacks(
 				this.connection,
 				tenants,
 				tenantCandidatesMap
@@ -1596,6 +1642,15 @@ export class SeedDataService {
 			)
 		);
 
+    await this.tryExecute(
+      'Random Candidate Feedbacks',
+      createRandomCandidateFeedbacks(
+        this.connection,
+        tenants,
+        tenantCandidatesMap
+      )
+    );
+
 		await this.tryExecute(
 			'Random Employee Recurring Expenses',
 			createRandomEmployeeRecurringExpense(
@@ -1641,7 +1696,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Random Organization Sprints',		
+			'Random Organization Sprints',
 			createRandomOrganizationSprint(
 				this.connection,
 				tenants,

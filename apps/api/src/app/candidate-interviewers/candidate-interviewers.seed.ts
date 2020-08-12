@@ -4,7 +4,6 @@ import { Candidate, Employee } from '@gauzy/models';
 import * as faker from 'faker';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import * as _ from 'underscore';
 
 export const createDefaultCandidateInterviewers = async (
   connection: Connection,
@@ -32,24 +31,9 @@ export const createDefaultCandidateInterviewers = async (
       const CandidateInterviews = await connection.manager.find(CandidateInterview, {
         where: [{ candidate: defaultCandidate }]
       });
-      for (let interview of CandidateInterviews) {
-        const employee = _.chain(defaultEmployees)
-          .shuffle()
-          .take(faker.random.number({ min: 1, max: 1 }))
-          .values()
-          .value();
+    candidates = await dataOperation(connection, candidates, CandidateInterviews, defaultEmployees);
 
-        let candidate = new CandidateInterviewers();
-
-        candidate.interviewId = interview.id;
-        candidate.interview = interview;
-        candidate.employeeId = employee[0].id;
-
-        candidates.push(candidate);
-      }
     }
-
-  await insertRandomCandidateInterviewers(connection, candidates);
   return candidates;
 };
 
@@ -78,35 +62,24 @@ export const createRandomCandidateInterviewers = async (
       const CandidateInterviews = await connection.manager.find(CandidateInterview, {
         where: [{ candidate: tenantCandidate }]
       });
-      for (let interview of CandidateInterviews) {
-        const employee = _.chain(tenantEmployees)
-          .shuffle()
-          .take(faker.random.number({ min: 1, max: 1 }))
-          .values()
-          .value();
-
-        let candidate = new CandidateInterviewers();
-
-        candidate.interviewId = interview.id;
-        candidate.interview = interview;
-        candidate.employeeId = employee[0].id;
-
-        candidates.push(candidate);
-      }
+      candidates = await dataOperation(connection, candidates, CandidateInterviews, tenantEmployees);
     }
   }
-  await insertRandomCandidateInterviewers(connection, candidates);
   return candidates;
 };
 
-const insertRandomCandidateInterviewers = async (
-  connection: Connection,
-  Candidates: CandidateInterviewers[]
-) => {
-  await connection
-    .createQueryBuilder()
-    .insert()
-    .into(CandidateInterviewers)
-    .values(Candidates)
-    .execute();
-};
+
+const dataOperation = async (connection: Connection, candidates, CandidateInterviews, tenantEmployees: Employee[])=>{
+  for (let interview of CandidateInterviews) {
+
+    let candidate = new CandidateInterviewers();
+
+    candidate.interviewId = interview.id;
+    candidate.interview = interview;
+    candidate.employeeId = faker.random.arrayElement(tenantEmployees).id;
+
+    candidates.push(candidate);
+  }
+  await connection.manager.save(candidates);
+  return candidates;
+}
