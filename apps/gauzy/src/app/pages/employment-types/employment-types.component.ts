@@ -15,6 +15,8 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { Store } from '../../@core/services/store.service';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { LocalDataSource } from 'ng2-smart-table';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 @Component({
 	selector: 'ga-employment-types',
@@ -30,9 +32,11 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	organizationEmploymentTypes: OrganizationEmploymentType[];
 	tags: Tag[] = [];
 	showEditDiv: boolean = true;
-	selectedOrgEmplType: OrganizationEmploymentType;
+	selectedOrgEmpType: OrganizationEmploymentType;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
 
 	constructor(
 		private fb: FormBuilder,
@@ -42,11 +46,14 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
 		this.showEditDiv = !this.showEditDiv;
 		this._initializeForm();
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 
 	private _initializeForm() {
@@ -65,14 +72,28 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 						.pipe(takeUntil(this._ngDestroy$))
 						.subscribe((types) => {
 							this.organizationEmploymentTypes = types.items;
+							this.smartTableSource.load(types.items);
 						});
 				}
 			});
 	}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				tags: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
+				}
+			}
+		};
+	}
 
 	private async onKeyEnter($event) {
 		if ($event.code === 'Enter') {
-			this.addEmploymentType($event.target.value);
+			this.addEmploymentType();
 		}
 	}
 	setView() {
@@ -84,10 +105,10 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 				this.dataLayoutStyle = componentLayout;
 			});
 	}
-	private async addEmploymentType(name: string) {
-		if (name) {
+	private async addEmploymentType() {
+		if (!this.form.invalid) {
 			const newEmploymentType = {
-				name,
+				name: this.form.get('name').value,
 				organizationId: this.organization.id,
 				tags: this.tags
 			};
@@ -101,7 +122,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ADD_EMPLOYMENT_TYPE',
 					{
-						name: name
+						name: this.form.get('name').value
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -120,19 +141,14 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	}
 
 	submitForm() {
-		const name = this.form.controls['name'].value;
-		const newEmploymentType = {
-			name,
-			organizationId: this.organization.id,
-			tags: this.tags
-		};
-		this.organizationEmploymentTypesService
-			.addEmploymentType(newEmploymentType)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data) => {
-				this.organizationEmploymentTypes.push(data);
-			});
-		this.form.reset();
+		if (this.selectedOrgEmpType) {
+			this.editOrgEmpType(
+				this.selectedOrgEmpType.id,
+				this.form.get('name').value
+			);
+		} else {
+			this.addEmploymentType();
+		}
 	}
 
 	async deleteEmploymentType(id, name) {
@@ -153,33 +169,50 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
-
-	showEditCard(orgEmplType: OrganizationEmploymentType) {
-		this.showEditDiv = true;
-		this.selectedOrgEmplType = orgEmplType;
-		this.tags = orgEmplType.tags;
+	gridEdit(empType: OrganizationEmploymentType) {
+		this.showAddCard = true;
+		this.tags = empType.tags;
+		this.selectedOrgEmpType = empType;
+		this.form.patchValue(empType);
 	}
-
+	showEditCard(orgEmpType: OrganizationEmploymentType) {
+		this.showEditDiv = true;
+		this.selectedOrgEmpType = orgEmpType;
+		this.tags = orgEmpType.tags;
+	}
+	add() {
+		this.showAddCard = true;
+		this.form.reset();
+		this.tags = [];
+	}
 	cancel() {
 		this.showEditDiv = !this.showEditDiv;
-		this.selectedOrgEmplType = null;
+		this.selectedOrgEmpType = null;
+		this.form.reset();
+		this.tags = [];
 	}
 
-	async editOrgEmplType(id: string, name: string) {
-		const orgEmplTypeForEdit = {
+	async editOrgEmpType(id: string, name: string) {
+		const orgEmpTypeForEdit = {
 			name: name,
 			tags: this.tags
 		};
 
 		await this.organizationEmploymentTypesService.editEmploymentType(
 			id,
-			orgEmplTypeForEdit
+			orgEmpTypeForEdit
 		);
 		this._initializeForm();
 		this.showEditDiv = !this.showEditDiv;
+		this.showAddCard = false;
+		this.selectedOrgEmpType = null;
 		this.tags = [];
 	}
-
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
+	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

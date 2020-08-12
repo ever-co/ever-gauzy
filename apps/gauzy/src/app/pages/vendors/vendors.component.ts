@@ -30,7 +30,7 @@ export class VendorsComponent extends TranslationBaseComponent
 	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
 	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedVendor: IOrganizationVendor;
 	tags: Tag[] = [];
 	settingsSmartTable: object;

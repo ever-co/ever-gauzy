@@ -6,34 +6,6 @@
 		) | translate
 	}}</nb-card-header>
 	<nb-card-body>
-		<div class="form-group">
-			<button
-				class="mr-2"
-				(click)="submitForm()"
-				nbButton
-				status="success"
-				[disabled]="!form.valid"
-				[attr.aria-invalid]="
-					form.controls.name.invalid && form.controls.name.touched
-						? true
-						: null
-				"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-			<button (click)="cancel()" nbButton status="danger">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button
-				*ngIf="form.controls['taskViewMode'].value === 'SPRINT'"
-				nbButton
-				class="float-right"
-				status="success"
-				(click)="openTasksSettings()"
-			>
-				{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
-			</button>
-		</div>
 		<form [formGroup]="form" *ngIf="form" class="row">
 			<div class="form-group col-4">
 				<label for="name" class="label">{{
@@ -198,5 +170,36 @@
 				>
 			</div>
 		</form>
+		<div
+			class="form-group"
+			style="display: flex; justify-content: flex-end;"
+		>
+			<button
+				class="mr-2"
+				(click)="submitForm()"
+				nbButton
+				status="success"
+				[disabled]="!form.valid"
+				[attr.aria-invalid]="
+					form.controls.name.invalid && form.controls.name.touched
+						? true
+						: null
+				"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button (click)="cancel()" nbButton status="danger">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button
+				*ngIf="form.controls['taskViewMode'].value === 'SPRINT'"
+				nbButton
+				class="float-right"
+				status="success"
+				(click)="openTasksSettings()"
+			>
+				{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
+			</button>
+		</div>
 	</nb-card-body>
 </nb-card>
