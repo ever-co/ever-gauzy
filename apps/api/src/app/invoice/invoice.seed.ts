@@ -41,6 +41,7 @@ export const createDefaultInvoice = async (
       });
       invoice.dueDate = faker.date.recent(50);
       invoice.organizationContactId = faker.random.arrayElement(OrganizationContacts).id;
+      invoice.sentTo =  organization.id;
       invoice.toContact = faker.random.arrayElement(OrganizationContacts);
       invoice.currency = faker.random.arrayElement(
         Object.values(CurrenciesEnum)
@@ -110,6 +111,7 @@ export const createRandomInvoice = async (
 				});
 				invoice.dueDate = faker.date.recent(50);
         invoice.organizationContactId = faker.random.arrayElement(OrganizationContacts).id;
+        invoice.sentTo =  organization.id;
         invoice.toContact = faker.random.arrayElement(OrganizationContacts);
         invoice.currency = faker.random.arrayElement(
 					Object.values(CurrenciesEnum)

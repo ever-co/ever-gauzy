@@ -17,20 +17,8 @@ export const createDefaultPipeline = async (
 
   let pipelines: Pipeline[] = [];
   // for (const tenantOrg of tenantOrganizations) {
-    for (let i = 0; i <= faker.random.number(10); i++) {
-      //todo Need to update with real values
-      let pipeline = new Pipeline();
-
-      pipeline.organization = tenantOrganizations;
-      pipeline.organizationId = tenantOrganizations.id;
-      pipeline.name = faker.company.companyName();
-      pipeline.description = faker.name.jobDescriptor();
-
-      pipelines.push(pipeline);
-    }
-  // }
-
-  await insertRandomPipeline(connection, pipelines);
+  pipelines = await dataOperation(connection, pipelines, tenantOrganizations);
+// }
   return pipelines;
 };
 
@@ -51,33 +39,25 @@ export const createRandomPipeline = async (
 	for (const tenant of tenants) {
 		let tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
-			for (let i = 0; i <= faker.random.number(10); i++) {
-				//todo Need to update with real values
-				let pipeline = new Pipeline();
+      pipelines = await dataOperation(connection, pipelines, tenantOrg);
+		}
+	}
 
-				pipeline.organization = tenantOrg;
-				pipeline.organizationId = tenantOrg.id;
+	return pipelines;
+};
+
+const dataOperation = async (connection: Connection, pipelines, organization)=>{
+  for (let i = 0; i <= faker.random.number(10); i++) {
+    let pipeline = new Pipeline();
+
+    pipeline.organization = organization;
+    pipeline.organizationId = organization.id;
 				pipeline.name = faker.company.companyName();
 				pipeline.description = faker.name.jobDescriptor();
 				pipeline.isActive = faker.random.boolean();
 
-				pipelines.push(pipeline);
-			}
-		}
-	}
-
-	await insertRandomPipeline(connection, pipelines);
-	return pipelines;
-};
-
-const insertRandomPipeline = async (
-	connection: Connection,
-	data: Pipeline[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Pipeline)
-		.values(data)
-		.execute();
-};
+    pipelines.push(pipeline);
+  }
+  await connection.manager.save(pipelines);
+  return pipelines;
+}

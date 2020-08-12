@@ -37,9 +37,8 @@ export const createDefaultOrganizations = async (
 ): Promise<Organization[]> => {
 	const defaultOrganizations: Organization[] = [];
 
-  const skills = getSkills(connection);
-  const contacts = getContacts(connection);
-  console.log('contacts',contacts[0]);
+  const skills = await getSkills(connection);
+  const contacts = await  getContacts(connection);
 
   defaultOrganizationsData.forEach((organiziation) => {
 
@@ -84,7 +83,7 @@ export const createDefaultOrganizations = async (
 
     defaultOrganization.skills = organizationSkills;
     defaultOrganization.brandColor = faker.random.arrayElement(['red', 'green', 'blue', 'orange', 'yellow']);
-    // defaultOrganization.contact = faker.random.arrayElement(contacts);
+    defaultOrganization.contact = faker.random.arrayElement(contacts);
     defaultOrganization.timeZone = faker.random.arrayElement(timezone.tz.names().filter((zone) => zone.includes('/')));
     defaultOrganization.dateFormat = faker.random.arrayElement(['L', 'L hh:mm', 'LL', 'LLL', 'LLLL']);
     defaultOrganization.defaultAlignmentType = faker.random.arrayElement(Object.keys(AlignmentOptions));
@@ -116,7 +115,8 @@ export const createRandomOrganizations = async (
 ): Promise<Map<Tenant, Organization[]>> => {
 	const currencies = Object.values(CurrenciesEnum);
 	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
-  const skills = getSkills(connection);
+  const skills = await getSkills(connection);
+  const contacts = await  getContacts(connection);
   const tenantOrganizations: Map<Tenant, Organization[]> = new Map();
 	let allOrganizations: Organization[] = [];
 
@@ -170,7 +170,7 @@ export const createRandomOrganizations = async (
 
         organization.skills = organizationSkills;
         organization.brandColor = faker.random.arrayElement(['red', 'green', 'blue', 'orange', 'yellow']);
-        // organization.contact = faker.random.arrayElement(contacts);
+        organization.contact = faker.random.arrayElement(contacts);
         organization.timeZone = faker.random.arrayElement(timezone.tz.names().filter((zone) => zone.includes('/')));
         organization.dateFormat = faker.random.arrayElement(['L', 'L hh:mm', 'LL', 'LLL', 'LLLL']);
         organization.defaultAlignmentType = faker.random.arrayElement(Object.keys(AlignmentOptions));

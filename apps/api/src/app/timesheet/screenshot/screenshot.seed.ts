@@ -44,9 +44,6 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 			const sourceFilePath = path.join(dir, sourceFile);
 			const destFilePath = path.join(baseDir, destFile);
 
-			console.log('sourceFilePath',sourceFilePath);
-			console.log('destFilePath',	destFilePath);
-
 			fs.copyFile(sourceFilePath, destFilePath, (err) => {
 				if (err) {
 					resolve('');
