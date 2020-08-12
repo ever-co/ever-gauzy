@@ -8,7 +8,7 @@ import {
 	NbDialogModule,
 	NbActionsModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -18,6 +18,8 @@ import { SharedModule } from '../../@shared/shared.module';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { EmploymentTypesRoutingModule } from './employment-types-routing.module';
 import { EmploymentTypesComponent } from './employment-types.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -29,6 +31,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		ThemeModule,
 		NbCardModule,
 		FormsModule,
+		ReactiveFormsModule,
 		NbButtonModule,
 		EmploymentTypesRoutingModule,
 		NbInputModule,
@@ -36,7 +39,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TagsColorInputModule,
 		NbActionsModule,
 		TableComponentsModule,
-		TagsColorInputModule,
+		CardGridModule,
+		Ng2SmartTableModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({

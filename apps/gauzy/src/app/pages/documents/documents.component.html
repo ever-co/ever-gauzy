@@ -100,7 +100,7 @@
 				>
 			</div>
 		</div>
-		<div *ngIf="documentList?.length">
+		<div *ngIf="documentList?.length && dataLayoutStyle === 'TABLE'">
 			<nb-card *ngFor="let document of documentList; let i = index">
 				<nb-card-body
 					style="
@@ -123,7 +123,7 @@
 
 					<nb-actions class="float-right" e="medium">
 						<nb-action
-							(click)="editDocument(i, document.id)"
+							(click)="editDocument(document)"
 							class="d-inline pr-2"
 							icon="edit"
 						></nb-action>
@@ -136,5 +136,39 @@
 				</nb-card-body>
 			</nb-card>
 		</div>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="documentList"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+		<ng-template
+			#actionButtons
+			let-buttonSize="buttonSize"
+			let-selectedItem="selectedItem"
+		>
+			<button
+				(click)="editDocument(selectedItem)"
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="removeDocument(selectedItem.id)"
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
