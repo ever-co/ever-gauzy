@@ -2277,6 +2277,7 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Создать сделку | Пипеллинг: {{ name }}",
-		"SELECT_STAGE": "Выбрать этап"
+		"SELECT_STAGE": "Выбрать этап",
+		"PROBABLITY": "Вероятность"
 	}
 }
