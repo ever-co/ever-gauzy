@@ -1,0 +1,14 @@
+<div class="text-center d-block" *ngIf="rowData.isActive; else inactive">
+	<div class="text-center d-block">
+		<div class="badge-success" style="border-radius: 0.25rem; min-width: 5rem;">
+			Active
+		</div>
+	</div>
+</div>
+<ng-template #inactive>
+	<div class="text-center d-block">
+		<div class="badge-warning" style="border-radius: 0.25rem; color: white; min-width: 5rem;">
+			Inactive
+		</div>
+	</div>
+</ng-template>

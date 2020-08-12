@@ -7,10 +7,9 @@ import {
 
 export interface Pipeline extends BaseEntityModel, PipelineCreateInput {
 	organization: Organization;
-
-	description: string;
-
 	stages: PipelineStage[];
+	description: string;
+	isActive: boolean;
 }
 
 export type PipelineFindInput = Partial<
@@ -19,10 +18,8 @@ export type PipelineFindInput = Partial<
 
 export interface PipelineCreateInput {
 	stages?: PipelineStageCreateInput[];
-
 	organizationId: string;
-
 	description?: string;
-
 	name: string;
+	isActive: boolean;
 }

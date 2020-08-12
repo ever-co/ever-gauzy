@@ -2277,6 +2277,7 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
-		"SELECT_STAGE": "Select Stage"
+		"SELECT_STAGE": "Select Stage",
+		"PROBABLITY": "Probability"
 	}
 }

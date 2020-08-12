@@ -23,17 +23,18 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 export interface ProposalViewModel {
+	tags?: Tag[];
+	valueDate: Date;
 	id: string;
 	employeeId?: string;
 	organizationId?: string;
-	valueDate: Date;
 	jobPostUrl?: string;
 	jobPostLink?: string;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: string;
 	author?: string;
-	tags?: Tag[];
+	
 }
 
 interface SelectedRowModel {
@@ -48,8 +49,7 @@ interface SelectedRowModel {
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class ProposalsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private router: Router,
@@ -63,29 +63,28 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.setView();
 	}
 
-	private _ngDestroy$ = new Subject<void>();
+	@ViewChild('proposalsTable') proposalsTable;
 
 	smartTableSettings: object;
 	selectedEmployeeId = '';
 	selectedDate: Date;
 	proposals: ProposalViewModel[];
 	smartTableSource = new LocalDataSource();
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	viewComponentName: ComponentEnum;
 	selectedProposal: ProposalViewModel;
+	chartData: { value: number; name: string }[] = [];
 	proposalStatus: string;
-	showTable: boolean;
 	employeeName: string;
+	successRate: string;
 	totalProposals: number;
 	countAccepted = 0;
-	successRate: string;
-	chartData: { value: number; name: string }[] = [];
+	showTable: boolean;
 	loading = true;
 	hasEditPermission = false;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
 	private _selectedOrganizationId: string;
-
-	@ViewChild('proposalsTable') proposalsTable;
+	private _ngDestroy$ = new Subject<void>();
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -450,7 +449,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSettingsSmartTable();
 		});
