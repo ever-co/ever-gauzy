@@ -52,6 +52,7 @@
 						fullWidth
 						formControlName="probability"
 						placeholder="(0-low / 5-high)"
+						[selected]="selectedProbability"
 					>
 						<nb-option
 							*ngFor="let pr of probabilities"

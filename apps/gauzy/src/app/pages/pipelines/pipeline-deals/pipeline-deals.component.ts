@@ -19,6 +19,7 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
+import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 
 @Component({
 	selector: 'ga-pipeline-deals',
@@ -34,8 +35,7 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 		noDataMessage: '-',
 		columns: {
 			title: {
-				filter: false,
-				editor: false,
+				type: 'string',
 				title: 'title'
 			},
 			stage: {
@@ -46,11 +46,16 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 				renderComponent: PipelineDealExcerptComponent
 			},
 			createdBy: {
-				filter: false,
-				editor: false,
 				title: 'Created by',
 				type: 'custom',
 				renderComponent: PipelineDealCreatedByComponent
+			},
+			probability: {
+				title: 'Probability',
+				type: 'custom',
+				width: '15%',
+				class: 'text-center',
+				renderComponent: PipelineDealProbabilityComponent
 			}
 		}
 	};

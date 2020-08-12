@@ -15,6 +15,7 @@ export class PipelineDealFormComponent implements OnInit {
 	pipeline: Pipeline;
 	mode: 'CREATE' | 'EDIT' = 'CREATE';
 	probabilities = [0,1,2,3,4,5];
+	selectedProbability: number;
 	id: string;
 
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
@@ -44,7 +45,7 @@ export class PipelineDealFormComponent implements OnInit {
 			createdByUserId: [null, Validators.required],
 			stageId: [null, Validators.required],
 			title: [null, Validators.required],
-			probability: [null, Validators.required]
+			probability: [null]
 		});
 
 		this.form.patchValue({
@@ -68,8 +69,9 @@ export class PipelineDealFormComponent implements OnInit {
 				this.id = dealId;
 				await this.dealsService
 					.find(dealId)
-					.then(({ title, stageId, createdBy }) => {
+					.then(({ title, stageId, createdBy, probability }) => {
 						this.form.patchValue({ title, stageId, createdBy });
+						this.selectedProbability = probability;
 					});
 			}
 

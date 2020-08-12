@@ -1,10 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import {
-	PermissionsEnum,
-	Pipeline,
-	ComponentLayoutStyleEnum
-} from '@gauzy/models';
+import { PermissionsEnum, Pipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { AppStore, Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -14,18 +9,17 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { AuthService } from '../../@core/services/auth.service';
 import { Subscription, Subject } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
+import { PipelineStatusComponent } from './table-components/pipeline-status/pipeline-status.component';
 
 @Component({
 	templateUrl: './pipelines.component.html',
 	selector: 'ga-pipelines',
 	styleUrls: ['./pipelines.component.scss']
 })
-export class PipelinesComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class PipelinesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	smartTableSettings = {
 		actions: false,
 		noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
@@ -41,7 +35,10 @@ export class PipelinesComponent extends TranslationBaseComponent
 			status: {
 				filter: false,
 				editor: false,
-				title: this.getTranslation('SM_TABLE.STATUS')
+				title: this.getTranslation('SM_TABLE.STATUS'),
+				type: 'custom',
+				width: '15%',
+				renderComponent: PipelineStatusComponent
 			}
 		}
 	};
@@ -59,12 +56,10 @@ export class PipelinesComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
-		private usersOrganizationsService: UsersOrganizationsService,
 		private pipelinesService: PipelinesService,
 		private nbToastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
-		private authService: AuthService,
 		private appStore: AppStore,
 		private store: Store,
 		private router: Router
