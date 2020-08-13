@@ -1,10 +1,35 @@
-.employee-card {
-  display: flex;
+.employee-info-wrapper {
+  position: relative;
+  margin-bottom: 40px;
 }
+
+.edit-icon {
+  right: 36px;
+  position: absolute;
+  width: 36px;
+  display: flex;
+  justify-content: center;
+  height: 36px;
+  align-items: center;
+
+  svg {
+    position: absolute;
+  }
+
+  nb-icon {
+    cursor: pointer;
+    z-index: 999;
+  }
+}
+
 .employee-photo-wrapper {
   display: flex;
-  flex-flow: column;
-  margin-right: 35px;
+  border-right: 1px solid lightgray;
+  .employee-info {
+    display: flex;
+    flex-flow: column;
+    margin-left: 35px;
+  }
 }
 
 img.employee-image {
@@ -17,7 +42,6 @@ img.employee-image {
 }
 
 .employee-photo {
-  margin-bottom: 15px;
   position: relative;
 
   div {
@@ -84,6 +108,15 @@ button.save_image {
   display: inline-block;
   padding: 6px 12px 5px;
   font-size: 12px;
+
+  &:hover {
+    cursor: pointer;
+    color: #fff;
+    border-color: #007bff;
+    background-color: #007bff;
+    -webkit-box-shadow: 0 2px 4px #82bfff;
+    box-shadow: 0 2px 4px #82bfff;
+  }
 }
 
 .tag.tag-sm {

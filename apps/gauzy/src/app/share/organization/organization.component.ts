@@ -195,7 +195,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 				filterDate: new Date()
 			}
 		);
-
 		if (!!this.organization.show_bonuses_paid) {
 			this.bonuses_paid = statistics.total.bonus;
 		}

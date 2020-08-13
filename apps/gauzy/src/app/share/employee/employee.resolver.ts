@@ -7,6 +7,9 @@ import {
 } from '@angular/router';
 import { EmployeesService } from '../../@core/services';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { catchError, tap } from 'rxjs/operators';
+import { EMPTY, Observable } from 'rxjs';
+import { Employee } from '@gauzy/models';
 
 @Injectable({
 	providedIn: 'root'
@@ -18,18 +21,25 @@ export class EmployeeResolver implements Resolve<any> {
 		private errorHandlingService: ErrorHandlingService
 	) {}
 
-	async resolve(
+	resolve(
 		route: ActivatedRouteSnapshot,
 		state: RouterStateSnapshot
-	): Promise<any> {
-		try {
-			return await this.employeesService.getEmployeeById(
-				route.params.employeeId,
-				['user', 'organization']
+	): Observable<Employee> {
+		return this.employeesService
+			.getPublicById(route.params.employeeId, [
+				'user',
+				'organization',
+				'organizationEmploymentTypes',
+				'tags',
+				'skills'
+			])
+			.pipe(
+				tap(console.log),
+				catchError((e) => {
+					this.errorHandlingService.handleError(e);
+					this.router.navigateByUrl('/');
+					return EMPTY;
+				})
 			);
-		} catch (e) {
-			this.errorHandlingService.handleError(e);
-			this.router.navigateByUrl('/');
-		}
 	}
 }
