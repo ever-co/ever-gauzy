@@ -18,6 +18,7 @@ import { Equipment } from '../equipment/equipment.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
@@ -93,4 +94,15 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@IsString()
 	@Column({ nullable: true })
 	equipmentSharingPolicyId: string;
+
+	@ApiProperty({ type: Organization })
+	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	organization: Organization;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((policy: EquipmentSharing) => policy.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

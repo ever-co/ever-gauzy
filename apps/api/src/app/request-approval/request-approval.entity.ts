@@ -17,9 +17,12 @@ import {
 	JoinTable
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { RequestApproval as IRequestApproval } from '@gauzy/models';
+import {
+	RequestApproval as IRequestApproval,
+	ApprovalPolicyTypesStringEnum
+} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsEnum } from 'class-validator';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
@@ -97,4 +100,9 @@ export class RequestApproval extends Base implements IRequestApproval {
 		name: 'request-approval-tag'
 	})
 	tags?: Tag[];
+
+	@ApiProperty({ type: String, enum: ApprovalPolicyTypesStringEnum })
+	@IsEnum(ApprovalPolicyTypesStringEnum)
+	@Column({ nullable: true })
+	requestType: string;
 }

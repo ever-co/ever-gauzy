@@ -16,7 +16,6 @@ import {
 	StatusTypesMapRequestApprovalEnum,
 	ApprovalPolicyTypesStringEnum
 } from '@gauzy/models';
-import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestContext } from '../core/context';
 
@@ -26,9 +25,7 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>,
-		@InjectRepository(ApprovalPolicy)
-		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>
+		private readonly requestApprovalRepository: Repository<RequestApproval>
 	) {
 		super(timeOffRequestRepository);
 	}
@@ -44,20 +41,12 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 
 			const requestApproval = new RequestApproval();
 			requestApproval.requestId = timeOffRequestSaved.id;
+			requestApproval.requestType =
+				ApprovalPolicyTypesStringEnum.TIME_OFF;
 			requestApproval.status = timeOffRequestSaved.status
 				? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status]
 				: RequestApprovalStatusTypesEnum.REQUESTED;
 
-			const approvalPolicy = await this.approvalPolicyRepository.findOne({
-				where: {
-					organizationId: timeOffRequestSaved.organizationId,
-					approvalType: ApprovalPolicyTypesStringEnum.TIME_OFF
-				}
-			});
-
-			if (approvalPolicy) {
-				requestApproval.approvalPolicyId = approvalPolicy.id;
-			}
 			requestApproval.createdBy = RequestContext.currentUser().id;
 			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = 'Request time off';
@@ -115,7 +104,10 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 		}
 	}
 
-	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
+	async updateTimeOffByAdmin(
+		id: string,
+		timeOffRequest: ITimeOffCreateInput
+	) {
 		await this.timeOffRequestRepository.delete(id);
 		return await this.timeOffRequestRepository.save(timeOffRequest);
 	}
@@ -125,23 +117,15 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 		status: string
 	): Promise<TimeOffRequest> {
 		try {
-			const [timeOffRequest, requestApproval] = await Promise.all([
-				await this.timeOffRequestRepository.findOne(id),
-				await this.requestApprovalRepository.findOne({
-					requestId: id
-				})
-			]);
+			const timeOffRequest = await this.timeOffRequestRepository.findOne(
+				id
+			);
 
 			if (!timeOffRequest) {
 				throw new NotFoundException('Request time off not found');
 			}
 			if (timeOffRequest.status === StatusTypesEnum.REQUESTED) {
 				timeOffRequest.status = status;
-				if (requestApproval) {
-					requestApproval.status =
-						StatusTypesMapRequestApprovalEnum[status];
-					await this.requestApprovalRepository.save(requestApproval);
-				}
 			} else {
 				throw new ConflictException('Request time off is Conflict');
 			}
