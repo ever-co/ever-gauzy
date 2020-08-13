@@ -152,6 +152,19 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			});
 	}
 
+	relativeProgress(currentUpdate, previousUpdate) {
+		const updateDiff = previousUpdate.update - currentUpdate.update;
+		const keyResultValDiff =
+			this.keyResult.targetValue - this.keyResult.initialValue;
+		const progress = Math.round((updateDiff / keyResultValDiff) * 100);
+		return {
+			progressText:
+				progress > 0 ? `+ ${progress}%` : `- ${progress * -1}%`,
+			status: progress > 0 ? 'success' : 'danger',
+			zero: progress === 0 ? true : false
+		};
+	}
+
 	async keyResultUpdate() {
 		if (this.keyResult.type === KeyResultTypeEnum.TASK) {
 			const taskDialog = this.dialogService.open(AddTaskDialogComponent, {
