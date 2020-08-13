@@ -138,6 +138,10 @@
 		"START": "Start",
 		"END": "End",
 		"REQUEST_DATE": "Request Date",
+		"PRIMARY_EMAIL": "Основна Е-поща",
+		"PRIMARY_PHONE": "Основен телефон",
+		"INVITE_STATUS": "Invite Status",
+		"CONTACT_TYPE": "Contact Type",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -487,6 +491,7 @@
 		"APPROVALS": "Approvals",
 		"HELP": "Помощ",
 		"ABOUT": "За нас",
+		"CONTACTS": "Contacts",
 		"ADMIN": "Администратор",
 		"EMPLOYEE_LEVEL": "Employee Level",
 		"EMPLOYEES": "Служители",
@@ -1115,7 +1120,8 @@
 			"CURRENCY": "Валута",
 			"OWNER": "Owner",
 			"TEAMS": "Отбори",
-			"ADD_NEW_CONTACT": "Add new contact",
+			"ADD_NEW_CONTACT": "Add New Contact",
+			"EDIT_CONTACT": "Edit Contact",
 			"GENERAL_SETTINGS": "Главни Настройки",
 			"DESIGN": "Дизайн",
 			"BONUS": "Бонус",
@@ -1212,6 +1218,12 @@
 			"ORG_TEAM_EDIT": "Create/Edit Teams",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts"
 		}
+	},
+	"CONTACTS_PAGE": {
+		"VISITORS": "Visitors",
+		"LEADS": "Leads",
+		"CUSTOMERS": "Customers",
+		"CLIENTS": "Клиенти"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
