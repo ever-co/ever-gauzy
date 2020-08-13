@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import {
 	FormGroup,
 	FormBuilder,
@@ -62,7 +62,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
-		private dialogService: NbDialogService,
 		public fb: FormBuilder,
 		private employeeService: EmployeesService,
 		private taskService: TasksService,

@@ -16,7 +16,6 @@ export class KeyResultUpdateService {
 	) {}
 
 	createUpdate(keyResultUpdate): Promise<KeyResultUpdates> {
-		console.log(keyResultUpdate);
 		return this._http
 			.post<KeyResultUpdates>(`${this.API_URL}/create`, keyResultUpdate)
 			.pipe(
