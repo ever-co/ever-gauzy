@@ -10,6 +10,7 @@ import {
 	addQuarters,
 	isAfter
 } from 'date-fns';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-keyresult-progress-chart',
@@ -22,17 +23,25 @@ export class KeyResultProgressChartComponent implements OnInit {
 	loading = true;
 	@Input() keyResult: KeyResult;
 	@Input() kpi: KPI;
-	constructor(private goalSettingsService: GoalSettingsService) {}
+	constructor(
+		private goalSettingsService: GoalSettingsService,
+		private store: Store
+	) {}
 
 	ngOnInit() {
 		this.updateChart(this.keyResult);
 	}
 
 	public async updateChart(keyResult: KeyResult) {
+		const findInput = {
+			name:
+				keyResult.goal.deadline === '' ? null : keyResult.goal.deadline,
+			organization: {
+				id: this.store.selectedOrganization.id
+			}
+		};
 		await this.goalSettingsService
-			.getTimeFrameByName(
-				keyResult.goal.deadline === '' ? null : keyResult.goal.deadline
-			)
+			.getAllTimeFrames(findInput)
 			.then((res) => {
 				if (res.items.length > 0) {
 					let start;
@@ -146,7 +155,6 @@ export class KeyResultProgressChartComponent implements OnInit {
 					});
 				}
 			});
-
 		const update = [];
 		update.push({
 			x: labelsData[0],

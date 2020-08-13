@@ -52,6 +52,11 @@ export interface SettingFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 }
 
+export interface GoalTimeFrameFindInput extends IBaseEntityModel {
+	name?: string;
+	organization?: OrganizationFindInput;
+}
+
 export enum GoalOwnershipEnum {
 	EMPLOYEES = 'Employees',
 	TEAMS = 'Teams',

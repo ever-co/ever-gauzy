@@ -73,8 +73,14 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			compareDesc(new Date(a.createdAt), new Date(b.createdAt))
 		);
 		// prevent keyresult updates after deadline
+		const findInput = {
+			name: this.keyResult.goal.deadline,
+			organization: {
+				id: this.store.selectedOrganization.id
+			}
+		};
 		this.goalSettingsService
-			.getTimeFrameByName(this.keyResult.goal.deadline)
+			.getAllTimeFrames(findInput)
 			.then(async (res) => {
 				const timeFrame = res.items[0];
 				this.startDate = new Date(timeFrame.startDate);
