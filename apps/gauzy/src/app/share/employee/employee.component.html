@@ -1,97 +1,106 @@
 <nb-card>
 	<nb-card-body *ngIf="employee$ | async as employee" class="employee-card">
-		<div class="employee-photo-wrapper">
-			<ng-container
-				*ngIf="hasEditPermission$ | async; else noPermissionTemp"
-			>
-				<div class="employee-photo">
-					<ngx-image-uploader
-						(changeHoverState)="hoverState = $event"
-						(uploadedImageUrl)="updateImageUrl($event)"
-						(uploadImageError)="handleImageUploadError($event)"
-					></ngx-image-uploader>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						xmlns:xlink="http://www.w3.org/1999/xlink"
-						width="68"
-						height="68"
-						viewBox="0 0 68 68"
-						[ngStyle]="{
-							opacity: hoverState ? '1' : '0.3'
-						}"
-					>
-						<defs>
-							<path
-								id="a"
-								d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
-							/>
-						</defs>
-						<g fill="none" fill-rule="evenodd">
-							<circle
-								cx="34"
-								cy="34"
-								r="34"
-								fill="#0091FF"
-								opacity=".3"
-							/>
-							<circle
-								cx="34"
-								cy="34"
-								r="26"
-								fill="#0091FF"
-								opacity=".9"
-							/>
-							<use
-								fill="#FFF"
-								fill-rule="nonzero"
-								xlink:href="#a"
-							/>
-						</g>
-					</svg>
-					<div
-						class="image-overlay"
-						[ngStyle]="{
-							opacity: hoverState ? '0.2' : '0'
-						}"
-					></div>
+		<div class="row employee-info-wrapper">
+			<div class="employee-photo-wrapper col-md-6">
+				<ng-container
+					*ngIf="hasEditPermission$ | async; else noPermissionTemp"
+				>
+					<div class="employee-photo">
+						<ngx-image-uploader
+							(changeHoverState)="hoverState = $event"
+							(uploadedImageUrl)="updateImageUrl($event)"
+							(uploadImageError)="handleImageUploadError($event)"
+						></ngx-image-uploader>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							xmlns:xlink="http://www.w3.org/1999/xlink"
+							width="68"
+							height="68"
+							viewBox="0 0 68 68"
+							[ngStyle]="{
+								opacity: hoverState ? '1' : '0.3'
+							}"
+						>
+							<defs>
+								<path
+									id="a"
+									d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+								/>
+							</defs>
+							<g fill="none" fill-rule="evenodd">
+								<circle
+									cx="34"
+									cy="34"
+									r="34"
+									fill="#0091FF"
+									opacity=".3"
+								/>
+								<circle
+									cx="34"
+									cy="34"
+									r="26"
+									fill="#0091FF"
+									opacity=".9"
+								/>
+								<use
+									fill="#FFF"
+									fill-rule="nonzero"
+									xlink:href="#a"
+								/>
+							</g>
+						</svg>
+						<div
+							class="image-overlay"
+							[ngStyle]="{
+								opacity: hoverState ? '0.2' : '0'
+							}"
+						></div>
 
+						<img
+							*ngIf="imageUrl"
+							[src]="imageUrl"
+							alt="{{
+								'PUBLIC_PAGE.COMPANY_PROFILE' | translate
+							}}"
+							(mouseenter)="hoverState = true"
+							(mouseleave)="hoverState = false"
+						/>
+						<button
+							*ngIf="imageUpdateButton"
+							class="save_image"
+							(click)="
+								saveImage({
+									userId: employee.user.id,
+									imageUrl: imageUrl
+								})
+							"
+							status="success"
+							nbButton
+						>
+							{{ 'BUTTONS.UPDATE' | translate }}
+						</button>
+					</div>
+				</ng-container>
+				<ng-template #noPermissionTemp>
 					<img
-						*ngIf="employee.user.imageUrl"
+						class="employee-image"
 						[src]="employee.user.imageUrl"
-						alt="{{ 'PUBLIC_PAGE.COMPANY_PROFILE' | translate }}"
-						(mouseenter)="hoverState = true"
-						(mouseleave)="hoverState = false"
+						alt="User Avatar"
 					/>
-					<button
-						*ngIf="imageUpdateButton"
-						class="save_image"
-						(click)="saveImage({ imageUrl: imageUrl })"
-						status="success"
-						nbButton
-					>
-						{{ 'BUTTONS.UPDATE' | translate }}
-					</button>
+				</ng-template>
+				<div class="employee-info">
+					<h4 class="employee-name">
+						{{ employee.user.name }}
+					</h4>
+					<span class="employee-banner">
+						{{ employee.user.email }}
+					</span>
+					<span class="employee-banner">
+						{{ employee.short_description }}
+					</span>
 				</div>
-			</ng-container>
-			<ng-template #noPermissionTemp>
-				<img
-					class="org-image"
-					[src]="employee.user.imageUrl"
-					alt="User Avatar"
-				/>
-			</ng-template>
-			<h4 class="org-name">
-				{{ employee.user.name }}
-			</h4>
-			<span class="org-banner">
-				{{ employee.user.email }}
-			</span>
-			<div>
-				{{ employee.short_description }}
 			</div>
-		</div>
-		<nb-tabset class="o__p__s">
-			<nb-tab tabTitle="Profile" class="o__p__s__t">
+			<div class="col-md-6">
 				<div class="employee-profile-item">
 					<h5 class="employee-profile-item-title">
 						{{ 'MENU.ORGANIZATION' | translate }}:
@@ -108,7 +117,10 @@
 						{{ employee.isActive ? 'Yes' : 'No' }}
 					</span>
 				</div>
-				<div class="employee-profile-item">
+				<div
+					class="employee-profile-item"
+					*ngIf="employee.show_start_work_on"
+				>
 					<h5 class="employee-profile-item-title">
 						{{ 'PUBLIC_PAGE.STARTED_WORK_ON' | translate }}:
 					</h5>
@@ -116,7 +128,38 @@
 						{{ employee.startedWorkOn }}
 					</span>
 				</div>
-				<div class="employee-profile-item">
+			</div>
+
+			<div class="edit-icon" *ngIf="hasEditPermission$ | async">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="36"
+					height="36"
+					viewBox="0 0 36 36"
+				>
+					<circle
+						cx="18"
+						cy="18"
+						r="18"
+						fill="#0091FF"
+						fill-rule="evenodd"
+					/>
+				</svg>
+				<nb-icon
+					class="open"
+					icon="edit-outline"
+					[options]="{ color: 'white' }"
+					(click)="openEditEmployeeDialog(employee)"
+				>
+				</nb-icon>
+			</div>
+		</div>
+		<nb-tabset class="o__p__s">
+			<nb-tab tabTitle="Profile" class="o__p__s__t">
+				<div
+					class="employee-profile-item"
+					*ngIf="employee.show_billrate"
+				>
 					<h5 class="employee-profile-item-title">
 						{{ 'PUBLIC_PAGE.RATE' | translate }}:
 					</h5>
@@ -125,32 +168,66 @@
 						{{ employee.billRateCurrency }}
 					</span>
 				</div>
+				<div
+					class="employee-profile-item"
+					*ngIf="employee.show_payperiod"
+				>
+					<h5 class="employee-profile-item-title">
+						{{ 'PUBLIC_PAGE.PAY_PERIOD' | translate }}:
+					</h5>
+					<span>
+						{{ 'SM_TABLE.' + employee.payPeriod | translate }}
+					</span>
+				</div>
+				<div class="employee-profile-item">
+					<h5 class="employee-profile-item-title">
+						{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
+					</h5>
+					<span>
+						{{ employee.description }}
+					</span>
+				</div>
+
+				<div
+					class="employee-profile-item"
+					*ngIf="employee.show_average_income"
+				>
+					<h5 class="employee-profile-item-title">
+						{{ 'PUBLIC_PAGE.AVERAGE_INCOME' | translate }}:
+					</h5>
+					<span>
+						{{ employee.averageIncome }}
+					</span>
+				</div>
+
+				<div
+					class="employee-profile-item"
+					*ngIf="employee.show_average_expenses"
+				>
+					<h5 class="employee-profile-item-title">
+						{{ 'PUBLIC_PAGE.AVERAGE_EXPENSES' | translate }}:
+					</h5>
+					<span>
+						{{ employee.averageExpenses }}
+					</span>
+				</div>
+
+				<div
+					class="employee-profile-item"
+					*ngIf="employee.show_average_bonus"
+				>
+					<h5 class="employee-profile-item-title">
+						{{ 'PUBLIC_PAGE.AVERAGE_BONUS' | translate }}:
+					</h5>
+					<span>
+						{{ employee.averageBonus }}
+					</span>
+				</div>
 			</nb-tab>
 			<nb-tab tabTitle="Skills" class="o__p__s__t">
 				<ul class="skill-items">
-					<li>
-						<span class="tag tag-sm">MySQL</span>
-					</li>
-					<li>
-						<span class="tag tag-sm">React</span>
-					</li>
-					<li>
-						<span class="tag tag-sm">AngularJS</span>
-					</li>
-					<li>
-						<span class="tag tag-sm">ASP &amp; ASP.NET</span>
-					</li>
-					<li>
-						<span class="tag tag-sm">jQuery</span>
-					</li>
-					<li>
-						<span class="tag tag-sm">Node.js</span>
-					</li>
-					<li>
-						<span class="tag tag-sm">TypeScript</span>
-					</li>
-					<li>
-						<span class="tag tag-sm">GraphQL</span>
+					<li *ngFor="let skill of employee.skills">
+						<span class="tag tag-sm">{{ skill.name }}</span>
 					</li>
 				</ul>
 			</nb-tab>

@@ -4,7 +4,13 @@ import {
 	PayPeriodEnum
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNumber, IsOptional } from 'class-validator';
+import {
+	IsDate,
+	IsEnum,
+	IsNumber,
+	IsOptional,
+	IsBoolean
+} from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -222,4 +228,39 @@ export class Employee extends TenantBase implements IEmployee {
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	averageExpenses?: number;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_anonymous_bonus?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_average_bonus?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_average_expenses?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_average_income?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_billrate?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_payperiod?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_start_work_on?: boolean;
 }

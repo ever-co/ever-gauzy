@@ -14,8 +14,8 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EmployeeRoutingModule } from './employee-routing.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { PublicPageMutationModule } from '../../@shared/organizations/public-page-mutation/public-page-mutation.module';
 import { EmployeeComponent } from './employee.component';
+import { PublicPageEmployeeMutationModule } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -30,7 +30,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbInputModule,
 		ImageUploaderModule,
-		PublicPageMutationModule,
+		PublicPageEmployeeMutationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
