@@ -30,6 +30,7 @@ import {
 	endOfYear
 } from 'date-fns';
 import { FormGroup, FormBuilder } from '@angular/forms';
+import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 
 @Component({
 	selector: 'ga-goal-settings',
@@ -432,5 +433,17 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	async addTemplate() {
+		const goalTemplateDialog = this.dialogService.open(
+			GoalTemplatesComponent
+		);
+		const response = await goalTemplateDialog.onClose
+			.pipe(first())
+			.toPromise();
+		if (!!response) {
+			console.log(response);
+		}
 	}
 }

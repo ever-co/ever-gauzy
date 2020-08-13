@@ -109,6 +109,8 @@ import { MulterModule } from '@nestjs/platform-express';
 import { FileStorage } from './core/file-storage';
 import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
 import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipment-sharing-policy.module';
+import { GoalTemplateModule } from './goal-template/goal-template.module';
+import { KeyresultTemplateModule } from './keyresult-template/keyresult-template.module';
 import * as moment from 'moment';
 
 @Module({
@@ -558,7 +560,9 @@ import * as moment from 'moment';
 			},
 			resolvers: [new HeaderResolver(['language'])]
 		}),
-		GoalKpiModule
+		GoalKpiModule,
+		GoalTemplateModule,
+		KeyresultTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
