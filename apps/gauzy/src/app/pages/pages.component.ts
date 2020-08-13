@@ -374,15 +374,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Contacts',
-					icon: 'book-open-outline',
-					link: `/pages/organization/contacts`,
-					data: {
-						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						translationKey: 'ORGANIZATIONS_PAGE.CONTACTS'
-					}
-				},
-				{
 					title: 'Vendors',
 					icon: 'car-outline',
 					link: '/pages/organization/vendors',
@@ -450,6 +441,50 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/organization/help-center',
 					data: {
 						translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER'
+					}
+				}
+			]
+		},
+		{
+			title: 'Contacts',
+			icon: 'book-open-outline',
+			data: {
+				translationKey: 'MENU.CONTACTS'
+			},
+			children: [
+				{
+					title: 'Visitors',
+					icon: 'book-open-outline',
+					link: `/pages/contacts/visitors`,
+					data: {
+						translationKey: 'CONTACTS_PAGE.VISITORS'
+					}
+				},
+				{
+					title: 'Leads',
+					icon: 'book-open-outline',
+					link: `/pages/contacts/leads`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'CONTACTS_PAGE.LEADS'
+					}
+				},
+				{
+					title: 'Customers',
+					icon: 'book-open-outline',
+					link: `/pages/contacts/customers`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'CONTACTS_PAGE.CUSTOMERS'
+					}
+				},
+				{
+					title: 'Clients',
+					icon: 'book-open-outline',
+					link: `/pages/contacts/clients`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'CONTACTS_PAGE.CLIENTS'
 					}
 				}
 			]

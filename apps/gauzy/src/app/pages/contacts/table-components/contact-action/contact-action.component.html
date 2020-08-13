@@ -1,0 +1,23 @@
+<div>
+	<button
+		size="medium"
+		class="ml-2"
+		(click)="invite(rowData)"
+		*ngIf="!rowData.inviteStatus || rowData.inviteStatus === 'NOT_INVITED'"
+		nbButton
+		status="success"
+	>
+		<nb-icon class="mr-1" icon="email-outline"></nb-icon
+		>{{ 'BUTTONS.INVITE' | translate }}
+	</button>
+	<button
+		size="medium"
+		class="ml-2"
+		(click)="invite(rowData)"
+		*ngIf="rowData.inviteStatus === 'INVITED'"
+		nbButton
+	>
+		<nb-icon class="mr-1" icon="email-outline"></nb-icon
+		>{{ 'BUTTONS.INVITE_AGAIN' | translate }}
+	</button>
+</div>

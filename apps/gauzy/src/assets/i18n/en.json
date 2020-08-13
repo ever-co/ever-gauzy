@@ -138,6 +138,10 @@
 		"START": "Start",
 		"END": "End",
 		"REQUEST_DATE": "Request Date",
+		"PRIMARY_EMAIL": "Primary Email",
+		"PRIMARY_PHONE": "Primary Phone",
+		"INVITE_STATUS": "Invite Status",
+		"CONTACT_TYPE": "Contact Type",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -487,6 +491,7 @@
 		"APPROVALS": "Approvals",
 		"HELP": "Help",
 		"ABOUT": "About",
+		"CONTACTS": "Contacts",
 		"ADMIN": "Admin",
 		"EMPLOYEE_LEVEL": "Employee Level",
 		"EMPLOYEES": "Employees",
@@ -1115,7 +1120,8 @@
 			"CURRENCY": "Currency",
 			"OWNER": "Owner",
 			"TEAMS": "Teams",
-			"ADD_NEW_CONTACT": "Add new contact",
+			"ADD_NEW_CONTACT": "Add New Contact",
+			"EDIT_CONTACT": "Edit Contact",
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
 			"BONUS": "Bonus",
@@ -1212,6 +1218,12 @@
 			"ORG_TEAM_EDIT": "Create/Edit Teams",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts"
 		}
+	},
+	"CONTACTS_PAGE": {
+		"VISITORS": "Visitors",
+		"LEADS": "Leads",
+		"CUSTOMERS": "Customers",
+		"CLIENTS": "Clients"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
