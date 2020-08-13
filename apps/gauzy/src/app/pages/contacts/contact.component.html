@@ -2,8 +2,7 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>
-				{{ 'ORGANIZATIONS_PAGE.CONTACTS' | translate }} :
-				{{ contactType }}
+				{{ 'ORGANIZATIONS_PAGE.CONTACTS' | translate }}
 			</h4>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
@@ -35,9 +34,6 @@
 				<nb-icon class="mr-1" icon="email-outline"></nb-icon
 				>{{ 'BUTTONS.INVITE' | translate }}
 			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
 
 			<ga-contact-mutation
 				*ngIf="showAddCard"

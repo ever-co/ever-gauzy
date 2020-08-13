@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Employee, OrganizationDepartment, Tag } from '@gauzy/models';
+import { Employee, Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-departments-mutation',
