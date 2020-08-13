@@ -16,9 +16,9 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
-import { DepartmentsMembersTableComponent } from './table-components/members/members.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
 
 @Component({
 	selector: 'ga-departments',
@@ -94,7 +94,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
 					),
 					type: 'custom',
-					renderComponent: DepartmentsMembersTableComponent,
+					renderComponent: EmployeeWithLinksComponent,
 					filter: false
 				},
 				notes: {
@@ -125,6 +125,10 @@ export class DepartmentsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+				this.selectedDepartment =
+					this.dataLayoutStyle === 'CARDS_GRID'
+						? null
+						: this.selectedDepartment;
 			});
 	}
 	async removeDepartment(id?: string, name?: string) {

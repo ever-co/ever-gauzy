@@ -25,8 +25,6 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { TeamMembersTableComponent } from './table-components/members/members.component';
-import { TeamManagersTableComponent } from './table-components/managers/managers.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -59,12 +57,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [
-		TeamsComponent,
-		TeamsMutationComponent,
-		TeamMembersTableComponent,
-		TeamManagersTableComponent
-	],
+	declarations: [TeamsComponent, TeamsMutationComponent],
 	entryComponents: [],
 	providers: [OrganizationTeamsService]
 })

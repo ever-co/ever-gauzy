@@ -127,6 +127,10 @@ export class ProjectsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+				this.selectedProject =
+					this.dataLayoutStyle === 'CARDS_GRID'
+						? null
+						: this.selectedProject;
 			});
 	}
 

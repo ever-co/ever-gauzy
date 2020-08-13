@@ -25,17 +25,12 @@ import { DepartmentsMutationComponent } from './departments-mutation/departments
 import { OrganizationDepartmentsService } from '../../@core/services/organization-departments.service';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { DepartmentsMembersTableComponent } from './table-components/members/members.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-const COMPONENTS = [
-	DepartmentsComponent,
-	DepartmentsMutationComponent,
-	DepartmentsMembersTableComponent
-];
+const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 
 @NgModule({
 	imports: [

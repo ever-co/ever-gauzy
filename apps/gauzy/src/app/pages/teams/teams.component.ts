@@ -21,8 +21,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { TeamManagersTableComponent } from './table-components/managers/managers.component';
-import { TeamMembersTableComponent } from './table-components/members/members.component';
+import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
 @Component({
 	selector: 'ga-teams',
 	templateUrl: './teams.component.html',
@@ -89,6 +88,10 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+				this.selectedTeam =
+					this.dataLayoutStyle === 'CARDS_GRID'
+						? null
+						: this.selectedTeam;
 			});
 	}
 	async addOrEditTeam(team: OrganizationTeamCreateInput) {
@@ -281,7 +284,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
 					),
 					type: 'custom',
-					renderComponent: TeamMembersTableComponent,
+					renderComponent: EmployeeWithLinksComponent,
 					filter: false
 				},
 				managers: {
@@ -289,7 +292,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'
 					),
 					type: 'custom',
-					renderComponent: TeamManagersTableComponent,
+					renderComponent: EmployeeWithLinksComponent,
 					filter: false
 				},
 				notes: {
