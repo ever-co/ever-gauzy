@@ -474,7 +474,14 @@
 		"DETAILS": "Детайли",
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
-		"SELECT_TIMEZONE": "Select Timezone"
+		"SELECT_TIMEZONE": "Select Timezone",
+		"SHOW_AVERAGE_BONUS": "Show Average Bonus",
+		"SHOW_AVERAGE_INCOME": "Show Average Income",
+		"SHOW_PAYPERIOD": "Show Pay Period",
+		"SHOW_ANONYMOUS_BONUS": "Show Anonymous Bonus",
+		"SHOW_AVERAGE_EXPENSES": "Show Average Expenses",
+		"SHOW_BILLRATE": "Show Bill Rate",
+		"SHOW_START_WORK_ON": "Show Started Work On"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -1246,7 +1253,14 @@
 		"PROFITS": "Profits",
 		"RATE": "Почасово",
 		"ACTIVE": "Активен",
-		"STARTED_WORK_ON": "Started work on"
+		"STARTED_WORK_ON": "Started work on",
+		"PAY_PERIOD": "Pay period",
+		"AVERAGE_BONUS": "Average Bonus",
+		"AVERAGE_EXPENSES": "Average Expenses",
+		"AVERAGE_INCOME": "Average Income",
+		"EMPLOYEE_UPDATED": "Employee has been updated.",
+		"IMAGE_UPDATED": "The image has been updated.",
+		"FAIL_TO_UPDATE_IMAGE": "Update failed."
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",
