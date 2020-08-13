@@ -474,7 +474,14 @@
 		"DETAILS": "Детали",
 		"SKILLS": "Навыки",
 		"PRIVACY": "Приватность",
-		"SELECT_TIMEZONE": "Выберите часовой пояс"
+		"SELECT_TIMEZONE": "Выберите часовой пояс",
+		"SHOW_AVERAGE_BONUS": "Показать средний бонус",
+		"SHOW_AVERAGE_INCOME": "Показать средний доход",
+		"SHOW_PAYPERIOD": "Показать платный период",
+		"SHOW_ANONYMOUS_BONUS": "Показать анонимный бонус",
+		"SHOW_AVERAGE_EXPENSES": "Показать средние расходы",
+		"SHOW_BILLRATE": "Показать процент счёта",
+		"SHOW_START_WORK_ON": "Показать начатую работу на"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -1246,7 +1253,14 @@
 		"PROFITS": "Прибыль",
 		"RATE": "Ставка",
 		"ACTIVE": "Активный",
-		"STARTED_WORK_ON": "Начата работа над"
+		"STARTED_WORK_ON": "Начата работа над",
+		"PAY_PERIOD": "Период оплаты",
+		"AVERAGE_BONUS": "Средний бонус",
+		"AVERAGE_EXPENSES": "Средние расходы",
+		"AVERAGE_INCOME": "Средний доход",
+		"EMPLOYEE_UPDATED": "Сотрудник обновлен.",
+		"IMAGE_UPDATED": "Изображение обновлено.",
+		"FAIL_TO_UPDATE_IMAGE": "Не удалось обновить."
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
