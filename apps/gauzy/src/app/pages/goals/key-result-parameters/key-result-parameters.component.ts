@@ -6,15 +6,16 @@ import {
 	KeyResultWeightEnum,
 	KeyResultDeadlineEnum,
 	KPI,
-	GoalGeneralSetting
+	GoalGeneralSetting,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { EditKpiComponent } from '../../goal-settings/edit-kpi/edit-kpi.component';
 
 @Component({
 	selector: 'ga-key-result-parameters',
@@ -27,11 +28,14 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 		selectedKeyResult: KeyResult;
 		allKeyResults: KeyResult[];
 		settings: GoalGeneralSetting;
+		orgId: string;
 	};
 	keyResultTypeEnum = KeyResultTypeEnum;
 	keyResultWeightEnum = KeyResultWeightEnum;
 	keyResultWeight: any;
 	KPIs: KPI[];
+	currenciesEnum = CurrenciesEnum;
+	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private fb: FormBuilder,
@@ -52,18 +56,27 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			initialValue: [0],
 			projectId: [null],
 			taskId: [null],
-			kpiId: ['']
+			kpiId: [''],
+			unit: ['']
 		});
 
 		await this.getKPI();
 		if (!!this.data.selectedKeyResult) {
+			if (
+				!this.numberUnitsEnum.find(
+					(unit) => unit === this.data.selectedKeyResult.unit
+				)
+			) {
+				this.numberUnitsEnum.push(this.data.selectedKeyResult.unit);
+			}
 			this.typeForm.patchValue({
 				type: this.data.selectedKeyResult.type,
 				targetValue: this.data.selectedKeyResult.targetValue,
 				initialValue: this.data.selectedKeyResult.initialValue,
 				projectId: this.data.selectedKeyResult.projectId,
 				taskId: this.data.selectedKeyResult.taskId,
-				kpiId: this.data.selectedKeyResult.kpiId
+				kpiId: this.data.selectedKeyResult.kpiId,
+				unit: this.data.selectedKeyResult.unit
 			});
 			this.weightForm.patchValue({
 				weight: this.data.selectedKeyResult.weight
@@ -94,10 +107,12 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	}
 
 	async getKPI() {
-		await this.goalSettingsService.getAllKPI().then((kpi) => {
-			const { items } = kpi;
-			this.KPIs = items;
-		});
+		await this.goalSettingsService
+			.getAllKPI({ organization: { id: this.data.orgId } })
+			.then((kpi) => {
+				const { items } = kpi;
+				this.KPIs = items;
+			});
 	}
 
 	async updateKeyResult() {
@@ -121,36 +136,6 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			...this.data.selectedKeyResult
 		});
 		this.closeDialog(this.data.selectedKeyResult);
-	}
-
-	async openEditKPI() {
-		const dialog = this.dialogService.open(EditKpiComponent, {
-			context: {
-				type: 'add'
-			}
-		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
-		if (!!response) {
-			await this.getKPI();
-		}
-	}
-
-	taskTypeValidators() {
-		if (this.typeForm.get('type').value === this.keyResultTypeEnum.TASK) {
-			this.typeForm.controls['projectId'].setValidators([
-				Validators.required
-			]);
-			this.typeForm.controls['taskId'].setValidators([
-				Validators.required
-			]);
-		} else {
-			this.typeForm.controls['projectId'].clearValidators();
-			this.typeForm.patchValue({ projectId: undefined });
-			this.typeForm.controls['taskId'].clearValidators();
-			this.typeForm.patchValue({ taskId: undefined });
-		}
-		this.typeForm.controls['projectId'].updateValueAndValidity();
-		this.typeForm.controls['taskId'].updateValueAndValidity();
 	}
 
 	closeDialog(data) {

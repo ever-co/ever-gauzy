@@ -32,6 +32,7 @@ import { Organization } from '../organization/organization.entity';
 import { Task } from '../tasks/task.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { Payment } from '../payment/payment.entity';
+import { TimeLog } from '../timesheet/time-log.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends TenantBase
@@ -77,6 +78,9 @@ export class OrganizationProjects extends TenantBase
 	@OneToMany((type) => Task, (task) => task.project)
 	@JoinColumn()
 	tasks?: Task[];
+
+	@OneToMany((type) => TimeLog, (timeLog) => timeLog.project)
+	timeLogs?: TimeLog[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

@@ -6,6 +6,34 @@ import * as faker from 'faker';
 import * as moment from 'moment';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
 
+const agendas = ['Meeting', 'Knowledge Transfer', 'Query Solution', 'Sprint Planning'];
+
+export const createDefaultEmployeeAppointment = async (
+  connection: Connection,
+  Employees: Employee[],
+  Organizations
+): Promise<EmployeeAppointment[]> => {
+  if (!Employees) {
+    console.warn(
+      'Warning: Employees not found, Default Employee Appointment  will not be created'
+    );
+    return;
+  }
+  if (!Organizations) {
+    console.warn(
+      'Warning: tenantOrganizations not found, Default Employee Appointment  will not be created'
+    );
+    return;
+  }
+
+  let employeesAppointments: EmployeeAppointment[] = [];
+
+  for (const employee of Employees) {
+    employeesAppointments = await dataOperation(connection, employeesAppointments, employee, [Organizations]);
+  }
+  await connection.manager.save(employeesAppointments);
+};
+
 export const createRandomEmployeeAppointment = async (
   connection: Connection,
   tenants: Tenant[],
@@ -25,23 +53,28 @@ export const createRandomEmployeeAppointment = async (
     return;
   }
 
-  const employeesAppointments: EmployeeAppointment[] = [];
-  const agendas =["Meeting", "Knowledge Transfer","Query Solution","Sprint Planning"];
+  let  employeesAppointments: EmployeeAppointment[] = [];
 
   for (const tenant of tenants) {
     const tenantEmployees = tenantEmployeeMap.get(tenant);
     const tenantOrgs = tenantOrganizationsMap.get(tenant);
 
     for (const tenantEmployee of tenantEmployees) {
-      for (const tenantOrg of tenantOrgs) {
-        const employeesAppointment = new EmployeeAppointment();
+      employeesAppointments = await dataOperation(connection, employeesAppointments, tenantEmployee, tenantOrgs);
+    }
+  }
+};
+
+const dataOperation = async (connection: Connection, employeesAppointments, tenantEmployee, organizations)=>{
+  for (const organization of organizations) {
+    const employeesAppointment = new EmployeeAppointment();
 
         const Invitees = await connection.manager.find(AppointmentEmployees, {
           where: [{ employeeId: tenantEmployee.id }]
         });
 
         employeesAppointment.employee = tenantEmployee;
-        employeesAppointment.organization = tenantOrg;
+        employeesAppointment.organization = organization;
         employeesAppointment.description = faker.name.jobDescriptor();
         employeesAppointment.location = faker.address.city();
         employeesAppointment.startDateTime = faker.date.between(new Date(),moment(new Date()).add(2, 'months').toDate());
@@ -49,10 +82,9 @@ export const createRandomEmployeeAppointment = async (
         employeesAppointment.invitees = Invitees;
         employeesAppointment.agenda = faker.random.arrayElement(agendas);
 
-        employeesAppointments.push(employeesAppointment);
-      }
-    }
+    employeesAppointments.push(employeesAppointment);
   }
 
   await connection.manager.save(employeesAppointments);
-};
+  return employeesAppointments;
+}

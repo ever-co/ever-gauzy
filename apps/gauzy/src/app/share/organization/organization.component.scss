@@ -295,11 +295,21 @@ p,
     background-color: #56d48f;
   }
 
-  .pay-rate {
+  /*.pay-rate {
     float: right;
     color: #3c495a;
     font-size: 16px;
     font-weight: 500;
+  }*/
+
+  .pay-rate {
+    float: right;
+    color: #3c495a;
+    font-size: 15px;
+    font-weight: 600;
+    border: 1px solid #3c495aba;
+    padding: 5px;
+    border-radius: 5px;
   }
 
   .speciality {

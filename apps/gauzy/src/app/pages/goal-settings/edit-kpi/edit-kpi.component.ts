@@ -33,7 +33,6 @@ export class EditKpiComponent extends TranslationBaseComponent
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	kpiOperatorEnum = KpiOperatorEnum;
 	kpiMetricEnum = KpiMetricEnum;
-	createNew = false;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private fb: FormBuilder,
@@ -115,13 +114,6 @@ export class EditKpiComponent extends TranslationBaseComponent
 		} else {
 			this.kpiForm.patchValue({ owner: event });
 		}
-	}
-
-	createNewUnit() {
-		if (this.kpiForm.value.unit !== ' ') {
-			this.numberUnitsEnum.push(this.kpiForm.value.unit);
-		}
-		this.createNew = false;
 	}
 
 	closeDialog(data) {

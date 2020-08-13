@@ -281,12 +281,6 @@ export interface ScreenshotMap {
 	timeSlots: TimeSlot[];
 }
 
-export interface IGetTimeSlotStatistics {
-	[x: string]: any;
-	employeeId?: string;
-	organizationId?: string;
-}
-
 export interface TimerStatus {
 	duration: number;
 	running: boolean;

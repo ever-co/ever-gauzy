@@ -100,9 +100,9 @@ export class KeyResult extends TenantBase implements IKeyResult {
 	kpi?: GoalKPI;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((keyResult: KeyResult) => keyResult.task)
+	@RelationId((keyResult: KeyResult) => keyResult.kpi)
 	@Column({ nullable: true })
-	readonly kpiId?: string;
+	kpiId?: string;
 
 	@ApiProperty({ type: String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)

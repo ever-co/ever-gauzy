@@ -11,17 +11,16 @@ import { AppStore } from '../../../../@core/services/store.service';
 	selector: 'ga-pipeline-deals-form'
 })
 export class PipelineDealFormComponent implements OnInit {
-	public id: string;
-
-	public form: FormGroup;
-
-	public pipeline: Pipeline;
-
-	public mode: 'CREATE' | 'EDIT' = 'CREATE';
+	form: FormGroup;
+	pipeline: Pipeline;
+	mode: 'CREATE' | 'EDIT' = 'CREATE';
+	probabilities = [0,1,2,3,4,5];
+	selectedProbability: number;
+	id: string;
 
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
 
-	public constructor(
+	constructor(
 		private router: Router,
 		private fb: FormBuilder,
 		private appStore: AppStore,
@@ -41,15 +40,18 @@ export class PipelineDealFormComponent implements OnInit {
 		};
 	}
 
-	public ngOnInit(): void {
+	ngOnInit() {
 		this.form = this.fb.group({
 			createdByUserId: [null, Validators.required],
 			stageId: [null, Validators.required],
-			title: [null, Validators.required]
+			title: [null, Validators.required],
+			probability: [null]
 		});
+
 		this.form.patchValue({
 			createdByUserId: this.appStore.getValue().user?.id
 		});
+		
 		this.activatedRoute.params.subscribe(async ({ pipelineId, dealId }) => {
 			this.form.disable();
 
@@ -67,8 +69,9 @@ export class PipelineDealFormComponent implements OnInit {
 				this.id = dealId;
 				await this.dealsService
 					.find(dealId)
-					.then(({ title, stageId, createdBy }) => {
+					.then(({ title, stageId, createdBy, probability }) => {
 						this.form.patchValue({ title, stageId, createdBy });
+						this.selectedProbability = probability;
 					});
 			}
 

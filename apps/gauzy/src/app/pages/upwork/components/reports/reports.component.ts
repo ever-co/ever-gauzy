@@ -81,9 +81,20 @@ export class ReportsComponent extends TranslationBaseComponent
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
-					width: '20%',
+					width: '10%',
 					renderComponent: DateViewComponent,
 					filter: false
+				},
+				type: {
+					title: this.getTranslation('SM_TABLE.TRANSACTION_TYPE'),
+					type: 'string',
+					filter: false,
+					valuePrepareFunction: (value, item) => {
+						if (item.hasOwnProperty('category')) {
+							return item.category ? item.category.name : null;
+						}
+						return 'Hourly';
+					}
 				},
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),

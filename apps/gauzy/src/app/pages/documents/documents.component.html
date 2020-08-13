@@ -1,118 +1,174 @@
 <nb-card>
 	<nb-spinner *ngIf="loading"></nb-spinner>
 	<nb-card-header>
-		<button
-			nbButton
-			status="success"
-			*ngIf="!showAddCard"
-			(click)="showCard()"
+		<div
+			style="
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			"
 		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
-		<div *ngIf="showAddCard" class="row documents-card m-0">
-			<form class="col-3" [formGroup]="form" *ngIf="form">
-				<div formArrayName="documents">
-					<div
-						*ngFor="
-							let document of form.controls.documents?.controls;
-							let i = index
-						"
-					>
-						<div [formGroupName]="i" class="documents-add-card">
-							<div class="col-12 add-card-wrapp">
-								<label for="documentName" class="label">{{
-									'FORM.LABELS.DOCUMENT_NAME' | translate
-								}}</label>
-								<input
-									id="documentName"
-									#addInput
-									class="col-12"
-									nbInput
-									formControlName="name"
-									type="text"
-									placeholder="{{
-										'FORM.PLACEHOLDERS.DOCUMENT_NAME'
-											| translate
-									}}"
-									fullWidth
-								/>
+			<h4>{{ 'ORGANIZATIONS_PAGE.DOCUMENTS' | translate }}</h4>
+			<div
+				style="
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+				"
+			>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="pb-4">
+			<button
+				nbButton
+				status="success"
+				*ngIf="!showAddCard"
+				(click)="showCard()"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<div *ngIf="showAddCard" class="row m-0">
+				<form class="col-3 pl-0" [formGroup]="form" *ngIf="form">
+					<div formArrayName="documents">
+						<div
+							*ngFor="
+								let document of form.controls.documents
+									?.controls;
+								let i = index
+							"
+						>
+							<div [formGroupName]="i">
+								<div class="col-12 pl-0">
+									<label for="documentName" class="label">{{
+										'FORM.LABELS.DOCUMENT_NAME' | translate
+									}}</label>
+									<input
+										id="documentName"
+										#addInput
+										class="col-12"
+										nbInput
+										formControlName="name"
+										type="text"
+										placeholder="{{
+											'FORM.PLACEHOLDERS.DOCUMENT_NAME'
+												| translate
+										}}"
+										fullWidth
+									/>
+								</div>
 							</div>
 						</div>
 					</div>
+				</form>
+				<div class="col-7">
+					<div class="label mb-2 mt-1">
+						{{ 'FORM.LABELS.DOCUMENT_URL' | translate }}
+					</div>
+					<ga-upload-doc
+						#uploadDoc
+						[documentUrl]="documentUrl"
+						[isDocument]="true"
+						style="width: 50%;"
+					>
+					</ga-upload-doc>
 				</div>
-			</form>
-			<div class="col-7">
-				<div class="label m-2">
-					{{ 'FORM.LABELS.DOCUMENT_URL' | translate }}
-				</div>
-				<ga-upload-doc
-					#uploadDoc
-					[documentUrl]="documentUrl"
-					[isDocument]="true"
-					style="width: 50%;"
+				<span class="col-1 pl-2 pt-4 pr-0 button"
+					><button
+						class="w-100 form-btn"
+						(click)="submitForm()"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button></span
 				>
-				</ga-upload-doc>
+				<span class="col-1 pl-2 pt-4 pr-0 button"
+					><button
+						class="w-100 form-btn"
+						(click)="cancel()"
+						nbButton
+						status="danger"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button></span
+				>
 			</div>
-			<span class="col-1 pl-2 pt-4 pr-0 button"
-				><button
-					class="w-100 form-btn"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button></span
-			>
-			<span class="col-1 pl-2 pt-4 pr-0 button"
-				><button
-					class="w-100 form-btn"
-					(click)="cancel()"
-					nbButton
-					status="danger"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button></span
-			>
 		</div>
-	</nb-card-header>
-	<nb-card-body *ngIf="documentList?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.DOCUMENTS' | translate
-			}}</strong>
-		</div>
-
-		<nb-card *ngFor="let document of documentList; let i = index">
-			<nb-card-body class="documents-card">
-				<div class="documents-line">
+		<div *ngIf="documentList?.length && dataLayoutStyle === 'TABLE'">
+			<nb-card *ngFor="let document of documentList; let i = index">
+				<nb-card-body
+					style="
+						display: flex;
+						align-items: center;
+						justify-content: space-between;
+					"
+				>
 					<div>
-						<nb-icon
-							class="doc-icon"
-							icon="file-text-outline"
-						></nb-icon>
-						<a href="{{ document.documentUrl }}">
-							{{ document.name }}
-						</a>
+						<div>
+							<nb-icon icon="file-text-outline"></nb-icon>
+							<a href="{{ document.documentUrl }}">
+								{{ document.name }}
+							</a>
+						</div>
+						<div>
+							{{ document.updatedAt | date: 'medium' }}
+						</div>
 					</div>
-					<div class="document-data">
-						{{ document.updatedAt | date: 'medium' }}
-					</div>
-				</div>
 
-				<nb-actions class="float-right" e="medium">
-					<nb-action
-						(click)="editDocument(i, document.id)"
-						class="d-inline pr-2"
-						icon="edit"
-					></nb-action>
-					<nb-action
-						(click)="removeDocument(document.id)"
-						class="d-inline pr-0 pl-2"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+					<nb-actions class="float-right" e="medium">
+						<nb-action
+							(click)="editDocument(document)"
+							class="d-inline pr-2"
+							icon="edit"
+						></nb-action>
+						<nb-action
+							(click)="removeDocument(document.id)"
+							class="d-inline pr-0 pl-2"
+							icon="close"
+						></nb-action>
+					</nb-actions>
+				</nb-card-body>
+			</nb-card>
+		</div>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="documentList"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+		<ng-template
+			#actionButtons
+			let-buttonSize="buttonSize"
+			let-selectedItem="selectedItem"
+		>
+			<button
+				(click)="editDocument(selectedItem)"
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="removeDocument(selectedItem.id)"
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</ng-template>
 	</nb-card-body>
 </nb-card>

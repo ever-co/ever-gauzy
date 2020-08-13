@@ -40,6 +40,13 @@
 							"
 						></textarea>
 					</nb-form-field>
+					<br />
+					<nb-checkbox
+						(checkedChange)="setIsActive()"
+						[checked]="isActive"
+						formControlName="isActive"
+						>Active</nb-checkbox
+					>
 				</div>
 				<div class="col">
 					<ga-stage-form

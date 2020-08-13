@@ -7,7 +7,8 @@ import {
 	NbDialogService,
 	NbToastrService,
 	NbMenuItem,
-	NbMenuService
+	NbMenuService,
+	NbPopoverDirective
 } from '@nebular/theme';
 import {
 	Invoice,
@@ -74,6 +75,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	@Input() isEstimate: boolean;
 
 	@ViewChild('invoicesTable') invoicesTable;
+	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
 	constructor(
 		private fb: FormBuilder,
@@ -737,6 +739,15 @@ export class InvoicesComponent extends TranslationBaseComponent
 	selectColumn($event) {
 		this.columns = $event;
 		this.loadSmartTable();
+	}
+
+	openPopover() {
+		if (this.popover.isShown) {
+			this.popover.hide();
+		} else {
+			this.popover.show();
+			document.getElementsByClassName('arrow')[0].remove();
+		}
 	}
 
 	_applyTranslationOnSmartTable() {

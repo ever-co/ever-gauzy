@@ -46,7 +46,6 @@ export class UpworkReportService {
 						ORDER BY 
 							worked_on,
 							assignment_ref`;
-			console.log(select);
 
 			return new Promise((resolve, reject) => {
 				api.setAccessToken(
@@ -190,11 +189,12 @@ export class UpworkReportService {
 								subtype,
 								description,
 								assignment_name,
-								assignment__reference
+								assignment__reference,
+								provider__reference,
+								reference
 							WHERE 
 								date > '${start || DEFAULT_DATE_RANGE.start}' AND 
 								date <= '${end || DEFAULT_DATE_RANGE.end}'`;
-			console.log(select);
 
 			return new Promise((resolve, reject) => {
 				api.setAccessToken(

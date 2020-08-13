@@ -1059,12 +1059,14 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
+		"POSITIONS": "Позиции",
 		"EDIT_PUBLIC_PAGE": "Изменить публичную страницу",
 		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
 		"DEPARTMENTS": "Департаменты",
 		"CONTACTS": "Контакты",
 		"VENDORS": "Вендоры",
+		"NAME": "Имя",
 		"EXPENSE_CATEGORIES": "Категории расходов",
 		"PROJECTS": "Проекты",
 		"ACTIVE": "Активно",
@@ -1072,6 +1074,7 @@
 		"ARCHIVED": "Архивирован",
 		"LOCATION": "Местоположение",
 		"SETTINGS": "Настройки",
+		"TEAMS": "Команды",
 		"ROLES": "Роли",
 		"HELP_CENTER": "Центр поддержки",
 		"DOCUMENTS": "Документы",
@@ -1082,7 +1085,11 @@
 		"EMAIL_INVITE": "Приглашение",
 		"ADD_LEVEL_OF_EMPLOYEE": "Добавить уровень сотрудника",
 		"LEVEL_OF_EMPLOYEE": "Уровни сотрудников",
-		"VENDOR_NAME": "Имя поставщика",
+		"PHONE": "Телефон",
+		"EMAIL": "Эл. адрес",
+		"WEBSITE": "Сайт",
+		"DOCUMENT_URL": "URL документа",
+		"UPDATED": "Обновлено",
 		"LEVEL_NAME": "Название уровня",
 		"EXPENSE_NAME": "Имя Расхода",
 		"EMPLOYMENT_TYPE_NAME": "Название типа занятости",
@@ -2235,7 +2242,17 @@
 			"email-estimate": "Почтовый расчет",
 			"email-invoice": "Email Счет",
 			"invite-employee": "Пригласить сотрудника",
-			"invite-user": "Пригласить пользователя"
+			"invite-user": "Пригласить пользователя",
+			"appointment-confirmation": "Подтверждение назначения",
+			"appointment-cancellation": "Отмена Назначения",
+			"equipment": "Создание снаряжения",
+			"equipment-request": "Запрос на Снаряжение",
+			"timesheet-overview": "Обзор временных таблиц",
+			"timesheet-submit": "Сроки представления",
+			"timesheet-action": "Действия по расписанию",
+			"timesheet-delete": "Удалить лист времени",
+			"candidate-schedule-interview": "Расписание интервью Кандидата",
+			"interviewer-interview-schedule": "Расписание интервьюера"
 		},
 		"LANGUAGE_CODES": {
 			"en": "Russian",
@@ -2262,6 +2279,7 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Создать сделку | Пипеллинг: {{ name }}",
-		"SELECT_STAGE": "Выбрать этап"
+		"SELECT_STAGE": "Выбрать этап",
+		"PROBABLITY": "Вероятность"
 	}
 }

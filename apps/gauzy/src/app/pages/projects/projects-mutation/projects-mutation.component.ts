@@ -37,6 +37,9 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	@Output()
 	addOrEditProject = new EventEmitter();
 
+	@Input()
+	organizationContacts: Object[] = [];
+
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];
@@ -46,7 +49,6 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	public: Boolean = true;
 	tags: Tag[] = [];
 	organizationId: string;
-	organizationContacts: Object[] = [];
 	owners: string[] = Object.values(ProjectOwnerEnum);
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	showSprintManage = false;
@@ -118,7 +120,9 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 					disabled: true
 				}
 			],
-			startDate: [this.project ? this.project.startDate : null],
+			startDate: [
+				this.project ? new Date(this.project.startDate) : new Date()
+			],
 			endDate: [this.project ? this.project.endDate : null],
 			owner: [this.project ? this.project.owner : 'CLIENT'],
 			taskViewMode: [this.project ? this.project.taskListType : 'GRID']

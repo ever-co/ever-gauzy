@@ -4,6 +4,24 @@ import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '@gauzy/models';
 
+export const createDefaultPipeline = async (
+  connection: Connection,
+  tenantOrganizations
+): Promise<Pipeline[]> => {
+  if (!tenantOrganizations) {
+    console.warn(
+      'Warning: tenantOrganizations not found, Default pipeline not be created'
+    );
+    return;
+  }
+
+  let pipelines: Pipeline[] = [];
+  // for (const tenantOrg of tenantOrganizations) {
+  pipelines = await dataOperation(connection, pipelines, tenantOrganizations);
+// }
+  return pipelines;
+};
+
 export const createRandomPipeline = async (
 	connection: Connection,
 	tenants: Tenant[],
@@ -21,32 +39,25 @@ export const createRandomPipeline = async (
 	for (const tenant of tenants) {
 		let tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
-			for (let i = 0; i <= faker.random.number(10); i++) {
-				//todo Need to update with real values
-				let pipeline = new Pipeline();
-
-				pipeline.organization = tenantOrg;
-				pipeline.organizationId = tenantOrg.id;
-				pipeline.name = faker.company.companyName();
-				pipeline.description = faker.name.jobDescriptor();
-
-				pipelines.push(pipeline);
-			}
+      pipelines = await dataOperation(connection, pipelines, tenantOrg);
 		}
 	}
 
-	await insertRandomPipeline(connection, pipelines);
 	return pipelines;
 };
 
-const insertRandomPipeline = async (
-	connection: Connection,
-	data: Pipeline[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Pipeline)
-		.values(data)
-		.execute();
-};
+const dataOperation = async (connection: Connection, pipelines, organization)=>{
+  for (let i = 0; i <= faker.random.number(10); i++) {
+    let pipeline = new Pipeline();
+
+    pipeline.organization = organization;
+    pipeline.organizationId = organization.id;
+				pipeline.name = faker.company.companyName();
+				pipeline.description = faker.name.jobDescriptor();
+				pipeline.isActive = faker.random.boolean();
+
+    pipelines.push(pipeline);
+  }
+  await connection.manager.save(pipelines);
+  return pipelines;
+}

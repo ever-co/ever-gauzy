@@ -3,7 +3,8 @@ import {
 	Employee,
 	OrganizationDepartment,
 	OrganizationDepartmentCreateInput,
-	Tag
+	Tag,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -13,6 +14,7 @@ import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	selector: 'ga-departments',
@@ -29,6 +31,8 @@ export class DepartmentsComponent extends TranslationBaseComponent
 	employees: Employee[] = [];
 	departmentToEdit: OrganizationDepartment;
 	tags: Tag[];
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
@@ -69,6 +73,15 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		this.employees = items;
 	}
 
+	setView() {
+		this.viewComponentName = ComponentEnum.DEPARTMENTS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 	async removeDepartment(id: string, name: string) {
 		await this.organizationDepartmentsService.delete(id);
 		this.toastrService.primary(

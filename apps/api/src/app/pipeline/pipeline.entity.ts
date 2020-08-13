@@ -13,7 +13,7 @@ import {
 	OneToMany,
 	RelationId
 } from 'typeorm';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 
@@ -47,6 +47,11 @@ export class Pipeline extends Base implements IPipeline {
 	@IsString()
 	@Column()
 	public name: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column()
+	public isActive: boolean;
 
 	@BeforeInsert()
 	public __before_persist(): void {

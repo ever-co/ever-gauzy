@@ -6,9 +6,10 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
-	NbActionsModule
+	NbActionsModule,
+	NbBadgeModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -17,6 +18,9 @@ import { OrganizationVendorsService } from '../../@core/services/organization-ve
 import { VendorsRoutingModule } from './vendors-routing.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { SharedModule } from '../../@shared/shared.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -26,6 +30,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	imports: [
 		ThemeModule,
 		NbCardModule,
+		ReactiveFormsModule,
 		FormsModule,
 		NbButtonModule,
 		NbInputModule,
@@ -34,6 +39,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbActionsModule,
 		TableComponentsModule,
 		VendorsRoutingModule,
+		NbBadgeModule,
+		CardGridModule,
+		SharedModule,
+		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

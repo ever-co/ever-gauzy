@@ -7,7 +7,7 @@ import {
 	FormControl
 } from '@angular/forms';
 import { EmployeesService } from '../../../@core/services';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
 	Employee,
@@ -30,7 +30,6 @@ import { Store } from '../../../@core/services/store.service';
 import { GoalService } from '../../../@core/services/goal.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
-import { EditKpiComponent } from '../../goal-settings/edit-kpi/edit-kpi.component';
 import { endOfTomorrow } from 'date-fns';
 
 @Component({
@@ -52,7 +51,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	teams: OrganizationTeam[] = [];
 	hideOrg = false;
 	hideTeam = false;
-	createNew = false;
 	hideEmployee = false;
 	goalLevelEnum = GoalLevelEnum;
 	softDeadline: FormControl;
@@ -98,17 +96,12 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			alignedGoalOwner: [''],
 			kpiId: [null]
 		});
-		await this.getKPI();
-		this.employeeService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
+
 		if (!!this.data) {
 			if (!this.numberUnitsEnum.find((unit) => unit === this.data.unit)) {
 				this.numberUnitsEnum.push(this.data.unit);
 			}
+			await this.getKPI();
 			this.keyResultsForm.patchValue(this.data);
 			this.keyResultsForm.patchValue({
 				softDeadline: this.data.softDeadline
@@ -118,10 +111,18 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					? new Date(this.data.hardDeadline)
 					: null,
 				lead: !!this.data.lead ? this.data.lead.id : null,
-				owner: this.data.owner.id,
-				unit: this.data.unit
+				owner: this.data.owner.id
 			});
+		} else {
+			await this.getKPI();
 		}
+		this.employeeService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employees) => {
+				this.employees = employees.items;
+			});
+
 		if (
 			this.store.user.role.name !== RolesEnum.SUPER_ADMIN &&
 			this.store.user.role.name !== RolesEnum.MANAGER &&
@@ -132,10 +133,12 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	}
 
 	async getKPI() {
-		await this.goalSettingsService.getAllKPI().then((kpi) => {
-			const { items } = kpi;
-			this.KPIs = items;
-		});
+		await this.goalSettingsService
+			.getAllKPI({ organization: { id: this.orgId } })
+			.then((kpi) => {
+				const { items } = kpi;
+				this.KPIs = items;
+			});
 	}
 
 	async getTeams() {
@@ -145,39 +148,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				const { items } = res;
 				this.teams = items;
 			});
-	}
-
-	async openEditKPI() {
-		const dialog = this.dialogService.open(EditKpiComponent, {
-			context: {
-				type: 'add'
-			}
-		});
-		const response = await dialog.onClose.pipe(first()).toPromise();
-		if (!!response) {
-			await this.getKPI();
-		}
-	}
-
-	taskTypeValidators() {
-		if (
-			this.keyResultsForm.get('type').value ===
-			this.keyResultTypeEnum.TASK
-		) {
-			this.keyResultsForm.controls['projectId'].setValidators([
-				Validators.required
-			]);
-			this.keyResultsForm.controls['taskId'].setValidators([
-				Validators.required
-			]);
-		} else {
-			this.keyResultsForm.controls['projectId'].clearValidators();
-			this.keyResultsForm.patchValue({ projectId: undefined });
-			this.keyResultsForm.controls['taskId'].clearValidators();
-			this.keyResultsForm.patchValue({ taskId: undefined });
-		}
-		this.keyResultsForm.controls['projectId'].updateValueAndValidity();
-		this.keyResultsForm.controls['taskId'].updateValueAndValidity();
 	}
 
 	deadlineValidators() {
@@ -285,6 +255,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		}
 
 		if (!!this.data) {
+			// Delete all updates and progress when keyresult type is changed.
 			if (this.data.type !== this.keyResultsForm.value.type) {
 				this.data.progress = 0;
 				this.data.update = this.keyResultsForm.value.initialValue;
@@ -323,13 +294,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				weight: KeyResultWeightEnum.DEFAULT
 			});
 		}
-	}
-
-	createNewUnit() {
-		if (this.keyResultsForm.value.unit !== ' ') {
-			this.numberUnitsEnum.push(this.keyResultsForm.value.unit);
-		}
-		this.createNew = false;
 	}
 
 	closeDialog(data = null) {

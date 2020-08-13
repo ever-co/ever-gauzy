@@ -80,7 +80,7 @@
 					(mouseenter)="helper = 'kpi-type'"
 					(mouseleave)="helperText(null)"
 				>
-					<div class="row">
+					<div class="row mt-3">
 						<div
 							[ngClass]="{
 								'col-md-6':
@@ -94,7 +94,7 @@
 									kpiForm.value.type != kpiMetricEnum.CURRENCY
 							}"
 						>
-							<label for="kpi-type" class="label mt-3">
+							<label for="kpi-type" class="label">
 								{{
 									'GOALS_PAGE.FORM.LABELS.KPI_METRIC'
 										| translate
@@ -124,76 +124,10 @@
 								kpiForm.value.type == kpiMetricEnum.CURRENCY
 							"
 						>
-							<label for="unit" class="label mt-3">
-								Unit
-							</label>
-							<nb-select
-								fullWidth
-								formControlName="unit"
-								*ngIf="
-									kpiForm.value.type == kpiMetricEnum.CURRENCY
-								"
-								id="unit"
-								nbSuffix
-							>
-								<nb-option
-									[value]="currency.value"
-									*ngFor="
-										let currency of currenciesEnum
-											| keyvalue
-									"
-									>{{ currency.value }}</nb-option
-								>
-							</nb-select>
-							<nb-select
-								fullWidth
-								formControlName="unit"
-								(selectedChange)="
-									kpiForm.value.unit == 'create-new'
-										? (createNew = !createNew)
-										: null
-								"
-								*ngIf="
-									kpiForm.value.type ==
-										kpiMetricEnum.NUMERICAL && !createNew
-								"
-								id="unit"
-								nbSuffix
-							>
-								<nb-option
-									[value]="unit"
-									*ngFor="let unit of numberUnitsEnum"
-									>{{ unit }}
-								</nb-option>
-								<nb-option
-									value="create-new"
-									class="bg-secondary text-light"
-								>
-									+ create new
-								</nb-option>
-							</nb-select>
-							<nb-form-field *ngIf="createNew">
-								<input
-									type="text"
-									formControlName="unit"
-									nbInput
-									fullWidth
-								/>
-								<nb-icon
-									nbSuffix
-									icon="checkmark-outline"
-									status="success"
-									(click)="createNewUnit()"
-								>
-								</nb-icon>
-								<nb-icon
-									nbSuffix
-									icon="close-outline"
-									status="danger"
-									(click)="createNew = !createNew"
-								>
-								</nb-icon>
-							</nb-form-field>
+							<ga-goal-custom-unit-select
+								[parentFormGroup]="kpiForm"
+								[numberUnits]="numberUnitsEnum"
+							></ga-goal-custom-unit-select>
 						</div>
 					</div>
 				</div>

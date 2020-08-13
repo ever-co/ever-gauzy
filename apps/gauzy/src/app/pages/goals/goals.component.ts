@@ -37,7 +37,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	employee: SelectedEmployee;
 	isEmployee = false;
 	selectedFilter = 'all';
-	objectiveGroup = 'level';
+	objectiveGroup = 'timeFrames';
 	goalGeneralSettings: GoalGeneralSetting;
 	goalTimeFrames: Array<string> = [];
 	filters = [
@@ -170,7 +170,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				data: {
 					selectedKeyResult: keyResult,
 					allKeyResults: this.goals[index].keyResults,
-					settings: this.goalGeneralSettings
+					settings: this.goalGeneralSettings,
+					orgId: this.selectedOrganizationId
 				}
 			},
 			closeOnBackdropClick: false
@@ -237,6 +238,12 @@ export class GoalsComponent extends TranslationBaseComponent
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (response) {
 			if (!!keyResult) {
+				this.goals[index].progress = this.calculateGoalProgress(
+					this.goals[index].keyResults
+				);
+				const goalData = this.goals[index];
+				delete goalData.keyResults;
+				await this.goalService.update(this.goals[index].id, goalData);
 				const keyResultData = response;
 				delete keyResultData.goal;
 				delete keyResultData.updates;

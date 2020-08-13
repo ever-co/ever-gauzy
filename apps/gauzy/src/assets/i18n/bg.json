@@ -1059,12 +1059,14 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
+		"POSITIONS": "Позиции",
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
 		"CONTACTS": "Contacts",
 		"VENDORS": "Доставчици",
+		"NAME": "Име",
 		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Проекти",
 		"ACTIVE": "Активна",
@@ -1072,6 +1074,7 @@
 		"ARCHIVED": "Архивирана",
 		"LOCATION": "Локация",
 		"SETTINGS": "Настройки",
+		"TEAMS": "Отбори",
 		"ROLES": "Роли",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",
@@ -1082,7 +1085,11 @@
 		"EMAIL_INVITE": "Email Invite",
 		"ADD_LEVEL_OF_EMPLOYEE": "Add level of employee",
 		"LEVEL_OF_EMPLOYEE": "Employee Levels",
-		"VENDOR_NAME": "Vendor name",
+		"PHONE": "Phone",
+		"EMAIL": "Eлектронна поща",
+		"WEBSITE": "Website",
+		"DOCUMENT_URL": "Document URL",
+		"UPDATED": "Updated",
 		"LEVEL_NAME": "Level name",
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
@@ -2235,7 +2242,17 @@
 			"email-estimate": "Email Estimate",
 			"email-invoice": "Email Invoice",
 			"invite-employee": "Invite Employee",
-			"invite-user": "Invite User"
+			"invite-user": "Invite User",
+			"appointment-confirmation": "Appointment Confirmation",
+			"appointment-cancellation": "Appointment Cancellation",
+			"equipment": "Equipment Create",
+			"equipment-request": "Equipment Request",
+			"timesheet-overview": "Time sheet overview",
+			"timesheet-submit": "Time Sheet Submit",
+			"timesheet-action": "Time Sheet Actions",
+			"timesheet-delete": "Time Sheet Delete",
+			"candidate-schedule-interview": "Candidate Interview Schedule",
+			"interviewer-interview-schedule": "Interviewer Schedule"
 		},
 		"LANGUAGE_CODES": {
 			"en": "English",
@@ -2262,6 +2279,7 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
-		"SELECT_STAGE": "Select Stage"
+		"SELECT_STAGE": "Select Stage",
+		"PROBABLITY": "Probability"
 	}
 }

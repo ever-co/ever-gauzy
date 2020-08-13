@@ -9,7 +9,8 @@ import {
 	NbActionsModule,
 	NbToggleModule,
 	NbSelectModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -32,6 +33,7 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -70,7 +72,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeeSelectorsModule,
 		EmployeeMultiSelectModule,
 		FileUploaderModule,
-		SharedModule
+		SharedModule,
+		Ng2SmartTableModule,
+		NbSpinnerModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	entryComponents: [],

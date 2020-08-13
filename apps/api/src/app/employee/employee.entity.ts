@@ -155,7 +155,7 @@ export class Employee extends TenantBase implements IEmployee {
 	teams?: OrganizationTeam[];
 
 	@OneToMany((type) => TimeLog, (timeLog) => timeLog.employee)
-	timelogs?: TimeLog[];
+	timeLogs?: TimeLog[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

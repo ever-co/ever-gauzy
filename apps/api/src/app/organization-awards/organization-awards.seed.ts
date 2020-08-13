@@ -4,6 +4,31 @@ import { Organization } from '../organization/organization.entity';
 import {OrganizationAwards} from './organization-awards.entity';
 import * as faker from 'faker';
 
+let defaultAwardsData = {
+  "Top Software Development Company":2015,
+  "Upwork Top Rated Development Company 2019":2019,
+  "Upwork Top Rated Development Company 2018":2018,
+  "Upwork Top Rated Development Company 2017":2017
+};
+
+export const createDefaultAwards = async (
+  connection: Connection,
+  organizations: Organization[]
+): Promise<OrganizationAwards[]> => {
+  let awards :OrganizationAwards[] = [];
+  let awardsNames  = Object.keys(defaultAwardsData);
+    for(const org of organizations){
+      for(const awardsName of awardsNames){
+        let award = new OrganizationAwards();
+        award.name= awardsName;
+        award.year = defaultAwardsData[awardsName];
+        award.organization = org;
+        awards.push(award);
+    }
+  }
+  return await connection.manager.save(awards);
+};
+
 export const createRandomAwards = async (
   connection: Connection,
   tenants: Tenant[],

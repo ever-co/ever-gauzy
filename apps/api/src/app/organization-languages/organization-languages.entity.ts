@@ -19,6 +19,7 @@ export class OrganizationLanguages extends Base
 		(organization_languages: OrganizationLanguages) =>
 			organization_languages.organization
 	)
+  @Column()
 	readonly organizationId: string;
 
 	@ApiProperty({ type: Language })

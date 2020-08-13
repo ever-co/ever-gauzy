@@ -2,15 +2,12 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import {
 	TimesheetStatus,
-	OrganizationProjects,
-	Organization
+	OrganizationProjects	
 } from '@gauzy/models';
 import { Timesheet } from '../timesheet.entity';
 import { Employee } from '../../employee/employee.entity';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-import * as rimraf from 'rimraf';
-import * as path from 'path';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
 
@@ -28,12 +25,7 @@ export const createDefaultTimeSheet = async (
 	}
 
 	const timesheets: Timesheet[] = [];
-
-	// const users = await connecption
-	// 	.getRepository(OrganizationClients)
-	// 	.createQueryBuilder()
-	// 	.getMany();
-
+	
 	for (let index = 0; index < 2; index++) {
 		const date = moment().subtract(index, 'week').toDate();
 		const startedAt = moment(date).startOf('week').toDate();
@@ -90,25 +82,13 @@ export const createDefaultTimeSheet = async (
 
 	const createdTimesheets = await connection.getRepository(Timesheet).find();
 
-	await new Promise((resolve, reject) => {
-		const dir = path.join(
-			process.cwd(),
-			'apps',
-			'api',
-			'public',
-			'screenshots'
-		);
-		rimraf(dir, () => {
-			resolve();
-		});
-	});
-
 	await createRandomTimeLogs(
 		connection,
 		createdTimesheets,
 		defaultProjects,
 		noOfTimeLogsPerTimeSheet
 	);
+
 	await createRandomActivities(connection);
 
 	return createdTimesheets;
@@ -127,15 +107,11 @@ export const createRandomTimesheet = async (
 	}
 
 	const timesheets: Timesheet[] = [];
+
 	const employees = await connection
 		.getRepository(Employee)
 		.createQueryBuilder()
 		.getMany();
-
-	// const users = await connection
-	// 	.getRepository(OrganizationClients)
-	// 	.createQueryBuilder()
-	// 	.getMany();
 
 	for (let index = 0; index < 2; index++) {
 		const date = moment().subtract(index, 'week').toDate();
@@ -192,23 +168,6 @@ export const createRandomTimesheet = async (
 	await connection.getRepository(Timesheet).save(timesheets);
 
 	const createdTimesheets = await connection.getRepository(Timesheet).find();
-	try {
-		await new Promise((resolve, reject) => {
-			const dir = path.join(
-				process.cwd(),
-				'apps',
-				'api',
-				'public',
-				'screenshots'
-			);
-			rimraf(dir, () => {
-				'Screenshots dir deleted';
-				resolve();
-			});
-		});
-	} catch (error) {
-		console.log('Screenshots dir delete error', error);
-	}
 
 	await createRandomTimeLogs(
 		connection,
@@ -216,6 +175,7 @@ export const createRandomTimesheet = async (
 		defaultProjects,
 		noOfTimeLogsPerTimeSheet
 	);
+
 	await createRandomActivities(connection);
 
 	return createdTimesheets;

@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	Employee,
 	Organization,
 	OrganizationTeamCreateInput,
 	OrganizationTeam,
 	Tag,
-	RolesEnum
+	RolesEnum,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +18,11 @@ import { EmployeesService } from '../../@core/services';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { LocalDataSource } from 'ng2-smart-table';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { TeamManagersTableComponent } from './table-components/managers/managers.component';
+import { TeamMembersTableComponent } from './table-components/members/members.component';
 @Component({
 	selector: 'ga-teams',
 	templateUrl: './teams.component.html',
@@ -26,14 +31,21 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 	selectedOrg: Organization;
+	@ViewChild('teamTable') teamTable;
 	organizationId: string;
 	showAddCard: boolean;
+	disableButton = true;
+	selectedTeam: OrganizationTeam;
+	showTable: boolean;
 	teams: OrganizationTeam[];
 	employees: Employee[] = [];
 	teamToEdit: OrganizationTeam;
 	loading = true;
 	tags: Tag[] = [];
-
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private employeesService: EmployeesService,
@@ -45,6 +57,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	async ngOnInit() {
@@ -55,6 +68,8 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 					this.organizationId = organization.id;
 					this.loadTeams();
 					this.loadEmployees();
+					this.loadSmartTable();
+					this._applyTranslationOnSmartTable();
 				}
 			});
 		this.route.queryParamMap
@@ -66,7 +81,15 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 				}
 			});
 	}
-
+	setView() {
+		this.viewComponentName = ComponentEnum.TEAMS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
 	async addOrEditTeam(team: OrganizationTeamCreateInput) {
 		if (team.name && team.name.trim().length && team.members.length) {
 			if (this.teamToEdit) {
@@ -204,6 +227,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 			}
 		);
 		if (teams) {
+			const result = [];
 			teams.forEach((team: OrganizationTeam) => {
 				team.managers = team.members.filter(
 					(member) =>
@@ -215,7 +239,64 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 			this.teams = [...teams].sort(
 				(a, b) => b.members.length - a.members.length
 			);
+
+			this.teams.forEach((team) =>
+				result.push({
+					team_name: team.name,
+					members: team.members.map((item) => item.employee),
+					managers: team.managers.map((item) => item.employee),
+					tags: team.tags
+				})
+			);
+			this.smartTableSource.load(result);
 		}
 		this.loading = false;
+	}
+
+	selectTeam({ isSelected, data }) {
+		const selectedTeam = isSelected ? data : null;
+		if (this.teamTable) {
+			this.teamTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedTeam = selectedTeam;
+	}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				team_name: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'string'
+				},
+				members: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
+					),
+					type: 'custom',
+					renderComponent: TeamMembersTableComponent,
+					filter: false
+				},
+				managers: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'
+					),
+					type: 'custom',
+					renderComponent: TeamManagersTableComponent,
+					filter: false
+				},
+				notes: {
+					title: this.getTranslation('MENU.TAGS'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
+				}
+			}
+		};
+	}
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 }

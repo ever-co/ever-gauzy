@@ -439,10 +439,10 @@
 											<div
 												class="label label-hourly margin-right-10"
 											>
-												hourly
+                        {{employee.payPeriod}}
 											</div>
 											<div class="pay-rate">
-												$25/hr
+                        {{employee.billRateValue | currency :  employee.billRateCurrency: 'symbol'}}/hr
 											</div>
 											<div class="clearfix"></div>
 											<div class="speciality">

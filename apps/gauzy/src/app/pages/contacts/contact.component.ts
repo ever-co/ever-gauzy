@@ -3,7 +3,8 @@ import {
 	Employee,
 	OrganizationContact,
 	OrganizationContactCreateInput,
-	OrganizationProjects
+	OrganizationProjects,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,6 +17,7 @@ import { EmployeesService } from '../../@core/services';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { Store } from '../../@core/services/store.service';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 @Component({
 	selector: 'ga-contact',
@@ -39,7 +41,8 @@ export class ContactComponent extends TranslationBaseComponent
 	employees: Employee[] = [];
 
 	organizationContactToEdit: OrganizationContact;
-
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
@@ -88,6 +91,15 @@ export class ContactComponent extends TranslationBaseComponent
 		);
 
 		this.loadOrganizationContacts();
+	}
+	setView() {
+		this.viewComponentName = ComponentEnum.CONTACTS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 
 	private async addOrEditOrganizationContact(

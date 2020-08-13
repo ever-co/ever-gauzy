@@ -1,116 +1,106 @@
 <nb-card>
 	<nb-card-header>
-		<button
-			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
-			nbButton
-			status="success"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
-		<div *ngIf="showAddCard" class="row">
-			<div class="col-sm-3 d-flex flex-column justify-content-end">
-				<label class="label" for="add-vendor">{{
-					'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
-				}}</label>
-				<input
-					#addInput="ngModel"
-					nbInput
-					type="text"
-					style="max-width: none;"
-					placeholder="{{
-						'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
-					}}"
-					id="add-vendor"
-					[ngModel]="vendor"
-					required
-				/>
+		<div class="header">
+			<h4>{{ 'ORGANIZATIONS_PAGE.VENDORS' | translate }}</h4>
+			<div class="header">
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
 			</div>
-			<ga-tags-color-input
-				[selectedTags]="tags"
-				(selectedTagsEvent)="selectedTagsEvent($event)"
-				class="col-sm-3"
-				[isOrgLevel]="true"
-			>
-			</ga-tags-color-input>
-			<span class="col-sm-3" style="margin-top: 29px;"
-				><button
-					class="w-100"
-					(click)="addVendor(addInput.value)"
-					nbButton
-					status="success"
-					[disabled]="addInput.invalid"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button></span
-			>
-			<span class="col-sm-3" style="margin-top: 29px;"
-				><button
-					class="w-100"
-					(click)="showAddCard = !showAddCard"
-					nbButton
-					status="danger"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button></span
-			>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="vendors?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{ 'ORGANIZATIONS_PAGE.VENDORS' | translate }}</strong>
-		</div>
-
-		<nb-card *ngFor="let v of vendors">
-			<nb-card-body
-				style="
-					display: flex;
-					justify-content: space-between;
-					align-items: center;
-				"
+	<nb-card-body>
+		<div style="padding-bottom: 1rem;">
+			<button
+				*ngIf="!showAddCard"
+				(click)="add()"
+				nbButton
+				status="success"
 			>
-				<ga-notes-with-tags [rowData]="v" *ngIf="v !== selectedVendor">
-				</ga-notes-with-tags>
-				<div
-					*ngIf="showEditDiv && v === selectedVendor"
-					class="row align-items-end"
-				>
-					<div
-						class="col-sm-3 d-flex flex-column justify-content-end"
-					>
-						<label class="label">{{
-							'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
-						}}</label>
-						<input
-							#editInput="ngModel"
-							nbInput
-							type="text"
-							fullWidth
-							[(ngModel)]="selectedVendor.name"
-							required
-						/>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<div *ngIf="showAddCard">
+				<form [formGroup]="form" *ngIf="form" class="form">
+					<div class="form-blocks">
+						<div class="form-input">
+							<label class="label" for="name">{{
+								'ORGANIZATIONS_PAGE.NAME' | translate
+							}}</label>
+							<input
+								nbInput
+								type="text"
+								style="max-width: none;"
+								placeholder="{{
+									'ORGANIZATIONS_PAGE.NAME' | translate
+								}}"
+								id="name"
+								formControlName="name"
+							/>
+						</div>
+						<div class="form-input">
+							<label class="label" for="phone">{{
+								'ORGANIZATIONS_PAGE.PHONE' | translate
+							}}</label>
+							<input
+								nbInput
+								type="text"
+								style="max-width: none;"
+								placeholder="{{
+									'ORGANIZATIONS_PAGE.PHONE' | translate
+								}}"
+								id="phone"
+								formControlName="phone"
+							/>
+						</div>
+						<div class="form-input">
+							<label class="label" for="email">{{
+								'ORGANIZATIONS_PAGE.EMAIL' | translate
+							}}</label>
+							<input
+								nbInput
+								type="text"
+								style="max-width: none;"
+								placeholder="{{
+									'ORGANIZATIONS_PAGE.EMAIL' | translate
+								}}"
+								id="email"
+								formControlName="email"
+							/>
+						</div>
+						<div class="form-input">
+							<label class="label" for="website">{{
+								'ORGANIZATIONS_PAGE.WEBSITE' | translate
+							}}</label>
+							<input
+								nbInput
+								type="text"
+								style="max-width: none;"
+								placeholder="{{
+									'ORGANIZATIONS_PAGE.WEBSITE' | translate
+								}}"
+								id="website"
+								formControlName="website"
+							/>
+						</div>
 					</div>
 					<ga-tags-color-input
 						[selectedTags]="tags"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
+						class="add-tags"
 						[isOrgLevel]="true"
 					>
 					</ga-tags-color-input>
-					<span class="col-2 pl-2 pr-1 ml-6">
+					<span class="add-btn">
 						<button
-							class="w-100"
-							(click)="
-								editVendor(selectedVendor.id, editInput.value)
-							"
+							class="w-100 mb-3"
+							(click)="save()"
 							nbButton
 							status="success"
-							[disabled]="editInput.invalid"
+							[disabled]="form.invalid"
 						>
-							{{ 'BUTTONS.UPDATE' | translate }}
-						</button></span
-					>
-					<span class="col-2 pl-1 pr-0">
+							{{ 'BUTTONS.SAVE' | translate }}
+						</button>
 						<button
 							class="w-100"
 							(click)="cancel()"
@@ -118,26 +108,109 @@
 							status="danger"
 						>
 							{{ 'BUTTONS.CANCEL' | translate }}
-						</button></span
+						</button>
+					</span>
+				</form>
+			</div>
+		</div>
+		<div *ngIf="dataLayoutStyle === 'TABLE'">
+			<nb-card *ngFor="let v of vendors">
+				<nb-card-body class="table">
+					<div class="table-blocks">
+						<span *ngIf="v.name" class="mb-1">
+							<span class="label">
+								{{
+									'ORGANIZATIONS_PAGE.NAME' | translate
+								}}: </span
+							>{{ v.name }}</span
+						>
+						<span *ngIf="v.phone">
+							<span class="label">
+								{{
+									'ORGANIZATIONS_PAGE.PHONE' | translate
+								}}: </span
+							>{{ v.phone }}</span
+						>
+					</div>
+					<div class="table-blocks">
+						<span *ngIf="v.email" class="mb-1">
+							<span class="label">
+								{{
+									'ORGANIZATIONS_PAGE.EMAIL' | translate
+								}}: </span
+							>{{ v.email }}</span
+						>
+						<span *ngIf="v.website">
+							<span class="label">
+								{{
+									'ORGANIZATIONS_PAGE.WEBSITE' | translate
+								}}: </span
+							>{{ v.website }}</span
+						>
+					</div>
+					<div class="tags">
+						<nb-badge
+							*ngFor="let tag of v?.tags"
+							class="color"
+							position="centered"
+							[style.background]="tag.color"
+							text="{{ tag.name }}"
+						>
+						</nb-badge>
+					</div>
+					<nb-actions
+						*ngIf="v !== selectedVendor"
+						class="float-right"
+						e="medium"
 					>
-				</div>
-				<nb-actions
-					*ngIf="v !== selectedVendor"
-					class="float-right"
-					e="medium"
-				>
-					<nb-action
-						(click)="showEditCard(v)"
-						class="d-inline pr-0 mr-3"
-						icon="edit"
-					></nb-action>
-					<nb-action
-						(click)="removeVendor(v.id, v.name)"
-						class="d-inline pr-0"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+						<nb-action
+							(click)="edit(v)"
+							class="d-inline pr-2"
+							icon="edit"
+						></nb-action>
+						<nb-action
+							(click)="removeVendor(v.id, v.name)"
+							class="d-inline pr-0 pl-2"
+							icon="close"
+						></nb-action>
+					</nb-actions>
+				</nb-card-body>
+			</nb-card>
+		</div>
+
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="vendors"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+		<ng-template
+			#actionButtons
+			let-buttonSize="buttonSize"
+			let-selectedItem="selectedItem"
+		>
+			<button
+				(click)="edit(selectedItem)"
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="removeVendor(selectedItem.id, selectedItem.name)"
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</ng-template>
 	</nb-card-body>
 </nb-card>

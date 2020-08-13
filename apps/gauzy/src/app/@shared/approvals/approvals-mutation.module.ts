@@ -19,6 +19,7 @@ import { RequestApprovalMutationComponent } from './approvals-mutation.component
 import { Store } from '../../@core/services/store.service';
 import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
+import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 
 @NgModule({
 	imports: [
@@ -34,6 +35,7 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 		NbRadioModule,
 		NgSelectModule,
 		EmployeeMultiSelectModule,
+		TagsColorInputModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

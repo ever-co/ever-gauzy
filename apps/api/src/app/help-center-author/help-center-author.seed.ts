@@ -6,6 +6,26 @@ import { Tenant } from '../tenant/tenant.entity';
 import { Employee } from '@gauzy/models';
 import * as _ from 'underscore';
 
+export const createDefaultHelpCenterAuthor = async (
+  connection: Connection,
+  defaultEmployees: Employee[]
+): Promise<HelpCenterAuthor[]> => {
+  if (!defaultEmployees) {
+    console.warn(
+      'Warning: defaultEmployees not found, default help center author not be created'
+    );
+    return;
+  }
+
+  let mapEmployeeToArticles: HelpCenterAuthor[] = [];
+
+  const allArticle = await connection.manager.find(HelpCenterArticle, {});
+
+  mapEmployeeToArticles = await operateData(connection, mapEmployeeToArticles, allArticle, defaultEmployees);
+
+  return mapEmployeeToArticles;
+};
+
 export const createRandomHelpCenterAuthor = async (
 	connection: Connection,
 	tenants: Tenant[],
@@ -29,17 +49,8 @@ export const createRandomHelpCenterAuthor = async (
 		}
 	}
 
-	for (let i = 0; i < allArticle.length; i++) {
-		const emps = faker.random.arrayElement(employees);
+  mapEmployeeToArticles = await operateData(connection, mapEmployeeToArticles, allArticle, employees)
 
-		let employeeMap = new HelpCenterAuthor();
-
-		employeeMap.employeeId = emps.id;
-		employeeMap.articleId = allArticle[i].id;
-
-		mapEmployeeToArticles.push(employeeMap);
-	}
-	await insertRandomHelpCenterAuthor(connection, mapEmployeeToArticles);
 	return mapEmployeeToArticles;
 };
 
@@ -53,4 +64,21 @@ const insertRandomHelpCenterAuthor = async (
 		.into(HelpCenterAuthor)
 		.values(data)
 		.execute();
+};
+
+const operateData = async (connection, mapEmployeeToArticles, allArticle, employees: Employee[]) =>{
+
+  for (let i = 0; i < allArticle.length; i++) {
+    const emps = faker.random.arrayElement(employees);
+
+    let employeeMap = new HelpCenterAuthor();
+
+    employeeMap.employeeId = emps.id;
+    employeeMap.articleId = allArticle[i].id;
+
+    mapEmployeeToArticles.push(employeeMap);
+  }
+
+  await insertRandomHelpCenterAuthor(connection, mapEmployeeToArticles);
+  return mapEmployeeToArticles;
 };
