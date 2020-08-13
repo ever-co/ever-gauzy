@@ -1,7 +1,9 @@
-import { Candidate, ICandidateFeedback } from '@gauzy/models';
+import { Candidate, CandidateStatus, ICandidateFeedback } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import * as faker from "faker";
 
 const candidateFeedbackList: ICandidateFeedback[] = [
 	{
@@ -16,8 +18,8 @@ const candidateFeedbackList: ICandidateFeedback[] = [
 export const createCandidateFeedbacks = async (
 	connection: Connection,
 	candidates: Candidate[] | void
-): Promise<CandidateFeedback[]> => {
-	let defaultCandidateFeedbacks = [];
+): Promise<Map<Candidate, CandidateFeedback[]>> => {
+  let candidateFeedbacksMap: Map<Candidate, any[]> = new Map();
 
 	if (!candidates) {
 		console.warn(
@@ -25,23 +27,9 @@ export const createCandidateFeedbacks = async (
 		);
 		return;
 	}
+  candidateFeedbacksMap = await dataOperation(connection, [], candidateFeedbacksMap, candidates)
 
-	candidates.forEach((candidate) => {
-		const feedbacks = candidateFeedbackList.map((feedback) => ({
-			description: feedback.description,
-			rating: feedback.rating,
-			candidateId: candidate.id
-		}));
-
-		defaultCandidateFeedbacks = [
-			...defaultCandidateFeedbacks,
-			...feedbacks
-		];
-	});
-
-	insertCandidateFeedbacks(connection, defaultCandidateFeedbacks);
-
-	return defaultCandidateFeedbacks;
+	return candidateFeedbacksMap;
 };
 
 export const createRandomCandidateFeedbacks = async (
@@ -57,25 +45,12 @@ export const createRandomCandidateFeedbacks = async (
 	}
 
 	let candidateFeedbacks = [];
-	const candidateFeedbacksMap: Map<Candidate, any[]> = new Map();
+	let candidateFeedbacksMap: Map<Candidate, any[]> = new Map();
 
-	(tenants || []).forEach((tenant) => {
+	for(let tenant of tenants)  {
 		const candidates = tenantCandidatesMap.get(tenant);
-
-		(candidates || []).forEach((candidate) => {
-			const feedbacks = candidateFeedbackList.map((feedback) => ({
-				description: feedback.description,
-				rating: feedback.rating,
-				candidateId: candidate.id
-			}));
-
-			candidateFeedbacksMap.set(candidate, feedbacks);
-			candidateFeedbacks = [...candidateFeedbacks, ...feedbacks];
-		});
-	});
-
-	await insertCandidateFeedbacks(connection, candidateFeedbacks);
-
+    candidateFeedbacksMap = await dataOperation(connection, candidateFeedbacks, candidateFeedbacksMap, candidates)
+	}
 	return candidateFeedbacksMap;
 };
 
@@ -90,3 +65,24 @@ const insertCandidateFeedbacks = async (
 		.values(candidateFeedbacks)
 		.execute();
 };
+
+let dataOperation = async (connection: Connection, candidateFeedbacks, candidateFeedbacksMap, candidates, ) =>{
+  for(let candidate of candidates){
+    const candidateInterviews = await connection.manager.find(CandidateInterview, {
+      where: [{ candidate: candidate }]
+    });
+    let interview = faker.random.arrayElement(candidateInterviews);
+    const feedbacks = candidateFeedbackList.map((feedback) => ({
+      description: feedback.description,
+      rating: feedback.rating,
+      candidateId: candidate.id,
+      interviewId: interview.id,
+      status: faker.random.arrayElement(Object.keys(CandidateStatus))
+    }));
+
+    candidateFeedbacksMap.set(candidate, feedbacks);
+    candidateFeedbacks = [...candidateFeedbacks, ...feedbacks];
+  }
+  await insertCandidateFeedbacks(connection, candidateFeedbacks);
+  return candidateFeedbacksMap;
+}

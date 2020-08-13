@@ -26,27 +26,10 @@ export const createDefaultEmployeeAppointment = async (
     return;
   }
 
-  const employeesAppointments: EmployeeAppointment[] = [];
+  let employeesAppointments: EmployeeAppointment[] = [];
 
   for (const employee of Employees) {
-    // for (const organization of Organizations) {
-      const employeesAppointment = new EmployeeAppointment();
-
-      const Invitees = await connection.manager.find(AppointmentEmployees, {
-        where: [{ employeeId: employee.id }]
-      });
-
-      employeesAppointment.employee = employee;
-      employeesAppointment.organization = Organizations;
-      employeesAppointment.description = faker.name.jobDescriptor();
-      employeesAppointment.location = faker.address.city();
-      employeesAppointment.startDateTime = faker.date.between(new Date(), moment(new Date()).add(2, 'months').toDate());
-      employeesAppointment.endDateTime = moment(employeesAppointment.startDateTime).add(1, 'hours').toDate();
-      employeesAppointment.invitees = Invitees;
-      employeesAppointment.agenda = faker.random.arrayElement(agendas);
-
-      employeesAppointments.push(employeesAppointment);
-    // }
+    employeesAppointments = await dataOperation(connection, employeesAppointments, employee, [Organizations]);
   }
   await connection.manager.save(employeesAppointments);
 };
@@ -70,22 +53,28 @@ export const createRandomEmployeeAppointment = async (
     return;
   }
 
-  const employeesAppointments: EmployeeAppointment[] = [];
+  let  employeesAppointments: EmployeeAppointment[] = [];
 
   for (const tenant of tenants) {
     const tenantEmployees = tenantEmployeeMap.get(tenant);
     const tenantOrgs = tenantOrganizationsMap.get(tenant);
 
     for (const tenantEmployee of tenantEmployees) {
-      for (const tenantOrg of tenantOrgs) {
-        const employeesAppointment = new EmployeeAppointment();
+      employeesAppointments = await dataOperation(connection, employeesAppointments, tenantEmployee, tenantOrgs);
+    }
+  }
+};
+
+const dataOperation = async (connection: Connection, employeesAppointments, tenantEmployee, organizations)=>{
+  for (const organization of organizations) {
+    const employeesAppointment = new EmployeeAppointment();
 
         const Invitees = await connection.manager.find(AppointmentEmployees, {
           where: [{ employeeId: tenantEmployee.id }]
         });
 
         employeesAppointment.employee = tenantEmployee;
-        employeesAppointment.organization = tenantOrg;
+        employeesAppointment.organization = organization;
         employeesAppointment.description = faker.name.jobDescriptor();
         employeesAppointment.location = faker.address.city();
         employeesAppointment.startDateTime = faker.date.between(new Date(),moment(new Date()).add(2, 'months').toDate());
@@ -93,10 +82,9 @@ export const createRandomEmployeeAppointment = async (
         employeesAppointment.invitees = Invitees;
         employeesAppointment.agenda = faker.random.arrayElement(agendas);
 
-        employeesAppointments.push(employeesAppointment);
-      }
-    }
+    employeesAppointments.push(employeesAppointment);
   }
 
   await connection.manager.save(employeesAppointments);
-};
+  return employeesAppointments;
+}

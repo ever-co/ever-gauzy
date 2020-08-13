@@ -1,0 +1,21 @@
+<div
+	*ngIf="probability < 3"
+	class="badge-danger text-center"
+	style="border-radius: 0.25rem; min-width: 5rem;"
+>
+	{{ probability }} - Low
+</div>
+<div
+	*ngIf="probability === 3 || probability === 4"
+	class="badge-warning text-center"
+	style="border-radius: 0.25rem; min-width: 5rem;"
+>
+	{{ probability }} - Medium
+</div>
+<div
+	*ngIf="probability === 5"
+	class="badge-success text-center"
+	style="border-radius: 0.25rem; min-width: 5rem;"
+>
+	{{ probability }} - High
+</div>

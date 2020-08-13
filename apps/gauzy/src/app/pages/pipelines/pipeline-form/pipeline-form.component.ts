@@ -17,6 +17,7 @@ export class PipelineFormComponent implements OnInit {
 	userOrganizations: UserOrganization[];
 	form: FormGroup;
 	icon: string;
+	isActive: boolean;
 
 	constructor(
 		public dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
@@ -27,9 +28,11 @@ export class PipelineFormComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
-		const { id } = this.pipeline;
+		const { id, isActive } = this.pipeline;
 		const { userId } = this.store;
 
+		isActive === undefined ? this.isActive = true : this.isActive = isActive;
+		
 		this.usersOrganizationsService
 			.getAll(['organization'], { userId })
 			.then(({ items }) => (this.userOrganizations = items));
@@ -41,8 +44,13 @@ export class PipelineFormComponent implements OnInit {
 			name: [this.pipeline.name || '', Validators.required],
 			...(id ? { id: [id, Validators.required] } : {}),
 			description: [this.pipeline.description],
-			stages: this.fb.array([])
+			stages: this.fb.array([]),
+			isActive: [this.isActive]
 		});
+	}
+
+	setIsActive() {
+		this.isActive = !this.isActive;
 	}
 
 	persist(): void {
@@ -50,6 +58,8 @@ export class PipelineFormComponent implements OnInit {
 			value,
 			value: { id }
 		} = this.form;
+
+		console.log(this.form.value)
 
 		Promise.race([
 			id

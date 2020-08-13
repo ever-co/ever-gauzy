@@ -10,12 +10,16 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Subject } from 'rxjs';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
 
 @Component({
 	selector: 'ga-documents',
 	templateUrl: './documents.component.html'
 })
-export class DocumentsComponent implements OnInit, OnDestroy {
+export class DocumentsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	@ViewChild('uploadDoc')
 	uploadDoc: UploadDocumentComponent;
 	private _ngDestroy$ = new Subject<void>();
@@ -27,23 +31,33 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 	documentList: OrganizationDocument[];
 	showAddCard = false;
 	loading = false;
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	constructor(
 		private readonly fb: FormBuilder,
 		private dialogService: NbDialogService,
 		private store: Store,
+		readonly translateService: TranslateService,
 		private organizationDocumentsService: OrganizationDocumentsService,
 		private toastrService: ToastrService
-	) {}
+	) {
+		super(translateService);
+		this.setView();
+	}
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
-				this.organizationId = org.id;
-				this._initializeForm();
-				this._loadDocuments();
+				if (org) {
+					this.organizationId = org.id;
+					this._initializeForm();
+					this._loadDocuments();
+					this.loadSmartTable();
+					this._applyTranslationOnSmartTable();
+				}
 			});
 	}
 
@@ -68,6 +82,28 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 				this.dataLayoutStyle = componentLayout;
 			});
 	}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				name: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'string'
+				},
+				documentUrl: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.DOCUMENT_URL'
+					),
+					type: 'string'
+				},
+				updated: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.UPDATED'),
+					type: 'string'
+				}
+			}
+		};
+	}
+
 	submitForm() {
 		const documentForm = this.form.controls.documents as FormArray;
 		const formValue = { ...documentForm.value[0] };
@@ -106,7 +142,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 					this.toastrService.success(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.CREATED'
 					);
-					this.showAddCard = !this.showAddCard;
+					this.cancel();
 					this._loadDocuments();
 				},
 				() =>
@@ -118,13 +154,27 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 
 	private _loadDocuments() {
 		this.loading = true;
-
+		const result = [];
 		this.organizationDocumentsService
 			.getAll({ organizationId: this.organizationId })
 			.pipe(first())
 			.subscribe(
-				(res) => {
-					this.documentList = res.items;
+				(data) => {
+					this.documentList = data.items;
+					for (const doc of data.items) {
+						result.push({
+							name: doc.name,
+							documentUrl:
+								doc.documentUrl.slice(0, 25) +
+								'...' +
+								doc.documentUrl.slice(-10, -1),
+							updated:
+								new Date(doc.updatedAt).toDateString() +
+								', ' +
+								new Date(doc.updatedAt).toLocaleTimeString()
+						});
+					}
+					this.smartTableSource.load(result);
 					this.loading = false;
 				},
 				() =>
@@ -143,7 +193,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 					this.toastrService.success(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.UPDATED'
 					);
-					this.showAddCard = !this.showAddCard;
+					this.cancel();
 					this._loadDocuments();
 				},
 				() =>
@@ -158,11 +208,11 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 		this.form.controls.documents.reset();
 	}
 
-	editDocument(index: number, id: string) {
+	editDocument(document: OrganizationDocument) {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.documents.patchValue([this.documentList[index]]);
-		this.documentId = id;
-		this.documentUrl = this.documentList[index].documentUrl;
+		this.form.controls.documents.patchValue([document]);
+		this.documentId = document.id;
+		this.documentUrl = document.documentUrl;
 	}
 
 	removeDocument(id: string) {
@@ -196,8 +246,13 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 	cancel() {
 		this.showAddCard = !this.showAddCard;
 		this.form.reset();
+		this.documentUrl = null;
 	}
-
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
+	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

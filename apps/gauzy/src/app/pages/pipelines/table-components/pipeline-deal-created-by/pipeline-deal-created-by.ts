@@ -9,8 +9,8 @@ import { Deal } from '@gauzy/models';
 })
 export class PipelineDealCreatedByComponent implements ViewCell {
 	@Input()
-	public value: string | number;
+	value: string | number;
 
 	@Input()
-	public rowData: Deal;
+	rowData: Deal;
 }

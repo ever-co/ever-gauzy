@@ -33,13 +33,14 @@ export class TimeOffComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	timeOffData: TimeOff[];
-	private _selectedOrganizationId: string;
+	selectedTimeOffRecord: TimeOff;
 	timeOffRequest: TimeOff;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedDate: Date;
+	tableData = [];
 	selectedEmployeeId: string;
 	selectedStatus = 'ALL';
-	selectedTimeOffRecord: TimeOff;
-	tableData = [];
 	timeOffStatuses = Object.keys(StatusTypesEnum);
 	loading = false;
 	isRecordSelected = false;
@@ -47,8 +48,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 	hasEditPermission = false;
 	showActions = false;
 	private _ngDestroy$ = new Subject<void>();
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	private _selectedOrganizationId: string;
+
 	@ViewChild('timeOffTable') timeOffTable;
 
 	constructor(
@@ -132,116 +133,30 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 	}
 
-	private _loadSmartTableSettings() {
-		this.settingsSmartTable = {
-			actions: false,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
-			columns: {
-				fullName: {
-					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-					type: 'custom',
-					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
-				},
-				description: {
-					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
-					type: 'html'
-				},
-				policyName: {
-					title: this.getTranslation('SM_TABLE.POLICY'),
-					type: 'string',
-					class: 'text-center'
-				},
-				start: {
-					title: this.getTranslation('SM_TABLE.START'),
-					type: 'date',
-					filter: false,
-					valuePrepareFunction: (date) =>
-						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
-					class: 'text-center'
-				},
-				end: {
-					title: this.getTranslation('SM_TABLE.END'),
-					type: 'date',
-					filter: false,
-					valuePrepareFunction: (date) =>
-						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
-					class: 'text-center'
-				},
-				requestDate: {
-					title: this.getTranslation('SM_TABLE.REQUEST_DATE'),
-					type: 'date',
-					filter: false,
-					valuePrepareFunction: (date) =>
-						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
-					class: 'text-center'
-				},
-				status: {
-					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'custom',
-					class: 'text-center',
-					width: '200px',
-					renderComponent: TimeOffStatusComponent,
-					filter: false
-				}
-			},
-			pager: {
-				display: true,
-				perPage: 8
-			}
-		};
+	showAdditionalActions() {
+		this.showActions = !this.showActions;
 	}
 
-	private _loadTableData(orgId?: string) {
-		this.timeOffService
-			.getAllTimeOffRecords(
-				['employees', 'employees.user', 'policy'],
-				{
-					organizationId: orgId,
-					employeeId: this.selectedEmployeeId || ''
-				},
-				this.selectedDate || null
-			)
-			.pipe(first())
-			.subscribe(
-				(res) => {
-					this.tableData = [];
-					res.items.forEach((result: TimeOff) => {
-						let employeeName: string;
-						let employeeImage: string;
-						let extendedDescription = '';
+	changeDisplayHolidays(checked: boolean) {
+		this.displayHolidays = checked;
+		this.isRecordSelected = false;
 
-						if (result.employees.length !== 1) {
-							employeeName = 'Multiple employees';
-							employeeImage =
-								'assets/images/avatars/people-outline.svg';
-						} else {
-							employeeName = `${result.employees[0].user.firstName} ${result.employees[0].user.lastName}`;
-							employeeImage = result.employees[0].user.imageUrl;
-						}
-
-						if (result.documentUrl) {
-							extendedDescription = `<a href=${result.documentUrl} target="_blank">View Request Document</a><br>${result.description}`;
-						} else {
-							extendedDescription = result.description;
-						}
-
-						this.tableData.push({
-							...result,
-							fullName: employeeName,
-							imageUrl: employeeImage,
-							policyName: result.policy.name,
-							description: extendedDescription
-						});
-					});
-					this.timeOffData = this.tableData;
-					this.sourceSmartTable.load(this.tableData);
-				},
-				() =>
-					this.toastrService.danger(
-						'TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS'
-					)
+		if (this.displayHolidays) {
+			this.timeOffData = this.tableData;
+			this.sourceSmartTable.load(this.tableData);
+		} else {
+			const filteredData = [...this.tableData].filter(
+				(record: TimeOff) => !record.isHoliday
 			);
+			this.timeOffData = filteredData;
+			this.sourceSmartTable.load(filteredData);
+		}
+	}
+
+	applyTranslationOnSmartTable() {
+		this.translate.onLangChange.subscribe(() => {
+			this._loadSmartTableSettings();
+		});
 	}
 
 	detectStatusChange(status: string) {
@@ -458,6 +373,118 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 	}
 
+	private _loadSmartTableSettings() {
+		this.settingsSmartTable = {
+			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			columns: {
+				fullName: {
+					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
+					type: 'custom',
+					renderComponent: PictureNameTagsComponent,
+					class: 'align-row'
+				},
+				description: {
+					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
+					type: 'html'
+				},
+				policyName: {
+					title: this.getTranslation('SM_TABLE.POLICY'),
+					type: 'string',
+					class: 'text-center'
+				},
+				start: {
+					title: this.getTranslation('SM_TABLE.START'),
+					type: 'date',
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					class: 'text-center'
+				},
+				end: {
+					title: this.getTranslation('SM_TABLE.END'),
+					type: 'date',
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					class: 'text-center'
+				},
+				requestDate: {
+					title: this.getTranslation('SM_TABLE.REQUEST_DATE'),
+					type: 'date',
+					filter: false,
+					valuePrepareFunction: (date) =>
+						new DatePipe('en-GB').transform(date, 'dd/MM/yyyy'),
+					class: 'text-center'
+				},
+				status: {
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'custom',
+					class: 'text-center',
+					width: '200px',
+					renderComponent: TimeOffStatusComponent,
+					filter: false
+				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
+			}
+		};
+	}
+
+	private _loadTableData(orgId?: string) {
+		this.timeOffService
+			.getAllTimeOffRecords(
+				['employees', 'employees.user', 'policy'],
+				{
+					organizationId: orgId,
+					employeeId: this.selectedEmployeeId || ''
+				},
+				this.selectedDate || null
+			)
+			.pipe(first())
+			.subscribe(
+				(res) => {
+					this.tableData = [];
+					res.items.forEach((result: TimeOff) => {
+						let employeeName: string;
+						let employeeImage: string;
+						let extendedDescription = '';
+
+						if (result.employees.length !== 1) {
+							employeeName = 'Multiple employees';
+							employeeImage =
+								'assets/images/avatars/people-outline.svg';
+						} else {
+							employeeName = `${result.employees[0].user.firstName} ${result.employees[0].user.lastName}`;
+							employeeImage = result.employees[0].user.imageUrl;
+						}
+
+						if (result.documentUrl) {
+							extendedDescription = `<a href=${result.documentUrl} target="_blank">View Request Document</a><br>${result.description}`;
+						} else {
+							extendedDescription = result.description;
+						}
+
+						this.tableData.push({
+							...result,
+							fullName: employeeName,
+							imageUrl: employeeImage,
+							policyName: result.policy.name,
+							description: extendedDescription
+						});
+					});
+					this.timeOffData = this.tableData;
+					this.sourceSmartTable.load(this.tableData);
+				},
+				() =>
+					this.toastrService.danger(
+						'TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS'
+					)
+			);
+	}
+
 	private _createRecord() {
 		if (this.timeOffRequest) {
 			this.timeOffService
@@ -503,32 +530,6 @@ export class TimeOffComponent extends TranslationBaseComponent
 		const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
 		const nativeDescription = this.selectedTimeOffRecord.description;
 		this.selectedTimeOffRecord.description = nativeDescription.substr(index+1);
-	}
-
-	showAdditionalActions() {
-		this.showActions = !this.showActions;
-	}
-
-	changeDisplayHolidays(checked: boolean) {
-		this.displayHolidays = checked;
-		this.isRecordSelected = false;
-
-		if (this.displayHolidays) {
-			this.timeOffData = this.tableData;
-			this.sourceSmartTable.load(this.tableData);
-		} else {
-			const filteredData = [...this.tableData].filter(
-				(record: TimeOff) => !record.isHoliday
-			);
-			this.timeOffData = filteredData;
-			this.sourceSmartTable.load(filteredData);
-		}
-	}
-
-	applyTranslationOnSmartTable() {
-		this.translate.onLangChange.subscribe(() => {
-			this._loadSmartTableSettings();
-		});
 	}
 
 	ngOnDestroy(): void {}

@@ -8,7 +8,6 @@ import {
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
-import * as _ from 'underscore';
 
 export const createDefaultOrganizationRecurringExpense = async (
   connection: Connection,
@@ -26,39 +25,9 @@ export const createDefaultOrganizationRecurringExpense = async (
   let currency = Object.keys(CurrenciesEnum);
 
   // for (const tenantOrg of defaultOrganizations) {
-      for (const expenseCategory of expenseCategories) {
-        let organization = new OrganizationRecurringExpense();
+  mapOrganizationRecurringExpense = await dataOperation(connection, mapOrganizationRecurringExpense, expenseCategories, defaultOrganizations, currency);
 
-        let startDate = moment(new Date()).add(faker.random.number(10), 'days').toDate();
-        let endDate = moment(startDate).add(1, 'months').toDate();
-
-        organization.organization = defaultOrganizations;
-        organization.organizationId = defaultOrganizations.id;
-
-        organization.startDay = startDate.getDate();
-        organization.startMonth = startDate.getMonth() + 1;
-        organization.startYear = startDate.getFullYear();
-        organization.startDate = startDate;
-
-        organization.endDay = endDate.getDate();
-        organization.endMonth = endDate.getMonth();
-        organization.endYear = endDate.getFullYear();
-        organization.endDate = endDate;
-
-        organization.categoryName = expenseCategory;
-        organization.value = faker.random.number(9999);
-
-        organization.currency =
-          CurrenciesEnum[currency[faker.random.number(2)]];
-
-        mapOrganizationRecurringExpense.push(organization);
-      }
     // }
-
-  await insertRandomOrganizationRecurringExpense(
-    connection,
-    mapOrganizationRecurringExpense
-  );
   return mapOrganizationRecurringExpense;
 };
 
@@ -82,51 +51,41 @@ export const createRandomOrganizationRecurringExpense = async (
 	for (const tenant of tenants) {
 		let tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
-			for (const expenseCategory of expenseCategories) {
-				let organization = new OrganizationRecurringExpense();
-
-				let startDate = faker.date.past();
-				let endDate = moment(startDate).add(1, 'months').toDate();
-
-				organization.organization = tenantOrg;
-				organization.organizationId = tenantOrg.id;
-
-				organization.startDay = startDate.getDate();
-				organization.startMonth = startDate.getMonth() + 1;
-				organization.startYear = startDate.getFullYear();
-				organization.startDate = startDate;
-
-				organization.endDay = endDate.getDate();
-				organization.endMonth = endDate.getMonth();
-				organization.endYear = endDate.getFullYear();
-				organization.endDate = endDate;
-
-				organization.categoryName = expenseCategory;
-				organization.value = faker.random.number(9999);
-
-				organization.currency =
-					CurrenciesEnum[currency[faker.random.number(2)]];
-
-				mapOrganizationRecurringExpense.push(organization);
-			}
+      mapOrganizationRecurringExpense = await dataOperation(connection, mapOrganizationRecurringExpense, expenseCategories, tenantOrg, currency);
 		}
 	}
 
-	await insertRandomOrganizationRecurringExpense(
-		connection,
-		mapOrganizationRecurringExpense
-	);
 	return mapOrganizationRecurringExpense;
 };
 
-const insertRandomOrganizationRecurringExpense = async (
-	connection: Connection,
-	data: OrganizationRecurringExpense[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(OrganizationRecurringExpense)
-		.values(data)
-		.execute();
-};
+const dataOperation = async (connection: Connection, mapOrganizationRecurringExpense, expenseCategories, tenantOrg, currency)=>{
+  for (const expenseCategory of expenseCategories) {
+    let organization = new OrganizationRecurringExpense();
+
+    let startDate = faker.date.past();
+    let endDate = moment(startDate).add(1, 'months').toDate();
+
+    organization.organization = tenantOrg;
+    organization.organizationId = tenantOrg.id;
+
+    organization.startDay = startDate.getDate();
+    organization.startMonth = startDate.getMonth() + 1;
+    organization.startYear = startDate.getFullYear();
+    organization.startDate = startDate;
+
+    organization.endDay = endDate.getDate();
+    organization.endMonth = endDate.getMonth();
+    organization.endYear = endDate.getFullYear();
+    organization.endDate = endDate;
+
+    organization.categoryName = expenseCategory;
+    organization.value = faker.random.number(9999);
+
+    organization.currency =
+      CurrenciesEnum[currency[faker.random.number(2)]];
+
+    mapOrganizationRecurringExpense.push(organization);
+  }
+  await connection.manager.save(mapOrganizationRecurringExpense);
+  return mapOrganizationRecurringExpense;
+}

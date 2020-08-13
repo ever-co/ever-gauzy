@@ -10,7 +10,8 @@ import {
 	NbActionsModule,
 	NbSpinnerModule,
 	NbSelectModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -22,7 +23,10 @@ import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { TeamMembersTableComponent } from './table-components/members/members.component';
+import { TeamManagersTableComponent } from './table-components/managers/managers.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -42,6 +46,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NbBadgeModule,
 		SharedModule,
+		CardGridModule,
+		NbTooltipModule,
+		Ng2SmartTableModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
@@ -52,7 +59,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [TeamsComponent, TeamsMutationComponent],
+	declarations: [
+		TeamsComponent,
+		TeamsMutationComponent,
+		TeamMembersTableComponent,
+		TeamManagersTableComponent
+	],
 	entryComponents: [],
 	providers: [OrganizationTeamsService]
 })

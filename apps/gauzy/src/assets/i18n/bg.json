@@ -1088,6 +1088,8 @@
 		"PHONE": "Phone",
 		"EMAIL": "Eлектронна поща",
 		"WEBSITE": "Website",
+		"DOCUMENT_URL": "Document URL",
+		"UPDATED": "Updated",
 		"LEVEL_NAME": "Level name",
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
@@ -2277,6 +2279,7 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
-		"SELECT_STAGE": "Select Stage"
+		"SELECT_STAGE": "Select Stage",
+		"PROBABLITY": "Probability"
 	}
 }
