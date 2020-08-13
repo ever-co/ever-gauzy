@@ -41,6 +41,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		VendorsRoutingModule,
 		NbBadgeModule,
 		CardGridModule,
+		NbDialogModule,
 		SharedModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),

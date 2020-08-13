@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	Employee,
 	OrganizationContact,
@@ -23,9 +23,11 @@ import { OrganizationProjectsService } from '../../@core/services/organization-p
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { LocalDataSource } from 'ng2-smart-table';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
+import { TaskTeamsComponent } from '../../@shared/table-components/task-teams/task-teams.component';
 
 @Component({
 	selector: 'ga-contact',
@@ -35,7 +37,6 @@ import { ContactActionComponent } from './table-components/contact-action/contac
 export class ContactComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
-
 	organizationId: string;
 	showAddCard: boolean;
 	organizationContact: OrganizationContact[] = [];
@@ -43,11 +44,12 @@ export class ContactComponent extends TranslationBaseComponent
 	selectProjects: string[] = [];
 	employees: Employee[] = [];
 	organizationContactToEdit: OrganizationContact;
-	disableButton = true;
 	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	@Input() contactType: any;
+	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	settingsSmartTable: object;
+	selectedContact: any;
+	isGridEdit: boolean;
+	disableButton: boolean;
 	smartTableSource = new LocalDataSource();
 	@ViewChild('contactsTable') contactsTable;
 
@@ -75,6 +77,8 @@ export class ContactComponent extends TranslationBaseComponent
 					this.loadOrganizationContacts();
 					this.loadProjectsWithoutOrganizationContacts();
 					this.loadEmployees();
+					this.loadSmartTable();
+					this._applyTranslationOnSmartTable();
 				}
 			});
 
@@ -95,21 +99,112 @@ export class ContactComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 	}
-
-	async removeOrganizationContact(id: string, name: string) {
-		await this.organizationContactService.delete(id);
-
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.REMOVE_CONTACT',
-				{
-					name: name
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				contact_name: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'string'
+				},
+				members: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
+					),
+					type: 'custom',
+					renderComponent: EmployeeWithLinksComponent,
+					filter: false
+				},
+				primaryPhone: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.PHONE'
+					),
+					type: 'string'
+				},
+				primaryEmail: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.EMAIL'
+					),
+					type: 'string'
+				},
+				contactType: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.CONTACT_TYPE'
+					),
+					type: 'string'
+				},
+				projects: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.PROJECTS'
+					),
+					type: 'custom',
+					renderComponent: TaskTeamsComponent,
+					filter: false
+				},
+				country: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.COUNTRY'
+					),
+					type: 'string'
+				},
+				city: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.CITY'
+					),
+					type: 'string'
+				},
+				street: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.STREET'
+					),
+					type: 'string'
+				},
+				notes: {
+					title: this.getTranslation('MENU.TAGS'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
 				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+			}
+		};
+	}
+	selectContact({ isSelected, data }) {
+		const selectedContact = isSelected ? data : null;
+		if (this.contactsTable) {
+			this.contactsTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedContact = selectedContact;
+	}
+	async removeOrganizationContact(id?: string, name?: string) {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Contact'
+				}
+			})
+			.onClose.pipe(first())
+			.toPromise();
 
-		this.loadOrganizationContacts();
+		if (result) {
+			await this.organizationContactService.delete(
+				this.selectedContact ? this.selectedContact.id : id
+			);
+
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.REMOVE_CONTACT',
+					{
+						name: this.selectedContact
+							? this.selectedContact.name
+							: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.loadOrganizationContacts();
+		}
 	}
 	setView() {
 		this.viewComponentName = ComponentEnum.CONTACTS;
@@ -118,6 +213,10 @@ export class ContactComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+				this.selectedContact =
+					this.dataLayoutStyle === 'CARDS_GRID'
+						? null
+						: this.selectedContact;
 			});
 	}
 
@@ -172,7 +271,6 @@ export class ContactComponent extends TranslationBaseComponent
 		if (!this.organizationId) {
 			return;
 		}
-
 		const res = await this.organizationContactService.getAll(
 			['projects', 'members', 'members.user', 'tags', 'contact'],
 			{
@@ -180,11 +278,18 @@ export class ContactComponent extends TranslationBaseComponent
 			}
 		);
 		if (res) {
-			const contact_items = res.items.filter(
-				(contact) => contact.contactType === this.contactType
-			);
-			this.organizationContact = contact_items;
-			this.smartTableSource.load(contact_items);
+			this.organizationContact = res.items;
+			const result = [];
+			res.items.forEach(async (contact: OrganizationContact) => {
+				result.push({
+					...contact,
+					contact_name: contact.name,
+					country: contact.contact.country,
+					city: contact.contact.city,
+					street: contact.contact.address
+				});
+			});
+			this.smartTableSource.load(result);
 		}
 	}
 
@@ -222,7 +327,10 @@ export class ContactComponent extends TranslationBaseComponent
 
 	async editOrganizationContact(organizationContact: OrganizationContact) {
 		await this.loadProjectsWithoutOrganizationContacts();
-		this.organizationContactToEdit = organizationContact;
+		this.organizationContactToEdit = organizationContact
+			? organizationContact
+			: this.selectedContact;
+		this.isGridEdit = organizationContact ? false : true;
 		this.showAddCard = true;
 	}
 
@@ -265,77 +373,9 @@ export class ContactComponent extends TranslationBaseComponent
 			);
 		}
 	}
-
-	async selectContact({ isSelected, data }) {
-		const selectedContact = isSelected ? data : null;
-		if (this.contactsTable) {
-			this.contactsTable.grid.dataSet.willSelect = false;
-		}
-		this.disableButton = !isSelected;
-		this.organizationContactToEdit = selectedContact;
-	}
-
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();
 		});
-	}
-
-	loadSmartTable() {
-		this.settingsSmartTable = {
-			actions: false,
-			mode: 'external',
-			editable: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
-			columns: {
-				name: {
-					title: this.getTranslation('SM_TABLE.NAME'),
-					type: 'custom',
-					class: 'align-row',
-					renderComponent: PictureNameTagsComponent
-				},
-				primaryEmail: {
-					title: this.getTranslation('SM_TABLE.PRIMARY_EMAIL'),
-					type: 'string',
-					width: '15%',
-					filter: false
-				},
-				primaryPhone: {
-					title: this.getTranslation('SM_TABLE.PRIMARY_PHONE'),
-					type: 'string',
-					width: '15%',
-					filter: false
-				},
-				inviteStatus: {
-					title: this.getTranslation('SM_TABLE.INVITE_STATUS'),
-					type: 'string',
-					width: '15%',
-					filter: false
-				},
-				contactType: {
-					title: this.getTranslation('SM_TABLE.CONTACT_TYPE'),
-					type: 'string',
-					width: '15%',
-					filter: false
-				},
-				actions: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_ACTIONS'
-					),
-					type: 'custom',
-					renderComponent: ContactActionComponent,
-					onComponentInitFunction: (instance) => {
-						instance.updateResult.subscribe((params) => {
-							this.invite(params);
-						});
-					},
-					filter: false
-				}
-			},
-			pager: {
-				display: true,
-				perPage: 8
-			}
-		};
 	}
 }

@@ -4,11 +4,11 @@ import {
 	Tag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -17,6 +17,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
 	selector: 'ga-vendors',
@@ -42,6 +43,7 @@ export class VendorsComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private readonly fb: FormBuilder,
 		readonly translateService: TranslateService,
+		private dialogService: NbDialogService,
 		private errorHandlingService: ErrorHandlingService,
 		private store: Store,
 		private router: Router
@@ -174,22 +176,33 @@ export class VendorsComponent extends TranslationBaseComponent
 		}
 	}
 	async removeVendor(id: string, name: string) {
-		try {
-			await this.organizationVendorsService.delete(id);
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Vendor'
+				}
+			})
+			.onClose.pipe(first())
+			.toPromise();
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+		if (result) {
+			try {
+				await this.organizationVendorsService.delete(id);
 
-			this.loadVendors();
-		} catch (error) {
-			this.errorHandlingService.handleError(error);
+				this.toastrService.primary(
+					this.getTranslation(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
+						{
+							name: name
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+
+				this.loadVendors();
+			} catch (error) {
+				this.errorHandlingService.handleError(error);
+			}
 		}
 	}
 

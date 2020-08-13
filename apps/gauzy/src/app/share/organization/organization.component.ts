@@ -23,9 +23,9 @@ import { EmployeeStatisticsService } from '../../@core/services/employee-statist
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 
 export enum CURRENCY {
-  USD = '$',
-  BGN = 'Лв',
-  ILS = '₪',
+	USD = '$',
+	BGN = 'Лв',
+	ILS = '₪'
 }
 
 @Component({
@@ -57,7 +57,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	awardExist: boolean;
 	imageUpdateButton = false;
 	moment = moment;
-  currencies = Object.values(CURRENCY);
+	currencies = Object.values(CURRENCY);
 
 	constructor(
 		private route: ActivatedRoute,

@@ -2,8 +2,7 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>
-				{{ 'ORGANIZATIONS_PAGE.CONTACTS' | translate }} :
-				{{ contactType }}
+				{{ 'ORGANIZATIONS_PAGE.CONTACTS' | translate }}
 			</h4>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
@@ -17,13 +16,16 @@
 				*ngIf="!showAddCard"
 				(click)="add()"
 				nbButton
+				class="mr-2"
 				status="success"
 			>
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 			<button
-				class="ml-2"
 				*ngIf="!showAddCard"
 				(click)="invite()"
 				nbButton
@@ -32,9 +34,6 @@
 				<nb-icon class="mr-1" icon="email-outline"></nb-icon
 				>{{ 'BUTTONS.INVITE' | translate }}
 			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
 
 			<ga-contact-mutation
 				*ngIf="showAddCard"
@@ -45,6 +44,7 @@
 				[projectsWithoutOrganizationContact]="
 					projectsWithoutOrganizationContact
 				"
+				[isGridEdit]="isGridEdit"
 				(canceled)="cancel()"
 				(addOrEditOrganizationContact)="
 					addOrEditOrganizationContact($event)
@@ -52,20 +52,12 @@
 			>
 			</ga-contact-mutation>
 		</div>
-		<ng2-smart-table
-			class="contacts-table"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			(userRowSelect)="selectContact($event)"
-			style="cursor: pointer;"
-			#contactsTable
-		>
-		</ng2-smart-table>
 		<div
 			class="contact-list"
 			*ngIf="
-				organizationContact?.length && dataLayoutStyle === 'CARDS_GRID'
+				organizationContact.length &&
+				dataLayoutStyle === 'CARDS_GRID' &&
+				!showAddCard
 			"
 		>
 			<ga-entity-with-members-card
@@ -169,6 +161,18 @@
 				</div>
 			</ga-entity-with-members-card>
 		</div>
+		<div class="mt-4">
+			<ng2-smart-table
+				*ngIf="dataLayoutStyle === 'TABLE' && !showAddCard"
+				class="w-100"
+				(userRowSelect)="selectContact($event)"
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource"
+				style="cursor: pointer;"
+				#contactsTable
+			>
+			</ng2-smart-table>
+		</div>
 	</nb-card-body>
 </nb-card>
 <ng-template
@@ -176,30 +180,29 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div>
-		<button
-			nbButton
-			class="ml-2"
-			status="info"
-			size="medium"
-			(click)="editOrganizationContact(selectedItem)"
-			[disabled]="!selectedItem && disableButton"
-		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-			>{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			size="medium"
-			class="ml-2"
-			nbButton
-			(click)="
-				removeOrganizationContact(selectedItem.id, selectedItem.name)
-			"
-			[disabled]="!selectedItem && disableButton"
-			status="danger"
-		>
-			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-			>{{ 'BUTTONS.DELETE' | translate }}
-		</button>
-	</div>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="editOrganizationContact(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+		>{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+
+	<button
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="
+			removeOrganizationContact(selectedItem?.id, selectedItem?.name)
+		"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon
+		>{{ 'BUTTONS.DELETE' | translate }}
+	</button>
 </ng-template>

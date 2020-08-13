@@ -158,7 +158,7 @@
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
-		(click)="deleteProject(selectedProject)"
+		(click)="removeProject(selectedProject.id, selectedProject.name)"
 		nbButton
 		*ngIf="!showAddCard"
 		status="danger"

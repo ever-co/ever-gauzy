@@ -9,14 +9,15 @@ import {
 	Tag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { takeUntil } from 'rxjs/operators';
-import { NbToastrService } from '@nebular/theme';
+import { takeUntil, first } from 'rxjs/operators';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
 	selector: 'ga-employment-types',
@@ -41,6 +42,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	constructor(
 		private fb: FormBuilder,
 		private readonly toastrService: NbToastrService,
+		private dialogService: NbDialogService,
 		private store: Store,
 		private organizationEmploymentTypesService: OrganizationEmploymentTypesService,
 		readonly translateService: TranslateService
@@ -152,19 +154,32 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	}
 
 	async deleteEmploymentType(id, name) {
-		await this.organizationEmploymentTypesService.deleteEmploymentType(id);
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.DELETE_EMPLOYMENT_TYPE',
-				{
-					name: name
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Employment Type'
 				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
-		this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter(
-			(t) => t['id'] !== id
-		);
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.organizationEmploymentTypesService.deleteEmploymentType(
+				id
+			);
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.DELETE_EMPLOYMENT_TYPE',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter(
+				(t) => t['id'] !== id
+			);
+		}
 	}
 	selectedTagsEvent(ev) {
 		this.tags = ev;

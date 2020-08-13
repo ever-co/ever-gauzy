@@ -1,3 +1,6 @@
-#temporary {
-  padding-bottom: 200px;
+.btn-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
 }

@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	Employee,
-	OrganizationContact,
 	OrganizationProjects,
 	Tag,
 	ContactType
@@ -26,9 +25,10 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	@Input()
 	organizationId: string;
 	@Input()
-	organizationContact?: OrganizationContact;
+	organizationContact?: any;
 	@Input()
 	projectsWithoutOrganizationContact: OrganizationProjects[];
+	@Input() isGridEdit: boolean;
 	@Input()
 	contactType: string;
 
@@ -108,7 +108,11 @@ export class ContactMutationComponent extends TranslationBaseComponent
 					: ''
 			],
 			name: [
-				this.organizationContact ? this.organizationContact.name : '',
+				this.organizationContact
+					? this.isGridEdit
+						? this.organizationContact.contact_name
+						: this.organizationContact.name
+					: '',
 				Validators.required
 			],
 			primaryEmail: [
