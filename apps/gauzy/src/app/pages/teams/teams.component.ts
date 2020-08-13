@@ -35,10 +35,11 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 	organizationId: string;
 	showAddCard: boolean;
 	disableButton = true;
-	selectedTeam: OrganizationTeam;
+	selectedTeam: any;
 	showTable: boolean;
 	teams: OrganizationTeam[];
 	employees: Employee[] = [];
+	isGridEdit: boolean;
 	teamToEdit: OrganizationTeam;
 	loading = true;
 	tags: Tag[] = [];
@@ -150,7 +151,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 		this.teamToEdit = null;
 	}
 
-	async removeTeam(id: string, name: string) {
+	async removeTeam(id?: string, name?: string) {
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -162,13 +163,17 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 
 		if (result) {
 			try {
-				await this.organizationTeamsService.delete(id);
+				await this.organizationTeamsService.delete(
+					this.selectedTeam ? this.selectedTeam.id : id
+				);
 
 				this.toastrService.primary(
 					this.getTranslation(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
 						{
-							name: name
+							name: this.selectedTeam
+								? this.selectedTeam.team_name
+								: name
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -183,7 +188,8 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 
 	editTeam(team: OrganizationTeam) {
 		this.showAddCard = !this.showAddCard;
-		this.teamToEdit = team;
+		this.teamToEdit = team ? team : this.selectedTeam;
+		this.isGridEdit = team ? false : true;
 		this.showAddCard = true;
 		// TODO: Scroll the page to the top!
 	}
@@ -242,6 +248,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 
 			this.teams.forEach((team) =>
 				result.push({
+					id: team.id,
 					team_name: team.name,
 					members: team.members.map((item) => item.employee),
 					managers: team.managers.map((item) => item.employee),

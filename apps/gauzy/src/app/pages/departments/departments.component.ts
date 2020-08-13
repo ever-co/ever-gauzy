@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	Employee,
 	OrganizationDepartment,
@@ -6,7 +6,7 @@ import {
 	Tag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +15,10 @@ import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { LocalDataSource } from 'ng2-smart-table';
+import { DepartmentsMembersTableComponent } from './table-components/members/members.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
 	selector: 'ga-departments',
@@ -24,24 +28,31 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 export class DepartmentsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
-
 	organizationId: string;
 	showAddCard: boolean;
 	departments: OrganizationDepartment[];
 	employees: Employee[] = [];
 	departmentToEdit: OrganizationDepartment;
 	tags: Tag[];
+	isGridEdit: boolean;
+	disableButton: boolean;
+	selectedDepartment: any;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
+	@ViewChild('departmentsTable') departmentsTable;
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly toastrService: NbToastrService,
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
+		private dialogService: NbDialogService,
 		private store: Store
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit() {
@@ -52,6 +63,8 @@ export class DepartmentsComponent extends TranslationBaseComponent
 					this.organizationId = organization.id;
 					this.loadDepartments();
 					this.loadEmployees();
+					this.loadSmartTable();
+					this._applyTranslationOnSmartTable();
 				}
 			});
 	}
@@ -60,7 +73,39 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		this.departmentToEdit = null;
 		this.showAddCard = !this.showAddCard;
 	}
-
+	selectDepartment({ isSelected, data }) {
+		const selectedDepartment = isSelected ? data : null;
+		if (this.departmentsTable) {
+			this.departmentsTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedDepartment = selectedDepartment;
+	}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				department_name: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'string'
+				},
+				members: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
+					),
+					type: 'custom',
+					renderComponent: DepartmentsMembersTableComponent,
+					filter: false
+				},
+				notes: {
+					title: this.getTranslation('MENU.TAGS'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
+				}
+			}
+		};
+	}
 	private async loadEmployees() {
 		if (!this.organizationId) {
 			return;
@@ -82,22 +127,40 @@ export class DepartmentsComponent extends TranslationBaseComponent
 				this.dataLayoutStyle = componentLayout;
 			});
 	}
-	async removeDepartment(id: string, name: string) {
-		await this.organizationDepartmentsService.delete(id);
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.REMOVE_DEPARTMENT',
-				{
-					name: name
+	async removeDepartment(id?: string, name?: string) {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Department'
 				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
-		this.loadDepartments();
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.organizationDepartmentsService.delete(
+				this.selectedDepartment ? this.selectedDepartment.id : id
+			);
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.REMOVE_DEPARTMENT',
+					{
+						name: this.selectedDepartment
+							? this.selectedDepartment.department_name
+							: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.loadDepartments();
+		}
 	}
 
 	async editDepartment(department: OrganizationDepartment) {
-		this.departmentToEdit = department;
+		this.departmentToEdit = department
+			? department
+			: this.selectedDepartment;
+		this.isGridEdit = department ? false : true;
 		this.showAddCard = true;
 	}
 
@@ -148,7 +211,23 @@ export class DepartmentsComponent extends TranslationBaseComponent
 			}
 		);
 		if (res) {
+			const result = [];
 			this.departments = res.items;
+
+			this.departments.forEach((dpt) =>
+				result.push({
+					id: dpt.id,
+					department_name: dpt.name,
+					members: dpt.members,
+					tags: dpt.tags
+				})
+			);
+			this.smartTableSource.load(result);
 		}
+	}
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 }

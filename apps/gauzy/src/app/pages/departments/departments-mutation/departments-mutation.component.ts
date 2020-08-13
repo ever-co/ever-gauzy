@@ -12,7 +12,9 @@ export class DepartmentsMutationComponent implements OnInit {
 	@Input()
 	organizationId: string;
 	@Input()
-	department?: OrganizationDepartment;
+	department?: any;
+	@Input()
+	isGridEdit: boolean;
 
 	@Output()
 	canceled = new EventEmitter();
@@ -29,7 +31,9 @@ export class DepartmentsMutationComponent implements OnInit {
 			this.selectedEmployeeIds = this.department.members.map(
 				(member) => member.id
 			);
-			this.name = this.department.name;
+			this.name = this.isGridEdit
+				? this.department.department_name
+				: this.department.name;
 			this.tags = this.department.tags;
 		}
 	}

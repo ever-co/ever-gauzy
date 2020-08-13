@@ -8,7 +8,7 @@ import {
 	PermissionsEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
@@ -27,6 +27,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DatePipe } from '@angular/common';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
 	selector: 'ga-projects',
@@ -49,7 +50,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 	projectToEdit: OrganizationProjects;
 	viewPrivateProjects: boolean;
 	disableButton = true;
-	selectedProject: OrganizationProjects[];
+	selectedProject: OrganizationProjects;
 	smartTableSource = new LocalDataSource();
 
 	@ViewChild('projectsTable') projectsTable;
@@ -62,7 +63,8 @@ export class ProjectsComponent extends TranslationBaseComponent
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute,
-		private router: Router
+		private router: Router,
+		private dialogService: NbDialogService
 	) {
 		super(translateService);
 		this.setView();
@@ -128,20 +130,35 @@ export class ProjectsComponent extends TranslationBaseComponent
 			});
 	}
 
-	async removeProject(id: string, name: string) {
-		await this.organizationProjectsService.delete(id);
-
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
-				{
-					name: name
+	async removeProject(id?: string, name?: string) {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Project'
 				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+			})
+			.onClose.pipe(first())
+			.toPromise();
 
-		this.loadProjects();
+		if (result) {
+			await this.organizationProjectsService.delete(
+				this.selectedProject ? this.selectedProject.id : id
+			);
+
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
+					{
+						name: this.selectedProject
+							? this.selectedProject.name
+							: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.loadProjects();
+		}
 	}
 
 	cancel() {
@@ -299,22 +316,6 @@ export class ProjectsComponent extends TranslationBaseComponent
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();
 		});
-	}
-
-	async deleteProject(project) {
-		await this.organizationProjectsService.delete(project.id);
-
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
-				{
-					name: project.name
-				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
-
-		this.loadProjects();
 	}
 
 	private async loadOrganizationContacts() {

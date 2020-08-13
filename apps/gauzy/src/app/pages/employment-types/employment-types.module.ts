@@ -40,6 +40,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbActionsModule,
 		TableComponentsModule,
 		CardGridModule,
+		NbDialogModule,
 		Ng2SmartTableModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
