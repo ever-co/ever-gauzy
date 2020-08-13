@@ -1,0 +1,25 @@
+.body {
+  width: 890px;
+  max-width: 100%;
+}
+
+form .tab_sections nb-tab {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  label {
+    color: #222b45;
+    font-size: 15px;
+    font-weight: 700;
+  }
+}
+
+.card-footer {
+  text-align: right;
+}

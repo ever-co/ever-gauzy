@@ -138,6 +138,10 @@
 		"START": "Start",
 		"END": "End",
 		"REQUEST_DATE": "Request Date",
+		"PRIMARY_EMAIL": "Основна Е-поща",
+		"PRIMARY_PHONE": "Основен телефон",
+		"INVITE_STATUS": "Invite Status",
+		"CONTACT_TYPE": "Contact Type",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -470,7 +474,14 @@
 		"DETAILS": "Детайли",
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
-		"SELECT_TIMEZONE": "Select Timezone"
+		"SELECT_TIMEZONE": "Select Timezone",
+		"SHOW_AVERAGE_BONUS": "Show Average Bonus",
+		"SHOW_AVERAGE_INCOME": "Show Average Income",
+		"SHOW_PAYPERIOD": "Show Pay Period",
+		"SHOW_ANONYMOUS_BONUS": "Show Anonymous Bonus",
+		"SHOW_AVERAGE_EXPENSES": "Show Average Expenses",
+		"SHOW_BILLRATE": "Show Bill Rate",
+		"SHOW_START_WORK_ON": "Show Started Work On"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -487,6 +498,7 @@
 		"APPROVALS": "Approvals",
 		"HELP": "Помощ",
 		"ABOUT": "За нас",
+		"CONTACTS": "Contacts",
 		"ADMIN": "Администратор",
 		"EMPLOYEE_LEVEL": "Employee Level",
 		"EMPLOYEES": "Служители",
@@ -1115,7 +1127,8 @@
 			"CURRENCY": "Валута",
 			"OWNER": "Owner",
 			"TEAMS": "Отбори",
-			"ADD_NEW_CONTACT": "Add new contact",
+			"ADD_NEW_CONTACT": "Add New Contact",
+			"EDIT_CONTACT": "Edit Contact",
 			"GENERAL_SETTINGS": "Главни Настройки",
 			"DESIGN": "Дизайн",
 			"BONUS": "Бонус",
@@ -1213,6 +1226,12 @@
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts"
 		}
 	},
+	"CONTACTS_PAGE": {
+		"VISITORS": "Visitors",
+		"LEADS": "Leads",
+		"CUSTOMERS": "Customers",
+		"CLIENTS": "Клиенти"
+	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
@@ -1234,7 +1253,14 @@
 		"PROFITS": "Profits",
 		"RATE": "Почасово",
 		"ACTIVE": "Активен",
-		"STARTED_WORK_ON": "Started work on"
+		"STARTED_WORK_ON": "Started work on",
+		"PAY_PERIOD": "Pay period",
+		"AVERAGE_BONUS": "Average Bonus",
+		"AVERAGE_EXPENSES": "Average Expenses",
+		"AVERAGE_INCOME": "Average Income",
+		"EMPLOYEE_UPDATED": "Employee has been updated.",
+		"IMAGE_UPDATED": "The image has been updated.",
+		"FAIL_TO_UPDATE_IMAGE": "Update failed."
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",

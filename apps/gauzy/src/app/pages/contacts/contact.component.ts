@@ -6,12 +6,17 @@ import {
 	OrganizationProjects,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
-import { ActivatedRoute } from '@angular/router';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { EmployeesService } from '../../@core/services';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
@@ -56,7 +61,8 @@ export class ContactComponent extends TranslationBaseComponent
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -83,6 +89,15 @@ export class ContactComponent extends TranslationBaseComponent
 					this.add();
 				}
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 	async loadSmartTable() {
 		this.settingsSmartTable = {

@@ -1,17 +1,18 @@
 <nb-card>
 	<nb-card-header>
 		<div class="main-header">
-			<h4>{{ 'ORGANIZATIONS_PAGE.CONTACTS' | translate }}</h4>
-			<div class="main-header">
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
-			</div>
+			<h4>
+				{{ 'ORGANIZATIONS_PAGE.CONTACTS' | translate }} :
+				{{ contactType }}
+			</h4>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 
 	<nb-card-body>
-		<div>
+		<div class="mb-3" style="display: flex;">
 			<button
 				*ngIf="!showAddCard"
 				(click)="add()"
@@ -34,10 +35,15 @@
 				<nb-icon class="mr-1" icon="email-outline"></nb-icon
 				>{{ 'BUTTONS.INVITE' | translate }}
 			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+
 			<ga-contact-mutation
 				*ngIf="showAddCard"
 				[employees]="employees"
 				[organizationId]="organizationId"
+				[contactType]="contactType"
 				[organizationContact]="organizationContactToEdit"
 				[projectsWithoutOrganizationContact]="
 					projectsWithoutOrganizationContact
@@ -61,6 +67,7 @@
 			<ga-entity-with-members-card
 				*ngFor="let c of organizationContact"
 				[entityWithMembers]="c"
+				[layout]="dataLayoutStyle"
 				(remove)="removeOrganizationContact(c.id, c.name)"
 				(edit)="editOrganizationContact(c)"
 				class="member-card"
@@ -172,7 +179,6 @@
 		</div>
 	</nb-card-body>
 </nb-card>
-
 <ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
