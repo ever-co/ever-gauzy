@@ -47,6 +47,12 @@ export interface Employee extends IContact, IBaseEntityModel {
 	averageIncome?: number;
 	averageExpenses?: number;
 	averageBonus?: number;
+	show_anonymous_bonus?: boolean;
+	show_average_bonus?: boolean;
+	show_average_expenses?: boolean;
+	show_average_income?: boolean;
+	show_billrate?: boolean;
+	show_payperiod?: boolean;
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {
@@ -73,6 +79,7 @@ export interface EmployeeUpdateInput {
 	averageIncome?: number;
 	averageExpenses?: number;
 	averageBonus?: number;
+	skills?: Skill[];
 }
 
 export interface EmployeeCreateInput {

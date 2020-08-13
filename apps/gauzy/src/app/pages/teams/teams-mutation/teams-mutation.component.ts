@@ -1,5 +1,5 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { OrganizationTeam, Employee, Tag } from '@gauzy/models';
+import { Employee, Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-teams-mutation',
@@ -11,7 +11,9 @@ export class TeamsMutationComponent implements OnInit {
 	@Input()
 	organizationId: string;
 	@Input()
-	team?: OrganizationTeam;
+	team?: any;
+	@Input()
+	isGridEdit: boolean;
 
 	@Output()
 	canceled = new EventEmitter();
@@ -27,13 +29,13 @@ export class TeamsMutationComponent implements OnInit {
 
 	ngOnInit() {
 		if (this.team) {
-			this.selectedEmployees = this.team.members.map(
-				(member) => member.employeeId
+			this.selectedEmployees = this.team.members.map((member) =>
+				this.isGridEdit ? member.id : member.employeeId
 			);
-			this.selectedManagers = this.team.managers.map(
-				(member) => member.employeeId
+			this.selectedManagers = this.team.managers.map((manager) =>
+				this.isGridEdit ? manager.id : manager.employeeId
 			);
-			this.name = this.team.name;
+			this.name = this.isGridEdit ? this.team.team_name : this.team.name;
 			this.tags = this.team.tags;
 		}
 	}

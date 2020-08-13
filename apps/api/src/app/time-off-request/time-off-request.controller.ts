@@ -1,4 +1,15 @@
-import {Controller, UseGuards, HttpStatus, Post, Body, Get, Query, Put, Param, HttpCode } from '@nestjs/common';
+import {
+	Controller,
+	UseGuards,
+	HttpStatus,
+	Post,
+	Body,
+	Get,
+	Query,
+	Put,
+	Param,
+	HttpCode
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { TimeOffRequest } from './time-off-request.entity';
@@ -12,12 +23,17 @@ import {
 } from '@gauzy/models';
 import { TimeOff as ITimeOff, PermissionsEnum } from '@gauzy/models';
 import { IPagination } from '../core';
+import { CommandBus } from '@nestjs/cqrs';
+import { TimeOffStatusCommand } from './commands';
 
 @ApiTags('TimeOffRequest')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
-	constructor(private readonly requestService: TimeOffRequestService) {
+	constructor(
+		private readonly requestService: TimeOffRequestService,
+		private commandBus: CommandBus
+	) {
 		super(requestService);
 	}
 
@@ -66,12 +82,9 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 	@Put(':id')
 	async timeOffRequestUpdate(
 		@Param('id') id: string,
-		@Body() entity: ITimeOffCreateInput,
+		@Body() entity: ITimeOffCreateInput
 	): Promise<TimeOffRequest> {
-		return this.requestService.updateTimeOffByAdmin(
-			id,
-			entity
-		);
+		return this.requestService.updateTimeOffByAdmin(id, entity);
 	}
 
 	@ApiOperation({ summary: 'Time off request approved' })
@@ -93,9 +106,8 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 	async timeOffRequestApproved(
 		@Param('id') id: string
 	): Promise<TimeOffRequest> {
-		return this.requestService.updateStatusTimeOffByAdmin(
-			id,
-			StatusTypesEnum.APPROVED
+		return this.commandBus.execute(
+			new TimeOffStatusCommand(id, StatusTypesEnum.APPROVED)
 		);
 	}
 
@@ -116,9 +128,8 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 	async timeOffRequestDenied(
 		@Param('id') id: string
 	): Promise<TimeOffRequest> {
-		return this.requestService.updateStatusTimeOffByAdmin(
-			id,
-			StatusTypesEnum.DENIED
+		return this.commandBus.execute(
+			new TimeOffStatusCommand(id, StatusTypesEnum.DENIED)
 		);
 	}
 }

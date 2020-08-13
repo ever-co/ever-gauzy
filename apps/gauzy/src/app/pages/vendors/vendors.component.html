@@ -113,7 +113,7 @@
 				</form>
 			</div>
 		</div>
-		<div *ngIf="dataLayoutStyle === 'TABLE'">
+		<div *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
 			<nb-card *ngFor="let v of vendors">
 				<nb-card-body class="table">
 					<div class="table-blocks">
@@ -179,7 +179,7 @@
 		</div>
 
 		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			*ngIf="dataLayoutStyle === 'CARDS_GRID' && !showAddCard"
 			[settings]="settingsSmartTable"
 			[source]="vendors"
 			[buttonTemplate]="actionButtons"

@@ -27,6 +27,14 @@ export class EmployeesService {
 		);
 	}
 
+	getPublicById(id: string, relations?: string[]): Observable<Employee> {
+		const data = JSON.stringify({ relations });
+
+		return this.http.get<Employee>(`/api/employee/public/${id}`, {
+			params: { data }
+		});
+	}
+
 	getAll(
 		relations?: string[],
 		findInput?: EmployeeFindInput

@@ -52,6 +52,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbActionsModule,
 		TableComponentsModule,
 		ProjectsRoutingModule,
+		NbDialogModule,
 		RemoveLodashModule,
 		EntityWithMembersModule,
 		NbDialogModule.forChild(),

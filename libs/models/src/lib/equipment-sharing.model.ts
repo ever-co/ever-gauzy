@@ -16,6 +16,7 @@ export interface EquipmentSharing extends IBaseEntityModel {
 	name?: string;
 	createdBy?: string;
 	createdByName?: string;
+	organizationId?: string;
 }
 
 export interface EquipmentSharingRequest extends IBaseEntityModel {
@@ -28,6 +29,7 @@ export interface EquipmentSharingRequest extends IBaseEntityModel {
 	equpmentSharingPolicyId?: string;
 	employees?: string[];
 	teams?: string[];
+	organizationId?: string;
 }
 
 export enum EquipmentSharingStatusEnum {

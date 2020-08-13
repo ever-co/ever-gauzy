@@ -27,6 +27,13 @@ import { OrganizationContactService } from '../../@core/services/organization-co
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { InviteService } from '../../@core/services/invite.service';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { ClientsComponent } from './clients/clients.component';
+import { LeadsComponent } from './leads/leads.component';
+import { CustomersComponent } from './customers/customers.component';
+import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
+import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -35,7 +42,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 const COMPONENTS = [
 	ContactComponent,
 	InviteContactComponent,
-	ContactMutationComponent
+	ContactMutationComponent,
+	ContactMutationComponent,
+	ClientsComponent,
+	CustomersComponent,
+	LeadsComponent,
+	ContactActionComponent
 ];
 
 @NgModule({
@@ -53,9 +65,13 @@ const COMPONENTS = [
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		FileUploaderModule,
+		CardGridModule,
+		Ng2SmartTableModule,
 		NgSelectModule,
 		EntityWithMembersModule,
 		TagsColorInputModule,
+		Ng2SmartTableModule,
+		ImageUploaderModule,
 		EmployeeMultiSelectModule,
 		TranslateModule.forChild({
 			loader: {
@@ -68,7 +84,14 @@ const COMPONENTS = [
 	],
 
 	declarations: [...COMPONENTS],
-	entryComponents: [InviteContactComponent],
+	entryComponents: [
+		ContactComponent,
+		InviteContactComponent,
+		ContactMutationComponent,
+		ClientsComponent,
+		CustomersComponent,
+		LeadsComponent
+	],
 	providers: [
 		OrganizationContactService,
 		OrganizationProjectsService,

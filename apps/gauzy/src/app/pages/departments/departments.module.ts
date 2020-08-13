@@ -23,6 +23,8 @@ import { DepartmentsComponent } from './departments.component';
 import { DepartmentsRoutingModule } from './departments-routing.module';
 import { DepartmentsMutationComponent } from './departments-mutation/departments-mutation.component';
 import { OrganizationDepartmentsService } from '../../@core/services/organization-departments.service';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -37,6 +39,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		DepartmentsRoutingModule,
 		NbCardModule,
 		FormsModule,
+		NbDialogModule,
 		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
@@ -46,6 +49,8 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		NbTooltipModule,
 		FileUploaderModule,
 		NgSelectModule,
+		CardGridModule,
+		Ng2SmartTableModule,
 		EntityWithMembersModule,
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,

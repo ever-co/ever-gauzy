@@ -1,11 +1,10 @@
-import { ContactType } from './../../../../../../../libs/models/src/lib/organization-contact.model';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	Employee,
-	OrganizationContact,
 	OrganizationProjects,
-	Tag
+	Tag,
+	ContactType
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +15,8 @@ import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-contact-mutation',
-	templateUrl: './contact-mutation.component.html'
+	templateUrl: './contact-mutation.component.html',
+	styleUrls: ['./contact-mutation.component.scss']
 })
 export class ContactMutationComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -25,22 +25,27 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	@Input()
 	organizationId: string;
 	@Input()
-	organizationContact?: OrganizationContact;
+	organizationContact?: any;
 	@Input()
 	projectsWithoutOrganizationContact: OrganizationProjects[];
+	@Input() isGridEdit: boolean;
+	@Input()
+	contactType: string;
 
 	@Output()
 	canceled = new EventEmitter();
 	@Output()
 	addOrEditOrganizationContact = new EventEmitter();
 
-	defaultSelectedType = 'Client';
+	defaultSelectedType: any;
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];
 	allProjects: OrganizationProjects[] = [];
 	tags: Tag[] = [];
 	projects: Object[] = [];
+	contactTypes = [];
+	hoverState: boolean;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -66,6 +71,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 			);
 		}
 		this._getProjects();
+		this.defaultSelectedType = this.contactType;
 	}
 
 	private async _getProjects() {
@@ -79,6 +85,11 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				{ name: i.name, projectId: i.id }
 			];
 		});
+		this.contactTypes = [
+			ContactType.CLIENT,
+			ContactType.CUSTOMER,
+			ContactType.LEAD
+		];
 	}
 
 	private _initializeForm() {
@@ -86,13 +97,22 @@ export class ContactMutationComponent extends TranslationBaseComponent
 			return;
 		}
 		this.form = this.fb.group({
+			imageUrl: [
+				this.organizationContact
+					? this.organizationContact.imageUrl
+					: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
+			],
 			tags: [
 				this.organizationContact
 					? (this.tags = this.organizationContact.tags)
 					: ''
 			],
 			name: [
-				this.organizationContact ? this.organizationContact.name : '',
+				this.organizationContact
+					? this.isGridEdit
+						? this.organizationContact.contact_name
+						: this.organizationContact.name
+					: '',
 				Validators.required
 			],
 			primaryEmail: [
@@ -142,6 +162,10 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		});
 	}
 
+	handleImageUploadError(error) {
+		this.toastrService.danger(error, 'Error');
+	}
+
 	addNewProject = (name: string): Promise<OrganizationProjects> => {
 		try {
 			this.toastrService.primary(
@@ -174,8 +198,12 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		if (this.form.valid) {
 			let contactType = this.form.value['contactType'].$ngOptionLabel;
 			if (contactType === undefined) {
-				contactType = 'Client';
+				contactType = this.defaultSelectedType;
 			}
+			let imgUrl = this.form.value.imageUrl;
+			imgUrl = imgUrl
+				? this.form.value['imageUrl']
+				: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text';
 			this.addOrEditOrganizationContact.emit({
 				tags: this.tags,
 				id: this.organizationContact
@@ -188,8 +216,11 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				country: this.form.value['country'],
 				city: this.form.value['city'],
 				address: this.form.value['address'],
-				projects: this.form.value['selectProjects'].projectId,
+				projects: this.form.value['selectProjects']
+					? this.form.value['selectProjects'].projectId
+					: '',
 				contactType: contactType,
+				imageUrl: imgUrl,
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e)

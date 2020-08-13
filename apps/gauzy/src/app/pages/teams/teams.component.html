@@ -29,6 +29,7 @@
 				[employees]="employees"
 				[organizationId]="organizationId"
 				[team]="teamToEdit"
+				[isGridEdit]="isGridEdit"
 				(canceled)="cancel()"
 				(addOrEditTeam)="addOrEditTeam($event)"
 			></ga-teams-mutation>
@@ -206,7 +207,7 @@
 		status="danger"
 		class="mr-2"
 		[disabled]="!selectedItem && disableButton"
-		(click)="removeTeam(selectedItem.id, selectedItem.name)"
+		(click)="removeTeam(selectedItem?.id, selectedItem?.name)"
 		[size]="buttonSize || 'medium'"
 	>
 		<nb-icon class="mr-1" icon="archive-outline"></nb-icon

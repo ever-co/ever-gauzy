@@ -21,8 +21,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { TeamManagersTableComponent } from './table-components/managers/managers.component';
-import { TeamMembersTableComponent } from './table-components/members/members.component';
+import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
 @Component({
 	selector: 'ga-teams',
 	templateUrl: './teams.component.html',
@@ -35,10 +34,11 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 	organizationId: string;
 	showAddCard: boolean;
 	disableButton = true;
-	selectedTeam: OrganizationTeam;
+	selectedTeam: any;
 	showTable: boolean;
 	teams: OrganizationTeam[];
 	employees: Employee[] = [];
+	isGridEdit: boolean;
 	teamToEdit: OrganizationTeam;
 	loading = true;
 	tags: Tag[] = [];
@@ -88,6 +88,10 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+				this.selectedTeam =
+					this.dataLayoutStyle === 'CARDS_GRID'
+						? null
+						: this.selectedTeam;
 			});
 	}
 	async addOrEditTeam(team: OrganizationTeamCreateInput) {
@@ -150,7 +154,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 		this.teamToEdit = null;
 	}
 
-	async removeTeam(id: string, name: string) {
+	async removeTeam(id?: string, name?: string) {
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -162,13 +166,17 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 
 		if (result) {
 			try {
-				await this.organizationTeamsService.delete(id);
+				await this.organizationTeamsService.delete(
+					this.selectedTeam ? this.selectedTeam.id : id
+				);
 
 				this.toastrService.primary(
 					this.getTranslation(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
 						{
-							name: name
+							name: this.selectedTeam
+								? this.selectedTeam.team_name
+								: name
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -183,7 +191,8 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 
 	editTeam(team: OrganizationTeam) {
 		this.showAddCard = !this.showAddCard;
-		this.teamToEdit = team;
+		this.teamToEdit = team ? team : this.selectedTeam;
+		this.isGridEdit = team ? false : true;
 		this.showAddCard = true;
 		// TODO: Scroll the page to the top!
 	}
@@ -242,6 +251,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 
 			this.teams.forEach((team) =>
 				result.push({
+					id: team.id,
 					team_name: team.name,
 					members: team.members.map((item) => item.employee),
 					managers: team.managers.map((item) => item.employee),
@@ -274,7 +284,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
 					),
 					type: 'custom',
-					renderComponent: TeamMembersTableComponent,
+					renderComponent: EmployeeWithLinksComponent,
 					filter: false
 				},
 				managers: {
@@ -282,7 +292,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'
 					),
 					type: 'custom',
-					renderComponent: TeamManagersTableComponent,
+					renderComponent: EmployeeWithLinksComponent,
 					filter: false
 				},
 				notes: {
