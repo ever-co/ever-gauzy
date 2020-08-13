@@ -7,7 +7,7 @@ import { map, tap, takeUntil } from 'rxjs/operators';
 import { PermissionsEnum, Employee } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import * as moment from 'moment';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { PublicPageEmployeeMutationComponent } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.component';
 import { EmployeesService, UsersService } from '../../@core/services';
 import { ToastrService } from '../../@core/services/toastr.service';
