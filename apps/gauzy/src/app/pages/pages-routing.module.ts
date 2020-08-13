@@ -76,10 +76,22 @@ const routes: Routes = [
 			},
 			{
 				path: 'contacts',
-				loadChildren: () =>
-					import('./work-in-progress/work-in-progress.module').then(
-						(m) => m.WorkInProgressModule
-					)
+				children: [
+					{
+						path: 'visitors',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: '',
+						loadChildren: () =>
+							import('./contacts/contact.module').then(
+								(m) => m.ContactModule
+							)
+					}
+				]
 			},
 			{
 				path: 'projects',
@@ -322,13 +334,6 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./projects/projects.module').then(
 								(m) => m.ProjectsModule
-							)
-					},
-					{
-						path: 'contacts',
-						loadChildren: () =>
-							import('./contacts/contact.module').then(
-								(m) => m.ContactModule
 							)
 					},
 					{

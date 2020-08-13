@@ -1,7 +1,7 @@
 <nb-card style="padding: 0 !important;" class="card-body">
 	<nb-card-header style="padding: 0.5rem;">
 		<div class="header-container">
-			<ga-notes-with-tags [rowData]="entityWithMembers">
+			<ga-notes-with-tags [rowData]="entityWithMembers" [layout]="layout">
 			</ga-notes-with-tags>
 			<div class="members-count">
 				{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
@@ -28,9 +28,7 @@
 			>
 				<div class="image-container">
 					<a
-						href="/#/pages/employees/edit/{{
-							member.id
-						}}/profile/main"
+						href="/pages/employees/edit/{{ member.id }}/profile"
 						target="_blank"
 					>
 						<img

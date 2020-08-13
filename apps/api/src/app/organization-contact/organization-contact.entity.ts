@@ -131,6 +131,11 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	@Column({ nullable: true })
 	contactType: string;
 
+	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@IsOptional()
+	@Column({ length: 500, nullable: true })
+	imageUrl?: string;
+
 	@ApiPropertyOptional({ type: Payment, isArray: true })
 	@OneToMany((type) => Payment, (payment) => payment.contact, {
 		onDelete: 'SET NULL'

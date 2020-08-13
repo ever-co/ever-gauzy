@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import {
 	Employee,
 	OrganizationContact,
@@ -6,18 +6,26 @@ import {
 	OrganizationProjects,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
-import { ActivatedRoute } from '@angular/router';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { EmployeesService } from '../../@core/services';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { LocalDataSource } from 'ng2-smart-table';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 
 @Component({
 	selector: 'ga-contact',
@@ -29,20 +37,20 @@ export class ContactComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 
 	organizationId: string;
-
 	showAddCard: boolean;
-
 	organizationContact: OrganizationContact[] = [];
-
 	projectsWithoutOrganizationContact: OrganizationProjects[];
-
 	selectProjects: string[] = [];
-
 	employees: Employee[] = [];
-
 	organizationContactToEdit: OrganizationContact;
+	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	@Input() contactType: any;
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
+	@ViewChild('contactsTable') contactsTable;
+
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
@@ -51,9 +59,11 @@ export class ContactComponent extends TranslationBaseComponent
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private router: Router
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
@@ -75,6 +85,15 @@ export class ContactComponent extends TranslationBaseComponent
 					this.add();
 				}
 			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 
 	async removeOrganizationContact(id: string, name: string) {
@@ -161,7 +180,11 @@ export class ContactComponent extends TranslationBaseComponent
 			}
 		);
 		if (res) {
-			this.organizationContact = res.items;
+			const contact_items = res.items.filter(
+				(contact) => contact.contactType === this.contactType
+			);
+			this.organizationContact = contact_items;
+			this.smartTableSource.load(contact_items);
 		}
 	}
 
@@ -241,5 +264,78 @@ export class ContactComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
+	}
+
+	async selectContact({ isSelected, data }) {
+		const selectedContact = isSelected ? data : null;
+		if (this.contactsTable) {
+			this.contactsTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.organizationContactToEdit = selectedContact;
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
+	}
+
+	loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			mode: 'external',
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			columns: {
+				name: {
+					title: this.getTranslation('SM_TABLE.NAME'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: PictureNameTagsComponent
+				},
+				primaryEmail: {
+					title: this.getTranslation('SM_TABLE.PRIMARY_EMAIL'),
+					type: 'string',
+					width: '15%',
+					filter: false
+				},
+				primaryPhone: {
+					title: this.getTranslation('SM_TABLE.PRIMARY_PHONE'),
+					type: 'string',
+					width: '15%',
+					filter: false
+				},
+				inviteStatus: {
+					title: this.getTranslation('SM_TABLE.INVITE_STATUS'),
+					type: 'string',
+					width: '15%',
+					filter: false
+				},
+				contactType: {
+					title: this.getTranslation('SM_TABLE.CONTACT_TYPE'),
+					type: 'string',
+					width: '15%',
+					filter: false
+				},
+				actions: {
+					title: this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_ACTIONS'
+					),
+					type: 'custom',
+					renderComponent: ContactActionComponent,
+					onComponentInitFunction: (instance) => {
+						instance.updateResult.subscribe((params) => {
+							this.invite(params);
+						});
+					},
+					filter: false
+				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
+			}
+		};
 	}
 }

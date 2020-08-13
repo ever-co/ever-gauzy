@@ -1,17 +1,18 @@
 <nb-card>
 	<nb-card-header>
 		<div class="main-header">
-			<h4>{{ 'ORGANIZATIONS_PAGE.CONTACTS' | translate }}</h4>
-			<div class="main-header">
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
-			</div>
+			<h4>
+				{{ 'ORGANIZATIONS_PAGE.CONTACTS' | translate }} :
+				{{ contactType }}
+			</h4>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 
 	<nb-card-body>
-		<div>
+		<div class="mb-3" style="display: flex;">
 			<button
 				*ngIf="!showAddCard"
 				(click)="add()"
@@ -31,10 +32,15 @@
 				<nb-icon class="mr-1" icon="email-outline"></nb-icon
 				>{{ 'BUTTONS.INVITE' | translate }}
 			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+
 			<ga-contact-mutation
 				*ngIf="showAddCard"
 				[employees]="employees"
 				[organizationId]="organizationId"
+				[contactType]="contactType"
 				[organizationContact]="organizationContactToEdit"
 				[projectsWithoutOrganizationContact]="
 					projectsWithoutOrganizationContact
@@ -46,10 +52,26 @@
 			>
 			</ga-contact-mutation>
 		</div>
-		<div class="contact-list" *ngIf="organizationContact?.length">
+		<ng2-smart-table
+			class="contacts-table"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			(userRowSelect)="selectContact($event)"
+			style="cursor: pointer;"
+			#contactsTable
+		>
+		</ng2-smart-table>
+		<div
+			class="contact-list"
+			*ngIf="
+				organizationContact?.length && dataLayoutStyle === 'CARDS_GRID'
+			"
+		>
 			<ga-entity-with-members-card
 				*ngFor="let c of organizationContact"
 				[entityWithMembers]="c"
+				[layout]="dataLayoutStyle"
 				(remove)="removeOrganizationContact(c.id, c.name)"
 				(edit)="editOrganizationContact(c)"
 				class="member-card"
@@ -149,3 +171,35 @@
 		</div>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<div>
+		<button
+			nbButton
+			class="ml-2"
+			status="info"
+			size="medium"
+			(click)="editOrganizationContact(selectedItem)"
+			[disabled]="!selectedItem && disableButton"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			>{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			size="medium"
+			class="ml-2"
+			nbButton
+			(click)="
+				removeOrganizationContact(selectedItem.id, selectedItem.name)
+			"
+			[disabled]="!selectedItem && disableButton"
+			status="danger"
+		>
+			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+			>{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</div>
+</ng-template>
