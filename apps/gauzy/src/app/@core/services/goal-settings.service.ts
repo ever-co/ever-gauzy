@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
 	GoalTimeFrame,
-	GoalFindInput,
 	KPI,
 	SettingFindInput,
-	GoalGeneralSetting
+	GoalGeneralSetting,
+	GoalTimeFrameFindInput
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { throwError } from 'rxjs';
@@ -52,7 +52,7 @@ export class GoalSettingsService {
 	}
 
 	getAllTimeFrames(
-		findInput: GoalFindInput
+		findInput: GoalTimeFrameFindInput
 	): Promise<IGoalTimeFrameResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
@@ -67,13 +67,6 @@ export class GoalSettingsService {
 		return this._http
 			.delete(`${this.TIME_FRAME_URL}/${id}`)
 			.pipe(first())
-			.toPromise();
-	}
-
-	getTimeFrameByName(name: string): Promise<IGoalTimeFrameResponse> {
-		return this._http
-			.get<IGoalTimeFrameResponse>(`${this.TIME_FRAME_URL}/${name}`)
-			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
 

@@ -10,7 +10,7 @@ import {
 	CurrenciesEnum,
 	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -42,8 +42,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 		private dialogRef: NbDialogRef<KeyResultParametersComponent>,
 		private keyResultService: KeyResultService,
 		private taskService: TasksService,
-		private goalSettingsService: GoalSettingsService,
-		private dialogService: NbDialogService
+		private goalSettingsService: GoalSettingsService
 	) {}
 
 	async ngOnInit() {

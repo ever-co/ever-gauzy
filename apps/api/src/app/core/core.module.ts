@@ -108,6 +108,8 @@ import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 import { OrganizationDocuments } from '../organization-documents/organization-documents.entity';
 import { GoalGeneralSetting } from '../goal-general-setting/goal-general-setting.entity';
 import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
+import { KeyResultTemplate } from '../keyresult-template/keyresult-template.entity';
+import { GoalTemplate } from '../goal-template/goal-template.entity';
 
 const entities = [
 	Invite,
@@ -154,8 +156,10 @@ const entities = [
 	GoalTimeFrame,
 	GoalGeneralSetting,
 	GoalKPI,
+	GoalTemplate,
 	KeyResult,
 	KeyResultUpdate,
+	KeyResultTemplate,
 	TimeSlot,
 	Timesheet,
 	TimeLog,

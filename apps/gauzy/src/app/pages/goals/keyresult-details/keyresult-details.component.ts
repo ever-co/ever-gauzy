@@ -73,8 +73,14 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			compareDesc(new Date(a.createdAt), new Date(b.createdAt))
 		);
 		// prevent keyresult updates after deadline
+		const findInput = {
+			name: this.keyResult.goal.deadline,
+			organization: {
+				id: this.store.selectedOrganization.id
+			}
+		};
 		this.goalSettingsService
-			.getTimeFrameByName(this.keyResult.goal.deadline)
+			.getAllTimeFrames(findInput)
 			.then(async (res) => {
 				const timeFrame = res.items[0];
 				this.startDate = new Date(timeFrame.startDate);
@@ -144,6 +150,19 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				);
 				this.chart.updateChart(this.keyResult);
 			});
+	}
+
+	relativeProgress(currentUpdate, previousUpdate) {
+		const updateDiff = previousUpdate.update - currentUpdate.update;
+		const keyResultValDiff =
+			this.keyResult.targetValue - this.keyResult.initialValue;
+		const progress = Math.round((updateDiff / keyResultValDiff) * 100);
+		return {
+			progressText:
+				progress > 0 ? `+ ${progress}%` : `- ${progress * -1}%`,
+			status: progress > 0 ? 'success' : 'danger',
+			zero: progress === 0 ? true : false
+		};
 	}
 
 	async keyResultUpdate() {

@@ -31,6 +31,24 @@ export interface KPI extends IBaseEntityModel {
 	operator: string;
 }
 
+export interface GoalTemplate extends IBaseEntityModel {
+	name: string;
+	level: string;
+	keyResults?: Array<KeyResultTemplate>;
+	category?: string;
+}
+
+export interface KeyResultTemplate extends IBaseEntityModel {
+	name: string;
+	type: string;
+	unit?: string;
+	deadline: string;
+	hardDeadline?: Date;
+	softDeadline?: Date;
+	goal: GoalTemplate;
+	goalId?: string;
+}
+
 export enum TimeFrameStatusEnum {
 	ACTIVE = 'Active',
 	INACTIVE = 'Inactive'
@@ -42,6 +60,13 @@ export enum KpiMetricEnum {
 	CURRENCY = 'Currency'
 }
 
+export enum GoalTemplateCategoriesEnum {
+	PRODUCT_MANAGEMENT = 'Product Management',
+	SALES = 'Sales',
+	HR = 'HR',
+	MARKETING = 'Marketing'
+}
+
 export enum KpiOperatorEnum {
 	GREATER_THAN_EQUAL_TO = '>=',
 	LESSER_THAN_EQUAL_TO = '<='
@@ -49,6 +74,11 @@ export enum KpiOperatorEnum {
 
 export interface SettingFindInput extends IBaseEntityModel {
 	employee?: EmployeeFindInput;
+	organization?: OrganizationFindInput;
+}
+
+export interface GoalTimeFrameFindInput extends IBaseEntityModel {
+	name?: string;
 	organization?: OrganizationFindInput;
 }
 

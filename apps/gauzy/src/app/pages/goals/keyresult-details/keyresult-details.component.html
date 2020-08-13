@@ -125,8 +125,28 @@
 					</nb-alert>
 				</div>
 				<div class="section mt-2 overflow-scroll" *ngIf="!!updates">
-					<nb-card *ngFor="let update of updates">
-						<nb-card-header>
+					<nb-card *ngFor="let update of updates; let index = index">
+						<nb-card-header style="position: relative;">
+							<nb-badge
+								style="font-size: 0.8rem !important;"
+								*ngIf="
+									index < updates.length - 1 &&
+									!relativeProgress(
+										update,
+										updates[index + 1]
+									).zero
+								"
+								[text]="
+									relativeProgress(update, updates[index + 1])
+										.progressText
+								"
+								[status]="
+									relativeProgress(update, updates[index + 1])
+										.status
+								"
+								position="top right"
+							>
+							</nb-badge>
 							<div class="main-header">
 								<ngx-avatar
 									class="ml-2"
@@ -135,7 +155,9 @@
 									[name]="ownerName"
 								>
 								</ngx-avatar>
-								<p>{{ update.createdAt | date }}</p>
+								<p class="mt-3">
+									{{ update.createdAt | date }}
+								</p>
 							</div>
 						</nb-card-header>
 						<nb-card-footer>
