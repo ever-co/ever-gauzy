@@ -5,8 +5,8 @@ import {
 	RequestApproval as IRequestApproval,
 	PermissionsEnum,
 	RequestApprovalCreateInput as IRequestApprovalCreateInput,
-	RequestApprovalStatusTypesEnum,
-	RolesEnum
+	RolesEnum,
+	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
 import {
 	Query,
@@ -20,18 +20,21 @@ import {
 	Param,
 	Controller
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../shared/decorators/roles';
+import { RequestApprovalStatusCommand } from './commands';
 
 @ApiTags('request-approval')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class RequestApprovalControler extends CrudController<RequestApproval> {
 	constructor(
-		private readonly requestApprovalService: RequestApprovalService
+		private readonly requestApprovalService: RequestApprovalService,
+		private commandBus: CommandBus
 	) {
 		super(requestApprovalService);
 	}
@@ -124,9 +127,11 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	async employeeApprovalRequestApproval(
 		@Param('id') id: string
 	): Promise<RequestApproval> {
-		return this.requestApprovalService.updateStatusRequestApprovalByAdmin(
-			id,
-			RequestApprovalStatusTypesEnum.APPROVED
+		return this.commandBus.execute(
+			new RequestApprovalStatusCommand(
+				id,
+				RequestApprovalStatusTypesEnum.APPROVED
+			)
 		);
 	}
 
@@ -148,9 +153,11 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	async employeeRefuseRequestApproval(
 		@Param('id') id: string
 	): Promise<RequestApproval> {
-		return this.requestApprovalService.updateStatusRequestApprovalByAdmin(
-			id,
-			RequestApprovalStatusTypesEnum.REFUSED
+		return this.commandBus.execute(
+			new RequestApprovalStatusCommand(
+				id,
+				RequestApprovalStatusTypesEnum.REFUSED
+			)
 		);
 	}
 

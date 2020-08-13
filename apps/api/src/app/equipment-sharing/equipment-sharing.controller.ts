@@ -15,6 +15,12 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 import { Post } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import {
+	EquipmentSharingStatusCommand,
+	EquipmentSharingCreateCommand,
+	EquipmentSharingUpdateCommand
+} from './commands';
 
 @ApiTags('EquipmentSharing')
 @UseGuards(AuthGuard('jwt'))
@@ -23,7 +29,8 @@ export class EquipmentSharingController extends CrudController<
 	EquipmentSharing
 > {
 	constructor(
-		private readonly equipmentSharingService: EquipmentSharingService
+		private readonly equipmentSharingService: EquipmentSharingService,
+		private commandBus: CommandBus
 	) {
 		super(equipmentSharingService);
 	}
@@ -100,14 +107,12 @@ export class EquipmentSharingController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post('organization/:id')
+	@Post()
 	async createEquipmentSharing(
-		@Param('id') orgId: string,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<any> {
-		return this.equipmentSharingService.createEquipmentSharing(
-			orgId,
-			equipmentSharing
+		return this.commandBus.execute(
+			new EquipmentSharingCreateCommand(equipmentSharing)
 		);
 	}
 
@@ -131,7 +136,9 @@ export class EquipmentSharingController extends CrudController<
 		@Param('id') id: string,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<any> {
-		return this.equipmentSharingService.update(id, equipmentSharing);
+		return this.commandBus.execute(
+			new EquipmentSharingUpdateCommand(id, equipmentSharing)
+		);
 	}
 
 	@ApiOperation({ summary: 'equipment sharings request approval' })
@@ -149,9 +156,11 @@ export class EquipmentSharingController extends CrudController<
 	async equipmentSharingsRequestApproval(
 		@Param('id') id: string
 	): Promise<EquipmentSharing> {
-		return this.equipmentSharingService.updateStatusRequestApprovalByAdmin(
-			id,
-			RequestApprovalStatusTypesEnum.APPROVED
+		return this.commandBus.execute(
+			new EquipmentSharingStatusCommand(
+				id,
+				RequestApprovalStatusTypesEnum.APPROVED
+			)
 		);
 	}
 
@@ -170,9 +179,11 @@ export class EquipmentSharingController extends CrudController<
 	async equipmentSharingsRequestRefuse(
 		@Param('id') id: string
 	): Promise<EquipmentSharing> {
-		return this.equipmentSharingService.updateStatusRequestApprovalByAdmin(
-			id,
-			RequestApprovalStatusTypesEnum.REFUSED
+		return this.commandBus.execute(
+			new EquipmentSharingStatusCommand(
+				id,
+				RequestApprovalStatusTypesEnum.REFUSED
+			)
 		);
 	}
 }

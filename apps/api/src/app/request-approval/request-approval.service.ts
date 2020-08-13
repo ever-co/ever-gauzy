@@ -11,18 +11,13 @@ import { FindManyOptions, Repository } from 'typeorm';
 import {
 	RequestApproval as IRequestApproval,
 	RequestApprovalStatusTypesEnum,
-	RequestApprovalCreateInput as IRequestApprovalCreateInput,
-	ApprovalPolicyTypesStringEnum,
-	StatusTypesMapRequestApprovalEnum
+	RequestApprovalCreateInput as IRequestApprovalCreateInput
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { RequestContext } from '../core/context';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
-import { OrganizationTeamService } from '../organization-team/organization-team.service';
-import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
-import { EquipmentSharing } from '../equipment-sharing';
 
 @Injectable()
 export class RequestApprovalService extends CrudService<RequestApproval> {
@@ -31,16 +26,10 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
-		private readonly organizationTeamService: OrganizationTeamService,
+		// private readonly organizationTeamService: OrganizationTeamService,
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<
 			OrganizationTeam
-		>,
-		@InjectRepository(TimeOffRequest)
-		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
-		@InjectRepository(EquipmentSharing)
-		private readonly equipmentSharingRepository: Repository<
-			EquipmentSharing
 		>
 	) {
 		super(requestApprovalRepository);
@@ -52,9 +41,19 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 	): Promise<IPagination<IRequestApproval>> {
 		let requestApproval = this.requestApprovalRepository
 			.createQueryBuilder('request_approval')
-			.innerJoinAndSelect(
+			.leftJoinAndSelect(
 				'request_approval.approvalPolicy',
 				'approvalPolicy'
+			)
+			.leftJoinAndSelect(
+				'time_off_request',
+				'time_off_request',
+				'"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
+			)
+			.leftJoinAndSelect(
+				'equipment_sharing',
+				'equipment_sharing',
+				'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
 			);
 
 		if (filter.relations && filter.relations.length > 0) {
@@ -68,6 +67,12 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 
 		const [items, total] = await requestApproval
 			.where('approvalPolicy.organizationId =:organizationId', {
+				organizationId
+			})
+			.orWhere('time_off_request.organizationId =:organizationId', {
+				organizationId
+			})
+			.orWhere('equipment_sharing.organizationId =:organizationId', {
 				organizationId
 			})
 			.getManyAndCount();
@@ -86,29 +91,29 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 				}
 			});
 
-			const employeeTeam = await this.organizationTeamService.getMyOrgTeams(
-				{
-					relations: ['members']
-				},
-				id
-			);
+			// const employeeTeam = await this.organizationTeamService.getMyOrgTeams(
+			// 	{
+			// 		relations: ['members']
+			// 	},
+			// 	id
+			// );
 
 			let requestApproval = [];
 
-			if (employeeTeam.items && employeeTeam.items.length > 0) {
-				for (const team of employeeTeam.items) {
-					const organizationTeam = await this.organizationTeamRepository.findOne(
-						team.id,
-						{
-							relations: ['requestApprovals']
-						}
-					);
-					requestApproval = [
-						...requestApproval,
-						...organizationTeam.requestApprovals
-					];
-				}
-			}
+			// if (employeeTeam.items && employeeTeam.items.length > 0) {
+			// 	for (const team of employeeTeam.items) {
+			// 		const organizationTeam = await this.organizationTeamRepository.findOne(
+			// 			team.id,
+			// 			{
+			// 				relations: ['requestApprovals']
+			// 			}
+			// 		);
+			// 		requestApproval = [
+			// 			...requestApproval,
+			// 			...organizationTeam.requestApprovals
+			// 		];
+			// 	}
+			// }
 
 			const employee = await this.employeeRepository.findOne(id, {
 				relations
@@ -301,35 +306,6 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			}
 
 			requestApproval.status = status;
-
-			if (
-				requestApproval.approvalPolicy &&
-				requestApproval.approvalPolicy.approvalType ===
-					ApprovalPolicyTypesStringEnum.TIME_OFF
-			) {
-				const timeOffRequest = await this.timeOffRequestRepository.findOne(
-					requestApproval.requestId
-				);
-				if (timeOffRequest) {
-					timeOffRequest.status =
-						StatusTypesMapRequestApprovalEnum[status];
-					await this.timeOffRequestRepository.save(timeOffRequest);
-				}
-			} else if (
-				requestApproval.approvalPolicy &&
-				requestApproval.approvalPolicy.approvalType ===
-					ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING
-			) {
-				const equipmentSharing = await this.equipmentSharingRepository.findOne(
-					requestApproval.requestId
-				);
-				if (equipmentSharing) {
-					equipmentSharing.status = status;
-					await this.equipmentSharingRepository.save(
-						equipmentSharing
-					);
-				}
-			}
 
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err /*: WriteError*/) {

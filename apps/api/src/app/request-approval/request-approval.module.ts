@@ -15,7 +15,13 @@ import { RoleService } from '../role/role.service';
 import { OrganizationService } from '../organization/organization.service';
 import { OrganizationTeamEmployeeModule } from '../organization-team-employee/organization-team-employee.module';
 import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
-import { EquipmentSharing } from '../equipment-sharing';
+import {
+	EquipmentSharing,
+	EquipmentSharingService
+} from '../equipment-sharing';
+import { RequestApprovalStatusHandler } from './commands/handlers/request-approval.status.handler';
+import { TimeOffRequestService } from '../time-off-request/time-off-request.service';
+import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
 	imports: [
@@ -29,6 +35,7 @@ import { EquipmentSharing } from '../equipment-sharing';
 			TimeOffRequest,
 			EquipmentSharing
 		]),
+		CqrsModule,
 		OrganizationTeamEmployeeModule
 	],
 	controllers: [RequestApprovalControler],
@@ -38,7 +45,10 @@ import { EquipmentSharing } from '../equipment-sharing';
 		OrganizationTeamService,
 		EmployeeService,
 		RoleService,
-		OrganizationService
+		OrganizationService,
+		RequestApprovalStatusHandler,
+		EquipmentSharingService,
+		TimeOffRequestService
 	],
 	exports: [RequestApprovalService]
 })
