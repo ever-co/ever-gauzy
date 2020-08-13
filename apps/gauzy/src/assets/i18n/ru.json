@@ -1076,7 +1076,6 @@
 		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
 		"DEPARTMENTS": "Департаменты",
-		"CONTACTS": "Контакты",
 		"VENDORS": "Вендоры",
 		"NAME": "Имя",
 		"EXPENSE_CATEGORIES": "Категории расходов",
@@ -1105,6 +1104,16 @@
 		"LEVEL_NAME": "Название уровня",
 		"EXPENSE_NAME": "Имя Расхода",
 		"EMPLOYMENT_TYPE_NAME": "Название типа занятости",
+		"CONTACTS": "Контакты",
+		"CONTACTS_PAGE": {
+			"CITY": "Город",
+			"STREET": "Улица",
+			"COUNTRY": "Страна",
+			"PROJECTS": "Проекты",
+			"EMAIL": "Основной email",
+			"PHONE": "Основной телефон",
+			"CONTACT_TYPE": "Тип контакта"
+		},
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
