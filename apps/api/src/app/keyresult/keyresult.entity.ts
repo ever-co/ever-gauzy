@@ -20,6 +20,7 @@ import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
 import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('key_result')
 export class KeyResult extends TenantBase implements IKeyResult {
@@ -148,4 +149,11 @@ export class KeyResult extends TenantBase implements IKeyResult {
 	)
 	@IsOptional()
 	updates?: KeyResultUpdate[];
+
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
+	organizationId: string;
+
+	@ManyToOne((type) => Organization, (organization) => organization.id)
+	organization?: Organization;
 }
