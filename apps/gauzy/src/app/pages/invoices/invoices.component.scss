@@ -17,10 +17,6 @@
   margin: 10px auto;
 }
 
-.popover-select {
-  margin: 0 auto;
-}
-
 .settings-button {
   width: 100%;
   text-align: right;
@@ -28,4 +24,14 @@
 
 .actions-container {
   display: flex;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
 }

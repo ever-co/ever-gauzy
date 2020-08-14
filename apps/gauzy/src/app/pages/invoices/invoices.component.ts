@@ -69,6 +69,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	form: FormGroup;
 	organizationContacts: OrganizationContact[];
 	duplicate: boolean;
+	perPage: number;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -522,7 +523,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.settingsSmartTable = {
 			pager: {
 				display: true,
-				perPage: 10
+				perPage: this.perPage ? this.perPage : 10
 			},
 			hideSubHeader: true,
 			actions: false,
@@ -663,6 +664,18 @@ export class InvoicesComponent extends TranslationBaseComponent
 					filter: false
 				};
 			}
+		}
+	}
+
+	async showPerPage() {
+		if (
+			this.perPage &&
+			Number.isInteger(this.perPage) &&
+			this.perPage > 0
+		) {
+			this.smartTableSource.getPaging().perPage = this.perPage;
+			this.loadSmartTable();
+			this.perPage = null;
 		}
 	}
 

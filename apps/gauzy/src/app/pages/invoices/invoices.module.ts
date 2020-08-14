@@ -17,7 +17,8 @@ import {
 	NbContextMenuModule,
 	NbMenuModule,
 	NbPopoverModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbFormFieldModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -104,6 +105,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbTabsetModule,
 		BackNavigationModule,
 		NbPopoverModule,
+		NbFormFieldModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

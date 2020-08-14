@@ -482,7 +482,6 @@
 			{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}
 		</label>
 		<nb-select
-			class="mr-2 popover-select"
 			*ngIf="!isEstimate"
 			[multiple]="true"
 			[(selected)]="columns"
@@ -498,7 +497,6 @@
 			</nb-option>
 		</nb-select>
 		<nb-select
-			class="mr-2"
 			*ngIf="isEstimate"
 			[multiple]="true"
 			[(selected)]="columns"
@@ -513,5 +511,23 @@
 				{{ column }}
 			</nb-option>
 		</nb-select>
+		<label class="popover-label label" *ngIf="!isEstimate">
+			{{ 'INVOICES_PAGE.INVOICES_PER_PAGE' | translate }}
+		</label>
+		<label class="popover-label label" *ngIf="isEstimate">
+			{{ 'INVOICES_PAGE.ESTIMATES_PER_PAGE' | translate }}
+		</label>
+		<nb-form-field id="form-field">
+			<input [(ngModel)]="perPage" fullWidth type="number" nbInput />
+			<button
+				status="success"
+				nbSuffix
+				nbButton
+				ghost
+				(click)="showPerPage()"
+			>
+				<nb-icon icon="checkmark-square-2"></nb-icon>
+			</button>
+		</nb-form-field>
 	</div>
 </ng-template>
