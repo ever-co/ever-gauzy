@@ -51,7 +51,6 @@ export class ContactComponent extends TranslationBaseComponent
 	selectedContact: any;
 	isGridEdit: boolean;
 	disableButton = true;
-	defaultSelectedType: any;
 	smartTableSource = new LocalDataSource();
 	@Input() contactType: any;
 	@ViewChild('contactsTable') contactsTable;
