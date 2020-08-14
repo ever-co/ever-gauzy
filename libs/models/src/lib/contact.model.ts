@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface Contact {
+	id?: string;
 	name?: string;
 	firstName?: string;
 	lastname?: string;

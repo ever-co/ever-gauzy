@@ -13,27 +13,26 @@
 		</nb-card-header>
 		<nb-card-body>
 			<nb-form-field>
-				<label>
-					<span nbprefix>
+				<div class="form-group">
+					<label class="label" for="title">
 						{{ 'SM_TABLE.TITLE' | translate }}
-					</span>
+					</label>
 					<input
 						nbInput
-						fullWidth
 						type="text"
 						formControlName="title"
 						placeholder="{{ 'SM_TABLE.TITLE' | translate }}"
 					/>
-				</label>
+				</div>
 			</nb-form-field>
 			<nb-form-field>
-				<label>
-					<span nbprefix>
+				<div class="form-group">
+					<label class="label" for="stageId">
 						{{
 							'PIPELINE_DEAL_CREATE_PAGE.SELECT_STAGE' | translate
 						}}
-					</span>
-					<nb-select fullWidth formControlName="stageId">
+					</label>
+					<nb-select formControlName="stageId">
 						<nb-option
 							*ngFor="let stage of pipeline?.stages"
 							[value]="stage.id"
@@ -41,15 +40,35 @@
 							{{ stage.name }}
 						</nb-option>
 					</nb-select>
-				</label>
+				</div>
 			</nb-form-field>
+
 			<nb-form-field>
-				<label>
-					<span nbprefix>
-						{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABLITY' | translate }}
-					</span>
+				<div class="form-group">
+					<label class="label" for="client">
+						Select Client
+					</label>
 					<nb-select
-						fullWidth
+						formControlName="clientId"
+						placeholder="Clients"
+						[selected]="selectedClient"
+					>
+						<nb-option
+							*ngFor="let cl of clients"
+							[value]="cl.id"
+						>
+							{{ cl.name }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</nb-form-field>
+
+			<nb-form-field>
+				<div class="form-group">
+					<label class="label" for="probability">
+						{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABLITY' | translate }}
+					</label>
+					<nb-select
 						formControlName="probability"
 						placeholder="(0-low / 5-high)"
 						[selected]="selectedProbability"
@@ -61,7 +80,7 @@
 							{{ pr }}
 						</nb-option>
 					</nb-select>
-				</label>
+				</div>
 			</nb-form-field>
 		</nb-card-body>
 		<nb-card-footer class="text-right">
