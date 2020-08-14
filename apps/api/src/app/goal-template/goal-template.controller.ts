@@ -20,14 +20,14 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 		super(goalTemplateService);
 	}
 
-	@ApiOperation({ summary: 'Create Goal' })
+	@ApiOperation({ summary: 'Create Goal Template' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Goal Created successfully',
+		description: 'Goal Template Created successfully',
 		type: GoalTemplate
 	})
 	@Post('/create')
-	async createGoal(@Body() entity: GoalTemplate): Promise<any> {
+	async createGoalTemplate(@Body() entity: GoalTemplate): Promise<any> {
 		return this.goalTemplateService.create(entity);
 	}
 
