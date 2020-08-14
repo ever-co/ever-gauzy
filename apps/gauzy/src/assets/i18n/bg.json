@@ -2300,7 +2300,8 @@
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
 		"FILTER_BY_STAGE": "Filter by Stage",
-		"RECORD_TYPE": "stage \"{{ title }}\""
+		"RECORD_TYPE": "stage \"{{ title }}\"",
+		"ALL_STAGES": "All Stages"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: {{ name }}"
