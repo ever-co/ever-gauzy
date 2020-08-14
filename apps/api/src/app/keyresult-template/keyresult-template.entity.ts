@@ -26,6 +26,16 @@ export class KeyResultTemplate extends TenantBase
 	@IsOptional()
 	unit?: string;
 
+	@ApiProperty({ type: Number })
+	@Column({ nullable: true })
+	@IsOptional()
+	targetValue?: number;
+
+	@ApiProperty({ type: Number })
+	@Column({ nullable: true })
+	@IsOptional()
+	initialValue: number;
+
 	@ApiProperty({ type: String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)
 	@Column()
