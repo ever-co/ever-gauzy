@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import {
 	Employee,
 	OrganizationContact,
@@ -25,9 +25,10 @@ import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { LocalDataSource } from 'ng2-smart-table';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
 import { TaskTeamsComponent } from '../../@shared/table-components/task-teams/task-teams.component';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 
 @Component({
 	selector: 'ga-contact',
@@ -49,8 +50,9 @@ export class ContactComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	selectedContact: any;
 	isGridEdit: boolean;
-	disableButton: boolean;
+	disableButton = true;
 	smartTableSource = new LocalDataSource();
+	@Input() contactType: any;
 	@ViewChild('contactsTable') contactsTable;
 
 	constructor(
@@ -105,7 +107,9 @@ export class ContactComponent extends TranslationBaseComponent
 			columns: {
 				contact_name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
-					type: 'string'
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: PictureNameTagsComponent
 				},
 				members: {
 					title: this.getTranslation(
@@ -116,55 +120,48 @@ export class ContactComponent extends TranslationBaseComponent
 					filter: false
 				},
 				primaryPhone: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.PHONE'
-					),
+					title: this.getTranslation('CONTACTS_PAGE.PHONE'),
 					type: 'string'
 				},
 				primaryEmail: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.EMAIL'
-					),
-					type: 'string'
-				},
-				contactType: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.CONTACT_TYPE'
-					),
+					title: this.getTranslation('CONTACTS_PAGE.EMAIL'),
 					type: 'string'
 				},
 				projects: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.PROJECTS'
-					),
+					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
 					type: 'custom',
 					renderComponent: TaskTeamsComponent,
 					filter: false
 				},
 				country: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.COUNTRY'
-					),
+					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
 					type: 'string'
 				},
 				city: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.CITY'
-					),
+					title: this.getTranslation('CONTACTS_PAGE.CITY'),
 					type: 'string'
 				},
 				street: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.CONTACTS_PAGE.STREET'
-					),
+					title: this.getTranslation('CONTACTS_PAGE.STREET'),
 					type: 'string'
 				},
-				notes: {
-					title: this.getTranslation('MENU.TAGS'),
+				actions: {
+					title: this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_ACTIONS'
+					),
 					type: 'custom',
-					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: ContactActionComponent,
+					onComponentInitFunction: (instance) => {
+						instance.updateResult.subscribe((params) => {
+							this.invite(params);
+						});
+					},
+					filter: false
 				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
 			}
 		};
 	}
@@ -278,7 +275,6 @@ export class ContactComponent extends TranslationBaseComponent
 			}
 		);
 		if (res) {
-			this.organizationContact = res.items;
 			const result = [];
 			res.items.forEach(async (contact: OrganizationContact) => {
 				result.push({
@@ -289,7 +285,11 @@ export class ContactComponent extends TranslationBaseComponent
 					street: contact.contact.address
 				});
 			});
-			this.smartTableSource.load(result);
+			const contact_items = result.filter(
+				(contact) => contact.contactType === this.contactType
+			);
+			this.organizationContact = contact_items;
+			this.smartTableSource.load(contact_items);
 		}
 	}
 

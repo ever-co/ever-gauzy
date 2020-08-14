@@ -138,10 +138,6 @@
 		"START": "Start",
 		"END": "End",
 		"REQUEST_DATE": "Request Date",
-		"PRIMARY_EMAIL": "Primary Email",
-		"PRIMARY_PHONE": "Primary Phone",
-		"INVITE_STATUS": "Invite Status",
-		"CONTACT_TYPE": "Contact Type",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -1105,15 +1101,6 @@
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"CONTACTS": "Contacts",
-		"CONTACTS_PAGE": {
-			"CITY": "City",
-			"STREET": "Street",
-			"COUNTRY": "Country",
-			"PROJECTS": "Projects",
-			"EMAIL": "Primary email",
-			"PHONE": "Primary phone",
-			"CONTACT_TYPE": "Contact type"
-		},
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "Client",
@@ -1126,7 +1113,6 @@
 			"CITY": "City",
 			"STREET": "Street",
 			"PROJECTS": "Projects",
-			"CONTACT_TYPE": "Contact Type",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
 			"NEW_PROJECT": "Add new project",
@@ -1239,7 +1225,14 @@
 		"VISITORS": "Visitors",
 		"LEADS": "Leads",
 		"CUSTOMERS": "Customers",
-		"CLIENTS": "Clients"
+		"CLIENTS": "Clients",
+		"CITY": "City",
+		"STREET": "Street",
+		"COUNTRY": "Country",
+		"PROJECTS": "Projects",
+		"EMAIL": "Primary Email",
+		"PHONE": "Primary Phone",
+		"CONTACT_TYPE": "Contact type"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
