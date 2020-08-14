@@ -166,14 +166,14 @@ export class PipelineDealsComponent extends TranslationBaseComponent implements 
 
 	private _checkOrganization() {
 		this.store.selectedOrganization$
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((org) => {
-					this._selectedOrganizationId = org.id;
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				this._selectedOrganizationId = org.id;
 
-					if (this.pipeline?.organizationId !== this._selectedOrganizationId) {
-						this.router.navigate(['pages/sales/pipelines']);
-					}
-			})
+				if (this.pipeline?.organizationId !== this._selectedOrganizationId) {
+					this.router.navigate(['pages/sales/pipelines']);
+				}
+		})
 	}
 
 	ngOnDestroy() {

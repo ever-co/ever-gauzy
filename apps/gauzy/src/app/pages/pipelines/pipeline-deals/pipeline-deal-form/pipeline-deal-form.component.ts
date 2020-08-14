@@ -1,34 +1,45 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Pipeline } from '@gauzy/models';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { Pipeline, Contact } from '@gauzy/models';
 import { PipelinesService } from '../../../../@core/services/pipelines.service';
 import { DealsService } from '../../../../@core/services/deals.service';
-import { AppStore } from '../../../../@core/services/store.service';
+import { AppStore, Store } from '../../../../@core/services/store.service';
+import { OrganizationContactService } from 'apps/gauzy/src/app/@core/services/organization-contact.service';
 
 @Component({
 	templateUrl: './pipeline-deal-form.component.html',
-	selector: 'ga-pipeline-deals-form'
+	selector: 'ga-pipeline-deals-form',
+	styleUrls: ['./pipeline-deal-form.component.scss']
 })
-export class PipelineDealFormComponent implements OnInit {
+export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	form: FormGroup;
 	pipeline: Pipeline;
+	clients: Contact[];
+	selectedClient: Contact
 	probabilities = [0,1,2,3,4,5];
 	selectedProbability: number;
 	mode: 'CREATE' | 'EDIT' = 'CREATE';
 	id: string;
 
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
+	private _ngDestroy$ = new Subject<void>();
+	private _selectedOrganizationId: string;
 
 	constructor(
 		private router: Router,
 		private fb: FormBuilder,
 		private appStore: AppStore,
+		private store: Store,
 		private dealsService: DealsService,
 		private activatedRoute: ActivatedRoute,
-		private pipelinesService: PipelinesService
+		private pipelinesService: PipelinesService,
+		private clientsService: OrganizationContactService
 	) {
 		this.$akitaPreUpdate = appStore.akitaPreUpdate;
+
 		appStore.akitaPreUpdate = (previous, next) => {
 			if (previous.user !== next.user) {
 				setTimeout(() =>
@@ -45,6 +56,7 @@ export class PipelineDealFormComponent implements OnInit {
 			createdByUserId: [null, Validators.required],
 			stageId: [null, Validators.required],
 			title: [null, Validators.required],
+			clientId: [null],
 			probability: [null]
 		});
 
@@ -62,6 +74,7 @@ export class PipelineDealFormComponent implements OnInit {
 						id: pipelineId
 					})
 					.then(({ items: [value] }) => (this.pipeline = value));
+
 				this.form.patchValue({ stageId: this.pipeline.stages[0]?.id });
 			}
 
@@ -77,6 +90,16 @@ export class PipelineDealFormComponent implements OnInit {
 
 			this.form.enable();
 		});
+
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				this._selectedOrganizationId = org.id;
+		})
+
+		this.clientsService
+			.getAll([], { organizationId: this._selectedOrganizationId })
+			.then(res => this.clients = res.items)
 	}
 
 	public async onSubmit(): Promise<void> {
@@ -88,8 +111,8 @@ export class PipelineDealFormComponent implements OnInit {
 
 		this.form.disable();
 		await (this.id
-			? this.dealsService.update(this.id, value)
-			: this.dealsService.create(value)
+			? this.dealsService.update(this.id, Object.assign({ organizationId: this._selectedOrganizationId }, value))
+			: this.dealsService.create(Object.assign({ organizationId: this._selectedOrganizationId }, value))
 		)
 			.then(() =>
 				this.router.navigate([id ? '../..' : '..'], { relativeTo })
@@ -99,5 +122,10 @@ export class PipelineDealFormComponent implements OnInit {
 
 	cancel() {
 		window.history.back();
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }
