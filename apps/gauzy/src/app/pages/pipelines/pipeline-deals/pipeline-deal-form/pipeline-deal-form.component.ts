@@ -13,9 +13,9 @@ import { AppStore } from '../../../../@core/services/store.service';
 export class PipelineDealFormComponent implements OnInit {
 	form: FormGroup;
 	pipeline: Pipeline;
-	mode: 'CREATE' | 'EDIT' = 'CREATE';
 	probabilities = [0,1,2,3,4,5];
 	selectedProbability: number;
+	mode: 'CREATE' | 'EDIT' = 'CREATE';
 	id: string;
 
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
