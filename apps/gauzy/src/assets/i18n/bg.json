@@ -138,10 +138,6 @@
 		"START": "Start",
 		"END": "End",
 		"REQUEST_DATE": "Request Date",
-		"PRIMARY_EMAIL": "Основна Е-поща",
-		"PRIMARY_PHONE": "Основен телефон",
-		"INVITE_STATUS": "Invite Status",
-		"CONTACT_TYPE": "Contact Type",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -1105,15 +1101,6 @@
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"CONTACTS": "Contacts",
-		"CONTACTS_PAGE": {
-			"CITY": "Град",
-			"STREET": "Улица",
-			"COUNTRY": "Държава",
-			"PROJECTS": "Проекти",
-			"EMAIL": "Primary email",
-			"PHONE": "Primary phone",
-			"CONTACT_TYPE": "Contact type"
-		},
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
@@ -1126,7 +1113,6 @@
 			"CITY": "Град",
 			"STREET": "Улица",
 			"PROJECTS": "Проекти",
-			"CONTACT_TYPE": "Contact Type",
 			"DEPARTMENT_NAME": "Име на отдела",
 			"POSITION_NAME": "Название на позиция",
 			"NEW_PROJECT": "Добавяне на нов проект",
@@ -1239,7 +1225,14 @@
 		"VISITORS": "Visitors",
 		"LEADS": "Leads",
 		"CUSTOMERS": "Customers",
-		"CLIENTS": "Клиенти"
+		"CLIENTS": "Клиенти",
+		"CITY": "Град",
+		"STREET": "Улица",
+		"COUNTRY": "Държава",
+		"PROJECTS": "Проекти",
+		"EMAIL": "Основна Е-поща",
+		"PHONE": "Основен телефон",
+		"CONTACT_TYPE": "Contact type"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
