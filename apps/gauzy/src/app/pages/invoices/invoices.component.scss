@@ -6,14 +6,37 @@
 }
 
 .popover-container {
-  display: flex;
-  flex-direction: column;
   border: solid 1px #919191;
   padding: 0 50px;
   padding-bottom: 20px;
 }
 
-.popover-label {
+.per-page {
+  display: flex;
+  text-align: center;
+}
+
+.per-page-input {
+  width: 100px;
+  margin: auto 0;
+}
+
+.per-page-label {
+  margin-right: 20px;
+  align-self: center;
+  margin-bottom: 0;
+}
+
+.per-page-button {
+  margin-left: 20px;
+}
+
+.show-columns {
+  display: flex;
+  flex-direction: column;
+}
+
+.show-columns-label {
   margin: 10px auto;
 }
 
@@ -26,12 +49,6 @@
   display: flex;
 }
 
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type='number'] {
-  -moz-appearance: textfield;
+.show-columns-select {
+  margin-bottom: 20px;
 }

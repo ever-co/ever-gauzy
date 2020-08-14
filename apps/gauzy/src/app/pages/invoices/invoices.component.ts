@@ -69,7 +69,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	form: FormGroup;
 	organizationContacts: OrganizationContact[];
 	duplicate: boolean;
-	perPage: number;
+	perPage = 10;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -675,7 +675,6 @@ export class InvoicesComponent extends TranslationBaseComponent
 		) {
 			this.smartTableSource.getPaging().perPage = this.perPage;
 			this.loadSmartTable();
-			this.perPage = null;
 		}
 	}
 
