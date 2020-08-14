@@ -2300,7 +2300,8 @@
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Сделки Трубопровода",
 		"FILTER_BY_STAGE": "Фильтр по этапу",
-		"RECORD_TYPE": "этап \"{{ title }}\""
+		"RECORD_TYPE": "этап \"{{ title }}\"",
+		"ALL_STAGES": "Все этапы"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Редактировать сделку | Пипеллинн: {{ name }}"
