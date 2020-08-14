@@ -138,10 +138,6 @@
 		"START": "Start",
 		"END": "End",
 		"REQUEST_DATE": "Request Date",
-		"PRIMARY_EMAIL": "דוא\"ל עיקרי",
-		"PRIMARY_PHONE": "מספר טלפון ראשי",
-		"INVITE_STATUS": "Invite Status",
-		"CONTACT_TYPE": "Contact Type",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -1105,15 +1101,6 @@
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"CONTACTS": "Contacts",
-		"CONTACTS_PAGE": {
-			"CITY": "עיר",
-			"STREET": "רחוב",
-			"COUNTRY": "מדינה",
-			"PROJECTS": "פרויקטים",
-			"EMAIL": "Primary email",
-			"PHONE": "Primary phone",
-			"CONTACT_TYPE": "Contact type"
-		},
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
@@ -1126,7 +1113,6 @@
 			"CITY": "עיר",
 			"STREET": "רחוב",
 			"PROJECTS": "פרויקטים",
-			"CONTACT_TYPE": "Contact Type",
 			"DEPARTMENT_NAME": "שם מחלקה",
 			"POSITION_NAME": "שם המיקום",
 			"NEW_PROJECT": "הוסף פרויקט חדש",
@@ -1239,7 +1225,14 @@
 		"VISITORS": "Visitors",
 		"LEADS": "Leads",
 		"CUSTOMERS": "Customers",
-		"CLIENTS": "לקוחות"
+		"CLIENTS": "לקוחות",
+		"CITY": "עיר",
+		"STREET": "רחוב",
+		"COUNTRY": "מדינה",
+		"PROJECTS": "פרויקטים",
+		"EMAIL": "דוא\"ל עיקרי",
+		"PHONE": "מספר טלפון ראשי",
+		"CONTACT_TYPE": "Contact type"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
