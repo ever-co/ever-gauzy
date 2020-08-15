@@ -16,12 +16,12 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { TimeOffStatusComponent } from './table-components/time-off-status.component';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Subject } from 'rxjs/internal/Subject';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @Component({
 	selector: 'ngx-time-off',
@@ -358,7 +358,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 
 	updateTimeOffRecord() {
 		this._removeDocUrl();
-		
+
 		this.dialogService
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: this.selectedTimeOffRecord }
@@ -422,8 +422,21 @@ export class TimeOffComponent extends TranslationBaseComponent
 					type: 'custom',
 					class: 'text-center',
 					width: '200px',
-					renderComponent: TimeOffStatusComponent,
-					filter: false
+					renderComponent: StatusBadgeComponent,
+					filter: false,
+					valuePrepareFunction: (cell, row) => {
+						const badgeClass = cell
+							? ['approved'].includes(cell.toLowerCase())
+								? 'success'
+								: ['requested'].includes(cell.toLowerCase())
+								? 'warning'
+								: 'danger'
+							: null;
+						return {
+							text: cell,
+							class: badgeClass
+						};
+					}
 				}
 			},
 			pager: {
@@ -515,21 +528,28 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.pipe(first())
 			.subscribe(
 				() => {
-					this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED');
+					this.toastrService.success(
+						'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED'
+					);
 					this._loadTableData(this._selectedOrganizationId);
 					this.selectRecord({
 						isSelected: false,
 						data: null
 					});
 				},
-				() => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD')
+				() =>
+					this.toastrService.danger(
+						'TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD'
+					)
 			);
 	}
 
 	private _removeDocUrl() {
 		const index = this.selectedTimeOffRecord.description.lastIndexOf('>');
 		const nativeDescription = this.selectedTimeOffRecord.description;
-		this.selectedTimeOffRecord.description = nativeDescription.substr(index+1);
+		this.selectedTimeOffRecord.description = nativeDescription.substr(
+			index + 1
+		);
 	}
 
 	ngOnDestroy(): void {}

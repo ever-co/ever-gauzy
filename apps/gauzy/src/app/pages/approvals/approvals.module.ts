@@ -26,7 +26,6 @@ import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { CommonModule } from '@angular/common';
-import { RequestApprovalStatusComponent } from './table-components/request-approval-status/request-approval-status.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -61,11 +60,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [
-		ApprovalsComponent,
-		RequestApprovalActionComponent,
-		RequestApprovalStatusComponent
-	],
+	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	entryComponents: [],
 	providers: [RequestApprovalService]
 })

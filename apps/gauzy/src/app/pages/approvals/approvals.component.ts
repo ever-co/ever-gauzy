@@ -10,12 +10,13 @@ import { PermissionsEnum } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
-import { RequestApprovalStatusComponent } from './table-components/request-approval-status/request-approval-status.component';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 export interface IApprovalsData {
 	icon: string;
@@ -183,7 +184,31 @@ export class ApprovalsComponent extends TranslationBaseComponent
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
 					),
 					type: 'custom',
-					renderComponent: RequestApprovalStatusComponent,
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						switch (cell) {
+							case RequestApprovalStatusTypesEnum.APPROVED:
+								cell = 'Approved';
+								break;
+							case RequestApprovalStatusTypesEnum.REFUSED:
+								cell = 'Refused';
+								break;
+							default:
+								cell = 'Requested';
+								break;
+						}
+						const badgeClass = cell
+							? ['approved'].includes(cell.toLowerCase())
+								? 'success'
+								: ['requested'].includes(cell.toLowerCase())
+								? 'warning'
+								: 'danger'
+							: null;
+						return {
+							text: cell,
+							class: badgeClass
+						};
+					},
 					filter: false
 				},
 				actions: {
