@@ -125,7 +125,6 @@
     padding: 6px 12px 5px;
     font-weight: normal;
     font-size: 12px;
-    margin-bottom: 15px;
   }
 
   ul.org-value li.org_list_data span:hover,
@@ -151,6 +150,11 @@ h5.org-title.org-key {
   display: block;
   line-height: 1.3rem;
   padding-right: 0.2rem;
+}
+
+.org-skills {
+  display: flex;
+  align-items: center;
 }
 
 .org-skills p.org-title.org-key {
@@ -317,6 +321,10 @@ p,
     margin-top: 10px;
   }
 
+  .average-bonus {
+    color: #7f92a9;
+  }
+
   .works-at {
     margin-top: 10px;
     display: inline-block;
@@ -414,4 +422,9 @@ p,
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+}
+
+.o__p__s__t {
+  padding-left: 0;
+  padding-right: 0;
 }

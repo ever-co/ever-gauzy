@@ -67,6 +67,8 @@ export interface Organization extends IBaseEntityModel, IContact {
 	contact: IContact;
 	separateInvoiceItemTaxAndDiscount?: boolean;
 	organizationSprints?: OrganizationSprint[];
+	minimumProjectSize?: string;
+	show_clients?: boolean;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -109,6 +111,8 @@ export interface OrganizationCreateInput extends IContact {
 	tags?: Tag[];
 	tenant: ITenant;
 	skills?: Skill[];
+	minimumProjectSize?: string;
+	show_clients?: boolean;
 }
 
 export enum OrganizationSelectInput {
@@ -180,6 +184,15 @@ export enum ClientFocusEnum {
 export enum ProjectOwnerEnum {
 	CLIENT = 'CLIENT',
 	INTERNAL = 'INTERNAL'
+}
+
+export enum MinimumProjectSizeEnum {
+	ONE_THOUSAND = '1000+',
+	FIVE_THOUSAND = '5000+',
+	TEN_THOUSAND = '10000+',
+	TWENTY_FIVE_THOUSAND = '25000+',
+	FIFTY_THOUSAND = '50000+',
+	ONE_HUNDRED_THOUSAND = '100000+'
 }
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;
