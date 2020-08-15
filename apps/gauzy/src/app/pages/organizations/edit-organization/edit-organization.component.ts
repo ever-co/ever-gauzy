@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Organization } from '@gauzy/models';
+import { Organization, PermissionsEnum } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
@@ -60,6 +60,10 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 						}
 					});
 			});
+	}
+
+	canEditPublicPage() {
+		return this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT);
 	}
 
 	//Open the public page in a new tab
