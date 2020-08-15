@@ -425,13 +425,16 @@ export class TimeOffComponent extends TranslationBaseComponent
 					renderComponent: StatusBadgeComponent,
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
-						const badgeClass = cell
-							? ['approved'].includes(cell.toLowerCase())
+						let badgeClass;
+						if (cell) {
+							badgeClass = ['approved'].includes(
+								cell.toLowerCase()
+							)
 								? 'success'
 								: ['requested'].includes(cell.toLowerCase())
 								? 'warning'
-								: 'danger'
-							: null;
+								: 'danger';
+						}
 						return {
 							text: cell,
 							class: badgeClass

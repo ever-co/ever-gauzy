@@ -577,21 +577,22 @@ export class InvoicesComponent extends TranslationBaseComponent
 				renderComponent: StatusBadgeComponent,
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					const badgeClass = cell
-						? [
-								'sent',
-								'viewed',
-								'accepted',
-								'active',
-								'fully paid'
-						  ].includes(cell.toLowerCase())
+					let badgeClass;
+					if (cell) {
+						badgeClass = [
+							'sent',
+							'viewed',
+							'accepted',
+							'active',
+							'fully paid'
+						].includes(cell.toLowerCase())
 							? 'success'
 							: ['void', 'draft', 'partially paid'].includes(
 									cell.toLowerCase()
 							  )
 							? 'warning'
-							: 'danger'
-						: null;
+							: 'danger';
+					}
 					return {
 						text: cell,
 						class: badgeClass

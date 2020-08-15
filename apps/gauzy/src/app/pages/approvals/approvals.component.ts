@@ -197,13 +197,13 @@ export class ApprovalsComponent extends TranslationBaseComponent
 								cell = 'Requested';
 								break;
 						}
-						const badgeClass = cell
-							? ['approved'].includes(cell.toLowerCase())
-								? 'success'
-								: ['requested'].includes(cell.toLowerCase())
-								? 'warning'
-								: 'danger'
-							: null;
+						const badgeClass = ['approved'].includes(
+							cell.toLowerCase()
+						)
+							? 'success'
+							: ['requested'].includes(cell.toLowerCase())
+							? 'warning'
+							: 'danger';
 						return {
 							text: cell,
 							class: badgeClass
