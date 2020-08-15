@@ -329,7 +329,6 @@ export class ExportComponent implements OnInit, OnDestroy {
 	}
 
 	onSubmit() {
-		console.log('Exported Files', this.selectedfiles);
 		this.exportAll
 			.downloadSpecificData(this.selectedfiles)
 			.subscribe((data) => saveAs(data, `export.zip`));
