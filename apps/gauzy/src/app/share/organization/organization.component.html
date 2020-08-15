@@ -1,7 +1,7 @@
 <nb-card>
 	<nb-card-body *ngIf="organization">
 		<div class="org-info">
-			<div *ngIf="hasEditPermission">
+			<div *ngIf="hasEditPermission && belongsToOrganization">
 				<div class="edit-icon">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -439,10 +439,15 @@
 											<div
 												class="label label-hourly margin-right-10"
 											>
-                        {{employee.payPeriod}}
+												{{ employee.payPeriod }}
 											</div>
 											<div class="pay-rate">
-                        {{employee.billRateValue | currency :  employee.billRateCurrency: 'symbol'}}/hr
+												{{
+													employee.billRateValue
+														| currency
+															: employee.billRateCurrency
+															: 'symbol'
+												}}/hr
 											</div>
 											<div class="clearfix"></div>
 											<div class="speciality">
