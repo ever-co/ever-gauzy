@@ -16,7 +16,6 @@ import {
 	OrganizationProjects
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
-import { InvoicePaymentOverdueComponent } from '../invoices/table-components/invoice-payment-overdue.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
@@ -26,6 +25,7 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @Component({
 	selector: 'ngx-payments',
@@ -291,7 +291,25 @@ export class PaymentsComponent extends TranslationBaseComponent
 					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
 					type: 'custom',
 					width: '9%',
-					renderComponent: InvoicePaymentOverdueComponent
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						let badgeClass;
+						if (cell) {
+							badgeClass = 'danger';
+							cell = this.getTranslation(
+								'INVOICES_PAGE.PAYMENTS.OVERDUE'
+							);
+						} else {
+							badgeClass = 'success';
+							cell = this.getTranslation(
+								'INVOICES_PAGE.PAYMENTS.ON_TIME'
+							);
+						}
+						return {
+							text: cell,
+							class: badgeClass
+						};
+					}
 				}
 			}
 		};

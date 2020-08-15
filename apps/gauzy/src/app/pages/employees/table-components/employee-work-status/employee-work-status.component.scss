@@ -1,21 +1,16 @@
-.badge-danger {
-  text-align: center;
-  padding: 5px;
-  background-color: #ff3d71;
-  margin-bottom: 20px;
-  border-radius: 0.25rem;
-}
-
-.badge-success {
-  text-align: center;
-  padding: 5px;
-  background-color: #00d68f;
-  border-radius: 0.25rem;
-}
-
 .badge-disabled {
-  text-align: center;
-  padding: 5px;
   background-color: #ccc;
+}
+
+.badge {
+  text-align: center;
+  padding: 5px 30px;
+  margin-bottom: 5px;
+}
+
+div {
   border-radius: 0.25rem;
+  align-content: center;
+  display: flex;
+  justify-content: center;
 }
