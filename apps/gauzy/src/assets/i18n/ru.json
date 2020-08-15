@@ -424,6 +424,7 @@
 		"DATE": "Дата",
 		"PICK_DATE": "Выбрать дату",
 		"ALL_CONTACTS": "Все контакты",
+		"CONTACT": "Контакт",
 		"ALL_VENDORS": "Поставщик / Торговец",
 		"ALL_CATEGORIES": "Все категории",
 		"CATEGORY_NAME": "Название категории",
@@ -1205,7 +1206,7 @@
 			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Создать/редактировать интервьюера",
 			"VIEW_ALL_EMAILS": "Посмотреть все письма",
 			"ORG_HELP_CENTER_EDIT": "Редактировать справочный центр организации",
-			"PUBLIC_PAGE_EDIT": "Редактирование публичной страницы",
+			"PUBLIC_PAGE_EDIT": "Изменить публичную страницу организации",
 			"CAN_APPROVE_TIMESHEET": "Одобрить график работы",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
@@ -1689,11 +1690,13 @@
 		"APPLIED": "Применяется",
 		"NOT_APPLIED": "Не применено",
 		"STATUS": "Статус",
-		"SET_STATUS": "Установить статус",
+		"SET_STATUS": "УСТАНОВИТЬ СТАТУС",
 		"SHOW_COLUMNS": "Показать колонки",
 		"ITEM": "Пункт 1",
 		"SETTINGS": "Настройки",
 		"SHOW_HIDE_COLUMNS": "Показать/скрыть столбцы",
+		"INVOICES_PER_PAGE": "Счета на странице",
+		"ESTIMATES_PER_PAGE": "Оценки на странице",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -2300,7 +2303,8 @@
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Сделки Трубопровода",
 		"FILTER_BY_STAGE": "Фильтр по этапу",
-		"RECORD_TYPE": "этап \"{{ title }}\""
+		"RECORD_TYPE": "этап \"{{ title }}\"",
+		"ALL_STAGES": "Все этапы"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Редактировать сделку | Пипеллинн: {{ name }}"

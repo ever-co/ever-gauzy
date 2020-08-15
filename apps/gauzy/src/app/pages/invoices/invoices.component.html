@@ -478,40 +478,66 @@
 
 <ng-template #settingsPopover>
 	<div class="popover-container">
-		<label class="popover-label label">
-			{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}
-		</label>
-		<nb-select
-			class="mr-2 popover-select"
-			*ngIf="!isEstimate"
-			[multiple]="true"
-			[(selected)]="columns"
-			(selectedChange)="selectColumn($event)"
-			placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
-		>
-			<nb-option
-				class="column"
-				*ngFor="let column of invoiceColumns"
-				[value]="column"
+		<div class="show-columns">
+			<label class="show-columns-label label">
+				{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}
+			</label>
+			<nb-select
+				class="show-columns-select"
+				*ngIf="!isEstimate"
+				[multiple]="true"
+				[(selected)]="columns"
+				(selectedChange)="selectColumn($event)"
+				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
 			>
-				{{ column }}
-			</nb-option>
-		</nb-select>
-		<nb-select
-			class="mr-2"
-			*ngIf="isEstimate"
-			[multiple]="true"
-			[(selected)]="columns"
-			(selectedChange)="selectColumn($event)"
-			placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
-		>
-			<nb-option
-				class="column"
-				*ngFor="let column of estimateColumns"
-				[value]="column"
+				<nb-option
+					class="column"
+					*ngFor="let column of invoiceColumns"
+					[value]="column"
+				>
+					{{ column }}
+				</nb-option>
+			</nb-select>
+			<nb-select
+				class="show-columns-select"
+				*ngIf="isEstimate"
+				[multiple]="true"
+				[(selected)]="columns"
+				(selectedChange)="selectColumn($event)"
+				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
 			>
-				{{ column }}
-			</nb-option>
-		</nb-select>
+				<nb-option
+					class="column"
+					*ngFor="let column of estimateColumns"
+					[value]="column"
+				>
+					{{ column }}
+				</nb-option>
+			</nb-select>
+		</div>
+		<div class="per-page-container">
+			<div class="per-page">
+				<label class="label per-page-label" *ngIf="!isEstimate">
+					{{ 'INVOICES_PAGE.INVOICES_PER_PAGE' | translate }}
+				</label>
+				<label class="label per-page-label" *ngIf="isEstimate">
+					{{ 'INVOICES_PAGE.ESTIMATES_PER_PAGE' | translate }}
+				</label>
+				<input
+					class="per-page-input"
+					[(ngModel)]="perPage"
+					type="number"
+					nbInput
+				/>
+				<button
+					class="per-page-button"
+					status="success"
+					nbButton
+					(click)="showPerPage()"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</div>
+		</div>
 	</div>
 </ng-template>

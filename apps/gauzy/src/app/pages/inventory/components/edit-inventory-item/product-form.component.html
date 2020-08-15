@@ -124,14 +124,15 @@
 												class="d-block"
 												size="medium"
 												fullWidth="true"
+												formControlName="language"
 											>
 												<nb-option
 													*ngFor="
 														let lang of languages
 													"
-													[value]="lang"
+													[value]="lang.value"
 												>
-													{{ lang }}
+													{{ lang.name }}
 												</nb-option>
 											</nb-select>
 										</div>

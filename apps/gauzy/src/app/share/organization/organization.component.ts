@@ -21,6 +21,7 @@ import * as moment from 'moment';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
+import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 
 export enum CURRENCY {
 	USD = '$',
@@ -37,6 +38,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organization: Organization;
 	hasEditPermission = false;
+	belongsToOrganization = false;
+
 	private _ngDestroy$ = new Subject<void>();
 
 	organization_languages: OrganizationLanguages[];
@@ -63,6 +66,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private router: Router,
 		private organizationsService: OrganizationsService,
+		private userOrganizationService: UsersOrganizationsService,
 		private toastrService: NbToastrService,
 		private employeesService: EmployeesService,
 		private organization_language_service: OrganizationLanguagesService,
@@ -103,6 +107,17 @@ export class OrganizationComponent extends TranslationBaseComponent
 						.getByProfileLink(profileLink, null, ['skills'])
 						.pipe(first())
 						.toPromise();
+
+					if (this.store.userId) {
+						const {
+							total
+						} = await this.userOrganizationService.getAll([], {
+							userId: this.store.userId,
+							organizationId: this.organization.id
+						});
+						this.belongsToOrganization = total > 0;
+					}
+
 					this.imageUrl = this.organization.imageUrl;
 					this.reloadPageData();
 					await this.getEmployeeStatistics();

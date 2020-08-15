@@ -30,6 +30,10 @@ export class AppComponent implements OnInit {
 			this.loading = false;
 		});
 		this.loadLanguages();
+
+		if (Number(this.store.serverConnection) === 0) {
+			this.loading = false;
+		}
 	}
 
 	private async loadLanguages() {

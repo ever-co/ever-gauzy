@@ -1,4 +1,8 @@
-import { GoalTemplate as IGoalTemplate, GoalLevelEnum } from '@gauzy/models';
+import {
+	GoalTemplate as IGoalTemplate,
+	GoalLevelEnum,
+	GoalTemplateCategoriesEnum
+} from '@gauzy/models';
 import { Entity, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
@@ -15,6 +19,11 @@ export class GoalTemplate extends TenantBase implements IGoalTemplate {
 	@IsEnum(GoalLevelEnum)
 	@Column()
 	level: string;
+
+	@ApiProperty({ type: String, enum: GoalTemplateCategoriesEnum })
+	@IsEnum(GoalTemplateCategoriesEnum)
+	@Column()
+	category: string;
 
 	@ApiProperty({ type: KeyResultTemplate })
 	@OneToMany((type) => KeyResultTemplate, (keyResult) => keyResult.goal)

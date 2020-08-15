@@ -86,4 +86,9 @@ export class Product extends TenantBase implements IProduct {
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	@ApiProperty({ type: String, readOnly: true })
+	@IsString()
+	@Column({ nullable: true })
+	language?: string;
 }

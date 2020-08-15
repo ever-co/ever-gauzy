@@ -424,6 +424,7 @@
 		"DATE": "Дата",
 		"PICK_DATE": "Изберете дата",
 		"ALL_CONTACTS": "All Contacts",
+		"CONTACT": "Contact",
 		"ALL_VENDORS": "Търговец",
 		"ALL_CATEGORIES": "Всички категории",
 		"CATEGORY_NAME": "Име на категория",
@@ -1205,7 +1206,7 @@
 			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Create/Edit Interviewers",
 			"VIEW_ALL_EMAILS": "View All Emails",
 			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
-			"PUBLIC_PAGE_EDIT": "Public Page Edit",
+			"PUBLIC_PAGE_EDIT": "Edit Organization Public Page",
 			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
 			"GROUPS": {
 				"GENERAL": "Основни",
@@ -1689,11 +1690,13 @@
 		"APPLIED": "Applied",
 		"NOT_APPLIED": "Not Applied",
 		"STATUS": "Статус",
-		"SET_STATUS": "Set Status",
+		"SET_STATUS": "SET STATUS",
 		"SHOW_COLUMNS": "Show Columns",
 		"ITEM": "Item",
 		"SETTINGS": "Настройки",
 		"SHOW_HIDE_COLUMNS": "Show/Hide Columns",
+		"INVOICES_PER_PAGE": "Invoices Per Page",
+		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -2300,7 +2303,8 @@
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
 		"FILTER_BY_STAGE": "Filter by Stage",
-		"RECORD_TYPE": "stage \"{{ title }}\""
+		"RECORD_TYPE": "stage \"{{ title }}\"",
+		"ALL_STAGES": "All Stages"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: {{ name }}"

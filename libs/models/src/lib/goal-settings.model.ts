@@ -43,6 +43,8 @@ export interface KeyResultTemplate extends IBaseEntityModel {
 	type: string;
 	unit?: string;
 	deadline: string;
+	targetValue?: number;
+	initialValue?: number;
 	hardDeadline?: Date;
 	softDeadline?: Date;
 	goal: GoalTemplate;
