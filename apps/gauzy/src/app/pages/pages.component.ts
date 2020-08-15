@@ -338,6 +338,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Manage',
 					icon: 'globe-2-outline',
+					pathMatch: 'prefix',
 					data: {
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
@@ -359,6 +360,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Inventory',
 					icon: 'grid-outline',
 					link: '/pages/organization/inventory',
+					pathMatch: 'prefix',
 					data: {
 						// permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
 						translationKey: 'MENU.INVENTORY'
