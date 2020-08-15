@@ -148,9 +148,11 @@ export class ContactMutationComponent extends TranslationBaseComponent
 						: ''
 					: ''
 			],
-			selectProjects: [
+			project: [
 				this.organizationContact
-					? (this.organizationContact.projects || []).map((m) => m.id)
+					? (this.organizationContact.projects || []).map(
+							(m) => m.projectId
+					  )
 					: []
 			],
 			contactType: [
@@ -216,8 +218,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				country: this.form.value['country'],
 				city: this.form.value['city'],
 				address: this.form.value['address'],
-				projects: this.form.value['selectProjects']
-					? this.form.value['selectProjects'].projectId
+				projects: this.form.value['project']
+					? this.form.value['project'].projectId
 					: '',
 				contactType: contactType,
 				imageUrl: imgUrl,
@@ -236,7 +238,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				city: '',
 				address: '',
 				contactType: '',
-				selectProjects: []
+				project: []
 			});
 		}
 	}

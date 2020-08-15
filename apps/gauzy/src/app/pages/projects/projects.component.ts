@@ -327,7 +327,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const res = await this.organizationContactService.getAll(['projects'], {
+		const res = await this.organizationContactService.getAll(['project'], {
 			organizationId: this.organization.id
 		});
 		if (res) {

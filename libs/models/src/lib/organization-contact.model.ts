@@ -15,7 +15,7 @@ export interface OrganizationContact extends IContact, IBaseEntityWithMembers {
 	emailAddresses?: string[];
 	primaryPhone: string;
 	phones?: string[];
-	projects?: OrganizationProjects[];
+	project?: OrganizationProjects[];
 	notes?: string;
 	members?: Employee[];
 	imageUrl?: string;
@@ -45,9 +45,10 @@ export interface OrganizationContactCreateInput
 	emailAddresses?: string[];
 	primaryPhone?: string;
 	phones?: string[];
-	projects?: OrganizationProjects[];
+	project?: OrganizationProjects[];
 	notes?: string;
 	imageUrl?: string;
+	contactType?: string;
 }
 
 export interface OrganizationContactInviteInput extends IBaseEntityModel {

@@ -1,12 +1,10 @@
 <nb-card>
-	<nb-card-header *ngIf="organizationContact; else headerAdd">{{
-		'ORGANIZATIONS_PAGE.EDIT.EDIT_CONTACT' | translate
+	<nb-card-header>{{
+		(organizationContact
+			? 'ORGANIZATIONS_PAGE.EDIT.EDIT_CONTACT'
+			: 'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CONTACT'
+		) | translate
 	}}</nb-card-header>
-	<ng-template #headerAdd>
-		<nb-card-header>
-			{{ 'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CONTACT' | translate }}
-		</nb-card-header>
-	</ng-template>
 	<nb-card-body *ngIf="form">
 		<form [formGroup]="form" class="contact-form">
 			<div class="contact-container">
@@ -269,9 +267,9 @@
 						[addTag]="addNewProject"
 						[items]="projects"
 						bindLabel="name"
-						[(ngModel)]="selectProjects"
+						[(ngModel)]="project"
 						[searchable]="true"
-						formControlName="selectProjects"
+						formControlName="project"
 						placeholder="{{
 							'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
 						}}"

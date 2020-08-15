@@ -30,6 +30,7 @@
 					[items]="organizationContacts"
 					bindLabel="name"
 					[searchable]="true"
+					[(ngModel)]="organizationContact"
 					formControlName="organizationContact"
 					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
 				>

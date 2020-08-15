@@ -269,7 +269,7 @@ export class ContactComponent extends TranslationBaseComponent
 			return;
 		}
 		const res = await this.organizationContactService.getAll(
-			['projects', 'members', 'members.user', 'tags', 'contact'],
+			['project', 'members', 'members.user', 'tags', 'contact'],
 			{
 				organizationId: this.organizationId
 			}
@@ -280,9 +280,9 @@ export class ContactComponent extends TranslationBaseComponent
 				result.push({
 					...contact,
 					contact_name: contact.name,
-					country: contact.contact.country,
-					city: contact.contact.city,
-					street: contact.contact.address
+					country: contact.contact ? contact.contact.country : '',
+					city: contact.contact ? contact.contact.city : '',
+					street: contact.contact ? contact.contact.address : ''
 				});
 			});
 			const contact_items = result.filter(
