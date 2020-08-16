@@ -44,21 +44,10 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 					.getById(id)
 					.pipe(first())
 					.toPromise();
-
 				this.selectedOrgFromHeader = this.selectedOrg;
 				this.loadEmployeesCount();
 				this.store.selectedEmployee = null;
-
-				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((org) => {
-						this.selectedOrgFromHeader = org;
-						if (org && org.id) {
-							this.router.navigate([
-								'/pages/organizations/edit/' + org.id
-							]);
-						}
-					});
+				this.store.selectedOrganization = this.selectedOrg;
 			});
 	}
 
