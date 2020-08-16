@@ -39,8 +39,6 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	addOrEditProject = new EventEmitter();
 
 	@Input()
-	organizationContact: any;
-
 	organizationContacts: Object[] = [];
 
 	form: FormGroup;

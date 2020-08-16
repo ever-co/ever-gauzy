@@ -265,11 +265,11 @@
 					}}</label>
 					<ng-select
 						[addTag]="addNewProject"
-						[items]="projects"
+						[items]="selectedproject"
 						bindLabel="name"
-						[(ngModel)]="project"
+						[(ngModel)]="projects"
 						[searchable]="true"
-						formControlName="project"
+						formControlName="projects"
 						placeholder="{{
 							'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
 						}}"

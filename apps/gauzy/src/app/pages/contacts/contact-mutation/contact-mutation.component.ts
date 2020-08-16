@@ -43,7 +43,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	selectedEmployeeIds: string[];
 	allProjects: OrganizationProjects[] = [];
 	tags: Tag[] = [];
-	projects: Object[] = [];
+	selectedproject: Object[] = [];
 	contactTypes = [];
 	hoverState: boolean;
 
@@ -63,7 +63,9 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		this.allProjects = (
 			this.projectsWithoutOrganizationContact || []
 		).concat(
-			this.organizationContact ? this.organizationContact.projects : []
+			this.organizationContact
+				? this.organizationContact.selectedproject
+				: []
 		);
 		if (this.organizationContact) {
 			this.selectedEmployeeIds = this.organizationContact.members.map(
@@ -80,8 +82,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 			organizationId: this.store.selectedOrganization.id
 		});
 		items.forEach((i) => {
-			this.projects = [
-				...this.projects,
+			this.selectedproject = [
+				...this.selectedproject,
 				{ name: i.name, projectId: i.id }
 			];
 		});
@@ -148,7 +150,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 						: ''
 					: ''
 			],
-			project: [
+			projects: [
 				this.organizationContact
 					? (this.organizationContact.projects || []).map(
 							(m) => m.projectId
@@ -218,8 +220,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				country: this.form.value['country'],
 				city: this.form.value['city'],
 				address: this.form.value['address'],
-				projects: this.form.value['project']
-					? this.form.value['project'].projectId
+				projects: this.form.value['projects']
+					? this.form.value['projects']
 					: '',
 				contactType: contactType,
 				imageUrl: imgUrl,
@@ -238,7 +240,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				city: '',
 				address: '',
 				contactType: '',
-				project: []
+				projects: []
 			});
 		}
 	}

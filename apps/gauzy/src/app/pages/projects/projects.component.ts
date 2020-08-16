@@ -121,7 +121,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 		this.employees = items;
 	}
 	setView() {
-		this.viewComponentName = ComponentEnum.APPROVALS;
+		this.viewComponentName = ComponentEnum.PROJECTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(takeUntil(this._ngDestroy$))
@@ -327,7 +327,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const res = await this.organizationContactService.getAll(['project'], {
+		const res = await this.organizationContactService.getAll(['projects'], {
 			organizationId: this.organization.id
 		});
 		if (res) {

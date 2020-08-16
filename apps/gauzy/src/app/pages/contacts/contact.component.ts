@@ -269,7 +269,7 @@ export class ContactComponent extends TranslationBaseComponent
 			return;
 		}
 		const res = await this.organizationContactService.getAll(
-			['project', 'members', 'members.user', 'tags', 'contact'],
+			['projects', 'members', 'members.user', 'tags', 'contact'],
 			{
 				organizationId: this.organizationId
 			}
@@ -345,7 +345,8 @@ export class ContactComponent extends TranslationBaseComponent
 			const dialog = this.dialogService.open(InviteContactComponent, {
 				context: {
 					organizationId: this.organizationId,
-					organizationContact: selectedOrganizationContact
+					organizationContact: selectedOrganizationContact,
+					contactType: this.contactType
 				}
 			});
 

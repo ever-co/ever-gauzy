@@ -60,7 +60,7 @@ export class OrganizationProjects extends TenantBase
 	@ApiPropertyOptional({ type: OrganizationContact })
 	@ManyToOne(
 		(type) => OrganizationContact,
-		(organizationContact) => organizationContact.project,
+		(organizationContact) => organizationContact.projects,
 		{
 			nullable: true,
 			onDelete: 'CASCADE'
