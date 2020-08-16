@@ -54,6 +54,18 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 	return fd;
 }
 
+export function prgressStatus(value) {
+	if (value >= 75) {
+		return 'success';
+	} else if (value >= 50) {
+		return 'warning';
+	} else if (value >= 25) {
+		return 'info';
+	} else {
+		return 'danger';
+	}
+}
+
 // It will use for pass nested object or array in query params in get method.
 export function toParams(query) {
 	let params: HttpParams = new HttpParams();

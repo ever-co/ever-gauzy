@@ -1,6 +1,7 @@
 export interface GetTimeSlotStatistics {
 	employeeId?: string;
 	organizationId: string;
+	date?: Date;
 }
 
 export interface GetActivitiesStatistics {
@@ -12,13 +13,16 @@ export interface GetActivitiesStatistics {
 export interface GetProjectsStatistics {
 	organizationId: string;
 	employeeId?: string;
+	date?: Date;
 }
 
 export interface GetTasksStatistics {
 	organizationId: string;
 	employeeId?: string;
+	date?: Date;
 }
 
 export interface GetMembersStatistics {
 	organizationId: string;
+	date?: Date;
 }
