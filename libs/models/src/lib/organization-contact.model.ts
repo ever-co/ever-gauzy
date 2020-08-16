@@ -48,6 +48,7 @@ export interface OrganizationContactCreateInput
 	projects?: OrganizationProjects[];
 	notes?: string;
 	imageUrl?: string;
+	contactType?: string;
 }
 
 export interface OrganizationContactInviteInput extends IBaseEntityModel {

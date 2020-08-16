@@ -34,6 +34,9 @@ export class InviteContactComponent extends TranslationBaseComponent
 	organizationId = '';
 
 	@Input()
+	contactType: string;
+
+	@Input()
 	organizationContact?: OrganizationContact = undefined;
 
 	ngOnInit(): void {
@@ -98,11 +101,17 @@ export class InviteContactComponent extends TranslationBaseComponent
 			if (this.organizationContact) {
 				return await this.organizationContactService.create({
 					...this.organizationContact,
+					contactType: this.contactType,
+					imageUrl:
+						'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
 					...this.form.getRawValue()
 				});
 			} else if (this.form.valid) {
 				return await this.organizationContactService.create({
 					organizationId: this.organizationId,
+					contactType: this.contactType,
+					imageUrl:
+						'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
 					...this.form.getRawValue()
 				});
 			}

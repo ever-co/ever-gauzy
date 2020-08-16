@@ -59,7 +59,7 @@
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">{{
-							'POP_UPS.ALL_CONTACTS' | translate
+							'POP_UPS.CONTACT' | translate
 						}}</label>
 						<ng-select
 							[addTag]="addNewClient"
@@ -67,9 +67,7 @@
 							bindLabel="clientName"
 							[searchable]="true"
 							formControlName="client"
-							placeholder="{{
-								'POP_UPS.ALL_CONTACTS' | translate
-							}}"
+							placeholder="{{ 'POP_UPS.CONTACT' | translate }}"
 						>
 						</ng-select>
 					</div>

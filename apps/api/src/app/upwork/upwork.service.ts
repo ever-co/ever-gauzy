@@ -20,7 +20,10 @@ import {
 	IntegrationEntity,
 	RolesEnum,
 	ExpenseCategoriesEnum,
-	OrganizationVendorEnum
+	OrganizationVendorEnum,
+	IUpworkOfferStatusEnum,
+	IUpworkProposalStatusEnum,
+	IUpworkDateRange
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -65,6 +68,9 @@ import { UpworkReportService } from './upwork-report.service';
 import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';
 import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { UpworkJobService } from './upwork-job.service';
+import { UpworkOffersService } from './upwork-offers.service';
+import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
 
 @Injectable()
 export class UpworkService {
@@ -82,6 +88,8 @@ export class UpworkService {
 		private _orgClientService: OrganizationContactService,
 		private _timeSlotService: TimeSlotService,
 		private readonly _upworkReportService: UpworkReportService,
+		private readonly _upworkJobService: UpworkJobService,
+		private readonly _upworkOfferService: UpworkOffersService,
 		private commandBus: CommandBus
 	) {}
 
@@ -567,6 +575,13 @@ export class UpworkService {
 							providerId,
 							entity.datePicker.selectedDate
 						);
+					case 'proposals':
+						return await this.syncProposalsOffers(
+							organizationId,
+							integrationId,
+							config,
+							employeeId
+						);
 					default:
 						return;
 				}
@@ -773,7 +788,7 @@ export class UpworkService {
 		providerRefernceId,
 		integrationId,
 		organizationId,
-		config
+		config: IUpworkApiConfig
 	) {
 		const { record } = await this._integrationMapService.findOneOrFail({
 			where: {
@@ -875,14 +890,17 @@ export class UpworkService {
 		return gauzyClient;
 	}
 
+	/*
+	 * Sync upwork transactions/earnings reports
+	 */
 	async syncReports(
 		organizationId,
 		integrationId,
-		config,
+		config: IUpworkApiConfig,
 		employeeId,
 		providerRefernceId,
 		providerId,
-		dateRange
+		dateRange: IUpworkDateRange
 	) {
 		try {
 			const syncedIncome = await this._syncIncome(
@@ -917,10 +935,10 @@ export class UpworkService {
 	private async _syncExpense(
 		organizationId,
 		integrationId,
-		config,
+		config: IUpworkApiConfig,
 		employeeId,
 		providerRefernceId,
-		dateRange
+		dateRange: IUpworkDateRange
 	) {
 		const reports = await this._upworkReportService.getEarningReportByFreelancer(
 			config,
@@ -1023,10 +1041,10 @@ export class UpworkService {
 	private async _syncIncome(
 		organizationId,
 		integrationId,
-		config,
+		config: IUpworkApiConfig,
 		employeeId,
 		providerId,
-		dateRange
+		dateRange: IUpworkDateRange
 	) {
 		const reports = await this._upworkReportService.getFullReportByFreelancer(
 			config,
@@ -1124,7 +1142,7 @@ export class UpworkService {
 	/**
 	 * Get all reports for upwork integration
 	 */
-	async getReportsForFreelancer(
+	async getReportListByIntegration(
 		integrationId,
 		filter,
 		relations
@@ -1183,5 +1201,190 @@ export class UpworkService {
 		}).reverse();
 
 		return reports;
+	}
+
+	/*
+	 * async
+	 */
+	async syncProposalsOffers(
+		organizationId,
+		integrationId,
+		config: IUpworkApiConfig,
+		employeeId
+	) {
+		const proposals = await this._getProposals(config);
+		const offers = await this._getOffers(config);
+
+		const syncedOffers = await this._syncOffers(
+			config,
+			offers,
+			organizationId,
+			integrationId,
+			employeeId
+		);
+
+		const syncedProposals = await this._syncProposals(
+			config,
+			proposals,
+			organizationId,
+			integrationId,
+			employeeId
+		);
+
+		return {
+			syncedOffers,
+			syncedProposals
+		};
+	}
+
+	/*
+	 * Sync upwork proposals for freelancer
+	 */
+	private async _getProposals(config: IUpworkApiConfig) {
+		try {
+			const promises = [];
+			for (const status in IUpworkProposalStatusEnum) {
+				if (isNaN(Number(status))) {
+					promises.push(
+						this._upworkOfferService
+							.getProposalLisByFreelancer(
+								config,
+								IUpworkProposalStatusEnum[status]
+							)
+							.then((response) => response)
+							.catch((error) => error)
+					);
+				}
+			}
+			return Promise.all(promises).then(async (results: any[]) => {
+				return results;
+			});
+		} catch (error) {
+			throw new BadRequestException('Cannot sync proposals');
+		}
+	}
+
+	/*
+	 * Sync upwork offers for freelancer
+	 */
+	private async _getOffers(config: IUpworkApiConfig) {
+		try {
+			const promises = [];
+			for (const status in IUpworkOfferStatusEnum) {
+				if (isNaN(Number(status))) {
+					promises.push(
+						this._upworkOfferService
+							.getOffersListByFreelancer(
+								config,
+								IUpworkOfferStatusEnum[status]
+							)
+							.then((response) => response)
+							.catch((error) => error)
+					);
+				}
+			}
+			return Promise.all(promises).then(async (results: any[]) => {
+				return results;
+			});
+		} catch (error) {
+			throw new BadRequestException('Cannot sync offers');
+		}
+	}
+
+	/*
+	 * Sync upwork offers for freelancer
+	 */
+	private async _syncOffers(
+		config: IUpworkApiConfig,
+		offers,
+		organizationId,
+		integrationId,
+		employeeId
+	) {
+		return await Promise.all(
+			offers
+				.filter(
+					(row) =>
+						row['offers'] && row['offers'].hasOwnProperty('offer')
+				)
+				.map((row) => row['offers'])
+				.map(async (row) => {
+					const { offer: items } = row;
+					let integratedOffers = [];
+
+					for await (const item of items) {
+						const {
+							title: proposalContent,
+							terms_data,
+							last_event_state,
+							job_posting_ref,
+							rid: sourceId
+						} = item;
+						let { title: jobPostContent } = item;
+						//find upwork job
+						const job = await this._upworkJobService
+							.getJobProfileByKey(config, job_posting_ref)
+							.then((response) => response)
+							.catch((error) => error);
+
+						//if job not found/closed
+						if (job.statusCode !== 400) {
+							const { profile } = job;
+							jobPostContent = profile['op_description'];
+						}
+
+						let integratedOffer;
+						const gauzyOffer = await this.commandBus.execute(
+							new ProposalCreateCommand({
+								employeeId,
+								organizationId,
+								valueDate: new Date(
+									moment
+										.unix(terms_data.start_date / 1000)
+										.format('YYYY-MM-DD HH:mm:ss')
+								),
+								status: last_event_state.trim().toUpperCase(),
+								proposalContent,
+								jobPostContent,
+								jobPostUrl: job_posting_ref
+							})
+						);
+
+						integratedOffer = await this._integrationMapService.create(
+							{
+								gauzyId: gauzyOffer.id,
+								integrationId,
+								sourceId,
+								entity: IntegrationEntity.PROPOSAL
+							}
+						);
+
+						integratedOffers = integratedOffers.concat(
+							integratedOffer
+						);
+					}
+
+					return integratedOffers;
+				})
+		);
+	}
+
+	/*
+	 * Sync upwork proposals for freelancer
+	 */
+	private async _syncProposals(
+		config: IUpworkApiConfig,
+		proposals,
+		organizationId,
+		integrationId,
+		employeeId
+	) {
+		proposals
+			.filter(
+				(row) =>
+					row['data'] && row['data'].hasOwnProperty('applications')
+			)
+			.map((row) => row.data.applications)
+			.map(async (row) => {});
 	}
 }

@@ -13,10 +13,12 @@ import {
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import * as _ from 'underscore';
+import { prgressStatus } from 'libs/utils';
 
 @Component({
 	selector: 'ga-time-tracking',
-	templateUrl: './time-tracking.component.html'
+	templateUrl: './time-tracking.component.html',
+	styleUrls: ['./time-tracking.component.scss']
 })
 export class TimeTrackingComponent implements OnInit, OnDestroy {
 	timeSlotEmployees = [];
@@ -31,6 +33,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	projectsLoading = true;
 	tasksLoading = true;
 	memberLoading = true;
+
+	prgressStatus = prgressStatus;
 
 	constructor(
 		private timesheetStatisticsService: TimesheetStatisticsService,
@@ -107,16 +111,7 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 		this.timesheetStatisticsService
 			.getProjects(projectRequest)
 			.then((resp) => {
-				const sum = _.reduce(
-					resp,
-					(memo, project) =>
-						memo + parseInt(project.duration + '', 10),
-					0
-				);
-				this.projects = resp.map((project) => {
-					project.durationPercentage = (project.duration * 100) / sum;
-					return project;
-				});
+				this.projects = resp;
 			})
 			.finally(() => {
 				this.projectsLoading = false;
@@ -145,13 +140,34 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 		this.memberLoading = true;
 		this.timesheetStatisticsService
 			.getMembers(memberRequest)
-			.then((resp) => {
-				this.members = resp;
+			.then((resp: any) => {
+				this.members = resp.map((member) => {
+					const week: any = _.chain(member.weekHours)
+						.indexBy('day')
+						.mapObject((day: any) => {
+							return day.duration;
+						})
+						.value();
+
+					const sum = _.reduce(
+						member.weekHours,
+						(memo, day: any) =>
+							memo + parseInt(day.duration + '', 10),
+						0
+					);
+					member.weekHours = _.range(0, 7).map((day) => {
+						return week[day] ? (week[day] * 100) / sum : 0;
+					});
+
+					return member;
+				});
 			})
 			.finally(() => {
 				this.memberLoading = false;
 			});
 	}
+
+	getMembChartData(member) {}
 
 	ngOnDestroy() {}
 }

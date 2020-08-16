@@ -30,7 +30,6 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { RequestApprovalIcon } from './table-components/request-approval-icon';
 import { PaidIcon } from './table-components/paid-icon';
 import { SharedModule } from '../../@shared/shared.module';
-import { TimeOffStatusComponent } from './table-components/time-off-status.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -73,15 +72,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TimeOffComponent,
 		TimeOffSettingsComponent,
 		RequestApprovalIcon,
-		TimeOffStatusComponent,
 		PaidIcon
 	],
-	entryComponents: [
-		TimeOffSettingsComponent,
-		TimeOffStatusComponent,
-		RequestApprovalIcon,
-		PaidIcon
-	],
+	entryComponents: [TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],
 	providers: [OrganizationsService, TimeOffService]
 })
 export class TimeOffModule {}

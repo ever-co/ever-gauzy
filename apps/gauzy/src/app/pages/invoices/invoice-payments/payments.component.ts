@@ -10,10 +10,10 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PaymentService } from '../../../@core/services/payment.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
-import { InvoicePaymentOverdueComponent } from '../table-components/invoice-payment-overdue.component';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/payment/generate-pdf';
+import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 
 export interface SelectedPayment {
 	data: Payment;
@@ -253,7 +253,26 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				overdue: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
 					type: 'custom',
-					renderComponent: InvoicePaymentOverdueComponent
+					width: '5%',
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						let badgeClass;
+						if (cell && row.overdue) {
+							badgeClass = 'danger';
+							cell = this.getTranslation(
+								'INVOICES_PAGE.PAYMENTS.OVERDUE'
+							);
+						} else if (cell) {
+							badgeClass = 'success';
+							cell = this.getTranslation(
+								'INVOICES_PAGE.PAYMENTS.ON_TIME'
+							);
+						}
+						return {
+							text: cell,
+							class: badgeClass
+						};
+					}
 				}
 			}
 		};

@@ -1,7 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Deal, Pipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { PipelinesService } from '../../../@core/services/pipelines.service';
-import { ActivatedRoute, Router, RouterEvent, NavigationEnd } from '@angular/router';
+import {
+	ActivatedRoute,
+	Router,
+	RouterEvent,
+	NavigationEnd
+} from '@angular/router';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +26,8 @@ import { PipelineDealProbabilityComponent } from '../table-components/pipeline-d
 	templateUrl: './pipeline-deals.component.html',
 	styleUrls: ['./pipeline-deals.component.scss']
 })
-export class PipelineDealsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class PipelineDealsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	deals = new LocalDataSource([] as Deal[]);
 	dealsData: Deal[];
 	filteredDeals: Deal[];
@@ -80,10 +86,18 @@ export class PipelineDealsComponent extends TranslationBaseComponent implements 
 	ngOnInit(): void {
 		this.updateViewData();
 
-		this.smartTableSettings.noDataMessage = this.getTranslation('SM_TABLE.NO_RESULT');
-		this.smartTableSettings.columns.title.title = this.getTranslation('SM_TABLE.TITLE');
-		this.smartTableSettings.columns.stage.title = this.getTranslation('SM_TABLE.STAGE');
-		this.smartTableSettings.columns.createdBy.title = this.getTranslation('Created by');
+		this.smartTableSettings.noDataMessage = this.getTranslation(
+			'SM_TABLE.NO_RESULT'
+		);
+		this.smartTableSettings.columns.title.title = this.getTranslation(
+			'SM_TABLE.TITLE'
+		);
+		this.smartTableSettings.columns.stage.title = this.getTranslation(
+			'SM_TABLE.STAGE'
+		);
+		this.smartTableSettings.columns.createdBy.title = this.getTranslation(
+			'Created by'
+		);
 
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
@@ -107,12 +121,12 @@ export class PipelineDealsComponent extends TranslationBaseComponent implements 
 	filterDealsByStage(): void {
 		const { stageId: search = '' } = this;
 
-		this.deals.setFilter([
-			{ field: 'stageId', search }
-		]);
+		this.deals.setFilter([{ field: 'stageId', search }]);
 
 		if (this.stageId) {
-			this.filteredDeals = this.dealsData.filter(deal => deal.stageId === this.stageId);
+			this.filteredDeals = this.dealsData.filter(
+				(deal) => deal.stageId === this.stageId
+			);
 		} else {
 			this.filteredDeals = this.dealsData;
 		}
@@ -147,7 +161,7 @@ export class PipelineDealsComponent extends TranslationBaseComponent implements 
 					})
 					.then(({ items: [value] }) => (this.pipeline = value));
 
-				this._checkOrganization()
+				this._checkOrganization();
 
 				await this.pipelinesService
 					.findDeals(pipelineId)
@@ -166,14 +180,17 @@ export class PipelineDealsComponent extends TranslationBaseComponent implements 
 
 	private _checkOrganization() {
 		this.store.selectedOrganization$
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((org) => {
-					this._selectedOrganizationId = org.id;
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				this._selectedOrganizationId = org.id;
 
-					if (this.pipeline?.organizationId !== this._selectedOrganizationId) {
-						this.router.navigate(['pages/sales/pipelines']);
-					}
-			})
+				if (
+					this.pipeline?.organizationId !==
+					this._selectedOrganizationId
+				) {
+					this.router.navigate(['pages/sales/pipelines']);
+				}
+			});
 	}
 
 	ngOnDestroy() {

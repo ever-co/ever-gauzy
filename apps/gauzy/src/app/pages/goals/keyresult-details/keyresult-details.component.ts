@@ -153,9 +153,17 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	}
 
 	relativeProgress(currentUpdate, previousUpdate) {
-		const updateDiff = previousUpdate.update - currentUpdate.update;
-		const keyResultValDiff =
-			this.keyResult.targetValue - this.keyResult.initialValue;
+		let updateDiff: number;
+		let keyResultValDiff: number;
+		if (this.keyResult.targetValue < this.keyResult.initialValue) {
+			updateDiff = previousUpdate.update - currentUpdate.update;
+			keyResultValDiff =
+				this.keyResult.initialValue - this.keyResult.targetValue;
+		} else {
+			updateDiff = currentUpdate.update - previousUpdate.update;
+			keyResultValDiff =
+				this.keyResult.targetValue - this.keyResult.initialValue;
+		}
 		const progress = Math.round((updateDiff / keyResultValDiff) * 100);
 		return {
 			progressText:

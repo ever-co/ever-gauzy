@@ -1,28 +1,9 @@
-<style>
-	.my-drop-zone {
-		border: dotted 3px lightgray;
-	}
-	.nv-file-over {
-		border: dotted 3px red;
-	} /* Default class applied to drop zones on over */
-	.another-file-over-class {
-		border: dotted 3px green;
-	}
-
-	html,
-	body {
-		height: 100%;
-	}
-</style>
-
-<div class="container">
-	<nb-card>
-		<nb-card-body>
-			<span class="info-text">
-				{{ 'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate }}</span
-			>
-		</nb-card-body>
-	</nb-card>
+<nb-card class="import" style="padding: 1rem;">
+	<nb-card-header>
+		<span class="info-text">
+			{{ 'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate }}</span
+		>
+	</nb-card-header>
 
 	<div class="row">
 		<div class="col-md-3">
@@ -64,11 +45,15 @@
 				{{ 'MENU.IMPORT_EXPORT.BROWSE' | translate }}
 			</button>
 			<div class="ilmport_export_wrapper">
-				<nb-radio-group class="radio-buttons-group">
-					<nb-radio value="1" checked="true">{{
+				<nb-radio-group
+					class="radio-buttons-group"
+					[value]="importType"
+					(valueChange)="onImportTypeChange($event)"
+				>
+					<nb-radio value="merge" checked="true">{{
 						'MENU.IMPORT_EXPORT.MERGE' | translate
 					}}</nb-radio>
-					<nb-radio value="2">{{
+					<nb-radio value="clean">{{
 						'MENU.IMPORT_EXPORT.CLEAN_UP' | translate
 					}}</nb-radio>
 				</nb-radio-group>
@@ -83,12 +68,21 @@
 						<th class="half-width">
 							{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}
 						</th>
-						<th>{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</th>
-						<th>{{ 'MENU.IMPORT_EXPORT.PROGRESS' | translate }}</th>
-						<th>{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}</th>
-						<th>{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}</th>
+						<th>
+							{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}
+						</th>
+						<th>
+							{{ 'MENU.IMPORT_EXPORT.PROGRESS' | translate }}
+						</th>
+						<th>
+							{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}
+						</th>
+						<th>
+							{{ 'MENU.IMPORT_EXPORT.ACTIONS' | translate }}
+						</th>
 					</tr>
 				</thead>
+
 				<tbody>
 					<tr *ngFor="let item of uploader.queue">
 						<td>
@@ -106,7 +100,9 @@
 								<div
 									class="progress-bar"
 									role="progressbar"
-									[ngStyle]="{ width: item.progress + '%' }"
+									[ngStyle]="{
+										width: item.progress + '%'
+									}"
 								></div>
 							</div>
 						</td>
@@ -180,7 +176,9 @@
 						<div
 							class="progress-bar"
 							role="progressbar"
-							[ngStyle]="{ width: uploader.progress + '%' }"
+							[ngStyle]="{
+								width: uploader.progress + '%'
+							}"
 						></div>
 					</div>
 				</div>
@@ -214,4 +212,67 @@
 			</div>
 		</div>
 	</div>
-</div>
+</nb-card>
+
+<nb-card class="import-history" style="padding: 1rem;">
+	<nb-card-header>
+		<h3>{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY' | translate }}</h3>
+		<span class="info-text">{{
+			'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate
+		}}</span>
+	</nb-card-header>
+	<br />
+	<thead>
+		<tr>
+			<th style="width: 25%;">
+				{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}
+			</th>
+			<th style="width: 25%;">
+				{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}
+			</th>
+			<th style="width: 25%;">Imported Date & Time</th>
+			<th style="width: 25%; padding-left: 100px;">
+				{{ 'MENU.IMPORT_EXPORT.STATUS' | translate }}
+			</th>
+		</tr>
+	</thead>
+
+	<tbody>
+		<tr *ngFor="let item of uploader.queue">
+			<td>
+				<strong>{{ item?.file?.name }}</strong>
+			</td>
+			<td
+				*ngIf="uploader.options.isHTML5"
+				style="white-space: nowrap; padding-left: 80px;"
+			>
+				{{ item?.file?.size / 1024 / 1024 | number: '.2' }}
+				MB
+			</td>
+
+			<td style="padding-left: 110px;">
+				{{ this.importDT | date: 'medium' }}
+			</td>
+			<td class="text-center" style="padding-left: 80px;">
+				<span *ngIf="item.isUploaded"
+					><nb-icon
+						style="stroke: #00d68f;"
+						icon="checkmark-circle-outline"
+					></nb-icon
+					>Success</span
+				>
+				<span *ngIf="item.isCancel"
+					><nb-icon
+						style="stroke: #ffaa00;"
+						icon="close-circle-outline"
+					></nb-icon
+				></span>
+				<span *ngIf="item.isError"
+					><nb-icon
+						style="stroke: #ff3d71;"
+						icon="alert-circle-outline"
+					></nb-icon
+				></span>
+			</td>
+		</tr></tbody
+></nb-card>

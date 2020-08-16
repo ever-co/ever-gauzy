@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import { TimerData } from '../local-data/timer';
+import { metaData } from '../local-data/coding-activity';
 import TimerHandler from './timer';
 import moment from 'moment';
 import { LocalStore } from './getSetStore';
@@ -52,10 +53,21 @@ export function ipcMainHandler(store, startServer, knex) {
 		});
 	});
 
-	ipcMain.on('return_activity', (event, arg) => {
-		TimerData.updateWindowEventUpload(knex, {
-			eventId: arg.eventId,
-			activityId: arg.activityId
+	ipcMain.on('remove_aw_local_data', (event, arg) => {
+		TimerData.deleteWindowEventAfterSended(knex, {
+			activityIds: arg.idsAw
+		});
+	});
+
+	ipcMain.on('remove_wakatime_local_data', (event, arg) => {
+		metaData.removeActivity(knex, {
+			idsWakatime: arg.idsWakatime
+		});
+	});
+
+	ipcMain.on('remove_afk_local_Data', (event, arg) => {
+		TimerData.deleteAfk(knex, {
+			idAfk: arg.idAfk
 		});
 	});
 

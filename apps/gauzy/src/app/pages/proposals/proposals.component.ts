@@ -15,12 +15,12 @@ import { ProposalsService } from '../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 export interface ProposalViewModel {
 	tags?: Tag[];
@@ -34,7 +34,6 @@ export interface ProposalViewModel {
 	proposalContent?: string;
 	status?: string;
 	author?: string;
-	
 }
 
 interface SelectedRowModel {
@@ -49,7 +48,8 @@ interface SelectedRowModel {
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class ProposalsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private router: Router,
@@ -322,7 +322,21 @@ export class ProposalsComponent extends TranslationBaseComponent implements OnIn
 					width: '10rem',
 					class: 'text-center',
 					filter: false,
-					renderComponent: ProposalStatusComponent
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						let badgeClass;
+						if (cell === 'SENT') {
+							badgeClass = 'warning';
+							cell = this.getTranslation('BUTTONS.SENT');
+						} else {
+							badgeClass = 'success';
+							cell = this.getTranslation('BUTTONS.ACCEPTED');
+						}
+						return {
+							text: cell,
+							class: badgeClass
+						};
+					}
 				}
 			}
 		};

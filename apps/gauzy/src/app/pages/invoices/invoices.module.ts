@@ -17,7 +17,8 @@ import {
 	NbContextMenuModule,
 	NbMenuModule,
 	NbPopoverModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbFormFieldModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -62,7 +63,6 @@ import { InvoicePaymentsComponent } from './invoice-payments/payments.component'
 import { PaymentService } from '../../@core/services/payment.service';
 import { PaymentMutationComponent } from './invoice-payments/payment-mutation/payment-mutation.component';
 import { TasksStoreService } from '../../@core/services/tasks-store.service';
-import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
 import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-apply-tax-discount.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { InvoiceExpensesSelectorComponent } from './table-components/invoice-expense-selector.component';
@@ -104,6 +104,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbTabsetModule,
 		BackNavigationModule,
 		NbPopoverModule,
+		NbFormFieldModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -146,7 +147,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoicePaymentOverdueComponent,
 		InvoiceApplyTaxDiscountComponent,
 		InvoiceExpensesSelectorComponent
 	],
@@ -172,7 +172,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoicePaymentOverdueComponent,
 		InvoiceApplyTaxDiscountComponent,
 		InvoiceExpensesSelectorComponent
 	]

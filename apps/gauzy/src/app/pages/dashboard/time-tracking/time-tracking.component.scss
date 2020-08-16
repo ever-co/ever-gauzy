@@ -1,0 +1,33 @@
+:host {
+  ::ng-deep {
+    nb-progress-bar {
+      .progress-container {
+        height: 5px !important;
+      }
+      .progress-value {
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .member-weekly-activity-graph {
+    display: flex;
+    align-items: flex-end;
+    margin-left: 15px;
+    min-height: 30px;
+    .bar-graph-entry {
+      width: 7px;
+      margin-right: 3px;
+      background-color: #0095ff;
+      min-height: 1px;
+    }
+  }
+
+  nb-badge {
+    position: unset;
+    display: table;
+    margin: 10px auto 0;
+  }
+}
