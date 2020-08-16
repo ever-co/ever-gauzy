@@ -3,121 +3,305 @@
 	<nb-card-body>
 		<div class="row">
 			<div class="col-sm-6">
-				<nb-card>
+				<nb-card
+					[nbSpinner]="timeSlotLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
 					<nb-card-header>Recent Activities</nb-card-header>
-					<nb-card-body
-						[nbSpinner]="timeSlotLoading"
-						nbSpinnerSize="giant"
-						nbSpinnerStatus="primary"
-					>
-						<div
-							class="row"
-							*ngFor="let timeSlotEmployee of timeSlotEmployees"
+					<nb-card-body>
+						<ng-template
+							[ngIf]="timeSlotEmployees?.length > 0"
+							[ngIfElse]="noScreenshot"
 						>
-							<div class="col">
-								<div class="hour-lable mt-3">
-									<h6>{{ timeSlotEmployee?.user?.name }}</h6>
-								</div>
-
-								<div
-									class="row my-3 align-items-center justify-content-center"
-								>
+							<div
+								class="row"
+								*ngFor="
+									let timeSlotEmployee of timeSlotEmployees
+								"
+							>
+								<div class="col">
+									<div class="hour-lable mt-3">
+										<h6>{{ timeSlotEmployee?.name }}</h6>
+									</div>
 									<div
-										class="col"
-										*ngFor="
-											let timeSlot of timeSlotEmployee.timeSlots
-										"
+										class="row my-3 align-items-center justify-content-center"
 									>
-										<ngx-screenshots-item
-											[timeSlot]="timeSlot"
+										<div
+											class="col"
+											*ngFor="
+												let timeSlot of timeSlotEmployee.timeSlots
+											"
 										>
-										</ngx-screenshots-item>
+											<ngx-screenshots-item
+												[timeSlot]="timeSlot"
+											>
+											</ngx-screenshots-item>
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
+						</ng-template>
+						<ng-template #noScreenshot>
+							<div class="text-center" *ngIf="!timeSlotLoading">
+								No screenshot for the week
+							</div>
+						</ng-template>
 					</nb-card-body>
 				</nb-card>
 
-				<nb-card class="mt-4">
+				<nb-card
+					class="mt-4"
+					[nbSpinner]="tasksLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
 					<nb-card-header>Tasks</nb-card-header>
-					<nb-list
-						[nbSpinner]="tasksLoading"
-						nbSpinnerSize="giant"
-						nbSpinnerStatus="primary"
+					<ng-template
+						[ngIf]="tasks?.length > 0"
+						[ngIfElse]="noTasks"
 					>
-						<nb-list-item
-							*ngFor="let task of tasks; let index = index"
-						>
-							<div class="row w-100">
-								<div class="col">
-									{{ task.title }}
+						<nb-list>
+							<nb-list-item
+								*ngFor="let task of tasks; let index = index"
+							>
+								<div class="w-100">
+									<div class="row">
+										<div class="col">
+											{{ task.title }}
+										</div>
+										<div class="col-sm-3">
+											<nb-progress-bar
+												class="mb-1"
+												[value]="
+													task.durationPercentage
+												"
+												[status]="
+													prgressStatus(
+														task.durationPercentage
+													)
+												"
+												[displayValue]="true"
+												size="tiny"
+											>
+											</nb-progress-bar>
+										</div>
+										<div class="col-auto">
+											{{ task.duration | durationFormat }}
+										</div>
+									</div>
 								</div>
-								<div class="col-auto">
-									{{ task.duration | durationFormat }}
-								</div>
-							</div>
-						</nb-list-item>
-					</nb-list>
+							</nb-list-item>
+						</nb-list>
+					</ng-template>
+					<ng-template #noTasks>
+						<div class="text-center p-3" *ngIf="!tasksLoading">
+							No task activity for the week
+						</div>
+					</ng-template>
 				</nb-card>
 			</div>
 
 			<div class="col-sm-6">
-				<nb-card>
+				<nb-card
+					[nbSpinner]="projectsLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
 					<nb-card-header>Projects</nb-card-header>
-					<nb-list
-						[nbSpinner]="projectsLoading"
-						nbSpinnerSize="giant"
-						nbSpinnerStatus="primary"
+					<ng-template
+						[ngIf]="projects?.length > 0"
+						[ngIfElse]="noProjects"
 					>
-						<nb-list-item *ngFor="let project of projects">
-							<div class="row w-100">
-								<div class="col">
-									{{ project.name }}
+						<nb-list>
+							<nb-list-item *ngFor="let project of projects">
+								<div class="w-100">
+									<div class="row">
+										<div class="col">
+											{{ project.name }}
+										</div>
+										<div class="col-sm-3">
+											<nb-progress-bar
+												class="mb-1"
+												[value]="
+													project.durationPercentage
+												"
+												[status]="
+													prgressStatus(
+														project.durationPercentage
+													)
+												"
+												[displayValue]="true"
+												size="tiny"
+											>
+											</nb-progress-bar>
+										</div>
+										<div class="col-auto">
+											{{
+												project.duration
+													| durationFormat
+											}}
+										</div>
+									</div>
 								</div>
-								<div class="col-auto">
-									{{ project.duration | durationFormat }}
-								</div>
-							</div>
-						</nb-list-item>
-					</nb-list>
+							</nb-list-item>
+						</nb-list>
+					</ng-template>
+					<ng-template #noProjects>
+						<div class="text-center p-3" *ngIf="!projectsLoading">
+							No project activity for the week
+						</div>
+					</ng-template>
 				</nb-card>
 
-				<nb-card class="mt-4">
+				<nb-card
+					class="mt-4"
+					[nbSpinner]="activitiesLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
 					<nb-card-header>Apps & Urls</nb-card-header>
-					<nb-list
-						[nbSpinner]="projectsLoading"
-						nbSpinnerSize="giant"
-						nbSpinnerStatus="primary"
+					<ng-template
+						[ngIf]="activities?.length > 0"
+						[ngIfElse]="noActivities"
 					>
-						<nb-list-item *ngFor="let activity of activities">
-							<div class="w-100">
-								<ngx-activity-item
-									[item]="activity"
-								></ngx-activity-item>
-							</div>
-						</nb-list-item>
-					</nb-list>
+						<nb-list>
+							<nb-list-item *ngFor="let activity of activities">
+								<div class="w-100">
+									<ngx-activity-item
+										[item]="activity"
+									></ngx-activity-item>
+								</div>
+							</nb-list-item>
+						</nb-list>
+					</ng-template>
+					<ng-template #noActivities>
+						<div class="text-center p-3" *ngIf="!activitiesLoading">
+							No app & url activity for the week
+						</div>
+					</ng-template>
 				</nb-card>
 
-				<nb-card class="mt-4">
+				<nb-card
+					class="mt-4"
+					[nbSpinner]="memberLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
 					<nb-card-header>Members</nb-card-header>
-					<nb-list
-						[nbSpinner]="memberLoading"
-						nbSpinnerSize="giant"
-						nbSpinnerStatus="primary"
+					<ng-template
+						[ngIf]="members?.length > 0"
+						[ngIfElse]="noMember"
 					>
-						<nb-list-item *ngFor="let member of members">
-							<div class="row w-100">
-								<div class="col">
-									{{ member?.name }}
+						<nb-list>
+							<nb-list-item>
+								<div class="w-100">
+									<div class="row font-weight-bold">
+										<div class="col">Member info</div>
+										<div class="col-sm-2 text-center">
+											Today
+										</div>
+										<div class="col-sm-3 text-center">
+											This week
+										</div>
+									</div>
 								</div>
-								<div class="col-auto">
-									{{ member?.duration | durationFormat }}
+							</nb-list-item>
+							<nb-list-item *ngFor="let member of members">
+								<div class="w-100">
+									<div class="row">
+										<div class="col">
+											<ngx-avatar
+												[name]="member?.user?.name"
+												[src]="member?.user?.imageUrl"
+											></ngx-avatar>
+										</div>
+										<div class="col-sm-2 text-center">
+											<div class="activity">
+												<div class="duration">
+													{{
+														member?.todayTime
+															?.duration || 0
+															| durationFormat
+													}}
+												</div>
+												<div
+													class="activity-percentage"
+												>
+													<nb-badge
+														[status]="
+															prgressStatus(
+																member
+																	?.todayTime
+																	?.overall
+															)
+														"
+														[text]="
+															(member?.todayTime
+																?.overall ||
+																0) + '%'
+														"
+													></nb-badge>
+												</div>
+											</div>
+										</div>
+										<div class="col-sm-3 text-center">
+											<div class="d-flex">
+												<div
+													class="activity text-center"
+												>
+													<div class="duration">
+														{{
+															member?.weekTime
+																?.duration || 0
+																| durationFormat
+														}}
+													</div>
+													<div
+														class="activity-percentage"
+													>
+														<nb-badge
+															[status]="
+																prgressStatus(
+																	member
+																		?.weekTime
+																		?.overall
+																)
+															"
+															[text]="
+																(member
+																	?.weekTime
+																	?.overall ||
+																	0) + '%'
+															"
+														></nb-badge>
+													</div>
+												</div>
+												<div
+													class="member-weekly-activity-graph"
+												>
+													<div
+														class="bar-graph-entry"
+														*ngFor="
+															let weekHour of member.weekHours
+														"
+														[style.height]="
+															weekHour + '%'
+														"
+													></div>
+												</div>
+											</div>
+										</div>
+									</div>
 								</div>
-							</div>
-						</nb-list-item>
-					</nb-list>
+							</nb-list-item>
+						</nb-list>
+					</ng-template>
+					<ng-template #noMember>
+						<div class="text-center p-3" *ngIf="!memberLoading">
+							No member activity for the week
+						</div>
+					</ng-template>
 				</nb-card>
 			</div>
 		</div>
