@@ -33,6 +33,16 @@ const contractSettings = {
 				max: new Date(),
 				selectedDate: new Date()
 			}
+		},
+		{
+			name: 'Proposals',
+			key: 'proposals',
+			relatedTo: [],
+			sync: true,
+			datePicker: {
+				max: new Date(),
+				selectedDate: new Date()
+			}
 		}
 	],
 	onlyContracts: false

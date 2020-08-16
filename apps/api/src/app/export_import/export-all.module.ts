@@ -196,6 +196,8 @@ import { ProductCategoryService } from '../product-category/product-category.ser
 import { OrganizationDocuments } from '../organization-documents/organization-documents.entity';
 import { OrganizationDocumentsService } from '../organization-documents/organization-documents.service';
 import { UpworkReportService } from '../upwork/upwork-report.service';
+import { UpworkJobService } from '../upwork/upwork-job.service';
+import { UpworkOffersService } from '../upwork/upwork-offers.service';
 
 @Module({
 	imports: [
@@ -421,6 +423,8 @@ import { UpworkReportService } from '../upwork/upwork-report.service';
 		TimeLogService,
 		TimeSlotService,
 
+		UpworkJobService,
+		UpworkOffersService,
 		UpworkService,
 		UpworkReportService,
 		UserService,
@@ -533,6 +537,8 @@ import { UpworkReportService } from '../upwork/upwork-report.service';
 		TimeLogService,
 		TimeSlotService,
 
+		UpworkJobService,
+		UpworkOffersService,
 		UpworkService,
 		UpworkReportService,
 		UserService,

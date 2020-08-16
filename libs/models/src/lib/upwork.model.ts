@@ -66,3 +66,19 @@ export interface IUpworkDateRange {
 	start: Date;
 	end: Date;
 }
+
+export enum IUpworkOfferStatusEnum {
+	ACCEPTED = 'accepted',
+	NEW = 'new',
+	DECLINED = 'declined',
+	EXPIRED = 'expired',
+	WITHDRAWN = 'withdrawn',
+	CANCELLED = 'cancelled',
+	CHANGED = 'changed'
+}
+
+export enum IUpworkProposalStatusEnum {
+	ACTIVE = 'active',
+	SUBMITTED = 'submitted',
+	ARCHIVED = 'archived'
+}
