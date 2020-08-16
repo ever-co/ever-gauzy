@@ -41,3 +41,6 @@ Thumbs.db
 
 .env
 /.deploy/nginx/log
+
+# Typeorm Logs
+ormlogs.log
