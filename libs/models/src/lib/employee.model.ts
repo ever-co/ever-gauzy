@@ -45,6 +45,7 @@ export interface Employee extends IContact, IBaseEntityModel {
 	requestApprovalEmployee?: RequestApprovalEmployee[];
 	contact: IContact;
 	averageIncome?: number;
+	totalWorkHours?: number;
 	averageExpenses?: number;
 	averageBonus?: number;
 	show_anonymous_bonus?: boolean;

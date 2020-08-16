@@ -226,6 +226,12 @@ export class Employee extends TenantBase implements IEmployee {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@IsOptional()
+	@Column({ type: 'numeric', default: 0 })
+	totalWorkHours?: number;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	averageExpenses?: number;
 

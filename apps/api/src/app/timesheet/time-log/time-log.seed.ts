@@ -110,26 +110,23 @@ export const createRandomTimeLogs = async (
 				timelogs.push(timelog);
 			}
 		}
-	}
 
-	await connection.manager.save(timeSlots);
+		await connection.manager.save(timeSlots);
 
-	await Promise.all(screenshotsPromise)
-		.then((data) => {
-			data.forEach((row) => {
-				screenshots = screenshots.concat(row);
+		await Promise.all(screenshotsPromise)
+			.then((data) => {
+				data.forEach((row) => {
+					screenshots = screenshots.concat(row);
+				});
+			})
+			.catch((err) => {
+				console.log({ err });
 			});
-		})
-		.catch((err) => {
-			console.log({ err });
-		});
 
-	try {
-		await connection.manager.save(timelogs);
-		await connection.manager.save(screenshots);
-	} catch (error) {
-		console.log({ error });
-		process.exit(0);
+		try {
+			await connection.manager.save(timelogs);
+			await connection.manager.save(screenshots);
+		} catch (error) {}
 	}
 };
 
