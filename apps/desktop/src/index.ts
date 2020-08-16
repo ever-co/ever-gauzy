@@ -217,6 +217,7 @@ try {
 	// Added 5000 ms to fix the black background issue while using transparent window.
 	// More details at https://github.com/electron/electron/issues/15947
 	app.on('ready', () => {
+		require(path.join(__dirname, 'desktop-api/main.js'));
 		try {
 			const configs: any = store.get('configs');
 			if (configs.isSetup) {

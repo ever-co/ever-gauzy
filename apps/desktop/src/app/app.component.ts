@@ -65,10 +65,17 @@ export class AppComponent implements OnInit {
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
 			appService.pushTotimeslot(arg).then((res: any) => {
-				event.sender.send('return_time_slot', {
-					timeSlotId: res.id,
-					timerId: arg.timerId
+				event.sender.send('remove_aw_local_data', {
+					idsAw: arg.idsAw
 				});
+				event.sender.send('remove_wakatime_local_data', {
+					idsWakatime: arg.idsWakatime
+				});
+				if (arg.idAfk) {
+					event.sender.send('remove_afk_local_Data', {
+						idAfk: arg.idAfk
+					});
+				}
 			});
 		});
 
@@ -82,8 +89,7 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on('set_activity', (event, arg) => {
 			appService.pushToActivity(arg).then((res: any) => {
 				event.sender.send('return_activity', {
-					activityId: res.id,
-					eventId: arg.eventId
+					activityIds: arg.sourceIds
 				});
 			});
 		});

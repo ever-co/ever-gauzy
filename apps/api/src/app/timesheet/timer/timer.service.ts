@@ -115,18 +115,20 @@ export class TimerService {
 			// await this.timesheetRepository.update(timesheet.id, { duration });
 			newTimeLog = await this.timeLogRepository.findOne(lastLog.id);
 
-			let timeSlots = this.timeSlotService.generateTimeSlots(
-				newTimeLog.startedAt,
-				newTimeLog.stoppedAt
-			);
-			timeSlots = timeSlots.map((slot) => ({
-				...slot,
-				employeeId: user.employeeId,
-				keyboard: 0,
-				mouse: 0,
-				overall: 0
-			}));
-			await this.timeSlotService.bulkCreate(timeSlots);
+			if (!request.manualTimeSlot) {
+				let timeSlots = this.timeSlotService.generateTimeSlots(
+					newTimeLog.startedAt,
+					newTimeLog.stoppedAt
+				);
+				timeSlots = timeSlots.map((slot) => ({
+					...slot,
+					employeeId: user.employeeId,
+					keyboard: 0,
+					mouse: 0,
+					overall: 0
+				}));
+				await this.timeSlotService.bulkCreate(timeSlots);
+			}
 		}
 		return newTimeLog;
 	}
