@@ -426,28 +426,50 @@
 											</a>
 										</div>
 										<div class="main-details">
-											<a
-												class="name margin-right-10"
-												[routerLink]="[employee.id]"
-											>
-												{{
-													employee.user.firstName +
-														' ' +
-														employee.user.lastName
-												}}
-											</a>
-											<div
-												class="label label-hourly margin-right-10"
-											>
-												{{ employee.payPeriod }}
-											</div>
-											<div class="pay-rate">
-												{{
-													employee.billRateValue
-														| currency
-															: employee.billRateCurrency
-															: 'symbol'
-												}}/hr
+											<div class="row align-items-center">
+												<div class="col-auto">
+													<a
+														class="name margin-right-10"
+														[routerLink]="[
+															employee.id
+														]"
+													>
+														{{
+															employee.user
+																.firstName +
+																' ' +
+																employee.user
+																	.lastName
+														}}
+													</a>
+												</div>
+												<div class="col-auto p-0">
+													<div
+														class="label label-hourly margin-right-10"
+													>
+														{{ employee.payPeriod }}
+													</div>
+												</div>
+
+												<div class="col"></div>
+												<div class="col-auto">
+													<div class="pay-rate">
+														{{
+															employee.billRateValue
+																| currency
+																	: employee.billRateCurrency
+																	: 'symbol'
+														}}/hr
+													</div>
+													<div
+														class="caption label-total-hours mt-2 text-center margin-right-10"
+													>
+														{{
+															employee.totalWorkHours
+														}}
+														hours worked
+													</div>
+												</div>
 											</div>
 											<div class="clearfix"></div>
 											<div class="speciality">
