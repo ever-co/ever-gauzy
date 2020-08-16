@@ -121,7 +121,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 		this.employees = items;
 	}
 	setView() {
-		this.viewComponentName = ComponentEnum.APPROVALS;
+		this.viewComponentName = ComponentEnum.PROJECTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(takeUntil(this._ngDestroy$))

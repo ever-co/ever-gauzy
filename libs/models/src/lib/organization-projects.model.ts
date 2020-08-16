@@ -51,6 +51,7 @@ export interface OrganizationProjectsCreateInput {
 	name: string;
 	organizationId: string;
 	organizationContact?: OrganizationContact;
+	organizationContactId?: string;
 	startDate?: Date;
 	endDate?: Date;
 	billing?: ProjectBillingEnum;

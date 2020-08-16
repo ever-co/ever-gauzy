@@ -9,7 +9,8 @@ import {
 	ProjectBillingEnum,
 	Tag,
 	ProjectOwnerEnum,
-	TaskListTypeEnum
+	TaskListTypeEnum,
+	ContactType
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -108,7 +109,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			name: [this.project ? this.project.name : '', Validators.required],
 			organizationContact: [
 				this.project && this.project.organizationContact
-					? this.project.organizationContact
+					? this.project.organizationContactId
 					: ''
 			],
 			billing: [this.project ? this.project.billing : 'RATE'],
@@ -189,7 +190,10 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			);
 			return this.organizationContactService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				contactType: ContactType.CLIENT,
+				imageUrl:
+					'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
