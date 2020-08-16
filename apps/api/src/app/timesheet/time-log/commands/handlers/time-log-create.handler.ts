@@ -8,6 +8,7 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands/timesheet-first-or-create.command';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import * as moment from 'moment';
+import { UpdateEmployeeTotalWorkedHoursCommand } from 'apps/api/src/app/employee/commands';
 
 @CommandHandler(TimeLogCreateCommand)
 export class TimeLogCreateHandler
@@ -79,7 +80,6 @@ export class TimeLogCreateHandler
 				timeSlot = timeSlot ? timeSlot : blankTimeSlot;
 				timeSlot.employeeId = input.employeeId;
 
-				console.log(timeSlot);
 				return timeSlot;
 			});
 		}
@@ -90,6 +90,10 @@ export class TimeLogCreateHandler
 
 		await this.commandBus.execute(
 			new TimesheetRecalculateCommand(timesheet.id)
+		);
+
+		await this.commandBus.execute(
+			new UpdateEmployeeTotalWorkedHoursCommand(newTimeLog.employeeId)
 		);
 
 		return newTimeLog;

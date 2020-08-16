@@ -1,5 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { PermissionsEnum, Pipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	Pipeline,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { AppStore, Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -12,14 +16,15 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { Subscription, Subject } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
-import { PipelineStatusComponent } from './table-components/pipeline-status/pipeline-status.component';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @Component({
 	templateUrl: './pipelines.component.html',
 	selector: 'ga-pipelines',
 	styleUrls: ['./pipelines.component.scss']
 })
-export class PipelinesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class PipelinesComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	smartTableSettings = {
 		actions: false,
 		noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
@@ -38,7 +43,21 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
 				title: this.getTranslation('SM_TABLE.STATUS'),
 				type: 'custom',
 				width: '15%',
-				renderComponent: PipelineStatusComponent
+				renderComponent: StatusBadgeComponent,
+				valuePrepareFunction: (cell, row) => {
+					let badgeClass;
+					if (row.isActive) {
+						badgeClass = 'success';
+						cell = 'Active';
+					} else {
+						badgeClass = 'warning';
+						cell = 'Inactive';
+					}
+					return {
+						text: cell,
+						class: badgeClass
+					};
+				}
 			}
 		}
 	};

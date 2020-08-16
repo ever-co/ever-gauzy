@@ -9,7 +9,9 @@ import { TaskStatusEnum } from '@gauzy/models';
 	styles: [
 		`
 			.badge {
-				position: static;
+				text-align: center;
+				padding: 5px 30px;
+				margin-bottom: 5px;
 			}
 		`
 	]

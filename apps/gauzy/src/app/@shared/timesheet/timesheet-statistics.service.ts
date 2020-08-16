@@ -60,9 +60,6 @@ export class TimesheetStatisticsService {
 		const params = toParams(request);
 		return this.http
 			.get('/api/timesheet/statistics/members', { params })
-			.toPromise()
-			.then((data: TimeSlot[]) => {
-				return data;
-			});
+			.toPromise();
 	}
 }

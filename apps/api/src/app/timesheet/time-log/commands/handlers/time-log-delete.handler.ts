@@ -6,6 +6,7 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import * as _ from 'underscore';
+import { UpdateEmployeeTotalWorkedHoursCommand } from 'apps/api/src/app/employee/commands';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler
@@ -62,8 +63,21 @@ export class TimeLogDeleteHandler
 					)
 			)
 			.value();
+
+		const totalWorkedHoursPromises = _.chain(timeLogs)
+			.pluck('employeeId')
+			.uniq()
+			.map(
+				async (employeeId) =>
+					await this.commandBus.execute(
+						new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
+					)
+			)
+			.value();
+
 		try {
 			await Promise.all(timesheetPromises);
+			await Promise.all(totalWorkedHoursPromises);
 		} catch (error) {
 			console.log('TimeLogDeleteHandler', { error });
 		}

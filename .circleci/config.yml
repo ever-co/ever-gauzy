@@ -1,4 +1,4 @@
-version: 2.1    
+version: 2.1
 
 orbs:
     node: circleci/node@3.0.0
@@ -28,44 +28,47 @@ jobs:
         steps:
             - checkout
             - node/install:
-                install-yarn: true
-                node-version: latest
+                  install-yarn: true
+                  node-version: latest
             - restore_cache:
-                    name: Restore Yarn Package Cache
-                    keys:
-                        - yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
+                  name: Restore Yarn Package Cache
+                  keys:
+                      - yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
             - run:
-                    name: Install Dependencies
-                    command: yarn install
+                  name: Install Dependencies
+                  command: yarn install
             - run:
-                name: Install Sonarqube scanner
-                command: |
-                    wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102.zip
-                    unzip sonar-scanner-cli-4.3.0.2102.zip
+                  name: Install Sonarqube scanner
+                  command: |
+                      wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102.zip
+                      unzip sonar-scanner-cli-4.3.0.2102.zip
             - run:
-                name: Run Sonarscanner
-                command: |
-                    export SONAR_SCANNER_OPTS="-Xmx2048m"
-                    eval ./sonar-scanner-4.3.0.2102/bin/sonar-scanner -Dsonar.host.url=$SONAR_SERVER \
-                    -Dsonar.projectKey=gauzy \
-                    -Dsonar.sources=. \
-                    -Dsonar.login=$SONAR_TOKEN
+                  name: Run Sonarscanner
+                  command: |
+                      export SONAR_SCANNER_OPTS="-Xmx2048m"
+                      eval ./sonar-scanner-4.3.0.2102/bin/sonar-scanner -Dsonar.host.url=$SONAR_SERVER \
+                      -Dsonar.projectKey=gauzy \
+                      -Dsonar.sources=. \
+                      -Dsonar.login=$SONAR_TOKEN
             - save_cache:
-                name: Save Yarn Package Cache
-                key: yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
-                paths:
-                    - ~/.cache/yarn
+                  name: Save Yarn Package Cache
+                  key: yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
+                  paths:
+                      - ~/.cache/yarn
             - persist_to_workspace:
-                root: /tmp/workspace/sonarqube-root
-                paths:
-                    - '*'
+                  root: /tmp/workspace/sonarqube-root
+                  paths:
+                      - '*'
     build-monorepo-root:
         <<: *defaults
+        machine:
+            image: ubuntu-1604:202004-01
         working_directory: /tmp/workspace/monorepo-root
-        docker:
-            - image: circleci/node:14.3.0
         steps:
             - checkout
+            - node/install:
+                  install-yarn: true
+                  node-version: latest
             - run:
                   name: 'Installing latest Yarn'
                   command: |
@@ -96,11 +99,14 @@ jobs:
                       - '*'
     build-desktop:
         <<: *defaults
+        machine:
+            image: ubuntu-1604:202004-01
         working_directory: /tmp/workspace/desktop
-        docker:
-            - image: circleci/node:14.3.0
         steps:
             - checkout
+            - node/install:
+                  install-yarn: true
+                  node-version: latest
             - run:
                   name: 'Installing latest Yarn'
                   command: |
@@ -134,11 +140,14 @@ jobs:
                       - '*'
     build-api:
         <<: *defaults
+        machine:
+            image: ubuntu-1604:202004-01
         working_directory: /tmp/workspace/api
-        docker:
-            - image: circleci/node:14.3.0
         steps:
             - checkout
+            - node/install:
+                  install-yarn: true
+                  node-version: latest
             - run:
                   name: 'Installing latest Yarn'
                   command: |
@@ -172,11 +181,14 @@ jobs:
                       - '*'
     build-web:
         <<: *defaults
+        machine:
+            image: ubuntu-1604:202004-01
         working_directory: /tmp/workspace/web
-        docker:
-            - image: circleci/node:14.3.0
         steps:
             - checkout
+            - node/install:
+                  install-yarn: true
+                  node-version: latest
             - run:
                   name: 'Installing latest Yarn'
                   command: |
