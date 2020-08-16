@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as UpworkApi from 'upwork-api';
-import { Jobs } from 'upwork-api/lib/routers/hr/jobs.js';
 import { Profile } from 'upwork-api/lib/routers/jobs/profile.js';
 import { IUpworkApiConfig } from '@gauzy/models';
 

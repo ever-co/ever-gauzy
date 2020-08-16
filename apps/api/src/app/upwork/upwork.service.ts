@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Res } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { In, Between } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import * as UpworkApi from 'upwork-api';
@@ -71,7 +71,6 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { UpworkJobService } from './upwork-job.service';
 import { UpworkOffersService } from './upwork-offers.service';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
-import { IUpworkConfig } from '../../environments/IUpworkConfig';
 
 @Injectable()
 export class UpworkService {
