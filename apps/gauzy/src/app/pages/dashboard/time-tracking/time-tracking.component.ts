@@ -159,7 +159,6 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 						return week[day] ? (week[day] * 100) / sum : 0;
 					});
 
-					console.log(member.weekHours);
 					return member;
 				});
 			})

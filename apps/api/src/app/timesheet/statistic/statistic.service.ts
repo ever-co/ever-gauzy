@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	Repository,
-	In,
-	SelectQueryBuilder,
-	getRepository,
-	Between
-} from 'typeorm';
+import { Repository, In, Between } from 'typeorm';
 import * as _ from 'underscore';
 import {
 	PermissionsEnum,
@@ -61,36 +55,6 @@ export class StatisticService extends CrudService<TimeSlot> {
 				'user_name'
 			)
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
-			// .addSelect((qb) => {
-			// 	qb.from(OrganizationProjects, 'OrganizationProjects')
-			// 		.select('name')
-			// 		.where(`timeLogs.projectId = ${qb.alias}.id`)
-			// 		.groupBy(`name`)
-			// 		.limit(1);
-			// 	return qb;
-			// }, 'project_name')
-
-			// .addSelect((qb) => {
-			// 	qb.from(Task, 'task')
-			// 		.select('title')
-			// 		.where(`timeLogs.taskId = ${qb.alias}.id`)
-			// 		.groupBy(`title`)
-			// 		.limit(1);
-			// 	return qb;
-			// }, 'task_title')
-
-			// .addSelect((qb) => {
-			// 	qb.from(TimeLog, 'timeLog')
-			// 		.select('MAX("timeLogs"."stoppedAt")')
-			// 		.where(`${query.alias}.id = ${qb.alias}.employeeId`)
-			// 		.limit(1);
-			// 	return qb;
-			// }, 'timelogs_stopped_at')
-
-			// .addSelect(`"project"."name"`, 'project_name')
-			// .addSelect(`"task"."title"`, 'task_title')
-			// .addSelect(`MAX("timeLogs"."stoppedAt")`, 'timelogs_stopped_at')
-
 			.addSelect(
 				`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
 				`duration`
@@ -106,110 +70,101 @@ export class StatisticService extends CrudService<TimeSlot> {
 				end
 			})
 			.addGroupBy(`"${query.alias}"."id"`)
-			//.addGroupBy(`project_name`)
-			//.addGroupBy(`task_title`)
-			//.addGroupBy(`timelogs_stopped_at`)
 			.addGroupBy(`"user"."id"`)
 			.orderBy('duration', 'DESC')
 			.limit(5)
 			.getRawMany();
 
-		let weekTimeSlots: any = await this.timeSlotRepository
-			.createQueryBuilder()
-			.select('SUM(duration)', 'duration')
-			.addSelect('AVG(overall)', 'overall')
-			.addSelect('"employeeId"', 'employeeId')
-			.where({
-				employeeId: In(_.pluck(employees, 'id')),
-				startedAt: Between(start, end)
-			})
-			.groupBy('"employeeId"')
-			.getRawMany();
-
-		weekTimeSlots = _.chain(weekTimeSlots)
-			.map((weekTimeSlot: any) => {
-				if (weekTimeSlot && weekTimeSlot.overall) {
-					weekTimeSlot.overall = (weekTimeSlot.overall as number).toFixed(
-						1
-					);
-				}
-				return weekTimeSlot;
-			})
-			.indexBy('employeeId');
-
-		let dayTimeSlots: any = await this.timeSlotRepository
-			.createQueryBuilder()
-			.select('AVG(overall)', 'overall')
-			.addSelect('SUM(duration)', 'duration')
-			.addSelect('"employeeId"', 'employeeId')
-			.where({
-				employeeId: In(_.pluck(employees, 'id')),
-				startedAt: Between(
-					moment().startOf('day').toDate(),
-					moment().endOf('day').toDate()
-				)
-			})
-			.groupBy('"employeeId"')
-			.getRawMany();
-
-		dayTimeSlots = _.chain(dayTimeSlots)
-			.map((dayTimeSlot: any) => {
-				if (dayTimeSlot && dayTimeSlot.overall) {
-					dayTimeSlot.overall = (dayTimeSlot.overall as number).toFixed(
-						1
-					);
-				}
-				return dayTimeSlot;
-			})
-			.indexBy('employeeId');
-
-		let timeLogs = await this.timeLogsRepository
-			.createQueryBuilder()
-			.select('"employeeId"', 'employeeId')
-			.addSelect('"projectId"', 'projectId')
-			.addSelect('"taskId"', 'taskId')
-			.where({
-				employeeId: In(_.pluck(employees, 'id')),
-				startedAt: Between(start, end)
-			})
-			.groupBy('"projectId"')
-			.addGroupBy('"taskId"')
-			.addGroupBy('"employeeId"')
-			//.orderBy('"stoppedAt"', 'DESC')
-			.getRawMany();
-
-		for (let index = 0; index < employees.length; index++) {
-			const member = employees[index];
-
-			member.weekTime = weekTimeSlots[member.id];
-			member.todayTime = dayTimeSlots[member.id];
-
-			member.user = {
-				name: member.user_name,
-				imageUrl: member.user_image_url
-			};
-
-			delete member.user_name;
-			delete member.user_image_url;
-
-			const weekHoursQuery = this.employeeRepository.createQueryBuilder();
-			member.weekHours = await weekHoursQuery
-				.select(
-					`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
-					`duration`
-				)
-				.addSelect('EXTRACT(DOW FROM "timeLogs"."startedAt")', 'day')
-				.where({ id: member.id })
-				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-					start,
-					end
+		if (employees.length > 0) {
+			let weekTimeSlots: any = await this.timeSlotRepository
+				.createQueryBuilder()
+				.select('SUM(duration)', 'duration')
+				.addSelect('AVG(overall)', 'overall')
+				.addSelect('"employeeId"', 'employeeId')
+				.where({
+					employeeId: In(_.pluck(employees, 'id')),
+					startedAt: Between(start, end)
 				})
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-				.addGroupBy(`EXTRACT(DOW FROM "timeLogs"."startedAt")`)
+				.groupBy('"employeeId"')
 				.getRawMany();
+
+			weekTimeSlots = _.chain(weekTimeSlots)
+				.map((weekTimeSlot: any) => {
+					if (weekTimeSlot && weekTimeSlot.overall) {
+						weekTimeSlot.overall = parseFloat(
+							weekTimeSlot.overall as string
+						).toFixed(1);
+					}
+					return weekTimeSlot;
+				})
+				.indexBy('employeeId')
+				.value();
+
+			let dayTimeSlots: any = await this.timeSlotRepository
+				.createQueryBuilder()
+				.select('AVG(overall)', 'overall')
+				.addSelect('SUM(duration)', 'duration')
+				.addSelect('"employeeId"', 'employeeId')
+				.where({
+					employeeId: In(_.pluck(employees, 'id')),
+					startedAt: Between(
+						moment().startOf('day').toDate(),
+						moment().endOf('day').toDate()
+					)
+				})
+				.groupBy('"employeeId"')
+				.getRawMany();
+
+			dayTimeSlots = _.chain(dayTimeSlots)
+				.map((dayTimeSlot: any) => {
+					if (dayTimeSlot && dayTimeSlot.overall) {
+						dayTimeSlot.overall = parseFloat(
+							dayTimeSlot.overall as string
+						).toFixed(1);
+					}
+					return dayTimeSlot;
+				})
+				.indexBy('employeeId')
+				.value();
+
+			for (let index = 0; index < employees.length; index++) {
+				const member = employees[index];
+
+				member.weekTime = weekTimeSlots[member.id];
+				member.todayTime = dayTimeSlots[member.id];
+
+				member.user = {
+					name: member.user_name,
+					imageUrl: member.user_image_url
+				};
+
+				delete member.user_name;
+				delete member.user_image_url;
+
+				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
+				member.weekHours = await weekHoursQuery
+					.select(
+						`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
+						`duration`
+					)
+					.addSelect(
+						'EXTRACT(DOW FROM "timeLogs"."startedAt")',
+						'day'
+					)
+					.where({ id: member.id })
+					.andWhere(
+						`"timeLogs"."startedAt" BETWEEN :start AND :end`,
+						{
+							start,
+							end
+						}
+					)
+					.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+					.addGroupBy(`EXTRACT(DOW FROM "timeLogs"."startedAt")`)
+					.getRawMany();
+			}
 		}
 
-		console.log(employees);
 		return employees;
 	}
 
