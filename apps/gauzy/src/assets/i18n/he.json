@@ -405,6 +405,7 @@
 		}
 	},
 	"POP_UPS": {
+		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
 		"ADD_INCOME": "הוסף הכנסה",
 		"ADD_EXPENSE": "הוסף הוצאה",
 		"EDIT_INCOME": "ערוך הכנסה",
