@@ -221,25 +221,6 @@
 							</div>
 						</div>
 					</div>
-					<div
-						class="row mb-3"
-						*ngIf="this.organization.show_minimum_project_size"
-					>
-						<div class="col">
-							<div class="org-year-found">
-								<h5 class="org-title org-key label-text">
-									{{
-										'PUBLIC_PAGE.MINIMUM_PROJECT_SIZE'
-											| translate
-									}}:
-								</h5>
-								<span
-									class="org-value"
-									[textContent]="minimum_project_size"
-								></span>
-							</div>
-						</div>
-					</div>
 					<div class="row mb-3" *ngIf="this.organization.show_income">
 						<div class="col">
 							<div class="org-year-found">

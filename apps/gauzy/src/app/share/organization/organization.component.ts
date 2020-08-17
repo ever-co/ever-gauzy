@@ -50,7 +50,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 	total_clients = 0;
 	total_income = 0;
 	profits = 0;
-	minimum_project_size = 0;
 	total_projects = 0;
 	total_employees = 0;
 	employee_bonuses = [];
@@ -186,14 +185,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 			}
 		);
 		this.total_projects = total;
-		if (total) {
-			this.minimum_project_size = items[0].members.length;
-			for (let inc = 0; inc < items.length; inc++) {
-				if (items[inc].members.length < this.minimum_project_size) {
-					this.minimum_project_size = items[inc].members.length;
-				}
-			}
-		}
 	}
 
 	private async getEmployees() {
