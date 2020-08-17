@@ -456,12 +456,11 @@ export class ExpensesComponent extends TranslationBaseComponent
 		employeeId = this.selectedEmployeeId,
 		orgId?: string
 	) {
-		let findObj;
 		this.showTable = false;
 		this.selectedExpense = null;
 
 		if (orgId) {
-			findObj = {
+			const findObj = {
 				organization: {
 					id: orgId
 				}
@@ -481,7 +480,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}
 			};
 		} else {
-			findObj = {
+			const findObj = {
 				employee: {
 					id: employeeId
 				}

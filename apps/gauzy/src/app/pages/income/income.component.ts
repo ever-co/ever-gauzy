@@ -371,12 +371,11 @@ export class IncomeComponent extends TranslationBaseComponent
 		employeId = this.selectedEmployeeId,
 		orgId?: string
 	) {
-		let findObj;
 		this.showTable = false;
 		this.selectedIncome = null;
 
 		if (orgId) {
-			findObj = {
+			const findObj = {
 				organization: {
 					id: orgId
 				}
@@ -393,7 +392,7 @@ export class IncomeComponent extends TranslationBaseComponent
 				}
 			};
 		} else {
-			findObj = {
+			const findObj = {
 				employee: {
 					id: employeId
 				}
