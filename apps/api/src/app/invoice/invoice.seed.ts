@@ -42,10 +42,9 @@ export const createDefaultInvoice = async (
       invoice.dueDate = faker.date.recent(50);
       invoice.organizationContactId = faker.random.arrayElement(OrganizationContacts).id;
       invoice.sentTo =  organization.id;
+      invoice.fromOrganization =  organization;
       invoice.toContact = faker.random.arrayElement(OrganizationContacts);
-      invoice.currency = faker.random.arrayElement(
-        Object.values(CurrenciesEnum)
-      );
+      invoice.currency = organization.currency;
       invoice.discountValue = faker.random.number({
         min: 1,
         max: 10
@@ -72,6 +71,7 @@ export const createDefaultInvoice = async (
       );
       invoice.organizationId = organization.id;
       invoice.status = 'Active';
+      invoice.totalValue = faker.random.number(99999);
       invoices.push(invoice);
     }
   }
@@ -112,10 +112,9 @@ export const createRandomInvoice = async (
 				invoice.dueDate = faker.date.recent(50);
         invoice.organizationContactId = faker.random.arrayElement(OrganizationContacts).id;
         invoice.sentTo =  organization.id;
+        invoice.fromOrganization =  organization;
         invoice.toContact = faker.random.arrayElement(OrganizationContacts);
-        invoice.currency = faker.random.arrayElement(
-					Object.values(CurrenciesEnum)
-				);
+        invoice.currency = organization.currency;
 				invoice.discountValue = faker.random.number({
 					min: 1,
 					max: 10
@@ -142,6 +141,7 @@ export const createRandomInvoice = async (
 				);
 				invoice.organizationId = organization.id;
 				invoice.status = 'Active';
+        invoice.totalValue = faker.random.number(99999);
 				invoices.push(invoice);
 			}
 		}
