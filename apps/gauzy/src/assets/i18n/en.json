@@ -479,7 +479,8 @@
 		"SHOW_ANONYMOUS_BONUS": "Show Anonymous Bonus",
 		"SHOW_AVERAGE_EXPENSES": "Show Average Expenses",
 		"SHOW_BILLRATE": "Show Bill Rate",
-		"SHOW_START_WORK_ON": "Show Started Work On"
+		"SHOW_START_WORK_ON": "Show Started Work On",
+		"SHOW_CLIENTS": "Show Clients"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
