@@ -49,6 +49,8 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 				this.loadEmployeesCount();
 				this.store.selectedEmployee = null;
 
+				this.store.selectedOrganization = this.selectedOrg;
+
 				this.store.selectedOrganization$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((org) => {

@@ -249,6 +249,7 @@ export class TaskComponent extends TranslationBaseComponent
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'custom',
+					width: '15%',
 					filter: false,
 					renderComponent: StatusViewComponent
 				}

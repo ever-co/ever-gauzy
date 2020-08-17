@@ -196,14 +196,15 @@
 				</div>
 			</div>
 			<div class="section_block"></div>
-			<nb-tabset class="o__p__s">
-				<nb-tab tabTitle="Profile" class="o__p__s__t">
+			<nb-tabset class="o__p__s" (changeTab)="onTabChange($event)">
+				<nb-tab
+					tabTitle="Profile"
+					class="o__p__s__t"
+					[active]="tabTitle === 'Profile'"
+				>
 					<div
 						class="row mb-3"
-						*ngIf="
-							this.organization.show_projects_count &&
-							total_projects
-						"
+						*ngIf="this.organization.show_projects_count"
 					>
 						<div class="col">
 							<div class="org-year-found">
@@ -220,32 +221,7 @@
 							</div>
 						</div>
 					</div>
-					<div
-						class="row mb-3"
-						*ngIf="
-							this.organization.show_minimum_project_size &&
-							minimum_project_size
-						"
-					>
-						<div class="col">
-							<div class="org-year-found">
-								<h5 class="org-title org-key label-text">
-									{{
-										'PUBLIC_PAGE.MINIMUM_PROJECT_SIZE'
-											| translate
-									}}:
-								</h5>
-								<span
-									class="org-value"
-									[textContent]="minimum_project_size"
-								></span>
-							</div>
-						</div>
-					</div>
-					<div
-						class="row mb-3"
-						*ngIf="this.organization.show_income && total_income"
-					>
+					<div class="row mb-3" *ngIf="this.organization.show_income">
 						<div class="col">
 							<div class="org-year-found">
 								<h5 class="org-title org-key label-text">
@@ -266,9 +242,7 @@
 					</div>
 					<div
 						class="row mb-3"
-						*ngIf="
-							this.organization.show_bonuses_paid && bonuses_paid
-						"
+						*ngIf="this.organization.show_bonuses_paid"
 					>
 						<div class="col">
 							<div class="org-year-found">
@@ -379,6 +353,26 @@
 							</div>
 						</div>
 					</div>
+
+					<div
+						class="row mb-3"
+						*ngIf="organization.show_minimum_project_size"
+					>
+						<div class="col">
+							<h5 class="org-title org-key label-text">
+								{{
+									'POP_UPS.MINIMUM_PROJECT_SIZE' | translate
+								}}:
+							</h5>
+							<div>
+								<div>
+									{{ organization.currency }}
+									{{ organization.minimumProjectSize }}
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<div
 						class="row mb-3"
 						*ngIf="organization.skills.length > 0"
@@ -390,7 +384,7 @@
 								</p>
 								<ul class="org-value">
 									<li
-										class="org_list_data mt-2"
+										class="org_list_data"
 										*ngFor="
 											let skill of organization.skills;
 											let i = index
@@ -403,12 +397,15 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab tabTitle="Employees" class="o__p__s__t">
+				<nb-tab
+					tabTitle="Employees"
+					class="o__p__s__t"
+					[active]="tabTitle === 'Employees'"
+				>
 					<div class="row" *ngIf="employees">
 						<div class="col">
 							<div class="employee-list">
 								<nb-list class="nb_list">
-									<!-- New Code -->
 									<nb-list-item
 										*ngFor="
 											let employee of employees;
@@ -426,28 +423,54 @@
 											</a>
 										</div>
 										<div class="main-details">
-											<a
-												class="name margin-right-10"
-												[routerLink]="[employee.id]"
-											>
-												{{
-													employee.user.firstName +
-														' ' +
-														employee.user.lastName
-												}}
-											</a>
-											<div
-												class="label label-hourly margin-right-10"
-											>
-												{{ employee.payPeriod }}
-											</div>
-											<div class="pay-rate">
-												{{
-													employee.billRateValue
-														| currency
-															: employee.billRateCurrency
-															: 'symbol'
-												}}/hr
+											<div class="row align-items-center">
+												<div class="col-auto">
+													<a
+														class="name margin-right-10"
+														[routerLink]="[
+															employee.id
+														]"
+													>
+														{{
+															employee.user
+																.firstName +
+																' ' +
+																employee.user
+																	.lastName
+														}}
+													</a>
+												</div>
+												<div class="col-auto p-0">
+													<div
+														class="label label-hourly margin-right-10"
+													>
+														{{
+															'SM_TABLE.' +
+																employee.payPeriod
+																| translate
+														}}
+													</div>
+												</div>
+
+												<div class="col"></div>
+												<div class="col-auto">
+													<div class="pay-rate">
+														{{
+															employee.billRateValue
+																| currency
+																	: employee.billRateCurrency
+																	: 'symbol'
+														}}/hr
+													</div>
+													<div
+														class="caption label-total-hours mt-2 text-center margin-right-10"
+													>
+														{{
+															employee.totalWorkHours
+														}}
+														hours worked
+													</div>
+												</div>
 											</div>
 											<div class="clearfix"></div>
 											<div class="speciality">
@@ -466,7 +489,7 @@
 													}"
 												>
 												</nb-icon>
-												Ever Technologies
+												{{ employee.organization.name }}
 											</a>
 											<span class="location text-success">
 												<nb-icon
@@ -478,6 +501,29 @@
 												</nb-icon>
 												Sofia, Sofia, Bulgaria
 											</span>
+
+											<div
+												class="profil-bio push-bottom-10"
+											>
+												<span class="average-bonus"
+													>{{
+														'PUBLIC_PAGE.AVERAGE_BONUS'
+															| translate
+													}}:</span
+												>
+												<span class="text-success">
+													{{
+														employee.billRateCurrency
+													}}
+													{{
+														employee.averageBonus ===
+														null
+															? 0
+															: employee.averageBonus
+													}}</span
+												>
+											</div>
+
 											<div
 												class="profil-bio push-bottom-10"
 											>
@@ -490,45 +536,14 @@
 											<div
 												class="list-inline push-bottom-20"
 											>
-												<li>
-													<span class="tag tag-sm"
-														>MySQL</span
-													>
-												</li>
-												<li>
-													<span class="tag tag-sm"
-														>React</span
-													>
-												</li>
-												<li>
-													<span class="tag tag-sm"
-														>AngularJS</span
-													>
-												</li>
-												<li>
-													<span class="tag tag-sm"
-														>ASP &amp; ASP.NET</span
-													>
-												</li>
-												<li>
-													<span class="tag tag-sm"
-														>jQuery</span
-													>
-												</li>
-												<li>
-													<span class="tag tag-sm"
-														>Node.js</span
-													>
-												</li>
-												<li>
-													<span class="tag tag-sm"
-														>TypeScript</span
-													>
-												</li>
-												<li>
-													<span class="tag tag-sm"
-														>GraphQL</span
-													>
+												<li
+													*ngFor="
+														let skill of employee.skills
+													"
+												>
+													<span class="tag tag-sm">{{
+														skill.name
+													}}</span>
 												</li>
 											</div>
 										</div>
@@ -539,7 +554,35 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab tabTitle="Portfolio" class="o__p__s__t"> </nb-tab>
+				<nb-tab
+					tabTitle="Portfolio"
+					class="o__p__s__t"
+					[active]="tabTitle === 'Portfolio'"
+				>
+				</nb-tab>
+				<nb-tab
+					tabTitle="Clients"
+					class="o__p__s__t"
+					*ngIf="organization.show_clients"
+					[active]="tabTitle === 'Clients'"
+				>
+					<nb-list class="nb_list">
+						<nb-list-item
+							*ngFor="let client of clients"
+							class="search-result"
+						>
+							<div class="avatar has-aura">
+								<img src="{{ client.imageUrl }}" />
+							</div>
+							<div class="main-details">
+								{{ client.name }}
+							</div>
+							<div class="speciality">
+								{{ client.primaryEmail }}
+							</div>
+						</nb-list-item>
+					</nb-list>
+				</nb-tab>
 			</nb-tabset>
 		</div>
 	</nb-card-body>

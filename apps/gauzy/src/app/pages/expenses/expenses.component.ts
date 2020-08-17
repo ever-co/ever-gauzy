@@ -30,6 +30,7 @@ import { IncomeExpenseAmountComponent } from '../../@shared/table-components/inc
 import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -124,7 +125,22 @@ export class ExpensesComponent extends TranslationBaseComponent
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'string'
+					type: 'custom',
+					width: '5%',
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						const badgeclass = cell
+							? ['paid'].includes(cell.toLowerCase())
+								? 'success'
+								: ['invoiced'].includes(cell.toLowerCase())
+								? 'warning'
+								: 'danger'
+							: null;
+						return {
+							text: cell,
+							class: badgeclass
+						};
+					}
 				}
 			}
 		};

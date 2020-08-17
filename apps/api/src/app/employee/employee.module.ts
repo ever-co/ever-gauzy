@@ -10,10 +10,11 @@ import { EmployeeService } from './employee.service';
 import { AuthService } from '../auth/auth.service';
 import { EmailService, EmailModule } from '../email';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
+import { TimeLog } from '../timesheet/time-log.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Employee, User]),
+		TypeOrmModule.forFeature([Employee, User, TimeLog]),
 		EmailModule,
 		UserOrganizationModule,
 		CqrsModule

@@ -4,7 +4,8 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	Post
+	Post,
+	Body
 } from '@nestjs/common';
 import { Activity } from '../activity.entity';
 import { CrudController } from '../../core/crud/crud.controller';
@@ -55,7 +56,7 @@ export class ActivityController extends CrudController<Activity> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/bulk')
-	async bulkSaveActivites(@Query() request: IBulkActivitiesInput) {
-		return this.activityService.bulkSave(request.activities);
+	async bulkSaveActivites(@Body() entities: IBulkActivitiesInput) {
+		return this.activityService.bulkSave(entities.activities);
 	}
 }

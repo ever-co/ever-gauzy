@@ -38,6 +38,7 @@ import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-dow
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @Component({
 	selector: 'ngx-invoices',
@@ -571,9 +572,32 @@ export class InvoicesComponent extends TranslationBaseComponent
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
 			this.settingsSmartTable['columns']['status'] = {
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
-				type: 'text',
+				type: 'custom',
 				width: '5%',
-				filter: false
+				renderComponent: StatusBadgeComponent,
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					let badgeClass;
+					if (cell) {
+						badgeClass = [
+							'sent',
+							'viewed',
+							'accepted',
+							'active',
+							'fully paid'
+						].includes(cell.toLowerCase())
+							? 'success'
+							: ['void', 'draft', 'partially paid'].includes(
+									cell.toLowerCase()
+							  )
+							? 'warning'
+							: 'danger';
+					}
+					return {
+						text: cell,
+						class: badgeClass
+					};
+				}
 			};
 		}
 

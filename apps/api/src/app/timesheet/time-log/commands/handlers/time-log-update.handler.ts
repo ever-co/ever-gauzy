@@ -7,6 +7,7 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands/timesheet-first-or-create.command';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import { Timesheet } from '../../../timesheet.entity';
+import { UpdateEmployeeTotalWorkedHoursCommand } from 'apps/api/src/app/employee/commands';
 
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler
@@ -98,6 +99,10 @@ export class TimeLogUpdateHandler
 
 			await this.commandBus.execute(
 				new TimesheetRecalculateCommand(timeLog.timesheetId)
+			);
+
+			await this.commandBus.execute(
+				new UpdateEmployeeTotalWorkedHoursCommand(timeLog.employeeId)
 			);
 		}
 

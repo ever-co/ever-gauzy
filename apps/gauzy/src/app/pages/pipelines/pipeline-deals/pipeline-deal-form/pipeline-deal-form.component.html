@@ -53,10 +53,7 @@
 						placeholder="Clients"
 						[selected]="selectedClient"
 					>
-						<nb-option
-							*ngFor="let cl of clients"
-							[value]="cl.id"
-						>
+						<nb-option *ngFor="let cl of clients" [value]="cl.id">
 							{{ cl.name }}
 						</nb-option>
 					</nb-select>

@@ -374,7 +374,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 		const timeSlots = await this.timeSlotRepository.find({
 			where: { id: In(ids) }
 		});
-		console.log({ timeSlots });
 		for (let i = 0; i < ids.length; i++) {
 			const timeSlot = await this.timeSlotRepository.findOne({
 				where: {
@@ -401,8 +400,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 
 				await Promise.all(deleteSlotPromise);
 			}
-
-			// await this.timeSlotRepository.delete({ id: In(ids) });
 		}
 		return true;
 	}

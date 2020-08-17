@@ -372,6 +372,8 @@ import {
 } from '../../product-type/type.seed';
 import { createDefaultGoalTemplates } from '../../goal-template/goal-template.seed';
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
+import { GoalTemplate } from '../../goal-template/goal-template.entity';
+import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -382,6 +384,8 @@ const allEntities = [
 	EmployeeRecurringExpense,
 	OrganizationRecurringExpense,
 	ExpenseCategory,
+  GoalTemplate,
+  KeyResultTemplate,
 	GoalGeneralSetting,
 	GoalKPI,
 	GoalTimeFrame,
@@ -529,6 +533,15 @@ export class SeedDataService {
 
 	constructor() {}
 
+	/**
+	 * This config is applied only for `yarn seed:*` type calls because
+	 * that is when connection is created by this service itself.
+	 */
+	overrideDbConfig = {
+		logging: true,
+		logger: 'file' //Removes console logging, instead logs all queries in a file ormlogs.log
+	};
+
 	private async cleanUpPreviousRuns() {
 		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
 
@@ -564,6 +577,7 @@ export class SeedDataService {
 
 				this.connection = await createConnection({
 					...env.database,
+					...this.overrideDbConfig,
 					entities: allEntities
 				} as ConnectionOptions);
 			} catch (error) {

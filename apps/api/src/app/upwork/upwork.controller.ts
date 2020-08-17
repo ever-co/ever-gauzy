@@ -216,7 +216,7 @@ export class UpworkController {
 		@Query('data') data: string
 	): Promise<IPagination<any>> {
 		const { relations, filter } = JSON.parse(data);
-		return await this._upworkService.getReportsForFreelancer(
+		return await this._upworkService.getReportListByIntegration(
 			integrationId,
 			filter,
 			relations

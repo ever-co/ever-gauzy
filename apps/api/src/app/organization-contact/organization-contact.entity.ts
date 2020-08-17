@@ -103,7 +103,7 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
 	@OneToMany(
 		(type) => OrganizationProjects,
-		(projects) => projects.organizationContact
+		(project) => project.organizationContact
 	)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
@@ -128,7 +128,7 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	@ApiProperty({ type: String, enum: ContactType })
 	@IsEnum(ContactType)
 	@IsOptional()
-	@Column({ nullable: true })
+	@Column({ nullable: false })
 	contactType: string;
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
