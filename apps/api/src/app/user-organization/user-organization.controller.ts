@@ -101,7 +101,9 @@ export class UserOrganizationController extends CrudController<
 			where: {
 				userId,
 				isActive: true,
-				'user.role': { name: Not(RolesEnum.EMPLOYEE) }
+				user: {
+					role: { name: Not(RolesEnum.EMPLOYEE) }
+				}
 			},
 			relations: ['user', 'user.role']
 		});
