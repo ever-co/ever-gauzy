@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import {
 	TimesheetStatus,
-	OrganizationProjects	
+	OrganizationProjects
 } from '@gauzy/models';
 import { Timesheet } from '../timesheet.entity';
 import { Employee } from '../../employee/employee.entity';
@@ -25,16 +25,17 @@ export const createDefaultTimeSheet = async (
 	}
 
 	const timesheets: Timesheet[] = [];
-	
+
 	for (let index = 0; index < 2; index++) {
 		const date = moment().subtract(index, 'week').toDate();
 		const startedAt = moment(date).startOf('week').toDate();
 		const stoppedAt = moment(date).endOf('week').toDate();
 
-		_.chain(employees)
-			.shuffle()
-			.take(faker.random.number(employees.length))
-			.each((employee) => {
+		// _.chain(employees)
+		// 	.shuffle()
+		// 	.take(faker.random.number(employees.length))
+		// 	.each((employee) => {
+    for(const employee of employees){
 				const status = faker.random.arrayElement(
 					Object.keys(TimesheetStatus)
 				);
@@ -75,7 +76,7 @@ export const createDefaultTimeSheet = async (
 				timesheet.status = TimesheetStatus[status];
 				timesheet.deletedAt = null;
 				timesheets.push(timesheet);
-			});
+			}
 	}
 
 	await connection.getRepository(Timesheet).save(timesheets);
