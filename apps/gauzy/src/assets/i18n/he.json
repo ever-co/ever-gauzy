@@ -405,7 +405,7 @@
 		}
 	},
 	"POP_UPS": {
-		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
+		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"ADD_INCOME": "הוסף הכנסה",
 		"ADD_EXPENSE": "הוסף הוצאה",
 		"EDIT_INCOME": "ערוך הכנסה",
@@ -479,7 +479,8 @@
 		"SHOW_ANONYMOUS_BONUS": "Show Anonymous Bonus",
 		"SHOW_AVERAGE_EXPENSES": "Show Average Expenses",
 		"SHOW_BILLRATE": "Show Bill Rate",
-		"SHOW_START_WORK_ON": "Show Started Work On"
+		"SHOW_START_WORK_ON": "Show Started Work On",
+		"SHOW_CLIENTS": "Show Clients"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
