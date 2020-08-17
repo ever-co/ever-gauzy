@@ -30,11 +30,7 @@ export const createDefaultTimeSheet = async (
 		const date = moment().subtract(index, 'week').toDate();
 		const startedAt = moment(date).startOf('week').toDate();
 		const stoppedAt = moment(date).endOf('week').toDate();
-
-		// _.chain(employees)
-		// 	.shuffle()
-		// 	.take(faker.random.number(employees.length))
-		// 	.each((employee) => {
+		
     for(const employee of employees){
 				const status = faker.random.arrayElement(
 					Object.keys(TimesheetStatus)
