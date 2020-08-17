@@ -299,7 +299,9 @@ export class IncomeComponent extends TranslationBaseComponent
 								currency: result.currency,
 								isBonus: result.isBonus,
 								tags: result.tags,
-								employeeId: this.selectedIncome.employee.id
+								employeeId: this.selectedIncome.employee
+									? this.selectedIncome.employee.id
+									: null
 							}
 						);
 						this.toastrService.primary(
@@ -341,7 +343,9 @@ export class IncomeComponent extends TranslationBaseComponent
 					try {
 						await this.incomeService.delete(
 							this.selectedIncome.id,
-							this.selectedIncome.employee.id
+							this.selectedIncome.employee
+								? this.selectedIncome.employee.id
+								: null
 						);
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
@@ -398,11 +402,11 @@ export class IncomeComponent extends TranslationBaseComponent
 		}
 
 		try {
-			const { items } = await this.incomeService.getAll(
-				['employee', 'employee.user', 'tags'],
-				findObj,
-				this.selectedDate
-			);
+			const { items } = await this.incomeService.getAll([
+				'employee',
+				'employee.user',
+				'tags'
+			]);
 			const incomeVM: Income[] = items.map((i) => {
 				return {
 					id: i.id,
@@ -411,6 +415,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					clientId: i.clientId,
 					valueDate: i.valueDate,
 					organization: i.organization,
+					employee: i.employee,
 					employeeId: i.employee ? i.employee.id : null,
 					employeeName: i.employee ? i.employee.user.name : null,
 					orgId: this.store.selectedOrganization.id,
