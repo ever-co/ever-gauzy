@@ -460,12 +460,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 		this.selectedExpense = null;
 
 		if (orgId) {
-			const findObj = {
-				organization: {
-					id: orgId
-				}
-			};
-
 			this.smartTableSettings['columns']['employeeName'] = {
 				title: 'Employee',
 				type: 'string',
@@ -480,12 +474,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}
 			};
 		} else {
-			const findObj = {
-				employee: {
-					id: employeeId
-				}
-			};
-
 			delete this.smartTableSettings['columns']['employee'];
 		}
 

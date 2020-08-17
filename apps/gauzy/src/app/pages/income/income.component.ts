@@ -375,11 +375,6 @@ export class IncomeComponent extends TranslationBaseComponent
 		this.selectedIncome = null;
 
 		if (orgId) {
-			const findObj = {
-				organization: {
-					id: orgId
-				}
-			};
 			this.smartTableSettings['columns']['employeeName'] = {
 				title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 				type: 'string',
@@ -392,11 +387,6 @@ export class IncomeComponent extends TranslationBaseComponent
 				}
 			};
 		} else {
-			const findObj = {
-				employee: {
-					id: employeId
-				}
-			};
 			delete this.smartTableSettings['columns']['employee'];
 		}
 
