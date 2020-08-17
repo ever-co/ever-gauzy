@@ -560,6 +560,7 @@
 				"build": {
 					"builder": "@nrwl/node:build",
 					"options": {
+						"webpackConfig": "tools/build/webpack.config.js",
 						"outputPath": "dist/apps/desktop/desktop-api",
 						"main": "apps/desktop/desktop-api/src/main.ts",
 						"tsConfig": "apps/desktop/desktop-api/tsconfig.app.json",
