@@ -405,6 +405,7 @@
 		}
 	},
 	"POP_UPS": {
+		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
 		"ADD_INCOME": "Add Income",
 		"ADD_EXPENSE": "Add Expense",
 		"EDIT_INCOME": "Edit Income",
