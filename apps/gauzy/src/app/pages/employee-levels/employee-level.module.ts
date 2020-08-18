@@ -17,6 +17,8 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { SharedModule } from '../../@shared/shared.module';
 import { EmployeeLevelComponent } from './employee-level.component';
 import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -34,6 +36,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		TagsColorInputModule,
 		NbActionsModule,
+		CardGridModule,
+		Ng2SmartTableModule,
+		NbDialogModule,
 		TableComponentsModule,
 		TagsColorInputModule,
 		NbActionsModule,

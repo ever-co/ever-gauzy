@@ -44,7 +44,9 @@
 						[placeholder]="
 							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
 						"
-						[ngModel]="add"
+						[ngModel]="
+							isGridEdit ? selectedEmployeeLevel.level : add
+						"
 						required
 					/>
 				</div>
@@ -58,7 +60,7 @@
 				<span class="col-sm-3" style="margin-top: 29px;"
 					><button
 						class="w-100"
-						(click)="addEmployeeLevel(addInput.value)"
+						(click)="save(addInput.value)"
 						nbButton
 						status="success"
 						[disabled]="addInput.invalid"
@@ -69,7 +71,7 @@
 				<span class="col-sm-3" style="margin-top: 29px;"
 					><button
 						class="w-100"
-						(click)="showAddCard = !showAddCard"
+						(click)="cancel()"
 						nbButton
 						status="danger"
 					>
@@ -78,7 +80,7 @@
 				>
 			</div>
 		</div>
-		<div *ngIf="employeeLevels?.length">
+		<div *ngIf="employeeLevels?.length && dataLayoutStyle === 'TABLE'">
 			<nb-card *ngFor="let e of employeeLevels">
 				<nb-card-body
 					style="
@@ -163,5 +165,41 @@
 				</nb-card-body>
 			</nb-card>
 		</div>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID' && employeeLevels?.length"
+			[settings]="settingsSmartTable"
+			[source]="employeeLevels"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+		<ng-template
+			#actionButtons
+			let-buttonSize="buttonSize"
+			let-selectedItem="selectedItem"
+		>
+			<button
+				(click)="edit(selectedItem)"
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="
+					removeEmployeeLevel(selectedItem.id, selectedItem.level)
+				"
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
