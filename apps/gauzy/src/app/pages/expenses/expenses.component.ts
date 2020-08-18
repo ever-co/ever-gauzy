@@ -298,8 +298,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-
-			this._loadTableData();
+			this._loadTableData(
+				this.selectedEmployeeId,
+				this.selectedEmployeeId ? null : this._selectedOrganizationId
+			);
 			this.store.selectedEmployee = formData.employee
 				? formData.employee
 				: null;
@@ -456,10 +458,16 @@ export class ExpensesComponent extends TranslationBaseComponent
 		employeeId = this.selectedEmployeeId,
 		orgId?: string
 	) {
+		let findObj;
 		this.showTable = false;
 		this.selectedExpense = null;
 
 		if (orgId) {
+			findObj = {
+				organization: {
+					id: orgId
+				}
+			};
 			this.smartTableSettings['columns']['employeeName'] = {
 				title: 'Employee',
 				type: 'string',
@@ -474,17 +482,20 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}
 			};
 		} else {
+			findObj = {
+				employee: {
+					id: employeeId
+				}
+			};
 			delete this.smartTableSettings['columns']['employee'];
 		}
 
 		try {
-			const { items } = await this.expenseService.getAll([
-				'employee',
-				'employee.user',
-				'category',
-				'vendor',
-				'tags'
-			]);
+			const { items } = await this.expenseService.getAll(
+				['employee', 'employee.user', 'category', 'vendor', 'tags'],
+				findObj,
+				this.selectedDate
+			);
 
 			const expenseVM: ExpenseViewModel[] = items.map((i) => {
 				return {

@@ -245,7 +245,12 @@ export class IncomeComponent extends TranslationBaseComponent
 							}),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadEmployeeIncomeData();
+						this._loadEmployeeIncomeData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.store.selectedEmployee = result.employee
 							? result.employee
 							: null;
@@ -371,10 +376,16 @@ export class IncomeComponent extends TranslationBaseComponent
 		employeId = this.selectedEmployeeId,
 		orgId?: string
 	) {
+		let findObj;
 		this.showTable = false;
 		this.selectedIncome = null;
 
 		if (orgId) {
+			findObj = {
+				organization: {
+					id: orgId
+				}
+			};
 			this.smartTableSettings['columns']['employeeName'] = {
 				title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 				type: 'string',
@@ -387,15 +398,20 @@ export class IncomeComponent extends TranslationBaseComponent
 				}
 			};
 		} else {
+			findObj = {
+				employee: {
+					id: employeId
+				}
+			};
 			delete this.smartTableSettings['columns']['employee'];
 		}
 
 		try {
-			const { items } = await this.incomeService.getAll([
-				'employee',
-				'employee.user',
-				'tags'
-			]);
+			const { items } = await this.incomeService.getAll(
+				['employee', 'employee.user', 'tags'],
+				findObj,
+				this.selectedDate
+			);
 			const incomeVM: Income[] = items.map((i) => {
 				return {
 					id: i.id,
