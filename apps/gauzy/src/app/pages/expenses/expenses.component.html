@@ -3,7 +3,15 @@
 		<div>
 			<h4>{{ 'EXPENSES_PAGE.EXPENSES' | translate }}</h4>
 		</div>
-		<div class="header-btn">
+		<div class="header-selector-wrapper">
+			<button
+				nbButton
+				status="primary"
+				class="mr-2"
+				(click)="manageCategories()"
+			>
+				{{ 'BUTTONS.MANAGE_CATEGORIES' | translate }}
+			</button>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>
@@ -26,16 +34,6 @@
 						*ngTemplateOutlet="actionButtons"
 					></ng-container>
 				</ng-container>
-			</div>
-			<div style="margin-right: -7px;" class="col mb-3">
-				<button
-					nbButton
-					status="primary"
-					class="mr-2 float-right"
-					(click)="manageCategories()"
-				>
-					{{ 'BUTTONS.MANAGE_CATEGORIES' | translate }}
-				</button>
 			</div>
 		</div>
 

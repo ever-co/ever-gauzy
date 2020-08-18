@@ -20,7 +20,7 @@ export class IncomeCreateHandler
 		const income = await this.createIncome(command);
 		let averageIncome = 0;
 		let averageBonus = 0;
-		if (income) {
+		if (income && income.employeeId) {
 			const id = income.employeeId;
 			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
 				income.employeeId

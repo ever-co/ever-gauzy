@@ -20,7 +20,7 @@ export class IncomeUpdateHandler
 		const income = await this.updateIncome(id, entity);
 		let averageIncome = 0;
 		let averageBonus = 0;
-		if (income) {
+		if (income && income.employeeId) {
 			id = income.employeeId;
 			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
 				id

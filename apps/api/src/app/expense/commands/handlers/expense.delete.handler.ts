@@ -15,21 +15,23 @@ export class ExpenseDeleteHandler
 
 	public async execute(command: ExpenseDeleteCommand): Promise<any> {
 		const { employeeId, expenseId } = command;
-		const id = employeeId;
-		let averageExpense = 0;
 		await this.deleteExpense(expenseId);
+		if (employeeId) {
+			const id = employeeId;
+			let averageExpense = 0;
 
-		const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
-			id
-		);
+			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+				id
+			);
 
-		averageExpense = this.expenseService.countStatistic(
-			stat.expenseStatistics
-		);
-		return await this.employeeService.create({
-			id,
-			averageExpenses: averageExpense
-		});
+			averageExpense = this.expenseService.countStatistic(
+				stat.expenseStatistics
+			);
+			return await this.employeeService.create({
+				id,
+				averageExpenses: averageExpense
+			});
+		}
 	}
 
 	public async deleteExpense(expenseId: string): Promise<any> {
