@@ -163,7 +163,7 @@ import {
 	createDefaultTimeSheet,
 	createRandomTimesheet
 } from '../../timesheet/timesheet/timesheet.seed';
-import { createRandomTask } from '../../tasks/task.seed';
+import { createDefaultTask, createRandomTask } from '../../tasks/task.seed';
 import {
 	createDefaultOrganizationProjects,
 	createRandomOrganizationProjects
@@ -372,6 +372,8 @@ import {
 } from '../../product-type/type.seed';
 import { createDefaultGoalTemplates } from '../../goal-template/goal-template.seed';
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
+import { GoalTemplate } from '../../goal-template/goal-template.entity';
+import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -382,6 +384,8 @@ const allEntities = [
 	EmployeeRecurringExpense,
 	OrganizationRecurringExpense,
 	ExpenseCategory,
+	GoalTemplate,
+	KeyResultTemplate,
 	GoalGeneralSetting,
 	GoalKPI,
 	GoalTimeFrame,
@@ -789,12 +793,28 @@ export class SeedDataService {
 			createDefaultOrganizationContact(this.connection)
 		);
 
+		//Employee level data that need connection, tenant, organization, role, users, employee
+		await this.tryExecute(
+			'Default Teams',
+			createDefaultTeams(
+				this.connection,
+				this.organizations[0],
+				this.defaultEmployees,
+				this.roles
+			)
+		);
+
 		this.defaultProjects = await this.tryExecute(
 			'Default Organization Projects',
 			createDefaultOrganizationProjects(
 				this.connection,
 				this.organizations
 			)
+		);
+
+		await this.tryExecute(
+			'Default Projects Task',
+			createDefaultTask(this.connection)
 		);
 
 		await this.tryExecute(
@@ -854,17 +874,6 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Candidate Sources',
 			createCandidateSources(this.connection, defaultCandidates)
-		);
-
-		//Employee level data that need connection, tenant, organization, role, users, employee
-		await this.tryExecute(
-			'Default Teams',
-			createDefaultTeams(
-				this.connection,
-				this.organizations[0],
-				this.defaultEmployees,
-				this.roles
-			)
 		);
 
 		await this.tryExecute(

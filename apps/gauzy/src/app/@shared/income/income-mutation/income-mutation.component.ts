@@ -10,7 +10,8 @@ import {
 	Income,
 	OrganizationSelectInput,
 	Tag,
-	OrganizationContact
+	OrganizationContact,
+	ContactType
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -21,8 +22,6 @@ import { OrganizationContactService } from '../../../@core/services/organization
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { EmployeesService } from '../../../@core/services';
-import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 
 @Component({
 	selector: 'ngx-income-mutation',
@@ -115,9 +114,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		private organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService,
-		private employeeStatisticsService: EmployeeStatisticsService,
-		private employeesService: EmployeesService
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -166,6 +163,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			);
 			return this.organizationContactService.create({
 				name,
+				contactType: ContactType.CLIENT,
 				organizationId: this.organizationId
 			});
 		} catch (error) {

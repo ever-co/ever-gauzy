@@ -18,8 +18,8 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	form: FormGroup;
 	pipeline: Pipeline;
 	clients: Contact[];
-	selectedClient: Contact
-	probabilities = [0,1,2,3,4,5];
+	selectedClient: Contact;
+	probabilities = [0, 1, 2, 3, 4, 5];
 	selectedProbability: number;
 	mode: 'CREATE' | 'EDIT' = 'CREATE';
 	id: string;
@@ -63,7 +63,7 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 		this.form.patchValue({
 			createdByUserId: this.appStore.getValue().user?.id
 		});
-		
+
 		this.activatedRoute.params.subscribe(async ({ pipelineId, dealId }) => {
 			this.form.disable();
 
@@ -95,11 +95,11 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				this._selectedOrganizationId = org.id;
-		})
+			});
 
 		this.clientsService
 			.getAll([], { organizationId: this._selectedOrganizationId })
-			.then(res => this.clients = res.items)
+			.then((res) => (this.clients = res.items));
 	}
 
 	public async onSubmit(): Promise<void> {
@@ -111,8 +111,19 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 
 		this.form.disable();
 		await (this.id
-			? this.dealsService.update(this.id, Object.assign({ organizationId: this._selectedOrganizationId }, value))
-			: this.dealsService.create(Object.assign({ organizationId: this._selectedOrganizationId }, value))
+			? this.dealsService.update(
+					this.id,
+					Object.assign(
+						{ organizationId: this._selectedOrganizationId },
+						value
+					)
+			  )
+			: this.dealsService.create(
+					Object.assign(
+						{ organizationId: this._selectedOrganizationId },
+						value
+					)
+			  )
 		)
 			.then(() =>
 				this.router.navigate([id ? '../..' : '..'], { relativeTo })

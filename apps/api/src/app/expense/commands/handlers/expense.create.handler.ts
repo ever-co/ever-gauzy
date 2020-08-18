@@ -19,7 +19,7 @@ export class ExpenseCreateHandler
 	public async execute(command: ExpenseCreateCommand): Promise<Expense> {
 		const expense = await this.createExpense(command);
 		let averageExpense = 0;
-		if (expense) {
+		if (expense && expense.employeeId) {
 			const id = expense.employeeId;
 			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
 				expense.employeeId

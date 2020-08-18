@@ -9,11 +9,12 @@ import {
 	Organization,
 	OrganizationAwards,
 	OrganizationLanguages,
-	PermissionsEnum
+	PermissionsEnum,
+	OrganizationContact
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, takeUntil, tap } from 'rxjs/operators';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
 import { OrganizationLanguagesService } from '../../@core/services/organization-languages.service';
 import { OrganizationAwardsService } from '../../@core/services/organization-awards.service';
@@ -49,7 +50,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 	total_clients = 0;
 	total_income = 0;
 	profits = 0;
-	minimum_project_size = 0;
 	total_projects = 0;
 	total_employees = 0;
 	employee_bonuses = [];
@@ -61,6 +61,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 	imageUpdateButton = false;
 	moment = moment;
 	currencies = Object.values(CURRENCY);
+	clients: OrganizationContact[];
+	tabTitle: string = 'Profile';
 
 	constructor(
 		private route: ActivatedRoute,
@@ -121,8 +123,11 @@ export class OrganizationComponent extends TranslationBaseComponent
 					this.imageUrl = this.organization.imageUrl;
 					this.reloadPageData();
 					await this.getEmployeeStatistics();
-					if (!!this.organization.show_clients_count) {
-						await this.getClientsCount();
+					if (
+						!!this.organization.show_clients_count ||
+						this.organization.show_clients
+					) {
+						await this.getClientsAndClientsCount();
 					}
 					if (!!this.organization.show_employees_count) {
 						await this.getEmployees();
@@ -160,11 +165,15 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async getClientsCount() {
-		const { total } = await this.organizationContactService.getAll(null, {
-			organizationId: this.organization.id
-		});
+	private async getClientsAndClientsCount() {
+		const { total, items } = await this.organizationContactService.getAll(
+			null,
+			{
+				organizationId: this.organization.id
+			}
+		);
 		this.total_clients = total;
+		this.clients = items;
 	}
 
 	private async getProjectCount() {
@@ -176,19 +185,11 @@ export class OrganizationComponent extends TranslationBaseComponent
 			}
 		);
 		this.total_projects = total;
-		if (total) {
-			this.minimum_project_size = items[0].members.length;
-			for (let inc = 0; inc < items.length; inc++) {
-				if (items[inc].members.length < this.minimum_project_size) {
-					this.minimum_project_size = items[inc].members.length;
-				}
-			}
-		}
 	}
 
 	private async getEmployees() {
 		const employees = await this.employeesService
-			.getAllPublic(['user'], {
+			.getAllPublic(['user', 'skills', 'organization'], {
 				organization: {
 					id: this.organization.id
 				}
@@ -242,7 +243,12 @@ export class OrganizationComponent extends TranslationBaseComponent
 					organization: this.organization
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(
+				tap(() =>
+					this._changeClientsTabIfActiveAndPrivacyIsTurnedOff()
+				),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe(async (result) => {
 				if (!!result) {
 					await this.organizationsService.update(
@@ -257,6 +263,16 @@ export class OrganizationComponent extends TranslationBaseComponent
 					);
 				}
 			});
+	}
+
+	private _changeClientsTabIfActiveAndPrivacyIsTurnedOff() {
+		if (!this.organization.show_clients && this.tabTitle === 'Clients') {
+			this.tabTitle = 'Profile';
+		}
+	}
+
+	onTabChange(e) {
+		this.tabTitle = e.tabTitle;
 	}
 
 	ngOnDestroy() {}

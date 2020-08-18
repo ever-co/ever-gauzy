@@ -19,7 +19,7 @@ export class ExpenseUpdateHandler
 		const { entity } = command;
 		const expense = await this.updateExpense(id, entity);
 		let averageExpense = 0;
-		if (expense) {
+		if (expense && expense.employeeId) {
 			id = expense.employeeId;
 
 			const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(

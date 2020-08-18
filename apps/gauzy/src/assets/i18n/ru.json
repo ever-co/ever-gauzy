@@ -405,6 +405,7 @@
 		}
 	},
 	"POP_UPS": {
+		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"ADD_INCOME": "Добавить доход",
 		"ADD_EXPENSE": "Добавить расходы",
 		"EDIT_INCOME": "Изменить доход",
@@ -478,7 +479,8 @@
 		"SHOW_ANONYMOUS_BONUS": "Показать анонимный бонус",
 		"SHOW_AVERAGE_EXPENSES": "Показать средние расходы",
 		"SHOW_BILLRATE": "Показать процент счёта",
-		"SHOW_START_WORK_ON": "Показать начатую работу на"
+		"SHOW_START_WORK_ON": "Показать начатую работу на",
+		"SHOW_CLIENTS": "Показать клиентов"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -683,7 +685,7 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Затраты",
 		"MUTATION": {
-			"CONTACT_IS_REQUIRED!": "Требуется контакт!",
+			"CONTACT_IS_REQUIRED": "Требуется контакт!",
 			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Пожалуйста, выберите контакт из выпадающего меню ниже или измените тип расходов.",
 			"ASSIGN_TO": "Назначить",
 			"INCLUDE_TAXES": "Включить налоги",

@@ -1,8 +1,22 @@
 import { Deal as IDeal } from '@gauzy/models';
 import { User } from '../user/user.entity';
-import { Column, Entity, JoinColumn, ManyToOne, RelationId, OneToOne } from 'typeorm';
+import {
+	Column,
+	Entity,
+	JoinColumn,
+	ManyToOne,
+	RelationId,
+	OneToOne
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Min, Max, IsInt, IsOptional } from 'class-validator';
+import {
+	IsNotEmpty,
+	IsString,
+	Min,
+	Max,
+	IsInt,
+	IsOptional
+} from 'class-validator';
 import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';

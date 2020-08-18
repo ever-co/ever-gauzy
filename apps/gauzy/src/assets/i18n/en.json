@@ -405,6 +405,7 @@
 		}
 	},
 	"POP_UPS": {
+		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
 		"ADD_INCOME": "Add Income",
 		"ADD_EXPENSE": "Add Expense",
 		"EDIT_INCOME": "Edit Income",
@@ -478,7 +479,8 @@
 		"SHOW_ANONYMOUS_BONUS": "Show Anonymous Bonus",
 		"SHOW_AVERAGE_EXPENSES": "Show Average Expenses",
 		"SHOW_BILLRATE": "Show Bill Rate",
-		"SHOW_START_WORK_ON": "Show Started Work On"
+		"SHOW_START_WORK_ON": "Show Started Work On",
+		"SHOW_CLIENTS": "Show Clients"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -683,7 +685,7 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Expenses",
 		"MUTATION": {
-			"CONTACT_IS_REQUIRED!": "Contact is required!",
+			"CONTACT_IS_REQUIRED": "Contact is required!",
 			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
