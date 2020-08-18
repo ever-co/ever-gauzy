@@ -1,5 +1,8 @@
 <nb-card>
-	<nb-card-header>Time Tracking</nb-card-header>
+	<nb-card-header>
+		<h4>Time Tracking</h4>
+		<div>{{ startDate | date }} - {{ endDate | date }}</div>
+	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
 			<div class="col-sm-6">
@@ -16,13 +19,24 @@
 						>
 							<div
 								class="row"
-								*ngFor="
-									let timeSlotEmployee of timeSlotEmployees
-								"
+								*ngFor="let employee of timeSlotEmployees"
 							>
 								<div class="col">
-									<div class="hour-lable mt-3">
-										<h6>{{ timeSlotEmployee?.name }}</h6>
+									<div
+										class="hour-lable mt-3"
+										*ngxPermissionsOnly="
+											PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+										"
+									>
+										<ngx-avatar
+											size="sm"
+											[name]="employee?.user?.name"
+											[src]="employee?.user?.imageUrl"
+											[caption]="
+												(employee?.timeSlots)[0]
+													?.startedAt | date
+											"
+										></ngx-avatar>
 									</div>
 									<div
 										class="row my-3 align-items-center justify-content-center"
@@ -30,7 +44,7 @@
 										<div
 											class="col"
 											*ngFor="
-												let timeSlot of timeSlotEmployee.timeSlots
+												let timeSlot of employee.timeSlots
 											"
 										>
 											<ngx-screenshots-item
@@ -187,6 +201,9 @@
 					[nbSpinner]="memberLoading"
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
+					*ngxPermissionsOnly="
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					"
 				>
 					<nb-card-header>Members</nb-card-header>
 					<ng-template

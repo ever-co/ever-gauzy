@@ -26,10 +26,6 @@ export const createRandomTimeLogs = async (
 
 	const projects = await query.getMany();
 
-	let timeSlots: TimeSlot[] = [];
-	const timelogs: TimeLog[] = [];
-	let screenshots: Screenshot[] = [];
-	const screenshotsPromise: Promise<Screenshot[]>[] = [];
 
 	for (
 		let timeSheetIndex = 0;
@@ -43,6 +39,11 @@ export const createRandomTimeLogs = async (
 			.take(faker.random.number({ min: 3, max: 5 }))
 			.values()
 			.value();
+
+		let timeSlots: TimeSlot[] = [];
+		const timelogs: TimeLog[] = [];
+		let screenshots: Screenshot[] = [];
+		const screenshotsPromise: Promise<Screenshot[]>[] = [];
 
 		for (let index = 0; index <= randomDays.length; index++) {
 			const day = randomDays[index];
@@ -104,11 +105,11 @@ export const createRandomTimeLogs = async (
 			}
 		}
 
-		let savedtimeSlot = await connection.manager.save(timeSlots);
+		const savedtimeSlot = await connection.manager.save(timeSlots);
 
 		for (const timelog of timelogs) {
 			if (timelog.logType === TimeLogType.TRACKED) {
-				let timeSlots = savedtimeSlot.filter(
+				const timeSlots = savedtimeSlot.filter(
 					(x) => x.employeeId === timelog.employeeId
 				);
 				for (const timeSlot of timeSlots) {
@@ -121,6 +122,11 @@ export const createRandomTimeLogs = async (
 			}
 		}
 
+		try {
+			await connection.manager.save(timeSlots);
+		} catch (error) {
+			console.log('timeSlots', error);
+		}
 		await Promise.all(screenshotsPromise)
 			.then((data) => {
 				data.forEach((row) => {
@@ -132,9 +138,16 @@ export const createRandomTimeLogs = async (
 			});
 
 		try {
-			await connection.manager.save(timelogs);
 			await connection.manager.save(screenshots);
-		} catch (error) {}
+		} catch (error) {
+			console.log('screenshots', error);
+		}
+
+		try {
+			await connection.manager.save(timelogs);
+		} catch (error) {
+			console.log('timelogs', error);
+		}
 	}
 };
 

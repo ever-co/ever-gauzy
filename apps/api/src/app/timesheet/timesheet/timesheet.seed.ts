@@ -1,12 +1,16 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { TimesheetStatus, OrganizationProjects } from '@gauzy/models';
+import {
+	TimesheetStatus,
+	OrganizationProjects,
+} from '@gauzy/models';
 import { Timesheet } from '../timesheet.entity';
 import { Employee } from '../../employee/employee.entity';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
+import chalk from 'chalk';
 
 export const createDefaultTimeSheet = async (
 	connection: Connection,
@@ -72,14 +76,24 @@ export const createDefaultTimeSheet = async (
 
 	const createdTimesheets = await connection.getRepository(Timesheet).find();
 
-	await createRandomTimeLogs(
-		connection,
-		createdTimesheets,
-		defaultProjects,
-		noOfTimeLogsPerTimeSheet
-	);
+	try {
+		console.log(chalk.green(`SEEDING Default TimeLogs`));
+		await createRandomTimeLogs(
+			connection,
+			createdTimesheets,
+			defaultProjects,
+			noOfTimeLogsPerTimeSheet
+		);
+	} catch (error) {
+		console.log(chalk.red(`SEEDING Default TimeLogs`, error));
+	}
 
-	await createRandomActivities(connection);
+	try {
+		console.log(chalk.green(`SEEDING Default Activities`));
+		await createRandomActivities(connection);
+	} catch (error) {
+		console.log(chalk.red(`SEEDING Default Activities`, error));
+	}
 
 	return createdTimesheets;
 };
@@ -159,6 +173,7 @@ export const createRandomTimesheet = async (
 
 	const createdTimesheets = await connection.getRepository(Timesheet).find();
 
+	console.log(chalk.green(`SEEDING Random TimeLogs`));
 	await createRandomTimeLogs(
 		connection,
 		createdTimesheets,
@@ -166,6 +181,7 @@ export const createRandomTimesheet = async (
 		noOfTimeLogsPerTimeSheet
 	);
 
+	console.log(chalk.green(`SEEDING Random Activities`));
 	await createRandomActivities(connection);
 
 	return createdTimesheets;

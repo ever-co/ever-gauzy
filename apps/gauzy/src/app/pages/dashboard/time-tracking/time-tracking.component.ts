@@ -8,12 +8,14 @@ import {
 	GetActivitiesStatistics,
 	GetProjectsStatistics,
 	GetTasksStatistics,
-	GetMembersStatistics
+	GetMembersStatistics,
+	PermissionsEnum
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import * as _ from 'underscore';
 import { prgressStatus } from 'libs/utils';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ga-time-tracking',
@@ -34,12 +36,18 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	tasksLoading = true;
 	memberLoading = true;
 
+	PermissionsEnum = PermissionsEnum;
 	prgressStatus = prgressStatus;
+	startDate: Date;
+	endDate: Date;
 
 	constructor(
 		private timesheetStatisticsService: TimesheetStatisticsService,
 		private store: Store
-	) {}
+	) {
+		this.startDate = moment().startOf('week').toDate();
+		this.endDate = moment().endOf('week').toDate();
+	}
 
 	ngOnInit() {
 		this.updateLogs$
