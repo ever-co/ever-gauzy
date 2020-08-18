@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Country, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 	styleUrls: ['./edit-organization-location.component.scss']
 })
 export class EditOrganizationLocationComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	selectedOrganization: Organization;
@@ -109,5 +109,10 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 	private async loadCountries() {
 		const { items } = await this.countryService.getAll();
 		this.countries = items;
+	}
+
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

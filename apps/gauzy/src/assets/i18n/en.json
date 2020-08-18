@@ -1106,6 +1106,7 @@
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"CONTACTS": "Contacts",
+		"LEVEL": "Level",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "Client",
@@ -2286,6 +2287,8 @@
 			"timesheet-submit": "Time Sheet Submit",
 			"timesheet-action": "Time Sheet Actions",
 			"timesheet-delete": "Time Sheet Delete",
+      "time-off-report-action": "Time off policy action",
+      "task-update": "Task Update",
 			"candidate-schedule-interview": "Candidate Interview Schedule",
 			"interviewer-interview-schedule": "Interviewer Schedule"
 		},

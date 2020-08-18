@@ -77,13 +77,6 @@ export const createRandomTimeLogs = async (
 				const newTimeSlot = createTimeSlots(startedAt, stoppedAt).map(
 					(timeSlot) => {
 						timeSlot.employeeId = timesheet.employeeId;
-						if (logType === TimeLogType.TRACKED) {
-							for (let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
-								screenshotsPromise.push(
-									createRandomScreenshot(timeSlot)
-								);
-							}
-						}
 						return timeSlot;
 					}
 				);
@@ -111,7 +104,22 @@ export const createRandomTimeLogs = async (
 			}
 		}
 
-		await connection.manager.save(timeSlots);
+		let savedtimeSlot = await connection.manager.save(timeSlots);
+
+		for (const timelog of timelogs) {
+			if (timelog.logType === TimeLogType.TRACKED) {
+				let timeSlots = savedtimeSlot.filter(
+					(x) => x.employeeId === timelog.employeeId
+				);
+				for (const timeSlot of timeSlots) {
+					for (let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
+						screenshotsPromise.push(
+							createRandomScreenshot(timeSlot)
+						);
+					}
+				}
+			}
+		}
 
 		await Promise.all(screenshotsPromise)
 			.then((data) => {
