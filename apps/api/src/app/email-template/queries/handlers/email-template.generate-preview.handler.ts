@@ -3,6 +3,7 @@ import * as Handlebars from 'handlebars';
 import * as mjml2html from 'mjml';
 import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
+import { moment } from '../../../core/moment';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
 export class EmailTemplateGeneratePreviewHandler
@@ -54,6 +55,21 @@ export class EmailTemplateGeneratePreviewHandler
       currency: 'BGN',
       max_share_period: '5',
       autoApproveShare: false,
+      time_off_policy_requires_approval: 'APPROVE/REJECT',
+      time_off_policy_paid_status: true,
+      task_update_status: 'Update/Assign',
+      task_update_title: 'Bug: Consistency in "Time Off" feature',
+      task_update_description: '"Time off" should be called "Time Off" everywhere. \n' +
+        'Fix "Request Days Off" and change it to just "Request". \n' +
+        'Also, check all popups, etc. that it is called "Time Off" (not "Day off" or anything else) everywhere.\n' +
+        '\n' +
+        '![Artboard](https://user-images.githubusercontent.com/6750734/88939490-33939180-d2a4-11ea-8d13-3efed87a7846.png)\n',
+      task_update_estimate: 'estimate',
+      task_update_due_date: moment(new Date()).add(10, 'days').toDate(),
+      task_status: 'In Progress',
+      task_update_project: 'Gauzy Project',
+      task_update_assign_by: 'Ruslan Konviser',
+      task_update_url: 'https://github.com/ever-co/gauzy/issues/1688',
 		});
 		return { html };
 	}
