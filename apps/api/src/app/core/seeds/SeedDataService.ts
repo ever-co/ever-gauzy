@@ -163,7 +163,7 @@ import {
 	createDefaultTimeSheet,
 	createRandomTimesheet
 } from '../../timesheet/timesheet/timesheet.seed';
-import { createRandomTask } from '../../tasks/task.seed';
+import { createDefaultTask, createRandomTask } from '../../tasks/task.seed';
 import {
 	createDefaultOrganizationProjects,
 	createRandomOrganizationProjects
@@ -793,11 +793,29 @@ export class SeedDataService {
 			createDefaultOrganizationContact(this.connection)
 		);
 
+    //Employee level data that need connection, tenant, organization, role, users, employee
+    await this.tryExecute(
+      'Default Teams',
+      createDefaultTeams(
+        this.connection,
+        this.organizations[0],
+        this.defaultEmployees,
+        this.roles
+      )
+    );
+
 		this.defaultProjects = await this.tryExecute(
 			'Default Organization Projects',
 			createDefaultOrganizationProjects(
 				this.connection,
 				this.organizations
+			)
+		);
+
+		await this.tryExecute(
+			'Default Projects Task',
+      createDefaultTask(
+				this.connection
 			)
 		);
 
@@ -858,17 +876,6 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Candidate Sources',
 			createCandidateSources(this.connection, defaultCandidates)
-		);
-
-		//Employee level data that need connection, tenant, organization, role, users, employee
-		await this.tryExecute(
-			'Default Teams',
-			createDefaultTeams(
-				this.connection,
-				this.organizations[0],
-				this.defaultEmployees,
-				this.roles
-			)
 		);
 
 		await this.tryExecute(
