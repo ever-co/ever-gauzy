@@ -17,6 +17,8 @@ export enum EmailTemplateNameEnum {
 	PASSWORD_RESET = 'password',
 	APPOINTMENT_CONFIRMATION = 'appointment-confirmation',
 	APPOINTMENT_CANCELLATION = 'appointment-cancellation',
+	TIME_OFF_POLICY_ACTION = 'time-off-report-action',
+	TASK_UPDATE = 'task-update',
   equipment = 'equipment',
   equipment_request = 'equipment-request',
 	TIME_SHEET_OVERVIEW = 'timesheet-overview',
