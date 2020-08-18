@@ -191,7 +191,6 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 						if (this.smartTable) {
 							this.smartTable.grid.dataSet.willSelect = 'false';
 						}
-						this.generateTimeFrames();
 					}
 				});
 		}
@@ -251,39 +250,6 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					}
 				}
 			};
-		}
-	}
-
-	generateTimeFrames() {
-		const today = new Date();
-		let date = today;
-		let year = getYear(today);
-		this.predefinedTimeFrames = [];
-		// Add Quarters
-		if (getQuarter(date) > 2) {
-			year = getYear(addDays(lastDayOfYear(today), 1));
-		}
-		while (getYear(date) <= year) {
-			const timeFrameName = `Q${getQuarter(date)}-${getYear(date)}`;
-			this.predefinedTimeFrames.push({
-				name: timeFrameName,
-				start: new Date(startOfQuarter(date)),
-				end: new Date(endOfQuarter(date))
-			});
-			date = addDays(lastDayOfQuarter(date), 1);
-		}
-		// Annual Time Frames
-		this.predefinedTimeFrames.push({
-			name: `Annual-${getYear(today)}`,
-			start: new Date(startOfYear(today)),
-			end: new Date(endOfYear(today))
-		});
-		if (year > getYear(today)) {
-			this.predefinedTimeFrames.push({
-				name: `Annual-${year}`,
-				start: new Date(startOfYear(addDays(lastDayOfYear(today), 1))),
-				end: new Date(endOfYear(addDays(lastDayOfYear(today), 1)))
-			});
 		}
 	}
 
