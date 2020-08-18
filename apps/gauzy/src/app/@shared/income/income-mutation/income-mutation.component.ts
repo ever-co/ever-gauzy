@@ -40,39 +40,12 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	notes: AbstractControl;
 
 	organizationId: string;
-
+	client: OrganizationContact;
 	clients: Object[] = [];
 	tags: Tag[] = [];
 
 	averageIncome = 0;
 	averageBonus = 0;
-
-	fakeClients = [
-		{
-			clientName: 'CUEAudio',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Urwex',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Nabo',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Gauzy',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Everbie',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Random Client',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		}
-	];
 
 	get valueDate() {
 		return this.form.get('valueDate').value;
@@ -131,11 +104,12 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			organizationId: this.store.selectedOrganization.id
 		});
 		items.forEach((i) => {
-			this.clients = [
-				...this.clients,
-				{ clientName: i.name, clientId: i.id }
-			];
+			this.clients = [...this.clients, { name: i.name, clientId: i.id }];
 		});
+	}
+
+	selectOrganizationContact($event) {
+		this.client = $event;
 	}
 
 	async addOrEditIncome() {

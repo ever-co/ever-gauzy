@@ -64,11 +64,24 @@
 						<ng-select
 							[addTag]="addNewClient"
 							[items]="clients"
-							bindLabel="clientName"
+							bindLabel="name"
 							[searchable]="true"
 							formControlName="client"
+							(change)="selectOrganizationContact($event)"
 							placeholder="{{ 'POP_UPS.CONTACT' | translate }}"
 						>
+							<ng-template
+								ng-option-tmp
+								let-item="item"
+								let-index="index"
+							>
+								{{ item.name }}
+							</ng-template>
+							<ng-template ng-label-tmp let-item="item">
+								<div class="selector-template">
+									<span>{{ item.name }}</span>
+								</div>
+							</ng-template>
 						</ng-select>
 					</div>
 				</div>

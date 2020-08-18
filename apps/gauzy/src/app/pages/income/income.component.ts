@@ -225,7 +225,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					try {
 						await this.incomeService.create({
 							amount: result.amount,
-							clientName: result.client.clientName,
+							clientName: result.client.name,
 							clientId: result.client.clientId,
 							valueDate: result.valueDate,
 							employeeId: result.employee
