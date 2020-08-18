@@ -2286,6 +2286,8 @@
 			"timesheet-submit": "Time Sheet Submit",
 			"timesheet-action": "Time Sheet Actions",
 			"timesheet-delete": "Time Sheet Delete",
+			"time-off-report-action": "Time off policy action",
+			"task-update": "Task Update",
 			"candidate-schedule-interview": "Candidate Interview Schedule",
 			"interviewer-interview-schedule": "Interviewer Schedule"
 		},
