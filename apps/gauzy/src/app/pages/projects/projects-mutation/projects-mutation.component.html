@@ -157,6 +157,24 @@
 				</nb-select>
 			</div>
 			<div class="form-group col-4">
+				<label for="color" class="label">{{
+					'FORM.PLACEHOLDERS.COLOR' | translate
+				}}</label>
+
+				<input
+					type="text"
+					nbInput
+					fullWidth
+					formControlName="color"
+					placeholder="{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}"
+					id="color"
+					[colorPicker]="form.get('color').value"
+					[style.background]="form.get('color').value"
+					[value]="form.get('color').value"
+					(colorPickerChange)="form.get('color').setValue($event)"
+				/>
+			</div>
+			<div class="form-group col-4">
 				<label for="code" class="label">{{
 					'FORM.PLACEHOLDERS.CODE' | translate
 				}}</label>
@@ -168,20 +186,6 @@
 					formControlName="code"
 					placeholder="{{ 'FORM.PLACEHOLDERS.CODE' | translate }}"
 					id="code"
-				/>
-			</div>
-			<div class="form-group col-4">
-				<label for="color" class="label">{{
-					'FORM.PLACEHOLDERS.COLOR' | translate
-				}}</label>
-				<input
-					type="text"
-					#color
-					nbInput
-					fullWidth
-					formControlName="color"
-					placeholder="{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}"
-					id="color"
 				/>
 			</div>
 			<div class="col-sm-12 mb-3">

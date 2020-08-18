@@ -182,55 +182,6 @@
 					<div class="col-6">
 						<div class="form-group">
 							<label class="label">
-								{{
-									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
-										| translate
-								}}
-							</label>
-							<input
-								fullWidth
-								id="brandColorInput"
-								nbInput
-								placeholder="{{
-									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
-										| translate
-								}}"
-								[value]="form.get('currencyPosition').value"
-							/>
-						</div>
-					</div>
-					<div class="col-6">
-						<div class="form-group">
-							<label class="label">
-								{{
-									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
-										| translate
-								}}
-							</label>
-							<nb-select
-								class="d-block"
-								size="medium"
-								formControlName="currencyPosition"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
-										| translate
-								}}"
-								fullWidth
-							>
-								<nb-option
-									*ngFor="let pos of defaultCurrencyPosition"
-									[value]="pos.toUpperCase()"
-								>
-									{{ pos }}
-								</nb-option>
-							</nb-select>
-						</div>
-					</div>
-				</div>
-				<div class="row" id="temporary">
-					<div class="col-6">
-						<div class="form-group">
-							<label class="label">
 								{{ 'FORM.LABELS.BRAND_COLOR' | translate }}
 							</label>
 							<input
@@ -272,6 +223,35 @@
 									[value]="type.toUpperCase()"
 								>
 									{{ type }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+				<div class="row" id="temporary">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{
+									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
+										| translate
+								}}
+							</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="currencyPosition"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
+										| translate
+								}}"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let pos of defaultCurrencyPosition"
+									[value]="pos.toUpperCase()"
+								>
+									{{ pos }}
 								</nb-option>
 							</nb-select>
 						</div>
