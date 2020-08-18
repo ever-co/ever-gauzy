@@ -2286,8 +2286,8 @@
 			"timesheet-submit": "Сроки представления",
 			"timesheet-action": "Действия по расписанию",
 			"timesheet-delete": "Удалить лист времени",
-			"time-off-report-action": "Действия по ограничению времени",
-			"task-update": "Обновление задачи",
+      "time-off-report-action": "Действия политики в свободное от работы время",
+      "task-update": "Обновление задачи",
 			"candidate-schedule-interview": "Расписание интервью Кандидата",
 			"interviewer-interview-schedule": "Расписание интервьюера"
 		},
