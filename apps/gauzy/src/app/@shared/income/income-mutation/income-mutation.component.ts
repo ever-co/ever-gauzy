@@ -40,39 +40,12 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	notes: AbstractControl;
 
 	organizationId: string;
-
-	clients: Object[] = [];
+	organizationContact: OrganizationContact;
+	organizationContacts: Object[] = [];
 	tags: Tag[] = [];
 
 	averageIncome = 0;
 	averageBonus = 0;
-
-	fakeClients = [
-		{
-			clientName: 'CUEAudio',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Urwex',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Nabo',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Gauzy',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Everbie',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			clientName: 'Random Client',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		}
-	];
 
 	get valueDate() {
 		return this.form.get('valueDate').value;
@@ -95,11 +68,11 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	}
 
 	get clientName() {
-		return this.form.get('client').value.clientName;
+		return this.form.get('organizationContact').value.clientName;
 	}
 
 	get clientId() {
-		return this.form.get('client').value.clientId;
+		return this.form.get('organizationContact').value.clientId;
 	}
 
 	get isBonus() {
@@ -122,20 +95,24 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this._initializeForm();
 		this.form.get('currency').disable();
-		this._getClients();
+		this._getOrganizationContacts();
 	}
 
-	private async _getClients() {
+	private async _getOrganizationContacts() {
 		this.organizationId = this.store.selectedOrganization.id;
 		const { items } = await this.organizationContactService.getAll([], {
 			organizationId: this.store.selectedOrganization.id
 		});
 		items.forEach((i) => {
-			this.clients = [
-				...this.clients,
-				{ clientName: i.name, clientId: i.id }
+			this.organizationContacts = [
+				...this.organizationContacts,
+				{ name: i.name, clientId: i.id }
 			];
 		});
+	}
+
+	selectOrganizationContact($event) {
+		this.organizationContact = $event;
 	}
 
 	async addOrEditIncome() {
@@ -150,11 +127,13 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			);
 		}
 	}
-	addNewClient = (name: string): Promise<OrganizationContact> => {
+	addNewOrganizationContact = (
+		name: string
+	): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
 					{
 						name: name
 					}
@@ -183,11 +162,8 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 					Validators.required
 				],
 				amount: [this.income.amount, Validators.required],
-				client: [
-					{
-						clientId: this.income.clientId,
-						clientName: this.income.clientName
-					},
+				organizationContact: [
+					this.income.clientName,
 					Validators.required
 				],
 				notes: this.income.notes,
@@ -202,7 +178,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 					Validators.required
 				],
 				amount: ['', Validators.required],
-				client: [null, Validators.required],
+				organizationContact: [null, Validators.required],
 				notes: '',
 				currency: '',
 				isBonus: false,

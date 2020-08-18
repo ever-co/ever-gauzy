@@ -194,14 +194,27 @@
 								[isOpen]="showWarning ? true : null"
 								[addTag]="addNewOrganizationContact"
 								[items]="organizationContacts"
-								bindLabel="organizationContactName"
+								bindLabel="name"
 								[searchable]="true"
 								autocomplete="on"
 								formControlName="organizationContact"
+								(change)="selectOrganizationContact($event)"
 								placeholder="{{
 									'CONTEXT_MENU.CONTACT' | translate
 								}}"
 							>
+								<ng-template
+									ng-option-tmp
+									let-item="item"
+									let-index="index"
+								>
+									{{ item.name }}
+								</ng-template>
+								<ng-template ng-label-tmp let-item="item">
+									<div class="selector-template">
+										<span>{{ item.name }}</span>
+									</div>
+								</ng-template>
 							</ng-select>
 						</div>
 					</div>
@@ -210,14 +223,27 @@
 							<ng-select
 								[items]="projects"
 								[addTag]="addNewProject"
-								bindLabel="projectName"
+								bindLabel="name"
 								[searchable]="true"
 								autocomplete="on"
 								formControlName="project"
+								(change)="selectProject($event)"
 								placeholder="{{
 									'CONTEXT_MENU.PROJECT' | translate
 								}}"
 							>
+								<ng-template
+									ng-option-tmp
+									let-item="item"
+									let-index="index"
+								>
+									{{ item.name }}
+								</ng-template>
+								<ng-template ng-label-tmp let-item="item">
+									<div class="selector-template">
+										<span>{{ item.name }}</span>
+									</div>
+								</ng-template>
 							</ng-select>
 						</div>
 					</div>

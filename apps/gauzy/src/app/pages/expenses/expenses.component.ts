@@ -265,10 +265,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 			typeOfExpense: formData.typeOfExpense,
 			organizationContactId:
 				formData.organizationContact.organizationContactId,
-			organizationContactName:
-				formData.organizationContact.organizationContactName,
+			organizationContactName: formData.organizationContact.name,
 			projectId: formData.project.projectId,
-			projectName: formData.project.projectName,
+			projectName: formData.project.name,
 			valueDate: formData.valueDate,
 			notes: formData.notes,
 			currency: formData.currency,

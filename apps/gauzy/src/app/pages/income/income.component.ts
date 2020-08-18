@@ -183,7 +183,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					filter: false
 				},
 				clientName: {
-					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
+					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
 					type: 'string'
 				},
 				amount: {
@@ -225,8 +225,8 @@ export class IncomeComponent extends TranslationBaseComponent
 					try {
 						await this.incomeService.create({
 							amount: result.amount,
-							clientName: result.client.clientName,
-							clientId: result.client.clientId,
+							clientName: result.organizationContact.name,
+							clientId: result.organizationContact.clientId,
 							valueDate: result.valueDate,
 							employeeId: result.employee
 								? result.employee.id
@@ -294,8 +294,9 @@ export class IncomeComponent extends TranslationBaseComponent
 							this.selectedIncome.id,
 							{
 								amount: result.amount,
-								clientName: result.client.clientName,
-								clientId: result.client.clientId,
+								clientName:
+									result.organizationContact.clientName,
+								clientId: result.organizationContact.clientId,
 								valueDate: result.valueDate,
 								notes: result.notes,
 								currency: result.currency,
