@@ -62,11 +62,11 @@
 							'POP_UPS.CONTACT' | translate
 						}}</label>
 						<ng-select
-							[addTag]="addNewClient"
-							[items]="clients"
+							[addTag]="addNewOrganizationContact"
+							[items]="organizationContacts"
 							bindLabel="name"
 							[searchable]="true"
-							formControlName="client"
+							formControlName="organizationContact"
 							(change)="selectOrganizationContact($event)"
 							placeholder="{{ 'POP_UPS.CONTACT' | translate }}"
 						>
