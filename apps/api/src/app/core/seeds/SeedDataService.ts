@@ -372,6 +372,8 @@ import {
 } from '../../product-type/type.seed';
 import { createDefaultGoalTemplates } from '../../goal-template/goal-template.seed';
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
+import { GoalTemplate } from '../../goal-template/goal-template.entity';
+import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -382,6 +384,8 @@ const allEntities = [
 	EmployeeRecurringExpense,
 	OrganizationRecurringExpense,
 	ExpenseCategory,
+  GoalTemplate,
+  KeyResultTemplate,
 	GoalGeneralSetting,
 	GoalKPI,
 	GoalTimeFrame,

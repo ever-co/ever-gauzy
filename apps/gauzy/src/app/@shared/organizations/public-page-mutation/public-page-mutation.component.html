@@ -106,15 +106,14 @@
 								<label for="Banner">{{
 									'POP_UPS.BANNER' | translate
 								}}</label>
-                <nb-icon
-                  class="info-btn"
-                  status="info"
-                  nbTooltip="{{
-													'POP_UPS.BANNER'
-														| translate
-												}}"
-                  icon="info-outline"
-                ></nb-icon>
+								<nb-icon
+									class="info-btn"
+									status="info"
+									nbTooltip="{{
+										'POP_UPS.BANNER' | translate
+									}}"
+									icon="info-outline"
+								></nb-icon>
 								<input
 									id="Banner"
 									nbInput
@@ -138,6 +137,40 @@
 							</div>
 						</div>
 					</div>
+
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label for="minimumProjectSize" class="label"
+									>{{
+										'POP_UPS.MINIMUM_PROJECT_SIZE'
+											| translate
+									}}
+									{{ organization.currency }}</label
+								>
+								<nb-select
+									class="d-block"
+									fullWidth
+									placeholder="{{
+										'POP_UPS.MINIMUM_PROJECT_SIZE'
+											| translate
+									}}"
+									formControlName="minimumProjectSize"
+									id="minimumProjectSize"
+								>
+									<nb-option
+										*ngFor="
+											let minimumProjectSize of minimumProjectSizes
+										"
+										value="{{ minimumProjectSize }}"
+										>{{ organization.currency }}
+										{{ minimumProjectSize }}</nb-option
+									>
+								</nb-select>
+							</div>
+						</div>
+					</div>
+
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
@@ -169,8 +202,8 @@
 												width="20px"
 												height="20px"
 												text="{{ item }}"
-											></nb-badge
-										></span>
+											></nb-badge>
+										</span>
 										<span
 											class="ng-value-icon right"
 											(click)="clear(item)"
@@ -641,6 +674,22 @@
 								</nb-toggle>
 							</div>
 						</div>
+
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<label class="check" for="show_clients">{{
+									'POP_UPS.SHOW_CLIENTS' | translate
+								}}</label>
+								<nb-toggle
+									class="nb_toggle"
+									id="show_clients"
+									[(checked)]="organization.show_clients"
+									(change)="changeShowAction('show_clients')"
+								>
+								</nb-toggle>
+							</div>
+						</div>
+
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
 								<label class="check" for="showEmployeesCount">{{
