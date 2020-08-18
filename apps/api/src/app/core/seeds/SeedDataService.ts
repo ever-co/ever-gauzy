@@ -384,8 +384,8 @@ const allEntities = [
 	EmployeeRecurringExpense,
 	OrganizationRecurringExpense,
 	ExpenseCategory,
-  GoalTemplate,
-  KeyResultTemplate,
+	GoalTemplate,
+	KeyResultTemplate,
 	GoalGeneralSetting,
 	GoalKPI,
 	GoalTimeFrame,
@@ -793,16 +793,16 @@ export class SeedDataService {
 			createDefaultOrganizationContact(this.connection)
 		);
 
-    //Employee level data that need connection, tenant, organization, role, users, employee
-    await this.tryExecute(
-      'Default Teams',
-      createDefaultTeams(
-        this.connection,
-        this.organizations[0],
-        this.defaultEmployees,
-        this.roles
-      )
-    );
+		//Employee level data that need connection, tenant, organization, role, users, employee
+		await this.tryExecute(
+			'Default Teams',
+			createDefaultTeams(
+				this.connection,
+				this.organizations[0],
+				this.defaultEmployees,
+				this.roles
+			)
+		);
 
 		this.defaultProjects = await this.tryExecute(
 			'Default Organization Projects',
@@ -814,9 +814,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Projects Task',
-      createDefaultTask(
-				this.connection
-			)
+			createDefaultTask(this.connection)
 		);
 
 		await this.tryExecute(

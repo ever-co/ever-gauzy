@@ -1,13 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Organization, PermissionsEnum } from '@gauzy/models';
 import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, takeUntil, switchMap, tap } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { OrganizationEditStore } from '../../../@core/services/organization-edit-store.service';
 
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -25,43 +26,37 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 
 	constructor(
 		private route: ActivatedRoute,
-		private router: Router,
 		private organizationsService: OrganizationsService,
 		private employeesService: EmployeesService,
 		private store: Store,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private organizationEditStore: OrganizationEditStore
 	) {
 		super(translateService);
 	}
 
 	async ngOnInit() {
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
-
-				this.selectedOrg = await this.organizationsService
-					.getById(id)
-					.pipe(first())
-					.toPromise();
-
-				this.selectedOrgFromHeader = this.selectedOrg;
-				this.loadEmployeesCount();
-				this.store.selectedEmployee = null;
-
-				this.store.selectedOrganization = this.selectedOrg;
-
-				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((org) => {
-						this.selectedOrgFromHeader = org;
-						if (org && org.id) {
-							this.router.navigate([
-								'/pages/organizations/edit/' + org.id
-							]);
-						}
-					});
-			});
+			.pipe(
+				switchMap((params) =>
+					this.organizationsService.getById(params.id, null, ['tags'])
+				),
+				tap((selectedOrg) => {
+					this.selectedOrg = selectedOrg;
+					this.store.selectedOrganization = this.selectedOrg;
+					this.selectedOrgFromHeader = this.selectedOrg;
+					this.loadEmployeesCount();
+					this.store.selectedEmployee = null;
+				}),
+				switchMap(() => this.store.selectedOrganization$),
+				tap((selectedOrg) => {
+					this.selectedOrgFromHeader = selectedOrg;
+					this.selectedOrg = selectedOrg;
+					this.organizationEditStore.selectedOrganization = selectedOrg;
+				}),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe();
 	}
 
 	canEditPublicPage() {
