@@ -5,8 +5,10 @@
 	<div [ngClass]="{ row: enableHelperText }">
 		<div
 			[ngClass]="{ 'col-md-7': enableHelperText }"
-			(mouseenter)="helperText = 'objective-level'"
-			(mouseleave)="helperText = ''"
+			(mouseenter)="
+				enableHelperText ? (helperText = 'objective-level') : null
+			"
+			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
 			<label for="objective-level" class="label mt-3">
 				{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
@@ -56,8 +58,10 @@
 		<div
 			*ngIf="alignedGoal ? !!parentFormGroup.value.level : true"
 			[ngClass]="{ 'col-md-7': enableHelperText }"
-			(mouseenter)="helperText = 'objective-owner'"
-			(mouseleave)="helperText = ''"
+			(mouseenter)="
+				enableHelperText ? (helperText = 'objective-owner') : null
+			"
+			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
 			<label for="objective-owner" class="label mt-3">
 				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
@@ -91,8 +95,10 @@
 			*ngIf="parentFormGroup.value.level === goalLevelEnum.TEAM"
 			(selectedChange)="selectEmployee($event, 'owner')"
 			[ngClass]="{ 'col-md-7': enableHelperText }"
-			(mouseenter)="helperText = 'objective-owner'"
-			(mouseleave)="helperText = ''"
+			(mouseenter)="
+				enableHelperText ? (helperText = 'objective-owner') : null
+			"
+			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
 			<nb-select
 				fullWidth
@@ -110,8 +116,10 @@
 		<div
 			*ngIf="parentFormGroup.value.level === goalLevelEnum.ORGANIZATION"
 			[ngClass]="{ 'col-md-7': enableHelperText }"
-			(mouseenter)="helperText = 'objective-owner'"
-			(mouseleave)="helperText = ''"
+			(mouseenter)="
+				enableHelperText ? (helperText = 'objective-owner') : null
+			"
+			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
 			<nb-select
 				fullWidth
@@ -129,8 +137,10 @@
 	<div *ngIf="!alignedGoal" [ngClass]="{ row: enableHelperText }">
 		<div
 			[ngClass]="{ 'col-md-7': enableHelperText }"
-			(mouseenter)="helperText = 'objective-lead'"
-			(mouseleave)="helperText = ''"
+			(mouseenter)="
+				enableHelperText ? (helperText = 'objective-lead') : null
+			"
+			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
 			<label for="objective-lead" class="label mt-3">
 				{{ 'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate }}
