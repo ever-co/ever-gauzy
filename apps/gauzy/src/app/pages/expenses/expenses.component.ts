@@ -302,9 +302,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 				this.selectedEmployeeId,
 				this.selectedEmployeeId ? null : this._selectedOrganizationId
 			);
-			this.store.selectedEmployee = formData.employee
-				? formData.employee
-				: null;
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}

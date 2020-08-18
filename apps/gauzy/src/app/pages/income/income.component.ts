@@ -251,9 +251,6 @@ export class IncomeComponent extends TranslationBaseComponent
 								? null
 								: this._selectedOrganizationId
 						);
-						this.store.selectedEmployee = result.employee
-							? result.employee
-							: null;
 					} catch (error) {
 						this.toastrService.danger(
 							this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
