@@ -179,5 +179,5 @@ export class OrganizationProjects extends TenantBase
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
-	billingFlat: boolean;
+	billingFlat?: boolean;
 }
