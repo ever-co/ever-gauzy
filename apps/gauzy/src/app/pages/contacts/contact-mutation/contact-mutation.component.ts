@@ -150,6 +150,20 @@ export class ContactMutationComponent extends TranslationBaseComponent
 						: ''
 					: ''
 			],
+			address2: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.address2
+						: ''
+					: ''
+			],
+			postcode: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.postcode
+						: ''
+					: ''
+			],
 			projects: [
 				this.organizationContact
 					? (this.organizationContact.projects || []).map(
@@ -162,6 +176,27 @@ export class ContactMutationComponent extends TranslationBaseComponent
 					? this.organizationContact.contactType
 					: '',
 				Validators.required
+			],
+			fax: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.fax
+						: ''
+					: ''
+			],
+			website: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.website
+						: ''
+					: ''
+			],
+			fiscalInformation: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.fiscalInformation
+						: ''
+					: ''
 			]
 		});
 	}
@@ -220,6 +255,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				country: this.form.value['country'],
 				city: this.form.value['city'],
 				address: this.form.value['address'],
+				address2: this.form.value['address2'],
+				postcode: this.form.value['postcode'],
 				projects: this.form.value['projects']
 					? this.form.value['projects']
 					: '',
@@ -227,7 +264,10 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				imageUrl: imgUrl,
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
-					.filter((e) => !!e)
+					.filter((e) => !!e),
+				fax: this.form.value['fax'],
+				fiscalInformation: this.form.value['fiscalInformation'],
+				website: this.form.value['website']
 			});
 
 			this.selectedEmployeeIds = [];
@@ -239,8 +279,14 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				country: '',
 				city: '',
 				address: '',
+				address2: '',
+				postcode: '',
 				contactType: '',
-				projects: []
+				imgUrl: '',
+				projects: [],
+				fax: '',
+				fiscalInformation: '',
+				website: ''
 			});
 		}
 	}

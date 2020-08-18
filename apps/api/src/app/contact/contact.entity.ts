@@ -60,4 +60,21 @@ export class Contact extends Base implements IContact {
 	@Column({ nullable: true })
 	regionCode?: string;
 
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	fax?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	fiscalInformation?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	website?: string;
 }

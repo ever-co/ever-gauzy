@@ -30,6 +30,11 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	organizationSprints?: OrganizationSprint[];
 	taskListType: string;
 	payments?: Payment[];
+	code?: string;
+	description?: string;
+	color?: string;
+	billable?: boolean;
+	billingFlat?: boolean;
 }
 
 export enum TaskListTypeEnum {
@@ -45,6 +50,8 @@ export interface OrganizationProjectsFindInput extends IBaseEntityModel {
 	members?: Employee[];
 	public?: boolean;
 	tags?: Tag[];
+	billable?: boolean;
+	billingFlat?: boolean;
 }
 
 export interface OrganizationProjectsCreateInput {
@@ -60,4 +67,9 @@ export interface OrganizationProjectsCreateInput {
 	public?: boolean;
 	tags?: Tag[];
 	owner?: ProjectOwnerEnum;
+	code?: string;
+	description?: string;
+	color?: string;
+	billable?: boolean;
+	billingFlat?: boolean;
 }

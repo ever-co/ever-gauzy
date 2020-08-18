@@ -223,7 +223,12 @@ export class ContactComponent extends TranslationBaseComponent
 		const contact = {
 			country: organizationContact.country,
 			city: organizationContact.city,
-			address: organizationContact.address
+			address: organizationContact.address,
+			address2: organizationContact.address2,
+			postcode: organizationContact.postcode,
+			fax: organizationContact.fax,
+			fiscalInformation: organizationContact.fiscalInformation,
+			website: organizationContact.website
 		};
 		const organizationContactData = {
 			...organizationContact,
@@ -282,7 +287,14 @@ export class ContactComponent extends TranslationBaseComponent
 					contact_name: contact.name,
 					country: contact.contact ? contact.contact.country : '',
 					city: contact.contact ? contact.contact.city : '',
-					street: contact.contact ? contact.contact.address : ''
+					street: contact.contact ? contact.contact.address : '',
+					street2: contact.contact ? contact.contact.address2 : '',
+					postcode: contact.contact ? contact.contact.postcode : '',
+					fax: contact.contact ? contact.contact.fax : '',
+					website: contact.contact ? contact.contact.website : '',
+					fiscalInformation: contact.contact
+						? contact.contact.fiscalInformation
+						: ''
 				});
 			});
 			const contact_items = result.filter(
