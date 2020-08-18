@@ -15,7 +15,7 @@ interface IGoalTemplateResponse {
 })
 export class GoalTemplatesService {
 	private readonly GOAL_URL = '/api/goal-templates';
-	private readonly KEYRESULT_URL = '/api/goal-templates';
+	private readonly KEYRESULT_URL = '/api/key-result-templates';
 
 	constructor(
 		private _http: HttpClient,

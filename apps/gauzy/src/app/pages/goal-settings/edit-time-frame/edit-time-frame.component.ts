@@ -8,6 +8,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
+import {
+	getYear,
+	getQuarter,
+	addDays,
+	lastDayOfYear,
+	startOfQuarter,
+	endOfQuarter,
+	lastDayOfQuarter,
+	startOfYear,
+	endOfYear
+} from 'date-fns';
 
 @Component({
 	selector: 'ga-edit-time-frame',
@@ -41,6 +52,8 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 			endDate: [null, Validators.required]
 		});
 
+		this.generateTimeFrames();
+
 		if (!!this.timeFrame) {
 			this.timeFrameForm.patchValue({
 				name: this.timeFrame.name,
@@ -61,6 +74,39 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 					});
 				}
 			});
+	}
+
+	generateTimeFrames() {
+		const today = new Date();
+		let date = today;
+		let year = getYear(today);
+		this.predefinedTimeFrames = [];
+		// Add Quarters
+		if (getQuarter(date) > 2) {
+			year = getYear(addDays(lastDayOfYear(today), 1));
+		}
+		while (getYear(date) <= year) {
+			const timeFrameName = `Q${getQuarter(date)}-${getYear(date)}`;
+			this.predefinedTimeFrames.push({
+				name: timeFrameName,
+				start: new Date(startOfQuarter(date)),
+				end: new Date(endOfQuarter(date))
+			});
+			date = addDays(lastDayOfQuarter(date), 1);
+		}
+		// Annual Time Frames
+		this.predefinedTimeFrames.push({
+			name: `Annual-${getYear(today)}`,
+			start: new Date(startOfYear(today)),
+			end: new Date(endOfYear(today))
+		});
+		if (year > getYear(today)) {
+			this.predefinedTimeFrames.push({
+				name: `Annual-${year}`,
+				start: new Date(startOfYear(addDays(lastDayOfYear(today), 1))),
+				end: new Date(endOfYear(addDays(lastDayOfYear(today), 1)))
+			});
+		}
 	}
 
 	ngOnDestroy() {

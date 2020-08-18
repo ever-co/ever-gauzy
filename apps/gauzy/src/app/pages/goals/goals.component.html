@@ -19,12 +19,28 @@
 						icon="plus-circle"
 						status="primary"
 						title="Add new Objective"
-						(click)="createObjective(null, null)"
+						nbPopoverTrigger="click"
+						nbPopoverPlacement="bottom"
+						[nbPopover]="createObjectivePopover"
 					></nb-action>
 					<nb-action>
 						{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
 					</nb-action>
 				</nb-actions>
+				<ng-template class="p-2" #createObjectivePopover>
+					<nb-list>
+						<nb-list-item
+							(click)="createObjective(null, null)"
+							style="cursor: pointer;"
+							>Create New</nb-list-item
+						>
+						<nb-list-item
+							(click)="createObjectiveFromTemplate()"
+							style="cursor: pointer;"
+							>Create from Preset</nb-list-item
+						>
+					</nb-list>
+				</ng-template>
 			</div>
 			<div>
 				<button
