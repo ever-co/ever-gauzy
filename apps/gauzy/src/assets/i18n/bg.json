@@ -685,7 +685,7 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Разходи",
 		"MUTATION": {
-			"CONTACT_IS_REQUIRED!": "Contact is required!",
+			"CONTACT_IS_REQUIRED": "Contact is required!",
 			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Възложи на",
 			"INCLUDE_TAXES": "Включете такси",
