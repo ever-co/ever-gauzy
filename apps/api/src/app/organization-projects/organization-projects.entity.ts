@@ -150,4 +150,34 @@ export class OrganizationProjects extends TenantBase
 	})
 	@JoinColumn()
 	payments?: Payment[];
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	code?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	description?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	color?: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	billable?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	billingFlat: boolean;
 }

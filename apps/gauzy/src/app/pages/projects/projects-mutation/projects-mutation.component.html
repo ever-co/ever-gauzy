@@ -30,7 +30,7 @@
 					[items]="organizationContacts"
 					bindLabel="name"
 					[searchable]="true"
-					[(ngModel)]="organizationContact"
+					#organizationContact
 					formControlName="organizationContact"
 					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
 				>
@@ -156,8 +156,56 @@
 					</nb-option>
 				</nb-select>
 			</div>
+			<div class="form-group col-4">
+				<label for="code" class="label">{{
+					'FORM.PLACEHOLDERS.CODE' | translate
+				}}</label>
+				<input
+					type="text"
+					#code
+					nbInput
+					fullWidth
+					formControlName="code"
+					placeholder="{{ 'FORM.PLACEHOLDERS.CODE' | translate }}"
+					id="code"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<label for="color" class="label">{{
+					'FORM.PLACEHOLDERS.COLOR' | translate
+				}}</label>
+				<input
+					type="text"
+					#color
+					nbInput
+					fullWidth
+					formControlName="color"
+					placeholder="{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}"
+					id="color"
+				/>
+			</div>
+			<div class="col-sm-12 mb-3">
+				<label for="description" class="label">
+					{{
+						'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
+							| translate
+					}}
+				</label>
+				<textarea
+					#description
+					nbInput
+					formControlName="description"
+					fullWidth
+					rows="4"
+					placeholder="{{
+						'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
+							| translate
+					}}"
+					id="description"
+				></textarea>
+			</div>
 
-			<div class="col-12">
+			<div class="col-2">
 				<nb-toggle
 					#public
 					labelPosition="start"
@@ -168,6 +216,17 @@
 					>{{
 						'FORM.PLACEHOLDERS.SWITCH_PROJECT_STATE' | translate
 					}}</nb-toggle
+				>
+			</div>
+			<div class="col-2">
+				<nb-toggle
+					#billable
+					labelPosition="start"
+					status="basic"
+					[checked]="billable"
+					formControlName="billable"
+					(checkedChange)="toggleBillable($event)"
+					>{{ 'FORM.PLACEHOLDERS.BILLABLE' | translate }}</nb-toggle
 				>
 			</div>
 		</form>

@@ -27,7 +27,8 @@ import {
 	DefaultValueDateTypeEnum,
 	Organization as IOrganization,
 	WeekDaysEnum,
-	MinimumProjectSizeEnum
+	MinimumProjectSizeEnum,
+	CurrencyPosition
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
@@ -359,4 +360,22 @@ export class Organization extends TenantBase implements IOrganization {
 	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.organization)
 	@JoinColumn()
 	organizationSprints?: OrganizationSprint[];
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	website?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	fiscalInformation?: string;
+
+	@ApiPropertyOptional({ type: String, enum: CurrencyPosition })
+	@IsEnum(CurrencyPosition)
+	@IsOptional()
+	@Column({ default: 'LEFT' })
+	currencyPosition?: string;
 }

@@ -69,6 +69,9 @@ export interface Organization extends IBaseEntityModel, IContact {
 	organizationSprints?: OrganizationSprint[];
 	minimumProjectSize?: string;
 	show_clients?: boolean;
+	currencyPosition?: string;
+	website?: string;
+	fiscalInformation?: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -113,6 +116,8 @@ export interface OrganizationCreateInput extends IContact {
 	skills?: Skill[];
 	minimumProjectSize?: string;
 	show_clients?: boolean;
+	website?: string;
+	fiscalInformation?: string;
 }
 
 export enum OrganizationSelectInput {
@@ -157,6 +162,11 @@ export enum AlignmentOptions {
 	LEFT = 'LEFT',
 	RIGHT = 'RIGHT',
 	CENTER = 'CENTER'
+}
+
+export enum CurrencyPosition {
+	LEFT = 'LEFT',
+	RIGHT = 'RIGHT'
 }
 
 export enum WeekDaysEnum {

@@ -178,6 +178,55 @@
 		</nb-card-header>
 		<nb-card-body>
 			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{
+									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
+										| translate
+								}}
+							</label>
+							<input
+								fullWidth
+								id="brandColorInput"
+								nbInput
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
+										| translate
+								}}"
+								[value]="form.get('currencyPosition').value"
+							/>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{
+									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
+										| translate
+								}}
+							</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="currencyPosition"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
+										| translate
+								}}"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let pos of defaultCurrencyPosition"
+									[value]="pos.toUpperCase()"
+								>
+									{{ pos }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
 				<div class="row" id="temporary">
 					<div class="col-6">
 						<div class="form-group">
@@ -285,6 +334,27 @@
 								Allow taxing and discounting of invoice items
 								separately
 							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{
+									'FORM.PLACEHOLDERS.FISCAL_INFORMATION'
+										| translate
+								}}
+							</label>
+							<input
+								placeholder="{{
+									'FORM.PLACEHOLDERS.FISCAL_INFORMATION'
+										| translate
+								}}"
+								fullWidth
+								type="text"
+								id="fiscalInformation"
+								nbInput
+								formControlName="fiscalInformation"
+							/>
 						</div>
 					</div>
 				</div>
