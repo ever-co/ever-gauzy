@@ -30,10 +30,14 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	organizationSprints?: OrganizationSprint[];
 	taskListType: string;
 	payments?: Payment[];
+  // prefix to project tasks / issues, e.g. GA-XXXX (GA is prefix)
 	code?: string;
 	description?: string;
+  // the color of project which is used in UI
 	color?: string;
+  // is project billible?
 	billable?: boolean;
+  // true if the project is flat rate, false if the project is time / materials billable
 	billingFlat?: boolean;
 }
 
