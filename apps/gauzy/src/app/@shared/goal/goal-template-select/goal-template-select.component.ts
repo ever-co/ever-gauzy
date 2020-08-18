@@ -124,6 +124,15 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 				progress: 0,
 				organizationId: this.store.selectedOrganization.id
 			};
+			goal[
+				this.goalDetailsForm.value.level === GoalLevelEnum.EMPLOYEE
+					? 'ownerEmployee'
+					: this.goalDetailsForm.value.level === GoalLevelEnum.TEAM
+					? 'ownerTeam'
+					: 'ownerOrg'
+			] = this.goalDetailsForm.value.owner;
+			delete goal.owner;
+			delete goal.keyResults;
 			await this.goalService.createGoal(goal).then((res) => {
 				if (res) {
 					this.closeDialog('done');
