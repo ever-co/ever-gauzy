@@ -22,7 +22,7 @@ export class Screenshot extends Base implements IScreenshot {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((screenshot: Screenshot) => screenshot.timeSlot)
-	@Column()
+	@Column({nullable: true})
 	readonly timeSlotId?: string;
 
 	@ApiProperty({ type: String })
