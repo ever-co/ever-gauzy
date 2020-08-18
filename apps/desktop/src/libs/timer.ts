@@ -88,7 +88,7 @@ export default class Timerhandler {
 			this.getSetActivity(knex, win2, this.timeSlotStart);
 			this.timeSlotStart = moment();
 			// this.updateToggle(win2, knex);
-		}, 60 * 1000 * 1);
+		}, 60 * 1000 * 5);
 	}
 
 	updateToggle(win2, knex, isStop) {
