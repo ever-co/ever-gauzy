@@ -18,17 +18,6 @@ import {
 	GoalGeneralSetting
 } from '@gauzy/models';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import {
-	getYear,
-	getQuarter,
-	addDays,
-	lastDayOfYear,
-	startOfQuarter,
-	endOfQuarter,
-	lastDayOfQuarter,
-	startOfYear,
-	endOfYear
-} from 'date-fns';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 

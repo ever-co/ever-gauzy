@@ -37,6 +37,6 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 	})
 	@Get('all')
 	async getAll() {
-		return this.goalTemplateService.findAll();
+		return this.goalTemplateService.findAll({ relations: ['keyResults'] });
 	}
 }

@@ -433,12 +433,20 @@ import * as moment from 'moment';
 						module: GoalKpiModule
 					},
 					{
+						path: '/goal-templates',
+						module: GoalTemplateModule
+					},
+					{
 						path: '/key-results',
 						module: KeyResultModule
 					},
 					{
 						path: '/key-result-updates',
 						module: KeyResultUpdateModule
+					},
+					{
+						path: '/key-result-templates',
+						module: KeyresultTemplateModule
 					}
 				]
 			}

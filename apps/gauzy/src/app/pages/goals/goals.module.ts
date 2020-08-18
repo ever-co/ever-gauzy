@@ -47,6 +47,7 @@ import { TaskSelectModule } from '../../@shared/tasks/task-select/task-select.mo
 import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
 import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
 import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal-level-select.module';
+import { GoalTemplateSelectModule } from '../../@shared/goal/goal-template-select/goal-template-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -93,6 +94,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		ProjectSelectModule,
 		GoalCustomUnitModule,
 		KeyresultTypeSelectModule,
+		GoalTemplateSelectModule,
 		GoalLevelSelectModule,
 		TaskSelectModule,
 		NbDialogModule.forChild(),

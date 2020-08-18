@@ -1,0 +1,12 @@
+.max-width-50vw {
+  width: 50vw;
+  height: 80vh !important;
+}
+
+.margin-stepper {
+  margin: 0 5vw;
+}
+
+::ng-deep nb-stepper .header {
+  margin: 0 10vw !important;
+}
