@@ -488,7 +488,8 @@
 		"SHOW_AVERAGE_EXPENSES": "Показать средние расходы",
 		"SHOW_BILLRATE": "Показать процент счёта",
 		"SHOW_START_WORK_ON": "Показать начатую работу на",
-		"SHOW_CLIENTS": "Показать клиентов"
+		"SHOW_CLIENTS": "Показать клиентов",
+		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -1283,7 +1284,8 @@
 		"AVERAGE_INCOME": "Средний доход",
 		"EMPLOYEE_UPDATED": "Сотрудник обновлен.",
 		"IMAGE_UPDATED": "Изображение обновлено.",
-		"FAIL_TO_UPDATE_IMAGE": "Не удалось обновить."
+		"FAIL_TO_UPDATE_IMAGE": "Не удалось обновить.",
+		"ANONYMOUS": "Анонимный"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
