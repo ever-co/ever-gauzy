@@ -65,9 +65,10 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 	private async loadProjects() {
 		const organizationId = this._organizationsStore.selectedOrganization.id;
 		const { items } = await this.organizationProjectsService.getAll(
-			['client'],
+			//['client']
+			[],
 			{
-				organizationId
+				organizationId: organizationId
 			}
 		);
 
@@ -112,7 +113,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			],
 			dueDate: [dueDate],
 			description: [description],
-			tags: [],
+			tags: [tags],
 			teams: []
 		});
 	}
