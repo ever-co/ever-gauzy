@@ -24,14 +24,17 @@ export const createDefaultOrganizationProjects = async (
 	});
 	const projects: OrganizationProjects[] = [];
 
-	const organization = faker.random.arrayElement(defaultOrganizations);
+	for (let index = 0; index < defaultProjects.length; index++) {
+		const name = defaultProjects[index];
 
-	const organizationContacts = await connection
-		.getRepository(OrganizationContact)
-		.find({ where: { organizationId: organization.id } });
-	const organizationContact = faker.random.arrayElement(organizationContacts);
+		const organization = faker.random.arrayElement(defaultOrganizations);
+		const organizationContacts = await connection
+			.getRepository(OrganizationContact)
+			.find({ where: { organizationId: organization.id } });
+		const organizationContact = faker.random.arrayElement(
+			organizationContacts
+		);
 
-	defaultProjects.forEach((name) => {
 		const project = new OrganizationProjects();
 		project.tags = [tag];
 		project.name = name;
@@ -43,7 +46,7 @@ export const createDefaultOrganizationProjects = async (
 		);
 		// TODO: this seed creates default projects without tenantId.
 		projects.push(project);
-	});
+	}
 	return await connection.manager.save(projects);
 };
 

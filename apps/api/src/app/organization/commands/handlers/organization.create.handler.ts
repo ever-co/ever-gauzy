@@ -43,7 +43,18 @@ export class OrganizationCreateHandler
 
 		// 3. Create organization
 		const createdOrganization: Organization = await this.organizationService.create(
-			input
+			{
+				...input,
+				show_profits: false,
+				show_bonuses_paid: false,
+				show_income: false,
+				show_total_hours: false,
+				show_projects_count: true,
+				show_minimum_project_size: true,
+				show_clients_count: true,
+				show_clients: true,
+				show_employees_count: true
+			}
 		);
 
 		// 4. Take each super admin user and add him/her to created organization

@@ -8,12 +8,23 @@ import {
 	GetActivitiesStatistics,
 	GetProjectsStatistics,
 	GetTasksStatistics,
-	GetMembersStatistics
+	GetMembersStatistics,
+	PermissionsEnum,
+	GetCountsStatistics,
+	CountsStatistics,
+	MembersStatistics,
+	ActivitiesStatistics,
+	TimeSlotStatistics,
+	ProjectsStatistics,
+	TasksStatistics,
+	GetManualTimesStatistics,
+	ManualTimesStatistics
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import * as _ from 'underscore';
+import _ from 'underscore';
 import { prgressStatus } from 'libs/utils';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ga-time-tracking',
@@ -21,11 +32,13 @@ import { prgressStatus } from 'libs/utils';
 	styleUrls: ['./time-tracking.component.scss']
 })
 export class TimeTrackingComponent implements OnInit, OnDestroy {
-	timeSlotEmployees = [];
-	activities = [];
-	projects = [];
-	tasks = [];
-	members = [];
+	timeSlotEmployees: TimeSlotStatistics[] = [];
+	activities: ActivitiesStatistics[] = [];
+	projects: ProjectsStatistics[] = [];
+	tasks: TasksStatistics[] = [];
+	members: MembersStatistics[] = [];
+	manualTimes: ManualTimesStatistics[] = [];
+	counts: CountsStatistics;
 	organization: Organization;
 	updateLogs$: Subject<any> = new Subject();
 	timeSlotLoading = true;
@@ -33,13 +46,21 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	projectsLoading = true;
 	tasksLoading = true;
 	memberLoading = true;
+	countsLoading = true;
+	manualTimeLoading = true;
 
+	PermissionsEnum = PermissionsEnum;
 	prgressStatus = prgressStatus;
+	startDate: Date;
+	endDate: Date;
 
 	constructor(
 		private timesheetStatisticsService: TimesheetStatisticsService,
 		private store: Store
-	) {}
+	) {
+		this.startDate = moment().startOf('week').toDate();
+		this.endDate = moment().endOf('week').toDate();
+	}
 
 	ngOnInit() {
 		this.updateLogs$
@@ -58,11 +79,13 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getStatistics() {
+		this.getCounts();
 		this.getTimeSlots();
 		this.getActivities();
 		this.getProjects();
 		this.getTasks();
 		this.getMembers();
+		this.getManualTimes();
 	}
 
 	getTimeSlots() {
@@ -79,6 +102,22 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 				this.timeSlotLoading = false;
 			});
 	}
+
+	getCounts() {
+		const request: GetCountsStatistics = {
+			organizationId: this.organization.id
+		};
+		this.countsLoading = true;
+		this.timesheetStatisticsService
+			.getCounts(request)
+			.then((resp) => {
+				this.counts = resp;
+			})
+			.finally(() => {
+				this.countsLoading = false;
+			});
+	}
+
 	getActivities() {
 		const activityRequest: GetActivitiesStatistics = {
 			organizationId: this.organization.id
@@ -133,6 +172,21 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			});
 	}
 
+	getManualTimes() {
+		const request: GetManualTimesStatistics = {
+			organizationId: this.organization.id
+		};
+		this.manualTimeLoading = true;
+		this.timesheetStatisticsService
+			.getManualTimes(request)
+			.then((resp) => {
+				this.manualTimes = resp;
+			})
+			.finally(() => {
+				this.manualTimeLoading = false;
+			});
+	}
+
 	getMembers() {
 		const memberRequest: GetMembersStatistics = {
 			organizationId: this.organization.id
@@ -142,12 +196,7 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			.getMembers(memberRequest)
 			.then((resp: any) => {
 				this.members = resp.map((member) => {
-					const week: any = _.chain(member.weekHours)
-						.indexBy('day')
-						.mapObject((day: any) => {
-							return day.duration;
-						})
-						.value();
+					const week: any = _.indexBy(member.weekHours, 'day');
 
 					const sum = _.reduce(
 						member.weekHours,
@@ -156,7 +205,12 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 						0
 					);
 					member.weekHours = _.range(0, 7).map((day) => {
-						return week[day] ? (week[day] * 100) / sum : 0;
+						if (week[day]) {
+							return (week[day].duration =
+								(week[day].duration * 100) / sum);
+						} else {
+							return { day, duration: 0 };
+						}
 					});
 
 					return member;

@@ -7,7 +7,9 @@ import {
 	GetProjectsStatistics,
 	GetTasksStatistics,
 	GetTimeSlotStatistics,
-	GetActivitiesStatistics
+	GetActivitiesStatistics,
+	GetCountsStatistics,
+	GetManualTimesStatistics
 } from '@gauzy/models';
 
 @ApiTags('Timesheet Statistic')
@@ -15,6 +17,21 @@ import {
 @Controller('statistics')
 export class StatisticController {
 	constructor(private readonly statisticService: StatisticService) {}
+
+	@ApiOperation({ summary: 'Statistics - members' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Statistics - members'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/counts')
+	async counts(@Query() request: GetCountsStatistics) {
+		return await this.statisticService.getcounts(request);
+	}
 
 	@ApiOperation({ summary: 'Statistics - members' })
 	@ApiResponse({
@@ -59,6 +76,21 @@ export class StatisticController {
 	@Get('/tasks')
 	async tasks(@Query() request: GetTasksStatistics) {
 		return await this.statisticService.getTasks(request);
+	}
+
+	@ApiOperation({ summary: 'Statistics - Manual Times' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Statistics - Manual Times'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/manual-times')
+	async manualTimes(@Query() request: GetManualTimesStatistics) {
+		return await this.statisticService.manualTimes(request);
 	}
 
 	@ApiOperation({ summary: 'Statistics - employee time-slots' })
