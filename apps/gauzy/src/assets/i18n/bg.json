@@ -488,7 +488,8 @@
 		"SHOW_AVERAGE_EXPENSES": "Show Average Expenses",
 		"SHOW_BILLRATE": "Show Bill Rate",
 		"SHOW_START_WORK_ON": "Show Started Work On",
-		"SHOW_CLIENTS": "Show Clients"
+		"SHOW_CLIENTS": "Show Clients",
+		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -1283,7 +1284,8 @@
 		"AVERAGE_INCOME": "Average Income",
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
-		"FAIL_TO_UPDATE_IMAGE": "Update failed."
+		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
+		"ANONYMOUS": "Anonymous"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",
