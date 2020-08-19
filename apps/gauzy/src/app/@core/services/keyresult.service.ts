@@ -32,6 +32,18 @@ export class KeyResultService {
 			.toPromise();
 	}
 
+	createBulkKeyResult(keyResults): Promise<KeyResult[]> {
+		return this._http
+			.post<KeyResult[]>(`${this.API_URL}/createBulk`, keyResults)
+			.pipe(
+				tap(() =>
+					this.toastrService.primary('Key Results Created', 'Success')
+				),
+				catchError((error) => this.errorHandler(error))
+			)
+			.toPromise();
+	}
+
 	async update(id: string, keyResult: KeyResult): Promise<KeyResult> {
 		return this._http
 			.put<KeyResult>(`${this.API_URL}/${id}`, keyResult)

@@ -6,7 +6,8 @@ import {
 	TimeFrameStatusEnum,
 	Employee,
 	OrganizationTeam,
-	GoalLevelEnum
+	GoalLevelEnum,
+	KeyResultWeightEnum
 } from '@gauzy/models';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { Store } from '../../../@core/services/store.service';
@@ -22,6 +23,7 @@ import { GoalService } from '../../../@core/services/goal.service';
 import { EmployeesService } from '../../../@core/services';
 import { Subject } from 'rxjs';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { KeyResultService } from '../../../@core/services/keyresult.service';
 
 @Component({
 	selector: 'ga-goal-template-select',
@@ -49,6 +51,7 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 		private dialogRef: NbDialogRef<GoalTemplateSelectComponent>,
 		private dialogService: NbDialogService,
 		private goalService: GoalService,
+		private keyResultService: KeyResultService,
 		private employeeService: EmployeesService,
 		private fb: FormBuilder
 	) {}
@@ -133,11 +136,33 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 			] = this.goalDetailsForm.value.owner;
 			delete goal.owner;
 			delete goal.keyResults;
-			await this.goalService.createGoal(goal).then((res) => {
-				if (res) {
-					this.closeDialog('done');
-				}
-			});
+			const goalCreated = await this.goalService.createGoal(goal);
+			if (goalCreated) {
+				const keyResults = this.selectedGoalTemplate.keyResults.map(
+					(keyResult) => {
+						delete keyResult.goalId;
+						return {
+							...keyResult,
+							goalId: goalCreated.id,
+							description: ' ',
+							progress: 0,
+							update: keyResult.initialValue,
+							owner: this.employees[0].id,
+							organizationId: this.orgId,
+							status: 'none',
+							weight: KeyResultWeightEnum.DEFAULT
+						};
+					}
+				);
+				console.log(keyResults);
+				await this.keyResultService
+					.createBulkKeyResult(keyResults)
+					.then((res) => {
+						if (res) {
+							this.closeDialog('done');
+						}
+					});
+			}
 		}
 	}
 
