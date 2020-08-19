@@ -4,17 +4,23 @@ import { Repository, In, Between } from 'typeorm';
 import * as _ from 'underscore';
 import {
 	PermissionsEnum,
-	Employee as IEmployee,
 	GetActivitiesStatistics,
 	GetTimeSlotStatistics,
 	GetTasksStatistics,
 	GetProjectsStatistics,
-	GetMembersStatistics
+	GetMembersStatistics,
+	GetCountsStatistics,
+	CountsStatistics,
+	MembersStatistics,
+	ActivitiesStatistics,
+	TimeSlotStatistics,
+	ProjectsStatistics,
+	GetManualTimesStatistics,
+	ManualTimesStatistics
 } from '@gauzy/models';
 import { TimeSlot } from '../time-slot.entity';
 import { Employee } from '../../employee/employee.entity';
 import { RequestContext } from '../../core/context';
-import { CrudService } from '../../core';
 import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
 import { Task } from '../../tasks/task.entity';
 import { Activity } from '../activity.entity';
@@ -22,7 +28,7 @@ import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
 
 @Injectable()
-export class StatisticService extends CrudService<TimeSlot> {
+export class StatisticService {
 	constructor(
 		@InjectRepository(OrganizationProjects)
 		private readonly organizationProjectsRepository: Repository<
@@ -37,9 +43,115 @@ export class StatisticService extends CrudService<TimeSlot> {
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
 		@InjectRepository(TimeLog)
-		private readonly timeLogsRepository: Repository<TimeLog>
-	) {
-		super(timeSlotRepository);
+		private readonly timeLogRepository: Repository<TimeLog>
+	) {}
+
+	async getcounts(request: GetCountsStatistics): Promise<CountsStatistics> {
+		const date = request.date || new Date();
+		const start = moment.utc(date).startOf('week').toDate();
+		const end = moment.utc(date).endOf('week').toDate();
+		const user = RequestContext.currentUser();
+
+		/*
+		 *  Get employees id of the orginization or get current employe id
+		 */
+		let employeeIds = [];
+		if (
+			(user.employeeId && request.onlyMe) ||
+			!RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			employeeIds = [user.employeeId];
+		} else {
+			employeeIds = await this.organizationEmployeesIds(
+				request.organizationId
+			);
+		}
+
+		/*
+		 *  Get employees count who worked in this week.
+		 */
+		const employeesCountQuery = await this.employeeRepository.createQueryBuilder();
+		employeesCountQuery
+			.innerJoin(`${employeesCountQuery.alias}.timeLogs`, 'timeLogs')
+			.where({
+				id: In(employeeIds)
+			})
+			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+				start,
+				end
+			});
+		const employeesCount = await employeesCountQuery.getCount();
+
+		/*
+		 *  Get projects count who worked in this week.
+		 */
+		const projectsCountQuery = await this.organizationProjectsRepository.createQueryBuilder();
+		projectsCountQuery
+			.innerJoin(`${projectsCountQuery.alias}.timeLogs`, 'timeLogs')
+			.where(`"timeLogs"."employeeId" IN (:...employeeId)`, {
+				employeeId: employeeIds
+			})
+			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+				start,
+				end
+			});
+		const projectsCount = await projectsCountQuery.getCount();
+
+		/*
+		 * Get average activity and total duration of the work for the week.
+		 */
+		let weekActivites = {
+			overall: 0,
+			duration: 0
+		};
+		if (employeeIds.length > 0) {
+			const activitesQuery = await this.timeSlotRepository
+				.createQueryBuilder()
+				.select('AVG(overall)', 'overall')
+				.addSelect('SUM(duration)', 'duration')
+				.where({
+					employeeId: In(employeeIds),
+					startedAt: Between(start, end)
+				});
+			weekActivites = await activitesQuery.getRawOne();
+		}
+
+		/*
+		 * Get average activity and total duration of the work for today.
+		 */
+		let todayActivites = {
+			overall: 0,
+			duration: 0
+		};
+		if (employeeIds.length > 0) {
+			const activitesQuery = await this.timeSlotRepository
+				.createQueryBuilder()
+				.select('AVG(overall)', 'overall')
+				.addSelect('SUM(duration)', 'duration')
+				.where({
+					employeeId: In(employeeIds),
+					startedAt: Between(
+						moment().startOf('day').toDate(),
+						moment().endOf('day').toDate()
+					)
+				});
+			todayActivites = await activitesQuery.getRawOne();
+		}
+
+		return {
+			employeesCount,
+			projectsCount,
+			weekActivites: parseFloat(
+				parseFloat(weekActivites.overall + '').toFixed(1)
+			),
+			weekDuration: weekActivites.duration,
+			todayActivites: parseFloat(
+				parseFloat(todayActivites.overall + '').toFixed(1)
+			),
+			todayDuration: todayActivites.duration
+		};
 	}
 
 	async getMembers(request: GetMembersStatistics) {
@@ -48,7 +160,7 @@ export class StatisticService extends CrudService<TimeSlot> {
 		const end = moment.utc(date).endOf('week').toDate();
 
 		const query = this.employeeRepository.createQueryBuilder();
-		const employees = await query
+		const employees: MembersStatistics[] = await query
 			.select(`"${query.alias}".id`)
 			.addSelect(
 				`("user"."firstName" || ' ' ||  "user"."lastName")`,
@@ -207,7 +319,7 @@ export class StatisticService extends CrudService<TimeSlot> {
 			.addGroupBy(`"${query.alias}"."id"`)
 			.limit(5);
 
-		let projects = await query.getRawMany();
+		let projects: ProjectsStatistics[] = await query.getRawMany();
 
 		const totalDuerationQuery = this.organizationProjectsRepository.createQueryBuilder();
 		totalDuerationQuery
@@ -263,27 +375,24 @@ export class StatisticService extends CrudService<TimeSlot> {
 		const start = moment.utc(date).startOf('week').toDate();
 		const end = moment.utc(date).endOf('week').toDate();
 		const user = RequestContext.currentUser();
-
-		const employeeQuery = this.employeeRepository
-			.createQueryBuilder()
-			.select(['id']);
-
+		/*
+		 *  Get employees id of the orginization or get current employe id
+		 */
+		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			const employeeId = RequestContext.currentUser().employeeId;
-			employeeQuery.andWhere(`id = :employeeId`, { employeeId });
+			employeeIds = [user.employeeId];
 		} else {
-			employeeQuery.where('"organizationId" = :organizationId', {
-				organizationId: request.organizationId
-			});
+			employeeIds = await this.organizationEmployeesIds(
+				request.organizationId
+			);
 		}
-		const employees = await employeeQuery.getRawMany();
 
-		if (employees.length > 0) {
+		if (employeeIds.length > 0) {
 			const query = this.taskRepository.createQueryBuilder();
 			let tasks = await query
 				.innerJoin(`${query.alias}.project`, 'project')
@@ -294,7 +403,7 @@ export class StatisticService extends CrudService<TimeSlot> {
 				)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
-					employeeId: _.pluck(employees, 'id')
+					employeeId: employeeIds
 				})
 				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 					start,
@@ -313,7 +422,7 @@ export class StatisticService extends CrudService<TimeSlot> {
 				)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
-					employeeId: _.pluck(employees, 'id')
+					employeeId: employeeIds
 				})
 				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 					start,
@@ -333,31 +442,85 @@ export class StatisticService extends CrudService<TimeSlot> {
 		}
 	}
 
-	async getActivites(request: GetActivitiesStatistics) {
+	async manualTimes(request: GetManualTimesStatistics) {
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').toDate();
 		const end = moment.utc(date).endOf('week').toDate();
 		const user = RequestContext.currentUser();
-
-		const employeesQuery = this.employeeRepository
-			.createQueryBuilder()
-			.select(['id']);
+		/*
+		 *  Get employees id of the orginization or get current employe id
+		 */
+		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			const employeeId = user.employeeId;
-			employeesQuery.andWhere(`id = :employeeId`, { employeeId });
+			employeeIds = [user.employeeId];
 		} else {
-			employeesQuery.where('"organizationId" = :organizationId', {
-				organizationId: request.organizationId
-			});
+			employeeIds = await this.organizationEmployeesIds(
+				request.organizationId
+			);
 		}
-		const employees = await employeesQuery.getRawMany();
 
-		if (employees.length > 0) {
+		if (employeeIds.length > 0) {
+			const timeLogs = await this.timeLogRepository.find({
+				relations: ['project', 'employee', 'employee.user'],
+				where: {
+					employeeId: In(employeeIds),
+					startedAt: Between(start, end)
+				},
+				take: 5,
+				order: {
+					startedAt: 'DESC'
+				}
+			});
+
+			const mapedTimeLogs: ManualTimesStatistics[] = timeLogs.map(
+				(timeLog) => {
+					return {
+						id: timeLog.id,
+						startedAt: timeLog.startedAt,
+						duration: timeLog.duration,
+						user: _.pick(timeLog.employee.user, [
+							'name',
+							'imageUrl'
+						]),
+						project: _.pick(timeLog.employee.user, ['name'])
+					} as ManualTimesStatistics;
+				}
+			);
+			return mapedTimeLogs;
+		} else {
+			return [];
+		}
+	}
+
+	async getActivites(request: GetActivitiesStatistics) {
+		const date = request.date || new Date();
+		const start = moment.utc(date).startOf('week').toDate();
+		const end = moment.utc(date).endOf('week').toDate();
+		const user = RequestContext.currentUser();
+
+		/*
+		 *  Get employees id of the orginization or get current employe id
+		 */
+		let employeeIds = [];
+		if (
+			(user.employeeId && request.onlyMe) ||
+			!RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			employeeIds = [user.employeeId];
+		} else {
+			employeeIds = await this.organizationEmployeesIds(
+				request.organizationId
+			);
+		}
+
+		if (employeeIds.length > 0) {
 			const query = this.activityRepository.createQueryBuilder();
 
 			query
@@ -370,13 +533,16 @@ export class StatisticService extends CrudService<TimeSlot> {
 					end
 				})
 				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeId)`, {
-					employeeId: _.pluck(employees, 'id')
+					employeeId: employeeIds
 				})
 				.orderBy(`"duration"`, 'DESC')
 				.limit(5);
 
-			let activites = await query.getRawMany();
+			let activites: ActivitiesStatistics[] = await query.getRawMany();
 
+			/*
+			 * Fetch total duration of the week for calculate duration percentage
+			 */
 			const totalDuerationQuery = this.activityRepository.createQueryBuilder();
 			const totalDueration = await totalDuerationQuery
 				.select(
@@ -386,7 +552,7 @@ export class StatisticService extends CrudService<TimeSlot> {
 				.andWhere(
 					`"${totalDuerationQuery.alias}"."employeeId" IN(:...employeeId)`,
 					{
-						employeeId: _.pluck(employees, 'id')
+						employeeId: employeeIds
 					}
 				)
 				.andWhere(`"${query.alias}"."date" BETWEEN :start AND :end`, {
@@ -408,7 +574,7 @@ export class StatisticService extends CrudService<TimeSlot> {
 	}
 
 	async getEmployeeTimeSlots(request: GetTimeSlotStatistics) {
-		let employees: Employee[] = [];
+		let employees: TimeSlotStatistics[] = [];
 
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').toDate();
@@ -452,7 +618,7 @@ export class StatisticService extends CrudService<TimeSlot> {
 		employees = await query.getRawMany();
 
 		for (let index = 0; index < employees.length; index++) {
-			const employee: IEmployee = employees[index];
+			const employee = employees[index];
 			employee.user = {
 				imageUrl: employee.user_image_url,
 				name: employee.user_name
@@ -471,5 +637,14 @@ export class StatisticService extends CrudService<TimeSlot> {
 			});
 		}
 		return employees;
+	}
+
+	private async organizationEmployeesIds(organizationId: string) {
+		const employees = await this.employeeRepository
+			.createQueryBuilder()
+			.select(['id'])
+			.andWhere('"organizationId" = :organizationId', { organizationId })
+			.getRawMany();
+		return _.pluck(employees, 'id');
 	}
 }
