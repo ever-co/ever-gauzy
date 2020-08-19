@@ -109,14 +109,21 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 				this.store.selectedEmployee$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((employee) => {
-						this.selectedEmployeeFromHeader = employee;
-						this._loadEmployeeRecurringExpense();
+						if (employee && employee.id) {
+							this.selectedEmployeeFromHeader = employee;
+							this._loadEmployeeRecurringExpense(employee.id);
+						} else {
+							this.selectedEmployeeFromHeader = null;
+							this._loadEmployeeRecurringExpense(null);
+						}
 					});
 
 				this.store.selectedOrganization$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((organization) => {
-						this.selectedOrganization = organization;
+						if (organization) {
+							this.selectedOrganization = organization;
+						}
 					});
 			});
 	}
@@ -267,7 +274,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		result
 	): EmployeeRecurringExpense {
 		return {
-			employeeId: this.selectedEmployee.id,
+			employeeId: result.employee.id,
 			categoryName: result.categoryName,
 			value: result.value,
 			currency: result.currency,
@@ -284,20 +291,15 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		};
 	}
 
-	private async _loadEmployeeRecurringExpense() {
+	private async _loadEmployeeRecurringExpense(employeeId?: string) {
 		this.fetchedHistories = {};
 		this.selectedEmployeeRecurringExpense = (
 			await this.employeeRecurringExpenseService.getAllByMonth([], {
-				employeeId: this.selectedEmployee.id,
+				employeeId: employeeId ? employeeId : this.selectedEmployee.id,
 				year: this.selectedDate.getFullYear(),
 				month: this.selectedDate.getMonth()
 			})
 		).items;
-		// console.log(
-		// 	this.selectedEmployeeRecurringExpense,
-		// 	this.selectedEmployeeFromHeader,
-		// 	this.selectedEmployee.id
-		// );
 	}
 	async loadEmployees() {
 		const { items } = await this.employeeService

@@ -75,7 +75,7 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 	}
 	getEmployee() {
 		this.currentEmployee = this.employees.find(
-			(item) => (item.id = this.recurringExpense.employeeId)
+			(item) => item.id === this.recurringExpense.employeeId
 		);
 	}
 	getStartDate() {
