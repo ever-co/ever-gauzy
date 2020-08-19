@@ -2,7 +2,8 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
 	Organization,
 	RecurringExpenseDefaultCategoriesEnum,
-	RecurringExpenseModel
+	RecurringExpenseModel,
+	Employee
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -18,6 +19,9 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
 	recurringExpense: RecurringExpenseModel;
+
+	@Input()
+	employees: Employee[];
 
 	@Input()
 	splitExpense?: boolean;
@@ -39,12 +43,17 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 
 	showMenu = false;
 	showHistory = false;
+	currentEmployee: Employee;
 
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
-	ngOnInit() {}
+	ngOnInit() {
+		if (this.recurringExpense && this.employees) {
+			this.getEmployee();
+		}
+	}
 
 	emitEdit() {
 		this.editRecurringExpense.emit();
@@ -64,7 +73,11 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 			this.showMenu = false;
 		}
 	}
-
+	getEmployee() {
+		this.currentEmployee = this.employees.find(
+			(item) => (item.id = this.recurringExpense.employeeId)
+		);
+	}
 	getStartDate() {
 		return this.recurringExpense && this.selectedOrganization
 			? moment(this.recurringExpense.startDate).format(

@@ -19,13 +19,10 @@ const routes: Routes = [
 		path: '',
 		component: EmployeesComponent
 	},
+
 	{
 		path: 'edit/:id',
-		component: EditEmployeeComponent
-	},
-	{
-		path: 'edit/:id/profile',
-		component: EditEmployeeProfileComponent,
+		component: EditEmployeeComponent,
 		children: [
 			{
 				path: '',

@@ -13,6 +13,7 @@ export interface RecurringExpenseModel extends IBaseEntityModel {
 	value: number;
 	currency: string;
 	parentRecurringExpenseId?: string;
+	employeeId?: string;
 }
 
 export interface RecurringExpenseByMonthFindInput extends IBaseEntityModel {
