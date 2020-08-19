@@ -12,6 +12,7 @@ import { OnDestroy } from '@angular/core';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ImportAllService } from '.';
+import * as path from 'path';
 
 @Injectable()
 @ApiTags('Import')
@@ -34,7 +35,7 @@ export class ImportAllController implements OnDestroy {
 	@UseInterceptors(
 		FilesInterceptor('file', 1, {
 			storage: diskStorage({
-				destination: './import',
+				destination: path.join(__dirname, '../../import'),
 				filename: (rq, file, cb) => {
 					cb(null, 'import.zip');
 				}
