@@ -1,5 +1,6 @@
 // Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
 
+// import { dialog } from 'electron';
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
@@ -9,12 +10,14 @@ const Store = require('electron-store');
 import { ipcMainHandler, ipcTimer } from './libs/ipc';
 import TrayIcon from './libs/tray-icon';
 import DataModel from './local-data/local-table';
+
 const knex = require('knex')({
 	client: 'sqlite3',
 	connection: {
-		filename: `${app.getPath('userData')}/metrix.sqlite`
+		filename: `${app.getPath('userData')}/gauzy.sqlite3`
 	}
 });
+
 const dataModel = new DataModel();
 dataModel.createNewTable(knex);
 
@@ -217,8 +220,14 @@ try {
 	// Added 5000 ms to fix the black background issue while using transparent window.
 	// More details at https://github.com/electron/electron/issues/15947
 	app.on('ready', () => {
+		// the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 		process.env.GAUZY_USER_PATH = app.getPath('userData');
+
+		// C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
+		// dialog.showMessageBox(null, { message: `GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}` });
+
 		require(path.join(__dirname, 'desktop-api/main.js'));
+
 		try {
 			const configs: any = store.get('configs');
 			if (configs.isSetup) {

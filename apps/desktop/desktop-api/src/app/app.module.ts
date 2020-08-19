@@ -6,13 +6,12 @@ import { WakatimeModule } from './wakatime/wakatime.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Wakatime } from './wakatime/wakatime.entity';
 
-console.log(__dirname);
 @Module({
 	imports: [
 		TypeOrmModule.forRoot({
 			type: 'sqlite',
 			database: process.env.GAUZY_USER_PATH
-				? `${process.env.GAUZY_USER_PATH}/metrix.sqlite`
+				? `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`
 				: '',
 			keepConnectionAlive: true,
 			logging: true,
