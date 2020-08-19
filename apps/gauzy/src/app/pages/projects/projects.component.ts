@@ -213,7 +213,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 		this.loadProjects();
 	}
 
-	private async loadProjects() {
+	async loadProjects() {
 		this.loading = false;
 		if (!this.organization) {
 			return;
