@@ -427,3 +427,19 @@ p,
   padding-left: 0;
   padding-right: 0;
 }
+
+.anonymous-avatar {
+  display: inline-flex;
+  position: relative;
+  float: left;
+  margin: 0 13px 0 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #cecece;
+  color: white;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 700;
+}
