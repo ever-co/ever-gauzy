@@ -1,7 +1,109 @@
 <nb-card>
-	<nb-card-header>Time Tracking</nb-card-header>
+	<nb-card-header>
+		<h4>Time Tracking</h4>
+		<div>{{ startDate | date }} - {{ endDate | date }}</div>
+	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
+			<div class="col-sm-12">
+				<div class="row">
+					<div
+						class="col-sm-4 col-md-3 col-lg"
+						*ngxPermissionsOnly="
+							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+						"
+					>
+						<nb-card
+							[nbSpinner]="countsLoading"
+							nbSpinnerSize="giant"
+							nbSpinnerStatus="primary"
+						>
+							<nb-card-body>
+								<p>Members worked</p>
+								<div class="h1">
+									{{ counts?.employeesCount || 0 }}
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+					<div class="col-sm-4 col-md-3 col-lg">
+						<nb-card
+							[nbSpinner]="countsLoading"
+							nbSpinnerSize="giant"
+							nbSpinnerStatus="primary"
+						>
+							<nb-card-body>
+								<p>Projects worked</p>
+								<div class="h1">
+									{{ counts?.projectsCount || 0 }}
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+					<div class="col-sm-4 col-md-3 col-lg">
+						<nb-card
+							[nbSpinner]="countsLoading"
+							nbSpinnerSize="giant"
+							nbSpinnerStatus="primary"
+						>
+							<nb-card-body>
+								<p>Weekly Activity</p>
+								<div class="h1">
+									{{ counts?.weekActivites || 0 }}%
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+					<div class="col-sm-4 col-md-3 col-lg">
+						<nb-card
+							[nbSpinner]="countsLoading"
+							nbSpinnerSize="giant"
+							nbSpinnerStatus="primary"
+						>
+							<nb-card-body>
+								<p>Worked this week</p>
+								<div class="h1">
+									{{
+										counts?.weekDuration || 0
+											| durationFormat
+									}}
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+					<div class="col-sm-4 col-md-3 col-lg">
+						<nb-card
+							[nbSpinner]="countsLoading"
+							nbSpinnerSize="giant"
+							nbSpinnerStatus="primary"
+						>
+							<nb-card-body>
+								<p>Today's Activity</p>
+								<div class="h1">
+									{{ counts?.todayActivites || 0 }}%
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+					<div class="col-sm-4 col-md-3 col-lg">
+						<nb-card
+							[nbSpinner]="countsLoading"
+							nbSpinnerSize="giant"
+							nbSpinnerStatus="primary"
+						>
+							<nb-card-body>
+								<p>Worked today</p>
+								<div class="h1">
+									{{
+										counts?.todayDuration || 0
+											| durationFormat
+									}}
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</div>
+			</div>
 			<div class="col-sm-6">
 				<nb-card
 					[nbSpinner]="timeSlotLoading"
@@ -16,13 +118,24 @@
 						>
 							<div
 								class="row"
-								*ngFor="
-									let timeSlotEmployee of timeSlotEmployees
-								"
+								*ngFor="let employee of timeSlotEmployees"
 							>
 								<div class="col">
-									<div class="hour-lable mt-3">
-										<h6>{{ timeSlotEmployee?.name }}</h6>
+									<div
+										class="hour-lable mt-3"
+										*ngxPermissionsOnly="
+											PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+										"
+									>
+										<ngx-avatar
+											size="sm"
+											[name]="employee?.user?.name"
+											[src]="employee?.user?.imageUrl"
+											[caption]="
+												(employee?.timeSlots)[0]
+													?.startedAt | date
+											"
+										></ngx-avatar>
 									</div>
 									<div
 										class="row my-3 align-items-center justify-content-center"
@@ -30,7 +143,7 @@
 										<div
 											class="col"
 											*ngFor="
-												let timeSlot of timeSlotEmployee.timeSlots
+												let timeSlot of employee.timeSlots
 											"
 										>
 											<ngx-screenshots-item
@@ -62,11 +175,9 @@
 						[ngIfElse]="noTasks"
 					>
 						<nb-list>
-							<nb-list-item
-								*ngFor="let task of tasks; let index = index"
-							>
+							<nb-list-item *ngFor="let task of tasks">
 								<div class="w-100">
-									<div class="row">
+									<div class="row align-items-center">
 										<div class="col">
 											{{ task.title }}
 										</div>
@@ -100,6 +211,65 @@
 						</div>
 					</ng-template>
 				</nb-card>
+
+				<nb-card
+					class="mt-4"
+					[nbSpinner]="manualTimeLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
+					<nb-card-header>Manual Time</nb-card-header>
+					<ng-template
+						[ngIf]="manualTimes?.length > 0"
+						[ngIfElse]="noManualTimes"
+					>
+						<nb-list>
+							<nb-list-item>
+								<div class="w-100">
+									<div class="row py-2 font-weight-bold">
+										<div class="col-sm-4">Member</div>
+										<div class="col-sm-4">Project</div>
+										<div class="col-sm-2">Duration</div>
+										<div class="col-sm-2">Date</div>
+									</div>
+								</div>
+							</nb-list-item>
+							<nb-list-item
+								*ngFor="let manualTime of manualTimes"
+							>
+								<div class="w-100">
+									<div class="row">
+										<div class="col-sm-4">
+											<ngx-avatar
+												[name]="manualTime?.user?.name"
+												[src]="
+													manualTime?.user?.imageUrl
+												"
+											></ngx-avatar>
+										</div>
+										<div class="col-sm-4">
+											{{ manualTime.project.name }}
+										</div>
+										<div class="col-sm-2">
+											{{
+												manualTime.duration
+													| durationFormat
+											}}
+										</div>
+										<div class="col-sm-2">
+											{{ manualTime.startedAt | date }}
+										</div>
+									</div>
+								</div>
+							</nb-list-item>
+						</nb-list>
+					</ng-template>
+					<ng-template #noManualTimes>
+						<div class="text-center p-3" *ngIf="!manualTimeLoading">
+							No manual time for the week
+						</div>
+					</ng-template>
+				</nb-card>
 			</div>
 
 			<div class="col-sm-6">
@@ -116,7 +286,7 @@
 						<nb-list>
 							<nb-list-item *ngFor="let project of projects">
 								<div class="w-100">
-									<div class="row">
+									<div class="row align-items-center">
 										<div class="col">
 											{{ project.name }}
 										</div>
@@ -187,6 +357,9 @@
 					[nbSpinner]="memberLoading"
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
+					*ngxPermissionsOnly="
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					"
 				>
 					<nb-card-header>Members</nb-card-header>
 					<ng-template
@@ -286,7 +459,8 @@
 															let weekHour of member.weekHours
 														"
 														[style.height]="
-															weekHour + '%'
+															weekHour.duration +
+															'%'
 														"
 													></div>
 												</div>
