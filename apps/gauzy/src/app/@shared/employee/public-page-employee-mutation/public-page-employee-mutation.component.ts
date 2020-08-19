@@ -126,7 +126,8 @@ export class PublicPageEmployeeMutationComponent
 			show_billrate: this.employee.show_billrate,
 			show_payperiod: this.employee.show_payperiod,
 			show_start_work_on: this.employee.show_start_work_on,
-			skills: this.employee.skills
+			skills: this.employee.skills,
+			anonymousBonus: this.employee.anonymousBonus
 		});
 	}
 
