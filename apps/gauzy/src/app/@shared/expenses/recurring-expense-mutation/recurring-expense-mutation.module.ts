@@ -19,6 +19,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
+import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -40,6 +41,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCheckboxModule,
 		NbAlertModule,
 		NbSpinnerModule,
+		EmployeeSelectorsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

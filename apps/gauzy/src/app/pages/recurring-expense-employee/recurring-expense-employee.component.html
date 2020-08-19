@@ -1,0 +1,63 @@
+<nb-card>
+	<nb-card-body
+		class="settings-body"
+		*ngIf="
+			selectedDate &&
+			selectedEmployeeFromHeader &&
+			selectedEmployeeFromHeader.id
+		"
+	>
+		<div class="body-header">
+			<div>
+				<span class="setting-name">
+					{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
+				</span>
+			</div>
+			<div *ngIf="hasEditExpensePermission">
+				<button
+					(click)="addEmployeeRecurringExpense()"
+					nbButton
+					status="success"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</div>
+		</div>
+
+		<div
+			class="sub-header header-content"
+			*ngIf="selectedEmployeeRecurringExpense?.length"
+		>
+			<div class="block header-info">
+				<div class="block-item-big">
+					{{ 'POP_UPS.EMPLOYEE' | translate }}
+				</div>
+				<div class="block-item">
+					{{ 'POP_UPS.CATEGORY_NAME' | translate }}
+				</div>
+				<div class="block-item-big">
+					{{ 'Starts On' }}
+				</div>
+				<div class="block-item">
+					{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
+				</div>
+			</div>
+		</div>
+
+		<ga-recurring-expense-block
+			*ngFor="
+				let expense of selectedEmployeeRecurringExpense;
+				let i = index
+			"
+			(editRecurringExpense)="editEmployeeRecurringExpense(i)"
+			(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
+			(fetchRecurringExpenseHistory)="fetchHistory(i)"
+			[fetchedHistories]="fetchedHistories[i]"
+			[recurringExpense]="expense"
+			[selectedOrganization]="selectedOrganization"
+			[employees]="employeeList"
+		>
+		</ga-recurring-expense-block>
+	</nb-card-body>
+</nb-card>

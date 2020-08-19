@@ -1,6 +1,5 @@
-import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Employee, EmployeeUpdateInput, UserUpdateInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
@@ -8,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';
 import { EmployeesService } from '../../../../@core/services/employees.service';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import { Store } from '../../../../@core/services/store.service';
 import { UsersService } from '../../../../@core/services/users.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Subject, Subscription } from 'rxjs';
@@ -38,14 +36,11 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 
 	constructor(
 		private route: ActivatedRoute,
-		private fb: FormBuilder,
-		private location: Location,
 		private employeeService: EmployeesService,
 		private userService: UsersService,
 		private toastrService: NbToastrService,
 		private employeeStore: EmployeeStore,
 		private errorHandler: ErrorHandlingService,
-		private store: Store,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -76,7 +71,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	}
 
 	getRoute(tab: string): string {
-		return `/pages/employees/edit/${this.routeParams.id}/profile/${tab}`;
+		return `/pages/employees/edit/${this.routeParams.id}/${tab}`;
 	}
 
 	loadTabs() {
@@ -139,11 +134,6 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 			}
 		];
 	}
-
-	goBack() {
-		this.location.back();
-	}
-
 	private async submitEmployeeForm(value: EmployeeUpdateInput) {
 		if (value) {
 			try {

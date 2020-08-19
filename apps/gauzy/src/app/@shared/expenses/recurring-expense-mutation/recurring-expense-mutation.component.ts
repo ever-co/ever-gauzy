@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	CurrenciesEnum,
@@ -20,6 +20,7 @@ import { defaultDateFormat } from '../../../@core/utils/date';
 import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
+import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -34,6 +35,8 @@ export enum COMPONENT_TYPE {
 export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	public form: FormGroup;
+	@ViewChild('employeeSelector')
+	employeeSelector: EmployeeSelectorComponent;
 
 	startDateUpdateType: StartDateUpdateTypeEnum =
 		StartDateUpdateTypeEnum.NO_CHANGE;
@@ -114,9 +117,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	}
 
 	previousMonth(date: string) {
-		return moment(date)
-			.subtract({ months: 1 })
-			.format('MMM, YYYY');
+		return moment(date).subtract({ months: 1 }).format('MMM, YYYY');
 	}
 
 	month(date: string) {
@@ -146,7 +147,8 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			...formValues,
 			startDay: formValues.startDate.getDate(),
 			startMonth: formValues.startDate.getMonth(),
-			startYear: formValues.startDate.getFullYear()
+			startYear: formValues.startDate.getFullYear(),
+			employee: this.employeeSelector.selectedEmployee
 		};
 		this.dialogRef.close(formValues);
 	}
