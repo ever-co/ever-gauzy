@@ -7,7 +7,7 @@ import {
 	SimpleChanges,
 	OnChanges
 } from '@angular/core';
-import { SprintStoreService } from 'apps/gauzy/src/app/@core/services/organization-sprint-store.service';
+import { SprintStoreService } from '../../../../../../@core/services/organization-sprint-store.service';
 import { Task, OrganizationSprint, OrganizationProjects } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { map, tap, filter, take } from 'rxjs/operators';
@@ -16,10 +16,10 @@ import {
 	moveItemInArray,
 	transferArrayItem
 } from '@angular/cdk/drag-drop';
-import { GauzyEditableGridComponent } from 'apps/gauzy/src/app/@shared/components/editable-grid/gauzy-editable-grid.component';
+import { GauzyEditableGridComponent } from '../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
+import { TasksStoreService } from '../../../../../../@core/services/tasks-store.service';
 
 @Component({
 	selector: 'ga-tasks-sprint-view',
@@ -64,6 +64,7 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 	}
 
 	ngOnInit(): void {
+		this.backlogTasks = this.tasks;
 		this.sprintActions = [
 			{ title: 'Edit sprint' },
 			{ title: 'Delete Sprint' }
@@ -124,9 +125,10 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 			this.taskStore.editTask({
 				id: event.item.data.id,
 				title: event.item.data.title,
-				organizationSprint: this.sprints.find(
-					(sprint) => sprint.id === event.container.id
-				)
+				organizationSprint:
+					this.sprints.find(
+						(sprint) => sprint.id === event.container.id
+					) || null
 			});
 			transferArrayItem(
 				event.previousContainer.data,
