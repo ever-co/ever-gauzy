@@ -56,7 +56,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			projectId: [null],
 			taskId: [null],
 			kpiId: [''],
-			unit: ['']
+			unit: [KeyResultNumberUnitsEnum.ITEMS]
 		});
 
 		await this.getKPI();
