@@ -36,6 +36,7 @@ import { Contact } from '../contact/contact.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { Employee } from '../employee/employee.entity';
+import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 
 @Entity('organization')
 export class Organization extends TenantBase implements IOrganization {
@@ -348,4 +349,15 @@ export class Organization extends TenantBase implements IOrganization {
 	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.organization)
 	@JoinColumn()
 	organizationSprints?: OrganizationSprint[];
+
+	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
+	@OneToMany(
+		(type) => InvoiceEstimateHistory,
+		(invoiceEstimateHistory) => invoiceEstimateHistory.organization,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	invoiceEstimateHistories?: InvoiceEstimateHistory[];
 }

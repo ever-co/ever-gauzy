@@ -112,6 +112,7 @@ import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipme
 import { GoalTemplateModule } from './goal-template/goal-template.module';
 import { KeyresultTemplateModule } from './keyresult-template/keyresult-template.module';
 import * as moment from 'moment';
+import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 
 @Module({
 	imports: [
@@ -439,6 +440,10 @@ import * as moment from 'moment';
 					{
 						path: '/key-result-updates',
 						module: KeyResultUpdateModule
+					},
+					{
+						path: '/invoice-estimate-history',
+						module: InvoiceEstimateHistoryModule
 					}
 				]
 			}
@@ -516,6 +521,7 @@ import * as moment from 'moment';
 		PipelineModule,
 		StageModule,
 		DealModule,
+		InvoiceEstimateHistoryModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({

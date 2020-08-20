@@ -26,6 +26,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ngx-payments',
@@ -46,7 +47,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 		this.setView();
@@ -160,6 +162,17 @@ export class PaymentsComponent extends TranslationBaseComponent
 			result['organizationId'] = this.organization.id;
 			await this.paymentService.add(result);
 			await this.loadSettings();
+			if (result.invoice) {
+				await this.invoiceEstimateHistoryService.add({
+					action: `Payment of ${result.amount} ${result.currency} added`,
+					invoice: result.invoice,
+					invoiceId: result.invoice.id,
+					user: this.store.user,
+					userId: this.store.userId,
+					organization: this.organization,
+					organizationId: this.organization.id
+				});
+			}
 		}
 	}
 
@@ -181,6 +194,15 @@ export class PaymentsComponent extends TranslationBaseComponent
 		if (result) {
 			await this.paymentService.update(result.id, result);
 			await this.loadSettings();
+			await this.invoiceEstimateHistoryService.add({
+				action: `Payment edited`,
+				invoice: result.invoice,
+				invoiceId: result.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
 		}
 	}
 
@@ -193,6 +215,15 @@ export class PaymentsComponent extends TranslationBaseComponent
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
 			this.loadSettings();
+			await this.invoiceEstimateHistoryService.add({
+				action: `Payment deleted`,
+				invoice: result.invoice,
+				invoiceId: result.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
 			this.toastrService.primary(
 				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')

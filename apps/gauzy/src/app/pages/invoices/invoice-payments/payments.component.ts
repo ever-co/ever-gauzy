@@ -14,6 +14,8 @@ import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/payment/generate-pdf';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
+import { Store } from '../../../@core/services/store.service';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 export interface SelectedPayment {
 	data: Payment;
@@ -33,7 +35,9 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private dialogService: NbDialogService,
 		private paymentService: PaymentService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private store: Store,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 	}
@@ -130,6 +134,15 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				+this.invoice.totalValue,
 				this.totalPaid
 			);
+			await this.invoiceEstimateHistoryService.add({
+				action: `Payment of ${result.amount} ${result.currency} added`,
+				invoice: result.invoice,
+				invoiceId: result.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.invoice.fromOrganization,
+				organizationId: this.invoice.fromOrganization.id
+			});
 		}
 	}
 
@@ -151,6 +164,15 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				+this.invoice.totalValue,
 				this.totalPaid
 			);
+			await this.invoiceEstimateHistoryService.add({
+				action: `Payment edited`,
+				invoice: result.invoice,
+				invoiceId: result.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.invoice.fromOrganization,
+				organizationId: this.invoice.fromOrganization.id
+			});
 		}
 	}
 
@@ -167,6 +189,16 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				+this.invoice.totalValue,
 				this.totalPaid
 			);
+
+			await this.invoiceEstimateHistoryService.add({
+				action: `Payment deleted`,
+				invoice: result.invoice,
+				invoiceId: result.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.invoice.fromOrganization,
+				organizationId: this.invoice.fromOrganization.id
+			});
 
 			this.toastrService.primary(
 				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),

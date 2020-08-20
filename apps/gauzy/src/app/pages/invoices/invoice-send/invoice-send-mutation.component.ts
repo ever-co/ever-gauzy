@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { Invoice, Tag, InvoiceStatusTypesEnum } from '@gauzy/models';
 import { InvoicesService } from '../../../@core/services/invoices.service';
+import { Store } from '../../../@core/services/store.service';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ga-invoice-send',
@@ -20,7 +22,9 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 		protected dialogRef: NbDialogRef<InvoiceSendMutationComponent>,
 		private invoicesService: InvoicesService,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -41,6 +45,18 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 			status: InvoiceStatusTypesEnum.SENT
 		});
 		this.dialogRef.close();
+
+		await this.invoiceEstimateHistoryService.add({
+			action: this.isEstimate
+				? `Estimate sent to ${this.invoice.toContact.name}`
+				: `Invoice sent to ${this.invoice.toContact.name}`,
+			invoice: this.invoice,
+			invoiceId: this.invoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.invoice.fromOrganization,
+			organizationId: this.invoice.fromOrganization.id
+		});
 
 		this.toastrService.primary(
 			this.isEstimate
