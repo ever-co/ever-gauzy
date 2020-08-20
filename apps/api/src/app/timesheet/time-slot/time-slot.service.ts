@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, Between, In } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { TimeSlot } from '../time-slot.entity';
-import { moment } from '../../core/moment';
+import { moment } from '../../core/moment-extend';
 import * as _ from 'underscore';
 import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
