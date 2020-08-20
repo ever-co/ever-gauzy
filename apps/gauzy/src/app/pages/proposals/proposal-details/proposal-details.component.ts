@@ -24,7 +24,6 @@ export class ProposalDetailsComponent implements OnInit {
 
 	ngOnInit() {
 		this.proposal = this.store.selectedProposal;
-		console.log(this.proposal);
 
 		if (!this.proposal) {
 			this.router.navigate([`/pages/sales/proposals`]);
