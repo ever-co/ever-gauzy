@@ -124,7 +124,9 @@ services:
             - db
         links:
             - db:${DB_HOST:-db}
-        volumes:            
+        entrypoint: './entrypoint'
+        command: ['pm2-runtime', 'main.js']
+        volumes:
             - webapp_node_modules:/srv/gauzy/node_modules
             - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
@@ -146,7 +148,9 @@ services:
         depends_on:
             - db
             - api
-        volumes:            
+        entrypoint: './entrypoint'
+        command: ['nginx', '-g', 'daemon off;']
+        volumes:
             - webapp_node_modules:/srv/gauzy/node_modules
         ports:
             - 4200:${HOST:-4200}
