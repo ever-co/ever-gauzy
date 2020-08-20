@@ -48,3 +48,8 @@ build execute app
 ```bash
 build:desktop:windows:quick
 ```
+
+```bash
+- delete app data
+$ rm -rf ~/Library/Application Support/gauzy-desktop
+```
