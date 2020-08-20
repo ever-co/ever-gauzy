@@ -172,6 +172,7 @@
 			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
+			"TIME_FORMAT": "Time Format",
 			"COUNTRY": "Country",
 			"CITY": "City",
 			"ADDRESS": "Address",
@@ -1229,6 +1230,8 @@
 			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
 			"PUBLIC_PAGE_EDIT": "Edit Organization Public Page",
 			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
+			"EVENT_TYPES_VIEW": "View Event Types",
+			"TIME_OFF_EDIT": "Edit Time Off",
 			"GROUPS": {
 				"GENERAL": "General",
 				"ADMINISTRATION": "Administration"
