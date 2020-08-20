@@ -6,7 +6,7 @@ import { map, takeUntil } from 'rxjs/operators';
 
 import { OrganizationSprint, OrganizationProjects } from '@gauzy/models';
 import { SprintStoreService } from '../../../../../../../@core/services/organization-sprint-store.service';
-import { ItemActionType } from 'apps/gauzy/src/app/@shared/components/editable-grid/gauzy-editable-grid.component';
+import { ItemActionType } from '../../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
 
 @Component({
 	selector: 'ngx-tasks-sprint-settings-view',

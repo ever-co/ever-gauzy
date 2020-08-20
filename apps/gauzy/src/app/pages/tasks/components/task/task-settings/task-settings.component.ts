@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Task, OrganizationProjects, TaskListTypeEnum } from '@gauzy/models';
 import { Observable } from 'rxjs';
-import { map, tap, switchMap, filter, take } from 'rxjs/operators';
+import { map, tap, switchMap, take } from 'rxjs/operators';
 import { TasksStoreService } from '../../../../../@core/services/tasks-store.service';
 import { ActivatedRoute } from '@angular/router';
 
@@ -29,7 +29,7 @@ export class TaskSettingsComponent {
 							({ projectId }: Task) =>
 								projectId === currentProjectId
 						);
-						if (!!projectTasks && !!projectTasks.length) {
+						if (projectTasks.length > 0) {
 							return {
 								...projectTasks[0].project,
 								tasks: projectTasks

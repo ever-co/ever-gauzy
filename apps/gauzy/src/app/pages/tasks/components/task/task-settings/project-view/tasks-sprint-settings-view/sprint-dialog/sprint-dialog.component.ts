@@ -60,7 +60,11 @@ export class SprintDialogComponent implements OnInit {
 					.toDate()
 			];
 		}
-		return [moment(this.sprintData?.endDate).toDate()];
+		return [
+			moment(this.sprintData?.endDate)
+				.add(this.defaults.length, 'days')
+				.toDate()
+		];
 	}
 
 	initForm(): void {

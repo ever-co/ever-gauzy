@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { OrganizationProjects, TaskListTypeEnum } from '@gauzy/models';
-import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { OrganizationProjectsService } from '../../../../../../@core/services/organization-projects.service';
+import { Store } from '../../../../../../@core/services/store.service';
 
 export interface TaskViewMode {
 	type: TaskListTypeEnum;
