@@ -172,6 +172,7 @@
 			"PROFILE_LINK": "Ссылка на профиль",
 			"START_WEEK_ON": "Начало недели в",
 			"TAX_ID": "Налог ID",
+			"TIME_FORMAT": "Формат времени",
 			"COUNTRY": "Страна",
 			"CITY": "Город",
 			"ADDRESS": "Адрес",
@@ -1229,6 +1230,8 @@
 			"ORG_HELP_CENTER_EDIT": "Редактировать справочный центр организации",
 			"PUBLIC_PAGE_EDIT": "Изменить публичную страницу организации",
 			"CAN_APPROVE_TIMESHEET": "Одобрить график работы",
+			"EVENT_TYPES_VIEW": "Типы событий",
+			"TIME_OFF_EDIT": "Редактировать время выкл",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
