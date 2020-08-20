@@ -254,7 +254,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							const project = this.projects.find(
 								(p) => p.id === cell
 							);
-							return `${project.name}`;
+							if (project) {
+								return `${project.name}`;
+							}
 						}
 					}
 				};
@@ -272,7 +274,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					valuePrepareFunction: (cell) => {
 						if (this.tasks) {
 							const task = this.tasks.find((t) => t.id === cell);
-							return `${task.title}`;
+							if (task) {
+								return `${task.title}`;
+							}
 						}
 					}
 				};
@@ -292,7 +296,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							const product = this.products.find(
 								(p) => p.id === cell
 							);
-							return `${product.name}`;
+							if (product) {
+								return `${product.name}`;
+							}
 						}
 					}
 				};
@@ -312,7 +318,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							const expense = this.expenses.find(
 								(e) => e.id === cell
 							);
-							return `${expense.purpose}`;
+							if (expense) {
+								return `${expense.purpose}`;
+							}
 						}
 					}
 				};
