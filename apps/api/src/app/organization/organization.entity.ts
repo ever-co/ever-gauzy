@@ -26,7 +26,9 @@ import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	Organization as IOrganization,
-	WeekDaysEnum
+	WeekDaysEnum,
+	MinimumProjectSizeEnum,
+	CurrencyPosition
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
@@ -191,6 +193,11 @@ export class Organization extends TenantBase implements IOrganization {
 	@Column({ nullable: true })
 	numberFormat?: string;
 
+	@ApiProperty({ type: String, enum: MinimumProjectSizeEnum })
+	@IsEnum(BonusTypeEnum)
+	@Column({ nullable: true })
+	minimumProjectSize?: string;
+
 	@ApiProperty({ type: String, enum: BonusTypeEnum })
 	@IsEnum(BonusTypeEnum)
 	@Column({ nullable: true })
@@ -242,6 +249,11 @@ export class Organization extends TenantBase implements IOrganization {
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_clients_count?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_clients?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
@@ -360,4 +372,22 @@ export class Organization extends TenantBase implements IOrganization {
 	)
 	@JoinColumn()
 	invoiceEstimateHistories?: InvoiceEstimateHistory[];
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	website?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	fiscalInformation?: string;
+
+	@ApiPropertyOptional({ type: String, enum: CurrencyPosition })
+	@IsEnum(CurrencyPosition)
+	@IsOptional()
+	@Column({ default: 'LEFT' })
+	currencyPosition?: string;
 }

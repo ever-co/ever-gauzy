@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Country, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationEditStore } from '../../../../@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
 import { OrganizationsService } from '../../../../@core/services/organizations.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -27,7 +27,7 @@ export enum ListsInputType {
 })
 export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	implements OnInit {
-	organization: Organization;
+	@Input() organization: Organization;
 
 	departments: string[] = [];
 	positions: string[] = [];
@@ -55,7 +55,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngOnDestroy$))
 			.subscribe((params) => {
 				this.routeParams = params;
-				this._loadOrganization(params.id);
 			});
 
 		this.loadTabs();
@@ -87,21 +86,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('settings')
 			}
 		];
-	}
-
-	private async _loadOrganization(id: string) {
-		try {
-			this.organization = await this.organizationService
-				.getById(id, null, ['tags'])
-				.pipe(first())
-				.toPromise();
-			this.organizationEditStore.selectedOrganization = this.organization;
-		} catch (error) {
-			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
-			);
-		}
 	}
 
 	private _applyTranslationOnTabs() {

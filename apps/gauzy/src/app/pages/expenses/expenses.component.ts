@@ -162,7 +162,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
-		this.expenseCategoriesStore.loadAll();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
@@ -266,10 +265,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 			typeOfExpense: formData.typeOfExpense,
 			organizationContactId:
 				formData.organizationContact.organizationContactId,
-			organizationContactName:
-				formData.organizationContact.organizationContactName,
+			organizationContactName: formData.organizationContact.name,
 			projectId: formData.project.projectId,
-			projectName: formData.project.projectName,
+			projectName: formData.project.name,
 			valueDate: formData.valueDate,
 			notes: formData.notes,
 			currency: formData.currency,
@@ -299,11 +297,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-
-			this._loadTableData();
-			this.store.selectedEmployee = formData.employee
-				? formData.employee
-				: null;
+			this._loadTableData(
+				this.selectedEmployeeId,
+				this.selectedEmployeeId ? null : this._selectedOrganizationId
+			);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -320,7 +317,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 				if (formData) {
 					const completedForm = this.getFormData(formData);
 					this.addExpense(completedForm, formData);
-					this.expenseCategoriesStore.loadAll();
 				}
 			});
 	}
@@ -344,7 +340,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 					try {
 						await this.expenseService.update(formData.id, {
 							...this.getFormData(formData),
-							employeeId: this.selectedExpense.employee.id
+							employeeId: this.selectedExpense.employee
+								? this.selectedExpense.employee.id
+								: null
 						});
 						this.toastrService.primary(
 							this.getTranslation(
@@ -417,7 +415,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 					try {
 						await this.expenseService.delete(
 							this.selectedExpense.id,
-							this.selectedExpense.employee.id
+							this.selectedExpense.employee
+								? this.selectedExpense.employee.id
+								: null
 						);
 						this.toastrService.primary(
 							this.getTranslation(
@@ -464,7 +464,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 					id: orgId
 				}
 			};
-
 			this.smartTableSettings['columns']['employeeName'] = {
 				title: 'Employee',
 				type: 'string',
@@ -484,7 +483,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 					id: employeeId
 				}
 			};
-
 			delete this.smartTableSettings['columns']['employee'];
 		}
 

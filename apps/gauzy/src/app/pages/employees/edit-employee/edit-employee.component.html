@@ -43,32 +43,6 @@
 						<strong>{{ selectedEmployee.user.email }}</strong>
 					</div>
 				</div>
-				<div
-					*ngIf="hasEditPermission"
-					class="employee-details edit-icon"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="36"
-						height="36"
-						viewBox="0 0 36 36"
-					>
-						<circle
-							cx="18"
-							cy="18"
-							r="18"
-							fill="#0091FF"
-							fill-rule="evenodd"
-						/>
-					</svg>
-					<nb-icon
-						class="ml-2 open"
-						icon="edit-outline"
-						(click)="editEmployee()"
-						[options]="{ color: 'white' }"
-					>
-					</nb-icon>
-				</div>
 			</div>
 		</div>
 
@@ -77,57 +51,6 @@
 		</ng-template>
 	</nb-card-header>
 	<nb-card-body
-		class="settings-body"
-		*ngIf="
-			selectedDate &&
-			selectedEmployeeFromHeader &&
-			selectedEmployeeFromHeader.id
-		"
-	>
-		<div class="body-header">
-			<div>
-				<span class="setting-name">
-					{{ 'POP_UPS.RECURRING_EXPENSES' | translate }}
-				</span>
-			</div>
-			<div *ngIf="hasEditPermission || hasEditExpensePermission">
-				<button
-					(click)="addEmployeeRecurringExpense()"
-					nbButton
-					status="success"
-				>
-					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-					>{{ 'BUTTONS.ADD' | translate }}
-				</button>
-			</div>
-		</div>
-
-		<div class="sub-header header-content">
-			<div class="row header-info">
-				<div class="col">
-					{{ 'POP_UPS.CATEGORY_NAME' | translate }}
-				</div>
-				<div class="col">
-					{{ 'Starts On' }}
-				</div>
-				<div class="col">
-					{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
-				</div>
-			</div>
-		</div>
-
-		<ga-recurring-expense-block
-			*ngFor="
-				let expense of selectedEmployeeRecurringExpense;
-				let i = index
-			"
-			(editRecurringExpense)="editEmployeeRecurringExpense(i)"
-			(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
-			(fetchRecurringExpenseHistory)="fetchHistory(i)"
-			[fetchedHistories]="fetchedHistories[i]"
-			[recurringExpense]="expense"
-			[selectedOrganization]="selectedOrganization"
-		>
-		</ga-recurring-expense-block>
+		><ngx-edit-employee-profile></ngx-edit-employee-profile>
 	</nb-card-body>
 </nb-card>

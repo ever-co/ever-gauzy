@@ -318,6 +318,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Recurring Expenses',
+					icon: 'flip-outline',
+					link: '/pages/employees/recurring-expenses',
+					data: {
+						translationKey: 'MENU.RECURRING_EXPENSE'
+					}
+				},
+				{
 					title: 'Candidates',
 					icon: 'person-done-outline',
 					link: '/pages/employees/candidates',

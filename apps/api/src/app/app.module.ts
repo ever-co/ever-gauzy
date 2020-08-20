@@ -434,6 +434,10 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 						module: GoalKpiModule
 					},
 					{
+						path: '/goal-templates',
+						module: GoalTemplateModule
+					},
+					{
 						path: '/key-results',
 						module: KeyResultModule
 					},
@@ -441,6 +445,10 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 						path: '/key-result-updates',
 						module: KeyResultUpdateModule
 					},
+          {
+            path: '/key-result-templates',
+						module: KeyresultTemplateModule
+          },
 					{
 						path: '/invoice-estimate-history',
 						module: InvoiceEstimateHistoryModule

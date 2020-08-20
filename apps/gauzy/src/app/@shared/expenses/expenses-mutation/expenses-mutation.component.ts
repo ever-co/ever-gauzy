@@ -16,7 +16,8 @@ import {
 	Tag,
 	OrganizationContact,
 	OrganizationProjects,
-	ExpenseStatusesEnum
+	ExpenseStatusesEnum,
+	ContactType
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -59,11 +60,13 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	expenseStatuses = Object.values(ExpenseStatusesEnum);
 	expenseCategories: IOrganizationExpenseCategory[];
 	vendors: IOrganizationVendor[];
+	organizationContact: OrganizationContact;
 	organizationContacts: {
-		organizationContactName: string;
+		name: string;
 		organizationContactId: string;
 	}[] = [];
-	projects: { projectName: string; projectId: string }[] = [];
+	project: OrganizationProjects;
+	projects: { name: string; projectId: string }[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
 	calculatedValue = '0';
 	duplicate: boolean;
@@ -124,6 +127,13 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			}
 		);
 		this.vendors = vendors;
+	}
+
+	selectOrganizationContact($event) {
+		this.organizationContact = $event;
+	}
+	selectProject($event) {
+		this.project = $event;
 	}
 
 	async addOrEditExpense() {
@@ -220,6 +230,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			);
 			return this.organizationContactService.create({
 				name,
+				contactType: ContactType.CLIENT,
 				organizationId: this.organizationId
 			});
 		} catch (error) {
@@ -350,7 +361,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		if (res) {
 			res.items.forEach((organizationContact) => {
 				this.organizationContacts.push({
-					organizationContactName: organizationContact.name,
+					name: organizationContact.name,
 					organizationContactId: organizationContact.id
 				});
 			});
@@ -368,7 +379,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		if (res) {
 			res.items.forEach((project) => {
 				this.projects.push({
-					projectName: project.name,
+					name: project.name,
 					projectId: project.id
 				});
 			});

@@ -34,6 +34,7 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { ColorPickerModule } from 'ngx-color-picker';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -49,6 +50,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbInputModule,
 		NbIconModule,
 		TagsColorInputModule,
+		ColorPickerModule,
 		NbActionsModule,
 		TableComponentsModule,
 		ProjectsRoutingModule,

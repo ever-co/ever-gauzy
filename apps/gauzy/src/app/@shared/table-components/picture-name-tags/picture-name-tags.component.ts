@@ -24,7 +24,10 @@ import { ComponentLayoutStyleEnum } from '@gauzy/models';
 				{{ rowData.name }}
 			</div>
 		</div>
-		<div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}">
+		<div
+			*ngIf="isTags"
+			class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
+		>
 			<nb-badge
 				*ngFor="let tag of rowData?.tags"
 				class="color"
@@ -72,6 +75,9 @@ import { ComponentLayoutStyleEnum } from '@gauzy/models';
 export class PictureNameTagsComponent implements ViewCell {
 	@Input()
 	rowData: any;
+
+	@Input()
+	isTags = true;
 
 	@Input()
 	value: string | number;

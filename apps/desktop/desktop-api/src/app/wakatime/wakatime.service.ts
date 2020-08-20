@@ -1,14 +1,16 @@
+import * as moment from 'moment';
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Wakatime } from './wakatime.entity';
-import * as moment from 'moment';
+
 @Injectable()
 export class WakatimeService {
 	constructor(
 		@InjectRepository(Wakatime)
 		private wakatimeRepository: Repository<Wakatime>
 	) {}
+
 	async getSummaries(params): Promise<any> {
 		const result = await this.wakatimeRepository
 			.query(`SELECT SUM(seconds) as seconds from (
@@ -82,6 +84,7 @@ export class WakatimeService {
 				user_agent: this._extractAgent(element.user_agent, 'agents')
 			});
 		});
+
 		if (params.length > 1) {
 			return this.bulkSave(params);
 		} else {

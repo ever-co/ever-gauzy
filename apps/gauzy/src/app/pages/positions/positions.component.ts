@@ -4,14 +4,17 @@ import {
 	Tag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { LocalDataSource } from 'ng2-smart-table';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
 	selector: 'ga-positions',
@@ -27,15 +30,20 @@ export class PositionsComponent extends TranslationBaseComponent
 	showEditDiv: boolean;
 	positionsExist: boolean;
 	tags: Tag[] = [];
+	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly toastrService: NbToastrService,
 		private readonly store: Store,
+		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+		this.setView();
 	}
 	ngOnInit(): void {
 		this.store.selectedOrganization$
@@ -44,23 +52,55 @@ export class PositionsComponent extends TranslationBaseComponent
 				if (organization) {
 					this.organizationId = organization.id;
 					this.loadPositions();
+					this.loadSmartTable();
+					this._applyTranslationOnSmartTable();
 				}
 			});
 	}
-	async removePosition(id: string, name: string) {
-		await this.organizationPositionsService.delete(id);
-
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.REMOVE_POSITION',
-				{
-					name: name
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				name: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
 				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+			}
+		};
+	}
+	async removePosition(id: string, name: string) {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Employee level'
+				}
+			})
+			.onClose.pipe(first())
+			.toPromise();
 
-		this.loadPositions();
+		if (result) {
+			await this.organizationPositionsService.delete(id);
+
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.REMOVE_POSITION',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.loadPositions();
+		}
+	}
+	edit(position: OrganizationPositions) {
+		this.showAddCard = true;
+		this.isGridEdit = true;
+		this.selectedPosition = position;
+		this.tags = position.tags;
 	}
 	setView() {
 		this.viewComponentName = ComponentEnum.POSITIONS;
@@ -69,7 +109,18 @@ export class PositionsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+				this.selectedPosition =
+					this.dataLayoutStyle === 'CARDS_GRID'
+						? null
+						: this.selectedPosition;
 			});
+	}
+	save(name: string) {
+		if (this.isGridEdit) {
+			this.editPosition(this.selectedPosition.id, name);
+		} else {
+			this.addPosition(name);
+		}
 	}
 	async editPosition(id: string, name: string) {
 		await this.organizationPositionsService.update(id, {
@@ -78,8 +129,7 @@ export class PositionsComponent extends TranslationBaseComponent
 		});
 		this.loadPositions();
 		this.toastrService.success('Successfully updated');
-		this.showEditDiv = !this.showEditDiv;
-		this.tags = [];
+		this.cancel();
 	}
 	private async addPosition(name: string) {
 		if (name) {
@@ -99,8 +149,8 @@ export class PositionsComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
-			this.showAddCard = !this.showAddCard;
 			this.loadPositions();
+			this.cancel();
 		} else {
 			// TODO translate
 			this.toastrService.danger(
@@ -114,8 +164,11 @@ export class PositionsComponent extends TranslationBaseComponent
 		}
 	}
 	cancel() {
-		this.showEditDiv = !this.showEditDiv;
+		this.showEditDiv = false;
+		this.showAddCard = false;
 		this.selectedPosition = null;
+		this.isGridEdit = false;
+		this.tags = [];
 	}
 	showEditCard(position: OrganizationPositions) {
 		this.tags = position.tags;
@@ -132,6 +185,7 @@ export class PositionsComponent extends TranslationBaseComponent
 		);
 		if (res) {
 			this.positions = res.items;
+			this.smartTableSource.load(res.items);
 
 			if (this.positions.length <= 0) {
 				this.positionsExist = false;
@@ -142,5 +196,10 @@ export class PositionsComponent extends TranslationBaseComponent
 	}
 	selectedTagsEvent(ev) {
 		this.tags = ev;
+	}
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 }

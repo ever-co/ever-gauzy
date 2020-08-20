@@ -17,7 +17,8 @@ import {
 	Tag,
 	Expense,
 	ExpenseTypesEnum,
-	ExpenseStatusesEnum
+	ExpenseStatusesEnum,
+	ContactType
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -1082,6 +1083,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			);
 			return this.organizationContactService.create({
 				name,
+				contactType: ContactType.CLIENT,
 				organizationId: this.organizationId
 			});
 		} catch (error) {

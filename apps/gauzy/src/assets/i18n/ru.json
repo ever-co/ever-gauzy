@@ -153,6 +153,7 @@
 		"EMAIL": "Эл. адрес",
 		"LABELS": {
 			"NAME": "Имя",
+			"WEBSITE": "Сайт",
 			"FIRST_NAME": "Имя (необязательно)",
 			"LAST_NAME": "Фамилия (необязательно)",
 			"FROM": "От",
@@ -257,6 +258,12 @@
 			"PICK_DATE": "Выбрать дату",
 			"DATE_TYPE": "Все типы даты",
 			"BILLING": "Биллинг",
+			"BILLABLE": "Оплачиваемый",
+			"CODE": "Код",
+			"COLOR": "Цвет",
+			"WEBSITE": "Сайт",
+			"CURRENCY_POSITION": "Позиция валюты",
+			"FISCAL_INFORMATION": "Фискальная информация",
 			"IMAGE_URL": "Изображение",
 			"ADD_DEPARTMENT": "Добавить департамент",
 			"ADD_POSITION": "Добавить позицию",
@@ -405,8 +412,10 @@
 		}
 	},
 	"POP_UPS": {
+		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"ADD_INCOME": "Добавить доход",
 		"ADD_EXPENSE": "Добавить расходы",
+		"EMPLOYEE": "Сотрудник",
 		"EDIT_INCOME": "Изменить доход",
 		"EDIT_EXPENSE": "Изменить Расход",
 		"EDIT_PAGE": "Изменить страницу",
@@ -478,7 +487,9 @@
 		"SHOW_ANONYMOUS_BONUS": "Показать анонимный бонус",
 		"SHOW_AVERAGE_EXPENSES": "Показать средние расходы",
 		"SHOW_BILLRATE": "Показать процент счёта",
-		"SHOW_START_WORK_ON": "Показать начатую работу на"
+		"SHOW_START_WORK_ON": "Показать начатую работу на",
+		"SHOW_CLIENTS": "Показать клиентов",
+		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -487,6 +498,7 @@
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
+		"RECURRING_EXPENSE": "Периодические расходы",
 		"POSITIONS": "Позиции",
 		"INTEGRATIONS": "Интеграции",
 		"UPWORK": "Обновления",
@@ -683,7 +695,7 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Затраты",
 		"MUTATION": {
-			"CONTACT_IS_REQUIRED!": "Требуется контакт!",
+			"CONTACT_IS_REQUIRED": "Требуется контакт!",
 			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Пожалуйста, выберите контакт из выпадающего меню ниже или измените тип расходов.",
 			"ASSIGN_TO": "Назначить",
 			"INCLUDE_TAXES": "Включить налоги",
@@ -1088,7 +1100,7 @@
 		"ROLES": "Роли",
 		"HELP_CENTER": "Центр поддержки",
 		"DOCUMENTS": "Документы",
-		"EXPENSE_RECURRING": "Повторяющиеся расходы",
+		"EXPENSE_RECURRING": "Периодические расходы",
 		"RECURRING_EXPENSE": "Организационные периодические расходы",
 		"EMPLOYMENT_TYPES": "Типы занятости",
 		"INVITE_CONTACT": "Пригласить контакт",
@@ -1104,6 +1116,7 @@
 		"EXPENSE_NAME": "Имя Расхода",
 		"EMPLOYMENT_TYPE_NAME": "Название типа занятости",
 		"CONTACTS": "Контакты",
+		"LEVEL": "Уровень",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -1116,6 +1129,12 @@
 			"CITY": "Город",
 			"STREET": "Улица",
 			"PROJECTS": "Проекты",
+			"FAX": "Факс",
+			"FISCAL_INFORMATION": "Фискальная информация",
+			"WEBSITE": "Сайт",
+			"SECOND_ADDRESS": "Улица 2",
+			"IMAGE_URL": "URL изображения",
+			"POSTCODE": "Почтовый индекс",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
 			"NEW_PROJECT": "Добавить новый проект",
@@ -1265,7 +1284,8 @@
 		"AVERAGE_INCOME": "Средний доход",
 		"EMPLOYEE_UPDATED": "Сотрудник обновлен.",
 		"IMAGE_UPDATED": "Изображение обновлено.",
-		"FAIL_TO_UPDATE_IMAGE": "Не удалось обновить."
+		"FAIL_TO_UPDATE_IMAGE": "Не удалось обновить.",
+		"ANONYMOUS": "Анонимный"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
@@ -2284,6 +2304,8 @@
 			"timesheet-submit": "Сроки представления",
 			"timesheet-action": "Действия по расписанию",
 			"timesheet-delete": "Удалить лист времени",
+			"time-off-report-action": "Действия по ограничению времени",
+			"task-update": "Обновление задачи",
 			"candidate-schedule-interview": "Расписание интервью Кандидата",
 			"interviewer-interview-schedule": "Расписание интервьюера"
 		},

@@ -201,7 +201,8 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 		this.tags = [];
 	}
 	cancel() {
-		this.showEditDiv = !this.showEditDiv;
+		this.showEditDiv = false;
+		this.showAddCard = false;
 		this.selectedOrgEmpType = null;
 		this.form.reset();
 		this.tags = [];

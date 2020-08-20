@@ -153,6 +153,7 @@
 		"EMAIL": "Email",
 		"LABELS": {
 			"NAME": "Name",
+			"WEBSITE": "Website",
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
 			"FROM": "From",
@@ -257,6 +258,12 @@
 			"PICK_DATE": "Pick a Date",
 			"DATE_TYPE": "All Date Types",
 			"BILLING": "Billing",
+			"BILLABLE": "Billable",
+			"CODE": "Code",
+			"COLOR": "Color",
+			"WEBSITE": "Website",
+			"CURRENCY_POSITION": "Currency Position",
+			"FISCAL_INFORMATION": "Fiscal Information",
 			"IMAGE_URL": "Image",
 			"ADD_DEPARTMENT": "Add Department",
 			"ADD_POSITION": "Add position",
@@ -405,8 +412,10 @@
 		}
 	},
 	"POP_UPS": {
+		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
 		"ADD_INCOME": "Add Income",
 		"ADD_EXPENSE": "Add Expense",
+		"EMPLOYEE": "Employee",
 		"EDIT_INCOME": "Edit Income",
 		"EDIT_EXPENSE": "Edit Expense",
 		"EDIT_PAGE": "Edit Page",
@@ -478,7 +487,9 @@
 		"SHOW_ANONYMOUS_BONUS": "Show Anonymous Bonus",
 		"SHOW_AVERAGE_EXPENSES": "Show Average Expenses",
 		"SHOW_BILLRATE": "Show Bill Rate",
-		"SHOW_START_WORK_ON": "Show Started Work On"
+		"SHOW_START_WORK_ON": "Show Started Work On",
+		"SHOW_CLIENTS": "Show Clients",
+		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -487,6 +498,7 @@
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
+		"RECURRING_EXPENSE": "Recurring Expenses",
 		"POSITIONS": "Positions",
 		"INTEGRATIONS": "Integrations",
 		"UPWORK": "Upwork",
@@ -683,7 +695,7 @@
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Expenses",
 		"MUTATION": {
-			"CONTACT_IS_REQUIRED!": "Contact is required!",
+			"CONTACT_IS_REQUIRED": "Contact is required!",
 			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
@@ -1088,7 +1100,7 @@
 		"ROLES": "Roles",
 		"HELP_CENTER": "Help Center",
 		"DOCUMENTS": "Documents",
-		"EXPENSE_RECURRING": "Expense Recurring",
+		"EXPENSE_RECURRING": "Recurring Expenses",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CONTACT": "Invite Contact",
@@ -1104,6 +1116,7 @@
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"CONTACTS": "Contacts",
+		"LEVEL": "Level",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "Client",
@@ -1116,6 +1129,12 @@
 			"CITY": "City",
 			"STREET": "Street",
 			"PROJECTS": "Projects",
+			"FAX": "Fax",
+			"FISCAL_INFORMATION": "Fiscal Information",
+			"WEBSITE": "Website",
+			"SECOND_ADDRESS": "Street 2",
+			"IMAGE_URL": "Image URL",
+			"POSTCODE": "Postcode",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
 			"NEW_PROJECT": "Add new project",
@@ -1265,7 +1284,8 @@
 		"AVERAGE_INCOME": "Average Income",
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
-		"FAIL_TO_UPDATE_IMAGE": "Update failed."
+		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
+		"ANONYMOUS": "Anonymous"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -2284,6 +2304,8 @@
 			"timesheet-submit": "Time Sheet Submit",
 			"timesheet-action": "Time Sheet Actions",
 			"timesheet-delete": "Time Sheet Delete",
+			"time-off-report-action": "Time off policy action",
+			"task-update": "Task Update",
 			"candidate-schedule-interview": "Candidate Interview Schedule",
 			"interviewer-interview-schedule": "Interviewer Schedule"
 		},

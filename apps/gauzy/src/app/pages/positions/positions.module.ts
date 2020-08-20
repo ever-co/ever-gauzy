@@ -18,6 +18,8 @@ import { OrganizationPositionsService } from '../../@core/services/organization-
 import { SharedModule } from '../../@shared/shared.module';
 import { PositionsRoutingModule } from './positions-routing.module';
 import { PositionsComponent } from './positions.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -35,6 +37,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TagsColorInputModule,
 		NbActionsModule,
 		TableComponentsModule,
+		CardGridModule,
+		Ng2SmartTableModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
 		NbActionsModule,

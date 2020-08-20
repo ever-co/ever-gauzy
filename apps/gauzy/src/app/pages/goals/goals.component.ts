@@ -22,6 +22,7 @@ import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { GoalLevelEnum } from '@gauzy/models';
 import { GoalSettingsService } from '../../@core/services/goal-settings.service';
+import { GoalTemplateSelectComponent } from '../../@shared/goal/goal-template-select/goal-template-select.component';
 
 @Component({
 	selector: 'ga-goals',
@@ -337,6 +338,22 @@ export class GoalsComponent extends TranslationBaseComponent
 			this.goalTimeFrames = [];
 		}
 		this.loading = false;
+	}
+
+	async createObjectiveFromTemplate() {
+		if (this.popover?.isShown) {
+			this.popover.hide();
+		}
+		const dialog = this.dialogService.open(GoalTemplateSelectComponent, {
+			context: {
+				orgId: this.selectedOrganizationId,
+				orgName: this.organizationName
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (response) {
+			this.loadPage();
+		}
 	}
 
 	async createObjective(goal, index) {

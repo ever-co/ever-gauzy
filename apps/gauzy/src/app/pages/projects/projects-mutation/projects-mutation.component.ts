@@ -48,6 +48,8 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	currencies: string[] = Object.values(CurrenciesEnum);
 	defaultCurrency: string;
 	public: Boolean = true;
+	billable: Boolean = true;
+	billingFlat: Boolean;
 	tags: Tag[] = [];
 	organizationId: string;
 	owners: string[] = Object.values(ProjectOwnerEnum);
@@ -105,7 +107,8 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		this.defaultCurrency = this.organization.currency || 'USD';
 		this.form = this.fb.group({
 			tags: [this.project ? (this.tags = this.project.tags) : ''],
-			public: this.project ? this.project.public : this.public,
+			public: [this.project ? this.project.public : this.public],
+			billable: [this.project ? this.project.billable : this.billable],
 			name: [this.project ? this.project.name : '', Validators.required],
 			organizationContact: [
 				this.project && this.project.organizationContact
@@ -126,12 +129,19 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			],
 			endDate: [this.project ? this.project.endDate : null],
 			owner: [this.project ? this.project.owner : 'CLIENT'],
-			taskViewMode: [this.project ? this.project.taskListType : 'GRID']
+			taskViewMode: [this.project ? this.project.taskListType : 'GRID'],
+			description: [this.project ? this.project.description : ''],
+			code: [this.project ? this.project.code : ''],
+			color: [this.project ? this.project.color : '']
 		});
 	}
 
 	togglePublic(state: boolean) {
 		this.public = state;
+	}
+
+	toggleBillable(state: boolean) {
+		this.billable = state;
 	}
 
 	onMembersSelected(members: string[]) {
@@ -149,11 +159,13 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 				project: {
 					tags: this.tags,
 					public: this.form.value['public'],
+					billable: this.form.value['billable'],
 					id: this.project ? this.project.id : undefined,
 					organizationId: this.organization.id,
 					name: this.form.value['name'],
-					organizationContact: this.form.value['organizationContact']
-						.organizationContactId,
+					organizationContactId: this.form.value[
+						'organizationContact'
+					].organizationContactId,
 					billing: this.form.value['billing'],
 					currency:
 						this.form.value['currency'] || this.defaultCurrency,
@@ -163,7 +175,15 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 					taskListType: this.form.value['taskViewMode'],
 					members: (this.members || this.selectedEmployeeIds || [])
 						.map((id) => this.employees.find((e) => e.id === id))
-						.filter((e) => !!e)
+						.filter((e) => !!e),
+					description: this.form.value['description'],
+					billingFlat:
+						this.form.value['billing'] === 'RATE' ||
+						this.form.value['billing'] === 'FLAT_FEE'
+							? true
+							: false,
+					code: this.form.value['code'],
+					color: this.form.value['color']
 				}
 			});
 			this.selectedEmployeeIds = [];

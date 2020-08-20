@@ -233,6 +233,13 @@ const routes: Routes = [
 							).then((m) => m.EmployeeLevelModule)
 					},
 					{
+						path: 'recurring-expenses',
+						loadChildren: () =>
+							import(
+								'./recurring-expense-employee/recurring-expense-employee.module'
+							).then((m) => m.RecurringExpensesEmployeeModule)
+					},
+					{
 						path: 'candidates',
 						loadChildren: () =>
 							import('./candidates/candidates.module').then(

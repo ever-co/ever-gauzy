@@ -1,106 +1,119 @@
 .setting-block {
-	&:hover {
-		box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
-		transform: translateY(-1px);
-	}
+  &:hover {
+    box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+    transform: translateY(-1px);
+  }
 
-	background-color: #f6f9fc;
-	border-radius: 4px 0 0 4px;
-	margin-bottom: 20px;
+  background-color: #f6f9fc;
+  border-radius: 4px 0 0 4px;
+  margin-bottom: 20px;
 
-	.setting-row {
-		display: flex;
-		justify-content: space-between;
-		width: 100%;
-		height: 84px;
-	}
+  .setting-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    height: 84px;
+  }
 
-	.setting-table {
-		border-top: 1px solid #ccc;
-	}
+  .setting-table {
+    border-top: 1px solid #ccc;
+  }
 
-	.block-settings {
-		display: flex;
-		align-items: center;
-		background-color: #333;
-		justify-content: space-evenly;
-		overflow: hidden;
-		transition: width 0.2s ease-in;
+  .block-settings {
+    display: flex;
+    align-items: center;
+    background-color: #333;
+    justify-content: space-evenly;
+    overflow: hidden;
+    transition: width 0.2s ease-in;
 
-		.single-setting {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			width: 30px;
-			cursor: pointer;
+    .single-setting {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 30px;
+      cursor: pointer;
 
-			::ng-deep svg {
-				fill: rgb(127, 127, 127);
-			}
+      ::ng-deep svg {
+        fill: rgb(127, 127, 127);
+      }
 
-			span {
-				color: #d7d9de;
-				font-size: 10px;
-				opacity: 0.6;
-			}
-		}
-	}
+      span {
+        color: #d7d9de;
+        font-size: 10px;
+        opacity: 0.6;
+      }
+    }
+  }
 }
 
 .block-content {
-	display: flex;
-	justify-content: space-between;
-	width: 100%;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 
-	.block-info {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		width: 560px;
-		padding-left: 30px;
+  .block-info {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 65rem;
+    padding-left: 30px;
+    .expense {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      .block-item {
+        width: 12rem;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+      }
+      .block-item-big {
+        width: 20.5rem;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+      }
+    }
+    span {
+      color: #18213a;
+      font-size: 16px;
+    }
 
-		.row {
-			width: 100%;
-		}
+    .block-amount {
+      text-align: center;
+      width: 130px;
+      color: #0091ff;
+      font-weight: bold;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      padding-right: 24px;
+      cursor: pointer;
+    }
+  }
 
-		span {
-			color: #18213a;
-			font-size: 16px;
-		}
+  .block-value {
+    display: flex;
+    justify-content: space-between;
+    width: 204px;
 
-		.block-amount {
-			text-align: center;
-			width: 130px;
-			color: #0091ff;
-			font-weight: bold;
-			font-size: 16px;
-			display: flex;
-			align-items: center;
-			padding-right: 24px;
-			cursor: pointer;
-		}
-	}
+    align-items: center;
+    padding-right: 30px;
 
-	.block-value {
-		display: flex;
-		justify-content: space-between;
-		width: 204px;
+    .hide-menu,
+    .block-actions.open {
+      cursor: pointer;
+      margin-left: auto;
+    }
 
-		align-items: center;
-		padding-right: 30px;
-
-		.hide-menu,
-		.block-actions.open {
-			cursor: pointer;
-			margin-left: auto;
-		}
-
-		small {
-			cursor: pointer;
-		}
-		svg {
-			width: 24px;
-			height: fit-content;
-		}
-	}
+    small {
+      cursor: pointer;
+    }
+    svg {
+      width: 24px;
+      height: fit-content;
+    }
+  }
 }
