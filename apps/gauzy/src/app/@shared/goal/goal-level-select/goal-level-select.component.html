@@ -101,6 +101,7 @@
 			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
 			<nb-select
+				formControlName="owner"
 				fullWidth
 				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
 			>
@@ -114,7 +115,7 @@
 
 	<div [ngClass]="{ row: enableHelperText }">
 		<div
-			*ngIf="parentFormGroup.value.level === goalLevelEnum.ORGANIZATION"
+			*ngIf="parentFormGroup?.value.level === goalLevelEnum.ORGANIZATION"
 			[ngClass]="{ 'col-md-7': enableHelperText }"
 			(mouseenter)="
 				enableHelperText ? (helperText = 'objective-owner') : null
@@ -123,10 +124,12 @@
 		>
 			<nb-select
 				fullWidth
+				formControlName="owner"
 				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
+				[(selected)]="orgId"
 				(selectedChange)="selectEmployee($event, 'owner')"
 			>
-				<nb-option [value]="orgId">
+				<nb-option [(value)]="orgId">
 					{{ orgName }}
 				</nb-option>
 			</nb-select>

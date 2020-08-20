@@ -77,7 +77,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			name: ['', Validators.required],
 			description: [''],
 			type: [this.keyResultTypeEnum.NUMERICAL, Validators.required],
-			unit: [''],
+			unit: [KeyResultNumberUnitsEnum.ITEMS],
 			targetValue: [1],
 			initialValue: [0],
 			owner: [null, Validators.required],

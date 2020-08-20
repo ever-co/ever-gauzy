@@ -47,7 +47,10 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 			newStatus: [KeyResultUpdateStatusEnum.ON_TRACK]
 		});
 		this.keyResultUpdateForm.patchValue({
-			newStatus: this.keyResult.status
+			newStatus:
+				this.keyResult.status === 'none'
+					? KeyResultUpdateStatusEnum.ON_TRACK
+					: this.keyResult.status
 		});
 		await this.getKPI();
 		if (

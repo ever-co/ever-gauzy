@@ -99,7 +99,7 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body *ngIf="!loading">
 		<div class="text-center p-5" *ngIf="noGoals == true">
 			<nb-alert outline="warning" fullWidth>
 				{{ 'GOALS_PAGE.GOALS_EMPTY' | translate }}
