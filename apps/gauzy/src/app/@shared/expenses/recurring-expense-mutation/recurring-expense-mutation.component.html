@@ -9,7 +9,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
-			<div class="row">
+			<div class="row" *ngIf="isAdd">
 				<div class="col-sm-12 mb-3">
 					<ga-employee-selector
 						#employeeSelector
