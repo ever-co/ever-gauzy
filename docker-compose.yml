@@ -122,12 +122,14 @@ services:
             DB_HOST: db
         env_file:
             - .env
+        entrypoint: './entrypoint'
+        command: ['pm2-runtime', 'main.js']
         restart: on-failure
         depends_on:
             - db
         links:
             - db:${DB_HOST:-db}
-        volumes:            
+        volumes:
             - webapp_node_modules:/srv/gauzy/node_modules
             - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
@@ -145,6 +147,8 @@ services:
                 API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
         environment:
             NODE_ENV: ${NODE_ENV:-development}
+        entrypoint: './entrypoint'
+        command: ['nginx', '-g', 'daemon off;']
         env_file:
             - .env
         restart: on-failure
@@ -154,7 +158,7 @@ services:
         depends_on:
             - db
             - api
-        volumes:            
+        volumes:
             - webapp_node_modules:/srv/gauzy/node_modules
         ports:
             - 4200:${HOST:-4200}

@@ -66,4 +66,3 @@ ENV API_PORT 3000
 
 EXPOSE ${PORT:-4200}
 CMD [ "nginx", "-g", "daemon off;" ]
-ENTRYPOINT [ "./entrypoint" ]
