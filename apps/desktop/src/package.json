@@ -54,7 +54,8 @@
 		"nsis": {
 			"createDesktopShortcut": "always",
 			"installerIcon": "icon.ico",
-			"artifactName": "Gauzy-${version}.${ext}"
+			"artifactName": "Gauzy-${version}.${ext}",
+			"deleteAppDataOnUninstall": true
 		},
 		"files": [
 			"./**/*",

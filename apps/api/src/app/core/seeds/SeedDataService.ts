@@ -1904,9 +1904,11 @@ export class SeedDataService {
 		try {
 			for (const entity of entities) {
 				const repository = getRepository(entity.name);
-				await repository.query(
-					`TRUNCATE  "${entity.tableName}" RESTART IDENTITY CASCADE;`
-				);
+				const truncateSql =
+					env.database.type === 'sqlite'
+						? `DELETE FROM  "${entity.tableName}";`
+						: `TRUNCATE  "${entity.tableName}" RESTART IDENTITY CASCADE;`;
+				await repository.query(truncateSql);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');
