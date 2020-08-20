@@ -126,7 +126,7 @@ export class OrganizationProjectsController extends CrudController<
 	@UseGuards(AuthGuard('jwt'))
 	// @UseGuards(PermissionGuard)
 	// @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-	@Put(':id')
+	@Put('/task-view/:id')
 	async updateTaskViewMode(
 		@Param('id') id: string,
 		@Body() entity: { taskViewMode: TaskListTypeEnum }
@@ -137,5 +137,25 @@ export class OrganizationProjectsController extends CrudController<
 			entity.taskViewMode
 			// new OrganizationProjectEditByEmployeeCommand(entity)
 		);
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'))
+	@Put(':id')
+	async updateProject(
+		@Param('id') id: string,
+		@Body() entity: OrganizationProjects
+	): Promise<OrganizationProjects> {
+		//We are using create here because create calls the method save()
+		//We need save() to save ManyToMany relations
+		try {
+			return await this.organizationProjectsService.create({
+				id,
+				...entity
+			});
+		} catch (error) {
+			console.log(error);
+			return;
+		}
 	}
 }
