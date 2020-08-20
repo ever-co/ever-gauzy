@@ -107,12 +107,13 @@ export class EquipmentSharingController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post()
+	@Post('organization/:id')
 	async createEquipmentSharing(
+		@Param('id') orgId: string,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<any> {
 		return this.commandBus.execute(
-			new EquipmentSharingCreateCommand(equipmentSharing)
+			new EquipmentSharingCreateCommand(orgId, equipmentSharing)
 		);
 	}
 
