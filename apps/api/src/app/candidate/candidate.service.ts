@@ -15,6 +15,13 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 	}
 
 	async createBulk(input: CandidateCreateInput[]) {
-		return await this.repository.save(input);
+		return Promise.all(
+			input.map((candidate) => {
+				candidate.user.tenant = {
+					id: candidate.organization.tenantId
+				};
+				return this.create(candidate);
+			})
+		);
 	}
 }
