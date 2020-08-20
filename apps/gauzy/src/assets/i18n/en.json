@@ -1960,6 +1960,8 @@
 			"KEY_RESULT_DELETED": "Key Result deleted",
 			"KEY_RESULT_UPDATED": "Key Result updated",
 			"TIME_FRAME_DELETED": "Time Frame deleted",
+			"EDIT_PAST_INTERVIEW": "Editing past interviews is prohibited",
+			"DELETE_PAST_INTERVIEW": "Deleting past interviews is prohibited",
 			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated",
 			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
 			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results."
