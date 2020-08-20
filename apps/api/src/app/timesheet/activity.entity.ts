@@ -26,6 +26,7 @@ import { TimeSlot } from './time-slot.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
+import { environment as env } from '@env-api/environment';
 
 @Entity('activity')
 export class Activity extends Base implements IActivity {
@@ -81,7 +82,10 @@ export class Activity extends Base implements IActivity {
 
 	@ApiProperty({ type: 'json' })
 	@IsDateString()
-	@Column({ nullable: true, type: 'json' })
+	@Column({
+		nullable: true,
+		type: env.database.type === 'sqlite' ? 'text' : 'json'
+	})
 	metaData?: string | URLMetaData;
 
 	@ApiProperty({ type: 'date' })
