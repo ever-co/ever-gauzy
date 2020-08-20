@@ -172,6 +172,7 @@
 			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Започни седмицата на",
 			"TAX_ID": "Таксa ID",
+			"TIME_FORMAT": "Time Format",
 			"COUNTRY": "Държава",
 			"CITY": "Град",
 			"ADDRESS": "Адрес",
@@ -1229,6 +1230,8 @@
 			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
 			"PUBLIC_PAGE_EDIT": "Edit Organization Public Page",
 			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
+			"EVENT_TYPES_VIEW": "View Event Types",
+			"TIME_OFF_EDIT": "Edit Time Off",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Администрация"
