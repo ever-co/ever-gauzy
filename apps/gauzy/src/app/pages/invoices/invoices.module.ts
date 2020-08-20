@@ -18,7 +18,8 @@ import {
 	NbMenuModule,
 	NbPopoverModule,
 	NbTabsetModule,
-	NbFormFieldModule
+	NbFormFieldModule,
+	NbListModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -67,6 +68,7 @@ import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-app
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { InvoiceExpensesSelectorComponent } from './table-components/invoice-expense-selector.component';
 import { BackNavigationModule } from '../../@shared/back-navigation';
+import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -105,6 +107,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		BackNavigationModule,
 		NbPopoverModule,
 		NbFormFieldModule,
+		NbListModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -123,7 +126,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeesService,
 		ProductService,
 		PaymentService,
-		TasksStoreService
+		TasksStoreService,
+		InvoiceEstimateHistoryService
 	],
 	entryComponents: [
 		InvoicesComponent,

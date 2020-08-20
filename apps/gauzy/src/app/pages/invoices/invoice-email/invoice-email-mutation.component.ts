@@ -18,6 +18,8 @@ import { TasksService } from '../../../@core/services/tasks.service';
 import { ProductService } from '../../../@core/services/product.service';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
 import { ExpensesService } from '../../../@core/services/expenses.service';
+import { Store } from '../../../@core/services/store.service';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ga-invoice-email',
@@ -39,7 +41,9 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 		private taskService: TasksService,
 		private productService: ProductService,
 		private invoiceService: InvoicesService,
-		private expensesService: ExpensesService
+		private expensesService: ExpensesService,
+		private store: Store,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 	}
@@ -102,6 +106,18 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 				status: InvoiceStatusTypesEnum.SENT
 			});
 		}
+
+		await this.invoiceEstimateHistoryService.add({
+			action: this.isEstimate
+				? `Estimate sent to ${this.form.value.email}`
+				: `Invoice sent to ${this.form.value.email}`,
+			invoice: this.invoice,
+			invoiceId: this.invoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.invoice.fromOrganization,
+			organizationId: this.invoice.fromOrganization.id
+		});
 
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.EMAIL.EMAIL_SENT'),

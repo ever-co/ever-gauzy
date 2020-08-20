@@ -42,6 +42,7 @@ import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-ap
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 import { ExpensesService } from '../../../@core/services/expenses.service';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ga-invoice-edit',
@@ -66,7 +67,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		private productService: ProductService,
 		private tasksStore: TasksStoreService,
 		private dialogService: NbDialogService,
-		private expensesService: ExpensesService
+		private expensesService: ExpensesService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translate);
 		this.observableTasks = this.tasksStore.tasks$;
@@ -602,6 +604,16 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				}
 			}
 
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate ? 'Estimate edited' : 'Invoice edited',
+				invoice: this.invoice,
+				invoiceId: this.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
+
 			if (this.isEstimate) {
 				this.toastrService.primary(
 					this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_ESTIMATE'),
@@ -629,6 +641,17 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				'Sent',
 				this.form.value.organizationContact.id
 			);
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate
+					? `Estimate sent to ${this.form.value.organizationContact.name}`
+					: `Invoice sent to ${this.form.value.organizationContact.name}`,
+				invoice: this.invoice,
+				invoiceId: this.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),

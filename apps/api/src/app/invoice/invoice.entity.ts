@@ -29,6 +29,7 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Payment } from '../payment/payment.entity';
+import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])
@@ -170,4 +171,15 @@ export class Invoice extends Base implements IInvoice {
 	})
 	@JoinColumn()
 	payments?: Payment[];
+
+	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
+	@OneToMany(
+		(type) => InvoiceEstimateHistory,
+		(invoiceEstimateHistory) => invoiceEstimateHistory.invoice,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	historyRecords?: InvoiceEstimateHistory[];
 }

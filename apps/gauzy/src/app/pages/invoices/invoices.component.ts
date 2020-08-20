@@ -22,7 +22,8 @@ import {
 	InvoiceColumnsEnum,
 	EstimateColumnsEnum,
 	CurrenciesEnum,
-	OrganizationContact
+	OrganizationContact,
+	InvoiceEstimateHistory
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -39,6 +40,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ngx-invoices',
@@ -71,6 +73,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 	organizationContacts: OrganizationContact[];
 	duplicate: boolean;
 	perPage = 10;
+	histories: InvoiceEstimateHistory[];
+	selectedInvoiceHistories = [];
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -89,7 +93,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private invoiceItemService: InvoiceItemService,
 		private router: Router,
 		private nbMenuService: NbMenuService,
-		private organizationContactService: OrganizationContactService
+		private organizationContactService: OrganizationContactService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 		this.setView();
@@ -289,6 +294,18 @@ export class InvoicesComponent extends TranslationBaseComponent
 			await this.invoiceItemService.add(itemToAdd);
 		}
 
+		await this.invoiceEstimateHistoryService.add({
+			action: this.isEstimate
+				? 'Estimate duplicated'
+				: 'Invoice duplicated',
+			invoice: this.selectedInvoice,
+			invoiceId: this.selectedInvoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.organization,
+			organizationId: this.organization.id
+		});
+
 		if (this.isEstimate) {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -362,6 +379,15 @@ export class InvoicesComponent extends TranslationBaseComponent
 			isEstimate: false,
 			status: InvoiceStatusTypesEnum.DRAFT
 		});
+		await this.invoiceEstimateHistoryService.add({
+			action: 'Estimate converted to invoice',
+			invoice: this.selectedInvoice,
+			invoiceId: this.selectedInvoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.organization,
+			organizationId: this.organization.id
+		});
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -387,6 +413,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 			for (const item of itemsToDelete) {
 				await this.invoiceItemService.delete(item.id);
+			}
+
+			for (const history of this.selectedInvoiceHistories) {
+				await this.invoiceEstimateHistoryService.delete(history.id);
 			}
 
 			this.loadSettings();
@@ -447,7 +477,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 								'tags',
 								'payments',
 								'fromOrganization',
-								'toContact'
+								'toContact',
+								'historyRecords'
 							],
 							{
 								organizationId: org.id,
@@ -498,6 +529,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 						this.smartTableSource.load(items);
 						this.organization = org;
 						this.loading = false;
+						const histories = await this.invoiceEstimateHistoryService.getAll(
+							['invoice', 'user', 'organization'],
+							{
+								organizationId: this.organization.id
+							}
+						);
+						this.histories = histories.items;
 					} catch (error) {
 						this.toastrService.danger(
 							this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
@@ -518,6 +556,24 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 		this.disableButton = !isSelected;
 		this.selectedInvoice = selectedInvoice;
+
+		const histories = selectedInvoice
+			? this.histories.filter((h) => h.invoice.id === selectedInvoice.id)
+			: null;
+
+		if (histories) {
+			const selectedInvoiceHistories = [];
+			histories.forEach((h) => {
+				const history = {
+					id: h.id,
+					createdAt: new Date(h.createdAt).toString().slice(0, 24),
+					action: h.action,
+					user: h.user
+				};
+				selectedInvoiceHistories.push(history);
+			});
+			this.selectedInvoiceHistories = selectedInvoiceHistories;
+		}
 	}
 
 	loadSmartTable() {
