@@ -25,9 +25,10 @@ export class EquipmentSharingCreateHandler
 	public async execute(
 		command?: EquipmentSharingCreateCommand
 	): Promise<EquipmentSharing> {
-		const { equipmentSharing } = command;
+		const { orgId, equipmentSharing } = command;
 		equipmentSharing.createdBy = RequestContext.currentUser().id;
 		equipmentSharing.createdByName = RequestContext.currentUser().name;
+		equipmentSharing.organizationId = orgId;
 		const equipmentSharingSaved = await this.equipmentSharingRepository.save(
 			equipmentSharing
 		);
@@ -38,7 +39,6 @@ export class EquipmentSharingCreateHandler
 		requestApproval.status = equipmentSharingSaved.status
 			? equipmentSharingSaved.status
 			: RequestApprovalStatusTypesEnum.REQUESTED;
-
 		requestApproval.createdBy = RequestContext.currentUser().id;
 		requestApproval.createdByName = RequestContext.currentUser().name;
 		requestApproval.name = equipmentSharing.name;
