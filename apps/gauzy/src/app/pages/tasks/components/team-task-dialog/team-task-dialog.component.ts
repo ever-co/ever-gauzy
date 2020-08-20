@@ -8,13 +8,13 @@ import {
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
+import { Store } from '../../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import * as moment from 'moment';
-import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
+import { OrganizationTeamsService } from '../../../../@core/services/organization-teams.service';
 
 const initialTaskValue = {
 	title: '',

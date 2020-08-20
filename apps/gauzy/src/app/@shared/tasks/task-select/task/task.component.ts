@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { Task } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
-import { TasksService } from 'apps/gauzy/src/app/@core/services/tasks.service';
+import { TasksService } from '../../../../@core/services/tasks.service';
 import { NbDialogService } from '@nebular/theme';
 import { AddTaskDialogComponent } from '../../add-task-dialog/add-task-dialog.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
@@ -20,15 +20,15 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 export class TaskSelectorComponent
 	implements OnInit, OnDestroy, ControlValueAccessor {
 	tasks: Task[];
+	val: any;
+
+	@Input() disabled = false;
+	@Input() allowAddNew = true;
 
 	private _projectId;
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
-	val: any;
-
-	@Input() disabled = false;
-	@Input() allowAddNew = true;
 
 	@Input()
 	public get projectId() {
