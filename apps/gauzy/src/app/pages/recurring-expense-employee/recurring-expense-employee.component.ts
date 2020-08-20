@@ -104,7 +104,6 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 				if (this.selectedDate) {
 					this._loadEmployeeRecurringExpense();
 				}
-
 				this.store.selectedEmployee$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((employee) => {
@@ -149,26 +148,30 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			.open(RecurringExpenseMutationComponent, {
 				context: {
 					componentType: COMPONENT_TYPE.EMPLOYEE,
-					selectedDate: this.selectedDate
+					selectedDate: this.selectedDate,
+					isAdd: true
 				}
 			})
 			.onClose.pipe(first())
 			.toPromise();
-
 		if (result) {
 			try {
 				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(
 					result
 				);
+
 				await this.employeeRecurringExpenseService.create(
 					employeeRecurringExpense
 				);
-
 				this.toastrService.primary(
 					this.employeeName + ' recurring expense set.',
 					'Success'
 				);
-				this._loadEmployeeRecurringExpense();
+				this._loadEmployeeRecurringExpense(
+					this.selectedEmployeeFromHeader === null
+						? null
+						: this.selectedEmployeeFromHeader.id
+				);
 			} catch (error) {
 				this.toastrService.danger(
 					error.error.message || error.message,
@@ -210,7 +213,11 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 					'Success'
 				);
 				setTimeout(() => {
-					this._loadEmployeeRecurringExpense();
+					this._loadEmployeeRecurringExpense(
+						this.selectedEmployeeFromHeader === null
+							? null
+							: employeeRecurringExpense.employeeId
+					);
 				}, 300);
 			} catch (error) {
 				this.toastrService.danger(
@@ -242,7 +249,6 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			})
 			.onClose.pipe(first())
 			.toPromise();
-
 		if (result) {
 			try {
 				const id = selectedExpense.id;
@@ -258,7 +264,11 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 					'Success'
 				);
 				setTimeout(() => {
-					this._loadEmployeeRecurringExpense();
+					this._loadEmployeeRecurringExpense(
+						this.selectedEmployeeFromHeader === null
+							? null
+							: selectedExpense.employeeId
+					);
 				}, 100);
 			} catch (error) {
 				this.toastrService.danger(
@@ -292,13 +302,21 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 
 	private async _loadEmployeeRecurringExpense(employeeId?: string) {
 		this.fetchedHistories = {};
-		this.selectedEmployeeRecurringExpense = (
-			await this.employeeRecurringExpenseService.getAllByMonth([], {
-				employeeId: employeeId ? employeeId : this.selectedEmployee.id,
-				year: this.selectedDate.getFullYear(),
-				month: this.selectedDate.getMonth()
-			})
-		).items;
+		if (employeeId !== null) {
+			this.selectedEmployeeRecurringExpense = (
+				await this.employeeRecurringExpenseService.getAllByMonth([], {
+					employeeId: employeeId
+						? employeeId
+						: this.selectedEmployee.id,
+					year: this.selectedDate.getFullYear(),
+					month: this.selectedDate.getMonth()
+				})
+			).items;
+		} else {
+			this.selectedEmployeeRecurringExpense = (
+				await this.employeeRecurringExpenseService.getAll()
+			).items;
+		}
 	}
 	async loadEmployees() {
 		const { items } = await this.employeeService
