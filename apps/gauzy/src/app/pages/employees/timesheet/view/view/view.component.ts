@@ -15,6 +15,8 @@ import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
+import { NbDialogService } from '@nebular/theme';
+import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 
 @Component({
 	selector: 'ngx-view',
@@ -34,7 +36,8 @@ export class ViewComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private timesheetService: TimesheetService,
-		private activatedRoute: ActivatedRoute
+		private activatedRoute: ActivatedRoute,
+		private nbDialogService: NbDialogService
 	) {}
 
 	ngOnInit() {
@@ -72,5 +75,23 @@ export class ViewComponent implements OnInit, OnDestroy {
 		});
 	}
 
+	openEditDialog(timeLog) {
+		this.nbDialogService
+			.open(EditTimeLogModalComponent, {
+				context: { timeLog: timeLog }
+			})
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((resp) => {
+				if (resp) {
+					this.updateLogs$.next();
+				}
+			});
+	}
+
+	deleteTimeLog(log) {
+		this.timesheetService.deleteLogs([log.id]).then(() => {
+			this.updateLogs$.next();
+		});
+	}
 	ngOnDestroy() {}
 }

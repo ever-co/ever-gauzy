@@ -206,8 +206,9 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 					);
 					member.weekHours = _.range(0, 7).map((day) => {
 						if (week[day]) {
-							return (week[day].duration =
-								(week[day].duration * 100) / sum);
+							week[day].duration =
+								(week[day].duration * 100) / sum;
+							return week[day];
 						} else {
 							return { day, duration: 0 };
 						}
