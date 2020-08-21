@@ -605,8 +605,8 @@ export class ImportAllService implements OnDestroy {
 		}
 	}
 
-	public unzipAndParse(cleanup: boolean = false) {
-		fs.createReadStream('./import/import.zip')
+	public unzipAndParse(filePath, cleanup: boolean = false) {
+		fs.createReadStream(filePath)
 			.pipe(unzipper.Extract({ path: this.__dirname }))
 			.on('close', () => {
 				console.log('Starting Import');

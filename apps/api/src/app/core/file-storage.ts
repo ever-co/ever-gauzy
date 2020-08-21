@@ -10,27 +10,63 @@ export interface FileStorageOption {
 	filename?: string | CallableFunction;
 }
 
+export interface FileSystem {
+	rootPath: string;
+	baseUrl: string;
+}
+
+/*
+ * How to Use
+ *
+ * 	FilesInterceptor('file', 1, {
+ * 		storage: new FileStorage({
+ * 			dest: path.join('import', moment().format('YYYY/MM/DD')), // moment is use to create year, month and day dir, If you don't want you can skip it.
+ * 			prefix: 'import'
+ * 		})
+ * 	})
+ */
+
 export class FileStorage {
-	static rootPath = path.join(process.cwd(), 'apps', 'api');
+	static defaultFileSystem = 'local';
+
+	static fileSystems: { [key: string]: FileSystem } = {
+		local: {
+			rootPath: path.join(process.cwd(), 'apps', 'api', 'public'),
+			baseUrl: environment.baseUrl + '/public'
+		}
+	};
+
+	constructor(option: FileStorageOption) {
+		return FileStorage.default(option);
+	}
 
 	static default(option: FileStorageOption) {
-		return FileStorage.local(option);
+		return FileStorage[this.defaultFileSystem](option);
 	}
 
 	static url(filePath: string) {
 		if (filePath && filePath.startsWith('http')) {
 			return filePath;
 		}
-		return filePath ? environment.baseUrl + '/' + filePath : null;
+		const fileSytem =
+			FileStorage.fileSystems[FileStorage.defaultFileSystem];
+		return filePath ? fileSytem.baseUrl + '/' + filePath : null;
+	}
+
+	static path(filePath: string) {
+		const fileSytem =
+			FileStorage.fileSystems[FileStorage.defaultFileSystem];
+		return filePath ? fileSytem.rootPath + '/' + filePath : null;
 	}
 
 	static local({ dest, filename, prefix }: FileStorageOption) {
 		return multer.diskStorage({
 			destination: (req, file, callback) => {
-				fs.mkdirSync(path.join(FileStorage.rootPath, dest), {
+				const fileSytem = FileStorage.fileSystems.local;
+				fs.mkdirSync(path.join(fileSytem.rootPath, dest), {
 					recursive: true
 				});
-				callback(null, path.join(FileStorage.rootPath, dest));
+				callback(null, path.join(fileSytem.rootPath, dest));
 			},
 			filename: (req, file, callback) => {
 				let fileNameString = '';
@@ -47,6 +83,7 @@ export class FileStorage {
 						10
 					)}.${ext}`;
 				}
+
 				callback(null, fileNameString);
 			}
 		});

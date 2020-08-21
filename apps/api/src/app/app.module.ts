@@ -106,7 +106,6 @@ import { HelpCenterAuthorModule } from './help-center-author/help-center-author.
 import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
 import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
 import { MulterModule } from '@nestjs/platform-express';
-import { FileStorage } from './core/file-storage';
 import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
 import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipment-sharing-policy.module';
 import { GoalTemplateModule } from './goal-template/goal-template.module';
@@ -120,9 +119,7 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 			rootPath: path.resolve(process.cwd(), 'apps', 'api', 'public'),
 			serveRoot: '/public/'
 		}),
-		MulterModule.register({
-			dest: FileStorage.rootPath
-		}),
+		MulterModule.register(),
 		RouterModule.forRoutes([
 			{
 				path: '',
@@ -445,10 +442,10 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 						path: '/key-result-updates',
 						module: KeyResultUpdateModule
 					},
-          {
-            path: '/key-result-templates',
+					{
+						path: '/key-result-templates',
 						module: KeyresultTemplateModule
-          },
+					},
 					{
 						path: '/invoice-estimate-history',
 						module: InvoiceEstimateHistoryModule
