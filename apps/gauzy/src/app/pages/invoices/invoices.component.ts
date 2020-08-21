@@ -457,7 +457,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.open(InvoiceEmailMutationComponent, {
 				context: {
 					invoice: this.selectedInvoice,
-					isEstimate: this.isEstimate
+					isEstimate: this.isEstimate,
+					saveAndSend: false
 				}
 			})
 			.onClose.subscribe(async () => {

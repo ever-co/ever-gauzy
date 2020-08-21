@@ -18,7 +18,8 @@ import {
 	Expense,
 	ExpenseTypesEnum,
 	ExpenseStatusesEnum,
-	ContactType
+	ContactType,
+	InvoiceStatusTypesEnum
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -585,6 +586,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				invoiceType: this.selectedInvoiceType,
 				tags: this.tags,
 				isEstimate: this.isEstimate,
+				status: InvoiceStatusTypesEnum.SENT,
 				invoiceItems: []
 			};
 
@@ -627,15 +629,17 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				.open(InvoiceEmailMutationComponent, {
 					context: {
 						invoice: invoice,
-						isEstimate: this.isEstimate
+						isEstimate: this.isEstimate,
+						saveAndSend: true,
+						invoiceItems: invoiceItems
 					}
 				})
 				.onClose.pipe(first())
 				.toPromise();
 
-			if (result) {
-				await this.addInvoice('Sent');
-			}
+			// if (result) {
+			// 	await this.addInvoice('Sent');
+			// }
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
