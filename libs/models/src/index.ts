@@ -81,6 +81,7 @@ export * from './lib/pipeline-stage.model';
 export * from './lib/deal.model';
 export * from './lib/contact.model';
 export * from './lib/organization-document.model';
+export * from './lib/employee-award.model';
 export * from './lib/invoice-estimate-history.model';
 
 export { Role, RolesEnum } from './lib/role.model';

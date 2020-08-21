@@ -111,6 +111,7 @@ import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipme
 import { GoalTemplateModule } from './goal-template/goal-template.module';
 import { KeyresultTemplateModule } from './keyresult-template/keyresult-template.module';
 import * as moment from 'moment';
+import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 
 @Module({
@@ -201,6 +202,10 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 					{
 						path: '/employee-appointment',
 						module: EmployeeAppointmentModule
+					},
+					{
+						path: '/employee-award',
+						module: EmployeeAwardModule
 					},
 					{
 						path: '/appointment-employees',
@@ -458,6 +463,7 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 		UserModule,
 		EmployeeModule,
 		EmployeeRecurringExpenseModule,
+		EmployeeAwardModule,
 		CandidateModule,
 		CandidateDocumentsModule,
 		CandidateSourceModule,

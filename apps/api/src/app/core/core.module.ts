@@ -110,6 +110,7 @@ import { GoalGeneralSetting } from '../goal-general-setting/goal-general-setting
 import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
 import { KeyResultTemplate } from '../keyresult-template/keyresult-template.entity';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
+import { EmployeeAward } from '../employee-award/employee-award.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 
 const entities = [
@@ -216,7 +217,8 @@ const entities = [
 	Payment,
 	EstimateEmail,
 	Contact,
-	OrganizationSprint
+	OrganizationSprint,
+	EmployeeAward
 ];
 
 @Module({
