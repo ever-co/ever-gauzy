@@ -1,4 +1,11 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
+import {
+	Entity,
+	Column,
+	RelationId,
+	ManyToOne,
+	JoinColumn,
+	OneToMany
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Timesheet as ITimesheet, TimesheetStatus } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
@@ -11,6 +18,8 @@ import {
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { TimeLog } from './time-log.entity';
+import { User } from '../user/user.entity';
 
 @Entity('timesheet')
 export class Timesheet extends Base implements ITimesheet {
@@ -24,15 +33,20 @@ export class Timesheet extends Base implements ITimesheet {
 	@Column()
 	readonly employeeId?: string;
 
-	@ApiProperty({ type: OrganizationContact })
-	@ManyToOne(() => OrganizationContact, { nullable: true })
+	@ApiProperty({ type: User })
+	@ManyToOne(() => User, { nullable: true })
 	@JoinColumn()
-	approvedBy?: OrganizationContact;
+	approvedBy?: User;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timesheet: Timesheet) => timesheet.approvedBy)
 	@Column({ nullable: true })
 	readonly approvedById?: string;
+
+	@ApiProperty({ type: TimeLog })
+	@OneToMany(() => TimeLog, (timeLog) => timeLog.timesheet)
+	@JoinColumn()
+	timeLogs?: TimeLog[];
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
