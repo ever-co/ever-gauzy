@@ -140,18 +140,21 @@
 
 			<div class="row">
 				<div class="col">
-					<div class="form-group">
+					<div class="form-group flex-container">
 						<nb-checkbox formControlName="isBonus">
-							<span
-								class="label"
-								nbTooltip="{{
-									'INCOME_PAGE.BONUS_HELP' | translate
-								}}"
-								>{{
-									'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate
-								}}</span
-							>
+							<span class="label">{{
+								'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate
+							}}</span>
 						</nb-checkbox>
+
+						<span
+							class="label info-font"
+							nbTooltip="{{
+								'INCOME_PAGE.BONUS_HELP' | translate
+							}}"
+						>
+							&nbsp;<nb-icon icon="info-outline"></nb-icon>
+						</span>
 					</div>
 				</div>
 			</div>

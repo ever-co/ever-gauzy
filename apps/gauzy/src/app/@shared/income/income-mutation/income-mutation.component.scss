@@ -22,4 +22,11 @@
   .employees {
     margin-bottom: 15px;
   }
+  .flex-container {
+    display: flex;
+    flex-direction: row;
+  }
+  .info-font {
+    font-size: 2em;
+  }
 }
