@@ -13,6 +13,7 @@ import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-
 import { TaskTeamsComponent } from './task-teams/task-teams.component';
 import { AssignedToComponent } from './assigned-to/assigned-to.component';
 import { StatusViewComponent } from './status-view/status-view.component';
+import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
 
 @NgModule({
 	imports: [
@@ -37,7 +38,8 @@ import { StatusViewComponent } from './status-view/status-view.component';
 		EmployeeWithLinksComponent,
 		TaskTeamsComponent,
 		AssignedToComponent,
-		StatusViewComponent
+		StatusViewComponent,
+		ValueWithUnitComponent
 	],
 	declarations: [
 		DateViewComponent,
@@ -48,13 +50,15 @@ import { StatusViewComponent } from './status-view/status-view.component';
 		EmployeeWithLinksComponent,
 		TaskTeamsComponent,
 		AssignedToComponent,
-		StatusViewComponent
+		StatusViewComponent,
+		ValueWithUnitComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
 		PictureNameTagsComponent,
 		EmployeeWithLinksComponent,
-		StatusViewComponent
+		StatusViewComponent,
+		ValueWithUnitComponent
 	],
 	providers: []
 })

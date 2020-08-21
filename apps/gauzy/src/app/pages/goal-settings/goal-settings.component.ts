@@ -20,6 +20,7 @@ import {
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
+import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 
 @Component({
 	selector: 'ga-goal-settings',
@@ -196,13 +197,15 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					},
 					currentValue: {
 						title: 'Current value',
-						type: 'number',
-						filter: false
+						type: 'custom',
+						filter: false,
+						renderComponent: ValueWithUnitComponent
 					},
 					targetValue: {
 						title: 'Target value',
-						type: 'number',
-						filter: false
+						type: 'custom',
+						filter: false,
+						renderComponent: ValueWithUnitComponent
 					},
 					updatedAt: {
 						title: 'Last Updated',

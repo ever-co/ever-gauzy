@@ -4,6 +4,7 @@ import { OrganizationContact } from './organization-contact.model';
 import { InvoiceItem } from './invoice-item.model';
 import { Tag } from './tag-entity.model';
 import { Payment } from './payment.model';
+import { InvoiceEstimateHistory } from './invoice-estimate-history.model';
 
 export interface Invoice extends IBaseEntityModel {
 	invoiceDate: Date;
@@ -32,6 +33,7 @@ export interface Invoice extends IBaseEntityModel {
 	status?: string;
 	payments?: Payment[];
 	isAccepted?: boolean;
+	historyRecords?: InvoiceEstimateHistory[];
 }
 
 export interface InvoiceUpdateInput {

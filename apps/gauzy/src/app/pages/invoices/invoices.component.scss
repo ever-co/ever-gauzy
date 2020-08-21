@@ -52,3 +52,32 @@
 .show-columns-select {
   margin-bottom: 20px;
 }
+
+.history-list {
+  width: 50%;
+  margin: 20px 0;
+}
+
+.history-list-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-list-select {
+  font-weight: bold;
+  // margin: 20px 0;
+  width: 50%;
+}
+
+.history-action {
+  font-weight: bold;
+}
+
+.history-date {
+  color: #919191;
+  font-size: 12px;
+}
+
+.history-item {
+  align-self: flex-start;
+}

@@ -16,6 +16,7 @@ import { OrganizationContactService } from '../../@core/services/organization-co
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { InvoicesService } from '../../@core/services/invoices.service';
+import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -39,7 +40,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbDialogModule.forChild()
 	],
-	providers: [PaymentService, OrganizationContactService, InvoicesService],
+	providers: [
+		PaymentService,
+		OrganizationContactService,
+		InvoicesService,
+		InvoiceEstimateHistoryService
+	],
 	entryComponents: [PaymentsComponent],
 	declarations: [PaymentsComponent]
 })

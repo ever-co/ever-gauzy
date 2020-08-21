@@ -43,6 +43,7 @@ import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-ap
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { ExpensesService } from '../../../@core/services/expenses.service';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -55,6 +56,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	loading = true;
 	form: FormGroup;
 	invoice?: Invoice;
+	createdInvoice: Invoice;
 	formInvoiceNumber: number;
 	currencies = Object.values(CurrenciesEnum);
 	invoiceTypes = Object.values(InvoiceTypeEnum);
@@ -110,7 +112,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private employeeService: EmployeesService,
 		private productService: ProductService,
 		private dialogService: NbDialogService,
-		private expensesService: ExpensesService
+		private expensesService: ExpensesService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 		this.observableTasks = this.tasksStore.tasks$;
@@ -441,6 +444,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				sentTo: sendTo
 			});
 
+			this.createdInvoice = createdInvoice;
+
 			for (const invoiceItem of tableData) {
 				const itemToAdd = {
 					description: invoiceItem.description,
@@ -473,6 +478,16 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				await this.invoiceItemService.add(itemToAdd);
 			}
 
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate ? 'Estimate added' : 'Invoice added',
+				invoice: createdInvoice,
+				invoiceId: createdInvoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
+
 			if (this.isEstimate) {
 				this.toastrService.primary(
 					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
@@ -500,6 +515,17 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				'Sent',
 				this.form.value.organizationContact.id
 			);
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate
+					? `Estimate sent to ${this.form.value.organizationContact.name}`
+					: `Invoice sent to ${this.form.value.organizationContact.name}`,
+				invoice: this.createdInvoice,
+				invoiceId: this.createdInvoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),

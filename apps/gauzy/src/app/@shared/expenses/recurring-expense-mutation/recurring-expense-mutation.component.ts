@@ -1,11 +1,12 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
 	RecurringExpenseModel,
 	RecurringExpenseDefaultCategoriesEnum,
-	StartDateUpdateTypeEnum
+	StartDateUpdateTypeEnum,
+	Employee
 } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { first } from 'rxjs/operators';
@@ -21,6 +22,7 @@ import { EmployeeRecurringExpenseService } from '../../../@core/services/employe
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { EmployeesService } from '../../../@core/services';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -69,7 +71,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
 		}
 	];
-
+	@Input() isAdd: true;
 	recurringExpense?: RecurringExpenseModel;
 	componentType: COMPONENT_TYPE;
 	currencies = Object.values(CurrenciesEnum);
@@ -81,6 +83,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		protected dialogRef: NbDialogRef<RecurringExpenseMutationComponent>,
 		private organizationsService: OrganizationsService,
 		private store: Store,
+		private employeesService: EmployeesService,
 		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
 		private translate: TranslateService,
 		private readonly toastrService: NbToastrService,
@@ -141,14 +144,23 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	closeAndSubmit() {
+	async closeAndSubmit() {
+		let employee: Employee;
+		if (this.recurringExpense) {
+			employee = await this.employeesService.getEmployeeById(
+				this.recurringExpense.employeeId
+			);
+		}
 		let formValues = this.form.getRawValue();
 		formValues = {
 			...formValues,
+			categoryName: formValues.categoryName,
 			startDay: formValues.startDate.getDate(),
 			startMonth: formValues.startDate.getMonth(),
 			startYear: formValues.startDate.getFullYear(),
-			employee: this.employeeSelector.selectedEmployee
+			employee: this.recurringExpense
+				? employee
+				: this.employeeSelector.selectedEmployee
 		};
 		this.dialogRef.close(formValues);
 	}

@@ -36,13 +36,6 @@ export interface ProposalViewModel {
 	author?: string;
 }
 
-interface SelectedRowModel {
-	data: ProposalViewModel;
-	isSelected: boolean;
-	selected: ProposalViewModel[];
-	source: LocalDataSource;
-}
-
 @Component({
 	selector: 'ga-proposals',
 	templateUrl: './proposals.component.html',
@@ -117,6 +110,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 

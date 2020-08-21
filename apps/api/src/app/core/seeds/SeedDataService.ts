@@ -376,6 +376,7 @@ import { GoalTemplate } from '../../goal-template/goal-template.entity';
 import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
 import { EmployeeAward } from '../../employee-award/employee-award.entity';
 import { createDefaultEmployeeAwards } from '../../employee-award/employee-award.seed';
+import { InvoiceEstimateHistory } from '../../invoice-estimate-history/invoice-estimate-history.entity';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -402,6 +403,7 @@ const allEntities = [
 	Income,
 	Invoice,
 	InvoiceItem,
+	InvoiceEstimateHistory,
 	KeyResult,
 	KeyResultUpdate,
 	Expense,

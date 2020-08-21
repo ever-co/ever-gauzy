@@ -14,15 +14,12 @@ import { first, take } from 'rxjs/operators';
 })
 export class OrganizationProjectsService {
 	constructor(private http: HttpClient) {}
-
+	private readonly API_URL = '/api/organization-projects';
 	create(
 		createInput: OrganizationProjectsCreateInput
 	): Promise<OrganizationProjects> {
 		return this.http
-			.post<OrganizationProjects>(
-				'/api/organization-projects',
-				createInput
-			)
+			.post<OrganizationProjects>(this.API_URL, createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -32,7 +29,7 @@ export class OrganizationProjectsService {
 	): Promise<OrganizationProjects> {
 		return this.http
 			.put<OrganizationProjects>(
-				`/api/organization-projects/${editInput.id}`,
+				`${this.API_URL}/${editInput.id}`,
 				editInput
 			)
 			.pipe(first())
@@ -41,9 +38,7 @@ export class OrganizationProjectsService {
 
 	getAllByEmployee(id: string): Promise<OrganizationProjects[]> {
 		return this.http
-			.get<OrganizationProjects[]>(
-				`/api/organization-projects/employee/${id}`
-			)
+			.get<OrganizationProjects[]>(`${this.API_URL}/employee/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -56,7 +51,7 @@ export class OrganizationProjectsService {
 
 		return this.http
 			.get<{ items: OrganizationProjects[]; total: number }>(
-				`/api/organization-projects`,
+				`${this.API_URL}`,
 				{
 					params: { data }
 				}
@@ -67,14 +62,14 @@ export class OrganizationProjectsService {
 
 	getById(id: string) {
 		return this.http
-			.get<OrganizationProjects>(`/api/organization-projects/${id}`)
+			.get<OrganizationProjects>(`${this.API_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	updateByEmployee(updateInput: EditEntityByMemberInput): Promise<any> {
 		return this.http
-			.put(`/api/organization-projects/employee`, updateInput)
+			.put(`${this.API_URL}/employee`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -84,14 +79,14 @@ export class OrganizationProjectsService {
 		taskViewMode: TaskListTypeEnum
 	): Promise<any> {
 		return this.http
-			.put(`api/organization-projects/${id}`, { taskViewMode })
+			.put(`${this.API_URL}/task-view/${id}`, { taskViewMode })
 			.pipe(take(1))
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization-projects/${id}`)
+			.delete(`${this.API_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

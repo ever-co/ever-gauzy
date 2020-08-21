@@ -7,7 +7,7 @@ import * as _ from 'underscore';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
-import { moment } from '../../../../core/moment';
+import { moment } from '../../../../core/moment-extend';
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler

@@ -250,9 +250,7 @@
 									*ngIf="!isEstimate"
 									formControlName="status"
 									fullWidth
-									placeholder="{{
-										'INVOICES_PAGE.SET_STATUS' | translate
-									}}"
+									placeholder="Status"
 								>
 									<nb-option
 										*ngFor="
@@ -268,9 +266,7 @@
 									*ngIf="isEstimate"
 									formControlName="status"
 									fullWidth
-									placeholder="{{
-										'INVOICES_PAGE.SET_STATUS' | translate
-									}}"
+									placeholder="Status"
 								>
 									<nb-option
 										*ngFor="
@@ -315,6 +311,35 @@
 						</div>
 					</div>
 				</form>
+			</nb-tab>
+			<nb-tab tabTitle="History">
+				<nb-list-item
+					*ngIf="disableButton && !isEstimate"
+					class="history-list-select"
+					>Select an invoice to view it's history</nb-list-item
+				>
+				<nb-list-item
+					*ngIf="disableButton && isEstimate"
+					class="history-list-select"
+					>Select an estimate to view it's history</nb-list-item
+				>
+				<nb-list *ngIf="!disableButton" class="history-list">
+					<nb-list-item
+						*ngFor="let history of selectedInvoiceHistories"
+						class="history-list-item"
+					>
+						<div class="history-item">
+							<span class="history-action">{{
+								history.action
+							}}</span>
+							- {{ history.user.firstName }}
+							{{ history.user.lastName }}
+						</div>
+						<div class="history-date history-item">
+							{{ history.createdAt }}
+						</div>
+					</nb-list-item>
+				</nb-list>
 			</nb-tab>
 		</nb-tabset>
 

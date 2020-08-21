@@ -77,8 +77,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			this.loadInterviews();
 		});
 	}
-	selectInterview(value) {}
-
 	onEmployeeSelected(empIds: string[]) {
 		this.selectedEmployees = empIds;
 		this.interviewList = this.findByEmployee(this.allInterviews);
@@ -251,6 +249,12 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		const currentInterview = this.interviewList.find(
 			(item) => item.id === id
 		);
+		const candidate = await this.candidatesService
+			.getAll(['user'], {
+				id: currentInterview.candidate.id
+			})
+			.pipe(first())
+			.toPromise();
 		const dialog = this.dialogService.open(
 			CandidateInterviewMutationComponent,
 			{
@@ -259,7 +263,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
 					),
 					editData: currentInterview,
-					selectedCandidate: currentInterview.candidate,
+					selectedCandidate: candidate.items[0],
 					interviewId: id,
 					interviewList: this.interviewList
 				}

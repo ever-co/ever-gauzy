@@ -57,7 +57,7 @@ export class EditKpiComponent extends TranslationBaseComponent
 				KpiOperatorEnum.GREATER_THAN_EQUAL_TO,
 				Validators.required
 			],
-			unit: ['']
+			unit: [KeyResultNumberUnitsEnum.ITEMS]
 		});
 		this.employeeService
 			.getAll(['user'])

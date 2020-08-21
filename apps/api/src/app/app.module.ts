@@ -113,6 +113,7 @@ import { GoalTemplateModule } from './goal-template/goal-template.module';
 import { KeyresultTemplateModule } from './keyresult-template/keyresult-template.module';
 import * as moment from 'moment';
 import { EmployeeAwardModule } from './employee-award/employee-award.module';
+import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 
 @Module({
 	imports: [
@@ -452,6 +453,10 @@ import { EmployeeAwardModule } from './employee-award/employee-award.module';
 					{
 						path: '/key-result-templates',
 						module: KeyresultTemplateModule
+					},
+					{
+						path: '/invoice-estimate-history',
+						module: InvoiceEstimateHistoryModule
 					}
 				]
 			}
@@ -530,6 +535,7 @@ import { EmployeeAwardModule } from './employee-award/employee-award.module';
 		PipelineModule,
 		StageModule,
 		DealModule,
+		InvoiceEstimateHistoryModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({

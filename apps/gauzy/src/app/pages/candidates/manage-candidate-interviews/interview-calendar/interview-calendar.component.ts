@@ -1,7 +1,7 @@
 import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { OptionsInput, EventInput, disableCursor } from '@fullcalendar/core';
+import { CalendarOptions, EventInput, disableCursor } from '@fullcalendar/core';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -35,7 +35,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
-	calendarOptions: OptionsInput;
+	calendarOptions: CalendarOptions;
 	selectedInterview = true;
 	isCandidate = false;
 	candidateList: EventInput[] = [];

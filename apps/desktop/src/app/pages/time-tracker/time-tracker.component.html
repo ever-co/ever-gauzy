@@ -95,6 +95,9 @@
 									placeholder="Project"
 									[(ngModel)]="projectSelect"
 									(ngModelChange)="setProject($event)"
+									[status]="
+										errors.project ? 'danger' : 'basic'
+									"
 								>
 									<nb-option
 										[value]="project.id"
@@ -108,6 +111,7 @@
 									placeholder="Task"
 									[(ngModel)]="taskSelect"
 									(ngModelChange)="setTask($event)"
+									[status]="errors.task ? 'danger' : 'basic'"
 								>
 									<nb-option
 										[value]="task.id"
@@ -124,6 +128,7 @@
 									placeholder="Note"
 									status="basic"
 									[(ngModel)]="note"
+									[status]="errors.note ? 'danger' : 'basic'"
 								></textarea>
 							</div>
 						</div>
