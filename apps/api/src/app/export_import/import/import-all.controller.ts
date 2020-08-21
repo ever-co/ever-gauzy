@@ -5,14 +5,15 @@ import {
 	Post,
 	UseInterceptors,
 	Injectable,
-	Body
+	Body,
+	UploadedFile
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OnDestroy } from '@angular/core';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
 import { ImportAllService } from '.';
 import * as path from 'path';
+import { FileStorage } from '../../core/file-storage';
 
 @Injectable()
 @ApiTags('Import')
@@ -34,19 +35,17 @@ export class ImportAllController implements OnDestroy {
 
 	@UseInterceptors(
 		FilesInterceptor('file', 1, {
-			storage: diskStorage({
-				destination: path.join(__dirname, '../../import'),
-				filename: (rq, file, cb) => {
-					cb(null, 'import.zip');
-				}
+			storage: new FileStorage({
+				dest: path.join('import'),
+				prefix: 'import'
 			})
 		})
 	)
 	@Post()
-	async parse(@Body() { importType }) {
+	async parse(@Body() { importType }, @UploadedFile() file) {
 		this.importAllService.removeExtractedFiles();
 
-		this.importAllService.unzipAndParse(importType === 'clean');
+		this.importAllService.unzipAndParse(file.path, importType === 'clean');
 
 		return;
 	}
