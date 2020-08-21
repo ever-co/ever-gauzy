@@ -34,7 +34,6 @@ export class EmployeeResolver implements Resolve<any> {
 				'skills'
 			])
 			.pipe(
-				tap(console.log),
 				catchError((e) => {
 					this.errorHandlingService.handleError(e);
 					this.router.navigateByUrl('/');

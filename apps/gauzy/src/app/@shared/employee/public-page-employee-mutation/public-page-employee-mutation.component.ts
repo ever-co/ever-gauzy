@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 
@@ -11,13 +11,23 @@ import {
 	Tag,
 	PayPeriodEnum,
 	CurrenciesEnum,
-	LanguagesEnum
+	LanguagesEnum,
+	IEmployeeAward
 } from '@gauzy/models';
 import { OrganizationEmploymentTypesService } from '../../../@core/services/organization-employment-types.service';
-import { switchMap, map, tap, filter } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import {
+	switchMap,
+	map,
+	tap,
+	filter,
+	catchError,
+	takeUntil
+} from 'rxjs/operators';
+import { Observable, EMPTY, Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeeLevelService } from '../../../@core/services/employee-level.service';
+import { EmployeeAwardService } from '../../../@core/services/employee-award.service';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ngx-public-page-employee-mutation',
@@ -27,7 +37,8 @@ import { EmployeeLevelService } from '../../../@core/services/employee-level.ser
 })
 export class PublicPageEmployeeMutationComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
+	private _ngDestroy$: Subject<void> = new Subject();
 	employee: Employee;
 	form: FormGroup;
 	employmentTypes$: Observable<OrganizationEmploymentType[]>;
@@ -36,6 +47,8 @@ export class PublicPageEmployeeMutationComponent
 	currencies = Object.values(CurrenciesEnum);
 	languages: string[] = Object.values(LanguagesEnum);
 	privacySettings: any[];
+	employeeAwards: IEmployeeAward[];
+	showAddAward: boolean;
 
 	constructor(
 		private fb: FormBuilder,
@@ -44,6 +57,8 @@ export class PublicPageEmployeeMutationComponent
 		readonly translateService: TranslateService,
 		private organizationEmploymentTypeService: OrganizationEmploymentTypesService,
 		private employeeLevelService: EmployeeLevelService,
+		private employeeAwardService: EmployeeAwardService,
+		private errorHandlingService: ErrorHandlingService,
 		private store: Store
 	) {
 		super(translateService);
@@ -147,5 +162,83 @@ export class PublicPageEmployeeMutationComponent
 		if (this.form.valid) {
 			this.dialogRef.close(this.form.value);
 		}
+	}
+
+	addAward(name, year) {
+		if (name && year) {
+			const employeeAwardCreateDto = {
+				name,
+				year,
+				employeeId: this.employee.id
+			};
+
+			this.employeeAwardService
+				.create(employeeAwardCreateDto)
+				.pipe(
+					tap((award) => this.employeeAwards.push(award)),
+					tap(() => {
+						this.showAddAward = false;
+						this.toastrService.primary(
+							this.getTranslation(
+								'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.ADD_AWARD',
+								{
+									name
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+					}),
+					catchError((err) => {
+						this.errorHandlingService.handleError(err);
+						return EMPTY;
+					}),
+					takeUntil(this._ngDestroy$)
+				)
+				.subscribe();
+		} else {
+			this.toastrService.danger(
+				this.getTranslation(
+					'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.INVALID_AWARD_NAME_YEAR'
+				),
+				this.getTranslation(
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_AWARD_INVALID_NAME'
+				)
+			);
+		}
+	}
+
+	removeAward(awardId: string) {
+		this.employeeAwardService
+			.delete(awardId)
+			.pipe(
+				tap(
+					() =>
+						(this.employeeAwards = this.employeeAwards.filter(
+							(a) => a.id !== awardId
+						))
+				),
+				tap(() => {
+					this.toastrService.primary(
+						this.getTranslation(
+							'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.ADD_AWARD',
+							{
+								name
+							}
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+				}),
+				catchError((err) => {
+					this.errorHandlingService.handleError(err);
+					return EMPTY;
+				}),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe();
+	}
+
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

@@ -112,6 +112,7 @@ import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipme
 import { GoalTemplateModule } from './goal-template/goal-template.module';
 import { KeyresultTemplateModule } from './keyresult-template/keyresult-template.module';
 import * as moment from 'moment';
+import { EmployeeAwardModule } from './employee-award/employee-award.module';
 
 @Module({
 	imports: [
@@ -203,6 +204,10 @@ import * as moment from 'moment';
 					{
 						path: '/employee-appointment',
 						module: EmployeeAppointmentModule
+					},
+					{
+						path: '/employee-award',
+						module: EmployeeAwardModule
 					},
 					{
 						path: '/appointment-employees',
@@ -456,6 +461,7 @@ import * as moment from 'moment';
 		UserModule,
 		EmployeeModule,
 		EmployeeRecurringExpenseModule,
+		EmployeeAwardModule,
 		CandidateModule,
 		CandidateDocumentsModule,
 		CandidateSourceModule,

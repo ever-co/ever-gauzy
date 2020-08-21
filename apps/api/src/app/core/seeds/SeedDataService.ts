@@ -374,6 +374,8 @@ import { createDefaultGoalTemplates } from '../../goal-template/goal-template.se
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
 import { GoalTemplate } from '../../goal-template/goal-template.entity';
 import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
+import { EmployeeAward } from '../../employee-award/employee-award.entity';
+import { createDefaultEmployeeAwards } from '../../employee-award/employee-award.seed';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -492,7 +494,8 @@ const allEntities = [
 	IntegrationMap,
 	IntegrationSetting,
 	IntegrationTenant,
-	Integration
+	Integration,
+	EmployeeAward
 ];
 
 const randomSeedConfig = {
@@ -1040,6 +1043,14 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Awards',
 			createDefaultAwards(this.connection, this.organizations)
+		);
+
+		await this.tryExecute(
+			'Default Employee Awards',
+			createDefaultEmployeeAwards(
+				this.connection,
+				this.defaultEmployees[0]
+			)
 		);
 
 		await this.tryExecute(

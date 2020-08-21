@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, of } from 'rxjs';
 import { map, tap, takeUntil } from 'rxjs/operators';
-import { PermissionsEnum, Employee } from '@gauzy/models';
+import { PermissionsEnum, Employee, IEmployeeAward } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
@@ -12,6 +12,7 @@ import { PublicPageEmployeeMutationComponent } from '../../@shared/employee/publ
 import { EmployeesService, UsersService } from '../../@core/services';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { EmployeeAwardService } from '../../@core/services/employee-award.service';
 
 @Component({
 	selector: 'ngx-employee',
@@ -26,6 +27,7 @@ export class EmployeeComponent extends TranslationBaseComponent
 	imageUpdateButton: boolean;
 	employee$: Observable<Employee>;
 	hoverState: boolean;
+	employeeAwards: IEmployeeAward[];
 
 	constructor(
 		private employeeService: EmployeesService,
@@ -35,13 +37,15 @@ export class EmployeeComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
 		private store: Store,
-		private errorHandlingService: ErrorHandlingService
+		private errorHandlingService: ErrorHandlingService,
+		private employeeAwardService: EmployeeAwardService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
 		this.initEmployeePublicData();
+		this.initEmployeeAwards();
 		this.handleUserPermission();
 	}
 
@@ -56,6 +60,18 @@ export class EmployeeComponent extends TranslationBaseComponent
 			tap((employee) => (this.imageUrl = employee.user.imageUrl))
 		);
 	}
+
+	private initEmployeeAwards() {
+		const employeeId = this.activatedRoute.snapshot.params.employeeId;
+		this.employeeAwardService
+			.getAll({ employeeId })
+			.pipe(
+				tap(({ items }) => (this.employeeAwards = items)),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe();
+	}
+
 	private handleUserPermission() {
 		this.hasEditPermission$ = this.store.userRolePermissions$.pipe(
 			map(() =>
@@ -83,10 +99,12 @@ export class EmployeeComponent extends TranslationBaseComponent
 	}
 
 	openEditEmployeeDialog(employee) {
+		console.log(this.employeeAwards);
 		this.dialogService
 			.open(PublicPageEmployeeMutationComponent, {
 				context: {
-					employee
+					employee,
+					employeeAwards: this.employeeAwards
 				}
 			})
 			.onClose.pipe(
