@@ -7,7 +7,7 @@ import {
 } from '@angular/router';
 import { EmployeesService } from '../../@core/services';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { EMPTY, Observable } from 'rxjs';
 import { Employee } from '@gauzy/models';
 
