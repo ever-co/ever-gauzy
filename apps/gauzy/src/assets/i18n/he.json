@@ -2029,6 +2029,13 @@
 				"ERROR": "{{ error }}"
 			}
 		},
+		"EMPLOYEE": {
+			"EDIT_EMPLOYEE_AWARDS": {
+				"ADD_AWARD": "New award {{ name }} successfully added!",
+				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
+				"REMOVE_AWARD": "Award {{ name }} successfully removed!"
+			}
+		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
 			"DELETE_ORGANIZATION": "{{ name }} organization deleted.",
