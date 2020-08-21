@@ -36,4 +36,9 @@ export enum TaskStatusEnum {
 	COMPLETED = 'Completed'
 }
 
-export interface ITaskCreateInput extends Task {}
+export interface ITaskCreateInput extends Task {
+	creatorId?: string;
+}
+export interface ITaskUpdateInput extends ITaskCreateInput {
+	id?: string;
+}
