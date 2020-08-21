@@ -1055,7 +1055,8 @@
 			"NOTES": "Notes",
 			"ACTIONS": "Actions",
 			"UPDATED": "Updated",
-			"CANDIDATE": "Candidate"
+			"CANDIDATE": "Candidate",
+			"START_DATE": "Start Date"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",

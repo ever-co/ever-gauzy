@@ -63,6 +63,14 @@ export class CandidateInterviewService {
 			.toPromise();
 	}
 
+	setInterviewAsArchived(id: string): Promise<ICandidateInterview> {
+		return this.http
+			.put<ICandidateInterview>(`/api/candidate-interview/${id}`, {
+				isArchived: true
+			})
+			.pipe(first())
+			.toPromise();
+	}
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/candidate-interview/${id}`)

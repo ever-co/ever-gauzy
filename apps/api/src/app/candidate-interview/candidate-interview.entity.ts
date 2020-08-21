@@ -71,4 +71,8 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 
 	@ManyToOne((type) => Candidate, (candidate) => candidate.interview)
 	candidate: ICandidate;
+
+	@ApiPropertyOptional({ type: Boolean, default: false })
+	@Column({ nullable: true, default: false })
+	isArchived?: boolean;
 }
