@@ -1055,7 +1055,8 @@
 			"NOTES": "הערות",
 			"ACTIONS": "Actions",
 			"UPDATED": "Updated",
-			"CANDIDATE": "Candidate"
+			"CANDIDATE": "Candidate",
+			"START_DATE": "תאריך התחלה"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",
