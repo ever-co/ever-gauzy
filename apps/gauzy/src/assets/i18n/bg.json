@@ -1055,7 +1055,8 @@
 			"NOTES": "Бележки",
 			"ACTIONS": "Actions",
 			"UPDATED": "Updated",
-			"CANDIDATE": "Candidate"
+			"CANDIDATE": "Candidate",
+			"START_DATE": "Начална дата"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",
