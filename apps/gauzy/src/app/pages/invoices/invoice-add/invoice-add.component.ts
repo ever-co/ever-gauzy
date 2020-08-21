@@ -625,7 +625,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 			invoice.invoiceItems = invoiceItems;
 
-			const result = await this.dialogService
+			await this.dialogService
 				.open(InvoiceEmailMutationComponent, {
 					context: {
 						invoice: invoice,
@@ -637,9 +637,19 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				.onClose.pipe(first())
 				.toPromise();
 
-			// if (result) {
-			// 	await this.addInvoice('Sent');
-			// }
+			if (this.isEstimate) {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices/estimates']);
+			} else {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices']);
+			}
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
