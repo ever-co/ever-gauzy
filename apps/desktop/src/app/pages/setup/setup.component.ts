@@ -22,6 +22,7 @@ export class SetupComponent implements OnInit {
 	statusIcon = 'success';
 	awCheck = false;
 	awAPI: String = 'http://localhost:5600';
+	buttonSave = false;
 	serverOption: any = [
 		{
 			id: 'local',
@@ -73,8 +74,8 @@ export class SetupComponent implements OnInit {
 		dbUser: '',
 		dbPassword: ''
 	};
-	selectedServer: String = null;
-	selectedDatabase: String = null;
+	selectedServer: any;
+	selectedDatabase: any;
 
 	onServerChange(event) {
 		this.defaultToggle = true;
@@ -94,6 +95,7 @@ export class SetupComponent implements OnInit {
 			default:
 				this.isLocalServer = false;
 		}
+		this.validation(this.setup);
 	}
 
 	onDatabaseChange(event) {
@@ -107,6 +109,7 @@ export class SetupComponent implements OnInit {
 			default:
 				this.isPostgres = false;
 		}
+		this.validation(this.setup);
 	}
 
 	saveConfiguration() {
@@ -159,6 +162,8 @@ export class SetupComponent implements OnInit {
 		} else {
 			this.setup = {};
 		}
+
+		this.validation(this.setup);
 	}
 
 	setAW() {
@@ -196,6 +201,46 @@ export class SetupComponent implements OnInit {
 					this._cdr.detectChanges();
 				}
 			});
+	}
+
+	onInputChange(e, field) {
+		this.setup[field] = e;
+		this.validation(this.setup);
+	}
+
+	validation(option) {
+		if (this.isLiveServer) {
+			if (option.serverUrl) {
+				this.buttonSave = true;
+			} else {
+				this.buttonSave = false;
+			}
+		} else {
+			if (this.selectedDatabase) {
+				if (this.selectedDatabase === 'sqlite') {
+					if (option.serverPort) {
+						this.buttonSave = true;
+					} else {
+						this.buttonSave = false;
+					}
+				} else {
+					if (
+						option.dbHost &&
+						option.dbPort &&
+						option.dbName &&
+						option.dbUser &&
+						option.dbPassword &&
+						option.serverPort
+					) {
+						this.buttonSave = true;
+					} else {
+						this.buttonSave = false;
+					}
+				}
+			} else {
+				this.buttonSave = false;
+			}
+		}
 	}
 
 	ngOnInit(): void {}
