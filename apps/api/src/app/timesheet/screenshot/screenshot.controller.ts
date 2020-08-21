@@ -49,7 +49,6 @@ export class ScreenshotController extends CrudController<Screenshot> {
 		@Body() entity: Screenshot,
 		@UploadedFile() file
 	): Promise<Screenshot> {
-		console.log(file);
 		const thumbName = `thumb-${file.filename}`;
 		await new Promise((resolve, reject) => {
 			sharp(file.path)
