@@ -2029,6 +2029,13 @@
 				"ERROR": "{{ error }}"
 			}
 		},
+		"EMPLOYEE": {
+			"EDIT_EMPLOYEE_AWARDS": {
+				"ADD_AWARD": "Новая награда {{ name }} успешно добавлена!",
+				"INVALID_AWARD_NAME_YEAR": "Пожалуйста, проверьте имя и год для получения награды",
+				"REMOVE_AWARD": "Награда {{ name }} успешно удалена!"
+			}
+		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "Организация {{ name }} создана.",
 			"DELETE_ORGANIZATION": "Организация {{ name }} удалена.",
