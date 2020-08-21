@@ -1055,7 +1055,8 @@
 			"NOTES": "Заметки",
 			"ACTIONS": "Действия",
 			"UPDATED": "Обновлено",
-			"CANDIDATE": "Кандидат"
+			"CANDIDATE": "Кандидат",
+			"START_DATE": "Дата начала"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Статистика",
