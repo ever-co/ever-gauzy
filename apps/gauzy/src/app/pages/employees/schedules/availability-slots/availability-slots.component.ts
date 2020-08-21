@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { OptionsInput, EventInput } from '@fullcalendar/core';
+import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -52,7 +52,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 
 	calendarComponent: FullCalendarComponent;
 	calendarEvents: EventInput[] = [];
-	calendarOptions: OptionsInput;
+	calendarOptions: CalendarOptions;
 
 	private _ngDestroy$ = new Subject<void>();
 	private firstLoad: boolean = true;

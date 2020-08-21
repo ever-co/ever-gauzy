@@ -13,7 +13,7 @@ export interface InvoiceEstimateHistory extends IBaseEntityModel {
 	organizationId: string;
 }
 
-export interface InvoiceEstimateHistoryFindInupt {
+export interface InvoiceEstimateHistoryFindInput {
 	action?: string;
 	userId?: string;
 	invoiceId?: string;

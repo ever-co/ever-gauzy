@@ -374,6 +374,7 @@ import { createDefaultGoalTemplates } from '../../goal-template/goal-template.se
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
 import { GoalTemplate } from '../../goal-template/goal-template.entity';
 import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
+import { InvoiceEstimateHistory } from '../../invoice-estimate-history/invoice-estimate-history.entity';
 
 const allEntities = [
 	AvailabilitySlots,
@@ -400,6 +401,7 @@ const allEntities = [
 	Income,
 	Invoice,
 	InvoiceItem,
+	InvoiceEstimateHistory,
 	KeyResult,
 	KeyResultUpdate,
 	Expense,

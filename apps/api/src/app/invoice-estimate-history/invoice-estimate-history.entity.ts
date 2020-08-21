@@ -7,7 +7,7 @@ import { User } from '../user/user.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Organization } from '../organization/organization.entity';
 
-@Entity('invoice-estimate-history')
+@Entity('invoice_estimate_history')
 export class InvoiceEstimateHistory extends Base
 	implements IInvoiceEstimateHistory {
 	@ApiProperty({ type: String })
