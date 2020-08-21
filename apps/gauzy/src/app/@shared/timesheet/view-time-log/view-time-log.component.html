@@ -38,7 +38,10 @@
 					nbButton
 					ghost
 					status="danger"
-					(click)="onDeleteConfirm($event, timelog)"
+					ngxConfirmDialog
+					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+					(click)="$event.stopPropagation()"
+					(confirm)="onDeleteConfirm(timelog)"
 				>
 					<nb-icon icon="trash-2-outline"></nb-icon>
 				</button>

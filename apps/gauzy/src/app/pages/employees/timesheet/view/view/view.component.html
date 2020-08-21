@@ -8,11 +8,10 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div *ngFor="let daylogs of timeLogs | keyvalue">
+		<div class="mb-5" *ngFor="let daylogs of timeLogs | keyvalue">
 			<h5 class="mb-3">
-				{{ daylogs.key }}
+				{{ daylogs.key | date }}
 			</h5>
-
 			<div
 				class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 			>
@@ -114,6 +113,7 @@
 								class="m-1"
 								nbButton
 								status="success"
+								(click)="openEditDialog(log)"
 								size="small"
 							>
 								<nb-icon icon="edit"></nb-icon>
@@ -128,6 +128,11 @@
 								nbButton
 								status="danger"
 								size="small"
+								ngxConfirmDialog
+								[message]="
+									'TIMESHEET.DELETE_TIMELOG' | translate
+								"
+								(confirm)="deleteTimeLog(log)"
 							>
 								<nb-icon icon="trash-2-outline"></nb-icon>
 								{{ 'TIMESHEET.DELETE' | translate }}

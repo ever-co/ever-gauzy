@@ -171,7 +171,9 @@
 						nbButton
 						status="danger"
 						size="small"
-						(click)="onDeleteConfirm(log)"
+						ngxConfirmDialog
+						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+						(confirm)="onDeleteConfirm(log)"
 					>
 						<nb-icon icon="trash-2-outline"></nb-icon>
 						{{ 'TIMESHEET.DELETE' | translate }}
