@@ -1055,7 +1055,8 @@
 			"NOTES": "Бележки",
 			"ACTIONS": "Actions",
 			"UPDATED": "Updated",
-			"CANDIDATE": "Candidate"
+			"CANDIDATE": "Candidate",
+			"START_DATE": "Начална дата"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",
@@ -2027,6 +2028,13 @@
 				"INVALID_FORM": "Please fill the form",
 				"INVALID_FIELD": "Please fill the field",
 				"ERROR": "{{ error }}"
+			}
+		},
+		"EMPLOYEE": {
+			"EDIT_EMPLOYEE_AWARDS": {
+				"ADD_AWARD": "New award {{ name }} successfully added!",
+				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
+				"REMOVE_AWARD": "Award {{ name }} successfully removed!"
 			}
 		},
 		"ORGANIZATIONS": {
