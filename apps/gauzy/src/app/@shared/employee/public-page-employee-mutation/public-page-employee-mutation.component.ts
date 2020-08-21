@@ -220,7 +220,7 @@ export class PublicPageEmployeeMutationComponent
 				tap(() => {
 					this.toastrService.primary(
 						this.getTranslation(
-							'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.ADD_AWARD',
+							'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.REMOVE_AWARD',
 							{
 								name
 							}
