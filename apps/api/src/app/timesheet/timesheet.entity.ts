@@ -17,7 +17,6 @@ import {
 	IsEnum
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { TimeLog } from './time-log.entity';
 import { User } from '../user/user.entity';
 
