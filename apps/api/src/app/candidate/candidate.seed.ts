@@ -47,7 +47,7 @@ export const createDefaultCandidates = async (
 			password: '123456',
 			firstName: 'Norris ',
 			lastName: 'Nesbit',
-			imageUrl: 'assets/images/avatars/atanas.jpeg',
+			imageUrl: 'assets/images/avatars/blagovest.jpeg',
 			candidateLevel: 'A',
 			preferredLanguage: LanguagesEnum.ENGLISH
 		},
@@ -65,7 +65,7 @@ export const createDefaultCandidates = async (
 			password: '123456',
 			firstName: 'Greg ',
 			lastName: 'Grise',
-			imageUrl: 'assets/images/avatars/savov.jpg',
+			imageUrl: 'assets/images/avatars/hristo.jpg',
 			candidateLevel: 'A',
 			preferredLanguage: LanguagesEnum.ENGLISH
 		}

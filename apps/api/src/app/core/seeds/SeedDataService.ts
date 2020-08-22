@@ -280,6 +280,7 @@ import { createDefaultGoalTemplates } from '../../goal-template/goal-template.se
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
 import { createDefaultEmployeeAwards } from '../../employee-award/employee-award.seed';
 import { allEntities } from './allEntity';
+import { createDefaultGoalKpiTemplate } from '../../goal-kpi-template/goal-kpi-template.seed';
 
 const randomSeedConfig = {
 	tenants: 5, //The number of random tenants to be seeded.
@@ -532,6 +533,11 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Goal Template',
 			createDefaultGoalTemplates(this.connection, this.tenant)
+		);
+
+		await this.tryExecute(
+			'Default Goal KPI Template',
+			createDefaultGoalKpiTemplate(this.connection, this.tenant)
 		);
 
 		await this.tryExecute(
