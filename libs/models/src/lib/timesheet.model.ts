@@ -211,6 +211,7 @@ export interface Activity extends IBaseEntityModel {
 	duration?: number;
 	type?: string;
 	source?: string;
+	id?: string;
 }
 
 export interface DailyActivity {

@@ -21,11 +21,7 @@ import * as moment from 'moment';
 const TODAY = new Date();
 
 const DEFAULT_DATE_RANGE = {
-	start: new Date(
-		moment()
-			.subtract(7, 'days')
-			.format('YYYY-MM-DD')
-	),
+	start: new Date(moment().subtract(7, 'days').format('YYYY-MM-DD')),
 	end: TODAY
 };
 
@@ -183,7 +179,7 @@ export class HubstaffService {
 		return this._http.post(
 			`/api/integrations/hubstaff/sync-projects/${integrationId}`,
 			{
-				projects: this._mapNameAndSourceId(projects),
+				projects: this._mapProjectPayload(projects),
 				orgId: organizationId
 			}
 		);
@@ -197,9 +193,7 @@ export class HubstaffService {
 	}
 
 	private _setEndDate(start) {
-		const end = moment(start)
-			.add(7, 'days')
-			.toDate();
+		const end = moment(start).add(7, 'days').toDate();
 		return end > TODAY ? TODAY : end;
 	}
 
@@ -279,7 +273,12 @@ export class HubstaffService {
 		);
 	}
 
-	private _mapNameAndSourceId(data: any[]) {
-		return data.map(({ name, id }) => ({ name, sourceId: id }));
+	private _mapProjectPayload(data: any[]) {
+		return data.map(({ name, id, billable, description }) => ({
+			name,
+			sourceId: id,
+			billable,
+			description
+		}));
 	}
 }
