@@ -1,6 +1,6 @@
 import { OrganizationContact } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { OrganizationContactCreateCommand } from '../organization-contact-create.commant';
+import { OrganizationContactCreateCommand } from '../organization-contact-create.command';
 import { OrganizationContactService } from '../../organization-contact.service';
 
 @CommandHandler(OrganizationContactCreateCommand)

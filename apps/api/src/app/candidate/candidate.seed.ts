@@ -2,9 +2,9 @@ import { Connection } from 'typeorm';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import { User, ISeedUsers, LanguagesEnum } from '@gauzy/models';
-import { CandidateSource } from '../candidate-source/candidate-source.entity';
-import * as faker from 'faker';
+import { User, ISeedUsers } from '@gauzy/models';
+// import { LanguagesEnum } from '@gauzy/models';
+// import { CandidateSource } from '../candidate-source/candidate-source.entity';
 
 export const createDefaultCandidates = async (
 	connection: Connection,
@@ -14,6 +14,7 @@ export const createDefaultCandidates = async (
 		users: User[];
 	}
 ): Promise<Candidate[]> => {
+	/*
 	const defaultCandidates = [
 		{
 			email: 'john@ever.co',
@@ -70,7 +71,8 @@ export const createDefaultCandidates = async (
 			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	];
-	const defaultSources = await connection.manager.find(CandidateSource);
+	*/
+	//const defaultSources = await connection.manager.find(CandidateSource);
 
 	let candidate: Candidate;
 	const candidates: Candidate[] = [];
@@ -104,7 +106,7 @@ export const createRandomCandidates = async (
 	tenantUsersMap: Map<Tenant, ISeedUsers>,
 	candidatesPerOrganization: number
 ): Promise<Map<Tenant, Candidate[]>> => {
-	const defaultSources = await connection.manager.find(CandidateSource);
+	// const defaultSources = await connection.manager.find(CandidateSource);
 	const candidateMap: Map<Tenant, Candidate[]> = new Map();
 	for (const tenant of tenants) {
 		let candidate: Candidate;

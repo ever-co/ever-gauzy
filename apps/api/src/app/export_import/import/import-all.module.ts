@@ -81,7 +81,7 @@ import { HelpCenterAuthor } from '../../help-center-author/help-center-author.en
 import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
 import { IntegrationSetting } from '../../integration-setting/integration-setting.entity';
 import { IntegrationMap } from '../../integration-map/integration-map.entity';
-import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 import { IntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.entity';
 import { KeyResultUpdate } from '../../keyresult-update/keyresult-update.entity';
 import { OrganizationAwards } from '../../organization-awards/organization-awards.entity';

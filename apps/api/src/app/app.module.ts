@@ -65,7 +65,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
 import { ProductVariantModule } from './product-variant/product-variant.module';
 import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
-import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.module';
+import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
 import { CandidateSourceModule } from './candidate-source/candidate-source.module';
 import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';

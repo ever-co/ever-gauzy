@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
 
 @Injectable()
 export class IntegrationEntitySettingTiedEntityService extends CrudService<

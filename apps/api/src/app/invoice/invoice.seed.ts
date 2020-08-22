@@ -4,11 +4,7 @@ import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
-import {
-	CurrenciesEnum,
-	DiscountTaxTypeEnum,
-	InvoiceTypeEnum
-} from '@gauzy/models';
+import { DiscountTaxTypeEnum, InvoiceTypeEnum } from '@gauzy/models';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import * as _ from 'underscore';
 
@@ -17,7 +13,7 @@ export const createDefaultInvoice = async (
 	defaultOrganizations: Organization[],
 	noOfInvoicePerOrganization: number
 ) => {
-	let invoices: Invoice[] = [];
+	const invoices: Invoice[] = [];
 
 	for (const organization of defaultOrganizations) {
 		const tags = await connection.manager.find(Tag, {
@@ -30,7 +26,7 @@ export const createDefaultInvoice = async (
 			}
 		);
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
-			let invoice = new Invoice();
+			const invoice = new Invoice();
 
 			invoice.tags = _.chain(tags)
 				.shuffle()
@@ -90,10 +86,10 @@ export const createRandomInvoice = async (
 	tenantOrganizationsMap: Map<Tenant, Organization[]>,
 	noOfInvoicePerOrganization: number
 ) => {
-	let invoices: Invoice[] = [];
+	const invoices: Invoice[] = [];
 
 	for (const tenant of tenants) {
-		let organizations = tenantOrganizationsMap.get(tenant);
+		const organizations = tenantOrganizationsMap.get(tenant);
 		for (const organization of organizations) {
 			const tags = await connection.manager.find(Tag, {
 				where: [{ organization: organization }]
@@ -105,7 +101,7 @@ export const createRandomInvoice = async (
 				}
 			);
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
-				let invoice = new Invoice();
+				const invoice = new Invoice();
 				// let invoiceItem = faker.random.arrayElement(invoiceItems);
 				invoice.tags = _.chain(tags)
 					.shuffle()

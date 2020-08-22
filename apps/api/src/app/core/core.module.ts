@@ -66,7 +66,7 @@ import { IntegrationTenant } from '../integration-tenant/integration-tenant.enti
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
-import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';

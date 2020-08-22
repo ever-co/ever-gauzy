@@ -30,9 +30,9 @@ import {
 } from './hubstaff-entity-settings';
 import { OrganizationCreateCommand } from '../organization/commands';
 import { CommandBus } from '@nestjs/cqrs';
-import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.commant';
+import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
 import { TaskCreateCommand } from '../tasks/commands';
-import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
+import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.service';
 import { DeepPartial } from 'typeorm';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 import { EmployeeCreateCommand } from '../employee/commands';

@@ -32,7 +32,6 @@ import { AccountingComponent } from './accounting/accounting.component';
 import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.module';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
-import { ScreenshotsItemModule } from '../../@shared/timesheet/screenshots/screenshots-item/screenshots-item.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 
 export function HttpLoaderFactory(http: HttpClient) {

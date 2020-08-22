@@ -10,7 +10,7 @@ import {
 import { Base } from '../core/entities/base';
 import { IIntegrationEntitySetting } from '@gauzy/models';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
-import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 
 @Entity('integration_entity_setting')
 export class IntegrationEntitySetting extends Base
