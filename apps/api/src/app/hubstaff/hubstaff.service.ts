@@ -1131,18 +1131,18 @@ export class HubstaffService {
 							);
 						}
 
-						// if (
-						// 	typeof screenshotSetting === 'object' &&
-						// 	screenshotSetting.sync
-						// ) {
-						screenshots = await this._handleScreenshots(
-							projectsMap,
-							integrationId,
-							token,
-							gauzyId,
-							dateRange
-						);
-						// }
+						if (
+							typeof screenshotSetting === 'object' &&
+							screenshotSetting.sync
+						) {
+							screenshots = await this._handleScreenshots(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+						}
 						return { tasks, projectsMap, activities, screenshots };
 					case IntegrationEntity.CLIENT:
 						const clients = await this._handleClients(
