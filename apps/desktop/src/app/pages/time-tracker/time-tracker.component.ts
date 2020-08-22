@@ -88,22 +88,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	ngOnInit(): void {
 		// this.getTask()
 		// console.log('init', this.projectSelect);
-		console.log('on init');
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
 	ngAfterViewInit(): void {
-		console.log('test after view');
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
 	toggleStart() {
-		this.start = !this.start;
-		if (this.start) {
-			this.startTime();
+		if (this.validationField()) {
+			this.start = !this.start;
+			if (this.start) {
+				this.startTime();
+			} else {
+				this.stopTimer();
+				this._cdr.detectChanges();
+			}
 		} else {
-			this.stopTimer();
-			this._cdr.detectChanges();
+			this.selectProjectElement.nativeElement.focus();
 		}
 	}
 
@@ -193,13 +195,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		console.log('set_project', item);
 		this.projectSelect = item;
 		this.tasks = this.organization.filter((t) => t.project.id === item);
+		this.errorBind();
 		this._cdr.detectChanges();
 	}
 
 	setTask(item) {
-		console.log('set task', item);
 		this._cdr.detectChanges();
 		this.taskSelect = item;
+		this.errorBind();
 	}
 
 	setAW(event) {
@@ -250,5 +253,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._cdr.detectChanges();
 				}
 			});
+	}
+
+	validationField() {
+		this.errorBind();
+		if (this.projectSelect && this.taskSelect && this.note) {
+			return true;
+		}
+		return false;
+	}
+
+	errorBind() {
+		if (!this.projectSelect) {
+			this.errors.project = true;
+		} else {
+			this.errors.project = false;
+		}
+
+		if (!this.taskSelect) {
+			this.errors.task = true;
+		} else {
+			this.errors.task = false;
+		}
+
+		if (!this.note) {
+			this.errors.note = true;
+		} else {
+			this.errors.note = false;
+		}
 	}
 }

@@ -69,7 +69,7 @@
 			<div class="col">
 				{{ timesheet.submittedAt | amDateFormat: 'LL' }}
 			</div>
-			<div class="col">{{ timesheet.status }}</div>
+			<div class="col">{{ timesheet.status | titlecase }}</div>
 			<div class="col action">
 				<div class="action-button">
 					<button

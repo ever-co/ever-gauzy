@@ -96,6 +96,9 @@
 									(focus)="inputFocus($event)"
 									id="serverPort"
 									(focusout)="inOutFocus($event)"
+									(ngModelChange)="
+										onInputChange($event, 'serverPort')
+									"
 								/>
 							</div>
 							<div *ngIf="isLiveServer" class="col-12 form-group">
@@ -108,6 +111,9 @@
 									placeholder="{{
 										defaultPlaceholder.serverUrl
 									}}"
+									(ngModelChange)="
+										onInputChange($event, 'serveUrl')
+									"
 									(focus)="inputFocus($event)"
 									id="serverUrl"
 									(focusout)="inOutFocus($event)"
@@ -130,6 +136,9 @@
 									id="dbHost"
 									(focusout)="inOutFocus($event)"
 									autocomplete="off"
+									(ngModelChange)="
+										onInputChange($event, 'dbHost')
+									"
 								/>
 							</div>
 							<div
@@ -149,6 +158,9 @@
 									id="dbPort"
 									(focusout)="inOutFocus($event)"
 									autocomplete="off"
+									(ngModelChange)="
+										onInputChange($event, 'dbPort')
+									"
 								/>
 							</div>
 							<div
@@ -168,6 +180,9 @@
 									id="dbName"
 									(focusout)="inOutFocus($event)"
 									autocomplete="off"
+									(ngModelChange)="
+										onInputChange($event, 'dbName')
+									"
 								/>
 							</div>
 							<div
@@ -187,6 +202,9 @@
 									id="dbUser"
 									(focusout)="inOutFocus($event)"
 									autocomplete="off"
+									(ngModelChange)="
+										onInputChange($event, 'dbUser')
+									"
 								/>
 							</div>
 							<div
@@ -206,6 +224,9 @@
 									id="dbPassword"
 									(focusout)="inOutFocus($event)"
 									autocomplete="off"
+									(ngModelChange)="
+										onInputChange($event, 'dbPassword')
+									"
 								/>
 							</div>
 						</div>
@@ -221,10 +242,7 @@
 									(click)="saveConfiguration()"
 									nbButton
 									status="primary"
-									[disabled]="
-										(!isLiveServer || !isLocalServer) &&
-										(!selectedDatabase || !selectedServer)
-									"
+									[disabled]="!buttonSave"
 								>
 									Save
 								</button>

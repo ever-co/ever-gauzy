@@ -4,7 +4,6 @@
 
 import * as rimraf from 'rimraf';
 import * as path from 'path';
-import { CandidateExperience } from './../../candidate-experience/candidate-experience.entity';
 import { Injectable } from '@nestjs/common';
 import {
 	Connection,
@@ -36,45 +35,34 @@ import {
 	createDefaultOrganizations,
 	createRandomOrganizations
 } from '../../organization/organization.seed';
-import { Income } from '../../income/income.entity';
 import {
 	createDefaultIncomes,
 	createRandomIncomes
 } from '../../income/income.seed';
-import { Expense } from '../../expense/expense.entity';
 import {
 	createDefaultExpenses,
 	createRandomExpenses
 } from '../../expense/expense.seed';
-import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
 import {
 	createDefaultUsersOrganizations,
 	createRandomUsersOrganizations
 } from '../../user-organization/user-organization.seed';
-import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { createCountries } from '../../country/country.seed';
-import { OrganizationTeam } from '../../organization-team/organization-team.entity';
-import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
-import { Country } from '../../country';
 import {
 	createDefaultTeams,
 	createRandomTeam
 } from '../../organization-team/organization-team.seed';
-import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
 	createDefaultTenants,
 	createRandomTenants
 } from '../../tenant/tenant.seed';
-import { EmailTemplate } from '../../email-template';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
 } from '../../organization-employment-type/organization-employment-type.seed';
-import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
-import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import {
 	createDefaultTimeOffPolicy,
 	createRandomTimeOffPolicies
@@ -91,63 +79,23 @@ import {
 	createOrganizationVendors,
 	createRandomOrganizationVendors
 } from '../../organization-vendors/organization-vendors.seed';
-import { Invoice } from '../../invoice/invoice.entity';
-import { InvoiceItem } from '../../invoice-item/invoice-item.entity';
-import { TimeOffPolicy } from '../../time-off-policy/time-off-policy.entity';
-import { Proposal } from '../../proposal/proposal.entity';
-import { Invite } from '../../invite/invite.entity';
-import { EmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.entity';
-import { ExpenseCategory } from '../../expense-categories/expense-category.entity';
-import { EquipmentSharing } from '../../equipment-sharing/equipment-sharing.entity';
-import { OrganizationContact } from '../../organization-contact/organization-contact.entity';
-import { OrganizationVendor } from '../../organization-vendors/organization-vendors.entity';
-import { OrganizationDepartment } from '../../organization-department/organization-department.entity';
 import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
-import { Task } from '../../tasks/task.entity';
-import { Screenshot } from '../../timesheet/screenshot.entity';
-import { Activity } from '../../timesheet/activity.entity';
-import { TimeSlot } from '../../timesheet/time-slot.entity';
-import { Timesheet } from '../../timesheet/timesheet.entity';
-import { OrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.entity';
-import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
-import { OrganizationAwards } from '../../organization-awards/organization-awards.entity';
-import { OrganizationLanguages } from '../../organization-languages/organization-languages.entity';
-import { Email } from '../../email/email.entity';
-import { Candidate } from '../../candidate/candidate.entity';
 import {
 	createDefaultCandidates,
 	createRandomCandidates
 } from '../../candidate/candidate.seed';
-import { CandidateSource } from '../../candidate-source/candidate-source.entity';
-import { Tag } from './../../tags/tag.entity';
-import { Skill } from './../../skills/skill.entity';
-import { Language } from './../../language/language.entity';
 import { Tenant } from './../../tenant/tenant.entity';
-import { ProductCategory } from '../../product-category/product-category.entity';
-import { ProductType } from '../../product-type/product-type.entity';
-import { CandidateEducation } from '../../candidate-education/candidate-education.entity';
-import { Product } from '../../product/product.entity';
-import { ProductVariant } from '../../product-variant/product-variant.entity';
-import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
-import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
-import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
 import {
 	createCandidateSources,
 	createRandomCandidateSources
 } from '../../candidate-source/candidate-source.seed';
 import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
 import { createDefaultIntegrations } from '../../integration/integration.seed';
-import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
-import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
-import { ProductOption } from '../../product-option/product-option.entity';
-import { HelpCenter } from '../../help-center/help-center.entity';
 import { createHelpCenter } from '../../help-center/help-center.seed';
 import {
 	createDefaultProducts,
 	createRandomProduct
 } from '../../product/product.seed';
-import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
-import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
 import {
 	createCandidateDocuments,
 	createRandomCandidateDocuments
@@ -156,8 +104,6 @@ import {
 	createCandidateFeedbacks,
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
-import { Equipment } from '../../equipment/equipment.entity';
-import { Contact } from '../../contact/contact.entity';
 
 import {
 	createDefaultTimeSheet,
@@ -168,25 +114,6 @@ import {
 	createDefaultOrganizationProjects,
 	createRandomOrganizationProjects
 } from '../../organization-projects/organization-projects.seed';
-
-import { RequestApprovalTeam } from '../../request-approval-team/request-approval-team.entity';
-import { RequestApproval } from '../../request-approval/request-approval.entity';
-import { ApprovalPolicy } from '../../approval-policy/approval-policy.entity';
-import { RequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.entity';
-import { ProductTypeTranslation } from '../../product-type/product-type-translation.entity';
-import { ProductCategoryTranslation } from '../../product-category/product-category-translation.entity';
-import { Payment } from '../../payment/payment.entity';
-import { EventType } from '../../event-types/event-type.entity';
-import { CandidateInterviewers } from '../../candidate-interviewers/candidate-interviewers.entity';
-import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
-import { CandidateTechnologies } from '../../candidate-technologies/candidate-technologies.entity';
-import { CandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.entity';
-import { CandidateCriterionsRating } from '../../candidate-criterions-rating/candidate-criterion-rating.entity';
-import { TimeSlotMinute } from '../../timesheet/time-slot-minute.entity';
-import { TimeLog } from '../../timesheet/time-log.entity';
-import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
-import { IntegrationType } from '../../integration/integration-type.entity';
-import { Integration } from '../../integration/integration.entity';
 import { createDefaultTimeFrames } from '../../goal-time-frame/goal-time-frame.seed';
 import {
 	createDefaultGoals,
@@ -221,7 +148,6 @@ import {
 	createRandomEmployeeInviteSent
 } from '../../invite/invite.seed';
 import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
-import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import {
 	createDefaultEmployeeTimeOff,
 	createRandomEmployeeTimeOff
@@ -322,21 +248,6 @@ import { createRandomDeal } from '../../deal/deal.seed';
 import { createRandomIntegrationSetting } from '../../integration-setting/integration-setting.seed';
 import { createRandomIntegrationMap } from '../../integration-map/integration-map.seed';
 import { createRandomIntegrationTenant } from '../../integration-tenant/integration-tenant.seed';
-import { IntegrationTenant } from '../../integration-tenant/integration-tenant.entity';
-import { Pipeline } from '../../pipeline/pipeline.entity';
-import { AvailabilitySlots } from '../../availability-slots/availability-slots.entity';
-import { IntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.entity';
-import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
-import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
-import { GoalTimeFrame } from '../../goal-time-frame/goal-time-frame.entity';
-import { KeyResult } from '../../keyresult/keyresult.entity';
-import { Goal } from '../../goal/goal.entity';
-import { GoalKPI } from '../../goal-kpi/goal-kpi.entity';
-import { KeyResultUpdate } from '../../keyresult-update/keyresult-update.entity';
-import { IntegrationSetting } from '../../integration-setting/integration-setting.entity';
-import { Deal } from '../../deal/deal.entity';
-import { OrganizationDocuments } from '../../organization-documents/organization-documents.entity';
-import { TimeOffRequest } from '../../time-off-request/time-off-request.entity';
 import { createRandomIntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.seed';
 import { createRandomIntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.seed';
 import { createRandomRequestApprovalTeam } from '../../request-approval-team/request-approval-team.seed';
@@ -345,10 +256,6 @@ import {
 	createDefaultPayment,
 	createRandomPayment
 } from '../../payment/payment.seed';
-import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-setting.entity';
-import { EstimateEmail } from '../../estimate-email/estimate-email.entity';
-import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
-import { IntegrationMap } from '../../integration-map/integration-map.entity';
 import {
 	createDefaultEventTypes,
 	createRandomEventType
@@ -357,7 +264,6 @@ import {
 	createDefaultEquipmentSharingPolicyForOrg,
 	createRandomEquipmentSharingPolicyForOrg
 } from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
-import { EquipmentSharingPolicy } from '../../equipment-sharing-policy/equipment-sharing-policy.entity';
 import { createRandomProductOption } from '../../product-option/product-option.seed';
 import { createRandomProductVariantSettings } from '../../product-settings/product-settings.seed';
 import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
@@ -372,128 +278,8 @@ import {
 } from '../../product-type/type.seed';
 import { createDefaultGoalTemplates } from '../../goal-template/goal-template.seed';
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
-import { GoalTemplate } from '../../goal-template/goal-template.entity';
-import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
-
-const allEntities = [
-	AvailabilitySlots,
-	TimeOffPolicy,
-	TimeOffRequest,
-	Proposal,
-	Invite,
-	EmployeeRecurringExpense,
-	OrganizationRecurringExpense,
-	ExpenseCategory,
-	GoalTemplate,
-	KeyResultTemplate,
-	GoalGeneralSetting,
-	GoalKPI,
-	GoalTimeFrame,
-	Goal,
-	EquipmentSharing,
-	EstimateEmail,
-	User,
-	Employee,
-	Candidate,
-	Role,
-	Organization,
-	Income,
-	Invoice,
-	InvoiceItem,
-	KeyResult,
-	KeyResultUpdate,
-	Expense,
-	EmployeeSetting,
-	OrganizationTeam,
-	OrganizationTeamEmployee,
-	OrganizationContact,
-	OrganizationDocuments,
-	OrganizationVendor,
-	OrganizationDepartment,
-	OrganizationPositions,
-	OrganizationProjects,
-	OrganizationAwards,
-	OrganizationLanguages,
-	OrganizationSprint,
-	Task,
-	Screenshot,
-	Activity,
-	TimeSlot,
-	Timesheet,
-	UserOrganization,
-	Country,
-	Deal,
-	RolePermissions,
-	Tenant,
-	Email,
-	EmailTemplate,
-	Tag,
-	Skill,
-	Language,
-	OrganizationEmploymentType,
-	Equipment,
-	EmployeeLevel,
-	ProductCategory,
-	AppointmentEmployees,
-	EmployeeAppointment,
-	ProductType,
-	CandidateSource,
-	CandidateEducation,
-	CandidateSkill,
-	CandidateExperience,
-	CandidateDocument,
-	CandidateFeedback,
-	HelpCenter,
-	Product,
-	ProductVariant,
-	ProductVariantSettings,
-	ProductVariantPrice,
-	ProductOption,
-	Contact,
-	RequestApprovalTeam,
-	RequestApproval,
-	ApprovalPolicy,
-	EquipmentSharingPolicy,
-	RequestApprovalEmployee,
-	ProductTypeTranslation,
-	ProductCategoryTranslation,
-	Payment,
-	Pipeline,
-	PipelineStage,
-	EventType,
-	CandidateInterviewers,
-	CandidateInterview,
-	CandidateTechnologies,
-	CandidatePersonalQualities,
-	CandidateCriterionsRating,
-	TimeSlotMinute,
-	TimeLog,
-	HelpCenterArticle,
-	HelpCenterAuthor,
-	IntegrationType,
-	Integration,
-	IntegrationTenant,
-	Pipeline,
-	AvailabilitySlots,
-	IntegrationEntitySetting,
-	IntegrationEntitySettingTiedEntity,
-	PipelineStage,
-	GoalTimeFrame,
-	KeyResult,
-	Goal,
-	GoalKPI,
-	KeyResultUpdate,
-	IntegrationSetting,
-	Deal,
-	OrganizationDocuments,
-	TimeOffRequest,
-	IntegrationEntitySetting,
-	IntegrationEntitySettingTiedEntity,
-	IntegrationMap,
-	IntegrationSetting,
-	IntegrationTenant,
-	Integration
-];
+import { createDefaultEmployeeAwards } from '../../employee-award/employee-award.seed';
+import { allEntities } from './allEntity';
 
 const randomSeedConfig = {
 	tenants: 5, //The number of random tenants to be seeded.
@@ -1040,6 +826,14 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Awards',
 			createDefaultAwards(this.connection, this.organizations)
+		);
+
+		await this.tryExecute(
+			'Default Employee Awards',
+			createDefaultEmployeeAwards(
+				this.connection,
+				this.defaultEmployees[0]
+			)
 		);
 
 		await this.tryExecute(

@@ -18,7 +18,8 @@ import {
 	Expense,
 	ExpenseTypesEnum,
 	ExpenseStatusesEnum,
-	ContactType
+	ContactType,
+	InvoiceStatusTypesEnum
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -585,6 +586,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				invoiceType: this.selectedInvoiceType,
 				tags: this.tags,
 				isEstimate: this.isEstimate,
+				status: InvoiceStatusTypesEnum.SENT,
 				invoiceItems: []
 			};
 
@@ -623,18 +625,30 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 			invoice.invoiceItems = invoiceItems;
 
-			const result = await this.dialogService
+			await this.dialogService
 				.open(InvoiceEmailMutationComponent, {
 					context: {
 						invoice: invoice,
-						isEstimate: this.isEstimate
+						isEstimate: this.isEstimate,
+						saveAndSend: true,
+						invoiceItems: invoiceItems
 					}
 				})
 				.onClose.pipe(first())
 				.toPromise();
 
-			if (result) {
-				await this.addInvoice('Sent');
+			if (this.isEstimate) {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices/estimates']);
+			} else {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices']);
 			}
 		} else {
 			this.toastrService.danger(

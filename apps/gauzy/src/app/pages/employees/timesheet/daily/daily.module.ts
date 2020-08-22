@@ -26,6 +26,7 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 import { ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.module';
 import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
 import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/tasks/task-select/task-select.module';
+import { DialogsModule } from 'apps/gauzy/src/app/@shared/dialogs';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -53,7 +54,8 @@ import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/tasks/task-select/t
 		FiltersModule,
 		NbSpinnerModule,
 		ViewTimeLogModule,
-		NbPopoverModule
+		NbPopoverModule,
+		DialogsModule
 	]
 })
 export class DailyModule {}

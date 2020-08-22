@@ -114,7 +114,6 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.token = token;
 				if (this.electronService.isElectronApp) {
 					try {
-						console.log('is electron app');
 						this.electronService.ipcRenderer.send('auth_success', {
 							token: token,
 							userId: user.id,

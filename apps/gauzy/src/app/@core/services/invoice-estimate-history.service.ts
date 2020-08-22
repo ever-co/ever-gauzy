@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	InvoiceEstimateHistory,
-	InvoiceEstimateHistoryFindInupt
+	InvoiceEstimateHistoryFindInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -12,7 +12,7 @@ export class InvoiceEstimateHistoryService {
 
 	getAll(
 		relations?: string[],
-		findInput?: InvoiceEstimateHistoryFindInupt
+		findInput?: InvoiceEstimateHistoryFindInput
 	): Promise<{ items: InvoiceEstimateHistory[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http

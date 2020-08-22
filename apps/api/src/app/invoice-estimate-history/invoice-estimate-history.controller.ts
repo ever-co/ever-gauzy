@@ -12,7 +12,7 @@ import {
 import { ParseJsonPipe } from '../shared';
 import { InvoiceEstimateHistoryService } from './invoice-estimate-history.service';
 
-@ApiTags('InvoiceEstimateHistry')
+@ApiTags('InvoiceEstimateHistory')
 @Controller()
 export class InvoiceEstimateHistoryController extends CrudController<
 	InvoiceEstimateHistory

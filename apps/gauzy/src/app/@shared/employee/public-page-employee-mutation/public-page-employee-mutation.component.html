@@ -390,6 +390,125 @@
 					</div>
 				</nb-tab>
 				<nb-tab
+					tabTitle="{{ 'POP_UPS.AWARDS' | translate }}"
+					tabIcon="award-outline"
+					responsive
+				>
+					<div class="row">
+						<div class="col-sm-12">
+							<span class="heading_title">{{
+								'POP_UPS.AWARDS' | translate
+							}}</span>
+							<button
+								*ngIf="!showAddAward"
+								(click)="showAddAward = !showAddAward"
+								nbButton
+								status="success"
+								class="add_new"
+							>
+								<nb-icon
+									class="mr-1"
+									icon="plus-outline"
+								></nb-icon>
+							</button>
+							<div class="row" *ngIf="showAddAward">
+								<div
+									class="col-sm-4 d-flex flex-column justify-content-end"
+								>
+									<label class="label">{{
+										'POP_UPS.NAME' | translate
+									}}</label>
+									<input
+										#addInputName
+										nbInput
+										class="input_name"
+										type="text"
+										placeholder="{{
+											'POP_UPS.NAME' | translate
+										}}"
+										fullWidth
+									/>
+								</div>
+								<div
+									class="col d-flex flex-column justify-content-end"
+								>
+									<label class="label">{{
+										'POP_UPS.YEAR' | translate
+									}}</label>
+									<input
+										#addInputYear
+										nbInput
+										class="input_year"
+										type="number"
+										placeholder="{{
+											'POP_UPS.YEAR' | translate
+										}}"
+										fullWidth
+									/>
+								</div>
+
+								<span class="col" style="margin-top: 29px;">
+									<button
+										class="w-100"
+										(click)="
+											addAward(
+												addInputName.value,
+												addInputYear.value
+											)
+										"
+										nbButton
+										status="success"
+									>
+										{{ 'BUTTONS.SAVE' | translate }}
+									</button></span
+								>
+								<span class="col" style="margin-top: 29px;"
+									><button
+										class="w-100"
+										(click)="showAddAward = !showAddAward"
+										nbButton
+										status="danger"
+									>
+										{{ 'BUTTONS.CANCEL' | translate }}
+									</button></span
+								>
+							</div>
+							<div class="row" *ngIf="employeeAwards.length">
+								<div class="col">
+									<nb-list class="nb_list awards-list">
+										<nb-list-item
+											*ngFor="let award of employeeAwards"
+											class="nb_list_item item"
+										>
+											<span
+												class="award_title"
+												[textContent]="
+													award.name +
+													' (' +
+													award.year +
+													')'
+												"
+											></span>
+											<nb-actions
+												class="nb_action float-left"
+												e="medium"
+											>
+												<nb-action
+													(click)="
+														removeAward(award.id)
+													"
+													class="d-inline pr-0"
+													icon="close"
+												></nb-action>
+											</nb-actions>
+										</nb-list-item>
+									</nb-list>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab
 					tabTitle="{{ 'POP_UPS.PRIVACY' | translate }}"
 					tabIcon="shield-outline"
 					responsive

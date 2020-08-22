@@ -14,6 +14,8 @@
 		"REMOVE": "Remove",
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Да",
+		"YES": "Yes",
+		"NO": "No",
 		"SAVE": "Запази",
 		"CLEAR_ALL": "Clear All",
 		"BACK": "Обратно",
@@ -1055,7 +1057,8 @@
 			"NOTES": "Бележки",
 			"ACTIONS": "Actions",
 			"UPDATED": "Updated",
-			"CANDIDATE": "Candidate"
+			"CANDIDATE": "Candidate",
+			"START_DATE": "Начална дата"
 		},
 		"STATISTIC": {
 			"STATISTICS": "Statistic",
@@ -2029,6 +2032,13 @@
 				"ERROR": "{{ error }}"
 			}
 		},
+		"EMPLOYEE": {
+			"EDIT_EMPLOYEE_AWARDS": {
+				"ADD_AWARD": "New award {{ name }} successfully added!",
+				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
+				"REMOVE_AWARD": "Award {{ name }} successfully removed!"
+			}
+		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
 			"DELETE_ORGANIZATION": "{{ name }} организация е изтрита",
@@ -2165,6 +2175,7 @@
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
 		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit",
+		"DELETE_TIMELOG": "Are you sure you want to delete Timelog?",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"ALL_EMPLOYEE": "Всички служители",
 		"SELECT_SOURCE": "Select Source",
@@ -2342,5 +2353,10 @@
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
 		"SELECT_STAGE": "Select Stage",
 		"PROBABLITY": "Probability"
+	},
+	"DIALOG": {
+		"CONFIRM": "Потвърждение",
+		"ALERT": "Alert",
+		"DELETE_CONFIRM": "Alert"
 	}
 }

@@ -130,7 +130,9 @@
 			class="mr-2"
 			nbButton
 			status="danger"
-			(click)="onDeleteConfirm()"
+			ngxConfirmDialog
+			[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+			(confirm)="onDeleteConfirm()"
 			*ngxPermissionsOnly="[
 				OrganizationPermissionsEnum.ALLOW_DELETE_TIME
 			]"

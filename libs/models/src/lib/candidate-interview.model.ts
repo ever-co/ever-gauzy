@@ -21,6 +21,7 @@ export interface ICandidateInterview extends IBaseEntityModel {
 	personalQualities?: ICandidatePersonalQualities[];
 	candidate: Candidate;
 	rating?: number;
+	isArchived?: boolean;
 }
 
 export interface ICandidateInterviewFindInput extends IBaseEntityModel {

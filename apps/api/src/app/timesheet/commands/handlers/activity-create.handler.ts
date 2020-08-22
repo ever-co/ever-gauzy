@@ -2,15 +2,11 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { ActivityCreateCommand } from '../activity-create.command';
 import { ActivityService } from '../../activity/activity.service';
-import { TimeSlotService } from '../../time-slot/time-slot.service';
 
 @CommandHandler(ActivityCreateCommand)
 export class ActivityCreateHandler
 	implements ICommandHandler<ActivityCreateCommand> {
-	constructor(
-		private _activityService: ActivityService,
-		private _timeSlotService: TimeSlotService
-	) {}
+	constructor(private _activityService: ActivityService) {}
 
 	public async execute(command: ActivityCreateCommand): Promise<any> {
 		try {

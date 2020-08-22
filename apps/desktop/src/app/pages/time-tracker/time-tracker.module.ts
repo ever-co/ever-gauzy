@@ -16,7 +16,7 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
 	declarations: [TimeTrackerComponent],
@@ -33,7 +33,8 @@ import { FormsModule } from '@angular/forms';
 		NbEvaIconsModule,
 		NbSidebarModule,
 		FormsModule,
-		NbCheckboxModule
+		NbCheckboxModule,
+		ReactiveFormsModule
 	],
 	providers: [NbSidebarService, TimeTrackerService],
 	exports: [TimeTrackerComponent]

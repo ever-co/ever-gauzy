@@ -6,7 +6,7 @@ import {
 	forwardRef,
 	Input
 } from '@angular/core';
-import { OptionsInput, EventInput } from '@fullcalendar/core';
+import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -72,7 +72,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 	hasEventTypesViewPermission: boolean = false;
 	selectedTimeZoneName = moment.tz.guess();
 	selectedTimeZoneOffset = moment.tz(this.selectedTimeZoneName).format('Z');
-	calendarOptions: OptionsInput;
+	calendarOptions: CalendarOptions;
 	allowedDuration: number;
 	calendarEvents: EventInput[] = [];
 	_selectedOrganizationId: string;
