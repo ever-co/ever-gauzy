@@ -3,7 +3,7 @@ import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
-import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
 
 export const createRandomIntegrationEntitySettingTiedEntity = async (
 	connection: Connection,
