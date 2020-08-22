@@ -8,17 +8,19 @@
 						: 'SCHEDULE.RECURRING_AVAILABILITY'
 					) | translate
 				}}
+				<nb-icon
+					class="ml-2"
+					icon="link-2-outline"
+					nbTooltip="{{
+						(!recurringAvailabilityMode
+							? 'SCHEDULE.DATE_SPECIFIC_AVAILABILITY_TOOLTIP'
+							: 'SCHEDULE.RECURRING_AVAILABILITY_TOOLTIP'
+						) | translate
+					}}"
+					nbTooltipTrigger="hover"
+				>
+				</nb-icon>
 			</h5>
-		</div>
-		<div class="col text-right">
-			<button
-				[disabled]="!dateSelected"
-				(click)="saveSelectedDateRange()"
-				status="success"
-				nbButton
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
 		</div>
 	</div>
 </div>
@@ -37,4 +39,8 @@
 	</div>
 </div>
 
-<full-calendar #calendar [options]="calendarOptions"></full-calendar>
+<full-calendar
+	*ngIf="!loading"
+	#calendar
+	[options]="calendarOptions"
+></full-calendar>

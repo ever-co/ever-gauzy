@@ -1,0 +1,103 @@
+<nb-card>
+	<nb-card-header>
+		<div class="main-header">
+			<h4>{{ 'ORGANIZATIONS_PAGE.DEPARTMENTS' | translate }}</h4>
+			<div class="main-header">
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div>
+			<button
+				*ngIf="!showAddCard"
+				(click)="showAddCard = !showAddCard"
+				nbButton
+				status="success"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+			<ga-departments-mutation
+				*ngIf="showAddCard"
+				[employees]="employees"
+				[organizationId]="organizationId"
+				[department]="departmentToEdit"
+				(canceled)="cancel()"
+				[isGridEdit]="isGridEdit"
+				(addOrEditDepartment)="addOrEditDepartment($event)"
+			>
+			</ga-departments-mutation>
+		</div>
+
+		<div
+			class="card-container"
+			*ngIf="
+				departments?.length &&
+				dataLayoutStyle === 'CARDS_GRID' &&
+				!showAddCard
+			"
+		>
+			<ga-entity-with-members-card
+				*ngFor="let d of departments"
+				[entityWithMembers]="d"
+				(remove)="removeDepartment(d.id, d.name)"
+				(edit)="editDepartment(d)"
+				class="member-card"
+			>
+			</ga-entity-with-members-card>
+		</div>
+		<div class="mt-4">
+			<ng2-smart-table
+				*ngIf="
+					departments?.length &&
+					dataLayoutStyle === 'TABLE' &&
+					!showAddCard
+				"
+				class="w-100"
+				(userRowSelect)="selectDepartment($event)"
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource"
+				style="cursor: pointer;"
+				#departmentsTable
+			>
+			</ng2-smart-table>
+		</div>
+	</nb-card-body>
+</nb-card>
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="editDepartment(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+		>{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+
+	<button
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="removeDepartment(selectedItem?.id, selectedItem?.name)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+		>{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

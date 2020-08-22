@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, In } from 'typeorm';
+import { Repository, Between, In, SelectQueryBuilder } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { Timesheet } from '../timesheet.entity';
 import * as moment from 'moment';
@@ -12,34 +12,24 @@ import {
 	PermissionsEnum
 } from '@gauzy/models';
 import { RequestContext } from '../../core/context';
+import { CommandBus } from '@nestjs/cqrs';
+import { TimesheetFirstOrCreateCommand } from './commands/timesheet-first-or-create.command';
 
 @Injectable()
 export class TimeSheetService extends CrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
-		private readonly timeSheetRepository: Repository<Timesheet>
+		private readonly timeSheetRepository: Repository<Timesheet>,
+		private readonly commandBus: CommandBus
 	) {
 		super(timeSheetRepository);
 	}
 
 	async createOrFindTimeSheet(employeeId, date: Date = new Date()) {
-		const from_date = moment(date).startOf('week');
-		const to_date = moment(date).endOf('week');
+		const timesheet = await this.commandBus.execute(
+			new TimesheetFirstOrCreateCommand(date, employeeId)
+		);
 
-		let timesheet = await this.timeSheetRepository.findOne({
-			where: {
-				startedAt: Between(from_date, to_date),
-				employeeId: employeeId
-			}
-		});
-
-		if (!timesheet) {
-			timesheet = await this.timeSheetRepository.save({
-				employeeId: employeeId,
-				startedAt: from_date.toISOString(),
-				stoppedAt: to_date.toISOString()
-			});
-		}
 		return timesheet;
 	}
 
@@ -66,7 +56,7 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		let approvedBy: string = null;
 		if (status === TimesheetStatus.APPROVED) {
 			const user = RequestContext.currentUser();
-			approvedBy = user.id;
+			approvedBy = user.employeeId;
 		}
 
 		const timesheet = await this.timeSheetRepository.update(
@@ -75,7 +65,9 @@ export class TimeSheetService extends CrudService<Timesheet> {
 			},
 			{
 				status: status,
-				approvedById: approvedBy
+				approvedById: approvedBy,
+				approvedAt:
+					status === TimesheetStatus.APPROVED ? new Date() : null
 			}
 		);
 		return timesheet;
@@ -105,7 +97,8 @@ export class TimeSheetService extends CrudService<Timesheet> {
 			join: {
 				alias: 'timesheet',
 				innerJoin: {
-					employee: 'timesheet.employee'
+					employee: 'timesheet.employee',
+					timeLogs: 'timesheet.timeLogs'
 				}
 			},
 			relations: [
@@ -115,16 +108,19 @@ export class TimeSheetService extends CrudService<Timesheet> {
 					? ['employee', 'employee.organization', 'employee.user']
 					: [])
 			],
-			where: (qb) => {
+			where: (qb: SelectQueryBuilder<Timesheet>) => {
 				qb.where({
 					startedAt: Between(startDate, endDate),
-					...(employeeIds ? { employeeIds: In(employeeIds) } : {})
+					...(employeeIds ? { employeeId: In(employeeIds) } : {})
 				});
-				qb.andWhere('"startedAt" Between :startDate AND :endDate', {
-					startDate,
-					endDate
-				});
-				qb.andWhere('"deletedAt" IS NULL');
+				qb.andWhere(
+					`"${qb.alias}"."startedAt" Between :startDate AND :endDate`,
+					{
+						startDate,
+						endDate
+					}
+				);
+				qb.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
 				if (request.organizationId) {
 					qb.andWhere(
 						'"employee"."organizationId" = :organizationId',

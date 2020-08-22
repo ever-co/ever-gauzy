@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
 import {
 	TimeLogType,
@@ -29,10 +29,11 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	running: boolean;
 	today: Date = new Date();
 	selectedRange: IDateRange = { start: null, end: null };
-	user: any = {};
+	user: User;
 	organization: Organization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	allowFutureDate: boolean;
+	@ViewChild(NgForm) form: NgForm;
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
@@ -72,6 +73,16 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		};
 	}
 
+	public get organizationContactId(): string {
+		return this.timeTrackerService.timerConfig.organizationContactId;
+	}
+	public set organizationContactId(value: string) {
+		this.timeTrackerService.timerConfig = {
+			...this.timeTrackerService.timerConfig,
+			organizationContactId: value
+		};
+	}
+
 	public get projectId(): string {
 		return this.timeTrackerService.timerConfig.projectId;
 	}
@@ -103,16 +114,24 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			this.user = user;
 		});
 
-		this.timeTrackerService.$dueration
+		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
-		this.timeTrackerService.$current_session_dueration
+
+		this.timeTrackerService.showTimerWindow$
+			.pipe(untilDestroyed(this))
+			.subscribe((isOpen) => {
+				this.isOpen = isOpen;
+			});
+
+		this.timeTrackerService.current_session_duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
 				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
+
 		this.timeTrackerService.$running
 			.pipe(untilDestroyed(this))
 			.subscribe((isRunning) => {
@@ -132,7 +151,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	toggle() {
+	toggleWindow() {
 		if (!this.isOpen) {
 			this.show();
 		} else {
@@ -141,23 +160,23 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	show() {
-		this.isOpen = true;
+		this.timeTrackerService.showTimerWindow = true;
 	}
 
 	hide() {
-		this.isOpen = false;
+		this.timeTrackerService.showTimerWindow = false;
 	}
 
-	toggleTimer(f: NgForm) {
-		if (!this.running && !f.valid) {
-			f.resetForm();
+	toggleTimer() {
+		if (!this.running && !this.form.valid) {
+			this.form.resetForm();
 			return;
 		}
 		this.timeTrackerService.toggle();
 	}
 
-	addTime(f: NgForm) {
-		if (!f.valid) {
+	addTime() {
+		if (!this.form.valid) {
 			return;
 		}
 		const startedAt = toUTC(this.selectedRange.start).toDate();
@@ -180,10 +199,10 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 						.local()
 						.isSame(new Date(), 'day')
 				) {
-					this.timeTrackerService.dueration =
-						this.timeTrackerService.dueration + timeLog.duration;
+					this.timeTrackerService.duration =
+						this.timeTrackerService.duration + timeLog.duration;
 				}
-				f.resetForm();
+				this.form.resetForm();
 				//this.updateTimePickerLimit(new Date());
 				this.selectedRange = { start: null, end: null };
 				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');

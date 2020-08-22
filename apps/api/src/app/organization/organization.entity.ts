@@ -26,7 +26,9 @@ import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	Organization as IOrganization,
-	WeekDaysEnum
+	WeekDaysEnum,
+	MinimumProjectSizeEnum,
+	CurrencyPosition
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
@@ -35,6 +37,8 @@ import { Payment } from '../payment/payment.entity';
 import { Contact } from '../contact/contact.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
+import { Employee } from '../employee/employee.entity';
+import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 
 @Entity('organization')
 export class Organization extends TenantBase implements IOrganization {
@@ -58,6 +62,11 @@ export class Organization extends TenantBase implements IOrganization {
 	@OneToMany((type) => Invoice, (invoices) => invoices.fromOrganization)
 	@JoinColumn()
 	invoices?: Invoice[];
+
+	@ApiProperty({ type: Employee })
+	@OneToMany(() => Employee, (employee) => employee.organization)
+	@JoinColumn()
+	employees?: Employee[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -184,6 +193,11 @@ export class Organization extends TenantBase implements IOrganization {
 	@Column({ nullable: true })
 	numberFormat?: string;
 
+	@ApiProperty({ type: String, enum: MinimumProjectSizeEnum })
+	@IsEnum(BonusTypeEnum)
+	@Column({ nullable: true })
+	minimumProjectSize?: string;
+
 	@ApiProperty({ type: String, enum: BonusTypeEnum })
 	@IsEnum(BonusTypeEnum)
 	@Column({ nullable: true })
@@ -236,6 +250,16 @@ export class Organization extends TenantBase implements IOrganization {
 	@Column({ nullable: true })
 	show_clients_count?: boolean;
 
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_clients?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_employees_count?: boolean;
+
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ nullable: true })
@@ -281,27 +305,27 @@ export class Organization extends TenantBase implements IOrganization {
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireReason?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireDescription?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireProject?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireTask?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column({ default: true })
+	@Column({ default: false })
 	requireClient?: boolean;
 
 	@ApiProperty({ enum: [12, 24] })
@@ -337,4 +361,33 @@ export class Organization extends TenantBase implements IOrganization {
 	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.organization)
 	@JoinColumn()
 	organizationSprints?: OrganizationSprint[];
+
+	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
+	@OneToMany(
+		(type) => InvoiceEstimateHistory,
+		(invoiceEstimateHistory) => invoiceEstimateHistory.organization,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	invoiceEstimateHistories?: InvoiceEstimateHistory[];
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	website?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	fiscalInformation?: string;
+
+	@ApiPropertyOptional({ type: String, enum: CurrencyPosition })
+	@IsEnum(CurrencyPosition)
+	@IsOptional()
+	@Column({ default: 'LEFT' })
+	currencyPosition?: string;
 }

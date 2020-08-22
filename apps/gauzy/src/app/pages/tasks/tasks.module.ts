@@ -19,12 +19,12 @@ import {
 	NbAccordionModule,
 	NbListModule,
 	NbTabsetModule,
-	NbActionsModule
+	NbActionsModule,
+	NbContextMenuModule
 } from '@nebular/theme';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TaskDialogComponent } from './components/task-dialog/task-dialog.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -41,6 +41,8 @@ import { SprintDialogComponent } from './components/task/task-settings/project-v
 import { TasksSprintViewComponent } from './components/task/tasks-layouts/tasks-sprint-view/tasks-sprint-view.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprint-view/task/task.component';
+import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -48,7 +50,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 @NgModule({
 	declarations: [
 		TaskComponent,
-		TaskDialogComponent,
 		MyTaskDialogComponent,
 		TeamTaskDialogComponent,
 		TaskSettingsComponent,
@@ -79,9 +80,11 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		NbListModule,
+		NbContextMenuModule,
 		Ng2SmartTableModule,
 		UserFormsModule,
 		CardGridModule,
+		AddTaskDialogModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -93,12 +96,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		EmployeeMultiSelectModule,
 		GauzyEditableGridModule,
-		DragDropModule
+		DragDropModule,
+		BackNavigationModule
 	],
-	entryComponents: [
-		TaskDialogComponent,
-		MyTaskDialogComponent,
-		TeamTaskDialogComponent
-	]
+	entryComponents: [MyTaskDialogComponent, TeamTaskDialogComponent]
 })
 export class TasksModule {}

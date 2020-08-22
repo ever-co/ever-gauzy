@@ -7,7 +7,8 @@ import {
 	WeekDaysEnum,
 	RegionsEnum,
 	CurrenciesEnum,
-	BonusTypeEnum
+	BonusTypeEnum,
+	CurrencyPosition
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
@@ -39,6 +40,7 @@ export class EditOrganizationOtherSettingsComponent
 			return type[0] + type.substr(1, type.length).toLowerCase();
 		}
 	);
+	defaultCurrencyPosition: string[] = Object.values(CurrencyPosition);
 	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
 
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
@@ -211,7 +213,9 @@ export class EditOrganizationOtherSettingsComponent
 			timeFormat: [this.organization.timeFormat || 12],
 			separateInvoiceItemTaxAndDiscount: [
 				this.organization.separateInvoiceItemTaxAndDiscount
-			]
+			],
+			fiscalInformation: [this.organization.fiscalInformation || ''],
+			currencyPosition: [this.organization.currencyPosition || 'LEFT']
 		});
 	}
 

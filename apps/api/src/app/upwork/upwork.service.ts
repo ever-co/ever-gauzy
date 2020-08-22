@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { In, Between } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import * as UpworkApi from 'upwork-api';
 import * as _ from 'underscore';
@@ -19,7 +20,11 @@ import {
 	IntegrationEntity,
 	RolesEnum,
 	ExpenseCategoriesEnum,
-	OrganizationVendorEnum
+	OrganizationVendorEnum,
+	IUpworkOfferStatusEnum,
+	IUpworkProposalStatusEnum,
+	IUpworkDateRange,
+	ContactType
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -36,15 +41,8 @@ import { Workdiary } from 'upwork-api/lib/routers/workdiary.js';
 import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
 import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
-import { Time } from 'upwork-api/lib/routers/reports/time.js';
-import { Accounts } from 'upwork-api/lib/routers/reports/finance/accounts.js';
-import { Earnings } from 'upwork-api/lib/routers/reports/finance/earnings.js';
-import { Billings } from 'upwork-api/lib/routers/reports/finance/billings.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
 import {
-	TimesheetGetCommand,
-	TimesheetCreateCommand,
-	TimeLogCreateCommand,
 	TimeSlotCreateCommand,
 	ScreenshotCreateCommand,
 	TimeSlotMinuteCreateCommand
@@ -59,22 +57,40 @@ import { OrganizationService } from '../organization/organization.service';
 import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
 import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
+import { ExpenseService } from '../expense/expense.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
+import { IncomeService } from '../income/income.service';
+import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
+import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
+import { IPagination } from '../core';
+import { UpworkReportService } from './upwork-report.service';
+import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';
+import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { UpworkJobService } from './upwork-job.service';
+import { UpworkOffersService } from './upwork-offers.service';
+import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
 
 @Injectable()
 export class UpworkService {
 	private _upworkApi: UpworkApi;
 
 	constructor(
+		private readonly _expenseService: ExpenseService,
 		private _expenseCategoryService: ExpenseCategoriesService,
+		private readonly _incomeService: IncomeService,
 		private _integrationMapService: IntegrationMapService,
 		private _userService: UserService,
 		private _roleService: RoleService,
 		private _organizationService: OrganizationService,
 		private _orgVendorService: OrganizationVendorsService,
+		private _orgClientService: OrganizationContactService,
 		private _timeSlotService: TimeSlotService,
+		private readonly _upworkReportService: UpworkReportService,
+		private readonly _upworkJobService: UpworkJobService,
+		private readonly _upworkOfferService: UpworkOffersService,
 		private commandBus: CommandBus
 	) {}
 
@@ -341,31 +357,34 @@ export class UpworkService {
 	}
 
 	async syncTimeLog(timeLog) {
-		let timesheet = await this.commandBus.execute(
-			new TimesheetGetCommand({
-				where: { employeeId: timeLog.employeeId }
-			})
+		const timesheet = await this.commandBus.execute(
+			new TimesheetFirstOrCreateCommand(
+				moment(timeLog.startDate).toDate(),
+				timeLog.employeeId
+			)
 		);
 
-		if (!timesheet) {
-			timesheet = await this.commandBus.execute(
-				new TimesheetCreateCommand({
-					startedAt: timeLog.startDate,
-					employeeId: timeLog.employeeId,
-					mouse: timeLog.mouse_events_count,
-					keyboard: timeLog.keyboard_events_count,
-					duration: timeLog.duration
-				})
-			);
-		}
+		// if (!timesheet) {
+		// 	timesheet = await this.commandBus.execute(
+		// 		new TimesheetCreateCommand({
+		// 			startedAt: timeLog.startDate,
+		// 			employeeId: timeLog.employeeId,
+		// 			mouse: timeLog.mouse_events_count,
+		// 			keyboard: timeLog.keyboard_events_count,
+		// 			duration: timeLog.duration
+		// 		})
+		// 	);
+		// }
 
 		const gauzyTimeLog = await this.commandBus.execute(
 			new TimeLogCreateCommand({
 				projectId: timeLog.projectId,
 				employeeId: timeLog.employeeId,
 				logType: timeLog.logType,
-				duration: timeLog.duration,
 				startedAt: timeLog.startDate,
+				stoppedAt: moment(timeLog.startedAt)
+					.add(timeLog.duration, 'seconds')
+					.toDate(),
 				timesheetId: timesheet.id
 			})
 		);
@@ -386,26 +405,26 @@ export class UpworkService {
 		let integratedTimeSlots = [];
 
 		for await (const timeSlot of timeSlots) {
+			const {
+				keyboard_events_count,
+				mouse_events_count,
+				cell_time
+			} = timeSlot;
 			const gauzyTimeSlot = await this.commandBus.execute(
 				new TimeSlotCreateCommand({
 					employeeId,
 					startedAt: new Date(
-						moment
-							.unix(timeSlot.cell_time)
-							.format('YYYY-MM-DD HH:mm:ss')
+						moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')
 					),
-					keyboard: timeSlot.keyboard_events_count,
-					mouse: timeSlot.mouse_events_count,
+					keyboard: keyboard_events_count,
+					mouse: mouse_events_count,
 					time_slot: new Date(
-						moment
-							.unix(timeSlot.cell_time)
-							.format('YYYY-MM-DD HH:mm:ss')
+						moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')
 					),
 					overall: 0,
 					duration: 0
 				})
 			);
-
 			const integratedSlot = await this.commandBus.execute(
 				new IntegrationMapSyncEntityCommand({
 					gauzyId: gauzyTimeSlot.id,
@@ -414,7 +433,6 @@ export class UpworkService {
 					entity: IntegrationEntity.TIME_SLOT
 				})
 			);
-
 			integratedTimeSlots = integratedTimeSlots.concat(integratedSlot);
 		}
 
@@ -558,6 +576,13 @@ export class UpworkService {
 							providerId,
 							entity.datePicker.selectedDate
 						);
+					case 'proposals':
+						return await this.syncProposalsOffers(
+							organizationId,
+							integrationId,
+							config,
+							employeeId
+						);
 					default:
 						return;
 				}
@@ -576,7 +601,7 @@ export class UpworkService {
 			const integratedTimeSlotsMinutes = await Promise.all(
 				minutes.map(async (minute) => {
 					const {
-						record: timeSlot
+						record: findTimeSlot
 					} = await this._timeSlotService.findOneOrFail({
 						where: {
 							employeeId: employeeId,
@@ -586,6 +611,10 @@ export class UpworkService {
 						}
 					});
 
+					if (!findTimeSlot) {
+						return;
+					}
+
 					const { time, mouse, keyboard } = minute;
 					const gauzyTimeSlotMinute = await this.commandBus.execute(
 						new TimeSlotMinuteCreateCommand({
@@ -594,10 +623,9 @@ export class UpworkService {
 							datetime: new Date(
 								moment.unix(time).format('YYYY-MM-DD HH:mm:ss')
 							),
-							timeSlot
+							timeSlot: findTimeSlot
 						})
 					);
-
 					return gauzyTimeSlotMinute;
 				})
 			);
@@ -684,10 +712,10 @@ export class UpworkService {
 				screenshot_img_thmb,
 				snapshot_time
 			}) => {
-				let recordedAt = moment
+				const recordedAt = moment
 					.unix(snapshot_time)
 					.format('YYYY-MM-DD HH:mm:ss');
-				let activityTimestamp = moment
+				const activityTimestamp = moment
 					.unix(cell_time)
 					.format('YYYY-MM-DD HH:mm:ss');
 
@@ -740,13 +768,13 @@ export class UpworkService {
 	}
 
 	private async _handleEmployee({ integrationId, organizationId, config }) {
-		let promises = [];
+		const promises = [];
 		promises.push(this._getUpworkAuthenticatedUser(config));
 		promises.push(this._getUpworkUserInfo(config));
 
 		return Promise.all(promises).then(async (results: any[]) => {
 			const { user } = results[0];
-			let { info } = results[1];
+			const { info } = results[1];
 			user['info'] = info;
 
 			return await this.syncEmployee({
@@ -761,9 +789,9 @@ export class UpworkService {
 		providerRefernceId,
 		integrationId,
 		organizationId,
-		config
+		config: IUpworkApiConfig
 	) {
-		let { record } = await this._integrationMapService.findOneOrFail({
+		const { record } = await this._integrationMapService.findOneOrFail({
 			where: {
 				sourceId: providerRefernceId,
 				entity: IntegrationEntity.EMPLOYEE
@@ -780,10 +808,14 @@ export class UpworkService {
 	}
 
 	async syncEmployee({ integrationId, user, organizationId }) {
-		const { reference: userId, email } = user;
-		let { record } = await this._userService.findOneOrFail({
+		const { reference: userId, email, info } = user;
+		const { record } = await this._userService.findOneOrFail({
 			where: { email: email }
 		});
+
+		//upwork profile picture
+		const { portrait_100_img: imageUrl } = info;
+
 		let employee;
 		if (record) {
 			employee = await this.commandBus.execute(
@@ -808,7 +840,8 @@ export class UpworkService {
 						lastName,
 						role,
 						tags: null,
-						tenant: null
+						tenant: null,
+						imageUrl
 					},
 					password: environment.defaultHubstaffUserPass,
 					organization
@@ -823,14 +856,53 @@ export class UpworkService {
 		});
 	}
 
+	/**
+	 * Sync contract client
+	 */
+	async syncClient(
+		integrationId,
+		organizationId,
+		client
+	): Promise<OrganizationContact> {
+		const { company_id: sourceId, company_name: name } = client;
+		const { record } = await this._orgClientService.findOneOrFail({
+			where: {
+				name,
+				organizationId: organizationId
+			}
+		});
+		if (record) {
+			return record;
+		}
+
+		const gauzyClient = await this.commandBus.execute(
+			new OrganizationContactCreateCommand({
+				name,
+				organizationId,
+				contactType: ContactType.CLIENT
+			})
+		);
+		await this._integrationMapService.create({
+			gauzyId: gauzyClient.id,
+			integrationId,
+			sourceId,
+			entity: IntegrationEntity.CLIENT
+		});
+
+		return gauzyClient;
+	}
+
+	/*
+	 * Sync upwork transactions/earnings reports
+	 */
 	async syncReports(
 		organizationId,
 		integrationId,
-		config,
+		config: IUpworkApiConfig,
 		employeeId,
 		providerRefernceId,
 		providerId,
-		dateRange
+		dateRange: IUpworkDateRange
 	) {
 		try {
 			const syncedIncome = await this._syncIncome(
@@ -860,24 +932,27 @@ export class UpworkService {
 	}
 
 	/*
-	 * Upwork freelancer expense
+	 * Sync upwork freelancer expense
 	 */
 	private async _syncExpense(
 		organizationId,
 		integrationId,
-		config,
+		config: IUpworkApiConfig,
 		employeeId,
 		providerRefernceId,
-		dateRange
+		dateRange: IUpworkDateRange
 	) {
-		const reports = await this._getEarningReportsForFreelancer(
+		const reports = await this._upworkReportService.getEarningReportByFreelancer(
 			config,
 			providerRefernceId,
 			dateRange
 		);
+		const {
+			table: { cols = [] }
+		} = reports;
 
-		var {
-			table: { cols = [], rows = [] }
+		let {
+			table: { rows = [] }
 		} = reports;
 
 		const columns = _.pluck(cols, 'label');
@@ -897,7 +972,13 @@ export class UpworkService {
 					(row) => row.subtype === ExpenseCategoriesEnum.SERVICE_FEE
 				)
 				.map(async (row) => {
-					const { amount, date, description, subtype } = row;
+					const {
+						amount,
+						date,
+						description,
+						subtype,
+						reference
+					} = row;
 					const {
 						record: category
 					} = await this._expenseCategoryService.findOneOrFail({
@@ -915,6 +996,20 @@ export class UpworkService {
 						}
 					});
 
+					const {
+						record: integrationMap
+					} = await this._integrationMapService.findOneOrFail({
+						where: {
+							integrationId,
+							sourceId: reference,
+							entity: IntegrationEntity.EXPENSE
+						}
+					});
+
+					if (integrationMap) {
+						return integrationMap;
+					}
+
 					const gauzyExpense = await this.commandBus.execute(
 						new ExpenseCreateCommand({
 							employeeId,
@@ -922,19 +1017,20 @@ export class UpworkService {
 							amount,
 							category,
 							valueDate: new Date(
-								moment(date).format('YYYY-MM-DD hh:mm:ss')
+								moment(date).format('YYYY-MM-DD HH:mm:ss')
 							),
 							vendor,
+							reference,
 							notes: description,
-							typeOfExpense: subtype
+							typeOfExpense: subtype,
+							currency: CurrenciesEnum.USD
 						})
 					);
 
-					const { assignment__reference: sourceId } = row;
 					return await this._integrationMapService.create({
 						gauzyId: gauzyExpense.id,
 						integrationId,
-						sourceId,
+						sourceId: reference,
 						entity: IntegrationEntity.EXPENSE
 					});
 				})
@@ -942,23 +1038,27 @@ export class UpworkService {
 	}
 
 	/*
-	 * Upwork freelancer income
+	 * Sync upwork freelancer income
 	 */
 	private async _syncIncome(
 		organizationId,
 		integrationId,
-		config,
+		config: IUpworkApiConfig,
 		employeeId,
 		providerId,
-		dateRange
+		dateRange: IUpworkDateRange
 	) {
-		const reports = await this._getFreelancerFullReports(
+		const reports = await this._upworkReportService.getFullReportByFreelancer(
 			config,
 			providerId,
 			dateRange
 		);
-		var {
-			table: { cols = [], rows = [] }
+		const {
+			table: { cols = [] }
+		} = reports;
+
+		let {
+			table: { rows = [] }
 		} = reports;
 
 		const columns = _.pluck(cols, 'label');
@@ -972,18 +1072,45 @@ export class UpworkService {
 			return ele;
 		});
 
-		return await Promise.all(
-			rows.map(async (row) => {
-				const {
-					company_id: clientId,
-					company_name: clientName,
-					memo: notes,
-					worked_on,
-					assignment_rate,
-					hours,
-					assignment_ref
-				} = row;
+		let integratedIncomes = [];
+		for await (const row of rows) {
+			const {
+				company_id: clientId,
+				company_name: clientName,
+				memo: notes,
+				worked_on,
+				assignment_rate,
+				hours,
+				assignment_ref: contractId
+			} = row;
 
+			//sync upwork contract client
+			await this.syncClient(integrationId, organizationId, row);
+
+			const { record: income } = await this._incomeService.findOneOrFail({
+				where: {
+					employeeId,
+					clientId,
+					reference: contractId,
+					valueDate: new Date(
+						moment(worked_on).format('YYYY-MM-DD HH:mm:ss')
+					)
+				}
+			});
+
+			let integratedIncome;
+			if (income) {
+				const findIntegration = await this._integrationMapService.findOneOrFail(
+					{
+						where: {
+							gauzyId: income.id,
+							integrationId,
+							entity: IntegrationEntity.INCOME
+						}
+					}
+				);
+				integratedIncome = findIntegration.record;
+			} else {
 				const gauzyIncome = await this.commandBus.execute(
 					new IncomeCreateCommand({
 						employeeId,
@@ -992,254 +1119,277 @@ export class UpworkService {
 						clientId,
 						amount: parseFloat(hours) * parseFloat(assignment_rate),
 						valueDate: new Date(
-							moment(worked_on).format('YYYY-MM-DD hh:mm:ss')
+							moment(worked_on).format('YYYY-MM-DD HH:mm:ss')
 						),
 						notes,
 						tags: [],
-						reference: assignment_ref
+						reference: contractId,
+						currency: CurrenciesEnum.USD
 					})
 				);
-
-				const sourceId = assignment_ref;
-				return await this._integrationMapService.create({
+				integratedIncome = await this._integrationMapService.create({
 					gauzyId: gauzyIncome.id,
 					integrationId,
-					sourceId,
+					sourceId: contractId,
 					entity: IntegrationEntity.INCOME
 				});
-			})
+			}
+
+			integratedIncomes = integratedIncomes.concat(integratedIncome);
+		}
+
+		return integratedIncomes;
+	}
+
+	/**
+	 * Get all reports for upwork integration
+	 */
+	async getReportListByIntegration(
+		integrationId,
+		filter,
+		relations
+	): Promise<IPagination<any>> {
+		const { items, total } = await this._integrationMapService.findAll({
+			where: {
+				integration: {
+					id: integrationId
+				},
+				entity: In([
+					IntegrationEntity.INCOME,
+					IntegrationEntity.EXPENSE
+				])
+			}
+		});
+
+		const reports = {
+			items: [],
+			total
+		};
+		if (items.length === 0) {
+			return reports;
+		}
+
+		const gauzyIds = _.pluck(items, 'gauzyId');
+		const {
+			dateRange: { start, end }
+		} = filter;
+		const income = await this._incomeService.findAll({
+			where: {
+				id: In(gauzyIds),
+				valueDate: Between(
+					moment(start).format('YYYY-MM-DD hh:mm:ss'),
+					moment(end).format('YYYY-MM-DD hh:mm:ss')
+				)
+			},
+			relations: relations.income
+		});
+		const expense = await this._expenseService.findAll({
+			where: {
+				id: In(gauzyIds),
+				valueDate: Between(
+					moment(start).format('YYYY-MM-DD hh:mm:ss'),
+					moment(end).format('YYYY-MM-DD hh:mm:ss')
+				)
+			},
+			relations: relations.expense
+		});
+
+		reports.total = income.total + expense.total;
+		reports.items = reports.items.concat(income.items);
+		reports.items = reports.items.concat(expense.items);
+
+		reports.items = _.sortBy(reports.items, function (item) {
+			return item.valueDate;
+		}).reverse();
+
+		return reports;
+	}
+
+	/*
+	 * async
+	 */
+	async syncProposalsOffers(
+		organizationId,
+		integrationId,
+		config: IUpworkApiConfig,
+		employeeId
+	) {
+		const proposals = await this._getProposals(config);
+		const offers = await this._getOffers(config);
+
+		const syncedOffers = await this._syncOffers(
+			config,
+			offers,
+			organizationId,
+			integrationId,
+			employeeId
+		);
+
+		const syncedProposals = await this._syncProposals(
+			config,
+			proposals,
+			organizationId,
+			integrationId,
+			employeeId
+		);
+
+		return {
+			syncedOffers,
+			syncedProposals
+		};
+	}
+
+	/*
+	 * Sync upwork proposals for freelancer
+	 */
+	private async _getProposals(config: IUpworkApiConfig) {
+		try {
+			const promises = [];
+			for (const status in IUpworkProposalStatusEnum) {
+				if (isNaN(Number(status))) {
+					promises.push(
+						this._upworkOfferService
+							.getProposalLisByFreelancer(
+								config,
+								IUpworkProposalStatusEnum[status]
+							)
+							.then((response) => response)
+							.catch((error) => error)
+					);
+				}
+			}
+			return Promise.all(promises).then(async (results: any[]) => {
+				return results;
+			});
+		} catch (error) {
+			throw new BadRequestException('Cannot sync proposals');
+		}
+	}
+
+	/*
+	 * Sync upwork offers for freelancer
+	 */
+	private async _getOffers(config: IUpworkApiConfig) {
+		try {
+			const promises = [];
+			for (const status in IUpworkOfferStatusEnum) {
+				if (isNaN(Number(status))) {
+					promises.push(
+						this._upworkOfferService
+							.getOffersListByFreelancer(
+								config,
+								IUpworkOfferStatusEnum[status]
+							)
+							.then((response) => response)
+							.catch((error) => error)
+					);
+				}
+			}
+			return Promise.all(promises).then(async (results: any[]) => {
+				return results;
+			});
+		} catch (error) {
+			throw new BadRequestException('Cannot sync offers');
+		}
+	}
+
+	/*
+	 * Sync upwork offers for freelancer
+	 */
+	private async _syncOffers(
+		config: IUpworkApiConfig,
+		offers,
+		organizationId,
+		integrationId,
+		employeeId
+	) {
+		return await Promise.all(
+			offers
+				.filter(
+					(row) =>
+						row['offers'] && row['offers'].hasOwnProperty('offer')
+				)
+				.map((row) => row['offers'])
+				.map(async (row) => {
+					const { offer: items } = row;
+					let integratedOffers = [];
+
+					for await (const item of items) {
+						const {
+							title: proposalContent,
+							terms_data,
+							last_event_state,
+							job_posting_ref,
+							rid: sourceId
+						} = item;
+						let { title: jobPostContent } = item;
+						//find upwork job
+						const job = await this._upworkJobService
+							.getJobProfileByKey(config, job_posting_ref)
+							.then((response) => response)
+							.catch((error) => error);
+
+						//if job not found/closed
+						if (job.statusCode !== 400) {
+							const { profile } = job;
+							jobPostContent = profile['op_description'];
+						}
+
+						let integratedOffer;
+						const gauzyOffer = await this.commandBus.execute(
+							new ProposalCreateCommand({
+								employeeId,
+								organizationId,
+								valueDate: new Date(
+									moment
+										.unix(terms_data.start_date / 1000)
+										.format('YYYY-MM-DD HH:mm:ss')
+								),
+								status: last_event_state.trim().toUpperCase(),
+								proposalContent,
+								jobPostContent,
+								jobPostUrl: job_posting_ref
+							})
+						);
+
+						integratedOffer = await this._integrationMapService.create(
+							{
+								gauzyId: gauzyOffer.id,
+								integrationId,
+								sourceId,
+								entity: IntegrationEntity.PROPOSAL
+							}
+						);
+
+						integratedOffers = integratedOffers.concat(
+							integratedOffer
+						);
+					}
+
+					return integratedOffers;
+				})
 		);
 	}
 
 	/*
-	 * Get freelancer limited reports for freelancer
+	 * Sync upwork proposals for freelancer
 	 */
-	private async _getFreelanceLimitedReports(
+	private async _syncProposals(
 		config: IUpworkApiConfig,
-		providerId
-	): Promise<any> {
-		const api = new UpworkApi(config);
-		const reports = new Time(api);
-
-		const freelancerId = providerId;
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							worked_on,
-							company_id,
-							company_name, 
-							assignment_name, 
-							assignment_team_id,
-							assignment_ref,
-							assignment_rate,
-							hours, 
-							memo,
-							contract_type
-						WHERE
-							worked_on > '${startOfMonth}' AND 
-							worked_on <= '${endOfMonth}',
-						ORDER BY 
-							worked_on,
-							assignment_ref`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				reports.getByFreelancerLimited(
-					freelancerId,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
-	 * Get freelancer reports for client
-	 */
-	private async _getFreelancerFullReports(
-		config: IUpworkApiConfig,
-		providerId,
-		dateRange
-	): Promise<any> {
-		const api = new UpworkApi(config);
-		const reports = new Time(api);
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							worked_on,
-							company_id,
-							company_name, 
-							assignment_name, 
-							assignment_team_id,
-							assignment_ref,
-							assignment_rate,
-							hours, 
-							memo,
-							contract_type
-						WHERE 
-							worked_on > '${startOfMonth}' AND 
-							worked_on <= '${endOfMonth}'
-						ORDER BY 
-							worked_on,
-							assignment_ref`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				reports.getByFreelancerFull(
-					providerId,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
-	 * Get billings reports for freelancer
-	 */
-	private async _getBillingReportsForFreelancer(
-		config: IUpworkApiConfig,
-		providerRefernceId
+		proposals,
+		organizationId,
+		integrationId,
+		employeeId
 	) {
-		const api = new UpworkApi(config);
-		const billings = new Billings(api);
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							amount,
-							date,
-							type,
-							subtype
-						WHERE 
-							date > '${startOfMonth}' AND 
-							date <= '${endOfMonth}'`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				billings.getByFreelancer(
-					providerRefernceId,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
-	 * Get earning reports for freelancer
-	 */
-	private async _getEarningReportsForFreelancer(
-		config: IUpworkApiConfig,
-		providerRefernceId,
-		dateRange
-	): Promise<any> {
-		const api = new UpworkApi(config);
-		const earnings = new Earnings(api);
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							amount,
-							date,
-							type,
-							subtype,
-							description,
-							assignment_name,
-							assignment__reference
-						WHERE 
-							date > '${startOfMonth}' AND 
-							date <= '${endOfMonth}'`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				earnings.getByFreelancer(
-					providerRefernceId,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
-	 * Get earning reports for client
-	 */
-	private async _getEarningReportsForClient(
-		config: IUpworkApiConfig,
-		providerId
-	): Promise<any> {
-		const api = new UpworkApi(config);
-		const earnings = new Earnings(api);
-
-		const buyerCompanyReference = '4882863';
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							amount
-						WHERE 
-							date > '${startOfMonth}' AND 
-							date <= '${endOfMonth}' AND
-							provider__id = '${providerId}'`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				earnings.getByBuyersCompany(
-					buyerCompanyReference,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
-	}
-
-	/*
-	 * Get financial reports for freelancer account
-	 */
-	private async _getFinancialReportsForAccount(
-		config: IUpworkApiConfig,
-		providerRefernceId
-	): Promise<any> {
-		const api = new UpworkApi(config);
-		const financeReports = new Accounts(api);
-
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
-		const select = `SELECT 
-							amount
-						WHERE 
-							date > '${startOfMonth}' AND 
-							date <= '${endOfMonth}'`;
-
-		return new Promise((resolve, reject) => {
-			api.setAccessToken(config.accessToken, config.accessSecret, () => {
-				financeReports.getSpecific(
-					providerRefernceId,
-					{
-						tq: select
-					},
-					(err, data) => (err ? reject(err) : resolve(data))
-				);
-			});
-		});
+		return await Promise.all(
+			proposals
+				.filter(
+					(row) =>
+						row['data'] &&
+						row['data'].hasOwnProperty('applications')
+				)
+				.map((row) => row.data.applications)
+				.map(async (row) => row)
+		);
 	}
 }

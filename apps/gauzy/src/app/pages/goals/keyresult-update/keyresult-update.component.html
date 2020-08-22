@@ -13,7 +13,8 @@
 		<h6>{{ keyResult.name }}</h6>
 		<div
 			*ngIf="
-				keyResult.type == keyResultTypeEnum.NUMBER ||
+				keyResult.type == keyResultTypeEnum.NUMERICAL ||
+				keyResult.type == keyResultTypeEnum.KPI ||
 				keyResult.type == keyResultTypeEnum.CURRENCY
 			"
 		>
@@ -25,9 +26,10 @@
 								'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
 									| translate
 							}}:</span
-						><span class="font-weight-bold">{{
-							keyResult.initialValue
-						}}</span>
+						><span class="font-weight-bold"
+							>{{ keyResult.initialValue }}
+							{{ keyResult.unit }}</span
+						>
 					</p>
 				</div>
 				<div class="col-md-6">
@@ -37,9 +39,10 @@
 								'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
 									| translate
 							}}:</span
-						><span class="font-weight-bold">{{
-							keyResult.targetValue
-						}}</span>
+						><span class="font-weight-bold"
+							>{{ keyResult.targetValue }}
+							{{ keyResult.unit }}</span
+						>
 					</p>
 				</div>
 			</div>
@@ -50,7 +53,8 @@
 			</label>
 			<input
 				*ngIf="
-					keyResult.type == keyResultTypeEnum.NUMBER ||
+					keyResult.type == keyResultTypeEnum.NUMERICAL ||
+					keyResult.type == keyResultTypeEnum.KPI ||
 					keyResult.type == keyResultTypeEnum.CURRENCY
 				"
 				type="number"
@@ -109,7 +113,7 @@
 			</nb-select>
 		</form>
 	</nb-card-body>
-	<nb-card-footer>
+	<nb-card-footer class="text-right">
 		<button class="mr-3" nbButton (click)="closeDialog()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>

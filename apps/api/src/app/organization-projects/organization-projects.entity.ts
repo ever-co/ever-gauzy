@@ -6,7 +6,8 @@ import {
 	ManyToOne,
 	ManyToMany,
 	JoinTable,
-	OneToMany
+	OneToMany,
+	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -18,8 +19,9 @@ import {
 	IsBoolean
 } from 'class-validator';
 import {
-  OrganizationProjects as IOrganizationProjects,
-  CurrenciesEnum, TaskListTypeEnum
+	OrganizationProjects as IOrganizationProjects,
+	CurrenciesEnum,
+	TaskListTypeEnum
 } from '@gauzy/models';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Employee } from '../employee/employee.entity';
@@ -29,6 +31,8 @@ import { TenantBase } from '../core/entities/tenant-base';
 import { Organization } from '../organization/organization.entity';
 import { Task } from '../tasks/task.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
+import { Payment } from '../payment/payment.entity';
+import { TimeLog } from '../timesheet/time-log.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends TenantBase
@@ -65,10 +69,18 @@ export class OrganizationProjects extends TenantBase
 	@JoinColumn()
 	organizationContact?: OrganizationContact;
 
+	@ApiProperty({ type: String })
+	@RelationId((contact: OrganizationProjects) => contact.organizationContact)
+	@Column({ nullable: true })
+	organizationContactId?: string;
+
 	@ApiProperty({ type: Task })
 	@OneToMany((type) => Task, (task) => task.project)
 	@JoinColumn()
 	tasks?: Task[];
+
+	@OneToMany((type) => TimeLog, (timeLog) => timeLog.project)
+	timeLogs?: TimeLog[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -127,8 +139,45 @@ export class OrganizationProjects extends TenantBase
 	@JoinColumn()
 	organizationSprints?: OrganizationSprint[];
 
-  @ApiProperty({ type: String, enum: TaskListTypeEnum })
-  @IsEnum(TaskListTypeEnum)
-  @Column({ default: TaskListTypeEnum.GRID })
-  taskListType: string;
+	@ApiProperty({ type: String, enum: TaskListTypeEnum })
+	@IsEnum(TaskListTypeEnum)
+	@Column({ default: TaskListTypeEnum.GRID })
+	taskListType: string;
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payment) => payment.project, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: Payment[];
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	code?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	description?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	color?: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	billable?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	billingFlat?: boolean;
 }

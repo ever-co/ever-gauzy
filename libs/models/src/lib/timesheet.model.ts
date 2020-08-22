@@ -10,7 +10,8 @@ export interface Pagination {
 
 export interface Timesheet extends IBaseEntityModel {
 	employee: Employee;
-	approvedBy?: OrganizationContact;
+	approvedBy?: Employee;
+	timeLogs?: TimeLog[];
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
@@ -90,16 +91,18 @@ export interface TimeLog extends IBaseEntityModel {
 	task?: Task;
 	timeSlots?: TimeSlot[];
 	project?: OrganizationProjects;
+	organizationContact?: OrganizationContact;
 	source?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
 	logType: string;
 	description?: string;
+	reason?: string;
 	duration: number;
 	isBillable: boolean;
 	employeeId: string;
 	projectId?: string;
-	clientId?: string;
+	organizationContactId?: string;
 	taskId?: string;
 	tags?: string[];
 }
@@ -194,6 +197,7 @@ export interface ITimeSlotMinute extends IBaseEntityModel {
 
 export interface Activity extends IBaseEntityModel {
 	title: string;
+	description?: string;
 	employee?: Employee;
 	employeeId?: string;
 	timeSlot?: TimeSlot;
@@ -202,11 +206,22 @@ export interface Activity extends IBaseEntityModel {
 	projectId?: string;
 	task?: Task;
 	taskId?: string;
+	metaData?: string | URLMetaData;
 	date: string;
 	time: string;
 	duration?: number;
 	type?: string;
 	source?: string;
+	id?: string;
+}
+
+export interface DailyActivity {
+	[x: string]: any;
+	sessions?: number;
+	duration?: number;
+	employeeId?: string;
+	date?: string;
+	title?: string;
 }
 
 export interface TimeSlotMinute extends IBaseEntityModel {
@@ -237,6 +252,12 @@ export enum ActivityType {
 	APP = 'APP'
 }
 
+export interface URLMetaData {
+	title?: string;
+	description?: string;
+	image?: string;
+}
+
 export interface ICreateScreenshotInput {
 	activityTimestamp: string;
 	employeeId?: string;
@@ -256,6 +277,12 @@ export interface Screenshot extends IBaseEntityModel {
 	recordedAt?: Date;
 }
 
+export interface ScreenshotMap {
+	startTime: string;
+	endTime: string;
+	timeSlots: TimeSlot[];
+}
+
 export interface TimerStatus {
 	duration: number;
 	running: boolean;
@@ -266,7 +293,7 @@ export interface ITimerToggleInput {
 	//timesheetId?: string;
 	projectId?: string;
 	taskId?: string;
-	clientId?: string;
+	organizationContactId?: string;
 	description?: string;
 	logType?: TimeLogType;
 	tags?: string[];
@@ -278,8 +305,10 @@ export interface IManualTimeInput {
 	employeeId?: string;
 	projectId?: string;
 	taskId?: string;
-	clientId?: string;
+	organizationContactId?: string;
+	logType?: TimeLogType;
 	description?: string;
+	reason?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
 	tags?: string[];
@@ -306,7 +335,6 @@ export interface IGetTimeSlotInput extends TimeLogFilters {
 export interface IGetActivitiesInput extends TimeLogFilters, Pagination {
 	relations?: string[];
 	type?: string[];
-	groupBy: 'date' | 'title' | 'title_date';
 }
 
 export interface IBulkActivitiesInput {

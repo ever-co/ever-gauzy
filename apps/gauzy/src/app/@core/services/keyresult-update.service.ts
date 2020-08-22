@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { KeyResultUpdates } from '@gauzy/models';
 import { throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, first } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
 
 @Injectable({
@@ -16,7 +16,6 @@ export class KeyResultUpdateService {
 	) {}
 
 	createUpdate(keyResultUpdate): Promise<KeyResultUpdates> {
-		console.log(keyResultUpdate);
 		return this._http
 			.post<KeyResultUpdates>(`${this.API_URL}/create`, keyResultUpdate)
 			.pipe(
@@ -25,6 +24,16 @@ export class KeyResultUpdateService {
 				),
 				catchError((error) => this.errorHandler(error))
 			)
+			.toPromise();
+	}
+
+	deleteBulkByKeyResultId(id: string): Promise<any> {
+		const data = JSON.stringify({ id });
+		return this._http
+			.delete(`${this.API_URL}/deleteBulkByKeyResultId`, {
+				params: { data }
+			})
+			.pipe(first())
 			.toPromise();
 	}
 

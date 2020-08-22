@@ -6,7 +6,6 @@ import {
 	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { EditTimeLogModalComponent } from '../../edit-time-log-modal/edit-time-log-modal.component';
-import { DeleteConfirmationComponent } from '../../../user/forms/delete-confirmation/delete-confirmation.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { TimesheetService } from '../../timesheet.service';
 
@@ -43,18 +42,9 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	}
 
 	onDeleteConfirm() {
-		this.nbDialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((type) => {
-				if (type === 'ok') {
-					this.timesheetService
-						.deleteLogs(this.timeLog.id)
-						.then((res) => {
-							this.dialogRef.close(res);
-						});
-				}
-			});
+		this.timesheetService.deleteLogs(this.timeLog.id).then((res) => {
+			this.dialogRef.close(res);
+		});
 	}
 
 	ngOnDestroy(): void {}

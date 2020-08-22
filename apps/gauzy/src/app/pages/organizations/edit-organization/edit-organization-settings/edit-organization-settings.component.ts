@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Country, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationEditStore } from '../../../../@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
 import { OrganizationsService } from '../../../../@core/services/organizations.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -27,7 +27,7 @@ export enum ListsInputType {
 })
 export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	implements OnInit {
-	organization: Organization;
+	@Input() organization: Organization;
 
 	departments: string[] = [];
 	positions: string[] = [];
@@ -55,7 +55,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngOnDestroy$))
 			.subscribe((params) => {
 				this.routeParams = params;
-				this._loadOrganization(params.id);
 			});
 
 		this.loadTabs();
@@ -63,7 +62,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	}
 
 	getRoute(tabName: string) {
-		return `/pages/organizations/edit/${this.routeParams.id}/settings/${tabName}`;
+		return `/pages/organizations/edit/${this.routeParams.id}/${tabName}`;
 	}
 
 	loadTabs() {
@@ -81,101 +80,12 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('location')
 			},
 			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.DEPARTMENTS'),
-				icon: 'briefcase-outline',
-				responsive: true,
-				route: this.getRoute('departments')
-			},
-			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.CONTACTS'),
-				icon: 'briefcase-outline',
-				responsive: true,
-				route: this.getRoute('contacts')
-			},
-			{
-				title: this.getTranslation(
-					'ORGANIZATIONS_PAGE.LEVEL_OF_EMPLOYEE'
-				),
-				icon: 'award-outline',
-				responsive: true,
-				route: this.getRoute('employeeLevels')
-			},
-			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.POSITIONS'),
-				icon: 'award-outline',
-				responsive: true,
-				route: this.getRoute('positions')
-			},
-			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
-				icon: 'car-outline',
-				responsive: true,
-				route: this.getRoute('vendors')
-			},
-			{
-				title: this.getTranslation(
-					'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES'
-				),
-				icon: 'list-outline',
-				responsive: true,
-				route: this.getRoute('expense-categories')
-			},
-			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.PROJECTS'),
-				icon: 'book-outline',
-				responsive: true,
-				route: this.getRoute('projects')
-			},
-			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS'),
-				icon: 'people-outline',
-				responsive: true,
-				route: this.getRoute('teams')
-			},
-			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.SETTINGS'),
 				icon: 'settings-outline',
 				responsive: true,
 				route: this.getRoute('settings')
-			},
-			{
-				title: this.getTranslation(
-					'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES'
-				),
-				icon: 'settings-outline',
-				responsive: true,
-				route: this.getRoute('employment-types')
-			},
-			{
-				title: this.getTranslation('ORGANIZATIONS_PAGE.DOCUMENTS'),
-				icon: 'file-text-outline',
-				responsive: true,
-				route: this.getRoute('documents')
 			}
 		];
-	}
-
-	goBack() {
-		const currentURL = window.location.href;
-		window.location.href = currentURL.substring(
-			0,
-			currentURL.indexOf('/settings')
-		);
-	}
-
-	private async _loadOrganization(id: string) {
-		try {
-			this.organization = await this.organizationService
-				.getById(id, null, ['tags'])
-				.pipe(first())
-				.toPromise();
-			this.organizationEditStore.selectedOrganization = this.organization;
-		} catch (error) {
-			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
-			);
-		}
 	}
 
 	private _applyTranslationOnTabs() {

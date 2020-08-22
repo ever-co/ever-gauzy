@@ -47,6 +47,7 @@ export interface TimeOff extends IBaseEntityModel {
 	requestDate?: Date;
 	status?: string;
 	isHoliday?: boolean;
+	documentUrl?: string;
 }
 
 export interface TimeOffFindInput extends IBaseEntityModel {
@@ -68,6 +69,7 @@ export interface TimeOffCreateInput {
 	requestDate?: Date;
 	status?: string;
 	isHoliday?: boolean;
+	documentUrl?: string;
 }
 
 export enum StatusTypesEnum {
@@ -75,4 +77,10 @@ export enum StatusTypesEnum {
 	APPROVED = 'Approved',
 	DENIED = 'Denied',
 	ALL = 'All'
+}
+
+export enum StatusTypesMapRequestApprovalEnum {
+	Requested = 1,
+	Approved = 2,
+	Denied = 3
 }

@@ -1,3 +1,4 @@
+import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -23,6 +24,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
+import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -45,8 +47,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		NbTooltipModule,
 		NbRadioModule,
+		CardGridModule,
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
+		BackNavigationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

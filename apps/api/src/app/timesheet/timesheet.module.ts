@@ -21,6 +21,12 @@ import { TimeSheetController } from './timesheet/timesheet.controller';
 import { TimeSlotController } from './time-slot/time-slot.controller';
 import { ScreenshotController } from './screenshot/screenshot.controller';
 import { ActivityController } from './activity/activity.controller';
+import { TimesheetCommandHandlers } from './timesheet/commands/handlers';
+import { TimeLogCommandHandlers } from './time-log/commands/handlers';
+import { StatisticService } from './statistic/statistic.service';
+import { StatisticController } from './statistic/statistic.controller';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { Task } from '../tasks/task.entity';
 
 @Module({
 	controllers: [
@@ -29,6 +35,7 @@ import { ActivityController } from './activity/activity.controller';
 		TimeLogController,
 		TimeSlotController,
 		ScreenshotController,
+		StatisticController,
 		TimeSheetController
 	],
 	imports: [
@@ -39,7 +46,9 @@ import { ActivityController } from './activity/activity.controller';
 			TimeLog,
 			Timesheet,
 			Employee,
-			TimeSlotMinute
+			TimeSlotMinute,
+			OrganizationProjects,
+			Task
 		]),
 		CqrsModule
 	],
@@ -50,6 +59,9 @@ import { ActivityController } from './activity/activity.controller';
 		ScreenshotService,
 		TimeLogService,
 		TimeSlotService,
+		StatisticService,
+		...TimeLogCommandHandlers,
+		...TimesheetCommandHandlers,
 		...CommandHandlers
 	],
 	exports: [
@@ -57,7 +69,8 @@ import { ActivityController } from './activity/activity.controller';
 		ActivityService,
 		ScreenshotService,
 		TimeLogService,
-		TimeSlotService
+		TimeSlotService,
+		StatisticService
 	]
 })
 export class TimesheetModule {}

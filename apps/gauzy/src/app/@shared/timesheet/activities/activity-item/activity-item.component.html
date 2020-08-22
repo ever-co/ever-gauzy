@@ -1,0 +1,23 @@
+<div class="row align-items-center">
+	<div class="col-sm-3 py-1">{{ item.title }}</div>
+	<div class="col-sm py-1">
+		<div class="row align-items-center">
+			<div class="col-auto percentage-col">
+				{{ item.durationPercentage }}%
+			</div>
+			<div class="col">
+				<nb-progress-bar
+					class="mb-1"
+					[value]="item.durationPercentage"
+					[status]="prgressStatus(item.durationPercentage)"
+					[displayValue]="true"
+					size="tiny"
+				>
+				</nb-progress-bar>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-2 text-center py-1">
+		{{ item.duration | durationFormat }}
+	</div>
+</div>

@@ -24,6 +24,7 @@ import { UserFormsModule } from '../../../@shared/user/forms/user-forms.module';
 import { TagsColorInputModule } from '../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
+import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -48,6 +49,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EventTypeMutationModule,
 		UserFormsModule,
 		CardGridModule,
+		BackNavigationModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

@@ -8,7 +8,8 @@ import {
 	OrganizationAwards,
 	Language,
 	OrganizationLanguages,
-	ClientFocusEnum
+	ClientFocusEnum,
+	MinimumProjectSizeEnum
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +29,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 	organization?: Organization;
 	currencies = Object.values(CurrenciesEnum);
 	client_focus = Object.values(ClientFocusEnum);
-
+	minimumProjectSizes = Object.values(MinimumProjectSizeEnum);
 	selectedLanguageLevel: string;
 	showAddAward: boolean;
 	showAddLanguage: boolean;
@@ -129,8 +130,11 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 					.show_minimum_project_size,
 				show_projects_count: this.organization.show_projects_count,
 				show_clients_count: this.organization.show_clients_count,
+				show_clients: this.organization.show_clients,
+				show_employees_count: this.organization.show_employees_count,
 				client_focus: [],
 				skills: this.organization.skills,
+				minimumProjectSize: this.organization.minimumProjectSize,
 				languages: []
 			});
 		}
@@ -272,7 +276,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 			{
 				organizationId: this.organizationId
 			},
-			['Language']
+			['language']
 		);
 		if (res) {
 			this.organization_languages = res.items;

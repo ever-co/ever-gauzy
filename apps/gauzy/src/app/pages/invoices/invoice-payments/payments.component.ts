@@ -10,10 +10,12 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PaymentService } from '../../../@core/services/payment.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
-import { InvoicePaymentOverdueComponent } from '../table-components/invoice-payment-overdue.component';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/payment/generate-pdf';
+import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
+import { Store } from '../../../@core/services/store.service';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 export interface SelectedPayment {
 	data: Payment;
@@ -33,7 +35,9 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private dialogService: NbDialogService,
 		private paymentService: PaymentService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private store: Store,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 	}
@@ -71,7 +75,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 			'invoiceItems',
 			'tags',
 			'fromOrganization',
-			'toClient'
+			'toContact'
 		]);
 		this.invoice = invoice;
 	}
@@ -113,37 +117,63 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 	}
 
 	async recordPayment() {
-		this.dialogService
+		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice
 				}
 			})
-			.onClose.subscribe(async () => {
-				this.totalPaid = 0;
-				await this.loadSettings();
-				await this.updateInvoiceStatus(
-					+this.invoice.totalValue,
-					this.totalPaid
-				);
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.paymentService.add(result);
+			this.totalPaid = 0;
+			await this.loadSettings();
+			await this.updateInvoiceStatus(
+				+this.invoice.totalValue,
+				this.totalPaid
+			);
+			await this.invoiceEstimateHistoryService.add({
+				action: `Payment of ${result.amount} ${result.currency} added`,
+				invoice: result.invoice,
+				invoiceId: result.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.invoice.fromOrganization,
+				organizationId: this.invoice.fromOrganization.id
 			});
+		}
 	}
 
 	async editPayment() {
-		this.dialogService
+		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice,
 					payment: this.selectedPayment
 				}
 			})
-			.onClose.subscribe(async () => {
-				await this.loadSettings();
-				await this.updateInvoiceStatus(
-					+this.invoice.totalValue,
-					this.totalPaid
-				);
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.paymentService.update(result.id, result);
+			await this.loadSettings();
+			await this.updateInvoiceStatus(
+				+this.invoice.totalValue,
+				this.totalPaid
+			);
+			await this.invoiceEstimateHistoryService.add({
+				action: `Payment edited`,
+				invoice: result.invoice,
+				invoiceId: result.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.invoice.fromOrganization,
+				organizationId: this.invoice.fromOrganization.id
 			});
+		}
 	}
 
 	async deletePayment() {
@@ -159,6 +189,16 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				+this.invoice.totalValue,
 				this.totalPaid
 			);
+
+			await this.invoiceEstimateHistoryService.add({
+				action: `Payment deleted`,
+				invoice: result.invoice,
+				invoiceId: result.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.invoice.fromOrganization,
+				organizationId: this.invoice.fromOrganization.id
+			});
 
 			this.toastrService.primary(
 				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),
@@ -185,7 +225,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 			this.invoice,
 			this.payments,
 			this.invoice.fromOrganization,
-			this.invoice.toClient,
+			this.invoice.toContact,
 			this.totalPaid
 		);
 
@@ -245,7 +285,26 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 				overdue: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
 					type: 'custom',
-					renderComponent: InvoicePaymentOverdueComponent
+					width: '5%',
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						let badgeClass;
+						if (cell && row.overdue) {
+							badgeClass = 'danger';
+							cell = this.getTranslation(
+								'INVOICES_PAGE.PAYMENTS.OVERDUE'
+							);
+						} else if (cell) {
+							badgeClass = 'success';
+							cell = this.getTranslation(
+								'INVOICES_PAGE.PAYMENTS.ON_TIME'
+							);
+						}
+						return {
+							text: cell,
+							class: badgeClass
+						};
+					}
 				}
 			}
 		};

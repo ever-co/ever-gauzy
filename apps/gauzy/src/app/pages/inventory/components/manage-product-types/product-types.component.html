@@ -1,18 +1,14 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<div class="top-nav">
-			<div class="navigate">
-				<button
-					(click)="goBack()"
-					nbButton
-					status="primary"
-					class="mr-4"
-				>
-					<nb-icon icon="arrow-back-outline"></nb-icon>
-				</button>
-			</div>
-			<div class="main-header">
+		<div class="main-header">
+			<div class="top-nav">
+				<ngx-back-navigation></ngx-back-navigation>
 				<h4>{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}</h4>
+			</div>
+			<div>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
 			</div>
 		</div>
 	</nb-card-header>
@@ -23,26 +19,9 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<button
-				(click)="save()"
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="delete()"
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 
 		<ng2-smart-table
@@ -51,8 +30,43 @@
 			(userRowSelect)="selectProductType($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#productTypesTable
 		>
 		</ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="productData"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="save(selectedItem)"
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		(click)="delete(selectedItem)"
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

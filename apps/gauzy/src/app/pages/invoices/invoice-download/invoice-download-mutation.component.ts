@@ -10,6 +10,9 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { TasksService } from '../../../@core/services/tasks.service';
 import { ProductService } from '../../../@core/services/product.service';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
+import { ExpensesService } from '../../../@core/services/expenses.service';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-invoice-send',
@@ -27,7 +30,10 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
-		private productService: ProductService
+		private productService: ProductService,
+		private expensesService: ExpensesService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -54,6 +60,9 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				service = this.productService;
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				service = this.expensesService;
+				break;
 			default:
 				break;
 		}
@@ -61,7 +70,7 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 		docDefinition = await generatePdf(
 			this.invoice,
 			this.invoice.fromOrganization,
-			this.invoice.toClient,
+			this.invoice.toContact,
 			service
 		);
 
@@ -74,6 +83,18 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 			);
 
 		this.dialogRef.close();
+
+		await this.invoiceEstimateHistoryService.add({
+			action: this.isEstimate
+				? 'Estimate downloaded'
+				: 'Invoice downloaded',
+			invoice: this.invoice,
+			invoiceId: this.invoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.invoice.fromOrganization,
+			organizationId: this.invoice.fromOrganization.id
+		});
 
 		this.toastrService.primary(
 			this.isEstimate

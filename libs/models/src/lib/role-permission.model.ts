@@ -48,6 +48,7 @@ export enum PermissionsEnum {
 	ALL_ORG_EDIT = 'ALL_ORG_EDIT',
 	POLICY_VIEW = 'POLICY_VIEW',
 	POLICY_EDIT = 'POLICY_EDIT',
+	TIME_OFF_EDIT = 'TIME_OFF_EDIT',
 	REQUEST_APPROVAL_VIEW = 'REQUEST_APPROVAL_VIEW',
 	REQUEST_APPROVAL_EDIT = 'REQUEST_APPROVAL_EDIT',
 	APPROVAL_POLICY_VIEW = 'APPROVALS_POLICY_VIEW',
@@ -69,7 +70,12 @@ export enum PermissionsEnum {
 	EDIT_SALES_PIPELINES = 'EDIT_SALES_PIPELINES',
 	CAN_APPROVE_TIMESHEET = 'CAN_APPROVE_TIMESHEET',
 	ORG_SPRINT_VIEW = 'ORG_SPRINT_VIEW',
-	ORG_SPRINT_EDIT = 'ORG_SPRINT_EDIT'
+	ORG_SPRINT_EDIT = 'ORG_SPRINT_EDIT',
+	ORG_PROJECT_EDIT = 'ORG_PROJECT_EDIT',
+	ORG_CONTACT_EDIT = 'ORG_CONTACT_EDIT',
+	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
+	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT',
+	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW'
 }
 
 export const PermissionGroups = {
@@ -87,6 +93,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_INVITE_EDIT,
 		PermissionsEnum.POLICY_VIEW,
 		PermissionsEnum.POLICY_EDIT,
+		PermissionsEnum.TIME_OFF_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
@@ -107,7 +114,12 @@ export const PermissionGroups = {
 		PermissionsEnum.EDIT_SALES_PIPELINES,
 		PermissionsEnum.CAN_APPROVE_TIMESHEET,
 		PermissionsEnum.ORG_SPRINT_EDIT,
-		PermissionsEnum.ORG_SPRINT_VIEW
+		PermissionsEnum.ORG_SPRINT_VIEW,
+		PermissionsEnum.ORG_PROJECT_EDIT,
+		PermissionsEnum.ORG_CONTACT_EDIT,
+		PermissionsEnum.ORG_TEAM_EDIT,
+		PermissionsEnum.ORG_CONTRACT_EDIT,
+		PermissionsEnum.EVENT_TYPES_VIEW
 	],
 
 	//Readonly permissions, are only enabled for admin role
@@ -129,6 +141,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
+		PermissionsEnum.TIME_OFF_EDIT,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
 		PermissionsEnum.REQUEST_APPROVAL_VIEW
 	]

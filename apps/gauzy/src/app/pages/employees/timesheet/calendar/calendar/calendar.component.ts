@@ -7,7 +7,7 @@ import {
 	OnDestroy,
 	TemplateRef
 } from '@angular/core';
-import { OptionsInput, EventInput } from '@fullcalendar/core';
+import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -42,7 +42,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('viewLogTemplate', { static: true })
 	viewLogTemplate: TemplateRef<any>;
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
-	calendarOptions: OptionsInput;
+	calendarOptions: CalendarOptions;
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
 	employeeId: string;

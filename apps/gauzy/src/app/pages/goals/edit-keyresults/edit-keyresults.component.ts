@@ -18,32 +18,47 @@ import {
 	GoalLevelEnum,
 	OrganizationTeam,
 	RolesEnum,
-	Goal
+	Goal,
+	KPI,
+	GoalGeneralSetting,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
 import { Store } from '../../../@core/services/store.service';
 import { GoalService } from '../../../@core/services/goal.service';
+import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
+import { endOfTomorrow } from 'date-fns';
 
 @Component({
 	selector: 'ga-edit-keyresults',
-	templateUrl: './edit-keyresults.component.html'
+	templateUrl: './edit-keyresults.component.html',
+	styleUrls: ['./edit-keyresults.component.scss']
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: Employee[];
 	keyResultsForm: FormGroup;
 	data: KeyResult;
 	showAllEmployees = false;
+	settings: GoalGeneralSetting;
 	orgId: string;
 	orgName: string;
+	currenciesEnum = CurrenciesEnum;
+	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
+	helperText = '';
 	teams: OrganizationTeam[] = [];
 	hideOrg = false;
+	hideTeam = false;
+	hideEmployee = false;
 	goalLevelEnum = GoalLevelEnum;
 	softDeadline: FormControl;
 	keyResultTypeEnum = KeyResultTypeEnum;
 	goalDeadline: string;
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
-	minDate = new Date();
+	minDate = endOfTomorrow();
+	KPIs: Array<KPI>;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
@@ -52,17 +67,17 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		private taskService: TasksService,
 		private organizationTeamsService: OrganizationTeamsService,
 		private store: Store,
-		private goalService: GoalService
+		private goalService: GoalService,
+		private goalSettingsService: GoalSettingsService,
+		private keyResultUpdateService: KeyResultUpdateService
 	) {}
 
-	ngOnInit() {
-		this.minDate = new Date(
-			this.minDate.setDate(this.minDate.getDate() + 1)
-		);
+	async ngOnInit() {
 		this.keyResultsForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			type: [this.keyResultTypeEnum.NUMBER, Validators.required],
+			type: [this.keyResultTypeEnum.NUMERICAL, Validators.required],
+			unit: [KeyResultNumberUnitsEnum.ITEMS],
 			targetValue: [1],
 			initialValue: [0],
 			owner: [null, Validators.required],
@@ -77,16 +92,15 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			hardDeadline: [null],
 			assignAsObjective: [false],
 			level: [''],
-			alignedGoalOwner: ['']
+			alignedGoalOwner: [''],
+			kpiId: [null]
 		});
 
-		this.employeeService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
 		if (!!this.data) {
+			if (!this.numberUnitsEnum.find((unit) => unit === this.data.unit)) {
+				this.numberUnitsEnum.push(this.data.unit);
+			}
+			await this.getKPI();
 			this.keyResultsForm.patchValue(this.data);
 			this.keyResultsForm.patchValue({
 				softDeadline: this.data.softDeadline
@@ -98,7 +112,16 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				lead: !!this.data.lead ? this.data.lead.id : null,
 				owner: this.data.owner.id
 			});
+		} else {
+			await this.getKPI();
 		}
+		this.employeeService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employees) => {
+				this.employees = employees.items;
+			});
+
 		if (
 			this.store.user.role.name !== RolesEnum.SUPER_ADMIN &&
 			this.store.user.role.name !== RolesEnum.MANAGER &&
@@ -108,6 +131,15 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	async getKPI() {
+		await this.goalSettingsService
+			.getAllKPI({ organization: { id: this.orgId } })
+			.then((kpi) => {
+				const { items } = kpi;
+				this.KPIs = items;
+			});
+	}
+
 	async getTeams() {
 		await this.organizationTeamsService
 			.getAll(['members'], { organizationId: this.orgId })
@@ -115,27 +147,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				const { items } = res;
 				this.teams = items;
 			});
-	}
-
-	taskTypeValidators() {
-		if (
-			this.keyResultsForm.get('type').value ===
-			this.keyResultTypeEnum.TASK
-		) {
-			this.keyResultsForm.controls['projectId'].setValidators([
-				Validators.required
-			]);
-			this.keyResultsForm.controls['taskId'].setValidators([
-				Validators.required
-			]);
-		} else {
-			this.keyResultsForm.controls['projectId'].clearValidators();
-			this.keyResultsForm.patchValue({ projectId: undefined });
-			this.keyResultsForm.controls['taskId'].clearValidators();
-			this.keyResultsForm.patchValue({ taskId: undefined });
-		}
-		this.keyResultsForm.controls['projectId'].updateValueAndValidity();
-		this.keyResultsForm.controls['taskId'].updateValueAndValidity();
 	}
 
 	deadlineValidators() {
@@ -198,6 +209,16 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	}
 
 	async saveKeyResult() {
+		if (this.keyResultsForm.value.type === KeyResultTypeEnum.KPI) {
+			const selectedKPI = this.KPIs.find(
+				(kpi) => kpi.id === this.keyResultsForm.value.kpiId
+			);
+			this.keyResultsForm.patchValue({
+				initialValue: selectedKPI.currentValue,
+				targetValue: selectedKPI.targetValue
+			});
+		}
+		// Create objective from keyResult
 		if (!!this.keyResultsForm.value.assignAsObjective) {
 			const objectiveData: Goal = {
 				name: this.keyResultsForm.value.name,
@@ -218,7 +239,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			] = this.keyResultsForm.value.alignedGoalOwner;
 			await this.goalService.createGoal(objectiveData);
 		}
-
+		// Assign Task dueDate as keyResult's hard Deadline.
 		if (this.keyResultsForm.value.type === this.keyResultTypeEnum.TASK) {
 			await this.taskService
 				.getById(this.keyResultsForm.value.taskId)
@@ -231,7 +252,20 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					}
 				});
 		}
+
 		if (!!this.data) {
+			// Delete all updates and progress when keyresult type is changed.
+			if (this.data.type !== this.keyResultsForm.value.type) {
+				this.data.progress = 0;
+				this.data.update = this.keyResultsForm.value.initialValue;
+				try {
+					this.keyResultUpdateService.deleteBulkByKeyResultId(
+						this.data.id
+					);
+				} catch (error) {
+					console.log(error);
+				}
+			}
 			this.keyResultsForm.patchValue({
 				targetValue:
 					this.keyResultsForm.value.type ===

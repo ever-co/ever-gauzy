@@ -1,0 +1,39 @@
+.setting-name {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.body-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+}
+
+.mutation-card.setting-block {
+  background: #eaf3fc;
+}
+
+.transparent {
+  opacity: 0.7;
+}
+
+.settings-body {
+  padding: 35px;
+}
+
+.sub-header {
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.header-content {
+  display: flex;
+  .header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 560px;
+    padding-left: 30px;
+  }
+}

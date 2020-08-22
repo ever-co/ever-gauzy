@@ -18,7 +18,6 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 import { RequestContext } from '../core/context';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
-import { OrganizationTeamService } from '../organization-team/organization-team.service';
 
 @Injectable()
 export class RequestApprovalService extends CrudService<RequestApproval> {
@@ -27,7 +26,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
-		private readonly organizationTeamService: OrganizationTeamService,
+		// private readonly organizationTeamService: OrganizationTeamService,
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<
 			OrganizationTeam
@@ -42,9 +41,19 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 	): Promise<IPagination<IRequestApproval>> {
 		let requestApproval = this.requestApprovalRepository
 			.createQueryBuilder('request_approval')
-			.innerJoinAndSelect(
+			.leftJoinAndSelect(
 				'request_approval.approvalPolicy',
 				'approvalPolicy'
+			)
+			.leftJoinAndSelect(
+				'time_off_request',
+				'time_off_request',
+				'"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
+			)
+			.leftJoinAndSelect(
+				'equipment_sharing',
+				'equipment_sharing',
+				'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
 			);
 
 		if (filter.relations && filter.relations.length > 0) {
@@ -56,11 +65,14 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			});
 		}
 
-		const [
-			items,
-			total
-		] = await requestApproval
+		const [items, total] = await requestApproval
 			.where('approvalPolicy.organizationId =:organizationId', {
+				organizationId
+			})
+			.orWhere('time_off_request.organizationId =:organizationId', {
+				organizationId
+			})
+			.orWhere('equipment_sharing.organizationId =:organizationId', {
 				organizationId
 			})
 			.getManyAndCount();
@@ -79,29 +91,29 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 				}
 			});
 
-			const employeeTeam = await this.organizationTeamService.getMyOrgTeams(
-				{
-					relations: ['members']
-				},
-				id
-			);
+			// const employeeTeam = await this.organizationTeamService.getMyOrgTeams(
+			// 	{
+			// 		relations: ['members']
+			// 	},
+			// 	id
+			// );
 
 			let requestApproval = [];
 
-			if (employeeTeam.items && employeeTeam.items.length > 0) {
-				for (const team of employeeTeam.items) {
-					const organizationTeam = await this.organizationTeamRepository.findOne(
-						team.id,
-						{
-							relations: ['requestApprovals']
-						}
-					);
-					requestApproval = [
-						...requestApproval,
-						...organizationTeam.requestApprovals
-					];
-				}
-			}
+			// if (employeeTeam.items && employeeTeam.items.length > 0) {
+			// 	for (const team of employeeTeam.items) {
+			// 		const organizationTeam = await this.organizationTeamRepository.findOne(
+			// 			team.id,
+			// 			{
+			// 				relations: ['requestApprovals']
+			// 			}
+			// 		);
+			// 		requestApproval = [
+			// 			...requestApproval,
+			// 			...organizationTeam.requestApprovals
+			// 		];
+			// 	}
+			// }
 
 			const employee = await this.employeeRepository.findOne(id, {
 				relations
@@ -126,7 +138,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 						relations: [
 							'approvalPolicy',
 							'employeeApprovals',
-							'teamApprovals'
+							'teamApprovals',
+							'tags'
 						]
 					}
 				);
@@ -147,41 +160,48 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
 			requestApproval.createdBy = RequestContext.currentUser().id;
+			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = entity.name;
-			requestApproval.type = entity.type;
 			requestApproval.min_count = entity.min_count;
+			requestApproval.tags = entity.tags;
+			if (entity.employeeApprovals) {
+				const employees = await this.employeeRepository.findByIds(
+					entity.employeeApprovals,
+					{
+						relations: ['user']
+					}
+				);
 
-			const employees = await this.employeeRepository.findByIds(
-				entity.employeeApprovals,
-				{
-					relations: ['user']
-				}
-			);
+				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
+				employees.forEach((employee) => {
+					const raEmployees = new RequestApprovalEmployee();
+					raEmployees.employeeId = employee.id;
+					raEmployees.employee = employee;
+					raEmployees.status =
+						RequestApprovalStatusTypesEnum.REQUESTED;
+					requestApprovalEmployees.push(raEmployees);
+				});
 
-			const teams = await this.organizationTeamRepository.findByIds(
-				entity.teams
-			);
+				requestApproval.employeeApprovals = requestApprovalEmployees;
+			}
 
-			const requestApprovalEmployees: RequestApprovalEmployee[] = [];
-			employees.forEach((employee) => {
-				const raEmployees = new RequestApprovalEmployee();
-				raEmployees.employeeId = employee.id;
-				raEmployees.employee = employee;
-				raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
-				requestApprovalEmployees.push(raEmployees);
-			});
+			if (entity.teams) {
+				const teams = await this.organizationTeamRepository.findByIds(
+					entity.teams
+				);
 
-			const requestApprovalTeams: RequestApprovalTeam[] = [];
-			teams.forEach((team) => {
-				const raTeam = new RequestApprovalTeam();
-				raTeam.teamId = team.id;
-				raTeam.team = team;
-				raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
-				requestApprovalTeams.push(raTeam);
-			});
+				const requestApprovalTeams: RequestApprovalTeam[] = [];
+				teams.forEach((team) => {
+					const raTeam = new RequestApprovalTeam();
+					raTeam.teamId = team.id;
+					raTeam.team = team;
+					raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
+					requestApprovalTeams.push(raTeam);
+				});
 
-			requestApproval.employeeApprovals = requestApprovalEmployees;
-			requestApproval.teamApprovals = requestApprovalTeams;
+				requestApproval.teamApprovals = requestApprovalTeams;
+			}
+
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err) {
 			throw new BadRequestException(err);
@@ -192,6 +212,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		entity: IRequestApprovalCreateInput
 	): Promise<RequestApproval> {
 		try {
+			let employees;
+			let teams;
 			const requestApproval = await this.requestApprovalRepository.findOne(
 				id
 			);
@@ -200,18 +222,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
 			requestApproval.min_count = entity.min_count;
-			requestApproval.type = entity.type;
-			const employees = await this.employeeRepository.findByIds(
-				entity.employeeApprovals,
-				{
-					relations: ['user']
-				}
-			);
-
-			const teams = await this.organizationTeamRepository.findByIds(
-				entity.teams
-			);
-
+			requestApproval.tags = entity.tags;
 			await this.repository
 				.createQueryBuilder()
 				.delete()
@@ -226,26 +237,43 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 				.where('requestApprovalId = :id', { id: id })
 				.execute();
 
-			const requestApprovalEmployees: RequestApprovalEmployee[] = [];
-			employees.forEach((employee) => {
-				const raEmployees = new RequestApprovalEmployee();
-				raEmployees.employeeId = employee.id;
-				raEmployees.employee = employee;
-				raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
-				requestApprovalEmployees.push(raEmployees);
-			});
+			if (entity.employeeApprovals) {
+				employees = await this.employeeRepository.findByIds(
+					entity.employeeApprovals,
+					{
+						relations: ['user']
+					}
+				);
 
-			const requestApprovalTeams: RequestApprovalTeam[] = [];
-			teams.forEach((team) => {
-				const raTeam = new RequestApprovalTeam();
-				raTeam.teamId = team.id;
-				raTeam.team = team;
-				raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
-				requestApprovalTeams.push(raTeam);
-			});
+				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
+				employees.forEach((employee) => {
+					const raEmployees = new RequestApprovalEmployee();
+					raEmployees.employeeId = employee.id;
+					raEmployees.employee = employee;
+					raEmployees.status =
+						RequestApprovalStatusTypesEnum.REQUESTED;
+					requestApprovalEmployees.push(raEmployees);
+				});
 
-			requestApproval.employeeApprovals = requestApprovalEmployees;
-			requestApproval.teamApprovals = requestApprovalTeams;
+				requestApproval.employeeApprovals = requestApprovalEmployees;
+			}
+
+			if (entity.teams) {
+				teams = await this.organizationTeamRepository.findByIds(
+					entity.teams
+				);
+
+				const requestApprovalTeams: RequestApprovalTeam[] = [];
+				teams.forEach((team) => {
+					const raTeam = new RequestApprovalTeam();
+					raTeam.teamId = team.id;
+					raTeam.team = team;
+					raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
+					requestApprovalTeams.push(raTeam);
+				});
+
+				requestApproval.teamApprovals = requestApprovalTeams;
+			}
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
@@ -258,7 +286,10 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 	): Promise<RequestApproval> {
 		try {
 			const requestApproval = await this.requestApprovalRepository.findOne(
-				id
+				id,
+				{
+					relations: ['approvalPolicy']
+				}
 			);
 
 			if (!requestApproval) {

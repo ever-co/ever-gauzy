@@ -27,7 +27,6 @@ import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Projects')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationProjectsController extends CrudController<
 	OrganizationProjects
@@ -97,6 +96,7 @@ export class OrganizationProjectsController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'))
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
@@ -123,9 +123,10 @@ export class OrganizationProjectsController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'))
 	// @UseGuards(PermissionGuard)
 	// @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-	@Put(':id')
+	@Put('/task-view/:id')
 	async updateTaskViewMode(
 		@Param('id') id: string,
 		@Body() entity: { taskViewMode: TaskListTypeEnum }
@@ -136,5 +137,25 @@ export class OrganizationProjectsController extends CrudController<
 			entity.taskViewMode
 			// new OrganizationProjectEditByEmployeeCommand(entity)
 		);
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'))
+	@Put(':id')
+	async updateProject(
+		@Param('id') id: string,
+		@Body() entity: OrganizationProjects
+	): Promise<OrganizationProjects> {
+		//We are using create here because create calls the method save()
+		//We need save() to save ManyToMany relations
+		try {
+			return await this.organizationProjectsService.create({
+				id,
+				...entity
+			});
+		} catch (error) {
+			console.log(error);
+			return;
+		}
 	}
 }

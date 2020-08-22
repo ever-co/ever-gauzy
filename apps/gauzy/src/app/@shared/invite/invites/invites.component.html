@@ -1,6 +1,7 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
-		<div>
+		<div class="header-selector-wrapper">
+			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				{{ 'INVITE_PAGE.' + invitationType + '.MANAGE' | translate }}
 				{{ organizationName }}
@@ -13,7 +14,6 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ngx-back-navigation class="d-block"></ngx-back-navigation>
 		<div *ngIf="hasInviteEditPermission" class="mb-3">
 			<button nbButton status="primary" (click)="invite()" class="mr-2">
 				<nb-icon class="mr-1" icon="email-outline"></nb-icon

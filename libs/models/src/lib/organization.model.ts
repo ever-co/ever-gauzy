@@ -1,5 +1,11 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { ITenant, Tag, Skill, OrganizationSprint } from '@gauzy/models';
+import {
+	ITenant,
+	Tag,
+	Skill,
+	OrganizationSprint,
+	Employee
+} from '@gauzy/models';
 import { Contact as IContact } from './contact.model';
 
 export enum OrganizationPermissionsEnum {
@@ -15,6 +21,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	valueDate?: Date;
 	totalEmployees: number;
 	status?: string;
+  // Organization logo Url
 	imageUrl?: string;
 	banner: string;
 	short_description: string;
@@ -26,6 +33,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
 	show_clients_count?: boolean;
+	show_employees_count?: boolean;
 	overview: string;
 	skills: Skill[];
 	currency: string;
@@ -42,6 +50,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	bonusType?: string;
 	bonusPercentage?: number;
 	tenant: ITenant;
+	employees?: Employee[];
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
 	tags: Tag[];
@@ -59,6 +68,13 @@ export interface Organization extends IBaseEntityModel, IContact {
 	contact: IContact;
 	separateInvoiceItemTaxAndDiscount?: boolean;
 	organizationSprints?: OrganizationSprint[];
+	minimumProjectSize?: string;
+	show_clients?: boolean;
+  // "left" and "right" values, used to know where to put currency symbol relative to amount
+	currencyPosition?: string;
+	website?: string;
+  // used in invoice headers to display organization details
+	fiscalInformation?: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -86,6 +102,7 @@ export interface OrganizationCreateInput extends IContact {
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
 	show_clients_count?: boolean;
+	show_employees_count?: boolean;
 	defaultValueDateType: DefaultValueDateTypeEnum;
 	dateFormat?: string;
 	timeZone?: string;
@@ -100,6 +117,10 @@ export interface OrganizationCreateInput extends IContact {
 	tags?: Tag[];
 	tenant: ITenant;
 	skills?: Skill[];
+	minimumProjectSize?: string;
+	show_clients?: boolean;
+	website?: string;  
+	fiscalInformation?: string;
 }
 
 export enum OrganizationSelectInput {
@@ -146,6 +167,11 @@ export enum AlignmentOptions {
 	CENTER = 'CENTER'
 }
 
+export enum CurrencyPosition {
+	LEFT = 'LEFT',
+	RIGHT = 'RIGHT'
+}
+
 export enum WeekDaysEnum {
 	MONDAY = 'MONDAY',
 	TUESDAY = 'TUESDAY',
@@ -171,6 +197,15 @@ export enum ClientFocusEnum {
 export enum ProjectOwnerEnum {
 	CLIENT = 'CLIENT',
 	INTERNAL = 'INTERNAL'
+}
+
+export enum MinimumProjectSizeEnum {
+	ONE_THOUSAND = '1000+',
+	FIVE_THOUSAND = '5000+',
+	TEN_THOUSAND = '10000+',
+	TWENTY_FIVE_THOUSAND = '25000+',
+	FIFTY_THOUSAND = '50000+',
+	ONE_HUNDRED_THOUSAND = '100000+'
 }
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;

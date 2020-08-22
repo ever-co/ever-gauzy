@@ -15,7 +15,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { Store } from '../../@core/services/store.service';
@@ -61,6 +61,8 @@ export class IncomeComponent extends TranslationBaseComponent
 	incomes: Income[];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedIncome: Income;
+	averageIncome = 0;
+	averageBonus = 0;
 
 	@ViewChild('incomeTable') incomeTable;
 
@@ -181,7 +183,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					filter: false
 				},
 				clientName: {
-					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
+					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
 					type: 'string'
 				},
 				amount: {
@@ -215,48 +217,52 @@ export class IncomeComponent extends TranslationBaseComponent
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
 		}
-
-		const result = await this.dialogService
+		this.dialogService
 			.open(IncomeMutationComponent)
-			.onClose.pipe(first())
-			.toPromise();
-		if (result) {
-			try {
-				await this.incomeService.create({
-					amount: result.amount,
-					clientName: result.client.clientName,
-					clientId: result.client.clientId,
-					valueDate: result.valueDate,
-					employeeId: result.employee ? result.employee.id : null,
-					orgId: this.store.selectedOrganization.id,
-					notes: result.notes,
-					currency: result.currency,
-					isBonus: result.isBonus,
-					tags: result.tags
-				});
-
-				this.toastrService.primary(
-					this.getTranslation('NOTES.INCOME.ADD_INCOME', {
-						name: result.employee
-							? `${result.employee.firstName} ${result.employee.lastName}`
-							: this.getTranslation('SM_TABLE.EMPLOYEE')
-					}),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-
-				this._loadEmployeeIncomeData();
-				this.store.selectedEmployee = result.employee
-					? result.employee
-					: null;
-			} catch (error) {
-				this.toastrService.danger(
-					this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
-						error: error.error ? error.error.message : error.message
-					}),
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
-			}
-		}
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.incomeService.create({
+							amount: result.amount,
+							clientName: result.organizationContact.name,
+							clientId: result.organizationContact.clientId,
+							valueDate: result.valueDate,
+							employeeId: result.employee
+								? result.employee.id
+								: null,
+							orgId: this.store.selectedOrganization.id,
+							notes: result.notes,
+							currency: result.currency,
+							isBonus: result.isBonus,
+							tags: result.tags
+						});
+						this.toastrService.primary(
+							this.getTranslation('NOTES.INCOME.ADD_INCOME', {
+								name: result.employee
+									? `${result.employee.firstName} ${result.employee.lastName}`
+									: this.getTranslation('SM_TABLE.EMPLOYEE')
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+						this._loadEmployeeIncomeData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
+					} catch (error) {
+						this.toastrService.danger(
+							this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
+								error: error.error
+									? error.error.message
+									: error.message
+							}),
+							this.getTranslation('TOASTR.TITLE.ERROR')
+						);
+					}
+				}
+			});
 	}
 
 	selectIncome({ isSelected, data }) {
@@ -267,7 +273,6 @@ export class IncomeComponent extends TranslationBaseComponent
 		this.disableButton = !isSelected;
 		this.selectedIncome = selectedIncome;
 	}
-
 	async editIncome(selectedItem?: Income) {
 		if (selectedItem) {
 			this.selectIncome({
@@ -289,16 +294,19 @@ export class IncomeComponent extends TranslationBaseComponent
 							this.selectedIncome.id,
 							{
 								amount: result.amount,
-								clientName: result.client.clientName,
-								clientId: result.client.clientId,
+								clientName:
+									result.organizationContact.clientName,
+								clientId: result.organizationContact.clientId,
 								valueDate: result.valueDate,
 								notes: result.notes,
 								currency: result.currency,
 								isBonus: result.isBonus,
-								tags: result.tags
+								tags: result.tags,
+								employeeId: this.selectedIncome.employee
+									? this.selectedIncome.employee.id
+									: null
 							}
 						);
-
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.EDIT_INCOME', {
 								name: this.employeeName
@@ -336,8 +344,12 @@ export class IncomeComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.incomeService.delete(this.selectedIncome.id);
-
+						await this.incomeService.delete(
+							this.selectedIncome.id,
+							this.selectedIncome.employee
+								? this.selectedIncome.employee.id
+								: null
+						);
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
 								name: this.employeeName
@@ -372,7 +384,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					id: orgId
 				}
 			};
-			this.smartTableSettings['columns']['employee'] = {
+			this.smartTableSettings['columns']['employeeName'] = {
 				title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 				type: 'string',
 				valuePrepareFunction: (_, income: Income) => {
@@ -392,11 +404,42 @@ export class IncomeComponent extends TranslationBaseComponent
 			delete this.smartTableSettings['columns']['employee'];
 		}
 
-		const { items } = await this.incomeService.getAll(
-			['employee', 'employee.user', 'tags'],
-			findObj,
-			this.selectedDate
-		);
+		try {
+			const { items } = await this.incomeService.getAll(
+				['employee', 'employee.user', 'tags'],
+				findObj,
+				this.selectedDate
+			);
+			const incomeVM: Income[] = items.map((i) => {
+				return {
+					id: i.id,
+					amount: i.amount,
+					clientName: i.clientName,
+					clientId: i.clientId,
+					valueDate: i.valueDate,
+					organization: i.organization,
+					employee: i.employee,
+					employeeId: i.employee ? i.employee.id : null,
+					employeeName: i.employee ? i.employee.user.name : null,
+					orgId: this.store.selectedOrganization.id,
+					notes: i.notes,
+					currency: i.currency,
+					isBonus: i.isBonus,
+					tags: i.tags
+				};
+			});
+			this.smartTableSource.load(items);
+			this.incomes = incomeVM;
+			this.loading = false;
+			this.showTable = true;
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
+					error: error.error.message || error.message
+				}),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
 		this.employeeName = this.store.selectedEmployee
 			? (
 					this.store.selectedEmployee.firstName +
@@ -404,10 +447,6 @@ export class IncomeComponent extends TranslationBaseComponent
 					this.store.selectedEmployee.lastName
 			  ).trim()
 			: '';
-		this.smartTableSource.load(items);
-		this.incomes = items;
-		this.loading = false;
-		this.showTable = true;
 	}
 
 	ngOnDestroy() {

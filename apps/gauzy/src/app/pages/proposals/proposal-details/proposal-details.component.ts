@@ -29,9 +29,7 @@ export class ProposalDetailsComponent implements OnInit {
 			this.router.navigate([`/pages/sales/proposals`]);
 		}
 
-		this.jobPostLink = this.sanitizer.bypassSecurityTrustHtml(
-			this.proposal.jobPostUrl
-		);
+		this.jobPostLink = this.proposal.jobPostUrl;
 
 		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(
 			this.proposal.jobPostContent

@@ -15,6 +15,12 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 import { Post } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import {
+	EquipmentSharingStatusCommand,
+	EquipmentSharingCreateCommand,
+	EquipmentSharingUpdateCommand
+} from './commands';
 
 @ApiTags('EquipmentSharing')
 @UseGuards(AuthGuard('jwt'))
@@ -23,7 +29,8 @@ export class EquipmentSharingController extends CrudController<
 	EquipmentSharing
 > {
 	constructor(
-		private readonly equipmentSharingService: EquipmentSharingService
+		private readonly equipmentSharingService: EquipmentSharingService,
+		private commandBus: CommandBus
 	) {
 		super(equipmentSharingService);
 	}
@@ -45,6 +52,46 @@ export class EquipmentSharingController extends CrudController<
 		return this.equipmentSharingService.findAllEquipmentSharings();
 	}
 
+	@ApiOperation({
+		summary: 'Find equipment sharings By Orgization Id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found equipment sharings',
+		type: EquipmentSharing
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/organization/:id')
+	async findEquipmentSharingsByOrgId(
+		@Param('id') orgId: string
+	): Promise<IPagination<EquipmentSharing>> {
+		return this.equipmentSharingService.findEquipmentSharingsByOrgId(orgId);
+	}
+
+	@ApiOperation({
+		summary: 'Find equipment sharings By Employee Id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found equipment sharings',
+		type: EquipmentSharing
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('employee/:id')
+	async findEquipmentSharingsByEmployeeId(
+		@Param('id') empId: string
+	): Promise<IPagination<EquipmentSharing>> {
+		return this.equipmentSharingService.findRequestApprovalsByEmployeeId(
+			empId
+		);
+	}
+
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -60,9 +107,14 @@ export class EquipmentSharingController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post()
-	async create(@Body() equipmentSharing: EquipmentSharing): Promise<any> {
-		return this.equipmentSharingService.create(equipmentSharing);
+	@Post('organization/:id')
+	async createEquipmentSharing(
+		@Param('id') orgId: string,
+		@Body() equipmentSharing: EquipmentSharing
+	): Promise<any> {
+		return this.commandBus.execute(
+			new EquipmentSharingCreateCommand(orgId, equipmentSharing)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -85,7 +137,9 @@ export class EquipmentSharingController extends CrudController<
 		@Param('id') id: string,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<any> {
-		return this.equipmentSharingService.update(id, equipmentSharing);
+		return this.commandBus.execute(
+			new EquipmentSharingUpdateCommand(id, equipmentSharing)
+		);
 	}
 
 	@ApiOperation({ summary: 'equipment sharings request approval' })
@@ -103,9 +157,11 @@ export class EquipmentSharingController extends CrudController<
 	async equipmentSharingsRequestApproval(
 		@Param('id') id: string
 	): Promise<EquipmentSharing> {
-		return this.equipmentSharingService.updateStatusRequestApprovalByAdmin(
-			id,
-			RequestApprovalStatusTypesEnum.APPROVED
+		return this.commandBus.execute(
+			new EquipmentSharingStatusCommand(
+				id,
+				RequestApprovalStatusTypesEnum.APPROVED
+			)
 		);
 	}
 
@@ -124,9 +180,11 @@ export class EquipmentSharingController extends CrudController<
 	async equipmentSharingsRequestRefuse(
 		@Param('id') id: string
 	): Promise<EquipmentSharing> {
-		return this.equipmentSharingService.updateStatusRequestApprovalByAdmin(
-			id,
-			RequestApprovalStatusTypesEnum.REFUSED
+		return this.commandBus.execute(
+			new EquipmentSharingStatusCommand(
+				id,
+				RequestApprovalStatusTypesEnum.REFUSED
+			)
 		);
 	}
 }

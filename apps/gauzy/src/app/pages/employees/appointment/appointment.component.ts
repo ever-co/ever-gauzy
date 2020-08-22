@@ -6,7 +6,7 @@ import {
 	forwardRef,
 	Input
 } from '@angular/core';
-import { OptionsInput, EventInput } from '@fullcalendar/core';
+import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -23,7 +23,8 @@ import {
 	TimeOff,
 	IEventType,
 	Employee,
-	IAvailabilitySlots
+	IAvailabilitySlots,
+	PermissionsEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
@@ -68,9 +69,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 
+	hasEventTypesViewPermission: boolean = false;
 	selectedTimeZoneName = moment.tz.guess();
 	selectedTimeZoneOffset = moment.tz(this.selectedTimeZoneName).format('Z');
-	calendarOptions: OptionsInput;
+	calendarOptions: CalendarOptions;
 	allowedDuration: number;
 	calendarEvents: EventInput[] = [];
 	_selectedOrganizationId: string;
@@ -80,6 +82,16 @@ export class AppointmentComponent extends TranslationBaseComponent
 	recurringSlots: IAvailabilitySlots[];
 	appointments: EmployeeAppointment[];
 	timeOff: TimeOff[];
+	hiddenDays: number[] = [];
+	headerToolbarOptions: {
+		left: string;
+		center: string;
+		right: string;
+	} = {
+		left: 'next',
+		center: 'title',
+		right: 'dayGridMonth,timeGridWeek'
+	};
 
 	constructor(
 		private router: Router,
@@ -93,6 +105,12 @@ export class AppointmentComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+
+		let currentDay = moment().day();
+
+		while (currentDay > 0) {
+			this.hiddenDays.push(currentDay--);
+		}
 
 		this.calendarOptions = {
 			eventClick: (event) => {
@@ -152,11 +170,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 			},
 			events: this.getEvents.bind(this),
 			initialView: 'timeGridWeek',
-			header: {
-				left: 'prev,next today',
-				center: 'title',
-				right: 'timeGridWeek'
-			},
+			headerToolbar: this.headerToolbarOptions,
+			hiddenDays: this.hiddenDays,
 			themeSystem: 'bootstrap',
 			plugins: [
 				dayGridPlugin,
@@ -167,11 +182,15 @@ export class AppointmentComponent extends TranslationBaseComponent
 			],
 			weekends: true,
 			height: 'auto',
-			dayHeaderDidMount: (o) => this._prepareSlots(o.date)
+			dayHeaderDidMount: this.headerMount.bind(this)
 		};
 	}
 
 	ngOnInit(): void {
+		this.hasEventTypesViewPermission = this.store.hasPermission(
+			PermissionsEnum.EVENT_TYPES_VIEW
+		);
+
 		if (this.selectedEventType) {
 			this.allowedDuration =
 				this.selectedEventType.durationUnit === 'Day(s)'
@@ -226,7 +245,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 		const data = await this.timeOffService
 			.getAllTimeOffRecords(['employees', 'employees.user'], {
 				organizationId: this._selectedOrganizationId,
-				employeeId: this._selectedEmployeeId || ''
+				employeeId:
+					this._selectedEmployeeId ||
+					(this.employee && this.employee.id) ||
+					''
 			})
 			.pipe(first())
 			.toPromise();
@@ -371,6 +393,35 @@ export class AppointmentComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
+	}
+
+	openEventTypes() {
+		this.router.navigate(['/pages/employees/event-types']);
+	}
+
+	headerMount(config) {
+		const currentStart = this.calendarComponent.getApi().view.currentStart;
+		const currentEnd = this.calendarComponent.getApi().view.currentEnd;
+		const hideDays = moment().isBetween(
+			currentStart,
+			currentEnd,
+			'day',
+			'[]'
+		)
+			? this.hiddenDays
+			: [];
+		this.calendarComponent.getApi().setOption('hiddenDays', hideDays);
+		this.headerToolbarOptions.left = moment(currentStart).isSameOrBefore(
+			moment(),
+			'day'
+		)
+			? 'next'
+			: 'prev,next';
+		this.calendarComponent
+			.getApi()
+			.setOption('headerToolbar', this.headerToolbarOptions);
+
+		this._prepareSlots(config.date);
 	}
 
 	private _prepareSlots(date: Date) {
@@ -636,7 +687,11 @@ export class AppointmentComponent extends TranslationBaseComponent
 
 	selectTimezone() {
 		this.dialogService
-			.open(TimezoneSelectorComponent)
+			.open(TimezoneSelectorComponent, {
+				context: {
+					selectedTimezone: this.selectedTimeZoneName
+				}
+			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (data) => {
 				if (data) {

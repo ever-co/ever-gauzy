@@ -93,11 +93,13 @@ export class AppService {
 				`${values.apiHost}/api/timesheet/time-slot`,
 				{
 					employeeId: values.employeeId,
+					projectId: values.projectId,
 					duration: values.duration,
-					keyboard: 0,
-					mouse: 0,
-					overall: 0,
-					startedAt: values.startedAt
+					keyboard: values.keyboard,
+					mouse: values.mouse,
+					overall: values.overall,
+					startedAt: values.startedAt,
+					activites: values.activities
 				},
 				{
 					headers: headers
@@ -166,7 +168,8 @@ export class AppService {
 					duration: values.duration,
 					keyboard: values.keyboard,
 					mouse: values.mouse,
-					overall: values.overall
+					overall: values.overall,
+					activities: values.activities
 				},
 				{
 					headers: headers
@@ -182,15 +185,9 @@ export class AppService {
 		});
 		return this.http
 			.post(
-				`${values.apiHost}/api/timesheet/activity`,
+				`${values.apiHost}/api/timesheet/activity/bulk`,
 				{
-					employeeId: values.employeeId,
-					projectId: values.projectId,
-					taskId: values.taskId,
-					title: values.title,
-					date: values.date,
-					duration: values.duration,
-					type: values.type
+					activities: values.activities
 				},
 				{
 					headers: headers
@@ -277,7 +274,8 @@ export class AppService {
 					logType: 'TRACKED',
 					projectId: values.projectId,
 					taskId: values.taskId,
-					source: 'Desktop'
+					source: 'Desktop',
+					manualTimeSlot: values.manualTimeSlot
 				},
 				{
 					headers: headers

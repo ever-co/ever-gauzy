@@ -65,102 +65,19 @@
 			</nb-tab>
 			<nb-tab tabTitle="Type">
 				<form [formGroup]="typeForm">
-					<label for="key-result-type" class="label mt-3">
-						{{
-							'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE'
-								| translate
-						}}
-					</label>
-					<nb-select
-						id="key-result-type"
-						fullWidth
-						formControlName="type"
-					>
-						<nb-option
-							*ngFor="let type of keyResultTypeEnum | keyvalue"
-							[value]="type.value"
-							>{{
-								'KEY_RESULT_PAGE.TYPE.' + type.key | translate
-							}}</nb-option
-						>
-					</nb-select>
-
-					<div class="row">
-						<div class="col-md-6">
-							<label
-								*ngIf="
-									typeForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									typeForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								for="initial-value"
-								class="label"
-							>
-								{{
-									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
-										| translate
-								}}
-							</label>
-							<input
-								type="number"
-								id="initial-value"
-								*ngIf="
-									typeForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									typeForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								nbInput
-								fullWidth
-								formControlName="initialValue"
-								placeholder="						{{
-									'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
-										| translate
-								}}"
-							/>
-						</div>
-
-						<div class="col-md-6">
-							<label
-								*ngIf="
-									typeForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									typeForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								for="target-value"
-								class="label"
-							>
-								{{
-									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
-										| translate
-								}}
-							</label>
-							<input
-								type="number"
-								id="target-value"
-								*ngIf="
-									typeForm.value.type ==
-										keyResultTypeEnum.NUMBER ||
-									typeForm.value.type ==
-										keyResultTypeEnum.CURRENCY
-								"
-								nbInput
-								fullWidth
-								formControlName="targetValue"
-								placeholder="{{
-									'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
-										| translate
-								}}"
-							/>
-						</div>
-					</div>
+					<ga-keyresult-type-select
+						[enableHelperText]="false"
+						[parentFormGroup]="typeForm"
+						[orgId]="data.orgId"
+						[KPIs]="KPIs"
+						[settings]="data.settings"
+						[numberUnits]="numberUnitsEnum"
+					></ga-keyresult-type-select>
 				</form>
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
-	<nb-card-footer>
+	<nb-card-footer class="text-right">
 		<button class="mr-3" nbButton (click)="closeDialog(null)">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>

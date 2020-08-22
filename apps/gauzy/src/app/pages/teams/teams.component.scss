@@ -1,0 +1,75 @@
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+
+  .card-body {
+    width: 100%;
+    max-width: 300px;
+    margin: 20px;
+
+    .header-container {
+      text-align: center;
+
+      .members-count {
+        font-size: 0.7em;
+        color: darkgray;
+      }
+    }
+
+    .team-card {
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem;
+
+      .name-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+
+        &:hover {
+          cursor: pointer;
+          color: #3366ff;
+        }
+
+        .image-container {
+          width: 70px;
+          height: 50px;
+          display: flex;
+          justify-content: center;
+          margin-right: 10px;
+
+          img {
+            height: 100%;
+            max-width: 70px;
+          }
+        }
+      }
+      .team-members {
+        margin-bottom: 0.5rem;
+      }
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: auto;
+    }
+  }
+
+  .tags {
+    position: static;
+    margin-top: 5px;
+    margin-right: 5px;
+  }
+
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

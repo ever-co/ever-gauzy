@@ -7,7 +7,8 @@ import {
 	NbDialogService,
 	NbToastrService,
 	NbMenuItem,
-	NbMenuService
+	NbMenuService,
+	NbPopoverDirective
 } from '@nebular/theme';
 import {
 	Invoice,
@@ -19,7 +20,10 @@ import {
 	InvoiceStatusTypesEnum,
 	EstimateStatusTypesEnum,
 	InvoiceColumnsEnum,
-	EstimateColumnsEnum
+	EstimateColumnsEnum,
+	CurrenciesEnum,
+	OrganizationContact,
+	InvoiceEstimateHistory
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -33,6 +37,10 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { OrganizationContactService } from '../../@core/services/organization-contact.service';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ngx-invoices',
@@ -43,13 +51,12 @@ export class InvoicesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	invoice: Invoice;
 	selectedInvoice: Invoice;
 	loading = true;
 	disableButton = true;
 	hasInvoiceEditPermission: boolean;
 	invoices: Invoice[];
-	tags: Tag[];
+	tags: Tag[] = [];
 	organization: Organization;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -61,14 +68,23 @@ export class InvoicesComponent extends TranslationBaseComponent
 	settingsContextMenu: NbMenuItem[];
 	menuArray = [];
 	columns = Object.values(InvoiceColumnsEnum);
+	currencies = Object.values(CurrenciesEnum);
+	form: FormGroup;
+	organizationContacts: OrganizationContact[];
+	duplicate: boolean;
+	perPage = 10;
+	histories: InvoiceEstimateHistory[];
+	selectedInvoiceHistories = [];
 
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input() isEstimate: boolean;
 
 	@ViewChild('invoicesTable') invoicesTable;
+	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
 	constructor(
+		private fb: FormBuilder,
 		readonly translateService: TranslateService,
 		private store: Store,
 		private dialogService: NbDialogService,
@@ -76,13 +92,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
 		private router: Router,
-		private nbMenuService: NbMenuService
+		private nbMenuService: NbMenuService,
+		private organizationContactService: OrganizationContactService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
+		this.initializeForm();
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
@@ -104,6 +123,18 @@ export class InvoicesComponent extends TranslationBaseComponent
 					this.setView();
 				}
 			});
+	}
+
+	initializeForm() {
+		this.form = this.fb.group({
+			invoiceNumber: [],
+			organizationContact: [],
+			invoiceDate: [],
+			dueDate: [],
+			totalValue: [],
+			currency: [],
+			status: []
+		});
 	}
 
 	setView() {
@@ -167,7 +198,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	bulkAction(action) {
-		if (action === 'Duplicate') this.duplicate(this.selectedInvoice);
+		if (action === 'Duplicate') this.duplicated(this.selectedInvoice);
 		if (action === 'Send') this.send(this.selectedInvoice);
 		if (action === 'Convert to Invoice') this.convert(this.selectedInvoice);
 		if (action === 'Email') this.email(this.selectedInvoice);
@@ -183,6 +214,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	edit(selectedItem?: Invoice) {
+		this.invoicesService.changeValue(false);
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -201,7 +233,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async duplicate(selectedItem?: Invoice) {
+	async duplicated(selectedItem?: Invoice) {
+		this.invoicesService.changeValue(true);
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -223,8 +256,9 @@ export class InvoicesComponent extends TranslationBaseComponent
 			terms: this.selectedInvoice.terms,
 			paid: this.selectedInvoice.paid,
 			totalValue: this.selectedInvoice.totalValue,
-			clientId: this.selectedInvoice.clientId,
-			toClient: this.selectedInvoice.toClient,
+			organizationContactId: this.selectedInvoice.organizationContactId,
+			toContact: this.selectedInvoice.toContact,
+			organizationContactName: this.selectedInvoice.toContact?.name,
 			fromOrganization: this.organization,
 			organizationId: this.selectedInvoice.organizationId,
 			invoiceType: this.selectedInvoice.invoiceType,
@@ -259,6 +293,18 @@ export class InvoicesComponent extends TranslationBaseComponent
 			}
 			await this.invoiceItemService.add(itemToAdd);
 		}
+
+		await this.invoiceEstimateHistoryService.add({
+			action: this.isEstimate
+				? 'Estimate duplicated'
+				: 'Invoice duplicated',
+			invoice: this.selectedInvoice,
+			invoiceId: this.selectedInvoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.organization,
+			organizationId: this.organization.id
+		});
 
 		if (this.isEstimate) {
 			this.toastrService.primary(
@@ -303,7 +349,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				data: selectedItem
 			});
 		}
-		if (this.selectedInvoice.clientId) {
+		if (this.selectedInvoice.organizationContactId) {
 			this.dialogService
 				.open(InvoiceSendMutationComponent, {
 					context: {
@@ -333,6 +379,15 @@ export class InvoicesComponent extends TranslationBaseComponent
 			isEstimate: false,
 			status: InvoiceStatusTypesEnum.DRAFT
 		});
+		await this.invoiceEstimateHistoryService.add({
+			action: 'Estimate converted to invoice',
+			invoice: this.selectedInvoice,
+			invoiceId: this.selectedInvoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.organization,
+			organizationId: this.organization.id
+		});
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -358,6 +413,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 			for (const item of itemsToDelete) {
 				await this.invoiceItemService.delete(item.id);
+			}
+
+			for (const history of this.selectedInvoiceHistories) {
+				await this.invoiceEstimateHistoryService.delete(history.id);
 			}
 
 			this.loadSettings();
@@ -398,7 +457,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.open(InvoiceEmailMutationComponent, {
 				context: {
 					invoice: this.selectedInvoice,
-					isEstimate: this.isEstimate
+					isEstimate: this.isEstimate,
+					saveAndSend: false
 				}
 			})
 			.onClose.subscribe(async () => {
@@ -411,23 +471,80 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (org) => {
 				if (org) {
-					const { items } = await this.invoicesService.getAll(
-						[
-							'invoiceItems',
-							'tags',
-							'payments',
-							'fromOrganization',
-							'toClient'
-						],
-						{
-							organizationId: org.id,
-							isEstimate: this.isEstimate
+					try {
+						const { items } = await this.invoicesService.getAll(
+							[
+								'invoiceItems',
+								'tags',
+								'payments',
+								'fromOrganization',
+								'toContact',
+								'historyRecords'
+							],
+							{
+								organizationId: org.id,
+								isEstimate: this.isEstimate
+							}
+						);
+						const res = await this.organizationContactService.getAll(
+							[],
+							{
+								organizationId: org.id
+							}
+						);
+
+						if (res) {
+							this.organizationContacts = res.items;
 						}
-					);
-					this.invoices = items;
-					this.organization = org;
-					this.loading = false;
-					this.smartTableSource.load(items);
+						const invoiceVM: Invoice[] = items.map((i) => {
+							return {
+								id: i.id,
+								invoiceNumber: i.invoiceNumber,
+								invoiceDate: i.invoiceDate,
+								dueDate: i.dueDate,
+								currency: i.currency,
+								discountValue: i.discountValue,
+								discountType: i.discountType,
+								tax: i.tax,
+								tax2: i.tax2,
+								taxType: i.taxType,
+								tax2Type: i.tax2Type,
+								terms: i.terms,
+								paid: i.paid,
+								payments: i.payments,
+								invoiceItems: i.invoiceItems,
+								totalValue: i.totalValue,
+								toContact: i.toContact,
+								organizationContactId: i.organizationContactId,
+								organizationContactName: i.toContact?.name,
+								fromOrganization: i.fromOrganization,
+								organizationId: i.organizationId,
+								invoiceType: i.invoiceType,
+								tags: i.tags,
+								isEstimate: i.isEstimate,
+								status: i.status,
+								sentTo: i.sentTo
+							};
+						});
+						this.invoices = invoiceVM;
+						this.smartTableSource.load(items);
+						this.organization = org;
+						this.loading = false;
+						const histories = await this.invoiceEstimateHistoryService.getAll(
+							['invoice', 'user', 'organization'],
+							{
+								organizationId: this.organization.id
+							}
+						);
+						this.histories = histories.items;
+					} catch (error) {
+						this.toastrService.danger(
+							this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
+								error: error.error.message || error.message
+							}),
+							this.getTranslation('TOASTR.TITLE.ERROR')
+						);
+					}
 				}
 			});
 	}
@@ -440,14 +557,33 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 		this.disableButton = !isSelected;
 		this.selectedInvoice = selectedInvoice;
+
+		const histories = selectedInvoice
+			? this.histories.filter((h) => h.invoice.id === selectedInvoice.id)
+			: null;
+
+		if (histories) {
+			const selectedInvoiceHistories = [];
+			histories.forEach((h) => {
+				const history = {
+					id: h.id,
+					createdAt: new Date(h.createdAt).toString().slice(0, 24),
+					action: h.action,
+					user: h.user
+				};
+				selectedInvoiceHistories.push(history);
+			});
+			this.selectedInvoiceHistories = selectedInvoiceHistories;
+		}
 	}
 
 	loadSmartTable() {
 		this.settingsSmartTable = {
 			pager: {
 				display: true,
-				perPage: 10
+				perPage: this.perPage ? this.perPage : 10
 			},
+			hideSubHeader: true,
 			actions: false,
 			columns: {
 				invoiceNumber: {
@@ -467,7 +603,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		if (this.columns.includes(InvoiceColumnsEnum.INVOICE_DATE)) {
 			this.settingsSmartTable['columns']['invoiceDate'] = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
-				type: 'text',
+				type: 'date',
 				width: '10%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
@@ -481,8 +617,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 				title: this.getTranslation(
 					'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
 				),
-				type: 'text',
-				width: '10%',
+				type: 'date',
+				width: '11%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${cell.slice(0, 10)}`;
@@ -493,9 +629,32 @@ export class InvoicesComponent extends TranslationBaseComponent
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
 			this.settingsSmartTable['columns']['status'] = {
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
-				type: 'text',
+				type: 'custom',
 				width: '5%',
-				filter: false
+				renderComponent: StatusBadgeComponent,
+				filter: false,
+				valuePrepareFunction: (cell, row) => {
+					let badgeClass;
+					if (cell) {
+						badgeClass = [
+							'sent',
+							'viewed',
+							'accepted',
+							'active',
+							'fully paid'
+						].includes(cell.toLowerCase())
+							? 'success'
+							: ['void', 'draft', 'partially paid'].includes(
+									cell.toLowerCase()
+							  )
+							? 'warning'
+							: 'danger';
+					}
+					return {
+						text: cell,
+						class: badgeClass
+					};
+				}
 			};
 		}
 
@@ -562,16 +721,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 			};
 		}
 
-		if (this.columns.includes(InvoiceColumnsEnum.CLIENT)) {
-			this.settingsSmartTable['columns']['client'] = {
+		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
+			this.settingsSmartTable['columns']['organizationContactName'] = {
 				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_SELECT_CLIENT'
+					'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
 				),
 				type: 'text',
 				width: '8%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return row.toClient.name;
+					return row.toContact.name;
 				}
 			};
 		}
@@ -589,6 +748,77 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
+	async showPerPage() {
+		if (
+			this.perPage &&
+			Number.isInteger(this.perPage) &&
+			this.perPage > 0
+		) {
+			this.smartTableSource.getPaging().perPage = this.perPage;
+			this.loadSmartTable();
+		}
+	}
+
+	search() {
+		const searchObj = this.form.value;
+		const result = [];
+		const filteredInvoices = this.invoices.filter(
+			(invoice) =>
+				(searchObj.invoiceNumber === null ||
+					searchObj.invoiceNumber === +invoice.invoiceNumber) &&
+				(searchObj.organizationContact === null ||
+					searchObj.organizationContact.id ===
+						invoice.toContact.id) &&
+				(searchObj.invoiceDate === null ||
+					searchObj.invoiceDate.toString().slice(0, 15) ===
+						new Date(invoice.invoiceDate)
+							.toString()
+							.slice(0, 15)) &&
+				(searchObj.dueDate === null ||
+					searchObj.dueDate.toString().slice(0, 15) ===
+						new Date(invoice.dueDate).toString().slice(0, 15)) &&
+				(searchObj.totalValue === null ||
+					searchObj.totalValue === +invoice.totalValue) &&
+				(searchObj.currency === null ||
+					searchObj.currency === invoice.currency) &&
+				(searchObj.status === null ||
+					searchObj.status === invoice.status)
+		);
+
+		for (const invoice of filteredInvoices) {
+			let contains = 0;
+			for (const tag of invoice.tags) {
+				for (const t of this.tags) {
+					if (t.id === tag.id) {
+						contains++;
+						break;
+					}
+				}
+			}
+			if (contains === this.tags.length) {
+				result.push(invoice);
+			}
+		}
+
+		this.smartTableSource.load(result);
+	}
+
+	reset() {
+		this.smartTableSource.load(this.invoices);
+		this.initializeForm();
+		this.tags = [];
+	}
+
+	searchContact(term: string, item: any) {
+		if (item.name) {
+			return item.name.toLowerCase().includes(term.toLowerCase());
+		}
+	}
+
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.tags = currentTagSelection;
+	}
+
 	async selectStatus($event) {
 		await this.invoicesService.update(this.selectedInvoice.id, {
 			status: $event
@@ -602,6 +832,15 @@ export class InvoicesComponent extends TranslationBaseComponent
 	selectColumn($event) {
 		this.columns = $event;
 		this.loadSmartTable();
+	}
+
+	openPopover() {
+		if (this.popover.isShown) {
+			this.popover.hide();
+		} else {
+			this.popover.show();
+			document.getElementsByClassName('arrow')[0].remove();
+		}
 	}
 
 	_applyTranslationOnSmartTable() {

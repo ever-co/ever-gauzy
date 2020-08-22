@@ -5,10 +5,12 @@ import {
 	RequestApproval,
 	Employee,
 	OrganizationTeam,
-	ApprovalPolicy
+	ApprovalPolicy,
+	RequestApprovalCreateInput,
+	ApprovalPolicyTypesStringEnum,
+	Tag
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
-import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
 import { EmployeesService } from '../../@core/services/employees.service';
@@ -16,10 +18,12 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
+import { RequestApprovalService } from '../../@core/services/request-approval.service';
 
 @Component({
 	selector: 'ngx-approval-mutation',
-	templateUrl: './approvals-mutation.component.html'
+	templateUrl: './approvals-mutation.component.html',
+	styleUrls: ['./approvals-mutation.component.scss']
 })
 export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -34,12 +38,14 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	teams: OrganizationTeam[];
 	selectedEmployees: string[] = [];
 	selectedApprovalPolicy: string[] = [];
+	tags: Tag[] = [];
+
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		public dialogRef: NbDialogRef<RequestApprovalMutationComponent>,
-		private requestApprovalService: RequestApprovalService,
 		private approvalPolicyService: ApprovalPolicyService,
+		private requestApprovalService: RequestApprovalService,
 		private employeesService: EmployeesService,
 		private organizationTeamsService: OrganizationTeamsService,
 		private fb: FormBuilder,
@@ -86,7 +92,7 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 
 	async loadApprovalPolicies() {
 		this.approvalPolicies = (
-			await this.approvalPolicyService.getAll([], {
+			await this.approvalPolicyService.getForRequestApproval([], {
 				organizationId: this.organizationId
 			})
 		).items.filter((policy) => {
@@ -95,6 +101,19 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 				this.organizationId === ''
 			);
 		});
+
+		if (this.requestApproval) {
+			if (this.requestApproval.approvalPolicy) {
+				switch (this.requestApproval.approvalPolicy.approvalType) {
+					case ApprovalPolicyTypesStringEnum.TIME_OFF:
+					case ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING:
+						this.approvalPolicies.push(
+							this.requestApproval.approvalPolicy
+						);
+						break;
+				}
+			}
+		}
 	}
 
 	loadSelectedOrganization() {
@@ -142,11 +161,6 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 					? this.requestApproval.teamApprovals.map((team) => team.id)
 					: []
 			],
-			type: [
-				this.requestApproval && this.requestApproval.type
-					? this.requestApproval.type
-					: ''
-			],
 			min_count: [
 				this.requestApproval && this.requestApproval.min_count
 					? this.requestApproval.min_count
@@ -163,8 +177,25 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 				this.requestApproval && this.requestApproval.id
 					? this.requestApproval.id
 					: null
-			]
+			],
+			tags:
+				this.requestApproval && this.requestApproval.tags
+					? [this.requestApproval.tags]
+					: []
 		});
+
+		this.tags = this.form.get('tags').value || [];
+
+		if (this.requestApproval) {
+			if (this.requestApproval.approvalPolicy) {
+				switch (this.requestApproval.approvalPolicy.approvalType) {
+					case ApprovalPolicyTypesStringEnum.TIME_OFF:
+					case ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING:
+						this.form.get('approvalPolicyId').disable();
+						break;
+				}
+			}
+		}
 	}
 
 	async closeDialog(requestApproval?: RequestApproval) {
@@ -190,12 +221,6 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 				});
 			}
 			requestApproval.employees = listEmployees;
-			requestApproval.type = 1;
-			this.approvalPolicies.forEach((e) => {
-				if (e.id === requestApproval.approvalPolicyId) {
-					requestApproval.type = e.type;
-				}
-			});
 		}
 		this.dialogRef.close(requestApproval);
 	}
@@ -204,7 +229,23 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 		if (!this.form.get('id').value) {
 			delete this.form.value['id'];
 		}
-		this.closeDialog(this.form.value);
+		const requestApproval: RequestApprovalCreateInput = {
+			name: this.form.value['name'],
+			approvalPolicyId: this.form.value['approvalPolicyId'],
+			min_count: this.form.value['min_count'],
+			employeeApprovals: this.form.value['employees'],
+			teams: this.form.value['teams'],
+			id: this.form.value['id'],
+			tags: this.form.get('tags').value
+		};
+
+		let result: RequestApproval;
+		result = await this.requestApprovalService.save(requestApproval);
+		this.closeDialog(result);
+	}
+
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.form.get('tags').setValue(currentTagSelection);
 	}
 
 	onMembersSelected(members: string[]) {

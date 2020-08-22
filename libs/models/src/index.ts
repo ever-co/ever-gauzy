@@ -45,6 +45,7 @@ export * from './lib/organization-employment-type.model';
 export * from './lib/equipment.model';
 export * from './lib/task-entity.model';
 export * from './lib/timesheet.model';
+export * from './lib/timesheet-statistics.model';
 export * from './lib/expense-category.model';
 export * from './lib/equipment-sharing.model';
 export * from './lib/tree-node.model';
@@ -74,12 +75,14 @@ export * from './lib/request-approval-team.model';
 export * from './lib/goal-settings.model';
 export * from './lib/estimate-email.model';
 export * from './lib/organization-sprint.model';
-
-export { Role, RolesEnum } from './lib/role.model';
-export { BaseEntityModel } from './lib/base-entity.model';
-
+export * from './lib/equipment-sharing-policy.model';
 export * from './lib/pipeline.model';
-export * from './lib/stage.model';
+export * from './lib/pipeline-stage.model';
 export * from './lib/deal.model';
 export * from './lib/contact.model';
 export * from './lib/organization-document.model';
+export * from './lib/employee-award.model';
+export * from './lib/invoice-estimate-history.model';
+
+export { Role, RolesEnum } from './lib/role.model';
+export { BaseEntityModel } from './lib/base-entity.model';

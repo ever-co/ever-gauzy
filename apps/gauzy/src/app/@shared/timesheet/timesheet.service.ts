@@ -27,7 +27,10 @@ export class TimesheetService {
 			.toPromise();
 	}
 
-	updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
+	updateTime(
+		id: string,
+		request: TimeLog | Partial<TimeLog>
+	): Promise<TimeLog> {
 		return this.http
 			.put<TimeLog>('/api/timesheet/time-log/' + id, request)
 			.toPromise();
@@ -52,7 +55,7 @@ export class TimesheetService {
 
 	getTimeSheets(request?: IGetTimesheetInput) {
 		return this.http
-			.get('/api/timesheet', { params: { ...request } })
+			.get('/api/timesheet', { params: toParams(request) })
 			.toPromise()
 			.then((data: Timesheet[]) => {
 				return data;

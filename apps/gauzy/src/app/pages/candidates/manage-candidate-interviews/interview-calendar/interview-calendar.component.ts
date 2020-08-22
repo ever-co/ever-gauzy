@@ -1,7 +1,7 @@
 import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { OptionsInput, EventInput, disableCursor } from '@fullcalendar/core';
+import { CalendarOptions, EventInput, disableCursor } from '@fullcalendar/core';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -23,6 +23,7 @@ import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewInfoComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
+import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 
 @Component({
 	selector: 'ga-interview-calendar',
@@ -34,7 +35,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
-	calendarOptions: OptionsInput;
+	calendarOptions: CalendarOptions;
 	selectedInterview = true;
 	isCandidate = false;
 	candidateList: EventInput[] = [];
@@ -51,7 +52,8 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 		private candidateInterviewersService: CandidateInterviewersService,
 		private toastrService: NbToastrService,
 		private candidatesService: CandidatesService,
-		private employeesService: EmployeesService
+		private employeesService: EmployeesService,
+		private candidateStore: CandidateStore
 	) {
 		super(translateService);
 	}
@@ -69,6 +71,9 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 				this.employees = employees.items;
 			});
 		this.loadInterviews();
+		this.candidateStore.interviewList$.subscribe(() => {
+			this.loadInterviews();
+		});
 	}
 
 	async loadInterviews() {
@@ -129,7 +134,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 			this.calendarOptions.events = this.calendarEvents;
 		}
 	}
-
 	async onCandidateSelected(ids: string[]) {
 		if (!ids[0]) {
 			//if no one is selected
@@ -226,7 +230,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 				.changeView('timeGridWeek', event.date);
 		}
 	}
-
 	handleEventSelect(event) {
 		const now = new Date().getTime();
 		if (now < event.start.getTime()) {
@@ -235,7 +238,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 			disableCursor();
 		}
 	}
-
 	handleEventMouseEnter({ el }) {
 		if (this.hasOverflow(el.querySelector('.fc-event-main'))) {
 			el.style.position = 'unset';
@@ -244,7 +246,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 	handleEventMouseLeave({ el }) {
 		el.removeAttribute('style');
 	}
-
 	hasOverflow(el: HTMLElement) {
 		if (!el) {
 			return;
@@ -265,7 +266,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 
 		return isOverflowing;
 	}
-
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

@@ -1,0 +1,57 @@
+<nb-card>
+	<nb-card-header>{{
+		(department
+			? 'FORM.LABELS.EDIT_DEPARTMENT'
+			: 'FORM.LABELS.ADD_NEW_DEPARTMENT'
+		) | translate
+	}}</nb-card-header>
+	<nb-card-body id="temporary">
+		<form class="row">
+			<div class="form-group col-4">
+				<label class="label">{{
+					'SM_TABLE.DEPARTMENTS' | translate
+				}}</label>
+				<input
+					type="text"
+					[(ngModel)]="name"
+					[ngModelOptions]="{ standalone: true }"
+					nbInput
+					fullWidth
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.DEPARTMENT_NAME' | translate
+					}}"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<ga-employee-multi-select
+					[selectedEmployeeIds]="selectedEmployeeIds"
+					[allEmployees]="employees"
+					(selectedChange)="onMembersSelected($event)"
+				>
+				</ga-employee-multi-select>
+			</div>
+			<div class="form-group col-4">
+				<ga-tags-color-input
+					[selectedTags]="tags"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+					[isOrgLevel]="true"
+				>
+				</ga-tags-color-input>
+			</div>
+		</form>
+		<div class="form-group btn-wrap">
+			<button
+				class="mr-2"
+				(click)="addOrEditDepartments()"
+				nbButton
+				status="success"
+				[disabled]="!name"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button (click)="cancel()" nbButton status="danger">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+		</div>
+	</nb-card-body>
+</nb-card>

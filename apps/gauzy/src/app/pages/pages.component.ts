@@ -252,6 +252,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Activity',
 					icon: 'trending-up-outline',
 					link: '/pages/employees/activity',
+					pathMatch: 'prefix',
 					data: {
 						translationKey: 'MENU.ACTIVITY'
 					}
@@ -260,6 +261,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Timesheets',
 					icon: 'clock-outline',
 					link: '/pages/employees/timesheets',
+					pathMatch: 'prefix',
 					data: {
 						translationKey: 'MENU.TIMESHEETS'
 					}
@@ -268,6 +270,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Schedules',
 					icon: 'calendar-outline',
 					link: '/pages/employees/schedules',
+					pathMatch: 'prefix',
 					data: {
 						translationKey: 'MENU.SCHEDULES'
 					}
@@ -282,20 +285,27 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Event Types',
-					icon: 'calendar-outline',
-					link: '/pages/employees/event-types',
-					pathMatch: 'prefix',
-					data: {
-						translationKey: 'MENU.EVENT_TYPES'
-					}
-				},
-				{
 					title: 'Approvals',
 					icon: 'flip-2-outline',
 					link: '/pages/employees/approvals',
 					data: {
 						translationKey: 'MENU.APPROVALS'
+					}
+				},
+				{
+					title: 'Employee Levels',
+					icon: 'bar-chart-outline',
+					link: `/pages/employees/employee-level`,
+					data: {
+						translationKey: 'MENU.EMPLOYEE_LEVEL'
+					}
+				},
+				{
+					title: 'Positions',
+					icon: 'award-outline',
+					link: `/pages/employees/positions`,
+					data: {
+						translationKey: 'MENU.POSITIONS'
 					}
 				},
 				{
@@ -305,6 +315,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translationKey: 'MENU.TIME_OFF',
 						permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW]
+					}
+				},
+				{
+					title: 'Recurring Expenses',
+					icon: 'flip-outline',
+					link: '/pages/employees/recurring-expenses',
+					data: {
+						translationKey: 'MENU.RECURRING_EXPENSE'
 					}
 				},
 				{
@@ -328,6 +346,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Manage',
 					icon: 'globe-2-outline',
+					pathMatch: 'prefix',
 					data: {
 						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
@@ -349,6 +368,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: 'Inventory',
 					icon: 'grid-outline',
 					link: '/pages/organization/inventory',
+					pathMatch: 'prefix',
 					data: {
 						// permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
 						translationKey: 'MENU.INVENTORY'
@@ -364,75 +384,65 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Contacts',
-					icon: 'book-open-outline',
-					link: `/pages/organizations/`,
-					data: {
-						organizationShortcut: true,
-						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/contacts',
-						translationKey: 'ORGANIZATIONS_PAGE.CONTACTS'
-					}
-				},
-				{
 					title: 'Vendors',
 					icon: 'car-outline',
-					link: `/pages/organizations/`,
+					link: '/pages/organization/vendors',
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/vendors',
 						translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
 					}
 				},
 				{
 					title: 'Projects',
 					icon: 'book-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/projects`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/projects',
 						translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
-					}
-				},
-				{
-					title: 'Positions',
-					icon: 'award-outline',
-					link: `/pages/organizations/`,
-					data: {
-						organizationShortcut: true,
-						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/positions',
-						translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
 					}
 				},
 				{
 					title: 'Departments',
 					icon: 'briefcase-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/departments`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/departments',
 						translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
 					}
 				},
 				{
 					title: 'Teams',
 					icon: 'people-outline',
-					link: `/pages/organizations/`,
+					link: `/pages/organization/teams`,
 					data: {
-						organizationShortcut: true,
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-						urlPrefix: `/pages/organizations/edit/`,
-						urlPostfix: '/settings/teams',
 						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
+					}
+				},
+				{
+					title: 'Documents',
+					icon: 'file-text-outline',
+					link: `/pages/organization/documents`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS'
+					}
+				},
+				{
+					title: 'Employment Types',
+					icon: 'layers-outline',
+					link: `/pages/organization/employment-types`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE'
+					}
+				},
+				{
+					title: 'Expense Recurring',
+					icon: 'flip-outline',
+					link: '/pages/organization/expense-recurring',
+					data: {
+						translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING'
 					}
 				},
 				{
@@ -440,7 +450,51 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'question-mark-circle-outline',
 					link: '/pages/organization/help-center',
 					data: {
-						translationKey: 'MENU.HELP_CENTER'
+						translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER'
+					}
+				}
+			]
+		},
+		{
+			title: 'Contacts',
+			icon: 'book-open-outline',
+			data: {
+				translationKey: 'MENU.CONTACTS'
+			},
+			children: [
+				{
+					title: 'Visitors',
+					icon: 'book-open-outline',
+					link: `/pages/contacts/visitors`,
+					data: {
+						translationKey: 'CONTACTS_PAGE.VISITORS'
+					}
+				},
+				{
+					title: 'Leads',
+					icon: 'book-open-outline',
+					link: `/pages/contacts/leads`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'CONTACTS_PAGE.LEADS'
+					}
+				},
+				{
+					title: 'Customers',
+					icon: 'book-open-outline',
+					link: `/pages/contacts/customers`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'CONTACTS_PAGE.CUSTOMERS'
+					}
+				},
+				{
+					title: 'Clients',
+					icon: 'book-open-outline',
+					link: `/pages/contacts/clients`,
+					data: {
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						translationKey: 'CONTACTS_PAGE.CLIENTS'
 					}
 				}
 			]
@@ -584,27 +638,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Import/Export',
 					icon: 'flip-outline',
+					link: '/pages/settings/import-export/export',
 					data: {
 						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
-					},
-					children: [
-						{
-							title: 'Export',
-							icon: 'download-outline',
-							link: '/pages/settings/import-export/export',
-							data: {
-								translationKey: 'MENU.IMPORT_EXPORT.EXPORT'
-							}
-						},
-						{
-							title: 'Import',
-							icon: 'upload-outline',
-							link: '/pages/settings/import-export/import',
-							data: {
-								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'
-							}
-						}
-					]
+					}
 				},
 				{
 					title: 'Payment Gateways',
@@ -648,7 +685,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	constructor(
 		private authService: AuthService,
 		private employeeService: EmployeesService,
-		private translate: TranslateService,
+		public translate: TranslateService,
 		private store: Store,
 		private selectorService: SelectorService,
 		private router: Router
@@ -687,10 +724,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	loadItems(
-		withOrganizationShortcuts: boolean,
-		forceTranslate: boolean = false
-	) {
+	loadItems(withOrganizationShortcuts: boolean) {
 		this.menu.forEach((item) => {
 			this.refreshMenuItem(item, withOrganizationShortcuts);
 		});
@@ -748,8 +782,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationShortcuts,
-					true
+						.showOrganizationShortcuts
 				);
 			});
 	}

@@ -52,13 +52,14 @@ import { NgxElectronModule } from 'ngx-electron';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
+import * as moment from 'moment';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
 };
 
 export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http);
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 if (environment.SENTRY_DNS && environment.production) {
 	Sentry.init({
@@ -145,7 +146,17 @@ if (environment.SENTRY_DNS && environment.production) {
 		ColorPickerService
 	]
 })
-export class AppModule {}
+export class AppModule {
+	constructor() {
+		// Set Monday as start of the week
+		moment.locale('en', {
+			week: {
+				dow: 1
+			}
+		});
+		moment.locale('en');
+	}
+}
 
 export function serverConnectionFactory(
 	provider: ServerConnectionService,

@@ -6,9 +6,9 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
 	selector: 'ngx-share',
 	template: `
-		<ngx-one-column-layout>
+		<ga-public-layout>
 			<router-outlet></router-outlet>
-		</ngx-one-column-layout>
+		</ga-public-layout>
 	`
 })
 export class ShareComponent implements OnInit, OnDestroy {

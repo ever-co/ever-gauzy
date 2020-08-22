@@ -10,10 +10,11 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Stage } from '../stage/stage.entity';
+import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Injectable } from '@nestjs/common';
 import { Deal } from '../deal/deal.entity';
+import { User } from '../user/user.entity';
 
 @Injectable()
 export class PipelineService extends CrudService<Pipeline> {
@@ -21,7 +22,9 @@ export class PipelineService extends CrudService<Pipeline> {
 		@InjectRepository(Deal)
 		protected dealRepository: Repository<Deal>,
 		@InjectRepository(Pipeline)
-		protected pipelineRepository: Repository<Pipeline>
+		protected pipelineRepository: Repository<Pipeline>,
+		@InjectRepository(User)
+		protected userRepository: Repository<User>
 	) {
 		super(pipelineRepository);
 	}
@@ -38,6 +41,12 @@ export class PipelineService extends CrudService<Pipeline> {
 			.orderBy('stage.index', 'ASC')
 			.getMany();
 		const { length: total } = items;
+
+		for (const deal of items) {
+			deal.createdBy = await this.userRepository.findOne(
+				deal.createdByUserId
+			);
+		}
 
 		return { items, total };
 	}
@@ -57,7 +66,7 @@ export class PipelineService extends CrudService<Pipeline> {
 		const updatedStages =
 			pipeline.stages?.filter((stage) => stage.id) || [];
 		const deletedStages = await manager
-			.find(Stage, {
+			.find(PipelineStage, {
 				where: {
 					pipelineId: id
 				},
@@ -87,13 +96,18 @@ export class PipelineService extends CrudService<Pipeline> {
 		await manager.remove(deletedStages);
 		await Promise.all(
 			createdStages.map((stage) => {
-				stage = manager.create(Stage, stage as DeepPartial<Stage>);
+				stage = manager.create(
+					PipelineStage,
+					stage as DeepPartial<PipelineStage>
+				);
 
 				return manager.save(stage);
 			})
 		);
 		await Promise.all(
-			updatedStages.map((stage) => manager.update(Stage, stage.id, stage))
+			updatedStages.map((stage) =>
+				manager.update(PipelineStage, stage.id, stage)
+			)
 		);
 
 		return await manager.update(Pipeline, id, pipeline);

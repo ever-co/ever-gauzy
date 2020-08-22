@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { KeyResult, KeyResultDeadlineEnum } from '@gauzy/models';
+import { KeyResult, KeyResultDeadlineEnum, KPI } from '@gauzy/models';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import {
 	differenceInCalendarDays,
@@ -10,6 +10,7 @@ import {
 	addQuarters,
 	isAfter
 } from 'date-fns';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-keyresult-progress-chart',
@@ -21,17 +22,26 @@ export class KeyResultProgressChartComponent implements OnInit {
 	options: any;
 	loading = true;
 	@Input() keyResult: KeyResult;
-	constructor(private goalSettingsService: GoalSettingsService) {}
+	@Input() kpi: KPI;
+	constructor(
+		private goalSettingsService: GoalSettingsService,
+		private store: Store
+	) {}
 
 	ngOnInit() {
 		this.updateChart(this.keyResult);
 	}
 
 	public async updateChart(keyResult: KeyResult) {
+		const findInput = {
+			name:
+				keyResult.goal.deadline === '' ? null : keyResult.goal.deadline,
+			organization: {
+				id: this.store.selectedOrganization.id
+			}
+		};
 		await this.goalSettingsService
-			.getTimeFrameByName(
-				keyResult.goal.deadline === '' ? null : keyResult.goal.deadline
-			)
+			.getAllTimeFrames(findInput)
 			.then((res) => {
 				if (res.items.length > 0) {
 					let start;
@@ -107,8 +117,12 @@ export class KeyResultProgressChartComponent implements OnInit {
 				{
 					label: 'Expected',
 					data: this.expectedDataCalculation(
-						keyResult.initialValue,
-						keyResult.targetValue,
+						!!this.kpi
+							? this.kpi.currentValue
+							: keyResult.initialValue,
+						!!this.kpi
+							? this.kpi.targetValue + this.kpi.targetValue
+							: keyResult.targetValue,
 						labelsData
 					),
 					borderWidth: 2,
@@ -141,9 +155,11 @@ export class KeyResultProgressChartComponent implements OnInit {
 					});
 				}
 			});
-
 		const update = [];
-		update.push({ x: labelsData[0], y: keyResult.initialValue });
+		update.push({
+			x: labelsData[0],
+			y: !!this.kpi ? this.kpi.currentValue : keyResult.initialValue
+		});
 		const sortedUpdates = [...updates].sort((a, b) => a.x - b.x);
 		sortedUpdates.forEach((val, index) => {
 			if (index === 0) {
@@ -186,7 +202,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 		result.push({ x: labelsData[0], y: Math.round(start) });
 		result.push({
 			x: labelsData[labelsData.length - 1],
-			y: Math.round(target)
+			y: Math.round(!!this.kpi ? target - this.kpi.targetValue : target)
 		});
 		return result;
 	}

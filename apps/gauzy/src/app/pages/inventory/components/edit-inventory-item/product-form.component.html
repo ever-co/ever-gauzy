@@ -124,14 +124,15 @@
 												class="d-block"
 												size="medium"
 												fullWidth="true"
+												formControlName="language"
 											>
 												<nb-option
 													*ngFor="
 														let lang of languages
 													"
-													[value]="lang"
+													[value]="lang.value"
 												>
-													{{ lang }}
+													{{ lang.name }}
 												</nb-option>
 											</nb-select>
 										</div>
@@ -465,7 +466,7 @@
 		</nb-card-body>
 		<nb-card-footer class="text-right">
 			<button (click)="onCancel()" status="warning" class="mr-3" nbButton>
-				{{ 'BUTTONS.CLOSE' | translate }}
+				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 			<button
 				status="success"

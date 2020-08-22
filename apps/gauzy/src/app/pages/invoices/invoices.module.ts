@@ -15,7 +15,11 @@ import {
 	NbSpinnerModule,
 	NbToggleModule,
 	NbContextMenuModule,
-	NbMenuModule
+	NbMenuModule,
+	NbPopoverModule,
+	NbTabsetModule,
+	NbFormFieldModule,
+	NbListModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -60,9 +64,11 @@ import { InvoicePaymentsComponent } from './invoice-payments/payments.component'
 import { PaymentService } from '../../@core/services/payment.service';
 import { PaymentMutationComponent } from './invoice-payments/payment-mutation/payment-mutation.component';
 import { TasksStoreService } from '../../@core/services/tasks-store.service';
-import { InvoicePaymentOverdueComponent } from './table-components/invoice-payment-overdue.component';
 import { InvoiceApplyTaxDiscountComponent } from './table-components/invoice-apply-tax-discount.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
+import { InvoiceExpensesSelectorComponent } from './table-components/invoice-expense-selector.component';
+import { BackNavigationModule } from '../../@shared/back-navigation';
+import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -97,6 +103,11 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbToggleModule,
 		NbContextMenuModule,
 		NbMenuModule,
+		NbTabsetModule,
+		BackNavigationModule,
+		NbPopoverModule,
+		NbFormFieldModule,
+		NbListModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -115,7 +126,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeesService,
 		ProductService,
 		PaymentService,
-		TasksStoreService
+		TasksStoreService,
+		InvoiceEstimateHistoryService
 	],
 	entryComponents: [
 		InvoicesComponent,
@@ -139,8 +151,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoicePaymentOverdueComponent,
-		InvoiceApplyTaxDiscountComponent
+		InvoiceApplyTaxDiscountComponent,
+		InvoiceExpensesSelectorComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -164,8 +176,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EstimateViewComponent,
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
-		InvoicePaymentOverdueComponent,
-		InvoiceApplyTaxDiscountComponent
+		InvoiceApplyTaxDiscountComponent,
+		InvoiceExpensesSelectorComponent
 	]
 })
 export class InvoicesModule {}

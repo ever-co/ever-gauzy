@@ -14,7 +14,10 @@ import {
 	IIntegrationMap,
 	IIntegrationSetting,
 	RolesEnum,
-	TimeLogType
+	TimeLogType,
+	ContactType,
+	CurrenciesEnum,
+	ProjectBillingEnum
 } from '@gauzy/models';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
@@ -27,9 +30,9 @@ import {
 } from './hubstaff-entity-settings';
 import { OrganizationCreateCommand } from '../organization/commands';
 import { CommandBus } from '@nestjs/cqrs';
-import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.commant';
+import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
 import { TaskCreateCommand } from '../tasks/commands';
-import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
+import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.service';
 import { DeepPartial } from 'typeorm';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 import { EmployeeCreateCommand } from '../employee/commands';
@@ -39,7 +42,6 @@ import { UserService } from '../user/user.service';
 import { EmployeeGetCommand } from '../employee/commands/employee.get.command';
 import * as moment from 'moment';
 import {
-	TimeLogCreateCommand,
 	TimeSlotCreateCommand,
 	TimesheetGetCommand,
 	TimesheetCreateCommand,
@@ -49,6 +51,11 @@ import {
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
 import { TenantService } from '../tenant/tenant.service';
+import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
+import { RequestContext } from '../core/context';
+import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
+import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
+import { TaskUpdateCommand } from '../tasks/commands/task-update.command';
 
 @Injectable()
 export class HubstaffService {
@@ -243,15 +250,38 @@ export class HubstaffService {
 		projects
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await projects.map(
-			async ({ name, sourceId }) => {
-				const gauzyProject = await this._organizationProjectService.create(
-					{
-						name,
-						organizationId: orgId,
-						public: true,
-						billing: 'RATE',
-						currency: 'BGN'
+			async ({ name, sourceId, billable, description, status }) => {
+				const payload = {
+					name,
+					organizationId: orgId,
+					public: true,
+					billing: ProjectBillingEnum.RATE,
+					currency: CurrenciesEnum.BGN,
+					billable,
+					description,
+					status
+				};
+
+				const {
+					record
+				} = await this._integrationMapService.findOneOrFail({
+					where: {
+						sourceId,
+						entity: IntegrationEntity.PROJECT
 					}
+				});
+				//if project already integrated then only update model/entity
+				if (record) {
+					await this.commandBus.execute(
+						new OrganizationProjectUpdateCommand(
+							Object.assign(payload, { id: record.gauzyId })
+						)
+					);
+					return record;
+				}
+
+				const gauzyProject = await this.commandBus.execute(
+					new OrganizationProjectCreateCommand(payload)
 				);
 
 				return await this._integrationMapService.create({
@@ -265,6 +295,7 @@ export class HubstaffService {
 
 		return await Promise.all(integrationMaps);
 	}
+
 	async syncOrganizations({
 		integrationId,
 		organizations
@@ -306,7 +337,8 @@ export class HubstaffService {
 					new OrganizationContactCreateCommand({
 						name,
 						organizationId,
-						primaryEmail: emails[0]
+						primaryEmail: emails[0],
+						contactType: ContactType.CLIENT
 					})
 				);
 
@@ -375,17 +407,36 @@ export class HubstaffService {
 		projectId,
 		tasks
 	}): Promise<IIntegrationMap[]> {
+		const user = RequestContext.currentUser();
 		const integrationMaps = await tasks.map(
 			async ({ summary: title, id, status }) => {
+				const payload = {
+					title,
+					projectId,
+					description: 'Hubstaff Task',
+					status,
+					creatorId: user.id
+				};
+				//if task already integrated then only update model/entity
+				const {
+					record
+				} = await this._integrationMapService.findOneOrFail({
+					where: {
+						sourceId: id,
+						entity: IntegrationEntity.TASK
+					}
+				});
+				if (record) {
+					await this.commandBus.execute(
+						new TaskUpdateCommand(
+							Object.assign(payload, { id: record.gauzyId })
+						)
+					);
+					return record;
+				}
 				const gauzyTask = await this.commandBus.execute(
-					new TaskCreateCommand({
-						title,
-						projectId,
-						description: 'Hubstaff Task',
-						status
-					})
+					new TaskCreateCommand(payload)
 				);
-
 				return await this._integrationMapService.create({
 					gauzyId: gauzyTask.id,
 					integrationId,
@@ -404,7 +455,7 @@ export class HubstaffService {
 		integrationId,
 		organizationId
 	) {
-		let { record } = await this._integrationMapService.findOneOrFail({
+		const { record } = await this._integrationMapService.findOneOrFail({
 			where: {
 				sourceId: user_id,
 				entity: IntegrationEntity.EMPLOYEE
@@ -519,7 +570,7 @@ export class HubstaffService {
 	}
 
 	async syncEmployee({ integrationId, user, organizationId }) {
-		let { record } = await this._userService.findOneOrFail({
+		const { record } = await this._userService.findOneOrFail({
 			where: { email: user.email }
 		});
 		let employee;
@@ -584,11 +635,15 @@ export class HubstaffService {
 				`https://api.hubstaff.com/v2/organizations/${sourceId}/projects?status=all`,
 				token
 			);
-			const projectMap = projects.map(({ name, id }) => ({
-				name,
-				sourceId: id
-			}));
-
+			const projectMap = projects.map(
+				({ name, id, billable, description, status }) => ({
+					name,
+					sourceId: id,
+					billable,
+					description,
+					status
+				})
+			);
 			return await this.syncProjects({
 				integrationId,
 				orgId: gauzyId,
@@ -619,7 +674,6 @@ export class HubstaffService {
 					`https://api.hubstaff.com/v2/projects/${project.sourceId}/tasks`,
 					token
 				);
-
 				return await this.syncTasks({
 					integrationId,
 					tasks,
@@ -642,24 +696,28 @@ export class HubstaffService {
 		organizationId
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await activities.map(
-			async ({
-				id,
-				site,
-				time_slot,
-				tracked,
-				details,
-				date,
-				user_id
-			}) => {
+			async ({ id, site, tracked, date, user_id }) => {
+				const {
+					record
+				} = await this._integrationMapService.findOneOrFail({
+					where: {
+						sourceId: id,
+						entity: IntegrationEntity.ACTIVITY
+					}
+				});
+				//if activity already integrated then no need to create new one
+				if (record) {
+					return record;
+				}
+
 				const employee = await this._getEmployeeByHubstaffUserId(
 					user_id,
 					token,
 					integrationId,
 					organizationId
 				);
-
-				const time = moment(date).format('YYYY-MM-DD');
-				date = moment(date).format('HH:mm:ss');
+				const time = moment(date).format('HH:mm:ss');
+				date = moment(date).format('YYYY-MM-DD');
 
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
@@ -711,7 +769,7 @@ export class HubstaffService {
 					let nextPageStartId = null;
 
 					while (stillRecordsAvailable) {
-						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/url_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
+						let url = `https://api.hubstaff.com/v2/projects/${sourceId}/url_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
 						if (nextPageStartId) {
 							url += `&page_start_id=${nextPageStartId}`;
 						}
@@ -725,7 +783,7 @@ export class HubstaffService {
 							pagination &&
 							pagination.hasOwnProperty('next_page_start_id')
 						) {
-							let { next_page_start_id } = pagination;
+							const { next_page_start_id } = pagination;
 							nextPageStartId = next_page_start_id;
 							stillRecordsAvailable = true;
 						} else {
@@ -766,14 +824,27 @@ export class HubstaffService {
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await activities.map(
 			async ({ id, name, tracked, date, user_id, task_id }) => {
+				const {
+					record
+				} = await this._integrationMapService.findOneOrFail({
+					where: {
+						sourceId: id,
+						entity: IntegrationEntity.ACTIVITY
+					}
+				});
+				//if activity already integrated then no need to create new one
+				if (record) {
+					return record;
+				}
+
 				const employee = await this._getEmployeeByHubstaffUserId(
 					user_id,
 					token,
 					integrationId,
 					organizationId
 				);
-				const time = moment(date).format('YYYY-MM-DD');
-				date = moment(date).format('HH:mm:ss');
+				const time = moment(date).format('HH:mm:ss');
+				date = moment(date).format('YYYY-MM-DD');
 
 				const gauzyActivity = await this.commandBus.execute(
 					new ActivityCreateCommand({
@@ -802,7 +873,6 @@ export class HubstaffService {
 	/*
 	 * auto sync for application activities for seperate project
 	 */
-
 	private async _handleAppActivities(
 		projectsMap,
 		integrationId,
@@ -826,7 +896,7 @@ export class HubstaffService {
 					let nextPageStartId = null;
 
 					while (stillRecordsAvailable) {
-						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/application_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
+						let url = `https://api.hubstaff.com/v2/projects/${sourceId}/application_activities?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
 						if (nextPageStartId) {
 							url += `&page_start_id=${nextPageStartId}`;
 						}
@@ -840,7 +910,7 @@ export class HubstaffService {
 							pagination &&
 							pagination.hasOwnProperty('next_page_start_id')
 						) {
-							let { next_page_start_id } = pagination;
+							const { next_page_start_id } = pagination;
 							nextPageStartId = next_page_start_id;
 							stillRecordsAvailable = true;
 						} else {
@@ -945,13 +1015,13 @@ export class HubstaffService {
 					let nextPageStartId = null;
 
 					while (stillRecordsAvailable) {
-						var url = `https://api.hubstaff.com/v2/projects/${sourceId}/screenshots?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
+						let url = `https://api.hubstaff.com/v2/projects/${sourceId}/screenshots?page_limit=${pageLimit}&time_slot[start]=${start}&time_slot[stop]=${end}`;
 						if (nextPageStartId) {
 							url += `&page_start_id=${nextPageStartId}`;
 						}
 
 						const {
-							screenshots,
+							screenshots: fetchScreenshots,
 							pagination = {}
 						} = await this.fetchIntegration(url, token);
 
@@ -959,7 +1029,7 @@ export class HubstaffService {
 							pagination &&
 							pagination.hasOwnProperty('next_page_start_id')
 						) {
-							let { next_page_start_id } = pagination;
+							const { next_page_start_id } = pagination;
 							nextPageStartId = next_page_start_id;
 							stillRecordsAvailable = true;
 						} else {
@@ -967,7 +1037,7 @@ export class HubstaffService {
 							stillRecordsAvailable = false;
 						}
 
-						syncedActivities.screenshots.push(screenshots);
+						syncedActivities.screenshots.push(fetchScreenshots);
 					}
 
 					const screenshots = [].concat.apply(
@@ -1022,7 +1092,7 @@ export class HubstaffService {
 						);
 
 						if (
-							typeof taskSetting == 'object' &&
+							typeof taskSetting === 'object' &&
 							taskSetting.sync
 						) {
 							tasks = await this._handleTasks(
@@ -1033,7 +1103,7 @@ export class HubstaffService {
 						}
 
 						if (
-							typeof activitySetting == 'object' &&
+							typeof activitySetting === 'object' &&
 							activitySetting.sync
 						) {
 							activities = await this._handleActivities(
@@ -1062,7 +1132,7 @@ export class HubstaffService {
 						}
 
 						if (
-							typeof screenshotSetting == 'object' &&
+							typeof screenshotSetting === 'object' &&
 							screenshotSetting.sync
 						) {
 							screenshots = await this._handleScreenshots(

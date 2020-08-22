@@ -14,6 +14,8 @@
 		"REMOVE": "Remove",
 		"ADD_EXISTING": "Add Existing",
 		"OK": "בסדר",
+		"YES": "Yes",
+		"NO": "No",
 		"SAVE": "לשמור",
 		"CLEAR_ALL": "Clear All",
 		"BACK": "חזור",
@@ -28,6 +30,7 @@
 		"COPY_LINK": "Copy Link",
 		"MANAGE_INTERVIEWS": "Manage Interviews",
 		"MANAGE_INVITES": "Manage Invites",
+		"MANAGE_SPRINTS": "Manage Sprints",
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
@@ -41,6 +44,7 @@
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
 		"HIRE": "Hire",
+		"MANAGE_CATEGORIES": "Manage Categories",
 		"REJECT": "Reject",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
@@ -54,15 +58,21 @@
 		"CONVERT_TO_INVOICE": "Convert to invoice",
 		"PUBLIC_APPOINTMENT_BOOK": "Book Public Appointment",
 		"SAVE_AS_DRAFT": "Save as Draft",
-		"SAVE_AND_SEND_CLIENT": "Save and send to client in gauzy",
+		"SAVE_AND_SEND_CONTACT": "Save and send to contact in gauzy",
 		"SAVE_AND_SEND_EMAIL": "Save and send via email",
+		"EVENT_TYPES": "Event Types",
+		"SEARCH": "Search",
+		"RESET": "Reset",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "ערוך",
 			"DELETE": "מחק"
-		}
+		},
+		"CANDIDATE_STATISTIC": "Statistic"
 	},
 	"SM_TABLE": {
+		"TRANSACTION_TYPE": "סוג",
+		"AMOUNT": "כמות",
 		"DATE": "תאריך",
 		"TITLE": "Title",
 		"STAGE": "Stage",
@@ -145,6 +155,7 @@
 		"EMAIL": "דוא\"ל",
 		"LABELS": {
 			"NAME": "שם",
+			"WEBSITE": "Website",
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
 			"FROM": "From",
@@ -158,10 +169,12 @@
 			"CURRENCY": "מטבע",
 			"DATE_TYPE": "סוג תאריך ברירת מחדל",
 			"ADD_TEAM": "Add New Team",
+			"EDIT_TEAM": "Edit Team",
 			"OFFICIAL_NAME": "Official Name",
 			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
+			"TIME_FORMAT": "Time Format",
 			"COUNTRY": "מדינה",
 			"CITY": "עיר",
 			"ADDRESS": "Address",
@@ -231,7 +244,8 @@
 			"ADD_REMOVE_MEMBERS": "Add or Remove Members",
 			"SHORT_DESCRIPTION": "Short Description",
 			"ENABLE_EMPLOYEE_FEATURES": "Enable Employee Features",
-			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features"
+			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features",
+			"STATUS": "עבודה"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -247,6 +261,12 @@
 			"PICK_DATE": "תבחר תאריך",
 			"DATE_TYPE": "כל סוגי התאריכים",
 			"BILLING": "Billing",
+			"BILLABLE": "Billable",
+			"CODE": "Code",
+			"COLOR": "Color",
+			"WEBSITE": "Website",
+			"CURRENCY_POSITION": "Currency Position",
+			"FISCAL_INFORMATION": "Fiscal Information",
 			"IMAGE_URL": "תמונה",
 			"ADD_DEPARTMENT": "הוסף מחלקה",
 			"ADD_POSITION": "Add position",
@@ -307,6 +327,7 @@
 			"SWITCH_PROJECT_STATE": "Public",
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
+			"CHOOSE_APPROVAL_POLICY": "Choose Approval Policy",
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
@@ -315,6 +336,8 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
+			"TASK_VIEW_MODE": "Task view mode",
+			"SELECT_STATUS": "Select Status",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -392,8 +415,10 @@
 		}
 	},
 	"POP_UPS": {
+		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"ADD_INCOME": "הוסף הכנסה",
 		"ADD_EXPENSE": "הוסף הוצאה",
+		"EMPLOYEE": "עובד",
 		"EDIT_INCOME": "ערוך הכנסה",
 		"EDIT_EXPENSE": "ערוך הוצאות",
 		"EDIT_PAGE": "Edit Page",
@@ -410,7 +435,8 @@
 		"DUPLICATE": "Duplicate",
 		"DATE": "תאריך",
 		"PICK_DATE": "תבחר תאריך",
-		"ALL_CLIENTS": "כל הלקוחות",
+		"ALL_CONTACTS": "All Contacts",
+		"CONTACT": "Contact",
 		"ALL_VENDORS": "Vendor / Merchant",
 		"ALL_CATEGORIES": "כל הקטגוריות",
 		"CATEGORY_NAME": "שם קטגוריה",
@@ -453,19 +479,30 @@
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"PROJECTS_COUNT": "Projects Count",
 		"CLIENTS_COUNT": "Clients Count",
+		"EMPLOYEES_COUNT": "Employees Count",
 		"DETAILS": "Details",
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
-		"SELECT_TIMEZONE": "Select Timezone"
+		"SELECT_TIMEZONE": "Select Timezone",
+		"SHOW_AVERAGE_BONUS": "Show Average Bonus",
+		"SHOW_AVERAGE_INCOME": "Show Average Income",
+		"SHOW_PAYPERIOD": "Show Pay Period",
+		"SHOW_ANONYMOUS_BONUS": "Show Anonymous Bonus",
+		"SHOW_AVERAGE_EXPENSES": "Show Average Expenses",
+		"SHOW_BILLRATE": "Show Bill Rate",
+		"SHOW_START_WORK_ON": "Show Started Work On",
+		"SHOW_CLIENTS": "Show Clients",
+		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "לוח מחוונים",
 		"APPOINTMENTS": "Appointments",
-		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
+		"RECURRING_EXPENSE": "Recurring Expenses",
+		"POSITIONS": "עמדות",
 		"INTEGRATIONS": "Integrations",
 		"UPWORK": "Upwork",
 		"PROPOSALS": "Proposals",
@@ -473,7 +510,9 @@
 		"APPROVALS": "Approvals",
 		"HELP": "עזרה",
 		"ABOUT": "עלינו",
+		"CONTACTS": "Contacts",
 		"ADMIN": "מנהל",
+		"EMPLOYEE_LEVEL": "Employee Level",
 		"EMPLOYEES": "עובדים",
 		"MANAGE": "Manage",
 		"CANDIDATES": "Candidates",
@@ -487,11 +526,13 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT": "Import",
+			"IMPORT_HISTORY": "Import History",
 			"EXPORT": "Export",
 			"MERGE": "merge data",
 			"CLEAN_UP": "clean up before import",
 			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database or click \"DOWNLOAD TEMPLATES\" to download zip archive with CSV templates ",
-			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
+			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"import.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
+			"IMPORT_HISTORY_MESSAGE": "You can track your recently imported files here",
 			"SELECT_FILE": "Select File",
 			"DROP_FILE": "Drop the file here",
 			"BROWSE": "BROWSE",
@@ -526,7 +567,6 @@
 		"TIMESHEETS": "Timesheets",
 		"SCHEDULES": "Schedules",
 		"EMAIL_TEMPLATES": "Email Templates",
-		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
 		"GOALS": "Goals",
 		"TIME_REPORTS": "Time Reports",
@@ -582,7 +622,8 @@
 			"SYNCED_CONTRACTS": "Synced Contracts",
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
-			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities"
+			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
+			"DATE_RANGE_PLACEHOLDER": "Choose date between"
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -651,16 +692,18 @@
 	"INCOME_PAGE": {
 		"INCOME": "הכנסה",
 		"BONUS_HELP": "If set, company % fee will NOT be applied to the Bonus Income",
-		"BONUS_TOOLTIP": "This is a direct bonus"
+		"BONUS_TOOLTIP": "This is a direct bonus",
+		"EMPLOYEES_GENERATE_INCOME": "Employees that generate income"
 	},
 	"EXPENSES_PAGE": {
 		"EXPENSES": "הוצאות",
 		"MUTATION": {
-			"CLIENT_IS_REQUIRED!": "Client is required!",
-			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Please select a Client from the dropdown menu below or change Expense type setting.",
+			"CONTACT_IS_REQUIRED": "Contact is required!",
+			"PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE": "Please select a Contact from the dropdown menu below or change Expense type setting.",
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
-			"ATTACH_A_RECEIPT": "Attach a receipt"
+			"ATTACH_A_RECEIPT": "Attach a receipt",
+			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense"
 		},
 		"DEFAULT_CATEGORY": {
 			"SALARY": "Salary",
@@ -719,19 +762,32 @@
 		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
 		"ADD_NEW_KEY_RESULT": "Add new key result",
 		"ADD_NEW_OBJECTIVE": "Add new Objective",
+		"EDIT_OBJECTIVE": "Edit Objective",
 		"SESSION": "Session",
-		"GOAL_SETTINGS": "Goal Settings",
+		"GOAL_SETTINGS": "Goals Settings",
 		"NO_DESCRIPTION": "No Description",
 		"PROGRESS": "Progress",
 		"UPDATES": "Updates",
 		"UPDATE": "Update",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
+		"GROUP_BY": "Group By",
+		"OWNERSHIP": {
+			"EMPLOYEES": "עובדים",
+			"TEAMS": "Teams",
+			"EMPLOYEES_AND_TEAMS": "Employees and Teams"
+		},
 		"SETTINGS": {
 			"ADD_TIME_FRAME_TITLE": "Add Time Frame",
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
 			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames",
-			"ADD_KPI": "Add KPI"
+			"ADD_KPI": "Add KPI",
+			"MAX_ENTITIES": "Max Number of entites that can be created",
+			"EMPLOYEE_OBJECTIVES": "Employees can create their own objectives",
+			"WHO_CAN_OWN_OBJECTIVES": "Who can own Objectives?",
+			"WHO_CAN_OWN_KEY_RESULTS": "Who can own Key Results?",
+			"ADD_KPI_TO_KEY_RESULT": "Add KPI to Key Result Type?",
+			"ADD_TASK_TO_KEY_RESULT": "Add Task to Key Result Type?"
 		},
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
@@ -752,8 +808,14 @@
 			"LESSER_THAN_EQUAL_TO": "Lesser than or equal to"
 		},
 		"KPI_METRIC": {
-			"NUMBER": "Number",
-			"PERCENTAGE": "Percentage"
+			"NUMERICAL": "Numerical",
+			"PERCENTAGE": "Percentage",
+			"CURRENCY": "מטבע"
+		},
+		"TOOLTIPS": {
+			"PROGRESS": "Overall progress of this Objective based on its Key result's progress",
+			"DETAILS": "Objective Details",
+			"EDIT": "Edit Objective"
 		},
 		"FORM": {
 			"LABELS": {
@@ -764,7 +826,10 @@
 				"DEADLINE": "Deadline",
 				"STATUS": "עבודה",
 				"KPI_SHOULD_BE": "This KPI should be",
-				"CURRENT_VALUE": "Current Value"
+				"KPI_METRIC": "KPI Metric",
+				"CURRENT_VALUE": "Current Value",
+				"OBJECTIVE": "Objectives",
+				"KEY_RESULT": "Key Results"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Objective Name. eg. Improve Website SEO",
@@ -780,6 +845,20 @@
 		},
 		"BUTTONS": {
 			"ADD_TIME_FRAME": "Add Time Frame"
+		},
+		"HELPER_TEXT": {
+			"OBJECTIVE_GENERAL": "An <b>Objective</b> is a description of a goal to be achieved in the future.",
+			"OBJECTIVE_TITLE": "<p>Create an ambitious title that best describes your goal.</p><p>The title should not contain any metric</p>eg.<ul><li>Generate more revenue than last year</li><li>Become market leader</li><li>Increase website engagement</li></ul>",
+			"OBJECTIVE_DESCRIPTION": "Write a short description to give some context to your Objective",
+			"OBJECTIVE_LEVEL": "The group to which this Objective belongs to.",
+			"OBJECTIVE_OWNER": "The group/ individual responsible for completing the Objective.",
+			"OBJECTIVE_LEAD": "The person responsible for organizing and planning that is needed to achieve the Objective.",
+			"OBJECTIVE_TIMEFRAME": "Time Frame for which this Objective is created. If a time frame doesn't exist, create one here.",
+			"KPI_GENERAL": "Organizations use <b> Key Performance Indicators (KPIs) </b> to evaluate their success at reaching targets. KPIs can be used as measurable metrics for Key results.",
+			"KPI_NAME": "<p>Name your new KPI</p><p>Examples for good KPI title</p><ul><li># of Followers</li><li>Annual Recurring Revenue</li><li>Customer Lifetime Value</li></ul>",
+			"KPI_DESCRIPTION": "Write a short description to give some context to your KPI",
+			"KPI_METRIC": "KPI measurable unit",
+			"KPI_LEAD": "Person who is responsible for updating the values of this KPI"
 		}
 	},
 	"KEY_RESULT_PAGE": {
@@ -806,15 +885,22 @@
 			"TIME_FRAME_NOT_STARTED": "You can't update this key result now. The Time Frame for this key result starts on {{ date }}. Then you'll be able to update it"
 		},
 		"TYPE": {
-			"NUMBER": "Number",
+			"NUMERICAL": "Numerical",
 			"TRUE_OR_FALSE": "True/False",
 			"CURRENCY": "מטבע",
-			"TASK": "Task"
+			"TASK": "Task",
+			"KPI": "KPI"
 		},
 		"DEADLINE": {
 			"NO_CUSTOM_DEADLINE": "No Custom Deadline",
 			"HARD_DEADLINE": "Hard Deadline",
 			"HARD_AND_SOFT_DEADLINE": "Hard and Soft Deadline"
+		},
+		"TOOLTIPS": {
+			"PROGRESS": "This Key result's progress contributes to {{weight}}% of the Objective's progress",
+			"DETAILS": "Key Result Details",
+			"EDIT": "Edit Key Result",
+			"WEIGHT": "Edit Weight/Type"
 		},
 		"FORM": {
 			"LABELS": {
@@ -832,12 +918,18 @@
 				"WEIGHT": "Weight",
 				"SELECT_PROJECT": "Select Project",
 				"SELECT_TASK": "Select Task",
+				"SELECT_KPI": "Select KPI",
 				"ASSIGN_AS_OBJECTIVE": "Assign as objective"
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
 				"DESCRIPTION": "A short desciption to give some context about the Key Result"
 			}
+		},
+		"HELPER_TEXT": {
+			"KEY_RESULT_GENERAL": "A <b>Key Result</b> is how you plan to measure that you have achieved your objective .",
+			"KEY_RESULT_OWNER": "The person responsible for completing the Key Result.",
+			"KEY_RESULT_LEAD": "The person responsible for organizing and planning that is needed to achieve the Key Result."
 		}
 	},
 	"CANDIDATES_PAGE": {
@@ -958,14 +1050,22 @@
 			"SEARCH_BY_CANDIDATE": "Search by candidate's name",
 			"CANDIDATE_NAME": "Candidate's name",
 			"RATING": "Rating",
-			"RESET_FILTERS": "Reset filters"
+			"RESET_FILTERS": "Reset filters",
+			"TITLE": "Title",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Location",
+			"NOTES": "הערות",
+			"ACTIONS": "Actions",
+			"UPDATED": "Updated",
+			"CANDIDATE": "Candidate",
+			"START_DATE": "תאריך התחלה"
 		},
 		"STATISTIC": {
-			"CANDIDATE_STATISTICS": "Candidates statistic",
-			"CANDIDATE_RATING": "Candidate's rating",
-			"INTERVIEWER_ASSESSMENT": "Candidate's rating per interview",
+			"STATISTICS": "Statistic",
+			"RATING": "Overall rating",
+			"INTERVIEWER_ASSESSMENT": "Rating per interview",
 			"CRITERIONS_RATING": "Criterion's rating per interview",
-			"CANDIDATE_CRITERIONS_RATING": "Criterion's rating from all feedbacks",
+			"CANDIDATE_CRITERIONS_RATING": "Average criterion's rating",
 			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview",
 			"SELECT_INTERVIEW_INTERVIEWER": "Select an interview and interviewer",
@@ -986,31 +1086,41 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "ארגונים",
 		"EMPLOYEES": "עובדים",
+		"POSITIONS": "עמדות",
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
 		"DEPARTMENTS": "מחלקות",
-		"CONTACTS": "Contacts",
-		"POSITIONS": "עמדות",
 		"VENDORS": "ספקים",
+		"NAME": "שם",
 		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "פרויקטים",
 		"ACTIVE": "פעיל",
+		"EMPLOYMENT_TYPE": "Employment Types",
 		"ARCHIVED": "נשמר בארכיון",
 		"LOCATION": "Location",
 		"SETTINGS": "הגדרות",
+		"TEAMS": "Teams",
 		"ROLES": "Roles",
+		"HELP_CENTER": "Help Center",
+		"DOCUMENTS": "Documents",
+		"EXPENSE_RECURRING": "Recurring Expenses",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CONTACT": "Invite Contact",
 		"EMAIL_INVITE": "Email Invite",
 		"ADD_LEVEL_OF_EMPLOYEE": "Add level of employee",
 		"LEVEL_OF_EMPLOYEE": "Employee Levels",
-		"VENDOR_NAME": "Vendor name",
+		"PHONE": "Phone",
+		"EMAIL": "דוא\"ל",
+		"WEBSITE": "Website",
+		"DOCUMENT_URL": "Document URL",
+		"UPDATED": "Updated",
 		"LEVEL_NAME": "Level name",
 		"EXPENSE_NAME": "Expense name",
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
-		"DOCUMENTS": "Documents",
+		"CONTACTS": "Contacts",
+		"LEVEL": "Level",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
@@ -1023,7 +1133,12 @@
 			"CITY": "עיר",
 			"STREET": "רחוב",
 			"PROJECTS": "פרויקטים",
-			"CONTACT_TYPE": "Contact Type",
+			"FAX": "Fax",
+			"FISCAL_INFORMATION": "Fiscal Information",
+			"WEBSITE": "Website",
+			"SECOND_ADDRESS": "Street 2",
+			"IMAGE_URL": "Image URL",
+			"POSTCODE": "Postcode",
 			"DEPARTMENT_NAME": "שם מחלקה",
 			"POSITION_NAME": "שם המיקום",
 			"NEW_PROJECT": "הוסף פרויקט חדש",
@@ -1033,7 +1148,8 @@
 			"CURRENCY": "מטבע",
 			"OWNER": "Owner",
 			"TEAMS": "Teams",
-			"ADD_NEW_CONTACT": "Add new contact",
+			"ADD_NEW_CONTACT": "Add New Contact",
+			"EDIT_CONTACT": "Edit Contact",
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
 			"BONUS": "בונוס",
@@ -1050,13 +1166,21 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_MODIFY_TIME_INFO": "Allow employee to modify manual time.",
 				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_DELETE_TIME_INFO": "Allow employee to delete time.",
 				"ALLOW_MANUAL_TIME": "Allow Manual Time",
+				"ALLOW_MANUAL_TIME_INFO": "Allow employee to add manual time.",
 				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_REASON_INFO": "Reason of the add manual time or edit time logs.",
 				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_DESCRIPTION_INFO": "Description of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
 				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_PROJECT_INFO": "Project of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
 				"REQUIRE_TASK": "Require Task",
-				"REQUIRE_CLIENT": "Require Client"
+				"REQUIRE_TASK_INFO": "Task of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
+				"REQUIRE_CLIENT": "Require Client",
+				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time."
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -1107,21 +1231,44 @@
 			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Create/Edit Interviewers",
 			"VIEW_ALL_EMAILS": "View All Emails",
 			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
-			"PUBLIC_PAGE_EDIT": "Public Page Edit",
+			"PUBLIC_PAGE_EDIT": "Edit Organization Public Page",
 			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
+			"EVENT_TYPES_VIEW": "View Event Types",
+			"TIME_OFF_EDIT": "Edit Time Off",
 			"GROUPS": {
 				"GENERAL": "כללי",
 				"ADMINISTRATION": "Administration"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
-			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
+			"ORG_SPRINT_EDIT": "Create/Edit Sprints",
+			"ORG_SPRINT_VIEW": "View Sprints",
+			"ORG_PROJECT_EDIT": "Create/Edit Projects",
+			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
+			"ORG_TEAM_EDIT": "Create/Edit Teams",
+			"ORG_CONTRACT_EDIT": "Create/Edit Contracts"
 		}
+	},
+	"CONTACTS_PAGE": {
+		"VISITORS": "Visitors",
+		"LEADS": "Leads",
+		"CUSTOMERS": "Customers",
+		"CLIENTS": "לקוחות",
+		"CITY": "עיר",
+		"STREET": "רחוב",
+		"COUNTRY": "מדינה",
+		"PROJECTS": "פרויקטים",
+		"EMAIL": "דוא\"ל עיקרי",
+		"PHONE": "מספר טלפון ראשי",
+		"CONTACT_TYPE": "Contact type"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
 		"AWARDS": "Awards",
 		"COMPANY_SKILLS": "Company Skills",
-		"SKILLS": "SKILLS",
+		"SKILLS": "Skills",
+		"OVERVIEW": "Overview",
+		"DESCRIPTION": "Description",
 		"TOTAL_BONUSES_PAID": "Total Bonuses Paid",
 		"COMPANY_PROFILE": "Company Profile",
 		"TOTAL_CLIENTS": "Total Clients",
@@ -1133,7 +1280,18 @@
 		"TOTAL_PROJECTS": "Total Projects",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"EMPLOYEES": "עובדים",
-		"PROFITS": "Profits"
+		"PROFITS": "Profits",
+		"RATE": "ציון",
+		"ACTIVE": "פעיל",
+		"STARTED_WORK_ON": "Started work on",
+		"PAY_PERIOD": "Pay period",
+		"AVERAGE_BONUS": "Average Bonus",
+		"AVERAGE_EXPENSES": "Average Expenses",
+		"AVERAGE_INCOME": "Average Income",
+		"EMPLOYEE_UPDATED": "Employee has been updated.",
+		"IMAGE_UPDATED": "The image has been updated.",
+		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
+		"ANONYMOUS": "Anonymous"
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -1146,6 +1304,7 @@
 			"AUTHOR": "Author",
 			"JOB_POST_URL": "Job Post URL",
 			"PICK_A_DATE": "תבחר תאריך",
+			"PROPOSAL_DATE": "Proposal Date",
 			"JOB_POST_CONTENT": "Job Post Content",
 			"UPLOAD": "Upload",
 			"PROPOSALS_CONTENT": "Proposal Content",
@@ -1181,7 +1340,8 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "עבודה",
 		"APPROVAL_REQUEST_ACTIONS": "Actions",
-		"APPROVAL": "Approval",
+		"CREATED_BY": "Created By",
+		"APPROVE": "Approve",
 		"REFUSE": "Refuse",
 		"HEADER": "Approval Request",
 		"EMPLOYEES": "עובדים",
@@ -1205,12 +1365,15 @@
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
-		"REQUEST_DAYS_OFF": "Request Days Off",
+		"REQUEST": "Request",
+		"REQUEST_TIME_OFF": "Request Time Off",
+		"EDIT": "ערוך",
 		"ADD_HOLIDAYS": "Add Holidays",
 		"DISPLAY_HOLIDAYS": "Display Holidays",
 		"HOLIDAY_NAME": "Holiday name",
 		"SELECT_EMPLOYEES": "Select Employees",
-		"TIME_OFF_SETTINGS": "Time Off Settings",
+		"SETTINGS": "הגדרות",
+		"EDI": "Edit Time Off record",
 		"SELECT_HOLIDAY_NAME": "Select Holiday name",
 		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees",
 		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy",
@@ -1222,9 +1385,10 @@
 			"ALL": "All"
 		},
 		"ACTIONS": {
-			"APPROVE_DAYS_OFF_REQUEST": "Approve Days off Request",
-			"DENY_DAYS_OFF_REQUEST": "Deny Days off Request",
-			"DELETE_DAYS_OFF_REQUEST": "Delete Days off Request"
+			"EDIT": "Edit Time Off record",
+			"APPROVE_DAYS_OFF_REQUEST": "Approve Time Off Request",
+			"DENY_DAYS_OFF_REQUEST": "Deny Time Off Request",
+			"DELETE_DAYS_OFF_REQUEST": "Delete Time Off Request"
 		},
 		"POLICY": {
 			"HEADER": "Time Off Policy",
@@ -1237,16 +1401,18 @@
 		},
 		"NOTIFICATIONS": {
 			"NO_CHANGES": "No changes",
-			"STATUS_SET_APPROVED": "You successfully set the days off request status to approved.",
-			"ERR_SET_STATUS": "Unable to set days off request status.",
-			"APPROVED_NO_CHANGES": "The days off request status is already set to approved",
-			"RECORD_CREATED": "Time off record {{this.timeOffRequest.description}} successfully created!",
-			"REQUEST_DENIED": "You successfully set the days off request status to denied",
-			"DENIED_NO_CHANGES": "The days off request status is already set to denied",
-			"REQUEST_DELETED": "Days off request successfully deleted",
+			"STATUS_SET_APPROVED": "You successfully set the time off request status to approved.",
+			"ERR_SET_STATUS": "Unable to set time off request status.",
+			"APPROVED_NO_CHANGES": "The time off request status is already set to approved",
+			"RECORD_CREATED": "Time off record successfully created!",
+			"REQUEST_DENIED": "You successfully set the time off request status to denied",
+			"DENIED_NO_CHANGES": "The time off request status is already set to denied",
+			"REQUEST_DELETED": "Time off request successfully deleted",
 			"ERR_LOAD_RECORDS": "Unable to load time off records",
-			"ERR_DELETE_REQUEST": "Unable to delete Days off request",
-			"ERR_CREATE_RECORD": "Unable to create Time off record"
+			"ERR_DELETE_REQUEST": "Unable to delete Time off request",
+			"ERR_CREATE_RECORD": "Unable to create Time off record",
+			"REQUEST_UPDATED": "Time Off request successfully updated",
+			"ERR_UPDATE_RECORD": "Unable to update Time off record"
 		}
 	},
 	"TAGS_PAGE": {
@@ -1302,9 +1468,11 @@
 		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
 		"REQUEST": "Request",
 		"EQUIPMENT_NAME": "Equipment name",
+		"EQUIPMENT_SHARING_POLICY": "Equipment Sharing Policy",
 		"SHARE_REQUIEST_DATE": "Share request date",
 		"SHARE_START_DATE": "Share start date",
 		"SHARE_END_DATE": "Share end date",
+		"CREATED_BY": "Created By",
 		"STATUS": "עבודה",
 		"REQUEST_SAVED": "Request saved",
 		"REQUEST_DELETED": "Request deleted",
@@ -1319,6 +1487,19 @@
 		"REFUSE": "Refuse",
 		"APPROVAL_SUCCESS": "Request Approval Success",
 		"REFUSE_SUCCESS": "Request Refuse Success"
+	},
+	"EQUIPMENT_SHARING_POLICY_PAGE": {
+		"HEADER": "Equipment Sharing Policy",
+		"ADD_EQUIPMENT_SHARING_POLICY": "Add Equipment Sharing Policy",
+		"EDIT_EQUIPMENT_SHARING_POLICY": "Edit Equipment Sharing Policy",
+		"DELETE_EQUIPMENT_SHARING_POLICY": "Delete Equipment Sharing Policy",
+		"REQUEST": "Request",
+		"EQUIPMENT_SHARING_POLICY_NAME": "Equipment Sharing Policy name",
+		"EQUIPMENT_SHARING_POLICY_ORG": "Equipment Sharing Policy organization",
+		"EQUIPMENT_SHARING_POLICY_DESCRIPTION": "Equipment Sharing Policy description",
+		"REQUEST_SAVED": "Policy saved",
+		"REQUEST_DELETED": "Policy deleted",
+		"ACTIONS": "Actions"
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Inventory",
@@ -1444,11 +1625,7 @@
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"CHAT": "Чат с нас",
 		"FAQ": "Въпроси и Отговори",
-		"HELP": "עזרה",
-		"MANAGE_INTERVIEWS": "Manage interviews",
-		"MANAGE_INVITES": "Manage invites",
-		"CANDIDATE_STATISTIC": "Candidates statistic",
-		"CANDIDATE_CRITERIONS": "Candidates criterions"
+		"HELP": "עזרה"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "שם פרטי",
@@ -1506,9 +1683,11 @@
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
 		"INVOICES_SELECT_PAID": "Paid",
 		"INVOICES_SELECT_TAX": "Tax",
+		"INVOICES_TAXES": "Taxes",
+		"INVOICES_DISCOUNT": "Discount",
 		"INVOICES_SELECT_TERMS": "Terms",
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
-		"INVOICES_SELECT_CLIENT": "לקוחות",
+		"INVOICES_SELECT_CONTACT": "Contact",
 		"ADD_INVOICE": "Add Invoice",
 		"ADD_ESTIMATE": "Add Estimate",
 		"EDIT_INVOICE": "Edit Invoice",
@@ -1539,24 +1718,32 @@
 		"APPLIED": "Applied",
 		"NOT_APPLIED": "Not Applied",
 		"STATUS": "עבודה",
-		"SET_STATUS": "Set Status",
+		"SET_STATUS": "SET STATUS",
 		"SHOW_COLUMNS": "Show Columns",
+		"ITEM": "Item",
+		"SETTINGS": "הגדרות",
+		"SHOW_HIDE_COLUMNS": "Show/Hide Columns",
+		"INVOICES_PER_PAGE": "Invoices Per Page",
+		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
 			"GENERATE_ESTIMATE_ITEMS": "Generate Estimate Items",
+			"GENERATE_FOR_UNINVOICED_EXPENSES": "Generate for all uninvoiced expenses",
 			"BY_EMPLOYEE_HOURS": "By Employee Hours",
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
+			"BY_EXPENSES": "By Expenses",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
 			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
 			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
 			"SELECT_TASKS": "Select tasks",
-			"SELECT_PRODUCTS": "Select products"
+			"SELECT_PRODUCTS": "Select products",
+			"SELECT_EXPENSES": "Select expenses"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
@@ -1571,6 +1758,7 @@
 			"HOURS_WORKED": "Hours Worked",
 			"PROJECT": "פרויקטים",
 			"PRODUCT": "Product",
+			"EXPENSE": "הוצאה",
 			"NO_ITEMS": "Please add invoice items",
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
@@ -1637,7 +1825,7 @@
 	},
 	"PAYMENTS_PAGE": {
 		"HEADER": "Payments",
-		"CLIENT": "לקוחות",
+		"CONTACT": "Contact",
 		"AMOUNT": "כמות",
 		"PAYMENT_DATE": "Payment Date",
 		"RECORDED_BY": "Recorded By",
@@ -1702,9 +1890,11 @@
 		"TITLE": {
 			"SUCCESS": "Success",
 			"ERROR": "Error",
-			"WARNING": "Warning"
+			"WARNING": "Warning",
+			"MAX_LIMIT_REACHED": "Max limit reached"
 		},
 		"MESSAGE": {
+			"ERRORS": "Please check the form for errors",
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
 			"INVITES_LOAD": "Could Not Load Invites",
@@ -1742,6 +1932,7 @@
 			"CANDIDATE_EDIT_DELETED": "Successfully deleted",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
 			"CANDIDATE_FEEDBACK_REQUIRED": "Feedback information is required",
+			"CANDIDATE_FEEDBACK_ABILITY": "All interviewers have already left feedback",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
@@ -1770,8 +1961,13 @@
 			"OBJECTIVE_UPDATED": "Objective updated",
 			"KEY_RESULT_ADDED": "Key Result added",
 			"KEY_RESULT_DELETED": "Key Result deleted",
-			"KEY_RESULT_UPDATED": "Key Result upadated",
-			"TIME_FRAME_DELETED": "Time Frame deleted"
+			"KEY_RESULT_UPDATED": "Key Result updated",
+			"TIME_FRAME_DELETED": "Time Frame deleted",
+			"EDIT_PAST_INTERVIEW": "Editing past interviews is prohibited",
+			"DELETE_PAST_INTERVIEW": "Deleting past interviews is prohibited",
+			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated",
+			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
+			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1795,6 +1991,12 @@
 			"EDIT_INCOME": "Income edited for {{ name }}",
 			"DELETE_INCOME": "Income deleted for {{ name }}",
 			"INCOME_ERROR": "{{ error }}"
+		},
+		"INVOICE": {
+			"ADD_INVOICE": "Invoice added for {{ name }}",
+			"EDIT_INVOICE": "Invoice edited for {{ name }}",
+			"DELETE_INVOICE": "Invoice deleted for {{ name }}",
+			"INVOICE_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
 			"ADD_EXPENSE": "Expense added for {{ name }}",
@@ -1828,6 +2030,13 @@
 				"INVALID_FORM": "Please fill the form",
 				"INVALID_FIELD": "Please fill the field",
 				"ERROR": "{{ error }}"
+			}
+		},
+		"EMPLOYEE": {
+			"EDIT_EMPLOYEE_AWARDS": {
+				"ADD_AWARD": "New award {{ name }} successfully added!",
+				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
+				"REMOVE_AWARD": "Award {{ name }} successfully removed!"
 			}
 		},
 		"ORGANIZATIONS": {
@@ -1903,6 +2112,16 @@
 				"ADD_LANGUAGE": "New language {{ name }} successfully added!",
 				"INVALID_LANGUAGE_NAME_LEVEL": "Please check the Name and Level for Language input",
 				"REMOVE_LANGUAGE": "Language {{ name }} successfully removed!"
+			},
+			"EDIT_ORGANIZATION_DOCS": {
+				"CREATED": "Document successfully created",
+				"ERR_CREATE": "Unable to create new organization document",
+				"ERR_LOAD": "Unable to load organization documents",
+				"UPDATED": "Selected document successfully updated!",
+				"ERR_UPDATED": "Unable to update the selected document!",
+				"SELECTED_DOC": "selected document",
+				"DELETED": "Document successfully deleted!",
+				"ERR_DELETED": "Unable to delete the selected document!"
 			}
 		},
 		"DANGER_ZONE": {
@@ -1930,11 +2149,21 @@
 		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"SELECT_CLIENT": "Select Client",
 		"DATE": "תאריך",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
 		"DESCRIPTION": "Description",
-		"ADD_TIME_SUCCESS": "Time Successfully added"
+		"ADD_TIME_SUCCESS": "Time Successfully added",
+		"VALIDATION": {
+			"CLIENT_REQUIRED": "Please select client",
+			"PROJECT_REQUIRED": "Please select project",
+			"TASK_REQUIRED": "Please select task",
+			"DESCRIPTION_REQUIRED": "Description is required"
+		},
+		"VIEW_TIMESHEET": "View timesheet",
+		"ADD_TIME": "Add Time",
+		"TODAY": "היום"
 	},
 	"TIMESHEET": {
 		"TODAY": "היום",
@@ -1946,6 +2175,7 @@
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
 		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit",
+		"DELETE_TIMELOG": "Are you sure you want to delete Timelog?",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"ALL_EMPLOYEE": "כל העובדים",
 		"SELECT_SOURCE": "Select Source",
@@ -1962,8 +2192,7 @@
 		"CLOSE": "סוֹף",
 		"DELETE": "מחק",
 		"IMMUTABLE_TIME": "Immutable Time",
-		"ADD_TIME ": "Add Time",
-		"BULK_ACTION ": "Bulk action",
+		"BULK_ACTION": "Bulk action",
 		"LOG_TYPE": "Log type",
 		"TOTAL_TIME": "Total Time",
 		"ACTIVITES": "Activites",
@@ -1978,17 +2207,21 @@
 		"ACTION": "Action",
 		"EMPLOYEE": "עובד",
 		"DURATION": "Duration",
+		"ORGANIZATION_CONTACT": "לקוחות",
+		"NO_ORGANIZATION_CONTACT": "No Client",
 		"PROJECT": "פרויקטים",
 		"NO_PROJECT": "No Project",
 		"NO_TIMELOG": "No timelogs found",
 		"TODO": "To-do",
 		"NO_TODO": "No To-do",
 		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
+		"REASON": "Reason",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",
 			"PROJECT": "Please selct project",
-			"EMPLOYEE": "Please selct employee"
+			"EMPLOYEE": "Please selct employee",
+			"REASON": "Please selct reason"
 		}
 	},
 	"ACTIVITY": {
@@ -2021,6 +2254,11 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"EMPLOYEE": "עובד"
 	},
+	"EMPLOYEE_SCHEDULES_MODAL": {
+		"EMPLOYEE": "עובד",
+		"SLOTS_AVAILABLE": "Employee is available only for the below time slots, Do you still want to continue?",
+		"SLOTS_UNAVAILABLE": "Employee unavailable for this time slot"
+	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",
 		"MANAGE_EVENT_TYPE": "Manage Event Type",
@@ -2031,7 +2269,9 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
-		"RECURRING_AVAILABILITY": "Recurring Availability"
+		"RECURRING_AVAILABILITY": "Recurring Availability",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availabity for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those sepcific dates only.",
+		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
 	},
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENT": "Book Appointment",
@@ -2071,7 +2311,19 @@
 			"email-estimate": "Email Estimate",
 			"email-invoice": "Email Invoice",
 			"invite-employee": "Invite Employee",
-			"invite-user": "Invite User"
+			"invite-user": "Invite User",
+			"appointment-confirmation": "Appointment Confirmation",
+			"appointment-cancellation": "Appointment Cancellation",
+			"equipment": "Equipment Create",
+			"equipment-request": "Equipment Request",
+			"timesheet-overview": "Time sheet overview",
+			"timesheet-submit": "Time Sheet Submit",
+			"timesheet-action": "Time Sheet Actions",
+			"timesheet-delete": "Time Sheet Delete",
+			"time-off-report-action": "Time off policy action",
+			"task-update": "Task Update",
+			"candidate-schedule-interview": "Candidate Interview Schedule",
+			"interviewer-interview-schedule": "Interviewer Schedule"
 		},
 		"LANGUAGE_CODES": {
 			"en": "English",
@@ -2091,13 +2343,20 @@
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
 		"FILTER_BY_STAGE": "Filter by Stage",
-		"RECORD_TYPE": "stage \"{{ title }}\""
+		"RECORD_TYPE": "stage \"{{ title }}\"",
+		"ALL_STAGES": "All Stages"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: {{ name }}"
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
-		"SELECT_STAGE": "Select Stage"
+		"SELECT_STAGE": "Select Stage",
+		"PROBABLITY": "Probability"
+	},
+	"DIALOG": {
+		"CONFIRM": "אשר",
+		"ALERT": "Alert",
+		"DELETE_CONFIRM": "Alert"
 	}
 }

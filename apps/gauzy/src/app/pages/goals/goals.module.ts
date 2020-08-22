@@ -22,7 +22,9 @@ import {
 	NbListModule,
 	NbPopoverModule,
 	NbAlertModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbFormFieldModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -41,7 +43,11 @@ import { ChartModule } from 'angular2-chartjs';
 import { GoalSettingsModule } from '../goal-settings/goal-settings.module';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
-import { TaskSelectModule } from '../../@shared/task-select/task-select.module';
+import { TaskSelectModule } from '../../@shared/tasks/task-select/task-select.module';
+import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
+import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
+import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal-level-select.module';
+import { GoalTemplateSelectModule } from '../../@shared/goal/goal-template-select/goal-template-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -81,9 +87,15 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbPopoverModule,
 		NbAlertModule,
 		NbTooltipModule,
+		NbFormFieldModule,
+		NbBadgeModule,
 		ChartModule,
 		GoalSettingsModule,
 		ProjectSelectModule,
+		GoalCustomUnitModule,
+		KeyresultTypeSelectModule,
+		GoalTemplateSelectModule,
+		GoalLevelSelectModule,
 		TaskSelectModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({

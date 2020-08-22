@@ -8,10 +8,7 @@ import {
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-	RequestApprovalStatusTypesEnum,
-	ApprovalPolicyTypesEnum
-} from '@gauzy/models';
+import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 import { RequestContext } from '../core/context';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 
@@ -28,33 +25,69 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 		super(equipmentSharingRepository);
 	}
 
+	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {
+		try {
+			return await this.equipmentSharingRepository
+				.createQueryBuilder('equipment_sharing')
+				.leftJoinAndSelect('equipment_sharing.employees', 'employees')
+				.leftJoinAndSelect('equipment_sharing.teams', 'teams')
+				.innerJoinAndSelect('equipment_sharing.equipment', 'equipment')
+				.leftJoinAndSelect(
+					'equipment_sharing.equipmentSharingPolicy',
+					'equipmentSharingPolicy'
+				)
+				.leftJoinAndSelect(
+					'request_approval',
+					'request_approval',
+					'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+				)
+				.leftJoinAndSelect(
+					'request_approval.approvalPolicy',
+					'approvalPolicy'
+				)
+				.where(
+					'equipmentSharingPolicy.organizationId =:organizationId',
+					{
+						organizationId
+					}
+				)
+				.getMany();
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
+
+	async findRequestApprovalsByEmployeeId(id: string): Promise<any> {
+		try {
+			return await this.equipmentSharingRepository.find({
+				where: {
+					createdBy: id
+				},
+				relations: ['equipment', 'employees', 'teams']
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
 	async findAllEquipmentSharings(): Promise<any> {
 		return await this.equipmentSharingRepository.find({
 			relations: ['equipment', 'employees', 'teams']
 		});
 	}
 
-	async create(
+	async createEquipmentSharing(
 		equipmentSharing: EquipmentSharing
 	): Promise<EquipmentSharing> {
 		try {
 			equipmentSharing.createdBy = RequestContext.currentUser().id;
-			equipmentSharing.status = RequestApprovalStatusTypesEnum.REQUESTED;
+			equipmentSharing.createdByName = RequestContext.currentUser().name;
 			const equipmentSharingSaved = await this.equipmentSharingRepository.save(
 				equipmentSharing
 			);
-			const requestApproval = new RequestApproval();
-			requestApproval.id = equipmentSharingSaved.id;
-			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
-			requestApproval.approvalPolicyId =
-				equipmentSharing.approvalPolicyId;
-			requestApproval.createdBy = RequestContext.currentUser().id;
-			requestApproval.name = equipmentSharing.name;
-			requestApproval.type = ApprovalPolicyTypesEnum.EQUIPMENT_SHARING;
-			requestApproval.min_count = 1;
-			await this.requestApprovalRepository.save(requestApproval);
 			return equipmentSharingSaved;
 		} catch (err) {
+			console.log('err', err);
 			throw new BadRequestException(err);
 		}
 	}
@@ -68,16 +101,7 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 			const equipmentSharingSaved = await this.equipmentSharingRepository.save(
 				equipmentSharing
 			);
-			const requestApproval = new RequestApproval();
-			requestApproval.id = equipmentSharingSaved.id;
-			requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
-			requestApproval.approvalPolicyId =
-				equipmentSharing.approvalPolicyId;
-			requestApproval.createdBy = RequestContext.currentUser().id;
-			requestApproval.name = equipmentSharing.name;
-			requestApproval.type = ApprovalPolicyTypesEnum.EQUIPMENT_SHARING;
-			requestApproval.min_count = 1;
-			await this.requestApprovalRepository.save(requestApproval);
+
 			return equipmentSharingSaved;
 		} catch (err) {
 			throw new BadRequestException(err);
@@ -88,7 +112,9 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 		try {
 			const [equipmentSharing] = await Promise.all([
 				await this.equipmentSharingRepository.delete(id),
-				await this.requestApprovalRepository.delete(id)
+				await this.requestApprovalRepository.delete({
+					requestId: id
+				})
 			]);
 
 			return equipmentSharing;
@@ -97,15 +123,14 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 		}
 	}
 
-	async updateStatusRequestApprovalByAdmin(
+	async updateStatusEquipmentSharingByAdmin(
 		id: string,
 		status: number
 	): Promise<EquipmentSharing> {
 		try {
-			const [equipmentSharing, requestApproval] = await Promise.all([
-				await this.equipmentSharingRepository.findOne(id),
-				await this.requestApprovalRepository.findOne(id)
-			]);
+			const equipmentSharing = await this.equipmentSharingRepository.findOne(
+				id
+			);
 
 			if (!equipmentSharing) {
 				throw new NotFoundException('Equiment Sharing not found');
@@ -115,16 +140,12 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 				RequestApprovalStatusTypesEnum.REQUESTED
 			) {
 				equipmentSharing.status = status;
-				if (requestApproval) {
-					requestApproval.status = status;
-					await this.requestApprovalRepository.save(requestApproval);
-				}
 			} else {
 				throw new ConflictException('Equiment Sharing is Conflict');
 			}
 			return await this.equipmentSharingRepository.save(equipmentSharing);
-		} catch (err /*: WriteError*/) {
-			throw err;
+		} catch (err) {
+			throw new BadRequestException(err);
 		}
 	}
 }

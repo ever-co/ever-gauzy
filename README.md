@@ -49,6 +49,10 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 ## Demos & Testing
 
+**Demos are not available at the moment as we are moving to Kubernetes and showdown old demo server!**
+
+<!---
+
 Feel free to test a Demo <http://demo.gauzy.co:4250> on our server. Login: `admin@ever.co` and password: `admin`.
 
 In the future we will have the following:
@@ -56,6 +60,8 @@ In the future we will have the following:
 -   Gauzy Platform SaaS at <https://app.gauzy.co>
 -   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev>
+
+-->
 
 ## Quick Start
 
@@ -81,14 +87,18 @@ Note: together with Gauzy, Docker Compose will run following:
 -   Install and run latest [PostgreSQL](https://www.postgresql.org) (optionally, other DB can be configured manually).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
 -   Install NPM packages with `yarn install`
+-   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`
 -   Run API with `yarn start:api` (by default runs on <http://localhost:3000/api>)
 -   Run Gauzy front-end with `yarn start`
 -   Open <http://localhost:4200> in your browser
 -   Login with email `admin@ever.co` and password: `admin`
 -   Enjoy
 
-Note: during the first API start, DB will be automatically seed with initial data if no users found.
-You can run seed any moment manually (e.g. if you changed entities schemas) with `yarn run seed` command to re-initialize DB (warning: unsafe for production!).
+Notes:
+
+-   during the first API start, DB will be automatically seed with minimum set of initial data if no users found.
+-   you can run seed any moment manually (e.g. if you changed entities schemas) with `yarn seed` command to re-initialize DB (warning: unsafe for production!).
+-   it is possible to run generation of extremely large amount of fake data for demo purposes / testing with `yarn seed:all` (warning: takes ~10 min to complete)
 
 ### Production
 
@@ -101,7 +111,7 @@ Note: it's WIP, currently supports AWS EKS (Kubernetes) and Fargate Clusters (fo
 -   [TypeScript](https://www.typescriptlang.org)
 -   [Node.js](https://nodejs.org)
 -   [Nx](https://nx.dev)
--   [Angular 8](https://angular.io)
+-   [Angular](https://angular.io)
 -   [Nest](https://github.com/nestjs/nest)
 -   [RxJS](http://reactivex.io/rxjs)
 -   [TypeORM](https://github.com/typeorm/typeorm)
@@ -134,26 +144,23 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 #### Developers (alphabetical order)
 
 -   Aleksandar Tasev ([AlexTasev](https://github.com/AlexTasev))
--   Aleksander Savov ([sunk0](https://github.com/sunk0))
 -   Alish Meklyov ([Alish](https://github.com/AlishMekliov931))
 -   Blagovest Gerov ([BlagovestGerov](https://github.com/BlagovestGerov))
--   Boyan Stanchev ([boyanstanchev](https://github.com/boyanstanchev))
 -   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
--   Lubomir Petrov ([lpetrv](https://github.com/lpetrv))
+-   Martin Asenov ([goofy5752](https://github.com/goofy5752))
+-   Pavel Denchev ([PavelDenchev](https://github.com/PavelDenchev))
 -   Tsvetelina Yordanova ([tsvetelina-e-y](https://github.com/tsvetelina-e-y))
+-   Valentin Peshev ([valiopld](https://github.com/valiopld))
 -   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
 #### Designers & QA
 
 -   [Julia Konviser](https://www.linkedin.com/in/julia-konviser-8b917552) (Graphic Designer, QA)
+-   [Yordan Genovski](https://services.ever.co/teammembers/yordan-genovski) (UX/UI/Product Designer)
 
 ### Contributors
-
--   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
--   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
--   Nikolay Monov ([ntmonov](https://github.com/ntmonov))
 
 View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
 

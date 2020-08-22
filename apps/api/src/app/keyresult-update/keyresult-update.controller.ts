@@ -7,7 +7,9 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	UseGuards
+	UseGuards,
+	Query,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core';
@@ -15,6 +17,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { KeyResultUpdateService } from './keyresult-update.service';
 import { KeyResultUpdates } from '@gauzy/models';
+import { ParseJsonPipe } from '../shared';
+import { CommandBus } from '@nestjs/cqrs';
+import { KeyResultUpdateBulkDeleteCommand } from './commands';
 
 @ApiTags('KeyResultsUpdate')
 @UseGuards(AuthGuard('jwt'))
@@ -23,6 +28,7 @@ export class KeyResultUpdateController extends CrudController<
 	KeyResultUpdates
 > {
 	constructor(
+		private readonly commandBus: CommandBus,
 		private readonly keyResultUpdateService: KeyResultUpdateService
 	) {
 		super(keyResultUpdateService);
@@ -93,5 +99,27 @@ export class KeyResultUpdateController extends CrudController<
 			console.log(error);
 			return;
 		}
+	}
+
+	@ApiOperation({
+		summary: 'Delete updates by Key Result Id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: "Found key result's updates",
+		type: KeyResultUpdate
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'updates not found'
+	})
+	@Delete('deleteBulkByKeyResultId')
+	async deleteBulkByKeyResultId(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { id = null } = data;
+		return this.commandBus.execute(
+			new KeyResultUpdateBulkDeleteCommand(id)
+		);
 	}
 }

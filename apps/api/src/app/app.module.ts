@@ -33,6 +33,7 @@ import { OrganizationTeamModule } from './organization-team/organization-team.mo
 import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
 import { OrganizationAwardsModule } from './organization-awards/organization-awards.module';
 import { OrganizationLanguagesModule } from './organization-languages/organization-languages.module';
+import { OrganizationDocumentsModule } from './organization-documents/organization-documents.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { InviteModule } from './invite/invite.module';
@@ -64,7 +65,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
 import { ProductVariantModule } from './product-variant/product-variant.module';
 import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
-import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.module';
+import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
 import { CandidateSourceModule } from './candidate-source/candidate-source.module';
 import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
@@ -87,7 +88,7 @@ import { HelpCenterModule } from './help-center/help-center.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
-import { StageModule } from './stage/stage.module';
+import { StageModule } from './pipeline-stage/pipeline-stage.module';
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
 import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
@@ -105,7 +106,14 @@ import { HelpCenterAuthorModule } from './help-center-author/help-center-author.
 import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
 import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
 import { MulterModule } from '@nestjs/platform-express';
-import { FileStorage } from './core/file-storage';
+import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
+import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipment-sharing-policy.module';
+import { GoalTemplateModule } from './goal-template/goal-template.module';
+import { KeyresultTemplateModule } from './keyresult-template/keyresult-template.module';
+import * as moment from 'moment';
+import { EmployeeAwardModule } from './employee-award/employee-award.module';
+import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
+import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
 
 @Module({
 	imports: [
@@ -113,9 +121,7 @@ import { FileStorage } from './core/file-storage';
 			rootPath: path.resolve(process.cwd(), 'apps', 'api', 'public'),
 			serveRoot: '/public/'
 		}),
-		MulterModule.register({
-			dest: FileStorage.rootPath
-		}),
+		MulterModule.register(),
 		RouterModule.forRoutes([
 			{
 				path: '',
@@ -199,6 +205,10 @@ import { FileStorage } from './core/file-storage';
 						module: EmployeeAppointmentModule
 					},
 					{
+						path: '/employee-award',
+						module: EmployeeAwardModule
+					},
+					{
 						path: '/appointment-employees',
 						module: AppointmentEmployeesModule
 					},
@@ -237,6 +247,10 @@ import { FileStorage } from './core/file-storage';
 					{
 						path: '/organization-recurring-expense',
 						module: OrganizationRecurringExpenseModule
+					},
+					{
+						path: '/organization-documents',
+						module: OrganizationDocumentsModule
 					},
 					{
 						path: '/employee-recurring-expense',
@@ -317,6 +331,10 @@ import { FileStorage } from './core/file-storage';
 					{
 						path: '/equipment-sharing',
 						module: EquipmentSharingModule
+					},
+					{
+						path: '/equipment-sharing-policy',
+						module: EquipmentSharingPolicyModule
 					},
 					{
 						path: '/organization-employment-type',
@@ -411,8 +429,20 @@ import { FileStorage } from './core/file-storage';
 						module: GoalTimeFrameModule
 					},
 					{
+						path: '/goal-general-settings',
+						module: GoalGeneralSettingModule
+					},
+					{
 						path: '/goal-kpi',
 						module: GoalKpiModule
+					},
+					{
+						path: '/goal-kpi-template',
+						module: GoalKpiTemplateModule
+					},
+					{
+						path: '/goal-templates',
+						module: GoalTemplateModule
 					},
 					{
 						path: '/key-results',
@@ -421,6 +451,14 @@ import { FileStorage } from './core/file-storage';
 					{
 						path: '/key-result-updates',
 						module: KeyResultUpdateModule
+					},
+					{
+						path: '/key-result-templates',
+						module: KeyresultTemplateModule
+					},
+					{
+						path: '/invoice-estimate-history',
+						module: InvoiceEstimateHistoryModule
 					}
 				]
 			}
@@ -429,6 +467,8 @@ import { FileStorage } from './core/file-storage';
 		AuthModule,
 		UserModule,
 		EmployeeModule,
+		EmployeeRecurringExpenseModule,
+		EmployeeAwardModule,
 		CandidateModule,
 		CandidateDocumentsModule,
 		CandidateSourceModule,
@@ -461,9 +501,9 @@ import { FileStorage } from './core/file-storage';
 		OrganizationAwardsModule,
 		OrganizationLanguagesModule,
 		OrganizationSprintModule,
-		EmployeeRecurringExpenseModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
+		OrganizationDocumentsModule,
 		RequestApprovalEmployeeModule,
 		RequestApprovalTeamModule,
 		ProposalModule,
@@ -474,6 +514,7 @@ import { FileStorage } from './core/file-storage';
 		TimeOffPolicyModule,
 		TimeOffRequestModule,
 		ApprovalPolicyModule,
+		EquipmentSharingPolicyModule,
 		RequestApprovalModule,
 		RolePermissionsModule,
 		HelpCenterArticleModule,
@@ -487,6 +528,7 @@ import { FileStorage } from './core/file-storage';
 		EstimateEmail,
 		GoalModule,
 		GoalTimeFrameModule,
+		GoalGeneralSettingModule,
 		KeyResultModule,
 		KeyResultUpdateModule,
 		EmployeeLevelModule,
@@ -495,6 +537,7 @@ import { FileStorage } from './core/file-storage';
 		PipelineModule,
 		StageModule,
 		DealModule,
+		InvoiceEstimateHistoryModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
@@ -539,10 +582,23 @@ import { FileStorage } from './core/file-storage';
 			},
 			resolvers: [new HeaderResolver(['language'])]
 		}),
-		GoalKpiModule
+		GoalKpiModule,
+		GoalTemplateModule,
+		KeyresultTemplateModule,
+		GoalKpiTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
 	exports: []
 })
-export class AppModule {}
+export class AppModule {
+	constructor() {
+		// Set Monday as start of the week
+		moment.locale('en', {
+			week: {
+				dow: 1
+			}
+		});
+		moment.locale('en');
+	}
+}

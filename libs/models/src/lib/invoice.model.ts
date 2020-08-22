@@ -4,6 +4,7 @@ import { OrganizationContact } from './organization-contact.model';
 import { InvoiceItem } from './invoice-item.model';
 import { Tag } from './tag-entity.model';
 import { Payment } from './payment.model';
+import { InvoiceEstimateHistory } from './invoice-estimate-history.model';
 
 export interface Invoice extends IBaseEntityModel {
 	invoiceDate: Date;
@@ -19,10 +20,11 @@ export interface Invoice extends IBaseEntityModel {
 	tax2Type: string;
 	terms?: string;
 	totalValue?: number;
-	clientId?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	organizationId?: string;
 	fromOrganization?: Organization;
-	toClient?: OrganizationContact;
+	toContact?: OrganizationContact;
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;
 	sentTo?: string;
@@ -31,6 +33,7 @@ export interface Invoice extends IBaseEntityModel {
 	status?: string;
 	payments?: Payment[];
 	isAccepted?: boolean;
+	historyRecords?: InvoiceEstimateHistory[];
 }
 
 export interface InvoiceUpdateInput {
@@ -47,7 +50,8 @@ export interface InvoiceUpdateInput {
 	tax2Type?: string;
 	terms?: string;
 	totalValue?: number;
-	clientId?: string;
+	organizationContactId?: string;
+	toContact?: OrganizationContact;
 	organizationId?: string;
 	invoiceType?: string;
 	sentTo?: string;
@@ -59,7 +63,7 @@ export interface InvoiceUpdateInput {
 
 export interface InvoiceFindInput {
 	organizationId?: string;
-	clientId?: string;
+	organizationContactId?: string;
 	invoiceId?: string;
 	sentTo?: string;
 	invoiceNumber?: string;
@@ -72,6 +76,7 @@ export enum InvoiceTypeEnum {
 	BY_PROJECT_HOURS = 'By Project Hours',
 	BY_TASK_HOURS = 'By Task Hours',
 	BY_PRODUCTS = 'By Products',
+	BY_EXPENSES = 'By Expenses',
 	DETAILS_INVOICE_ITEMS = 'Details Invoice Items'
 }
 
@@ -108,7 +113,7 @@ export enum InvoiceColumnsEnum {
 	TAX = 'Tax',
 	TAX_2 = 'Tax 2',
 	DISCOUNT = 'Discount',
-	CLIENT = 'Client',
+	CONTACT = 'Contact',
 	PAID_STATUS = 'Paid Status'
 }
 
@@ -121,5 +126,5 @@ export enum EstimateColumnsEnum {
 	TAX = 'Tax',
 	TAX_2 = 'Tax 2',
 	DISCOUNT = 'Discount',
-	CLIENT = 'Client'
+	CONTACT = 'Contact'
 }

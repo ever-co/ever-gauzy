@@ -1,0 +1,10 @@
+:host {
+  min-width: 200px;
+  display: block;
+  nb-select {
+    max-width: none;
+  }
+  .multiple-select {
+    width: 100%;
+  }
+}

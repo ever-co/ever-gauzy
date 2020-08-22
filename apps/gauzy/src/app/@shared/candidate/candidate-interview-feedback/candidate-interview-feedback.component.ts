@@ -114,7 +114,6 @@ export class CandidateInterviewFeedbackComponent
 					feedback.interviewer
 				) {
 					this.disabledIds.push(feedback.interviewer.employeeId);
-
 					if (feedback.status === CandidateStatus.REJECTED) {
 						this.isRejected = true;
 					} else {
@@ -140,14 +139,18 @@ export class CandidateInterviewFeedbackComponent
 
 	async createFeedback() {
 		const description = this.form.get('description').value;
-		if (this.form.valid) {
+		if (
+			this.form.valid &&
+			this.status &&
+			this.form.get('technologies').value.every((el: number) => el) &&
+			this.form.get('personalQualities').value.every((el: number) => el)
+		) {
 			try {
 				const feedback = await this.candidateFeedbacksService.create({
 					...this.emptyFeedback,
 					candidateId: this.candidateId,
 					interviewId: this.interviewId
 				});
-
 				await this.candidateCriterionsRatingService.createBulk(
 					feedback.id,
 					this.technologiesList,
@@ -155,7 +158,11 @@ export class CandidateInterviewFeedbackComponent
 				);
 				await this.candidateFeedbacksService.update(feedback.id, {
 					description: description,
-					rating: this.averageRating,
+					rating:
+						this.technologiesList.length === 0 &&
+						this.personalQualitiesList.length === 0
+							? this.form.get('rating').value
+							: this.averageRating,
 					interviewer: this.feedbackInterviewer,
 					status: this.status
 				});

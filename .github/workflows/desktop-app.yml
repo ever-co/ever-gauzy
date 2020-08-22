@@ -1,0 +1,98 @@
+name: Desktop App Build
+
+on:
+    push:
+        branches: [master]
+
+jobs:
+    release-linux:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [ubuntu-latest]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v1
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.5
+
+            - name: Change permissions
+              run: 'sudo chown -R $(whoami) ./*'
+
+            - name: Install system dependencies
+              run: 'sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
+
+            - name: Install Yarn dependencies
+              run: 'yarn install'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Bump version and push tag
+              uses: mathieudutour/github-tag-action@v4.5
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build Desktop App
+              run: 'yarn build:desktop:linux'
+              env:
+                  GH_TOKEN: ${{ secrets.github_token }}
+
+    release-mac:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [macos-latest]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v1
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.5
+
+            - name: Install Yarn dependencies
+              run: 'yarn install'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Build Desktop App
+              run: 'yarn build:desktop:mac'
+              env: # Set the secret as an input
+                  GH_TOKEN: ${{ secrets.github_token }}
+
+    release-windows:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [windows-latest]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v1
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.5
+
+            - name: Install Yarn dependencies
+              run: 'yarn install'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Build Desktop App
+              run: 'yarn build:desktop:windows'
+              env: # Set the secret as an input
+                  GH_TOKEN: ${{ secrets.github_token }}

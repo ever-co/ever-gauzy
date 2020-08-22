@@ -12,19 +12,15 @@ import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.compo
 import { Store } from '../../@core/services/store.service';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
-	getYear,
-	getQuarter,
-	addDays,
-	lastDayOfYear,
-	startOfQuarter,
-	endOfQuarter,
-	lastDayOfQuarter,
-	startOfYear,
-	endOfYear
-} from 'date-fns';
+	ComponentLayoutStyleEnum,
+	GoalOwnershipEnum,
+	GoalGeneralSetting
+} from '@gauzy/models';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { FormGroup, FormBuilder } from '@angular/forms';
+import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
+import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 
 @Component({
 	selector: 'ga-goal-settings',
@@ -34,6 +30,7 @@ import {
 export class GoalSettingsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	smartTableData = new LocalDataSource();
+	generalSettingsForm: FormGroup;
 	smartTableSettings: object;
 	selectedTimeFrame: any = null;
 	selectedKPI: any = null;
@@ -43,6 +40,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
 	goalTimeFrames: any[];
+	goalGeneralSettings: GoalGeneralSetting;
+	goalOwnershipEnum = GoalOwnershipEnum;
 	predefinedTimeFrames = [];
 	@ViewChild('smartTable') smartTable;
 	private _ngDestroy$ = new Subject<void>();
@@ -52,13 +51,23 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		private goalSettingService: GoalSettingsService,
 		private toastrService: NbToastrService,
 		private store: Store,
-		private router: Router
+		private router: Router,
+		private fb: FormBuilder
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	async ngOnInit() {
+		this.generalSettingsForm = this.fb.group({
+			maxObjectives: [],
+			maxKeyResults: [],
+			employeeCanCreateObjective: [true],
+			canOwnObjectives: [],
+			canOwnKeyResult: [],
+			krTypeKPI: [true],
+			krTypeTask: [true]
+		});
 		this._loadTableSettings(null);
 		this._applyTranslationOnSmartTable();
 		await this.store.selectedOrganization$
@@ -87,6 +96,25 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				this.dataLayoutStyle = componentLayout;
 				this.selectedKPI = null;
 				this.selectedTimeFrame = null;
+			});
+	}
+
+	saveGeneralSettings() {
+		this.goalSettingService
+			.updateGeneralSettings(
+				this.goalGeneralSettings.id,
+				this.generalSettingsForm.value
+			)
+			.then((res) => {
+				if (res) {
+					this.toastrService.success(
+						this.getTranslation(
+							'TOASTR.MESSAGE.GOAL_GENERAL_SETTING_UPDATED'
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+					this._loadTableData(null);
+				}
 			});
 	}
 
@@ -126,6 +154,15 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 				id: this.selectedOrganizationId
 			}
 		};
+		await this.goalSettingService
+			.getAllGeneralSettings(findObj)
+			.then((generalSettings) => {
+				const { items } = generalSettings;
+				this.goalGeneralSettings = items.pop();
+				this.generalSettingsForm.patchValue({
+					...this.goalGeneralSettings
+				});
+			});
 		if (tab === 'KPI') {
 			await this.goalSettingService.getAllKPI(findObj).then((res) => {
 				this.smartTableData.load(res.items);
@@ -144,7 +181,6 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 						if (this.smartTable) {
 							this.smartTable.grid.dataSet.willSelect = 'false';
 						}
-						this.generateTimeFrames();
 					}
 				});
 		}
@@ -161,13 +197,15 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					},
 					currentValue: {
 						title: 'Current value',
-						type: 'number',
-						filter: false
+						type: 'custom',
+						filter: false,
+						renderComponent: ValueWithUnitComponent
 					},
 					targetValue: {
 						title: 'Target value',
-						type: 'number',
-						filter: false
+						type: 'custom',
+						filter: false,
+						renderComponent: ValueWithUnitComponent
 					},
 					updatedAt: {
 						title: 'Last Updated',
@@ -207,41 +245,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		}
 	}
 
-	generateTimeFrames() {
-		const today = new Date();
-		let date = today;
-		let year = getYear(today);
-		this.predefinedTimeFrames = [];
-		// Add Quarters
-		if (getQuarter(date) > 2) {
-			year = getYear(addDays(lastDayOfYear(today), 1));
-		}
-		while (getYear(date) <= year) {
-			const timeFrameName = `Q${getQuarter(date)}-${getYear(date)}`;
-			this.predefinedTimeFrames.push({
-				name: timeFrameName,
-				start: new Date(startOfQuarter(date)),
-				end: new Date(endOfQuarter(date))
-			});
-			date = addDays(lastDayOfQuarter(date), 1);
-		}
-		// Annual Time Frames
-		this.predefinedTimeFrames.push({
-			name: `Annual-${getYear(today)}`,
-			start: new Date(startOfYear(today)),
-			end: new Date(endOfYear(today))
-		});
-		if (year > getYear(today)) {
-			this.predefinedTimeFrames.push({
-				name: `Annual-${year}`,
-				start: new Date(startOfYear(addDays(lastDayOfYear(today), 1))),
-				end: new Date(endOfYear(addDays(lastDayOfYear(today), 1)))
-			});
-		}
-	}
-
 	async editTimeFrame(source, selectedItem?: any) {
-		this.predefinedTimeFrames = this.predefinedTimeFrames.filter(
+		const prdefTimeFrames = this.predefinedTimeFrames.filter(
 			(timeFrame) => {
 				return (
 					this.goalTimeFrames.findIndex(
@@ -264,8 +269,9 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 			context: {
 				timeFrame: this.selectedTimeFrame,
 				type: source,
-				predefinedTimeFrames: this.predefinedTimeFrames
-			}
+				predefinedTimeFrames: prdefTimeFrames
+			},
+			closeOnBackdropClick: false
 		});
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
@@ -290,7 +296,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 			context: {
 				selectedKPI: this.selectedKPI,
 				type: source
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await kpiDialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -313,7 +320,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					message: 'Are you sure? This action is irreversible.',
 					status: 'danger'
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -350,7 +358,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					message: 'Are you sure? This action is irreversible.',
 					status: 'danger'
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -382,5 +391,17 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	async addTemplate() {
+		const goalTemplateDialog = this.dialogService.open(
+			GoalTemplatesComponent
+		);
+		const response = await goalTemplateDialog.onClose
+			.pipe(first())
+			.toPromise();
+		if (!!response) {
+			console.log(response);
+		}
 	}
 }

@@ -52,6 +52,10 @@ export class TimeOffService {
 		return this.http.post('/api/time-off-request', timeOffRequest);
 	}
 
+	updateRequest(id: string, timeOffRequest: TimeOff): Observable<TimeOff> {
+		return this.http.put(`/api/time-off-request/${id}`, timeOffRequest)
+	}
+
 	getAllTimeOffRecords(
 		relations?: string[],
 		findInput?: TimeOffFindInput,

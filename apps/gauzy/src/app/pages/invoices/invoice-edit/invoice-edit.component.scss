@@ -38,10 +38,71 @@
   }
 }
 
-.payment-button {
-  margin-left: 80%;
+.header-selector-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 :host ::ng-deep ng2-smart-table .ng2-smart-actions {
   width: 5%;
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+
+  .block-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    .block {
+      width: 48%;
+    }
+  }
+}
+.footer-block-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  .footer-block {
+    width: 100%;
+  }
+}
+
+.terms-textarea {
+  width: 98%;
+}
+
+.group {
+  border: 1px #edf1f7 solid;
+  border-radius: 0.6rem;
+  margin-bottom: 9px;
+  padding-top: 14px;
+  position: relative;
+  margin-top: 1rem;
+
+  .label-group {
+    position: absolute;
+    top: -7px;
+    left: 15px;
+    background-color: #fff;
+  }
+}
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
 }

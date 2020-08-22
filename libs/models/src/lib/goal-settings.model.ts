@@ -10,12 +10,56 @@ export interface GoalTimeFrame extends IBaseEntityModel {
 	organization: Organization;
 }
 
+export interface GoalGeneralSetting extends IBaseEntityModel {
+	maxObjectives: number;
+	maxKeyResults: number;
+	employeeCanCreateObjective: boolean;
+	canOwnObjectives: string;
+	canOwnKeyResult: string;
+	krTypeKPI: boolean;
+	krTypeTask: boolean;
+}
+
 export interface KPI extends IBaseEntityModel {
 	name: string;
 	description: string;
-	metric: string;
+	type: string;
+	unit?: string;
 	currentValue: number;
 	targetValue: number;
+	lead?: Employee;
+	operator: string;
+}
+
+export interface GoalTemplate extends IBaseEntityModel {
+	name: string;
+	level: string;
+	keyResults?: Array<KeyResultTemplate>;
+	category?: string;
+}
+
+export interface KeyResultTemplate extends IBaseEntityModel {
+	name: string;
+	type: string;
+	unit?: string;
+	deadline: string;
+	targetValue?: number;
+	initialValue?: number;
+	hardDeadline?: Date;
+	softDeadline?: Date;
+	goal: GoalTemplate;
+	goalId?: string;
+	kpi?: GoalKPITemplate;
+	kpiId?: string;
+}
+
+export interface GoalKPITemplate extends IBaseEntityModel {
+	name: string;
+	description: string;
+	type: string;
+	unit?: string;
+	currentValue?: number;
+	targetValue?: number;
 	lead?: Employee;
 	operator: string;
 }
@@ -26,8 +70,16 @@ export enum TimeFrameStatusEnum {
 }
 
 export enum KpiMetricEnum {
-	NUMBER = 'number',
-	PERCENTAGE = 'percentage'
+	NUMERICAL = 'Numerical',
+	PERCENTAGE = 'Percentage',
+	CURRENCY = 'Currency'
+}
+
+export enum GoalTemplateCategoriesEnum {
+	PRODUCT_MANAGEMENT = 'Product Management',
+	SALES = 'Sales',
+	HR = 'HR',
+	MARKETING = 'Marketing'
 }
 
 export enum KpiOperatorEnum {
@@ -35,7 +87,18 @@ export enum KpiOperatorEnum {
 	LESSER_THAN_EQUAL_TO = '<='
 }
 
-export interface KpiFindInput extends IBaseEntityModel {
+export interface SettingFindInput extends IBaseEntityModel {
 	employee?: EmployeeFindInput;
 	organization?: OrganizationFindInput;
+}
+
+export interface GoalTimeFrameFindInput extends IBaseEntityModel {
+	name?: string;
+	organization?: OrganizationFindInput;
+}
+
+export enum GoalOwnershipEnum {
+	EMPLOYEES = 'Employees',
+	TEAMS = 'Teams',
+	EMPLOYEES_AND_TEAMS = 'Employees and Teams'
 }

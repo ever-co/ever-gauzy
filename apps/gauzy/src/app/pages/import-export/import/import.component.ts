@@ -19,6 +19,8 @@ export class ImportComponent extends TranslationBaseComponent
 	response: string;
 	selectedFile: File = null;
 	exportName = false;
+	importDT: Date = new Date();
+	importType = 'merge';
 
 	constructor(
 		private toastrService: NbToastrService,
@@ -30,12 +32,20 @@ export class ImportComponent extends TranslationBaseComponent
 			url: URL,
 			itemAlias: 'file'
 		});
+		this.uploader.onBuildItemForm = (item, form) => {
+			form.append('importType', this.importType);
+		};
 
 		this.hasBaseDropZoneOver = false;
 	}
 
+	onImportTypeChange(e) {
+		console.log(e);
+		this.importType = e;
+	}
+
 	public dropFile(e) {
-		if (e[0].name !== 'export.zip' || Object.values(e).length > 1) {
+		if (e[0].name !== 'import.zip' || Object.values(e).length > 1) {
 			this.uploader.clearQueue();
 			this.toastrService.danger(
 				this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'),
@@ -44,6 +54,7 @@ export class ImportComponent extends TranslationBaseComponent
 			);
 		}
 	}
+
 	fileOverBase(e) {
 		this.hasBaseDropZoneOver = e;
 	}
@@ -54,7 +65,7 @@ export class ImportComponent extends TranslationBaseComponent
 
 	onFileClick(event) {
 		this.selectedFile = event.target.files[0];
-		if (event.target.files[0].name !== 'export.zip') {
+		if (event.target.files[0].name !== 'import.zip') {
 			this.uploader.queue[0].remove();
 			this.toastrService.danger(
 				this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'),

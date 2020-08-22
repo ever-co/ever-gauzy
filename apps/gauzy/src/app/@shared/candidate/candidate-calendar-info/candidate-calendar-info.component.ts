@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { OptionsInput, EventInput, disableCursor } from '@fullcalendar/core';
+import { CalendarOptions, EventInput, disableCursor } from '@fullcalendar/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -16,7 +16,7 @@ import * as moment from 'moment';
 export class CandidateCalendarInfoComponent implements OnInit {
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
-	calendarOptions: OptionsInput;
+	calendarOptions: CalendarOptions;
 	calendarEvents: EventInput[] = [];
 	eventStartTime: Date;
 	eventEndTime: Date;

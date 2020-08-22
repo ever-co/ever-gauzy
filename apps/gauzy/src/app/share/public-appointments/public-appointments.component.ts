@@ -8,6 +8,7 @@ import { timeOff } from './test-data';
 import { takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../@core/services';
 import { EventTypeService } from '../../@core/services/event-type.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-public-appointments',
@@ -21,10 +22,12 @@ export class PublicAppointmentsComponent extends TranslationBaseComponent
 	eventTypes: IEventType[];
 	timeOff: TimeOff[] = timeOff;
 	loading = true;
+	_selectedOrganizationId: string;
 
 	constructor(
 		private router: Router,
 		private route: ActivatedRoute,
+		private store: Store,
 		private employeeService: EmployeesService,
 		private eventTypeService: EventTypeService,
 		readonly translateService: TranslateService
@@ -46,10 +49,18 @@ export class PublicAppointmentsComponent extends TranslationBaseComponent
 					await this.router.navigate(['/share/404']);
 				}
 			});
+
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				if (org) {
+					this._selectedOrganizationId = org.id;
+				}
+			});
 	}
 
 	async _getEventTypes() {
-		const { items } = await this.eventTypeService.getAll(
+		let { items } = await this.eventTypeService.getAll(
 			['employee', 'employee.user', 'tags'],
 			{
 				employee: {
@@ -57,6 +68,16 @@ export class PublicAppointmentsComponent extends TranslationBaseComponent
 				}
 			}
 		);
+
+		if (items.length === 0) {
+			items = (
+				await this.eventTypeService.getAll(['tags'], {
+					organization: {
+						id: this._selectedOrganizationId
+					}
+				})
+			).items;
+		}
 
 		const eventTypesOrder = ['Minute(s)', 'Hour(s)', 'Day(s)'];
 		this.eventTypes = [...items].sort((a, b) => {

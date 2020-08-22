@@ -1,17 +1,37 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
-import { ICandidateInterview, Candidate, Employee } from '@gauzy/models';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
+import {
+	ICandidateInterview,
+	Candidate,
+	Employee,
+	ICandidateFeedback,
+	ICandidateInterviewers,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { Router } from '@angular/router';
-import { FormControl } from '@angular/forms';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { DeleteInterviewComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
+import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
+import { LocalDataSource } from 'ng2-smart-table';
+import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
+import { InterviewCriterionsTableComponent } from './table-components/criterions/criterions.component';
+import { InterviewDateTableComponent } from './table-components/date/date.component';
+import { InterviewersTableComponent } from './table-components/interviewers/interviewers.component';
+import { InterviewActionsTableComponent } from './table-components/actions/actions.component';
+import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
+import { PictureNameTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ArchiveConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/archive-confirmation/archive-confirmation.component';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+
 @Component({
 	selector: 'ga-interview-panel',
 	templateUrl: './interview-panel.component.html',
@@ -21,149 +41,94 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
+	tableInterviewList = [];
 	candidates: Candidate[];
 	averageRating: number;
 	employeeList: Employee[];
 	allInterviews: ICandidateInterview[];
 	interviewTitle: ICandidateInterview[];
-	interviewSearch: FormControl = new FormControl();
-	candidateSearch: FormControl = new FormControl();
-	sort: FormControl = new FormControl();
+	allFeedbacks: ICandidateFeedback[];
 	isResetSelect: boolean;
-	filterParams = {
-		name: '',
-		title: '',
-		employeeIds: null
-	};
 	loading: boolean;
+	includeArchived = false;
+	addedInterview: ICandidateInterview[];
+	settingsSmartTable: object;
+	sourceSmartTable = new LocalDataSource();
+	selectedEmployees: string[] = [];
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	@ViewChild('interviewsTable') interviewsTable;
 	constructor(
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
+		private readonly store: Store,
 		private toastrService: NbToastrService,
 		private candidateInterviewService: CandidateInterviewService,
+		private router: Router,
+		private errorHandler: ErrorHandlingService,
+		private candidateStore: CandidateStore,
 		private candidatesService: CandidatesService,
 		private employeesService: EmployeesService,
-		private router: Router
+		private candidateFeedbacksService: CandidateFeedbacksService
 	) {
 		super(translateService);
+		this.setView();
 	}
 	async ngOnInit() {
+		this.candidatesService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((candidates) => {
+				this.candidates = candidates.items;
+			});
 		this.loadInterviews();
-		this.interviewSearch.valueChanges.subscribe((item) => {
-			this.filterBySearch(item, 'title');
-		});
-		this.candidateSearch.valueChanges.subscribe((item) => {
-			this.filterBySearch(item, 'name');
-		});
-	}
-	filterBySearch(item: string, type: string) {
-		type === 'name'
-			? (this.filterParams.name = item)
-			: (this.filterParams.title = item);
-		this.isResetSelect = false;
-		this.filterInterviews();
-	}
-	onEmployeeSelected(employeeIds: string[]) {
-		this.filterParams.employeeIds = employeeIds;
-		this.isResetSelect = false;
-		this.filterInterviews();
-	}
-	filterInterviews() {
-		//TO DO
-		if (
-			!this.filterParams.name &&
-			!this.filterParams.title &&
-			!this.filterParams.employeeIds
-		)
-			this.interviewList = this.allInterviews;
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 
-		if (
-			this.filterParams.name &&
-			!this.filterParams.title &&
-			!this.filterParams.employeeIds
-		)
-			this.interviewList = this.allInterviews.filter(
-				(interview) =>
-					interview.candidate.user.name
-						.toLocaleLowerCase()
-						.indexOf(this.filterParams.name.toLocaleLowerCase()) !==
-					-1
-			);
-
-		if (
-			!this.filterParams.name &&
-			this.filterParams.title &&
-			!this.filterParams.employeeIds
-		)
-			this.interviewList = this.allInterviews.filter(
-				(interview) =>
-					interview.title
-						.toLocaleLowerCase()
-						.indexOf(
-							this.filterParams.title.toLocaleLowerCase()
-						) !== -1
-			);
-		if (
-			!this.filterParams.name &&
-			!this.filterParams.title &&
-			this.filterParams.employeeIds
-		) {
-			if (!this.filterParams.employeeIds[0]) {
-				this.interviewList = this.allInterviews;
-			} else {
-				const result = [];
-				this.allInterviews.forEach((interview) => {
-					interview.interviewers.forEach((interviewer) => {
-						this.filterParams.employeeIds.forEach(
-							(item: string) => {
-								if (
-									item === interviewer.employeeId &&
-									!result.includes(interview)
-								) {
-									result.push(interview);
-								}
-							}
-						);
+		this.candidateStore.interviewList$.subscribe(() => {
+			this.loadInterviews();
+		});
+	}
+	onEmployeeSelected(empIds: string[]) {
+		this.selectedEmployees = empIds;
+		this.interviewList = this.findByEmployee(this.allInterviews);
+		const tableList = this.findByEmployee(this.tableInterviewList);
+		this.sourceSmartTable.load(tableList);
+	}
+	findByEmployee(list: ICandidateInterview[]) {
+		if (!this.selectedEmployees[0]) {
+			this.interviewList = list;
+		} else {
+			const result = [];
+			list.forEach((interview) => {
+				interview.interviewers.forEach((interviewer) => {
+					this.selectedEmployees.forEach((item: string) => {
+						if (
+							item === interviewer.employeeId &&
+							!result.includes(interview)
+						) {
+							result.push(interview);
+						}
 					});
 				});
-				this.interviewList = result;
-			}
+			});
+			this.interviewList = result;
 		}
-	}
-	clearFilters() {
-		this.candidateSearch.reset();
-		this.interviewSearch.reset();
-		// this.isResetSelect = true;
-		this.filterParams.name = '';
-		this.filterParams.title = '';
-		this.filterParams.employeeIds = null;
-		this.interviewList = this.allInterviews;
-	}
-	onSortSelected(value: string) {
-		switch (value) {
-			case 'date':
-				this.interviewList.sort(function (a, b) {
-					const dateA = new Date(a.startTime),
-						dateB = new Date(b.startTime);
-					return dateB > dateA ? -1 : dateB < dateA ? 1 : 0;
-				});
-				break;
-			case 'name':
-				this.interviewList.sort(function (a, b) {
-					const nameA = a.candidate.user.name.toLowerCase(),
-						nameB = b.candidate.user.name.toLowerCase();
-					return nameB > nameA ? -1 : nameB < nameA ? 1 : 0;
-				});
-				break;
-			case 'rating':
-				this.interviewList.sort((a, b) => b.rating - a.rating);
-				break;
-			default:
-				return this.interviewList;
-		}
+		return this.interviewList;
 	}
 	async loadInterviews() {
+		const res = await this.candidateFeedbacksService.getAll([
+			'interviewer'
+		]);
+		if (res) {
+			this.allFeedbacks = res.items;
+		}
 		this.loading = true;
+		const { items } = await this.employeesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		this.employeeList = items;
 		const interviews = await this.candidateInterviewService.getAll([
 			'feedbacks',
 			'interviewers',
@@ -174,91 +139,256 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		if (interviews) {
 			this.interviewList = interviews.items;
 			this.allInterviews = interviews.items;
-			this.candidatesService
-				.getAll(['user'])
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((candidates) => {
-					this.candidates = candidates.items;
-					this.interviewList.forEach((interview) => {
-						this.loadEmployee(interview);
-						this.candidates.forEach((item) => {
-							if (item.id === interview.candidateId) {
-								interview.candidate = item;
+			this.tableInterviewList = [];
+			const result = [];
+			let interviewsForTable = [];
+			this.interviewList.forEach((interview) => {
+				const employees = [];
+				interview.interviewers.forEach(
+					(interviewer: ICandidateInterviewers) => {
+						this.employeeList.forEach((employee: Employee) => {
+							if (interviewer.employeeId === employee.id) {
+								interviewer.employeeImageUrl =
+									employee.user.imageUrl;
+								interviewer.employeeName = employee.user.name;
+								employees.push(employee);
 							}
 						});
-
-						if (interview.feedbacks.length > 0) {
-							const res: number[] = [];
-							interview.feedbacks.forEach((fb) => {
-								res.push(Number(fb.rating));
-							});
-							const fbSum = res.reduce((sum, current) => {
-								return sum + current;
-							});
-							interview.rating =
-								fbSum / interview.feedbacks.length;
-						} else {
-							interview.rating = 0;
-						}
-					});
-					this.loading = false;
+					}
+				);
+				this.candidates.forEach((item) => {
+					if (item.id === interview.candidate.id) {
+						interview.candidate.user = item.user;
+						result.push({
+							...interview,
+							fullName: item.user.name,
+							imageUrl: item.user.imageUrl,
+							employees: employees,
+							allFeedbacks: this.allFeedbacks
+						});
+					}
 				});
-		}
-	}
-	async loadEmployee(interview: ICandidateInterview) {
-		const employees = [];
-		const { items } = await this.employeesService
-			.getAll(['user'])
-			.pipe(first())
-			.toPromise();
-		this.employeeList = items;
-		interview.interviewers.forEach((interviewer) => {
-			this.employeeList.forEach((employee) => {
-				if (interviewer.employeeId === employee.id) {
-					employees.push(employee);
+				// For rating
+				if (interview.feedbacks.length > 0) {
+					const rate: number[] = [];
+					interview.feedbacks.forEach((fb) => {
+						rate.push(Number(fb.rating));
+					});
+					const fbSum = rate.reduce((sum, current) => {
+						return sum + current;
+					});
+					interview.rating = fbSum / interview.feedbacks.length;
+				} else {
+					interview.rating = 0;
 				}
 			});
-		});
-		interview.employees = employees;
+			if (!this.includeArchived) {
+				result.forEach((interview) => {
+					if (!interview.isArchived) {
+						interviewsForTable.push(interview);
+					}
+				});
+			} else {
+				interviewsForTable = result;
+			}
+			this.tableInterviewList = interviewsForTable;
+			this.sourceSmartTable.load(interviewsForTable);
+			this.loading = false;
+		}
+	}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				fullName: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CANDIDATE'
+					),
+					type: 'custom',
+					renderComponent: PictureNameTagsComponent,
+					class: 'align-row'
+				},
+				title: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.TITLE'
+					),
+					type: 'string'
+				},
+				date: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE'
+					),
+					type: 'custom',
+					width: '120px',
+					renderComponent: InterviewDateTableComponent,
+					filter: false,
+					class: 'text-center'
+				},
+				rating: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
+					),
+					type: 'custom',
+					width: '136px',
+					renderComponent: InterviewStarRatingComponent,
+					filter: false
+				},
+				employees: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'
+					),
+					type: 'custom',
+					width: '155px',
+					renderComponent: InterviewersTableComponent,
+					filter: false
+				},
+				criterions: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'
+					),
+					type: 'custom',
+					renderComponent: InterviewCriterionsTableComponent,
+					filter: false
+				},
+				location: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.LOCATION'
+					),
+					type: 'string'
+				},
+				note: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.NOTES'
+					),
+					type: 'string',
+					filter: false
+				},
+				actions: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ACTIONS'
+					),
+					width: '145px',
+					type: 'custom',
+					renderComponent: InterviewActionsTableComponent,
+					filter: false,
+					onComponentInitFunction: (instance) => {
+						instance.updateResult.subscribe((params) => {
+							if (params.isEdit) {
+								this.editInterview(params.data.id);
+							} else {
+								this.removeInterview(params.data.id);
+							}
+						});
+					}
+				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
+			}
+		};
+	}
+	setView() {
+		this.viewComponentName = ComponentEnum.TEAMS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+	changeIncludeArchived(checked: boolean) {
+		this.includeArchived = checked;
+		this.loadInterviews();
+	}
+	archive(interview: ICandidateInterview) {
+		this.dialogService
+			.open(ArchiveConfirmationComponent, {
+				context: {
+					recordType: `${interview.title}`
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.candidateInterviewService.setInterviewAsArchived(
+							interview.id
+						);
+						this.toastrService.primary(
+							`${interview.title}` + '  set as archived.',
+							'Success'
+						);
+						this.loadInterviews();
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
+			});
 	}
 	async editInterview(id: string) {
 		const currentInterview = this.interviewList.find(
 			(item) => item.id === id
 		);
-		const dialog = this.dialogService.open(
-			CandidateInterviewMutationComponent,
-			{
-				context: {
-					header: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
-					),
-					editData: currentInterview,
-					selectedCandidate: currentInterview.candidate,
-					interviewId: id,
-					interviewList: this.interviewList
+		if (this.isPastInterview(currentInterview)) {
+			this.toastrService.warning(
+				this.getTranslation('TOASTR.TITLE.WARNING'),
+				this.getTranslation('TOASTR.MESSAGE.EDIT_PAST_INTERVIEW')
+			);
+		} else {
+			const candidate = await this.candidatesService
+				.getAll(['user'], {
+					id: currentInterview.candidate.id
+				})
+				.pipe(first())
+				.toPromise();
+			const dialog = this.dialogService.open(
+				CandidateInterviewMutationComponent,
+				{
+					context: {
+						header: this.getTranslation(
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
+						),
+						editData: currentInterview,
+						selectedCandidate: candidate.items[0],
+						interviewId: id,
+						interviewList: this.interviewList
+					}
 				}
+			);
+			const data = await dialog.onClose.pipe(first()).toPromise();
+			if (data) {
+				this.toastrSuccess('UPDATED');
+				this.loadInterviews();
 			}
-		);
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			this.toastrSuccess('UPDATED');
-			this.loadInterviews();
 		}
 	}
 	async removeInterview(id: string) {
 		const currentInterview = this.interviewList.find(
 			(item) => item.id === id
 		);
-		const dialog = this.dialogService.open(DeleteInterviewComponent, {
-			context: {
-				interview: currentInterview
+		if (this.isPastInterview(currentInterview)) {
+			this.toastrService.warning(
+				this.getTranslation('TOASTR.TITLE.WARNING'),
+				this.getTranslation('TOASTR.MESSAGE.DELETE_PAST_INTERVIEW')
+			);
+		} else {
+			const dialog = this.dialogService.open(DeleteInterviewComponent, {
+				context: {
+					interview: currentInterview
+				}
+			});
+			const data = await dialog.onClose.pipe(first()).toPromise();
+			if (data) {
+				this.toastrSuccess('DELETED');
+				this.loadInterviews();
 			}
-		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			this.toastrSuccess('DELETED');
-			this.loadInterviews();
 		}
+	}
+	goToCandidate(id: string) {
+		this.router.navigate([
+			`/pages/employees/candidates/edit/${id}/profile`
+		]);
 	}
 	isPastInterview(interview: ICandidateInterview) {
 		const now = new Date().getTime();
@@ -268,10 +398,8 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			return true;
 		}
 	}
-	goToCandidate(id: string) {
-		this.router.navigate([
-			`/pages/employees/candidates/edit/${id}/profile/interview`
-		]);
+	openEmployees(id: string) {
+		this.router.navigate([`/pages/employees/edit/${id}`]);
 	}
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
@@ -282,5 +410,12 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 }

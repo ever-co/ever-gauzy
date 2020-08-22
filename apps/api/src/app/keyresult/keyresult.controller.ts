@@ -39,6 +39,21 @@ export class KeyResultController extends CrudController<KeyResult> {
 		return this.keyResultService.create(entity);
 	}
 
+	@ApiOperation({ summary: 'Create Bulk key result' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Key Results Created',
+		type: KeyResult
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Key Result not found'
+	})
+	@Post('/createBulk')
+	async createBulkKeyResults(@Body() entity: KeyResult[]): Promise<any> {
+		return this.keyResultService.createBulk(entity);
+	}
+
 	@ApiOperation({ summary: 'Get key result by ID' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -92,7 +107,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async deleteTask(@Param('id') id: string): Promise<any> {
+	async deleteKeyResult(@Param('id') id: string): Promise<any> {
 		return this.keyResultService.delete(id);
 	}
 }

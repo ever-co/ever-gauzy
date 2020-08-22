@@ -30,9 +30,9 @@ import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-s
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.module';
-import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
+import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -67,14 +67,14 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSpinnerModule,
 		SingleStatisticModule,
 		InfoBlockModule,
-		NbRouteTabsetModule
+		NbRouteTabsetModule,
+		TimeTrackingModule
 	],
 	declarations: [
 		DashboardComponent,
 		AccountingComponent,
 		HumanResourcesComponent,
 		DataEntryShortcutsComponent,
-		TimeTrackingComponent,
 		ProjectManagementComponent
 	],
 	providers: [IncomeService, ExpensesService, AuthService]

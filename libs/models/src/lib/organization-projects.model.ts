@@ -10,12 +10,13 @@ import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-m
 import { Tag } from './tag-entity.model';
 import { Task } from './task-entity.model';
 import { ITenant } from './tenant.model';
-import { OrganizationSprint } from '@gauzy/models';
+import { OrganizationSprint, Payment } from '@gauzy/models';
 
 export interface OrganizationProjects extends IBaseEntityWithMembers {
 	name: string;
 	organizationId: string;
 	organizationContact?: OrganizationContact;
+	organizationContactId?: string;
 	startDate?: Date;
 	endDate?: Date;
 	billing: string;
@@ -28,6 +29,16 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	tenant: ITenant;
 	organizationSprints?: OrganizationSprint[];
 	taskListType: string;
+	payments?: Payment[];
+	// prefix to project tasks / issues, e.g. GA-XXXX (GA is prefix)
+	code?: string;
+	description?: string;
+	// the color of project which is used in UI
+	color?: string;
+	// is project billible?
+	billable?: boolean;
+	// true if the project is flat rate, false if the project is time / materials billable
+	billingFlat?: boolean;
 }
 
 export enum TaskListTypeEnum {
@@ -38,16 +49,20 @@ export enum TaskListTypeEnum {
 export interface OrganizationProjectsFindInput extends IBaseEntityModel {
 	name?: string;
 	organizationId?: string;
+	organizationContactId?: string;
 	organizationContact?: OrganizationContact;
 	members?: Employee[];
 	public?: boolean;
 	tags?: Tag[];
+	billable?: boolean;
+	billingFlat?: boolean;
 }
 
 export interface OrganizationProjectsCreateInput {
 	name: string;
 	organizationId: string;
 	organizationContact?: OrganizationContact;
+	organizationContactId?: string;
 	startDate?: Date;
 	endDate?: Date;
 	billing?: ProjectBillingEnum;
@@ -56,4 +71,15 @@ export interface OrganizationProjectsCreateInput {
 	public?: boolean;
 	tags?: Tag[];
 	owner?: ProjectOwnerEnum;
+	code?: string;
+	description?: string;
+	color?: string;
+	billable?: boolean;
+	billingFlat?: boolean;
+	status?: string;
+}
+
+export interface OrganizationProjectsUpdateInput
+	extends OrganizationProjectsCreateInput {
+	id?: string;
 }

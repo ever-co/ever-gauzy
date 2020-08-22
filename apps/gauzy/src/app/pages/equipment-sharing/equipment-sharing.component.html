@@ -1,34 +1,36 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
-		<h4>{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}</h4>
+	<nb-card-header class="main-header">
+		<div class="main-header">
+			<ngx-back-navigation></ngx-back-navigation>
+			<h4>{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}</h4>
+		</div>
+		<div class="main-header">
+			<button
+				style="margin-right: 9px;"
+				nbButton
+				status="primary"
+				(click)="manageAppropvalPolicy()"
+			>
+				{{
+					'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
+						| translate
+				}}
+			</button>
+			<ga-layout-selector
+				componentName="{{ viewComponentName }}"
+			></ga-layout-selector>
+		</div>
 	</nb-card-header>
 
 	<nb-card-body>
 		<div class="mb-3">
-			<button nbButton status="success" class="mr-2" (click)="save()">
+			<button nbButton status="success" class="mr-2" (click)="save(true)">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.REQUEST' | translate }}
 			</button>
-			<button
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="disableButton"
-				(click)="save()"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="disableButton"
-				(click)="delete()"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
 		</div>
 
 		<ng2-smart-table
@@ -37,8 +39,114 @@
 			(userRowSelect)="selectEquipmentSharing($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#equipmentSharingTable
 		>
 		</ng2-smart-table>
+		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<li class="flex-item" *ngFor="let x of equipmentsData">
+				<div class="info-line">
+					<span class="info-meta">Equipment name</span>
+					<span class="info-value">{{ x.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Equipment Sharing Policy</span>
+					<span class="info-value">{{ x.equipment.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Share request date</span>
+					<span class="info-value">{{
+						x.shareRequestDay | date
+					}}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Share start date</span>
+					<span class="info-value">{{ x.shareStartDay | date }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Share end date</span>
+					<span class="info-value">{{ x.shareEndDay | date }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Created By</span>
+					<span class="info-value">{{ x.createdByName }}</span>
+				</div>
+
+				<div class="info-line" [ngSwitch]="x.status">
+					<span class="info-meta">Status</span>
+					<span class="badge-warning-card" *ngSwitchCase="1">{{
+						'Requested'
+					}}</span>
+					<span class="badge-success-card" *ngSwitchCase="2">{{
+						'Approved'
+					}}</span>
+					<span class="badge-danger-card" *ngSwitchCase="3">{{
+						'Refused'
+					}}</span>
+				</div>
+				<div class="info-line" style="height: 56px;">
+					<span class="info-meta">Action</span>
+					<div *ngIf="x.status === 1">
+						<button
+							nbButton
+							status="success"
+							(click)="approval(x)"
+							class="mr-3"
+							[size]="'tiny'"
+						>
+							{{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
+						</button>
+						<button
+							nbButton
+							status="danger"
+							(click)="refuse(x)"
+							[size]="'tiny'"
+						>
+							{{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
+						</button>
+					</div>
+				</div>
+				<nb-card-footer class="card-footer">
+					<ng-container
+						*ngTemplateOutlet="
+							actionButtons;
+							context: {
+								buttonSize: 'tiny',
+								selectedItem: x
+							}
+						"
+					>
+					</ng-container>
+				</nb-card-footer>
+			</li>
+		</ul>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="save(false, selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="delete(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

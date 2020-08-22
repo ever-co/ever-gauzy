@@ -5,11 +5,12 @@ import { CurrenciesEnum, Organization, Employee } from '@gauzy/models';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
 import { Tenant } from '../tenant/tenant.entity';
+import * as moment from 'moment';
 
 export const createDefaultIncomes = async (
 	connection: Connection,
 	defaultData: {
-		org: Organization;
+    organizations: Organization[];
 		employees: Employee[];
 	}
 ): Promise<Income[]> => {
@@ -25,32 +26,35 @@ export const createDefaultIncomes = async (
 		console.error('Cannot find income data csv');
 	}
 
-	fs.createReadStream(filePath)
+  for(const organization of defaultData.organizations) {
+    fs.createReadStream(filePath)
 		.pipe(csv())
 		.on('data', (data) => incomeFromFile.push(data))
 		.on('end', async () => {
-			defaultIncomes = incomeFromFile.map((seedIncome) => {
-				const income = new Income();
-				const foundEmployee = defaultData.employees.find(
-					(emp) => emp.user.email === seedIncome.email
-				);
+       defaultIncomes = incomeFromFile.map((seedIncome) => {
 
-				income.employee = foundEmployee;
-				income.clientName = seedIncome.clientName;
-				income.organization = defaultData.org;
-				income.tenant = defaultData.org.tenant;
-				income.amount = seedIncome.amount;
-				income.clientId = faker.random
-					.number({ min: 10, max: 9999 })
-					.toString();
-				income.currency = seedIncome.currency;
-				income.valueDate = new Date(seedIncome.valueDate);
-				income.notes = seedIncome.notes;
-				return income;
-			});
+          const income = new Income();
+          const foundEmployee = defaultData.employees.find(
+            (emp) => emp.user.email === seedIncome.email
+          );
+
+          income.employee = foundEmployee;
+          income.clientName = seedIncome.clientName;
+          income.organization = organization;
+          income.tenant = organization.tenant;
+          income.amount = seedIncome.amount;
+          income.clientId = faker.random
+            .number({ min: 10, max: 9999 })
+            .toString();
+          income.currency = seedIncome.currency;
+          income.valueDate = faker.date.between(new Date(), moment(new Date()).add(10, 'days').toDate());
+          income.notes = seedIncome.notes;
+          return income;
+        });
 
 			await insertIncome(connection, defaultIncomes);
 		});
+}
 
 	return defaultIncomes;
 };
@@ -95,7 +99,10 @@ export const createRandomIncomes = async (
 					.toString();
 				income.currency =
 					employee.organization.currency || currencies[0];
-				income.valueDate = faker.date.recent(150);
+				income.valueDate = faker.date.between(
+					new Date(),
+					moment(new Date()).add(10, 'days').toDate()
+				);
 				income.notes = notesArray[currentIndex];
 
 				randomIncomes.push(income);

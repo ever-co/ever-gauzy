@@ -10,6 +10,7 @@ import { IncomeExpenseAmountComponent } from '../../table-components/income-amou
 import { TableComponentsModule } from '../../table-components/table-components.module';
 import { RecurringExpenseHistoryModule } from '../reecurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockComponent } from './recurring-expense-block.component';
+import { PictureNameTagsComponent } from '../../table-components/picture-name-tags/picture-name-tags.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -36,7 +37,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 	entryComponents: [
 		RecurringExpenseBlockComponent,
 		DateViewComponent,
-		IncomeExpenseAmountComponent
+		IncomeExpenseAmountComponent,
+		PictureNameTagsComponent
 	],
 	providers: []
 })

@@ -10,7 +10,7 @@ docker-compose*.yml
 .deploy
 .git/
 .gitignore
-
+Jenkinsfile
 node_modules
 apps/api/node_modules
 
@@ -33,3 +33,4 @@ Thumbs.db
 !/.deploy/api/entrypoint
 !/.deploy/webapp/entrypoint
 !/.deploy/webapp/nginx.conf
+!/.deploy/webapp/entrypoint.prod.sh

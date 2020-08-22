@@ -7,7 +7,8 @@ import {
 	NbIconModule,
 	NbSpinnerModule,
 	NbDatepickerModule,
-	NbDialogModule
+	NbDialogModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProposalsComponent } from './proposals.component';
@@ -53,6 +54,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbSpinnerModule,
 		NbDatepickerModule,
+		NbBadgeModule,
 		EmployeeSelectorsModule,
 		Ng2SmartTableModule,
 		UserFormsModule,

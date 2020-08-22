@@ -76,10 +76,22 @@ const routes: Routes = [
 			},
 			{
 				path: 'contacts',
-				loadChildren: () =>
-					import('./work-in-progress/work-in-progress.module').then(
-						(m) => m.WorkInProgressModule
-					)
+				children: [
+					{
+						path: 'visitors',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: '',
+						loadChildren: () =>
+							import('./contacts/contact.module').then(
+								(m) => m.ContactModule
+							)
+					}
+				]
 			},
 			{
 				path: 'projects',
@@ -207,6 +219,27 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'positions',
+						loadChildren: () =>
+							import('./positions/positions.module').then(
+								(m) => m.PositionsModule
+							)
+					},
+					{
+						path: 'employee-level',
+						loadChildren: () =>
+							import(
+								'./employee-levels/employee-level.module'
+							).then((m) => m.EmployeeLevelModule)
+					},
+					{
+						path: 'recurring-expenses',
+						loadChildren: () =>
+							import(
+								'./recurring-expense-employee/recurring-expense-employee.module'
+							).then((m) => m.RecurringExpensesEmployeeModule)
+					},
+					{
 						path: 'candidates',
 						loadChildren: () =>
 							import('./candidates/candidates.module').then(
@@ -240,6 +273,14 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'expense-recurring',
+						loadChildren: () =>
+							import(
+								'./expense-recurring/expense-recurring.module'
+							).then((m) => m.ExpenseRecurringModule)
+					},
+
+					{
 						path: 'help-center',
 						loadChildren: () =>
 							import('./help-center/help-center.module').then(
@@ -259,6 +300,55 @@ const routes: Routes = [
 							import(
 								'./equipment-sharing/equipment-sharing.module'
 							).then((m) => m.EquipmentSharingModule)
+					},
+					{
+						path: 'equipment-sharing-policy',
+						loadChildren: () =>
+							import(
+								'./equipment-sharing-policy/equipment-sharing-policy.module'
+							).then((m) => m.EquipmentSharingPolicyModule)
+					},
+					{
+						path: 'documents',
+						loadChildren: () =>
+							import('./documents/documents.module').then(
+								(m) => m.DocumentsModule
+							)
+					},
+					{
+						path: 'employment-types',
+						loadChildren: () =>
+							import(
+								'./employment-types/employment-types.module'
+							).then((m) => m.EmploymentTypesModule)
+					},
+					{
+						path: 'vendors',
+						loadChildren: () =>
+							import('./vendors/vendors.module').then(
+								(m) => m.VendorsModule
+							)
+					},
+					{
+						path: 'departments',
+						loadChildren: () =>
+							import('./departments/departments.module').then(
+								(m) => m.DepartmentsModule
+							)
+					},
+					{
+						path: 'projects',
+						loadChildren: () =>
+							import('./projects/projects.module').then(
+								(m) => m.ProjectsModule
+							)
+					},
+					{
+						path: 'teams',
+						loadChildren: () =>
+							import('./teams/teams.module').then(
+								(m) => m.TeamsModule
+							)
 					}
 				]
 			},

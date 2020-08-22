@@ -1,5 +1,6 @@
 <nb-card>
-	<nb-card-header>
+	<nb-card-header class="header">
+		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
 			{{
 				(editMode
@@ -10,7 +11,6 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<ngx-back-navigation class="d-block"></ngx-back-navigation>
 		<div class="appointment-form">
 			<form [formGroup]="form" *ngIf="form">
 				<div class="row">
@@ -177,6 +177,7 @@
 								'FORM.LABELS.MEETING_INVITEES' | translate
 							}}</label>
 							<ga-employee-multi-select
+								#employeeSelector
 								[label]="false"
 								[selectedEmployeeIds]="selectedEmployeeIds"
 								[allEmployees]="employees"

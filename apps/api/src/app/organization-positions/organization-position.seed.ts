@@ -18,6 +18,24 @@ const organizationPositionArray = [
 	'Tester'
 ];
 
+export const seedDefaultOrganizationPosition = async (
+  connection: Connection,
+  Organizations
+): Promise<void> => {
+  let positions: OrganizationPositions[] = [];
+
+    // Organizations.forEach(({ id: organizationId }) => {
+      const organizationPositions: OrganizationPositions[] = organizationPositionArray.map((name) => {
+        const employmentPosition = new OrganizationPositions();
+        employmentPosition.name = name;
+        employmentPosition.organizationId = Organizations.id;
+        return employmentPosition;
+      });
+      positions = [...positions, ...organizationPositions];
+    // });
+    await insertEmploymentPosition(connection, positions);
+};
+
 export const seedRandomOrganizationPosition = async (
 	connection: Connection,
 	tenants: Tenant[],

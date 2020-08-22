@@ -39,12 +39,8 @@ export class ScreenshotController extends CrudController<Screenshot> {
 	@Post('/')
 	@UseInterceptors(
 		FileInterceptor('file', {
-			storage: FileStorage.default({
-				dest: path.join(
-					'public',
-					'screenshots',
-					moment().format('YYYY/MM/DD')
-				),
+			storage: new FileStorage({
+				dest: path.join('screenshots', moment().format('YYYY/MM/DD')),
 				prefix: 'screenshots'
 			})
 		})
@@ -66,13 +62,11 @@ export class ScreenshotController extends CrudController<Screenshot> {
 				});
 		});
 		entity.file = path.join(
-			'public',
 			'screenshots',
 			moment().format('YYYY/MM/DD'),
 			file.filename
 		);
 		entity.thumb = path.join(
-			'public',
 			'screenshots',
 			moment().format('YYYY/MM/DD'),
 			thumbName

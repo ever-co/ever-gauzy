@@ -42,6 +42,7 @@
 			(rowSelect)="pipeline = $event.data"
 			[settings]="smartTableSettings"
 			[source]="pipelines"
+			style="cursor: pointer;"
 		></ng2-smart-table>
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"

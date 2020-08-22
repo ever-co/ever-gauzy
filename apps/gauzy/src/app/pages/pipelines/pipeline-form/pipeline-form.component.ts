@@ -12,24 +12,27 @@ import { NbDialogRef } from '@nebular/theme';
 })
 export class PipelineFormComponent implements OnInit {
 	@Input()
-	public pipeline: PipelineCreateInput & { id?: string };
+	pipeline: PipelineCreateInput & { id?: string };
 
-	public userOrganizations: UserOrganization[];
-	public form: FormGroup;
-	public icon: string;
+	userOrganizations: UserOrganization[];
+	form: FormGroup;
+	icon: string;
+	isActive: boolean;
 
-	public constructor(
-		private dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
+	constructor(
+		public dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
 		private usersOrganizationsService: UsersOrganizationsService,
 		private pipelinesService: PipelinesService,
 		private fb: FormBuilder,
 		private store: Store
 	) {}
 
-	public ngOnInit(): void {
-		const { id } = this.pipeline;
+	ngOnInit(): void {
+		const { id, isActive } = this.pipeline;
 		const { userId } = this.store;
 
+		isActive === undefined ? this.isActive = true : this.isActive = isActive;
+		
 		this.usersOrganizationsService
 			.getAll(['organization'], { userId })
 			.then(({ items }) => (this.userOrganizations = items));
@@ -41,15 +44,22 @@ export class PipelineFormComponent implements OnInit {
 			name: [this.pipeline.name || '', Validators.required],
 			...(id ? { id: [id, Validators.required] } : {}),
 			description: [this.pipeline.description],
-			stages: this.fb.array([])
+			stages: this.fb.array([]),
+			isActive: [this.isActive]
 		});
 	}
 
-	public persist(): void {
+	setIsActive() {
+		this.isActive = !this.isActive;
+	}
+
+	persist(): void {
 		const {
 			value,
 			value: { id }
 		} = this.form;
+
+		console.log(this.form.value)
 
 		Promise.race([
 			id

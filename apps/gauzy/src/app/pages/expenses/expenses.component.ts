@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { AuthService } from '../../@core/services/auth.service';
 import {
 	Expense,
 	PermissionsEnum,
 	IExpenseCategory,
 	IOrganizationVendor,
 	Tag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	Employee
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -30,6 +30,7 @@ import { IncomeExpenseAmountComponent } from '../../@shared/table-components/inc
 import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -41,8 +42,8 @@ export interface ExpenseViewModel {
 	categoryId: string;
 	categoryName: string;
 	category: IExpenseCategory;
-	clientId: string;
-	clientName: string;
+	organizationContactId: string;
+	organizationContactName: string;
 	projectId: string;
 	projectName: string;
 	currency: string;
@@ -51,10 +52,13 @@ export interface ExpenseViewModel {
 	purpose: string;
 	taxType: string;
 	taxLabel: string;
+	employee: Employee;
+	employeeName: string;
 	rateValue: number;
 	receipt: string;
 	splitExpense: boolean;
 	tags: Tag[];
+	status: string;
 }
 
 @Component({
@@ -67,7 +71,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 	selectedEmployeeId: string;
 	selectedDate: Date;
 	smartTableSource = new LocalDataSource();
-	expenses: Expense[];
+	expenses: ExpenseViewModel[];
 	selectedExpense: ExpenseViewModel;
 	showTable: boolean;
 	employeeName: string;
@@ -78,6 +82,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 	private _selectedOrganizationId: string;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
+	averageExpense = 0;
 	@ViewChild('expensesTable') expensesTable;
 
 	loadSettingsSmartTable() {
@@ -117,13 +122,31 @@ export class ExpensesComponent extends TranslationBaseComponent
 				purpose: {
 					title: 'Purpose',
 					type: 'string'
+				},
+				status: {
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'custom',
+					width: '5%',
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						const badgeclass = cell
+							? ['paid'].includes(cell.toLowerCase())
+								? 'success'
+								: ['invoiced'].includes(cell.toLowerCase())
+								? 'warning'
+								: 'danger'
+							: null;
+						return {
+							text: cell,
+							class: badgeclass
+						};
+					}
 				}
 			}
 		};
 	}
 
 	constructor(
-		private authService: AuthService,
 		private dialogService: NbDialogService,
 		private store: Store,
 		private expenseService: ExpensesService,
@@ -139,7 +162,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
-		this.expenseCategoriesStore.loadAll();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
@@ -197,7 +219,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 					}
 				}
 			});
-
 		this.route.queryParamMap
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
@@ -225,6 +246,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
+	manageCategories() {
+		this.router.navigate(['/pages/accounting/expenses/categories']);
+	}
+
 	canShowTable() {
 		if (this.expensesTable) {
 			this.expensesTable.grid.dataSet.willSelect = 'false';
@@ -238,10 +263,11 @@ export class ExpensesComponent extends TranslationBaseComponent
 			category: formData.category,
 			vendor: formData.vendor,
 			typeOfExpense: formData.typeOfExpense,
-			clientId: formData.client.clientId,
-			clientName: formData.client.clientName,
+			organizationContactId:
+				formData.organizationContact.organizationContactId,
+			organizationContactName: formData.organizationContact.name,
 			projectId: formData.project.projectId,
-			projectName: formData.project.projectName,
+			projectName: formData.project.name,
 			valueDate: formData.valueDate,
 			notes: formData.notes,
 			currency: formData.currency,
@@ -251,7 +277,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 			rateValue: formData.rateValue,
 			receipt: formData.receipt,
 			splitExpense: formData.splitExpense,
-			tags: formData.tags
+			tags: formData.tags,
+			status: formData.status
 		};
 	}
 
@@ -262,7 +289,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 				employeeId: formData.employee ? formData.employee.id : null,
 				orgId: this.store.selectedOrganization.id
 			});
-
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: formData.employee
@@ -271,11 +297,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-
-			this._loadTableData();
-			this.store.selectedEmployee = formData.employee
-				? formData.employee
-				: null;
+			this._loadTableData(
+				this.selectedEmployeeId,
+				this.selectedEmployeeId ? null : this._selectedOrganizationId
+			);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -285,7 +310,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
 		}
-
 		this.dialogService
 			.open(ExpensesMutationComponent)
 			.onClose.pipe(takeUntil(this._ngDestroy$))
@@ -314,10 +338,12 @@ export class ExpensesComponent extends TranslationBaseComponent
 			.subscribe(async (formData) => {
 				if (formData) {
 					try {
-						await this.expenseService.update(
-							formData.id,
-							this.getFormData(formData)
-						);
+						await this.expenseService.update(formData.id, {
+							...this.getFormData(formData),
+							employeeId: this.selectedExpense.employee
+								? this.selectedExpense.employee.id
+								: null
+						});
 						this.toastrService.primary(
 							this.getTranslation(
 								'NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG',
@@ -388,9 +414,11 @@ export class ExpensesComponent extends TranslationBaseComponent
 				if (result) {
 					try {
 						await this.expenseService.delete(
-							this.selectedExpense.id
+							this.selectedExpense.id,
+							this.selectedExpense.employee
+								? this.selectedExpense.employee.id
+								: null
 						);
-
 						this.toastrService.primary(
 							this.getTranslation(
 								'NOTES.EXPENSES.DELETE_EXPENSE',
@@ -413,7 +441,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 				}
 			});
 	}
-
 	selectExpense({ isSelected, data }) {
 		const selectedExpense = isSelected ? data : null;
 		if (this.expensesTable) {
@@ -437,11 +464,10 @@ export class ExpensesComponent extends TranslationBaseComponent
 					id: orgId
 				}
 			};
-
-			this.smartTableSettings['columns']['employee'] = {
+			this.smartTableSettings['columns']['employeeName'] = {
 				title: 'Employee',
 				type: 'string',
-				valuePrepareFunction: (_, expense: Expense) => {
+				valuePrepareFunction: (_, expense: ExpenseViewModel) => {
 					const user = expense.employee
 						? expense.employee.user
 						: null;
@@ -457,7 +483,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 					id: employeeId
 				}
 			};
-
 			delete this.smartTableSettings['columns']['employee'];
 		}
 
@@ -479,24 +504,26 @@ export class ExpensesComponent extends TranslationBaseComponent
 					categoryId: i.categoryId,
 					categoryName: i.category.name,
 					category: i.category,
-					clientId: i.clientId,
-					clientName: i.clientName,
+					organizationContactId: i.organizationContactId,
+					organizationContactName: i.organizationContactName,
 					projectId: i.projectId,
 					projectName: i.projectName,
 					amount: i.amount,
 					notes: i.notes,
 					currency: i.currency,
 					employee: i.employee,
+					employeeName: i.employee?.user?.name,
 					purpose: i.purpose,
 					taxType: i.taxType,
 					taxLabel: i.taxLabel,
 					rateValue: i.rateValue,
 					receipt: i.receipt,
 					splitExpense: i.splitExpense,
-					tags: i.tags
+					tags: i.tags,
+					status: i.status
 				};
 			});
-			this.expenses = items;
+			this.expenses = expenseVM;
 			this.smartTableSource.load(expenseVM);
 			this.showTable = true;
 		} catch (error) {

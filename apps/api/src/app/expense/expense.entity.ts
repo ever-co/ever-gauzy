@@ -94,13 +94,13 @@ export class Expense extends TenantBase implements IExpense {
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
-	clientId?: string;
+	organizationContactId?: string;
 
 	@ApiPropertyOptional({ type: String })
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
-	clientName?: string;
+	organizationContactName?: string;
 
 	@ApiPropertyOptional({ type: String })
 	@Index()
@@ -174,6 +174,11 @@ export class Expense extends TenantBase implements IExpense {
 	@IsOptional()
 	@Column({ nullable: true })
 	reference?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	status?: string;
 
 	//IN SOME CASES THE EXPENSES ARE CRASHING BECAUZE ITS TRYING TO ADD EXPENSEID AND THERE IS NO SUCH THING
 

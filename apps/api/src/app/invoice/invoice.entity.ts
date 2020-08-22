@@ -29,6 +29,7 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Payment } from '../payment/payment.entity';
+import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])
@@ -145,7 +146,7 @@ export class Invoice extends Base implements IInvoice {
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
-	clientId?: string;
+	organizationContactId?: string;
 
 	@ApiPropertyOptional({ type: Organization })
 	@ManyToOne((type) => Organization)
@@ -155,7 +156,7 @@ export class Invoice extends Base implements IInvoice {
 	@ApiPropertyOptional({ type: OrganizationContact })
 	@ManyToOne((type) => OrganizationContact)
 	@JoinColumn()
-	toClient?: OrganizationContact;
+	toContact?: OrganizationContact;
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
@@ -170,4 +171,15 @@ export class Invoice extends Base implements IInvoice {
 	})
 	@JoinColumn()
 	payments?: Payment[];
+
+	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
+	@OneToMany(
+		(type) => InvoiceEstimateHistory,
+		(invoiceEstimateHistory) => invoiceEstimateHistory.invoice,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	historyRecords?: InvoiceEstimateHistory[];
 }

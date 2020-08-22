@@ -1,0 +1,57 @@
+.body {
+  width: 890px;
+  max-width: 100%;
+}
+
+form .tab_sections nb-tab {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  label {
+    color: #222b45;
+    font-size: 15px;
+    font-weight: 700;
+  }
+}
+
+.card-footer {
+  text-align: right;
+}
+
+span.heading_title {
+  color: #222b45;
+  font-family: Open Sans, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1rem;
+  margin-right: 10px;
+}
+
+button.add_new {
+  border-radius: 50% !important;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  padding-right: 4px !important;
+  margin: 0 !important;
+}
+
+.nb_list_item.item {
+  border: none !important;
+  float: left;
+  padding-left: 0;
+}
+
+.close {
+  cursor: pointer;
+}
+
+.awards-list {
+  flex-direction: row;
+}

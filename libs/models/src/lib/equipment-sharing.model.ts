@@ -9,10 +9,14 @@ export interface EquipmentSharing extends IBaseEntityModel {
 	shareStartDay?: Date;
 	shareEndDay?: Date;
 	status?: number;
+	equipmentSharingPolicyId?: string;
 	employees?: Employee[];
 	teams?: OrganizationTeam[];
 	equipment?: Equipment;
 	name?: string;
+	createdBy?: string;
+	createdByName?: string;
+	organizationId?: string;
 }
 
 export interface EquipmentSharingRequest extends IBaseEntityModel {
@@ -22,8 +26,10 @@ export interface EquipmentSharingRequest extends IBaseEntityModel {
 	shareStartDay: Date;
 	shareEndDay: Date;
 	status: number;
+	equpmentSharingPolicyId?: string;
 	employees?: string[];
 	teams?: string[];
+	organizationId?: string;
 }
 
 export enum EquipmentSharingStatusEnum {

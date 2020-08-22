@@ -57,6 +57,7 @@ COPY --chown=node:node --from=dependencies /srv/gauzy/node_modules ./node_module
 COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
+RUN npm install pm2 -g && mkdir /import && chown node:node /import
 RUN chown node:node wait && chmod +x wait && chown -R node:node apps/
 USER node:node
 
@@ -67,5 +68,4 @@ ENV API_PORT 3000
 ENV DB_PORT 5432
 
 EXPOSE ${API_PORT:-3000}
-CMD [ "node", "main.js" ]
-ENTRYPOINT [ "./entrypoint" ]
+CMD [ "pm2-runtime", "main.js" ]

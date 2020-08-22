@@ -10,12 +10,13 @@ import { PermissionsEnum } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
-import { RequestApprovalStatusComponent } from './table-components/request-approval-status/request-approval-status.component';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
-import { RequestApprovalTypeComponent } from './table-components/request-approval-type/request-approval-type.component';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 export interface IApprovalsData {
 	icon: string;
@@ -135,7 +136,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		} else {
 			items = (
 				await this.approvalRequestService.getAll(
-					['employeeApprovals', 'teamApprovals'],
+					['employeeApprovals', 'teamApprovals', 'tags'],
 					this.selectedOrganizationId
 				)
 			).items;
@@ -153,15 +154,8 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
 					),
-					type: 'string'
-				},
-				type: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_TYPE'
-					),
 					type: 'custom',
-					renderComponent: RequestApprovalTypeComponent,
-					filter: false
+					renderComponent: PictureNameTagsComponent
 				},
 				min_count: {
 					title: this.getTranslation(
@@ -178,12 +172,43 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					renderComponent: ApprovalPolicyComponent,
 					filter: false
 				},
+				createdByName: {
+					title: this.getTranslation(
+						'APPROVAL_REQUEST_PAGE.CREATED_BY'
+					),
+					type: 'string',
+					filter: false
+				},
 				status: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
 					),
 					type: 'custom',
-					renderComponent: RequestApprovalStatusComponent,
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						switch (cell) {
+							case RequestApprovalStatusTypesEnum.APPROVED:
+								cell = 'Approved';
+								break;
+							case RequestApprovalStatusTypesEnum.REFUSED:
+								cell = 'Refused';
+								break;
+							default:
+								cell = 'Requested';
+								break;
+						}
+						const badgeClass = ['approved'].includes(
+							cell.toLowerCase()
+						)
+							? 'success'
+							: ['requested'].includes(cell.toLowerCase())
+							? 'warning'
+							: 'danger';
+						return {
+							text: cell,
+							class: badgeClass
+						};
+					},
 					filter: false
 				},
 				actions: {
@@ -201,6 +226,21 @@ export class ApprovalsComponent extends TranslationBaseComponent
 				}
 			}
 		};
+	}
+
+	approval(rowData) {
+		const params = {
+			isApproval: true,
+			data: rowData
+		};
+		this.handleEvent(params);
+	}
+	refuse(rowData) {
+		const params = {
+			isApproval: false,
+			data: rowData
+		};
+		this.handleEvent(params);
 	}
 
 	async handleEvent(params: any) {
@@ -259,23 +299,9 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			dialog = this.dialogService.open(RequestApprovalMutationComponent);
 		}
 		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
-
 		this.selectedRequestApproval = null;
 		this.disableButton = true;
-		const params = {
-			name: requestApproval.name,
-			type: Number(requestApproval.type),
-			approvalPolicyId: requestApproval.approvalPolicyId,
-			employeeApprovals: requestApproval.employees || [],
-			teams: requestApproval.teams || [],
-			min_count: requestApproval.min_count,
-			id: undefined
-		};
-		if (requestApproval.id) {
-			params.id = requestApproval.id;
-		}
-		const isSuccess = await this.approvalRequestService.save(params);
-		if (isSuccess) {
+		if (requestApproval) {
 			this.toastrService.primary(
 				this.getTranslation(
 					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_SAVED'
@@ -283,7 +309,6 @@ export class ApprovalsComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-
 		this.loadSettings();
 	}
 

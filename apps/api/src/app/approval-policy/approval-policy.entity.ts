@@ -12,9 +12,12 @@ import {
 	RelationId
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { ApprovalPolicy as IApprovalPolicy } from '@gauzy/models';
+import {
+	ApprovalPolicy as IApprovalPolicy,
+	ApprovalPolicyTypesStringEnum
+} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
@@ -49,13 +52,13 @@ export class ApprovalPolicy extends Base implements IApprovalPolicy {
 	@Column({ nullable: true })
 	tenantId: string;
 
-	@ApiProperty({ type: Number })
-	@IsNumber()
-	@Column({ nullable: true })
-	type: number;
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
 	description: string;
+
+	@ApiProperty({ type: String, enum: ApprovalPolicyTypesStringEnum })
+	@IsEnum(ApprovalPolicyTypesStringEnum)
+	@Column({ nullable: true })
+	approvalType: string;
 }

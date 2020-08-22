@@ -25,6 +25,7 @@ import { RequestApprovalService } from '../../@core/services/request-approval.se
 import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { CommonModule } from '@angular/common';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -32,6 +33,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		CommonModule,
 		SharedModule,
 		ThemeModule,
 		NbBadgeModule,

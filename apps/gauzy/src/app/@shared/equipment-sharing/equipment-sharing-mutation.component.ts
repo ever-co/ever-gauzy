@@ -12,7 +12,8 @@ import {
 	RequestApprovalStatusTypesEnum,
 	RequestApprovalStatus,
 	Employee,
-	OrganizationTeam
+	OrganizationTeam,
+	EquipmentSharingPolicy
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,6 +24,7 @@ import { OrganizationTeamsService } from '../../@core/services/organization-team
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
+import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 
 export interface RequestEmployee {
 	id: string;
@@ -47,7 +49,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		private fb: FormBuilder,
 		readonly translationService: TranslateService,
 		private employeesService: EmployeesService,
-		private organizationTeamsService: OrganizationTeamsService
+		private organizationTeamsService: OrganizationTeamsService,
+		private equipmentSharingPolicyService: EquipmentSharingPolicyService
 	) {
 		super(translationService);
 	}
@@ -63,7 +66,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
-
+	equipmentSharingPolicies: EquipmentSharingPolicy[] = [];
+	selectedEquipmentSharingPolicy: string;
 	requestStatuses = Object.values(RequestApprovalStatus);
 
 	private _ngDestroy$ = new Subject<void>();
@@ -84,6 +88,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.loadSelectedOrganization();
 		this.loadEmployees();
 		this.loadTeams();
+		this.loadEquipmentSharingPolicy();
 		this.loadRequestStatus();
 		this.validateForm();
 	}
@@ -99,8 +104,14 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	async initializeForm() {
 		this.form = this.fb.group({
 			equipment: [
-				this.equipmentSharing ? this.equipmentSharing.equipment.id : '',
+				this.equipmentSharing ? this.equipmentSharing.equipmentId : '',
 				Validators.required
+			],
+			equipmentSharingPolicyId: [
+				this.equipmentSharing &&
+				this.equipmentSharing.equipmentSharingPolicyId
+					? this.equipmentSharing.equipmentSharingPolicyId
+					: ''
 			],
 			employees: [
 				this.equipmentSharing
@@ -137,12 +148,29 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		});
 	}
 
+	async loadEquipmentSharingPolicy() {
+		this.equipmentSharingPolicies = (
+			await this.equipmentSharingPolicyService.getAll([], {
+				organizationId: this.selectedOrgId
+			})
+		).items;
+	}
+
+	onEquipmentSharingPolicySelected(equipmentSharingPolicy: string) {
+		this.selectedEquipmentSharingPolicy = equipmentSharingPolicy;
+	}
+
 	async onSaveRequest() {
 		const shareRequest = {
 			equipmentId: this.form.value['equipment'],
 			equipment: this.equipmentItems.find(
 				(eq) => eq.id === this.form.value['equipment']
 			),
+			createdBy: '',
+			createdByName: '',
+			equipmentSharingPolicyId: this.form.value[
+				'equipmentSharingPolicyId'
+			],
 			employees: this.employees.filter((emp) => {
 				return this.selectedEmployees.includes(emp.id);
 			}),
@@ -155,17 +183,19 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			status: this.requestStatus,
 			name: this.form.value['name']
 		};
-		console.log('shareRequest', shareRequest);
 		let equipmentSharing: EquipmentSharing;
 
 		if (this.equipmentSharing) {
+			shareRequest.createdBy = this.equipmentSharing.createdBy;
+			shareRequest.createdByName = this.equipmentSharing.createdByName;
 			equipmentSharing = await this.equipmentSharingService.update(
 				this.equipmentSharing.id,
 				shareRequest
 			);
 		} else {
 			equipmentSharing = await this.equipmentSharingService.create(
-				shareRequest
+				shareRequest,
+				this.selectedOrgId
 			);
 		}
 
@@ -383,5 +413,16 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		}
 
 		return !this.checkIfDateBetweenPeriods(this.periodsUnderUse, date);
+	}
+
+	getStatus(id: number) {
+		switch (id) {
+			case RequestApprovalStatusTypesEnum.REQUESTED:
+				return 'Request';
+			case RequestApprovalStatusTypesEnum.REFUSED:
+				return 'Refused';
+			case RequestApprovalStatusTypesEnum.APPROVED:
+				return 'Approved';
+		}
 	}
 }

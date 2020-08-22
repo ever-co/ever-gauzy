@@ -6,8 +6,11 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import { StageUpdateInput } from '@gauzy/models';
+import { PipelineStageUpdateInput } from '@gauzy/models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { NbDialogService } from '@nebular/theme';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { first } from 'rxjs/operators';
 
 @Component({
 	templateUrl: './stage-form.component.html',
@@ -15,40 +18,41 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 })
 export class StageFormComponent implements OnInit {
 	@Input('values')
-	public stages: StageUpdateInput[];
+	stages: PipelineStageUpdateInput[];
 
 	@Input()
-	public pipelineId: string;
+	pipelineId: string;
 
-	public control: FormArray;
+	control: FormArray;
 
-	public isAdding = false;
+	isAdding = false;
 
-	public constructor(
+	constructor(
 		private readonly controlContainer: ControlContainer,
+		private dialogService: NbDialogService,
 		private fb: FormBuilder
 	) {}
 
-	public ngOnInit(): void {
+	ngOnInit(): void {
 		this.control = this.controlContainer.control as FormArray;
 		this.stages?.forEach(({ id, name, description }) => {
 			this.pushNewStage({ id, name, description });
 		});
 	}
 
-	public reorder(event: CdkDragDrop<FormGroup>) {
+	reorder(event: CdkDragDrop<FormGroup>) {
 		const index = this.control.controls.indexOf(event.item.data);
 
 		this.control.removeAt(index);
 		this.control.insert(event.currentIndex, event.item.data);
 	}
 
-	public pushNewStage(
+	pushNewStage(
 		{
 			id,
 			name,
 			description
-		}: Omit<StageUpdateInput, 'pipelineId'> = {} as any
+		}: Omit<PipelineStageUpdateInput, 'pipelineId'> = {} as any
 	): void {
 		const { pipelineId } = this;
 
@@ -62,5 +66,18 @@ export class StageFormComponent implements OnInit {
 				description: [description]
 			})
 		);
+	}
+
+	deleteStage(index: number) {
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: { recordType: 'Stage' }
+			})
+			.onClose.pipe(first())
+			.subscribe((res) => {
+				if (res) {
+					this.control.removeAt(index);
+				}
+			});
 	}
 }

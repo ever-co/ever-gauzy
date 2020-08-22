@@ -42,7 +42,15 @@ export const TimerData = {
 			})
 			.then((res) => res);
 	},
-
+	deleteWindowEventAfterSended: (knex, data) => {
+		return knex('window-events')
+			.whereIn('id', data.activityIds)
+			.del()
+			.then((res) => {
+				console.log(res);
+				return res;
+			});
+	},
 	updateTimerUpload: (knex, data) => {
 		return knex('timer')
 			.where({
@@ -65,6 +73,15 @@ export const TimerData = {
 			.where({
 				timerId: timerId
 			})
+			.then((res) => res);
+	},
+
+	deleteAfk: (knex, data) => {
+		return knex('afk-events')
+			.where({
+				id: data.idAfk
+			})
+			.del()
 			.then((res) => res);
 	},
 

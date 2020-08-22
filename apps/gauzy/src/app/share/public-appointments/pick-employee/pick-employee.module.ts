@@ -7,6 +7,7 @@ import { PickEmployeeComponent } from './pick-employee.component';
 import { PickEmployeeRoutingModule } from './pick-employee.routing.module';
 import { NbCardModule, NbButtonModule, NbToastrModule } from '@nebular/theme';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
+import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -19,6 +20,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbCardModule,
 		EmployeeSelectorsModule,
+		BackNavigationModule,
 		PickEmployeeRoutingModule,
 		TranslateModule.forChild({
 			loader: {

@@ -23,6 +23,7 @@ import { EmployeesService } from '../../../@core/services';
 import { PermissionsEnum } from '@gauzy/models';
 import { NO_EMPLOYEE_SELECTED } from '../../components/header/selectors/employee/employee.component';
 import { Router } from '@angular/router';
+import { ElectronService } from 'ngx-electron';
 
 @Component({
 	selector: 'ngx-one-column-layout',
@@ -39,13 +40,15 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		private employeesService: EmployeesService,
 		private store: Store,
 		private directionService: NbLayoutDirectionService,
-		private router: Router
+		private router: Router,
+		private electronService: ElectronService
 	) {}
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: any;
 	showOrganizationsSelector = false;
 	showEmployeesSelector = false;
+	loading = true;
 
 	userMenu = [
 		{ title: 'Profile', link: '/pages/auth/profile' },
@@ -78,6 +81,18 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 			'role.rolePermissions',
 			'tenant'
 		]);
+
+		try {
+			if (this.electronService.isElectronApp) {
+				this.electronService.ipcRenderer.send('auth_success', {
+					token: this.store.token,
+					userId: this.user.id,
+					employeeId: this.user.employee
+						? this.user.employee.id
+						: null
+				});
+			}
+		} catch (error) {}
 
 		//When a new user registers & logs in for the first time, he/she does not have tenantId.
 		//In this case, we redirect the user to the onboarding page to create their first organization, tenant, role.
@@ -127,5 +142,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
 			}
 		}
+
+		this.loading = false;
 	}
 }

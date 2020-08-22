@@ -9,6 +9,7 @@ export const createDefaultTenants = async (
 		name: 'Ever'
 	};
 	await insertTenants(connection, [tenant]);
+
 	return tenant;
 };
 

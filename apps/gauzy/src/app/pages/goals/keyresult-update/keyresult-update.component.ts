@@ -5,11 +5,15 @@ import {
 	KeyResult,
 	KeyResultUpdates,
 	KeyResultTypeEnum,
-	KeyResultUpdateStatusEnum
+	KeyResultUpdateStatusEnum,
+	KPI,
+	KpiOperatorEnum
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
+import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-keyresult-update',
@@ -20,6 +24,7 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 	implements OnInit {
 	keyResultUpdateForm: FormGroup;
 	keyResult: KeyResult;
+	KPI: KPI;
 	keyResultTypeEnum = KeyResultTypeEnum;
 	hideStatus = false;
 	updateStatusEnum = KeyResultUpdateStatusEnum;
@@ -28,23 +33,30 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 		private dialogRef: NbDialogRef<KeyResultUpdateComponent>,
 		private fb: FormBuilder,
 		readonly translateService: TranslateService,
-		private keyResultUpdateService: KeyResultUpdateService
+		private keyResultUpdateService: KeyResultUpdateService,
+		private goalSettingsService: GoalSettingsService,
+		private store: Store
 	) {
 		super(translateService);
 	}
 
-	ngOnInit() {
+	async ngOnInit() {
 		this.keyResultUpdateForm = this.fb.group({
 			newValueNumber: [null],
 			newValueBoolean: [0],
 			newStatus: [KeyResultUpdateStatusEnum.ON_TRACK]
 		});
 		this.keyResultUpdateForm.patchValue({
-			newStatus: this.keyResult.status
+			newStatus:
+				this.keyResult.status === 'none'
+					? KeyResultUpdateStatusEnum.ON_TRACK
+					: this.keyResult.status
 		});
+		await this.getKPI();
 		if (
-			this.keyResult.type === KeyResultTypeEnum.NUMBER ||
-			this.keyResult.type === KeyResultTypeEnum.CURRENCY
+			this.keyResult.type === KeyResultTypeEnum.NUMERICAL ||
+			this.keyResult.type === KeyResultTypeEnum.CURRENCY ||
+			this.keyResult.type === KeyResultTypeEnum.KPI
 		) {
 			this.keyResultUpdateForm.patchValue({
 				newValueNumber: this.keyResult.update
@@ -58,13 +70,24 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 		}
 	}
 
+	async getKPI() {
+		await this.goalSettingsService
+			.getAllKPI({
+				organization: { id: this.store.selectedOrganization.id }
+			})
+			.then((kpi) => {
+				const { items } = kpi;
+				this.KPI = items.pop();
+			});
+	}
+
 	closeDialog() {
 		this.dialogRef.close();
 	}
 
 	async updateKeyResult() {
 		if (
-			this.keyResult.type === KeyResultTypeEnum.NUMBER ||
+			this.keyResult.type === KeyResultTypeEnum.NUMERICAL ||
 			this.keyResult.type === KeyResultTypeEnum.CURRENCY
 		) {
 			this.keyResult.update = this.keyResultUpdateForm.value.newValueNumber;
@@ -80,6 +103,19 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 			this.keyResult.update =
 				this.keyResultUpdateForm.value.newValueBoolean === true ? 1 : 0;
 			this.keyResult.progress = this.keyResult.update === 0 ? 0 : 100;
+		} else if (this.keyResult.type === KeyResultTypeEnum.KPI) {
+			this.keyResult.update = this.keyResultUpdateForm.value.newValueNumber;
+			if (this.KPI.operator === KpiOperatorEnum.LESSER_THAN_EQUAL_TO) {
+				this.keyResult.progress =
+					this.keyResult.update <= this.keyResult.targetValue
+						? 100
+						: 0;
+			} else {
+				this.keyResult.progress =
+					this.keyResult.update >= this.keyResult.targetValue
+						? 100
+						: 0;
+			}
 		}
 		this.keyResult.status = this.keyResultUpdateForm.value.newStatus;
 		try {

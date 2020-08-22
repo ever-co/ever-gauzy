@@ -66,7 +66,7 @@ import { IntegrationTenant } from '../integration-tenant/integration-tenant.enti
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
-import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
@@ -89,7 +89,7 @@ import { ProductCategoryTranslation } from '../product-category/product-category
 import { Pipeline } from '../pipeline/pipeline.entity';
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
-import { Stage } from '../stage/stage.entity';
+import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
 import { Goal } from '../goal/goal.entity';
 import { KeyResult } from '../keyresult/keyresult.entity';
@@ -105,6 +105,14 @@ import { TimeOffRequest } from '../time-off-request/time-off-request.entity';
 import { Deal } from '../deal/deal.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
+import { OrganizationDocuments } from '../organization-documents/organization-documents.entity';
+import { GoalGeneralSetting } from '../goal-general-setting/goal-general-setting.entity';
+import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
+import { KeyResultTemplate } from '../keyresult-template/keyresult-template.entity';
+import { GoalTemplate } from '../goal-template/goal-template.entity';
+import { EmployeeAward } from '../employee-award/employee-award.entity';
+import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
+import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
 
 const entities = [
 	Invite,
@@ -128,6 +136,7 @@ const entities = [
 	OrganizationTeamEmployee,
 	OrganizationAwards,
 	OrganizationLanguages,
+	OrganizationDocuments,
 	Proposal,
 	Country,
 	Email,
@@ -141,6 +150,7 @@ const entities = [
 	Language,
 	Invoice,
 	InvoiceItem,
+	InvoiceEstimateHistory,
 	OrganizationEmploymentType,
 	Equipment,
 	EquipmentSharing,
@@ -148,9 +158,13 @@ const entities = [
 	Task,
 	Goal,
 	GoalTimeFrame,
+	GoalGeneralSetting,
 	GoalKPI,
+	GoalTemplate,
+	GoalKPITemplate,
 	KeyResult,
 	KeyResultUpdate,
+	KeyResultTemplate,
 	TimeSlot,
 	Timesheet,
 	TimeLog,
@@ -191,6 +205,7 @@ const entities = [
 	RequestApprovalEmployee,
 	RequestApprovalTeam,
 	ApprovalPolicy,
+	EquipmentSharingPolicy,
 	EmployeeAppointment,
 	AppointmentEmployees,
 	EventType,
@@ -199,12 +214,13 @@ const entities = [
 	ProductCategoryTranslation,
 	Pipeline,
 	Payment,
-	Stage,
+	PipelineStage,
 	Deal,
 	Payment,
 	EstimateEmail,
 	Contact,
-	OrganizationSprint
+	OrganizationSprint,
+	EmployeeAward
 ];
 
 @Module({

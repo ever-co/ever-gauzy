@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import {
 	PermissionsEnum,
 	Pipeline,
@@ -14,10 +13,10 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { AuthService } from '../../@core/services/auth.service';
 import { Subscription, Subject } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @Component({
 	templateUrl: './pipelines.component.html',
@@ -26,42 +25,60 @@ import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 })
 export class PipelinesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	public smartTableSettings = {
+	smartTableSettings = {
 		actions: false,
 		noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
 		columns: {
 			name: {
-				filter: false,
-				editor: false,
+				type: 'string',
 				title: this.getTranslation('SM_TABLE.NAME')
 			},
 			description: {
+				type: 'string',
+				title: this.getTranslation('SM_TABLE.DESCRIPTION')
+			},
+			status: {
 				filter: false,
 				editor: false,
-				title: this.getTranslation('SM_TABLE.DESCRIPTION')
+				title: this.getTranslation('SM_TABLE.STATUS'),
+				type: 'custom',
+				width: '15%',
+				renderComponent: StatusBadgeComponent,
+				valuePrepareFunction: (cell, row) => {
+					let badgeClass;
+					if (row.isActive) {
+						badgeClass = 'success';
+						cell = 'Active';
+					} else {
+						badgeClass = 'warning';
+						cell = 'Inactive';
+					}
+					return {
+						text: cell,
+						class: badgeClass
+					};
+				}
 			}
 		}
 	};
 
-	public pipelines = new LocalDataSource([] as Pipeline[]);
-	public CAN_EDIT_SALES_PIPELINES = false;
-	public organizationId: string;
-	public pipeline: Pipeline;
-	public name: string;
-	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
-	private permissionSubscription: Subscription;
-	viewComponentName: ComponentEnum;
-	private _ngDestroy$ = new Subject<void>();
 	pipelineData: Pipeline[];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	pipelines = new LocalDataSource([] as Pipeline[]);
+	viewComponentName: ComponentEnum;
+	pipeline: Pipeline;
+	organizationId: string;
+	name: string;
+	CAN_EDIT_SALES_PIPELINES = false;
+	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
+	private permissionSubscription: Subscription;
+	private _ngDestroy$ = new Subject<void>();
 
-	public constructor(
-		private usersOrganizationsService: UsersOrganizationsService,
+	constructor(
 		private pipelinesService: PipelinesService,
 		private nbToastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
-		private authService: AuthService,
 		private appStore: AppStore,
 		private store: Store,
 		private router: Router
@@ -80,7 +97,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 		this.setView();
 	}
 
-	public ngOnInit(): void {
+	ngOnInit() {
 		this.permissionSubscription = this.store.userRolePermissions$.subscribe(
 			() => {
 				this.CAN_EDIT_SALES_PIPELINES = this.store.hasPermission(
@@ -115,12 +132,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 			});
 	}
 
-	public ngOnDestroy(): void {
-		this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
-		this.permissionSubscription.unsubscribe();
-	}
-
-	public async updatePipelines(): Promise<void> {
+	async updatePipelines(): Promise<void> {
 		const { organizationId: value } = this;
 		const organizationId = value || void 0;
 
@@ -133,7 +145,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 			});
 	}
 
-	public filterPipelines(): void {
+	filterPipelines(): void {
 		setTimeout(() => {
 			const { name: search = '' } = this;
 
@@ -146,7 +158,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 		});
 	}
 
-	public async deletePipeline(): Promise<void> {
+	async deletePipeline(): Promise<void> {
 		const canProceed: 'ok' = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -164,14 +176,14 @@ export class PipelinesComponent extends TranslationBaseComponent
 		}
 	}
 
-	public async createPipeline(): Promise<void> {
+	async createPipeline(): Promise<void> {
 		const { name, organizationId } = this;
 
 		await this.goto({ pipeline: { name, organizationId } });
 		delete this.name;
 	}
 
-	public async editPipeline(): Promise<void> {
+	async editPipeline(): Promise<void> {
 		const { pipeline } = this;
 
 		await this.goto({ pipeline });
@@ -196,5 +208,11 @@ export class PipelinesComponent extends TranslationBaseComponent
 			);
 			await this.updatePipelines();
 		}
+	}
+
+	ngOnDestroy(): void {
+		this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
+		this.permissionSubscription.unsubscribe();
+		clearTimeout();
 	}
 }

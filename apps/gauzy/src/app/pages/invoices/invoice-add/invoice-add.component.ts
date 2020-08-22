@@ -14,7 +14,12 @@ import {
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
 	Product,
-	Tag
+	Tag,
+	Expense,
+	ExpenseTypesEnum,
+	ExpenseStatusesEnum,
+	ContactType,
+	InvoiceStatusTypesEnum
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -37,6 +42,9 @@ import { InvoiceProductsSelectorComponent } from '../table-components/invoice-pr
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { ExpensesService } from '../../../@core/services/expenses.service';
+import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -49,6 +57,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	loading = true;
 	form: FormGroup;
 	invoice?: Invoice;
+	createdInvoice: Invoice;
 	formInvoiceNumber: number;
 	currencies = Object.values(CurrenciesEnum);
 	invoiceTypes = Object.values(InvoiceTypeEnum);
@@ -58,14 +67,16 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	selectedTasks: Task[];
 	observableTasks: Observable<Task[]>;
 	tasks: Task[];
-	client: OrganizationContact;
-	clients: OrganizationContact[];
+	organizationContact: OrganizationContact;
+	organizationContacts: OrganizationContact[];
 	selectedProjects: OrganizationProjects[];
 	projects: OrganizationProjects[];
 	employees: Employee[];
 	selectedEmployeeIds: string[];
 	products: Product[];
 	selectedProducts: Product[];
+	expenses: Expense[];
+	selectedExpenses: Expense[];
 	invoiceType: string;
 	selectedInvoiceType: string;
 	shouldLoadTable: boolean;
@@ -73,6 +84,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	isProjectHourTable: boolean;
 	isTaskHourTable: boolean;
 	isProductTable: boolean;
+	isExpenseTable: boolean;
 	disableSaveButton = true;
 	organizationId: string;
 	subtotal = 0;
@@ -100,7 +112,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private errorHandler: ErrorHandlingService,
 		private employeeService: EmployeesService,
 		private productService: ProductService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private expensesService: ExpensesService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 		this.observableTasks = this.tasksStore.tasks$;
@@ -139,14 +153,15 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
 			terms: [''],
-			client: ['', Validators.required],
-			discountType: ['', Validators.required],
-			taxType: ['', Validators.required],
-			tax2Type: ['', Validators.required],
+			organizationContact: ['', Validators.required],
+			discountType: [''],
+			taxType: [''],
+			tax2Type: [''],
 			invoiceType: [''],
 			project: [''],
 			task: [''],
 			product: [''],
+			expense: [''],
 			tags: ['']
 		});
 	}
@@ -248,6 +263,24 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					}
 				};
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				this.settingsSmartTable['columns']['selectedItem'] = {
+					title: this.getTranslation(
+						'INVOICES_PAGE.INVOICE_ITEM.EXPENSE'
+					),
+					width: '13%',
+					editor: {
+						type: 'custom',
+						component: InvoiceExpensesSelectorComponent
+					},
+					valuePrepareFunction: (cell) => {
+						const expense = this.expenses.find(
+							(e) => e.id === cell
+						);
+						return `${expense.purpose}`;
+					}
+				};
+				break;
 			default:
 				break;
 		}
@@ -278,7 +311,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			};
 		} else if (
 			this.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
-			this.invoiceType === InvoiceTypeEnum.BY_PRODUCTS
+			this.invoiceType === InvoiceTypeEnum.BY_PRODUCTS ||
+			this.invoiceType === InvoiceTypeEnum.BY_EXPENSES
 		) {
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
@@ -400,8 +434,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toClient: invoiceData.client,
-				clientId: invoiceData.client.id,
+				toContact: invoiceData.organizationContact,
+				organizationContactId: invoiceData.organizationContact.id,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
@@ -410,6 +444,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				status: status,
 				sentTo: sendTo
 			});
+
+			this.createdInvoice = createdInvoice;
 
 			for (const invoiceItem of tableData) {
 				const itemToAdd = {
@@ -434,11 +470,24 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					case InvoiceTypeEnum.BY_PRODUCTS:
 						itemToAdd['productId'] = invoiceItem.selectedItem;
 						break;
+					case InvoiceTypeEnum.BY_EXPENSES:
+						itemToAdd['expenseId'] = invoiceItem.selectedItem;
+						break;
 					default:
 						break;
 				}
 				await this.invoiceItemService.add(itemToAdd);
 			}
+
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate ? 'Estimate added' : 'Invoice added',
+				invoice: createdInvoice,
+				invoiceId: createdInvoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
 
 			if (this.isEstimate) {
 				this.toastrService.primary(
@@ -461,9 +510,23 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		}
 	}
 
-	async sendToClient() {
-		if (this.form.value.client.id) {
-			await this.addInvoice('Sent', this.form.value.client.id);
+	async sendToContact() {
+		if (this.form.value.organizationContact.id) {
+			await this.addInvoice(
+				'Sent',
+				this.form.value.organizationContact.id
+			);
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate
+					? `Estimate sent to ${this.form.value.organizationContact.name}`
+					: `Invoice sent to ${this.form.value.organizationContact.name}`,
+				invoice: this.createdInvoice,
+				invoiceId: this.createdInvoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
@@ -516,13 +579,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toClient: invoiceData.client,
-				clientId: invoiceData.client.id,
+				toContact: invoiceData.organizationContact,
+				organizationContactId: invoiceData.organizationContact.id,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
 				tags: this.tags,
 				isEstimate: this.isEstimate,
+				status: InvoiceStatusTypesEnum.SENT,
 				invoiceItems: []
 			};
 
@@ -550,6 +614,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					case InvoiceTypeEnum.BY_PRODUCTS:
 						itemToAdd['productId'] = invoiceItem.selectedItem;
 						break;
+					case InvoiceTypeEnum.BY_EXPENSES:
+						itemToAdd['expenseId'] = invoiceItem.selectedItem;
+						break;
 					default:
 						break;
 				}
@@ -558,18 +625,30 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 			invoice.invoiceItems = invoiceItems;
 
-			const result = await this.dialogService
+			await this.dialogService
 				.open(InvoiceEmailMutationComponent, {
 					context: {
 						invoice: invoice,
-						isEstimate: this.isEstimate
+						isEstimate: this.isEstimate,
+						saveAndSend: true,
+						invoiceItems: invoiceItems
 					}
 				})
 				.onClose.pipe(first())
 				.toPromise();
 
-			if (result) {
-				await this.addInvoice('Sent');
+			if (this.isEstimate) {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices/estimates']);
+			} else {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices']);
 			}
 		} else {
 			this.toastrService.danger(
@@ -630,7 +709,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					);
 
 					if (res) {
-						this.clients = res.items;
+						this.organizationContacts = res.items;
 					}
 
 					this.tasksStore.fetchTasks();
@@ -642,6 +721,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						organizationId: organization.id
 					});
 					this.products = products.items;
+
+					const expenses = await this.expensesService.getAll([], {
+						typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
+						organization: {
+							id: organization.id
+						}
+					});
+					this.expenses = expenses.items;
 				}
 			});
 	}
@@ -653,6 +740,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		let isProjectHourTable = false;
 		let isTaskHourTable = false;
 		let isProductTable = false;
+		let isExpenseTable = false;
 
 		switch ($event) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -667,6 +755,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				isProductTable = true;
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				isExpenseTable = true;
+				break;
 			default:
 				break;
 		}
@@ -675,14 +766,26 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.isProjectHourTable = isProjectHourTable;
 		this.isTaskHourTable = isTaskHourTable;
 		this.isProductTable = isProductTable;
+		this.isExpenseTable = isExpenseTable;
 	}
 
-	async generateTable() {
+	async generateTable(generateUninvoiced?: boolean) {
 		this.selectedInvoiceType = this.invoiceType;
 		this.smartTableSource.refresh();
 		const fakeData = [];
 		let fakePrice = 10;
 		let fakeQuantity = 5;
+
+		if (generateUninvoiced) {
+			const expenses = await this.expensesService.getAll([], {
+				typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
+				status: ExpenseStatusesEnum.UNINVOICED,
+				organization: {
+					id: this.organization.id
+				}
+			});
+			this.selectedExpenses = expenses.items;
+		}
 
 		switch (this.selectedInvoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -757,6 +860,24 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					}
 				}
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				if (this.selectedExpenses.length) {
+					for (const expense of this.selectedExpenses) {
+						const data = {
+							description: 'Desc',
+							price: fakePrice,
+							quantity: fakeQuantity,
+							selectedItem: expense.id,
+							totalValue: fakePrice * fakeQuantity,
+							applyTax: true,
+							applyDiscount: true
+						};
+						fakeData.push(data);
+						fakePrice++;
+						fakeQuantity++;
+					}
+				}
+				break;
 			default:
 				break;
 		}
@@ -785,8 +906,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.selectedTasks = $event;
 	}
 
-	selectClient($event) {
-		this.client = $event;
+	selectOrganizationContact($event) {
+		this.organizationContact = $event;
 	}
 
 	selectProject($event) {
@@ -797,7 +918,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.selectedProducts = $event;
 	}
 
-	searchClient(term: string, item: any) {
+	selectExpense($event) {
+		this.selectedExpenses = $event;
+	}
+
+	searchOrganizationContact(term: string, item: any) {
 		if (item.name) {
 			return item.name.toLowerCase().includes(term.toLowerCase());
 		}
@@ -830,10 +955,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			if (item.applyTax) {
 				switch (this.form.value.taxType) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (tax / 100);
+						totalTax += item.totalValue * (+tax / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += tax;
+						totalTax += +tax;
 						break;
 					default:
 						totalTax = 0;
@@ -841,10 +966,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				}
 				switch (this.form.value.tax2Type) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (tax2 / 100);
+						totalTax += item.totalValue * (+tax2 / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += tax2;
+						totalTax += +tax2;
 						break;
 					default:
 						totalTax = 0;
@@ -856,10 +981,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
 						totalDiscount +=
-							item.totalValue * (discountValue / 100);
+							item.totalValue * (+discountValue / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalDiscount += discountValue;
+						totalDiscount += +discountValue;
 						break;
 					default:
 						totalDiscount = 0;
@@ -956,12 +1081,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		return d1 > d2;
 	}
 
-	addNewClient = (name: string): Promise<OrganizationContact> => {
+	addNewOrganizationContact = (
+		name: string
+	): Promise<OrganizationContact> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
 					{
 						name: name
 					}
@@ -970,6 +1097,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			);
 			return this.organizationContactService.create({
 				name,
+				contactType: ContactType.CLIENT,
 				organizationId: this.organizationId
 			});
 		} catch (error) {

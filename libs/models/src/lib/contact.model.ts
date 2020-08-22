@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface Contact {
+	id?: string;
 	name?: string;
 	firstName?: string;
 	lastname?: string;
@@ -10,6 +11,9 @@ export interface Contact {
 	address2?: string;
 	postcode?: number;
 	regionCode?: string;
+	fax?: string;
+	fiscalInformation?: string;
+	website?: string;
 }
 
 export interface ContactFindInput extends IBaseEntityModel {
@@ -22,6 +26,9 @@ export interface ContactFindInput extends IBaseEntityModel {
 	address2?: string;
 	postcode?: number;
 	regionCode?: string;
+	fax?: string;
+	fiscalInformation?: string;
+	website?: string;
 }
 
 export interface ContactCreateInput extends IBaseEntityModel {
@@ -34,4 +41,7 @@ export interface ContactCreateInput extends IBaseEntityModel {
 	address2?: string;
 	postcode?: number;
 	regionCode?: string;
+	fax?: string;
+	fiscalInformation?: string;
+	website?: string;
 }

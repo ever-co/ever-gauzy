@@ -1,13 +1,14 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
-import { Employee, TimeOffPolicy } from '@gauzy/models';
+import { Employee, TimeOffPolicy, TimeOff } from '@gauzy/models';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
 import { TimeOffService } from '../../../@core/services/time-off.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
+import { OrganizationDocumentsService } from '../../../@core/services/organization-documents.service';
 
 @Component({
 	selector: 'ngx-time-off-request-mutation',
@@ -21,35 +22,47 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		private toastrService: NbToastrService,
 		private timeOffService: TimeOffService,
 		private employeesService: EmployeesService,
+		private documentsService: OrganizationDocumentsService,
 		private store: Store
 	) {}
 
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
-	@Input() type: string;
+	@Input() type: TimeOff | string;
 
 	form: FormGroup;
 	policies: TimeOffPolicy[] = [];
 	orgEmployees: Employee[];
 	employeesArr: Employee[] = [];
+	holidays = [];
 	selectedEmployee: any;
+	documentUrl: any;
+	description = '';
+	downloadDocUrl = '';
+	uploadDocUrl = '';
+	status: string;
+	holidayName: string;
 	organizationId: string;
 	policy: TimeOffPolicy;
 	startDate: Date = null;
 	endDate: Date = null;
 	requestDate: Date;
-	status: string;
-	holidayName: string;
 	invalidInterval: boolean;
 	isHoliday = false;
-	holidays = [];
-	description = '';
+	isEditMode = false;
 
 	ngOnInit() {
 		if (this.type === 'holiday') {
 			this.isHoliday = true;
 			this._getAllHolidays();
+		} else if (this.type.hasOwnProperty('id')) {
+			this.isEditMode = true;
+			this.selectedEmployee = this.type['employees'][0];
+			this.policy = this.type['policy'];
+			this.startDate = this.type['start'];
+			this.endDate = this.type['end'];
+			this.description = this.type['description'];
 		}
 
 		this._initializeForm();
@@ -57,18 +70,19 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	private async _getAllHolidays() {
 		const holidays = new Holidays();
-		const currentMoment = new Date;
+		const currentMoment = new Date();
 
 		fetch('https://extreme-ip-lookup.com/json/')
-			.then( res => res.json())
-			.then(response => {
+			.then((res) => res.json())
+			.then((response) => {
 				holidays.init(response.countryCode);
-				this.holidays = holidays.getHolidays(currentMoment.getFullYear()).filter(holiday => holiday.type === 'public');
+				this.holidays = holidays
+					.getHolidays(currentMoment.getFullYear())
+					.filter((holiday) => holiday.type === 'public');
 			})
 			.catch(() => {
-				this.toastrService.danger('Unable to get holidays')
-			})
-		
+				this.toastrService.danger('Unable to get holidays');
+			});
 	}
 
 	private async _initializeForm() {
@@ -80,8 +94,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			end: [this.endDate, Validators.required],
 			policy: [this.policy, Validators.required],
 			requestDate: [new Date()],
+			documentUrl: [this.uploadDocUrl],
 			status: ['']
 		});
+
+		this.documentUrl = this.form.get('documentUrl');
 	}
 
 	addRequest() {
@@ -93,6 +110,21 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			this.employeesArr.push(this.selectedEmployee);
 			this._createNewRecord();
 		}
+	}
+
+	getRequestForm(reqType: string) {
+		this.documentsService
+			.getAll({ organizationId: this.organizationId })
+			.pipe(first())
+			.subscribe((docs) => {
+				if (reqType === 'paid') {
+					this.downloadDocUrl = docs.items[0].documentUrl;
+				} else {
+					this.downloadDocUrl = docs.items[1].documentUrl;
+				}
+
+				window.open(`${this.downloadDocUrl}`);
+			});
 	}
 
 	addHolidays() {
@@ -170,7 +202,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				organization: { id: this.organizationId }
 			})
 			.pipe(first())
-			.subscribe((res) => this.orgEmployees = res.items)
+			.subscribe((res) => (this.orgEmployees = res.items));
 	}
 
 	onPolicySelected(policy: TimeOffPolicy) {
@@ -185,7 +217,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this.startDate = holiday.start;
 		this.endDate = holiday.end || null;
 		this.description = holiday.name;
-		
+
 		this._initializeForm();
 	}
 

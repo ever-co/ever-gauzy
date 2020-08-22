@@ -18,7 +18,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { FormsModule } from '@angular/forms';
 import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
-import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/task-select/task-select.module';
 import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/project-select.module';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { DailyComponent } from './daily/daily.component';
@@ -26,6 +25,8 @@ import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edi
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 import { ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.module';
 import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
+import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/tasks/task-select/task-select.module';
+import { DialogsModule } from 'apps/gauzy/src/app/@shared/dialogs';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -53,7 +54,8 @@ import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/vie
 		FiltersModule,
 		NbSpinnerModule,
 		ViewTimeLogModule,
-		NbPopoverModule
+		NbPopoverModule,
+		DialogsModule
 	]
 })
 export class DailyModule {}

@@ -12,7 +12,8 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	Delete
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
@@ -26,6 +27,9 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { IncomeCreateCommand } from './commands/income.create.command';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
+import { ParseJsonPipe } from '../shared';
+import { IncomeDeleteCommand } from './commands/income.delete.command';
+import { IncomeUpdateCommand } from './commands/income.update.command';
 
 @ApiTags('Income')
 @UseGuards(AuthGuard('jwt'))
@@ -112,10 +116,7 @@ export class IncomeController extends CrudController<Income> {
 		@Body() entity: Income,
 		...options: any[]
 	): Promise<any> {
-		return this.incomeService.create({
-			id,
-			...entity
-		});
+		return this.commandBus.execute(new IncomeUpdateCommand(id, entity));
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -136,5 +137,26 @@ export class IncomeController extends CrudController<Income> {
 		...options: any[]
 	): Promise<Income> {
 		return this.commandBus.execute(new IncomeCreateCommand(entity));
+	}
+
+	@ApiOperation({
+		summary: 'Delete record'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
+	@Delete('deleteIncome')
+	async deleteIncome(@Query('data', ParseJsonPipe) data: any): Promise<any> {
+		const { incomeId = null, employeeId = null } = data;
+		return this.commandBus.execute(
+			new IncomeDeleteCommand(employeeId, incomeId)
+		);
 	}
 }

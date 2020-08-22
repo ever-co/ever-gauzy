@@ -1,0 +1,216 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}</h4>
+			<div class="main-header">
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div>
+			<button
+				*ngIf="!showAddCard"
+				(click)="showAddCard = !showAddCard; this.loadTeams()"
+				nbButton
+				status="success"
+				class="mb-0 mr-2"
+			>
+				<nb-icon class="mr-2" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+			<ga-teams-mutation
+				*ngIf="showAddCard"
+				[employees]="employees"
+				[organizationId]="organizationId"
+				[team]="teamToEdit"
+				[isGridEdit]="isGridEdit"
+				(canceled)="cancel()"
+				(addOrEditTeam)="addOrEditTeam($event)"
+			></ga-teams-mutation>
+		</div>
+		<div
+			class="card-container"
+			*ngIf="
+				teams?.length &&
+				dataLayoutStyle === 'CARDS_GRID' &&
+				!showAddCard
+			"
+		>
+			<nb-card
+				style="padding: 0 !important;"
+				class="card-body"
+				*ngFor="let team of teams"
+			>
+				<nb-card-header style="padding: 0.5rem;">
+					<div class="header-container">
+						<ga-notes-with-tags [rowData]="team">
+						</ga-notes-with-tags>
+						<div class="members-count">
+							{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
+							{{ team.members.length }}
+						</div>
+					</div>
+				</nb-card-header>
+
+				<nb-card-body class="team-card">
+					<nb-card *ngIf="team.managers.length">
+						<nb-card-header>
+							<div>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'
+										| translate
+								}}
+							</div>
+						</nb-card-header>
+						<nb-card-body>
+							<div
+								class="name-container"
+								*ngFor="let manager of team.managers"
+								(click)="openEmployees(manager.employee.id)"
+							>
+								<div class="image-container">
+									<img
+										[src]="manager.employee.user.imageUrl"
+									/>
+								</div>
+								<span
+									>{{ manager.employee.user.firstName }}
+									{{ manager.employee.user.lastName }}
+									<div class="tags-container">
+										<nb-badge
+											*ngFor="
+												let tag of getTagsByEmployeeId(
+													manager.employee.id
+												)
+											"
+											class="tags"
+											position="centered"
+											[style.background]="tag.color"
+											text="{{ tag.name }}"
+										>
+										</nb-badge>
+									</div>
+								</span>
+							</div>
+						</nb-card-body>
+					</nb-card>
+					<nb-card *ngIf="team.members.length" class="team-members">
+						<nb-card-header>
+							<div>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
+										| translate
+								}}
+							</div>
+						</nb-card-header>
+						<nb-card-body>
+							<div
+								class="name-container"
+								*ngFor="let member of team.members"
+								(click)="openEmployees(member.employee.id)"
+							>
+								<div class="image-container">
+									<img
+										[src]="member.employee.user.imageUrl"
+									/>
+								</div>
+								<span
+									>{{ member.employee.user.firstName }}
+									{{ member.employee.user.lastName }}
+									<div class="tags-container">
+										<nb-badge
+											*ngFor="
+												let tag of getTagsByEmployeeId(
+													member.employee.id
+												)
+											"
+											class="tags"
+											position="centered"
+											[style.background]="tag.color"
+											text="{{ tag.name }}"
+										>
+										</nb-badge>
+									</div>
+								</span>
+							</div>
+						</nb-card-body>
+					</nb-card>
+
+					<div class="button-container">
+						<button
+							nbButton
+							status="info"
+							(click)="editTeam(team)"
+							size="small"
+						>
+							<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+							>{{ 'BUTTONS.EDIT' | translate }}
+						</button>
+						<button
+							size="small"
+							nbButton
+							(click)="removeTeam(team.id, team.name)"
+							status="danger"
+						>
+							<nb-icon
+								class="mr-2"
+								icon="trash-2-outline"
+							></nb-icon
+							>{{ 'BUTTONS.DELETE' | translate }}
+						</button>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</div>
+		<div class="mt-4">
+			<ng2-smart-table
+				*ngIf="
+					teams?.length && dataLayoutStyle === 'TABLE' && !showAddCard
+				"
+				class="tags-table w-100"
+				(userRowSelect)="selectTeam($event)"
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource"
+				style="cursor: pointer;"
+				#teamTable
+			>
+			</ng2-smart-table>
+		</div>
+	</nb-card-body>
+</nb-card>
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="editTeam(selectedItem)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+		>{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+
+	<button
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		(click)="removeTeam(selectedItem?.id, selectedItem?.name)"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+		>{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

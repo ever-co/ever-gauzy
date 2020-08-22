@@ -1,0 +1,555 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<h5>
+			{{ 'POP_UPS.EDIT_PAGE' | translate }}
+		</h5>
+
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="close()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form">
+			<nb-tabset class="tab_sections">
+				<nb-tab
+					tabTitle="{{
+						'EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT' | translate
+					}}"
+					tabIcon="person-outline"
+					responsive
+				>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label class="label" for="usernameInput">{{
+									'FORM.USERNAME' | translate
+								}}</label>
+								<input
+									fullWidth
+									id="usernameInput"
+									type="text"
+									nbInput
+									formControlName="username"
+									placeholder="{{
+										'FORM.USERNAME' | translate
+									}}"
+								/>
+							</div>
+						</div>
+						<div class="col">
+							<div class="form-group">
+								<label for="emailInput" class="label">{{
+									'FORM.EMAIL' | translate
+								}}</label>
+								<input
+									fullWidth
+									id="emailInput"
+									type="email"
+									nbInput
+									formControlName="email"
+									placeholder="{{ 'FORM.EMAIL' | translate }}"
+								/>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label class="label" for="firstNameInput">{{
+									'FORM.LABELS.FIRST_NAME' | translate
+								}}</label>
+								<input
+									fullWidth
+									id="firstNameInput"
+									type="text"
+									nbInput
+									formControlName="firstName"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.FIRST_NAME'
+											| translate
+									}}"
+								/>
+							</div>
+						</div>
+						<div class="col">
+							<div class="form-group">
+								<label for="lastNameInput" class="label">{{
+									'FORM.LABELS.LAST_NAME' | translate
+								}}</label>
+								<input
+									fullWidth
+									id="lastNameInput"
+									type="text"
+									nbInput
+									formControlName="lastName"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.LAST_NAME'
+											| translate
+									}}"
+								/>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label for="preferredLanguage" class="label">{{
+									'FORM.LABELS.PREFERRED_LANGUAGE' | translate
+								}}</label>
+								<nb-select
+									class="d-block"
+									fullWidth
+									placeholder="{{
+										'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'
+											| translate
+									}}"
+									formControlName="preferredLanguage"
+									id="preferredLanguage"
+								>
+									<nb-option
+										*ngFor="let language of languages"
+										value="{{ language }}"
+										>{{
+											'USERS_PAGE.EDIT_USER.PREFERRED_LANGUAGE.' +
+												language | translate
+										}}</nb-option
+									>
+								</nb-select>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+
+				<nb-tab
+					tabTitle="{{
+						'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT' | translate
+					}}"
+					tabIcon="browser-outline"
+					responsive
+				>
+					<div class="row">
+						<div class="col-md-12">
+							<div class="form-group">
+								<label for="startedWork" class="label">
+									{{ 'FORM.LABELS.START_DATE' | translate }}
+								</label>
+								<input
+									[nbDatepicker]="datepicker"
+									nbInput
+									fullWidth
+									placeholder="{{
+										'FORM.PLACEHOLDERS.START_DATE'
+											| translate
+									}}"
+									formControlName="startedWorkOn"
+								/>
+								<nb-datepicker #datepicker></nb-datepicker>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label class="label" for="shortDescription">{{
+									'FORM.LABELS.SHORT_DESCRIPTION' | translate
+								}}</label>
+								<input
+									fullWidth
+									id="shortDescription"
+									type="text"
+									nbInput
+									formControlName="short_description"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.EG_FULL_STACK_WEB_DEVELOPER'
+											| translate
+									}}"
+								/>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<p class="label">
+									{{ 'FORM.LABELS.DESCRIPTION' | translate }}
+								</p>
+								<div class="ck-editor">
+									<ckeditor
+										formControlName="description"
+										class="description"
+										[config]="{
+											width: '100%',
+											height: '200'
+										}"
+									></ckeditor>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label for="employmentType" class="label">{{
+									'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
+										| translate
+								}}</label>
+								<ng-select
+									id="employmentType"
+									[items]="employmentTypes$ | async"
+									formControlName="organizationEmploymentTypes"
+									bindLabel="name"
+									[searchable]="false"
+									placeholder="{{
+										'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
+											| translate
+									}}"
+									multiple="true"
+								>
+								</ng-select>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label class="label" for="empLevelInput">
+									Employee Level
+								</label>
+								<ng-select formControlName="employeeLevel">
+									<ng-option
+										*ngFor="let empL of employeeLevels"
+										[value]="empL.level"
+										>{{ empL.level }}
+									</ng-option>
+								</ng-select>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<ga-tags-color-input
+									[selectedTags]="employee.tags"
+									(selectedTagsEvent)="
+										selectedTagsHandler($event)
+									"
+									[isOrgLevel]="true"
+								>
+								</ga-tags-color-input>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<ngx-skills-input
+									[form]="form"
+									[selectedSkills]="employee.skills"
+									(selectedSkillsEvent)="
+										selectedSkillsHandler($event)
+									"
+								></ngx-skills-input>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+
+				<nb-tab
+					tabTitle="{{
+						'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES' | translate
+					}}"
+					tabIcon="pricetags-outline"
+					responsive
+				>
+					<div class="row">
+						<div class="col">
+							<nb-card>
+								<nb-card-header>
+									{{ 'FORM.RATES.DEFAULT_RATE' | translate }}
+								</nb-card-header>
+								<nb-card-body>
+									<div class="form-group">
+										<label class="label">{{
+											'FORM.LABELS.PAY_PERIOD' | translate
+										}}</label>
+										<nb-select
+											id="payPeriodsSelect"
+											formControlName="payPeriod"
+											placeholder="{{
+												'FORM.LABELS.PAY_PERIOD'
+													| translate
+											}}"
+											class="d-block"
+											size="medium"
+											fullWidth="true"
+										>
+											<nb-option
+												*ngFor="
+													let payPeriod of payPeriods
+												"
+												[value]="payPeriod"
+											>
+												{{
+													'SM_TABLE.' + payPeriod
+														| translate
+												}}
+											</nb-option>
+										</nb-select>
+									</div>
+									<div class="bill-rate">
+										<div class="form-group">
+											<label
+												class="label"
+												for="billRateValueInput"
+												>{{
+													'FORM.LABELS.BILL_RATE'
+														| translate
+												}}</label
+											>
+											<input
+												fullWidth
+												id="billRateValueInput"
+												type="number"
+												step="0.1"
+												nbInput
+												formControlName="billRateValue"
+												placeholder="{{
+													'FORM.PLACEHOLDERS.BILL_RATE'
+														| translate
+												}}"
+											/>
+										</div>
+										<div
+											class="form-group currency-per-hour"
+										>
+											<label
+												class="label"
+												for="currencyPerHourInput"
+												>{{
+													'FORM.LABELS.CURRENCY_PER_HOUR'
+														| translate
+												}}</label
+											>
+											<nb-select
+												id="currencyPerHourInput"
+												formControlName="billRateCurrency"
+												placeholder="{{
+													'FORM.LABELS.CURRENCY_PER_HOUR'
+														| translate
+												}}"
+												class="d-block"
+												size="medium"
+												fullWidth="true"
+											>
+												<nb-option
+													*ngFor="
+														let currency of currencies
+													"
+													[value]="currency"
+												>
+													{{ currency }}
+												</nb-option>
+											</nb-select>
+										</div>
+									</div>
+								</nb-card-body>
+							</nb-card>
+						</div>
+						<div class="col">
+							<nb-card>
+								<nb-card-header>
+									{{ 'FORM.RATES.LIMITS' | translate }}
+								</nb-card-header>
+								<nb-card-body>
+									<div class="form-group">
+										<label
+											class="label"
+											for="reWeeklyLimitInput"
+											>{{
+												'FORM.LABELS.RECURRING_WEEKLY_LIMIT'
+													| translate
+											}}</label
+										>
+										<input
+											fullWidth
+											id="reWeeklyLimitInput"
+											type="text"
+											nbInput
+											type="number"
+											step="0.1"
+											max="5"
+											formControlName="reWeeklyLimit"
+											placeholder="{{
+												'FORM.PLACEHOLDERS.RECURRING_WEEKLY_LIMIT'
+													| translate
+											}}"
+										/>
+									</div>
+								</nb-card-body>
+							</nb-card>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab
+					tabTitle="{{ 'POP_UPS.AWARDS' | translate }}"
+					tabIcon="award-outline"
+					responsive
+				>
+					<div class="row">
+						<div class="col-sm-12">
+							<span class="heading_title">{{
+								'POP_UPS.AWARDS' | translate
+							}}</span>
+							<button
+								*ngIf="!showAddAward"
+								(click)="showAddAward = !showAddAward"
+								nbButton
+								status="success"
+								class="add_new"
+							>
+								<nb-icon
+									class="mr-1"
+									icon="plus-outline"
+								></nb-icon>
+							</button>
+							<div class="row" *ngIf="showAddAward">
+								<div
+									class="col-sm-4 d-flex flex-column justify-content-end"
+								>
+									<label class="label">{{
+										'POP_UPS.NAME' | translate
+									}}</label>
+									<input
+										#addInputName
+										nbInput
+										class="input_name"
+										type="text"
+										placeholder="{{
+											'POP_UPS.NAME' | translate
+										}}"
+										fullWidth
+									/>
+								</div>
+								<div
+									class="col d-flex flex-column justify-content-end"
+								>
+									<label class="label">{{
+										'POP_UPS.YEAR' | translate
+									}}</label>
+									<input
+										#addInputYear
+										nbInput
+										class="input_year"
+										type="number"
+										placeholder="{{
+											'POP_UPS.YEAR' | translate
+										}}"
+										fullWidth
+									/>
+								</div>
+
+								<span class="col" style="margin-top: 29px;">
+									<button
+										class="w-100"
+										(click)="
+											addAward(
+												addInputName.value,
+												addInputYear.value
+											)
+										"
+										nbButton
+										status="success"
+									>
+										{{ 'BUTTONS.SAVE' | translate }}
+									</button></span
+								>
+								<span class="col" style="margin-top: 29px;"
+									><button
+										class="w-100"
+										(click)="showAddAward = !showAddAward"
+										nbButton
+										status="danger"
+									>
+										{{ 'BUTTONS.CANCEL' | translate }}
+									</button></span
+								>
+							</div>
+							<div class="row" *ngIf="employeeAwards.length">
+								<div class="col">
+									<nb-list class="nb_list awards-list">
+										<nb-list-item
+											*ngFor="let award of employeeAwards"
+											class="nb_list_item item"
+										>
+											<span
+												class="award_title"
+												[textContent]="
+													award.name +
+													' (' +
+													award.year +
+													')'
+												"
+											></span>
+											<nb-actions
+												class="nb_action float-left"
+												e="medium"
+											>
+												<nb-action
+													(click)="
+														removeAward(award.id)
+													"
+													class="d-inline pr-0"
+													icon="close"
+												></nb-action>
+											</nb-actions>
+										</nb-list-item>
+									</nb-list>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab
+					tabTitle="{{ 'POP_UPS.PRIVACY' | translate }}"
+					tabIcon="shield-outline"
+					responsive
+				>
+					<div class="row">
+						<div
+							class="col-sm-6"
+							*ngFor="let setting of privacySettings"
+						>
+							<div class="form-group form-item">
+								<label class="check" for="{{ setting.key }}">
+									{{ setting.translation | translate }}
+								</label>
+								<nb-toggle
+									class="nb_toggle"
+									id="{{ setting.key }}"
+									[formControlName]="setting.key"
+								>
+								</nb-toggle>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group">
+								<nb-checkbox formControlName="anonymousBonus">
+									{{
+										'POP_UPS.DISPLAY_BONUS_ANONYMOUSLY'
+											| translate
+									}}
+								</nb-checkbox>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+			</nb-tabset>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="card-footer">
+		<button status="success" nbButton (click)="updateEmployee()">
+			{{ 'BUTTONS.UPDATE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

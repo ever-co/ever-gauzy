@@ -15,7 +15,6 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 	selector: 'ga-edit-candidate',
 	templateUrl: './edit-candidate.component.html',
 	styleUrls: [
-		'../../organizations/edit-organization/edit-organization.component.scss',
 		'../../dashboard/dashboard.component.scss',
 		'./edit-candidate.component.scss'
 	]

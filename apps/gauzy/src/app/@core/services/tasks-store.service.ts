@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Task } from '@gauzy/models';
+import { Task, TaskListTypeEnum } from '@gauzy/models';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
@@ -48,6 +48,26 @@ export class TasksStoreService {
 		this._tasks$.next(tasks);
 	}
 
+	updateTasksViewMode(
+		projectId: string,
+		viewModeType: TaskListTypeEnum
+	): void {
+		this._tasks$.next([
+			...this.tasks.map((task: Task) => {
+				if (
+					task.projectId === projectId &&
+					task.project.taskListType !== viewModeType
+				) {
+					return {
+						...task,
+						project: { ...task.project, taskListType: viewModeType }
+					};
+				}
+				return task;
+			})
+		]);
+	}
+
 	createTask(task: Task): void {
 		console.log('createdTask[0] in store service: ', task);
 		this._taskService
@@ -72,7 +92,7 @@ export class TasksStoreService {
 				tap(() => {
 					const tasks = [...this.tasks];
 					const newState = tasks.map((t) =>
-						t.id === task.id ? task : t
+						t.id === task.id ? { ...t, ...task } : t
 					);
 					this._tasks$.next(newState);
 				})

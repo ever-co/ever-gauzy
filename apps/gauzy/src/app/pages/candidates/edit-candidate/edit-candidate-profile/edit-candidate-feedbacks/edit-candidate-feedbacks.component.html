@@ -1,26 +1,38 @@
 <nb-card>
 	<nb-card-header>
 		<div class="main-btn" *ngIf="!showAddCard">
-			<button nbButton status="success" (click)="showCard()">
+			<button nbButton status="success" (click)="cancel()">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 
-			<nb-select
-				class="select"
-				placeholder="Select interview"
-				(selectedChange)="onInterviewSelected($event)"
-				[selected]="all"
-			>
-				<nb-option [value]="all">
-					All feedbacks
-				</nb-option>
-				<nb-option
-					value="{{ interview.id }}"
-					*ngFor="let interview of allInterviews"
-					>{{ interview.title }}</nb-option
+			<div class="filters">
+				<ga-employee-multi-select
+					class="select"
+					[multiple]="false"
+					[label]="false"
+					[reset]="isEmployeeReset"
+					[allEmployees]="employeeList"
+					(selectedChange)="onEmployeeSelected($event)"
+					[reset]="isResetSelect"
 				>
-			</nb-select>
+				</ga-employee-multi-select>
+				<nb-select
+					[formControl]="selectInterview"
+					class="select ml-3"
+					placeholder="Select interview"
+					(selectedChange)="onInterviewSelected($event)"
+				>
+					<nb-option [value]="all">
+						All feedbacks
+					</nb-option>
+					<nb-option
+						value="{{ interview.id }}"
+						*ngFor="let interview of interviewList"
+						>{{ interview.title }}</nb-option
+					>
+				</nb-select>
+			</div>
 		</div>
 
 		<div *ngIf="showAddCard" class="add-card">
@@ -43,7 +55,22 @@
 										<ga-star-rating-output
 											[rate]="averageRating"
 											class="stars-output"
+											*ngIf="
+												technologiesList?.length > 0 ||
+												personalQualitiesList?.length >
+													0
+											"
 										></ga-star-rating-output>
+										<ga-star-rating-input
+											*ngIf="
+												technologiesList?.length ===
+													0 &&
+												personalQualitiesList?.length ===
+													0
+											"
+											formControlName="rating"
+											class="stars-optional"
+										></ga-star-rating-input>
 
 										<nb-radio-group
 											class="radio-group"
@@ -245,15 +272,11 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="feedbackList?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACKS' | translate
-			}}</strong>
-		</div>
 		<div
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
+			class="mt-3"
 		>
 			<nb-card *ngFor="let feedback of feedbackList; let i = index">
 				<nb-card-body class="feedbacks-card">

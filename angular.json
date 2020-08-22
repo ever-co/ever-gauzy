@@ -233,7 +233,31 @@
 					"builder": "@nrwl/node:build",
 					"options": {
 						"outputPath": "dist/apps/api",
-						"main": "apps/api/src/app/core/seeds/index.ts",
+						"main": "apps/api/src/seed.ts",
+						"showCircularDependencies": false,
+						"sourceMap": true,
+						"tsConfig": "apps/api/tsconfig.app.json"
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": true,
+							"inspect": false,
+							"sourceMap": false,
+							"fileReplacements": [
+								{
+									"replace": "apps/api/src/environments/environment.ts",
+									"with": "apps/api/src/environments/environment.prod.ts"
+								}
+							]
+						}
+					}
+				},
+				"seed-all": {
+					"builder": "@nrwl/node:build",
+					"options": {
+						"outputPath": "dist/apps/api",
+						"main": "apps/api/src/seedAll.ts",
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"tsConfig": "apps/api/tsconfig.app.json"
@@ -522,6 +546,65 @@
 						"tsConfig": "apps/desktop/web-ui/tsconfig.spec.json",
 						"passWithNoTests": true,
 						"setupFile": "apps/desktop/web-ui/src/test-setup.ts"
+					}
+				}
+			}
+		},
+		"api-desktop": {
+			"root": "apps/desktop/desktop-api",
+			"sourceRoot": "apps/desktop/desktop-api/src",
+			"projectType": "application",
+			"prefix": "api-desktop",
+			"schematics": {},
+			"architect": {
+				"build": {
+					"builder": "@nrwl/node:build",
+					"options": {
+						"webpackConfig": "tools/build/webpack.config.js",
+						"outputPath": "dist/apps/desktop/desktop-api",
+						"main": "apps/desktop/desktop-api/src/main.ts",
+						"tsConfig": "apps/desktop/desktop-api/tsconfig.app.json",
+						"assets": ["apps/desktop/desktop-api/src/assets"]
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": true,
+							"inspect": false,
+							"fileReplacements": [
+								{
+									"replace": "apps/desktop/desktop-api/src/environments/environment.ts",
+									"with": "apps/desktop/desktop-api/src/environments/environment.prod.ts"
+								}
+							]
+						}
+					}
+				},
+				"serve": {
+					"builder": "@nrwl/node:execute",
+					"options": {
+						"buildTarget": "api-desktop:build"
+					}
+				},
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"apps/desktop/desktop-api/tsconfig.app.json",
+							"apps/desktop/desktop-api/tsconfig.spec.json"
+						],
+						"exclude": [
+							"**/node_modules/**",
+							"!apps/desktop/desktop-api/**"
+						]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "apps/desktop/desktop-api/jest.config.js",
+						"tsConfig": "apps/desktop/desktop-api/tsconfig.spec.json",
+						"passWithNoTests": true
 					}
 				}
 			}

@@ -63,7 +63,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 					message: 'Are you sure? This action is irreversible.',
 					status: 'danger'
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -76,12 +77,21 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 		}
 	}
 
+	calculateKeyResultWeight(weight) {
+		const weightSum = this.goal.keyResults.reduce(
+			(a, b) => a + +b.weight,
+			0
+		);
+		return Math.round(+weight * (100 / weightSum));
+	}
+
 	async keyResultDetails(index, selectedKeyResult) {
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
 				keyResult: selectedKeyResult
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -91,7 +101,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_DELETED'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
-			} else {
+			} else if (!!index) {
 				this.goal.keyResults[index] = response;
 				this.goal.progress = this.calculateGoalProgress(
 					this.goal.keyResults
@@ -105,7 +115,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				keyResult: selectedKeyResult
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {

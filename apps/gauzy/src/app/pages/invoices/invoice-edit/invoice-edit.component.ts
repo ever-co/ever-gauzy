@@ -17,7 +17,9 @@ import {
 	Tag,
 	Task,
 	OrganizationProjects,
-	Product
+	Product,
+	Expense,
+	ExpenseTypesEnum
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -38,6 +40,9 @@ import { ProductService } from '../../../@core/services/product.service';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
+import { ExpensesService } from '../../../@core/services/expenses.service';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 @Component({
 	selector: 'ga-invoice-edit',
@@ -61,7 +66,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		private projectService: OrganizationProjectsService,
 		private productService: ProductService,
 		private tasksStore: TasksStoreService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private expensesService: ExpensesService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translate);
 		this.observableTasks = this.tasksStore.tasks$;
@@ -80,8 +87,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	organization: Organization;
 	itemsToDelete: string[] = [];
 	invoiceItems: InvoiceItem[];
-	selectedClient: OrganizationContact;
-	clients: OrganizationContact[];
+	selectedOrganizationContact: OrganizationContact;
+	organizationContacts: OrganizationContact[];
 	employees: Employee[];
 	projects: OrganizationProjects[];
 	products: Product[];
@@ -91,8 +98,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	hasInvoiceEditPermission: boolean;
 	tags: Tag[] = [];
 	tasks: Task[];
+	expenses: Expense[] = [];
 	observableTasks: Observable<Task[]>;
-
+	duplicate: boolean;
 	subtotal = 0;
 	total = 0;
 	get currency() {
@@ -113,29 +121,29 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.route.paramMap.subscribe((params) => {
 			this.invoiceId = params.get('id');
 		});
-		this.executeInitialFunctions();
+
+		this.invoicesService.currentData.subscribe((response) => {
+			this.duplicate = response;
+		});
+		this.loadData();
 	}
 
-	async getInvoice() {
+	async loadData() {
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
 			'invoiceItems',
-			'tags'
+			'tags',
+			'toContact',
+			'fromOrganization'
 		]);
 		this.invoice = invoice;
-		this.invoiceItems = this.invoice.invoiceItems;
+		this.invoiceItems = invoice.invoiceItems;
+		this.selectedOrganizationContact = invoice.toContact;
+		this.organization = invoice.fromOrganization;
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 		await this._loadOrganizationData();
-	}
-
-	async executeInitialFunctions() {
-		await this.getInvoice();
-		if (this.invoice) {
-			this.invoiceDate = new Date(this.invoice.invoiceDate);
-			this.dueDate = new Date(this.invoice.dueDate);
-			this.loadSmartTable();
-			this._applyTranslationOnSmartTable();
-			this.seedFormData(this.invoice);
-			this.form.get('currency').disable();
-		}
+		this.seedFormData(invoice);
+		this.form.get('currency').disable();
 	}
 
 	initializeForm() {
@@ -159,19 +167,19 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
 			terms: [''],
-			client: ['', Validators.required],
+			organizationContact: ['', Validators.required],
 			currency: ['', Validators.required],
-			discountType: ['', Validators.required],
-			taxType: ['', Validators.required],
-			tax2Type: ['', Validators.required],
+			discountType: [''],
+			taxType: [''],
+			tax2Type: [''],
 			tags: []
 		});
 	}
 
 	seedFormData(invoice: Invoice) {
 		this.form.get('invoiceNumber').setValue(invoice.invoiceNumber);
-		this.form.get('invoiceDate').setValue(this.invoiceDate);
-		this.form.get('dueDate').setValue(this.dueDate);
+		this.form.get('invoiceDate').setValue(new Date(invoice.invoiceDate));
+		this.form.get('dueDate').setValue(new Date(invoice.dueDate));
 		this.form.get('discountValue').setValue(invoice.discountValue);
 		this.form.get('tax').setValue(invoice.tax);
 		this.form.get('tax2').setValue(invoice.tax2);
@@ -248,7 +256,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							const project = this.projects.find(
 								(p) => p.id === cell
 							);
-							return `${project.name}`;
+							if (project) {
+								return `${project.name}`;
+							}
 						}
 					}
 				};
@@ -266,7 +276,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					valuePrepareFunction: (cell) => {
 						if (this.tasks) {
 							const task = this.tasks.find((t) => t.id === cell);
-							return `${task.title}`;
+							if (task) {
+								return `${task.title}`;
+							}
 						}
 					}
 				};
@@ -286,7 +298,31 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							const product = this.products.find(
 								(p) => p.id === cell
 							);
-							return `${product.name}`;
+							if (product) {
+								return `${product.name}`;
+							}
+						}
+					}
+				};
+				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				this.settingsSmartTable['columns']['selectedItem'] = {
+					title: this.getTranslation(
+						'INVOICES_PAGE.INVOICE_ITEM.EXPENSE'
+					),
+					width: '13%',
+					editor: {
+						type: 'custom',
+						component: InvoiceExpensesSelectorComponent
+					},
+					valuePrepareFunction: (cell) => {
+						if (this.expenses) {
+							const expense = this.expenses.find(
+								(e) => e.id === cell
+							);
+							if (expense) {
+								return `${expense.purpose}`;
+							}
 						}
 					}
 				};
@@ -322,7 +358,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		} else if (
 			this.invoice.invoiceType ===
 				InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
-			this.invoice.invoiceType === InvoiceTypeEnum.BY_PRODUCTS
+			this.invoice.invoiceType === InvoiceTypeEnum.BY_PRODUCTS ||
+			this.invoice.invoiceType === InvoiceTypeEnum.BY_EXPENSES
 		) {
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
@@ -364,7 +401,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			filter: false,
 			width: '13%'
 		};
-		if (this.organization.separateInvoiceItemTaxAndDiscount) {
+		if (
+			this.organization &&
+			this.organization.separateInvoiceItemTaxAndDiscount
+		) {
 			this.settingsSmartTable['columns']['applyTax'] = {
 				title: this.getTranslation('INVOICES_PAGE.APPLY_TAX'),
 				editor: {
@@ -401,68 +441,77 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	private async _loadOrganizationData() {
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (organization) => {
-				if (organization) {
-					this.organization = organization;
+		const orgData = await this.organizationsService
+			.getById(this.organization.id, [OrganizationSelectInput.currency])
+			.pipe(first())
+			.toPromise();
 
-					this.employeeService
-						.getAll(['user'])
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe(async (employees) => {
-							this.employees = employees.items.filter((emp) => {
-								return (
-									emp.orgId === organization.id ||
-									organization.id === ''
-								);
-							});
-							await this.loadInvoiceItemData();
-							this.calculateTotal();
+		if (orgData && this.currency) {
+			this.currency.setValue(orgData.currency);
+		}
+
+		const organizationContacts = await this.organizationContactService.getAll(
+			[],
+			{
+				organizationId: this.organization.id
+			}
+		);
+
+		this.organizationContacts = organizationContacts.items;
+
+		switch (this.invoice.invoiceType) {
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+				this.employeeService
+					.getAll(['user'])
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe(async (employees) => {
+						this.employees = employees.items.filter((emp) => {
+							return (
+								emp.orgId === this.organization.id ||
+								this.organization.id === ''
+							);
 						});
-
-					const products = await this.productService.getAll([], {
-						organizationId: organization.id
 					});
-					this.products = products.items;
+				break;
 
-					this.tasksStore.fetchTasks();
-					this.observableTasks.subscribe((data) => {
-						this.tasks = data;
-					});
+			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+				const projects = await this.projectService.getAll([], {
+					organizationId: this.organization.id
+				});
+				this.projects = projects.items;
+				break;
 
-					const projects = await this.projectService.getAll([], {
-						organizationId: organization.id
-					});
-					this.projects = projects.items;
+			case InvoiceTypeEnum.BY_TASK_HOURS:
+				this.tasksStore.fetchTasks();
+				this.observableTasks.subscribe((data) => {
+					this.tasks = data;
+				});
+				break;
 
-					const orgData = await this.organizationsService
-						.getById(organization.id, [
-							OrganizationSelectInput.currency
-						])
-						.pipe(first())
-						.toPromise();
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				const products = await this.productService.getAll([], {
+					organizationId: this.organization.id
+				});
+				this.products = products.items;
+				break;
 
-					if (orgData && this.currency) {
-						this.currency.setValue(orgData.currency);
+			case InvoiceTypeEnum.BY_EXPENSES:
+				const expenses = await this.expensesService.getAll([], {
+					typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
+					organization: {
+						id: this.organization.id
 					}
+				});
 
-					const res = await this.organizationContactService.getAll(
-						['projects'],
-						{
-							organizationId: organization.id
-						}
-					);
+				this.expenses = expenses.items;
+				break;
 
-					if (res) {
-						this.clients = res.items;
-						const client = this.clients.filter(
-							(c) => c.id === this.invoice.clientId
-						);
-						this.selectedClient = client[0];
-					}
-				}
-			});
+			default:
+				break;
+		}
+
+		await this.loadInvoiceItemData();
+		await this.calculateTotal();
 	}
 
 	async updateInvoice(status: string, sendTo?: string) {
@@ -510,7 +559,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				terms: invoiceData.terms,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
-				clientId: invoiceData.client.id,
+				organizationContactId: invoiceData.organizationContact.id,
+				toContact: invoiceData.organizationContact,
 				organizationId: this.organization.id,
 				tags: this.tags,
 				status: status,
@@ -540,6 +590,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					case InvoiceTypeEnum.BY_PRODUCTS:
 						itemToAdd['productId'] = invoiceItem.selectedItem;
 						break;
+					case InvoiceTypeEnum.BY_EXPENSES:
+						itemToAdd['expenseId'] = invoiceItem.selectedItem;
+						break;
 					default:
 						break;
 				}
@@ -558,6 +611,16 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					this.invoiceItemService.delete(itemId);
 				}
 			}
+
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate ? 'Estimate edited' : 'Invoice edited',
+				invoice: this.invoice,
+				invoiceId: this.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
 
 			if (this.isEstimate) {
 				this.toastrService.primary(
@@ -580,9 +643,23 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		}
 	}
 
-	async sendToClient() {
-		if (this.form.value.client.id) {
-			await this.updateInvoice('Sent', this.form.value.client.id);
+	async sendToContact() {
+		if (this.form.value.organizationContact.id) {
+			await this.updateInvoice(
+				'Sent',
+				this.form.value.organizationContact.id
+			);
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate
+					? `Estimate sent to ${this.form.value.organizationContact.name}`
+					: `Invoice sent to ${this.form.value.organizationContact.name}`,
+				invoice: this.invoice,
+				invoiceId: this.invoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id
+			});
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
@@ -639,8 +716,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toClient: invoiceData.client,
-				clientId: invoiceData.client.id,
+				toContact: invoiceData.organizationContact,
+				organizationContactId: invoiceData.organizationContact.id,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
 				invoiceType: this.invoice.invoiceType,
@@ -672,6 +749,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 						break;
 					case InvoiceTypeEnum.BY_PRODUCTS:
 						itemToAdd['productId'] = invoiceItem.selectedItem;
+						break;
+					case InvoiceTypeEnum.BY_EXPENSES:
+						itemToAdd['expenseId'] = invoiceItem.selectedItem;
 						break;
 					default:
 						break;
@@ -730,6 +810,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				case InvoiceTypeEnum.BY_PRODUCTS:
 					data['selectedItem'] = item.productId;
 					break;
+				case InvoiceTypeEnum.BY_EXPENSES:
+					data['selectedItem'] = item.expenseId;
+					break;
 				default:
 					break;
 			}
@@ -743,6 +826,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	async calculateTotal() {
+		const tableData = await this.smartTableSource.getAll();
+
 		const discountValue =
 			this.form.value.discountValue && this.form.value.discountValue > 0
 				? this.form.value.discountValue
@@ -759,16 +844,14 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		let totalDiscount = 0;
 		let totalTax = 0;
 
-		const tableData = await this.smartTableSource.getAll();
-
 		for (const item of tableData) {
 			if (item.applyTax) {
 				switch (this.form.value.taxType) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (tax / 100);
+						totalTax += item.totalValue * (+tax / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += tax;
+						totalTax += +tax;
 						break;
 					default:
 						totalTax = 0;
@@ -776,10 +859,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				}
 				switch (this.form.value.tax2Type) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (tax2 / 100);
+						totalTax += item.totalValue * (+tax2 / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += tax2;
+						totalTax += +tax2;
 						break;
 					default:
 						totalTax = 0;
@@ -791,10 +874,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
 						totalDiscount +=
-							item.totalValue * (discountValue / 100);
+							item.totalValue * (+discountValue / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalDiscount += discountValue;
+						totalDiscount += +discountValue;
 						break;
 					default:
 						totalDiscount = 0;
@@ -834,14 +917,14 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.smartTableSource.load(tableData);
 	}
 
-	searchClient(term: string, item: any) {
+	searchOrganizationContact(term: string, item: any) {
 		if (item.name) {
 			return item.name.toLowerCase().includes(term.toLowerCase());
 		}
 	}
 
-	selectClient($event) {
-		this.selectedClient = $event;
+	selectOrganizationContact($event) {
+		this.selectedOrganizationContact = $event;
 	}
 
 	_applyTranslationOnSmartTable() {

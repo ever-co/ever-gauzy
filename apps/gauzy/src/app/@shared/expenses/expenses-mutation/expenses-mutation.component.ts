@@ -15,7 +15,9 @@ import {
 	IOrganizationVendor,
 	Tag,
 	OrganizationContact,
-	OrganizationProjects
+	OrganizationProjects,
+	ExpenseStatusesEnum,
+	ContactType
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -34,7 +36,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
+import { IOrganizationExpenseCategory } from '../../../../../../../libs/models/src/lib/organization-expense-category.model';
 import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 
 @Component({
@@ -55,10 +57,16 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	expenseTypes = Object.values(ExpenseTypesEnum);
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
+	expenseStatuses = Object.values(ExpenseStatusesEnum);
 	expenseCategories: IOrganizationExpenseCategory[];
 	vendors: IOrganizationVendor[];
-	clients: { clientName: string; clientId: string }[] = [];
-	projects: { projectName: string; projectId: string }[] = [];
+	organizationContact: OrganizationContact;
+	organizationContacts: {
+		name: string;
+		organizationContactId: string;
+	}[] = [];
+	project: OrganizationProjects;
+	projects: { name: string; projectId: string }[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
 	calculatedValue = '0';
 	duplicate: boolean;
@@ -73,6 +81,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	amount: AbstractControl;
 	notes: AbstractControl;
 	showTooltip = false;
+	disableStatuses = false;
+	averageExpense = 0;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -93,10 +103,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.getDefaultData();
-		this.loadClients();
+		this.loadOrganizationContacts();
 		this.loadProjects();
 		this._initializeForm();
-		this.form.get('currency').disable();
+		this.form.get('currency');
+		this.changeExpenseType(this.form.value.typeOfExpense);
 	}
 
 	get currency() {
@@ -118,10 +129,17 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.vendors = vendors;
 	}
 
-	addOrEditExpense() {
+	selectOrganizationContact($event) {
+		this.organizationContact = $event;
+	}
+	selectProject($event) {
+		this.project = $event;
+	}
+
+	async addOrEditExpense() {
 		if (
-			this.form.value.typeOfExpense === 'Billable to Client' &&
-			!this.form.value.client
+			this.form.value.typeOfExpense === 'Billable to Contact' &&
+			!this.form.value.organizationContact
 		) {
 			this.showWarning = true;
 			setTimeout(() => {
@@ -132,10 +150,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			this.closeWarning();
 		}
 
-		if (this.form.value.client === null) {
-			this.form.value.client = {
-				clientName: null,
-				clientId: null
+		if (this.form.value.organizationContact === null) {
+			this.form.value.organizationContact = {
+				organizationContactName: null,
+				organizationContactId: null
 			};
 		}
 
@@ -149,6 +167,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		if (this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED)
 			this.form.value.splitExpense = true;
 
+		if (this.form.value.typeOfExpense !== 'Billable to Contact') {
+			this.form.value.status = 'Not Billable';
+		}
+
 		this.dialogRef.close(
 			Object.assign(
 				{ employee: this.employeeSelector.selectedEmployee },
@@ -156,7 +178,6 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			)
 		);
 	}
-
 	addNewCategory = async (
 		name: string
 	): Promise<IOrganizationExpenseCategory> => {
@@ -194,11 +215,13 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		}
 	};
 
-	addNewClient = (name: string): Promise<OrganizationContact> => {
+	addNewOrganizationContact = (
+		name: string
+	): Promise<OrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
 					{
 						name: name
 					}
@@ -207,6 +230,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			);
 			return this.organizationContactService.create({
 				name,
+				contactType: ContactType.CLIENT,
 				organizationId: this.organizationId
 			});
 		} catch (error) {
@@ -262,14 +286,15 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 					Validators.required
 				],
 				purpose: [this.expense.purpose],
-				client: [null],
-				project: [null],
+				organizationContact: [this.expense.organizationContactName],
+				project: [this.expense.projectName],
 				taxType: [this.expense.taxType],
 				taxLabel: [this.expense.taxLabel],
 				rateValue: [this.expense.rateValue],
 				receipt: [this.expense.receipt],
 				splitExpense: [this.expense.splitExpense],
-				tags: [this.expense.tags]
+				tags: [this.expense.tags],
+				status: [this.expense.status]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -284,14 +309,15 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 					Validators.required
 				],
 				purpose: [''],
-				client: [null],
+				organizationContact: [null],
 				project: [null],
 				taxType: [TaxTypesEnum.PERCENTAGE],
 				taxLabel: [''],
 				rateValue: [0],
 				receipt: [this.defaultImage],
 				splitExpense: [false],
-				tags: []
+				tags: [],
+				status: []
 			});
 
 			this._loadDefaultCurrency();
@@ -327,16 +353,16 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			});
 	}
 
-	private async loadClients() {
+	private async loadOrganizationContacts() {
 		const res = await this.organizationContactService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});
 
 		if (res) {
-			res.items.forEach((client) => {
-				this.clients.push({
-					clientName: client.name,
-					clientId: client.id
+			res.items.forEach((organizationContact) => {
+				this.organizationContacts.push({
+					name: organizationContact.name,
+					organizationContactId: organizationContact.id
 				});
 			});
 		}
@@ -353,7 +379,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		if (res) {
 			res.items.forEach((project) => {
 				this.projects.push({
-					projectName: project.name,
+					name: project.name,
 					projectId: project.id
 				});
 			});
@@ -396,6 +422,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	onEmployeeChange(selectedEmployee: SelectedEmployee) {
 		this.showTooltip = selectedEmployee === ALL_EMPLOYEES_SELECTED;
+	}
+
+	changeExpenseType($event) {
+		if ($event !== 'Billable to Contact') {
+			this.disableStatuses = true;
+		} else {
+			this.disableStatuses = false;
+		}
 	}
 
 	ngOnDestroy() {

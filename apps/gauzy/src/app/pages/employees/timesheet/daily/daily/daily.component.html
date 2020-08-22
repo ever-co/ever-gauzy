@@ -1,12 +1,15 @@
-<div class="header row">
-	<h5 class="mb-3 col">
-		{{ 'TIMESHEET.DAILY' | translate }} - {{ selectedDate | date }}
-	</h5>
-	<div class="col-auto">
-		<button nbButton status="primary" (click)="openAdd()">
-			<nb-icon icon="plus-outline"></nb-icon>
-			{{ 'TIMESHEET.ADD_TIME' | translate }}
-		</button>
+<div class="header">
+	<div class="text-left mb-3">
+		<ng-template
+			[ngxPermissionsOnly]="[
+				OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+			]"
+		>
+			<button nbButton status="primary" (click)="openAdd()">
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'TIMESHEET.ADD_TIME' | translate }}
+			</button>
+		</ng-template>
 	</div>
 </div>
 
@@ -168,7 +171,9 @@
 						nbButton
 						status="danger"
 						size="small"
-						(click)="onDeleteConfirm(log)"
+						ngxConfirmDialog
+						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+						(confirm)="onDeleteConfirm(log)"
 					>
 						<nb-icon icon="trash-2-outline"></nb-icon>
 						{{ 'TIMESHEET.DELETE' | translate }}

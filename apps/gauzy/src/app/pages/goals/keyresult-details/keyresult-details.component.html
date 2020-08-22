@@ -30,39 +30,64 @@
 					<div class="col-md-12">
 						<ga-keyresult-progress-chart
 							[keyResult]="keyResult"
+							[kpi]="kpi"
 						></ga-keyresult-progress-chart>
 					</div>
 				</div>
 				<div class="p-3">
-					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">
+					<div
+						class="row mt-2"
+						*ngIf="
+							keyResult.type !== keyResultTypeEnum.TRUE_OR_FALSE
+						"
+					>
+						<div class="col-md-4 font-weight-bold">
 							{{
 								'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE'
 									| translate
 							}}
 						</div>
-						<div class="col-md-6">{{ keyResult.initialValue }}</div>
+						<div class="col-md-8">
+							{{ keyResult.initialValue }}
+							{{
+								keyResult.type == keyResultTypeEnum.KPI
+									? kpi?.unit
+									: keyResult.unit
+							}}
+						</div>
 					</div>
-					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">
+					<div
+						class="row mt-2"
+						*ngIf="
+							keyResult.type !== keyResultTypeEnum.TRUE_OR_FALSE
+						"
+					>
+						<div class="col-md-4 font-weight-bold">
 							{{
 								'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE'
 									| translate
 							}}
 						</div>
-						<div class="col-md-6">{{ keyResult.targetValue }}</div>
+						<div class="col-md-8">
+							{{ keyResult.targetValue }}
+							{{
+								keyResult.type == keyResultTypeEnum.KPI
+									? kpi?.unit
+									: keyResult.unit
+							}}
+						</div>
 					</div>
 					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">
+						<div class="col-md-4 font-weight-bold">
 							{{ 'GOALS_PAGE.PROGRESS' | translate }}
 						</div>
-						<div class="col-md-6">{{ keyResult.progress }} %</div>
+						<div class="col-md-8">{{ keyResult.progress }} %</div>
 					</div>
 					<div class="row mt-2">
-						<div class="col-md-6 font-weight-bold">
+						<div class="col-md-4 font-weight-bold">
 							{{ 'GOALS_PAGE.GOAL' | translate }}
 						</div>
-						<div class="col-md-6">{{ keyResult.goal.name }}</div>
+						<div class="col-md-8">{{ keyResult.goal.name }}</div>
 					</div>
 				</div>
 			</div>
@@ -72,7 +97,7 @@
 					<button
 						nbButton
 						size="small"
-						[disabled]="!isUpdatable"
+						[hidden]="!isUpdatable"
 						status="primary"
 						(click)="keyResultUpdate()"
 					>
@@ -100,8 +125,28 @@
 					</nb-alert>
 				</div>
 				<div class="section mt-2 overflow-scroll" *ngIf="!!updates">
-					<nb-card *ngFor="let update of updates">
-						<nb-card-header>
+					<nb-card *ngFor="let update of updates; let index = index">
+						<nb-card-header style="position: relative;">
+							<nb-badge
+								style="font-size: 0.8rem !important;"
+								*ngIf="
+									index < updates.length - 1 &&
+									!relativeProgress(
+										update,
+										updates[index + 1]
+									).zero
+								"
+								[text]="
+									relativeProgress(update, updates[index + 1])
+										.progressText
+								"
+								[status]="
+									relativeProgress(update, updates[index + 1])
+										.status
+								"
+								position="top right"
+							>
+							</nb-badge>
 							<div class="main-header">
 								<ngx-avatar
 									class="ml-2"
@@ -110,7 +155,9 @@
 									[name]="ownerName"
 								>
 								</ngx-avatar>
-								<p>{{ update.createdAt | date }}</p>
+								<p class="mt-3">
+									{{ update.createdAt | date }}
+								</p>
 							</div>
 						</nb-card-header>
 						<nb-card-footer>
@@ -134,16 +181,18 @@
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
-		<button status="danger" nbButton (click)="deleteKeyResult()">
-			{{ 'BUTTONS.DELETE' | translate }}
-		</button>
-		<button
-			class="float-right"
-			nbButton
-			status="success"
-			(click)="closeDialog()"
-		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
+		<div class="d-flex float-right">
+			<button
+				class="mr-3"
+				status="danger"
+				nbButton
+				(click)="deleteKeyResult()"
+			>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+			<button nbButton status="success" (click)="closeDialog()">
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
 	</nb-card-footer>
 </nb-card>

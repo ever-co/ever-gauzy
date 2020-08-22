@@ -12,7 +12,7 @@ import {
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
-import { Goal, KeyResult } from '@gauzy/models';
+import { Goal, KeyResult, GoalGeneralSetting } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { GoalService } from '../../@core/services/goal.service';
@@ -20,6 +20,9 @@ import { KeyResultService } from '../../@core/services/keyresult.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
+import { GoalLevelEnum } from '@gauzy/models';
+import { GoalSettingsService } from '../../@core/services/goal-settings.service';
+import { GoalTemplateSelectComponent } from '../../@shared/goal/goal-template-select/goal-template-select.component';
 
 @Component({
 	selector: 'ga-goals',
@@ -33,10 +36,12 @@ export class GoalsComponent extends TranslationBaseComponent
 	selectedOrganizationId: string;
 	organizationName: string;
 	employee: SelectedEmployee;
-	employeeId: string;
-	selectedFilter: string;
+	isEmployee = false;
+	selectedFilter = 'all';
+	objectiveGroup = 'timeFrames';
+	goalGeneralSettings: GoalGeneralSetting;
 	goalTimeFrames: Array<string> = [];
-	filter = [
+	filters = [
 		{
 			title: 'All Objectives',
 			value: 'all'
@@ -54,6 +59,11 @@ export class GoalsComponent extends TranslationBaseComponent
 			value: 'employee'
 		}
 	];
+	goalLevels = [...Object.values(GoalLevelEnum)];
+	groupObjectivesBy = [
+		{ title: 'Objective Level', value: 'level' },
+		{ title: 'Time Frames', value: 'timeFrames' }
+	];
 	private _ngDestroy$ = new Subject<void>();
 	goals: Goal[];
 	allGoals: Goal[];
@@ -66,12 +76,20 @@ export class GoalsComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private goalService: GoalService,
 		private errorHandler: ErrorHandlingService,
-		private keyResultService: KeyResultService
+		private keyResultService: KeyResultService,
+		private goalSettingsService: GoalSettingsService
 	) {
 		super(translateService);
 	}
 
 	async ngOnInit() {
+		await this.store.user$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((user) => {
+				if (user) {
+					this.isEmployee = !!user.employee;
+				}
+			});
 		await this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
@@ -87,6 +105,15 @@ export class GoalsComponent extends TranslationBaseComponent
 			});
 	}
 
+	async getGoalSettings(findObj) {
+		await this.goalSettingsService
+			.getAllGeneralSettings(findObj)
+			.then((res) => {
+				const { items } = res;
+				this.goalGeneralSettings = items.pop();
+			});
+	}
+
 	private async loadPage() {
 		this.loading = true;
 		const { name } = this.store.selectedOrganization
@@ -98,7 +125,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				id: this.selectedOrganizationId
 			}
 		};
-		this.goalService
+		await this.getGoalSettings(findObj);
+		await this.goalService
 			.getAllGoals(
 				[
 					'keyResults',
@@ -113,20 +141,27 @@ export class GoalsComponent extends TranslationBaseComponent
 					'keyResults.owner',
 					'keyResults.lead',
 					'alignedKeyResult',
-					'alignedKeyResult.goal'
+					'alignedKeyResult.goal',
+					'alignedKeyResult.goal.ownerEmployee',
+					'alignedKeyResult.goal.ownerEmployee.user',
+					'alignedKeyResult.goal.ownerOrg',
+					'alignedKeyResult.goal.ownerTeam',
+					'alignedKeyResult.owner',
+					'alignedKeyResult.lead',
+					'alignedKeyResult.updates'
 				],
 				findObj
 			)
 			.then((goals) => {
-				this.noGoals = goals.items.length > 0 ? false : true;
-				this.goals = goals.items;
-				this.allGoals = goals.items;
-				if (!!this.selectedFilter && this.selectedFilter !== 'all') {
-					this.filterGoals(this.selectedFilter);
-				} else {
-					this.createTimeFrameGroups(this.goals);
+				if (goals) {
+					this.noGoals = goals.items.length > 0 ? false : true;
+					this.goals = goals.items;
+					this.allGoals = goals.items;
+					if (!!this.selectedFilter) {
+						this.filterGoals(this.selectedFilter, this.allGoals);
+					}
+					this.loading = false;
 				}
-				this.loading = false;
 			});
 	}
 
@@ -135,9 +170,12 @@ export class GoalsComponent extends TranslationBaseComponent
 			context: {
 				data: {
 					selectedKeyResult: keyResult,
-					allKeyResults: this.goals[index].keyResults
+					allKeyResults: this.goals[index].keyResults,
+					settings: this.goalGeneralSettings,
+					orgId: this.selectedOrganizationId
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -155,7 +193,7 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	createTimeFrameGroups(goals) {
+	createGroups(goals) {
 		this.goalTimeFrames = [];
 		goals.forEach((goal) => {
 			if (this.goalTimeFrames.length < 1) {
@@ -168,22 +206,45 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.goalTimeFrames.push(goal.deadline);
 			}
 		});
+		this.goalLevels = this.goalLevels.filter((goalLevel) =>
+			goals.find((goal) => goal.level === goalLevel)
+		);
 		this.goalTimeFrames.sort((a, b) => a.localeCompare(b));
 	}
 
 	async addKeyResult(index, keyResult) {
+		if (
+			!keyResult &&
+			this.goalGeneralSettings.maxKeyResults <=
+				this.goals[index].keyResults.length
+		) {
+			this.toastrService.info(
+				this.getTranslation('TOASTR.MESSAGE.MAX_KEY_RESULT_LIMIT'),
+				this.getTranslation('TOASTR.TITLE.MAX_LIMIT_REACHED'),
+				{ duration: 5000, preventDuplicates: true }
+			);
+			return;
+		}
 		const dialog = this.dialogService.open(EditKeyResultsComponent, {
 			hasScroll: true,
 			context: {
 				data: keyResult,
 				orgId: this.selectedOrganizationId,
 				orgName: this.organizationName,
-				goalDeadline: this.goals[index].deadline
-			}
+				goalDeadline: this.goals[index].deadline,
+				settings: this.goalGeneralSettings
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (response) {
 			if (!!keyResult) {
+				this.goals[index].progress = this.calculateGoalProgress(
+					this.goals[index].keyResults
+				);
+				const goalData = this.goals[index];
+				delete goalData.keyResults;
+				await this.goalService.update(this.goals[index].id, goalData);
 				const keyResultData = response;
 				delete keyResultData.goal;
 				delete keyResultData.updates;
@@ -222,54 +283,97 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
+	groupBy(group) {
+		this.loading = true;
+		this.objectiveGroup = group;
+		if (this.popover?.isShown) {
+			this.popover.hide();
+		}
+		this.loading = false;
+	}
+
 	calculateGoalProgress(keyResults) {
 		const progressTotal = keyResults.reduce(
-			(a, b) => a + b.progress * parseInt(b.weight, 10),
+			(a, b) => a + b.progress * +b.weight,
 			0
 		);
-		const weightTotal = keyResults.reduce(
-			(a, b) => a + parseInt(b.weight, 10),
-			0
-		);
+		const weightTotal = keyResults.reduce((a, b) => a + +b.weight, 0);
 		return Math.round(progressTotal / weightTotal);
 	}
 
-	filterGoals(selection) {
+	filterGoals(selection, allGoals) {
 		this.loading = true;
+		if (this.popover?.isShown) {
+			this.popover.hide();
+		}
 		this.selectedFilter = selection;
 		if (selection !== 'all') {
 			if (selection === 'employee' && !!this.employee) {
-				this.goals = this.allGoals.filter((goal) =>
+				this.goals = allGoals.filter((goal) =>
 					this.employee.id == null
 						? goal.level.toLowerCase() === selection
 						: goal.ownerEmployee.id === this.employee.id
 				);
 			} else {
-				this.goals = this.allGoals.filter(
+				this.goals = allGoals.filter(
 					(goal) => goal.level.toLowerCase() === selection
 				);
 			}
+			this.goalLevels = [GoalLevelEnum[selection.toUpperCase()]];
 		} else {
-			this.goals = this.allGoals;
+			this.goals = allGoals;
+			this.goalLevels = [...Object.values(GoalLevelEnum)];
+			this.goalLevels = this.goalLevels.filter((goalLevel) =>
+				this.goals.find((goal) => goal.level === goalLevel)
+			);
 		}
 		this.noGoals = this.goals.length > 0 ? false : true;
 		if (this.goals.length > 0) {
-			this.createTimeFrameGroups(this.goals);
+			this.createGroups(this.goals);
 		} else {
+			this.goalLevels = [];
 			this.goalTimeFrames = [];
 		}
-		this.popover.hide();
 		this.loading = false;
 	}
 
+	async createObjectiveFromTemplate() {
+		if (this.popover?.isShown) {
+			this.popover.hide();
+		}
+		const dialog = this.dialogService.open(GoalTemplateSelectComponent, {
+			context: {
+				orgId: this.selectedOrganizationId,
+				orgName: this.organizationName
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (response) {
+			this.loadPage();
+		}
+	}
+
 	async createObjective(goal, index) {
+		if (
+			!goal &&
+			this.goalGeneralSettings.maxObjectives <= this.allGoals.length
+		) {
+			this.toastrService.info(
+				this.getTranslation('TOASTR.MESSAGE.MAX_OBJECTIVE_LIMIT'),
+				this.getTranslation('TOASTR.TITLE.MAX_LIMIT_REACHED'),
+				{ duration: 5000, preventDuplicates: true }
+			);
+			return;
+		}
 		const dialog = this.dialogService.open(EditObjectiveComponent, {
 			hasScroll: true,
 			context: {
 				data: goal,
 				orgId: this.selectedOrganizationId,
-				orgName: this.organizationName
-			}
+				orgName: this.organizationName,
+				settings: this.goalGeneralSettings
+			},
+			closeOnBackdropClick: false
 		});
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
@@ -284,6 +388,7 @@ export class GoalsComponent extends TranslationBaseComponent
 							),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
+						this.loadPage();
 					}
 				});
 			} else {
@@ -297,19 +402,19 @@ export class GoalsComponent extends TranslationBaseComponent
 					await this.goalService
 						.createGoal(data)
 						.then(async (val) => {
-							await this.goalService.getAllGoals();
+							//await this.goalService.getAllGoals();
 							this.toastrService.primary(
 								this.getTranslation(
 									'TOASTR.MESSAGE.OBJECTIVE_ADDED'
 								),
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
+							await this.loadPage();
 						});
 				} catch (error) {
 					this.errorHandler.handleError(error);
 				}
 			}
-			this.loadPage();
 		}
 	}
 
@@ -318,7 +423,8 @@ export class GoalsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				goal: data
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -353,7 +459,8 @@ export class GoalsComponent extends TranslationBaseComponent
 			hasScroll: true,
 			context: {
 				keyResult: selectedkeyResult
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
@@ -379,6 +486,11 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
+	calculateKeyResultWeight(weight, goal) {
+		const weightSum = goal.keyResults.reduce((a, b) => a + +b.weight, 0);
+		return Math.round(+weight * (100 / weightSum));
+	}
+
 	async keyResultUpdate(index, selectedKeyResult: KeyResult) {
 		const keyResultDialog = this.dialogService.open(
 			KeyResultUpdateComponent,
@@ -386,7 +498,8 @@ export class GoalsComponent extends TranslationBaseComponent
 				hasScroll: true,
 				context: {
 					keyResult: selectedKeyResult
-				}
+				},
+				closeOnBackdropClick: false
 			}
 		);
 		const response = await keyResultDialog.onClose

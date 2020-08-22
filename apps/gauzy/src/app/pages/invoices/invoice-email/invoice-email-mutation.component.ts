@@ -4,7 +4,8 @@ import { OnInit } from '@angular/core';
 import {
 	Invoice,
 	InvoiceTypeEnum,
-	InvoiceStatusTypesEnum
+	InvoiceStatusTypesEnum,
+	InvoiceItem
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
@@ -17,6 +18,10 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { TasksService } from '../../../@core/services/tasks.service';
 import { ProductService } from '../../../@core/services/product.service';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
+import { ExpensesService } from '../../../@core/services/expenses.service';
+import { Store } from '../../../@core/services/store.service';
+import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
+import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 
 @Component({
 	selector: 'ga-invoice-email',
@@ -27,6 +32,9 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 	invoice: Invoice;
 	form: FormGroup;
 	isEstimate: boolean;
+	saveAndSend: boolean;
+	invoiceItems: InvoiceItem[];
+	createdInvoice: Invoice;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -37,7 +45,12 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
 		private productService: ProductService,
-		private invoiceService: InvoicesService
+		private invoiceService: InvoicesService,
+		private expensesService: ExpensesService,
+		private store: Store,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private invoicesService: InvoicesService,
+		private invoiceItemService: InvoiceItemService
 	) {
 		super(translateService);
 	}
@@ -53,6 +66,23 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 	}
 
 	async sendEmail() {
+		if (this.saveAndSend) {
+			const createdInvoice = await this.invoicesService.add(this.invoice);
+			this.createdInvoice = createdInvoice;
+			this.invoiceItems.forEach(async (item) => {
+				item['invoiceId'] = createdInvoice.id;
+				await this.invoiceItemService.add(item);
+			});
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate ? 'Estimate added' : 'Invoice added',
+				invoice: createdInvoice,
+				invoiceId: createdInvoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.invoice.fromOrganization,
+				organizationId: this.invoice.fromOrganization.id
+			});
+		}
 		pdfMake.vfs = pdfFonts.pdfMake.vfs;
 		let docDefinition;
 		let service;
@@ -70,6 +100,9 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				service = this.productService;
 				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				service = this.expensesService;
+				break;
 			default:
 				break;
 		}
@@ -77,7 +110,7 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 		docDefinition = await generatePdf(
 			this.invoice,
 			this.invoice.fromOrganization,
-			this.invoice.toClient,
+			this.invoice.toContact,
 			service
 		);
 
@@ -87,7 +120,7 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 				this.form.value.email,
 				data,
 				this.invoice.invoiceNumber,
-				this.invoice.id,
+				this.invoice.id ? this.invoice.id : this.createdInvoice.id,
 				this.isEstimate
 			);
 		});
@@ -97,6 +130,20 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 				status: InvoiceStatusTypesEnum.SENT
 			});
 		}
+
+		await this.invoiceEstimateHistoryService.add({
+			action: this.isEstimate
+				? `Estimate sent to ${this.form.value.email}`
+				: `Invoice sent to ${this.form.value.email}`,
+			invoice: this.createdInvoice ? this.createdInvoice : this.invoice,
+			invoiceId: this.createdInvoice
+				? this.createdInvoice.id
+				: this.invoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.invoice.fromOrganization,
+			organizationId: this.invoice.fromOrganization.id
+		});
 
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.EMAIL.EMAIL_SENT'),

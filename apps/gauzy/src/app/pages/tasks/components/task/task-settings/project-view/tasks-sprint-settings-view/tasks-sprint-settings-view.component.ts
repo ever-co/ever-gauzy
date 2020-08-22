@@ -6,7 +6,7 @@ import { map, takeUntil } from 'rxjs/operators';
 
 import { OrganizationSprint, OrganizationProjects } from '@gauzy/models';
 import { SprintStoreService } from '../../../../../../../@core/services/organization-sprint-store.service';
-import { ItemActionType } from 'apps/gauzy/src/app/@shared/components/editable-grid/gauzy-editable-grid.component';
+import { ItemActionType } from '../../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
 
 @Component({
 	selector: 'ngx-tasks-sprint-settings-view',
@@ -20,7 +20,12 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 				(sprint: OrganizationSprint) =>
 					sprint.projectId === this.project.id
 			)
-		)
+		),
+		map((sprints: OrganizationSprint[]): OrganizationSprint[] => {
+			return sprints.sort((sprint, nextSprint) =>
+				sprint.startDate < nextSprint.startDate ? -1 : 1
+			);
+		})
 	);
 	moment: any = moment;
 	private _onDestroy$: Subject<void> = new Subject<void>();

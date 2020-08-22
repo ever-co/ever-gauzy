@@ -14,10 +14,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../shared.module';
 import { RouterModule } from '@angular/router';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';
-import { TaskSelectModule } from '../task-select/task-select.module';
 import { ProjectSelectModule } from '../project-select/project-select.module';
 import { AngularDraggableModule } from 'angular2-draggable';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { ContactSelectorModule } from '../contact-selector/contact-selector.module';
+import { TaskSelectModule } from '../tasks/task-select/task-select.module';
 
 @NgModule({
 	declarations: [TimeTrackerComponent],
@@ -36,7 +37,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		TaskSelectModule,
 		ProjectSelectModule,
 		AngularDraggableModule,
-		NgxPermissionsModule
+		NgxPermissionsModule,
+		ContactSelectorModule
 	],
 	exports: [TimeTrackerComponent]
 })

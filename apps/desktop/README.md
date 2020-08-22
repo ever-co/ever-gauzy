@@ -48,3 +48,10 @@ build execute app
 ```bash
 build:desktop:windows:quick
 ```
+
+uninstall gauzy desktop macOS
+
+```bash
+- delete app data
+$ rm -rf ~/Library/Application Support/gauzy-desktop
+```

@@ -30,6 +30,7 @@ import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 import { Contact } from '../contact/contact.entity';
 import { Base } from '../core/entities/base';
+import { Payment } from '../payment/payment.entity';
 
 @Entity('organization_contact')
 export class OrganizationContact extends Base implements IOrganizationContact {
@@ -102,13 +103,13 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
 	@OneToMany(
 		(type) => OrganizationProjects,
-		(projects) => projects.organizationContact
+		(project) => project.organizationContact
 	)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
-	@OneToMany((type) => Invoice, (invoices) => invoices.toClient)
+	@OneToMany((type) => Invoice, (invoices) => invoices.toContact)
 	@JoinColumn()
 	invoices?: Invoice[];
 
@@ -127,6 +128,18 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	@ApiProperty({ type: String, enum: ContactType })
 	@IsEnum(ContactType)
 	@IsOptional()
-	@Column({ nullable: true })
+	@Column({ nullable: false })
 	contactType: string;
+
+	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@IsOptional()
+	@Column({ length: 500, nullable: true })
+	imageUrl?: string;
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payment) => payment.contact, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: Payment[];
 }

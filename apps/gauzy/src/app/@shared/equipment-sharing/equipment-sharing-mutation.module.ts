@@ -19,6 +19,7 @@ import { EquipmentSharingService } from '../../@core/services/equipment-sharing.
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 
 @NgModule({
 	imports: [
@@ -45,6 +46,11 @@ import { NgSelectModule } from '@ng-select/ng-select';
 	],
 	declarations: [EquipmentSharingMutationComponent],
 	entryComponents: [],
-	providers: [EquipmentSharingService, Store, EquipmentService]
+	providers: [
+		EquipmentSharingService,
+		Store,
+		EquipmentService,
+		EquipmentSharingPolicyService
+	]
 })
 export class EquipmentSharingMutationModule {}

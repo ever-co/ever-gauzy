@@ -16,17 +16,19 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import { ConfirmComponent } from 'apps/gauzy/src/app/@shared/dialogs';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-daily',
-	templateUrl: './daily.component.html'
+	templateUrl: './daily.component.html',
+	styleUrls: ['./daily.component.scss']
 })
 export class DailyComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
@@ -63,7 +65,8 @@ export class DailyComponent implements OnInit, OnDestroy {
 		private timesheetService: TimesheetService,
 		private dialogService: NbDialogService,
 		private store: Store,
-		private nbMenuService: NbMenuService
+		private nbMenuService: NbMenuService,
+		private translateService: TranslateService
 	) {}
 
 	async ngOnInit() {
@@ -201,23 +204,24 @@ export class DailyComponent implements OnInit, OnDestroy {
 	}
 
 	onDeleteConfirm(log) {
-		this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((type) => {
-				if (type === 'ok') {
-					this.timesheetService.deleteLogs(log.id).then(() => {
-						const index = this.timeLogs.indexOf(log);
-						this.timeLogs.splice(index, 1);
-					});
-				}
-			});
+		this.timesheetService.deleteLogs(log.id).then(() => {
+			const index = this.timeLogs.indexOf(log);
+			this.timeLogs.splice(index, 1);
+		});
 	}
 
 	bulkAction(action) {
 		if (action === 'Delete') {
 			this.dialogService
-				.open(DeleteConfirmationComponent)
+				.open(ConfirmComponent, {
+					context: {
+						data: {
+							message: this.translateService.instant(
+								'TIMESHEET.DELETE_TIMELOG'
+							)
+						}
+					}
+				})
 				.onClose.pipe(untilDestroyed(this))
 				.subscribe((type) => {
 					if (type === 'ok') {

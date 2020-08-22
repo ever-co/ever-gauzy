@@ -9,7 +9,8 @@ import {
 	KeyResultTypeEnum,
 	Task,
 	TaskStatusEnum,
-	KeyResultUpdateStatusEnum
+	KeyResultUpdateStatusEnum,
+	KPI
 } from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first, takeUntil } from 'rxjs/operators';
@@ -20,11 +21,11 @@ import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/key
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
 import { Store } from '../../../@core/services/store.service';
-import { TaskDialogComponent } from '../../tasks/components/task-dialog/task-dialog.component';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
+import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -36,11 +37,13 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	keyResult: KeyResult;
 	updates: KeyResultUpdates[];
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
+	keyResultTypeEnum = KeyResultTypeEnum;
 	isUpdatable = true;
 	startDate: Date;
 	today = new Date();
 	loading = true;
 	task: Task;
+	kpi: KPI;
 	endDate: Date;
 	private _ngDestroy$ = new Subject<void>();
 	ownerName: string;
@@ -70,8 +73,14 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			compareDesc(new Date(a.createdAt), new Date(b.createdAt))
 		);
 		// prevent keyresult updates after deadline
+		const findInput = {
+			name: this.keyResult.goal.deadline,
+			organization: {
+				id: this.store.selectedOrganization.id
+			}
+		};
 		this.goalSettingsService
-			.getTimeFrameByName(this.keyResult.goal.deadline)
+			.getAllTimeFrames(findInput)
 			.then(async (res) => {
 				const timeFrame = res.items[0];
 				this.startDate = new Date(timeFrame.startDate);
@@ -116,6 +125,14 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 							this.loading = false;
 						});
 				});
+		} else if (this.keyResult.type === KeyResultTypeEnum.KPI) {
+			await this.goalSettingsService
+				.getAllKPI({ id: this.keyResult.kpiId })
+				.then((kpi) => {
+					const { items } = kpi;
+					this.kpi = items.pop();
+					this.loading = false;
+				});
 		} else {
 			this.loading = false;
 		}
@@ -135,12 +152,34 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			});
 	}
 
+	relativeProgress(currentUpdate, previousUpdate) {
+		let updateDiff: number;
+		let keyResultValDiff: number;
+		if (this.keyResult.targetValue < this.keyResult.initialValue) {
+			updateDiff = previousUpdate.update - currentUpdate.update;
+			keyResultValDiff =
+				this.keyResult.initialValue - this.keyResult.targetValue;
+		} else {
+			updateDiff = currentUpdate.update - previousUpdate.update;
+			keyResultValDiff =
+				this.keyResult.targetValue - this.keyResult.initialValue;
+		}
+		const progress = Math.round((updateDiff / keyResultValDiff) * 100);
+		return {
+			progressText:
+				progress > 0 ? `+ ${progress}%` : `- ${progress * -1}%`,
+			status: progress > 0 ? 'success' : 'danger',
+			zero: progress === 0 ? true : false
+		};
+	}
+
 	async keyResultUpdate() {
 		if (this.keyResult.type === KeyResultTypeEnum.TASK) {
-			const taskDialog = this.dialogService.open(TaskDialogComponent, {
+			const taskDialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.task
-				}
+				},
+				closeOnBackdropClick: false
 			});
 			const taskResponse = await taskDialog.onClose
 				.pipe(first())
@@ -198,7 +237,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 				hasScroll: true,
 				context: {
 					keyResult: this.keyResult
-				}
+				},
+				closeOnBackdropClick: false
 			});
 			const response = await dialog.onClose.pipe(first()).toPromise();
 			if (!!response) {
@@ -225,7 +265,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 					message: 'Are you sure? This action is irreversible.',
 					status: 'danger'
 				}
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {

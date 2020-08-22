@@ -8,7 +8,9 @@ import {
 	GoalLevelEnum,
 	TimeFrameStatusEnum,
 	RolesEnum,
-	OrganizationTeam
+	OrganizationTeam,
+	GoalGeneralSetting,
+	GoalOwnershipEnum
 } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil, first } from 'rxjs/operators';
@@ -32,7 +34,11 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	orgId: string;
 	orgName: string;
 	goalLevelEnum = GoalLevelEnum;
+	hideEmployee = false;
+	hideTeam = false;
 	hideOrg = false;
+	helperText = '';
+	settings: GoalGeneralSetting;
 	teams: OrganizationTeam[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
@@ -53,17 +59,9 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			description: [''],
 			owner: [null, Validators.required],
 			lead: [null],
-			level: ['', Validators.required],
+			level: [GoalLevelEnum.ORGANIZATION, Validators.required],
 			deadline: ['', Validators.required]
 		});
-
-		this.getTimeFrames();
-		await this.employeeService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
 		if (!!this.data) {
 			this.objectiveForm.patchValue(this.data);
 			this.objectiveForm.patchValue({
@@ -78,6 +76,15 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				this.getTeams();
 			}
 		}
+		this.getTimeFrames();
+		await this.employeeService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employees) => {
+				this.employees = employees.items;
+			});
+
+		this.objectiveForm.controls['level'].updateValueAndValidity();
 		if (
 			this.store.user.role.name !== RolesEnum.SUPER_ADMIN &&
 			this.store.user.role.name !== RolesEnum.MANAGER &&
@@ -85,6 +92,10 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		) {
 			this.hideOrg = true;
 		}
+		this.hideEmployee =
+			this.settings.canOwnObjectives === GoalOwnershipEnum.TEAMS;
+		this.hideTeam =
+			this.settings.canOwnObjectives === GoalOwnershipEnum.EMPLOYEES;
 	}
 
 	async getTeams() {
@@ -109,6 +120,13 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 						timeframe.status === this.timeFrameStatusEnum.ACTIVE &&
 						isFuture(new Date(timeframe.endDate))
 				);
+				if (!!this.data) {
+					this.timeFrames.push(
+						res.items.find(
+							(timeFrame) => this.data.deadline === timeFrame.name
+						)
+					);
+				}
 			}
 		});
 	}
@@ -117,19 +135,12 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
 			context: {
 				type: 'add'
-			}
+			},
+			closeOnBackdropClick: false
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (response) {
 			await this.getTimeFrames();
-		}
-	}
-
-	selectEmployee(event, control) {
-		if (control === 'lead') {
-			this.objectiveForm.patchValue({ lead: event });
-		} else {
-			this.objectiveForm.patchValue({ owner: event });
 		}
 	}
 

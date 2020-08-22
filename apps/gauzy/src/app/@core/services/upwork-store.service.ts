@@ -1,9 +1,16 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
-import { IEngagement, IUpworkApiConfig } from '@gauzy/models';
+import { IEngagement, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/models';
 import { UpworkService } from './upwork.service';
-import { tap, switchMap } from 'rxjs/operators';
+import { tap, switchMap, map } from 'rxjs/operators';
 import { Store } from './store.service';
+import * as moment from 'moment';
+
+const TODAY = new Date();
+const DEFAULT_DATE_RANGE = {
+	start: new Date(moment().subtract(1, 'months').format('YYYY-MM-DD')),
+	end: TODAY
+};
 
 const contractSettings = {
 	entitiesToSync: [
@@ -20,6 +27,16 @@ const contractSettings = {
 		{
 			name: 'Reports',
 			key: 'reports',
+			relatedTo: ['Income', 'Expense'],
+			sync: true,
+			datePicker: {
+				max: new Date(),
+				selectedDate: new Date()
+			}
+		},
+		{
+			name: 'Proposals',
+			key: 'proposals',
 			relatedTo: [],
 			sync: true,
 			datePicker: {
@@ -30,6 +47,21 @@ const contractSettings = {
 	],
 	onlyContracts: false
 };
+
+/* const reportSettings = {
+	entitiesToSync: [
+		{
+			name: 'Reports',
+			key: 'reports',
+			relatedTo: ['Income', 'Expense'],
+			sync: true,
+			datePicker: {
+				max: new Date(),
+				selectedDate: new Date()
+			}
+		}
+	]
+} */
 
 @Injectable({
 	providedIn: 'root'
@@ -59,6 +91,16 @@ export class UpworkStoreService {
 
 	private employeeId: string;
 
+	private _dateRangeActivity$: BehaviorSubject<
+		IUpworkDateRange
+	> = new BehaviorSubject(DEFAULT_DATE_RANGE);
+	public dateRangeActivity$: Observable<
+		IUpworkDateRange
+	> = this._dateRangeActivity$.asObservable();
+
+	private _reports$: BehaviorSubject<any[]> = new BehaviorSubject(null);
+	public reports$: Observable<any> = this._reports$.asObservable();
+
 	constructor(private _us: UpworkService, private _os: Store) {}
 
 	getContracts(): Observable<IEngagement[]> {
@@ -71,6 +113,24 @@ export class UpworkStoreService {
 				config ? this._us.getContracts(config) : EMPTY
 			),
 			tap((contracts) => this._contracts$.next(contracts))
+		);
+	}
+
+	/**
+	 * Get upwork income/expense reports
+	 */
+	loadReports(): Observable<any> {
+		const relations: object = {
+			income: ['employee', 'employee.user'],
+			expense: ['employee', 'employee.user', 'vendor', 'category']
+		};
+		const dateRange = this._dateRangeActivity$.getValue();
+		const integrationId = this._selectedIntegrationId$.getValue();
+		const data = JSON.stringify({ relations, filter: { dateRange } });
+
+		return this._us.getAllReports({ integrationId, data }).pipe(
+			map((reports) => reports.items),
+			tap((reports) => this._reports$.next(reports))
 		);
 	}
 
@@ -125,6 +185,13 @@ export class UpworkStoreService {
 
 	setSelectedEmployeeId(employeeId) {
 		this.employeeId = employeeId;
+	}
+
+	setFilterDateRange({ start, end }: IUpworkDateRange) {
+		this._dateRangeActivity$.next({
+			start: start || DEFAULT_DATE_RANGE.start,
+			end: end || DEFAULT_DATE_RANGE.end
+		});
 	}
 
 	getConfig(integrationId): Observable<IUpworkApiConfig> {

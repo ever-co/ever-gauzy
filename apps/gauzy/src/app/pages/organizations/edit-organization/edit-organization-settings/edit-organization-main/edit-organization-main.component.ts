@@ -102,7 +102,8 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 				this.organization.registrationDate
 					? new Date(this.organization.registrationDate)
 					: null
-			]
+			],
+			website: [this.organization.website]
 		});
 		this.tags = this.form.get('tags').value || [];
 	}

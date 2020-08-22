@@ -4,6 +4,11 @@ nb-radio-group {
   margin: 0em 5em 0 5em;
 }
 
+.row {
+  display: flex;
+  justify-content: space-between;
+}
+
 .edit-icon {
   margin-left: 30px;
   position: relative;
@@ -19,5 +24,103 @@ nb-radio-group {
 }
 
 .actions-container {
-  justify-content: flex-end;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Card grid */
+
+.flex-container {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.flex-item {
+  border: 0.0625rem solid #e4e9f2;
+  border-radius: 0.25rem;
+  width: 386px;
+  margin-top: 10px;
+}
+
+.fullName {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  line-height: 40px;
+  font-size: 1.5em;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+
+.info-line {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-size: 0.8em;
+  color: darkgray;
+  line-height: 0px;
+  padding: 1rem 1.5rem;
+
+  .info-meta {
+    margin-right: 10px;
+  }
+
+  .info-value {
+    display: flex;
+    justify-content: flex-end;
+    text-align: end;
+    font-size: 1em;
+  }
+}
+
+.card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.aditional-actions{
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-around;
+}
+
+/* Status */
+
+.badge-danger {
+  text-align: center;
+  padding: 5px;
+  background-color: #ff3d71;
+  margin-bottom: 5px;
+  border-radius: 0.25rem;
+}
+
+.badge-success {
+  text-align: center;
+  padding: 5px;
+  background-color: #00d68f;
+  border-radius: 0.25rem;
+}
+
+.badge-warning {
+  text-align: center;
+  padding: 5px;
+  background-color: #fa0;
+  color: #fff;
+  border-radius: 0.25rem;
 }

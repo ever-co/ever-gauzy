@@ -15,32 +15,25 @@ import { ProposalsService } from '../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 export interface ProposalViewModel {
+	tags?: Tag[];
+	valueDate: Date;
 	id: string;
 	employeeId?: string;
 	organizationId?: string;
-	valueDate: Date;
 	jobPostUrl?: string;
 	jobPostLink?: string;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: string;
 	author?: string;
-	tags?: Tag[];
-}
-
-interface SelectedRowModel {
-	data: ProposalViewModel;
-	isSelected: boolean;
-	selected: ProposalViewModel[];
-	source: LocalDataSource;
 }
 
 @Component({
@@ -63,29 +56,28 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.setView();
 	}
 
-	private _ngDestroy$ = new Subject<void>();
+	@ViewChild('proposalsTable') proposalsTable;
 
 	smartTableSettings: object;
 	selectedEmployeeId = '';
 	selectedDate: Date;
 	proposals: ProposalViewModel[];
 	smartTableSource = new LocalDataSource();
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	viewComponentName: ComponentEnum;
 	selectedProposal: ProposalViewModel;
+	chartData: { value: number; name: string }[] = [];
 	proposalStatus: string;
-	showTable: boolean;
 	employeeName: string;
+	successRate: string;
 	totalProposals: number;
 	countAccepted = 0;
-	successRate: string;
-	chartData: { value: number; name: string }[] = [];
+	showTable: boolean;
 	loading = true;
 	hasEditPermission = false;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
 	private _selectedOrganizationId: string;
-
-	@ViewChild('proposalsTable') proposalsTable;
+	private _ngDestroy$ = new Subject<void>();
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -118,6 +110,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 
@@ -323,7 +316,21 @@ export class ProposalsComponent extends TranslationBaseComponent
 					width: '10rem',
 					class: 'text-center',
 					filter: false,
-					renderComponent: ProposalStatusComponent
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (cell, row) => {
+						let badgeClass;
+						if (cell === 'SENT') {
+							badgeClass = 'warning';
+							cell = this.getTranslation('BUTTONS.SENT');
+						} else {
+							badgeClass = 'success';
+							cell = this.getTranslation('BUTTONS.ACCEPTED');
+						}
+						return {
+							text: cell,
+							class: badgeClass
+						};
+					}
 				}
 			}
 		};
@@ -407,7 +414,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 						jobPostUrl: i.jobPostUrl,
 						jobTitle: i.jobPostContent
 							.toString()
-							.replace(/<[^>]+>/g, '')
+							.replace(/<[^>]*(>|$)|&nbsp;/g, '')
 							.split(/[\s,\n]+/)
 							.slice(0, 3)
 							.join(' '),
@@ -450,7 +457,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSettingsSmartTable();
 		});

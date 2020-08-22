@@ -16,8 +16,8 @@ export interface Expense extends IBaseEntityModel {
 	typeOfExpense?: string;
 	category: IExpenseCategory;
 	categoryId: string;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	projectId?: string;
 	projectName?: string;
 	notes?: string;
@@ -30,6 +30,7 @@ export interface Expense extends IBaseEntityModel {
 	receipt?: string;
 	splitExpense?: boolean;
 	tags?: Tag[];
+	status?: string;
 }
 
 export interface ExpenseCreateInput {
@@ -38,8 +39,8 @@ export interface ExpenseCreateInput {
 	typeOfExpense?: string;
 	category: IExpenseCategory;
 	vendor: IOrganizationVendor;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	projectId?: string;
 	projectName?: string;
 	notes?: string;
@@ -54,6 +55,7 @@ export interface ExpenseCreateInput {
 	splitExpense?: boolean;
 	reference?: string;
 	tags?: Tag[];
+	status?: string;
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {
@@ -65,8 +67,8 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	categoryName?: string;
 	categoryId?: string;
 	amount?: number;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	projectId?: string;
 	projectName?: string;
 	notes?: string;
@@ -79,6 +81,7 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	receipt?: string;
 	splitExpense?: boolean;
 	tags?: Tag[];
+	status?: string;
 }
 
 export interface ExpenseUpdateInput {
@@ -89,8 +92,8 @@ export interface ExpenseUpdateInput {
 	vendorId?: string;
 	typeOfExpense?: string;
 	category: IExpenseCategory;
-	clientId?: string;
-	clientName?: string;
+	organizationContactId?: string;
+	organizationContactName?: string;
 	projectId?: string;
 	projectName?: string;
 	notes?: string;
@@ -103,6 +106,7 @@ export interface ExpenseUpdateInput {
 	receipt?: string;
 	splitExpense?: boolean;
 	tags?: Tag[];
+	status?: string;
 }
 
 export interface SplitExpenseOutput extends Expense {
@@ -119,10 +123,16 @@ export interface SplitExpenseFindInput {
 export enum ExpenseTypesEnum {
 	TAX_DEDUCTIBLE = 'Tax Deductible',
 	NOT_TAX_DEDUCTIBLE = 'Not Tax Deductible',
-	BILLABLE_TO_CLIENT = 'Billable to Client'
+	BILLABLE_TO_CONTACT = 'Billable to Contact'
 }
 
 export enum TaxTypesEnum {
 	PERCENTAGE = 'Percentage',
 	VALUE = 'Value'
+}
+
+export enum ExpenseStatusesEnum {
+	INVOICED = 'Invoiced',
+	UNINVOICED = 'Uninvoiced',
+	PAID = 'Paid'
 }

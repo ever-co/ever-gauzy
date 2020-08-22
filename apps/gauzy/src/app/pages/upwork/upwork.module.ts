@@ -27,6 +27,7 @@ import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ReportsComponent } from './components/reports/reports.component';
+import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -59,6 +60,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TableComponentsModule,
 		EmployeeSelectorsModule,
 		NbCheckboxModule,
+		BackNavigationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

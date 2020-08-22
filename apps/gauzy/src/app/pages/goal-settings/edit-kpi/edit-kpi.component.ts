@@ -6,7 +6,14 @@ import { NbDialogRef } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, KpiMetricEnum, KpiOperatorEnum, KPI } from '@gauzy/models';
+import {
+	Employee,
+	KpiMetricEnum,
+	KpiOperatorEnum,
+	KPI,
+	CurrenciesEnum,
+	KeyResultNumberUnitsEnum
+} from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 
@@ -21,6 +28,9 @@ export class EditKpiComponent extends TranslationBaseComponent
 	employees: Employee[];
 	selectedKPI: KPI;
 	type: string;
+	helper = '';
+	currenciesEnum = CurrenciesEnum;
+	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	kpiOperatorEnum = KpiOperatorEnum;
 	kpiMetricEnum = KpiMetricEnum;
 	private _ngDestroy$ = new Subject<void>();
@@ -39,14 +49,15 @@ export class EditKpiComponent extends TranslationBaseComponent
 		this.kpiForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
-			metric: [KpiMetricEnum.NUMBER, Validators.required],
+			type: [KpiMetricEnum.NUMERICAL, Validators.required],
 			currentValue: [0],
 			targetValue: [1],
 			lead: ['', Validators.required],
 			operator: [
 				KpiOperatorEnum.GREATER_THAN_EQUAL_TO,
 				Validators.required
-			]
+			],
+			unit: [KeyResultNumberUnitsEnum.ITEMS]
 		});
 		this.employeeService
 			.getAll(['user'])
@@ -55,6 +66,13 @@ export class EditKpiComponent extends TranslationBaseComponent
 				this.employees = employees.items;
 			});
 		if (!!this.selectedKPI) {
+			if (
+				!this.numberUnitsEnum.find(
+					(unit) => unit === this.selectedKPI.unit
+				)
+			) {
+				this.numberUnitsEnum.push(this.selectedKPI.unit);
+			}
 			this.kpiForm.patchValue({
 				...this.selectedKPI
 			});
@@ -62,6 +80,10 @@ export class EditKpiComponent extends TranslationBaseComponent
 				lead: !!this.selectedKPI.lead ? this.selectedKPI.lead.id : null
 			});
 		}
+	}
+
+	helperText(event) {
+		this.helper = !!event ? event.target.id : '';
 	}
 
 	async saveKeyResult() {

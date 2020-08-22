@@ -7,7 +7,8 @@ import {
 	NbIconModule,
 	NbDialogModule,
 	NbSpinnerModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbActionsModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { ExpensesRoutingModule } from './expenses-routing.module';
@@ -20,6 +21,11 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { SharedModule } from '../../@shared/shared.module';
+import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
+import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
+import { OrganizationExpenseCategoriesService } from '../../@core/services/organization-expense-categories.service';
+import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -30,6 +36,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbBadgeModule,
 		ExpensesRoutingModule,
 		ThemeModule,
+		SharedModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
@@ -48,9 +55,15 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NbSpinnerModule
+		NbSpinnerModule,
+		NbActionsModule,
+		TagsColorInputModule
 	],
-	declarations: [ExpensesComponent],
-	entryComponents: []
+	declarations: [ExpensesComponent, ExpenseCategoriesComponent],
+	entryComponents: [],
+	providers: [
+		ExpenseCategoriesStoreService,
+		OrganizationExpenseCategoriesService
+	]
 })
 export class ExpensesModule {}

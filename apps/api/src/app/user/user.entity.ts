@@ -44,12 +44,12 @@ export class User extends Base implements IUser {
 	@JoinTable({
 		name: 'tag_user'
 	})
-	tags: Tag[];
+	tags?: Tag[];
 
 	@ApiProperty({ type: Tenant })
 	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	tenant: Tenant;
+	tenant?: Tenant;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((user: User) => user.tenant)

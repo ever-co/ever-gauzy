@@ -2,19 +2,26 @@
 	<div class="setting-row">
 		<div class="block-content">
 			<div class="block-info">
-				<div class="row">
-					<div class="col">
+				<div class="expense">
+					<ga-picture-name-tags
+						class="block-item-big"
+						[isTags]="false"
+						[rowData]="currentEmployee.user"
+					></ga-picture-name-tags>
+
+					<div class="block-item">
 						{{ getCategoryName(recurringExpense?.categoryName) }}
 					</div>
-					<div class="col">
+					<div class="block-item-big">
 						{{ getStartDate() }}
 					</div>
-					<div class="col">
+					<div class="block-item">
 						<span class="block-amount" (click)="emitFetchHistory()"
 							>{{
 								recurringExpense?.value
 									| currency: recurringExpense?.currency
 							}}
+
 							<nb-icon
 								*ngIf="splitExpense"
 								nbTooltip="{{

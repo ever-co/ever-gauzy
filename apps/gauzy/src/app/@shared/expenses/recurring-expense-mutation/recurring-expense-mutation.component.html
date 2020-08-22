@@ -9,6 +9,20 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
+			<div class="row" *ngIf="isAdd">
+				<div class="col-sm-12 mb-3">
+					<ga-employee-selector
+						#employeeSelector
+						placeholder="Employee"
+						[defaultSelected]="false"
+						[showAllEmployeesOption]="false"
+						[skipGlobalChange]="true"
+						class="employees"
+						[selectedDate]="valueDate"
+					>
+					</ga-employee-selector>
+				</div>
+			</div>
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
@@ -86,7 +100,7 @@
 
 						<div
 							[ngSwitch]="startDateUpdateType"
-							style="margin-top:10px"
+							style="margin-top: 10px;"
 							[nbSpinner]="startDateChangeLoading"
 							nbSpinnerStatus="danger"
 							nbSpinnerSize="large"

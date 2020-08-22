@@ -5,16 +5,16 @@
 		(click)="approval()"
 		*ngIf="isApproval"
 		class="mr-3"
-		[size]="'tiny'"
+		[size]="layout === 'CARDS_GRID' ? 'tiny' : 'medium'"
 	>
-		{{ 'APPROVAL_REQUEST_PAGE.APPROVAL' | translate }}
+		{{ 'APPROVAL_REQUEST_PAGE.APPROVE' | translate }}
 	</button>
 	<button
 		nbButton
 		status="danger"
 		(click)="refuse()"
 		*ngIf="isRefuse"
-		[size]="'tiny'"
+		[size]="layout === 'CARDS_GRID' ? 'tiny' : 'medium'"
 	>
 		{{ 'APPROVAL_REQUEST_PAGE.REFUSE' | translate }}
 	</button>

@@ -117,6 +117,9 @@ export class EventTypeComponent extends TranslationBaseComponent
 						this._loadTableData(null, this._selectedOrganizationId);
 					}
 				}
+
+				this._loadSmartTableSettings();
+				this._applyTranslationOnSmartTable();
 			});
 
 		this.store.selectedOrganization$
@@ -161,9 +164,6 @@ export class EventTypeComponent extends TranslationBaseComponent
 					this.setView();
 				}
 			});
-
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
 	}
 
 	setView() {
@@ -189,7 +189,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 				organizationId
 			};
 
-			this.settingsSmartTable['columns']['employee'] = {
+			this.settingsSmartTable['columns']['employeeName'] = {
 				title: 'Employee',
 				type: 'string',
 				valuePrepareFunction: (_, eventType: IEventType) => {
@@ -227,6 +227,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 				duration: i.duration,
 				durationUnit: i.durationUnit,
 				employee: i.employee,
+				employeeName: i.employee?.user?.name,
 				tags: i.tags
 			}));
 

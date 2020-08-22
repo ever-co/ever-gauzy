@@ -28,22 +28,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	employees: Employee[] = [];
 	organizationId: string;
 	tenantId: string;
-	selectedApprovalPolicy: string;
 	isHasType = true;
-	typeItems: SelectedApprovalPolicy[] = [
-		{
-			name: 'Business Trip',
-			value: ApprovalPolicyTypesEnum.BUSINESS_TRIP
-		},
-		{
-			name: 'Equipment Sharing',
-			value: ApprovalPolicyTypesEnum.EQUIPMENT_SHARING
-		},
-		{
-			name: 'Time Off',
-			value: ApprovalPolicyTypesEnum.TIME_OFF
-		}
-	];
 
 	constructor(
 		public dialogRef: NbDialogRef<ApprovalPolicyMutationComponent>,
@@ -56,11 +41,6 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		if (this.approvalPolicy && this.approvalPolicy.type) {
-			this.selectedApprovalPolicy = this.typeItems
-				.find((item) => item.value === this.approvalPolicy.type)
-				.value.toString();
-		}
 		this.initializeForm();
 	}
 
@@ -69,9 +49,6 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 			name: [
 				this.approvalPolicy ? this.approvalPolicy.name : '',
 				Validators.required
-			],
-			type: [
-				this.typeItems ? this.typeItems.map((item) => item.value) : []
 			],
 			description: [
 				this.approvalPolicy ? this.approvalPolicy.description : ''
@@ -88,14 +65,8 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	}
 
 	async saveApprovalPolicy() {
-		if (!this.selectedApprovalPolicy) {
-			this.isHasType = false;
-			return;
-		}
-
 		const apprPolicy: ApprovalPolicyCreateInput = {
 			name: this.form.value['name'],
-			type: parseInt(this.selectedApprovalPolicy, 10),
 			description: this.form.value['description'],
 			organizationId: this.organizationId,
 			tenantId: this.tenantId,
@@ -106,12 +77,5 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 		result = await this.approvalPolicyService.save(apprPolicy);
 
 		this.closeDialog(result);
-	}
-
-	onApprovalPolicySelected(selection: string) {
-		this.selectedApprovalPolicy = selection;
-		if (this.selectedApprovalPolicy) {
-			this.isHasType = true;
-		}
 	}
 }

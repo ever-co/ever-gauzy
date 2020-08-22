@@ -1,8 +1,10 @@
 import moment from 'moment';
 import { Tray } from 'electron';
 import { TimerData } from '../local-data/timer';
+import { metaData } from '../local-data/coding-activity';
 import { LocalStore } from './getSetStore';
 import NotificationDesktop from './notifier';
+
 export default class Timerhandler {
 	timeRecordMinute = 0;
 	timeRecordHours = 0;
@@ -14,12 +16,14 @@ export default class Timerhandler {
 	lastTimer: any;
 	configs: any;
 	notificationDesktop = new NotificationDesktop();
+	timeSlotStart = null;
 
 	async startTimer(win2, knex, win3) {
 		this.notificationDesktop.startTimeNotification(true);
 		this.configs = LocalStore.getStore('configs');
 		const ProjectInfo = LocalStore.getStore('project');
 		this.timeStart = moment();
+		this.timeSlotStart = moment();
 		this.lastTimer = await TimerData.createTimer(knex, {
 			day: moment().format('YYYY-MM-DD'),
 			updated_at: moment(),
@@ -81,16 +85,19 @@ export default class Timerhandler {
 
 	updateTime(win2, knex) {
 		this.intervalUpdateTime = setInterval(() => {
-			this.getSetActivity(knex, win2);
-			this.updateToggle(win2, knex);
+			this.getSetActivity(knex, win2, this.timeSlotStart);
+			this.timeSlotStart = moment();
+			// this.updateToggle(win2, knex);
 		}, 60 * 1000 * 5);
 	}
 
-	updateToggle(win2, knex) {
-		win2.webContents.send('update_toggle_timer', {
+	updateToggle(win2, knex, isStop) {
+		const params: any = {
 			...LocalStore.beforeRequestParams(),
 			timerId: this.lastTimer[0]
-		});
+		};
+		if (isStop) params.manualTimeSlot = true;
+		win2.webContents.send('update_toggle_timer', params);
 	}
 
 	getSetTimeSlot(win2, knex) {
@@ -99,32 +106,86 @@ export default class Timerhandler {
 		});
 	}
 
-	getSetActivity(knex, win2) {
-		TimerData.getWindowEvent(knex, this.lastTimer[0]).then((events) => {
-			events.map((item) => {
-				if (item.activityId) {
-					win2.webContents.send('update_to_activity', {
-						duration: Math.floor(item.durations),
-						activityId: item.activityId,
-						...LocalStore.beforeRequestParams()
-					});
-				} else {
-					win2.webContents.send('set_activity', {
-						...LocalStore.beforeRequestParams(),
-						title: JSON.parse(item.data).app,
-						date: moment().format('YYYY-MM-DD'),
-						duration: Math.floor(item.durations),
-						type: 'app',
-						eventId: item.eventId
-					});
+	async getSetActivity(knex, win2, lastTimeSlot) {
+		const now = moment();
+		const userInfo = LocalStore.beforeRequestParams();
+		// get aw activity
+		let awActivities = await TimerData.getWindowEvent(
+			knex,
+			this.lastTimer[0]
+		);
+		// get waktime heartbeats
+		let wakatimeHeartbeats = await metaData.getActivity(knex, {
+			start: lastTimeSlot.utc().format('YYYY-MM-DD HH:mm:ss'),
+			end: moment().utc().format('YYYY-MM-DD HH:mm:ss')
+		});
+		//get aw afk
+		const awAfk = await TimerData.getAfk(knex, this.lastTimer[0]);
+		const duration = awAfk.length > 0 ? awAfk[0].durations : 0;
+
+		const idsAw = [];
+		const idsWakatime = [];
+		const idAfk = awAfk.length > 0 ? awAfk[0].id : null;
+
+		// formating aw
+		awActivities = awActivities.map((item) => {
+			idsAw.push(item.id);
+			return {
+				title: JSON.parse(item.data).app,
+				date: moment().format('YYYY-MM-DD'),
+				time: moment().utc().format('HH:mm:ss'),
+				duration: Math.floor(item.durations),
+				type: 'APP',
+				taskId: userInfo.taskId,
+				projectId: userInfo.projectId,
+				source: 'DESKTOP'
+			};
+		});
+
+		//formating wakatime
+		wakatimeHeartbeats = wakatimeHeartbeats.map((item) => {
+			idsWakatime.push(item.id);
+			return {
+				title: item.editors,
+				date: moment.unix(item.time).format('YYYY-MM-DD'),
+				time: moment.unix(item.time).format('HH:mm:ss'),
+				duration: 0,
+				type: 'APP',
+				taskId: userInfo.taskId,
+				projectId: userInfo.projectId,
+				metaData: {
+					type: item.type,
+					dependecies: item.dependencies,
+					language: item.languages,
+					project: item.projects,
+					branches: item.branches,
+					entity: item.entities,
+					line: item.lines
 				}
-			});
+			};
+		});
+
+		const allActivities = [...awActivities, ...wakatimeHeartbeats];
+
+		// send Activity to gauzy
+		win2.webContents.send('set_time_slot', {
+			...userInfo,
+			duration: now.diff(moment(lastTimeSlot), 'seconds'),
+			keyboard: duration,
+			mouse: duration,
+			overall: duration,
+			startedAt: lastTimeSlot.utc().toDate(),
+			activities: allActivities,
+			idsAw: idsAw,
+			idsWakatime: idsWakatime,
+			idAfk: idAfk
 		});
 	}
 
 	stopTime(win2, win3, knex) {
 		this.notificationDesktop.startTimeNotification(false);
-		this.updateToggle(win2, knex);
+		this.updateToggle(win2, knex, true);
+		this.getSetActivity(knex, win2, this.timeSlotStart);
 		clearInterval(this.intevalTimer);
 		clearInterval(this.intervalUpdateTime);
 	}

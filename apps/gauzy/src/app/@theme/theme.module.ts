@@ -35,7 +35,8 @@ import {
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
-	TwoColumnsLayoutComponent
+	TwoColumnsLayoutComponent,
+	PublicLayoutComponent
 } from './layouts';
 import { WindowModeBlockScrollService } from './services/window-mode-block-scroll.service';
 import { DEFAULT_THEME } from './styles/theme.default';
@@ -95,6 +96,7 @@ const COMPONENTS = [
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
+	PublicLayoutComponent,
 	ThemeSettingsComponent,
 	LayoutSelectorComponent
 ];

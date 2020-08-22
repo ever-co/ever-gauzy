@@ -3,7 +3,11 @@ import { Connection } from 'typeorm';
 import { KeyResult } from '../keyresult/keyresult.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
-import { KeyResultUpdateStatusEnum, KeyResultTypeEnum } from '@gauzy/models';
+import {
+	KeyResultUpdateStatusEnum,
+	KeyResultTypeEnum,
+	KeyResultDeadlineEnum
+} from '@gauzy/models';
 import * as moment from 'moment';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 
@@ -30,6 +34,9 @@ export const createDefaultKeyResultUpdates = async (
 			const startDate = goalTimeFrames.find(
 				(element) => element.name === keyResult.goal.deadline
 			).startDate;
+			const endDate = goalTimeFrames.find(
+				(element) => element.name === keyResult.goal.deadline
+			).endDate;
 			if (moment().isAfter(startDate)) {
 				const keyResultUpdate = new KeyResultUpdate();
 				keyResultUpdate.owner = keyResult.owner.id;
@@ -48,15 +55,20 @@ export const createDefaultKeyResultUpdates = async (
 					min: keyResult.initialValue + 1,
 					max: keyResult.targetValue
 				});
-
-				keyResultUpdate.createdAt = faker.date.between(
-					startDate,
-					!keyResult.hardDeadline
-						? moment().toDate()
-						: moment(keyResult.hardDeadline).isBefore(moment())
-						? keyResult.hardDeadline
-						: moment().toDate()
-				);
+				if (
+					keyResult.deadline ===
+					KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
+				) {
+					keyResultUpdate.createdAt = faker.date.between(
+						startDate,
+						endDate
+					);
+				} else {
+					keyResultUpdate.createdAt = faker.date.between(
+						startDate,
+						keyResult.hardDeadline
+					);
+				}
 
 				if (keyResult.type !== KeyResultTypeEnum.TRUE_OR_FALSE) {
 					const diff = keyResult.targetValue - keyResult.initialValue;

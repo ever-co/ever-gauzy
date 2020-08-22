@@ -19,7 +19,12 @@ export class GoalKPI extends TenantBase implements IKPI {
 	@ApiProperty({ type: String, enum: KpiMetricEnum })
 	@Column()
 	@IsEnum(KpiMetricEnum)
-	metric: string;
+	type: string;
+
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
+	@IsOptional()
+	unit?: string;
 
 	@ApiProperty({ type: String })
 	@Column()

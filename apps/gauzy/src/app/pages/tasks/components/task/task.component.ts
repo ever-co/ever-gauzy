@@ -9,7 +9,7 @@ import {
 
 import { uniqBy } from 'lodash';
 import { Observable, Subject } from 'rxjs';
-import { first, takeUntil, map, tap, filter } from 'rxjs/operators';
+import { first, takeUntil, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
@@ -21,24 +21,25 @@ import {
 	ComponentLayoutStyleEnum,
 	TaskListTypeEnum
 } from '@gauzy/models';
-import { TaskDialogComponent } from '../task-dialog/task-dialog.component';
-import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
-import { TaskEstimateComponent } from 'apps/gauzy/src/app/@shared/table-components/task-estimate/task-estimate.component';
-import { EmployeeWithLinksComponent } from 'apps/gauzy/src/app/@shared/table-components/employee-with-links/employee-with-links.component';
-import { TaskTeamsComponent } from 'apps/gauzy/src/app/@shared/table-components/task-teams/task-teams.component';
-import { MyTasksStoreService } from 'apps/gauzy/src/app/@core/services/my-tasks-store.service';
-import { AssignedToComponent } from 'apps/gauzy/src/app/@shared/table-components/assigned-to/assigned-to.component';
+import { TasksStoreService } from '../../../../@core/services/tasks-store.service';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { NotesWithTagsComponent } from '../../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { DateViewComponent } from '../../../../@shared/table-components/date-view/date-view.component';
+import { TaskEstimateComponent } from '../../../../@shared/table-components/task-estimate/task-estimate.component';
+import { EmployeeWithLinksComponent } from '../../../../@shared/table-components/employee-with-links/employee-with-links.component';
+import { TaskTeamsComponent } from '../../../../@shared/table-components/task-teams/task-teams.component';
+import { MyTasksStoreService } from '../../../../@core/services/my-tasks-store.service';
+import { AssignedToComponent } from '../../../../@shared/table-components/assigned-to/assigned-to.component';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
-import { TeamTasksStoreService } from 'apps/gauzy/src/app/@core/services/team-tasks-store.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+import { TeamTasksStoreService } from '../../../../@core/services/team-tasks-store.service';
+import { Store } from '../../../../@core/services/store.service';
+import { OrganizationTeamsService } from '../../../../@core/services/organization-teams.service';
+import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { ComponentEnum } from '../../../../@core/constants/layout.constants';
+import { StatusViewComponent } from '../../../../@shared/table-components/status-view/status-view.component';
+import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 
 @Component({
 	selector: 'ngx-task',
@@ -114,6 +115,14 @@ export class TaskComponent extends TranslationBaseComponent
 			tap((selectedProject: OrganizationProjects) => {
 				if (!!selectedProject) {
 					this.viewMode = selectedProject.taskListType as TaskListTypeEnum;
+					this.availableTasks$ = this.availableTasks$.pipe(
+						map((tasks: Task[]) =>
+							tasks.filter(
+								(task: Task) =>
+									task?.project?.id === selectedProject.id
+							)
+						)
+					);
 				} else {
 					this.viewMode = TaskListTypeEnum.GRID;
 				}
@@ -121,15 +130,15 @@ export class TaskComponent extends TranslationBaseComponent
 		);
 		this.projects$ = this.availableTasks$.pipe(
 			map((tasks: Task[]): OrganizationProjects[] => {
-				console.log(tasks);
 				return uniqBy(
-					tasks.map(
-						(task: Task): OrganizationProjects => task.project
-					),
+					tasks
+						.filter((t) => t.project)
+						.map(
+							(task: Task): OrganizationProjects => task.project
+						),
 					'id'
 				);
-			}),
-			tap(console.log)
+			})
 		);
 	}
 
@@ -143,9 +152,10 @@ export class TaskComponent extends TranslationBaseComponent
 		if (!!project) {
 			this.availableTasks$ = this.availableTasks$.pipe(
 				map((tasks: Task[]) =>
-					tasks.filter((task: Task) => task.project.id === project.id)
-				),
-				tap((tasks) => console.log('Reactive Tasks: ', tasks))
+					tasks.filter(
+						(task: Task) => task?.project?.id === project.id
+					)
+				)
 			);
 		}
 	}
@@ -187,7 +197,7 @@ export class TaskComponent extends TranslationBaseComponent
 				});
 			this._organizationsStore.selectedOrganization$
 				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((data) => {
+				.subscribe(() => {
 					this.loadTeams();
 				});
 			// this.availableTasks$ = this.teamTasks$;
@@ -216,15 +226,10 @@ export class TaskComponent extends TranslationBaseComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				title: {
-					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
-					type: 'string',
-					width: '10%'
-				},
 				description: {
-					title: this.getTranslation('TASKS_PAGE.TASKS_DESCRIPTION'),
+					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'custom',
-					filter: false,
+					filter: true,
 					class: 'align-row',
 					renderComponent: NotesWithTagsComponent
 				},
@@ -253,8 +258,10 @@ export class TaskComponent extends TranslationBaseComponent
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
-					type: 'string',
-					filter: false
+					type: 'custom',
+					width: '15%',
+					filter: false,
+					renderComponent: StatusViewComponent
 				}
 			}
 		};
@@ -315,7 +322,7 @@ export class TaskComponent extends TranslationBaseComponent
 	async createTaskDialog() {
 		let dialog;
 		if (this.isTasksPage()) {
-			dialog = this.dialogService.open(TaskDialogComponent, {
+			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {}
 			});
 		} else if (this.isMyTasksPage()) {
@@ -347,7 +354,6 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async editTaskDialog(selectedItem?: Task) {
-		console.log(selectedItem);
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
@@ -356,9 +362,9 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 		let dialog;
 		if (this.isTasksPage()) {
-			dialog = this.dialogService.open(TaskDialogComponent, {
+			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
+					task: this.selectedTask
 				}
 			});
 		} else if (this.isMyTasksPage()) {
@@ -403,9 +409,9 @@ export class TaskComponent extends TranslationBaseComponent
 		});
 		let dialog;
 		if (this.isTasksPage()) {
-			dialog = this.dialogService.open(TaskDialogComponent, {
+			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
+					task: this.selectedTask
 				}
 			});
 		} else if (this.isMyTasksPage()) {
@@ -501,7 +507,6 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	openTasksSettings(selectedProject: OrganizationProjects): void {
-		console.log('SELECTED_PROJECT: ', selectedProject);
 		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject
 		});

@@ -1,8 +1,5 @@
-<div class="header row">
-	<h5 class="mb-3 col">
-		{{ 'TIMESHEET.CALENDAR' | translate }}
-	</h5>
-	<div class="col-auto">
+<div class="filters row mb-3">
+	<div class="col-sm-3 text-left mb-3">
 		<button
 			nbButton
 			status="primary"
@@ -15,9 +12,6 @@
 			{{ 'TIMESHEET.ADD_TIME' | translate }}
 		</button>
 	</div>
-</div>
-
-<div class="filters row mb-3">
 	<div class="col">
 		<ngx-filters
 			[hasDateRangeFilter]="false"
