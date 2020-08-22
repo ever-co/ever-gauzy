@@ -1,12 +1,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import {
-	NbListModule,
 	NbButtonModule,
 	NbDialogModule,
 	NbIconModule,
-	NbUserModule,
 	NbCheckboxModule,
 	NbProgressBarModule
 } from '@nebular/theme';

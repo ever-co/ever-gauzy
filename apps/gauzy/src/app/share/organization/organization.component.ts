@@ -62,7 +62,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	moment = moment;
 	currencies = Object.values(CURRENCY);
 	clients: OrganizationContact[];
-	tabTitle: string = 'Profile';
+	tabTitle = 'Profile';
 
 	constructor(
 		private route: ActivatedRoute,
@@ -177,7 +177,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getProjectCount() {
-		const { items, total } = await this.organizationProjectsService.getAll(
+		const { total } = await this.organizationProjectsService.getAll(
 			['members'],
 			{
 				organizationId: this.organization.id,

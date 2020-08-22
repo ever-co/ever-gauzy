@@ -97,7 +97,7 @@ import { IntegrationType } from '../../integration/integration-type.entity';
 import { Integration } from '../../integration/integration.entity';
 import { IntegrationTenant } from '../../integration-tenant/integration-tenant.entity';
 import { IntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.entity';
-import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 import { IntegrationSetting } from '../../integration-setting/integration-setting.entity';
 import { IntegrationMap } from '../../integration-map/integration-map.entity';
 import { EmployeeAward } from '../../employee-award/employee-award.entity';

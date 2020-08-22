@@ -63,7 +63,7 @@ import { IncomeService } from '../income/income.service';
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
-import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.commant';
+import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
 import { IPagination } from '../core';
 import { UpworkReportService } from './upwork-report.service';
 import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';

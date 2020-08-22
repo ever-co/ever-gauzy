@@ -4,26 +4,30 @@ import { HelpCenterArticle } from '../help-center-article/help-center-article.en
 import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { Employee } from '@gauzy/models';
-import * as _ from 'underscore';
 
 export const createDefaultHelpCenterAuthor = async (
-  connection: Connection,
-  defaultEmployees: Employee[]
+	connection: Connection,
+	defaultEmployees: Employee[]
 ): Promise<HelpCenterAuthor[]> => {
-  if (!defaultEmployees) {
-    console.warn(
-      'Warning: defaultEmployees not found, default help center author not be created'
-    );
-    return;
-  }
+	if (!defaultEmployees) {
+		console.warn(
+			'Warning: defaultEmployees not found, default help center author not be created'
+		);
+		return;
+	}
 
-  let mapEmployeeToArticles: HelpCenterAuthor[] = [];
+	let mapEmployeeToArticles: HelpCenterAuthor[] = [];
 
-  const allArticle = await connection.manager.find(HelpCenterArticle, {});
+	const allArticle = await connection.manager.find(HelpCenterArticle, {});
 
-  mapEmployeeToArticles = await operateData(connection, mapEmployeeToArticles, allArticle, defaultEmployees);
+	mapEmployeeToArticles = await operateData(
+		connection,
+		mapEmployeeToArticles,
+		allArticle,
+		defaultEmployees
+	);
 
-  return mapEmployeeToArticles;
+	return mapEmployeeToArticles;
 };
 
 export const createRandomHelpCenterAuthor = async (
@@ -49,7 +53,12 @@ export const createRandomHelpCenterAuthor = async (
 		}
 	}
 
-  mapEmployeeToArticles = await operateData(connection, mapEmployeeToArticles, allArticle, employees)
+	mapEmployeeToArticles = await operateData(
+		connection,
+		mapEmployeeToArticles,
+		allArticle,
+		employees
+	);
 
 	return mapEmployeeToArticles;
 };
@@ -66,19 +75,23 @@ const insertRandomHelpCenterAuthor = async (
 		.execute();
 };
 
-const operateData = async (connection, mapEmployeeToArticles, allArticle, employees: Employee[]) =>{
+const operateData = async (
+	connection,
+	mapEmployeeToArticles,
+	allArticle,
+	employees: Employee[]
+) => {
+	for (let i = 0; i < allArticle.length; i++) {
+		const employee = faker.random.arrayElement(employees);
 
-  for (let i = 0; i < allArticle.length; i++) {
-    const emps = faker.random.arrayElement(employees);
+		const employeeMap = new HelpCenterAuthor();
 
-    let employeeMap = new HelpCenterAuthor();
+		employeeMap.employeeId = employee.id;
+		employeeMap.articleId = allArticle[i].id;
 
-    employeeMap.employeeId = emps.id;
-    employeeMap.articleId = allArticle[i].id;
+		mapEmployeeToArticles.push(employeeMap);
+	}
 
-    mapEmployeeToArticles.push(employeeMap);
-  }
-
-  await insertRandomHelpCenterAuthor(connection, mapEmployeeToArticles);
-  return mapEmployeeToArticles;
+	await insertRandomHelpCenterAuthor(connection, mapEmployeeToArticles);
+	return mapEmployeeToArticles;
 };

@@ -70,7 +70,7 @@ import { KeyResultService } from '../keyresult/keyresult.service';
 import { KeyResultUpdateService } from '../keyresult-update/keyresult-update.service';
 import { IntegrationService } from '../integration/integration.service';
 import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
-import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
+import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.service';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
