@@ -111,6 +111,7 @@ import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sh
 import { KeyResultTemplate } from '../keyresult-template/keyresult-template.entity';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
+import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
 
 const entities = [
 	Invite,
@@ -159,6 +160,7 @@ const entities = [
 	GoalGeneralSetting,
 	GoalKPI,
 	GoalTemplate,
+	GoalKPITemplate,
 	KeyResult,
 	KeyResultUpdate,
 	KeyResultTemplate,

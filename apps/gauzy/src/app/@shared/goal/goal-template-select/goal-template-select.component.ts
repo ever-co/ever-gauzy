@@ -7,7 +7,8 @@ import {
 	Employee,
 	OrganizationTeam,
 	GoalLevelEnum,
-	KeyResultWeightEnum
+	KeyResultWeightEnum,
+	KeyResultTypeEnum
 } from '@gauzy/models';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { Store } from '../../../@core/services/store.service';
@@ -53,7 +54,8 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 		private goalService: GoalService,
 		private keyResultService: KeyResultService,
 		private employeeService: EmployeesService,
-		private fb: FormBuilder
+		private fb: FormBuilder,
+		private goalSettingsService: GoalSettingsService
 	) {}
 
 	async ngOnInit() {
@@ -66,11 +68,12 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 					: GoalLevelEnum.ORGANIZATION,
 				Validators.required
 			],
-			lead: ['', Validators.required]
+			lead: [null]
 		});
 		await this.getTimeFrames();
 		this.goalTemplateService.getAllGoalTemplates().then((res) => {
 			const { items } = res;
+			console.log(items);
 			this.goalTemplates = items;
 		});
 		await this.employeeService
@@ -138,30 +141,53 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 			delete goal.keyResults;
 			const goalCreated = await this.goalService.createGoal(goal);
 			if (goalCreated) {
-				const keyResults = this.selectedGoalTemplate.keyResults.map(
-					(keyResult) => {
-						delete keyResult.goalId;
-						return {
-							...keyResult,
-							goalId: goalCreated.id,
-							description: ' ',
-							progress: 0,
-							update: keyResult.initialValue,
-							owner: this.employees[0].id,
-							organizationId: this.orgId,
-							status: 'none',
-							weight: KeyResultWeightEnum.DEFAULT
-						};
+				const kpicreatedPromise = [];
+				this.selectedGoalTemplate.keyResults.forEach(
+					async (keyResult) => {
+						if (keyResult.type === KeyResultTypeEnum.KPI) {
+							const kpiData = {
+								...keyResult.kpi,
+								organization: this.orgId
+							};
+							await this.goalSettingsService
+								.createKPI(kpiData)
+								.then((res) => {
+									if (res) {
+										keyResult.kpiId = res.id;
+									}
+									kpicreatedPromise.push(keyResult);
+								});
+						}
 					}
 				);
-				console.log(keyResults);
-				await this.keyResultService
-					.createBulkKeyResult(keyResults)
-					.then((res) => {
-						if (res) {
-							this.closeDialog('done');
+				Promise.all(kpicreatedPromise).then(async () => {
+					const keyResults = this.selectedGoalTemplate.keyResults.map(
+						(keyResult) => {
+							delete keyResult.kpi;
+							delete keyResult.goalId;
+							return {
+								...keyResult,
+								goalId: goalCreated.id,
+								description: ' ',
+								progress: 0,
+								update: keyResult.initialValue,
+								owner: this.employees[0].id,
+								organizationId: this.orgId,
+								status: 'none',
+								weight: KeyResultWeightEnum.DEFAULT
+							};
 						}
-					});
+					);
+
+					console.log(keyResults);
+					await this.keyResultService
+						.createBulkKeyResult(keyResults)
+						.then((res) => {
+							if (res) {
+								this.closeDialog('done');
+							}
+						});
+				});
 			}
 		}
 	}

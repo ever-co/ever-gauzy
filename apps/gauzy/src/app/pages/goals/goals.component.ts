@@ -294,13 +294,10 @@ export class GoalsComponent extends TranslationBaseComponent
 
 	calculateGoalProgress(keyResults) {
 		const progressTotal = keyResults.reduce(
-			(a, b) => a + b.progress * parseInt(b.weight, 10),
+			(a, b) => a + b.progress * +b.weight,
 			0
 		);
-		const weightTotal = keyResults.reduce(
-			(a, b) => a + parseInt(b.weight, 10),
-			0
-		);
+		const weightTotal = keyResults.reduce((a, b) => a + +b.weight, 0);
 		return Math.round(progressTotal / weightTotal);
 	}
 

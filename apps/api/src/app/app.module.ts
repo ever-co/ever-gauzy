@@ -113,6 +113,7 @@ import { GoalTemplateModule } from './goal-template/goal-template.module';
 import { KeyresultTemplateModule } from './keyresult-template/keyresult-template.module';
 import * as moment from 'moment';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
+import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
 
 @Module({
 	imports: [
@@ -434,6 +435,10 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 						module: GoalKpiModule
 					},
 					{
+						path: '/goal-kpi-template',
+						module: GoalKpiTemplateModule
+					},
+					{
 						path: '/goal-templates',
 						module: GoalTemplateModule
 					},
@@ -445,10 +450,10 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 						path: '/key-result-updates',
 						module: KeyResultUpdateModule
 					},
-          {
-            path: '/key-result-templates',
+					{
+						path: '/key-result-templates',
 						module: KeyresultTemplateModule
-          },
+					},
 					{
 						path: '/invoice-estimate-history',
 						module: InvoiceEstimateHistoryModule
@@ -576,7 +581,8 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 		}),
 		GoalKpiModule,
 		GoalTemplateModule,
-		KeyresultTemplateModule
+		KeyresultTemplateModule,
+		GoalKpiTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

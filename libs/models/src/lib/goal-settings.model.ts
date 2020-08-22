@@ -49,6 +49,19 @@ export interface KeyResultTemplate extends IBaseEntityModel {
 	softDeadline?: Date;
 	goal: GoalTemplate;
 	goalId?: string;
+	kpi?: GoalKPITemplate;
+	kpiId?: string;
+}
+
+export interface GoalKPITemplate extends IBaseEntityModel {
+	name: string;
+	description: string;
+	type: string;
+	unit?: string;
+	currentValue?: number;
+	targetValue?: number;
+	lead?: Employee;
+	operator: string;
 }
 
 export enum TimeFrameStatusEnum {

@@ -8,6 +8,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { TenantBase } from '../core/entities/tenant-base';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
+import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
 
 @Entity('key_result_template')
 export class KeyResultTemplate extends TenantBase
@@ -40,6 +41,17 @@ export class KeyResultTemplate extends TenantBase
 	@IsEnum(KeyResultDeadlineEnum)
 	@Column()
 	deadline: string;
+
+	@ApiProperty({ type: GoalKPITemplate })
+	@ManyToOne((type) => GoalKPITemplate, { nullable: true })
+	@JoinColumn({ name: 'kpiId' })
+	@IsOptional()
+	kpi?: GoalKPITemplate;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((keyResult: KeyResultTemplate) => keyResult.kpi)
+	@Column({ nullable: true })
+	kpiId?: string;
 
 	@ApiProperty({ type: GoalTemplate })
 	@ManyToOne(
