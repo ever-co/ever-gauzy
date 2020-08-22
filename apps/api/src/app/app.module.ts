@@ -113,6 +113,7 @@ import { KeyresultTemplateModule } from './keyresult-template/keyresult-template
 import * as moment from 'moment';
 import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
+import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
 
 @Module({
 	imports: [
@@ -436,6 +437,10 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 						module: GoalKpiModule
 					},
 					{
+						path: '/goal-kpi-template',
+						module: GoalKpiTemplateModule
+					},
+					{
 						path: '/goal-templates',
 						module: GoalTemplateModule
 					},
@@ -579,7 +584,8 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 		}),
 		GoalKpiModule,
 		GoalTemplateModule,
-		KeyresultTemplateModule
+		KeyresultTemplateModule,
+		GoalKpiTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

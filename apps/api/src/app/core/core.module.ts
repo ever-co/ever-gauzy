@@ -112,6 +112,7 @@ import { KeyResultTemplate } from '../keyresult-template/keyresult-template.enti
 import { GoalTemplate } from '../goal-template/goal-template.entity';
 import { EmployeeAward } from '../employee-award/employee-award.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
+import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
 
 const entities = [
 	Invite,
@@ -160,6 +161,7 @@ const entities = [
 	GoalGeneralSetting,
 	GoalKPI,
 	GoalTemplate,
+	GoalKPITemplate,
 	KeyResult,
 	KeyResultUpdate,
 	KeyResultTemplate,
