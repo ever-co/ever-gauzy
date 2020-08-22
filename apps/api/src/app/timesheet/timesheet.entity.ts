@@ -18,7 +18,6 @@ import {
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { TimeLog } from './time-log.entity';
-import { User } from '../user/user.entity';
 
 @Entity('timesheet')
 export class Timesheet extends Base implements ITimesheet {
