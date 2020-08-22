@@ -14,6 +14,8 @@
 		"REMOVE": "Remove",
 		"ADD_EXISTING": "Add Existing",
 		"OK": "בסדר",
+		"YES": "Yes",
+		"NO": "No",
 		"SAVE": "לשמור",
 		"CLEAR_ALL": "Clear All",
 		"BACK": "חזור",
@@ -2173,6 +2175,7 @@
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
 		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit",
+		"DELETE_TIMELOG": "Are you sure you want to delete Timelog?",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"ALL_EMPLOYEE": "כל העובדים",
 		"SELECT_SOURCE": "Select Source",
@@ -2350,5 +2353,10 @@
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
 		"SELECT_STAGE": "Select Stage",
 		"PROBABLITY": "Probability"
+	},
+	"DIALOG": {
+		"CONFIRM": "אשר",
+		"ALERT": "Alert",
+		"DELETE_CONFIRM": "Alert"
 	}
 }
