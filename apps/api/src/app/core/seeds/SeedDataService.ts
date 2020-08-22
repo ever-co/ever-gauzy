@@ -1631,7 +1631,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Random Integration Entity Settings',
+			'Random Integration Entity Settings Tied Entity',
 			createRandomIntegrationEntitySettingTiedEntity(
 				this.connection,
 				tenants

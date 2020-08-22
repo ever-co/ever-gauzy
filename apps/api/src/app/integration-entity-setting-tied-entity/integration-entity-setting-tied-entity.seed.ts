@@ -16,7 +16,7 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 		return;
 	}
 
-	const integrationEntitySettings: IntegrationEntitySettingTiedEntity[] = [];
+	const randomIntegrationEntitySettingsTiedEntity: IntegrationEntitySettingTiedEntity[] = [];
 
 	for (const tenant of tenants) {
 		const integrationTenants = await connection.manager.find(
@@ -25,7 +25,6 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 				where: [{ tenant: tenant }]
 			}
 		);
-
 		for (const integrationTenant of integrationTenants) {
 			const integrationEntitySettings = await connection.manager.find(
 				IntegrationEntitySetting,
@@ -34,18 +33,20 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 				}
 			);
 			for (const integrationEntitySetting of integrationEntitySettings) {
-				const integrationEntitySetting = new IntegrationEntitySettingTiedEntity();
+				const integrationEntitySettingTiedEntity = new IntegrationEntitySettingTiedEntity();
 
-				integrationEntitySetting.integrationEntitySetting = integrationEntitySetting;
-				integrationEntitySetting.sync = faker.random.boolean();
+				integrationEntitySettingTiedEntity.integrationEntitySetting = integrationEntitySetting;
+				integrationEntitySettingTiedEntity.sync = faker.random.boolean();
 				//todo: need to understand real values here
-				integrationEntitySetting.entity =
+				integrationEntitySettingTiedEntity.entity =
 					'entity-' + faker.random.number(40);
 
-				integrationEntitySettings.push(integrationEntitySetting);
+				randomIntegrationEntitySettingsTiedEntity.push(
+					integrationEntitySettingTiedEntity
+				);
 			}
 		}
 	}
 
-	await connection.manager.save(integrationEntitySettings);
+	await connection.manager.save(randomIntegrationEntitySettingsTiedEntity);
 };
