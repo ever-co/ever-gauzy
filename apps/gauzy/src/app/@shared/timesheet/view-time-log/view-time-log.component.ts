@@ -5,7 +5,6 @@ import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from '../edit-time-log-modal/edit-time-log-modal.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { ViewTimeLogModalComponent } from '../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
-import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { TimesheetService } from '../timesheet.service';
 
 @Component({
@@ -67,18 +66,10 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	onDeleteConfirm($event: MouseEvent, timeLog) {
-		$event.stopPropagation();
-		this.nbDialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((type) => {
-				if (type === 'ok') {
-					this.timesheetService.deleteLogs(timeLog.id).then((res) => {
-						this.callback(res);
-					});
-				}
-			});
+	onDeleteConfirm(timeLog) {
+		this.timesheetService.deleteLogs(timeLog.id).then((res) => {
+			this.callback(res);
+		});
 	}
 
 	ngOnDestroy(): void {}

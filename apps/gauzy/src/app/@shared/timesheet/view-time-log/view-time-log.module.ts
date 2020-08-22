@@ -11,6 +11,8 @@ import {
 import { SharedModule } from '../../shared.module';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 import { ViewTimeLogModalModule } from '../view-time-log-modal/view-time-log-modal.module';
+import { DialogsModule } from '../../dialogs';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [ViewTimeLogComponent],
@@ -25,7 +27,9 @@ import { ViewTimeLogModalModule } from '../view-time-log-modal/view-time-log-mod
 		EditTimeLogModalModule,
 		ViewTimeLogModalModule,
 		NbIconModule,
-		NbUserModule
+		NbUserModule,
+		DialogsModule,
+		TranslateModule
 	]
 })
 export class ViewTimeLogModule {}

@@ -25,6 +25,7 @@ import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/he
 import { MomentModule } from 'ngx-moment';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/tasks/task-select/task-select.module';
+import { DialogsModule } from 'apps/gauzy/src/app/@shared/dialogs';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
@@ -50,7 +51,8 @@ import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/tasks/task-select/t
 		NbPopoverModule,
 		MomentModule,
 		FiltersModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		DialogsModule
 	]
 })
 export class ApprovalsModule {}

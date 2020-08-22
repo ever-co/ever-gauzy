@@ -10,7 +10,8 @@ export interface Pagination {
 
 export interface Timesheet extends IBaseEntityModel {
 	employee: Employee;
-	approvedBy?: OrganizationContact;
+	approvedBy?: Employee;
+	timeLogs?: TimeLog[];
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
