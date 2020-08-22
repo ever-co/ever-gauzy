@@ -32,10 +32,10 @@ export class Timesheet extends Base implements ITimesheet {
 	@Column()
 	readonly employeeId?: string;
 
-	@ApiProperty({ type: User })
-	@ManyToOne(() => User, { nullable: true })
+	@ApiProperty({ type: Employee })
+	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
-	approvedBy?: User;
+	approvedBy?: Employee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timesheet: Timesheet) => timesheet.approvedBy)

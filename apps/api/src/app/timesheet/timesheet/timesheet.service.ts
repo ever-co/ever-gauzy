@@ -56,7 +56,7 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		let approvedBy: string = null;
 		if (status === TimesheetStatus.APPROVED) {
 			const user = RequestContext.currentUser();
-			approvedBy = user.id;
+			approvedBy = user.employeeId;
 		}
 
 		const timesheet = await this.timeSheetRepository.update(

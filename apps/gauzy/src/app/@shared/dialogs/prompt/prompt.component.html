@@ -9,7 +9,7 @@
 					class="col-auto"
 					nbButton
 					ghost
-					(click)="close(false)"
+					(click)="close()"
 					type="button"
 				>
 					<nb-icon icon="close-outline"></nb-icon>
@@ -87,7 +87,7 @@
 			<button class="mr-2" nbButton status="primary">
 				{{ data?.okText || ('BUTTONS.OK' | translate) }}
 			</button>
-			<button class="mr-2" nbButton type="button" (click)="close(false)">
+			<button class="mr-2" nbButton type="button" (click)="close()">
 				{{ data?.cancelText || ('BUTTONS.CANCEL' | translate) }}
 			</button>
 		</nb-card-footer>
