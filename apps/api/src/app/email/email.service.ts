@@ -17,6 +17,7 @@ import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
 import { Email as IEmail } from './email.entity';
 import { Invite } from '../invite/invite.entity';
+import { MailerService } from '@nestjs-modules/mailer';
 
 export interface InviteUserModel {
 	email: string;
@@ -48,7 +49,8 @@ export class EmailService extends CrudService<IEmail> {
 		@InjectRepository(EmailTemplate)
 		private readonly emailTemplateRepository: Repository<EmailTemplate>,
 		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>
+		private readonly organizationRepository: Repository<Organization>,
+		private readonly mailerService: MailerService
 	) {
 		super(emailRepository);
 	}
@@ -146,6 +148,7 @@ export class EmailService extends CrudService<IEmail> {
 				}
 			})
 			.then((res) => {
+				this.emailSend(res.originalMessage);
 				this.createEmailRecord({
 					templateName: isEstimate
 						? 'email-estimate'
@@ -191,6 +194,7 @@ export class EmailService extends CrudService<IEmail> {
 		this.email
 			.send(sendOptions)
 			.then((res) => {
+				this.emailSend(res.originalMessage);
 				this.createEmailRecord({
 					templateName: sendOptions.template,
 					email: organizationContact.primaryEmail,
@@ -231,6 +235,7 @@ export class EmailService extends CrudService<IEmail> {
 		this.email
 			.send(sendOptions)
 			.then((res) => {
+				this.emailSend(res.originalMessage);
 				this.createEmailRecord({
 					templateName: sendOptions.template,
 					email,
@@ -272,6 +277,7 @@ export class EmailService extends CrudService<IEmail> {
 		this.email
 			.send(sendOptions)
 			.then((res) => {
+				this.emailSend(res.originalMessage);
 				this.createEmailRecord({
 					templateName: sendOptions.template,
 					email,
@@ -314,6 +320,7 @@ export class EmailService extends CrudService<IEmail> {
 		this.email
 			.send(sendOptions)
 			.then((res) => {
+				this.emailSend(res.originalMessage);
 				this.createEmailRecord({
 					templateName: sendOptions.template,
 					email: user.email,
@@ -353,6 +360,7 @@ export class EmailService extends CrudService<IEmail> {
 		this.email
 			.send(sendOptions)
 			.then((res) => {
+				this.emailSend(res.originalMessage);
 				this.createEmailRecord({
 					templateName: sendOptions.template,
 					email: user.email,
@@ -434,6 +442,7 @@ export class EmailService extends CrudService<IEmail> {
 		this.email
 			.send(sendOptions)
 			.then((res) => {
+				this.emailSend(res.originalMessage);
 				this.createEmailRecord({
 					templateName: sendOptions.template,
 					email: email,
@@ -443,6 +452,25 @@ export class EmailService extends CrudService<IEmail> {
 				});
 			})
 			.catch(console.error);
+	}
+
+	emailSend(emailContent) {
+		this.mailerService
+		.sendMail({
+		  to: emailContent.to, // list of receivers
+		  from: emailContent.from, // sender address
+		  subject: emailContent.subject, // Subject line
+		  text: emailContent.text, // plaintext body
+		  html: emailContent.html, // HTML body content
+		  attachments: emailContent.attachments,
+		})
+		.then((success) => {
+		  console.log(success)
+		})
+		.catch((err) => {
+		  console.log(err)
+		});
+		
 	}
 
 	// tested e-mail send functionality

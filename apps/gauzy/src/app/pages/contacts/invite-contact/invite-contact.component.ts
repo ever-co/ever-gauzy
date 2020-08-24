@@ -81,6 +81,8 @@ export class InviteContactComponent extends TranslationBaseComponent
 
 	async inviteContact() {
 		const organizationContact: OrganizationContact = await this.addOrEditOrganizationContact();
+		console.log('invite or invite again', organizationContact)
+
 		try {
 			if (organizationContact) {
 				const invited = this.inviteService.inviteOrganizationContact(

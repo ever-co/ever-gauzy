@@ -113,6 +113,7 @@ import { KeyresultTemplateModule } from './keyresult-template/keyresult-template
 import * as moment from 'moment';
 import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
+import { SendMailModule } from './email/sendMail.module';
 
 @Module({
 	imports: [
@@ -532,6 +533,7 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 		PipelineModule,
 		StageModule,
 		DealModule,
+		SendMailModule,
 		InvoiceEstimateHistoryModule,
 		...(environment.sentry
 			? [
