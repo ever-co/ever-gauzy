@@ -28,7 +28,9 @@ export class ScreenshotCreateHandler
 				record: timeSlot
 			} = await this._timeSlotService.findOneOrFail({
 				where: {
-					startedAt: moment(activityTimestamp).toDate()
+					startedAt: new Date(
+						moment(activityTimestamp).format('YYYY-MM-DD HH:mm:ss')
+					)
 				}
 			});
 
@@ -40,7 +42,9 @@ export class ScreenshotCreateHandler
 					keyboard: 0,
 					mouse: 0,
 					overall: 0,
-					startedAt: moment(activityTimestamp).toDate()
+					startedAt: new Date(
+						moment(activityTimestamp).format('YYYY-MM-DD HH:mm:ss')
+					)
 				});
 			}
 
