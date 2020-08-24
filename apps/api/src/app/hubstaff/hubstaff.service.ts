@@ -17,7 +17,8 @@ import {
 	TimeLogType,
 	ContactType,
 	CurrenciesEnum,
-	ProjectBillingEnum
+	ProjectBillingEnum,
+	TimeLogSourceEnum
 } from '@gauzy/models';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
@@ -250,7 +251,7 @@ export class HubstaffService {
 		projects
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await projects.map(
-			async ({ name, sourceId, billable, description, status }) => {
+			async ({ name, sourceId, billable, description }) => {
 				const payload = {
 					name,
 					organizationId: orgId,
@@ -258,10 +259,8 @@ export class HubstaffService {
 					billing: ProjectBillingEnum.RATE,
 					currency: CurrenciesEnum.BGN,
 					billable,
-					description,
-					status
+					description
 				};
-
 				const {
 					record
 				} = await this._integrationMapService.findOneOrFail({
@@ -279,11 +278,9 @@ export class HubstaffService {
 					);
 					return record;
 				}
-
 				const gauzyProject = await this.commandBus.execute(
 					new OrganizationProjectCreateCommand(payload)
 				);
-
 				return await this._integrationMapService.create({
 					gauzyId: gauzyProject.id,
 					integrationId,
@@ -302,6 +299,18 @@ export class HubstaffService {
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await organizations.map(
 			async (organization) => {
+				const { sourceId } = organization;
+				const {
+					record
+				} = await this._integrationMapService.findOneOrFail({
+					where: {
+						sourceId,
+						entity: IntegrationEntity.ORGANIZATION
+					}
+				});
+				if (record) {
+					return record;
+				}
 				const tenant = await this._tenantService.findOne({
 					where: { name: 'Ever' }
 				});
@@ -313,11 +322,10 @@ export class HubstaffService {
 							organization.imageUrl || getDummyImage(330, 300, '')
 					})
 				);
-
 				return await this._integrationMapService.create({
 					gauzyId: gauzyOrganization.id,
 					integrationId,
-					sourceId: organization.sourceId,
+					sourceId,
 					entity: IntegrationEntity.ORGANIZATION
 				});
 			}
@@ -364,42 +372,44 @@ export class HubstaffService {
 		token,
 		organizationId
 	}): Promise<IIntegrationMap[]> {
-		const integrationMaps = await screenshots.map(
-			async ({
+		let integratedScreenshots = [];
+		for await (const screenshot of screenshots) {
+			const {
 				id,
 				time_slot,
 				full_url,
 				thumb_url,
 				recorded_at,
 				user_id
-			}) => {
-				const employee = await this._getEmployeeByHubstaffUserId(
-					user_id,
-					token,
-					integrationId,
-					organizationId
-				);
-
-				const gauzyScreenshot = await this.commandBus.execute(
-					new ScreenshotCreateCommand({
-						file: full_url,
-						thumb: thumb_url,
-						recordedAt: recorded_at,
-						activityTimestamp: time_slot,
-						employeeId: employee.gauzyId
-					})
-				);
-
-				return await this._integrationMapService.create({
+			} = screenshot;
+			const employee = await this._getEmployeeByHubstaffUserId(
+				user_id,
+				token,
+				integrationId,
+				organizationId
+			);
+			const gauzyScreenshot = await this.commandBus.execute(
+				new ScreenshotCreateCommand({
+					file: full_url,
+					thumb: thumb_url,
+					recordedAt: recorded_at,
+					activityTimestamp: time_slot,
+					employeeId: employee.gauzyId
+				})
+			);
+			const integratedScreenshot = await this._integrationMapService.create(
+				{
 					gauzyId: gauzyScreenshot.id,
 					integrationId,
 					sourceId: id,
 					entity: IntegrationEntity.SCREENSHOT
-				});
-			}
-		);
-
-		return await Promise.all(integrationMaps);
+				}
+			);
+			integratedScreenshots = integratedScreenshots.concat(
+				integratedScreenshot
+			);
+		}
+		return integratedScreenshots;
 	}
 
 	async syncTasks({
@@ -409,13 +419,19 @@ export class HubstaffService {
 	}): Promise<IIntegrationMap[]> {
 		const user = RequestContext.currentUser();
 		const integrationMaps = await tasks.map(
-			async ({ summary: title, id, status }) => {
+			async ({ summary: title, id, status, due_at }) => {
+				if (!due_at) {
+					due_at = new Date(
+						moment().add(2, 'week').format('YYYY-MM-DD HH:mm:ss')
+					);
+				}
 				const payload = {
 					title,
 					projectId,
 					description: 'Hubstaff Task',
-					status,
-					creatorId: user.id
+					status: status.charAt(0).toUpperCase() + status.slice(1),
+					creatorId: user.id,
+					dueDate: due_at
 				};
 				//if task already integrated then only update model/entity
 				const {
@@ -553,7 +569,8 @@ export class HubstaffService {
 					logType: timeLog.logType,
 					duration: timeLog.tracked,
 					startedAt: timeLog.starts_at,
-					timesheetId: timesheet.id
+					timesheetId: timesheet.id,
+					source: TimeLogSourceEnum.HUBSTAFF
 				})
 			);
 
@@ -588,6 +605,7 @@ export class HubstaffService {
 				})
 			]);
 			const [firstName, lastName] = user.name.split(' ');
+			const isActive = user.status === 'active' ? true : false;
 			employee = await this.commandBus.execute(
 				new EmployeeCreateCommand({
 					user: {
@@ -599,7 +617,11 @@ export class HubstaffService {
 						tenant: null
 					},
 					password: environment.defaultHubstaffUserPass,
-					organization
+					organization,
+					startedWorkOn: new Date(
+						moment().format('YYYY-MM-DD HH:mm:ss')
+					),
+					isActive
 				})
 			);
 		}
@@ -636,12 +658,11 @@ export class HubstaffService {
 				token
 			);
 			const projectMap = projects.map(
-				({ name, id, billable, description, status }) => ({
+				({ name, id, billable, description }) => ({
 					name,
 					sourceId: id,
 					billable,
-					description,
-					status
+					description
 				})
 			);
 			return await this.syncProjects({
@@ -695,52 +716,52 @@ export class HubstaffService {
 		token,
 		organizationId
 	}): Promise<IIntegrationMap[]> {
-		const integrationMaps = await activities.map(
-			async ({ id, site, tracked, date, user_id }) => {
-				const {
-					record
-				} = await this._integrationMapService.findOneOrFail({
-					where: {
-						sourceId: id,
-						entity: IntegrationEntity.ACTIVITY
-					}
-				});
-				//if activity already integrated then no need to create new one
-				if (record) {
-					return record;
-				}
+		let integrationMaps = [];
+		for await (const activity of activities) {
+			const { id, site, tracked, user_id } = activity;
+			let { date } = activity;
 
-				const employee = await this._getEmployeeByHubstaffUserId(
-					user_id,
-					token,
-					integrationId,
-					organizationId
-				);
-				const time = moment(date).format('HH:mm:ss');
-				date = moment(date).format('YYYY-MM-DD');
-
-				const gauzyActivity = await this.commandBus.execute(
-					new ActivityCreateCommand({
-						title: site,
-						duration: tracked,
-						type: 'URL',
-						date,
-						time,
-						projectId,
-						employeeId: employee.gauzyId
-					})
-				);
-
-				return await this._integrationMapService.create({
-					gauzyId: gauzyActivity.id,
-					integrationId,
+			const { record } = await this._integrationMapService.findOneOrFail({
+				where: {
 					sourceId: id,
 					entity: IntegrationEntity.ACTIVITY
-				});
+				}
+			});
+			//if activity already integrated then no need to create new one
+			if (record) {
+				return record;
 			}
-		);
 
-		return await Promise.all(integrationMaps);
+			const employee = await this._getEmployeeByHubstaffUserId(
+				user_id,
+				token,
+				integrationId,
+				organizationId
+			);
+			const time = moment(date).format('HH:mm:ss');
+			date = moment(date).format('YYYY-MM-DD');
+
+			const gauzyActivity = await this.commandBus.execute(
+				new ActivityCreateCommand({
+					title: site,
+					duration: tracked,
+					type: 'URL',
+					date,
+					time,
+					projectId,
+					employeeId: employee.gauzyId
+				})
+			);
+			const integrationMap = await this._integrationMapService.create({
+				gauzyId: gauzyActivity.id,
+				integrationId,
+				sourceId: id,
+				entity: IntegrationEntity.ACTIVITY
+			});
+			integrationMaps = integrationMaps.concat(integrationMap);
+		}
+
+		return integrationMaps;
 	}
 
 	/*
@@ -822,52 +843,56 @@ export class HubstaffService {
 		token,
 		organizationId
 	}): Promise<IIntegrationMap[]> {
-		const integrationMaps = await activities.map(
-			async ({ id, name, tracked, date, user_id, task_id }) => {
-				const {
-					record
-				} = await this._integrationMapService.findOneOrFail({
-					where: {
-						sourceId: id,
-						entity: IntegrationEntity.ACTIVITY
-					}
-				});
-				//if activity already integrated then no need to create new one
-				if (record) {
-					return record;
+		let integratedAppActivities = [];
+		for await (const activity of activities) {
+			const { id, name, tracked, user_id } = activity;
+			let { date } = activity;
+
+			const { record } = await this._integrationMapService.findOneOrFail({
+				where: {
+					sourceId: id,
+					entity: IntegrationEntity.ACTIVITY
 				}
+			});
+			//if activity already integrated then no need to create new one
+			if (record) {
+				return record;
+			}
 
-				const employee = await this._getEmployeeByHubstaffUserId(
-					user_id,
-					token,
-					integrationId,
-					organizationId
-				);
-				const time = moment(date).format('HH:mm:ss');
-				date = moment(date).format('YYYY-MM-DD');
+			const employee = await this._getEmployeeByHubstaffUserId(
+				user_id,
+				token,
+				integrationId,
+				organizationId
+			);
+			const time = moment(date).format('HH:mm:ss');
+			date = moment(date).format('YYYY-MM-DD');
 
-				const gauzyActivity = await this.commandBus.execute(
-					new ActivityCreateCommand({
-						title: name,
-						duration: tracked,
-						type: 'APP',
-						time,
-						date,
-						projectId,
-						employeeId: employee.gauzyId
-					})
-				);
-
-				return await this._integrationMapService.create({
+			const gauzyActivity = await this.commandBus.execute(
+				new ActivityCreateCommand({
+					title: name,
+					duration: tracked,
+					type: 'APP',
+					time,
+					date,
+					projectId,
+					employeeId: employee.gauzyId
+				})
+			);
+			const integartedActivity = await this._integrationMapService.create(
+				{
 					gauzyId: gauzyActivity.id,
 					integrationId,
 					sourceId: id,
 					entity: IntegrationEntity.ACTIVITY
-				});
-			}
-		);
+				}
+			);
+			integratedAppActivities = integratedAppActivities.concat(
+				integartedActivity
+			);
+		}
 
-		return await Promise.all(integrationMaps);
+		return integratedAppActivities;
 	}
 
 	/*
