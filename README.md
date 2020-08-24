@@ -47,21 +47,11 @@ In addition, we encourage individual **Freelancers** to join our "Gauzy" revolut
 
 Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your freelance business, agency, studio or in-house teams.
 
-## Demos & Testing
+## Demos, Testing and Production
 
-**Demos are not available at the moment as we are moving to Kubernetes and showdown old demo server!**
-
-<!---
-
-Feel free to test a Demo <http://demo.gauzy.co:4250> on our server. Login: `admin@ever.co` and password: `admin`.
-
-In the future we will have the following:
-
--   Gauzy Platform SaaS at <https://app.gauzy.co>
 -   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
--   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev>
-
--->
+-   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary deployed manually)
+-   Gauzy Platform SaaS at <https://app.gauzy.co> (not used yet in production, it's same as demo.gauzy.co for now)
 
 ## Quick Start
 
@@ -102,9 +92,9 @@ Notes:
 
 ### Production
 
--   Check [Gauzy Pulumi](https://github.com/ever-co/gauzy-pulumi) project, it will make Clouds deployments possible with a single command (`pulumi up`)
+-   Check [Gauzy Pulumi](https://github.com/ever-co/gauzy-pulumi) project, it makes Clouds deployments possible with a single command (`pulumi up`)
 
-Note: it's WIP, currently supports AWS EKS (Kubernetes) and Fargate Clusters (for web app and backend api), Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments.
+Note: it currently supports AWS EKS (Kubernetes) for development and production (recommended) with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. In addition, we implemented deployments to ECS EC2 and Fargate Clusters.
 
 ## Technology Stack
 
