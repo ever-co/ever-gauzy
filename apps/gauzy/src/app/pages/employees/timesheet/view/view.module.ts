@@ -8,6 +8,8 @@ import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { MomentModule } from 'ngx-moment';
+import { DialogsModule } from 'apps/gauzy/src/app/@shared/dialogs';
+import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
 
 @NgModule({
 	declarations: [ViewComponent],
@@ -19,7 +21,9 @@ import { MomentModule } from 'ngx-moment';
 		SharedModule,
 		NbButtonModule,
 		MomentModule,
-		NbIconModule
+		NbIconModule,
+		DialogsModule,
+		EditTimeLogModalModule
 	]
 })
 export class ViewModule {}

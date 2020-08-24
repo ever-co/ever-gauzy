@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entitiy.entity';
-import { IntegrationEntitySettingTiedEntityController } from './integration-entity-setting-tied-entitiy.controller';
-import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entitiy.service';
+import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
+import { IntegrationEntitySettingTiedEntityController } from './integration-entity-setting-tied-entity.controller';
+import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entity.service';
 
 @Module({
 	imports: [TypeOrmModule.forFeature([IntegrationEntitySettingTiedEntity])],

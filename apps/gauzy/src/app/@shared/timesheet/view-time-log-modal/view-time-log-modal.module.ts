@@ -10,6 +10,7 @@ import {
 	NbIconModule
 } from '@nebular/theme';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
+import { DialogsModule } from '../../dialogs';
 
 @NgModule({
 	declarations: [ViewTimeLogModalComponent],
@@ -23,7 +24,8 @@ import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-mod
 		NbButtonModule,
 		NbDialogModule.forChild(),
 		EditTimeLogModalModule,
-		NbIconModule
+		NbIconModule,
+		DialogsModule
 	]
 })
 export class ViewTimeLogModalModule {}

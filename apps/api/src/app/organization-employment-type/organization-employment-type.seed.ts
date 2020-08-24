@@ -11,50 +11,45 @@ export const seedDefaultEmploymentTypes = async (
 	defaultOrganization: Organization
 ) => {
 	const defaultTeams = [
-    {
-      name: 'Employees',
-      defaultMembers: [
-        'admin@ever.co',
-        'alish@ever.co',
-        'blagovest@ever.co',
-        'elvis@ever.co',
-        'emil@ever.co',
-        'boyan@ever.co',
-        'atanas@ever.co',
-        'hristo@ever.co',
-        'alex@ever.co',
-        'milena@ever.co',
-        'sunko@ever.co',
-        'lubomir@ever.co',
-        'pavel@ever.co',
-        'yavor@ever.co',
-        'tsvetelina@ever.co',
-        'everq@ever.co',
-        'julia@ever.co'
-      ],
-      manager: ['ruslan@ever.co']
-    },
-    {
-      name: 'Contractors',
-      defaultMembers: [
-        'dimana@ever.co',
-        'deko898@hotmail.com',
-        'muiz@smooper.xyz',
-        'ckhandla94@gmail.com'
-      ],
-      manager: ['ruslan@ever.co', 'rachit@ever.co']
-    },
-    {
-      name: 'Designers',
-      defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
-      manager: []
-    },
-    {
-      name: 'QA',
-      defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
-      manager: []
-    }
-  ];
+		{
+			name: 'Employees',
+			defaultMembers: [
+				'admin@ever.co',
+				'alish@ever.co',
+				'blagovest@ever.co',
+				'elvis@ever.co',
+				'emil@ever.co',
+				'hristo@ever.co',
+				'alex@ever.co',
+				'pavel@ever.co',
+				'yavor@ever.co',
+				'tsvetelina@ever.co',
+				'everq@ever.co',
+				'julia@ever.co'
+			],
+			manager: ['ruslan@ever.co']
+		},
+		{
+			name: 'Contractors',
+			defaultMembers: [
+				'dimana@ever.co',
+				'deko898@hotmail.com',
+				'muiz@smooper.xyz',
+				'ckhandla94@gmail.com'
+			],
+			manager: ['ruslan@ever.co', 'rachit@ever.co']
+		},
+		{
+			name: 'Designers',
+			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
+			manager: []
+		},
+		{
+			name: 'QA',
+			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
+			manager: []
+		}
+	];
 	const fullTimeEmployees = defaultTeams[0].defaultMembers;
 	const contractors = defaultTeams[1].defaultMembers;
 	const employmentTypes: OrganizationEmploymentType[] = Object.values(

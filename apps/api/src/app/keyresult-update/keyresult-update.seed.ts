@@ -56,7 +56,7 @@ export const createDefaultKeyResultUpdates = async (
 					max: keyResult.targetValue
 				});
 				if (
-					keyResult.deadline ==
+					keyResult.deadline ===
 					KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
 				) {
 					keyResultUpdate.createdAt = faker.date.between(

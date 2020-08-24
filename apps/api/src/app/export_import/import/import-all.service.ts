@@ -69,7 +69,7 @@ import { IntegrationMap } from '../../integration-map/integration-map.entity';
 import { Income } from '../../income/income.entity';
 import { Integration } from '../../integration/integration.entity';
 import { IntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.entity';
-import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 import { Organization } from '../../organization/organization.entity';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { OrganizationAwards } from '../../organization-awards/organization-awards.entity';

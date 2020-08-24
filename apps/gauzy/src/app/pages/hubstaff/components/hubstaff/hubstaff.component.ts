@@ -135,9 +135,8 @@ export class HubstaffComponent extends TranslationBaseComponent
 	}
 
 	selectProject({ isSelected, selected }) {
-		const selectedProject = isSelected ? selected : null;
 		this.projectsTable.grid.dataSet.willSelect = false;
-		this.selectedProjects = selectedProject;
+		this.selectedProjects = selected;
 	}
 
 	syncProjects() {

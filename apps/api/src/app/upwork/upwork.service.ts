@@ -23,7 +23,8 @@ import {
 	OrganizationVendorEnum,
 	IUpworkOfferStatusEnum,
 	IUpworkProposalStatusEnum,
-	IUpworkDateRange
+	IUpworkDateRange,
+	ContactType
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -62,7 +63,7 @@ import { IncomeService } from '../income/income.service';
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
-import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.commant';
+import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
 import { IPagination } from '../core';
 import { UpworkReportService } from './upwork-report.service';
 import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';
@@ -877,7 +878,8 @@ export class UpworkService {
 		const gauzyClient = await this.commandBus.execute(
 			new OrganizationContactCreateCommand({
 				name,
-				organizationId
+				organizationId,
+				contactType: ContactType.CLIENT
 			})
 		);
 		await this._integrationMapService.create({
@@ -1379,12 +1381,15 @@ export class UpworkService {
 		integrationId,
 		employeeId
 	) {
-		proposals
-			.filter(
-				(row) =>
-					row['data'] && row['data'].hasOwnProperty('applications')
-			)
-			.map((row) => row.data.applications)
-			.map(async (row) => {});
+		return await Promise.all(
+			proposals
+				.filter(
+					(row) =>
+						row['data'] &&
+						row['data'].hasOwnProperty('applications')
+				)
+				.map((row) => row.data.applications)
+				.map(async (row) => row)
+		);
 	}
 }

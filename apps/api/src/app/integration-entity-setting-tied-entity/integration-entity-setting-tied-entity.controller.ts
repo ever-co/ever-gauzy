@@ -8,9 +8,9 @@ import {
 } from '@nestjs/common';
 import { CrudController } from '../core';
 
-import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entitiy.service';
+import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entity.service';
 import { AuthGuard } from '@nestjs/passport';
 
 @UseGuards(AuthGuard('jwt'))

@@ -65,7 +65,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
 import { ProductVariantModule } from './product-variant/product-variant.module';
 import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
-import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.module';
+import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
 import { CandidateSourceModule } from './candidate-source/candidate-source.module';
 import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
@@ -114,6 +114,7 @@ import * as moment from 'moment';
 import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 import { SendMailModule } from './email/sendMail.module';
+import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
 
 @Module({
 	imports: [
@@ -437,6 +438,10 @@ import { SendMailModule } from './email/sendMail.module';
 						module: GoalKpiModule
 					},
 					{
+						path: '/goal-kpi-template',
+						module: GoalKpiTemplateModule
+					},
+					{
 						path: '/goal-templates',
 						module: GoalTemplateModule
 					},
@@ -581,7 +586,8 @@ import { SendMailModule } from './email/sendMail.module';
 		}),
 		GoalKpiModule,
 		GoalTemplateModule,
-		KeyresultTemplateModule
+		KeyresultTemplateModule,
+		GoalKpiTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
