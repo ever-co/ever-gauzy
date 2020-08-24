@@ -4,6 +4,8 @@ import { metaData } from '../local-data/coding-activity';
 import TimerHandler from './timer';
 import moment from 'moment';
 import { LocalStore } from './getSetStore';
+import { writeFileSync } from 'fs';
+import { app } from 'electron';
 export function ipcMainHandler(store, startServer, knex) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
@@ -108,6 +110,24 @@ export function ipcMainHandler(store, startServer, knex) {
 			);
 		}
 	});
+
+	ipcMain.on('screen_shoot', (event, arg) => {
+		event.sender.send('take_screen_shoot');
+	});
+
+	ipcMain.on('save_screen_shoot', (event, arg) => {
+		console.log('save');
+		try {
+			writeFileSync(
+				`${app.getPath('userData')}/screen_shoot-${moment().format(
+					'YYYYMMDDHHmmss'
+				)}.png`,
+				arg.buffer
+			);
+		} catch (error) {
+			console.log('error', error);
+		}
+	});
 }
 
 export function ipcTimer(store, knex, win2, win3) {
@@ -122,7 +142,7 @@ export function ipcTimer(store, knex, win2, win3) {
 			}
 		});
 		timerHandler.startTimer(win2, knex, win3);
-		timerHandler.updateTime(win2, knex);
+		timerHandler.updateTime(win2, knex, win3);
 	});
 
 	ipcMain.on('stop_timer', (event, arg) => {
