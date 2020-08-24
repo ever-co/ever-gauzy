@@ -6,7 +6,16 @@
 }
 
 .tags {
+  padding-top: 0.25rem !important;
   padding-bottom: 2rem !important;
+}
+
+nb-badge {
+  position: relative !important;
+}
+
+nb-badge:not(:first-child) {
+  margin-left: 0.3rem !important;
 }
 
 .card-container {
