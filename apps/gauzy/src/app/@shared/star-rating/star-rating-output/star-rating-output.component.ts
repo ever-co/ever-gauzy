@@ -12,6 +12,7 @@ export enum StarsIcon {
 	styleUrls: ['./star-rating-output.component.scss']
 })
 export class StarRatingOutputComponent {
+	@Input() isGridView = false;
 	@Input()
 	public set rate(rate: number | null) {
 		if (rate === null) {
