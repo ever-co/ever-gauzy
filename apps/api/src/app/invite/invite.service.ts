@@ -252,17 +252,15 @@ export class InviteService extends CrudService<Invite> {
 		invite.expireDate = expireDate;
 		invite.organizationContact = [organizationContact];
 
-		const createdInvite = await this.repository.save(invite);
-
 		this.emailService.inviteOrganizationContact(
 			organizationContact,
 			inviterUser,
 			organization,
-			createdInvite,
+			invite,
 			languageCode,
 			originalUrl
 		);
-
+		const createdInvite = await this.repository.save(invite);
 		return createdInvite;
 	}
 

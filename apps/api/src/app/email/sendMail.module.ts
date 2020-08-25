@@ -1,33 +1,28 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+require('dotenv').config();
 
-@Module({  
+@Module({
 	imports: [
-        MailerModule.forRoot({
-			transport: {
-			  host: 'smtp.gmail.com',
-			  port: 587,
-			  secure: false, // upgrade later with STARTTLS
-			  auth: {
-				user: 'user.900gpt@gmail.com',
-                pass: 'Admin@123#'
-			  },
-			},
-			defaults: {
-			  from:'"Gauzy" <Gauzy@ever.co>',
-			},
-			template: {
-			  dir: process.cwd() + '/templates/',
-			  adapter: new HandlebarsAdapter(), // or new PugAdapter()
-			  options: {
-				strict: true,
-			  },
-			},
-		  }),
-    ],
+		MailerModule.forRootAsync({
+			useFactory: () => ({
+				transport: {
+					host: 'smtp.gmail.com', // set your host and port according to server configuration
+					port: 587,
+					secure: false, // upgrade later with STARTTLS
+					auth: {
+						user: process.env.MAIL_ID, // generate new .env file and put mail_id and password
+						pass: process.env.MAIL_PASS
+					},
+					defaults: {
+						from: '"nest-modules" <modules@nestjs.com>',
+					},
+				},
+			}),
+		}),
+	],
 	controllers: [],
 	providers: [],
 	exports: []
 })
-export class SendMailModule {}
+export class SendMailModule { }
