@@ -152,8 +152,6 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 						return { project, dates };
 					})
 					.value();
-
-				console.log(this.weekData);
 			})
 			.finally(() => (this.loading = false));
 	}
@@ -169,7 +167,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	openAddByDateProject(date, projectId) {
+	openAddByDateProject(date, project: OrganizationProjects) {
 		const minutes = moment().minutes();
 		const stoppedAt = new Date(
 			moment(date).format('YYYY-MM-DD') +
@@ -179,10 +177,21 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 					.format('HH:mm')
 		);
 		const startedAt = moment(stoppedAt).subtract('1', 'hour').toDate();
+
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, {
 				context: {
-					timeLog: { startedAt, stoppedAt, projectId: projectId }
+					timeLog: {
+						startedAt,
+						stoppedAt,
+						organizationContactId: project
+							? project.organizationContactId
+							: null,
+						projectId: project ? project.id : null,
+						...(this.logRequest.employeeIds
+							? { employeeId: this.logRequest.employeeIds[0] }
+							: {})
+					}
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))

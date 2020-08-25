@@ -2,6 +2,9 @@ import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { OrganizationProjects } from '@gauzy/models';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-project-selector',
@@ -17,11 +20,21 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	private _projectId: string | string[];
+	private _employeeId: string;
 	private _organizationContactId: string;
 	projects: OrganizationProjects[];
 
 	@Input() disabled = false;
 	@Input() multiple = false;
+
+	@Input()
+	public get employeeId() {
+		return this._employeeId;
+	}
+	public set employeeId(value) {
+		this._employeeId = value;
+		this.loadProjects$.next();
+	}
 
 	@Input()
 	public get organizationContactId(): string {
@@ -30,10 +43,11 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	public set organizationContactId(value: string) {
 		this._organizationContactId = value;
 		if (this._organizationContactId) {
-			this.loadProjects();
+			this.loadProjects$.next();
 		}
 	}
 
+	loadProjects$: Subject<any> = new Subject();
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
@@ -49,20 +63,17 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.loadProjects();
-	}
-
-	private async loadProjects(): Promise<void> {
-		const { items = [] } = await this.organizationProjects.getAll([], {
-			organizationContactId: this.organizationContactId
-		});
-		this.projects = items;
-		if (
-			items.length === 0 ||
-			items.find((item) => this.projectId !== item.id)
-		) {
-			this.projectId = this.multiple ? [] : null;
-		}
+		this.loadProjects$
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe(async () => {
+				const { items = [] } = await this.organizationProjects.getAll(
+					[],
+					{
+						organizationContactId: this.organizationContactId
+					}
+				);
+				this.projects = items;
+			});
 	}
 
 	writeValue(value: string | string[]) {

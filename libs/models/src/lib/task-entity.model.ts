@@ -21,6 +21,9 @@ export interface Task extends IBaseEntityModel {
 
 export interface GetTaskOptions {
 	projectId?: string;
+	members?: {
+		id: string;
+	};
 	organizationId?: string;
 }
 
