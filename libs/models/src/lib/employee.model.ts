@@ -97,6 +97,7 @@ export interface EmployeeCreateInput {
 	short_description?: string;
 	description?: string;
 	originalUrl?: string;
+	isActive?: boolean;
 }
 
 export enum PayPeriodEnum {

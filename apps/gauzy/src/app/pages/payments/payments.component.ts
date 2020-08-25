@@ -217,8 +217,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 			this.loadSettings();
 			await this.invoiceEstimateHistoryService.add({
 				action: `Payment deleted`,
-				invoice: result.invoice,
-				invoiceId: result.invoice.id,
+				invoice: this.selectedPayment.invoice,
+				invoiceId: this.selectedPayment.invoice.id,
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,

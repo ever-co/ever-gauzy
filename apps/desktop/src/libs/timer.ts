@@ -83,10 +83,11 @@ export default class Timerhandler {
 		this.timeRecordMinute = now.diff(moment(this.timeStart), 'minutes');
 	}
 
-	updateTime(win2, knex) {
+	updateTime(win2, knex, win3) {
 		this.intervalUpdateTime = setInterval(() => {
 			this.getSetActivity(knex, win2, this.timeSlotStart);
 			this.timeSlotStart = moment();
+			// win3.webContents.send('take_screen_shoot');
 			// this.updateToggle(win2, knex);
 		}, 60 * 1000 * 5);
 	}

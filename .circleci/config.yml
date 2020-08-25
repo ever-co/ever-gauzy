@@ -128,7 +128,7 @@ jobs:
                   command: yarn bootstrap
             - run:
                   name: Run Build
-                  command: yarn build:desktop:linux
+                  command: yarn build:desktop
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-desktop-{{ checksum "yarn.lock" }}

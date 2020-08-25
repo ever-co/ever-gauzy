@@ -83,6 +83,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				_cdr.detectChanges();
 			}
 		);
+
+		this.electronService.ipcRenderer.on(
+			'take_screen_shoot',
+			(event, arg) => {
+				const thumbSize = this.determineScreenshot();
+				this.electronService.desktopCapturer
+					.getSources({ types: ['screen'], thumbnailSize: thumbSize })
+					.then((sources) => {
+						sources.forEach(async (source) => {
+							if (source.name === 'Screen 1') {
+								event.sender.send('save_screen_shoot', {
+									buffer: source.thumbnail.toPNG()
+								});
+							}
+						});
+					});
+			}
+		);
 	}
 
 	ngOnInit(): void {
@@ -281,5 +299,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} else {
 			this.errors.note = false;
 		}
+	}
+
+	doshoot() {
+		console.log('shoot');
+		this.electronService.ipcRenderer.send('screen_shoot');
+	}
+
+	determineScreenshot() {
+		const screensize = this.electronService.screen.getPrimaryDisplay()
+			.workAreaSize;
+		const maxDimension = Math.max(screensize.width, screensize.height);
+		console.log(maxDimension);
+
+		return {
+			width: maxDimension * window.devicePixelRatio,
+			height: maxDimension * window.devicePixelRatio
+		};
 	}
 }
