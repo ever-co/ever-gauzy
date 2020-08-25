@@ -14,6 +14,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MomentModule } from 'ngx-moment';
 import { GalleryModule } from '../../../gallery/gallery.module';
 import { ViewTimeLogModalModule } from '../../view-time-log-modal/view-time-log-modal.module';
+import { DialogsModule } from '../../../dialogs';
 
 @NgModule({
 	declarations: [ScreenshotsItemComponent],
@@ -31,7 +32,8 @@ import { ViewTimeLogModalModule } from '../../view-time-log-modal/view-time-log-
 		ReactiveFormsModule,
 		MomentModule,
 		GalleryModule,
-		ViewTimeLogModalModule
+		ViewTimeLogModalModule,
+		DialogsModule
 	]
 })
 export class ScreenshotsItemModule {}

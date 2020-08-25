@@ -21,6 +21,7 @@ export class ContactSelectorComponent implements OnInit {
 
 	@Input() disabled = false;
 	@Input() multiple = false;
+	@Input() employeeId;
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
@@ -30,13 +31,11 @@ export class ContactSelectorComponent implements OnInit {
 	) {}
 
 	set contactId(val: string | string[]) {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
 		this._contactId = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
 	get contactId(): string | string[] {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
 		return this._contactId;
 	}
 

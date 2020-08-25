@@ -1,18 +1,24 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	Input,
+	OnDestroy,
+	AfterViewInit,
+	ChangeDetectorRef
+} from '@angular/core';
 import {
 	IDateRange,
 	Organization,
 	TimeLog,
 	Employee,
 	PermissionsEnum,
-	IManualTimeInput,
 	OrganizationPermissionsEnum,
 	IGetTimeLogConflictInput
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
 import { TimesheetService } from '../timesheet.service';
-import { NgForm } from '@angular/forms';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { FormGroup, FormControl } from '@angular/forms';
+import { NbDialogRef } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
@@ -20,14 +26,17 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 import { EmployeesService } from '../../../@core/services';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { debounceTime, tap } from 'rxjs/operators';
+import { merge, Subject } from 'rxjs';
 
 @Component({
 	selector: 'ngx-edit-time-log-modal',
-	templateUrl: './edit-time-log-modal.component.html'
+	templateUrl: './edit-time-log-modal.component.html',
+	styleUrls: ['./edit-time-log-modal.component.scss']
 })
-export class EditTimeLogModalComponent implements OnInit, OnDestroy {
+export class EditTimeLogModalComponent
+	implements OnInit, AfterViewInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	today: Date = new Date();
@@ -35,54 +44,31 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	loading: boolean;
 	overlaps: TimeLog[] = [];
 
-	addEditRequest: IManualTimeInput = {
-		isBillable: true,
-		projectId: null,
-		taskId: null,
-		description: '',
-		reason: ''
-	};
 	selectedRange: IDateRange = { start: null, end: null };
 	organization: Organization;
 
 	employee: SelectedEmployee;
 	employees: Employee[];
 	futureDateAllowed: boolean;
+	loadEmployees$: Subject<any> = new Subject();
+
+	form: FormGroup;
 
 	private _timeLog: TimeLog | Partial<TimeLog>;
+	changeSelectedEmployee: boolean;
 	@Input()
 	public get timeLog(): TimeLog | Partial<TimeLog> {
-		return this._timeLog;
+		return this._timeLog || {};
 	}
 	public set timeLog(value: TimeLog | Partial<TimeLog>) {
-		this._timeLog = value;
-		this.addEditRequest = _.pick(
-			value,
-			'id',
-			'isBillable',
-			'employeeId',
-			'projectId',
-			'clientId',
-			'taskId',
-			'description',
-			'startedAt',
-			'stoppedAt',
-			'tags'
-		);
-		this.selectedRange = {
-			start: this.addEditRequest.startedAt,
-			end: this.addEditRequest.stoppedAt
-		};
-		this.mode = value && value.id ? 'update' : 'create';
-		if (this.store.selectedEmployee && this.mode === 'create') {
-			this.addEditRequest.employeeId = this.store.selectedEmployee.id;
-		}
+		this._timeLog = Object.assign({}, value);
+
+		this.mode = this._timeLog && this._timeLog.id ? 'update' : 'create';
 	}
 
 	constructor(
 		private timesheetService: TimesheetService,
 		private toastrService: ToastrService,
-		private dialogService: NbDialogService,
 		private ngxPermissionsService: NgxPermissionsService,
 		private store: Store,
 		private employeesService: EmployeesService,
@@ -90,26 +76,101 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	) {
 		const munutes = moment().get('minutes');
 		const roundTime = moment().subtract(munutes - (munutes % 10));
-		this.selectedRange = {
+		const selectedRange: IDateRange = {
 			end: roundTime.toDate(),
 			start: roundTime.subtract(1, 'hour').toDate()
 		};
+		this.form = new FormGroup({
+			isBillable: new FormControl(true),
+			employeeId: new FormControl(null),
+			projectId: new FormControl(null),
+			organizationContactId: new FormControl(null),
+			taskId: new FormControl(null),
+			description: new FormControl(null),
+			reason: new FormControl(null),
+			selectedRange: new FormControl(selectedRange)
+		});
+	}
+	ngAfterViewInit(): void {
+		if (this._timeLog) {
+			setTimeout(() => {
+				this.form.setValue({
+					isBillable: this._timeLog.isBillable || true,
+					employeeId:
+						this._timeLog.employeeId ||
+						this.store.selectedEmployee.id,
+					projectId: this._timeLog.projectId || null,
+					organizationContactId:
+						this._timeLog.organizationContactId || null,
+					taskId: this._timeLog.taskId || null,
+					description: this._timeLog.description || null,
+					reason: this._timeLog.reason || null,
+					selectedRange: {
+						start: this._timeLog.startedAt,
+						end: this._timeLog.stoppedAt
+					}
+				});
+			});
+		}
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
-				this.organization = organization;
-				this.loadEmployees();
+		this.loadEmployees$
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe(async () => {
+				if (
+					this.changeSelectedEmployee &&
+					this.selectedRange &&
+					this.selectedRange.start
+				) {
+					const {
+						items = []
+					} = await this.employeesService.getWorking(
+						this.organization.id,
+						this.selectedRange.start,
+						true
+					);
+					this.employees = items;
+				}
 			});
 
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {
+				this.changeSelectedEmployee = await this.ngxPermissionsService.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				);
 				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
 					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
 				);
+			});
+
+		merge(
+			this.form.get('employeeId').valueChanges,
+			this.form.get('selectedRange').valueChanges.pipe(
+				tap((value: IDateRange) => {
+					this.selectedRange = value;
+					this.loadEmployees$.next();
+					return value;
+				})
+			)
+		)
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe(() => {
+				if (
+					this.selectedRange &&
+					this.selectedRange.start &&
+					this.selectedRange.end
+				) {
+					this.loadEmployees$.next();
+					this.checkOverlaps();
+				}
+			});
+
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((organization: Organization) => {
+				this.organization = organization;
 			});
 	}
 
@@ -118,16 +179,14 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	}
 
 	checkOverlaps() {
-		if (this.selectedRange && this.addEditRequest.employeeId) {
+		if (this.selectedRange && this.timeLog.employeeId) {
 			const startDate = toUTC(this.selectedRange.start).toISOString();
 			const endDate = toUTC(this.selectedRange.end).toISOString();
 			const request: IGetTimeLogConflictInput = {
-				...(this.addEditRequest.id
-					? { ignoreId: [this.addEditRequest.id] }
-					: {}),
+				...(this.timeLog.id ? { ignoreId: [this.timeLog.id] } : {}),
 				startDate,
 				endDate,
-				employeeId: this.addEditRequest.employeeId,
+				employeeId: this.timeLog.employeeId,
 				relations: ['project', 'task']
 			};
 			this.timesheetService.checkOverlaps(request).then((timeLogs) => {
@@ -182,32 +241,32 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	addTime(f: NgForm) {
-		if (!f.valid) {
+	addTime() {
+		if (!this.form.valid) {
 			return;
 		}
 		const startedAt = toUTC(this.selectedRange.start).toDate();
 		const stoppedAt = toUTC(this.selectedRange.end).toDate();
 
-		const addRequestData = {
+		const requestData = {
+			..._.omit(this.form.value, ['selectedRange']),
 			startedAt,
-			stoppedAt,
-			employeeId: this.addEditRequest.employeeId,
-			isBillable: this.addEditRequest.isBillable,
-			projectId: this.addEditRequest.projectId,
-			taskId: this.addEditRequest.taskId,
-			description: this.addEditRequest.description
+			stoppedAt
 		};
 		this.loading = true;
-		(this.addEditRequest.id
-			? this.timesheetService.updateTime(
-					this.addEditRequest.id,
-					addRequestData
-			  )
-			: this.timesheetService.addTime(addRequestData)
-		)
+		let request;
+		if (this.mode === 'create') {
+			request = this.timesheetService.addTime(requestData);
+		} else {
+			request = this.timesheetService.updateTime(
+				this.timeLog.id,
+				requestData
+			);
+		}
+
+		request
 			.then((data) => {
-				f.resetForm();
+				this.form.reset();
 				this.dialogRef.close(data);
 				this.selectedRange = { start: null, end: null };
 				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
@@ -218,26 +277,10 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			.finally(() => (this.loading = false));
 	}
 
-	private async loadEmployees(): Promise<void> {
-		const { items = [] } = await this.employeesService.getWorking(
-			this.organization.id,
-			this.selectedRange.start,
-			true
-		);
-		this.employees = items;
-	}
-
 	onDeleteConfirm(log) {
-		this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((type) => {
-				if (type === 'ok') {
-					this.timesheetService.deleteLogs(log.id).then((res) => {
-						this.dialogRef.close(res);
-					});
-				}
-			});
+		this.timesheetService.deleteLogs(log.id).then((res) => {
+			this.dialogRef.close(res);
+		});
 	}
 
 	ngOnDestroy(): void {}
