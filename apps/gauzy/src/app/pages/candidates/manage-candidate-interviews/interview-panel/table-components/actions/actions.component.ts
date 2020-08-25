@@ -10,24 +10,53 @@ import { ICandidateInterview } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-interview-actions',
 	template: `
 		<div class="update">
+			<div class="badges">
+				<div
+					class="badge badge-primary"
+					*ngIf="isPastInterview(rowData)"
+				>
+					{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate }}
+				</div>
+				<div class="badge badge-warning" *ngIf="rowData.isArchived">
+					{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
+				</div>
+			</div>
 			<span class="title">
 				updated:
 			</span>
 			<span class="title">
 				{{ rowData?.updatedAt | date: 'short' }}
 			</span>
-			<div>
+			<div class="btn">
+				<nb-icon
+					(click)="addFeedback()"
+					nbTooltip="{{
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK'
+							| translate
+					}}"
+					nbTooltipPlacement="top"
+					icon="message-square-outline"
+					class="icons"
+					[ngClass]="{
+						enabled: isPastInterview(rowData),
+						disabled: !isPastInterview(rowData)
+					}"
+				></nb-icon>
 				<nb-icon
 					(click)="editInterview()"
 					icon="edit-outline"
-					nbTooltip="edit"
+					nbTooltip="{{
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.EDIT' | translate
+					}}"
 					nbTooltipPlacement="top"
-					class="icons"
+					class="icons ml-2"
 					[ngClass]="{
 						enabled: !isPastInterview(rowData),
 						disabled: isPastInterview(rowData)
@@ -36,16 +65,24 @@ import { takeUntil } from 'rxjs/operators';
 				</nb-icon>
 				<nb-icon
 					(click)="archive()"
-					nbTooltip="archive"
+					nbTooltip="{{
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate
+					}}"
 					nbTooltipPlacement="top"
 					icon="archive-outline"
 					class="icons ml-2"
+					[ngClass]="{
+						enabled: !rowData.isArchived,
+						disabled: rowData.isArchived
+					}"
 				></nb-icon>
 				<nb-icon
 					(click)="removeInterview()"
 					icon="close"
 					class="icons ml-2"
-					nbTooltip="remove"
+					nbTooltip="{{
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DELETE' | translate
+					}}"
 					nbTooltipPlacement="top"
 					[ngClass]="{
 						enabled: !isPastInterview(rowData),
@@ -57,6 +94,22 @@ import { takeUntil } from 'rxjs/operators';
 	`,
 	styles: [
 		`
+			.badge-warning {
+				background-color: #fa0;
+			}
+			.badges {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.badge-primary {
+				background-color: #0095ff;
+			}
+			.badge {
+				text-align: center;
+				padding: 5px;
+				margin: 0 3px;
+			}
 			.update {
 				display: flex;
 				flex-direction: column;
@@ -80,15 +133,27 @@ import { takeUntil } from 'rxjs/operators';
 			.disabled {
 				color: rgba(143, 155, 179, 0.48) !important;
 			}
+			.btn {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+				align-items: center;
+			}
 		`
 	]
 })
-export class InterviewActionsTableComponent implements OnInit, OnDestroy {
+export class InterviewActionsTableComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	@Input() rowData: any;
 	@Output() updateResult = new EventEmitter<any>();
 	private _ngDestroy$ = new Subject<void>();
 
-	constructor(private candidatesService: CandidatesService) {}
+	constructor(
+		private candidatesService: CandidatesService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.candidatesService
@@ -116,15 +181,28 @@ export class InterviewActionsTableComponent implements OnInit, OnDestroy {
 	}
 	removeInterview() {
 		const params = {
-			isEdit: false,
+			type: 'remove',
 			data: this.rowData
 		};
 		this.updateResult.emit(params);
 	}
-	archive() {}
+	archive() {
+		const params = {
+			type: 'archive',
+			data: this.rowData
+		};
+		this.updateResult.emit(params);
+	}
+	addFeedback() {
+		const params = {
+			type: 'feedback',
+			data: this.rowData
+		};
+		this.updateResult.emit(params);
+	}
 	editInterview() {
 		const params = {
-			isEdit: true,
+			type: 'edit',
 			data: this.rowData
 		};
 		this.updateResult.emit(params);

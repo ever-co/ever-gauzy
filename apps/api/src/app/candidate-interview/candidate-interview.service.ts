@@ -39,6 +39,10 @@ export class CandidateInterviewService extends CrudService<CandidateInterview> {
 				.getOne();
 
 			if (interview) {
+				interview.isArchived =
+					entity.isArchived === interview.isArchived
+						? interview.isArchived
+						: entity.isArchived;
 				interview.note =
 					entity.note === interview.note
 						? interview.note

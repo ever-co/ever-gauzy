@@ -104,15 +104,17 @@
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Source</span>
-					<span class="info-value">{{ x.source.name }}</span>
+					<span class="info-value">{{ x.source?.name }}</span>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">Rating</span>
+					<ga-star-rating-output
+						[rate]="x.rating"
+						[isGridView]="true"
+					></ga-star-rating-output>
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Status</span>
-					<div class="rating">
-						<ga-star-rating-output
-							[rate]="x.rating"
-						></ga-star-rating-output>
-					</div>
 					<div *ngIf="!x?.isArchived">
 						<div
 							class="text-center d-block"
