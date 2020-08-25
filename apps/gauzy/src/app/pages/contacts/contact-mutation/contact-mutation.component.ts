@@ -161,8 +161,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				this.organizationContact
 					? this.organizationContact.contact
 						? this.organizationContact.contact.postcode
-						: ''
-					: ''
+						: null
+					: null
 			],
 			projects: [
 				this.organizationContact
@@ -280,7 +280,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				city: '',
 				address: '',
 				address2: '',
-				postcode: '',
+				postcode: null,
 				contactType: '',
 				imgUrl: '',
 				projects: [],

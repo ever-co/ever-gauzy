@@ -289,7 +289,7 @@ export class ContactComponent extends TranslationBaseComponent
 					city: contact.contact ? contact.contact.city : '',
 					street: contact.contact ? contact.contact.address : '',
 					street2: contact.contact ? contact.contact.address2 : '',
-					postcode: contact.contact ? contact.contact.postcode : '',
+					postcode: contact.contact ? contact.contact.postcode : null,
 					fax: contact.contact ? contact.contact.fax : '',
 					website: contact.contact ? contact.contact.website : '',
 					fiscalInformation: contact.contact
