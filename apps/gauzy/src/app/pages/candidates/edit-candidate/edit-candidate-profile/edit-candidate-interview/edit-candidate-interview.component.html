@@ -1,20 +1,39 @@
 <nb-card>
 	<nb-card-header>
-		<button nbButton status="success" (click)="add()">
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
+		<div class="header">
+			<button nbButton status="success" (click)="add()">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<div class="right-block">
+				<div class="checkboxes" *ngIf="showCheckboxes">
+					<nb-checkbox
+						(checkedChange)="changePast($event)"
+						status="warning"
+						[checked]="onlyPast"
+						>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
+					</nb-checkbox>
+					<nb-checkbox
+						(checkedChange)="changeFuture($event)"
+						status="warning"
+						[checked]="onlyFuture"
+						class="mr-3 ml-3"
+						>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
+					</nb-checkbox>
+				</div>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
+			</div>
+		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="showPastCheckbox">
-		<nb-checkbox
-			(checkedChange)="changeHidePastInterviews($event)"
-			status="primary"
-			class="float-right py-auto"
-			>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIDE_PAST' | translate
-			}}</nb-checkbox
+	<nb-card-body>
+		<div
+			*ngIf="
+				interviewList?.length > 0 && dataLayoutStyle === 'CARDS_GRID'
+			"
+			class="cards"
 		>
-		<div *ngIf="interviewList?.length > 0" class="cards">
 			<div
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
@@ -98,5 +117,14 @@
 				</nb-card>
 			</div>
 		</div>
+		<ng2-smart-table
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			class="interviews-table"
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			#interviewsTable
+		>
+		</ng2-smart-table>
 	</nb-card-body>
 </nb-card>

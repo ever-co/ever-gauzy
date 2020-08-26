@@ -24,7 +24,10 @@ import { TranslateService } from '@ngx-translate/core';
 				>
 					{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate }}
 				</div>
-				<div class="badge badge-warning" *ngIf="rowData.isArchived">
+				<div
+					class="badge badge-warning"
+					*ngIf="rowData.isArchived && rowData.showArchive"
+				>
 					{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
 				</div>
 			</div>
@@ -36,18 +39,27 @@ import { TranslateService } from '@ngx-translate/core';
 			</span>
 			<div class="btn">
 				<nb-icon
+					*ngIf="isPastInterview(rowData)"
 					(click)="addFeedback()"
 					nbTooltip="{{
 						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK'
 							| translate
-					}}"
+					}} 
+					({{ rowData.feedbacks.length }}/{{ rowData.interviewers.length }})"
 					nbTooltipPlacement="top"
 					icon="message-square-outline"
-					class="icons"
-					[ngClass]="{
-						enabled: isPastInterview(rowData),
-						disabled: !isPastInterview(rowData)
-					}"
+					class="icons enabled"
+				></nb-icon>
+				<nb-icon
+					*ngIf="!isPastInterview(rowData)"
+					(click)="addFeedback()"
+					nbTooltip="{{
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK'
+							| translate
+					}} "
+					nbTooltipPlacement="top"
+					icon="message-square-outline"
+					class="icons disabled"
 				></nb-icon>
 				<nb-icon
 					(click)="editInterview()"
@@ -68,6 +80,7 @@ import { TranslateService } from '@ngx-translate/core';
 					nbTooltip="{{
 						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate
 					}}"
+					*ngIf="rowData.showArchive"
 					nbTooltipPlacement="top"
 					icon="archive-outline"
 					class="icons ml-2"
@@ -126,9 +139,9 @@ import { TranslateService } from '@ngx-translate/core';
 			}
 			.enabled {
 				color: #222b45 !important;
-				&:focus {
-					transform: translateY(2px);
-				}
+			}
+			.icons:active {
+				transform: translateY(2px);
 			}
 			.disabled {
 				color: rgba(143, 155, 179, 0.48) !important;

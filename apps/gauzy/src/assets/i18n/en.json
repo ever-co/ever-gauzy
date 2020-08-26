@@ -382,7 +382,9 @@
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted",
-			"INCLUDE_ARCHIVED": "Include Archived"
+			"INCLUDE_ARCHIVED": "Include Archived",
+			"ONLY_PAST": "Only Past",
+			"ONLY_FUTURE": "Only Future"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"

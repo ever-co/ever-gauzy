@@ -12,13 +12,25 @@
 
 		<div class="btn">
 			<nb-checkbox
+				(checkedChange)="changePast($event)"
+				status="warning"
+				class="mr-3"
+				[checked]="onlyPast"
+				>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
+			</nb-checkbox>
+			<nb-checkbox
+				(checkedChange)="changeFuture($event)"
+				status="warning"
+				[checked]="onlyFuture"
+				class="mr-3"
+				>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
+			</nb-checkbox>
+			<nb-checkbox
 				(checkedChange)="changeIncludeArchived($event)"
 				status="warning"
 				class="mr-3"
-				>{{
-					'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate
-				}}</nb-checkbox
-			>
+				>{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+			</nb-checkbox>
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>
@@ -229,6 +241,11 @@
 							icon="message-square-outline"
 						></nb-icon
 						>{{ 'BUTTONS.LEAVE_FEEDBACK' | translate }}
+						<span *ngIf="isPastInterview(interview)" class="ml-1">
+							({{ interview.feedbacks.length }}/{{
+								interview.interviewers.length
+							}})
+						</span>
 					</button>
 				</div>
 			</nb-card-body>
