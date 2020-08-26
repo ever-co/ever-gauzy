@@ -18,9 +18,10 @@ import { Role } from '../role/role.entity';
 import { User } from '../user/user.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('invite')
-export class Invite extends Base implements IInvite {
+export class Invite extends TenantBase implements IInvite {
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index({ unique: true })

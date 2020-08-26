@@ -4,9 +4,9 @@ import {
 	OneToOne,
 	JoinColumn,
 	OneToMany,
-	ManyToOne
+	ManyToOne,
+	RelationId
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateFeedback,
@@ -16,14 +16,16 @@ import {
 	Candidate as ICandidate,
 	ICandidateInterview
 } from '@gauzy/models';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('candidate_feedback')
-export class CandidateFeedback extends Base implements ICandidateFeedback {
+export class CandidateFeedback extends TenantBase
+	implements ICandidateFeedback {
 	@ApiProperty({ type: String })
 	@Column()
 	description: string;
@@ -69,4 +71,16 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 		onDelete: 'CASCADE'
 	})
 	candidate: ICandidate;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(candidateFeedback: CandidateFeedback) => candidateFeedback.organization
+	)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

@@ -4,9 +4,11 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { OrganizationAwards as IOrganizationAwards } from '@gauzy/models';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization_awards')
-export class OrganizationAwards extends Base implements IOrganizationAwards {
+export class OrganizationAwards extends TenantBase
+	implements IOrganizationAwards {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

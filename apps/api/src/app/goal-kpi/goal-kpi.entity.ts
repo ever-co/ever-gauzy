@@ -1,7 +1,7 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { KPI as IKPI, KpiMetricEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { Organization } from '../organization/organization.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { Employee } from '../employee/employee.entity';
@@ -46,4 +46,10 @@ export class GoalKPI extends TenantBase implements IKPI {
 
 	@ManyToOne((type) => Organization, (organization) => organization.id)
 	organization: Organization;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((kpi: GoalKPI) => kpi.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

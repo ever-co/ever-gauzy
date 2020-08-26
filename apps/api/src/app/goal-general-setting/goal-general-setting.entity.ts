@@ -2,10 +2,10 @@ import {
 	GoalGeneralSetting as IGoalGeneralSetting,
 	GoalOwnershipEnum
 } from '@gauzy/models';
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantBase } from '../core/entities/tenant-base';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
 import { Organization } from '../organization/organization.entity';
 
 @Entity('goal_general_setting')
@@ -43,4 +43,13 @@ export class GoalGeneralSetting extends TenantBase
 
 	@ManyToOne((type) => Organization, (organization) => organization.id)
 	organization: Organization;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(goalGeneralSetting: GoalGeneralSetting) =>
+			goalGeneralSetting.organization
+	)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

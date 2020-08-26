@@ -14,12 +14,12 @@ import {
 	IsDate,
 	IsOptional
 } from 'class-validator';
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { Employee } from '../employee/employee.entity';
-import { Base } from '../core/entities/base';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('employee_recurring_expense')
-export class EmployeeRecurringExpense extends Base
+export class EmployeeRecurringExpense extends TenantBase
 	implements IEmployeeRecurringExpense {
 	@ApiProperty({ type: String })
 	@IsString()
@@ -113,4 +113,17 @@ export class EmployeeRecurringExpense extends Base
 
 	@ManyToOne((type) => Employee, (employee) => employee.id)
 	employee: Employee;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(employeeRecurringExpense: EmployeeRecurringExpense) =>
+			employeeRecurringExpense.organization
+	)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

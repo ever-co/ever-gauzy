@@ -18,9 +18,10 @@ import {
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { TimeLog } from './time-log.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('timesheet')
-export class Timesheet extends Base implements ITimesheet {
+export class Timesheet extends TenantBase implements ITimesheet {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
@@ -106,4 +107,14 @@ export class Timesheet extends Base implements ITimesheet {
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((ts: Timesheet) => ts.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

@@ -2,12 +2,12 @@ import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import {
 	CurrenciesEnum,
-	Employee,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
+import { Employee } from '../employee/employee.entity';
 
 export const createRandomEmployeeRecurringExpense = async (
 	connection: Connection,

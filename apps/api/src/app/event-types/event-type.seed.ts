@@ -1,9 +1,10 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee, Organization } from '@gauzy/models';
 import { EventType } from './event-type.entity';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
+import { Employee } from '../employee/employee.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createRandomEventType = async (
 	connection: Connection,

@@ -8,12 +8,13 @@ import {
 	OneToMany
 } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Base } from '../core/entities/base';
 import { IIntegrationTenant } from '@gauzy/models';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('integration_tenant')
-export class IntegrationTenant extends Base implements IIntegrationTenant {
+export class IntegrationTenant extends TenantBase
+	implements IIntegrationTenant {
 	@ApiProperty({ type: Tenant })
 	@ManyToOne((type) => Tenant, {
 		nullable: false

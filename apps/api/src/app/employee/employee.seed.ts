@@ -6,9 +6,9 @@ import { User } from '../user/user.entity';
 import { date as fakerDate } from 'faker';
 import {
 	CurrenciesEnum,
-	ISeedUsers,
 	LanguagesEnum,
-	PayPeriodEnum
+	PayPeriodEnum,
+	ISeedUsers
 } from '@gauzy/models';
 import * as faker from 'faker';
 

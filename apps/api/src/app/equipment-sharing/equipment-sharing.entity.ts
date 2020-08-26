@@ -7,7 +7,6 @@ import {
 	JoinColumn,
 	ManyToOne
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
 	EquipmentSharing as IEquipmentSharing,
 	RequestApprovalStatusTypesEnum
@@ -19,9 +18,10 @@ import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('equipment_sharing')
-export class EquipmentSharing extends Base implements IEquipmentSharing {
+export class EquipmentSharing extends TenantBase implements IEquipmentSharing {
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })

@@ -12,9 +12,10 @@ import { Base } from '../core/entities/base';
 import { OrganizationPositions as IOrganizationPositions } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization_position')
-export class OrganizationPositions extends Base
+export class OrganizationPositions extends TenantBase
 	implements IOrganizationPositions {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationPosition)

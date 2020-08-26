@@ -19,9 +19,10 @@ import { ProductOption } from '../product-option/product-option.entity';
 import { ProductVariantSettings } from '../product-settings/product-settings.entity';
 import { Product } from '../product/product.entity';
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('product_variant')
-export class ProductVariant extends Base implements IProductVariant {
+export class ProductVariant extends TenantBase implements IProductVariant {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
@@ -89,4 +90,14 @@ export class ProductVariant extends Base implements IProductVariant {
 	})
 	@JoinColumn()
 	product: Product;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((productVariant: ProductVariant) => productVariant.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

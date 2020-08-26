@@ -16,9 +16,10 @@ import {
 import { IsNotEmpty, IsString, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('pipeline')
-export class Pipeline extends Base implements IPipeline {
+export class Pipeline extends TenantBase implements IPipeline {
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
 		cascade: ['insert']
 	})

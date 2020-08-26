@@ -14,9 +14,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('time_off_policy')
-export class TimeOffPolicy extends Base implements ITimeOffPolicy {
+export class TimeOffPolicy extends TenantBase implements ITimeOffPolicy {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

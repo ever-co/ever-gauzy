@@ -2,13 +2,14 @@ import { OrganizationTeamEmployee as IOrganizationTeamEmployee } from '@gauzy/mo
 import { Base } from '../core/entities/base';
 import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { Employee } from '../employee/employee.entity';
 import { Role } from '../role/role.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization_team_employee')
-export class OrganizationTeamEmployee extends Base
+export class OrganizationTeamEmployee extends TenantBase
 	implements IOrganizationTeamEmployee {
 	@ApiProperty({ type: String })
 	@IsString()
@@ -47,4 +48,19 @@ export class OrganizationTeamEmployee extends Base
 			organizationTeamEmployee.role
 	)
 	readonly roleId?: string;
+
+	@ApiProperty({ type: String })
+	@IsOptional()
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(organizationTeamEmployee: OrganizationTeamEmployee) =>
+			organizationTeamEmployee.organization
+	)
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

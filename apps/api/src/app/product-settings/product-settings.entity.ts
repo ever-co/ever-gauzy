@@ -1,11 +1,13 @@
-import { Entity, Column, OneToOne } from 'typeorm';
+import { Entity, Column, OneToOne, RelationId } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ProductVariantSettings as IProductVariantSettings } from '@gauzy/models';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { ProductVariant } from '../product-variant/product-variant.entity';
+import { TenantBase } from '../core/entities/tenant-base';
+import { IsString } from 'class-validator';
 
 @Entity('product_variant_settings')
-export class ProductVariantSettings extends Base
+export class ProductVariantSettings extends TenantBase
 	implements IProductVariantSettings {
 	@ApiPropertyOptional({ type: Boolean })
 	@Column({ default: false })
@@ -41,4 +43,17 @@ export class ProductVariantSettings extends Base
 
 	@OneToOne(() => ProductVariant)
 	productVariant: ProductVariant;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(productVariantSettings: ProductVariantSettings) =>
+			productVariantSettings.organization
+	)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

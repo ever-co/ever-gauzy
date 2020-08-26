@@ -30,10 +30,11 @@ import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Payment } from '../payment/payment.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])
-export class Invoice extends Base implements IInvoice {
+export class Invoice extends TenantBase implements IInvoice {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.invoice)
 	@JoinTable({

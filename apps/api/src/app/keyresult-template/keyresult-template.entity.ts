@@ -5,7 +5,7 @@ import {
 	KeyResultDeadlineEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsEnum } from 'class-validator';
+import { IsOptional, IsEnum, IsString } from 'class-validator';
 import { TenantBase } from '../core/entities/tenant-base';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
 import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
@@ -68,4 +68,16 @@ export class KeyResultTemplate extends TenantBase
 	@RelationId((keyResult: KeyResultTemplate) => keyResult.goal)
 	@Column({ nullable: true })
 	readonly goalId?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(keyResultTemplate: KeyResultTemplate) => keyResultTemplate.organization
+	)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

@@ -23,9 +23,10 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { Task } from '../tasks/task.entity';
 import * as moment from 'moment';
 import { TimeSlot } from './time-slot.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('time_log')
-export class TimeLog extends Base implements ITimeLog {
+export class TimeLog extends TenantBase implements ITimeLog {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
@@ -127,6 +128,16 @@ export class TimeLog extends Base implements ITimeLog {
 	deletedAt?: Date;
 
 	duration: number;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((tl: TimeLog) => tl.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 
 	@AfterLoad()
 	getDuration?() {

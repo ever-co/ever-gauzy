@@ -16,11 +16,11 @@ import {
 } from 'class-validator';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 
-import { Base } from '../core/entities/base';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization_recurring_expense')
-export class OrganizationRecurringExpense extends Base
+export class OrganizationRecurringExpense extends TenantBase
 	implements IOrganizationRecurringExpense {
 	@ApiProperty({ type: String })
 	@IsString()

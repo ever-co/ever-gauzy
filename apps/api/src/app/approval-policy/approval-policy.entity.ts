@@ -11,18 +11,18 @@ import {
 	JoinColumn,
 	RelationId
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
 	ApprovalPolicy as IApprovalPolicy,
 	ApprovalPolicyTypesStringEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('approval_policy')
-export class ApprovalPolicy extends Base implements IApprovalPolicy {
+export class ApprovalPolicy extends TenantBase implements IApprovalPolicy {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -32,14 +32,16 @@ export class ApprovalPolicy extends Base implements IApprovalPolicy {
 
 	@ApiProperty({ type: Organization })
 	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
+	@IsOptional()
 	@JoinColumn()
-	organization: Organization;
+	organization?: Organization;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((policy: ApprovalPolicy) => policy.organization)
+	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
-	organizationId: string;
+	organizationId?: string;
 
 	@ApiProperty({ type: Tenant })
 	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })

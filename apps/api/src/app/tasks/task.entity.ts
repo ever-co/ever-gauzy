@@ -10,7 +10,7 @@ import {
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 import { Task as ITask, TaskStatusEnum } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
@@ -21,9 +21,10 @@ import { OrganizationTeam } from '../organization-team/organization-team.entity'
 import { User } from '../user/user.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('task')
-export class Task extends Base implements ITask {
+export class Task extends TenantBase implements ITask {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.task)
 	@JoinTable({
@@ -105,4 +106,14 @@ export class Task extends Base implements ITask {
 	})
 	@JoinColumn()
 	organizationSprint?: OrganizationSprint;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((task: Task) => task.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

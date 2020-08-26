@@ -1,4 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { ITenant } from './tenant.model';
 
 export interface Contact {
 	id?: string;
@@ -14,6 +15,8 @@ export interface Contact {
 	fax?: string;
 	fiscalInformation?: string;
 	website?: string;
+	organizationId?: string;
+	tenant: ITenant;
 }
 
 export interface ContactFindInput extends IBaseEntityModel {

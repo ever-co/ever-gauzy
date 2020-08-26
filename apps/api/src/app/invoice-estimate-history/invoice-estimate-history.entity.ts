@@ -6,9 +6,10 @@ import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from '../user/user.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('invoice_estimate_history')
-export class InvoiceEstimateHistory extends Base
+export class InvoiceEstimateHistory extends TenantBase
 	implements IInvoiceEstimateHistory {
 	@ApiProperty({ type: String })
 	@IsString()

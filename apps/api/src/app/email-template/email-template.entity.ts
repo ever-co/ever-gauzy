@@ -1,12 +1,19 @@
 import { EmailTemplate as IEmailTemplate } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
-import { Column, Entity, Index, ManyToOne, JoinColumn } from 'typeorm';
-import { Base } from '../core/entities/base';
+import {
+	Column,
+	Entity,
+	Index,
+	ManyToOne,
+	JoinColumn,
+	RelationId
+} from 'typeorm';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('email_template')
-export class EmailTemplate extends Base implements IEmailTemplate {
+export class EmailTemplate extends TenantBase implements IEmailTemplate {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -37,4 +44,10 @@ export class EmailTemplate extends Base implements IEmailTemplate {
 	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	organization: Organization;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((template: EmailTemplate) => template.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

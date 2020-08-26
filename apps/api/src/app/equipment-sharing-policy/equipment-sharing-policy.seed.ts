@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
-import { Organization } from '@gauzy/models';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultEquipmentSharingPolicyForOrg = async (
 	connection: Connection,

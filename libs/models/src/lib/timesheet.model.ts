@@ -1,3 +1,4 @@
+import { ITenant } from './tenant.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tag, Task, Employee, EmployeeFindInput } from '..';
 import { OrganizationContact } from './organization-contact.model';
@@ -129,6 +130,9 @@ export interface ITimeSlotCreateInput {
 	overall: number;
 	startedAt: Date;
 	time_slot: Date;
+	organization: string;
+	organizationId: string;
+	tenant: ITenant;
 }
 
 export enum TimeLogType {
@@ -179,6 +183,9 @@ export interface TimeSlot extends IBaseEntityModel {
 	stoppedAt?: Date;
 	tags?: Tag[];
 	activites?: Activity[];
+	organization: string;
+	organizationId: string;
+	tenant: ITenant;
 }
 
 export interface ITimeSlotTimeLogs extends IBaseEntityModel {

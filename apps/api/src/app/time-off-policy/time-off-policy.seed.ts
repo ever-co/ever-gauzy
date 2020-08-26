@@ -1,12 +1,10 @@
 import { Connection } from 'typeorm';
-import {
-	TimeOffPolicy as ITimeOfPolicy,
-	Organization,
-	Employee
-} from '@gauzy/models';
+import { TimeOffPolicy as ITimeOfPolicy } from '@gauzy/models';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
+import { Organization } from '../organization/organization.entity';
+import { Employee } from '../employee/employee.entity';
 
 export const createDefaultTimeOffPolicy = async (
 	connection: Connection,

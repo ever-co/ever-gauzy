@@ -1,5 +1,5 @@
 import { Base } from '../core/entities/base';
-import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { InvoiceItem as IInvoiceItem } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
@@ -8,9 +8,10 @@ import { Task } from '../tasks/task.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Product } from '../product/product.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('invoice_item')
-export class InvoiceItem extends Base implements IInvoiceItem {
+export class InvoiceItem extends TenantBase implements IInvoiceItem {
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
@@ -111,4 +112,14 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	@IsBoolean()
 	@Column({ nullable: true })
 	applyDiscount?: boolean;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((invoiceItem: InvoiceItem) => invoiceItem.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

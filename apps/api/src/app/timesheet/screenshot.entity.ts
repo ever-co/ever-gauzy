@@ -12,9 +12,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
 import { FileStorage } from '../core/file-storage';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('screenshot')
-export class Screenshot extends Base implements IScreenshot {
+export class Screenshot extends TenantBase implements IScreenshot {
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -49,6 +50,16 @@ export class Screenshot extends Base implements IScreenshot {
 
 	fullUrl?: string;
 	thumbUrl?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((sc: Screenshot) => sc.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 
 	@AfterLoad()
 	afterLoad?() {

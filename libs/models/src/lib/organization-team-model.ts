@@ -1,3 +1,4 @@
+import { ITenant } from './tenant.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { OrganizationTeamEmployee } from './organization-team-employee-model';
 import { Tag } from '..';
@@ -8,6 +9,7 @@ export interface OrganizationTeam extends IBaseEntityModel {
 	members?: OrganizationTeamEmployee[];
 	managers?: OrganizationTeamEmployee[];
 	tags?: Tag[];
+	tenant: ITenant;
 }
 
 export interface OrganizationTeamFindInput extends IBaseEntityModel {

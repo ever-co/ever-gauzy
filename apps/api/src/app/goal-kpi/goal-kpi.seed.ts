@@ -1,8 +1,9 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee, Organization } from '@gauzy/models';
 import { GoalKPI } from './goal-kpi.entity';
 import * as faker from 'faker';
+import { Organization } from '../organization/organization.entity';
+import { Employee } from '../employee/employee.entity';
 
 const goalKPIData = [
 	{

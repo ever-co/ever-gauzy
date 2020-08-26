@@ -1,7 +1,13 @@
 import { CandidatePersonalQualities } from './../candidate-personal-qualities/candidate-personal-qualities.entity';
 import { CandidateTechnologies } from './../candidate-technologies/candidate-technologies.entity';
-import { Column, Entity, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
-import { Base } from '../core/entities/base';
+import {
+	Column,
+	Entity,
+	ManyToOne,
+	OneToMany,
+	JoinColumn,
+	RelationId
+} from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateInterview,
@@ -14,9 +20,12 @@ import {
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 import { Candidate } from '../candidate/candidate.entity';
+import { IsString } from 'class-validator';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('candidate_interview')
-export class CandidateInterview extends Base implements ICandidateInterview {
+export class CandidateInterview extends TenantBase
+	implements ICandidateInterview {
 	@ApiProperty({ type: String })
 	@Column()
 	title: string;
@@ -75,4 +84,17 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@ApiPropertyOptional({ type: Boolean, default: false })
 	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(candidateInterview: CandidateInterview) =>
+			candidateInterview.organization
+	)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

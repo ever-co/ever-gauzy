@@ -18,7 +18,10 @@ export class TimeSlotCreateHandler
 				keyboard,
 				mouse,
 				overall,
-				time_slot
+				time_slot,
+				organization,
+				organizationId,
+				tenant
 			}: TimeSlot = input;
 
 			return await this._timeSlotService.create({
@@ -27,7 +30,10 @@ export class TimeSlotCreateHandler
 				keyboard,
 				mouse,
 				overall,
-				startedAt: time_slot
+				startedAt: time_slot,
+				organization,
+				organizationId,
+				tenant
 			});
 		} catch (error) {
 			throw new BadRequestException('Cant create time slot');

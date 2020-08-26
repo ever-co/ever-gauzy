@@ -1,12 +1,13 @@
 import * as seed from './product-type.seed.json';
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Organization, ProductTypesIconsEnum } from '@gauzy/models';
+import { ProductTypesIconsEnum } from '@gauzy/models';
 import { ProductType } from './product-type.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { Product } from '../product/product.entity';
 import { ProductTypeTranslation } from './product-type-translation.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultProductTypes = async (
 	connection: Connection,

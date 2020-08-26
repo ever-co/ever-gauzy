@@ -7,13 +7,14 @@ import {
 	IsBoolean,
 	IsDate
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { IAvailabilitySlots } from '@gauzy/models';
 import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('availability_slots')
-export class AvailabilitySlots extends Base implements IAvailabilitySlots {
+export class AvailabilitySlots extends TenantBase
+	implements IAvailabilitySlots {
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

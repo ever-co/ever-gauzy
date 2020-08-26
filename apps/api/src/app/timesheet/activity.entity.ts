@@ -27,9 +27,10 @@ import { Employee } from '../employee/employee.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
 import { environment as env } from '@env-api/environment';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('activity')
-export class Activity extends Base implements IActivity {
+export class Activity extends TenantBase implements IActivity {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
@@ -120,6 +121,16 @@ export class Activity extends Base implements IActivity {
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((activity: Activity) => activity.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 
 	@AfterLoad()
 	getStoppedAt?() {

@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationTeam, Employee, Role } from '..';
+import { OrganizationTeam, Employee, Role, ITenant } from '..';
 
 export interface OrganizationTeamEmployee extends IBaseEntityModel {
 	organizationTeamId: string;
@@ -8,4 +8,7 @@ export interface OrganizationTeamEmployee extends IBaseEntityModel {
 	organizationTeam: OrganizationTeam;
 	employee: Employee;
 	role?: Role;
+	organization?: string;
+	organizationId?: string;
+	tenant: ITenant;
 }

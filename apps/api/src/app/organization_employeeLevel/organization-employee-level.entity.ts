@@ -4,11 +4,12 @@ import { Tag } from '../tags/tag.entity';
 import { Base } from '../core/entities/base';
 import { Organization } from '../organization/organization.entity';
 import { IsString, IsNotEmpty } from 'class-validator';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity({
 	name: 'organization_employee_level'
 })
-export class EmployeeLevel extends Base {
+export class EmployeeLevel extends TenantBase {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.employeeLevel)
 	@JoinTable({

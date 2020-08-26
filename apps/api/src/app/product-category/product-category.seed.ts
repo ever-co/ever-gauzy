@@ -1,9 +1,9 @@
 import { Connection } from 'typeorm';
-import { Organization } from '@gauzy/models';
 import { ProductCategory } from './product-category.entity';
 import * as seed from './product-category.seed.json';
 import * as faker from 'faker';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultProductCategories = async (
 	connection: Connection,

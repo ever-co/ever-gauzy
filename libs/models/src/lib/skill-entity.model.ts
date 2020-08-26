@@ -1,3 +1,4 @@
+import { ITenant } from './tenant.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface Skill extends IBaseEntityModel {
@@ -5,6 +6,8 @@ export interface Skill extends IBaseEntityModel {
 	description?: string;
 	color?: string;
 	isSelected?: boolean;
+	organizationId: string;
+	tenant: ITenant;
 }
 
 export interface SkillName {

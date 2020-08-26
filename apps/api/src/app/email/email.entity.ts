@@ -1,19 +1,13 @@
 import { Email as IEmail } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne
-} from 'typeorm';
-import { Base } from '../core/entities/base';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { User } from '../user/user.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('email_sent')
-export class Email extends Base implements IEmail {
+export class Email extends TenantBase implements IEmail {
 	@ApiProperty({ type: EmailTemplate })
 	@ManyToOne((type) => EmailTemplate, {
 		nullable: false,

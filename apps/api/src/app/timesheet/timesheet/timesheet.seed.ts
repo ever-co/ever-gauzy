@@ -1,9 +1,6 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import {
-	TimesheetStatus,
-	OrganizationProjects,
-} from '@gauzy/models';
+import { TimesheetStatus } from '@gauzy/models';
 import { Timesheet } from '../timesheet.entity';
 import { Employee } from '../../employee/employee.entity';
 import * as moment from 'moment';
@@ -11,6 +8,7 @@ import * as _ from 'underscore';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
 import chalk from 'chalk';
+import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
 
 export const createDefaultTimeSheet = async (
 	connection: Connection,

@@ -1,3 +1,4 @@
+import { ITenant } from './tenant.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Employee } from './employee.model';
@@ -49,6 +50,7 @@ export interface OrganizationContactCreateInput
 	notes?: string;
 	imageUrl?: string;
 	contactType?: string;
+	tenant: ITenant;
 }
 
 export interface OrganizationContactInviteInput extends IBaseEntityModel {

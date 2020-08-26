@@ -1,7 +1,8 @@
-import { OrganizationVendorEnum, Organization } from '@gauzy/models';
+import { OrganizationVendorEnum } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { OrganizationVendor } from './organization-vendors.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createOrganizationVendors = async (
 	connection: Connection,

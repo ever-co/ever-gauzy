@@ -18,9 +18,10 @@ import {
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('time_off_request')
-export class TimeOffRequest extends Base implements ITimeOffRequest {
+export class TimeOffRequest extends TenantBase implements ITimeOffRequest {
 	@ManyToMany((type) => Employee, { cascade: true })
 	@JoinTable({
 		name: 'time_off_request_employee'

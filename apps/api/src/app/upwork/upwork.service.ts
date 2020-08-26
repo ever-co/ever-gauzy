@@ -862,6 +862,7 @@ export class UpworkService {
 	async syncClient(
 		integrationId,
 		organizationId,
+		tenant,
 		client
 	): Promise<OrganizationContact> {
 		const { company_id: sourceId, company_name: name } = client;
@@ -879,6 +880,7 @@ export class UpworkService {
 			new OrganizationContactCreateCommand({
 				name,
 				organizationId,
+				tenant,
 				contactType: ContactType.CLIENT
 			})
 		);

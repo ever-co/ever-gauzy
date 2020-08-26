@@ -16,14 +16,14 @@ import {
 	IsOptional,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { IEventType } from '@gauzy/models';
 import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('event_type')
-export class EventType extends Base implements IEventType {
+export class EventType extends TenantBase implements IEventType {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.eventType)
 	@JoinTable({ name: 'tag_event_type' })

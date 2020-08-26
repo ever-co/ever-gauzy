@@ -2,9 +2,10 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
 import { OrganizationProjects } from './organization-projects.entity';
-import { Organization, TaskListTypeEnum } from '@gauzy/models';
+import { TaskListTypeEnum } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { Organization } from '../organization/organization.entity';
 
 const defaultProjects = [
 	'Gauzy Platform (Open-Source)',

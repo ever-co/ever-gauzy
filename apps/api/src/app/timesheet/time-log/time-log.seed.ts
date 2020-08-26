@@ -1,7 +1,7 @@
 import { Connection, In } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
-import { TimeLogSourceEnum, TimeLogType, TimeSlot } from '@gauzy/models';
+import { TimeLogSourceEnum, TimeLogType } from '@gauzy/models';
 import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
 import { Timesheet } from '../timesheet.entity';
@@ -9,6 +9,7 @@ import { OrganizationProjects } from '../../organization-projects/organization-p
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { Screenshot } from '../screenshot.entity';
+import { TimeSlot } from '../time-slot.entity';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,
@@ -36,7 +37,7 @@ export const createRandomTimeLogs = async (
 		let timeSlots: TimeSlot[] = [];
 		const timelogs: TimeLog[] = [];
 		const screenshotsPromise: Promise<Screenshot[]>[] = [];
-		
+
 		for (
 			let timeSheetIndex = 0;
 			timeSheetIndex < timeSheetChunk[timeSheetChunkIndex].length;
@@ -135,7 +136,6 @@ export const createRandomTimeLogs = async (
 				}
 			}
 		}
-
 
 		await connection.manager.save(timeSlots);
 		let screenshots: Screenshot[] = [];

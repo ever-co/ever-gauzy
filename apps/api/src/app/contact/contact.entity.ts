@@ -1,11 +1,11 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { Contact as IContact } from '../../../../../libs/models/src/lib/contact.model';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('contact')
-export class Contact extends Base implements IContact {
+export class Contact extends TenantBase implements IContact {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsOptional()
@@ -77,4 +77,16 @@ export class Contact extends Base implements IContact {
 	@IsOptional()
 	@Column({ nullable: true })
 	website?: string;
+
+	@ApiProperty({ type: String })
+	@IsOptional()
+	@Column()
+	organization?: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((contact: Contact) => contact.organization)
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	organizationId?: string;
 }

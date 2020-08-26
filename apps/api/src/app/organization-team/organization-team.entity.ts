@@ -13,9 +13,10 @@ import { OrganizationTeam as IOrganizationTeam } from '@gauzy/models';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization_team')
-export class OrganizationTeam extends Base implements IOrganizationTeam {
+export class OrganizationTeam extends TenantBase implements IOrganizationTeam {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationTeam)
 	@JoinTable({

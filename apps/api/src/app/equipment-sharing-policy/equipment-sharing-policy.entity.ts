@@ -16,9 +16,10 @@ import { EquipmentSharingPolicy as IEquipmentSharingPolicy } from '@gauzy/models
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('equipment_sharing_policy')
-export class EquipmentSharingPolicy extends Base
+export class EquipmentSharingPolicy extends TenantBase
 	implements IEquipmentSharingPolicy {
 	@ApiProperty({ type: String })
 	@IsString()

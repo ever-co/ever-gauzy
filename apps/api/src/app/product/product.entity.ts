@@ -91,4 +91,14 @@ export class Product extends TenantBase implements IProduct {
 	@IsString()
 	@Column({ nullable: true })
 	language?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((product: Product) => product.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

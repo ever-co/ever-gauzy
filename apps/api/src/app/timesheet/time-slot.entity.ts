@@ -12,17 +12,18 @@ import {
 import { Base } from '../core/entities/base';
 import { TimeSlot as ITimeSlot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsDateString } from 'class-validator';
+import { IsNumber, IsDateString, IsString } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import * as moment from 'moment';
 import { Screenshot } from './screenshot.entity';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 import { TimeLog } from './time-log.entity';
 import { Activity } from './activity.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('time_slot')
 @Unique(['employeeId', 'startedAt'])
-export class TimeSlot extends Base implements ITimeSlot {
+export class TimeSlot extends TenantBase implements ITimeSlot {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
@@ -78,6 +79,16 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@IsDateString()
 	@Column()
 	startedAt: Date;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((ts: TimeSlot) => ts.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 
 	stoppedAt?: Date;
 	@AfterLoad()

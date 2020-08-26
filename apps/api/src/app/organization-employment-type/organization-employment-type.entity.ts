@@ -6,9 +6,10 @@ import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization_employment_type')
-export class OrganizationEmploymentType extends Base
+export class OrganizationEmploymentType extends TenantBase
 	implements IOrganizationEmploymentType {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationEmploymentType)

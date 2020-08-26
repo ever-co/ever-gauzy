@@ -1,19 +1,15 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Base } from '../core/entities/base';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IExperience, Candidate as ICandidate } from '@gauzy/models';
 import { Candidate } from '../candidate/candidate.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('candidate_experience')
-export class CandidateExperience extends Base implements IExperience {
+export class CandidateExperience extends TenantBase implements IExperience {
 	@ApiProperty({ type: String })
 	@Column()
 	occupation: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	organization: string;
 
 	@ApiProperty({ type: String })
 	@Column()
@@ -31,4 +27,17 @@ export class CandidateExperience extends Base implements IExperience {
 
 	@ManyToOne((type) => Candidate, (candidate) => candidate.experience)
 	candidate: ICandidate;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(candidateExperience: CandidateExperience) =>
+			candidateExperience.organization
+	)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

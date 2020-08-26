@@ -27,9 +27,10 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
 import { Tag } from '../tags/tag.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('request_approval')
-export class RequestApproval extends Base implements IRequestApproval {
+export class RequestApproval extends TenantBase implements IRequestApproval {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -105,4 +106,16 @@ export class RequestApproval extends Base implements IRequestApproval {
 	@IsEnum(ApprovalPolicyTypesStringEnum)
 	@Column({ nullable: true })
 	requestType: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(requestApproval: RequestApproval) => requestApproval.organization
+	)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

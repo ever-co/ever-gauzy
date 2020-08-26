@@ -1,5 +1,12 @@
 import { Equipment as IEquipment, CurrenciesEnum } from '@gauzy/models';
-import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import {
+	Entity,
+	Column,
+	OneToMany,
+	ManyToMany,
+	JoinTable,
+	RelationId
+} from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
@@ -72,4 +79,14 @@ export class Equipment extends TenantBase implements IEquipment {
 		(equipmentSharing) => equipmentSharing.equipment
 	)
 	equipmentSharings: EquipmentSharing[];
+
+	@ApiProperty({ type: String })
+	@Column()
+	organization: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((equipment: Equipment) => equipment.organization)
+	@IsString()
+	@Column({ nullable: true })
+	organizationId: string;
 }

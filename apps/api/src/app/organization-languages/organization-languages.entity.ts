@@ -5,9 +5,10 @@ import { Base } from '../core/entities/base';
 import { OrganizationLanguages as IOrganizationLanguages } from '@gauzy/models';
 import { Language } from '../language/language.entity';
 import { Organization } from '../organization/organization.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('organization_languages')
-export class OrganizationLanguages extends Base
+export class OrganizationLanguages extends TenantBase
 	implements IOrganizationLanguages {
 	@ApiProperty({ type: Organization })
 	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
@@ -19,7 +20,7 @@ export class OrganizationLanguages extends Base
 		(organization_languages: OrganizationLanguages) =>
 			organization_languages.organization
 	)
-  @Column()
+	@Column()
 	readonly organizationId: string;
 
 	@ApiProperty({ type: Language })
