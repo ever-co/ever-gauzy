@@ -1,7 +1,6 @@
 .interviews-line {
   margin: 0.2rem 0 0.2rem 0.2rem;
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   width: 100%;
@@ -9,9 +8,26 @@
 
 .interviews-card {
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
+}
+
+.right-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkboxes {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .cards {

@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ICandidateFeedback } from '@gauzy/models';
 import {
 	SelectedEmployee,
 	ALL_EMPLOYEES_SELECTED
@@ -10,7 +9,7 @@ import { Router } from '@angular/router';
 @Component({
 	selector: 'ga-interview-interviewers',
 	template: `
-		<div class="employee" *ngIf="rowData.employees.length > 0">
+		<div class="employee" *ngIf="rowData.employees?.length > 0">
 			<span
 				*ngFor="let employee of rowData.employees"
 				nbTooltip=" {{ employee?.user?.name }}"

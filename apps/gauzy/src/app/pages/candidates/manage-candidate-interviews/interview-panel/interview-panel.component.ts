@@ -52,6 +52,8 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	isResetSelect: boolean;
 	loading: boolean;
 	includeArchived = false;
+	onlyPast = false;
+	onlyFuture = false;
 	addedInterview: ICandidateInterview[];
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -83,9 +85,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				this.candidates = candidates.items;
 			});
 		this.loadInterviews();
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
-
 		this.candidateStore.interviewList$.subscribe(() => {
 			this.loadInterviews();
 		});
@@ -164,6 +163,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 							fullName: item.user.name,
 							imageUrl: item.user.imageUrl,
 							employees: employees,
+							showArchive: true,
 							allFeedbacks: this.allFeedbacks
 						});
 					}
@@ -182,18 +182,48 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 					interview.rating = 0;
 				}
 			});
+			// for grid view
+			this.interviewList = this.onlyPast
+				? this.filterInterviewByTime(this.interviewList, true)
+				: this.interviewList;
+
+			this.interviewList = this.onlyFuture
+				? this.filterInterviewByTime(this.interviewList, false)
+				: this.interviewList;
+
 			this.interviewList = this.includeArchivedCheck(
 				this.includeArchived,
 				this.interviewList
 			);
+			// for table view
 			this.tableInterviewList = this.includeArchivedCheck(
 				this.includeArchived,
 				result
 			);
+			this.tableInterviewList = this.onlyPast
+				? this.filterInterviewByTime(this.tableInterviewList, true)
+				: this.tableInterviewList;
+
+			this.tableInterviewList = this.onlyFuture
+				? this.filterInterviewByTime(this.tableInterviewList, false)
+				: this.tableInterviewList;
+
 			this.sourceSmartTable.load(this.tableInterviewList);
 			this.loading = false;
+			this.loadSmartTable();
+			this._applyTranslationOnSmartTable();
 		}
 	}
+	filterInterviewByTime(list: ICandidateInterview[], isPast: boolean) {
+		const now = new Date().getTime();
+		let res: ICandidateInterview[] = [];
+		return (res = list.filter((item) =>
+			isPast
+				? new Date(item.startTime).getTime() < now
+				: new Date(item.startTime).getTime() > now
+		));
+	}
+
 	includeArchivedCheck(
 		includeArchived: boolean,
 		list: ICandidateInterview[]
@@ -322,6 +352,20 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	}
 	changeIncludeArchived(checked: boolean) {
 		this.includeArchived = checked;
+		this.loadInterviews();
+	}
+	changePast(checked: boolean) {
+		this.onlyPast = checked;
+		if (this.onlyFuture) {
+			this.onlyFuture = false;
+		}
+		this.loadInterviews();
+	}
+	changeFuture(checked: boolean) {
+		this.onlyFuture = checked;
+		if (this.onlyPast) {
+			this.onlyPast = false;
+		}
 		this.loadInterviews();
 	}
 	async addFeedback(interview: ICandidateInterview) {

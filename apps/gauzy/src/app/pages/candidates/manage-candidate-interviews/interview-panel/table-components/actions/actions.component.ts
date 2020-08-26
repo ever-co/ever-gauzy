@@ -24,7 +24,10 @@ import { TranslateService } from '@ngx-translate/core';
 				>
 					{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate }}
 				</div>
-				<div class="badge badge-warning" *ngIf="rowData.isArchived">
+				<div
+					class="badge badge-warning"
+					*ngIf="rowData.isArchived && rowData.showArchive"
+				>
 					{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
 				</div>
 			</div>
@@ -77,6 +80,7 @@ import { TranslateService } from '@ngx-translate/core';
 					nbTooltip="{{
 						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate
 					}}"
+					*ngIf="rowData.showArchive"
 					nbTooltipPlacement="top"
 					icon="archive-outline"
 					class="icons ml-2"
