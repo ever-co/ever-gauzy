@@ -36,6 +36,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	candidateName = 'Candidate';
 	tabs: any[];
 	interviewList: ICandidateInterview[];
+	futureInterviews: ICandidateInterview[];
 
 	constructor(
 		private route: ActivatedRoute,
@@ -102,13 +103,17 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 
 		if (interviews) {
 			this.interviewList = interviews.items;
+			const now = new Date().getTime();
+			this.futureInterviews = this.interviewList.filter(
+				(item) => new Date(item.startTime).getTime() > now
+			);
 		}
 	}
 	async interviewInfo() {
-		if (this.interviewList.length > 0) {
+		if (this.futureInterviews.length > 0) {
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
-					interviewList: this.interviewList,
+					interviewList: this.futureInterviews,
 					selectedCandidate: this.selectedCandidate,
 					isSlider: true
 				}

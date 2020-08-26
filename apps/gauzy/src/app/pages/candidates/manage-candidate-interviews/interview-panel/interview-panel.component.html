@@ -229,6 +229,11 @@
 							icon="message-square-outline"
 						></nb-icon
 						>{{ 'BUTTONS.LEAVE_FEEDBACK' | translate }}
+						<span *ngIf="isPastInterview(interview)" class="ml-1">
+							({{ interview.feedbacks.length }}/{{
+								interview.interviewers.length
+							}})
+						</span>
 					</button>
 				</div>
 			</nb-card-body>
