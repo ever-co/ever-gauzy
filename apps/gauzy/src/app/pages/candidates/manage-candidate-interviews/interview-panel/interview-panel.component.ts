@@ -216,12 +216,11 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	}
 	filterInterviewByTime(list: ICandidateInterview[], isPast: boolean) {
 		const now = new Date().getTime();
-		let res: ICandidateInterview[] = [];
-		return (res = list.filter((item) =>
+		return list.filter((item) =>
 			isPast
 				? new Date(item.startTime).getTime() < now
 				: new Date(item.startTime).getTime() > now
-		));
+		);
 	}
 
 	includeArchivedCheck(

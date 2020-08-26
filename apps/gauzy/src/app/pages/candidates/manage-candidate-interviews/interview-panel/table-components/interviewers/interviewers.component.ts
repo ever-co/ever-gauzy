@@ -67,7 +67,9 @@ export class InterviewersTableComponent {
 		this.store.selectedEmployee.firstName = firstName;
 		this.store.selectedEmployee.lastName = lastName;
 		this.store.selectedEmployee.imageUrl = imageUrl;
-		this.navigateToEmployeeStatistics(employee.id);
+		if (employee) {
+			this.navigateToEmployeeStatistics(employee.id);
+		}
 	}
 
 	navigateToEmployeeStatistics(id: string) {
