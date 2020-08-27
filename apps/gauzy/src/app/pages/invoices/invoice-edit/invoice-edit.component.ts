@@ -101,6 +101,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	expenses: Expense[] = [];
 	observableTasks: Observable<Task[]>;
 	duplicate: boolean;
+	discountAfterTax: boolean;
 	subtotal = 0;
 	total = 0;
 	get currency() {
@@ -139,6 +140,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.invoiceItems = invoice.invoiceItems;
 		this.selectedOrganizationContact = invoice.toContact;
 		this.organization = invoice.fromOrganization;
+		this.discountAfterTax = invoice.fromOrganization.discountAfterTax;
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		await this._loadOrganizationData();
@@ -873,8 +875,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			if (item.applyDiscount) {
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalDiscount +=
-							item.totalValue * (+discountValue / 100);
+						if (!this.discountAfterTax) {
+							totalDiscount +=
+								item.totalValue * (+discountValue / 100);
+						}
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
 						totalDiscount += +discountValue;
@@ -884,6 +888,13 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 						break;
 				}
 			}
+		}
+
+		if (
+			this.discountAfterTax &&
+			this.form.value.discountType === DiscountTaxTypeEnum.PERCENT
+		) {
+			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
 		}
 
 		this.total = this.subtotal - totalDiscount + totalTax;
@@ -1005,6 +1016,11 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		} else {
 			this.router.navigate(['/pages/accounting/invoices']);
 		}
+	}
+
+	async applyDiscountAfterTax($event) {
+		this.discountAfterTax = $event;
+		this.calculateTotal();
 	}
 
 	payments() {

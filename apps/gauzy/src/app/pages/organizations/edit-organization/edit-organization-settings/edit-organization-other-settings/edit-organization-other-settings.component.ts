@@ -215,7 +215,8 @@ export class EditOrganizationOtherSettingsComponent
 				this.organization.separateInvoiceItemTaxAndDiscount
 			],
 			fiscalInformation: [this.organization.fiscalInformation || ''],
-			currencyPosition: [this.organization.currencyPosition || 'LEFT']
+			currencyPosition: [this.organization.currencyPosition || 'LEFT'],
+			discountAfterTax: [this.organization.discountAfterTax]
 		});
 	}
 
@@ -226,6 +227,10 @@ export class EditOrganizationOtherSettingsComponent
 	toggleExpiry(checked) {
 		const inviteExpiryControl = this.form.get('inviteExpiryPeriod');
 		checked ? inviteExpiryControl.enable() : inviteExpiryControl.disable();
+	}
+
+	toggleDiscountAfterTax($event) {
+		this.organization.discountAfterTax = $event;
 	}
 
 	ngOnDestroy() {
