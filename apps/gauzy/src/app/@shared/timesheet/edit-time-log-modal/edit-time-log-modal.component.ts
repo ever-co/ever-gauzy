@@ -179,14 +179,15 @@ export class EditTimeLogModalComponent
 	}
 
 	checkOverlaps() {
-		if (this.selectedRange && this.timeLog.employeeId) {
+		const employeeId = this.form.get('employeeId').value;
+		if (this.selectedRange && employeeId) {
 			const startDate = toUTC(this.selectedRange.start).toISOString();
 			const endDate = toUTC(this.selectedRange.end).toISOString();
 			const request: IGetTimeLogConflictInput = {
 				...(this.timeLog.id ? { ignoreId: [this.timeLog.id] } : {}),
 				startDate,
 				endDate,
-				employeeId: this.timeLog.employeeId,
+				employeeId: employeeId,
 				relations: ['project', 'task']
 			};
 			this.timesheetService.checkOverlaps(request).then((timeLogs) => {

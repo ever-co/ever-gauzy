@@ -70,16 +70,24 @@ export class TaskSelectorComponent
 		this.loadTasks$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(async () => {
-				const { items = [] } = await this.tasksService
-					.getAllTasks({
-						projectId: this.projectId
-						// members: {
-						// 	id: this.employeeId
-						// }
-					})
-					.toPromise();
+				if (this.employeeId) {
+					this.tasks = await this.tasksService.getAllTasksByEmployee(
+						this.employeeId,
+						{
+							where: {
+								projectId: this.projectId
+							}
+						}
+					);
+				} else {
+					const { items = [] } = await this.tasksService
+						.getAllTasks({
+							projectId: this.projectId
+						})
+						.toPromise();
 
-				this.tasks = items;
+					this.tasks = items;
+				}
 			});
 	}
 

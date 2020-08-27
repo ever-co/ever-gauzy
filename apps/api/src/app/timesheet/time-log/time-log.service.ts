@@ -141,7 +141,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
-		console.log('addManualTime', request);
 		if (!request.startedAt || !request.stoppedAt) {
 			throw new BadRequestException(
 				'Please select valid Date, start time and end time'
@@ -184,7 +183,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 		const timelog = await this.commandBus.execute(
 			new TimeLogCreateCommand(request)
 		);
-		console.log(timelog);
 		return timelog;
 	}
 

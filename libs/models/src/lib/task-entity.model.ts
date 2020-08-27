@@ -21,10 +21,11 @@ export interface Task extends IBaseEntityModel {
 
 export interface GetTaskOptions {
 	projectId?: string;
-	members?: {
-		id: string;
-	};
 	organizationId?: string;
+}
+export interface GetTaskByEmployeeOptions {
+	relations?: string[];
+	where?: GetTaskOptions;
 }
 
 export interface GetSprintsOptions {

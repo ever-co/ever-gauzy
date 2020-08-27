@@ -11,6 +11,7 @@ import {
 } from '@nebular/theme';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 import { DialogsModule } from '../../dialogs';
+import { LabelModule } from '../../components/label/label.module';
 
 @NgModule({
 	declarations: [ViewTimeLogModalComponent],
@@ -25,7 +26,8 @@ import { DialogsModule } from '../../dialogs';
 		NbDialogModule.forChild(),
 		EditTimeLogModalModule,
 		NbIconModule,
-		DialogsModule
+		DialogsModule,
+		LabelModule
 	]
 })
 export class ViewTimeLogModalModule {}

@@ -8,6 +8,7 @@ import {
 	TaskListTypeEnum
 } from '@gauzy/models';
 import { first, take } from 'rxjs/operators';
+import { toParams } from 'libs/utils';
 
 @Injectable({
 	providedIn: 'root'
@@ -36,9 +37,15 @@ export class OrganizationProjectsService {
 			.toPromise();
 	}
 
-	getAllByEmployee(id: string): Promise<OrganizationProjects[]> {
+	getAllByEmployee(
+		id: string,
+		findInput: OrganizationProjectsFindInput = {}
+	): Promise<OrganizationProjects[]> {
+		const data = toParams({ findInput });
 		return this.http
-			.get<OrganizationProjects[]>(`${this.API_URL}/employee/${id}`)
+			.get<OrganizationProjects[]>(`${this.API_URL}/employee/${id}`, {
+				params: data
+			})
 			.pipe(first())
 			.toPromise();
 	}
@@ -59,7 +66,6 @@ export class OrganizationProjectsService {
 			.pipe(first())
 			.toPromise();
 	}
-
 	getById(id: string) {
 		return this.http
 			.get<OrganizationProjects>(`${this.API_URL}/${id}`)
