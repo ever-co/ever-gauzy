@@ -37,6 +37,7 @@ export class TimeLogCreateHandler
 			organizationContactId: input.organizationContactId || null,
 			logType: input.logType || TimeLogType.MANUAL,
 			description: input.description || '',
+			reason: input.reason || '',
 			isBillable: input.isBillable || false
 		});
 

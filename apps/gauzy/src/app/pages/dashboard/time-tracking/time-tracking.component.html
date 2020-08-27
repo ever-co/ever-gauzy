@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header>
-		<h4>Time Tracking</h4>
+		<h4>{{ 'TIMESHEET.TIME_TRACKING' | translate }}</h4>
 		<div>{{ startDate | date }} - {{ endDate | date }}</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -19,7 +19,9 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>Members worked</p>
+								<p>
+									{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
+								</p>
 								<div class="h1">
 									{{ counts?.employeesCount || 0 }}
 								</div>
@@ -33,7 +35,11 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>Projects worked</p>
+								<p>
+									{{
+										'TIMESHEET.PROJECTS_WORKED' | translate
+									}}
+								</p>
 								<div class="h1">
 									{{ counts?.projectsCount || 0 }}
 								</div>
@@ -47,7 +53,11 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>Weekly Activity</p>
+								<p>
+									{{
+										'TIMESHEET.WEEKLY_ACTIVITY' | translate
+									}}
+								</p>
 								<div class="h1">
 									{{ counts?.weekActivites || 0 }}%
 								</div>
@@ -61,7 +71,11 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>Worked this week</p>
+								<p>
+									{{
+										'TIMESHEET.WORKED_THIS_WEEK' | translate
+									}}
+								</p>
 								<div class="h1">
 									{{
 										counts?.weekDuration || 0
@@ -78,7 +92,9 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>Today's Activity</p>
+								<p>
+									{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
+								</p>
 								<div class="h1">
 									{{ counts?.todayActivites || 0 }}%
 								</div>
@@ -92,7 +108,9 @@
 							nbSpinnerStatus="primary"
 						>
 							<nb-card-body>
-								<p>Worked today</p>
+								<p>
+									{{ 'TIMESHEET.WORKED_TODAY' | translate }}
+								</p>
 								<div class="h1">
 									{{
 										counts?.todayDuration || 0
@@ -110,7 +128,9 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header>Recent Activities</nb-card-header>
+					<nb-card-header>{{
+						'TIMESHEET.RECENT_ACTIVITIES' | translate
+					}}</nb-card-header>
 					<nb-card-body>
 						<ng-template
 							[ngIf]="timeSlotEmployees?.length > 0"
@@ -157,7 +177,7 @@
 						</ng-template>
 						<ng-template #noScreenshot>
 							<div class="text-center" *ngIf="!timeSlotLoading">
-								No screenshot for the week
+								{{ 'TIMESHEET.NO_SCREENSHOT' | translate }}
 							</div>
 						</ng-template>
 					</nb-card-body>
@@ -169,7 +189,9 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header>Tasks</nb-card-header>
+					<nb-card-header>{{
+						'TIMESHEET.TASKS' | translate
+					}}</nb-card-header>
 					<ng-template
 						[ngIf]="tasks?.length > 0"
 						[ngIfElse]="noTasks"
@@ -207,7 +229,7 @@
 					</ng-template>
 					<ng-template #noTasks>
 						<div class="text-center p-3" *ngIf="!tasksLoading">
-							No task activity for the week
+							{{ 'TIMESHEET.NO_TASK_ACTIVITY' | translate }}
 						</div>
 					</ng-template>
 				</nb-card>
@@ -218,7 +240,9 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header>Manual Time</nb-card-header>
+					<nb-card-header>{{
+						'TIMESHEET.MANUAL_TIME' | translate
+					}}</nb-card-header>
 					<ng-template
 						[ngIf]="manualTimes?.length > 0"
 						[ngIfElse]="noManualTimes"
@@ -227,10 +251,22 @@
 							<nb-list-item>
 								<div class="w-100">
 									<div class="row py-2 font-weight-bold">
-										<div class="col-sm-4">Member</div>
-										<div class="col-sm-4">Project</div>
-										<div class="col-sm-2">Duration</div>
-										<div class="col-sm-2">Date</div>
+										<div class="col-sm-4">
+											{{ 'TIMESHEET.MEMBER' | translate }}
+										</div>
+										<div class="col-sm-4">
+											{{
+												'TIMESHEET.PROJECT' | translate
+											}}
+										</div>
+										<div class="col-sm-2">
+											{{
+												'TIMESHEET.DURATION' | translate
+											}}
+										</div>
+										<div class="col-sm-2">
+											{{ 'TIMESHEET.DATE' | translate }}
+										</div>
 									</div>
 								</div>
 							</nb-list-item>
@@ -266,7 +302,7 @@
 					</ng-template>
 					<ng-template #noManualTimes>
 						<div class="text-center p-3" *ngIf="!manualTimeLoading">
-							No manual time for the week
+							{{ 'TIMESHEET.NO_MANUAL_TIME' | translate }}
 						</div>
 					</ng-template>
 				</nb-card>
@@ -319,7 +355,7 @@
 					</ng-template>
 					<ng-template #noProjects>
 						<div class="text-center p-3" *ngIf="!projectsLoading">
-							No project activity for the week
+							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY' | translate }}
 						</div>
 					</ng-template>
 				</nb-card>
@@ -330,7 +366,9 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header>Apps & Urls</nb-card-header>
+					<nb-card-header>{{
+						'TIMESHEET.APPS_URLS' | translate
+					}}</nb-card-header>
 					<ng-template
 						[ngIf]="activities?.length > 0"
 						[ngIfElse]="noActivities"
@@ -347,7 +385,7 @@
 					</ng-template>
 					<ng-template #noActivities>
 						<div class="text-center p-3" *ngIf="!activitiesLoading">
-							No app & url activity for the week
+							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY' | translate }}
 						</div>
 					</ng-template>
 				</nb-card>
@@ -361,7 +399,9 @@
 						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 					"
 				>
-					<nb-card-header>Members</nb-card-header>
+					<nb-card-header>{{
+						'TIMESHEET.MEMBERS' | translate
+					}}</nb-card-header>
 					<ng-template
 						[ngIf]="members?.length > 0"
 						[ngIfElse]="noMember"
@@ -370,12 +410,20 @@
 							<nb-list-item>
 								<div class="w-100">
 									<div class="row font-weight-bold">
-										<div class="col">Member info</div>
+										<div class="col">
+											{{
+												'TIMESHEET.MEMBER_INFO'
+													| translate
+											}}
+										</div>
 										<div class="col-sm-2 text-center">
-											Today
+											{{ 'TIMESHEET.TODAY' | translate }}
 										</div>
 										<div class="col-sm-3 text-center">
-											This week
+											{{
+												'TIMESHEET.THIS_WEEK'
+													| translate
+											}}
 										</div>
 									</div>
 								</div>
@@ -473,7 +521,7 @@
 					</ng-template>
 					<ng-template #noMember>
 						<div class="text-center p-3" *ngIf="!memberLoading">
-							No member activity for the week
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY' | translate }}
 						</div>
 					</ng-template>
 				</nb-card>

@@ -5,18 +5,18 @@ import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbCheckboxModule,
 	NbButtonModule,
-	NbDialogModule,
 	NbSpinnerModule,
 	NbIconModule
 } from '@nebular/theme';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { ContactSelectorModule } from '../../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
+import { DialogsModule } from '../../dialogs';
 
 @NgModule({
 	declarations: [EditTimeLogModalComponent],
@@ -30,14 +30,15 @@ import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 		TranslateModule,
 		SharedModule,
 		FormsModule,
+		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
-		NbDialogModule.forChild(),
 		NbCheckboxModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
 		NbIconModule,
-		ContactSelectorModule
+		ContactSelectorModule,
+		DialogsModule
 	]
 })
 export class EditTimeLogModalModule {}

@@ -23,6 +23,10 @@ export interface GetTaskOptions {
 	projectId?: string;
 	organizationId?: string;
 }
+export interface GetTaskByEmployeeOptions {
+	relations?: string[];
+	where?: GetTaskOptions;
+}
 
 export interface GetSprintsOptions {
 	projectId?: string;

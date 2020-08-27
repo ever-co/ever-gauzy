@@ -11,6 +11,7 @@ import { CrudService } from '../core';
 import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
 import { RequestContext } from '../core/context';
+import { GetTaskByEmployeeOptions } from '@gauzy/models';
 
 @Injectable()
 export class TaskService extends CrudService<Task> {
@@ -75,6 +76,34 @@ export class TaskService extends CrudService<Task> {
 			.setParameter('employeeId', employeeId)
 			.getMany();
 		return { items, total };
+	}
+
+	async getAllTasksByEmployee(
+		employeeId: string,
+		filter: GetTaskByEmployeeOptions
+	) {
+		const query = await this.taskRepository
+			.createQueryBuilder('task')
+			.leftJoin('task.members', 'members');
+		if (filter && filter.where) {
+			query.where({
+				where: filter.where
+			});
+		}
+		return await query
+			.andWhere((qb) => {
+				const subQuery = qb
+					.subQuery()
+					.select('"task_employee_sub"."taskId"')
+					.from('task_employee', 'task_employee_sub')
+					.where('"task_employee_sub"."employeeId" = :employeeId', {
+						employeeId
+					})
+					.distinct(true)
+					.getQuery();
+				return '"task_members"."taskId" IN(' + subQuery + ')';
+			})
+			.getMany();
 	}
 
 	async getTeamTasks(employeeId?: string) {

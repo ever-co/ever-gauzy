@@ -8,9 +8,7 @@ import {
 } from '@angular/core';
 import { OrganizationPermissionsEnum, TimeSlot, TimeLog } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 import { TimesheetService } from '../../timesheet.service';
-import { DeleteConfirmationComponent } from '../../../user/forms/delete-confirmation/delete-confirmation.component';
 import { GalleryItem } from '../../../gallery/gallery.directive';
 import { ViewTimeLogModalComponent } from '../../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { toLocal } from 'libs/utils';
@@ -66,22 +64,13 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	deleteSlot(timeSlot) {
-		this.nbDialogService
-			.open(DeleteConfirmationComponent)
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((type) => {
-				if (type === 'ok') {
-					this.timesheetService
-						.deleteTimeSlots([timeSlot.id])
-						.then(() => {
-							this.delete.emit();
-						});
-				}
-			});
+		this.timesheetService.deleteTimeSlots([timeSlot.id]).then(() => {
+			this.delete.emit();
+		});
 	}
 
 	viewInfo(timeSlot) {
-		if (timeSlot.timeLogs.length > 0) {
+		if (timeSlot.timeLogs && timeSlot.timeLogs.length > 0) {
 			const findOptions = {
 				relations: ['employee', 'employee.user', 'project', 'task']
 			};
