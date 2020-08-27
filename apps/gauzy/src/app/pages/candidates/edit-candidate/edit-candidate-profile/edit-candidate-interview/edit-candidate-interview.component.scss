@@ -18,6 +18,13 @@
   align-items: center;
 }
 
+::ng-deep {
+  .ng2-smart-actions,
+  .ng2-smart-actions-title {
+    display: none;
+  }
+}
+
 .checkboxes {
   display: flex;
   justify-content: flex-end;

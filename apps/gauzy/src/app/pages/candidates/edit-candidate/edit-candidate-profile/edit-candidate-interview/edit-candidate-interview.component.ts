@@ -282,7 +282,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			currentInterview.feedbacks.length !==
 			currentInterview.interviewers.length
 		) {
-			console.log(currentInterview);
 			const dialog = this.dialogService.open(
 				CandidateInterviewFeedbackComponent,
 				{

@@ -24,7 +24,7 @@ export class FeedbackDeleteHandler
 			let interviewRating: number;
 
 			if (feedbacks.length > 0) {
-				interviewRating = this.candidateFeedbackService.calkRating(
+				interviewRating = this.candidateFeedbackService.calcRating(
 					feedbacks
 				);
 				await this.candidateInterviewService.create({

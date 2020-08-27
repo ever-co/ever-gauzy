@@ -117,7 +117,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		return this.interviewList;
 	}
 	async loadInterviews() {
-		console.log('in');
 		const res = await this.candidateFeedbacksService.getAll([
 			'interviewer'
 		]);

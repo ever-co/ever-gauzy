@@ -25,7 +25,7 @@ export class CandidateFeedbacksService extends CrudService<CandidateFeedback> {
 			})
 			.getMany();
 	}
-	calkRating(feedbacks: ICandidateFeedback[]) {
+	calcRating(feedbacks: ICandidateFeedback[]) {
 		const rate: number[] = [];
 		feedbacks.forEach((fb) => {
 			rate.push(Number(fb.rating));
