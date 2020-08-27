@@ -6,6 +6,10 @@
     flex-direction: column;
     margin-right: 10px;
     width: 350px;
+    &.big {
+      width: 415px;
+      margin-right: 65px;
+    }
     .info-line {
       display: flex;
       flex-direction: row;
