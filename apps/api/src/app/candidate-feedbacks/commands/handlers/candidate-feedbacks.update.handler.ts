@@ -17,7 +17,7 @@ export class FeedbackUpdateHandler
 		const { id } = command;
 		const { entity } = command;
 
-		const feedback = await this.updateFeedback(id['id'], entity);
+		const feedback = await this.updateFeedback(id, entity);
 		const interviewId = entity.interviewer.interviewId;
 
 		if (feedback) {

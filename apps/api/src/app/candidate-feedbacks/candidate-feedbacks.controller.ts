@@ -113,7 +113,7 @@ export class CandidateFeedbacksController extends CrudController<
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Put(':id')
 	async updateCandidateFeedback(
-		@Param() id: string,
+		@Param('id') id: string,
 		@Body() entity: any
 	): Promise<any> {
 		return this.commandBus.execute(new FeedbackUpdateCommand(id, entity));
@@ -125,6 +125,7 @@ export class CandidateFeedbacksController extends CrudController<
 	async deleteFeedback(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
+		console.log('@@@@@@');
 		const { interviewId = null, feedbackId = null } = data;
 		return this.commandBus.execute(
 			new FeedbackDeleteCommand(interviewId, feedbackId)

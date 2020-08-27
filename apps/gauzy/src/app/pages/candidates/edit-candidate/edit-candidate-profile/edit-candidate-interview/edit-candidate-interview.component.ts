@@ -43,7 +43,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
 	form: FormGroup;
-	showCheckboxes: boolean = true;
+	showCheckboxes = true;
 	loading: boolean;
 	onlyPast = false;
 	onlyFuture = false;

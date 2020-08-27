@@ -181,10 +181,6 @@ export class CandidateInterviewFeedbackComponent
 				);
 				this.dialogRef.close(updated);
 				this.form.reset();
-				this.toastrService.success(
-					this.getTranslation('TOASTR.TITLE.SUCCESS'),
-					this.getTranslation('TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED')
-				);
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
