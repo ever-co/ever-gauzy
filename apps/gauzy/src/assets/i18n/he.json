@@ -1734,6 +1734,7 @@
 		"SHOW_HIDE_COLUMNS": "Show/Hide Columns",
 		"INVOICES_PER_PAGE": "Invoices Per Page",
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
+		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
