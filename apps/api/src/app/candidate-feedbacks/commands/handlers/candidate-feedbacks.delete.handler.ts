@@ -17,29 +17,27 @@ export class FeedbackDeleteHandler
 
 		const feedback = await this.deleteFeedback(feedbackId);
 
-		// if (feedback) {
-		const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(
-			id
-		);
-		let interviewRating: number;
-		console.log('@@@@@@', feedbacks);
-		if (feedbacks.length > 0) {
-			interviewRating = this.candidateFeedbackService.calcRating(
-				feedbacks
+		if (feedback) {
+			const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(
+				id
 			);
-			await this.candidateInterviewService.create({
-				id: id,
-				rating: interviewRating
-			});
-		} else {
-			console.log('@@@@@@');
-			await this.candidateInterviewService.create({
-				id: id,
-				rating: 0
-			});
+			let interviewRating: number;
+			if (feedbacks.length > 0) {
+				interviewRating = this.candidateFeedbackService.calcRating(
+					feedbacks
+				);
+				await this.candidateInterviewService.create({
+					id: id,
+					rating: interviewRating
+				});
+			} else {
+				await this.candidateInterviewService.create({
+					id: id,
+					rating: 0
+				});
+			}
+			return;
 		}
-		return;
-		// }
 	}
 
 	public async deleteFeedback(id: string): Promise<any> {
