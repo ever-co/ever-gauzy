@@ -75,4 +75,8 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@ApiPropertyOptional({ type: Boolean, default: false })
 	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
+
+	@ApiPropertyOptional({ type: Number })
+	@Column({ nullable: true, type: 'numeric' })
+	rating?: number;
 }

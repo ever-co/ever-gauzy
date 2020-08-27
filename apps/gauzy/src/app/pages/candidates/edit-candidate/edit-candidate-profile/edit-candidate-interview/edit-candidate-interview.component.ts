@@ -243,6 +243,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 						});
 					}
 				);
+				interview.employees = employees;
 				this.tableInterviewList.push({
 					...interview,
 					fullName: this.selectedCandidate.user.name,
@@ -251,19 +252,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					employees: employees,
 					allFeedbacks: this.allFeedbacks
 				});
-
-				if (interview.feedbacks.length > 0) {
-					const rate: number[] = [];
-					interview.feedbacks.forEach((fb) => {
-						rate.push(Number(fb.rating));
-					});
-					const fbSum = rate.reduce((sum, current) => {
-						return sum + current;
-					});
-					interview.rating = fbSum / interview.feedbacks.length;
-				} else {
-					interview.rating = 0;
-				}
 			});
 		}
 		this.interviewList = this.onlyPast
@@ -294,6 +282,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			currentInterview.feedbacks.length !==
 			currentInterview.interviewers.length
 		) {
+			console.log(currentInterview);
 			const dialog = this.dialogService.open(
 				CandidateInterviewFeedbackComponent,
 				{
