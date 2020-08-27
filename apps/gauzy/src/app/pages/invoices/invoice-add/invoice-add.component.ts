@@ -87,6 +87,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	isExpenseTable: boolean;
 	disableSaveButton = true;
 	organizationId: string;
+	discountAfterTax: boolean;
 	subtotal = 0;
 	total = 0;
 	tags: Tag[] = [];
@@ -672,6 +673,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
 				if (organization) {
+					this.discountAfterTax = organization.discountAfterTax;
+
 					this.employeeService
 						.getAll(['user'])
 						.pipe(takeUntil(this._ngDestroy$))
@@ -980,8 +983,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			if (item.applyDiscount) {
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalDiscount +=
-							item.totalValue * (+discountValue / 100);
+						if (!this.discountAfterTax) {
+							totalDiscount +=
+								item.totalValue * (+discountValue / 100);
+						}
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
 						totalDiscount += +discountValue;
@@ -993,11 +998,23 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			}
 		}
 
+		if (
+			this.discountAfterTax &&
+			this.form.value.discountType === DiscountTaxTypeEnum.PERCENT
+		) {
+			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
+		}
+
 		this.total = this.subtotal - totalDiscount + totalTax;
 
 		if (this.total < 0) {
 			this.total = 0;
 		}
+	}
+
+	async applyDiscountAfterTax($event) {
+		this.discountAfterTax = $event;
+		this.calculateTotal();
 	}
 
 	async onCurrencyChange() {

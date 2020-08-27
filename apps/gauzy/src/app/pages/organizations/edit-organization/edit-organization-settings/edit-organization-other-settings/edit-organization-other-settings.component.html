@@ -338,6 +338,22 @@
 						</div>
 					</div>
 				</div>
+				<div class="row">
+					<div class="col-6">
+						<label class="label">
+							Discount after tax
+						</label>
+						<nb-toggle
+							class="d-block"
+							formControlName="discountAfterTax"
+							status="primary"
+							labelPosition="start"
+							(checkedChange)="toggleDiscountAfterTax($event)"
+						>
+							Apply discount after tax for invoices and estimates
+						</nb-toggle>
+					</div>
+				</div>
 			</div>
 		</nb-card-body>
 	</nb-card>

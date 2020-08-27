@@ -673,6 +673,17 @@
 							</div>
 						</div>
 					</div>
+					<div class="discountCheckbox">
+						<nb-checkbox
+							(checkedChange)="applyDiscountAfterTax($event)"
+							[checked]="discountAfterTax"
+						>
+							{{
+								'INVOICES_PAGE.APPLY_DISCOUNT_AFTER_TAX'
+									| translate
+							}}
+						</nb-checkbox>
+					</div>
 				</div>
 			</div>
 		</form>
