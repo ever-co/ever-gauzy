@@ -21,6 +21,7 @@ export class CardGridComponent extends TranslationBaseComponent
 	@Input() source: any;
 	@Input() settings: any = {};
 	@Input() buttonTemplate: TemplateRef<any>;
+	@Input() cardSize: undefined | 'big';
 
 	private _ngDestroy$ = new Subject<void>();
 

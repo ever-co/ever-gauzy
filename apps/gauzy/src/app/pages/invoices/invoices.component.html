@@ -370,6 +370,7 @@
 			[source]="invoices"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[buttonTemplate]="actionButtons"
+			cardSize="big"
 		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
@@ -379,65 +380,77 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		status="info"
-		(click)="download(selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="download-outline"> </nb-icon>
-		{{ 'BUTTONS.DOWNLOAD' | translate }}
-	</button>
-	<button
-		nbButton
-		status="info"
-		(click)="edit(selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<nb-select
-		filled
-		status="info"
-		class="mr-2"
-		*ngIf="!isEstimate"
-		placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-		[(selected)]="status"
-		[disabled]="disableButton"
-		(selectedChange)="selectStatus($event)"
-	>
-		<nb-option *ngFor="let status of invoiceStatusTypes" [value]="status">
-			{{ status }}
-		</nb-option>
-	</nb-select>
-	<nb-select
-		filled
-		status="info"
-		class="mr-2"
-		*ngIf="isEstimate"
-		placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-		[(selected)]="status"
-		[disabled]="disableButton"
-		(selectedChange)="selectStatus($event)"
-	>
-		<nb-option *ngFor="let status of estimateStatusTypes" [value]="status">
-			{{ status }}
-		</nb-option>
-	</nb-select>
-	<button
-		nbButton
-		[nbContextMenu]="settingsContextMenu"
-		nbContextMenuPlacement="top"
-		(click)="selectMenu(selectedItem)"
-		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-	>
-		<nb-icon class="icons" icon="settings-2-outline"></nb-icon>
-	</button>
+	<div class="btn-group">
+		<button
+			nbButton
+			status="info"
+			(click)="download(selectedItem)"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="download-outline"> </nb-icon>
+			{{ 'BUTTONS.DOWNLOAD' | translate }}
+		</button>
+		<button
+			nbButton
+			status="info"
+			(click)="edit(selectedItem)"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<nb-select
+			filled
+			status="info"
+			class="mr-2"
+			*ngIf="!isEstimate"
+			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+			[(selected)]="status"
+			[disabled]="disableButton"
+			(selectedChange)="selectStatus($event)"
+			[size]="dataLayoutStyle === 'CARDS_GRID' ? 'tiny' : 'medium'"
+		>
+			<nb-option
+				*ngFor="let status of invoiceStatusTypes"
+				[value]="status"
+			>
+				{{ status }}
+			</nb-option>
+		</nb-select>
+		<nb-select
+			filled
+			status="info"
+			class="mr-2"
+			*ngIf="isEstimate"
+			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+			[(selected)]="status"
+			[disabled]="disableButton"
+			(selectedChange)="selectStatus($event)"
+			[size]="dataLayoutStyle === 'CARDS_GRID' ? 'tiny' : 'medium'"
+		>
+			<nb-option
+				*ngFor="let status of estimateStatusTypes"
+				[value]="status"
+			>
+				{{ status }}
+			</nb-option>
+		</nb-select>
+
+		<button
+			nbButton
+			[nbContextMenu]="settingsContextMenu"
+			nbContextMenuPlacement="top"
+			(click)="selectMenu(selectedItem)"
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[ngStyle]="{ transform: 'scale(0.65)' }"
+		>
+			<nb-icon class="icons" icon="settings-2-outline"></nb-icon>
+		</button>
+	</div>
 
 	<button
 		*ngIf="dataLayoutStyle === 'TABLE'"

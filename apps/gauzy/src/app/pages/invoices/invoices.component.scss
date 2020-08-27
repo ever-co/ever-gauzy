@@ -81,3 +81,18 @@
 .history-item {
   align-self: flex-start;
 }
+
+.btn-group {
+  display: flex;
+  align-items: center;
+}
+
+.flex-container {
+  display: flex;
+  flex-flow: row wrap;
+  flex-direction: row;
+  justify-content: space-around;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
