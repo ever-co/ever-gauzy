@@ -405,10 +405,13 @@ export class UpworkService {
 		let integratedTimeSlots = [];
 
 		for await (const timeSlot of timeSlots) {
+			const multiply = 10;
+			const durtion = 600;
 			const {
 				keyboard_events_count,
 				mouse_events_count,
-				cell_time
+				cell_time,
+				activity
 			} = timeSlot;
 			const gauzyTimeSlot = await this.commandBus.execute(
 				new TimeSlotCreateCommand({
@@ -421,8 +424,8 @@ export class UpworkService {
 					time_slot: new Date(
 						moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')
 					),
-					overall: 0,
-					duration: 0
+					overall: activity * multiply,
+					duration: durtion
 				})
 			);
 			const integratedSlot = await this.commandBus.execute(
@@ -831,7 +834,8 @@ export class UpworkService {
 				})
 			]);
 
-			const { first_name: firstName, last_name: lastName } = user;
+			const { first_name: firstName, last_name: lastName, status } = user;
+			const isActive = status === 'active' ? true : false;
 			employee = await this.commandBus.execute(
 				new EmployeeCreateCommand({
 					user: {
@@ -844,7 +848,11 @@ export class UpworkService {
 						imageUrl
 					},
 					password: environment.defaultHubstaffUserPass,
-					organization
+					organization,
+					startedWorkOn: new Date(
+						moment().format('YYYY-MM-DD HH:mm:ss')
+					),
+					isActive
 				})
 			);
 		}
