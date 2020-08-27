@@ -8,14 +8,17 @@ import {
 import { EditTimeLogModalComponent } from '../../edit-time-log-modal/edit-time-log-modal.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { TimesheetService } from '../../timesheet.service';
+import { TimeLogsLable } from 'apps/gauzy/src/app/static-data/timesheet';
 
 @Component({
 	selector: 'ngx-view-time-log-modal',
-	templateUrl: './view-time-log-modal.component.html'
+	templateUrl: './view-time-log-modal.component.html',
+	styleUrls: ['view-time-log-modal.component.scss']
 })
 export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
+	TimeLogsLable = TimeLogsLable;
 	@Input() timeLog: TimeLog;
 
 	constructor(

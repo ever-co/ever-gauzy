@@ -19,7 +19,7 @@ import { TaskService } from './task.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, GetTaskByEmployeeOptions } from '@gauzy/models';
 import { EmployeeService } from '../employee/employee.service';
 import { RequestContext } from '../core/context';
 
@@ -92,6 +92,26 @@ export class TaskController extends CrudController<Task> {
 	): Promise<IPagination<Task>> {
 		const { employeeId } = JSON.parse(data);
 		return this.taskService.findTeamTasks(employeeId);
+	}
+
+	@ApiOperation({
+		summary: 'Find Employee Task.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found Employee Task',
+		type: Task
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('employee/:id')
+	async getAllTasksByEmployee(
+		@Param('id') employeeId: string,
+		@Body() findInput: GetTaskByEmployeeOptions
+	) {
+		return this.taskService.getAllTasksByEmployee(employeeId, findInput);
 	}
 
 	@ApiOperation({ summary: 'create a task' })

@@ -1,0 +1,12 @@
+:host {
+  display: block;
+  position: relative;
+  max-width: 500px;
+  width: 90%;
+  .close-button {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    z-index: 9;
+  }
+}

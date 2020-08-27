@@ -66,13 +66,21 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 		this.loadProjects$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(async () => {
-				const { items = [] } = await this.organizationProjects.getAll(
-					[],
-					{
+				if (this.employeeId) {
+					this.projects = await this.organizationProjects.getAllByEmployee(
+						this.employeeId,
+						{
+							organizationContactId: this.organizationContactId
+						}
+					);
+				} else {
+					const {
+						items = []
+					} = await this.organizationProjects.getAll([], {
 						organizationContactId: this.organizationContactId
-					}
-				);
-				this.projects = items;
+					});
+					this.projects = items;
+				}
 			});
 	}
 
