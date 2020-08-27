@@ -3,8 +3,7 @@ import {
 	OnInit,
 	Input,
 	OnDestroy,
-	AfterViewInit,
-	ChangeDetectorRef
+	AfterViewInit
 } from '@angular/core';
 import {
 	IDateRange,

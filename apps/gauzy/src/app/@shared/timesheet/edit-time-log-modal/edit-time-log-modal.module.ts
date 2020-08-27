@@ -10,7 +10,6 @@ import {
 	NbCardModule,
 	NbCheckboxModule,
 	NbButtonModule,
-	NbDialogModule,
 	NbSpinnerModule,
 	NbIconModule
 } from '@nebular/theme';
