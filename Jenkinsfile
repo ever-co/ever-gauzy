@@ -24,6 +24,10 @@ pipeline {
             script: "aws ecr get-login-password --region ${env.AWS_DEFAULT_REGION}",
             returnStdout: true
         )}"""
+        WORKFLOW_ID = """${sh(
+            script: "curl --silent -X GET -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/ever-co/$REPO_NAME-pulumi/actions/workflows/pulumi.yml | tr -s ' ' | grep -Eo '[0-9]{5,9}' | uniq
+            returnStdout: true
+        )}"""
     }
 
     stages {
@@ -148,6 +152,13 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+        stage ("Pulumi Update") {
+            steps {
+                sh """
+                    curl -sX POST https://api.github.com/repos/ever-co/${REPO_NAME}-pulumi/actions/workflows/$WORKFLOW_ID/dispatches -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${GITHUB_TOKEN} -d '{"ref":$GIT_COMMIT}'
+                """
             }
         }
     }
