@@ -958,6 +958,7 @@
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Опыт работы",
 			"SKILLS": "Навыки",
+			"ALL_FEEDBACKS": "Все отзывы",
 			"FEEDBACKS": "Обратная связь",
 			"EDUCATION": "Образование",
 			"SCHOOL_NAME": "Название школы",
@@ -976,6 +977,8 @@
 			"DOCUMENT": "Документ",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"INTERVIEW_FEEDBACK": "Интервью: ",
+			"INTERVIEWER": "Интервьюер",
+			"FEEDBACK_STATUS": "Статус",
 			"LEAVE_FEEDBACK": "Оставить отзыв о ",
 			"STATUS": "Выбранный статус: ",
 			"INTERVIEW": {
@@ -1011,6 +1014,8 @@
 				"NOTIFY_INTERVIEWERS": "Уведомить интервьюера (ов)",
 				"INTERVIEWERS": "интервьюер(ы)",
 				"HIRE": "Нанять",
+				"RATING": "Рейтинг",
+				"DESCRIPTION": "Пояснение: ",
 				"POSTPONE": "Отложить",
 				"REJECT": "Отклонить",
 				"INTERVIEW_TITLE_EXIST": "Интервью с таким именем уже существует"
