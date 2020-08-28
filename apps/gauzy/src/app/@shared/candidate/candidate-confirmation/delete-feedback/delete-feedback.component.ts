@@ -35,8 +35,12 @@ export class DeleteFeedbackComponent extends TranslationBaseComponent
 				await this.candidateCriterionsRatingService.deleteBulk(
 					this.feedbackId
 				);
+				await this.candidateFeedbacksService.delete(
+					res.interviewId,
+					this.feedbackId
+				);
 			}
-			await this.candidateFeedbacksService.delete(this.feedbackId);
+
 			this.dialogRef.close(this.feedbackId);
 		} catch (error) {
 			this.toastrError(error);

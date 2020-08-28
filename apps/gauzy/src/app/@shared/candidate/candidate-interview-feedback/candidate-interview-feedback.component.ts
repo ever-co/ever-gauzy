@@ -151,32 +151,36 @@ export class CandidateInterviewFeedbackComponent
 					candidateId: this.candidateId,
 					interviewId: this.interviewId
 				});
-				await this.candidateCriterionsRatingService.createBulk(
+				if (
+					this.technologiesList.length !== 0 ||
+					this.personalQualitiesList.length !== 0
+				) {
+					await this.candidateCriterionsRatingService.createBulk(
+						feedback.id,
+						this.technologiesList,
+						this.personalQualitiesList
+					);
+				}
+				const updated = await this.candidateFeedbacksService.update(
 					feedback.id,
-					this.technologiesList,
-					this.personalQualitiesList
+					{
+						description: description,
+						rating:
+							this.technologiesList.length === 0 &&
+							this.personalQualitiesList.length === 0
+								? this.form.get('rating').value
+								: this.averageRating,
+						interviewer: this.feedbackInterviewer,
+						status: this.status
+					}
 				);
-				await this.candidateFeedbacksService.update(feedback.id, {
-					description: description,
-					rating:
-						this.technologiesList.length === 0 &&
-						this.personalQualitiesList.length === 0
-							? this.form.get('rating').value
-							: this.averageRating,
-					interviewer: this.feedbackInterviewer,
-					status: this.status
-				});
 				this.setStatus(this.status);
 				this.technologiesList.forEach((tech) => (tech.rating = null));
 				this.personalQualitiesList.forEach(
 					(qual) => (qual.rating = null)
 				);
-				this.dialogRef.close();
+				this.dialogRef.close(updated);
 				this.form.reset();
-				this.toastrService.success(
-					this.getTranslation('TOASTR.TITLE.SUCCESS'),
-					this.getTranslation('TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED')
-				);
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {

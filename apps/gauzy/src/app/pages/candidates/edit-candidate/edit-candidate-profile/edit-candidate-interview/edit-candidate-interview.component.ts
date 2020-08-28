@@ -43,7 +43,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
 	form: FormGroup;
-	showCheckboxes: boolean = true;
+	showCheckboxes = true;
 	loading: boolean;
 	onlyPast = false;
 	onlyFuture = false;
@@ -243,6 +243,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 						});
 					}
 				);
+				interview.employees = employees;
 				this.tableInterviewList.push({
 					...interview,
 					fullName: this.selectedCandidate.user.name,
@@ -251,19 +252,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					employees: employees,
 					allFeedbacks: this.allFeedbacks
 				});
-
-				if (interview.feedbacks.length > 0) {
-					const rate: number[] = [];
-					interview.feedbacks.forEach((fb) => {
-						rate.push(Number(fb.rating));
-					});
-					const fbSum = rate.reduce((sum, current) => {
-						return sum + current;
-					});
-					interview.rating = fbSum / interview.feedbacks.length;
-				} else {
-					interview.rating = 0;
-				}
 			});
 		}
 		this.interviewList = this.onlyPast

@@ -168,19 +168,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 						});
 					}
 				});
-				// For rating
-				if (interview.feedbacks.length > 0) {
-					const rate: number[] = [];
-					interview.feedbacks.forEach((fb) => {
-						rate.push(Number(fb.rating));
-					});
-					const fbSum = rate.reduce((sum, current) => {
-						return sum + current;
-					});
-					interview.rating = fbSum / interview.feedbacks.length;
-				} else {
-					interview.rating = 0;
-				}
 			});
 			// for grid view
 			this.interviewList = this.onlyPast
@@ -389,8 +376,8 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				);
 				const data = await dialog.onClose.pipe(first()).toPromise();
 				if (data) {
-					this.toastrSuccess('CREATED');
 					this.loadInterviews();
+					this.toastrSuccess('CREATED');
 				}
 			} else {
 				this.toastrService.primary(

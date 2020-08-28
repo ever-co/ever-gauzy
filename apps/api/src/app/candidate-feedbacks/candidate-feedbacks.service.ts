@@ -1,3 +1,4 @@
+import { ICandidateFeedback } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -23,5 +24,15 @@ export class CandidateFeedbacksService extends CrudService<CandidateFeedback> {
 				interviewId
 			})
 			.getMany();
+	}
+	calcRating(feedbacks: ICandidateFeedback[]) {
+		const rate: number[] = [];
+		feedbacks.forEach((fb) => {
+			rate.push(Number(fb.rating));
+		});
+		const fbSum = rate.reduce((sum, current) => {
+			return sum + current;
+		});
+		return fbSum / feedbacks.length;
 	}
 }

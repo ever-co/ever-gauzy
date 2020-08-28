@@ -18,6 +18,13 @@
   }
 }
 
+::ng-deep {
+  .ng2-smart-actions,
+  .ng2-smart-actions-title {
+    display: none;
+  }
+}
+
 .header {
   display: flex;
   align-items: center;
