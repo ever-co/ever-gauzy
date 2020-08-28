@@ -29,7 +29,6 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	animations: [fadeInOutAnimation]
 })
 export class GalleryComponent implements OnInit, OnDestroy {
-	private _items: GalleryItem[] = [];
 	private _item: GalleryItem;
 	active_index: any;
 
@@ -37,27 +36,14 @@ export class GalleryComponent implements OnInit, OnDestroy {
 		HTMLElement
 	>;
 
-	@Input()
-	public get item(): GalleryItem {
-		return this._item;
-	}
-	public set item(value: GalleryItem) {
-		this._item = value;
-		this.setFocus(value);
-	}
-
-	@Input()
-	set items(items: GalleryItem[]) {
-		this._items = items || [];
-		// this.setFocus(items[0]);
-	}
-	get items(): GalleryItem[] {
-		return this._items;
-	}
+	@Input() items: GalleryItem[] = [];
+	@Input() item: GalleryItem;
 
 	constructor(private dialogRef: NbDialogRef<GalleryComponent>) {}
 
-	ngOnInit() {}
+	ngOnInit() {
+		this.setFocus(this.item);
+	}
 
 	close() {
 		this.dialogRef.close();

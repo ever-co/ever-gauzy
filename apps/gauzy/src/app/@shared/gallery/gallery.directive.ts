@@ -23,9 +23,9 @@ export class GalleryDirective implements OnDestroy, OnInit {
 	_items: string;
 	dialogRef: ComponentRef<GalleryComponent>;
 
-	@Input() item: string;
+	@Input() item: GalleryItem | GalleryItem[];
 
-	@Input() items: GalleryItem[];
+	@Input() items: GalleryItem[] = [];
 
 	@Input() set disabled(value: any) {
 		this.disableClick = value || false;
@@ -46,13 +46,10 @@ export class GalleryDirective implements OnDestroy, OnInit {
 		if (this.disableClick) {
 			return;
 		}
-
-		const item = this.items.find((obj) => obj.fullUrl === this.item);
-
 		this.nbDialogService.open(GalleryComponent, {
 			context: {
 				items: this.items,
-				item: item
+				item: this.item instanceof Array ? this.item[0] : this.item
 			},
 			dialogClass: 'fullscreen'
 		});
