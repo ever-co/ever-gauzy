@@ -11,6 +11,7 @@
 	[nbSpinner]="loading"
 	nbSpinnerSize="giant"
 	nbSpinnerStatus="primary"
+	ngxGalleryContainer
 >
 	<ng-template [ngIf]="timeSlots?.length > 0" [ngIfElse]="notFound">
 		<div class="row" *ngFor="let hourSlot of timeSlots; let i = index">

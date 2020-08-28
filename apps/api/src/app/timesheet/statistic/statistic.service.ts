@@ -627,6 +627,7 @@ export class StatisticService {
 			delete employee.user_name;
 
 			employee.timeSlots = await this.timeSlotRepository.find({
+				relations: ['screenshots'],
 				where: {
 					employeeId: employee.id
 				},

@@ -80,12 +80,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 					});
 				}
 				if (request.startDate && request.endDate) {
-					const startDate = moment(request.startDate).format(
-						'YYYY-MM-DD HH:mm:ss'
-					);
-					const endDate = moment(request.endDate).format(
-						'YYYY-MM-DD HH:mm:ss'
-					);
+					const startDate = moment.utc(request.startDate).toDate();
+					const endDate = moment.utc(request.endDate).toDate();
+					console.log({ startDate, endDate });
 					qb.andWhere('"startedAt" Between :startDate AND :endDate', {
 						startDate,
 						endDate
@@ -96,12 +93,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 						employeeId: employeeIds
 					});
 				}
-				// if (request.organizationId) {
-				// 	qb.andWhere(
-				// 		'"employee"."organizationId" = :organizationId',
-				// 		{ organizationId: request.organizationId }
-				// 	);
-				// }
 
 				if (request.projectIds) {
 					qb.andWhere(
@@ -257,8 +248,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async checkConfictTime(request: IGetTimeLogConflictInput) {
-		const startedAt = moment(request.startDate).toISOString();
-		const stoppedAt = moment(request.endDate).toISOString();
+		const startedAt = moment.utc(request.startDate).toISOString();
+		const stoppedAt = moment.utc(request.endDate).toISOString();
 		let confictQuery = this.timeLogRepository.createQueryBuilder();
 
 		confictQuery = confictQuery
@@ -294,7 +285,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	private allowDate(start: Date, end: Date, organization: Organization) {
-		if (!moment(start).isBefore(moment(end))) {
+		if (!moment.utc(start).isBefore(moment.utc(end))) {
 			return false;
 		}
 		if (organization.futureDateAllowed) {

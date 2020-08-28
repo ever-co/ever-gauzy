@@ -1,0 +1,25 @@
+:host {
+  display: block;
+  position: relative;
+  width: 700px;
+  margin: auto;
+  overflow: auto;
+  .close-button {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    z-index: 9;
+  }
+  .screenshots-image {
+    height: 150px;
+    width: 100%;
+    object-fit: cover;
+  }
+  ::ng-deep {
+    .progress-value {
+      span {
+        display: none;
+      }
+    }
+  }
+}

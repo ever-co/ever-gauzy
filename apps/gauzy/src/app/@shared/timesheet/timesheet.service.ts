@@ -83,11 +83,8 @@ export class TimesheetService {
 	getTimeLogs(request?: IGetTimeLogInput) {
 		const params = toParams(request);
 		return this.http
-			.get('/api/timesheet/time-log', { params })
-			.toPromise()
-			.then((data: TimeLog[]) => {
-				return data;
-			});
+			.get<TimeLog[]>('/api/timesheet/time-log', { params })
+			.toPromise();
 	}
 
 	getTimeLog(id: string, findOptions) {
@@ -99,25 +96,25 @@ export class TimesheetService {
 				return data;
 			});
 	}
+	getTimeSlot(id, request?: IGetTimeSlotInput) {
+		const params = toParams(request);
+		return this.http
+			.get<TimeSlot>(`/api/timesheet/time-slot/${id}`, { params })
+			.toPromise();
+	}
 
 	getTimeSlots(request?: IGetTimeSlotInput) {
 		const params = toParams(request);
 		return this.http
-			.get('/api/timesheet/time-slot', { params })
-			.toPromise()
-			.then((data: TimeSlot[]) => {
-				return data;
-			});
+			.get<TimeSlot[]>('/api/timesheet/time-slot', { params })
+			.toPromise();
 	}
 
 	deleteTimeSlots(ids?: string[]) {
 		const params = toParams({ ids });
 		return this.http
 			.delete('/api/timesheet/time-slot', { params })
-			.toPromise()
-			.then((data: TimeSlot[]) => {
-				return data;
-			});
+			.toPromise();
 	}
 
 	deleteLogs(logIds: string | string[]) {
