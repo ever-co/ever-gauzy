@@ -103,6 +103,10 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			});
 	}
 
+	onDelete() {
+		this.getTimeSlots();
+	}
+
 	getCounts() {
 		const request: GetCountsStatistics = {
 			organizationId: this.organization.id
