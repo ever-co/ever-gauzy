@@ -27,13 +27,8 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div
-			*ngIf="
-				interviewList?.length > 0 && dataLayoutStyle === 'CARDS_GRID'
-			"
-			class="cards"
-		>
+	<nb-card-body *ngIf="interviewList?.length > 0">
+		<div *ngIf="dataLayoutStyle === 'CARDS_GRID'" class="cards">
 			<div
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"

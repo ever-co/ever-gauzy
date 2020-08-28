@@ -12,12 +12,12 @@ export class FeedbackDeleteHandler
 	) {}
 
 	public async execute(command: FeedbackDeleteCommand): Promise<any> {
-		const { interviewId, feedbackId } = command;
-		const id = interviewId;
+		const { feedbackId, interviewId } = command;
 
 		const feedback = await this.deleteFeedback(feedbackId);
 
-		if (feedback) {
+		if (feedback && interviewId) {
+			const id = interviewId;
 			const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(
 				id
 			);

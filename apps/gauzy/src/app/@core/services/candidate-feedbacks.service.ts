@@ -59,8 +59,8 @@ export class CandidateFeedbacksService {
 			.toPromise();
 	}
 
-	delete(interviewId: string, feedbackId: string): Promise<any> {
-		const data = JSON.stringify({ interviewId, feedbackId });
+	delete(feedbackId: string, interviewId?: string): Promise<any> {
+		const data = JSON.stringify({ feedbackId, interviewId });
 		return this.http
 			.delete('/api/candidate-feedbacks/deleteFeedback', {
 				params: { data }

@@ -12,6 +12,13 @@
   width: 15%;
 }
 
+::ng-deep {
+  .ng2-smart-actions,
+  .ng2-smart-actions-title {
+    display: none;
+  }
+}
+
 .filters {
   display: flex;
   flex-direction: row;
@@ -168,6 +175,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  .action-btn {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+  }
 }
 
 .select {
