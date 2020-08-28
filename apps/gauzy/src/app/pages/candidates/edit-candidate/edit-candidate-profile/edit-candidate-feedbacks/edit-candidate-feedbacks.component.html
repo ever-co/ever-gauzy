@@ -1,14 +1,48 @@
 <nb-card>
 	<nb-card-header>
 		<div class="main-btn" *ngIf="!showAddCard">
-			<button nbButton status="success" (click)="cancel()">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
+			<div class="action-btn">
+				<button
+					nbButton
+					status="success"
+					class="mr-2"
+					(click)="cancel()"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
+				<ng-container
+					*ngIf="dataLayoutStyle === 'TABLE' && !showAddCard"
+				>
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+			</div>
 
 			<div class="filters">
+				<nb-select
+					[formControl]="selectInterview"
+					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+					class="select mr-3 show"
+					placeholder="Select interview"
+					(selectedChange)="onInterviewSelected($event)"
+				>
+					<nb-option [value]="all">
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.ALL_FEEDBACKS'
+								| translate
+						}}
+					</nb-option>
+					<nb-option
+						value="{{ interview.id }}"
+						*ngFor="let interview of interviewList"
+						>{{ interview.title }}</nb-option
+					>
+				</nb-select>
 				<ga-employee-multi-select
-					class="select"
+					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+					class="select mr-3"
 					[multiple]="false"
 					[label]="false"
 					[reset]="isEmployeeReset"
@@ -17,21 +51,10 @@
 					[reset]="isResetSelect"
 				>
 				</ga-employee-multi-select>
-				<nb-select
-					[formControl]="selectInterview"
-					class="select ml-3"
-					placeholder="Select interview"
-					(selectedChange)="onInterviewSelected($event)"
-				>
-					<nb-option [value]="all">
-						All feedbacks
-					</nb-option>
-					<nb-option
-						value="{{ interview.id }}"
-						*ngFor="let interview of interviewList"
-						>{{ interview.title }}</nb-option
-					>
-				</nb-select>
+
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
 			</div>
 		</div>
 
@@ -271,7 +294,9 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="feedbackList?.length">
+	<nb-card-body
+		*ngIf="feedbackList?.length && dataLayoutStyle === 'CARDS_GRID'"
+	>
 		<div
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
@@ -283,13 +308,23 @@
 					<div class="feedbacks-line">
 						<div class="top-blocks">
 							<div class="block" *ngIf="feedback?.interviewTitle">
-								<strong>Interview</strong>
+								<strong>
+									{{
+										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'
+											| translate
+									}}</strong
+								>
 								<span class="center">
 									{{ feedback.interviewTitle }}
 								</span>
 							</div>
 							<div class="block" *ngIf="feedback?.interviewer">
-								<strong>Interviewer</strong>
+								<strong>
+									{{
+										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER'
+											| translate
+									}}</strong
+								>
 								<img
 									nbTooltip=" {{
 										feedback?.interviewer?.employeeName
@@ -306,14 +341,20 @@
 								/>
 							</div>
 							<div class="block" *ngIf="feedback?.status">
-								<strong>Status</strong>
+								<strong>{{
+									'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACK_STATUS'
+										| translate
+								}}</strong>
 								<p class="feedback-status">
 									<span *ngIf="feedback.status === 'HIRED'">
 										<nb-icon
 											class="mr-1 success"
 											icon="checkmark-square-2-outline"
 										></nb-icon>
-										Hire</span
+										{{
+											'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
+												| translate
+										}}</span
 									>
 									<span
 										*ngIf="feedback.status === 'REJECTED'"
@@ -322,12 +363,18 @@
 											class="mr-1 error"
 											icon="close-square-outline"
 										></nb-icon>
-										Reject</span
+										{{
+											'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
+												| translate
+										}}</span
 									>
 								</p>
 							</div>
 							<div class="block">
-								<strong>Rating</strong>
+								<strong>{{
+									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.RATING'
+										| translate
+								}}</strong>
 								<ga-star-rating-output
 									[rate]="feedback.rating"
 								></ga-star-rating-output>
@@ -335,14 +382,17 @@
 						</div>
 
 						<div class="bottom-block">
-							<strong>Description: </strong>
+							<strong>{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.DESCRIPTION'
+									| translate
+							}}</strong>
 							{{ feedback.description }}
 						</div>
 					</div>
 
 					<nb-actions class="float-right" e="medium">
 						<nb-action
-							(click)="editFeedback(i, feedback.id)"
+							(click)="editFeedback(feedback)"
 							class="d-inline pr-2"
 							icon="edit"
 						></nb-action>
@@ -356,4 +406,43 @@
 			</nb-card>
 		</div>
 	</nb-card-body>
+	<nb-card-body *ngIf="dataLayoutStyle === 'TABLE'">
+		<ng2-smart-table
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectFeedback($event)"
+			#feedbackTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+	<ng-template
+		#actionButtons
+		let-buttonSize="buttonSize"
+		let-selectedItem="selectedItem"
+	>
+		<button
+			(click)="editFeedback()"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		{{ selectedItem | json }}
+		<button
+			(click)="removeFeedback()"
+			nbButton
+			status="danger"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
 </nb-card>

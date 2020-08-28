@@ -36,9 +36,11 @@ export class DeleteFeedbackComponent extends TranslationBaseComponent
 					this.feedbackId
 				);
 				await this.candidateFeedbacksService.delete(
-					res.interviewId,
-					this.feedbackId
+					this.feedbackId,
+					res.interviewId
 				);
+			} else {
+				await this.candidateFeedbacksService.delete(this.feedbackId);
 			}
 
 			this.dialogRef.close(this.feedbackId);
@@ -46,7 +48,6 @@ export class DeleteFeedbackComponent extends TranslationBaseComponent
 			this.toastrError(error);
 		}
 	}
-
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {

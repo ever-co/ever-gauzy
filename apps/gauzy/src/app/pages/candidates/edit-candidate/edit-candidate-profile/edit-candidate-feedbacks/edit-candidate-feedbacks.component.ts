@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import {
@@ -20,13 +20,21 @@ import {
 	ICandidateInterview,
 	ICandidateTechnologies,
 	ICandidatePersonalQualities,
-	Employee
+	Employee,
+	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { CandidateCriterionsRatingService } from 'apps/gauzy/src/app/@core/services/candidate-criterions-rating.service';
 import { DeleteFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
+import { LocalDataSource } from 'ng2-smart-table';
+import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { InterviewCriterionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/criterions/criterions.component';
+import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
+import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
+import { FeedbackStatusTableComponent } from './table-components/status/status.component';
 
 @Component({
 	selector: 'ga-edit-candidate-feedbacks',
@@ -43,6 +51,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	candidateId: string;
 	form: FormGroup;
 	status: string;
+	disableButton = true;
 	currentInterview: ICandidateInterview;
 	feedbackInterviewId: string;
 	feedbackInterviewer: ICandidateInterviewers;
@@ -57,9 +66,15 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	isCancel = false;
 	loading: boolean;
 	employeeList: Employee[];
+	selectedFeedback: ICandidateFeedback;
 	isEmployeeReset: boolean;
 	selectInterview: FormControl = new FormControl();
 	interviewList: ICandidateInterview[];
+	@ViewChild('feedbackTable') feedbackTable;
+	settingsSmartTable: object;
+	sourceSmartTable = new LocalDataSource();
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -69,10 +84,12 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		private employeesService: EmployeesService,
 		private dialogService: NbDialogService,
 		private candidatesService: CandidatesService,
+		private store: Store,
 		private candidateInterviewService: CandidateInterviewService,
 		private candidateCriterionsRatingService: CandidateCriterionsRatingService
 	) {
 		super(translateService);
+		this.setView();
 	}
 	async ngOnInit() {
 		this.candidateStore.selectedCandidate$
@@ -82,6 +99,8 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 					this.candidateId = candidate.id;
 					this._initializeForm();
 					this.loadInterviews();
+					this.loadSmartTable();
+					this._applyTranslationOnSmartTable();
 				}
 			});
 		const { items } = await this.employeesService
@@ -90,6 +109,19 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			.toPromise();
 		this.employeeList = items;
 		this.selectInterview.setValue('all');
+	}
+	setView() {
+		this.viewComponentName = ComponentEnum.VENDORS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+				this.selectedFeedback =
+					this.dataLayoutStyle === 'CARDS_GRID'
+						? null
+						: this.selectedFeedback;
+			});
 	}
 	private _initializeForm() {
 		this.form = new FormGroup({
@@ -105,6 +137,57 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			})
 		);
 	}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				description: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'
+					),
+					type: 'string',
+					filter: false
+				},
+				rating: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
+					),
+					type: 'custom',
+					width: '136px',
+					renderComponent: InterviewStarRatingComponent,
+					filter: false
+				},
+				interviewTitle: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'
+					),
+					type: 'string',
+					width: '200px'
+				},
+				employees: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER'
+					),
+					type: 'custom',
+					width: '130px',
+					renderComponent: InterviewersTableComponent,
+					filter: false
+				},
+				status: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACK_STATUS'
+					),
+					type: 'custom',
+					width: '100px',
+					renderComponent: FeedbackStatusTableComponent
+				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
+			}
+		};
+	}
 	private async loadFeedbacks() {
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer', 'criterionsRating'],
@@ -113,6 +196,26 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		if (res) {
 			this.feedbackList = res.items;
 			this.allFeedbacks = res.items;
+			const feedbacksForTable = [];
+
+			this.feedbackList.forEach((fb) => {
+				const interview = this.interviewList.find(
+					(item) => item.id === fb.interviewId
+				);
+				feedbacksForTable.push({
+					...fb,
+					interviewTitle: interview ? interview.title : null,
+					employees: fb.interviewer
+						? [
+								this.employeeList.find(
+									(emp) =>
+										emp.id === fb.interviewer.employeeId
+								)
+						  ]
+						: null
+				});
+			});
+			this.sourceSmartTable.load(feedbacksForTable);
 			return this.feedbackList;
 		}
 	}
@@ -203,7 +306,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 					}
 				});
 			});
-			this.loading = true;
+			// this.loading = true;
 			const feedbackList = await this.loadFeedbacks();
 			feedbackList.forEach((fb) => {
 				const currentInterview = this.interviewList.find(
@@ -228,18 +331,20 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				(obj) => !uniq[obj.id] && (uniq[obj.id] = true)
 			);
 		}
-		this.loading = false;
+		// this.loading = false;
 	}
-	editFeedback(index: number, id: string) {
+	editFeedback(feedback?: ICandidateFeedback) {
 		this.cancel();
-		this.currentFeedback = this.feedbackList[index];
+		this.currentFeedback = feedback ? feedback : this.selectedFeedback;
 		this._initializeForm();
-		this.loadCriterions(this.currentFeedback);
+		if (this.currentFeedback.criterionsRating.length) {
+			this.loadCriterions(this.currentFeedback);
+		}
 		this.showAddCard = this.showAddCard
 			? this.showAddCard
 			: !this.showAddCard;
 		this.form.controls.feedbacks.patchValue([this.currentFeedback]);
-		this.feedbackId = id;
+		this.feedbackId = this.currentFeedback.id;
 		if (this.currentFeedback.interviewId) {
 			this.status = this.currentFeedback.status;
 			this.feedbackInterviewer = this.currentFeedback.interviewer;
@@ -257,9 +362,9 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	onEmployeeSelected(id: string) {
 		this.isEmployeeReset = false;
 		this.selectInterview.reset();
-		return (this.feedbackList = this.allFeedbacks.filter(
+		this.feedbackList = this.allFeedbacks.filter(
 			(fb) => fb.interviewId && id === fb.interviewer.employeeId
-		));
+		);
 	}
 	submitForm() {
 		const feedbackForm = this.form.controls.feedbacks as FormArray;
@@ -346,10 +451,10 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			);
 		}
 	}
-	async removeFeedback(id: string) {
+	async removeFeedback(id?: string) {
 		const dialog = this.dialogService.open(DeleteFeedbackComponent, {
 			context: {
-				feedbackId: id
+				feedbackId: id ? id : this.selectedFeedback.id
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -357,6 +462,14 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.toastrSuccess('DELETED');
 			this.loadInterviews();
 		}
+	}
+	selectFeedback({ isSelected, data }) {
+		const selectedFeedback = isSelected ? data : null;
+		if (this.feedbackTable) {
+			this.feedbackTable.grid.dataSet.willSelect = false;
+		}
+		this.disableButton = !isSelected;
+		this.selectedFeedback = selectedFeedback;
 	}
 	onInterviewSelected(value: any) {
 		this.isEmployeeReset = true;
@@ -395,6 +508,11 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.feedbackInterviewer = null;
 		this.feedbackInterviewId = null;
 		this.interviewers = [];
+	}
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

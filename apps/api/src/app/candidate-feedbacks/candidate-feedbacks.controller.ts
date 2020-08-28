@@ -125,10 +125,9 @@ export class CandidateFeedbacksController extends CrudController<
 	async deleteFeedback(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
-		console.log('@@@@@@');
-		const { interviewId = null, feedbackId = null } = data;
+		const { feedbackId = null, interviewId = null } = data;
 		return this.commandBus.execute(
-			new FeedbackDeleteCommand(interviewId, feedbackId)
+			new FeedbackDeleteCommand(feedbackId, interviewId)
 		);
 	}
 }
