@@ -146,6 +146,15 @@ export default class Timerhandler {
 		//formating wakatime
 		wakatimeHeartbeats = wakatimeHeartbeats.map((item) => {
 			idsWakatime.push(item.id);
+			const activityMetadata = {
+				type: item.type,
+				dependecies: item.dependencies,
+				language: item.languages,
+				project: item.projects,
+				branches: item.branches,
+				entity: item.entities,
+				line: item.lines
+			};
 			return {
 				title: item.editors,
 				date: moment.unix(item.time).format('YYYY-MM-DD'),
@@ -154,15 +163,10 @@ export default class Timerhandler {
 				type: 'APP',
 				taskId: userInfo.taskId,
 				projectId: userInfo.projectId,
-				metaData: {
-					type: item.type,
-					dependecies: item.dependencies,
-					language: item.languages,
-					project: item.projects,
-					branches: item.branches,
-					entity: item.entities,
-					line: item.lines
-				}
+				metaData:
+					this.configs && this.configs.db === 'sqlite'
+						? JSON.stringify(activityMetadata)
+						: activityMetadata
 			};
 		});
 
