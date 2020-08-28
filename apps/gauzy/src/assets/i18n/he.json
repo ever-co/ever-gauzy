@@ -958,6 +958,7 @@
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
 			"SKILLS": "Skills",
+			"ALL_FEEDBACKS": "All feedbacks",
 			"FEEDBACKS": "Feedbacks",
 			"EDUCATION": "Education",
 			"SCHOOL_NAME": "School name",
@@ -976,6 +977,8 @@
 			"DOCUMENT": "Document",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"INTERVIEW_FEEDBACK": "Interview: ",
+			"INTERVIEWER": "Interviewer",
+			"FEEDBACK_STATUS": "עבודה",
 			"LEAVE_FEEDBACK": "Leave a feedback about the ",
 			"STATUS": "Selected status: ",
 			"INTERVIEW": {
@@ -1011,6 +1014,8 @@
 				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
 				"INTERVIEWERS": "interviewer(s)",
 				"HIRE": "Hire",
+				"RATING": "Rating",
+				"DESCRIPTION": "Description: ",
 				"POSTPONE": "Postpone",
 				"REJECT": "Reject",
 				"INTERVIEW_TITLE_EXIST": "An interview with such name already exists"
