@@ -5,8 +5,8 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<div class="right-block">
-				<div class="checkboxes" *ngIf="showCheckboxes">
+			<div class="right-block" *ngIf="allInterviews?.length > 0">
+				<div class="checkboxes">
 					<nb-checkbox
 						(checkedChange)="changePast($event)"
 						status="warning"
@@ -217,20 +217,6 @@
 							</button>
 							<button
 								class="btn"
-								nbButton
-								(click)="archive(interview)"
-								status="warning"
-								[disabled]="interview.isArchived"
-								size="tiny"
-							>
-								<nb-icon
-									class="mr-1"
-									icon="archive-outline"
-								></nb-icon
-								>{{ 'BUTTONS.ARCHIVE' | translate }}
-							</button>
-							<button
-								class="btn"
 								size="tiny"
 								nbButton
 								[disabled]="isPastInterview(interview)"
@@ -246,7 +232,7 @@
 							<button
 								class="btn"
 								nbButton
-								(click)="addFeedback(interview)"
+								(click)="addInterviewFeedback(interview.id)"
 								status="success"
 								[disabled]="!isPastInterview(interview)"
 								size="tiny"

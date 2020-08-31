@@ -20,7 +20,7 @@
 				</ng-container>
 			</div>
 
-			<div class="filters">
+			<div class="filters" *ngIf="allFeedbacks?.length > 0">
 				<nb-select
 					[formControl]="selectInterview"
 					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
