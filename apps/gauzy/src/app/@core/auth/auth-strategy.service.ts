@@ -213,7 +213,8 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	logout(): Observable<NbAuthResult> {
-		return from(this._logout());
+		const result = from(this._logout());
+		return result;
 	}
 
 	requestPassword(args: { email: string }): Observable<NbAuthResult> {

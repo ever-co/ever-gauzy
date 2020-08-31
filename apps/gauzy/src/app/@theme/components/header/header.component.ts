@@ -120,7 +120,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 
 		this.store.user$.pipe(untilDestroyed(this)).subscribe((user) => {
 			this.user = user;
-			this.isEmployee = !!user.employeeId;
+			this.isEmployee = !!user && !!user.employeeId;
 		});
 
 		this.themeService

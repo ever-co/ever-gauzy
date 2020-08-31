@@ -87,6 +87,7 @@
 												| translate
 										}}</label>
 										<input
+											data-integration-tests="input-organisation-name"
 											fullWidth
 											id="nameInput"
 											type="text"
@@ -110,6 +111,7 @@
 											'FORM.LABELS.CURRENCY' | translate
 										}}</label>
 										<nb-select
+											data-integration-tests="input-organisation-currency"
 											class="d-block"
 											size="medium"
 											formControlName="currency"
@@ -125,6 +127,7 @@
 											}"
 										>
 											<nb-option
+												data-integration-tests="input-organisation-currency-option"
 												*ngFor="
 													let currency of currencies
 												"
@@ -207,6 +210,7 @@
 
 						<div class="" style="margin-top: 20px;">
 							<button
+								data-integration-tests="btn-next-add-organisation-step-1"
 								[disabled]="orgMainForm.invalid"
 								nbButton
 								nbStepperNext
@@ -341,6 +345,7 @@
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
+							data-integration-tests="btn-next-add-organisation-step-2"
 							[disabled]="this.orgLocationForm.invalid"
 							nbButton
 							status="success"
@@ -516,6 +521,7 @@
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
+							data-integration-tests="btn-next-add-organisation-step-3"
 							[disabled]="this.orgBonusForm.invalid"
 							nbButton
 							status="success"
@@ -725,6 +731,7 @@
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
+							data-integration-tests="btn-next-add-organisation-step-4"
 							[disabled]="this.orgSettingsForm.invalid"
 							(click)="addOrganization()"
 							nbButton

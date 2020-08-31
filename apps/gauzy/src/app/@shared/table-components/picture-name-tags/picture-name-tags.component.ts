@@ -20,7 +20,12 @@ import { ComponentLayoutStyleEnum } from '@gauzy/models';
 			>
 				{{ rowData.fullName }}
 			</div>
-			<div *ngIf="rowData.name" class="d-block" style="margin-left:15px;">
+			<div
+				data-integration-tests="TODO-here-1601"
+				*ngIf="rowData.name"
+				class="d-block"
+				style="margin-left: 15px;"
+			>
 				{{ rowData.name }}
 			</div>
 		</div>
