@@ -1,6 +1,7 @@
 <nb-card-body class="card">
 	<div class="header">
 		<ga-employee-multi-select
+			*ngIf="allInterviews?.length > 0"
 			class="select"
 			[multiple]="true"
 			[label]="false"
@@ -10,7 +11,7 @@
 		>
 		</ga-employee-multi-select>
 
-		<div class="btn">
+		<div class="btn" *ngIf="allInterviews?.length > 0">
 			<nb-checkbox
 				(checkedChange)="changePast($event)"
 				status="warning"
@@ -31,6 +32,7 @@
 				class="mr-3"
 				>{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
 			</nb-checkbox>
+
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>
