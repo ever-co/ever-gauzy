@@ -28,6 +28,7 @@ import { InterviewStarRatingComponent } from '../../../manage-candidate-intervie
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewCriterionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/criterions/criterions.component';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -54,11 +55,13 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	tableInterviewList = [];
 	employeeList: Employee[];
+	candidates: Candidate[];
 	allInterviews: ICandidateInterview[];
 	allFeedbacks: ICandidateFeedback[];
 	constructor(
 		private dialogService: NbDialogService,
 		translate: TranslateService,
+		private candidatesService: CandidatesService,
 		private employeesService: EmployeesService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
 		private readonly candidateInterviewService: CandidateInterviewService,
@@ -81,6 +84,12 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					this._applyTranslationOnSmartTable();
 				}
 				this.selectedCandidate = candidate;
+			});
+		this.candidatesService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((candidates) => {
+				this.candidates = candidates.items;
 			});
 	}
 	setView() {
@@ -243,6 +252,12 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 						});
 					}
 				);
+				this.candidates.forEach((item) => {
+					if (item.id === interview.candidate.id) {
+						interview.candidate.user = item.user;
+					}
+				});
+
 				interview.employees = employees;
 				this.tableInterviewList.push({
 					...interview,

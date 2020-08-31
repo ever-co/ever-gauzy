@@ -30,83 +30,241 @@
 	<nb-card-body *ngIf="interviewList?.length > 0">
 		<div *ngIf="dataLayoutStyle === 'CARDS_GRID'" class="cards">
 			<div
+				class="card-container"
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
 			>
 				<nb-card
-					*ngFor="let interview of interviewList; let i = index"
-					class="ribbon-wrap"
+					style="padding: 0 !important;"
+					class="card-body"
+					*ngFor="let interview of interviewList"
 				>
-					<div *ngIf="isPastInterview(interview)" class="ribbon">
-						<span>Past</span>
-					</div>
-					<nb-card-body class="interviews-card">
-						<div class="interviews-line">
-							<div>
-								<nb-icon icon="calendar-outline"></nb-icon>
-								<strong> {{ interview?.title }} </strong>
+					<nb-card-header class="card-header">
+						<div class="header-container">
+							{{ interview.title }}
+						</div>
+						<div class="card-header-badge">
+							<div
+								class="badge badge-primary"
+								*ngIf="isPastInterview(interview)"
+							>
 								{{
-									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
+									'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST'
 										| translate
 								}}
-								<strong
-									>{{
-										interview?.startTime | date: 'fullDate'
-									}} </strong
-								>{{
-									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
-										| translate
-								}}
-								<strong>{{
-									interview?.startTime | date: 'shortTime'
-								}}</strong
-								>-
-								<strong>{{
-									interview?.endTime | date: 'shortTime'
-								}}</strong>
 							</div>
-							<div class="image-wrap">
-								<span
-									*ngFor="let employee of interview.employees"
-									nbTooltip=" {{ employee?.user?.firstName }}
-					{{ employee?.user?.lastName }}"
-									nbTooltipPlacement="top"
-								>
-									<img
-										class="candidate-image-small"
-										[src]="employee?.user?.imageUrl"
-										alt="employee Avatar"
-									/>
-								</span>
+
+							<div
+								class="badge badge-warning"
+								*ngIf="interview.isArchived"
+							>
+								{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
 							</div>
 						</div>
-						<div class="float-right icon-wrap">
-							<nb-icon
-								(click)="addInterviewFeedback(interview.id)"
-								[ngClass]="{
-									icons: isPastInterview(interview),
-									disabled: !isPastInterview(interview)
-								}"
-								icon="message-square-outline"
-							></nb-icon>
+					</nb-card-header>
 
-							<nb-icon
+					<nb-card-body class="interview-card">
+						<nb-card>
+							<nb-card-header>
+								<div>
+									{{
+										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CANDIDATE'
+											| translate
+									}}
+								</div>
+							</nb-card-header>
+							<nb-card-body>
+								<div
+									class="name-container"
+									(click)="
+										goToCandidate(interview.candidate.id)
+									"
+								>
+									<div class="image-container">
+										<img
+											[src]="
+												interview.candidate.user
+													?.imageUrl
+											"
+										/>
+									</div>
+									<span
+										>{{ interview.candidate.user?.name }}
+									</span>
+								</div>
+							</nb-card-body>
+						</nb-card>
+						<div class="client-info">
+							<div class="info-line">
+								<div class="info-meta">
+									{{
+										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.START_DATE'
+											| translate
+									}}
+								</div>
+								<div class="info-value">
+									{{
+										interview?.startTime | date: 'shortDate'
+									}}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{
+										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'
+											| translate
+									}}
+								</div>
+								<div class="info-value criterions">
+									<span
+										*ngFor="
+											let tech of interview.technologies
+										"
+									>
+										<span> {{ tech.name }} </span>
+									</span>
+
+									<span
+										*ngFor="
+											let qual of interview.personalQualities
+										"
+									>
+										<span> {{ qual.name }} </span>
+									</span>
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{
+										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.LOCATION'
+											| translate
+									}}
+								</div>
+								<div class="info-value">
+									{{ interview.location }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{
+										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.NOTES'
+											| translate
+									}}
+								</div>
+								<div class="info-value">
+									{{ interview.note }}
+								</div>
+							</div>
+							<div class="info-line">
+								<div class="info-meta">
+									{{
+										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
+											| translate
+									}}
+								</div>
+								<div class="info-value">
+									<ga-star-rating-output
+										[rate]="interview.rating"
+										[isGridView]="true"
+									></ga-star-rating-output>
+								</div>
+							</div>
+						</div>
+						<nb-card *ngIf="interview.interviewers.length">
+							<nb-card-header>
+								<div>
+									{{
+										'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'
+											| translate
+									}}
+								</div>
+							</nb-card-header>
+							<nb-card-body>
+								<div
+									class="name-container"
+									*ngFor="
+										let interviewer of interview.interviewers
+									"
+									(click)="
+										openEmployees(interviewer.employeeId)
+									"
+								>
+									<div class="image-container">
+										<img
+											[src]="interviewer.employeeImageUrl"
+										/>
+									</div>
+									<span>{{ interviewer.employeeName }} </span>
+								</div>
+							</nb-card-body>
+						</nb-card>
+
+						<div class="button-container">
+							<button
+								nbButton
+								class="btn"
+								status="info"
+								[disabled]="isPastInterview(interview)"
 								(click)="editInterview(interview.id)"
-								[ngClass]="{
-									icons: !isPastInterview(interview),
-									disabled: isPastInterview(interview)
-								}"
-								icon="edit"
-							></nb-icon>
-							<nb-icon
+								size="tiny"
+							>
+								<nb-icon
+									class="mr-1"
+									icon="edit-outline"
+								></nb-icon
+								>{{ 'BUTTONS.EDIT' | translate }}
+							</button>
+							<button
+								class="btn"
+								nbButton
+								(click)="archive(interview)"
+								status="warning"
+								[disabled]="interview.isArchived"
+								size="tiny"
+							>
+								<nb-icon
+									class="mr-1"
+									icon="archive-outline"
+								></nb-icon
+								>{{ 'BUTTONS.ARCHIVE' | translate }}
+							</button>
+							<button
+								class="btn"
+								size="tiny"
+								nbButton
+								[disabled]="isPastInterview(interview)"
 								(click)="removeInterview(interview.id)"
-								[ngClass]="{
-									icons: !isPastInterview(interview),
-									disabled: isPastInterview(interview)
-								}"
-								icon="close"
-							></nb-icon>
+								status="danger"
+							>
+								<nb-icon
+									class="mr-2"
+									icon="trash-2-outline"
+								></nb-icon
+								>{{ 'BUTTONS.DELETE' | translate }}
+							</button>
+							<button
+								class="btn"
+								nbButton
+								(click)="addFeedback(interview)"
+								status="success"
+								[disabled]="!isPastInterview(interview)"
+								size="tiny"
+							>
+								<nb-icon
+									class="mr-1"
+									icon="message-square-outline"
+								></nb-icon
+								>{{ 'BUTTONS.LEAVE_FEEDBACK' | translate }}
+								<span
+									*ngIf="isPastInterview(interview)"
+									class="ml-1"
+								>
+									({{ interview.feedbacks.length }}/{{
+										interview.interviewers.length
+									}})
+								</span>
+							</button>
 						</div>
 					</nb-card-body>
 				</nb-card>
