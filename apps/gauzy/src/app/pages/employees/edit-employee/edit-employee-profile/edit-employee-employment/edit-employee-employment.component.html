@@ -1,185 +1,199 @@
-<form class="main-form" [formGroup]="form" *ngIf="form">
-	<div class="row">
-		<div class="col-md-6">
-			<div class="form-group">
-				<label for="startedWork" class="label">
-					{{ 'FORM.LABELS.START_DATE' | translate }}
-				</label>
-				<input
-					[nbDatepicker]="datepicker"
-					nbInput
-					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.START_DATE' | translate
-					}}"
-					formControlName="startedWorkOn"
-				/>
-				<nb-datepicker #datepicker></nb-datepicker>
-			</div>
-		</div>
-		<div
-			class="col-md-6"
-			*ngIf="form.touched && form.get('startedWorkOn').value == null"
-		>
-			<div class="notes">
-				<p>
-					{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
-				</p>
-			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col">
-			<div class="form-group">
-				<label class="label" for="shortDescription">{{
-					'FORM.LABELS.SHORT_DESCRIPTION' | translate
-				}}</label>
-				<input
-					fullWidth
-					id="shortDescription"
-					type="text"
-					nbInput
-					formControlName="short_description"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.EG_FULL_STACK_WEB_DEVELOPER'
-							| translate
-					}}"
-				/>
-			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col">
-			<div class="form-group">
-				<p class="label">
-					{{ 'FORM.LABELS.DESCRIPTION' | translate }}
-				</p>
-				<div class="ck-editor">
-					<ckeditor
-						formControlName="description"
-						class="description"
-						[config]="{
-							width: '100%',
-							height: '200'
-						}"
-					></ckeditor>
+<nb-card>
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="startedWork" class="label">
+							{{ 'FORM.LABELS.START_DATE' | translate }}
+						</label>
+						<input
+							[nbDatepicker]="datepicker"
+							nbInput
+							fullWidth
+							placeholder="{{
+								'FORM.PLACEHOLDERS.START_DATE' | translate
+							}}"
+							formControlName="startedWorkOn"
+						/>
+						<nb-datepicker #datepicker></nb-datepicker>
+					</div>
+				</div>
+				<div
+					class="col-md-6"
+					*ngIf="
+						form.touched && form.get('startedWorkOn').value == null
+					"
+				>
+					<div class="notes">
+						<p>
+							{{
+								'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate
+							}}
+						</p>
+					</div>
 				</div>
 			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-md-6">
-			<div class="form-group">
-				<label for="employmentType" class="label">{{
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate
-				}}</label>
-				<ng-select
-					id="employmentType"
-					[items]="employmentTypes"
-					formControlName="organizationEmploymentTypes"
-					bindLabel="name"
-					[searchable]="false"
-					placeholder="{{
-						'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
-							| translate
-					}}"
-					multiple="true"
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label class="label" for="shortDescription">{{
+							'FORM.LABELS.SHORT_DESCRIPTION' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="shortDescription"
+							type="text"
+							nbInput
+							formControlName="short_description"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.EG_FULL_STACK_WEB_DEVELOPER'
+									| translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<p class="label">
+							{{ 'FORM.LABELS.DESCRIPTION' | translate }}
+						</p>
+						<div class="ck-editor">
+							<ckeditor
+								formControlName="description"
+								class="description"
+								[config]="{
+									width: '100%',
+									height: '200'
+								}"
+							></ckeditor>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="employmentType" class="label">{{
+							'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
+								| translate
+						}}</label>
+						<ng-select
+							id="employmentType"
+							[items]="employmentTypes"
+							formControlName="organizationEmploymentTypes"
+							bindLabel="name"
+							[searchable]="false"
+							placeholder="{{
+								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
+									| translate
+							}}"
+							multiple="true"
+						>
+						</ng-select>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="form-group">
+						<label class="label" for="empLevelInput">
+							Employee Level
+						</label>
+						<ng-select formControlName="employeeLevel">
+							<ng-option
+								*ngFor="let empL of employeeLevels"
+								[value]="empL.level"
+								>{{ empL.level }}</ng-option
+							>
+						</ng-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label class="label">
+							{{
+								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DEPARTMENT'
+									| translate
+							}}
+						</label>
+						<ng-select
+							id="departmentInput"
+							[items]="departments"
+							formControlName="organizationDepartments"
+							bindLabel="name"
+							[searchable]="false"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate
+							}}"
+							multiple="true"
+						>
+						</ng-select>
+					</div>
+				</div>
+				<div class="col">
+					<div class="form-group">
+						<label for="positionInput" class="label">{{
+							'EMPLOYEES_PAGE.EDIT_EMPLOYEE.POSITION' | translate
+						}}</label>
+						<ng-select
+							id="positionInput"
+							[items]="positions"
+							formControlName="organizationPosition"
+							bindLabel="name"
+							[searchable]="false"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate
+							}}"
+						>
+						</ng-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-6">
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsHandler($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="form-group">
+						<ngx-skills-input
+							[selectedSkills]="skills"
+							(selectedSkillsEvent)="
+								selectedSkillsHandler($event)
+							"
+						>
+						</ngx-skills-input>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox formControlName="anonymousBonus">
+							Display bonus Anonymously
+						</nb-checkbox>
+					</div>
+				</div>
+			</div>
+			<div class="actions">
+				<button
+					[disabled]="form.invalid"
+					(click)="submitForm()"
+					nbButton
+					status="success"
 				>
-				</ng-select>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
 			</div>
-		</div>
-		<div class="col-md-6">
-			<div class="form-group">
-				<label class="label" for="empLevelInput">
-					Employee Level
-				</label>
-				<ng-select formControlName="employeeLevel">
-					<ng-option
-						*ngFor="let empL of employeeLevels"
-						[value]="empL.level"
-						>{{ empL.level }}</ng-option
-					>
-				</ng-select>
-			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col">
-			<div class="form-group">
-				<label class="label">
-					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DEPARTMENT' | translate }}
-				</label>
-				<ng-select
-					id="departmentInput"
-					[items]="departments"
-					formControlName="organizationDepartments"
-					bindLabel="name"
-					[searchable]="false"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate
-					}}"
-					multiple="true"
-				>
-				</ng-select>
-			</div>
-		</div>
-		<div class="col">
-			<div class="form-group">
-				<label for="positionInput" class="label">{{
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.POSITION' | translate
-				}}</label>
-				<ng-select
-					id="positionInput"
-					[items]="positions"
-					formControlName="organizationPosition"
-					bindLabel="name"
-					[searchable]="false"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate
-					}}"
-				>
-				</ng-select>
-			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-md-6">
-			<div class="form-group">
-				<ga-tags-color-input
-					[selectedTags]="tags"
-					(selectedTagsEvent)="selectedTagsHandler($event)"
-					[isOrgLevel]="true"
-				>
-				</ga-tags-color-input>
-			</div>
-		</div>
-		<div class="col-md-6">
-			<div class="form-group">
-				<ngx-skills-input
-					[selectedSkills]="skills"
-					(selectedSkillsEvent)="selectedSkillsHandler($event)"
-				>
-				</ngx-skills-input>
-			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col">
-			<div class="form-group">
-				<nb-checkbox formControlName="anonymousBonus">
-					Display bonus Anonymously
-				</nb-checkbox>
-			</div>
-		</div>
-	</div>
-	<div class="actions">
-		<button
-			[disabled]="form.invalid"
-			(click)="submitForm()"
-			nbButton
-			status="success"
-		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</div>
-</form>
+		</form>
+	</nb-card-body>
+</nb-card>
