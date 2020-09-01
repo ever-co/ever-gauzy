@@ -14,6 +14,8 @@ import { TaskTeamsComponent } from './task-teams/task-teams.component';
 import { AssignedToComponent } from './assigned-to/assigned-to.component';
 import { StatusViewComponent } from './status-view/status-view.component';
 import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
+import { DocumentUrlTableComponent } from './document-url/document-url.component';
+import { DocumentDateTableComponent } from './document-date/document-date.component';
 
 @NgModule({
 	imports: [
@@ -39,7 +41,9 @@ import { ValueWithUnitComponent } from './value-with-units/value-with-units.comp
 		TaskTeamsComponent,
 		AssignedToComponent,
 		StatusViewComponent,
-		ValueWithUnitComponent
+		ValueWithUnitComponent,
+		DocumentUrlTableComponent,
+		DocumentDateTableComponent
 	],
 	declarations: [
 		DateViewComponent,
@@ -51,7 +55,9 @@ import { ValueWithUnitComponent } from './value-with-units/value-with-units.comp
 		TaskTeamsComponent,
 		AssignedToComponent,
 		StatusViewComponent,
-		ValueWithUnitComponent
+		ValueWithUnitComponent,
+		DocumentUrlTableComponent,
+		DocumentDateTableComponent
 	],
 	exports: [
 		NotesWithTagsComponent,

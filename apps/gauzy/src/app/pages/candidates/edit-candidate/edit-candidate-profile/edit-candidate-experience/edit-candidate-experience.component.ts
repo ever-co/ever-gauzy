@@ -7,8 +7,9 @@ export interface ICandidateSkill {
 @Component({
 	selector: 'ga-edit-candidate-experience',
 	template: `
-		<nb-tabset fullWidth>
+		<nb-tabset fullWidth style="padding-top: 1rem;">
 			<nb-tab
+				style="padding: 0;"
 				tabTitle="{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.EDUCATION' | translate
 				}}"
@@ -16,6 +17,7 @@ export interface ICandidateSkill {
 				<ga-edit-candidate-education></ga-edit-candidate-education>
 			</nb-tab>
 			<nb-tab
+				style="padding: 0;"
 				tabTitle="{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.EXPERIENCE' | translate
 				}}"
@@ -23,6 +25,7 @@ export interface ICandidateSkill {
 				<ga-edit-candidate-experience-form></ga-edit-candidate-experience-form>
 			</nb-tab>
 			<nb-tab
+				style="padding: 0;"
 				tabTitle="{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.SKILLS' | translate
 				}}"

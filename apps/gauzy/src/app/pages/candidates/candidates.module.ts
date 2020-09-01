@@ -94,6 +94,7 @@ import { InterviewDateTableComponent } from './manage-candidate-interviews/inter
 import { InterviewersTableComponent } from './manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewActionsTableComponent } from './manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -189,6 +190,7 @@ const COMPONENTS = [
 		NbContextMenuModule,
 		NbActionsModule,
 		StarRatingInputModule,
+		CardGridModule,
 		StarRatingOutputModule,
 		CandidateMultiSelectModule,
 		EmployeeMultiSelectModule,

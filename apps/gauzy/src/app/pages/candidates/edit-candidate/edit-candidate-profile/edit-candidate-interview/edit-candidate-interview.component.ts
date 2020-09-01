@@ -92,7 +92,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			});
 	}
 	setView() {
-		this.viewComponentName = ComponentEnum.VENDORS;
+		this.viewComponentName = ComponentEnum.INTERVIEWS;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(takeUntil(this._ngDestroy$))
@@ -236,7 +236,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		if (interviews) {
 			this.interviewList = interviews.items;
 			this.allInterviews = interviews.items;
-			console.log();
 			this.tableInterviewList = [];
 			this.interviewList.forEach((interview) => {
 				const employees = [];
