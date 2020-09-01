@@ -2,7 +2,7 @@
 	<div class="gallery-header d-flex p-2">
 		<span class="spacer"></span>
 		<div class="ml-auto">
-			<a [href]="item.fullUrl" target="_blank" download nbButton>
+			<a [href]="item?.fullUrl" target="_blank" download nbButton>
 				<nb-icon icon="download-outline"></nb-icon>
 			</a>
 			<button class="ml-2" nbButton (click)="close()">
@@ -16,18 +16,20 @@
 				class="nav-button"
 				nbButton
 				status="primary"
+				[disabled]="active_index == 0"
 				(click)="prev($event)"
 			>
 				<nb-icon icon="arrow-left"></nb-icon>
 			</button>
 		</div>
 		<div class="media-viewer" (click)="$event.stopPropagation()">
-			<img #imageMedia [src]="item.fullUrl" />
+			<img #imageMedia [src]="item?.fullUrl" />
 		</div>
 		<div class="right-button">
 			<button
 				class="nav-button"
 				nbButton
+				[disabled]="active_index == items.length - 1"
 				status="primary"
 				(click)="next($event)"
 			>
