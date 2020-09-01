@@ -110,7 +110,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.selectInterview.setValue('all');
 	}
 	setView() {
-		this.viewComponentName = ComponentEnum.VENDORS;
+		this.viewComponentName = ComponentEnum.FEEDBACKS;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(takeUntil(this._ngDestroy$))

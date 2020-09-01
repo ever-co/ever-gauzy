@@ -92,7 +92,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			});
 	}
 	setView() {
-		this.viewComponentName = ComponentEnum.VENDORS;
+		this.viewComponentName = ComponentEnum.INTERVIEWS;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(takeUntil(this._ngDestroy$))
