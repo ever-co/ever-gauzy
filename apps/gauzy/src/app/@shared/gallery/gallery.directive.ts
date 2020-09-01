@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { GalleryComponent } from './gallery.component';
 import { NbDialogService } from '@nebular/theme';
+import { GalleryService } from './gallery.service';
 
 export interface GalleryItem {
 	thumbUrl: string;
@@ -38,7 +39,8 @@ export class GalleryDirective implements OnDestroy, OnInit {
 
 	constructor(
 		private el: ElementRef,
-		private nbDialogService: NbDialogService
+		private nbDialogService: NbDialogService,
+		private galleryService: GalleryService
 	) {}
 
 	@HostListener('click', [])
@@ -46,16 +48,19 @@ export class GalleryDirective implements OnDestroy, OnInit {
 		if (this.disableClick) {
 			return;
 		}
+		const item = this.item instanceof Array ? this.item[0] : this.item;
 		this.nbDialogService.open(GalleryComponent, {
 			context: {
 				items: this.items,
-				item: this.item instanceof Array ? this.item[0] : this.item
+				item
 			},
 			dialogClass: 'fullscreen'
 		});
 	}
 
-	ngOnInit() {}
+	ngOnInit() {
+		this.galleryService.appendItems(this.item);
+	}
 
 	ngOnDestroy() {}
 }

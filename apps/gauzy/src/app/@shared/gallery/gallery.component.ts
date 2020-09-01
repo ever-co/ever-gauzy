@@ -9,6 +9,8 @@ import {
 import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
 import { GalleryItem } from './gallery.directive';
+import { GalleryService } from './gallery.service';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -29,20 +31,28 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	animations: [fadeInOutAnimation]
 })
 export class GalleryComponent implements OnInit, OnDestroy {
-	private _item: GalleryItem;
 	active_index: any;
 
 	@ViewChild('customScroll', { static: true }) customScroll: ElementRef<
 		HTMLElement
 	>;
 
-	@Input() items: GalleryItem[] = [];
+	// @Input() items: GalleryItem[] = [];
 	@Input() item: GalleryItem;
+	items: GalleryItem[];
 
-	constructor(private dialogRef: NbDialogRef<GalleryComponent>) {}
+	constructor(
+		private dialogRef: NbDialogRef<GalleryComponent>,
+		private galleryService: GalleryService
+	) {}
 
 	ngOnInit() {
-		this.setFocus(this.item);
+		this.galleryService.items$
+			.pipe(untilDestroyed(this))
+			.subscribe((items) => {
+				this.items = items;
+				this.setFocus(this.item);
+			});
 	}
 
 	close() {
@@ -66,10 +76,17 @@ export class GalleryComponent implements OnInit, OnDestroy {
 		this.updateActiveIndex();
 	}
 
-	setFocus(item) {
-		const index = this.items.indexOf(item);
-		this.active_index = index;
-		this._item = this.items[this.active_index];
+	setFocus(selectedItem: GalleryItem) {
+		const foundItem = this.items.find(
+			(item) => item.fullUrl === selectedItem.fullUrl
+		);
+		if (this.item) {
+			const index = this.items.indexOf(this.item);
+			this.active_index = index;
+			this.item = foundItem;
+		} else {
+			this.item = selectedItem;
+		}
 		this.updateActiveIndex();
 	}
 

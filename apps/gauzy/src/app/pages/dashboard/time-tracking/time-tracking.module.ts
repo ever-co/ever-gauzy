@@ -13,6 +13,7 @@ import { ScreenshotsItemModule } from '../../../@shared/timesheet/screenshots/sc
 import { ActivityItemModule } from '../../../@shared/timesheet/activities/activity-item/activity-item.module';
 import { ChartModule } from 'angular2-chartjs';
 import { TranslateModule } from '@ngx-translate/core';
+import { GalleryModule } from '../../../@shared/gallery/gallery.module';
 
 @NgModule({
 	imports: [
@@ -26,7 +27,8 @@ import { TranslateModule } from '@ngx-translate/core';
 		NbProgressBarModule,
 		ChartModule,
 		NbBadgeModule,
-		TranslateModule
+		TranslateModule,
+		GalleryModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],
