@@ -236,7 +236,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		if (interviews) {
 			this.interviewList = interviews.items;
 			this.allInterviews = interviews.items;
-			console.log();
 			this.tableInterviewList = [];
 			this.interviewList.forEach((interview) => {
 				const employees = [];

@@ -51,3 +51,9 @@ input {
 .doc-icon {
   color: #3365ff !important;
 }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
