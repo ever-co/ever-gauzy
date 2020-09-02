@@ -15,6 +15,7 @@ import { Wakatime } from './wakatime/wakatime.entity';
 				: '',
 			keepConnectionAlive: true,
 			logging: true,
+			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: true,
 			entities: [Wakatime]
 		}),

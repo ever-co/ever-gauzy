@@ -130,20 +130,25 @@ export class UpworkService {
 	}
 
 	async getAccessTokenSecretPair(config): Promise<IAccessTokenSecretPair> {
-		const consumerAcessToken = await this._consumerHasAccessToken(
+		const consumerAccessToken = await this._consumerHasAccessToken(
 			config.consumerKey
 		);
 
-		// access token live forever, if user already registered app, retern the access token;
-		if (consumerAcessToken) {
-			return consumerAcessToken;
+		// access token live forever, if user already registered app, return the access token;
+		if (consumerAccessToken) {
+			console.log('consumerAccessToken already exits and will be reused');
+			return consumerAccessToken;
 		}
 
 		this._upworkApi = new UpworkApi(config);
 
+		const authUrl = environment.upworkConfig.callbackUrl;
+
+		console.log(`Upwork callback URL: ${authUrl}`);
+
 		return new Promise((resolve, reject) => {
 			this._upworkApi.getAuthorizationUrl(
-				environment.upworkConfig.callbackUrl,
+				authUrl,
 				async (error, url, requestToken, requestTokenSecret) => {
 					if (error)
 						reject(`can't get authorization url, error: ${error}`);

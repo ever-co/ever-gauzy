@@ -26,6 +26,7 @@ switch (dbType) {
 			password: process.env.DB_PASS || 'root',
 			keepConnectionAlive: true,
 			logging: true,
+			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: true,
 			uuidExtension: 'pgcrypto'
 		};
@@ -37,6 +38,7 @@ switch (dbType) {
 			database: path.join(__dirname, '../../data/gauzy.sqlite3'),
 			keepConnectionAlive: true,
 			logging: true,
+			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: true
 		};
 		break;

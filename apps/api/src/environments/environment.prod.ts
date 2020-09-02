@@ -23,6 +23,7 @@ switch (dbType) {
 			password: process.env.DB_PASS || 'root',
 			keepConnectionAlive: true,
 			logging: true,
+			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: true,
 			uuidExtension: 'pgcrypto'
 		};
@@ -34,6 +35,7 @@ switch (dbType) {
 			database: path.join(__dirname, '../../data/gauzy.sqlite3'),
 			keepConnectionAlive: true,
 			logging: true,
+			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: true
 		};
 		break;
@@ -114,7 +116,7 @@ export const environment: IEnvironment = {
 		domain: process.env.Auth0Domanin
 	},
 
-  sentry: {
+	sentry: {
 		dns:
 			process.env.SENTRY ||
 			'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
