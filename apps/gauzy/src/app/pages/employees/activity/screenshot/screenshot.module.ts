@@ -17,6 +17,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ViewTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ScreenshotsItemModule } from 'apps/gauzy/src/app/@shared/timesheet/screenshots/screenshots-item/screenshots-item.module';
+import { GalleryModule } from 'apps/gauzy/src/app/@shared/gallery/gallery.module';
 
 @NgModule({
 	declarations: [ScreenshotComponent],
@@ -35,7 +36,8 @@ import { ScreenshotsItemModule } from 'apps/gauzy/src/app/@shared/timesheet/scre
 		NbCheckboxModule,
 		FormsModule,
 		ReactiveFormsModule,
-		ScreenshotsItemModule
+		ScreenshotsItemModule,
+		GalleryModule
 	]
 })
 export class ScreenshotModule {}

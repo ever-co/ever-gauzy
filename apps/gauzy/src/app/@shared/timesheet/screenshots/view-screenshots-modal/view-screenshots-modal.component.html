@@ -1,0 +1,142 @@
+<button
+	size="small"
+	class="close-button"
+	nbButton
+	ghost
+	(click)="close()"
+	type="button"
+>
+	<nb-icon icon="close-outline"></nb-icon>
+</button>
+
+<nb-card>
+	<nb-card-body class="custom-scroll">
+		<h6>
+			{{ timeSlot.startedAt | utcToLocal | date }}
+			{{ timeSlot.localStartedAt | timeFormat }} -
+			{{ timeSlot.localStoppedAt | timeFormat }}
+		</h6>
+		<div class="activity mb-3">
+			<nb-progress-bar
+				class="mb-1"
+				[value]="timeSlot.overall"
+				[status]="prgressStatus(timeSlot.overall)"
+				[displayValue]="true"
+				size="tiny"
+			></nb-progress-bar>
+
+			<div class="activity-count">
+				{{ timeSlot.overall || 0 }}% of
+				{{
+					timeSlot.duration
+						| amFromUnix
+						| amFromUtc
+						| amDateFormat: 'mm'
+				}}
+				{{ 'ACTIVITY.MINUTES' | translate }}
+			</div>
+		</div>
+
+		<ng-template [ngIf]="timeSlot.screenshots?.length > 0">
+			<h6>Screenshots</h6>
+			<div class="row mb-3 justify-content-center">
+				<div
+					class="col-sm-4"
+					*ngFor="let image of timeSlot.screenshots"
+				>
+					<img
+						ngxGallery
+						[item]="image"
+						nb-card-image
+						draggable="false"
+						class="screenshots-image"
+						[src]="image?.fullUrl"
+					/>
+				</div>
+			</div>
+		</ng-template>
+
+		<h6>TimeLog</h6>
+		<div *ngFor="let timeLog of timeSlot.timeLogs" class="mt-3 p-3 card">
+			<div
+				class="row"
+				*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+			>
+				<div class="col">
+					<ngx-avatar
+						[name]="timeLog?.employee?.user?.name"
+						[src]="timeLog?.employee?.user?.imageUrl"
+						[caption]="
+							(timeLog?.startedAt
+								| utcToLocal
+								| timeFormat: true) +
+							' - ' +
+							(timeLog?.stoppedAt
+								? (timeLog?.stoppedAt
+								  | utcToLocal
+								  | timeFormat: true)
+								: ('TIMESHEET.TILL_NOW' | translate)) +
+							' (' +
+							(timeLog?.duration | durationFormat) +
+							')'
+						"
+					></ngx-avatar>
+				</div>
+				<div class="col-auto">
+					<ngx-label
+						[status]="TimeLogsLable[timeLog?.logType].status"
+						[text]="TimeLogsLable[timeLog?.logType].text"
+					>
+					</ngx-label>
+				</div>
+			</div>
+
+			<div class="mt-3 row align-items-center">
+				<div class="col">
+					<div class="mb-2">
+						<strong> 
+							{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
+						</strong>
+						{{
+							timeLog?.organizationContact
+								? timeLog?.organizationContact.name
+								: ('TIMESHEET.NO_ORGANIZATION_CONTACT'
+								  | translate)
+						}}
+					</div>
+
+					<div class="mb-2">
+						<strong>
+							{{ 'TIMESHEET.PROJECT' | translate }} :
+						</strong>
+						{{
+							timeLog?.project
+								? timeLog?.project.name
+								: ('TIMESHEET.NO_PROJECT' | translate)
+						}}
+					</div>
+
+					<div>
+						<strong>{{ 'TIMESHEET.TODO' | translate }} : </strong>
+						{{
+							timeLog?.task
+								? timeLog?.task?.title
+								: ('TIMESHEET.NO_TODO' | translate)
+						}}
+					</div>
+				</div>
+				<div class="col-auto">
+					<button
+						nbButton
+						status="primary"
+						size="small"
+						(click)="viewTimeLog(timeLog)"
+					>
+						<nb-icon icon="eye"></nb-icon>
+						{{ 'TIMESHEET.VIEW' | translate }}
+					</button>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

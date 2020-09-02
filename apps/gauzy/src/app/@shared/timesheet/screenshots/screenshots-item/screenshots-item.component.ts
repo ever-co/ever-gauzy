@@ -6,12 +6,12 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
-import { OrganizationPermissionsEnum, TimeSlot, TimeLog } from '@gauzy/models';
+import { OrganizationPermissionsEnum, TimeSlot } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { ViewTimeLogModalComponent } from '../../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { toLocal } from 'libs/utils';
+import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 
 @Component({
 	selector: 'ngx-screenshots-item',
@@ -33,6 +33,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	public get timeSlot(): TimeSlot {
 		return this._timeSlot;
 	}
+	s;
 	public set timeSlot(timeSlot: TimeSlot) {
 		if (timeSlot) {
 			timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
@@ -70,19 +71,9 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	viewInfo(timeSlot) {
-		if (timeSlot.timeLogs && timeSlot.timeLogs.length > 0) {
-			const findOptions = {
-				relations: ['employee', 'employee.user', 'project', 'task']
-			};
-			this.timesheetService
-				.getTimeLog(timeSlot.timeLogs[0].id, findOptions)
-				.then((timeLog: TimeLog) => {
-					this.nbDialogService.open(ViewTimeLogModalComponent, {
-						context: { timeLog },
-						dialogClass: 'view-log-dialog'
-					});
-				});
-		}
+		this.nbDialogService.open(ViewScreenshotsModalComponent, {
+			context: { timeSlot }
+		});
 	}
 
 	ngOnDestroy(): void {}
