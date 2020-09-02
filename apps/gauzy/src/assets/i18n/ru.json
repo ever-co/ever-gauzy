@@ -190,6 +190,7 @@
 			"CURRENCY_PER_HOUR": "Валюта",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
 			"ROLE": "Роль",
+			"SOURCE": "Источник (необязательно)",
 			"EMAILS": "Адреса E-mail",
 			"PROJECTS_OPTIONAL": "Проекты (необязательно)",
 			"CONTACTS_OPTIONAL": "Контакты (необязательно)",
@@ -495,7 +496,8 @@
 		"SHOW_BILLRATE": "Показать процент счёта",
 		"SHOW_START_WORK_ON": "Показать начатую работу на",
 		"SHOW_CLIENTS": "Показать клиентов",
-		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса"
+		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса",
+		"SOURCE": "Источник"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -974,6 +976,7 @@
 			"HISTORY": "История",
 			"DOCUMENTS": "Документы",
 			"DOCUMENT_NAME": "Название документа",
+			"NAME": "Имя",
 			"DOCUMENT": "Документ",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"INTERVIEW_FEEDBACK": "Интервью: ",
