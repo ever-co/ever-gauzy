@@ -79,7 +79,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			: this.selectedEducation;
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.educations.patchValue([selectedItem]);
-		this.educationId = selectedItem.id;
+		this.educationId = education ? education.id : null;
 	}
 	selectEducation({ isSelected, data }) {
 		const selectedEducation = isSelected ? data : null;
@@ -94,8 +94,14 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		this.form.controls.educations.reset();
 	}
 	cancel() {
-		this.showAddCard = !this.showAddCard;
+		this.showAddCard = false;
 		this.form.controls.educations.value.length = 0;
+		this.educationId = null;
+		this.form.reset();
+	}
+	add() {
+		this.showAddCard = true;
+		this.form.reset();
 	}
 	private async loadEducations() {
 		const res = await this.candidateEducationsService.getAll({
@@ -164,11 +170,18 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		const educationForm = this.form.controls.educations as FormArray;
 		if (educationForm.valid) {
 			const formValue = { ...educationForm.value[0] };
-			if (this.educationId !== null) {
+			if (
+				(this.dataLayoutStyle === 'CARDS_GRID' &&
+					this.educationId !== null) ||
+				(this.dataLayoutStyle === 'TABLE' &&
+					this.selectedEducation !== null)
+			) {
 				//editing existing education
 				try {
 					await this.candidateEducationsService.update(
-						this.educationId,
+						this.educationId
+							? this.educationId
+							: this.selectedEducation.id,
 						{
 							...formValue
 						}
@@ -211,6 +224,8 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			: this.selectedEducation;
 		try {
 			await this.candidateEducationsService.delete(selectedItem.id);
+			this.selectedEducation = null;
+			this.disableButton = true;
 			this.toastrSuccess('DELETED');
 			this.loadEducations();
 		} catch (error) {
