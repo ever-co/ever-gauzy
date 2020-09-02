@@ -190,6 +190,7 @@
 			"CURRENCY_PER_HOUR": "מטבע",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
 			"ROLE": "Role",
+			"SOURCE": "Source (optional)",
 			"EMAILS": "Email Addresses",
 			"PROJECTS_OPTIONAL": "Projects (Optional)",
 			"CONTACTS_OPTIONAL": "Contacts (Optional)",
@@ -495,7 +496,8 @@
 		"SHOW_BILLRATE": "Show Bill Rate",
 		"SHOW_START_WORK_ON": "Show Started Work On",
 		"SHOW_CLIENTS": "Show Clients",
-		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously"
+		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously",
+		"SOURCE": "Source"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -974,6 +976,7 @@
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents",
 			"DOCUMENT_NAME": "Document name",
+			"NAME": "שם",
 			"DOCUMENT": "Document",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"INTERVIEW_FEEDBACK": "Interview: ",
