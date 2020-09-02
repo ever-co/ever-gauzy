@@ -633,7 +633,7 @@ export class StatisticService {
 				},
 				take: 3,
 				order: {
-					createdAt: 'DESC'
+					startedAt: 'DESC'
 				}
 			});
 		}
