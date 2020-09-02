@@ -7,7 +7,10 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { takeUntil } from 'rxjs/operators';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
-import { ISkill } from '@gauzy/models';
+import { ISkill, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { LocalDataSource } from 'ng2-smart-table';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',
@@ -22,14 +25,20 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	candidateId: string;
 	skillList: ISkill[] = [];
 	form: FormGroup;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	settingsSmartTable: object;
+	sourceSmartTable = new LocalDataSource();
 	constructor(
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
+		private store: Store,
 		private fb: FormBuilder,
 		private candidateSkillsService: CandidateSkillsService
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit() {
@@ -40,6 +49,8 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 					this.candidateId = candidate.id;
 					this._initializeForm();
 					this.loadSkills();
+					this.loadSmartTable();
+					this._applyTranslationOnSmartTable();
 				}
 			});
 	}
@@ -53,6 +64,20 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 				name: ['', Validators.required]
 			})
 		);
+	}
+	add() {
+		this.showAddCard = true;
+		this.skillId = null;
+		this.form.reset();
+	}
+	setView() {
+		this.viewComponentName = ComponentEnum.SKILLS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
 	}
 	private async loadSkills() {
 		const res = await this.candidateSkillsService.getAll({
@@ -75,16 +100,28 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			this.toastrError(error);
 		}
 	}
-	async editSkill(skill: string, index: number) {
-		if (skill !== '') {
+	submitForm() {
+		if (this.skillId) {
+			const skillForm = this.form.controls.skills as FormArray;
+			if (skillForm.valid) {
+				const formValue = { ...skillForm.value[0] };
+				this.editSkill(formValue.name);
+			}
+		} else {
+			this.addSkill();
+		}
+	}
+	async editSkill(name: string, index?: number) {
+		if (name !== '') {
 			try {
 				await this.candidateSkillsService.update(this.skillId, {
-					name: skill
+					name: name
 				});
 				this.loadSkills();
 				this.toastrSuccess('UPDATED');
 				(this.form.controls.skills as FormArray).reset();
 				this.showEditDiv[index] = !this.showEditDiv[index];
+				this.showAddCard = false;
 			} catch (error) {
 				this.toastrError(error);
 			}
@@ -96,8 +133,27 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			);
 		}
 	}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				name: {
+					title: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.NAME'
+					),
+					type: 'string'
+				}
+			}
+		};
+	}
+	gridEdit(skill: ISkill) {
+		this.showAddCard = true;
+		this.form.controls.skills.patchValue([skill]);
+		this.skillId = skill.id;
+	}
 	cancel(index: number) {
 		this.showEditDiv[index] = !this.showEditDiv[index];
+		this.skillId = null;
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
@@ -117,7 +173,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			} catch (error) {
 				this.toastrError(error);
 			}
-			this.showAddCard = !this.showAddCard;
+			this.showAddCard = false;
 			skillForm.reset();
 		} else {
 			this.toastrService.danger(
@@ -139,6 +195,11 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
 		);
+	}
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

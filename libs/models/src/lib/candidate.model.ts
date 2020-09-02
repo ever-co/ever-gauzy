@@ -83,6 +83,7 @@ export interface CandidateCreateInput {
 	password?: string;
 	appliedDate?: Date;
 	hiredDate?: Date;
+	source?: ICandidateSource;
 	rejectDate?: Date;
 	cvUrl?: string;
 	members?: Candidate[];

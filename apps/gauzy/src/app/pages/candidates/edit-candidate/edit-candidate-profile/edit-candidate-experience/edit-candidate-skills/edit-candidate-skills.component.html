@@ -1,15 +1,28 @@
 <nb-card>
-	<nb-card-header>
+	<nb-card-header
+		style="
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		"
+	>
 		<button
 			nbButton
 			status="success"
 			*ngIf="!showAddCard"
-			(click)="showCard()"
+			(click)="add()"
+			class="mr-2"
 		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="showAddCard" class="row m-0">
+
+		<ga-layout-selector
+			*ngIf="!showAddCard"
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
+
+		<div *ngIf="showAddCard" class="row m-0 w-100">
 			<form class="col-8" [formGroup]="form" *ngIf="form">
 				<div formArrayName="skills">
 					<div
@@ -36,7 +49,7 @@
 			<span class="col-2 pl-2 pr-1"
 				><button
 					class="w-100"
-					(click)="addSkill()"
+					(click)="submitForm()"
 					nbButton
 					status="success"
 				>
@@ -55,7 +68,10 @@
 			>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="skillList?.length" class="mt-3">
+	<nb-card-body
+		*ngIf="skillList?.length && dataLayoutStyle === 'TABLE'"
+		class="mt-3"
+	>
 		<nb-card *ngFor="let skill of skillList; let i = index">
 			<nb-card-body>
 				<span *ngIf="!showEditDiv[i]"> {{ skill.name }}</span>
@@ -108,4 +124,40 @@
 			</nb-card-body>
 		</nb-card>
 	</nb-card-body>
+	<nb-card-body *ngIf="skillList?.length">
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="skillList"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+	</nb-card-body>
+	<ng-template
+		#actionButtons
+		let-buttonSize="buttonSize"
+		let-selectedItem="selectedItem"
+	>
+		<button
+			(click)="gridEdit(selectedItem)"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="removeSkill(selectedItem.id)"
+			nbButton
+			status="danger"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
 </nb-card>

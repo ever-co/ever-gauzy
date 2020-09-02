@@ -5,13 +5,19 @@
 				nbButton
 				status="success"
 				*ngIf="!showAddCard"
-				(click)="showCard()"
+				(click)="add()"
 				class="mr-2"
 			>
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 				{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
+			<ng-container
+				*ngIf="
+					dataLayoutStyle === 'TABLE' &&
+					!showAddCard &&
+					educationList?.length
+				"
+			>
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
@@ -119,13 +125,9 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body
-		*ngIf="educationList?.length && dataLayoutStyle === 'TABLE'"
-		class="mt-3"
-	>
+	<nb-card-body *ngIf="educationList?.length" class="mt-3">
 		<ng2-smart-table
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			class="interviews-table"
 			style="cursor: pointer;"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
@@ -134,9 +136,9 @@
 		>
 		</ng2-smart-table>
 	</nb-card-body>
-	<nb-card-body>
+	<nb-card-body *ngIf="educationList?.length">
 		<ga-card-grid
-			*ngIf="educationList?.length && dataLayoutStyle === 'CARDS_GRID'"
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
 			[source]="educationList"
 			[buttonTemplate]="actionButtons"

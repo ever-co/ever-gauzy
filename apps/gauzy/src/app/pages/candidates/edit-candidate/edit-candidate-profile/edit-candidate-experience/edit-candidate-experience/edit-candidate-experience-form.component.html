@@ -1,15 +1,32 @@
 <nb-card>
-	<nb-card-header>
-		<button
-			nbButton
-			status="success"
+	<nb-card-header class="header">
+		<div class="btn" *ngIf="!showAddCard">
+			<button
+				nbButton
+				status="success"
+				*ngIf="!showAddCard"
+				(click)="add()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<ng-container
+				*ngIf="
+					dataLayoutStyle === 'TABLE' &&
+					!showAddCard &&
+					experienceList?.length
+				"
+			>
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+		</div>
+
+		<ga-layout-selector
 			*ngIf="!showAddCard"
-			(click)="showCard()"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
-		<div *ngIf="showAddCard" class="row m-0">
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
+		<div *ngIf="showAddCard" class="row m-0 w-100">
 			<form class="col-10" [formGroup]="form" *ngIf="form">
 				<div formArrayName="experience">
 					<div
@@ -96,62 +113,50 @@
 			</div>
 		</div>
 	</nb-card-header>
+
 	<nb-card-body *ngIf="experienceList?.length" class="mt-3">
-		<nb-card *ngFor="let exp of experienceList; let i = index">
-			<nb-card-body class="experience-card">
-				<div>
-					<div class="experience-line">
-						<span class="experience-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.OCCUPATION'
-									| translate
-							}}:</span
-						>
-						{{ exp.occupation }}
-					</div>
-					<div class="experience-line">
-						<span class="experience-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.ORGANIZATION'
-									| translate
-							}}:</span
-						>
-						{{ exp.organization }}
-					</div>
-					<div class="experience-line">
-						<span class="experience-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.DURATION'
-									| translate
-							}}:</span
-						>
-						{{ exp.duration }}
-					</div>
-
-					<div class="experience-line" *ngIf="exp.description">
-						<span class="experience-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'
-									| translate
-							}}:
-						</span>
-						{{ exp.description }}
-					</div>
-				</div>
-
-				<nb-actions class="float-right" e="medium">
-					<nb-action
-						(click)="editExperience(i, exp.id)"
-						class="d-inline pr-2"
-						icon="edit"
-					></nb-action>
-					<nb-action
-						(click)="removeExperience(exp.id)"
-						class="d-inline pr-0 pl-2"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+		<ng2-smart-table
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectExperience($event)"
+			#experienceTable
+		>
+		</ng2-smart-table>
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="experienceList"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
 	</nb-card-body>
+	<ng-template
+		#actionButtons
+		let-buttonSize="buttonSize"
+		let-selectedItem="selectedItem"
+	>
+		<button
+			(click)="editExperience(selectedItem)"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="removeExperience(selectedItem)"
+			nbButton
+			status="danger"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
 </nb-card>
