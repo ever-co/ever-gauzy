@@ -1,10 +1,21 @@
 import { CandidateSource } from './candidate-source.entity';
-import { Controller, UseGuards, HttpStatus, Get, Query } from '@nestjs/common';
+import {
+	Post,
+	UseGuards,
+	HttpStatus,
+	Get,
+	Query,
+	Body,
+	Controller
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { CandidateSourceService } from './candidate-source.service';
 import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
+import { RoleGuard } from '../shared/guards/auth/role.guard';
+import { Roles } from '../shared/decorators/roles';
+import { RolesEnum } from '@gauzy/models';
 
 @ApiTags('candidate_source')
 @UseGuards(AuthGuard('jwt'))
@@ -33,5 +44,12 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	): Promise<IPagination<CandidateSource>> {
 		const { findInput } = JSON.parse(data);
 		return this.candidateSourceService.findAll({ where: findInput });
+	}
+
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Post()
+	async create(@Body() entity: CandidateSource): Promise<any> {
+		return this.candidateSourceService.create(entity);
 	}
 }

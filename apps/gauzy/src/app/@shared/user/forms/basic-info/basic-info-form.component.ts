@@ -55,6 +55,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	appliedDate: any;
 	hiredDate: any;
 	rejectDate: any;
+	source: any;
 	tags: Tag[] = [];
 	items: any;
 	createEmployee: any;
@@ -139,6 +140,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 				appliedDate: [''],
 				hiredDate: [''],
 				rejectDate: [''],
+				source: [''],
 				tags: [this.selectedTags],
 				createEmployee: [false]
 			},
@@ -158,6 +160,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		this.acceptDate = this.form.get('acceptDate');
 		this.appliedDate = this.form.get('appliedDate');
 		this.hiredDate = this.form.get('hiredDate');
+		this.source = this.form.get('source');
 		this.rejectDate = this.form.get('rejectDate');
 		this.tags = this.form.get('tags').value || [];
 		this.createEmployee = this.form.get('createEmployee');

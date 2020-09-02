@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { ICandidateSourceFindInput, ICandidateSource } from '@gauzy/models';
+import {
+	ICandidateSourceFindInput,
+	ICandidateSource,
+	ICandidateSourceCreateInput
+} from '@gauzy/models';
 
 @Injectable({
 	providedIn: 'root'
@@ -20,6 +24,14 @@ export class CandidateSourceService {
 					params: { data }
 				}
 			)
+			.pipe(first())
+			.toPromise();
+	}
+	create(
+		createInput: ICandidateSourceCreateInput
+	): Promise<ICandidateSource> {
+		return this.http
+			.post<ICandidateSource>('/api/candidate-source', createInput)
 			.pipe(first())
 			.toPromise();
 	}

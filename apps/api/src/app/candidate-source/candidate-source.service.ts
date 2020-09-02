@@ -12,4 +12,8 @@ export class CandidateSourceService extends CrudService<CandidateSource> {
 	) {
 		super(candidateSourceRepository);
 	}
+	createSource(createInput: any) {
+		//TO DO
+		return this.candidateSourceRepository.create(createInput);
+	}
 }

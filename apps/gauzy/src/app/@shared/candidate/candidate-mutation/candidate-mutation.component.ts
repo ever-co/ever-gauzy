@@ -11,7 +11,8 @@ import {
 	Role,
 	CandidateCreateInput,
 	Candidate,
-	ICandidateDocument
+	ICandidateDocument,
+	ICandidateSource
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -21,6 +22,7 @@ import { FormGroup } from '@angular/forms';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
+import { CandidateSourceService } from '../../../@core/services/candidate-source.service';
 
 @Component({
 	selector: 'ga-candidate-mutation',
@@ -47,6 +49,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		private readonly roleService: RoleService,
 		protected toastrService: NbToastrService,
 		protected store: Store,
+		protected candidateSourceService: CandidateSourceService,
 		protected candidatesService: CandidatesService,
 		private errorHandler: ErrorHandlingService
 	) {}
@@ -83,6 +86,13 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		const appliedDate = this.form.get('appliedDate').value || null;
 		const rejectDate = this.form.get('rejectDate').value || null;
 		const hiredDate = this.form.get('hiredDate').value || null;
+
+		const sourceName = this.form.get('source').value || null;
+		let source: ICandidateSource = null;
+		if (sourceName !== null) {
+			source = { name: sourceName };
+		}
+
 		const cvUrl = this.formCV.get('cvUrl').value || null;
 		let documents: ICandidateDocument[] = null;
 		if (cvUrl !== null) {
@@ -97,6 +107,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			organization: this.store.selectedOrganization,
 			appliedDate,
 			hiredDate,
+			source,
 			rejectDate,
 			tags: this.userBasicInfo.selectedTags
 		};

@@ -305,7 +305,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 					}
 				});
 			});
-			// this.loading = true;
+			this.loading = true;
 			const feedbackList = await this.loadFeedbacks();
 			feedbackList.forEach((fb) => {
 				const currentInterview = this.interviewList.find(
@@ -330,7 +330,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				(obj) => !uniq[obj.id] && (uniq[obj.id] = true)
 			);
 		}
-		// this.loading = false;
+		this.loading = false;
 	}
 	editFeedback(feedback?: ICandidateFeedback) {
 		this.cancel();
