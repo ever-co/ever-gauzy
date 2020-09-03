@@ -11,6 +11,7 @@ pipeline {
         GITHUB_DOCKER_USERNAME = credentials('github-docker-username')
         GITHUB_DOCKER_PASSWORD = credentials('github-docker-password')
         GITHUB_DOCKER_REPO = "docker.pkg.github.com/ever-co/gauzy"
+        GITHUB_DISPATCH_TOKEN = credentials('github-dispatch-token')
         GITHUB_TOKEN = credentials('github-token')
         CI_URL = "ci.ever.co"
         AWS_ACCESS_KEY_ID = credentials('aws-access-key')
@@ -157,7 +158,7 @@ pipeline {
         stage ("Pulumi Update") {
             steps {
                 sh """
-                    curl -sX POST https://api.github.com/repos/ever-co/${REPO_NAME}-pulumi/actions/workflows/$WORKFLOW_ID/dispatches -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${GITHUB_TOKEN} -d '{"ref":$GIT_COMMIT}'
+                    curl -sX POST https://api.github.com/repos/ever-co/${REPO_NAME}-pulumi/actions/workflows/$WORKFLOW_ID/dispatches -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${GITHUB_DISPATCH_TOKEN} -d '{"ref":$GIT_COMMIT}'
                 """
             }
         }
