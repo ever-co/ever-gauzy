@@ -10,11 +10,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Candidate } from './candidate.entity';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { CommandHandlers } from './commands/handlers';
-import { CandidateSourceService } from '../candidate-source/candidate-source.service';
-import { CandidateSource } from '../candidate-source/candidate-source.entity';
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Candidate, User, CandidateSource]),
+		TypeOrmModule.forFeature([Candidate, User]),
 		EmailModule,
 		CqrsModule,
 		UserOrganizationModule
@@ -22,7 +20,6 @@ import { CandidateSource } from '../candidate-source/candidate-source.entity';
 	controllers: [CandidateController],
 	providers: [
 		CandidateService,
-		CandidateSourceService,
 		UserService,
 		AuthService,
 		EmailService,
