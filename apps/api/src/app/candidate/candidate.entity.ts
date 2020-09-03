@@ -13,7 +13,7 @@ import {
 	CandidateStatus
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional, IsEnum } from 'class-validator';
+import { IsDate, IsOptional, IsEnum, IsString } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -38,6 +38,7 @@ import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.en
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { Contact } from '../contact/contact.entity';
+import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('candidate')
 export class Candidate extends TenantBase implements ICandidate {
@@ -141,7 +142,20 @@ export class Candidate extends TenantBase implements ICandidate {
 
 	@ApiProperty({ type: String, readOnly: false })
 	@RelationId((candidate: Candidate) => candidate.organization)
+  @IsString()
+  @Column({ nullable: true })
 	orgId: string;
+
+  @ApiProperty({ type: Tenant })
+  @ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn()
+  tenant: Tenant;
+
+  @ApiProperty({ type: String, readOnly: true })
+  @RelationId((candidate: Candidate) => candidate.tenant)
+  @IsString()
+  @Column({ nullable: true })
+  tenantId: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

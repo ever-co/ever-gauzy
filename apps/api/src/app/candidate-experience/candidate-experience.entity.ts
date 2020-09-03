@@ -1,9 +1,10 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IExperience, Candidate as ICandidate } from '@gauzy/models';
 import { Candidate } from '../candidate/candidate.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('candidate_experience')
 export class CandidateExperience extends Base implements IExperience {
@@ -11,9 +12,10 @@ export class CandidateExperience extends Base implements IExperience {
 	@Column()
 	occupation: string;
 
-	@ApiProperty({ type: String })
-	@Column()
-	organization: string;
+  @ApiProperty({ type: Organization })
+  @ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn()
+  organization: Organization;
 
 	@ApiProperty({ type: String })
 	@Column()

@@ -3,6 +3,7 @@ import { Tenant } from '../tenant/tenant.entity';
 import { Candidate } from '@gauzy/models';
 import * as faker from 'faker';
 import { CandidateExperience } from './candidate-experience.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createRandomCandidateExperience = async (
   connection: Connection,
@@ -21,6 +22,9 @@ export const createRandomCandidateExperience = async (
 
   for (const tenant of tenants) {
     let tenantCandidates = tenantCandidatesMap.get(tenant);
+    const Organizations = await connection.manager.find(Organization, {
+      where: [{ tenant: tenant }]
+    });
     for (const tenantCandidate of tenantCandidates) {
       for (let i = 0; i <= (Math.floor(Math.random() * 3) + 1); i++) {
         let candidate = new CandidateExperience();
@@ -30,7 +34,7 @@ export const createRandomCandidateExperience = async (
         getExperience = Number(getExperience.toFixed(2));
         let val = Math.abs(getExperience);
         candidate.occupation = faker.name.jobArea();
-        candidate.organization = faker.company.companyName();
+        candidate.organization = faker.random.arrayElement(Organizations);
         candidate.duration = val.toString().split('.')[0].toString() + ' months';
         candidate.description = faker.lorem.words();
         candidate.candidateId = tenantCandidate.id;

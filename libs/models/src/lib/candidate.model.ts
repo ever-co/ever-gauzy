@@ -26,6 +26,7 @@ export interface Candidate extends IBaseEntityModel, IContact {
 	status?: string;
 	teams?: OrganizationTeam[];
 	tenant: ITenant;
+  tenantId?: string;
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
 	tags: Tag[];

@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
+import { ITenant } from './tenant.model';
 
 export interface IAvailabilitySlots extends IBaseEntityModel {
 	startTime: Date;
@@ -11,6 +12,7 @@ export interface IAvailabilitySlots extends IBaseEntityModel {
 	organizationId: string;
 	employee?: Employee;
 	organization: Organization;
+  tenant: ITenant;
 }
 
 export interface IAvailabilitySlotsFindInput extends IBaseEntityModel {

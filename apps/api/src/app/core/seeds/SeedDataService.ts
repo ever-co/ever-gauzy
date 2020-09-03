@@ -956,6 +956,7 @@ export class SeedDataService {
 			'Default Availability Slots',
 			createDefaultAvailabilitySlots(
 				this.connection,
+        [this.tenant],
 				this.organizations[0],
 				this.defaultEmployees,
 				randomSeedConfig.availabilitySlotsPerOrganization || 20
