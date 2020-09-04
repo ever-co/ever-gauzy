@@ -5,17 +5,11 @@ import * as faker from 'faker';
 import { AddOrganizationPageData } from '../support/Base/pagedata/AddOrganizationPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 
-let fullName = ' ';
-let email = ' ';
-let pass = ' ';
 let organizationName = ' ';
 let taxId = ' ';
 
 describe('Create Organization Test', () => {
 	before(() => {
-		fullName = faker.name.findName();
-		email = faker.internet.email();
-		pass = faker.internet.password();
 		organizationName = faker.company.companyName();
 		taxId = faker.random.alphaNumeric();
 

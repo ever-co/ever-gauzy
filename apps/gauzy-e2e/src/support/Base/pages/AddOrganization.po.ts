@@ -2,8 +2,7 @@ import {
 	enterInput,
 	verifyElementIsVisible,
 	clickButton,
-	clickElementByText,
-	clickButtonByIndex
+	clickElementByText
 } from '../utils/util';
 import { AddOrganizationPage } from '../pageobjects/AddOrganizationPageObject';
 
