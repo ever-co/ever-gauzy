@@ -14,7 +14,7 @@ export const deleteBtnExists = () => {
 };
 
 export const deleteBtnClick = () => {
-	clickButtonByIndex(DeleteOrganizationPage.deleteButtonCss, 3);
+	clickButtonByIndex(DeleteOrganizationPage.deleteButtonCss, 2);
 };
 
 export const confirmBtnExists = () => {
