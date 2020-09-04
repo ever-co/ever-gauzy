@@ -17,6 +17,8 @@ import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
 import { Email as IEmail } from './email.entity';
 import { Invite } from '../invite/invite.entity';
+import { Timesheet } from '../timesheet/timesheet.entity';
+import { RequestContext } from '../core/context';
 
 export interface InviteUserModel {
 	email: string;
@@ -440,6 +442,78 @@ export class EmailService extends CrudService<IEmail> {
 					languageCode,
 					message: res.originalMessage,
 					organization
+				});
+			})
+			.catch(console.error);
+	}
+
+	async setTimesheetAction(email: string, timesheet: Timesheet) {
+		const languageCode = RequestContext.getLanguageCode();
+
+		const sendOptions = {
+			template: 'timesheet-action',
+			message: {
+				to: email
+			},
+			locals: {
+				locale: languageCode,
+				email: email,
+				host: environment.host,
+				timesheet: timesheet,
+				timesheet_action: timesheet.status
+			}
+		};
+
+		const organization = await this.organizationRepository.findOne(
+			timesheet.employee.organizationId
+		);
+
+		this.email
+			.send(sendOptions)
+			.then((res) => {
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email: email,
+					languageCode,
+					message: res.originalMessage,
+					organization,
+					user: timesheet.employee.user
+				});
+			})
+			.catch(console.error);
+	}
+
+	async timesheetSubmit(email: string, timesheet: Timesheet) {
+		const languageCode = RequestContext.getLanguageCode();
+
+		const sendOptions = {
+			template: 'timesheet-submit',
+			message: {
+				to: email
+			},
+			locals: {
+				locale: languageCode,
+				email: email,
+				host: environment.host,
+				timesheet: timesheet,
+				timesheet_action: timesheet.status
+			}
+		};
+
+		const organization = await this.organizationRepository.findOne(
+			timesheet.employee.organizationId
+		);
+
+		this.email
+			.send(sendOptions)
+			.then((res) => {
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email: email,
+					languageCode,
+					message: res.originalMessage,
+					organization,
+					user: timesheet.employee.user
 				});
 			})
 			.catch(console.error);
