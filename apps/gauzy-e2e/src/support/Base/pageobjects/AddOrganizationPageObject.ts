@@ -5,6 +5,5 @@ export const AddOrganizationPage = {
 	officialNameFieldCss: '#officialNameInput',
 	taxFieldCss: '#taxIdInput',
 	nextButtonCss: 'button[type="submit"]',
-	addButtonCss: 'button[id="addOrganization"]',
-	gotoDashboardCardCss: 'nb-card-body div div'
+	addButtonCss: 'nb-card-body > div > button[status="success"]'
 };

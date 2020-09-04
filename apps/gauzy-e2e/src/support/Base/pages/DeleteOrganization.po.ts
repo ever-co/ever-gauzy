@@ -5,12 +5,12 @@ import {
 } from '../utils/util';
 import { DeleteOrganizationPage } from '../pageobjects/DeleteOrganizationPageObject';
 
-export const tableExists = () => {
-	verifyElementIsVisible(DeleteOrganizationPage.table);
+export const gridBtnExists = () => {
+	verifyElementIsVisible(DeleteOrganizationPage.gridButtonCss);
 };
 
-export const selectTableRow = () => {
-	cy.get(DeleteOrganizationPage.table).eq(2);
+export const gridBtnClick = () => {
+	clickButtonByIndex(DeleteOrganizationPage.gridButtonCss, 0);
 };
 
 export const deleteBtnExists = () => {
@@ -18,9 +18,13 @@ export const deleteBtnExists = () => {
 };
 
 export const deleteBtnClick = () => {
-	clickButton(DeleteOrganizationPage.deleteButtonCss);
+	clickButtonByIndex(DeleteOrganizationPage.deleteButtonCss, 3);
 };
 
-export const clickDashboardCard = (data) => {
-	clickButtonByIndex(DeleteOrganizationPage.gotoDashboardCardCss, data);
+export const confirmBtnExists = () => {
+	verifyElementIsVisible(DeleteOrganizationPage.confirmDeleteCss);
+};
+
+export const confirmBtnClick = () => {
+	clickButtonByIndex(DeleteOrganizationPage.confirmDeleteCss, 0);
 };

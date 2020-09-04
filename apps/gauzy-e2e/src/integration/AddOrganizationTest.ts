@@ -42,7 +42,5 @@ describe('Create Organization Test', () => {
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.clickOnNextButton();
-		addOrganizationPage.clickDashboardCard(0);
-		dashboradPage.verifyCreateButton();
 	});
 });

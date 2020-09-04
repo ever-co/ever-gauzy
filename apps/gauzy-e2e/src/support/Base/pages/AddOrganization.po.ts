@@ -39,7 +39,3 @@ export const enterTaxId = (data) => {
 export const clickOnNextButton = () => {
 	clickButton(AddOrganizationPage.nextButtonCss);
 };
-
-export const clickDashboardCard = (data) => {
-	clickButtonByIndex(AddOrganizationPage.gotoDashboardCardCss, data);
-};

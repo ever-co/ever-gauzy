@@ -18,11 +18,11 @@ describe('Delete Organization Test', () => {
 
 	it('Should able to delete organization', () => {
 		cy.visit('/#/pages/organizations');
-		deleteOrganizationPage.tableExists();
-		deleteOrganizationPage.selectTableRow();
+		deleteOrganizationPage.gridBtnExists();
+		deleteOrganizationPage.gridBtnClick();
 		deleteOrganizationPage.deleteBtnExists();
 		deleteOrganizationPage.deleteBtnClick();
-		deleteOrganizationPage.clickDashboardCard(0);
-		dashboradPage.verifyCreateButton();
+		deleteOrganizationPage.confirmBtnExists();
+		deleteOrganizationPage.confirmBtnClick();
 	});
 });

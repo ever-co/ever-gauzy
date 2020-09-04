@@ -48,5 +48,5 @@ export const verifyElementIsVisible = (loc) => {
 };
 
 export const clickButtonByIndex = (loc, index) => {
-	cy.get(loc, { timeout: 60000 }).eq(index).click();
+	cy.get(loc, { timeout: 60000 }).eq(index).click({ force: true });
 };
