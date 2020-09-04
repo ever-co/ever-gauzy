@@ -6,6 +6,7 @@ import { CandidateInterview } from './candidate-interview.entity';
 
 export const createDefaultCandidateInterview = async (
   connection: Connection,
+  tenants: Tenant[],
   Candidates
 ): Promise<CandidateInterview[]> => {
   if (!Candidates) {
@@ -18,7 +19,7 @@ export const createDefaultCandidateInterview = async (
   let candidates: CandidateInterview[] = [];
 
   for (const tenantCandidate of Candidates) {
-    candidates = await dataOperation(connection,candidates,tenantCandidate);
+    candidates = await dataOperation(connection,candidates,tenantCandidate, faker.random.arrayElement(tenants));
   }
 
   return candidates;
@@ -41,13 +42,13 @@ export const createRandomCandidateInterview = async (
   for (const tenant of tenants) {
     let tenantCandidates = tenantCandidatesMap.get(tenant);
     for (const tenantCandidate of tenantCandidates) {
-      candidates = await dataOperation(connection,candidates,tenantCandidate);
+      candidates = await dataOperation(connection,candidates,tenantCandidate, tenant);
     }
   }
   return candidates;
 };
 
-const dataOperation = async (connection: Connection, candidates, tenantCandidate)=>{
+const dataOperation = async (connection: Connection, candidates, tenantCandidate, tenant)=>{
   for (let i = 0; i <= (Math.floor(Math.random() * 3) + 1); i++) {
     let candidate = new CandidateInterview();
 
@@ -59,6 +60,7 @@ const dataOperation = async (connection: Connection, candidates, tenantCandidate
     candidate.location = faker.address.city();
     candidate.note = faker.lorem.words();
     candidate.candidate = tenantCandidate;
+    candidate.tenant = tenant;
 
     candidates.push(candidate);
   }

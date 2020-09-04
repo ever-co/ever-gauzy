@@ -2,21 +2,25 @@ import { ICandidateDocument, Candidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { CandidateDocument } from './candidate-documents.entity';
+import * as faker from 'faker';
 
 const candidateDocumentList: ICandidateDocument[] = [
 	{
 		name: 'Document 1',
 		documentUrl:
-			'http://res.cloudinary.com/evereq/image/upload/v1587742725/everbie-products-images/n07vjqa8pa8dfinkzqdy.pdf'
+			'http://res.cloudinary.com/evereq/image/upload/v1587742725/everbie-products-images/n07vjqa8pa8dfinkzqdy.pdf',
+    tenant:{}
 	},
 	{
 		name: 'Document 2',
 		documentUrl:
-			'http://res.cloudinary.com/evereq/raw/upload/v1587742757/everbie-products-images/wxjghcvuysc3imrx7z2t.docx'
+			'http://res.cloudinary.com/evereq/raw/upload/v1587742757/everbie-products-images/wxjghcvuysc3imrx7z2t.docx',
+    tenant:{}
 	}
 ];
 export const createCandidateDocuments = async (
 	connection: Connection,
+	tenants: Tenant[],
 	candidates: Candidate[] | void
 ): Promise<CandidateDocument[]> => {
 	let defaultCandidateDocuments = [];
@@ -32,7 +36,8 @@ export const createCandidateDocuments = async (
 		const documents = candidateDocumentList.map((document) => ({
 			name: document.name,
 			documentUrl: document.documentUrl,
-			candidateId: candidate.id
+			candidateId: candidate.id,
+      tenant: faker.random.arrayElement(tenants)
 		}));
 
 		defaultCandidateDocuments = [
@@ -68,7 +73,8 @@ export const createRandomCandidateDocuments = async (
 			const documents = candidateDocumentList.map((document) => ({
 				name: document.name,
 				documentUrl: document.documentUrl,
-				candidateId: candidate.id
+				candidateId: candidate.id,
+        tenant: tenant
 			}));
 
 			candidateDocumentsMap.set(candidate, documents);

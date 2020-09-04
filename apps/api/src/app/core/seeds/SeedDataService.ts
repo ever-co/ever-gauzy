@@ -670,17 +670,18 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Candidate Documents',
-			createCandidateDocuments(this.connection, defaultCandidates)
+			createCandidateDocuments(this.connection, [this.tenant], defaultCandidates)
 		);
 		await this.tryExecute(
 			'Default candidate interview',
-			createDefaultCandidateInterview(this.connection, defaultCandidates)
+			createDefaultCandidateInterview(this.connection, [this.tenant], defaultCandidates)
 		);
 
 		await this.tryExecute(
 			'Default candidate interviewers',
 			createDefaultCandidateInterviewers(
 				this.connection,
+        [this.tenant],
 				this.defaultEmployees,
 				defaultCandidates
 			)
@@ -688,7 +689,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Candidate Feedbacks',
-			createCandidateFeedbacks(this.connection, defaultCandidates)
+			createCandidateFeedbacks(this.connection, [this.tenant], defaultCandidates)
 		);
 
 		await this.tryExecute(

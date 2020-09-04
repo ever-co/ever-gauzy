@@ -8,15 +8,18 @@ import * as faker from "faker";
 const candidateFeedbackList: ICandidateFeedback[] = [
 	{
 		description: 'Feedback 1',
-		rating: 4
+		rating: 4,
+    tenant: {}
 	},
 	{
 		description: 'Feedback 2',
-		rating: 3
+		rating: 3,
+    tenant: {}
 	}
 ];
 export const createCandidateFeedbacks = async (
 	connection: Connection,
+  tenants: Tenant[],
 	candidates: Candidate[] | void
 ): Promise<Map<Candidate, CandidateFeedback[]>> => {
   let candidateFeedbacksMap: Map<Candidate, any[]> = new Map();
@@ -27,7 +30,7 @@ export const createCandidateFeedbacks = async (
 		);
 		return;
 	}
-  candidateFeedbacksMap = await dataOperation(connection, [], candidateFeedbacksMap, candidates)
+  candidateFeedbacksMap = await dataOperation(connection, [], candidateFeedbacksMap, candidates, faker.random.arrayElement(tenants))
 
 	return candidateFeedbacksMap;
 };
@@ -49,7 +52,7 @@ export const createRandomCandidateFeedbacks = async (
 
 	for(let tenant of tenants)  {
 		const candidates = tenantCandidatesMap.get(tenant);
-    candidateFeedbacksMap = await dataOperation(connection, candidateFeedbacks, candidateFeedbacksMap, candidates)
+    candidateFeedbacksMap = await dataOperation(connection, candidateFeedbacks, candidateFeedbacksMap, candidates, tenant)
 	}
 	return candidateFeedbacksMap;
 };
@@ -66,7 +69,7 @@ const insertCandidateFeedbacks = async (
 		.execute();
 };
 
-let dataOperation = async (connection: Connection, candidateFeedbacks, candidateFeedbacksMap, candidates, ) =>{
+let dataOperation = async (connection: Connection, candidateFeedbacks, candidateFeedbacksMap, candidates, tenant) =>{
   for(let candidate of candidates){
     const candidateInterviews = await connection.manager.find(CandidateInterview, {
       where: [{ candidate: candidate }]
@@ -77,7 +80,8 @@ let dataOperation = async (connection: Connection, candidateFeedbacks, candidate
       rating: feedback.rating,
       candidateId: candidate.id,
       interviewId: interview.id,
-      status: faker.random.arrayElement(Object.keys(CandidateStatus))
+      status: faker.random.arrayElement(Object.keys(CandidateStatus)),
+      tenant: tenant
     }));
 
     candidateFeedbacksMap.set(candidate, feedbacks);

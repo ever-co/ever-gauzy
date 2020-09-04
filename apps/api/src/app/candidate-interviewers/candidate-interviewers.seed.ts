@@ -7,6 +7,7 @@ import { CandidateInterview } from '../candidate-interview/candidate-interview.e
 
 export const createDefaultCandidateInterviewers = async (
   connection: Connection,
+  tenants: Tenant[],
   defaultEmployees,
   defaultCandidates
 ): Promise<CandidateInterviewers[]> => {
@@ -31,7 +32,7 @@ export const createDefaultCandidateInterviewers = async (
       const CandidateInterviews = await connection.manager.find(CandidateInterview, {
         where: [{ candidate: defaultCandidate }]
       });
-    candidates = await dataOperation(connection, candidates, CandidateInterviews, defaultEmployees);
+    candidates = await dataOperation(connection, candidates, CandidateInterviews, defaultEmployees, faker.random.arrayElement(tenants));
 
     }
   return candidates;
@@ -62,14 +63,14 @@ export const createRandomCandidateInterviewers = async (
       const CandidateInterviews = await connection.manager.find(CandidateInterview, {
         where: [{ candidate: tenantCandidate }]
       });
-      candidates = await dataOperation(connection, candidates, CandidateInterviews, tenantEmployees);
+      candidates = await dataOperation(connection, candidates, CandidateInterviews, tenantEmployees, tenant);
     }
   }
   return candidates;
 };
 
 
-const dataOperation = async (connection: Connection, candidates, CandidateInterviews, tenantEmployees: Employee[])=>{
+const dataOperation = async (connection: Connection, candidates, CandidateInterviews, tenantEmployees: Employee[], tenant)=>{
   for (let interview of CandidateInterviews) {
 
     let candidate = new CandidateInterviewers();
@@ -77,6 +78,7 @@ const dataOperation = async (connection: Connection, candidates, CandidateInterv
     candidate.interviewId = interview.id;
     candidate.interview = interview;
     candidate.employeeId = faker.random.arrayElement(tenantEmployees).id;
+    candidate.tenant = tenant;
 
     candidates.push(candidate);
   }

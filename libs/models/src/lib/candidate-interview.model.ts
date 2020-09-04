@@ -1,10 +1,10 @@
 import { ICandidatePersonalQualities } from './candidate-personal-qualities.model';
 import { Employee } from './employee.model';
 import {
-	ICandidateFeedback,
-	ICandidateInterviewers,
-	ICandidateTechnologies,
-	Candidate
+  ICandidateFeedback,
+  ICandidateInterviewers,
+  ICandidateTechnologies,
+  Candidate, Organization, ITenant
 } from '@gauzy/models';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 export interface ICandidateInterview extends IBaseEntityModel {
@@ -22,6 +22,8 @@ export interface ICandidateInterview extends IBaseEntityModel {
 	candidate: Candidate;
 	rating?: number;
 	isArchived?: boolean;
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface ICandidateInterviewFindInput extends IBaseEntityModel {
@@ -35,6 +37,8 @@ export interface ICandidateInterviewFindInput extends IBaseEntityModel {
 	feedbacks?: ICandidateFeedback[];
 	technologies?: ICandidateTechnologies[];
 	personalQualities?: ICandidatePersonalQualities[];
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface ICandidateInterviewCreateInput {
