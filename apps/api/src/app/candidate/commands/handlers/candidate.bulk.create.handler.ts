@@ -4,7 +4,6 @@ import { AuthService } from '../../../auth/auth.service';
 import { EmailService } from '../../../email';
 import { CandidateBulkCreateCommand } from '../candidate.bulk.create.command';
 import { CandidateService } from '../../candidate.service';
-import { CandidateSourceService } from '../../../candidate-source/candidate-source.service';
 
 @CommandHandler(CandidateBulkCreateCommand)
 export class CandidateBulkCreateHandler
@@ -12,8 +11,7 @@ export class CandidateBulkCreateHandler
 	constructor(
 		private readonly candidateService: CandidateService,
 		private readonly authService: AuthService,
-		private readonly emailService: EmailService,
-		private readonly candidateSourceService: CandidateSourceService
+		private readonly emailService: EmailService
 	) {}
 
 	public async execute(
@@ -25,15 +23,6 @@ export class CandidateBulkCreateHandler
 		const createdCandidates = await this.candidateService.createBulk(
 			inputWithHash
 		);
-		//TO DO
-
-		// createdCandidates.forEach((item) => {
-		// 	this.candidateSourceService.createSource({
-		// 		name: item.source.name,
-		// 		candidateId: item.id
-		// 	});
-		// });
-
 		this._sendWelcomeEmail(createdCandidates, languageCode);
 
 		return createdCandidates;

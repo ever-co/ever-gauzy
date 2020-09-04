@@ -35,4 +35,11 @@ export class CandidateSourceService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	updateBulk(updateInput: ICandidateSource[]): Promise<any> {
+		return this.http
+			.put('/api/candidate-source/updateBulk', updateInput)
+			.pipe(first())
+			.toPromise();
+	}
 }

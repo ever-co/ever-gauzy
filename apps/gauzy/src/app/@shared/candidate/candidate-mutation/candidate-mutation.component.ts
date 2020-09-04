@@ -121,14 +121,35 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	}
 	async add() {
 		this.addCandidate();
+
 		try {
-			const candidate = await this.candidatesService
+			const candidates = await this.candidatesService
 				.createBulk(this.candidates)
 				.pipe(first())
 				.toPromise();
-			this.closeDialog(candidate);
+			this.updateSource(candidates);
+			this.closeDialog(candidates);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
+	}
+
+	async updateSource(createdCandidates: Candidate[]) {
+		const updateInput = [];
+		const all = await this.candidatesService
+			.getAll(['user'])
+			.pipe(first())
+			.toPromise();
+		all.items.forEach((item) => {
+			createdCandidates.forEach((cc) => {
+				if (item.user.id === cc.userId) {
+					updateInput.push({
+						candidateId: item.id,
+						id: cc.source.id
+					});
+				}
+			});
+		});
+		await this.candidateSourceService.updateBulk(updateInput);
 	}
 }
