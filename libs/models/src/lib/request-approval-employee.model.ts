@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { RequestApproval, Employee } from '..';
+import { RequestApproval, Employee, Organization, ITenant } from '..';
 
 export interface RequestApprovalEmployee extends IBaseEntityModel {
 	requestApprovalId: string;
@@ -7,4 +7,6 @@ export interface RequestApprovalEmployee extends IBaseEntityModel {
 	status: number;
 	requestApproval: RequestApproval;
 	employee: Employee;
+  organization?: Organization;
+  tenant: ITenant;
 }

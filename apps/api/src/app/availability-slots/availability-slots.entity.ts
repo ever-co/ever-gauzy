@@ -7,14 +7,12 @@ import {
 	IsBoolean,
 	IsDate
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { IAvailabilitySlots } from '@gauzy/models';
-import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
-import { Tenant } from '../tenant/tenant.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('availability_slots')
-export class AvailabilitySlots extends Base implements IAvailabilitySlots {
+export class AvailabilitySlots extends TenantOrganizationBase implements IAvailabilitySlots {
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -27,28 +25,6 @@ export class AvailabilitySlots extends Base implements IAvailabilitySlots {
 	)
 	@Column({ nullable: true })
 	readonly employeeId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId(
-		(availabilitySlots: AvailabilitySlots) => availabilitySlots.organization
-	)
-	readonly organizationId: string;
-
-  @ApiProperty({ type: Tenant })
-  @ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-  @JoinColumn()
-  tenant: Tenant;
-
-  @ApiProperty({ type: String, readOnly: true })
-  @RelationId((availabilitySlots: AvailabilitySlots) => availabilitySlots.tenant)
-  @IsString()
-  @Column({ nullable: true })
-  tenantId: string;
 
 	@ApiProperty({ type: Date })
 	@IsDate()

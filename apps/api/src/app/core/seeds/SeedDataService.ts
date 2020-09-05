@@ -665,23 +665,23 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Candidate Sources',
-			createCandidateSources(this.connection, defaultCandidates)
+			createCandidateSources(this.connection, this.tenant, defaultCandidates)
 		);
 
 		await this.tryExecute(
 			'Candidate Documents',
-			createCandidateDocuments(this.connection, [this.tenant], defaultCandidates)
+			createCandidateDocuments(this.connection, this.tenant, defaultCandidates)
 		);
 		await this.tryExecute(
 			'Default candidate interview',
-			createDefaultCandidateInterview(this.connection, [this.tenant], defaultCandidates)
+			createDefaultCandidateInterview(this.connection, this.tenant, defaultCandidates)
 		);
 
 		await this.tryExecute(
 			'Default candidate interviewers',
 			createDefaultCandidateInterviewers(
 				this.connection,
-        [this.tenant],
+        this.tenant,
 				this.defaultEmployees,
 				defaultCandidates
 			)
@@ -689,17 +689,17 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Candidate Feedbacks',
-			createCandidateFeedbacks(this.connection, [this.tenant], defaultCandidates)
+			createCandidateFeedbacks(this.connection, this.tenant, defaultCandidates)
 		);
 
 		await this.tryExecute(
 			'Candidate Educations',
-			createCandidateEducations(this.connection, defaultCandidates)
+			createCandidateEducations(this.connection, this.tenant, defaultCandidates)
 		);
 
 		await this.tryExecute(
 			'Candidate Skills',
-			createCandidateSkills(this.connection, defaultCandidates)
+			createCandidateSkills(this.connection, this.tenant, defaultCandidates)
 		);
 
 		await this.tryExecute(
@@ -799,7 +799,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Integrations',
-			createDefaultIntegrations(this.connection, integrationTypes)
+			createDefaultIntegrations(this.connection, this.tenant, integrationTypes)
 		);
 
 		await this.tryExecute(
@@ -816,6 +816,7 @@ export class SeedDataService {
 			'Default Proposals',
 			createDefaultProposals(
 				this.connection,
+				this.tenant,
 				this.defaultEmployees,
 				this.organizations,
 				randomSeedConfig.proposalsSharingPerOrganizations || 30
@@ -839,6 +840,7 @@ export class SeedDataService {
 			'Default Employee Awards',
 			createDefaultEmployeeAwards(
 				this.connection,
+        this.tenant,
 				this.defaultEmployees[0]
 			)
 		);
@@ -872,6 +874,7 @@ export class SeedDataService {
 			'Default Employee Appointment',
 			createDefaultEmployeeAppointment(
 				this.connection,
+				this.tenant,
 				this.defaultEmployees,
 				this.organizations[0]
 			)
@@ -899,6 +902,7 @@ export class SeedDataService {
 			'Default Candidate Personal Qualities',
 			createDefaultCandidatePersonalQualities(
 				this.connection,
+				this.tenant,
 				defaultCandidates
 			)
 		);
@@ -907,6 +911,7 @@ export class SeedDataService {
 			'Default Candidate Technologies',
 			createDefaultCandidateTechnologies(
 				this.connection,
+        this.tenant,
 				defaultCandidates
 			)
 		);
@@ -915,6 +920,7 @@ export class SeedDataService {
 			'Default Candidate Criterion Rating',
 			createDefaultCandidateCriterionRating(
 				this.connection,
+				this.tenant,
 				defaultCandidates
 			)
 		);
@@ -941,6 +947,7 @@ export class SeedDataService {
 			'Help Center Articles',
 			createHelpCenterArticle(
 				this.connection,
+        [this.tenant],
 				randomSeedConfig.noOfHelpCenterArticle || 5
 			)
 		);
@@ -949,6 +956,7 @@ export class SeedDataService {
 			'Default Help Center Author',
 			createDefaultHelpCenterAuthor(
 				this.connection,
+        [this.tenant],
 				this.defaultEmployees
 			)
 		);
@@ -1533,6 +1541,7 @@ export class SeedDataService {
 			'Random Help Center Articles',
 			createHelpCenterArticle(
 				this.connection,
+        tenants,
 				randomSeedConfig.noOfHelpCenterArticle || 5
 			)
 		);

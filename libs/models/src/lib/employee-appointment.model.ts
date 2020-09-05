@@ -2,6 +2,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { AppointmentEmployees } from './appointment-employees.model';
 import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
+import { ITenant } from './tenant.model';
 
 export interface EmployeeAppointment extends IBaseEntityModel {
 	employee?: Employee;
@@ -20,7 +21,8 @@ export interface EmployeeAppointment extends IBaseEntityModel {
 	organizationId: string;
 	emails?: string;
 	status?: string;
-	organization: Organization;
+	organization?: Organization;
+	tenant: ITenant;
 }
 
 export interface IEmployeeAppointmentFindInput extends IBaseEntityModel {

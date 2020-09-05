@@ -41,6 +41,7 @@ export const createRandomProductOption = async (
 						productOption.name = faker.company.companyName();
 						productOption.code = product.code;
 						productOption.product = product;
+						productOption.tenant = tenant;
 
 						productOptions.push(productOption);
 					}

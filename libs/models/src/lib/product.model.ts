@@ -95,6 +95,8 @@ export interface ProductVariant extends IBaseEntityModel {
 	options: ProductOption[];
 	settings: ProductVariantSettings;
 	product?: Product;
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface IVariantCreateInput {
@@ -112,6 +114,8 @@ export interface ProductVariantPrice extends IBaseEntityModel {
 	retailPrice: number;
 	retailPriceCurrency: string;
 	productVariant: ProductVariant;
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface ProductVariantSettings extends IBaseEntityModel {
@@ -124,12 +128,16 @@ export interface ProductVariantSettings extends IBaseEntityModel {
 	isEquipment: boolean;
 	trackInventory: boolean;
 	productVariant: ProductVariant;
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface ProductOption extends IBaseEntityModel {
 	name: string;
 	code: string;
 	product?: Product;
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export enum BillingInvoicingPolicyEnum {

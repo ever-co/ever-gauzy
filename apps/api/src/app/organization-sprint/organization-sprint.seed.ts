@@ -49,6 +49,7 @@ export const createRandomOrganizationSprint = async (
 				sprint.organizationId = org.id;
 				sprint.organization = org;
 				sprint.tasks = tasks;
+				sprint.tenant = tenant;
 
 				// TODO: which goal
 				// sprint.goal = '';

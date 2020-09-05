@@ -34,6 +34,7 @@ export const createRandomEmployeeSetting = async (
 			employee.value = Math.floor(Math.random() * 999) + 1;
 			employee.currency = currency[Math.floor(Math.random() * 2)];
 			employee.employee = tenantEmployee;
+			employee.tenant = tenant;
 			employees.push(employee);
 		}
 	}

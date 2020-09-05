@@ -31,7 +31,6 @@ export const createRandomEstimateEmail = async (
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 
 		for (const tenantEmployee of tenantEmployees) {
-			console.log('tenantEmployee', tenantEmployee);
 
 			const estimateEmail = new EstimateEmail();
 			let newDate = faker.date.recent();
@@ -39,8 +38,8 @@ export const createRandomEstimateEmail = async (
 			estimateEmail.token = createToken(tenantEmployee.user.email);
 			estimateEmail.email = tenantEmployee.user.email;
 			estimateEmail.expireDate = newDate;
+			estimateEmail.tenant = tenant;
 
-			console.log('estimateEmail', estimateEmail);
 			estimateEmails.push(estimateEmail);
 		}
 	}

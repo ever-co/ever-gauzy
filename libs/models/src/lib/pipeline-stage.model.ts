@@ -1,4 +1,4 @@
-import { BaseEntityModel, Pipeline } from '@gauzy/models';
+import { BaseEntityModel, ITenant, Organization, Pipeline } from '@gauzy/models';
 
 export interface PipelineStage
 	extends BaseEntityModel,
@@ -6,6 +6,8 @@ export interface PipelineStage
 	description: string;
 	pipeline: Pipeline;
 	index: number;
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export type PipelineStageFindInput = Pick<PipelineStage, 'id' | 'name'>;

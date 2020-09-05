@@ -39,6 +39,7 @@ export const createRandomPipelineStage = async (
 					pipelineStage.name = faker.company.companyName();
 					pipelineStage.description = faker.name.jobDescriptor();
 					pipelineStage.index = Math.floor(Math.random() * 99999) + 1;
+					pipelineStage.tenant = tenant;
 
 					pipelineStages.push(pipelineStage);
 				}

@@ -57,6 +57,7 @@ export const createRandomProductVariantPrice = async (
 						productVariantPrice.retailPriceCurrency = faker.random.arrayElement(
 							Object.keys(CurrenciesEnum)
 						);
+						productVariantPrice.tenant = tenant;
 
 						productVariantPrices.push(productVariantPrice);
 					}

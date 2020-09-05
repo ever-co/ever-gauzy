@@ -6,7 +6,7 @@ import { CandidateInterview } from './candidate-interview.entity';
 
 export const createDefaultCandidateInterview = async (
   connection: Connection,
-  tenants: Tenant[],
+  tenant: Tenant,
   Candidates
 ): Promise<CandidateInterview[]> => {
   if (!Candidates) {
@@ -19,7 +19,7 @@ export const createDefaultCandidateInterview = async (
   let candidates: CandidateInterview[] = [];
 
   for (const tenantCandidate of Candidates) {
-    candidates = await dataOperation(connection,candidates,tenantCandidate, faker.random.arrayElement(tenants));
+    candidates = await dataOperation(connection,candidates,tenantCandidate, tenant);
   }
 
   return candidates;

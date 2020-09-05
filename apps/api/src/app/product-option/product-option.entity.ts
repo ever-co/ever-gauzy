@@ -1,12 +1,12 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { ProductOption as IProductOption } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { Product } from '../product/product.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('product_option')
-export class ProductOption extends Base implements IProductOption {
+export class ProductOption extends TenantOrganizationBase implements IProductOption {
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()

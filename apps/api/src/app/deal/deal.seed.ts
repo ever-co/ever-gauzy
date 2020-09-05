@@ -50,6 +50,7 @@ export const createRandomDeal = async (
               deal.stageId = pipelineStage.id;
               deal.organizationId = tenantOrg.id;
               deal.probability = faker.random.number(5);
+              deal.tenant = tenant;
 
               deals.push(deal);
             }
@@ -60,4 +61,3 @@ export const createRandomDeal = async (
 
     await connection.manager.save(deals);
   }
-;

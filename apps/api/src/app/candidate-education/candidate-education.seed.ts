@@ -8,12 +8,14 @@ const candidateEducations: IEducation[] = [
 		schoolName: 'MIT',
 		degree: 'Master',
 		completionDate: new Date(2017, 4, 4),
-		field: 'Computer Science'
+		field: 'Computer Science',
+    tenant:{}
 	}
 ];
 
 export const createCandidateEducations = async (
 	connection: Connection,
+  tenant: Tenant,
 	candidates: Candidate[] | void
 ): Promise<CandidateEducation[]> => {
 	let defaultCandidateEducation = [];
@@ -30,7 +32,8 @@ export const createCandidateEducations = async (
 			degree: education.degree,
 			completionDate: education.completionDate,
 			field: education.field,
-			candidateId: candidate.id
+			candidateId: candidate.id,
+      tenant: tenant
 		}));
 		defaultCandidateEducation = [
 			...defaultCandidateEducation,
@@ -66,9 +69,9 @@ export const createRandomCandidateEducations = async (
 				degree: education.degree,
 				completionDate: education.completionDate,
 				field: education.field,
-				candidateId: candidate.id
-			}));
-
+				candidateId: candidate.id,
+        tenant: tenant
+      }));
 			candidateEducationsMap.set(candidate, educations);
 			candidateEducation = [...candidateEducations, ...educations];
 		});

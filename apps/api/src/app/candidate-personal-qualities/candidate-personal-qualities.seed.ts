@@ -7,6 +7,7 @@ import { CandidateInterview } from '../candidate-interview/candidate-interview.e
 
 export const createDefaultCandidatePersonalQualities = async (
   connection: Connection,
+  tenant: Tenant,
   defaultCandidates
 ): Promise<CandidatePersonalQualities[]> => {
   if(!defaultCandidates){
@@ -22,7 +23,7 @@ export const createDefaultCandidatePersonalQualities = async (
       const candidateInterviews = await connection.manager.find(CandidateInterview, {
         where: [{ candidate: tenantCandidate }]
       });
-      candidates = await dataOperation(connection, candidates, candidateInterviews);
+      candidates = await dataOperation(connection, candidates, candidateInterviews, tenant);
   }
   return candidates;
 };
@@ -47,13 +48,13 @@ export const createRandomCandidatePersonalQualities = async (
       const candidateInterviews = await connection.manager.find(CandidateInterview, {
         where: [{ candidate: tenantCandidate }]
       });
-      candidates = await dataOperation(connection, candidates, candidateInterviews);
+      candidates = await dataOperation(connection, candidates, candidateInterviews, tenant);
     }
   }
   return candidates;
 };
 
-const dataOperation = async (connection: Connection, candidates, CandidateInterviews)=>{
+const dataOperation = async (connection: Connection, candidates, CandidateInterviews, tenant)=>{
   for (let interview of CandidateInterviews) {
     let candidate = new CandidatePersonalQualities();
 
@@ -61,6 +62,7 @@ const dataOperation = async (connection: Connection, candidates, CandidateInterv
     candidate.interviewId = interview.id;
     candidate.rating = (Math.floor(Math.random() * 5) + 1);
     candidate.interview = interview;
+    candidate.tenant = tenant;
 
     candidates.push(candidate);
   }

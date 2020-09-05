@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Tenant } from '../../tenant/tenant.entity';
 import { Organization } from '../../organization/organization.entity';
 import { IsOptional, IsString } from 'class-validator';
 import { TenantBase } from './tenant-base';

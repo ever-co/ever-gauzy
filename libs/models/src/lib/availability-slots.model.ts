@@ -11,7 +11,7 @@ export interface IAvailabilitySlots extends IBaseEntityModel {
 	employeeId?: string;
 	organizationId: string;
 	employee?: Employee;
-	organization: Organization;
+	organization?: Organization;
   tenant: ITenant;
 }
 

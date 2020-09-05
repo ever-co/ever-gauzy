@@ -19,7 +19,7 @@ const candidateFeedbackList: ICandidateFeedback[] = [
 ];
 export const createCandidateFeedbacks = async (
 	connection: Connection,
-  tenants: Tenant[],
+  tenant: Tenant,
 	candidates: Candidate[] | void
 ): Promise<Map<Candidate, CandidateFeedback[]>> => {
   let candidateFeedbacksMap: Map<Candidate, any[]> = new Map();
@@ -30,7 +30,7 @@ export const createCandidateFeedbacks = async (
 		);
 		return;
 	}
-  candidateFeedbacksMap = await dataOperation(connection, [], candidateFeedbacksMap, candidates, faker.random.arrayElement(tenants))
+  candidateFeedbacksMap = await dataOperation(connection, [], candidateFeedbacksMap, candidates, tenant)
 
 	return candidateFeedbacksMap;
 };

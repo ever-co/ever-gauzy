@@ -2,7 +2,6 @@ import { ICandidateDocument, Candidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { CandidateDocument } from './candidate-documents.entity';
-import * as faker from 'faker';
 
 const candidateDocumentList: ICandidateDocument[] = [
 	{
@@ -20,7 +19,7 @@ const candidateDocumentList: ICandidateDocument[] = [
 ];
 export const createCandidateDocuments = async (
 	connection: Connection,
-	tenants: Tenant[],
+	tenant: Tenant,
 	candidates: Candidate[] | void
 ): Promise<CandidateDocument[]> => {
 	let defaultCandidateDocuments = [];
@@ -37,7 +36,7 @@ export const createCandidateDocuments = async (
 			name: document.name,
 			documentUrl: document.documentUrl,
 			candidateId: candidate.id,
-      tenant: faker.random.arrayElement(tenants)
+      tenant: tenant
 		}));
 
 		defaultCandidateDocuments = [

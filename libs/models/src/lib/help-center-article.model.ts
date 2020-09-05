@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from '..';
+import { Employee, ITenant, Organization } from '..';
 
 export interface IHelpCenterArticle extends IBaseEntityModel {
 	name: string;
@@ -11,6 +11,8 @@ export interface IHelpCenterArticle extends IBaseEntityModel {
 	categoryId: string;
 	employees?: Employee[];
 	authors?: IHelpCenterAuthor[];
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface IHelpCenterAuthor extends IBaseEntityModel {

@@ -5,6 +5,8 @@ import { OrganizationTeam } from './organization-team-model';
 import { RequestApprovalTeam } from './request-approval-team.model';
 import { ApprovalPolicy } from './approval-policy.model';
 import { Tag } from './tag-entity.model';
+import { Organization } from './organization.model';
+import { ITenant } from './tenant.model';
 
 export interface RequestApproval extends IBaseEntityModel {
 	employeeApprovals?: RequestApprovalEmployee[];
@@ -17,6 +19,8 @@ export interface RequestApproval extends IBaseEntityModel {
 	approvalPolicyId?: string;
 	approvalPolicy?: ApprovalPolicy;
 	tags?: Tag[];
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface RequestApprovalCreateInput extends IBaseEntityModel {

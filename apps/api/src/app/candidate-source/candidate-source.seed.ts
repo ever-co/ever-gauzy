@@ -5,24 +5,30 @@ import { Tenant } from '../tenant/tenant.entity';
 
 const candidateSourceList: ICandidateSource[] = [
 	{
-		name: 'LinkedIn'
+		name: 'LinkedIn',
+    tenant: {}
 	},
 	{
-		name: 'Indeed'
+		name: 'Indeed',
+    tenant: {}
 	},
 	{
-		name: 'Idealist'
+		name: 'Idealist',
+    tenant: {}
 	},
 	{
-		name: 'Dice'
+		name: 'Dice',
+    tenant: {}
 	},
 	{
-		name: 'Monster'
+		name: 'Monster',
+    tenant: {}
 	}
 ];
 
 export const createCandidateSources = async (
 	connection: Connection,
+  tenant: Tenant,
 	candidates: Candidate[] | void
 ): Promise<CandidateSource[]> => {
 	if (!candidates) {
@@ -38,7 +44,8 @@ export const createCandidateSources = async (
 		const rand = Math.floor(Math.random() * candidateSourceList.length);
 		const sources = {
 			name: candidateSourceList[rand].name,
-			candidateId: candidate.id
+			candidateId: candidate.id,
+			tenant: tenant
 		};
 		defaultCandidateSources = [...defaultCandidateSources, sources];
 	});
@@ -71,7 +78,8 @@ export const createRandomCandidateSources = async (
 		(candidates || []).forEach((candidate) => {
 			const sources: any = {
 				name: candidateSourceList[rand].name,
-				candidateId: candidate.id
+				candidateId: candidate.id,
+        tenant: tenant
 			};
 
 			candidateSourcesMap.set(candidate, sources);

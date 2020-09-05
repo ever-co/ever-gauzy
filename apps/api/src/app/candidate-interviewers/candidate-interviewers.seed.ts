@@ -7,7 +7,7 @@ import { CandidateInterview } from '../candidate-interview/candidate-interview.e
 
 export const createDefaultCandidateInterviewers = async (
   connection: Connection,
-  tenants: Tenant[],
+  tenant: Tenant,
   defaultEmployees,
   defaultCandidates
 ): Promise<CandidateInterviewers[]> => {
@@ -32,7 +32,7 @@ export const createDefaultCandidateInterviewers = async (
       const CandidateInterviews = await connection.manager.find(CandidateInterview, {
         where: [{ candidate: defaultCandidate }]
       });
-    candidates = await dataOperation(connection, candidates, CandidateInterviews, defaultEmployees, faker.random.arrayElement(tenants));
+    candidates = await dataOperation(connection, candidates, CandidateInterviews, defaultEmployees, tenant);
 
     }
   return candidates;

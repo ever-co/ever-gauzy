@@ -19,9 +19,10 @@ import { Base } from '../core/entities/base';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('employee_appointment')
-export class EmployeeAppointment extends Base implements IEmployeeAppointment {
+export class EmployeeAppointment extends TenantOrganizationBase implements IEmployeeAppointment {
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
