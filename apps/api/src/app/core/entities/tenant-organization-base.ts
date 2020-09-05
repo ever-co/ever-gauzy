@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { Tenant } from '../../tenant/tenant.entity';
-import { Base } from './base';
 import { Organization } from '../../organization/organization.entity';
 import { IsOptional, IsString } from 'class-validator';
+import { TenantBase } from './tenant-base';
 
-export abstract class TenantOrganizationBase extends Base {
+export abstract class TenantOrganizationBase extends TenantBase {
   @ApiProperty({ type: Organization })
   @ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn()
@@ -21,18 +21,4 @@ export abstract class TenantOrganizationBase extends Base {
   @IsOptional()
   @Column({ nullable: true })
   organizationId: string;
-
-  @ApiProperty({ type: Tenant })
-  @ManyToOne((type) => Tenant, { onDelete: 'CASCADE' })
-  @JoinColumn()
-  tenant: Tenant;
-
-  @ApiProperty({ type: String, readOnly: true })
-  @RelationId(
-    (it: TenantOrganizationBase) =>
-      it.tenant
-  )
-  @IsString()
-  @Column()
-  tenantId: string;
 }
