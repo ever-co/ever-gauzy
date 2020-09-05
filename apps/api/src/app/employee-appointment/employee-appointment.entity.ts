@@ -15,7 +15,6 @@ import {
 	ManyToOne,
 	RelationId
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
