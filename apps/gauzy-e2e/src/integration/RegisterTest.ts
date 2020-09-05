@@ -44,7 +44,7 @@ describe('Register Test', () => {
 		onboardingPage.verifyOrganisationNameField();
 	});
 
-	it('Should able to create first organisation', () => {
+	it('Should able to create first organization', () => {
 		onboardingPage.enterOrganizationName(organizationName);
 		onboardingPage.selectCurrency(OnboardingPageData.currency);
 		onboardingPage.enterOfficialName(organizationName);
