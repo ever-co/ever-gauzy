@@ -260,6 +260,8 @@ export class UpworkService {
 	async getContractsForFreelancer(
 		getEngagementsDto: IGetContractsDto
 	): Promise<IEngagement[]> {
+		// console.log(`Call Upwork API using accessToken: ${getEngagementsDto.config.accessToken}, accessSecret: ${getEngagementsDto.config.accessSecret}`);
+
 		const api = new UpworkApi(getEngagementsDto.config);
 		const engagements = new Engagements(api);
 		const params = {};
