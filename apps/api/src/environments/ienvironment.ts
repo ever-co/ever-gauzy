@@ -59,4 +59,6 @@ export interface IEnvironment {
 
 	defaultHubstaffUserPass?: string;
 	upworkConfig?: IUpworkConfig;
+	isElectron?: boolean;
+	gauzyUserPath?: string;
 }

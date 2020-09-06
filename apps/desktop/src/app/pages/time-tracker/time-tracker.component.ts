@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -44,6 +45,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	statusIcon = 'success';
 	awCheck = false;
 	defaultAwAPI = 'http:localhost:5600';
+	todayDuration = {
+		hours: '00',
+		minutes: '00'
+	};
+	userOrganization: any = {};
+	lastScreenCapture: any = {};
 
 	constructor(
 		private electronService: ElectronService,
@@ -58,6 +65,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			'timer_tracker_show',
 			(event, arg) => {
 				this.getTask(arg);
+				this.getTodayTime(arg);
+				this.getUserInfo(arg);
+				if (arg.timeSlotId) {
+					this.getLastTimeSlotImage(arg);
+				}
 			}
 		);
 
@@ -101,6 +113,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					});
 			}
 		);
+
+		this.electronService.ipcRenderer.on(
+			'refresh_time_log',
+			(event, arg) => {
+				this.getTodayTime(arg);
+				this.getLastTimeSlotImage(arg);
+			}
+		)
+
+		this.electronService.ipcRenderer.on(
+			'show_last_capture',
+			(event, arg) => {
+				this.getLastTimeSlotImage(arg);
+			}
+		)
 	}
 
 	ngOnInit(): void {
@@ -210,7 +237,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	setProject(item) {
-		console.log('set_project', item);
 		this.projectSelect = item;
 		this.tasks = this.organization.filter((t) => t.project.id === item);
 		this.errorBind();
@@ -316,5 +342,65 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			width: maxDimension * window.devicePixelRatio,
 			height: maxDimension * window.devicePixelRatio
 		};
+	}
+
+	getTodayTime(arg) {
+		this.timeTrackerService.getTimeLogs(arg).then((res:any) => {
+			if (res && res.length > 0) {
+				this.countDurationToday(res);
+			}
+		})
+	}
+
+	countDurationToday(items) {
+		const workToday = {
+			hours: 0,
+			seconds: 0
+		};
+		items.forEach((item) => {
+			const stopItem = item.stoppedAt ? item.stoppedAt : new Date();
+			const itemDurationHours = moment(stopItem).diff(moment(item.startedAt), 'hours');
+			const itemDurationSeconds = moment(stopItem).diff(moment(item.startedAt), 'seconds');
+			workToday.hours += itemDurationHours;
+			workToday.seconds += itemDurationSeconds;
+		})
+		this.todayDuration = {
+			hours: this.formatingDuration('hours', workToday.hours),
+			minutes: this.formatingDuration('minutes', Math.floor(workToday.seconds/60))
+		};
+		this._cdr.detectChanges();
+	}
+
+	formatingDuration(timeEntity, val) {
+		switch (timeEntity) {
+			case 'hours': {
+				return val.toString().length > 1 ? `${val}` : `0${val}`
+			}
+			case 'minutes': {
+				const minteBackTime = val % 60;
+				return val.toString().length > 1 ? `${minteBackTime}` : `0${minteBackTime}`
+			}
+			default:
+				return '00'
+		}
+	}
+
+	getLastTimeSlotImage(arg) {
+		this.timeTrackerService.getTimeSlot(arg).then((res: any) => {
+			this.lastScreenCapture = res.screenshots && res.screenshots.length > 0 ? res.screenshots[0] : '';
+			if (this.lastScreenCapture.createdAt) {
+				this.lastScreenCapture.textTime = moment(this.lastScreenCapture.createdAt).fromNow();
+			}
+			this._cdr.detectChanges();
+		})
+	}
+
+	getUserInfo(arg) {
+		this.timeTrackerService.getUserDetail(arg).then((res:any) => {
+			if (res.employee && res.employee.organization) {
+				this.userOrganization = res.employee.organization;
+				this._cdr.detectChanges();
+			}
+		})
 	}
 }

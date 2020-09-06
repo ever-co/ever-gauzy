@@ -31,7 +31,7 @@ export class FileStorage {
 
 	static fileSystems: { [key: string]: FileSystem } = {
 		local: {
-			rootPath: path.join(process.cwd(), 'apps', 'api', 'public'),
+			rootPath: environment.isElectron ? path.resolve(environment.gauzyUserPath, 'public') :path.resolve(process.cwd(), 'apps', 'api', 'public'),
 			baseUrl: environment.baseUrl + '/public'
 		}
 	};
