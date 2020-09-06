@@ -77,6 +77,23 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
+	loadChild(item: DailyActivity) {
+		const date = toLocal(item.date).format('YYYY-MM-DD') + ' ' + item.time;
+		const request: IGetActivitiesInput = {
+			startDate: toUTC(date).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(date).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+			employeeIds: [item.employeeId],
+			type: [this.type === 'urls' ? ActivityType.URL : ActivityType.APP],
+			title: [item.title]
+		};
+
+		console.log(item.date, { date, request, item });
+
+		this.activityService.getActivites(request).then((items) => {
+			item.childItems = items;
+		});
+	}
+
 	async getLogs() {
 		if (!this.organization) {
 			return;

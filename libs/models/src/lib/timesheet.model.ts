@@ -222,6 +222,7 @@ export interface DailyActivity {
 	employeeId?: string;
 	date?: string;
 	title?: string;
+	childItems?: DailyActivity[];
 }
 
 export interface TimeSlotMinute extends IBaseEntityModel {
@@ -335,6 +336,7 @@ export interface IGetTimeSlotInput extends TimeLogFilters {
 export interface IGetActivitiesInput extends TimeLogFilters, Pagination {
 	relations?: string[];
 	type?: string[];
+	title?: string[];
 }
 
 export interface IBulkActivitiesInput {

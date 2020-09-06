@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { Activity } from '../activity.entity';
 import * as moment from 'moment';
@@ -49,7 +49,15 @@ export class ActivityService extends CrudService<Activity> {
 		query.orderBy(`time`, 'ASC');
 		query.orderBy(`"duration"`, 'DESC');
 
+		console.log(request, query.getSql());
+
 		return await query.getRawMany();
+	}
+
+	async getAllActivites(request: IGetActivitiesInput) {
+		const query = this.filterQuery(request);
+
+		return await query.getMany();
 	}
 
 	async getActivites(request: IGetActivitiesInput) {
@@ -113,12 +121,12 @@ export class ActivityService extends CrudService<Activity> {
 
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
-				const startDate = moment(request.startDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
-				const endDate = moment(request.endDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
+				const startDate = moment
+					.utc(request.startDate)
+					.format('YYYY-MM-DD HH:mm:ss');
+				const endDate = moment
+					.utc(request.endDate)
+					.format('YYYY-MM-DD HH:mm:ss');
 				qb.andWhere(
 					`"${query.alias}"."date" Between :startDate AND :endDate`,
 					{
@@ -135,6 +143,13 @@ export class ActivityService extends CrudService<Activity> {
 					}
 				);
 			}
+
+			if (request.title) {
+				qb.andWhere(`"${query.alias}"."title" = :title`, {
+					title: In(request.title)
+				});
+			}
+
 			if (request.organizationId) {
 				qb.andWhere('"employee"."organizationId" = :organizationId', {
 					organizationId: request.organizationId

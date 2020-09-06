@@ -1,4 +1,12 @@
 <div class="row align-items-center">
+	<div class="col-auto" *ngIf="allowChild">
+		<button nbButton ghost *ngIf="childOpen" (click)="toggleChild()">
+			<nb-icon icon="arrow-ios-downward-outline"></nb-icon>
+		</button>
+		<button nbButton ghost *ngIf="!childOpen" (click)="toggleChild()">
+			<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+		</button>
+	</div>
 	<div class="col-sm-3 py-1">{{ item.title }}</div>
 	<div class="col-sm py-1">
 		<div class="row align-items-center">
@@ -20,4 +28,10 @@
 	<div class="col-sm-2 text-center py-1">
 		{{ item.duration | durationFormat }}
 	</div>
+</div>
+<div *ngIf="item?.childItems?.length && childOpen">
+	<ngx-activity-item
+		*ngFor="let childItem of childItems"
+		[item]="childItem"
+	></ngx-activity-item>
 </div>
