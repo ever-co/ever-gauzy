@@ -4,7 +4,7 @@ const Store = require('electron-store');
 import TimerHandler from './timer';
 import { LocalStore } from './getSetStore';
 import { ipcMain } from 'electron';
-
+import { TimerData } from '../local-data/timer';
 export default class TrayIcon {
 	tray: Tray;
 	constructor(win2, knex, win3, auth) {
@@ -48,10 +48,14 @@ export default class TrayIcon {
 						}, 1000);
 					} else {
 						win3.show();
-						setTimeout(() => {
+						setTimeout(async () => {
+							const lastTime:any = await TimerData.getLastTimer(knex, LocalStore.beforeRequestParams());
 							win3.webContents.send(
 								'timer_tracker_show',
-								LocalStore.beforeRequestParams()
+								{
+									...LocalStore.beforeRequestParams(),
+									timeSlotId: lastTime && lastTime.length > 0 ? lastTime[0].timeSlotId : null
+								}
 							);
 						}, 1000);
 					}
@@ -74,10 +78,15 @@ export default class TrayIcon {
 				enabled: true,
 				click(menuItem) {
 					win3.show();
-					setTimeout(() => {
+					setTimeout(async () => {
+						const lastTime:any = await TimerData.getLastTimer(knex, LocalStore.beforeRequestParams());
+						console.log('last', lastTime);
 						win3.webContents.send(
 							'timer_tracker_show',
-							LocalStore.beforeRequestParams()
+							{
+								...LocalStore.beforeRequestParams(),
+								timeSlotId: lastTime && lastTime.length > 0 ? lastTime[0].timeSlotId : null
+							}
 						);
 					}, 1000);
 				}

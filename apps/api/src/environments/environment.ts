@@ -132,5 +132,8 @@ export const environment: IEnvironment = {
 		callbackUrl:
 			process.env.UPWORK_CALLBACK_URL ||
 			'http://localhost:4200/#/pages/integrations/upwork'
-	}
+	},
+
+	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
+	gauzyUserPath: process.env.GAUZY_USER_PATH
 };

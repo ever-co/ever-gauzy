@@ -4,8 +4,7 @@ import { metaData } from '../local-data/coding-activity';
 import TimerHandler from './timer';
 import moment from 'moment';
 import { LocalStore } from './getSetStore';
-import { writeFileSync } from 'fs';
-import { app } from 'electron';
+import { takeshot } from './screenshot';
 export function ipcMainHandler(store, startServer, knex) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
@@ -73,13 +72,6 @@ export function ipcMainHandler(store, startServer, knex) {
 		});
 	});
 
-	ipcMain.on('return_time_slot', (event, arg) => {
-		TimerData.updateTimerUpload(knex, {
-			id: arg.timerId,
-			timeSlotId: arg.timeSlotId
-		});
-	});
-
 	ipcMain.on('return_time_sheet', (event, arg) => {
 		console.log('timesheet return', arg);
 		TimerData.updateTimerUpload(knex, {
@@ -100,13 +92,19 @@ export function ipcMainHandler(store, startServer, knex) {
 		event.sender.send('set_project_task_reply', arg);
 	});
 
-	ipcMain.on('time_tracker_ready', (event, arg) => {
-		console.log('open time tracker');
+	ipcMain.on('time_tracker_ready', async (event, arg) => {
+		console.log('time readi');
 		const auth = LocalStore.getStore('auth');
 		if (auth) {
+			const lastTime:any = await TimerData.getLastTimer(knex, LocalStore.beforeRequestParams());
+			console.log('last', lastTime);
 			event.sender.send(
 				'timer_tracker_show',
-				LocalStore.beforeRequestParams()
+				{
+					...LocalStore.beforeRequestParams(),
+					timeSlotId: lastTime && lastTime.length > 0 ? lastTime[0].timeSlotId : null
+				}
+
 			);
 		}
 	});
@@ -115,22 +113,12 @@ export function ipcMainHandler(store, startServer, knex) {
 		event.sender.send('take_screen_shoot');
 	});
 
-	ipcMain.on('save_screen_shoot', (event, arg) => {
-		console.log('save');
-		try {
-			writeFileSync(
-				`${app.getPath('userData')}/screen_shoot-${moment().format(
-					'YYYYMMDDHHmmss'
-				)}.png`,
-				arg.buffer
-			);
-		} catch (error) {
-			console.log('error', error);
-		}
-	});
+	ipcMain.on('get_last_screen_capture', (event, arg) => {
+		event.sender.send('get_last_screen');
+	})
 }
 
-export function ipcTimer(store, knex, win2, win3) {
+export function ipcTimer(store, knex, win2, win3, win4) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
 		store.set({
@@ -147,5 +135,14 @@ export function ipcTimer(store, knex, win2, win3) {
 
 	ipcMain.on('stop_timer', (event, arg) => {
 		timerHandler.stopTime(win2, win3, knex);
+	});
+
+	ipcMain.on('return_time_slot', (event, arg) => {
+		TimerData.updateTimerUpload(knex, {
+			id: arg.timerId,
+			timeSlotId: arg.timeSlotId
+		});
+		// after update time slot do upload screenshot
+		takeshot(win3, arg.timeSlotId, win4);
 	});
 }

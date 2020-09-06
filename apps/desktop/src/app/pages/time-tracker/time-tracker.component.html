@@ -1,7 +1,7 @@
 <nb-layout>
-	<nb-layout-column class="">
+	<nb-layout-column class="top-space">
 		<div class="row full-height">
-			<div class="col-4 full-height no-padding">
+			<div class="col-5 full-height no-padding">
 				<nb-card class="full-height">
 					<nb-card-body>
 						<div class="row">
@@ -68,11 +68,37 @@
 								<div class="row">
 									<div class="col-11 center-text">
 										<h5>
-											Ever Co
+											{{userOrganization.name ? userOrganization.name : 'UNKNOWN'}}
 										</h5>
 									</div>
 									<div class="col-11 center-text">
-										<h6>Total Worked Today 00:00</h6>
+										<h6>Total Worked Today {{todayDuration.hours}}:{{todayDuration.minutes}}</h6>
+									</div>
+								</div>
+							</div>
+							<div class="col-12">
+								<div class="row">
+									<div class="col-12 center-text">
+										<nb-card>
+											<nb-card-header>
+												<div class="row">
+													<div class="col-6 screen-capture-label-left"><span>Last screen capture</span></div>
+													<div *ngIf="lastScreenCapture.textTime" class="col-6 screen-capture-label-right"><span>{{lastScreenCapture.textTime}}</span></div>
+												</div>
+											</nb-card-header>
+											<nb-card-body>
+												<img 
+													class="screen-capture-img"
+													*ngIf="lastScreenCapture.fullUrl"
+													[src]="lastScreenCapture.fullUrl"
+												>
+												<nb-icon
+													*ngIf="!lastScreenCapture.fullUrl"
+													icon="image-outline"
+												>
+												</nb-icon>
+											</nb-card-body>
+										</nb-card>
 									</div>
 								</div>
 							</div>
@@ -80,16 +106,16 @@
 					</nb-card-body>
 				</nb-card>
 			</div>
-			<div class="col-8 full-height no-padding">
+			<div class="col-7 full-height no-padding">
 				<nb-card class="full-height">
 					<nb-card-body>
 						<div class="row">
 							<div class="col-12">
 								<h5>TASK</h5>
 							</div>
-							<div class="col-12">
+							<!-- <div class="col-12">
 								<h6>Electron APP</h6>
-							</div>
+							</div> -->
 							<div class="col-12 form-group" #selectRef>
 								<nb-select
 									placeholder="Project"

@@ -10,7 +10,8 @@ const Store = require('electron-store');
 import { ipcMainHandler, ipcTimer } from './libs/ipc';
 import TrayIcon from './libs/tray-icon';
 import DataModel from './local-data/local-table';
-
+import { hasPromptedForPermission, hasScreenCapturePermission, openSystemPreferences } from 'mac-screen-capture-permissions';
+console.log('path electron', app.getPath('appData'));
 const knex = require('knex')({
 	client: 'sqlite3',
 	connection: {
@@ -30,6 +31,7 @@ serve = args.some((val) => val === '--serve');
 let win: BrowserWindow = null;
 let win2: BrowserWindow = null;
 let win3: BrowserWindow = null;
+let win4: BrowserWindow = null;
 let tray = null;
 let isAlreadyRun = false;
 let willquit = false;
@@ -55,7 +57,6 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	// to hide title bar, uncomment:
 	// titleBarStyle: 'hidden',
 	webPreferences: {
-		devTools: true,
 		nodeIntegration: true,
 		webSecurity: false
 	}
@@ -125,11 +126,11 @@ function createWindow() {
 
 	initMainListener();
 
-	if (debugMode) {
-		// Open the DevTools.
-		win.webContents.openDevTools();
-		// client.create(applicationRef);
-	}
+	// if (debugMode) {
+	// 	// Open the DevTools.
+	// 	win.webContents.openDevTools();
+	// 	// client.create(applicationRef);
+	// }
 }
 
 /* create second window */
@@ -154,6 +155,7 @@ function timeTrackerWindow() {
 	mainWindowSettings.width = 900;
 	mainWindowSettings.height = 600;
 	mainWindowSettings.title = 'Time Tracker';
+	mainWindowSettings.webPreferences.devTools = true;
 	win3 = new BrowserWindow(mainWindowSettings);
 	const launchPath = url.format({
 		pathname: path.join(__dirname, 'ui/index.html'),
@@ -163,9 +165,15 @@ function timeTrackerWindow() {
 	});
 	win3.loadURL(launchPath);
 	win3.hide();
+	// if (debugMode) {
+	// 	// Open the DevTools.
+	// 	win3.webContents.openDevTools();
+	// 	// client.create(applicationRef);
+	// }
 }
 
 function startServer(value) {
+	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
 		process.env.DB_TYPE = 'sqlite';
 	} else {
@@ -219,10 +227,19 @@ try {
 	// Some APIs can only be used after this event occurs.
 	// Added 5000 ms to fix the black background issue while using transparent window.
 	// More details at https://github.com/electron/electron/issues/15947
-	app.on('ready', () => {
+	app.on('ready', async () => {
+		// check premission for mac os
+		if (process.platform === 'darwin') {
+			const screenCapturePermission = hasScreenCapturePermission();
+			if (!screenCapturePermission) {
+				const haspromp = hasPromptedForPermission();
+				console.log('prop', haspromp);
+				const sysPref = await openSystemPreferences();
+				console.log(sysPref);
+			}
+		}
 		// the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 		process.env.GAUZY_USER_PATH = app.getPath('userData');
-
 		// C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
 		// dialog.showMessageBox(null, { message: `GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}` });
 
@@ -254,21 +271,23 @@ try {
 		console.log('this server is ready');
 		try {
 			isAlreadyRun = true;
-			win2.hide();
 			timeTrackerWindow();
-			createWindow();
-			ipcTimer(store, knex, win2, win3);
-			const auth = store.get('auth');
-			tray = new TrayIcon(win2, knex, win3, auth);
-			win3.on('close', (event) => {
-				console.log('close', event);
-				if (willquit) {
-					app.quit();
-				} else {
-					event.preventDefault();
-					win3.hide();
-				}
-			});
+			setTimeout(() => {
+				win2.hide();
+				createWindow();
+				ipcTimer(store, knex, win2, win3, win4);
+				const auth = store.get('auth');
+				tray = new TrayIcon(win2, knex, win3, auth);
+				win3.on('close', (event) => {
+					console.log('close', event);
+					if (willquit) {
+						app.quit();
+					} else {
+						event.preventDefault();
+						win3.hide();
+					}
+				});
+				}, 1000);
 		} catch (error) {
 			console.log(error);
 		}

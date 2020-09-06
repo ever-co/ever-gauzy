@@ -14,5 +14,8 @@ export default class NotificationDesktop {
 		});
 
 		notification.show();
+		setTimeout(() => {
+			notification.close();
+		}, 2000);
 	}
 }
