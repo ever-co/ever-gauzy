@@ -44,7 +44,7 @@ export class ExpenseCreateHandler
 			? await this.employeeService.findOne(input.employeeId)
 			: null;
 		const organization = await this.organizationService.findOne(
-			input.orgId
+			input.organizationId
 		);
 
 		expense.amount = Math.abs(input.amount);
