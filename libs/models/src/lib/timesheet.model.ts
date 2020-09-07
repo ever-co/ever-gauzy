@@ -222,6 +222,7 @@ export interface DailyActivity {
 	employeeId?: string;
 	date?: string;
 	title?: string;
+	description?: string;
 	durationPercentage?: number;
 	childItems?: DailyActivity[];
 }

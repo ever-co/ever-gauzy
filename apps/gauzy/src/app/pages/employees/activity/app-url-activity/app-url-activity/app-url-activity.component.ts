@@ -96,7 +96,8 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 						duration: activite.duration,
 						employeeId: activite.employeeId,
 						date: activite.date,
-						title: activite.description,
+						title: activite.title,
+						description: activite.description,
 						durationPercentage:
 							(activite.duration * 100) / item.duration
 					};
