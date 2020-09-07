@@ -19,10 +19,10 @@ export class OrganizationProjectUpdateHandler
 		const { input } = command;
 		const { id } = input;
 
-		return this.updateTask(id, input);
+		return this.updateProject(id, input);
 	}
 
-	private async updateTask(
+	private async updateProject(
 		id: string,
 		request: OrganizationProjectsUpdateInput
 	): Promise<OrganizationProjects> {

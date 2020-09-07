@@ -1,5 +1,6 @@
 import { sample } from 'lodash';
 import { User as IUser } from '@gauzy/models';
+import * as moment from 'moment';
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -53,4 +54,15 @@ export function arrayToObject(array, key, value) {
 			[current[key]]: current[value]
 		};
 	}, {});
+}
+
+/*
+ * To convert unix timestamp to datetime using date format
+ */
+export function unixTimestampToDate(
+	timestamps,
+	format = 'YYYY-MM-DD HH:mm:ss'
+) {
+	const millisecond = 1000;
+	return moment.unix(timestamps / millisecond).format(format);
 }
