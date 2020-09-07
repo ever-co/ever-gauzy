@@ -5,7 +5,7 @@ import { Organization } from './organization.model';
 export interface ApprovalPolicy extends IBaseEntityModel {
 	organizationId?: string;
 	organization?: Organization;
-	tenant: ITenant;
+	tenant?: ITenant;
 	tenantId?: string;
 	name?: string;
 	description?: string;
@@ -15,7 +15,7 @@ export interface ApprovalPolicy extends IBaseEntityModel {
 export interface ApprovalPolicyCreateInput extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId: string;
-	tenant: ITenant;
+	tenant?: ITenant;
 	name?: string;
 	description?: string;
 	approvalType?: string;

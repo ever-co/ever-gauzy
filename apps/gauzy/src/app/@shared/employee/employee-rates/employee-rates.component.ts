@@ -95,7 +95,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 
 	private async getDefaultCurrency(role: Employee | Candidate) {
 		const orgData = await this.organizationsService
-			.getById(role.orgId, [OrganizationSelectInput.currency])
+			.getById(role.organizationId, [OrganizationSelectInput.currency])
 			.pipe(first())
 			.toPromise();
 

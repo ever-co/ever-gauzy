@@ -231,7 +231,7 @@ export class IncomeComponent extends TranslationBaseComponent
 							employeeId: result.employee
 								? result.employee.id
 								: null,
-							orgId: this.store.selectedOrganization.id,
+							organizationId: this.store.selectedOrganization.id,
 							notes: result.notes,
 							currency: result.currency,
 							isBonus: result.isBonus,
@@ -418,6 +418,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					clientId: i.clientId,
 					valueDate: i.valueDate,
 					organization: i.organization,
+					organizationId: i.organization.id,
 					employee: i.employee,
 					employeeId: i.employee ? i.employee.id : null,
 					employeeName: i.employee ? i.employee.user.name : null,

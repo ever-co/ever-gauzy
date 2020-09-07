@@ -38,7 +38,7 @@ export interface ICandidateInterviewFindInput extends IBaseEntityModel {
 	technologies?: ICandidateTechnologies[];
 	personalQualities?: ICandidatePersonalQualities[];
   organization?: Organization;
-  tenant: ITenant;
+  tenant?: ITenant;
 }
 
 export interface ICandidateInterviewCreateInput {

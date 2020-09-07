@@ -137,7 +137,7 @@ export interface ProductOption extends IBaseEntityModel {
 	code: string;
 	product?: Product;
   organization?: Organization;
-  tenant: ITenant;
+  tenant?: ITenant;
 }
 
 export enum BillingInvoicingPolicyEnum {

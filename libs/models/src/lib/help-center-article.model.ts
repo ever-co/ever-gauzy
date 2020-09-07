@@ -12,7 +12,7 @@ export interface IHelpCenterArticle extends IBaseEntityModel {
 	employees?: Employee[];
 	authors?: IHelpCenterAuthor[];
   organization?: Organization;
-  tenant: ITenant;
+  tenant?: ITenant;
 }
 
 export interface IHelpCenterAuthor extends IBaseEntityModel {

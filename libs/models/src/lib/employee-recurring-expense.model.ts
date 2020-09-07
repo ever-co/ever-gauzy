@@ -6,7 +6,7 @@ import { ITenant } from './tenant.model';
 export interface EmployeeRecurringExpense extends RecurringExpenseModel {
 	employeeId: string;
   organization?: Organization;
-  tenant: ITenant;
+  tenant?: ITenant;
 }
 
 export interface EmployeeRecurringExpenseByMonthFindInput

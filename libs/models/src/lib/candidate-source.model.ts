@@ -5,7 +5,7 @@ export interface ICandidateSource extends IBaseEntityModel {
 	name: string;
 	candidateId?: string;
   organization?: Organization;
-  tenant: ITenant;
+  tenant?: ITenant;
 }
 export interface ICandidateSourceFindInput extends IBaseEntityModel {
 	name?: string;

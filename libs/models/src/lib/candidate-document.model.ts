@@ -7,7 +7,7 @@ export interface ICandidateDocument extends IBaseEntityModel {
 	candidateId?: string;
 	documentUrl: string;
   organization?: Organization;
-  tenant: ITenant;
+  tenant?: ITenant;
 }
 
 export interface ICandidateDocumentFindInput extends IBaseEntityModel {
