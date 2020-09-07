@@ -284,4 +284,25 @@ export class AppService {
 			.pipe()
 			.toPromise();
 	}
+
+	uploadScreenCapture(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+		});
+		const formData = new FormData();
+		const fileUpload:File = values.fileStream;
+		formData.append('file', fileUpload);
+		formData.append('timeSlotId', values.timeSlotId);
+		console.log(values);
+		return this.http
+			.post(
+				`${values.apiHost}/api/timesheet/screenshot`,
+				formData,
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
 }

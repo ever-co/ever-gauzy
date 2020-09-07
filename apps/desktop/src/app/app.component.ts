@@ -76,6 +76,10 @@ export class AppComponent implements OnInit {
 						idAfk: arg.idAfk
 					});
 				}
+				event.sender.send('return_time_slot', {
+					timerId: arg.timerId,
+					timeSlotId: res.id
+				})
 			});
 		});
 
@@ -152,6 +156,12 @@ export class AppComponent implements OnInit {
 					});
 			}, 2000);
 		});
+
+		this.electronService.ipcRenderer.on('upload_screen_shot', (event, arg) => {
+			appService.uploadScreenCapture(arg).then((res) => {
+				console.log('screen upload', res);
+			})
+		})
 	}
 
 	ngOnInit(): void {

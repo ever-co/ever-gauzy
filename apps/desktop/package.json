@@ -18,6 +18,7 @@
 		"url": "https://ever.co"
 	},
 	"devDependencies": {
+		"@nestjs/typeorm": "^7.0.0",
 		"electron": "8.3.0",
 		"electron-builder": "^22.6.1",
 		"electron-installer-dmg": "~3.0.0",
@@ -26,15 +27,18 @@
 		"electron-reload": "~1.5.0",
 		"electron-store": "~5.1.0",
 		"electron-updater": "~4.2.0",
-		"@nestjs/typeorm": "^7.0.0",
 		"typeorm": "^0.2.24",
 		"typeorm-express-query-builder": "^1.2.0"
 	},
 	"dependencies": {
 		"electron-store": "^5.2.0",
+		"form-data": "^3.0.0",
 		"knex": "^0.21.1",
+		"mac-screen-capture-permissions": "^1.1.0",
 		"moment": "^2.25.3",
+		"node-fetch": "^2.6.0",
 		"node-notifier": "^7.0.1",
+		"screenshot-desktop": "^1.12.2",
 		"sharp": "^0.25.2"
 	}
 }

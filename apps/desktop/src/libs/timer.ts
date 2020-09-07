@@ -22,6 +22,7 @@ export default class Timerhandler {
 		this.notificationDesktop.startTimeNotification(true);
 		this.configs = LocalStore.getStore('configs');
 		const ProjectInfo = LocalStore.getStore('project');
+		const appInfo = LocalStore.beforeRequestParams();
 		this.timeStart = moment();
 		this.timeSlotStart = moment();
 		this.lastTimer = await TimerData.createTimer(knex, {
@@ -30,7 +31,7 @@ export default class Timerhandler {
 			created_at: moment(),
 			durations: 0,
 			projectid: ProjectInfo.projectId,
-			userId: ProjectInfo.taskId
+			userId: appInfo.employeeId
 		});
 
 		win2.webContents.send('time_toggle', {
@@ -87,9 +88,7 @@ export default class Timerhandler {
 		this.intervalUpdateTime = setInterval(() => {
 			this.getSetActivity(knex, win2, this.timeSlotStart);
 			this.timeSlotStart = moment();
-			// win3.webContents.send('take_screen_shoot');
-			// this.updateToggle(win2, knex);
-		}, 60 * 1000 * 5);
+		}, 60 * 1000 * 1);
 	}
 
 	updateToggle(win2, knex, isStop) {
@@ -183,7 +182,8 @@ export default class Timerhandler {
 			activities: allActivities,
 			idsAw: idsAw,
 			idsWakatime: idsWakatime,
-			idAfk: idAfk
+			idAfk: idAfk,
+			timerId: this.lastTimer[0]
 		});
 	}
 
