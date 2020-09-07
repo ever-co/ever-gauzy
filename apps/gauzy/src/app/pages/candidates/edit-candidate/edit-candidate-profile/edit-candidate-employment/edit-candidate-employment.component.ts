@@ -74,7 +74,7 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 
 	private async getDepartments() {
 		const { items } = await this.organizationDepartmentsService.getAll([], {
-			organizationId: this.selectedCandidate.orgId
+			organizationId: this.selectedCandidate.organizationId
 		});
 		this.departments = items;
 	}
