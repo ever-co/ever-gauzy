@@ -62,7 +62,6 @@ export const createRandomApprovalPolicyForOrg = async (
 				policy.name = name;
 				policy.tenant = tenant;
 				policy.organization = org;
-				policy.tenant = tenant;
 				policy.approvalType = name.replace(/\s+/g, '_').toUpperCase();
 				policies.push(policy);
 			});
