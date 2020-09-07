@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { TimeLog } from '../../../time-log.entity';
-import { TimeLogType } from '@gauzy/models';
+import { TimeLogType, TimeLogSourceEnum } from '@gauzy/models';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { Repository } from 'typeorm';
@@ -38,7 +38,8 @@ export class TimeLogCreateHandler
 			logType: input.logType || TimeLogType.MANUAL,
 			description: input.description || '',
 			reason: input.reason || '',
-			isBillable: input.isBillable || false
+			isBillable: input.isBillable || false,
+			source: input.source || TimeLogSourceEnum.BROWSER
 		});
 
 		let timeSlots = this.timeSlotService.generateTimeSlots(

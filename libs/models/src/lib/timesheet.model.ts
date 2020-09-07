@@ -139,12 +139,12 @@ export enum TimeLogType {
 }
 
 export enum TimeLogSourceEnum {
-	MOBILE = 'Mobile',
-	WEB_TIMER = 'WebTimer',
-	DESKTOP = 'Desktop',
-	BROWSER = 'Browser',
-	HUBSTAFF = 'Hubstaff',
-	UPWORK = 'Upwork'
+	MOBILE = 'MOBILE',
+	WEB_TIMER = 'WEB_TIMER',
+	DESKTOP = 'DESKTOP',
+	BROWSER = 'BROWSER',
+	HUBSTAFF = 'HUBSTAFF',
+	UPWORK = 'UPWORK'
 }
 
 export interface TimeLogFilters {
