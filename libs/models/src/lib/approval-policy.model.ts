@@ -24,6 +24,7 @@ export interface ApprovalPolicyCreateInput extends IBaseEntityModel {
 export interface ApprovalPolicyUpdateInput extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId: string;
+  tenant: ITenant;
 	name?: string;
 	description?: string;
 	approvalType?: string;
