@@ -25,5 +25,9 @@ export const PROJECT_TIED_ENTITIES = [
 	{
 		entity: IntegrationEntity.ACTIVITY,
 		sync: true
+	},
+	{
+		entity: IntegrationEntity.SCREENSHOT,
+		sync: true
 	}
 ] as DeepPartial<IntegrationEntitySetting>;
