@@ -49,7 +49,7 @@ export class Income extends TenantBase implements IIncome {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((income: Income) => income.organization)
-	readonly orgId: string;
+	readonly organizationId: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

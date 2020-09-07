@@ -7,7 +7,7 @@ export interface Income extends IBaseEntityModel {
 	employee?: Employee;
 	employeeId?: string;
 	organization: Organization;
-	orgId: string;
+	organizationId: string
 	amount: number;
 	clientId?: string;
 	clientName: string;
@@ -26,7 +26,7 @@ export interface IncomeCreateInput {
 	currency?: string;
 	employeeId?: string;
 	notes?: string;
-	orgId?: string;
+  organizationId?: string;
 	isBonus?: boolean;
 	reference?: string;
 	tags: Tag[];

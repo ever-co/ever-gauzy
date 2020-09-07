@@ -29,7 +29,7 @@ export class EmployeeBulkCreateHandler
 		const usersWithOrganizations = createdEmployees.map((employee) =>
 			this.userOrganizationService.addUserToOrganization(
 				employee.user,
-				employee.orgId
+				employee.organizationId
 			)
 		);
 

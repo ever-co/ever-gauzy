@@ -21,8 +21,8 @@ import { ICandidateDocument } from './candidate-document.model';
 export interface Candidate extends IBaseEntityModel, IContact {
 	user: User;
 	userId: string;
-	organization: Organization;
-	orgId: string;
+	organization?: Organization;
+	organizationId?: string;
 	status?: string;
 	teams?: OrganizationTeam[];
 	tenant: ITenant;
@@ -62,7 +62,7 @@ export interface CandidateFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 	user?: UserFindInput;
 	valueDate?: Date;
-	orgId?: string;
+	organizationId?: string;
 }
 
 export interface CandidateUpdateInput {

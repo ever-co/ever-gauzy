@@ -18,7 +18,7 @@ export interface RecurringExpenseModel extends IBaseEntityModel {
 
 export interface RecurringExpenseByMonthFindInput extends IBaseEntityModel {
 	employeeId?: string;
-	orgId?: string;
+  organizationId?: string;
 	month?: number;
 	year?: number;
 }

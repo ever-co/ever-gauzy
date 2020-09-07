@@ -90,7 +90,7 @@ export class Employee extends TenantBase implements IEmployee {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.organization)
-	readonly orgId: string;
+	readonly organizationId: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

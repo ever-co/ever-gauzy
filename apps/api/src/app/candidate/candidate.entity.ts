@@ -13,7 +13,7 @@ import {
 	CandidateStatus
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional, IsEnum, IsString } from 'class-validator';
+import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -30,18 +30,16 @@ import { OrganizationEmploymentType } from '../organization-employment-type/orga
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
-import { Organization } from '../organization/organization.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { Contact } from '../contact/contact.entity';
-import { Tenant } from '../tenant/tenant.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate')
-export class Candidate extends TenantBase implements ICandidate {
+export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@ManyToMany((type) => Tag, (tag) => tag.candidate)
 	@JoinTable({
 		name: 'tag_candidate'
@@ -134,28 +132,6 @@ export class Candidate extends TenantBase implements ICandidate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.organizationPosition)
 	readonly organizationPositionId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: false })
-	@RelationId((candidate: Candidate) => candidate.organization)
-  @IsString()
-  @Column({ nullable: true })
-	orgId: string;
-
-  @ApiProperty({ type: Tenant })
-  @ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-  @JoinColumn()
-  tenant: Tenant;
-
-  @ApiProperty({ type: String, readOnly: true })
-  @RelationId((candidate: Candidate) => candidate.tenant)
-  @IsString()
-  @Column({ nullable: true })
-  tenantId: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

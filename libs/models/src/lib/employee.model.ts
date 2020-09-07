@@ -21,7 +21,7 @@ export interface Employee extends IContact, IBaseEntityModel {
 	user: User;
 	userId: string;
 	organization: Organization;
-	orgId: string;
+	organizationId: string;
 	valueDate?: Date;
 	isActive: boolean;
 	short_description?: string;
@@ -60,7 +60,7 @@ export interface EmployeeFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 	user?: UserFindInput;
 	valueDate?: Date;
-	orgId?: string;
+  organizationId?: string;
 	tags?: Tag[];
 	skills?: Skill[];
 }

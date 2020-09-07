@@ -52,7 +52,7 @@ export class Expense extends TenantBase implements IExpense {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((expense: Expense) => expense.organization)
-	readonly orgId: string;
+	readonly organizationId: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

@@ -9,7 +9,7 @@ export interface Expense extends IBaseEntityModel {
 	employee?: Employee;
 	employeeId?: string;
 	organization: Organization;
-	orgId: string;
+	organizationId: string
 	amount: number;
 	vendor: IOrganizationVendor;
 	vendorId: string;
@@ -46,7 +46,7 @@ export interface ExpenseCreateInput {
 	notes?: string;
 	valueDate: Date;
 	currency?: string;
-	orgId?: string;
+  organizationId?: string;
 	purpose?: string;
 	taxType?: string;
 	taxLabel?: string;
@@ -86,7 +86,7 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 
 export interface ExpenseUpdateInput {
 	employeeId?: string;
-	orgId?: string;
+  organizationId?: string;
 	amount?: number;
 	vendorName?: string;
 	vendorId?: string;

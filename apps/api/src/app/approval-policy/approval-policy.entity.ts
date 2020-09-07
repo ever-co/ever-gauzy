@@ -6,23 +6,18 @@ E.g. for example, "Business Trip", "Borrow Items", ...
 import {
 	Entity,
 	Index,
-	Column,
-	ManyToOne,
-	JoinColumn,
-	RelationId
+	Column
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
 	ApprovalPolicy as IApprovalPolicy,
 	ApprovalPolicyTypesStringEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
-import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('approval_policy')
-export class ApprovalPolicy extends Base implements IApprovalPolicy {
+export class ApprovalPolicy extends TenantOrganizationBase implements IApprovalPolicy {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -30,7 +25,7 @@ export class ApprovalPolicy extends Base implements IApprovalPolicy {
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: Organization })
+	/*@ApiProperty({ type: Organization })
 	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	organization: Organization;
@@ -50,7 +45,7 @@ export class ApprovalPolicy extends Base implements IApprovalPolicy {
 	@RelationId((policy: ApprovalPolicy) => policy.tenant)
 	@IsString()
 	@Column({ nullable: true })
-	tenantId: string;
+	tenantId: string;*/
 
 	@ApiProperty({ type: String })
 	@IsString()
