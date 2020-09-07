@@ -7,7 +7,8 @@ import {
 	TimeLogFilters,
 	IGetActivitiesInput,
 	ActivityType,
-	DailyActivity
+	DailyActivity,
+	Activity
 } from '@gauzy/models';
 import { debounceTime } from 'rxjs/operators';
 import { toUTC, toLocal } from 'libs/utils';
@@ -83,14 +84,26 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			startDate: toUTC(date).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(date).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
 			employeeIds: [item.employeeId],
-			type: [this.type === 'urls' ? ActivityType.URL : ActivityType.APP],
-			title: [item.title]
+			types: [this.type === 'urls' ? ActivityType.URL : ActivityType.APP],
+			titles: [item.title]
 		};
 
-		console.log(item.date, { date, request, item });
-
 		this.activityService.getActivites(request).then((items) => {
-			item.childItems = items;
+			item.childItems = items.map(
+				(activite: Activity): DailyActivity => {
+					return {
+						sessions: 1,
+						duration: activite.duration,
+						employeeId: activite.employeeId,
+						date: activite.date,
+						title: activite.description,
+						durationPercentage:
+							(activite.duration * 100) / item.duration
+					};
+				}
+			);
+
+			console.log(item.childItems);
 		});
 	}
 
@@ -107,7 +120,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
-			type: this.type === 'apps' ? ActivityType.APP : ActivityType.URL
+			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
 		};
 
 		this.loading = true;

@@ -29,9 +29,9 @@
 		{{ item.duration | durationFormat }}
 	</div>
 </div>
-<div *ngIf="item?.childItems?.length && childOpen">
+<div *ngIf="item?.childItems?.length && childOpen" class="child-items">
 	<ngx-activity-item
-		*ngFor="let childItem of childItems"
+		*ngFor="let childItem of item.childItems"
 		[item]="childItem"
 	></ngx-activity-item>
 </div>

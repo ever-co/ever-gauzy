@@ -6,8 +6,7 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
-import { TimeSlot } from '@gauzy/models';
-
+import { DailyActivity } from '@gauzy/models';
 @Component({
 	selector: 'ngx-activity-item',
 	templateUrl: './activity-item.component.html',
@@ -15,20 +14,18 @@ import { TimeSlot } from '@gauzy/models';
 })
 export class ActivityItemComponent implements OnInit, OnDestroy {
 	childOpen: boolean;
-	childItems: TimeSlot[];
-	private _item: TimeSlot;
+	private _item: DailyActivity;
 
 	@Output() loadChild: EventEmitter<any> = new EventEmitter();
 	@Input() allowChild = false;
 	@Input()
-	public get item(): TimeSlot {
+	public get item(): DailyActivity {
 		return this._item;
 	}
-	public set item(value: TimeSlot) {
-		value.durationPercentage = parseInt(
-			value.durationPercentage + '',
-			10
-		).toFixed(1);
+	public set item(value: DailyActivity) {
+		value.durationPercentage = parseFloat(
+			parseInt(value.durationPercentage + '', 10).toFixed(1)
+		);
 		this._item = value;
 	}
 
