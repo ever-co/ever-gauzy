@@ -552,6 +552,17 @@ export class SeedDataService {
 				employees: this.defaultEmployees
 			})
 		);
+
+		//seed default integrations with types
+		const integrationTypes = await this.tryExecute(
+			'Default Integration Types',
+			createDefaultIntegrationTypes(this.connection)
+		);
+
+		await this.tryExecute(
+			'Default Integrations',
+			createDefaultIntegrations(this.connection, integrationTypes)
+		);
 	}
 
 	/**
@@ -799,7 +810,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Integrations',
-			createDefaultIntegrations(this.connection, this.tenant, integrationTypes)
+			createDefaultIntegrations(this.connection, integrationTypes)
 		);
 
 		await this.tryExecute(

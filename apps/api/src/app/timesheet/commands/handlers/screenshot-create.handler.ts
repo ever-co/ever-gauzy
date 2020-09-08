@@ -38,7 +38,7 @@ export class ScreenshotCreateHandler
 			if (!timeSlot) {
 				timeSlot = await this._timeSlotService.create({
 					employeeId,
-					duration: 0,
+					duration: 600,
 					keyboard: 0,
 					mouse: 0,
 					overall: 0,
@@ -56,16 +56,20 @@ export class ScreenshotCreateHandler
 				}
 			});
 
-			if (!screenshot) {
-				return await this._screenshotService.create({
-					timeSlotId: timeSlot,
+			if (screenshot) {
+				const { id } = screenshot;
+				await this._screenshotService.update(id, {
 					file,
-					thumb,
-					recordedAt
+					thumb
 				});
+				return await this._screenshotService.findOne(id);
 			}
-
-			return screenshot;
+			return await this._screenshotService.create({
+				timeSlotId: timeSlot,
+				file,
+				thumb,
+				recordedAt
+			});
 		} catch (error) {
 			throw new BadRequestException(
 				'Cant create screenshot for time slot'

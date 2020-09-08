@@ -24,7 +24,8 @@ import {
 	IUpworkOfferStatusEnum,
 	IUpworkProposalStatusEnum,
 	IUpworkDateRange,
-	ContactType
+	ContactType,
+	TimeLogSourceEnum
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -35,7 +36,7 @@ import {
 	IntegrationSettingGetManyCommand,
 	IntegrationSettingCreateCommand
 } from '../integration-setting/commands';
-import { arrayToObject } from '../core';
+import { arrayToObject, unixTimestampToDate } from '../core';
 import { Engagements } from 'upwork-api/lib/routers/hr/engagements.js';
 import { Workdiary } from 'upwork-api/lib/routers/workdiary.js';
 import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
@@ -72,6 +73,7 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { UpworkJobService } from './upwork-job.service';
 import { UpworkOffersService } from './upwork-offers.service';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
+import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 
 @Injectable()
 export class UpworkService {
@@ -316,17 +318,70 @@ export class UpworkService {
 	}): Promise<IIntegrationMap[]> {
 		return await Promise.all(
 			await contracts.map(
-				async ({ job__title: name, reference: sourceId }) => {
-					const project = await this.commandBus.execute(
-						new OrganizationProjectCreateCommand({
-							name,
-							organizationId,
-							public: true,
-							billing: ProjectBillingEnum.RATE,
-							currency: CurrenciesEnum.BGN
-						})
-					);
+				async ({
+					job__title: name,
+					reference: sourceId,
+					engagement_start_date,
+					engagement_end_date,
+					active_milestone
+				}) => {
+					const payload = {
+						name,
+						organizationId,
+						public: true,
+						currency: CurrenciesEnum.USD
+					};
 
+					if (typeof active_milestone === 'object') {
+						payload['billing'] = ProjectBillingEnum.MILESTONES;
+					} else {
+						payload['billing'] = ProjectBillingEnum.RATE;
+					}
+
+					// contract start date
+					if (
+						typeof engagement_start_date === 'string' &&
+						engagement_start_date.length > 0
+					) {
+						payload['startDate'] = new Date(
+							unixTimestampToDate(engagement_start_date)
+						);
+					}
+					// contract end date
+					if (
+						typeof engagement_end_date === 'string' &&
+						engagement_end_date.length > 0
+					) {
+						payload['endDate'] = new Date(
+							unixTimestampToDate(engagement_end_date)
+						);
+					}
+
+					const {
+						record: integrationMap
+					} = await this._integrationMapService.findOneOrFail({
+						where: {
+							sourceId,
+							entity: IntegrationEntity.PROJECT
+						}
+					});
+
+					//if project already integrated then only update model/entity
+					if (integrationMap) {
+						await this.commandBus.execute(
+							new OrganizationProjectUpdateCommand(
+								Object.assign(payload, {
+									id: integrationMap.gauzyId
+								})
+							)
+						);
+						return integrationMap;
+					}
+					const project = await this.commandBus.execute(
+						new OrganizationProjectCreateCommand(
+							Object.assign({}, payload)
+						)
+					);
 					return await this.commandBus.execute(
 						new IntegrationMapSyncEntityCommand({
 							gauzyId: project.id,
@@ -392,7 +447,8 @@ export class UpworkService {
 				stoppedAt: moment(timeLog.startedAt)
 					.add(timeLog.duration, 'seconds')
 					.toDate(),
-				timesheetId: timesheet.id
+				timesheetId: timesheet.id,
+				source: TimeLogSourceEnum.UPWORK
 			})
 		);
 
@@ -463,7 +519,13 @@ export class UpworkService {
 					contractId: contract.sourceId,
 					config,
 					forDate
-				});
+				})
+					.then((response) => response)
+					.catch((error) => error);
+
+				if (wd.hasOwnProperty('statusCode') && wd.statusCode === 404) {
+					return wd;
+				}
 
 				const cells = wd.data.cells;
 				const sourceId = wd.data.contract.record_id;
@@ -1126,13 +1188,16 @@ export class UpworkService {
 				);
 				integratedIncome = findIntegration.record;
 			} else {
+				const amount = parseFloat(
+					(parseFloat(hours) * parseFloat(assignment_rate)).toFixed(2)
+				);
 				const gauzyIncome = await this.commandBus.execute(
 					new IncomeCreateCommand({
 						employeeId,
             organizationId: organizationId,
 						clientName,
 						clientId,
-						amount: parseFloat(hours) * parseFloat(assignment_rate),
+						amount,
 						valueDate: new Date(
 							moment(worked_on).format('YYYY-MM-DD HH:mm:ss')
 						),
@@ -1221,7 +1286,7 @@ export class UpworkService {
 	}
 
 	/*
-	 * async
+	 * Sync upwork offers for freelancer
 	 */
 	async syncProposalsOffers(
 		organizationId,
@@ -1350,37 +1415,54 @@ export class UpworkService {
 							jobPostContent = profile['op_description'];
 						}
 
-						let integratedOffer;
-						const gauzyOffer = await this.commandBus.execute(
-							new ProposalCreateCommand({
-								employeeId,
-								organizationId,
-								valueDate: new Date(
-									moment
-										.unix(terms_data.start_date / 1000)
-										.format('YYYY-MM-DD HH:mm:ss')
-								),
-								status: last_event_state.trim().toUpperCase(),
-								proposalContent,
-								jobPostContent,
-								jobPostUrl: job_posting_ref
-							})
-						);
-
-						integratedOffer = await this._integrationMapService.create(
+						const integrationMap = await this._integrationMapService.findOneOrFail(
 							{
-								gauzyId: gauzyOffer.id,
-								integrationId,
-								sourceId,
-								entity: IntegrationEntity.PROPOSAL
+								where: {
+									sourceId,
+									entity: IntegrationEntity.PROPOSAL
+								}
 							}
 						);
+
+						let integratedOffer;
+						if (
+							integrationMap &&
+							integrationMap['success'] === true
+						) {
+							integratedOffer = integrationMap.record;
+						} else {
+							const gauzyOffer = await this.commandBus.execute(
+								new ProposalCreateCommand({
+									employeeId,
+									organizationId,
+									valueDate: new Date(
+										unixTimestampToDate(
+											terms_data.start_date
+										)
+									),
+									status: last_event_state
+										.trim()
+										.toUpperCase(),
+									proposalContent,
+									jobPostContent,
+									jobPostUrl: job_posting_ref
+								})
+							);
+
+							integratedOffer = await this._integrationMapService.create(
+								{
+									gauzyId: gauzyOffer.id,
+									integrationId,
+									sourceId,
+									entity: IntegrationEntity.PROPOSAL
+								}
+							);
+						}
 
 						integratedOffers = integratedOffers.concat(
 							integratedOffer
 						);
 					}
-
 					return integratedOffers;
 				})
 		);
