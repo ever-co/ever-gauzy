@@ -1,6 +1,4 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization } from './organization.model';
-import { ITenant } from './tenant.model';
 
 export interface ICandidateTechnologies extends IBaseEntityModel {
 	name: string;

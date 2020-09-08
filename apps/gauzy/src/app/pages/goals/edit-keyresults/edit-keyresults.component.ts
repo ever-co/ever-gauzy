@@ -235,7 +235,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					? 'ownerEmployee'
 					: this.keyResultsForm.value.level === GoalLevelEnum.TEAM
 					? 'ownerTeam'
-					: 'ownerOrg'
+					: 'organization'
 			] = this.keyResultsForm.value.alignedGoalOwner;
 			await this.goalService.createGoal(objectiveData);
 		}

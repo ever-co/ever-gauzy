@@ -19,11 +19,6 @@ export class Goal extends TenantOrganizationBase implements IGoal {
 	@IsOptional()
 	description?: string;
 
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization)
-	@JoinColumn()
-	ownerOrg?: Organization;
-
 	@ManyToOne((type) => OrganizationTeam)
 	@JoinColumn()
 	ownerTeam?: OrganizationTeam;

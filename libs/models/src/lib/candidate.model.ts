@@ -46,7 +46,9 @@ export interface Candidate extends IBaseEntityModel, IContact {
 	interview?: ICandidateInterview[];
 	contact: IContact;
 	organization?: Organization;
+	organizationId?: string;
 	tenant: ITenant;
+	tenantId?: string;
 }
 
 export enum CandidateStatus {

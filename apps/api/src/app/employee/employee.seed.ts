@@ -229,7 +229,6 @@ export const createDefaultEmployees = async (
 		employee = new Employee();
 		employee.organization = defaultOrg;
 		employee.user = user;
-		employee.tenant = defaultTenant;
 		employee.employeeLevel = defaultEmployees.filter(
 			(e) => e.email === employee.user.email
 		)[0].employeeLevel;
@@ -285,7 +284,6 @@ export const createRandomEmployees = async (
 					employee.isActive = true;
 					employee.endWork = null;
 					employee.startedWorkOn = fakerDate.past(index % 5);
-					employee.tenant = tenant;
 					employee.payPeriod = faker.random.arrayElement(
 						Object.keys(PayPeriodEnum)
 					);

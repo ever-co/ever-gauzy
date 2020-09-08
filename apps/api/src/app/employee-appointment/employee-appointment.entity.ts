@@ -17,7 +17,6 @@ import {
 } from 'typeorm';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
 import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('employee_appointment')

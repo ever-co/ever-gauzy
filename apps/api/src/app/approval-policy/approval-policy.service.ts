@@ -68,7 +68,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
-			approvalPolicy.tenantId = entity.tenantId;
+			approvalPolicy.tenant = entity.tenant;
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()

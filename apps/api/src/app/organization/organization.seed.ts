@@ -63,7 +63,6 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.currency = currency;
 		defaultOrganization.defaultValueDateType = defaultValueDateType;
 		defaultOrganization.imageUrl = imageUrl;
-		defaultOrganization.tenant = tenant;
 		defaultOrganization.invitesAllowed = true;
 		defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
 		defaultOrganization.bonusPercentage = 10;
@@ -177,7 +176,6 @@ export const createRandomOrganizations = async (
 					300,
 					logoAbbreviation
 				);
-				organization.tenant = tenant;
 				organization.invitesAllowed = true;
 				organization.overview = faker.name.jobDescriptor();
 				organization.short_description = faker.name.jobDescriptor();

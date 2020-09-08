@@ -43,9 +43,9 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 			);
 			this.src = employee.user.imageUrl;
 			this.ownerName = employee.user.name;
-		} else if (!!this.goal.ownerOrg) {
-			this.ownerName = this.goal.ownerOrg.name;
-			this.src = this.goal.ownerOrg.imageUrl;
+		} else if (!!this.goal.organization) {
+			this.ownerName = this.goal.organization.name;
+			this.src = this.goal.organization.imageUrl;
 		} else {
 			this.ownerName = this.goal.ownerTeam.name;
 		}

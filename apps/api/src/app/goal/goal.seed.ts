@@ -56,7 +56,7 @@ export const createDefaultGoals = async (
 			} else if (goal.level === GoalLevelEnum.TEAM) {
 				goal.ownerTeam = faker.random.arrayElement(orgTeams);
 			} else if (goal.level === GoalLevelEnum.ORGANIZATION) {
-				goal.ownerOrg = organization;
+				goal.organization = organization;
 			}
 			goal.lead = faker.random.arrayElement(employees);
 			goal.tenant = tenant;
@@ -166,7 +166,7 @@ export const createRandomGoal = async (
 			} else if (goal.level === GoalLevelEnum.TEAM) {
 				goal.ownerTeam = faker.random.arrayElement(organizationTeams);
 			} else if (goal.level === GoalLevelEnum.ORGANIZATION) {
-				goal.ownerOrg = tenantOrg;
+				goal.organization = tenantOrg;
 			}
 			goal.lead = faker.random.arrayElement(tenantEmployees);
 			goal.tenant = tenant;

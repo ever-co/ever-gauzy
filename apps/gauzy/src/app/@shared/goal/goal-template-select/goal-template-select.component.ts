@@ -135,7 +135,7 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 					? 'ownerEmployee'
 					: this.goalDetailsForm.value.level === GoalLevelEnum.TEAM
 					? 'ownerTeam'
-					: 'ownerOrg'
+					: 'organization'
 			] = this.goalDetailsForm.value.owner;
 			delete goal.owner;
 			delete goal.keyResults;

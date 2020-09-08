@@ -70,7 +70,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 					? this.data.ownerEmployee.id
 					: !!this.data.ownerTeam
 					? this.data.ownerTeam.id
-					: this.data.ownerOrg.id
+					: this.data.organization.id
 			});
 			if (this.data.level === GoalLevelEnum.TEAM) {
 				this.getTeams();
@@ -153,7 +153,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				? 'ownerEmployee'
 				: this.objectiveForm.value.level === GoalLevelEnum.TEAM
 				? 'ownerTeam'
-				: 'ownerOrg'
+				: 'organization'
 		] = this.objectiveForm.value.owner;
 		delete objectiveData.owner;
 		this.closeDialog(objectiveData);
