@@ -4,7 +4,7 @@
 
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as cls from 'cls-hooked';
-import { User, PermissionsEnum } from '@gauzy/models';
+import { User, PermissionsEnum, LanguagesEnum } from '@gauzy/models';
 import { ExtractJwt } from 'passport-jwt';
 import { verify } from 'jsonwebtoken';
 import { environment as env } from '@env-api/environment';
@@ -63,6 +63,22 @@ export class RequestContext {
 		throwError?: boolean
 	): boolean {
 		return this.hasPermissions([permission], throwError);
+	}
+
+	static getLanguageCode(): LanguagesEnum {
+		const req = this.currentRequest();
+		let lang: LanguagesEnum;
+		const keys = ['language'];
+		if (req) {
+			for (const key of keys) {
+				if (req.headers && req.headers[key]) {
+					lang = req.headers[key];
+					break;
+				}
+			}
+		}
+
+		return lang;
 	}
 
 	static hasPermissions(

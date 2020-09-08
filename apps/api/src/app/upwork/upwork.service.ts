@@ -45,8 +45,7 @@ import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
 import {
 	TimeSlotCreateCommand,
-	ScreenshotCreateCommand,
-	TimeSlotMinuteCreateCommand
+	ScreenshotCreateCommand
 } from '../timesheet/commands';
 import * as moment from 'moment';
 import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
@@ -74,6 +73,7 @@ import { UpworkJobService } from './upwork-job.service';
 import { UpworkOffersService } from './upwork-offers.service';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
 import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
+import { CreateTimeSlotMinutesCommand } from '../timesheet/time-slot/commands/create-time-slot-minutes.command';
 
 @Injectable()
 export class UpworkService {
@@ -689,7 +689,7 @@ export class UpworkService {
 
 					const { time, mouse, keyboard } = minute;
 					const gauzyTimeSlotMinute = await this.commandBus.execute(
-						new TimeSlotMinuteCreateCommand({
+						new CreateTimeSlotMinutesCommand({
 							mouse,
 							keyboard,
 							datetime: new Date(

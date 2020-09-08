@@ -8,12 +8,13 @@ import {
 	IUpdateTimesheetStatusInput,
 	IGetTimesheetInput,
 	ISubmitTimesheetInput,
-	TimesheetStatus,
 	PermissionsEnum
 } from '@gauzy/models';
 import { RequestContext } from '../../core/context';
 import { CommandBus } from '@nestjs/cqrs';
 import { TimesheetFirstOrCreateCommand } from './commands/timesheet-first-or-create.command';
+import { TimesheetUpdateStatusCommand } from './commands/timesheet-update-status.command';
+import { TimesheetSubmitCommand } from './commands/timesheet-submit.command';
 
 @Injectable()
 export class TimeSheetService extends CrudService<Timesheet> {
@@ -33,44 +34,12 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		return timesheet;
 	}
 
-	async submitTimeheet({ ids, status }: ISubmitTimesheetInput) {
-		if (typeof ids === 'string') {
-			ids = [ids];
-		}
-		const timesheet = await this.timeSheetRepository.update(
-			{
-				id: In(ids)
-			},
-			{
-				submittedAt: status === 'submit' ? new Date() : null
-			}
-		);
-		return timesheet;
+	submitTimeheet(input: ISubmitTimesheetInput) {
+		return this.commandBus.execute(new TimesheetSubmitCommand(input));
 	}
 
-	async updateStatus({ ids, status }: IUpdateTimesheetStatusInput) {
-		if (typeof ids === 'string') {
-			ids = [ids];
-		}
-
-		let approvedBy: string = null;
-		if (status === TimesheetStatus.APPROVED) {
-			const user = RequestContext.currentUser();
-			approvedBy = user.employeeId;
-		}
-
-		const timesheet = await this.timeSheetRepository.update(
-			{
-				id: In(ids)
-			},
-			{
-				status: status,
-				approvedById: approvedBy,
-				approvedAt:
-					status === TimesheetStatus.APPROVED ? new Date() : null
-			}
-		);
-		return timesheet;
+	updateStatus(input: IUpdateTimesheetStatusInput) {
+		return this.commandBus.execute(new TimesheetUpdateStatusCommand(input));
 	}
 
 	async getTimeSheets(request: IGetTimesheetInput) {

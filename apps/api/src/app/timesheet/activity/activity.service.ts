@@ -34,11 +34,6 @@ export class ActivityService extends CrudService<Activity> {
 			`time`
 		);
 		query.addSelect(`"${query.alias}"."title"`, `title`);
-
-		// if ( RequestContext.hasPermission( PermissionsEnum.CHANGE_SELECTED_EMPLOYEE ) ) {
-		// 	query.innerJoinAndSelect(`${query.alias}.employee`,'activitesEmployee');
-		// }
-
 		query.addGroupBy(`"${query.alias}"."date"`);
 		query.addGroupBy(
 			`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`
@@ -50,6 +45,12 @@ export class ActivityService extends CrudService<Activity> {
 		query.orderBy(`"duration"`, 'DESC');
 
 		return await query.getRawMany();
+	}
+
+	async getAllActivites(request: IGetActivitiesInput) {
+		const query = this.filterQuery(request);
+
+		return await query.getMany();
 	}
 
 	async getActivites(request: IGetActivitiesInput) {
@@ -113,14 +114,11 @@ export class ActivityService extends CrudService<Activity> {
 
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
-				const startDate = moment(request.startDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
-				const endDate = moment(request.endDate).format(
-					'YYYY-MM-DD HH:mm:ss'
-				);
+				const startDate = moment.utc(request.startDate).toDate();
+				const endDate = moment.utc(request.endDate).toDate();
 				qb.andWhere(
-					`"${query.alias}"."date" Between :startDate AND :endDate`,
+					`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
+					//`"${query.alias}"."date" Between :startDate AND :endDate`,
 					{
 						startDate,
 						endDate
@@ -135,6 +133,13 @@ export class ActivityService extends CrudService<Activity> {
 					}
 				);
 			}
+
+			if (request.titles) {
+				qb.andWhere(`"${query.alias}"."title" IN (:...title)`, {
+					title: request.titles
+				});
+			}
+
 			if (request.organizationId) {
 				qb.andWhere('"employee"."organizationId" = :organizationId', {
 					organizationId: request.organizationId
@@ -169,9 +174,9 @@ export class ActivityService extends CrudService<Activity> {
 				}
 			}
 
-			if (request.type) {
-				qb.andWhere(`"${query.alias}"."type" = :type`, {
-					type: request.type
+			if (request.types) {
+				qb.andWhere(`"${query.alias}"."type" IN (:...type)`, {
+					type: request.types
 				});
 			}
 		});

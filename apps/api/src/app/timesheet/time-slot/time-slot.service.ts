@@ -1,27 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Between, In } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { TimeSlot } from '../time-slot.entity';
 import { moment } from '../../core/moment-extend';
-import * as _ from 'underscore';
 import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/models';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
 import { generateTimeSlots } from './utils';
-import { Activity } from '../activity.entity';
-import { DeleteTimeSpanCommand } from '../time-log/commands/delete-time-span.command';
 import { CommandBus } from '@nestjs/cqrs';
+import { CreateTimeSlotCommand } from './commands/create-time-slot.command';
+import { UpdateTimeSlotCommand } from './commands/update-time-slot.command';
+import { TimeSlotBulkCreateOrUpdateCommand } from './commands/time-slot-bulk-create-or-update.command';
+import { TimeSlotBulkCreateCommand } from './commands/time-slot-bulk-create.command';
+import { CreateTimeSlotMinutesCommand } from './commands/create-time-slot-minutes.command';
+import { UpdateTimeSlotMinutesCommand } from './commands/update-time-slot-minutes.command';
+import { DeleteTimeSlotCommand } from './commands/delete-time-slot.command';
+import { TimeSlotRangeDeleteCommand } from './commands/time-slot-range-delete.command';
 
 @Injectable()
 export class TimeSlotService extends CrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
-		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>,
-		@InjectRepository(TimeSlotMinute)
-		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
 		private readonly commandBus: CommandBus
 	) {
 		super(timeSlotRepository);
@@ -130,89 +131,19 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async bulkCreateOrUpdate(slots) {
-		if (slots.length === 0) {
-			return [];
-		}
-
-		const insertedSlots = await this.timeSlotRepository.find({
-			where: {
-				startedAt: In(_.pluck(slots, 'startedAt'))
-			}
-		});
-
-		if (insertedSlots.length > 0) {
-			slots = slots.map((slot) => {
-				const oldSlot = insertedSlots.find(
-					(insertedSlot) =>
-						moment(insertedSlot.startedAt).format(
-							'YYYY-MM-DD HH:mm'
-						) === moment(slot.startedAt).format('YYYY-MM-DD HH:mm')
-				);
-				if (oldSlot) {
-					oldSlot.keyboard = slot.keyboard;
-					oldSlot.mouse = slot.mouse;
-					oldSlot.overall = slot.overall;
-					return oldSlot;
-				} else {
-					return slot;
-				}
-			});
-		}
-
-		await this.timeSlotRepository.save(slots);
-		return slots;
+		return this.commandBus.execute(
+			new TimeSlotBulkCreateOrUpdateCommand(slots)
+		);
 	}
 
 	async bulkCreate(slots) {
-		if (slots.length === 0) {
-			return [];
-		}
-
-		const insertedSlots = await this.timeSlotRepository.find({
-			where: {
-				startedAt: In(_.pluck(slots, 'startedAt'))
-			}
-		});
-
-		if (insertedSlots.length > 0) {
-			slots = slots.filter(
-				(slot) =>
-					!insertedSlots.find(
-						(insertedSlot) =>
-							moment(insertedSlot.startedAt).format(
-								'YYYY-MM-DD HH:mm'
-							) ===
-							moment(slot.startedAt).format('YYYY-MM-DD HH:mm')
-					)
-			);
-		}
-
-		if (slots.length > 0) {
-			await this.timeSlotRepository.save(slots);
-		}
-		slots = insertedSlots.concat(slots);
-		return slots;
+		return this.commandBus.execute(new TimeSlotBulkCreateCommand(slots));
 	}
 
 	async rangeDelete(employeeId: string, start: Date, stop: Date) {
-		const mStart = moment(start);
-		mStart.set(
-			'minute',
-			mStart.get('minute') - (mStart.get('minute') % 10)
+		return this.commandBus.execute(
+			new TimeSlotRangeDeleteCommand(employeeId, start, stop)
 		);
-		mStart.set('second', 0);
-		mStart.set('millisecond', 0);
-
-		const mEnd = moment(stop);
-		mEnd.set('minute', mEnd.get('minute') + (mEnd.get('minute') % 10) - 1);
-		mEnd.set('second', 59);
-		mEnd.set('millisecond', 0);
-
-		const deleteResult = await this.timeSlotRepository.delete({
-			employeeId: employeeId,
-			startedAt: Between(mStart.toDate(), mEnd.toDate())
-		});
-		return deleteResult;
 	}
 
 	generateTimeSlots(start: Date, end: Date) {
@@ -220,187 +151,34 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async create(request: TimeSlot) {
-		// if (!request.timeLogs || request.timeLogs.length === 0) {
-		// 	throw new BadRequestException("Timelogs are require");
-		// }
-
-		if (
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			const user = RequestContext.currentUser();
-			request.employeeId = user.employeeId;
-		}
-
-		request.startedAt = moment(request.startedAt)
-			//.set('minute', 0)
-			.set('millisecond', 0)
-			.toDate();
-
-		let timeSlot = await this.timeSlotRepository.findOne({
-			where: {
-				employeeId: request.employeeId,
-				startedAt: request.startedAt
-			}
-		});
-
-		if (timeSlot) {
-			timeSlot = await this.update(timeSlot.id, request);
-		} else {
-			timeSlot = new TimeSlot(request);
-			if (request.activites) {
-				request.activites = request.activites.map((activity) => {
-					activity = new Activity(activity);
-					activity.employeeId = timeSlot.employeeId;
-					return activity;
-				});
-				timeSlot.activites = request.activites;
-				await this.activityRepository.save(timeSlot.activites);
-			}
-			await this.timeSlotRepository.save(timeSlot);
-		}
-
-		timeSlot = await this.timeSlotRepository.findOne(timeSlot.id, {
-			relations: ['timeLogs', 'screenshots', 'activites']
-		});
-
-		return timeSlot;
+		return this.commandBus.execute(new CreateTimeSlotCommand(request));
 	}
 
 	async update(id: string, request: TimeSlot) {
-		let employeeId = request.employeeId;
-		if (
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			const user = RequestContext.currentUser();
-			employeeId = user.employeeId;
-		}
-
-		let timeSlot = await this.timeSlotRepository.findOne({
-			where: {
-				...(employeeId ? { employeeId: employeeId } : {}),
-				id: id
-			}
-		});
-
-		if (timeSlot) {
-			if (request.startedAt) {
-				request.startedAt = moment(request.startedAt)
-					//.set('minute', 0)
-					.set('millisecond', 0)
-					.toDate();
-			}
-
-			let newActivites = [];
-			if (request.activites) {
-				newActivites = request.activites.map((activity) => {
-					activity = new Activity(activity);
-					activity.employeeId = timeSlot.employeeId;
-					return activity;
-				});
-				await this.activityRepository.save(newActivites);
-				request.activites = (timeSlot.activites || []).concat(
-					newActivites
-				);
-			}
-			await this.timeSlotRepository.update(id, request);
-
-			timeSlot = await this.timeSlotRepository.findOne(id, {
-				relations: ['timeLogs', 'screenshots', 'activites']
-			});
-			return timeSlot;
-		} else {
-			return null;
-		}
+		return this.commandBus.execute(new UpdateTimeSlotCommand(id, request));
 	}
 
 	/*
 	 *create time slot minute activity for specific timeslot
 	 */
-	async createTimeSlotMinute({ keyboard, mouse, datetime, timeSlot }) {
-		const timeMinute = await this.timeSlotMinuteRepository.findOne({
-			where: {
-				timeSlot,
-				datetime
-			}
-		});
+	async createTimeSlotMinute(request: TimeSlotMinute) {
+		// const { keyboard, mouse, datetime, timeSlot } = request;
 
-		if (timeMinute) {
-			const request = {
-				keyboard,
-				mouse,
-				datetime,
-				timeSlot,
-				timeSlotId: timeMinute.id
-			};
-			return await this.updateTimeSlotMinute(timeMinute.id, request);
-		} else {
-			return await this.timeSlotMinuteRepository.save({
-				keyboard,
-				mouse,
-				datetime,
-				timeSlot
-			});
-		}
+		return this.commandBus.execute(
+			new CreateTimeSlotMinutesCommand(request)
+		);
 	}
 
 	/*
 	 * Update timeslot minute activity for specific timeslot
 	 */
 	async updateTimeSlotMinute(id: string, request: TimeSlotMinute) {
-		let timeMinute = await this.timeSlotMinuteRepository.findOne({
-			where: {
-				id: id
-			}
-		});
-
-		if (timeMinute) {
-			delete request.timeSlotId;
-			await this.timeSlotMinuteRepository.update(id, request);
-
-			timeMinute = await this.timeSlotMinuteRepository.findOne(id, {
-				relations: ['timeSlot']
-			});
-			return timeMinute;
-		} else {
-			return null;
-		}
+		return this.commandBus.execute(
+			new UpdateTimeSlotMinutesCommand(id, request)
+		);
 	}
 
 	async deleteTimeSlot(ids: string[]) {
-		const timeSlots = await this.timeSlotRepository.find({
-			where: { id: In(ids) }
-		});
-		for (let i = 0; i < ids.length; i++) {
-			const timeSlot = await this.timeSlotRepository.findOne({
-				where: {
-					startedAt: timeSlots[i].startedAt
-				},
-				relations: ['timeLogs']
-			});
-			console.log('deleteTimeSlot', ids[i], { timeSlot });
-			if (timeSlot && timeSlot.timeLogs.length > 0) {
-				const deleteSlotPromise = timeSlot.timeLogs.map(
-					async (timeLog) => {
-						await this.commandBus.execute(
-							new DeleteTimeSpanCommand(
-								{
-									start: timeSlot.startedAt,
-									end: timeSlot.stoppedAt
-								},
-								timeLog
-							)
-						);
-						return;
-					}
-				);
-
-				await Promise.all(deleteSlotPromise);
-			}
-		}
-		return true;
+		return this.commandBus.execute(new DeleteTimeSlotCommand(ids));
 	}
 }

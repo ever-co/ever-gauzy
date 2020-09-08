@@ -29,7 +29,11 @@
 			{{ values.hour | timeFormat }}
 		</div>
 		<div class="mt-2" *ngFor="let app of values.activities">
-			<ngx-activity-item [item]="app"></ngx-activity-item>
+			<ngx-activity-item
+				(loadChild)="loadChild($event)"
+				[allowChild]="type === 'urls'"
+				[item]="app"
+			></ngx-activity-item>
 		</div>
 	</div>
 	<div class="py-5 text-center" *ngIf="!loading && apps?.length == 0">

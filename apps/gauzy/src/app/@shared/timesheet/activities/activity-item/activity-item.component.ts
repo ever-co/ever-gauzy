@@ -1,19 +1,31 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { TimeSlot } from '@gauzy/models';
-
+import {
+	Component,
+	OnInit,
+	Input,
+	OnDestroy,
+	Output,
+	EventEmitter
+} from '@angular/core';
+import { DailyActivity } from '@gauzy/models';
 @Component({
 	selector: 'ngx-activity-item',
 	templateUrl: './activity-item.component.html',
 	styleUrls: ['./activity-item.component.scss']
 })
 export class ActivityItemComponent implements OnInit, OnDestroy {
-	private _item: TimeSlot;
+	childOpen: boolean;
+	private _item: DailyActivity;
+
+	@Output() loadChild: EventEmitter<any> = new EventEmitter();
+	@Input() allowChild = false;
 	@Input()
-	public get item(): TimeSlot {
+	public get item(): DailyActivity {
 		return this._item;
 	}
-	public set item(value: TimeSlot) {
-		value.durationPercentage = value.durationPercentage.toFixed(1);
+	public set item(value: DailyActivity) {
+		value.durationPercentage = parseFloat(
+			parseInt(value.durationPercentage + '', 10).toFixed(1)
+		);
 		this._item = value;
 	}
 
@@ -33,5 +45,11 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	toggleChild() {
+		this.childOpen = !this.childOpen;
+		if (this.childOpen) {
+			this.loadChild.emit(this.item);
+		}
+	}
 	ngOnDestroy(): void {}
 }
