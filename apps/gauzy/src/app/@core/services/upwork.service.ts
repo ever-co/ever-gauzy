@@ -72,4 +72,11 @@ export class UpworkService {
 			{ params: { data } }
 		);
 	}
+
+	/*
+	 * Check remeber state for upwork integration
+	 */
+	checkRemeberState() {
+		return this.http.get<any>(`/api/integrations/upwork/check/state`);
+	}
 }

@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NbMenuItem } from '@nebular/theme';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -14,6 +15,8 @@ export class UpworkComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$: Subject<void> = new Subject();
 	tabs: any[];
+	supportContextActions: NbMenuItem[];
+	integrationId: string;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -26,11 +29,12 @@ export class UpworkComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this._getConfig();
 		this.loadTabs();
+		this.loadActions();
 		this._applyTranslationOnTabs();
 	}
 
 	private _getConfig() {
-		const integrationdId = this._ar.snapshot.params.id;
+		const integrationdId = (this.integrationId = this._ar.snapshot.params.id);
 		this._us
 			.getConfig(integrationdId)
 			.pipe(takeUntil(this._ngDestroy$))
@@ -72,6 +76,23 @@ export class UpworkComponent extends TranslationBaseComponent
 				icon: 'book-outline',
 				responsive: true,
 				route: this.getRoute('contracts')
+			}
+		];
+	}
+
+	loadActions() {
+		this.supportContextActions = [
+			{
+				title: this.getTranslation(
+					'INTEGRATIONS.UPWORK_PAGE.RE_INTEGRATE'
+				),
+				icon: 'text-outline',
+				link: `pages/integrations/upwork/regenerate`
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.SETTINGS'),
+				icon: 'settings-2-outline',
+				link: `pages/integrations/upwork/${this.integrationId}/settings`
 			}
 		];
 	}

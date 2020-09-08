@@ -7,8 +7,14 @@ import { Time } from 'upwork-api/lib/routers/reports/time.js';
 import { IUpworkApiConfig, IUpworkDateRange } from '@gauzy/models';
 
 const DEFAULT_DATE_RANGE = {
-	start: moment().subtract(1, 'months').startOf('month').format('YYYY-MM-DD'),
-	end: moment().subtract(1, 'months').endOf('month').format('YYYY-MM-DD')
+	start: moment()
+		.quarter(moment().quarter())
+		.startOf('quarter')
+		.format('YYYY-MM-DD'),
+	end: moment()
+		.quarter(moment().quarter())
+		.endOf('quarter')
+		.format('YYYY-MM-DD')
 };
 
 @Injectable()
