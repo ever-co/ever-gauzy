@@ -117,12 +117,15 @@ export class UpworkService {
 				where: { integration: integrationSetting.integration }
 			})
 		);
+		if (!integrationSettings.length) {
+			return false;
+		}
+
 		const integrationSettingMap = arrayToObject(
 			integrationSettings,
 			'settingsName',
 			'settingsValue'
 		);
-
 		if (
 			integrationSettingMap.accessToken &&
 			integrationSettingMap.accessTokenSecret
@@ -1508,6 +1511,9 @@ export class UpworkService {
 			return await this._integrationTenantService.findOneOrFail({
 				where: {
 					tenant: tenant
+				},
+				order: {
+					updatedAt: 'DESC'
 				}
 			});
 		} catch (error) {
