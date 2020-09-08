@@ -22,7 +22,6 @@ import {
 	RelationId,
 	OneToMany
 } from 'typeorm';
-import { Organization } from '../organization/organization.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
