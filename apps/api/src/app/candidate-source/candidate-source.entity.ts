@@ -2,10 +2,10 @@ import { Column, Entity } from 'typeorm';
 import { ICandidateSource } from '@gauzy/models';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('candidate_source')
-export class CandidateSource extends TenantOrganizationBase implements ICandidateSource {
+export class CandidateSource extends Base implements ICandidateSource {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

@@ -38,7 +38,6 @@ export const createRandomEstimateEmail = async (
 			estimateEmail.token = createToken(tenantEmployee.user.email);
 			estimateEmail.email = tenantEmployee.user.email;
 			estimateEmail.expireDate = newDate;
-			estimateEmail.tenant = tenant;
 
 			estimateEmails.push(estimateEmail);
 		}

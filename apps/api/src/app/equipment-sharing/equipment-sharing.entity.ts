@@ -7,7 +7,6 @@ import {
 	JoinColumn,
 	ManyToOne
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
 	EquipmentSharing as IEquipmentSharing,
 	RequestApprovalStatusTypesEnum
@@ -18,10 +17,10 @@ import { Equipment } from '../equipment/equipment.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('equipment_sharing')
-export class EquipmentSharing extends Base implements IEquipmentSharing {
+export class EquipmentSharing extends TenantOrganizationBase implements IEquipmentSharing {
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
@@ -94,15 +93,4 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@IsString()
 	@Column({ nullable: true })
 	equipmentSharingPolicyId: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((policy: EquipmentSharing) => policy.organization)
-	@IsString()
-	@Column({ nullable: true })
-	organizationId: string;
 }

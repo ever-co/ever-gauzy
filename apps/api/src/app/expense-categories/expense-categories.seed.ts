@@ -5,13 +5,15 @@ import { Tenant } from '../tenant/tenant.entity';
 
 export const createExpenseCategories = async (
 	connection: Connection,
+  tenant: Tenant,
 	organizations: Organization[]
 ): Promise<ExpenseCategory[]> => {
 	let defaultExpenseCategories: ExpenseCategory[] = [];
 	organizations.forEach((organization) => {
 		const category = Object.values(ExpenseCategoriesEnum).map((name) => ({
 			name,
-			organizationId: organization.id
+			organizationId: organization.id,
+			tenant: tenant
 		}));
 		defaultExpenseCategories = [...defaultExpenseCategories, ...category];
 	});
@@ -35,7 +37,8 @@ export const createRandomExpenseCategories = async (
 			const category = Object.values(ExpenseCategoriesEnum).map(
 				(name) => ({
 					name,
-					organizationId: organization.id
+					organizationId: organization.id,
+          tenant: tenant
 				})
 			);
 			expenseCategoryMap.set(organization, category);

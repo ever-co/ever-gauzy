@@ -561,7 +561,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Integrations',
-			createDefaultIntegrations(this.connection, integrationTypes)
+			createDefaultIntegrations(this.connection, this.tenant, integrationTypes)
 		);
 	}
 
@@ -572,7 +572,7 @@ export class SeedDataService {
 		//Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
 			'Expense Categories',
-			createExpenseCategories(this.connection, this.organizations)
+			createExpenseCategories(this.connection, this.tenant, this.organizations)
 		);
 
 		await this.tryExecute(
@@ -676,7 +676,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Candidate Sources',
-			createCandidateSources(this.connection, this.tenant, defaultCandidates)
+			createCandidateSources(this.connection, defaultCandidates)
 		);
 
 		await this.tryExecute(
@@ -685,14 +685,13 @@ export class SeedDataService {
 		);
 		await this.tryExecute(
 			'Default candidate interview',
-			createDefaultCandidateInterview(this.connection, this.tenant, defaultCandidates)
+			createDefaultCandidateInterview(this.connection, defaultCandidates)
 		);
 
 		await this.tryExecute(
 			'Default candidate interviewers',
 			createDefaultCandidateInterviewers(
 				this.connection,
-        this.tenant,
 				this.defaultEmployees,
 				defaultCandidates
 			)
@@ -700,17 +699,17 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Candidate Feedbacks',
-			createCandidateFeedbacks(this.connection, this.tenant, defaultCandidates)
+			createCandidateFeedbacks(this.connection, defaultCandidates)
 		);
 
 		await this.tryExecute(
 			'Candidate Educations',
-			createCandidateEducations(this.connection, this.tenant, defaultCandidates)
+			createCandidateEducations(this.connection, defaultCandidates)
 		);
 
 		await this.tryExecute(
 			'Candidate Skills',
-			createCandidateSkills(this.connection, this.tenant, defaultCandidates)
+			createCandidateSkills(this.connection, defaultCandidates)
 		);
 
 		await this.tryExecute(
@@ -725,6 +724,7 @@ export class SeedDataService {
 			'Default Expenses',
 			createDefaultExpenses(this.connection, {
 				organizations: this.organizations,
+        tenant: this.tenant,
 				employees: this.defaultEmployees,
 				categories,
 				organizationVendors
@@ -799,18 +799,9 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Equipment Sharing Policies',
 			createDefaultEquipmentSharingPolicyForOrg(this.connection, {
-				orgs: this.organizations
+				orgs: this.organizations,
+        tenant: this.tenant
 			})
-		);
-
-		const integrationTypes = await this.tryExecute(
-			'Default Integration Types',
-			createDefaultIntegrationTypes(this.connection)
-		);
-
-		await this.tryExecute(
-			'Default Integrations',
-			createDefaultIntegrations(this.connection, integrationTypes)
 		);
 
 		await this.tryExecute(
@@ -873,7 +864,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Event Types',
-			createDefaultEventTypes(this.connection, this.organizations)
+			createDefaultEventTypes(this.connection, this.tenant, this.organizations)
 		);
 
 		await this.tryExecute(
@@ -913,7 +904,6 @@ export class SeedDataService {
 			'Default Candidate Personal Qualities',
 			createDefaultCandidatePersonalQualities(
 				this.connection,
-				this.tenant,
 				defaultCandidates
 			)
 		);
@@ -922,7 +912,6 @@ export class SeedDataService {
 			'Default Candidate Technologies',
 			createDefaultCandidateTechnologies(
 				this.connection,
-        this.tenant,
 				defaultCandidates
 			)
 		);
@@ -931,7 +920,6 @@ export class SeedDataService {
 			'Default Candidate Criterion Rating',
 			createDefaultCandidateCriterionRating(
 				this.connection,
-				this.tenant,
 				defaultCandidates
 			)
 		);
@@ -987,6 +975,7 @@ export class SeedDataService {
 			'default Email Sent',
 			createDefaultEmailSent(
 				this.connection,
+				this.tenant,
 				this.organizations[0],
 				randomSeedConfig.emailsPerOrganization || 20
 			)

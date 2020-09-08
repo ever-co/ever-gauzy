@@ -1,6 +1,6 @@
 import { Email as IEmail } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -8,12 +8,12 @@ import {
 	JoinColumn,
 	ManyToOne
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { User } from '../user/user.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('email_sent')
-export class Email extends Base implements IEmail {
+export class Email extends TenantOrganizationBase implements IEmail {
 	@ApiProperty({ type: EmailTemplate })
 	@ManyToOne((type) => EmailTemplate, {
 		nullable: false,
@@ -46,12 +46,6 @@ export class Email extends Base implements IEmail {
 	@IsNotEmpty()
 	@Column()
 	email: string;
-
-	@ApiPropertyOptional({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	organizationId: string;
 
 	@ApiProperty({ type: User })
 	@ManyToOne((type) => User, {

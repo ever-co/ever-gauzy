@@ -7,6 +7,7 @@ export const createDefaultEquipmentSharingPolicyForOrg = async (
 	connection: Connection,
 	defaultData: {
 		orgs: Organization[];
+    tenant: Tenant;
 	}
 ): Promise<void> => {
 	const promises = [];
@@ -16,6 +17,7 @@ export const createDefaultEquipmentSharingPolicyForOrg = async (
 		defaultEquipmentSharingPolicy.name = 'Default Approval Policy';
 		defaultEquipmentSharingPolicy.organizationId = org.id;
 		defaultEquipmentSharingPolicy.description = 'Default approval policy';
+		defaultEquipmentSharingPolicy.tenant = defaultData.tenant;
 		promises.push(
 			insertDefaultPolicy(connection, defaultEquipmentSharingPolicy)
 		);
@@ -51,6 +53,7 @@ export const createRandomEquipmentSharingPolicyForOrg = async (
 				policy.description = name;
 				policy.name = name;
 				policy.organization = org;
+				policy.tenant = tenant;
 				policies.push(policy);
 			});
 		});

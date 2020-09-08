@@ -25,28 +25,6 @@ export class ApprovalPolicy extends TenantOrganizationBase implements IApprovalP
 	@Column()
 	name: string;
 
-	/*@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((policy: ApprovalPolicy) => policy.organization)
-	@IsString()
-	@Column({ nullable: true })
-	organizationId: string;
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((policy: ApprovalPolicy) => policy.tenant)
-	@IsString()
-	@Column({ nullable: true })
-	tenantId: string;*/
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })

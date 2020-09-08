@@ -20,7 +20,7 @@ export interface Employee extends IContact, IBaseEntityModel {
 	startedWorkOn?: any;
 	user: User;
 	userId: string;
-	organization: Organization;
+	organization?: Organization;
 	organizationId: string;
 	valueDate?: Date;
 	isActive: boolean;
@@ -32,6 +32,7 @@ export interface Employee extends IContact, IBaseEntityModel {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	tenant: ITenant;
+	tenantId?: string;
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
 	tags: Tag[];

@@ -15,8 +15,10 @@ import { AuthGuard } from '@nestjs/passport';
 import {
 	IUpdateTimesheetStatusInput,
 	IGetTimesheetInput,
-	ISubmitTimesheetInput
+	ISubmitTimesheetInput,
+	LanguagesEnum
 } from '@gauzy/models';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('TimeSheet')
 @UseGuards(AuthGuard('jwt'))
@@ -57,8 +59,10 @@ export class TimeSheetController extends CrudController<Timesheet> {
 	// @UseGuards(OrganizationPermissionGuard)
 	// @Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
 	async updateStatus(
-		@Body() entity: IUpdateTimesheetStatusInput
+		@Body() entity: IUpdateTimesheetStatusInput,
+		@I18nLang() i18nLang: LanguagesEnum
 	): Promise<any> {
+		console.log({ i18nLang });
 		return this.timeSheetService.updateStatus(entity);
 	}
 

@@ -13,10 +13,10 @@ import {
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 import { Candidate } from '../candidate/candidate.entity';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('candidate_interview')
-export class CandidateInterview extends TenantOrganizationBase implements ICandidateInterview {
+export class CandidateInterview extends Base implements ICandidateInterview {
 	@ApiProperty({ type: String })
 	@Column()
 	title: string;

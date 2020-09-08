@@ -5,14 +5,12 @@ import { Tenant } from '../tenant/tenant.entity';
 
 const createCandiateSkills: ISkill[] = [
 	{
-		name: 'Fullstack Developer',
-    tenant: {}
+		name: 'Fullstack Developer'
 	}
 ];
 
 export const createCandidateSkills = async (
 	connection: Connection,
-  tenant: Tenant,
 	candidates: Candidate[] | void
 ): Promise<CandidateSkill[]> => {
 	let defaultCandidateSkills = [];
@@ -28,7 +26,6 @@ export const createCandidateSkills = async (
 		const skills = createCandiateSkills.map((skill) => ({
 			name: skill.name,
 			candidateId: candidate.id,
-			tenant: tenant
 		}));
 		defaultCandidateSkills = [...defaultCandidateSkills, ...skills];
 	});
@@ -60,7 +57,6 @@ export const createRandomCandidateSkills = async (
 			const skills = createCandiateSkills.map((skill) => ({
 				name: skill.name,
 				candidateId: candidate.id,
-        tenant: tenant
 			}));
 
 			candidateSkillsMap.set(candidate, skills);

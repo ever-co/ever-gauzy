@@ -9,8 +9,6 @@ export interface EmployeeSetting extends IBaseEntityModel {
     settingType: string;
     value: number;
     currency: string;
-  organization?: Organization;
-  tenant: ITenant;
 }
 
 export interface EmployeeSettingFindInput extends IBaseEntityModel {

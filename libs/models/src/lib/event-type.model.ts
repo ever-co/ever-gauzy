@@ -1,7 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
-import { Tag } from '..';
+import { ITenant, Tag } from '..';
 
 export interface IEventType extends IBaseEntityModel {
 	title: string;
@@ -12,7 +12,8 @@ export interface IEventType extends IBaseEntityModel {
 	employeeId?: string;
 	organizationId: string;
 	employee?: Employee;
-	organization: Organization;
+	organization?: Organization;
+	tenant: ITenant;
 	tags?: Tag[];
 }
 

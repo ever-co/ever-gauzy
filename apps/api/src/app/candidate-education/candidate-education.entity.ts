@@ -3,10 +3,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IEducation, Candidate as ICandidate } from '@gauzy/models';
 import { Candidate } from '../candidate/candidate.entity';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('candidate_education')
-export class CandidateEducation extends TenantOrganizationBase implements IEducation {
+export class CandidateEducation extends Base implements IEducation {
 	@ApiProperty({ type: String })
 	@Column()
 	schoolName: string;

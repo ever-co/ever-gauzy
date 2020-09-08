@@ -18,11 +18,11 @@ import {
 	IsOptional
 } from 'class-validator';
 import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('deal')
-export class Deal extends TenantBase implements IDeal {
+export class Deal extends TenantOrganizationBase implements IDeal {
 	@ApiProperty({ type: String })
 	@IsNotEmpty()
 	@IsString()
@@ -45,12 +45,6 @@ export class Deal extends TenantBase implements IDeal {
 	@ApiProperty({ type: PipelineStage })
 	@JoinColumn()
 	public stage: PipelineStage;
-
-	@ApiProperty({ type: String })
-	@IsNotEmpty()
-	@IsString()
-	@Column()
-	public organizationId: string;
 
 	@ApiProperty({ type: String })
 	@IsOptional()

@@ -26,7 +26,6 @@ export const createRandomAppointmentEmployees = async (
 		//todo: need to verify appointmentId is used anywhere else or not
         Appointemployee.appointmentId = faker.random.number({ min: 100000, max: 1000000 }).toString();
         Appointemployee.employeeId = tenantEmployee.id;
-        Appointemployee.tenant = tenant;
 
         AppointEmployees.push(Appointemployee);
       }

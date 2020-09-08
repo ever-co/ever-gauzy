@@ -6,11 +6,10 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput, User } from './user.model';
 import { OrganizationTeam } from './organization-team-model';
 import {
-	ITenant,
-	OrganizationDepartment,
-	OrganizationPositions,
-	Tag,
-	Contact as IContact
+  OrganizationDepartment,
+  OrganizationPositions,
+  Tag,
+  Contact as IContact, ITenant
 } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { IExperience } from './candidate-experience.model';
@@ -21,12 +20,8 @@ import { ICandidateDocument } from './candidate-document.model';
 export interface Candidate extends IBaseEntityModel, IContact {
 	user: User;
 	userId: string;
-	organization?: Organization;
-	organizationId?: string;
 	status?: string;
 	teams?: OrganizationTeam[];
-	tenant: ITenant;
-  tenantId?: string;
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
 	tags: Tag[];
@@ -50,6 +45,8 @@ export interface Candidate extends IBaseEntityModel, IContact {
 	isArchived?: boolean;
 	interview?: ICandidateInterview[];
 	contact: IContact;
+	organization?: Organization;
+	tenant: ITenant;
 }
 
 export enum CandidateStatus {
@@ -59,7 +56,7 @@ export enum CandidateStatus {
 }
 
 export interface CandidateFindInput extends IBaseEntityModel {
-	organization?: OrganizationFindInput;
+	organization: OrganizationFindInput;
 	user?: UserFindInput;
 	valueDate?: Date;
 	organizationId?: string;

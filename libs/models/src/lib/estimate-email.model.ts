@@ -6,8 +6,6 @@ export interface EstimateEmail extends IBaseEntityModel {
 	token?: string;
 	email?: string;
 	expireDate?: Date;
-  organization?: Organization;
-  tenant: ITenant;
 }
 
 export interface EstimateEmailFindInput {

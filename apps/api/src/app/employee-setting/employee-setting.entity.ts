@@ -13,10 +13,10 @@ import {
 	CurrenciesEnum
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('employee_setting')
-export class EmployeeSetting extends TenantOrganizationBase implements IEmployeeSetting {
+export class EmployeeSetting extends Base implements IEmployeeSetting {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

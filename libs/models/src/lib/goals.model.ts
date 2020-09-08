@@ -5,11 +5,12 @@ import { OrganizationProjects } from './organization-projects.model';
 import { Task } from './task-entity.model';
 import { OrganizationTeam } from './organization-team-model';
 import { KPI } from './goal-settings.model';
+import { ITenant } from './tenant.model';
 
 export interface Goal extends IBaseEntityModel {
 	name: string;
 	description?: string;
-	ownerOrg?: Organization;
+  organization?: Organization;
 	ownerTeam?: OrganizationTeam;
 	ownerEmployee?: Employee;
 	lead?: Employee;
@@ -19,6 +20,7 @@ export interface Goal extends IBaseEntityModel {
 	organizationId: string;
 	keyResults?: Array<KeyResult>;
 	alignedKeyResult?: KeyResult;
+	tenant: ITenant;
 }
 
 export interface KeyResult extends IBaseEntityModel {

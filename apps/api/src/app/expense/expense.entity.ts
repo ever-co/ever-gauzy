@@ -19,15 +19,14 @@ import {
 	IsBoolean
 } from 'class-validator';
 import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
-import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('expense')
-export class Expense extends TenantBase implements IExpense {
+export class Expense extends TenantOrganizationBase implements IExpense {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.expense)
 	@JoinTable({
@@ -44,15 +43,6 @@ export class Expense extends TenantBase implements IExpense {
 	@RelationId((expense: Expense) => expense.employee)
 	@Column({ nullable: true })
 	readonly employeeId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((expense: Expense) => expense.organization)
-	readonly organizationId: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

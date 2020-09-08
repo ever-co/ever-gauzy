@@ -2,6 +2,8 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee } from './employee.model';
 import { OrganizationTeam } from './organization-team-model';
 import { Equipment } from './equipment.model';
+import { ITenant } from './tenant.model';
+import { Organization } from './organization.model';
 
 export interface EquipmentSharing extends IBaseEntityModel {
 	equipmentId?: string;
@@ -17,6 +19,8 @@ export interface EquipmentSharing extends IBaseEntityModel {
 	createdBy?: string;
 	createdByName?: string;
 	organizationId?: string;
+	organization?: Organization;
+	tenant: ITenant;
 }
 
 export interface EquipmentSharingRequest extends IBaseEntityModel {

@@ -98,19 +98,14 @@ export class EmployeeAppointment extends TenantOrganizationBase implements IEmpl
 	@Column({ nullable: true })
 	status?: string;
 
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((appointment: EmployeeAppointment) => appointment.organization)
-	readonly organizationId: string;
-
 	@ApiProperty({ type: AppointmentEmployees, isArray: true })
-	@OneToMany((type) => AppointmentEmployees, (entity) => entity.employeeId, {
-		onDelete: 'SET NULL'
-	})
+	@OneToMany(
+		(type) => AppointmentEmployees,
+		(entity) => entity.employeeAppointment,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
 	@JoinColumn()
 	invitees?: AppointmentEmployees[];
 }

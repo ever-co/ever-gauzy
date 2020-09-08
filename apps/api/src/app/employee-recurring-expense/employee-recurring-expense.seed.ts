@@ -58,7 +58,6 @@ export const createRandomEmployeeRecurringExpense = async (
 			// TODO: some expenses should have a parent if they change "over time"
 			employee.parentRecurringExpenseId = null;
 			employee.employee = tenantEmployee;
-			employee.tenant = tenant;
 			employees.push(employee);
 		}
 	}

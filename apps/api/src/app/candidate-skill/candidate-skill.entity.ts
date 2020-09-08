@@ -3,10 +3,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ISkill, Candidate as ICandidate } from '@gauzy/models';
 import { Candidate } from '../candidate/candidate.entity';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('candidate_skill')
-export class CandidateSkill extends TenantOrganizationBase implements ISkill {
+export class CandidateSkill extends Base implements ISkill {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

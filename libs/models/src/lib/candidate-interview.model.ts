@@ -22,8 +22,6 @@ export interface ICandidateInterview extends IBaseEntityModel {
 	candidate: Candidate;
 	rating?: number;
 	isArchived?: boolean;
-  organization?: Organization;
-  tenant: ITenant;
 }
 
 export interface ICandidateInterviewFindInput extends IBaseEntityModel {

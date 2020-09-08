@@ -34,11 +34,11 @@ import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { Skill } from '../skills/skill.entity';
 import { Contact } from '../contact/contact.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { TimeLog } from '../timesheet/time-log.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('employee')
-export class Employee extends TenantBase implements IEmployee {
+export class Employee extends TenantOrganizationBase implements IEmployee {
 	@ManyToMany((type) => Tag, (tag) => tag.employee)
 	@JoinTable({
 		name: 'tag_employee'
@@ -82,15 +82,6 @@ export class Employee extends TenantBase implements IEmployee {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.organizationPosition)
 	readonly organizationPositionId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((employee: Employee) => employee.organization)
-	readonly organizationId: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

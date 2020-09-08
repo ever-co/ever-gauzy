@@ -3,10 +3,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { ICandidateCriterionsRating } from '@gauzy/models';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('candidate_criterion_rating')
-export class CandidateCriterionsRating extends TenantOrganizationBase
+export class CandidateCriterionsRating extends Base
 	implements ICandidateCriterionsRating {
 	@ApiProperty({ type: String })
 	@Column()

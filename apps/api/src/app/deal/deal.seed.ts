@@ -48,7 +48,7 @@ export const createRandomDeal = async (
               deal.title = faker.name.jobTitle();
               deal.createdByUserId = tenantEmployee.user.id;
               deal.stageId = pipelineStage.id;
-              deal.organizationId = tenantOrg.id;
+              deal.organization = tenantOrg;
               deal.probability = faker.random.number(5);
               deal.tenant = tenant;
 

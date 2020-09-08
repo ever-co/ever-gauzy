@@ -13,7 +13,9 @@ import {
 	NbToggleModule,
 	NbDatepickerModule,
 	NbCalendarKitModule,
-	NbCheckboxModule
+	NbCheckboxModule,
+	NbActionsModule,
+	NbContextMenuModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -60,6 +62,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TableComponentsModule,
 		EmployeeSelectorsModule,
 		NbCheckboxModule,
+		NbActionsModule,
+		NbContextMenuModule,
 		BackNavigationModule,
 		TranslateModule.forChild({
 			loader: {

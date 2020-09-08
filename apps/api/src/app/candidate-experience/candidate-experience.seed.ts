@@ -39,6 +39,7 @@ export const createRandomCandidateExperience = async (
         candidate.description = faker.lorem.words();
         candidate.candidateId = tenantCandidate.id;
         candidate.candidate = tenantCandidate;
+        candidate.tenant = tenant;
         candidates.push(candidate);
       }
     }

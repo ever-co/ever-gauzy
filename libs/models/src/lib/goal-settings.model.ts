@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { Employee, EmployeeFindInput } from './employee.model';
+import { ITenant } from './tenant.model';
 
 export interface GoalTimeFrame extends IBaseEntityModel {
 	name: string;
@@ -18,6 +19,8 @@ export interface GoalGeneralSetting extends IBaseEntityModel {
 	canOwnKeyResult: string;
 	krTypeKPI: boolean;
 	krTypeTask: boolean;
+	organization?: Organization;
+	tenant: ITenant;
 }
 
 export interface KPI extends IBaseEntityModel {

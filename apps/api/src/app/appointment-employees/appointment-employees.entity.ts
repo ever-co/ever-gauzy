@@ -3,10 +3,10 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { EmployeeAppointment } from '../employee-appointment';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('appointment_employees')
-export class AppointmentEmployees extends TenantOrganizationBase
+export class AppointmentEmployees extends Base
 	implements IAppointmentEmployees {
 	@ApiProperty({ type: String })
 	@IsString()

@@ -6,8 +6,6 @@ export interface ICandidateTechnologies extends IBaseEntityModel {
 	name: string;
 	interviewId?: string;
 	rating?: number;
-  organization?: Organization;
-  tenant: ITenant;
 	// rating?: ICandidateCriterionsRating;
 }
 

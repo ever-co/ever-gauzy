@@ -7,8 +7,6 @@ export interface ICandidateInterviewers extends IBaseEntityModel {
 	employeeId: string;
 	employeeImageUrl?: string;
 	employeeName?: string;
-  organization?: Organization;
-  tenant: ITenant;
 }
 
 export interface ICandidateInterviewersFindInput extends IBaseEntityModel {

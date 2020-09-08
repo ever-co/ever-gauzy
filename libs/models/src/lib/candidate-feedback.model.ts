@@ -14,7 +14,6 @@ export interface ICandidateFeedback extends IBaseEntityModel {
 	interviewTitle?: string;
 	criterionsRating?: ICandidateCriterionsRating[];
   organization?: Organization;
-  tenant: ITenant;
 }
 
 export interface ICandidateFeedbackFindInput extends IBaseEntityModel {

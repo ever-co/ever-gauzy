@@ -9,7 +9,6 @@ import { CandidateInterview } from '../candidate-interview/candidate-interview.e
 
 export const createDefaultCandidateCriterionRating = async (
   connection: Connection,
-  tenant: Tenant,
   defaultCandidates
 ): Promise<CandidateCriterionsRating[]> => {
 
@@ -38,7 +37,7 @@ export const createDefaultCandidateCriterionRating = async (
           where: [{ interview: interview }]
         });
 
-        candidates = await dataOperation(connection, candidates, CandidatesFeedback, candidatesTechnologies,candidatesPersonalQualities, tenant);
+        candidates = await dataOperation(connection, candidates, CandidatesFeedback, candidatesTechnologies,candidatesPersonalQualities);
       }
     }
 
@@ -79,14 +78,14 @@ export const createRandomCandidateCriterionRating = async (
           where: [{ interview: interview }]
         });
 
-        candidates = await dataOperation(connection, candidates, CandidatesFeedback, candidatesTechnologies,candidatesPersonalQualities, tenant);
+        candidates = await dataOperation(connection, candidates, CandidatesFeedback, candidatesTechnologies,candidatesPersonalQualities);
       }
     }
   }
   return candidates;
 };
 
-const dataOperation = async (connection: Connection, candidates, CandidatesFeedback, CandidatesTechnologies, CandidatesPersonalQualities, tenant)=>{
+const dataOperation = async (connection: Connection, candidates, CandidatesFeedback, CandidatesTechnologies, CandidatesPersonalQualities)=>{
   for (let feedback of CandidatesFeedback) {
     let candidate = new CandidateCriterionsRating();
 
@@ -95,7 +94,6 @@ const dataOperation = async (connection: Connection, candidates, CandidatesFeedb
     candidate.personalQualityId = CandidatesPersonalQualities[0].id;
     candidate.feedbackId = feedback.id;
     candidate.feedback = feedback;
-    candidate.tenant = tenant;
     candidates.push(candidate);
   }
   await connection.manager.save(candidates);

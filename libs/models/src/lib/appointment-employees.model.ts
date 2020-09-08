@@ -7,6 +7,4 @@ export interface AppointmentEmployees extends IBaseEntityModel {
 	appointmentId: string;
 	employeeId: string;
 	employeeAppointment: EmployeeAppointment;
-  organization?: Organization;
-  tenant?: ITenant;
 }

@@ -8,8 +8,6 @@ export interface IEducation extends IBaseEntityModel {
 	field: string;
 	notes?: string;
 	candidateId?: string;
-  organization?: Organization;
-  tenant: ITenant;
 }
 export interface IEducationFindInput extends IBaseEntityModel {
 	schoolName?: string;

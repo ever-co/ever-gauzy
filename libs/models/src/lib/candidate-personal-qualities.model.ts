@@ -6,8 +6,6 @@ export interface ICandidatePersonalQualities extends IBaseEntityModel {
 	name: string;
 	interviewId?: string;
 	rating?: number;
-  organization?: Organization;
-  tenant: ITenant;
 }
 
 export interface ICandidatePersonalQualitiesFindInput extends IBaseEntityModel {

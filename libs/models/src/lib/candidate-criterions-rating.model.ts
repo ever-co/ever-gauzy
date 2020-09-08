@@ -7,8 +7,6 @@ export interface ICandidateCriterionsRating extends IBaseEntityModel {
 	technologyId?: string;
 	personalQualityId?: string;
 	feedbackId?: string;
-  organization?: Organization;
-  tenant: ITenant;
 }
 
 export interface ICandidateCriterionsRatingFindInput extends IBaseEntityModel {
