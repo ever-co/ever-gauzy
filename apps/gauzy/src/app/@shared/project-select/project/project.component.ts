@@ -5,6 +5,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-project-selector',
@@ -26,6 +27,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 
 	@Input() disabled = false;
 	@Input() multiple = false;
+	organizationId: string;
 
 	@Input()
 	public get employeeId() {
@@ -51,7 +53,10 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
-	constructor(private organizationProjects: OrganizationProjectsService) {}
+	constructor(
+		private organizationProjects: OrganizationProjectsService,
+		private store: Store
+	) {}
 
 	set projectId(val: string | string[]) {
 		this._projectId = val;
@@ -70,18 +75,31 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					this.projects = await this.organizationProjects.getAllByEmployee(
 						this.employeeId,
 						{
-							organizationContactId: this.organizationContactId
+							organizationContactId: this.organizationContactId,
+							...(this.organizationId
+								? { organizationId: this.organizationId }
+								: {})
 						}
 					);
 				} else {
 					const {
 						items = []
 					} = await this.organizationProjects.getAll([], {
-						organizationContactId: this.organizationContactId
+						organizationContactId: this.organizationContactId,
+						...(this.organizationId
+							? { organizationId: this.organizationId }
+							: {})
 					});
 					this.projects = items;
 				}
 			});
+
+		this.store.selectedOrganization$.subscribe((organization) => {
+			if (organization) {
+				this.organizationId = organization.id;
+				this.loadProjects$.next();
+			}
+		});
 	}
 
 	writeValue(value: string | string[]) {
