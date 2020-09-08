@@ -74,6 +74,9 @@ import { UpworkOffersService } from './upwork-offers.service';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
 import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 import { CreateTimeSlotMinutesCommand } from '../timesheet/time-slot/commands/create-time-slot-minutes.command';
+import { RequestContext } from '../core/context';
+import { TenantService } from '../tenant/tenant.service';
+import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 
 @Injectable()
 export class UpworkService {
@@ -84,12 +87,14 @@ export class UpworkService {
 		private _expenseCategoryService: ExpenseCategoriesService,
 		private readonly _incomeService: IncomeService,
 		private _integrationMapService: IntegrationMapService,
+		private readonly _integrationTenantService: IntegrationTenantService,
 		private _userService: UserService,
 		private _roleService: RoleService,
 		private _organizationService: OrganizationService,
 		private _orgVendorService: OrganizationVendorsService,
 		private _orgClientService: OrganizationContactService,
 		private _timeSlotService: TimeSlotService,
+		private readonly _tenantService: TenantService,
 		private readonly _upworkReportService: UpworkReportService,
 		private readonly _upworkJobService: UpworkJobService,
 		private readonly _upworkOfferService: UpworkOffersService,
@@ -112,12 +117,15 @@ export class UpworkService {
 				where: { integration: integrationSetting.integration }
 			})
 		);
+		if (!integrationSettings.length) {
+			return false;
+		}
+
 		const integrationSettingMap = arrayToObject(
 			integrationSettings,
 			'settingsName',
 			'settingsValue'
 		);
-
 		if (
 			integrationSettingMap.accessToken &&
 			integrationSettingMap.accessTokenSecret
@@ -196,7 +204,6 @@ export class UpworkService {
 					relations: ['integration']
 				})
 			);
-
 			const integrationSettings = await this.commandBus.execute(
 				new IntegrationSettingGetManyCommand({
 					where: { integration }
@@ -1488,5 +1495,29 @@ export class UpworkService {
 				.map((row) => row.data.applications)
 				.map(async (row) => row)
 		);
+	}
+
+	/*
+	 * Check upwork already remember state for logger in user
+	 */
+	public async checkRemeberState() {
+		try {
+			const user = RequestContext.currentUser();
+			const { tenantId } = user;
+			const { record: tenant } = await this._tenantService.findOneOrFail(
+				tenantId
+			);
+
+			return await this._integrationTenantService.findOneOrFail({
+				where: {
+					tenant: tenant
+				},
+				order: {
+					updatedAt: 'DESC'
+				}
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

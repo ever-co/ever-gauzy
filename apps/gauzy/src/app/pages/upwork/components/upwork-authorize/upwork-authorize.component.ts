@@ -13,6 +13,7 @@ import { EMPTY, Subject } from 'rxjs';
 export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	private _ngDestroy$: Subject<void> = new Subject();
 	upworkConfigForm: FormGroup;
+	rememberState: boolean;
 
 	constructor(
 		private _fb: FormBuilder,
@@ -22,7 +23,14 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this._getUpworkVerifier();
+		this._activatedRoute.data
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((data: any) => {
+				if (data.hasOwnProperty('state')) {
+					this.rememberState = data['state'];
+					this._getUpworkVerifier();
+				}
+			});
 	}
 
 	private _initializeForm() {
@@ -42,12 +50,31 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 							verifier: params.oauth_verifier
 						});
 					}
+					// if remember state is true
+					if (this.rememberState) {
+						this._checkRemeberState();
+					}
 					this._initializeForm();
 					return EMPTY;
 				}),
 				tap((res) =>
 					this._redirectToUpworkIntegration(res.integrationId)
 				),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe();
+	}
+
+	private _checkRemeberState() {
+		this._upworkService
+			.checkRemeberState()
+			.pipe(
+				tap((res) => {
+					if (res.success) {
+						const { record } = res;
+						this._redirectToUpworkIntegration(record.id);
+					}
+				}),
 				takeUntil(this._ngDestroy$)
 			)
 			.subscribe();

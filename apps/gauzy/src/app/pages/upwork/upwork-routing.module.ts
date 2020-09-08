@@ -9,7 +9,13 @@ import { ReportsComponent } from './components/reports/reports.component';
 const routes: Routes = [
 	{
 		path: '',
-		component: UpworkAuthorizeComponent
+		component: UpworkAuthorizeComponent,
+		data: { state: true }
+	},
+	{
+		path: 'regenerate',
+		component: UpworkAuthorizeComponent,
+		data: { state: false }
 	},
 	{
 		path: ':id',
@@ -37,6 +43,13 @@ const routes: Routes = [
 				component: ContractsComponent
 			}
 		]
+	},
+	{
+		path: ':id/settings',
+		loadChildren: () =>
+			import('../work-in-progress/work-in-progress.module').then(
+				(m) => m.WorkInProgressModule
+			)
 	}
 ];
 
