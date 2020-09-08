@@ -103,8 +103,6 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 					};
 				}
 			);
-
-			console.log(item.childItems);
 		});
 	}
 
@@ -148,10 +146,9 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 							0
 						);
 						value = value.map((activity) => {
-							activity.durationPercentage = (
-								(activity.duration * 100) /
-								sum
-							).toFixed(1);
+							activity.durationPercentage = parseFloat(
+								((activity.duration * 100) / sum).toFixed(1)
+							);
 							return activity;
 						});
 						return { hour: key, activities: value };
