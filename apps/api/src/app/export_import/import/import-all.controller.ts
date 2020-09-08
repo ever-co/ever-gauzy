@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OnDestroy } from '@angular/core';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ImportAllService } from '.';
 import * as path from 'path';
 import { FileStorage } from '../../core/file-storage';
@@ -34,7 +34,7 @@ export class ImportAllController implements OnDestroy {
 	async importAll() {}
 
 	@UseInterceptors(
-		FilesInterceptor('file', 1, {
+		FileInterceptor('file', {
 			storage: new FileStorage({
 				dest: path.join('import'),
 				prefix: 'import'
