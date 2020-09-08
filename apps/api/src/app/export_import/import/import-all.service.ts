@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
-import * as moment from 'moment';
 import { Connection, Repository } from 'typeorm';
 import { Country } from '../../country/country.entity';
 import { User } from '../../user/user.entity';
