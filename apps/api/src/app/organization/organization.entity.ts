@@ -390,4 +390,9 @@ export class Organization extends TenantBase implements IOrganization {
 	@IsOptional()
 	@Column({ default: 'LEFT' })
 	currencyPosition?: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	discountAfterTax?: boolean;
 }

@@ -1,7 +1,9 @@
-import { Component, OnInit, Input, forwardRef } from '@angular/core';
+import { Component, OnInit, Input, forwardRef, OnDestroy } from '@angular/core';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { OrganizationContact } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'gauzy-contact-selector',
@@ -15,38 +17,54 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 		}
 	]
 })
-export class ContactSelectorComponent implements OnInit {
+export class ContactSelectorComponent implements OnInit, OnDestroy {
 	private _contactId: string | string[];
+	private _employeeId: string;
 	contacts: OrganizationContact[];
 
 	@Input() disabled = false;
 	@Input() multiple = false;
+	@Input()
+	public get employeeId() {
+		return this._employeeId;
+	}
+	public set employeeId(value) {
+		this._employeeId = value;
+		this.loadContacts$.next();
+	}
 
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	set contactId(val: string | string[]) {
+		this._contactId = val;
+		this.onChange(val);
+		this.onTouched(val);
+		this.loadContacts$.next();
+	}
+	get contactId(): string | string[] {
+		return this._contactId;
+	}
+
+	loadContacts$: Subject<any> = new Subject();
 
 	constructor(
 		private organizationContactService: OrganizationContactService
 	) {}
 
-	set contactId(val: string | string[]) {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
-		this._contactId = val;
-		this.onChange(val);
-		this.onTouched(val);
-	}
-	get contactId(): string | string[] {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
-		return this._contactId;
-	}
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	ngOnInit() {
-		this.loadContacts();
-	}
-
-	private async loadContacts(): Promise<void> {
-		const { items = [] } = await this.organizationContactService.getAll([]);
-		this.contacts = items;
+		this.loadContacts$.pipe(untilDestroyed(this)).subscribe(async () => {
+			if (this.employeeId) {
+				this.contacts = await this.organizationContactService.getAllByEmployee(
+					this.employeeId
+				);
+			} else {
+				const {
+					items = []
+				} = await this.organizationContactService.getAll([]);
+				this.contacts = items;
+			}
+		});
 	}
 
 	writeValue(value: string | string[]) {

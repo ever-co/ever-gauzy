@@ -69,7 +69,7 @@ export class EmployeeSelectComponent implements OnInit {
 		if (val) {
 			this.val = val;
 			this.onChange(val);
-			this.onTouched(val);
+			//this.onTouched(val);
 		}
 	}
 	get employeeId(): string[] | string {

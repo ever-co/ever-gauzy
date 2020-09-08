@@ -24,7 +24,8 @@ import {
 	IUpworkOfferStatusEnum,
 	IUpworkProposalStatusEnum,
 	IUpworkDateRange,
-	ContactType
+	ContactType,
+	TimeLogSourceEnum
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -35,7 +36,7 @@ import {
 	IntegrationSettingGetManyCommand,
 	IntegrationSettingCreateCommand
 } from '../integration-setting/commands';
-import { arrayToObject } from '../core';
+import { arrayToObject, unixTimestampToDate } from '../core';
 import { Engagements } from 'upwork-api/lib/routers/hr/engagements.js';
 import { Workdiary } from 'upwork-api/lib/routers/workdiary.js';
 import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
@@ -44,8 +45,7 @@ import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { IntegrationMapSyncEntityCommand } from '../integration-map/commands';
 import {
 	TimeSlotCreateCommand,
-	ScreenshotCreateCommand,
-	TimeSlotMinuteCreateCommand
+	ScreenshotCreateCommand
 } from '../timesheet/commands';
 import * as moment from 'moment';
 import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
@@ -72,6 +72,11 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { UpworkJobService } from './upwork-job.service';
 import { UpworkOffersService } from './upwork-offers.service';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
+import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
+import { CreateTimeSlotMinutesCommand } from '../timesheet/time-slot/commands/create-time-slot-minutes.command';
+import { RequestContext } from '../core/context';
+import { TenantService } from '../tenant/tenant.service';
+import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 
 @Injectable()
 export class UpworkService {
@@ -82,12 +87,14 @@ export class UpworkService {
 		private _expenseCategoryService: ExpenseCategoriesService,
 		private readonly _incomeService: IncomeService,
 		private _integrationMapService: IntegrationMapService,
+		private readonly _integrationTenantService: IntegrationTenantService,
 		private _userService: UserService,
 		private _roleService: RoleService,
 		private _organizationService: OrganizationService,
 		private _orgVendorService: OrganizationVendorsService,
 		private _orgClientService: OrganizationContactService,
 		private _timeSlotService: TimeSlotService,
+		private readonly _tenantService: TenantService,
 		private readonly _upworkReportService: UpworkReportService,
 		private readonly _upworkJobService: UpworkJobService,
 		private readonly _upworkOfferService: UpworkOffersService,
@@ -110,12 +117,15 @@ export class UpworkService {
 				where: { integration: integrationSetting.integration }
 			})
 		);
+		if (!integrationSettings.length) {
+			return false;
+		}
+
 		const integrationSettingMap = arrayToObject(
 			integrationSettings,
 			'settingsName',
 			'settingsValue'
 		);
-
 		if (
 			integrationSettingMap.accessToken &&
 			integrationSettingMap.accessTokenSecret
@@ -130,20 +140,25 @@ export class UpworkService {
 	}
 
 	async getAccessTokenSecretPair(config): Promise<IAccessTokenSecretPair> {
-		const consumerAcessToken = await this._consumerHasAccessToken(
+		const consumerAccessToken = await this._consumerHasAccessToken(
 			config.consumerKey
 		);
 
-		// access token live forever, if user already registered app, retern the access token;
-		if (consumerAcessToken) {
-			return consumerAcessToken;
+		// access token live forever, if user already registered app, return the access token;
+		if (consumerAccessToken) {
+			console.log('consumerAccessToken already exits and will be reused');
+			return consumerAccessToken;
 		}
 
 		this._upworkApi = new UpworkApi(config);
 
+		const authUrl = environment.upworkConfig.callbackUrl;
+
+		console.log(`Upwork callback URL: ${authUrl}`);
+
 		return new Promise((resolve, reject) => {
 			this._upworkApi.getAuthorizationUrl(
-				environment.upworkConfig.callbackUrl,
+				authUrl,
 				async (error, url, requestToken, requestTokenSecret) => {
 					if (error)
 						reject(`can't get authorization url, error: ${error}`);
@@ -189,7 +204,6 @@ export class UpworkService {
 					relations: ['integration']
 				})
 			);
-
 			const integrationSettings = await this.commandBus.execute(
 				new IntegrationSettingGetManyCommand({
 					where: { integration }
@@ -255,6 +269,8 @@ export class UpworkService {
 	async getContractsForFreelancer(
 		getEngagementsDto: IGetContractsDto
 	): Promise<IEngagement[]> {
+		// console.log(`Call Upwork API using accessToken: ${getEngagementsDto.config.accessToken}, accessSecret: ${getEngagementsDto.config.accessSecret}`);
+
 		const api = new UpworkApi(getEngagementsDto.config);
 		const engagements = new Engagements(api);
 		const params = {};
@@ -309,17 +325,70 @@ export class UpworkService {
 	}): Promise<IIntegrationMap[]> {
 		return await Promise.all(
 			await contracts.map(
-				async ({ job__title: name, reference: sourceId }) => {
-					const project = await this.commandBus.execute(
-						new OrganizationProjectCreateCommand({
-							name,
-							organizationId,
-							public: true,
-							billing: ProjectBillingEnum.RATE,
-							currency: CurrenciesEnum.BGN
-						})
-					);
+				async ({
+					job__title: name,
+					reference: sourceId,
+					engagement_start_date,
+					engagement_end_date,
+					active_milestone
+				}) => {
+					const payload = {
+						name,
+						organizationId,
+						public: true,
+						currency: CurrenciesEnum.USD
+					};
 
+					if (typeof active_milestone === 'object') {
+						payload['billing'] = ProjectBillingEnum.MILESTONES;
+					} else {
+						payload['billing'] = ProjectBillingEnum.RATE;
+					}
+
+					// contract start date
+					if (
+						typeof engagement_start_date === 'string' &&
+						engagement_start_date.length > 0
+					) {
+						payload['startDate'] = new Date(
+							unixTimestampToDate(engagement_start_date)
+						);
+					}
+					// contract end date
+					if (
+						typeof engagement_end_date === 'string' &&
+						engagement_end_date.length > 0
+					) {
+						payload['endDate'] = new Date(
+							unixTimestampToDate(engagement_end_date)
+						);
+					}
+
+					const {
+						record: integrationMap
+					} = await this._integrationMapService.findOneOrFail({
+						where: {
+							sourceId,
+							entity: IntegrationEntity.PROJECT
+						}
+					});
+
+					//if project already integrated then only update model/entity
+					if (integrationMap) {
+						await this.commandBus.execute(
+							new OrganizationProjectUpdateCommand(
+								Object.assign(payload, {
+									id: integrationMap.gauzyId
+								})
+							)
+						);
+						return integrationMap;
+					}
+					const project = await this.commandBus.execute(
+						new OrganizationProjectCreateCommand(
+							Object.assign({}, payload)
+						)
+					);
 					return await this.commandBus.execute(
 						new IntegrationMapSyncEntityCommand({
 							gauzyId: project.id,
@@ -385,7 +454,8 @@ export class UpworkService {
 				stoppedAt: moment(timeLog.startedAt)
 					.add(timeLog.duration, 'seconds')
 					.toDate(),
-				timesheetId: timesheet.id
+				timesheetId: timesheet.id,
+				source: TimeLogSourceEnum.UPWORK
 			})
 		);
 
@@ -405,10 +475,13 @@ export class UpworkService {
 		let integratedTimeSlots = [];
 
 		for await (const timeSlot of timeSlots) {
+			const multiply = 10;
+			const durtion = 600;
 			const {
 				keyboard_events_count,
 				mouse_events_count,
-				cell_time
+				cell_time,
+				activity
 			} = timeSlot;
 			const gauzyTimeSlot = await this.commandBus.execute(
 				new TimeSlotCreateCommand({
@@ -421,8 +494,8 @@ export class UpworkService {
 					time_slot: new Date(
 						moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')
 					),
-					overall: 0,
-					duration: 0
+					overall: activity * multiply,
+					duration: durtion
 				})
 			);
 			const integratedSlot = await this.commandBus.execute(
@@ -453,7 +526,13 @@ export class UpworkService {
 					contractId: contract.sourceId,
 					config,
 					forDate
-				});
+				})
+					.then((response) => response)
+					.catch((error) => error);
+
+				if (wd.hasOwnProperty('statusCode') && wd.statusCode === 404) {
+					return wd;
+				}
 
 				const cells = wd.data.cells;
 				const sourceId = wd.data.contract.record_id;
@@ -617,7 +696,7 @@ export class UpworkService {
 
 					const { time, mouse, keyboard } = minute;
 					const gauzyTimeSlotMinute = await this.commandBus.execute(
-						new TimeSlotMinuteCreateCommand({
+						new CreateTimeSlotMinutesCommand({
 							mouse,
 							keyboard,
 							datetime: new Date(
@@ -831,7 +910,8 @@ export class UpworkService {
 				})
 			]);
 
-			const { first_name: firstName, last_name: lastName } = user;
+			const { first_name: firstName, last_name: lastName, status } = user;
+			const isActive = status === 'active' ? true : false;
 			employee = await this.commandBus.execute(
 				new EmployeeCreateCommand({
 					user: {
@@ -844,7 +924,11 @@ export class UpworkService {
 						imageUrl
 					},
 					password: environment.defaultHubstaffUserPass,
-					organization
+					organization,
+					startedWorkOn: new Date(
+						moment().format('YYYY-MM-DD HH:mm:ss')
+					),
+					isActive
 				})
 			);
 		}
@@ -1111,13 +1195,16 @@ export class UpworkService {
 				);
 				integratedIncome = findIntegration.record;
 			} else {
+				const amount = parseFloat(
+					(parseFloat(hours) * parseFloat(assignment_rate)).toFixed(2)
+				);
 				const gauzyIncome = await this.commandBus.execute(
 					new IncomeCreateCommand({
 						employeeId,
 						orgId: organizationId,
 						clientName,
 						clientId,
-						amount: parseFloat(hours) * parseFloat(assignment_rate),
+						amount,
 						valueDate: new Date(
 							moment(worked_on).format('YYYY-MM-DD HH:mm:ss')
 						),
@@ -1206,7 +1293,7 @@ export class UpworkService {
 	}
 
 	/*
-	 * async
+	 * Sync upwork offers for freelancer
 	 */
 	async syncProposalsOffers(
 		organizationId,
@@ -1335,37 +1422,54 @@ export class UpworkService {
 							jobPostContent = profile['op_description'];
 						}
 
-						let integratedOffer;
-						const gauzyOffer = await this.commandBus.execute(
-							new ProposalCreateCommand({
-								employeeId,
-								organizationId,
-								valueDate: new Date(
-									moment
-										.unix(terms_data.start_date / 1000)
-										.format('YYYY-MM-DD HH:mm:ss')
-								),
-								status: last_event_state.trim().toUpperCase(),
-								proposalContent,
-								jobPostContent,
-								jobPostUrl: job_posting_ref
-							})
-						);
-
-						integratedOffer = await this._integrationMapService.create(
+						const integrationMap = await this._integrationMapService.findOneOrFail(
 							{
-								gauzyId: gauzyOffer.id,
-								integrationId,
-								sourceId,
-								entity: IntegrationEntity.PROPOSAL
+								where: {
+									sourceId,
+									entity: IntegrationEntity.PROPOSAL
+								}
 							}
 						);
+
+						let integratedOffer;
+						if (
+							integrationMap &&
+							integrationMap['success'] === true
+						) {
+							integratedOffer = integrationMap.record;
+						} else {
+							const gauzyOffer = await this.commandBus.execute(
+								new ProposalCreateCommand({
+									employeeId,
+									organizationId,
+									valueDate: new Date(
+										unixTimestampToDate(
+											terms_data.start_date
+										)
+									),
+									status: last_event_state
+										.trim()
+										.toUpperCase(),
+									proposalContent,
+									jobPostContent,
+									jobPostUrl: job_posting_ref
+								})
+							);
+
+							integratedOffer = await this._integrationMapService.create(
+								{
+									gauzyId: gauzyOffer.id,
+									integrationId,
+									sourceId,
+									entity: IntegrationEntity.PROPOSAL
+								}
+							);
+						}
 
 						integratedOffers = integratedOffers.concat(
 							integratedOffer
 						);
 					}
-
 					return integratedOffers;
 				})
 		);
@@ -1391,5 +1495,29 @@ export class UpworkService {
 				.map((row) => row.data.applications)
 				.map(async (row) => row)
 		);
+	}
+
+	/*
+	 * Check upwork already remember state for logger in user
+	 */
+	public async checkRemeberState() {
+		try {
+			const user = RequestContext.currentUser();
+			const { tenantId } = user;
+			const { record: tenant } = await this._tenantService.findOneOrFail(
+				tenantId
+			);
+
+			return await this._integrationTenantService.findOneOrFail({
+				where: {
+					tenant: tenant
+				},
+				order: {
+					updatedAt: 'DESC'
+				}
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

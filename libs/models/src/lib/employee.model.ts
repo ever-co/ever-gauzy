@@ -22,6 +22,7 @@ export interface Employee extends IContact, IBaseEntityModel {
 	userId: string;
 	organization: Organization;
 	orgId: string;
+	organizationId: string;
 	valueDate?: Date;
 	isActive: boolean;
 	short_description?: string;
@@ -97,6 +98,7 @@ export interface EmployeeCreateInput {
 	short_description?: string;
 	description?: string;
 	originalUrl?: string;
+	isActive?: boolean;
 }
 
 export enum PayPeriodEnum {

@@ -280,6 +280,21 @@
 				<nb-datepicker #hiredDatePicker></nb-datepicker>
 			</div>
 		</div>
+		<div class="col-sm-6">
+			<div class="form-group">
+				<label for="sourceInput" class="label">{{
+					'FORM.LABELS.SOURCE' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="sourceInput"
+					formControlName="source"
+					nbInput
+					placeholder="{{ 'POP_UPS.SOURCE' | translate }}"
+					[autocomplete]="off"
+				/>
+			</div>
+		</div>
 	</div>
 
 	<div class="row">

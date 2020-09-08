@@ -26,6 +26,7 @@ import { Task } from '../../tasks/task.entity';
 import { Activity } from '../activity.entity';
 import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
+import { environment } from '@env-api/environment';
 
 @Injectable()
 export class StatisticService {
@@ -48,8 +49,8 @@ export class StatisticService {
 
 	async getcounts(request: GetCountsStatistics): Promise<CountsStatistics> {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').toDate();
-		const end = moment.utc(date).endOf('week').toDate();
+		const start = moment.utc(date).startOf('week').format();
+		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 
 		/*
@@ -133,8 +134,8 @@ export class StatisticService {
 				.where({
 					employeeId: In(employeeIds),
 					startedAt: Between(
-						moment().startOf('day').toDate(),
-						moment().endOf('day').toDate()
+						moment().startOf('day').format(),
+						moment().endOf('day').format()
 					)
 				});
 			todayActivites = await activitesQuery.getRawOne();
@@ -156,8 +157,8 @@ export class StatisticService {
 
 	async getMembers(request: GetMembersStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').toDate();
-		const end = moment.utc(date).endOf('week').toDate();
+		const start = moment.utc(date).startOf('week').format();
+		const end = moment.utc(date).endOf('week').format();
 
 		const query = this.employeeRepository.createQueryBuilder();
 		const employees: MembersStatistics[] = await query
@@ -168,7 +169,8 @@ export class StatisticService {
 			)
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
-				`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
+				`${environment.database.type === 'sqlite' ? 
+				'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.user`, 'user')
@@ -220,8 +222,8 @@ export class StatisticService {
 				.where({
 					employeeId: In(_.pluck(employees, 'id')),
 					startedAt: Between(
-						moment().startOf('day').toDate(),
-						moment().endOf('day').toDate()
+						moment().startOf('day').format(),
+						moment().endOf('day').format()
 					)
 				})
 				.groupBy('"employeeId"')
@@ -256,7 +258,8 @@ export class StatisticService {
 				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
 				member.weekHours = await weekHoursQuery
 					.select(
-						`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
+						`${environment.database.type === 'sqlite' ? 
+						'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
 						`duration`
 					)
 					.addSelect(
@@ -271,7 +274,7 @@ export class StatisticService {
 							end
 						}
 					)
-					.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.addGroupBy(`EXTRACT(DOW FROM "timeLogs"."startedAt")`)
 					.getRawMany();
 			}
@@ -283,14 +286,15 @@ export class StatisticService {
 	async getProjects(request: GetProjectsStatistics) {
 		const query = this.organizationProjectsRepository.createQueryBuilder();
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').toDate();
-		const end = moment.utc(date).endOf('week').toDate();
+		const start = moment.utc(date).startOf('week').format();
+		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 
 		query
 			.select(`"${query.alias}".*`)
 			.addSelect(
-				`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
+				`${environment.database.type === 'sqlite' ? 
+					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
@@ -324,7 +328,8 @@ export class StatisticService {
 		const totalDuerationQuery = this.organizationProjectsRepository.createQueryBuilder();
 		totalDuerationQuery
 			.select(
-				`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
+				`${environment.database.type === 'sqlite' ? 
+				'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)': 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -372,8 +377,8 @@ export class StatisticService {
 
 	async getTasks(request: GetTasksStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').toDate();
-		const end = moment.utc(date).endOf('week').toDate();
+		const start = moment.utc(date).startOf('week').format();
+		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		/*
 		 *  Get employees id of the orginization or get current employe id
@@ -398,7 +403,8 @@ export class StatisticService {
 				.innerJoin(`${query.alias}.project`, 'project')
 				.select(`"${query.alias}".*`)
 				.addSelect(
-					`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
+					`${environment.database.type === 'sqlite' ? 
+					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
 					`duration`
 				)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -413,14 +419,16 @@ export class StatisticService {
 				.addGroupBy(`"${query.alias}"."id"`)
 				.limit(5)
 				.getRawMany();
+			console.log('satu', tasks.length);
 
 			const totalDuerationQuery = this.taskRepository.createQueryBuilder();
 			const totalDueration = await totalDuerationQuery
 				.select(
-					`SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))`,
+					`${environment.database.type === 'sqlite' ? 
+					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
 					`duration`
 				)
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.innerJoin(`${totalDuerationQuery.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -429,7 +437,7 @@ export class StatisticService {
 					end
 				})
 				.getRawOne();
-
+			console.log('dua', totalDueration);
 			tasks = tasks.map((task) => {
 				task.durationPercentage =
 					(task.duration * 100) / totalDueration.duration;
@@ -444,8 +452,8 @@ export class StatisticService {
 
 	async manualTimes(request: GetManualTimesStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').toDate();
-		const end = moment.utc(date).endOf('week').toDate();
+		const start = moment.utc(date).startOf('week').format();
+		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		/*
 		 *  Get employees id of the orginization or get current employe id
@@ -499,8 +507,8 @@ export class StatisticService {
 
 	async getActivites(request: GetActivitiesStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').toDate();
-		const end = moment.utc(date).endOf('week').toDate();
+		const start = moment.utc(date).startOf('week').format();
+		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 
 		/*
@@ -577,8 +585,8 @@ export class StatisticService {
 		let employees: TimeSlotStatistics[] = [];
 
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').toDate();
-		const end = moment.utc(date).endOf('week').toDate();
+		const start = moment.utc(date).startOf('week').format();
+		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 
 		const query = this.employeeRepository.createQueryBuilder();
@@ -627,12 +635,13 @@ export class StatisticService {
 			delete employee.user_name;
 
 			employee.timeSlots = await this.timeSlotRepository.find({
+				relations: ['screenshots'],
 				where: {
 					employeeId: employee.id
 				},
 				take: 3,
 				order: {
-					createdAt: 'DESC'
+					startedAt: 'DESC'
 				}
 			});
 		}

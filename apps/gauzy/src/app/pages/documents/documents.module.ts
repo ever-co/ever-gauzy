@@ -22,6 +22,7 @@ import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploa
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -43,6 +44,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbIconModule,
 		NbActionsModule,
 		CardGridModule,
+		TableComponentsModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,

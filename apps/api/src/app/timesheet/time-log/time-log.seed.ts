@@ -36,7 +36,7 @@ export const createRandomTimeLogs = async (
 		let timeSlots: TimeSlot[] = [];
 		const timelogs: TimeLog[] = [];
 		const screenshotsPromise: Promise<Screenshot[]>[] = [];
-		
+
 		for (
 			let timeSheetIndex = 0;
 			timeSheetIndex < timeSheetChunk[timeSheetChunkIndex].length;
@@ -97,7 +97,7 @@ export const createRandomTimeLogs = async (
 					timeSlots = timeSlots.concat(newTimeSlot);
 
 					timelog.timesheet = timesheet;
-					// timelog.timeSlots = newTimeSlot;
+					timelog.timeSlots = newTimeSlot;
 					timelog.project = project;
 					timelog.task = task;
 					timelog.organizationContact = project.organizationContact;
@@ -135,7 +135,6 @@ export const createRandomTimeLogs = async (
 				}
 			}
 		}
-
 
 		await connection.manager.save(timeSlots);
 		let screenshots: Screenshot[] = [];

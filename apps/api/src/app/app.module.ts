@@ -118,7 +118,7 @@ import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.mod
 @Module({
 	imports: [
 		ServeStaticModule.forRoot({
-			rootPath: path.resolve(process.cwd(), 'apps', 'api', 'public'),
+			rootPath: environment.isElectron ? path.resolve(environment.gauzyUserPath, 'public') : path.resolve(process.cwd(), 'apps', 'api', 'public'),
 			serveRoot: '/public/'
 		}),
 		MulterModule.register(),

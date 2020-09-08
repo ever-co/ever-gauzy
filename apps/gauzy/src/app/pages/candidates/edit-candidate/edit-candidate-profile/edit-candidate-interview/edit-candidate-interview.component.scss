@@ -1,110 +1,143 @@
-.interviews-line {
-  margin: 0.2rem 0 0.2rem 0.2rem;
+.right-block {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.interviews-card {
-  display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
 
-.cards {
-  margin-top: 2.5rem !important;
+::ng-deep {
+  .ng2-smart-actions,
+  .ng2-smart-actions-title {
+    display: none;
+  }
 }
 
-.image-wrap {
+.checkboxes {
   display: flex;
-  flex-direction: row;
   justify-content: flex-end;
   align-items: center;
 }
 
-.candidate-image-small {
-  max-width: 35px;
-  max-height: 35px;
-  border-radius: 13px;
-  margin: 4px;
-}
-
-.disabled {
-  color: rgba(143, 155, 179, 0.48) !important;
-  font-size: 2rem;
-  padding: 0 4px;
-  margin: 0 2px;
-  pointer-events: none;
-}
-
-.icons {
-  pointer-events: visible;
-  padding: 0 4px;
-  margin: 0 2px;
-  color: #222b45 !important;
-  font-size: 2rem;
-}
-
-.icon-wrap {
-  padding-left: 10px;
+.card-container {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+  flex-wrap: wrap;
+
+  .card-body {
+    width: 100%;
+    max-width: 300px;
+    margin: 20px;
+    .card-header {
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      &-badge {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .header-container {
+        text-align: center;
+      }
+    }
+
+    .interview-card {
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem;
+
+      .name-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+
+        &:hover {
+          cursor: pointer;
+          color: #3366ff;
+        }
+
+        .image-container {
+          width: 70px;
+          height: 50px;
+          display: flex;
+          justify-content: center;
+          margin-right: 10px;
+
+          img {
+            height: 100%;
+            max-width: 70px;
+          }
+        }
+      }
+      .team-members {
+        margin-bottom: 0.5rem;
+      }
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: auto;
+      flex-wrap: wrap;
+    }
+  }
 }
 
-.ribbon-wrap {
-  position: relative;
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
 }
-.ribbon {
-  position: absolute;
-  left: -6px;
-  top: -5px;
-  z-index: 1;
-  overflow: hidden;
-  width: 55px;
-  height: 55px;
-  text-align: right;
-}
-.ribbon span {
-  font-size: 10px;
-  font-weight: bold;
-  color: #fff;
-  text-transform: uppercase;
+
+.badge {
   text-align: center;
-  line-height: 20px;
-  transform: rotate(-45deg);
-  -webkit-transform: rotate(-45deg);
-  width: 76px;
-  display: block;
-  background: linear-gradient(#b6bac9 0%, #808080 100%);
-  box-shadow: 0 3px 10px -5px rgba(0, 0, 0, 1);
-  position: absolute;
-  top: 10px;
-  left: -18px;
+  padding: 5px;
+  margin-left: 0.2rem;
 }
-.ribbon span::before {
-  content: '';
-  position: absolute;
-  left: 0px;
-  top: 100%;
-  z-index: -1;
-  border-left: 3px solid #808080;
-  border-right: 3px solid transparent;
-  border-bottom: 3px solid transparent;
-  border-top: 3px solid #808080;
+
+.client-info {
+  padding: 0px 12px;
+  display: flex;
+  flex-direction: column;
+  .info-line {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: 0.7em;
+    color: darkgray;
+    .info-value {
+      display: flex;
+      justify-content: flex-end;
+      text-align: end;
+      .info-list-item:not(:last-child)::after {
+        content: ',';
+        margin-right: 5px;
+      }
+    }
+    .criterions {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      text-align: end;
+    }
+  }
 }
-.ribbon span::after {
-  content: '';
-  position: absolute;
-  right: 0px;
-  top: 100%;
-  z-index: -1;
-  border-left: 3px solid transparent;
-  border-right: 3px solid #808080;
-  border-bottom: 3px solid transparent;
-  border-top: 3px solid #808080;
+
+.btn {
+  margin: 0.2rem;
+}
+
+.badge-warning {
+  background-color: #fa0;
+}
+
+.badge-primary {
+  background-color: #0095ff;
 }

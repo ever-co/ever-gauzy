@@ -1,5 +1,9 @@
 <div class="card-layout">
-	<nb-card *ngFor="let item of source" class="card-item">
+	<nb-card
+		*ngFor="let item of source"
+		class="card-item"
+		[ngClass]="{ big: cardSize === 'big' }"
+	>
 		<nb-card-body>
 			<div class="info-line" *ngFor="let key of getKeys()">
 				<div class="info-meta">{{ settings.columns[key].title }}</div>

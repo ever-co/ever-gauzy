@@ -50,11 +50,17 @@
 								{{ sprint.name }}?</nb-card-body
 							>
 							<nb-card-footer>
-								<button nbButton (click)="dialogRef.close()">
+								<button
+									nbButton
+									status="warning"
+									class="mr-3"
+									(click)="dialogRef.close()"
+								>
 									No
 								</button>
 								<button
 									nbButton
+									status="success"
 									(click)="dialogRef.close(sprint)"
 								>
 									Yes

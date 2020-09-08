@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindManyOptions } from 'typeorm';
 import { OrganizationProjects } from './organization-projects.entity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 
@@ -17,12 +17,19 @@ export class OrganizationProjectsService extends TenantAwareCrudService<
 		super(organizationProjectsRepository);
 	}
 
-	async findByEmployee(id: string): Promise<any> {
-		return await this.organizationProjectsRepository
+	async findByEmployee(
+		id: string,
+		filter?: FindManyOptions<OrganizationProjects>
+	): Promise<any> {
+		const query = this.organizationProjectsRepository
 			.createQueryBuilder('organization_project')
-			.leftJoin('organization_project.members', 'member')
-			.where('member.id = :id', { id })
-			.getMany();
+			.leftJoin('organization_project.members', 'member');
+		if (filter && filter.where) {
+			query.where(filter.where);
+		}
+		query.andWhere('member.id = :id', { id });
+
+		return await query.getMany();
 	}
 
 	async updateTaskViewMode(id: string, taskViewMode: string): Promise<any> {

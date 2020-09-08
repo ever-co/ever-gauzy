@@ -9,6 +9,8 @@ import {
 import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
 import { GalleryItem } from './gallery.directive';
+import { GalleryService } from './gallery.service';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -29,35 +31,29 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	animations: [fadeInOutAnimation]
 })
 export class GalleryComponent implements OnInit, OnDestroy {
-	private _items: GalleryItem[] = [];
-	private _item: GalleryItem;
 	active_index: any;
 
 	@ViewChild('customScroll', { static: true }) customScroll: ElementRef<
 		HTMLElement
 	>;
 
-	@Input()
-	public get item(): GalleryItem {
-		return this._item;
-	}
-	public set item(value: GalleryItem) {
-		this._item = value;
-		this.setFocus(value);
-	}
+	// @Input() items: GalleryItem[] = [];
+	@Input() item: GalleryItem;
+	items: GalleryItem[];
 
-	@Input()
-	set items(items: GalleryItem[]) {
-		this._items = items || [];
-		// this.setFocus(items[0]);
-	}
-	get items(): GalleryItem[] {
-		return this._items;
-	}
+	constructor(
+		private dialogRef: NbDialogRef<GalleryComponent>,
+		private galleryService: GalleryService
+	) {}
 
-	constructor(private dialogRef: NbDialogRef<GalleryComponent>) {}
-
-	ngOnInit() {}
+	ngOnInit() {
+		this.galleryService.items$
+			.pipe(untilDestroyed(this))
+			.subscribe((items) => {
+				this.items = items;
+				this.setFocus(this.item);
+			});
+	}
 
 	close() {
 		this.dialogRef.close();
@@ -80,10 +76,17 @@ export class GalleryComponent implements OnInit, OnDestroy {
 		this.updateActiveIndex();
 	}
 
-	setFocus(item) {
-		const index = this.items.indexOf(item);
-		this.active_index = index;
-		this._item = this.items[this.active_index];
+	setFocus(selectedItem: GalleryItem) {
+		const foundItem = this.items.find(
+			(item) => item.fullUrl === selectedItem.fullUrl
+		);
+		if (this.item) {
+			const index = this.items.indexOf(this.item);
+			this.active_index = index;
+			this.item = foundItem;
+		} else {
+			this.item = selectedItem;
+		}
 		this.updateActiveIndex();
 	}
 

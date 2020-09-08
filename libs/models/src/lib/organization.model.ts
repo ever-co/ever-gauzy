@@ -21,7 +21,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	valueDate?: Date;
 	totalEmployees: number;
 	status?: string;
-  // Organization logo Url
+	// Organization logo Url
 	imageUrl?: string;
 	banner: string;
 	short_description: string;
@@ -70,11 +70,12 @@ export interface Organization extends IBaseEntityModel, IContact {
 	organizationSprints?: OrganizationSprint[];
 	minimumProjectSize?: string;
 	show_clients?: boolean;
-  // "left" and "right" values, used to know where to put currency symbol relative to amount
+	// "left" and "right" values, used to know where to put currency symbol relative to amount
 	currencyPosition?: string;
 	website?: string;
-  // used in invoice headers to display organization details
+	// used in invoice headers to display organization details
 	fiscalInformation?: string;
+	discountAfterTax?: boolean;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -119,7 +120,7 @@ export interface OrganizationCreateInput extends IContact {
 	skills?: Skill[];
 	minimumProjectSize?: string;
 	show_clients?: boolean;
-	website?: string;  
+	website?: string;
 	fiscalInformation?: string;
 }
 

@@ -1,14 +1,31 @@
 <nb-card>
-	<nb-card-header>
-		<button
-			nbButton
-			status="success"
+	<nb-card-header class="header">
+		<div class="btn">
+			<button
+				nbButton
+				status="success"
+				*ngIf="!showAddCard"
+				(click)="add()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<ng-container
+				*ngIf="
+					dataLayoutStyle === 'TABLE' &&
+					!showAddCard &&
+					educationList?.length
+				"
+			>
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+		</div>
+
+		<ga-layout-selector
 			*ngIf="!showAddCard"
-			(click)="showCard()"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
 		<div *ngIf="showAddCard" class="row m-0">
 			<form class="col-10" [formGroup]="form" *ngIf="form">
 				<div formArrayName="educations">
@@ -109,69 +126,51 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="educationList?.length" class="mt-3">
-		<nb-card *ngFor="let education of educationList; let i = index">
-			<nb-card-body class="education-card">
-				<div>
-					<div class="education-line">
-						<span class="education-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.SCHOOL_NAME'
-									| translate
-							}}:</span
-						>
-						{{ education.schoolName }}
-					</div>
-					<div class="education-line">
-						<span class="education-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.DEGREE'
-									| translate
-							}}:</span
-						>
-						{{ education.degree }}
-					</div>
-					<div class="education-line">
-						<span class="education-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.FIELD'
-									| translate
-							}}:</span
-						>
-						{{ education.field }}
-					</div>
-					<div class="education-line">
-						<span class="education-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.COMPLETION_DATE'
-									| translate
-							}}:
-						</span>
-						{{ education.completionDate | date: 'mediumDate' }}
-					</div>
-					<div class="education-line" *ngIf="education.notes">
-						<span class="education-title">
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.ADDITIONAL_NOTES'
-									| translate
-							}}:
-						</span>
-						{{ education.notes }}
-					</div>
-				</div>
-
-				<nb-actions class="float-right" e="medium">
-					<nb-action
-						(click)="editEducation(i, education.id)"
-						class="d-inline pr-2"
-						icon="edit"
-					></nb-action>
-					<nb-action
-						(click)="removeEducation(education.id)"
-						class="d-inline pr-0 pl-2"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+		<ng2-smart-table
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectEducation($event)"
+			#educationTable
+		>
+		</ng2-smart-table>
 	</nb-card-body>
+	<nb-card-body *ngIf="educationList?.length">
+		<ga-card-grid
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="educationList"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+	</nb-card-body>
+
+	<ng-template
+		#actionButtons
+		let-buttonSize="buttonSize"
+		let-selectedItem="selectedItem"
+	>
+		<button
+			(click)="editEducation(selectedItem)"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="removeEducation(selectedItem)"
+			nbButton
+			status="danger"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
 </nb-card>

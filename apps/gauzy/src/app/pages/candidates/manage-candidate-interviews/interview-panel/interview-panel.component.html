@@ -1,6 +1,7 @@
 <nb-card-body class="card">
 	<div class="header">
 		<ga-employee-multi-select
+			*ngIf="allInterviews?.length > 0"
 			class="select"
 			[multiple]="true"
 			[label]="false"
@@ -10,15 +11,28 @@
 		>
 		</ga-employee-multi-select>
 
-		<div class="btn">
+		<div class="btn" *ngIf="allInterviews?.length > 0">
+			<nb-checkbox
+				(checkedChange)="changePast($event)"
+				status="warning"
+				class="mr-3"
+				[checked]="onlyPast"
+				>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
+			</nb-checkbox>
+			<nb-checkbox
+				(checkedChange)="changeFuture($event)"
+				status="warning"
+				[checked]="onlyFuture"
+				class="mr-3"
+				>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
+			</nb-checkbox>
 			<nb-checkbox
 				(checkedChange)="changeIncludeArchived($event)"
 				status="warning"
 				class="mr-3"
-				>{{
-					'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate
-				}}</nb-checkbox
-			>
+				>{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+			</nb-checkbox>
+
 			<ga-layout-selector
 				componentName="{{ viewComponentName }}"
 			></ga-layout-selector>
@@ -46,9 +60,26 @@
 			class="card-body"
 			*ngFor="let interview of interviewList"
 		>
-			<nb-card-header style="padding: 0.5rem;">
+			<nb-card-header class="card-header">
 				<div class="header-container">
 					{{ interview.title }}
+				</div>
+				<div class="card-header-badge">
+					<div
+						class="badge badge-primary"
+						*ngIf="isPastInterview(interview)"
+					>
+						{{
+							'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate
+						}}
+					</div>
+
+					<div
+						class="badge badge-warning"
+						*ngIf="interview.isArchived"
+					>
+						{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
+					</div>
 				</div>
 			</nb-card-header>
 
@@ -69,14 +100,13 @@
 						>
 							<div class="image-container">
 								<img
-									[src]="interview.candidate.user.imageUrl"
+									[src]="interview.candidate.user?.imageUrl"
 								/>
 							</div>
-							<span>{{ interview.candidate.user.name }} </span>
+							<span>{{ interview.candidate.user?.name }} </span>
 						</div>
 					</nb-card-body>
 				</nb-card>
-
 				<div class="client-info">
 					<div class="info-line">
 						<div class="info-meta">
@@ -138,6 +168,7 @@
 						<div class="info-value">
 							<ga-star-rating-output
 								[rate]="interview.rating"
+								[isGridView]="true"
 							></ga-star-rating-output>
 						</div>
 					</div>
@@ -168,7 +199,9 @@
 				<div class="button-container">
 					<button
 						nbButton
+						class="btn"
 						status="info"
+						[disabled]="isPastInterview(interview)"
 						(click)="editInterview(interview.id)"
 						size="tiny"
 					>
@@ -176,22 +209,45 @@
 						>{{ 'BUTTONS.EDIT' | translate }}
 					</button>
 					<button
+						class="btn"
 						nbButton
 						(click)="archive(interview)"
 						status="warning"
+						[disabled]="interview.isArchived"
 						size="tiny"
 					>
 						<nb-icon class="mr-1" icon="archive-outline"></nb-icon
 						>{{ 'BUTTONS.ARCHIVE' | translate }}
 					</button>
 					<button
+						class="btn"
 						size="tiny"
 						nbButton
+						[disabled]="isPastInterview(interview)"
 						(click)="removeInterview(interview.id)"
 						status="danger"
 					>
 						<nb-icon class="mr-2" icon="trash-2-outline"></nb-icon
 						>{{ 'BUTTONS.DELETE' | translate }}
+					</button>
+					<button
+						class="btn"
+						nbButton
+						(click)="addFeedback(interview)"
+						status="success"
+						[disabled]="!isPastInterview(interview)"
+						size="tiny"
+					>
+						<nb-icon
+							class="mr-1"
+							icon="message-square-outline"
+						></nb-icon
+						>{{ 'BUTTONS.LEAVE_FEEDBACK' | translate }}
+						<span *ngIf="isPastInterview(interview)" class="ml-1">
+							({{ interview.feedbacks.length }}/{{
+								interview.interviewers.length
+							}})
+						</span>
 					</button>
 				</div>
 			</nb-card-body>

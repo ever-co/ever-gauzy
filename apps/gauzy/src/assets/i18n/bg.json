@@ -63,6 +63,7 @@
 		"EVENT_TYPES": "Event Types",
 		"SEARCH": "Search",
 		"RESET": "Reset",
+		"LEAVE_FEEDBACK": "Leave a feedback",
 		"SPRINT": {
 			"CREATE": "Create Sprint",
 			"EDIT": "Редактиране",
@@ -189,6 +190,7 @@
 			"CURRENCY_PER_HOUR": "Валута",
 			"RECURRING_WEEKLY_LIMIT": "Седмичен лимит (часове)",
 			"ROLE": "Роля",
+			"SOURCE": "Source (optional)",
 			"EMAILS": "Електронни пощи",
 			"PROJECTS_OPTIONAL": "Проекти (по избор)",
 			"CONTACTS_OPTIONAL": "Contacts (Optional)",
@@ -381,7 +383,9 @@
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Показване на изтритите",
-			"INCLUDE_ARCHIVED": "Include Archived"
+			"INCLUDE_ARCHIVED": "Include Archived",
+			"ONLY_PAST": "Only Past",
+			"ONLY_FUTURE": "Only Future"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
@@ -492,7 +496,8 @@
 		"SHOW_BILLRATE": "Show Bill Rate",
 		"SHOW_START_WORK_ON": "Show Started Work On",
 		"SHOW_CLIENTS": "Show Clients",
-		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously"
+		"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously",
+		"SOURCE": "Source"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -623,7 +628,9 @@
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
-			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+			"DATE_RANGE_PLACEHOLDER": "Choose date between",
+			"RE_INTEGRATE": "Re-integrate",
+			"SETTINGS": "Настройки"
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -955,6 +962,7 @@
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
 			"SKILLS": "Skills",
+			"ALL_FEEDBACKS": "All feedbacks",
 			"FEEDBACKS": "Feedbacks",
 			"EDUCATION": "Education",
 			"SCHOOL_NAME": "School name",
@@ -970,9 +978,12 @@
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents",
 			"DOCUMENT_NAME": "Document name",
+			"NAME": "Име",
 			"DOCUMENT": "Document",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"INTERVIEW_FEEDBACK": "Interview: ",
+			"INTERVIEWER": "Interviewer",
+			"FEEDBACK_STATUS": "Статус",
 			"LEAVE_FEEDBACK": "Leave a feedback about the ",
 			"STATUS": "Selected status: ",
 			"INTERVIEW": {
@@ -1008,6 +1019,8 @@
 				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
 				"INTERVIEWERS": "interviewer(s)",
 				"HIRE": "Hire",
+				"RATING": "Rating",
+				"DESCRIPTION": "Description: ",
 				"POSTPONE": "Postpone",
 				"REJECT": "Reject",
 				"INTERVIEW_TITLE_EXIST": "An interview with such name already exists"
@@ -1053,11 +1066,17 @@
 			"RESET_FILTERS": "Reset filters",
 			"TITLE": "Title",
 			"INTERVIEWERS": "Interviewers",
+			"ADD_FEEDBACK": "Add a feedback",
 			"LOCATION": "Локация",
 			"NOTES": "Бележки",
 			"ACTIONS": "Actions",
+			"EDIT": "Редактиране",
+			"ARCHIVE": "Archive",
+			"PAST": "Past",
+			"DELETE": "Изтрий",
 			"UPDATED": "Updated",
 			"CANDIDATE": "Candidate",
+			"FEEDBACK_PROHIBIT": "Adding feedback about future interviews is prohibited",
 			"START_DATE": "Начална дата"
 		},
 		"STATISTIC": {
@@ -1725,6 +1744,7 @@
 		"SHOW_HIDE_COLUMNS": "Show/Hide Columns",
 		"INVOICES_PER_PAGE": "Invoices Per Page",
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
+		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -1964,6 +1984,7 @@
 			"KEY_RESULT_UPDATED": "Key Result updated",
 			"TIME_FRAME_DELETED": "Time Frame deleted",
 			"EDIT_PAST_INTERVIEW": "Editing past interviews is prohibited",
+			"ARCHIVE_INTERVIEW": "This interview has already been archived",
 			"DELETE_PAST_INTERVIEW": "Deleting past interviews is prohibited",
 			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated",
 			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
@@ -2216,6 +2237,31 @@
 		"NO_TODO": "No To-do",
 		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
 		"REASON": "Reason",
+		"NOTES": "Бележки",
+		"TIME_OVERLAPS": "Time overlaps",
+		"TIME_TRACKING": "Time Tracking",
+		"MEMBERS_WORKED": "Members worked",
+		"PROJECTS_WORKED": "Projects worked",
+		"WEEKLY_ACTIVITY": "Weekly Activity",
+		"WORKED_THIS_WEEK": "Worked this week",
+		"TODAY_ACTIVITY": "Today's Activity",
+		"WORKED_TODAY": "Worked today",
+		"RECENT_ACTIVITIES": "Recent Activities",
+		"NO_SCREENSHOT": "No screenshot for the week",
+		"TASKS": "Tasks",
+		"NO_TASK_ACTIVITY": "No task activity for the week",
+		"MANUAL_TIME": "Manual Time",
+		"NO_MANUAL_TIME": "No manual time for the week",
+		"PROJECTS": "Проекти",
+		"NO_PROJECT_ACTIVITY": "No project activity for the week",
+		"APPS_URLS": "Apps & Urls",
+		"NO_APP_URL_ACTIVITY": "No app & url activity for the week",
+		"DATE": "Дата",
+		"MEMBERS": "Members",
+		"MEMBER": "Member",
+		"MEMBER_INFO": "Member info",
+		"THIS_WEEK": "This week",
+		"NO_MEMBER_ACTIVITY": "No member activity for the week",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please selct task",
@@ -2232,7 +2278,9 @@
 		"NO_ACTIVITY": "No Activity",
 		"VIEW_SCREEN": "View Screen",
 		"VIEW_INFO": "View Info",
-		"NO_SCREENSHOTS": "No Screenshots"
+		"MINUTES": "Minutes",
+		"NO_SCREENSHOTS": "No Screenshots",
+		"DELETE_CONFIRM": "Are you sure you want to delete this screenshots and activities?"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

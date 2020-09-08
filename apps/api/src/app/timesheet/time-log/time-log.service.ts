@@ -19,6 +19,7 @@ import { TimeLogCreateCommand } from './commands/time-log-create.command';
 import { TimeLogUpdateCommand } from './commands/time-log-update.command';
 import { TimeLogDeleteCommand } from './commands/time-log-delete.command';
 import { DeleteTimeSpanCommand } from './commands/delete-time-span.command';
+import { GetConfictTimeLogCommand } from './commands/get-confict-time-log.command';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
@@ -80,12 +81,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 					});
 				}
 				if (request.startDate && request.endDate) {
-					const startDate = moment(request.startDate).format(
-						'YYYY-MM-DD HH:mm:ss'
-					);
-					const endDate = moment(request.endDate).format(
-						'YYYY-MM-DD HH:mm:ss'
-					);
+					const startDate = moment.utc(request.startDate).toDate();
+					const endDate = moment.utc(request.endDate).toDate();
+					console.log({ startDate, endDate });
 					qb.andWhere('"startedAt" Between :startDate AND :endDate', {
 						startDate,
 						endDate
@@ -96,12 +94,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 						employeeId: employeeIds
 					});
 				}
-				// if (request.organizationId) {
-				// 	qb.andWhere(
-				// 		'"employee"."organizationId" = :organizationId',
-				// 		{ organizationId: request.organizationId }
-				// 	);
-				// }
 
 				if (request.projectIds) {
 					qb.andWhere(
@@ -141,7 +133,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
-		console.log('addManualTime', request);
 		if (!request.startedAt || !request.stoppedAt) {
 			throw new BadRequestException(
 				'Please select valid Date, start time and end time'
@@ -184,7 +175,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 		const timelog = await this.commandBus.execute(
 			new TimeLogCreateCommand(request)
 		);
-		console.log(timelog);
 		return timelog;
 	}
 
@@ -259,44 +249,13 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async checkConfictTime(request: IGetTimeLogConflictInput) {
-		const startedAt = moment(request.startDate).toISOString();
-		const stoppedAt = moment(request.endDate).toISOString();
-		let confictQuery = this.timeLogRepository.createQueryBuilder();
-
-		confictQuery = confictQuery
-			.where(`"${confictQuery.alias}"."employeeId" = :employeeId`, {
-				employeeId: request.employeeId
-			})
-			.andWhere(`"${confictQuery.alias}"."deletedAt" IS null`)
-			.andWhere(
-				`("${confictQuery.alias}"."startedAt", "${confictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
-			);
-
-		if (request.relations) {
-			request.relations.forEach((relation) => {
-				confictQuery = confictQuery.leftJoinAndSelect(
-					`${confictQuery.alias}.${relation}`,
-					relation
-				);
-			});
-		}
-
-		if (request.ignoreId) {
-			confictQuery = confictQuery.andWhere(
-				`${confictQuery.alias}.id NOT IN (:...id)`,
-				{
-					id:
-						request.ignoreId instanceof Array
-							? request.ignoreId
-							: [request.ignoreId]
-				}
-			);
-		}
-		return await confictQuery.getMany();
+		return await this.commandBus.execute(
+			new GetConfictTimeLogCommand(request)
+		);
 	}
 
 	private allowDate(start: Date, end: Date, organization: Organization) {
-		if (!moment(start).isBefore(moment(end))) {
+		if (!moment.utc(start).isBefore(moment.utc(end))) {
 			return false;
 		}
 		if (organization.futureDateAllowed) {

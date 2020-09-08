@@ -1,49 +1,61 @@
-<nb-card class="view-log-dialog">
+<button
+	size="small"
+	class="close-button"
+	nbButton
+	ghost
+	(click)="close()"
+	type="button"
+>
+	<nb-icon icon="close-outline"></nb-icon>
+</button>
+<nb-card>
 	<nb-card-header>
-		<div class="row">
-			<div class="col">
-				{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}
-			</div>
-			<button
-				class="col-auto"
-				nbButton
-				ghost
-				(click)="close()"
-				type="button"
-			>
-				<nb-icon icon="close-outline"></nb-icon>
-			</button>
-		</div>
-	</nb-card-header>
-	<nb-card-body class="custom-scroll">
 		<div
-			class="mb-3"
+			class="row"
 			*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
 		>
-			<div class="description">
+			<div class="col">
 				<ngx-avatar
 					[name]="timeLog?.employee?.user?.name"
 					[src]="timeLog?.employee?.user?.imageUrl"
+					[caption]="
+						(timeLog?.startedAt | utcToLocal | timeFormat: true) +
+						' - ' +
+						(timeLog?.stoppedAt
+							? (timeLog?.stoppedAt
+							  | utcToLocal
+							  | timeFormat: true)
+							: ('TIMESHEET.TILL_NOW' | translate)) +
+						' (' +
+						(timeLog?.duration | durationFormat) +
+						')'
+					"
 				></ngx-avatar>
 			</div>
-		</div>
-		<div class="mb-3">
-			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }}
-			</div>
-			<div class="description">
-				{{
-					timeLog?.organizationContact
-						? timeLog?.organizationContact.name
-						: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
-				}}
+			<div class="col-auto">
+				<ngx-label
+					[status]="TimeLogsLable[timeLog?.logType].status"
+					[text]="TimeLogsLable[timeLog?.logType].text"
+				>
+				</ngx-label>
 			</div>
 		</div>
-		<div class="mb-3">
-			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.PROJECT' | translate }}
-			</div>
-			<div class="description">
+	</nb-card-header>
+	<nb-card-body class="custom-scroll">
+		<div>
+			<strong
+				>{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
+			</strong>
+			<span>{{
+				timeLog?.organizationContact
+					? timeLog?.organizationContact.name
+					: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
+			}}</span>
+		</div>
+
+		<div class="mt-3">
+			<div class="description mb-2">
+				<strong>{{ 'TIMESHEET.PROJECT' | translate }} : </strong>
 				{{
 					timeLog?.project
 						? timeLog?.project.name
@@ -51,71 +63,37 @@
 				}}
 			</div>
 		</div>
-		<div class="mb-3">
-			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.TODO' | translate }}
-			</div>
+
+		<div class="mt-3">
 			<div class="description">
+				<strong>{{ 'TIMESHEET.TODO' | translate }} : </strong>
 				{{
 					timeLog?.task
 						? timeLog?.task?.title
-						: ('TIMESHEET.NO_TOTO' | translate)
+						: ('TIMESHEET.NO_TODO' | translate)
 				}}
 			</div>
 		</div>
-		<div class="mb-3">
+
+		<div class="mt-3" *ngIf="timeLog?.description">
 			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.LOG_TYPE' | translate }}
+				{{ 'TIMESHEET.NOTES' | translate }} :
 			</div>
-			<div class="description">{{ timeLog?.logType }}</div>
-		</div>
-		<div class="mb-3">
-			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.TIME_SPAN' | translate }}
-			</div>
-			<div class="description">
-				<span class="start-timer">
-					{{ timeLog?.startedAt | utcToLocal | timeFormat: true }}
-				</span>
-				-
-				<span
-					class="end-timer"
-					*ngIf="timeLog?.stoppedAt; else runningTimer"
-				>
-					{{ timeLog?.stoppedAt | utcToLocal | timeFormat: true }}
-				</span>
-				<ng-template #runningTimer>
-					<span class="running-timer">
-						{{ 'TIMESHEET.TILL_NOW' | translate }}
-					</span>
-				</ng-template>
-			</div>
-		</div>
-		<div class="mb-3">
-			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.DURATION' | translate }}
-			</div>
-			<div class="description">
-				{{ timeLog?.duration | durationFormat }}
-			</div>
+			<div class="description">{{ timeLog?.description }}</div>
 		</div>
 
-		<div class="mb-3">
-			<div class="font-weight-bold mb-2">Description</div>
-			<div class="description">{{ timeLog?.description || '-' }}</div>
-		</div>
-
-		<div class="mb-3">
+		<div class="mt-3" *ngIf="timeLog?.reason">
 			<div class="font-weight-bold mb-2">
-				{{ 'TIMESHEET.REASON' | translate }}
+				{{ 'TIMESHEET.REASON' | translate }} :
 			</div>
 			<div class="description">
-				{{ timeLog?.reason || '-' }}
+				{{ timeLog?.reason }}
 			</div>
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
 		<button
+			size="small"
 			class="mr-2"
 			nbButton
 			status="primary"
@@ -127,6 +105,7 @@
 			<nb-icon icon="edit"></nb-icon> {{ 'TIMESHEET.EDIT' | translate }}
 		</button>
 		<button
+			size="small"
 			class="mr-2"
 			nbButton
 			status="danger"

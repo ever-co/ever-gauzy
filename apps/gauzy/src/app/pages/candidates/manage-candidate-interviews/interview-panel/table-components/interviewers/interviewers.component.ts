@@ -1,23 +1,37 @@
 import { Component, Input } from '@angular/core';
-import { ICandidateFeedback } from '@gauzy/models';
+import {
+	SelectedEmployee,
+	ALL_EMPLOYEES_SELECTED
+} from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ga-interview-interviewers',
 	template: `
-		<div class="employee" *ngIf="rowData.employees.length > 0">
+		<div class="employee" *ngIf="rowData.employees?.length > 0">
 			<span
 				*ngFor="let employee of rowData.employees"
 				nbTooltip=" {{ employee?.user?.name }}"
 				nbTooltipPlacement="top"
 			>
-				<img
-					class="image-employee"
-					[src]="employee?.user?.imageUrl"
-					alt="employee Avatar"
-					[ngClass]="{
-						active: isInterviewerActive(rowData.id, employee.id)
-					}"
-				/>
+				<a
+					*ngIf="employee.user"
+					(click)="
+						selectEmployee(
+							employee,
+							employee.user.firstName,
+							employee.user.lastName,
+							employee.user.imageUrl
+						)
+					"
+				>
+					<img
+						class="image-employee"
+						[src]="employee?.user?.imageUrl"
+						alt="employee Avatar"
+					/>
+				</a>
 			</span>
 		</div>
 	`,
@@ -35,12 +49,6 @@ import { ICandidateFeedback } from '@gauzy/models';
 				max-height: 30px;
 				border-radius: 50%;
 				margin: 0.25rem;
-				&:hover {
-					opacity: 1 !important;
-				}
-			}
-			.active {
-				opacity: 0.7 !important;
 			}
 		`
 	]
@@ -48,13 +56,23 @@ import { ICandidateFeedback } from '@gauzy/models';
 export class InterviewersTableComponent {
 	@Input()
 	rowData: any;
+	constructor(private store: Store, private readonly router: Router) {}
+	selectEmployee(
+		employee: SelectedEmployee,
+		firstName: string,
+		lastName: string,
+		imageUrl: string
+	) {
+		this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+		this.store.selectedEmployee.firstName = firstName;
+		this.store.selectedEmployee.lastName = lastName;
+		this.store.selectedEmployee.imageUrl = imageUrl;
+		if (employee) {
+			this.navigateToEmployeeStatistics(employee.id);
+		}
+	}
 
-	isInterviewerActive(interviewId: string, employeeId: string) {
-		return this.rowData.allFeedbacks.find(
-			(el: ICandidateFeedback) =>
-				el.interviewId === interviewId &&
-				el.interviewer &&
-				employeeId === el.interviewer.employeeId
-		);
+	navigateToEmployeeStatistics(id: string) {
+		this.router.navigate([`/pages/employees/edit/${id}/account`]);
 	}
 }

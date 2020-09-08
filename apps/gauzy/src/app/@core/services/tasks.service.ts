@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbToastrService } from '@nebular/theme';
 import { Observable, throwError } from 'rxjs';
-import { Task, GetTaskOptions } from '@gauzy/models';
+import { Task, GetTaskOptions, GetTaskByEmployeeOptions } from '@gauzy/models';
 import { tap, catchError, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { toParams } from 'libs/utils';
 
 interface ITaskResponse {
 	items: Task[];
@@ -44,6 +45,16 @@ export class TasksService extends TranslationBaseComponent {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)));
+	}
+
+	getAllTasksByEmployee(id, findInput: GetTaskByEmployeeOptions = {}) {
+		const data = toParams(findInput);
+		return this._http
+			.get<Task[]>(`${this.API_URL}/employee/${id}`, {
+				params: data
+			})
+			.pipe(catchError((error) => this.errorHandler(error)))
+			.toPromise();
 	}
 
 	getMyTasks(): Observable<ITaskResponse> {

@@ -7,3 +7,8 @@ export interface ICandidateSourceFindInput extends IBaseEntityModel {
 	name?: string;
 	candidateId?: string;
 }
+
+export interface ICandidateSourceCreateInput {
+	name: string;
+	candidateId: string;
+}

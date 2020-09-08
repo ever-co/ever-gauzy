@@ -13,6 +13,8 @@ import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
+import { DocumentUrlTableComponent } from '../../@shared/table-components/document-url/document-url.component';
+import { DocumentDateTableComponent } from '../../@shared/table-components/document-date/document-date.component';
 
 @Component({
 	selector: 'ga-documents',
@@ -94,11 +96,13 @@ export class DocumentsComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'ORGANIZATIONS_PAGE.DOCUMENT_URL'
 					),
-					type: 'string'
+					type: 'custom',
+					renderComponent: DocumentUrlTableComponent
 				},
 				updated: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.UPDATED'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: DocumentDateTableComponent
 				}
 			}
 		};
@@ -154,27 +158,13 @@ export class DocumentsComponent extends TranslationBaseComponent
 
 	private _loadDocuments() {
 		this.loading = true;
-		const result = [];
 		this.organizationDocumentsService
 			.getAll({ organizationId: this.organizationId })
 			.pipe(first())
 			.subscribe(
 				(data) => {
 					this.documentList = data.items;
-					for (const doc of data.items) {
-						result.push({
-							name: doc.name,
-							documentUrl:
-								doc.documentUrl.slice(0, 25) +
-								'...' +
-								doc.documentUrl.slice(-10, -1),
-							updated:
-								new Date(doc.updatedAt).toDateString() +
-								', ' +
-								new Date(doc.updatedAt).toLocaleTimeString()
-						});
-					}
-					this.smartTableSource.load(result);
+					this.smartTableSource.load(data.items);
 					this.loading = false;
 				},
 				() =>

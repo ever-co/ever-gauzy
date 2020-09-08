@@ -22,6 +22,7 @@ export default class Timerhandler {
 		this.notificationDesktop.startTimeNotification(true);
 		this.configs = LocalStore.getStore('configs');
 		const ProjectInfo = LocalStore.getStore('project');
+		const appInfo = LocalStore.beforeRequestParams();
 		this.timeStart = moment();
 		this.timeSlotStart = moment();
 		this.lastTimer = await TimerData.createTimer(knex, {
@@ -30,7 +31,7 @@ export default class Timerhandler {
 			created_at: moment(),
 			durations: 0,
 			projectid: ProjectInfo.projectId,
-			userId: ProjectInfo.taskId
+			userId: appInfo.employeeId
 		});
 
 		win2.webContents.send('time_toggle', {
@@ -83,12 +84,11 @@ export default class Timerhandler {
 		this.timeRecordMinute = now.diff(moment(this.timeStart), 'minutes');
 	}
 
-	updateTime(win2, knex) {
+	updateTime(win2, knex, win3) {
 		this.intervalUpdateTime = setInterval(() => {
 			this.getSetActivity(knex, win2, this.timeSlotStart);
 			this.timeSlotStart = moment();
-			// this.updateToggle(win2, knex);
-		}, 60 * 1000 * 5);
+		}, 60 * 1000 * 1);
 	}
 
 	updateToggle(win2, knex, isStop) {
@@ -145,6 +145,15 @@ export default class Timerhandler {
 		//formating wakatime
 		wakatimeHeartbeats = wakatimeHeartbeats.map((item) => {
 			idsWakatime.push(item.id);
+			const activityMetadata = {
+				type: item.type,
+				dependecies: item.dependencies,
+				language: item.languages,
+				project: item.projects,
+				branches: item.branches,
+				entity: item.entities,
+				line: item.lines
+			};
 			return {
 				title: item.editors,
 				date: moment.unix(item.time).format('YYYY-MM-DD'),
@@ -153,15 +162,10 @@ export default class Timerhandler {
 				type: 'APP',
 				taskId: userInfo.taskId,
 				projectId: userInfo.projectId,
-				metaData: {
-					type: item.type,
-					dependecies: item.dependencies,
-					language: item.languages,
-					project: item.projects,
-					branches: item.branches,
-					entity: item.entities,
-					line: item.lines
-				}
+				metaData:
+					this.configs && this.configs.db === 'sqlite'
+						? JSON.stringify(activityMetadata)
+						: activityMetadata
 			};
 		});
 
@@ -178,7 +182,8 @@ export default class Timerhandler {
 			activities: allActivities,
 			idsAw: idsAw,
 			idsWakatime: idsWakatime,
-			idAfk: idAfk
+			idAfk: idAfk,
+			timerId: this.lastTimer[0]
 		});
 	}
 

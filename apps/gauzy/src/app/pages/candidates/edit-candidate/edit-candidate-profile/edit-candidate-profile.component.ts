@@ -36,6 +36,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	candidateName = 'Candidate';
 	tabs: any[];
 	interviewList: ICandidateInterview[];
+	futureInterviews: ICandidateInterview[];
 
 	constructor(
 		private route: ActivatedRoute,
@@ -65,50 +66,33 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			.subscribe((value) => {
 				this.submitUserForm(value);
 			});
-
 		this.candidateStore.candidateForm$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((value) => {
 				this.submitCandidateForm(value);
 			});
-
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
-
-				const { items } = await this.candidatesService
-					.getAll(['user'], { id })
-					.pipe(first())
-					.toPromise();
-
-				this.selectedCandidate = items[0];
-				this.loadInterview();
-				const checkUsername = this.selectedCandidate.user.username;
-				this.candidateName = checkUsername
-					? checkUsername
-					: 'Candidate';
-			});
-
 		this.loadTabs();
 		this._applyTranslationOnTabs();
 	}
 
-	private async loadInterview() {
+	private async loadInterviews() {
 		const interviews = await this.candidateInterviewService.getAll(
 			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
 			{ candidateId: this.selectedCandidate.id }
 		);
-
 		if (interviews) {
 			this.interviewList = interviews.items;
+			const now = new Date().getTime();
+			this.futureInterviews = this.interviewList.filter(
+				(item) => new Date(item.startTime).getTime() > now
+			);
 		}
 	}
 	async interviewInfo() {
-		if (this.interviewList.length > 0) {
+		if (this.futureInterviews.length > 0) {
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
-					interviewList: this.interviewList,
+					interviewList: this.futureInterviews,
 					selectedCandidate: this.selectedCandidate,
 					isSlider: true
 				}
@@ -278,6 +262,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 		this.candidateName = checkUsername ? checkUsername : 'Candidate';
 
 		this.candidateStore.selectedCandidate = this.selectedCandidate;
+		this.loadInterviews();
 	}
 
 	ngOnDestroy() {

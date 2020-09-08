@@ -66,7 +66,7 @@ export const createRandomActivities = async (connection: Connection) => {
 				const url = faker.internet.domainName();
 				for (
 					let j = 0;
-					j < faker.random.number({ min: 1, max: 10 });
+					j < faker.random.number({ min: 5, max: 10 });
 					j++
 				) {
 					const project = faker.random.arrayElement(projects);

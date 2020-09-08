@@ -63,6 +63,7 @@
 		"EVENT_TYPES": "Типы событий",
 		"SEARCH": "Искать",
 		"RESET": "Reset",
+		"LEAVE_FEEDBACK": "Оставить отзыв",
 		"SPRINT": {
 			"CREATE": "Создать спринт",
 			"EDIT": "Редактировать",
@@ -189,6 +190,7 @@
 			"CURRENCY_PER_HOUR": "Валюта",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
 			"ROLE": "Роль",
+			"SOURCE": "Источник (необязательно)",
 			"EMAILS": "Адреса E-mail",
 			"PROJECTS_OPTIONAL": "Проекты (необязательно)",
 			"CONTACTS_OPTIONAL": "Контакты (необязательно)",
@@ -381,7 +383,9 @@
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Включать удаленные",
-			"INCLUDE_ARCHIVED": "Включать в архив"
+			"INCLUDE_ARCHIVED": "Включать в архив",
+			"ONLY_PAST": "Только прошлое",
+			"ONLY_FUTURE": "Только будущее"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "Необходимо ввести дату, когда работник начал работу для генерации заработной платы работников, позволяет работнику участвовать в разделенных расходах, видеть статистику работников"
@@ -492,7 +496,8 @@
 		"SHOW_BILLRATE": "Показать процент счёта",
 		"SHOW_START_WORK_ON": "Показать начатую работу на",
 		"SHOW_CLIENTS": "Показать клиентов",
-		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса"
+		"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса",
+		"SOURCE": "Источник"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -623,7 +628,9 @@
 			"SELECT_DATE": "Выберите дату",
 			"ONLY_CONTRACTS": "Только контракты",
 			"CONTRACTS_RELATED_DATA": "Синхронизированные Контракты",
-			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
+			"DATE_RANGE_PLACEHOLDER": "Выберите дату между",
+			"RE_INTEGRATE": "Переинтегрировать",
+			"SETTINGS": "Настройки"
 		},
 		"COMING_SOON": "Скоро появится"
 	},
@@ -955,6 +962,7 @@
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Опыт работы",
 			"SKILLS": "Навыки",
+			"ALL_FEEDBACKS": "Все отзывы",
 			"FEEDBACKS": "Обратная связь",
 			"EDUCATION": "Образование",
 			"SCHOOL_NAME": "Название школы",
@@ -970,9 +978,12 @@
 			"HISTORY": "История",
 			"DOCUMENTS": "Документы",
 			"DOCUMENT_NAME": "Название документа",
+			"NAME": "Имя",
 			"DOCUMENT": "Документ",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"INTERVIEW_FEEDBACK": "Интервью: ",
+			"INTERVIEWER": "Интервьюер",
+			"FEEDBACK_STATUS": "Статус",
 			"LEAVE_FEEDBACK": "Оставить отзыв о ",
 			"STATUS": "Выбранный статус: ",
 			"INTERVIEW": {
@@ -1008,6 +1019,8 @@
 				"NOTIFY_INTERVIEWERS": "Уведомить интервьюера (ов)",
 				"INTERVIEWERS": "интервьюер(ы)",
 				"HIRE": "Нанять",
+				"RATING": "Рейтинг",
+				"DESCRIPTION": "Пояснение: ",
 				"POSTPONE": "Отложить",
 				"REJECT": "Отклонить",
 				"INTERVIEW_TITLE_EXIST": "Интервью с таким именем уже существует"
@@ -1053,11 +1066,17 @@
 			"RESET_FILTERS": "Сбросить фильтры",
 			"TITLE": "Заголовок",
 			"INTERVIEWERS": "Интервьюеры",
+			"ADD_FEEDBACK": "Добавить отзыв",
 			"LOCATION": "Местоположение",
 			"NOTES": "Заметки",
 			"ACTIONS": "Действия",
+			"EDIT": "Редактировать",
+			"ARCHIVE": "Архивировать",
+			"PAST": "Прошлые",
+			"DELETE": "Удалить",
 			"UPDATED": "Обновлено",
 			"CANDIDATE": "Кандидат",
+			"FEEDBACK_PROHIBIT": "Запрещена добавление отзывов о будущих интервью",
 			"START_DATE": "Дата начала"
 		},
 		"STATISTIC": {
@@ -1725,6 +1744,7 @@
 		"SHOW_HIDE_COLUMNS": "Показать/скрыть столбцы",
 		"INVOICES_PER_PAGE": "Счета на странице",
 		"ESTIMATES_PER_PAGE": "Оценки на странице",
+		"APPLY_DISCOUNT_AFTER_TAX": "Применить скидку после налога",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -1964,6 +1984,7 @@
 			"KEY_RESULT_UPDATED": "Результат ключа обновлён",
 			"TIME_FRAME_DELETED": "Рамка времени удалена",
 			"EDIT_PAST_INTERVIEW": "Редактирование прошлых интервью запрещено",
+			"ARCHIVE_INTERVIEW": "Это интервью уже было заархивировано",
 			"DELETE_PAST_INTERVIEW": "Удаление прошлых интервью запрещено",
 			"GOAL_GENERAL_SETTING_UPDATED": "Общие настройки цели обновлены",
 			"MAX_OBJECTIVE_LIMIT": "Вы не можете создать больше целей. Пожалуйста, измените ограничение на максимальные цели, чтобы добавить больше целей.",
@@ -2216,6 +2237,31 @@
 		"NO_TODO": "Нет задач",
 		"OVERLAP_MESSAGE": "Эта запись перекрывает деятельность в других проектах/задачах, которые будут заменены:",
 		"REASON": "Причина",
+		"NOTES": "Заметки",
+		"TIME_OVERLAPS": "Перекрытие времени",
+		"TIME_TRACKING": "Время отслеживания",
+		"MEMBERS_WORKED": "Пользователи работали",
+		"PROJECTS_WORKED": "Выполнено проектов",
+		"WEEKLY_ACTIVITY": "Еженедельная активность",
+		"WORKED_THIS_WEEK": "Работал на этой неделе",
+		"TODAY_ACTIVITY": "Текущая активность",
+		"WORKED_TODAY": "Работал сегодня",
+		"RECENT_ACTIVITIES": "Недавние действия",
+		"NO_SCREENSHOT": "Нет скриншота за неделю",
+		"TASKS": "Задачи",
+		"NO_TASK_ACTIVITY": "Нет активности за неделю",
+		"MANUAL_TIME": "Ручное время",
+		"NO_MANUAL_TIME": "Нет ручного времени за неделю",
+		"PROJECTS": "Проекты",
+		"NO_PROJECT_ACTIVITY": "Нет активности по проекту за неделю",
+		"APPS_URLS": "Приложения и адреса",
+		"NO_APP_URL_ACTIVITY": "Нет активности приложения и url на неделю",
+		"DATE": "Дата",
+		"MEMBERS": "Члены Комитета",
+		"MEMBER": "Участник",
+		"MEMBER_INFO": "Информация о участнике",
+		"THIS_WEEK": "Эта неделя",
+		"NO_MEMBER_ACTIVITY": "Нет активности членов за неделю",
 		"VALIDATION": {
 			"DESCRIPTION": "Описание обязательно",
 			"TASK": "Пожалуйста, выберите задачу",
@@ -2232,7 +2278,9 @@
 		"NO_ACTIVITY": "Нет активности",
 		"VIEW_SCREEN": "Экран",
 		"VIEW_INFO": "Просмотр информации",
-		"NO_SCREENSHOTS": "Нет скриншотов"
+		"MINUTES": "Минут",
+		"NO_SCREENSHOTS": "Нет скриншотов",
+		"DELETE_CONFIRM": "Вы уверены, что хотите удалить эти скриншоты и активности?"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",

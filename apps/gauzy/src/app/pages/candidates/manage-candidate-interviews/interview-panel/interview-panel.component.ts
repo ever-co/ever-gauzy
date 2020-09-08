@@ -31,6 +31,7 @@ import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constan
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ArchiveConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 
 @Component({
 	selector: 'ga-interview-panel',
@@ -51,6 +52,8 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	isResetSelect: boolean;
 	loading: boolean;
 	includeArchived = false;
+	onlyPast = false;
+	onlyFuture = false;
 	addedInterview: ICandidateInterview[];
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -82,9 +85,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				this.candidates = candidates.items;
 			});
 		this.loadInterviews();
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
-
 		this.candidateStore.interviewList$.subscribe(() => {
 			this.loadInterviews();
 		});
@@ -141,7 +141,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			this.allInterviews = interviews.items;
 			this.tableInterviewList = [];
 			const result = [];
-			let interviewsForTable = [];
 			this.interviewList.forEach((interview) => {
 				const employees = [];
 				interview.interviewers.forEach(
@@ -164,37 +163,68 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 							fullName: item.user.name,
 							imageUrl: item.user.imageUrl,
 							employees: employees,
+							showArchive: true,
 							allFeedbacks: this.allFeedbacks
 						});
 					}
 				});
-				// For rating
-				if (interview.feedbacks.length > 0) {
-					const rate: number[] = [];
-					interview.feedbacks.forEach((fb) => {
-						rate.push(Number(fb.rating));
-					});
-					const fbSum = rate.reduce((sum, current) => {
-						return sum + current;
-					});
-					interview.rating = fbSum / interview.feedbacks.length;
-				} else {
-					interview.rating = 0;
+			});
+			// for grid view
+			this.interviewList = this.onlyPast
+				? this.filterInterviewByTime(this.interviewList, true)
+				: this.interviewList;
+
+			this.interviewList = this.onlyFuture
+				? this.filterInterviewByTime(this.interviewList, false)
+				: this.interviewList;
+
+			this.interviewList = this.includeArchivedCheck(
+				this.includeArchived,
+				this.interviewList
+			);
+			// for table view
+			this.tableInterviewList = this.includeArchivedCheck(
+				this.includeArchived,
+				result
+			);
+			this.tableInterviewList = this.onlyPast
+				? this.filterInterviewByTime(this.tableInterviewList, true)
+				: this.tableInterviewList;
+
+			this.tableInterviewList = this.onlyFuture
+				? this.filterInterviewByTime(this.tableInterviewList, false)
+				: this.tableInterviewList;
+
+			this.sourceSmartTable.load(this.tableInterviewList);
+			this.loading = false;
+			this.loadSmartTable();
+			this._applyTranslationOnSmartTable();
+		}
+	}
+	filterInterviewByTime(list: ICandidateInterview[], isPast: boolean) {
+		const now = new Date().getTime();
+		return list.filter((item) =>
+			isPast
+				? new Date(item.startTime).getTime() < now
+				: new Date(item.startTime).getTime() > now
+		);
+	}
+
+	includeArchivedCheck(
+		includeArchived: boolean,
+		list: ICandidateInterview[]
+	) {
+		let res: ICandidateInterview[] = [];
+		if (!includeArchived) {
+			list.forEach((interview) => {
+				if (!interview.isArchived) {
+					res.push(interview);
 				}
 			});
-			if (!this.includeArchived) {
-				result.forEach((interview) => {
-					if (!interview.isArchived) {
-						interviewsForTable.push(interview);
-					}
-				});
-			} else {
-				interviewsForTable = result;
-			}
-			this.tableInterviewList = interviewsForTable;
-			this.sourceSmartTable.load(interviewsForTable);
-			this.loading = false;
+		} else {
+			res = list;
 		}
+		return res;
 	}
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -267,16 +297,25 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ACTIONS'
 					),
-					width: '145px',
+					width: '150px',
 					type: 'custom',
 					renderComponent: InterviewActionsTableComponent,
 					filter: false,
 					onComponentInitFunction: (instance) => {
 						instance.updateResult.subscribe((params) => {
-							if (params.isEdit) {
-								this.editInterview(params.data.id);
-							} else {
-								this.removeInterview(params.data.id);
+							switch (params.type) {
+								case 'feedback':
+									this.addFeedback(params.data);
+									break;
+								case 'archive':
+									this.archive(params.data);
+									break;
+								case 'edit':
+									this.editInterview(params.data.id);
+									break;
+								case 'remove':
+									this.removeInterview(params.data.id);
+									break;
 							}
 						});
 					}
@@ -301,30 +340,86 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		this.includeArchived = checked;
 		this.loadInterviews();
 	}
-	archive(interview: ICandidateInterview) {
-		this.dialogService
-			.open(ArchiveConfirmationComponent, {
-				context: {
-					recordType: `${interview.title}`
-				}
-			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (result) => {
-				if (result) {
-					try {
-						await this.candidateInterviewService.setInterviewAsArchived(
-							interview.id
-						);
-						this.toastrService.primary(
-							`${interview.title}` + '  set as archived.',
-							'Success'
-						);
-						this.loadInterviews();
-					} catch (error) {
-						this.errorHandler.handleError(error);
+	changePast(checked: boolean) {
+		this.onlyPast = checked;
+		if (this.onlyFuture) {
+			this.onlyFuture = false;
+		}
+		this.loadInterviews();
+	}
+	changeFuture(checked: boolean) {
+		this.onlyFuture = checked;
+		if (this.onlyPast) {
+			this.onlyPast = false;
+		}
+		this.loadInterviews();
+	}
+	async addFeedback(interview: ICandidateInterview) {
+		if (!this.isPastInterview(interview)) {
+			this.toastrService.warning(
+				this.getTranslation('TOASTR.TITLE.WARNING'),
+				this.getTranslation(
+					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.FEEDBACK_PROHIBIT'
+				)
+			);
+		} else {
+			if (interview.feedbacks.length !== interview.interviewers.length) {
+				const dialog = this.dialogService.open(
+					CandidateInterviewFeedbackComponent,
+					{
+						context: {
+							currentInterview: interview,
+							candidateId: interview.candidate.id,
+							interviewId: interview.id
+						}
 					}
+				);
+				const data = await dialog.onClose.pipe(first()).toPromise();
+				if (data) {
+					this.loadInterviews();
+					this.toastrSuccess('CREATED');
 				}
-			});
+			} else {
+				this.toastrService.primary(
+					this.getTranslation('TOASTR.TITLE.WARNING'),
+					this.getTranslation(
+						'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_ABILITY'
+					)
+				);
+			}
+		}
+	}
+	archive(interview: ICandidateInterview) {
+		if (interview.isArchived) {
+			this.toastrService.warning(
+				this.getTranslation('TOASTR.TITLE.WARNING'),
+				this.getTranslation('TOASTR.MESSAGE.ARCHIVE_INTERVIEW')
+			);
+		} else {
+			this.dialogService
+				.open(ArchiveConfirmationComponent, {
+					context: {
+						recordType: `${interview.title}`
+					}
+				})
+				.onClose.pipe(takeUntil(this._ngDestroy$))
+				.subscribe(async (result) => {
+					if (result) {
+						try {
+							await this.candidateInterviewService.setInterviewAsArchived(
+								interview.id
+							);
+							this.toastrService.primary(
+								`${interview.title}` + '  set as archived.',
+								'Success'
+							);
+							this.loadInterviews();
+						} catch (error) {
+							this.errorHandler.handleError(error);
+						}
+					}
+				});
+		}
 	}
 	async editInterview(id: string) {
 		const currentInterview = this.interviewList.find(

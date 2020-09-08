@@ -8,7 +8,12 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { takeUntil } from 'rxjs/operators';
 import { CandidateDocumentsService } from 'apps/gauzy/src/app/@core/services/candidate-documents.service';
 import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-cv/candidate-cv.component';
-import { ICandidateDocument } from '@gauzy/models';
+import { ICandidateDocument, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { LocalDataSource } from 'ng2-smart-table';
+import { DocumentUrlTableComponent } from 'apps/gauzy/src/app/@shared/table-components/document-url/document-url.component';
+import { DocumentDateTableComponent } from 'apps/gauzy/src/app/@shared/table-components/document-date/document-date.component';
 
 @Component({
 	selector: 'ga-edit-candidate-documents',
@@ -26,15 +31,21 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	candidateId: string;
 	form: FormGroup;
 	formCv: FormGroup;
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	documentUrl = '';
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateDocumentsService: CandidateDocumentsService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore
+		private candidateStore: CandidateStore,
+		private store: Store
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit() {
@@ -45,6 +56,8 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 					this.candidateId = candidate.id;
 					this._initializeForm();
 					this.loadDocuments();
+					this.loadSmartTable();
+					this._applyTranslationOnSmartTable();
 				}
 			});
 	}
@@ -60,12 +73,45 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 			})
 		);
 	}
+	setView() {
+		this.viewComponentName = ComponentEnum.DOCUMENTS;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				name: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'string'
+				},
+				documentUrl: {
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.DOCUMENT_URL'
+					),
+					type: 'custom',
+					renderComponent: DocumentUrlTableComponent
+				},
+				updated: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.UPDATED'),
+					type: 'custom',
+					renderComponent: DocumentDateTableComponent
+				}
+			}
+		};
+	}
 	private async loadDocuments() {
 		const res = await this.candidateDocumentsService.getAll({
 			candidateId: this.candidateId
 		});
 		if (res) {
 			this.documentList = res.items;
+			this.smartTableSource.load(res.items);
 		}
 	}
 	showCard() {
@@ -73,11 +119,11 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		this.form.controls.documents.reset();
 	}
 
-	editDocument(index: number, id: string) {
+	editDocument(doc: ICandidateDocument) {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.documents.patchValue([this.documentList[index]]);
-		this.documentId = id;
-		this.documentUrl = this.documentList[index].documentUrl;
+		this.form.controls.documents.patchValue([doc]);
+		this.documentId = doc.id;
+		this.documentUrl = doc.documentUrl;
 	}
 
 	cancel() {
@@ -171,6 +217,11 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 			this.getTranslation('NOTES.CANDIDATE.INVALID_FORM'),
 			this.getTranslation('TOASTR.MESSAGE.CANDIDATE_DOCUMENT_REQUIRED')
 		);
+	}
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

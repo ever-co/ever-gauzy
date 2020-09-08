@@ -23,7 +23,6 @@ export class CandidateBulkCreateHandler
 		const createdCandidates = await this.candidateService.createBulk(
 			inputWithHash
 		);
-
 		this._sendWelcomeEmail(createdCandidates, languageCode);
 
 		return createdCandidates;

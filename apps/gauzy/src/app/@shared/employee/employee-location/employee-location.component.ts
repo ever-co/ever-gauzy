@@ -9,8 +9,7 @@ import { CountryService } from '../../../@core/services/country.service';
 
 @Component({
 	selector: 'ga-employee-location',
-	templateUrl: 'employee-location.component.html',
-	styleUrls: ['employee-location.component.scss']
+	templateUrl: 'employee-location.component.html'
 })
 export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;

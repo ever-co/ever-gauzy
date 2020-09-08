@@ -17,7 +17,10 @@
 						status="danger"
 						nbButton
 						size="tiny"
-						(click)="$event.stopPropagation(); deleteSlot(timeSlot)"
+						(click)="$event.stopPropagation()"
+						ngxConfirmDialog
+						[message]="'ACTIVITY.DELETE_CONFIRM' | translate"
+						(confirm)="deleteSlot(timeSlot)"
 					>
 						<nb-icon icon="trash-2-outline"></nb-icon>
 					</button>
@@ -30,8 +33,7 @@
 						status="primary"
 						(click)="$event.stopPropagation()"
 						ngxGallery
-						[item]="timeSlot.screenshots[0]?.fullUrl"
-						[items]="galleryItems"
+						[item]="timeSlot?.screenshots"
 						*ngIf="timeSlot?.screenshots?.length > 0"
 					>
 						{{ 'ACTIVITY.VIEW_SCREEN' | translate }}
@@ -82,7 +84,7 @@
 						| amFromUtc
 						| amDateFormat: 'mm'
 				}}
-				Minutes
+				{{ 'ACTIVITY.MINUTES' | translate }}
 			</div>
 		</div>
 	</div>

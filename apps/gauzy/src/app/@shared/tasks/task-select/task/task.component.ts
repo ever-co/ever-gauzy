@@ -5,6 +5,8 @@ import { TasksService } from '../../../../@core/services/tasks.service';
 import { NbDialogService } from '@nebular/theme';
 import { AddTaskDialogComponent } from '../../add-task-dialog/add-task-dialog.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+import { debounceTime } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-task-selector',
@@ -19,16 +21,11 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 })
 export class TaskSelectorComponent
 	implements OnInit, OnDestroy, ControlValueAccessor {
-	tasks: Task[];
-	val: any;
+	private _employeeId;
+	private _projectId;
 
 	@Input() disabled = false;
 	@Input() allowAddNew = true;
-
-	private _projectId;
-
-	onChange: any = () => {};
-	onTouched: any = () => {};
 
 	@Input()
 	public get projectId() {
@@ -36,40 +33,62 @@ export class TaskSelectorComponent
 	}
 	public set projectId(value) {
 		this._projectId = value;
-		this.loadTasks();
+		this.loadTasks$.next();
+	}
+
+	@Input()
+	public get employeeId() {
+		return this._employeeId;
+	}
+	public set employeeId(value) {
+		this._employeeId = value;
+		this.loadTasks$.next();
 	}
 
 	set taskId(val: string) {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
 		this.val = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
 	get taskId() {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
 		return this.val;
 	}
+
+	tasks: Task[];
+	val: any;
+	loadTasks$: Subject<any> = new Subject();
 
 	constructor(
 		private tasksService: TasksService,
 		private dialogService: NbDialogService
 	) {}
 
-	ngOnInit() {}
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
-	private async loadTasks(): Promise<void> {
-		const { items = [] } = await this.tasksService
-			.getAllTasks({ projectId: this.projectId })
-			.toPromise();
+	ngOnInit() {
+		this.loadTasks$
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe(async () => {
+				if (this.employeeId) {
+					this.tasks = await this.tasksService.getAllTasksByEmployee(
+						this.employeeId,
+						{
+							where: {
+								projectId: this.projectId
+							}
+						}
+					);
+				} else {
+					const { items = [] } = await this.tasksService
+						.getAllTasks({
+							projectId: this.projectId
+						})
+						.toPromise();
 
-		this.tasks = items;
-
-		if (
-			items.length === 0 ||
-			items.find((item) => this.taskId !== item.id)
-		) {
-			this.taskId = null;
-		}
+					this.tasks = items;
+				}
+			});
 	}
 
 	writeValue(value: any) {

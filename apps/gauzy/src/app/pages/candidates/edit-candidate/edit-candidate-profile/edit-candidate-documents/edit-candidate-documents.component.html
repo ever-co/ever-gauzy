@@ -1,5 +1,5 @@
 <nb-card>
-	<nb-card-header>
+	<nb-card-header class="header">
 		<button
 			nbButton
 			status="success"
@@ -9,6 +9,10 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
+		<ga-layout-selector
+			*ngIf="!showAddCard"
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
 		<div *ngIf="showAddCard" class="row m-0">
 			<div class="col-8 documents-card">
 				<form class="col-5" [formGroup]="form" *ngIf="form">
@@ -77,7 +81,10 @@
 			>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="documentList?.length" class="mt-3">
+	<nb-card-body
+		*ngIf="documentList?.length && dataLayoutStyle === 'TABLE'"
+		class="mt-3"
+	>
 		<nb-card *ngFor="let document of documentList; let i = index">
 			<nb-card-body class="documents-card">
 				<div class="documents-line">
@@ -97,7 +104,7 @@
 
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="editDocument(i, document.id)"
+						(click)="editDocument(document)"
 						class="d-inline pr-2"
 						icon="edit"
 					></nb-action>
@@ -110,4 +117,41 @@
 			</nb-card-body>
 		</nb-card>
 	</nb-card-body>
+	<nb-card-body>
+		<ga-card-grid
+			*ngIf="documentList?.length && dataLayoutStyle === 'CARDS_GRID'"
+			[settings]="settingsSmartTable"
+			[source]="documentList"
+			[buttonTemplate]="actionButtons"
+		></ga-card-grid>
+	</nb-card-body>
+
+	<ng-template
+		#actionButtons
+		let-buttonSize="buttonSize"
+		let-selectedItem="selectedItem"
+	>
+		<button
+			(click)="editDocument(selectedItem)"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="removeDocument(selectedItem.id)"
+			nbButton
+			status="danger"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
 </nb-card>

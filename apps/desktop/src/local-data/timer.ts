@@ -111,5 +111,14 @@ export const TimerData = {
 				.update(query)
 				.then(true);
 		}
+	},
+
+	getLastTimer: async (knex, appInfo) => {
+		console.log('userinfo', appInfo);
+		const result = await knex('timer').where({
+			projectId: appInfo.projectId,
+			userId: appInfo.employeeId
+		}).orderBy('created_at', 'desc').limit(1);
+		return result;
 	}
 };
