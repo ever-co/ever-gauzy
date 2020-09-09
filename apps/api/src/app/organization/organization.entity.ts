@@ -39,6 +39,7 @@ import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { Employee } from '../employee/employee.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
+import { Deal } from '../deal/deal.entity';
 
 @Entity('organization')
 export class Organization extends TenantBase implements IOrganization {
@@ -67,6 +68,11 @@ export class Organization extends TenantBase implements IOrganization {
 	@OneToMany(() => Employee, (employee) => employee.organization)
 	@JoinColumn()
 	employees?: Employee[];
+
+	@ApiProperty({ type: Deal })
+	@OneToMany(() => Deal, (deal) => deal.organization)
+	@JoinColumn()
+	deals?: Deal[];
 
 	@ApiProperty({ type: String })
 	@IsString()

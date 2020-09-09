@@ -123,7 +123,7 @@ export const createRandomTimeLogs = async (
 
 		for (const timelog of timelogs) {
 			if (timelog.logType === TimeLogType.TRACKED) {
-				const timeSlots = savedtimeSlot.filter(
+				timeSlots = savedtimeSlot.filter(
 					(x) => x.employeeId === timelog.employeeId
 				);
 				for (const timeSlot of timeSlots) {

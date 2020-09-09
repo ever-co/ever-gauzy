@@ -1378,7 +1378,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random TimeSheets',
-			createRandomTimesheet(this.connection, this.defaultProjects, 20)
+			createRandomTimesheet(
+				this.connection,
+				this.defaultProjects,
+				randomSeedConfig.noOfTimeLogsPerTimeSheet
+			)
 		);
 
 		await this.tryExecute(
