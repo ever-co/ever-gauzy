@@ -23,7 +23,7 @@ export interface IIntegrationMap {
 }
 
 export interface IIntegrationViewModel {
-	title: string;
+	name: string;
 	imgSrc: string | SafeResourceUrl;
 	navigation_url: string;
 	isComingSoon?: boolean;

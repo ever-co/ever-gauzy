@@ -550,7 +550,7 @@
 			"CANCEL": "בטל",
 			"REMOVE": "Remove",
 			"WRONG_FILE_NAME": "Wrong file name!!!",
-			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\"",
+			"CORRECT_FILE_NAME": "The file name should be: \"import.zip\"",
 			"DOWNLOAD_TEMPLATES": "Download templates"
 		},
 		"TAGS": "Tags",
@@ -628,7 +628,9 @@
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
-			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+			"DATE_RANGE_PLACEHOLDER": "Choose date between",
+			"RE_INTEGRATE": "Re-integrate",
+			"SETTINGS": "הגדרות"
 		},
 		"COMING_SOON": "Coming soon"
 	},

@@ -1,4 +1,12 @@
 <div class="row align-items-center">
+	<div class="col-auto" *ngIf="allowChild">
+		<button nbButton ghost *ngIf="childOpen" (click)="toggleChild()">
+			<nb-icon icon="arrow-ios-downward-outline"></nb-icon>
+		</button>
+		<button nbButton ghost *ngIf="!childOpen" (click)="toggleChild()">
+			<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+		</button>
+	</div>
 	<div class="col-sm-3 py-1">{{ item.title }}</div>
 	<div class="col-sm py-1">
 		<div class="row align-items-center">
@@ -17,7 +25,34 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-sm-2 text-center py-1">
+	<div class="col-sm-2 text-right py-1">
 		{{ item.duration | durationFormat }}
+	</div>
+</div>
+<div *ngIf="item?.childItems?.length && childOpen" class="child-items">
+	<div class="row pt-2 pb-2 border-bottom font-weight-bold">
+		<div class="col-sm-2">
+			Title
+		</div>
+		<div class="col-sm-8">
+			Url
+		</div>
+		<div class="col-sm-2 text-right">
+			Time spent (hours)
+		</div>
+	</div>
+	<div
+		class="row pt-2 pb-2 border-top"
+		*ngFor="let childItem of item.childItems"
+	>
+		<div class="col-sm-2">
+			{{ childItem.title }}
+		</div>
+		<div class="col-sm-8">
+			{{ childItem.description }}
+		</div>
+		<div class="col-sm-2 text-right">
+			{{ item.duration | durationFormat }}
+		</div>
 	</div>
 </div>

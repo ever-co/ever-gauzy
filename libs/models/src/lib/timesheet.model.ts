@@ -188,11 +188,11 @@ export interface ITimeSlotTimeLogs extends IBaseEntityModel {
 	timeSlotId: string;
 }
 
-export interface ITimeSlotMinute extends IBaseEntityModel {
+export interface ITimeSlotMinute extends Omit<IBaseEntityModel, 'tenantId'> {
 	timeSlot?: TimeSlot;
 	keyboard?: number;
 	mouse?: number;
-	datetime: Date;
+	datetime?: Date;
 }
 
 export interface Activity extends IBaseEntityModel {
@@ -222,14 +222,17 @@ export interface DailyActivity {
 	employeeId?: string;
 	date?: string;
 	title?: string;
+	description?: string;
+	durationPercentage?: number;
+	childItems?: DailyActivity[];
 }
 
 export interface TimeSlotMinute extends IBaseEntityModel {
-	timeSlot: TimeSlot;
-	timeSlotId: string;
-	keyboard: number;
-	mouse: number;
-	datetime: Date;
+	timeSlot?: TimeSlot;
+	timeSlotId?: string;
+	keyboard?: number;
+	mouse?: number;
+	datetime?: Date;
 }
 
 export interface ICreateActivityInput {
@@ -334,7 +337,8 @@ export interface IGetTimeSlotInput extends TimeLogFilters {
 
 export interface IGetActivitiesInput extends TimeLogFilters, Pagination {
 	relations?: string[];
-	type?: string[];
+	types?: string[];
+	titles?: string[];
 }
 
 export interface IBulkActivitiesInput {

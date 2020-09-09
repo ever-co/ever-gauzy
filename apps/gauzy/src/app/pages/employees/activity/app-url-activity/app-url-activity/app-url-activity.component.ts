@@ -7,7 +7,8 @@ import {
 	TimeLogFilters,
 	IGetActivitiesInput,
 	ActivityType,
-	DailyActivity
+	DailyActivity,
+	Activity
 } from '@gauzy/models';
 import { debounceTime } from 'rxjs/operators';
 import { toUTC, toLocal } from 'libs/utils';
@@ -77,6 +78,34 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
+	loadChild(item: DailyActivity) {
+		const date = toLocal(item.date).format('YYYY-MM-DD') + ' ' + item.time;
+		const request: IGetActivitiesInput = {
+			startDate: toUTC(date).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(date).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+			employeeIds: [item.employeeId],
+			types: [this.type === 'urls' ? ActivityType.URL : ActivityType.APP],
+			titles: [item.title]
+		};
+
+		this.activityService.getActivites(request).then((items) => {
+			item.childItems = items.map(
+				(activite: Activity): DailyActivity => {
+					return {
+						sessions: 1,
+						duration: activite.duration,
+						employeeId: activite.employeeId,
+						date: activite.date,
+						title: activite.title,
+						description: activite.description,
+						durationPercentage:
+							(activite.duration * 100) / item.duration
+					};
+				}
+			);
+		});
+	}
+
 	async getLogs() {
 		if (!this.organization) {
 			return;
@@ -90,7 +119,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
-			type: this.type === 'apps' ? ActivityType.APP : ActivityType.URL
+			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
 		};
 
 		this.loading = true;
@@ -117,10 +146,9 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 							0
 						);
 						value = value.map((activity) => {
-							activity.durationPercentage = (
-								(activity.duration * 100) /
-								sum
-							).toFixed(1);
+							activity.durationPercentage = parseFloat(
+								((activity.duration * 100) / sum).toFixed(1)
+							);
 							return activity;
 						});
 						return { hour: key, activities: value };

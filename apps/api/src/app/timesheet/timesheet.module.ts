@@ -27,6 +27,12 @@ import { StatisticService } from './statistic/statistic.service';
 import { StatisticController } from './statistic/statistic.controller';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
+import { EmailTemplate } from '../email-template/email-template.entity';
+import { Organization } from '../organization/organization.entity';
+import { Email } from '../email/email.entity';
+import { EmailService } from '../email/email.service';
+import { EmailModule } from '../email';
+import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
 
 @Module({
 	controllers: [
@@ -48,9 +54,13 @@ import { Task } from '../tasks/task.entity';
 			Employee,
 			TimeSlotMinute,
 			OrganizationProjects,
-			Task
+			Task,
+			Email,
+			EmailTemplate,
+			Organization
 		]),
-		CqrsModule
+		CqrsModule,
+		EmailModule
 	],
 	providers: [
 		TimerService,
@@ -60,8 +70,10 @@ import { Task } from '../tasks/task.entity';
 		TimeLogService,
 		TimeSlotService,
 		StatisticService,
+		EmailService,
 		...TimeLogCommandHandlers,
 		...TimesheetCommandHandlers,
+		...TimeSlotCommandHandlers,
 		...CommandHandlers
 	],
 	exports: [

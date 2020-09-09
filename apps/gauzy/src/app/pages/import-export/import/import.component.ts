@@ -40,7 +40,6 @@ export class ImportComponent extends TranslationBaseComponent
 	}
 
 	onImportTypeChange(e) {
-		console.log(e);
 		this.importType = e;
 	}
 

@@ -18,25 +18,25 @@ export class TimeSlotMinute extends Base implements ITimeSlotMinute {
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	timeSlot: TimeSlot;
+	timeSlot?: TimeSlot;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: TimeSlotMinute) => activity.timeSlot)
 	@Column()
-	timeSlotId: string;
+	timeSlotId?: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	keyboard: number;
+	keyboard?: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
-	mouse: number;
+	mouse?: number;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column()
-	datetime: Date;
+	datetime?: Date;
 }
