@@ -11,8 +11,6 @@ export interface IHelpCenterArticle extends IBaseEntityModel {
 	categoryId: string;
 	employees?: Employee[];
 	authors?: IHelpCenterAuthor[];
-  organization?: Organization;
-  tenant?: ITenant;
 }
 
 export interface IHelpCenterAuthor extends IBaseEntityModel {

@@ -8,7 +8,8 @@ export interface GoalTimeFrame extends IBaseEntityModel {
 	status: string;
 	startDate: Date;
 	endDate: Date;
-	organization: Organization;
+	organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface GoalGeneralSetting extends IBaseEntityModel {
@@ -32,6 +33,8 @@ export interface KPI extends IBaseEntityModel {
 	targetValue: number;
 	lead?: Employee;
 	operator: string;
+  organization?: Organization;
+  tenant: ITenant;
 }
 
 export interface GoalTemplate extends IBaseEntityModel {

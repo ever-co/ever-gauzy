@@ -4,7 +4,6 @@ import {
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum
 } from '@gauzy/models';
-import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
@@ -30,10 +29,11 @@ import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Payment } from '../payment/payment.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])
-export class Invoice extends Base implements IInvoice {
+export class Invoice extends TenantOrganizationBase implements IInvoice {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.invoice)
 	@JoinTable({
@@ -135,12 +135,6 @@ export class Invoice extends Base implements IInvoice {
 	@IsOptional()
 	@Column({ nullable: true })
 	sentTo?: string;
-
-	@ApiPropertyOptional({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	organizationId?: string;
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()

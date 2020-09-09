@@ -20,12 +20,11 @@ import {
 } from 'class-validator';
 import { Income as IIncome, CurrenciesEnum } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('income')
-export class Income extends TenantBase implements IIncome {
+export class Income extends TenantOrganizationBase implements IIncome {
 	@ManyToMany((type) => Tag, (tag) => tag.income)
 	@JoinTable({
 		name: 'tag_income'
@@ -41,15 +40,6 @@ export class Income extends TenantBase implements IIncome {
 	@RelationId((income: Income) => income.employee)
 	@Column({ nullable: true })
 	readonly employeeId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((income: Income) => income.organization)
-	readonly organizationId: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

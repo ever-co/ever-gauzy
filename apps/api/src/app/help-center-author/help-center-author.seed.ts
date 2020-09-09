@@ -7,7 +7,6 @@ import { Employee } from '@gauzy/models';
 
 export const createDefaultHelpCenterAuthor = async (
 	connection: Connection,
-  tenants: Tenant[],
 	defaultEmployees: Employee[]
 ): Promise<HelpCenterAuthor[]> => {
 	if (!defaultEmployees) {
@@ -25,8 +24,7 @@ export const createDefaultHelpCenterAuthor = async (
 		connection,
 		mapEmployeeToArticles,
 		allArticle,
-		defaultEmployees,
-    tenants
+		defaultEmployees
 	);
 
 	return mapEmployeeToArticles;
@@ -59,8 +57,7 @@ export const createRandomHelpCenterAuthor = async (
 		connection,
 		mapEmployeeToArticles,
 		allArticle,
-		employees,
-    tenants
+		employees
 	);
 
 	return mapEmployeeToArticles;
@@ -82,18 +79,15 @@ const operateData = async (
 	connection,
 	mapEmployeeToArticles,
 	allArticle,
-	employees: Employee[],
-  tenants
+	employees: Employee[]
 ) => {
 	for (let i = 0; i < allArticle.length; i++) {
 		const employee = faker.random.arrayElement(employees);
-		let tenant = tenants.filter((x)=> x.id === employee.tenantId)[0];
 
 		const employeeMap = new HelpCenterAuthor();
 
 		employeeMap.employeeId = employee.id;
 		employeeMap.articleId = allArticle[i].id;
-		employeeMap.tenant = tenant;
 
 		mapEmployeeToArticles.push(employeeMap);
 	}

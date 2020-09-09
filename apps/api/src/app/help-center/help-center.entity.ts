@@ -3,11 +3,10 @@ import { Entity, Column, ManyToOne, OneToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IHelpCenter } from '@gauzy/models';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
-import { TenantBase } from '../core/entities/tenant-base';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('knowledge_base')
-export class HelpCenter extends TenantBase implements IHelpCenter {
+export class HelpCenter extends TenantOrganizationBase implements IHelpCenter {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -65,11 +64,4 @@ export class HelpCenter extends TenantBase implements IHelpCenter {
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	parentId?: string;
-
-	@ApiProperty({ type: String })
-	@Column({ nullable: true })
-	organizationId?: string;
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization: Organization;
 }

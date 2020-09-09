@@ -23,7 +23,6 @@ export const createHelpCenterArticle = async (
       article.draft = booleanAry[Math.random() > 0.5 ? 1 : 0];
       article.privacy = booleanAry[Math.random() > 0.5 ? 1 : 0];
       article.index = Math.floor(Math.random() * 99999) + 1;
-      article.tenant = tenant;
 
       HelpCenterArticles.push(article);
     }

@@ -16,14 +16,14 @@ import { IsOptional, IsEnum } from 'class-validator';
 import { Goal } from '../goal/goal.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { Employee } from '../employee/employee.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
 import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('key_result')
-export class KeyResult extends TenantBase implements IKeyResult {
+export class KeyResult extends TenantOrganizationBase implements IKeyResult {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -149,11 +149,4 @@ export class KeyResult extends TenantBase implements IKeyResult {
 	)
 	@IsOptional()
 	updates?: KeyResultUpdate[];
-
-	@ApiProperty({ type: String })
-	@Column({ nullable: true })
-	organizationId: string;
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization?: Organization;
 }

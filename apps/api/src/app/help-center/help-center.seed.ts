@@ -13,6 +13,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 		language: 'en',
 		color: '#d53636',
 		index: 0,
+    tenant: {},
 		children: [
 			{
 				name: 'Cookies',
@@ -22,6 +23,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Information',
 				language: 'en',
 				color: '#d53636',
+        tenant: {},
 				index: 0
 			},
 			{
@@ -32,6 +34,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Device Information',
 				language: 'en',
 				color: '#d53636',
+        tenant: {},
 				index: 1
 			},
 			{
@@ -43,6 +46,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				data: 'Usage Information',
 				language: 'en',
 				color: '#d53636',
+        tenant: {},
 				index: 2
 			},
 			{
@@ -53,6 +57,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Gauzy Testing',
 				language: 'en',
 				color: '#d53636',
+        tenant: {},
 				index: 3
 			}
 		]
@@ -65,6 +70,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 		language: 'en',
 		color: '#d53636',
 		index: 1,
+    tenant: {},
 		children: [
 			{
 				name: 'Cookies',
@@ -74,6 +80,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Information',
 				language: 'en',
 				color: '#d53636',
+        tenant: {},
 				index: 0
 			}
 		]
@@ -86,6 +93,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 		language: 'en',
 		color: '#d53636',
 		index: 2,
+    tenant: {},
 		children: [
 			{
 				name: 'Cookies',
@@ -95,6 +103,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Information',
 				language: 'en',
 				color: '#d53636',
+        tenant: {},
 				index: 0
 			}
 		]
@@ -112,7 +121,7 @@ export const createHelpCenter = async (
 	}
 ): Promise<IHelpCenter[]> => {
 	for (const node of helpCenterMenuList) {
-		const helpCenter: HelpCenter = { ...node, tenant, organization: org };
+		const helpCenter: HelpCenter = { ...node, tenant, organization: org, organizationId: org.id };
 		helpCenter.children.forEach((child: HelpCenter) => {
 			child.organization = org;
 			child.tenant = tenant;

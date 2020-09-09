@@ -6,6 +6,7 @@ import { Organization, OrganizationCreateInput } from './organization.model';
 import { User, LanguagesEnum } from './user.model';
 import { Tag } from './tag-entity.model';
 import { Contact as IContact } from './contact.model';
+import { ITenant } from './tenant.model';
 
 export interface OrganizationContact extends IContact, IBaseEntityWithMembers {
 	name: string;
@@ -19,8 +20,9 @@ export interface OrganizationContact extends IContact, IBaseEntityWithMembers {
 	notes?: string;
 	members?: Employee[];
 	imageUrl?: string;
-	contactOrganization?: Organization;
-	contactOrganizationId?: string;
+	organization?: Organization;
+	tenant: ITenant;
+	tenantId?: string;
 	inviteStatus?: string;
 	tags: Tag[];
 	contact: IContact;

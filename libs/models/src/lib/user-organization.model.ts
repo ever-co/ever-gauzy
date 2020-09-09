@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { LanguagesEnum, User } from './user.model';
+import { ITenant } from './tenant.model';
 
 export interface UserOrganization extends IBaseEntityModel {
 	userId: string;
@@ -9,6 +10,8 @@ export interface UserOrganization extends IBaseEntityModel {
 	isActive: boolean;
 	user?: User;
 	organization?: Organization;
+	tenant: ITenant;
+	tenantId?: string;
 }
 
 export interface UserOrganizationFindInput extends IBaseEntityModel {

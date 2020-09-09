@@ -11,16 +11,15 @@ import {
 	ManyToOne,
 	RelationId
 } from 'typeorm';
-import { Base } from '../core/entities/base';
-import { Organization } from '../organization/organization.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Role } from '../role/role.entity';
 import { User } from '../user/user.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('invite')
-export class Invite extends Base implements IInvite {
+export class Invite extends TenantOrganizationBase implements IInvite {
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index({ unique: true })
@@ -33,12 +32,6 @@ export class Invite extends Base implements IInvite {
 	@Index({ unique: true })
 	@Column()
 	email: string;
-
-	@ApiProperty({ type: String })
-	@RelationId((invite: Invite) => invite.organization)
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
 
 	@ApiProperty({ type: String })
 	@RelationId((invite: Invite) => invite.role)
@@ -65,11 +58,6 @@ export class Invite extends Base implements IInvite {
 	@ManyToOne((type) => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	role?: Role;
-
-	@ApiPropertyOptional({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization?: Organization;
 
 	@ApiPropertyOptional({ type: User })
 	@ManyToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })

@@ -49,7 +49,6 @@ export const createRandomRequestApprovalEmployee = async (
             requestApprovalEmployee.requestApproval = requestApproval;
             requestApprovalEmployee.employeeId = tenantEmployee.id;
             requestApprovalEmployee.employee = tenantEmployee;
-            requestApprovalEmployee.tenant = tenant;
             requestApprovalEmployee.status = faker.random.number(99);
 
             requestApprovalEmployees.push(requestApprovalEmployee);

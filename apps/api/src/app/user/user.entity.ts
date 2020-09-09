@@ -31,29 +31,20 @@ import {
 	AfterLoad,
 	OneToMany
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { Role } from '../role/role.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Tag } from '../tags/tag.entity';
 import { Employee } from '../employee/employee.entity';
 import { Payment } from '../payment/payment.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('user')
-export class User extends Base implements IUser {
+export class User extends TenantBase implements IUser {
 	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_user'
 	})
 	tags?: Tag[];
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant?: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((user: User) => user.tenant)
-	readonly tenantId?: string;
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()

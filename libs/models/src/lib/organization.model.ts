@@ -50,6 +50,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	bonusType?: string;
 	bonusPercentage?: number;
 	tenant: ITenant;
+	tenantId?: string;
 	employees?: Employee[];
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;

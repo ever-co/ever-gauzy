@@ -1,9 +1,6 @@
-import { Base } from '../core/entities/base';
-import { Entity, Column, ManyToOne, ManyToMany } from 'typeorm';
+import { Entity, Column, ManyToMany } from 'typeorm';
 import { Tag as ITag } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { Employee } from '../employee/employee.entity';
 import { Equipment } from '../equipment/equipment.entity';
@@ -25,9 +22,10 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { Product } from '../product/product.entity';
 import { Payment } from '../payment/payment.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('tag')
-export class Tag extends Base implements ITag {
+export class Tag extends TenantOrganizationBase implements ITag {
 	@ApiProperty({ type: String })
 	@Column()
 	name?: string;
@@ -39,14 +37,6 @@ export class Tag extends Base implements ITag {
 	@ApiProperty({ type: String })
 	@Column()
 	color?: string;
-
-	@ApiProperty()
-	@ManyToOne((type) => Organization)
-	organization?: Organization;
-
-	@ApiProperty()
-	@ManyToOne((type) => Tenant)
-	tenant?: Tenant;
 
 	@ManyToMany((type) => Candidate, (candidate) => candidate.tags)
 	candidate?: Candidate[];

@@ -6,7 +6,6 @@ import {
 	ManyToMany,
 	OneToMany,
 	JoinTable,
-	OneToOne,
 	RelationId,
 	ManyToOne
 } from 'typeorm';
@@ -25,15 +24,14 @@ import {
 } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 import { Contact } from '../contact/contact.entity';
-import { Base } from '../core/entities/base';
 import { Payment } from '../payment/payment.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_contact')
-export class OrganizationContact extends Base implements IOrganizationContact {
+export class OrganizationContact extends TenantOrganizationBase implements IOrganizationContact {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationContact)
 	@JoinTable({
@@ -61,12 +59,6 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	name: string;
 
 	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
-
-	@ApiProperty({ type: String })
 	@IsEmail()
 	@IsNotEmpty()
 	@Column({ nullable: true })
@@ -89,16 +81,6 @@ export class OrganizationContact extends Base implements IOrganizationContact {
 	@IsOptional()
 	@Column({ nullable: true })
 	inviteStatus?: string;
-
-	@ApiProperty({ type: Organization })
-	@OneToOne((type) => Organization, { nullable: true, onDelete: 'SET NULL' })
-	@JoinColumn()
-	contactOrganization?: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((contact: OrganizationContact) => contact.contactOrganization)
-	@Column({ nullable: true })
-	readonly contactOrganizationId?: string;
 
 	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
 	@OneToMany(

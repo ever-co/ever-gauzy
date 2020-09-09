@@ -40,6 +40,7 @@ export const createDefaultOrganizationContact = async (
         orgContact.contact = contact;
 
         orgContact.organizationId = org.id;
+        orgContact.organization = org;
 
         orgContact.contactType = faker.random.arrayElement(
           contactTypes
@@ -63,6 +64,7 @@ export const createDefaultOrganizationContact = async (
         orgContact.phones = [faker.phone.phoneNumber()];
         orgContact.primaryEmail = orgContact.emailAddresses[0];
         orgContact.primaryPhone = orgContact.phones[0];
+        orgContact.tenant = tenant;
 
         orgContact.tags = _.chain(tags)
           .shuffle()
@@ -106,7 +108,7 @@ export const createRandomOrganizationContact = async (
         let orgContact = new OrganizationContact();
 
         orgContact.contact = faker.random.arrayElement(contacts);
-        orgContact.organizationId = org.id;
+        orgContact.organization = org;
         orgContact.contactType = faker.random.arrayElement(contactTypes);
         orgContact.emailAddresses = [faker.internet.email(orgContact.contact.firstName, orgContact.contact.lastName)];
         orgContact.inviteStatus = faker.random.arrayElement(contactInvitationTypes);
@@ -121,6 +123,7 @@ export const createRandomOrganizationContact = async (
         orgContact.phones = [faker.phone.phoneNumber()];
         orgContact.primaryEmail = orgContact.emailAddresses[0];
         orgContact.primaryPhone = orgContact.phones[0];
+        orgContact.tenant = tenant;
 
         orgContact.tags = _.chain(tags)
           .shuffle()

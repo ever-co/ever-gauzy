@@ -49,6 +49,10 @@ export interface KeyResult extends IBaseEntityModel {
 	updates?: Array<KeyResultUpdates>;
 	kpi?: KPI;
 	kpiId?: string;
+	organization?: Organization;
+	tenant: ITenant;
+	tenantId?: string;
+  organizationId?: string;
 }
 
 export interface KeyResultUpdates extends IBaseEntityModel {
@@ -58,6 +62,10 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 	progress: number;
 	update: number;
 	status: string;
+  organization?: Organization;
+  tenant: ITenant;
+  tenantId?: string;
+  organizationId?: string;
 }
 
 export enum KeyResultNumberUnitsEnum {

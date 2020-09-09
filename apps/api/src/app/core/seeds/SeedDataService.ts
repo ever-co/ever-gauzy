@@ -835,7 +835,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Awards',
-			createDefaultAwards(this.connection, this.organizations)
+			createDefaultAwards(this.connection, this.tenant, this.organizations)
 		);
 
 		await this.tryExecute(
@@ -849,7 +849,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Invoices',
-			createDefaultInvoice(this.connection, this.organizations, 50)
+			createDefaultInvoice(this.connection, this.tenant, this.organizations, 50)
 		);
 
 		await this.tryExecute(
@@ -955,7 +955,6 @@ export class SeedDataService {
 			'Default Help Center Author',
 			createDefaultHelpCenterAuthor(
 				this.connection,
-        [this.tenant],
 				this.defaultEmployees
 			)
 		);

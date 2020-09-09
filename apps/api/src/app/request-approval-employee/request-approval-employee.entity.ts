@@ -8,10 +8,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { Employee } from '../employee/employee.entity';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('request_approval_employee')
-export class RequestApprovalEmployee extends TenantOrganizationBase
+export class RequestApprovalEmployee extends Base
 	implements IRequestApprovalEmployee {
 	@ApiProperty({ type: String })
 	@IsString()

@@ -9,11 +9,13 @@ import { OrganizationProjects } from './organization-projects.model';
 import { Organization } from './organization.model';
 import { OrganizationContact } from './organization-contact.model';
 import { OrganizationDepartment } from './organization-department.model';
+import { ITenant } from './tenant.model';
 
 export interface Invite extends IBaseEntityModel {
 	token: string;
 	email: string;
 	organizationId: string;
+  tenantId?: string;
 	roleId: string;
 	invitedById: string;
 	status: string;
@@ -24,6 +26,7 @@ export interface Invite extends IBaseEntityModel {
 	organizationContacts?: OrganizationContact[];
 	departments?: OrganizationDepartment[];
 	organization?: Organization;
+	tenant?: ITenant;
 }
 
 export interface IInviteAcceptInput extends UserRegistrationInput {

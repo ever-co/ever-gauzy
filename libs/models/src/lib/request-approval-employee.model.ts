@@ -7,6 +7,4 @@ export interface RequestApprovalEmployee extends IBaseEntityModel {
 	status: number;
 	requestApproval: RequestApproval;
 	employee: Employee;
-  organization?: Organization;
-  tenant: ITenant;
 }

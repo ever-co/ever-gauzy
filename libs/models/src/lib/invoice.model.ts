@@ -5,6 +5,7 @@ import { InvoiceItem } from './invoice-item.model';
 import { Tag } from './tag-entity.model';
 import { Payment } from './payment.model';
 import { InvoiceEstimateHistory } from './invoice-estimate-history.model';
+import { ITenant } from './tenant.model';
 
 export interface Invoice extends IBaseEntityModel {
 	invoiceDate: Date;
@@ -22,8 +23,10 @@ export interface Invoice extends IBaseEntityModel {
 	totalValue?: number;
 	organizationContactId?: string;
 	organizationContactName?: string;
-	organizationId?: string;
+	organizationId: string;
+  tenantId?: string;
 	fromOrganization?: Organization;
+	tenant: ITenant;
 	toContact?: OrganizationContact;
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;
