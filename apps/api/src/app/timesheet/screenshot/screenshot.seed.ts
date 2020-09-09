@@ -29,9 +29,11 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 	await getList();
 
 	const screenshots: Screenshot[] = [];
-
-	for (let index = 0; index < faker.random.number(3); index++) {
-		const screenshot = new Screenshot();
+	for (
+		let index = 0;
+		index < faker.random.number({ min: 1, max: 1 });
+		index++
+	) {
 		const sourceFile = faker.random.arrayElement(fileList);
 		const destFile = path.join(
 			destDir,
@@ -53,6 +55,7 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot) => {
 		});
 
 		if (file) {
+			const screenshot = new Screenshot();
 			screenshot.fullUrl = file;
 			screenshot.file = sourceFile;
 			screenshot.timeSlot = timeSlot;
