@@ -20,6 +20,7 @@ import {
 import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
 import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('deal')
 export class Deal extends TenantBase implements IDeal {
@@ -46,6 +47,12 @@ export class Deal extends TenantBase implements IDeal {
 	@JoinColumn()
 	public stage: PipelineStage;
 
+	@ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+	@ApiProperty({ type: Organization })
+	@JoinColumn()
+	public organization: Organization;
+
+	@RelationId(({ organization }: Deal) => organization)
 	@ApiProperty({ type: String })
 	@IsNotEmpty()
 	@IsString()
