@@ -63,7 +63,7 @@ export interface KeyResultUpdates extends IBaseEntityModel {
 	update: number;
 	status: string;
   organization?: Organization;
-  tenant: ITenant;
+  tenant?: ITenant;
   tenantId?: string;
   organizationId?: string;
 }

@@ -19,6 +19,6 @@ export interface IHelpCenter extends IBaseEntityModel {
 	parentId?: string;
 	organizationId?: string;
 	organization?: Organization;
-	tenant: ITenant;
+	tenant?: ITenant;
 	tenantId?: string;
 }

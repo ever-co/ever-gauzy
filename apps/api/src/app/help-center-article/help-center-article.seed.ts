@@ -11,8 +11,6 @@ export const createHelpCenterArticle = async (
 	let HelpCenterArticles: HelpCenterArticle[] = [];
 
 	const booleanAry = [true, false];
-
-	for (const tenant of tenants) {
     for (let i = 0; i <= numberOfHelpCenterArticle; i++) {
       let article = new HelpCenterArticle();
 
@@ -26,7 +24,6 @@ export const createHelpCenterArticle = async (
 
       HelpCenterArticles.push(article);
     }
-	}
 	await insertRandomHelpCenterArticle(connection, HelpCenterArticles);
 	return HelpCenterArticles;
 };

@@ -32,7 +32,6 @@ import {
 	OneToMany
 } from 'typeorm';
 import { Role } from '../role/role.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { Tag } from '../tags/tag.entity';
 import { Employee } from '../employee/employee.entity';
 import { Payment } from '../payment/payment.entity';

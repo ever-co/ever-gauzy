@@ -8,7 +8,7 @@ export interface Income extends IBaseEntityModel {
 	employee?: Employee;
 	employeeId?: string;
 	organization?: Organization;
-	tenant: ITenant;
+	tenant?: ITenant;
   tenantId?: string
 	organizationId?: string
 	amount: number;
