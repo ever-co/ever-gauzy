@@ -550,7 +550,7 @@
 			"CANCEL": "Отменить",
 			"REMOVE": "Удалить",
 			"WRONG_FILE_NAME": "Неправильное имя файла!!!",
-			"CORRECT_FILE_NAME": "Имя файла должно быть: \"export.zip\"",
+			"CORRECT_FILE_NAME": "Имя файла должно быть: \"import.zip\"",
 			"DOWNLOAD_TEMPLATES": "Скачать шаблоны"
 		},
 		"TAGS": "Теги",

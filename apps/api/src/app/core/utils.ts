@@ -66,3 +66,14 @@ export function unixTimestampToDate(
 	const millisecond = 1000;
 	return moment.unix(timestamps / millisecond).format(format);
 }
+
+/*
+ * To convert any datetime to any datetime format
+ */
+export function convertToDatetime(datetime, format = 'YYYY-MM-DD HH:mm:ss') {
+	if (moment(datetime).isValid()) {
+		return moment(datetime).format(format);
+	}
+
+	return null;
+}

@@ -99,6 +99,7 @@ import { ProductVariantSettings } from '../../product-settings/product-settings.
 import { ProductOption } from '../../product-option/product-option.entity';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { Product } from '../../product/product.entity';
+import { convertToDatetime } from '../../core/utils';
 
 @Injectable()
 export class ImportAllService implements OnDestroy {
@@ -634,7 +635,10 @@ export class ImportAllService implements OnDestroy {
 			 */
 			fs.createReadStream(this.__dirname + i + '.csv')
 				.pipe(csv())
-				.on('data', (data) => results.push(data))
+				.on('data', (data) => {
+					data = this.mappedTimestampsFields(data);
+					results.push(data);
+				})
 				.on('end', async () => {
 					if (cleanup) {
 						await this.orderedRepositories[i].query(
@@ -644,6 +648,25 @@ export class ImportAllService implements OnDestroy {
 					this.orderedRepositories[i].insert(results);
 				});
 		}
+	}
+
+	/*
+	 * Add missing timestamps fields here
+	 */
+	mappedTimestampsFields(data) {
+		if (data.hasOwnProperty('createdAt')) {
+			data['createdAt'] = convertToDatetime(data['createdAt']);
+		}
+		if (data.hasOwnProperty('updatedAt')) {
+			data['updatedAt'] = convertToDatetime(data['updatedAt']);
+		}
+		if (data.hasOwnProperty('recordedAt')) {
+			data['recordedAt'] = convertToDatetime(data['recordedAt']);
+		}
+		if (data.hasOwnProperty('deletedAt')) {
+			data['deletedAt'] = convertToDatetime(data['deletedAt']);
+		}
+		return data;
 	}
 
 	ngOnDestroy() {}
