@@ -25,6 +25,31 @@ export const enterLastNameData = (data) => {
 	enterInput(EditProfilePage.lastNameInputCss, data);
 };
 
+export const passwordInputVisible = () => {
+	verifyElementIsVisible(EditProfilePage.passwordInputCss);
+};
+
+export const enterPasswordData = (data) => {
+	enterInput(EditProfilePage.passwordInputCss, data);
+};
+
+export const repeatPasswordInputVisible = () => {
+	verifyElementIsVisible(EditProfilePage.repeatPasswordInputCss);
+};
+
+export const enterRepeatPasswordData = (data) => {
+	enterInput(EditProfilePage.repeatPasswordInputCss, data);
+};
+
+export const emailInputVisible = () => {
+	verifyElementIsVisible(EditProfilePage.emailInpitCss);
+};
+
+export const enterEmailData = (data) => {
+	clearField(EditProfilePage.emailInpitCss);
+	enterInput(EditProfilePage.emailInpitCss, data);
+};
+
 export const languageSelectVisible = () => {
 	verifyElementIsVisible(EditProfilePage.preferredLanguageCss);
 };

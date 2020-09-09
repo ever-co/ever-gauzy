@@ -1,5 +1,5 @@
 export const EditProfilePageData = {
 	preferredLanguage: 'English',
-	testerEmail: 'tester@ever.co',
-	testerPassword: 'tester'
+	email: 'local.admin@ever.co',
+	password: 'admin'
 };
