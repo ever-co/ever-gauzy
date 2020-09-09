@@ -26,7 +26,7 @@ pipeline {
             returnStdout: true
         )}"""
         WORKFLOW_ID = """${sh(
-            script: "curl --silent -X GET -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/ever-co/$REPO_NAME-pulumi/actions/workflows/pulumi.yml | tr -s ' ' | grep -Eo '[0-9]{5,9}' | uniq",
+            script: "curl --silent -X GET -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/ever-co/$REPO_NAME-pulumi/actions/workflows/pulumi.yml | tr -s ' ' | tr -d '\r' | tr -d '\n' | grep -Eo '[0-9]{5,9}' | uniq",
             returnStdout: true
         )}"""
     }
@@ -158,7 +158,7 @@ pipeline {
         stage ("Pulumi Update") {
             steps {
                 sh """
-                    curl -sX POST 'https://api.github.com/repos/ever-co/${REPO_NAME}-pulumi/actions/workflows/$WORKFLOW_ID/dispatches' -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${GITHUB_DISPATCH_TOKEN}' -d '{"ref": "master"}'
+                    curl -sX POST 'https://api.github.com/repos/ever-co/${REPO_NAME}-pulumi/actions/workflows/2319005/dispatches' -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${GITHUB_DISPATCH_TOKEN}' -d '{"ref": "master"}'
                 """
             }
         }
