@@ -20,7 +20,7 @@ export interface EquipmentSharing extends IBaseEntityModel {
 	createdByName?: string;
 	organizationId?: string;
 	organization?: Organization;
-	tenant: ITenant;
+	tenant?: ITenant;
 }
 
 export interface EquipmentSharingRequest extends IBaseEntityModel {

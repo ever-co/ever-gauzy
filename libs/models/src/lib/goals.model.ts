@@ -20,7 +20,7 @@ export interface Goal extends IBaseEntityModel {
 	organizationId: string;
 	keyResults?: Array<KeyResult>;
 	alignedKeyResult?: KeyResult;
-	tenant: ITenant;
+	tenant?: ITenant;
 }
 
 export interface KeyResult extends IBaseEntityModel {

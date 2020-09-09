@@ -58,7 +58,7 @@ export enum CandidateStatus {
 }
 
 export interface CandidateFindInput extends IBaseEntityModel {
-	organization: OrganizationFindInput;
+	organization?: OrganizationFindInput;
 	user?: UserFindInput;
 	valueDate?: Date;
 	organizationId?: string;

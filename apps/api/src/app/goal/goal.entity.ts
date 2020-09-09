@@ -3,7 +3,6 @@ import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
-import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';

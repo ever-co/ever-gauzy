@@ -4,8 +4,9 @@ import { ITenant } from './tenant.model';
 
 export interface EquipmentSharingPolicy extends IBaseEntityModel {
 	name?: string;
-	organizationId?: string;
 	description?: string;
 	organization?: Organization;
-	tenant: ITenant;
+	organizationId?: string;
+  tenantId?: string;
+	tenant?: ITenant;
 }
