@@ -158,7 +158,7 @@ pipeline {
         stage ("Pulumi Update") {
             steps {
                 sh """
-                    curl -sX POST 'https://api.github.com/repos/ever-co/${REPO_NAME}-pulumi/actions/workflows/$WORKFLOW_ID/dispatches' -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${GITHUB_DISPATCH_TOKEN}' -d '{"ref": "master"}'
+                    curl -sX POST 'https://api.github.com/repos/ever-co/${REPO_NAME}-pulumi/actions/workflows/2319005/dispatches' -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token ${GITHUB_DISPATCH_TOKEN}' -d '{"ref": "master"}'
                 """
             }
         }
