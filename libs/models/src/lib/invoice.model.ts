@@ -26,7 +26,7 @@ export interface Invoice extends IBaseEntityModel {
 	organizationId: string;
   tenantId?: string;
 	fromOrganization?: Organization;
-	tenant?: ITenant;
+	tenant: ITenant;
 	toContact?: OrganizationContact;
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;

@@ -8,8 +8,8 @@ export interface Tag extends IBaseEntityModel {
 	color?: string;
 	isSelected?: boolean;
 	organization?: Organization;
-	organizationId: string;
-	tenant: ITenant;
+	organizationId?: string;
+	tenant?: ITenant;
 	tenantId?: string;
 }
 
