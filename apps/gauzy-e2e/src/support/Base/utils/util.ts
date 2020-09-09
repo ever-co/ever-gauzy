@@ -50,3 +50,11 @@ export const verifyElementIsVisible = (loc) => {
 export const clickButtonByIndex = (loc, index) => {
 	cy.get(loc, { timeout: 60000 }).eq(index).click({ force: true });
 };
+
+export const enterInputConditionally = (loc, data) => {
+	cy.get(loc, { timeout: 40000 }).type(`${data}{enter}`);
+};
+
+export const clickKeyboardBtnByKeycode = (keycode) => {
+	cy.get('body').trigger('keydown', { keyCode: keycode });
+};
