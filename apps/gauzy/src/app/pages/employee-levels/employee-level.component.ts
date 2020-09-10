@@ -80,10 +80,10 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
-				this.selectedEmployeeLevel =
-					this.dataLayoutStyle === 'CARDS_GRID'
-						? null
-						: this.selectedEmployeeLevel;
+				this.selectedEmployeeLevel = null;
+
+				//when layout selector change then hide edit showcard
+				this.showAddCard = false;
 			});
 	}
 	async loadSmartTable() {

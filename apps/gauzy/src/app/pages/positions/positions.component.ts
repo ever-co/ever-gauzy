@@ -109,10 +109,10 @@ export class PositionsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
-				this.selectedPosition =
-					this.dataLayoutStyle === 'CARDS_GRID'
-						? null
-						: this.selectedPosition;
+				this.selectedPosition = null;
+
+				//when layout selector change then hide edit showcard
+				this.showAddCard = false;
 			});
 	}
 	save(name: string) {
