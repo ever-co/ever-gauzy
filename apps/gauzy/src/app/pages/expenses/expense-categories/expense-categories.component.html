@@ -43,7 +43,7 @@
 						<input
 							#addInput="ngModel"
 							[ngModel]="
-								isGridEdit ? selectedExpenseCategory.name : ''
+								isGridEdit ? selectedExpenseCategory?.name : ''
 							"
 							required
 							nbInput
@@ -96,6 +96,7 @@
 					(click)="showAddCard = !showAddCard"
 					nbButton
 					status="success"
+					[disabled]="selectedExpenseCategory"
 				>
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 					{{ 'BUTTONS.ADD' | translate }}

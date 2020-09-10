@@ -58,7 +58,7 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 	ngOnDestroy(): void {}
 
 	setView() {
-		this.viewComponentName = ComponentEnum.EMPLOYEE_LEVELS;
+		this.viewComponentName = ComponentEnum.EXPENSES_CATEGORY;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(untilDestroyed(this))
@@ -73,6 +73,7 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 
 	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
 		this.showEditDiv = true;
+		this.showAddCard = false;
 		this.selectedExpenseCategory = expenseCategory;
 		this.tags = expenseCategory.tags;
 	}
