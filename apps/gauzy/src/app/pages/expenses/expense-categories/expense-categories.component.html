@@ -1,154 +1,247 @@
 <nb-card>
 	<nb-card-header>
-		<ngx-back-navigation></ngx-back-navigation>
-		<button
-			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
-			nbButton
-			status="success"
+		<div
+			style="
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			"
 		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
-		<div *ngIf="showAddCard" class="row">
-			<div class="col-sm-3 d-flex flex-column justify-content-end">
-				<label class="label">{{
-					'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
-				}}</label>
-				<input
-					#addInput="ngModel"
-					[ngModel]="add"
-					required
-					nbInput
-					type="text"
-					placeholder="{{
-						'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
-					}}"
-				/>
-			</div>
-			<ga-tags-color-input
-				[selectedTags]="tags"
-				(selectedTagsEvent)="selectedTagsEvent($event)"
-				class="col-sm-3"
-				[isOrgLevel]="true"
-			>
-			</ga-tags-color-input>
-			<span class="col-sm-3" style="margin-top: 29px;"
-				><button
-					class="w-100"
-					(click)="addCategory(addInput.value)"
-					nbButton
-					status="success"
-					[disabled]="addInput.invalid"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button></span
-			>
-			<span class="col-sm-3" style="margin-top: 29px;"
-				><button
-					class="w-100"
-					(click)="showAddCard = !showAddCard"
-					nbButton
-					status="danger"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button></span
-			>
-		</div>
-	</nb-card-header>
-	<nb-card-body *ngIf="expenseCategories?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES' | translate
-			}}</strong>
-		</div>
-
-		<nb-card *ngFor="let v of expenseCategories">
-			<nb-card-body
+			<h4>
+				<ngx-back-navigation></ngx-back-navigation>
+				<span>{{
+					'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES' | translate
+				}}</span>
+			</h4>
+			<div
 				style="
 					display: flex;
-					justify-content: space-between;
 					align-items: center;
+					justify-content: space-between;
 				"
 			>
-				<!-- {{ selectedExpenseCategory === v ? '' : v.name }} -->
-				<ga-notes-with-tags
-					[rowData]="v"
-					*ngIf="v !== selectedExpenseCategory"
-				>
-				</ga-notes-with-tags>
-
-				<div
-					*ngIf="showEditDiv && v === selectedExpenseCategory"
-					class="row m-0"
-				>
-					<div class="col-3 d-flex flex-column justify-content-end">
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3">
+			<ng-container
+				*ngIf="showAddCard; then editableTemplate; else buttonTemplate"
+			>
+			</ng-container>
+			<ng-template #editableTemplate>
+				<div class="row">
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+					>
 						<label class="label">{{
 							'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
 						}}</label>
 						<input
-							#editInput="ngModel"
+							#addInput="ngModel"
+							[ngModel]="
+								isGridEdit ? selectedExpenseCategory?.name : ''
+							"
+							required
 							nbInput
 							type="text"
-							[(ngModel)]="selectedExpenseCategory.name"
-							required
+							fullWidth
+							[placeholder]="
+								'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
+							"
 						/>
 					</div>
-					<ga-tags-color-input
-						class="col-3"
-						[selectedTags]="tags"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 					>
-					</ga-tags-color-input>
-					<span
-						class="col-2 pl-2 pr-1 d-flex flex-column justify-content-end"
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 					>
 						<button
-							class="w-100"
-							(click)="
-								editCategory(
-									selectedExpenseCategory.id,
-									editInput.value
-								)
-							"
+							class="w-100 mt-3"
+							(click)="save(addInput.value)"
 							nbButton
 							status="success"
-							[disabled]="editInput.invalid"
+							[disabled]="addInput.invalid"
 						>
-							{{ 'BUTTONS.UPDATE' | translate }}
-						</button></span
-					>
-					<span
-						class="col-2 pl-1 pr-0 d-flex flex-column justify-content-end"
+							{{ 'BUTTONS.SAVE' | translate }}
+						</button>
+					</div>
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 					>
 						<button
-							class="w-100"
+							class="w-100 mt-3"
 							(click)="cancel()"
 							nbButton
 							status="danger"
 						>
 							{{ 'BUTTONS.CANCEL' | translate }}
-						</button></span
-					>
+						</button>
+					</div>
 				</div>
-				<nb-actions
-					*ngIf="v !== selectedExpenseCategory"
-					class="float-right"
-					e="medium"
+			</ng-template>
+			<ng-template #buttonTemplate>
+				<button
+					(click)="showAddCard = !showAddCard"
+					nbButton
+					status="success"
+					[disabled]="selectedExpenseCategory"
 				>
-					<nb-action
-						(click)="showEditCard(v)"
-						class="d-inline pr-0 mr-3"
-						icon="edit"
-					></nb-action>
-					<nb-action
-						(click)="removeCategory(v.id, v.name)"
-						class="d-inline pr-0"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</ng-template>
+		</div>
+
+		<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+			<div *ngIf="expenseCategories?.length">
+				<nb-card *ngFor="let v of expenseCategories">
+					<nb-card-body
+						style="
+							display: inline;
+							justify-content: space-between;
+							align-items: center;
+							overflow: inherit;
+						"
+					>
+						<!-- {{ selectedExpenseCategory === v ? '' : v.name }} -->
+						<ga-notes-with-tags
+							[rowData]="v"
+							*ngIf="v !== selectedExpenseCategory"
+						>
+						</ga-notes-with-tags>
+
+						<div
+							*ngIf="showEditDiv && v === selectedExpenseCategory"
+							class="row m-0"
+						>
+							<div
+								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+							>
+								<label class="label">{{
+									'ORGANIZATIONS_PAGE.EXPENSE_NAME'
+										| translate
+								}}</label>
+								<input
+									#editInput="ngModel"
+									nbInput
+									type="text"
+									fullWidth
+									[(ngModel)]="selectedExpenseCategory.name"
+									required
+								/>
+							</div>
+							<div
+								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+							>
+								<ga-tags-color-input
+									[selectedTags]="tags"
+									(selectedTagsEvent)="
+										selectedTagsEvent($event)
+									"
+									[isOrgLevel]="true"
+								>
+								</ga-tags-color-input>
+							</div>
+							<div
+								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+							>
+								<button
+									class="w-100 mt-3"
+									(click)="
+										editCategory(
+											selectedExpenseCategory.id,
+											editInput.value
+										)
+									"
+									nbButton
+									status="success"
+									[disabled]="editInput.invalid"
+								>
+									{{ 'BUTTONS.UPDATE' | translate }}
+								</button>
+							</div>
+							<div
+								class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+							>
+								<button
+									class="w-100 mt-3"
+									(click)="cancel()"
+									nbButton
+									status="danger"
+								>
+									{{ 'BUTTONS.CANCEL' | translate }}
+								</button>
+							</div>
+						</div>
+						<nb-actions
+							*ngIf="v !== selectedExpenseCategory"
+							class="float-right"
+							e="medium"
+						>
+							<nb-action
+								(click)="showEditCard(v)"
+								class="d-inline pr-0 mr-3"
+								icon="edit"
+							></nb-action>
+							<nb-action
+								(click)="removeCategory(v.id, v.name)"
+								class="d-inline pr-0"
+								icon="close"
+							></nb-action>
+						</nb-actions>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</ng-container>
+
+		<ng-container *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<ga-card-grid
+				*ngIf="expenseCategories?.length"
+				[settings]="settingsSmartTable"
+				[source]="expenseCategories"
+				[buttonTemplate]="actionButtons"
+			></ga-card-grid>
+		</ng-container>
+
+		<ng-template
+			#actionButtons
+			let-buttonSize="buttonSize"
+			let-selectedItem="selectedItem"
+		>
+			<button
+				(click)="edit(selectedItem)"
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="!selectedItem"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="removeCategory(selectedItem.id, selectedItem.name)"
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="!selectedItem"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
