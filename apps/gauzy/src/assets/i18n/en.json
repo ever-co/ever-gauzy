@@ -2085,6 +2085,7 @@
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
+				"UPDATE_VENDOR": "Vendor {{ name }} successfully updated!",
 				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
