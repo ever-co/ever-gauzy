@@ -2085,6 +2085,7 @@
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
+				"UPDATE_VENDOR": "Vendor {{ name }} successfully updated!",
 				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
 				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
 			},
