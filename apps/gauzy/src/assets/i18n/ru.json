@@ -1939,6 +1939,7 @@
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
+			"NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME": "Требуется название категории расходов",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Требуется уровень сотрудника",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
@@ -2089,6 +2090,7 @@
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
 				"ADD_EXPENSE_CATEGORY": "Новая категория {{ name }} успешно добавлена!",
+				"UPDATE_EXPENSE_CATEGORY": "Категория {{ name }} успешно обновлена!",
 				"REMOVE_EXPENSE_CATEGORY": "Категория {{ name }} успешно удалена!",
 				"INVALID_EXPENSE_CATEGORY_NAME": "Пожалуйста, добавьте название категории"
 			},
