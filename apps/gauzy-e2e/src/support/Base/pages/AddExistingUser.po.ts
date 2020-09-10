@@ -6,7 +6,7 @@ import {
 } from '../utils/util';
 import { AddExistingUserPage } from '../pageobjects/AddExistingUserPageObject';
 
-export const addExistingUsersButtonvisible = () => {
+export const addExistingUsersButtonVisible = () => {
 	verifyElementIsVisible(AddExistingUserPage.addUserButtonCss);
 };
 

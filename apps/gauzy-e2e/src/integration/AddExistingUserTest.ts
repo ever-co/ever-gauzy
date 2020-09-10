@@ -18,7 +18,7 @@ describe('Add existing user/s test', () => {
 
 	it('Should be able to add existing user/s', () => {
 		cy.visit('/#/pages/users');
-		addExistingUserPage.addExistingUsersButtonvisible();
+		addExistingUserPage.addExistingUsersButtonVisible();
 		addExistingUserPage.clickAddExistingUsersButton();
 		addExistingUserPage.cancelButtonVisible();
 		addExistingUserPage.clickCancelButton();
