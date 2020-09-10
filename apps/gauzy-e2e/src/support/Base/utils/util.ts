@@ -58,3 +58,11 @@ export const enterInputConditionally = (loc, data) => {
 export const clickKeyboardBtnByKeycode = (keycode) => {
 	cy.get('body').trigger('keydown', { keyCode: keycode });
 };
+
+export const clickElementIfVisible = (loc, index) => {
+	cy.get(loc, { timeout: 40000 }).then((option) => {
+		if (option.is(':visible')) {
+			option.eq(index).trigger('click');
+		}
+	});
+};
