@@ -42,6 +42,7 @@
 							[placeholder]="
 								'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
 							"
+							fullWidth
 							[ngModel]="
 								isGridEdit ? selectedEmployeeLevel.level : ''
 							"
@@ -127,6 +128,7 @@
 							<input
 								nbInput
 								type="text"
+								fullWidth
 								[(ngModel)]="e.level"
 								#level="ngModel"
 								required
