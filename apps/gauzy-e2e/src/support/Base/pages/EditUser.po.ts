@@ -6,7 +6,9 @@ import {
 	enterInput,
 	clickElementByText,
 	clickElementIfVisible,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	verifyTextByIndex,
+	wait
 } from '../utils/util';
 import { EditUserPage } from '../pageobjects/EditUserPageObject';
 
@@ -23,7 +25,59 @@ export const editButtonVisible = () => {
 };
 
 export const clickEditButton = () => {
-	clickButtonByIndex(EditUserPage.editButtonCss, 0);
+	clickButtonByIndex(EditUserPage.editButtonCss, 4);
+};
+
+export const orgTabButtonVisible = () => {
+	verifyElementIsVisible(EditUserPage.orgTabButtonCss);
+};
+
+export const clickOrgTabButton = (index) => {
+	clickButtonByIndex(EditUserPage.orgTabButtonCss, index);
+};
+
+export const removeOrgButtonVisible = () => {
+	verifyElementIsVisible(EditUserPage.removeOrgButtonCss);
+};
+
+export const clickRemoveOrgButton = () => {
+	clickButtonByIndex(EditUserPage.removeOrgButtonCss, 0);
+};
+
+export const confirmRemoveBtnVisible = () => {
+	verifyElementIsVisible(EditUserPage.confirmRemoveOrgButtonCss);
+};
+
+export const clickConfirmRemoveButton = () => {
+	clickButton(EditUserPage.confirmRemoveOrgButtonCss);
+};
+
+export const addOrgButtonVisible = () => {
+	verifyElementIsVisible(EditUserPage.addOrgButtonCss);
+};
+
+export const clickAddOrgButton = () => {
+	clickButton(EditUserPage.addOrgButtonCss);
+};
+
+export const selectOrgDropdownVisible = () => {
+	verifyElementIsVisible(EditUserPage.selectOrgMultyselectCss);
+};
+
+export const clickSelectOrgDropdown = () => {
+	clickButton(EditUserPage.selectOrgMultyselectCss);
+};
+
+export const clickSelectOrgDropdownOption = () => {
+	clickElementIfVisible(EditUserPage.selectOrgDropdownOptionCss, 0);
+};
+
+export const saveSelectedOrgButtonVisible = () => {
+	verifyElementIsVisible(EditUserPage.saveSelectedOrgButton);
+};
+
+export const clickSaveselectedOrgButton = () => {
+	clickButton(EditUserPage.saveSelectedOrgButton);
 };
 
 export const firstNameInputVisible = () => {
@@ -78,7 +132,7 @@ export const clickTagsMultyselect = () => {
 };
 
 export const selectTagsFromDropdown = (index) => {
-	clickElementIfVisible(EditUserPage.tagsSelectOptionCss, index);
+	clickButtonByIndex(EditUserPage.tagsSelectOptionCss, index);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
