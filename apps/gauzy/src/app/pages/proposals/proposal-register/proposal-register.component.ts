@@ -3,7 +3,6 @@ import {
 	OnInit,
 	ViewChild,
 	OnDestroy,
-	ChangeDetectionStrategy,
 	AfterViewInit,
 	ChangeDetectorRef
 } from '@angular/core';
