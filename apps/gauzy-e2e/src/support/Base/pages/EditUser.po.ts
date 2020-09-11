@@ -6,9 +6,7 @@ import {
 	enterInput,
 	clickElementByText,
 	clickElementIfVisible,
-	clickKeyboardBtnByKeycode,
-	verifyTextByIndex,
-	wait
+	clickKeyboardBtnByKeycode
 } from '../utils/util';
 import { EditUserPage } from '../pageobjects/EditUserPageObject';
 
