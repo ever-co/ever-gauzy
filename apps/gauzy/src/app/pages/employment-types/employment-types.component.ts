@@ -1,6 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	Employee,
@@ -9,30 +8,30 @@ import {
 	Tag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { takeUntil, first } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-employment-types',
 	templateUrl: './employment-types.component.html'
 })
 export class EmploymentTypesComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
+	implements OnInit, OnDestroy {
 	form: FormGroup;
-	showAddCard: boolean;
+	showAddCard: Boolean;
 	selectedEmployee: Employee;
 	organization: Organization;
 	organizationEmploymentTypes: OrganizationEmploymentType[];
 	tags: Tag[] = [];
-	showEditDiv: boolean = true;
+	showEditDiv: Boolean = true;
 	selectedOrgEmpType: OrganizationEmploymentType;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -58,12 +57,14 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 	}
 
+	ngOnDestroy(): void {}
+
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: ['', Validators.required]
 		});
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				this.organization = data;
 				if (this.organization) {
@@ -71,7 +72,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 						.getAll(['tags'], {
 							organizationId: this.organization.id
 						})
-						.pipe(takeUntil(this._ngDestroy$))
+						.pipe(untilDestroyed(this))
 						.subscribe((types) => {
 							this.organizationEmploymentTypes = types.items;
 							this.smartTableSource.load(types.items);
@@ -93,20 +94,26 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 		};
 	}
 
-	private async onKeyEnter($event) {
+	public async onKeyEnter($event) {
 		if ($event.code === 'Enter') {
 			this.addEmploymentType();
 		}
 	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.EMPLOYMENT_TYPE;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+				this.selectedOrgEmpType = null;
+
+				//when layout selector change then hide edit showcard
+				this.showAddCard = false;
 			});
 	}
+
 	private async addEmploymentType() {
 		if (!this.form.invalid) {
 			const newEmploymentType = {
@@ -116,7 +123,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 			};
 			this.organizationEmploymentTypesService
 				.addEmploymentType(newEmploymentType)
-				.pipe(takeUntil(this._ngDestroy$))
+				.pipe(untilDestroyed(this))
 				.subscribe((data) => {
 					this.organizationEmploymentTypes.push(data);
 				});
@@ -179,6 +186,8 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 			this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter(
 				(t) => t['id'] !== id
 			);
+
+			this.emptyListInvoke();
 		}
 	}
 	selectedTagsEvent(ev) {
@@ -225,12 +234,20 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 		this.tags = [];
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+
+	/*
+	 * if empty employment types then displayed add button
+	 */
+	private emptyListInvoke() {
+		if (this.organizationEmploymentTypes.length === 0) {
+			this.showAddCard = false;
+			this.selectedOrgEmpType = null;
+		}
 	}
 }

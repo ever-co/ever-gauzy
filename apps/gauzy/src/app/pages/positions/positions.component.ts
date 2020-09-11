@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	OrganizationPositions,
 	Tag,
@@ -7,22 +7,20 @@ import {
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-
+import { untilDestroyed } from 'ngx-take-until-destroy';
 @Component({
 	selector: 'ga-positions',
 	templateUrl: './positions.component.html'
 })
 export class PositionsComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
+	implements OnInit, OnDestroy {
 	organizationId: string;
 	showAddCard: boolean;
 	positions: OrganizationPositions[];
@@ -47,7 +45,7 @@ export class PositionsComponent extends TranslationBaseComponent
 	}
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationId = organization.id;
@@ -57,6 +55,9 @@ export class PositionsComponent extends TranslationBaseComponent
 				}
 			});
 	}
+
+	ngOnDestroy(): void {}
+
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -74,7 +75,7 @@ export class PositionsComponent extends TranslationBaseComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Employee level'
+					recordType: 'Employee Position'
 				}
 			})
 			.onClose.pipe(first())
@@ -106,7 +107,7 @@ export class PositionsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.POSITIONS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedPosition = null;
@@ -192,14 +193,27 @@ export class PositionsComponent extends TranslationBaseComponent
 			} else {
 				this.positionsExist = true;
 			}
+
+			this.emptyListInvoke();
 		}
 	}
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
+	}
+
+	/*
+	 * if empty employment levels then displayed add button
+	 */
+	private emptyListInvoke() {
+		if (this.positions.length === 0) {
+			this.cancel();
+		}
 	}
 }

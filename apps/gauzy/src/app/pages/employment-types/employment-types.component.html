@@ -23,61 +23,75 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
-			<button
-				*ngIf="!showAddCard"
-				(click)="add()"
-				nbButton
-				status="success"
+			<ng-container
+				*ngIf="showAddCard; then editableTemplate; else buttonTemplate"
 			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<form [formGroup]="form" *ngIf="form && showAddCard" class="row">
-				<div class="col-sm-3 d-flex flex-column justify-content-end">
-					<label class="label">{{
-						'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME' | translate
-					}}</label>
-					<input
-						required
-						formControlName="name"
-						nbInput
-						type="text"
-						(keyup)="onKeyEnter($event)"
-						placeholder="{{
+			</ng-container>
+			<ng-template #editableTemplate>
+				<form [formGroup]="form" *ngIf="form" class="row">
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+					>
+						<label class="label">{{
 							'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME'
 								| translate
-						}}"
-					/>
-				</div>
-				<ga-tags-color-input
-					[selectedTags]="tags"
-					(selectedTagsEvent)="selectedTagsEvent($event)"
-					[isOrgLevel]="true"
-					class="col-sm-3"
-				>
-				</ga-tags-color-input>
-				<span class="col-sm-3" style="margin-top: 29px;"
-					><button
-						class="w-100"
-						(click)="submitForm()"
-						nbButton
-						status="success"
-						[disabled]="form.invalid"
+						}}</label>
+						<input
+							required
+							formControlName="name"
+							nbInput
+							type="text"
+							(keyup)="onKeyEnter($event)"
+							[placeholder]="
+								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME'
+									| translate
+							"
+							fullWidth
+						/>
+					</div>
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button></span
-				>
-				<span class="col-sm-3" style="margin-top: 29px;"
-					><button
-						class="w-100"
-						(click)="cancel()"
-						nbButton
-						status="danger"
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button></span
-				>
-			</form>
+						<button
+							class="w-100 mt-3"
+							(click)="submitForm()"
+							nbButton
+							status="success"
+							[disabled]="form.invalid"
+						>
+							{{ 'BUTTONS.SAVE' | translate }}
+						</button>
+					</div>
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+					>
+						<button
+							class="w-100 mt-3"
+							(click)="cancel()"
+							nbButton
+							status="danger"
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
+					</div>
+				</form>
+			</ng-template>
+			<ng-template #buttonTemplate>
+				<button (click)="add()" nbButton status="success">
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</ng-template>
 		</div>
 
 		<div
@@ -92,6 +106,7 @@
 						display: flex;
 						align-items: center;
 						justify-content: space-between;
+						overflow: inherit;
 					"
 				>
 					<ga-notes-with-tags
@@ -106,7 +121,7 @@
 						class="row m-0 w-100"
 					>
 						<div
-							class="col-3 d-flex flex-column justify-content-end"
+							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 						>
 							<label class="label">{{
 								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME'
@@ -117,21 +132,25 @@
 								required
 								nbInput
 								type="text"
+								fullWidth
 								[(ngModel)]="employmentType.name"
 							/>
 						</div>
-						<ga-tags-color-input
-							class="col-3"
-							[selectedTags]="tags"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
+						<div
+							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 						>
-						</ga-tags-color-input>
-						<span
-							class="col-2 pl-2 pr-1 d-flex flex-column justify-content-end"
+							<ga-tags-color-input
+								[selectedTags]="tags"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
+						<div
+							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 						>
 							<button
-								class="w-100"
+								class="w-100 mt-3"
 								(click)="
 									editOrgEmpType(
 										employmentType.id,
@@ -143,20 +162,20 @@
 								[disabled]="editInput.invalid"
 							>
 								{{ 'BUTTONS.UPDATE' | translate }}
-							</button></span
-						>
-						<span
-							class="col-2 pl-1 pr-0 d-flex flex-column justify-content-end"
+							</button>
+						</div>
+						<div
+							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 						>
 							<button
-								class="w-100"
+								class="w-100 mt-3"
 								(click)="cancel()"
 								nbButton
 								status="danger"
 							>
 								{{ 'BUTTONS.CANCEL' | translate }}
-							</button></span
-						>
+							</button>
+						</div>
 					</div>
 					<nb-actions
 						class="float-right"
@@ -198,7 +217,7 @@
 				nbButton
 				status="info"
 				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedItem"
 				[size]="buttonSize || 'medium'"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
@@ -211,7 +230,7 @@
 				nbButton
 				status="danger"
 				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedItem"
 				[size]="buttonSize || 'medium'"
 			>
 				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
