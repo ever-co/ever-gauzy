@@ -23,70 +23,88 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
-			<button
-				*ngIf="!showAddCard"
-				(click)="showAddCard = !showAddCard"
-				nbButton
-				status="success"
+			<ng-container
+				*ngIf="showAddCard; then editableTemplate; else buttonTemplate"
 			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<div *ngIf="showAddCard" class="row">
-				<div class="col-sm-3 d-flex flex-column justify-content-end">
-					<label class="label" for="add-vendor">{{
-						'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
-					}}</label>
-					<input
-						#addInput="ngModel"
-						nbInput
-						type="text"
-						[placeholder]="
+			</ng-container>
+			<ng-template #editableTemplate>
+				<div class="row">
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+					>
+						<label class="label" for="add-vendor">{{
 							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
-						"
-						[ngModel]="
-							isGridEdit ? selectedEmployeeLevel.level : add
-						"
-						required
-					/>
+						}}</label>
+						<input
+							#addInput="ngModel"
+							nbInput
+							type="text"
+							[placeholder]="
+								'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
+							"
+							fullWidth
+							[ngModel]="
+								isGridEdit ? selectedEmployeeLevel.level : ''
+							"
+							required
+						/>
+					</div>
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+					>
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+					>
+						<button
+							class="w-100 mt-3"
+							(click)="save(addInput.value)"
+							nbButton
+							status="success"
+							[disabled]="addInput.invalid"
+						>
+							{{ 'BUTTONS.SAVE' | translate }}
+						</button>
+					</div>
+					<div
+						class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
+					>
+						<button
+							class="w-100 mt-3"
+							(click)="cancel()"
+							nbButton
+							status="danger"
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
+					</div>
 				</div>
-				<ga-tags-color-input
-					[selectedTags]="tags"
-					(selectedTagsEvent)="selectedTagsEvent($event)"
-					[isOrgLevel]="true"
-					class="col-sm-3"
+			</ng-template>
+			<ng-template #buttonTemplate>
+				<button
+					(click)="showAddCard = !showAddCard"
+					nbButton
+					status="success"
 				>
-				</ga-tags-color-input>
-				<span class="col-sm-3" style="margin-top: 29px;"
-					><button
-						class="w-100"
-						(click)="save(addInput.value)"
-						nbButton
-						status="success"
-						[disabled]="addInput.invalid"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button></span
-				>
-				<span class="col-sm-3" style="margin-top: 29px;"
-					><button
-						class="w-100"
-						(click)="cancel()"
-						nbButton
-						status="danger"
-					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button></span
-				>
-			</div>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</ng-template>
 		</div>
 		<div *ngIf="employeeLevels?.length && dataLayoutStyle === 'TABLE'">
 			<nb-card *ngFor="let e of employeeLevels">
 				<nb-card-body
 					style="
-						display: flex;
+						display: inline;
 						align-items: center;
 						justify-content: space-between;
+						overflow: inherit;
 					"
 				>
 					<!-- {{ selectedEmployeeLevel === e ? '' : e.level }} -->
@@ -97,54 +115,60 @@
 					</ga-notes-with-tags>
 					<div
 						*ngIf="showEditDiv && e === selectedEmployeeLevel"
-						class="row m-0"
+						class="row"
 					>
 						<div
-							class="col-3 d-flex flex-column justify-content-end"
+							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 						>
-							<label class="label">{{
-								'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
-							}}</label>
+							<label class="label">
+								{{
+									'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
+								}}
+							</label>
 							<input
 								nbInput
 								type="text"
+								fullWidth
 								[(ngModel)]="e.level"
 								#level="ngModel"
 								required
 							/>
 						</div>
-						<ga-tags-color-input
-							class="col-3"
-							[selectedTags]="tags"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
+						<div
+							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 						>
-						</ga-tags-color-input>
-						<span
-							class="col-2 pl-2 pr-1 d-flex flex-column justify-content-end"
+							<ga-tags-color-input
+								[selectedTags]="tags"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
+						<div
+							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 						>
 							<button
-								class="w-100"
+								class="w-100 mt-3"
 								(click)="editEmployeeLevel(e.id, level.value)"
 								nbButton
 								status="success"
 								[disabled]="level.invalid"
 							>
 								{{ 'BUTTONS.UPDATE' | translate }}
-							</button></span
-						>
-						<span
-							class="col-2 pl-1 pr-0 d-flex flex-column justify-content-end"
+							</button>
+						</div>
+						<div
+							class="col-sm-12 col-md-3 d-flex flex-column justify-content-end"
 						>
 							<button
-								class="w-100"
+								class="w-100 mt-3"
 								(click)="cancel()"
 								nbButton
 								status="danger"
 							>
 								{{ 'BUTTONS.CANCEL' | translate }}
-							</button></span
-						>
+							</button>
+						</div>
 					</div>
 					<nb-actions
 						*ngIf="e !== selectedEmployeeLevel"
@@ -181,7 +205,7 @@
 				nbButton
 				status="info"
 				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedItem"
 				[size]="buttonSize || 'medium'"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
@@ -194,7 +218,7 @@
 				nbButton
 				status="danger"
 				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedItem"
 				[size]="buttonSize || 'medium'"
 			>
 				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
