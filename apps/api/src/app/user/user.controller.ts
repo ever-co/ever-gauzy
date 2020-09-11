@@ -31,7 +31,10 @@ import { Permissions } from '../shared/decorators/permissions';
 import { RequestContext } from '../core/context';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserCreateCommand } from './commands';
-import { UserCreateInput as IUserCreateInput } from '@gauzy/models';
+import {
+	UserCreateInput as IUserCreateInput,
+	UserUpdateInput as IUserUpdateInput
+} from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('User')
@@ -149,10 +152,10 @@ export class UserController extends CrudController<User> {
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: User,
+		@Body() entity: IUserUpdateInput,
 		...options: any[]
 	): Promise<any> {
-		return this.userService.create({
+		return this.userService.updateProfile(id, {
 			id,
 			...entity
 		});
