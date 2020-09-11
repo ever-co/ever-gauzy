@@ -6,7 +6,8 @@ import {
 	Output,
 	EventEmitter,
 	AfterViewInit,
-	ChangeDetectorRef
+	ChangeDetectorRef,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 import { takeUntil, filter, debounceTime } from 'rxjs/operators';
@@ -57,7 +58,8 @@ export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
 @Component({
 	selector: 'ga-employee-selector',
 	templateUrl: './employee.component.html',
-	styleUrls: ['./employee.component.scss']
+	styleUrls: ['./employee.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeSelectorComponent
 	implements OnInit, OnDestroy, AfterViewInit {

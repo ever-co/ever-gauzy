@@ -21,8 +21,7 @@ import * as moment from 'moment';
 @Component({
 	selector: 'ga-proposal-register',
 	templateUrl: './proposal-register.component.html',
-	styleUrls: ['././proposal-register.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	styleUrls: ['././proposal-register.component.scss']
 })
 export class ProposalRegisterComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
