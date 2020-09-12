@@ -10664,6 +10664,11 @@ electron-installer-dmg@~3.0.0:
   optionalDependencies:
     appdmg "^0.6.0"
 
+electron-is-dev@^1.1.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/electron-is-dev/-/electron-is-dev-1.2.0.tgz#2e5cea0a1b3ccf1c86f577cee77363ef55deb05e"
+  integrity sha512-R1oD5gMBPS7PVU8gJwH6CtT0e6VSoD0+SzSnYpNm+dBkcijgA+K7VAMHDfnRq/lkKPZArpzplTW6jfiMYosdzw==
+
 electron-notarize@^0.2.0:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/electron-notarize/-/electron-notarize-0.2.1.tgz#759e8006decae19134f82996ed910db26d9192cc"
@@ -10769,6 +10774,14 @@ electron-updater@~4.2.0:
     lodash.isequal "^4.5.0"
     pako "^1.0.11"
     semver "^7.1.3"
+
+electron-util@^0.13.0:
+  version "0.13.1"
+  resolved "https://registry.yarnpkg.com/electron-util/-/electron-util-0.13.1.tgz#ba3b9cb7e5fdb6a51970a01e9070877cf7855ef8"
+  integrity sha512-CvOuAyQPaPtnDp7SspwnT1yTb1yynw6yp4LrZCfEJ7TG/kJFiZW9RqMHlCEFWMn3QNoMkNhGVeCvWJV5NsYyuQ==
+  dependencies:
+    electron-is-dev "^1.1.0"
+    new-github-issue-url "^0.2.1"
 
 electron@8.3.0:
   version "8.3.0"
@@ -11398,7 +11411,7 @@ execa@^0.7.0:
     signal-exit "^3.0.0"
     strip-eof "^1.0.0"
 
-execa@^2.0.3, execa@^2.1.0:
+execa@^2.0.3, execa@^2.0.4, execa@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/execa/-/execa-2.1.0.tgz#e5d3ecd837d2a60ec50f3da78fd39767747bbe99"
   integrity sha512-Y/URAVapfbYy2Xp/gb6A0E7iR8xeqOCXsuuaoMn7A5PzrXUK84E1gyiEfq0wQd/GHA6GsoHWwhNq8anb0mleIw==
@@ -16982,6 +16995,15 @@ lunr@^2.3.6:
   resolved "https://registry.yarnpkg.com/lunr/-/lunr-2.3.8.tgz#a8b89c31f30b5a044b97d2d28e2da191b6ba2072"
   integrity sha512-oxMeX/Y35PNFuZoHp+jUj5OSEmLCaIH4KTFJh7a93cHBoFmpw2IoPs22VIz7vyO2YUnx2Tn9dzIwO2P/4quIRg==
 
+mac-screen-capture-permissions@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/mac-screen-capture-permissions/-/mac-screen-capture-permissions-1.1.0.tgz#a60ac7f06240d5037b0e86d409723ec36d077c8c"
+  integrity sha512-jMRumlB3FScui/7yW+5FqqbuO7CQ0XOJVT5oTsb7W9eRQDhCIpJpIF0XxLVXwq2DIOp0fYsz1LFiBjnyDYULyQ==
+  dependencies:
+    electron-util "^0.13.0"
+    execa "^2.0.4"
+    macos-version "^5.2.0"
+
 macos-alias@~0.2.5:
   version "0.2.11"
   resolved "https://registry.yarnpkg.com/macos-alias/-/macos-alias-0.2.11.tgz#feeea6c13ba119814a43fc43c470b31e59ef718a"
@@ -16993,6 +17015,13 @@ macos-release@^2.2.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/macos-release/-/macos-release-2.3.0.tgz#eb1930b036c0800adebccd5f17bc4c12de8bb71f"
   integrity sha512-OHhSbtcviqMPt7yfw5ef5aghS2jzFVKEFyCJndQt2YpSQ9qRVSEv2axSJI1paVThEu+FFGs584h/1YhxjVqajA==
+
+macos-version@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/macos-version/-/macos-version-5.2.0.tgz#ae3a25155877902bbc5f5ae6b2d57b1ddce2e79e"
+  integrity sha512-egt1bqVE1evUjCup2QN2F0g42AuVcumdM31xNbABz+uXquYPzWP4OrqDm+HpCfM+6t4JzWrzABQW+MZM+FW+Jg==
+  dependencies:
+    semver "^5.6.0"
 
 magic-string@0.25.1:
   version "0.25.1"
@@ -18501,6 +18530,11 @@ netmask@^1.0.6:
   resolved "https://registry.yarnpkg.com/netmask/-/netmask-1.0.6.tgz#20297e89d86f6f6400f250d9f4f6b4c1945fcd35"
   integrity sha1-ICl+idhvb2QA8lDZ9Pa0wZRfzTU=
 
+new-github-issue-url@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/new-github-issue-url/-/new-github-issue-url-0.2.1.tgz#e17be1f665a92de465926603e44b9f8685630c1d"
+  integrity sha512-md4cGoxuT4T4d/HDOXbrUHkTKrp/vp+m3aOA7XXVYwNsUNMK49g3SQicTSeV5GIz/5QVGAeYRAOlyp9OvlgsYA==
+
 next-tick@1:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.1.0.tgz#1836ee30ad56d67ef281b22bd199f709449b35eb"
@@ -18717,10 +18751,10 @@ node-fetch-npm@^2.0.2:
     json-parse-better-errors "^1.0.0"
     safe-buffer "^5.1.1"
 
-node-fetch@^2.1.2, node-fetch@^2.2.0, node-fetch@^2.3.0, node-fetch@^2.5.0:
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.0.tgz#e633456386d4aa55863f676a7ab0daa8fdecb0fd"
-  integrity sha512-8dG4H5ujfvFiqDmVu9fQ5bOHUC15JMjMY/Zumv26oOvvVJjM67KF8koCWIabKQ1GJIa9r2mMZscBq/TbdOcmNA==
+node-fetch@^2.1.2, node-fetch@^2.2.0, node-fetch@^2.3.0, node-fetch@^2.5.0, node-fetch@^2.6.0:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
+  integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
 
 node-forge@0.9.0:
   version "0.9.0"
@@ -20603,7 +20637,7 @@ pify@^5.0.0:
   resolved "https://registry.yarnpkg.com/pify/-/pify-5.0.0.tgz#1f5eca3f5e87ebec28cc6d54a0e4aaf00acc127f"
   integrity sha512-eW/gHNMlxdSP6dmG6uJip6FXN0EQBwm2clYYd8Wul42Cwu/DK8HEftzsapcNdYe2MfLiIwZqsDk2RDEsTE79hA==
 
-pinkie-promise@^2.0.0:
+pinkie-promise@^2.0.0, pinkie-promise@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/pinkie-promise/-/pinkie-promise-2.0.1.tgz#2135d6dfa7a358c069ac9b178776288228450ffa"
   integrity sha1-ITXW36ejWMBprJsXh3YogihFD/o=
@@ -22721,7 +22755,7 @@ rimraf@2, rimraf@^2.2.8, rimraf@^2.5.2, rimraf@^2.5.4, rimraf@^2.6.0, rimraf@^2.
   dependencies:
     glob "^7.1.3"
 
-rimraf@2.6.3:
+rimraf@2.6.3, rimraf@~2.6.2:
   version "2.6.3"
   resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-2.6.3.tgz#b2d104fe0d8fb27cf9e0a1cda8262dd3833c6cab"
   integrity sha512-mwqeW5XsA2qAejG46gYdENaxXjx9onRNCfn7L0duuP4hCuTIi/QO7PDK07KJfp1d+izWPrzEJDcSqBa0OZQriA==
@@ -23139,6 +23173,14 @@ screenfull@^4.2.1:
   version "4.2.1"
   resolved "https://registry.yarnpkg.com/screenfull/-/screenfull-4.2.1.tgz#3245b7bc73d2b7c9a15bd8caaf6965db7cbc7f04"
   integrity sha512-PLSp6f5XdhvjCCCO8OjavRfzkSGL3Qmdm7P82bxyU8HDDDBhDV3UckRaYcRa/NDNTYt8YBpzjoLWHUAejmOjLg==
+
+screenshot-desktop@^1.12.2:
+  version "1.12.2"
+  resolved "https://registry.yarnpkg.com/screenshot-desktop/-/screenshot-desktop-1.12.2.tgz#7f45f247ee14fc31a11cd027967b278aaee74f07"
+  integrity sha512-0MdHZgWsojyJ5NzCPISrNqArfuygkrZuhpcqisYg/6JqoqV7qoDFLP5ZNqH1TpZoLbFDTqjZwuIMI+0dsHLRdg==
+  dependencies:
+    pinkie-promise "^2.0.1"
+    temp "^0.9.0"
 
 secure-keys@^1.0.0:
   version "1.0.0"
@@ -25223,6 +25265,13 @@ temp-write@^3.4.0:
     temp-dir "^1.0.0"
     uuid "^3.0.1"
 
+temp@^0.9.0:
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/temp/-/temp-0.9.1.tgz#2d666114fafa26966cd4065996d7ceedd4dd4697"
+  integrity sha512-WMuOgiua1xb5R56lE0eH6ivpVmg/lq2OHm4+LtT/xtEtPQ+sz6N3bBM6WZ5FvO1lO4IKIOb43qnhoc4qxP5OeA==
+  dependencies:
+    rimraf "~2.6.2"
+
 temp@~0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/temp/-/temp-0.4.0.tgz#671ad63d57be0fe9d7294664b3fc400636678a60"
@@ -26095,9 +26144,9 @@ uc.micro@^1.0.1:
   integrity sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==
 
 uglify-js@3.4.x, uglify-js@^2.6.1, uglify-js@^3.1.4, "uglify-js@npm:terser":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/terser/-/terser-5.0.0.tgz#269640e4e92f15d628de1e5f01c4c61e1ba3d765"
-  integrity sha512-olH2DwGINoSuEpSGd+BsPuAQaA3OrHnHnFL/rDB2TVNc3srUbz/rq/j2BlF4zDXI+JqAvGr86bIm1R2cJgZ3FA==
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/terser/-/terser-5.3.1.tgz#f50fe20ab48b15234fe9bdd86b10148ad5fca787"
+  integrity sha512-yD80f4hdwCWTH5mojzxe1q8bN1oJbsK/vfJGLcPZM/fl+/jItIVNKhFIHqqR71OipFWMLgj3Kc+GIp6CeIqfnA==
   dependencies:
     commander "^2.20.0"
     source-map "~0.6.1"
