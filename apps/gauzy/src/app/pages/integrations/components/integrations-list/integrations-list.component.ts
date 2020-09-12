@@ -15,6 +15,8 @@ export class IntegrationsListComponent implements OnInit {
 		.integrationGroups$;
 	selectedIntegrationTypeId$: Observable<string> = this._integrationsStore
 		.selectedIntegrationTypeId$;
+	selectedIntegrationFilter$: Observable<string> = this._integrationsStore
+		.selectedIntegrationFilter$;
 	isLoading$: Observable<boolean> = this._integrationsStore.isLoading$;
 
 	constructor(private _integrationsStore: IntegrationsStoreService) {}
@@ -25,7 +27,22 @@ export class IntegrationsListComponent implements OnInit {
 		this._integrationsStore.setSelectedIntegrationTypeId(integrationTypeId);
 	}
 
+	setSelectedIntegrationFilter(filter) {
+		this._integrationsStore.setSelectedIntegrationFilter(filter);
+	}
+
 	doSearch({ target: { value } }) {
 		this._integrationsStore.searchIntegration(value);
+	}
+
+	/*
+	 * Get integrations filters
+	 */
+	getFilters() {
+		return [
+			{ key: 'All', value: 'all' },
+			{ key: 'Free', value: 'false' },
+			{ key: 'Paid', value: 'true' }
+		];
 	}
 }

@@ -25,6 +25,19 @@
 					>
 				</nb-option-group>
 			</nb-select>
+			<nb-select
+				class="group-select"
+				placeholder="Filter integrations"
+				fullWidth
+				[selected]="selectedIntegrationFilter$ | async"
+				(selectedChange)="setSelectedIntegrationFilter($event)"
+			>
+				<nb-option
+					*ngFor="let filter of getFilters()"
+					[value]="filter.value"
+					>{{ filter.key }}
+				</nb-option>
+			</nb-select>
 			<input
 				fullWidth
 				id="integrationSearch"
