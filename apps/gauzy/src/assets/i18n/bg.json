@@ -508,7 +508,7 @@
 		"EXPENSES": "Разходи",
 		"RECURRING_EXPENSE": "Recurring Expenses",
 		"POSITIONS": "Позиции",
-		"INTEGRATIONS": "Integrations",
+		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Почивка",
@@ -601,7 +601,7 @@
 		"CARDS_GRID": "Cards Grid"
 	},
 	"INTEGRATIONS": {
-		"AVALIABLE_INTEGRATIONS": "Avaliable integrations",
+		"AVALIABLE_INTEGRATIONS": "Avaliable Apps & Integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
