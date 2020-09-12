@@ -4,59 +4,116 @@
 			'MENU.IMPORT_EXPORT.EXPORT_MESSAGE' | translate
 		}}</span>
 	</nb-card-header>
-
-	<div class="import_export_wrapper">
-		<button
-			class="button-export"
-			nbButton
-			shape="round"
-			size="large"
-			(click)="onDownloadTemplates()"
-		>
-			<nb-icon icon="file-text-outline"></nb-icon>
-			{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
-		</button>
-		<button
-			nbButton
-			style="margin-left: 1%;"
-			shape="round"
-			status="info"
-			size="large"
-			type="submit"
-			value="Export"
-			(click)="onSubmit()"
-		>
-			<nb-icon icon="download-outline"></nb-icon>
-			{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
-		</button>
-		<button
-			style="margin-left: 1%;"
-			class="button-export"
-			nbButton
-			shape="round"
-			status="success"
-			size="large"
-			(click)="importPage()"
-		>
-			<nb-icon icon="upload-outline"></nb-icon>
-			{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
-		</button>
-	</div>
-	<form [formGroup]="form" (ngSubmit)="onSubmit()">
-		<hr />
-		<div class="export-checkbox">
-			<div
-				class="checkbox"
-				*ngFor="let data of getControls(); let i = index"
-			>
-				<input
-					class="checkboxes"
-					type="checkbox"
-					[formControl]="data"
-					(change)="onCheckboxChange(data, files[i].name)"
-				/>
-				{{ files[i].name }}
+	<nb-card-header>
+		<div class="row">
+			<div class="col-sm-12 col-md-6 text-left">
+				<div class="mt-3">
+					<nb-checkbox
+						[checked]="checkedAll"
+						status="basic"
+						(checkedChange)="onCheckboxChangeAll($event)"
+					>
+						ALL Entities
+					</nb-checkbox>
+				</div>
+			</div>
+			<div class="col-sm-12 col-md-6 text-right">
+				<button
+					class="m-1"
+					nbButton
+					shape="round"
+					size="large"
+					(click)="onDownloadTemplates()"
+				>
+					<nb-icon icon="file-text-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
+				</button>
+				<button
+					class="m-1"
+					nbButton
+					shape="round"
+					status="info"
+					size="large"
+					type="submit"
+					value="Export"
+					(click)="onSubmit()"
+				>
+					<nb-icon icon="download-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+				</button>
+				<button
+					class="m-1"
+					nbButton
+					shape="round"
+					status="success"
+					size="large"
+					(click)="importPage()"
+				>
+					<nb-icon icon="upload-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
+				</button>
 			</div>
 		</div>
-	</form>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<form>
+				<nb-card-body>
+					<div class="row">
+						<ng-container
+							*ngFor="let entity of entities; let i = index"
+						>
+							<div class="col-sm-12 col-md-12">
+								<nb-card-body class="p-0">
+									<nb-card>
+										<nb-card-header>
+											<nb-checkbox
+												[checked]="entity.checked"
+												status="basic"
+												(checkedChange)="
+													onCheckboxChange(
+														$event,
+														entity
+													)
+												"
+												>{{ entity?.name }}
+											</nb-checkbox>
+										</nb-card-header>
+										<ng-container *ngIf="entity.isGroup">
+											<nb-card-body>
+												<ng-container
+													*ngFor="
+														let item of entity.entities;
+														let j = index
+													"
+												>
+													<div
+														class="col-sm-12 col-md-3 float-left"
+													>
+														<nb-checkbox
+															[checked]="
+																entity.checked
+															"
+															status="basic"
+															(checkedChange)="
+																onCheckboxChange(
+																	$event,
+																	item
+																)
+															"
+															>{{ item?.name }}
+														</nb-checkbox>
+													</div>
+												</ng-container>
+											</nb-card-body>
+										</ng-container>
+									</nb-card>
+								</nb-card-body>
+							</div>
+						</ng-container>
+					</div>
+				</nb-card-body>
+			</form>
+		</div>
+	</nb-card-body>
 </nb-card>
