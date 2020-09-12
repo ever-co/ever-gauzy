@@ -508,7 +508,7 @@
 		"EXPENSES": "Затраты",
 		"RECURRING_EXPENSE": "Периодические расходы",
 		"POSITIONS": "Позиции",
-		"INTEGRATIONS": "Интеграции",
+		"INTEGRATIONS": "Приложения и интеграция",
 		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
@@ -601,7 +601,7 @@
 		"CARDS_GRID": "Сетка карт"
 	},
 	"INTEGRATIONS": {
-		"AVALIABLE_INTEGRATIONS": "Доступная интеграция",
+		"AVALIABLE_INTEGRATIONS": "Доступные приложения и интеграции",
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
