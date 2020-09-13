@@ -10,6 +10,7 @@ import { AppService } from './app.service';
 import { HttpClientModule } from '@angular/common/http';
 import { TimeTrackerModule } from './pages/time-tracker/time-tracker.module';
 import { ScreenCaptureModule } from './pages/screen-capture/screen-capture.module';
+import { SettingsModule } from './pages/settings/settings.module';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -22,7 +23,8 @@ import { ScreenCaptureModule } from './pages/screen-capture/screen-capture.modul
 		TimeTrackerModule,
 		NgxElectronModule,
 		HttpClientModule,
-		ScreenCaptureModule
+		ScreenCaptureModule,
+		SettingsModule
 	],
 	providers: [AppService, HttpClientModule],
 	bootstrap: [AppComponent]

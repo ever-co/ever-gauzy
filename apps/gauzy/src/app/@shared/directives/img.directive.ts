@@ -1,4 +1,5 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 @Directive({
 	// tslint:disable-next-line: directive-selector
@@ -14,9 +15,13 @@ export class ImgDirective implements OnDestroy, OnInit {
 
 	public defaultImg() {
 		if (this.type === 'user') {
-			return '/assets/images/avatar-default.svg';
+			return environment.IS_ELECTRON
+				? './assets/images/avatar-default.svg'
+				: '/assets/images/avatar-default.svg';
 		} else {
-			return '/assets/images/default.svg';
+			return environment.IS_ELECTRON
+				? './assets/images/default.svg'
+				: '/assets/images/default.svg';
 		}
 	}
 

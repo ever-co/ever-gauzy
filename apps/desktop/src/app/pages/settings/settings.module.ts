@@ -1,0 +1,30 @@
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SettingsComponent } from './settings.component';
+import {
+	NbLayoutModule,
+	NbSidebarModule,
+	NbMenuModule,
+	NbCardModule,
+	NbIconModule,
+	NbListModule,
+	NbSelectModule
+} from '@nebular/theme';
+import { FormsModule } from '@angular/forms';
+
+@NgModule({
+	declarations: [SettingsComponent],
+	imports: [
+		CommonModule,
+		NbLayoutModule,
+		NbSidebarModule,
+		NbMenuModule.forRoot(),
+		NbCardModule,
+		NbIconModule,
+		NbListModule,
+		NbSelectModule,
+		FormsModule
+	],
+	exports: [SettingsComponent]
+})
+export class SettingsModule {}

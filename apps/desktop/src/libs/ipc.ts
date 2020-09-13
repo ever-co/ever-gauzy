@@ -96,16 +96,18 @@ export function ipcMainHandler(store, startServer, knex) {
 		console.log('time readi');
 		const auth = LocalStore.getStore('auth');
 		if (auth) {
-			const lastTime:any = await TimerData.getLastTimer(knex, LocalStore.beforeRequestParams());
-			console.log('last', lastTime);
-			event.sender.send(
-				'timer_tracker_show',
-				{
-					...LocalStore.beforeRequestParams(),
-					timeSlotId: lastTime && lastTime.length > 0 ? lastTime[0].timeSlotId : null
-				}
-
+			const lastTime: any = await TimerData.getLastTimer(
+				knex,
+				LocalStore.beforeRequestParams()
 			);
+			console.log('last', lastTime);
+			event.sender.send('timer_tracker_show', {
+				...LocalStore.beforeRequestParams(),
+				timeSlotId:
+					lastTime && lastTime.length > 0
+						? lastTime[0].timeSlotId
+						: null
+			});
 		}
 	});
 
@@ -115,10 +117,20 @@ export function ipcMainHandler(store, startServer, knex) {
 
 	ipcMain.on('get_last_screen_capture', (event, arg) => {
 		event.sender.send('get_last_screen');
-	})
+	});
+
+	ipcMain.on('update_app_setting', (event, arg) => {
+		LocalStore.updateApplicationSetting(arg.values);
+	});
 }
 
-export function ipcTimer(store, knex, win2, win3, win4) {
+export function ipcTimer(
+	store,
+	knex,
+	setupWindow,
+	timeTrackerWindow,
+	NotificationWindow
+) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
 		store.set({
@@ -129,12 +141,12 @@ export function ipcTimer(store, knex, win2, win3, win4) {
 				aw: arg.aw
 			}
 		});
-		timerHandler.startTimer(win2, knex, win3);
-		timerHandler.updateTime(win2, knex, win3);
+		timerHandler.startTimer(setupWindow, knex, timeTrackerWindow);
+		timerHandler.updateTime(setupWindow, knex, timeTrackerWindow);
 	});
 
 	ipcMain.on('stop_timer', (event, arg) => {
-		timerHandler.stopTime(win2, win3, knex);
+		timerHandler.stopTime(setupWindow, timeTrackerWindow, knex);
 	});
 
 	ipcMain.on('return_time_slot', (event, arg) => {
@@ -143,6 +155,12 @@ export function ipcTimer(store, knex, win2, win3, win4) {
 			timeSlotId: arg.timeSlotId
 		});
 		// after update time slot do upload screenshot
-		takeshot(win3, arg.timeSlotId, win4);
+		timeTrackerWindow.webContents.send('take_screenshot', {
+			timeSlotId: arg.timeSlotId
+		});
+	});
+
+	ipcMain.on('save_screen_shoot', (event, arg) => {
+		takeshot(timeTrackerWindow, arg, NotificationWindow);
 	});
 }

@@ -169,8 +169,11 @@ export class StatisticService {
 			)
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
-				`${environment.database.type === 'sqlite' ? 
-				'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+				`${
+					environment.database.type === 'sqlite'
+						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+				}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.user`, 'user')
@@ -258,8 +261,11 @@ export class StatisticService {
 				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
 				member.weekHours = await weekHoursQuery
 					.select(
-						`${environment.database.type === 'sqlite' ? 
-						'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+						`${
+							environment.database.type === 'sqlite'
+								? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+								: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+						}`,
 						`duration`
 					)
 					.addSelect(
@@ -293,8 +299,11 @@ export class StatisticService {
 		query
 			.select(`"${query.alias}".*`)
 			.addSelect(
-				`${environment.database.type === 'sqlite' ? 
-					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+				`${
+					environment.database.type === 'sqlite'
+						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+				}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
@@ -328,8 +337,11 @@ export class StatisticService {
 		const totalDuerationQuery = this.organizationProjectsRepository.createQueryBuilder();
 		totalDuerationQuery
 			.select(
-				`${environment.database.type === 'sqlite' ? 
-				'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)': 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+				`${
+					environment.database.type === 'sqlite'
+						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+				}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -403,8 +415,11 @@ export class StatisticService {
 				.innerJoin(`${query.alias}.project`, 'project')
 				.select(`"${query.alias}".*`)
 				.addSelect(
-					`${environment.database.type === 'sqlite' ? 
-					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+					`${
+						environment.database.type === 'sqlite'
+							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+					}`,
 					`duration`
 				)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -419,13 +434,15 @@ export class StatisticService {
 				.addGroupBy(`"${query.alias}"."id"`)
 				.limit(5)
 				.getRawMany();
-			console.log('satu', tasks.length);
 
 			const totalDuerationQuery = this.taskRepository.createQueryBuilder();
 			const totalDueration = await totalDuerationQuery
 				.select(
-					`${environment.database.type === 'sqlite' ? 
-					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+					`${
+						environment.database.type === 'sqlite'
+							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+					}`,
 					`duration`
 				)
 				.innerJoin(`${totalDuerationQuery.alias}.timeLogs`, 'timeLogs')
@@ -437,7 +454,6 @@ export class StatisticService {
 					end
 				})
 				.getRawOne();
-			console.log('dua', totalDueration);
 			tasks = tasks.map((task) => {
 				task.durationPercentage =
 					(task.duration * 100) / totalDueration.duration;

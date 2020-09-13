@@ -1,0 +1,101 @@
+<nb-layout>
+	<nb-sidebar>
+		<nb-list>
+			<nb-list-item
+				*ngFor="let menu of menus"
+				(click)="selectMenu(menu)"
+				[class]="
+					selectedMenu === menu
+						? 'menu-item menu-item-active'
+						: 'menu-item'
+				"
+			>
+				<div #selectRef>
+					{{ menu }}
+				</div>
+			</nb-list-item>
+		</nb-list>
+	</nb-sidebar>
+
+	<nb-layout-column class="colored-column-success">
+		<div class="row" *ngIf="selectedMenu === 'Screen Capture'">
+			<div class="col-12">
+				<h4>Monitor</h4>
+			</div>
+			<div class="col-12">
+				<h6>Automactically capturing screen</h6>
+			</div>
+			<div class="col-12">
+				<div class="row">
+					<div class="col-4" *ngFor="let item of montorsOption">
+						<nb-card accent="{{ item.accent }}" status="primary">
+							<nb-card-body
+								class="center-card"
+								(click)="selectMonitorOption(item)"
+							>
+								<div class="row">
+									<div class="col-12">
+										<nb-icon
+											class="all-monitor_icon"
+											icon="monitor-outline"
+											[status]="item.status"
+										>
+										</nb-icon>
+										<nb-icon
+											*ngIf="item.value === 'all'"
+											class="all-monitor_icon monitor-many"
+											icon="monitor-outline"
+											[status]="item.status"
+										>
+										</nb-icon>
+									</div>
+									<div class="col-12">
+										<span
+											[class]="
+												item.status === 'success'
+													? 'title-tile selected'
+													: 'title-tile'
+											"
+										>
+											{{ item.title }}
+										</span>
+									</div>
+									<div class="col-12">
+										<span
+											[class]="
+												item.status === 'success'
+													? 'subtitle-tile selected'
+													: 'subtitle-tile'
+											"
+										>
+											{{ item.subtitle }}
+										</span>
+									</div>
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" *ngIf="selectedMenu === 'Timer'">
+			<div class="col-12">
+				<h4>Timer</h4>
+			</div>
+			<div class="col-12">
+				<h6>Update activities or screen capture every</h6>
+			</div>
+			<div class="col-12 form-group">
+				<nb-select
+					placeholder="Select Periode"
+					[(ngModel)]="selectedPeriod"
+					(ngModelChange)="selectPeriod($event)"
+				>
+					<nb-option *ngFor="let item of periodeOption" [value]="item"
+						>{{ item }} Minute</nb-option
+					>
+				</nb-select>
+			</div>
+		</div>
+	</nb-layout-column>
+</nb-layout>
