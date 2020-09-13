@@ -12,9 +12,14 @@ export class IntegrationsService {
 
 	fetchIntegrations(
 		integrationTypeId: string,
-		searchQuery: string = ''
+		searchQuery: string = '',
+		filter: string | boolean = 'all'
 	): Observable<IIntegration[]> {
-		const filters = JSON.stringify({ integrationTypeId, searchQuery });
+		const filters = JSON.stringify({
+			integrationTypeId,
+			searchQuery,
+			filter
+		});
 		return this._http.get<IIntegration[]>('/api/integration', {
 			params: { filters }
 		});

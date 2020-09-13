@@ -50,6 +50,7 @@ export interface IIntegrationType extends IBaseEntityModel {
 export interface IIntegrationFilter {
 	integrationTypeId: string;
 	searchQuery: string;
+	filter: string;
 }
 
 export interface IIntegrationMapSyncProject {
