@@ -8,7 +8,8 @@ import {
 	Put,
 	Param,
 	Delete,
-  Get, Query
+	Get,
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -19,7 +20,7 @@ import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from '../core/crud';
 
-@ApiTags('Organization-Languages')
+@ApiTags('OrganizationLanguages')
 @Controller()
 export class OrganizationLanguagesController extends CrudController<
 	OrganizationLanguages
@@ -89,26 +90,26 @@ export class OrganizationLanguagesController extends CrudController<
 		return this.organizationLanguagesService.delete(id);
 	}
 
-  @ApiOperation({
-    summary: 'Find Organization Language.'
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Found Organization Language',
-    type: OrganizationLanguages
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Record not found'
-  })
-  @Get()
-  async findLanguageByOrgId(
-    @Query('data') data: string
-  ): Promise<IPagination<OrganizationLanguages>> {
-    const { relations, findInput } = JSON.parse(data);
-    return this.organizationLanguagesService.findAll({
-      where: findInput,
-      relations
-    });
-  }
+	@ApiOperation({
+		summary: 'Find Organization Language.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found Organization Language',
+		type: OrganizationLanguages
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findLanguageByOrgId(
+		@Query('data') data: string
+	): Promise<IPagination<OrganizationLanguages>> {
+		const { relations, findInput } = JSON.parse(data);
+		return this.organizationLanguagesService.findAll({
+			where: findInput,
+			relations
+		});
+	}
 }

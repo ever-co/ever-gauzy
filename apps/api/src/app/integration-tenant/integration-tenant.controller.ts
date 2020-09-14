@@ -1,9 +1,20 @@
-import { Controller, HttpStatus, Get, Query, Param } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Query,
+	Param,
+	UseGuards
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('IntegrationTenant')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class IntegrationTenantController extends CrudController<
 	IntegrationTenant

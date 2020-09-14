@@ -7,7 +7,9 @@ import {
 	IIntegrationMap
 } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Integrations')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class HubstaffController {

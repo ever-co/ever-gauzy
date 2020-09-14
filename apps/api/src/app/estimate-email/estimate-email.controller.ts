@@ -1,10 +1,18 @@
 import { CrudController } from '../core';
 import { ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Query, BadRequestException } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Query,
+	BadRequestException,
+	UseGuards
+} from '@nestjs/common';
 import { EstimateEmail } from './estimate-email.entity';
 import { EstimateEmailService } from './estimate-email.service';
+import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Invoice')
+@ApiTags('EstimateEmail')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EstimateEmailController extends CrudController<EstimateEmail> {
 	constructor(private estimateEmailService: EstimateEmailService) {

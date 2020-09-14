@@ -16,8 +16,9 @@ export class IntegrationGetHandler
 		command: IntegrationGetCommand
 	): Promise<Integration[]> {
 		const { input } = command;
-		return await this.repository
-			.createQueryBuilder('integration')
+
+		const query = this.repository.createQueryBuilder('integration');
+		query
 			.leftJoinAndSelect(
 				'integration.integrationTypes',
 				'integrationTypes'
@@ -27,7 +28,19 @@ export class IntegrationGetHandler
 			})
 			.andWhere('LOWER(integration.name) LIKE :name', {
 				name: `${input.searchQuery.toLowerCase()}%`
-			})
-			.getMany();
+			});
+
+		if (input['filter'] === 'true') {
+			query.andWhere('integration.isPaid = :isPaid', {
+				isPaid: true
+			});
+		}
+		if (input['filter'] === 'false') {
+			query.andWhere('integration.isPaid = :isPaid', {
+				isPaid: false
+			});
+		}
+
+		return await query.getMany();
 	}
 }

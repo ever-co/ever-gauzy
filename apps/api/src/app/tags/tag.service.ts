@@ -25,14 +25,24 @@ export class TagService extends CrudService<Tag> {
 
 	async findTagsByOrgLevel(relations: any, orgId: any): Promise<any> {
 		const allTags = await this.tagRepository.find({
-			where: [{ organization: orgId }],
+			where: [
+				{
+					organization: orgId,
+					isSystem: false
+				}
+			],
 			relations: relations
 		});
 		return allTags;
 	}
 	async findTagsByTenantLevel(relations: any, tenantId: any): Promise<any> {
 		const allTags = await this.tagRepository.find({
-			where: [{ tenant: tenantId }],
+			where: [
+				{
+					tenant: tenantId,
+					isSystem: false
+				}
+			],
 			relations: relations
 		});
 		return allTags;
@@ -44,6 +54,9 @@ export class TagService extends CrudService<Tag> {
 			.select('*')
 			.where('tag.organization = :organizationId', {
 				organizationId: orgId
+			})
+			.where('tag.isSystem = :action', {
+				action: false
 			})
 			.getRawMany();
 
@@ -82,6 +95,7 @@ export class TagService extends CrudService<Tag> {
 			.leftJoinAndSelect('tag.product', 'product')
 			.leftJoinAndSelect('tag.payment', 'payment')
 			.where('tag.id IN (:...id)', { id: allTagsIds })
+			.where('tag.isSystem = :action', { action: false })
 			.getMany();
 
 		let tagWithCounter = {};

@@ -12,7 +12,7 @@ import {
 	GetManualTimesStatistics
 } from '@gauzy/models';
 
-@ApiTags('Timesheet Statistic')
+@ApiTags('TimesheetStatistic')
 @UseGuards(AuthGuard('jwt'))
 @Controller('statistics')
 export class StatisticController {

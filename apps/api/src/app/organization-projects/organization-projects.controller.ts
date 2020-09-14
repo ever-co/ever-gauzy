@@ -26,7 +26,8 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Organization-Projects')
+@ApiTags('OrganizationProjects')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationProjectsController extends CrudController<
 	OrganizationProjects
@@ -140,7 +141,6 @@ export class OrganizationProjectsController extends CrudController<
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'))
 	@Put(':id')
 	async updateProject(
 		@Param('id') id: string,

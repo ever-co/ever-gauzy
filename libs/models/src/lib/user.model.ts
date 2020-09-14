@@ -24,7 +24,7 @@ export interface User extends IBaseEntityModel {
 	tenant?: ITenant;
 	tenantId?: string;
 	organization?: Organization;
-  organizationId?: string;
+	organizationId?: string;
 	tags?: Tag[];
 	preferredLanguage?: string;
 	payments?: Payment[];
@@ -77,6 +77,7 @@ export interface UserUpdateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	tags?: Tag[];
 	preferredLanguage?: LanguagesEnum;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 }

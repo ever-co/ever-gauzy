@@ -5,7 +5,7 @@ import { ProductVariantPrice } from './product-variant-price.entity';
 import { ProductVariantPriceService } from './product-variant-price.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Product-Variant-Price')
+@ApiTags('ProductVariantPrice')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ProductVariantPriceController extends CrudController<

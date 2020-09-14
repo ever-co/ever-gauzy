@@ -31,8 +31,8 @@ import { OrganizationRecurringExpenseFindSplitExpenseQuery } from './queries/org
 import { OrganizationRecurringExpenseStartDateUpdateTypeQuery } from './queries/organization-recurring-expense.update-type.query';
 
 @ApiTags('OrganizationRecurringExpense')
-@Controller()
 @UseGuards(AuthGuard('jwt'))
+@Controller()
 export class OrganizationRecurringExpenseController extends CrudController<
 	OrganizationRecurringExpense
 > {

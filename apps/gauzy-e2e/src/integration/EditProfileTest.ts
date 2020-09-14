@@ -59,6 +59,6 @@ describe('Edit user profile test', () => {
 		loginPage.clearPasswordField();
 		loginPage.enterPassword(password);
 		loginPage.clickLoginButton();
-		// dashboradPage.verifyCreateButton();
+		dashboradPage.verifyCreateButton();
 	});
 });

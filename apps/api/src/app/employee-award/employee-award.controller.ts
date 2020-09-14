@@ -19,7 +19,8 @@ import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { EmployeeAwardService } from './employee-award.service';
 
-@ApiTags('Employee-Award')
+@ApiTags('EmployeeAward')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	constructor(private readonly employeeAwardService: EmployeeAwardService) {
@@ -38,7 +39,6 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UseGuards(AuthGuard('jwt'))
 	async create(
 		@Body() entity: DeepPartial<EmployeeAward>
 	): Promise<EmployeeAward> {
@@ -61,7 +61,6 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UseGuards(AuthGuard('jwt'))
 	async update(
 		@Param('id') id: string,
 		@Body() entity: QueryDeepPartialEntity<EmployeeAward>
@@ -80,7 +79,6 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	@UseGuards(AuthGuard('jwt'))
 	async delete(@Param('id') id: string): Promise<any> {
 		return this.employeeAwardService.delete(id);
 	}

@@ -12,7 +12,7 @@ export abstract class TenantBase extends Base {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((t: TenantBase) => t.tenant)
-  @IsString()
-  @Column()
+	@IsString()
+	@Column()
 	readonly tenantId?: string;
 }

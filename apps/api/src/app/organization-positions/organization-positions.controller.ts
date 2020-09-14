@@ -15,7 +15,7 @@ import { OrganizationPositions } from './organization-positions.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Organization-Positions')
+@ApiTags('OrganizationPositions')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationPositionsController extends CrudController<

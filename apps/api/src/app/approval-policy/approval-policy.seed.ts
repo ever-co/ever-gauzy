@@ -14,10 +14,10 @@ export const createDefaultApprovalPolicyForOrg = async (
 	defaultData.orgs.forEach((org) => {
 		const defaultApprovalPolicy = new ApprovalPolicy();
 		defaultApprovalPolicy.name = 'Default Approval Policy';
-		defaultApprovalPolicy.organizationId = org.id;
+		// defaultApprovalPolicy.organizationId = org.id;
 		defaultApprovalPolicy.description = 'Default approval policy';
 		defaultApprovalPolicy.approvalType = 'DEFAULT_APPROVAL_POLICY';
-		defaultApprovalPolicy.tenant = org.tenant;
+		// defaultApprovalPolicy.tenant = org.tenant;
 		promises.push(insertDefaultPolicy(connection, defaultApprovalPolicy));
 	});
 
@@ -41,8 +41,8 @@ export const createRandomApprovalPolicyForOrg = async (
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, Organization[]>
 ): Promise<ApprovalPolicy[]> => {
-	let policies: ApprovalPolicy[] = [];
-	let policyArray = [
+	const policies: ApprovalPolicy[] = [];
+	const policyArray = [
 		'Trade Policy',
 		'Union Budget',
 		'Definition, Licensing Policies and Registration',
@@ -53,15 +53,16 @@ export const createRandomApprovalPolicyForOrg = async (
 		'Time Off',
 		'Equipment Sharing'
 	];
+
 	for (const tenant of tenants) {
 		const orgs = tenantOrganizationsMap.get(tenant);
 		orgs.forEach((org) => {
 			policyArray.forEach((name) => {
-				let policy = new ApprovalPolicy();
+				const policy = new ApprovalPolicy();
 				policy.description = name;
 				policy.name = name;
 				policy.tenant = tenant;
-				policy.organization = org;
+				policy.organizationId = org.id;
 				policy.approvalType = name.replace(/\s+/g, '_').toUpperCase();
 				policies.push(policy);
 			});

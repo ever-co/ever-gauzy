@@ -7,11 +7,13 @@ import {
 	Body,
 	Put
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { EmployeeLevelService } from './organization-employee-level.service';
 import { AuthGuard } from '@nestjs/passport';
 
+@ApiTags('OrganizationEmployeeLevel')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeLevelController extends CrudController<EmployeeLevel> {

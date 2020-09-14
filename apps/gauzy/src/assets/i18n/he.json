@@ -508,7 +508,7 @@
 		"EXPENSES": "הוצאות",
 		"RECURRING_EXPENSE": "Recurring Expenses",
 		"POSITIONS": "עמדות",
-		"INTEGRATIONS": "Integrations",
+		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
@@ -601,7 +601,7 @@
 		"CARDS_GRID": "Cards Grid"
 	},
 	"INTEGRATIONS": {
-		"AVALIABLE_INTEGRATIONS": "Avaliable integrations",
+		"AVALIABLE_INTEGRATIONS": "Avaliable Apps & Integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
@@ -1939,6 +1939,7 @@
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
+			"NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME": "Expense category name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Employee Level is required",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
@@ -2084,11 +2085,13 @@
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
+				"UPDATE_VENDOR": "Vendor {{ name }} successfully updated!",
 				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
 				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"UPDATE_EXPENSE_CATEGORY": "Category {{ name }} successfully updated!",
 				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
 				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},

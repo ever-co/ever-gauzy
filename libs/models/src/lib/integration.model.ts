@@ -50,6 +50,7 @@ export interface IIntegrationType extends IBaseEntityModel {
 export interface IIntegrationFilter {
 	integrationTypeId: string;
 	searchQuery: string;
+	filter: string;
 }
 
 export interface IIntegrationMapSyncProject {
@@ -101,6 +102,8 @@ export enum IntegrationTypeGroupEnum {
 export enum IntegrationTypeNameEnum {
 	ALL_INTEGRATIONS = 'All Integrations',
 	FOR_SALES_TEAMS = 'For Sales Teams',
+	FOR_ACCOUNTANTS = 'For Accountants',
+	FOR_SUPPORT_TEAMS = 'For Support Teams',
 	CRM = 'CRM',
 	SCHEDULING = 'Scheduling',
 	TOOLS = 'Tools'

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	IOrganizationVendor,
 	Tag,
@@ -7,8 +7,7 @@ import {
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -18,6 +17,7 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-vendors',
@@ -25,8 +25,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 	styleUrls: ['vendors.component.scss']
 })
 export class VendorsComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
+	implements OnInit, OnDestroy {
 	organizationId: string;
 	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
@@ -57,7 +56,7 @@ export class VendorsComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationId = organization.id;
@@ -65,13 +64,16 @@ export class VendorsComponent extends TranslationBaseComponent
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
 	}
+
+	ngOnDestroy(): void {}
+
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: ['', Validators.required],
@@ -86,11 +88,17 @@ export class VendorsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.VENDORS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+
+				this.selectedVendor = null;
+
+				//when layout selector change then hide edit showcard
+				this.showAddCard = false;
 			});
 	}
+
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -122,17 +130,20 @@ export class VendorsComponent extends TranslationBaseComponent
 		this.showAddCard = true;
 		this.tags = [];
 	}
+
 	edit(vendor: IOrganizationVendor) {
 		this.showAddCard = true;
 		this.form.patchValue(vendor);
 		this.tags = vendor.tags;
 		this.currentVendor = vendor;
 	}
+
 	cancel() {
 		this.form.reset();
 		this.showAddCard = !this.showAddCard;
 		this.currentVendor = null;
 	}
+
 	save() {
 		if (this.currentVendor) {
 			this.updateVendor(this.currentVendor);
@@ -141,8 +152,10 @@ export class VendorsComponent extends TranslationBaseComponent
 			this.createVendor();
 		}
 	}
+
 	async createVendor() {
 		if (!this.form.invalid) {
+			const name = this.form.get('name').value;
 			await this.organizationVendorsService.create({
 				name: this.form.get('name').value,
 				phone: this.form.get('phone').value,
@@ -154,9 +167,7 @@ export class VendorsComponent extends TranslationBaseComponent
 			this.toastrService.primary(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
-					{
-						name: name
-					}
+					{ name: name }
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
@@ -175,6 +186,7 @@ export class VendorsComponent extends TranslationBaseComponent
 			);
 		}
 	}
+
 	async removeVendor(id: string, name: string) {
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
@@ -188,17 +200,13 @@ export class VendorsComponent extends TranslationBaseComponent
 		if (result) {
 			try {
 				await this.organizationVendorsService.delete(id);
-
 				this.toastrService.primary(
 					this.getTranslation(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
-						{
-							name: name
-						}
+						{ name: name }
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
-
 				this.loadVendors();
 			} catch (error) {
 				this.errorHandlingService.handleError(error);
@@ -207,6 +215,7 @@ export class VendorsComponent extends TranslationBaseComponent
 	}
 
 	async updateVendor(vendor: IOrganizationVendor) {
+		const name = this.form.get('name').value;
 		await this.organizationVendorsService.update(vendor.id, {
 			name: this.form.get('name').value,
 			phone: this.form.get('phone').value,
@@ -214,11 +223,20 @@ export class VendorsComponent extends TranslationBaseComponent
 			website: this.form.get('website').value,
 			tags: this.tags
 		});
+
+		this.toastrService.primary(
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.UPDATE_VENDOR',
+				{ name: name }
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+
 		this.loadVendors();
-		this.toastrService.success('Successfully updated');
 		this.showAddCard = !this.showAddCard;
 		this.tags = [];
 	}
+
 	private async loadVendors() {
 		if (!this.organizationId) {
 			return;
@@ -238,9 +256,12 @@ export class VendorsComponent extends TranslationBaseComponent
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
+
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 }

@@ -3,7 +3,15 @@ import {
 	ICustomizeEmailTemplateFindInput,
 	IEmailTemplateSaveInput
 } from '@gauzy/models';
-import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpStatus,
+	Post,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { QueryBus, CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -14,8 +22,10 @@ import {
 	FindEmailTemplateQuery
 } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('EmailTemplate')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmailTemplateController extends CrudController<EmailTemplate> {
 	constructor(

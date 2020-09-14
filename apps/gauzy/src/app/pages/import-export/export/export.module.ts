@@ -5,7 +5,8 @@ import {
 	NbButtonModule,
 	NbInputModule,
 	NbIconModule,
-	NbRadioModule
+	NbRadioModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ExportComponent } from './export.component';
@@ -20,7 +21,6 @@ import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-up
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
-
 @NgModule({
 	imports: [
 		ExportRoutingModule,
@@ -32,6 +32,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbInputModule,
 		NbRadioModule,
+		NbCheckboxModule,
 		ReactiveFormsModule,
 		FormsModule,
 		TranslateModule.forChild({
