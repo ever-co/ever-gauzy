@@ -42,12 +42,12 @@ export const enterRepeatPasswordData = (data) => {
 };
 
 export const emailInputVisible = () => {
-	verifyElementIsVisible(EditProfilePage.emailInpitCss);
+	verifyElementIsVisible(EditProfilePage.emailInputCss);
 };
 
 export const enterEmailData = (data) => {
-	clearField(EditProfilePage.emailInpitCss);
-	enterInput(EditProfilePage.emailInpitCss, data);
+	clearField(EditProfilePage.emailInputCss);
+	enterInput(EditProfilePage.emailInputCss, data);
 };
 
 export const languageSelectVisible = () => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	EmployeeLevelInput,
 	Tag,
@@ -6,24 +6,21 @@ import {
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { takeUntil, first } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
 import { Store } from '../../@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-
+import { untilDestroyed } from 'ngx-take-until-destroy';
 @Component({
 	selector: 'ga-employee-level',
 	templateUrl: './employee-level.component.html'
 })
 export class EmployeeLevelComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
-
+	implements OnInit, OnDestroy {
 	organizationId: string;
 
 	showAddCard: boolean;
@@ -51,7 +48,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationId = organization.id;
@@ -61,6 +58,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 				}
 			});
 	}
+	ngOnDestroy(): void {}
 
 	private async loadEmployeeLevels() {
 		const { items } = await this.employeeLevelService.getAll(
@@ -72,12 +70,14 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 			this.employeeLevels = items;
 			this.smartTableSource.load(items);
 		}
+
+		this.emptyListInvoke();
 	}
 	setView() {
 		this.viewComponentName = ComponentEnum.EMPLOYEE_LEVELS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedEmployeeLevel = null;
@@ -152,7 +152,6 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 		this.tags = employeeLevel.tags;
 	}
 	save(name: string) {
-		console.log(this.isGridEdit);
 		if (this.isGridEdit) {
 			this.editEmployeeLevel(this.selectedEmployeeLevel.id, name);
 		} else {
@@ -201,8 +200,19 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 		this.tags = ev;
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
+	}
+
+	/*
+	 * if empty employment levels then displayed add button
+	 */
+	private emptyListInvoke() {
+		if (this.employeeLevels.length === 0) {
+			this.cancel();
+		}
 	}
 }

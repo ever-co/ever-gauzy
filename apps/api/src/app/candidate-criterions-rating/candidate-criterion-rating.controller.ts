@@ -24,7 +24,7 @@ import { ParseJsonPipe } from '../shared';
 import { CandidateCriterionsRatingBulkDeleteCommand } from './commands/candidate-criterions-rating.bulk.delete.command';
 import { CandidateCriterionsRatingBulkUpdateCommand } from './commands';
 
-@ApiTags('candidate_criterion_rating')
+@ApiTags('CandidateCriterionRating')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateCriterionsRatingController extends CrudController<

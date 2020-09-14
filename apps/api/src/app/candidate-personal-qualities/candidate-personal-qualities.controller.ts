@@ -23,7 +23,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ParseJsonPipe } from '../shared';
 
-@ApiTags('candidate_personal_quality')
+@ApiTags('CandidatePersonalQuality')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidatePersonalQualitiesController extends CrudController<

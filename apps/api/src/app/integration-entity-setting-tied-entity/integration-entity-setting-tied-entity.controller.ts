@@ -9,10 +9,11 @@ import {
 import { CrudController } from '../core';
 
 import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entity.service';
 import { AuthGuard } from '@nestjs/passport';
 
+@ApiTags('IntegrationsEntitySetting')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class IntegrationEntitySettingTiedEntityController extends CrudController<

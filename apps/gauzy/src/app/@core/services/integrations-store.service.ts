@@ -21,7 +21,8 @@ import { ErrorHandlingService } from './error-handling.service';
 
 const initialFIlter: IIntegrationFilter = {
 	integrationTypeId: '',
-	searchQuery: ''
+	searchQuery: '',
+	filter: ''
 };
 
 @Injectable({
@@ -51,6 +52,14 @@ export class IntegrationsStoreService {
 	public selectedIntegrationTypeId$: Observable<
 		string
 	> = this._selectedIntegrationTypeId$.asObservable();
+
+	private _selectedIntegrationFilter$: BehaviorSubject<
+		string
+	> = new BehaviorSubject('all');
+	public selectedIntegrationFilter$: Observable<
+		string
+	> = this._selectedIntegrationFilter$.asObservable();
+
 	private _filters$: BehaviorSubject<
 		IIntegrationFilter
 	> = new BehaviorSubject(initialFIlter);
@@ -69,11 +78,12 @@ export class IntegrationsStoreService {
 			.pipe(
 				distinctUntilChanged(),
 				debounceTime(300),
-				mergeMap(({ integrationTypeId, searchQuery }) => {
+				mergeMap(({ integrationTypeId, searchQuery, filter }) => {
 					return integrationTypeId
 						? this._integrationsService.fetchIntegrations(
 								integrationTypeId,
-								searchQuery
+								searchQuery,
+								filter
 						  )
 						: of([]);
 				}),
@@ -112,7 +122,8 @@ export class IntegrationsStoreService {
 				tap((integrationType) =>
 					this._filters$.next({
 						integrationTypeId: integrationType.id,
-						searchQuery: ''
+						searchQuery: '',
+						filter: 'all'
 					})
 				),
 				catchError((error) => {
@@ -136,6 +147,11 @@ export class IntegrationsStoreService {
 	setSelectedIntegrationTypeId(integrationTypeId: string) {
 		const filterState = this._filters$.getValue();
 		this._filters$.next({ ...filterState, integrationTypeId });
+	}
+
+	setSelectedIntegrationFilter(filter: string) {
+		const filterState = this._filters$.getValue();
+		this._filters$.next({ ...filterState, filter });
 	}
 
 	searchIntegration(searchQuery: string) {

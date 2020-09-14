@@ -26,7 +26,7 @@ import {
 	IEmployeeAppointmentUpdateInput
 } from '@gauzy/models';
 
-@ApiTags('employee_appointment')
+@ApiTags('EmployeeAppointment')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeAppointmentController extends CrudController<

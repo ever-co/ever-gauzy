@@ -1,4 +1,5 @@
-import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { Email } from './email.entity';
@@ -7,6 +8,7 @@ import { IPagination } from '../core';
 import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Email')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmailController extends CrudController<Email> {
 	constructor(private readonly emailService: EmailService) {

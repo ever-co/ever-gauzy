@@ -16,7 +16,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
 import { ICandidateSource } from '@gauzy/models';
 
-@ApiTags('candidate_source')
+@ApiTags('CandidateSource')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateSourceController extends CrudController<CandidateSource> {

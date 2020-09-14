@@ -6,7 +6,7 @@ import { CandidateExperience } from './candidate-experience.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('candidate_experience')
+@ApiTags('CandidateExperience')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateExperienceController extends CrudController<

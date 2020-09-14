@@ -1,85 +1,143 @@
-import { Component, OnInit } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
-import { Tag } from '@gauzy/models';
+import { Tag, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
 import { Store } from '../../../@core/services/store.service';
-
+import { ComponentEnum } from '../../../@core/constants/layout.constants';
+import { untilDestroyed } from 'ngx-take-until-destroy';
+import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 @Component({
 	selector: 'ga-expense-categories',
 	templateUrl: './expense-categories.component.html'
 })
 export class ExpenseCategoriesComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
-	expenseCategoryId: string;
+	implements OnInit, OnDestroy {
+	organizationId: string;
 
 	showAddCard: boolean;
 	showEditDiv: boolean;
-
+	settingsSmartTable: object;
 	expenseCategories: IOrganizationExpenseCategory[];
 
 	selectedExpenseCategory: IOrganizationExpenseCategory;
 	tags: Tag[] = [];
+	isGridEdit: boolean;
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
 		private readonly toastrService: NbToastrService,
 		private store: Store,
 		readonly translateService: TranslateService,
-		private errorHandlingService: ErrorHandlingService
+		private errorHandlingService: ErrorHandlingService,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
+		this.setView();
 	}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
-					this.expenseCategoryId = organization.id;
+					this.organizationId = organization.id;
 					this.loadCategories();
+					this.loadSmartTable();
 				}
+			});
+	}
+
+	ngOnDestroy(): void {}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EXPENSES_CATEGORY;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(untilDestroyed(this))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+				this.selectedExpenseCategory = null;
+
+				//when layout selector change then hide edit showcard
+				this.showAddCard = false;
 			});
 	}
 
 	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
 		this.showEditDiv = true;
+		this.showAddCard = false;
 		this.selectedExpenseCategory = expenseCategory;
 		this.tags = expenseCategory.tags;
 	}
 
 	cancel() {
-		this.showEditDiv = !this.showEditDiv;
+		this.showEditDiv = false;
+		this.showAddCard = false;
 		this.selectedExpenseCategory = null;
+		this.isGridEdit = false;
+		this.tags = [];
+	}
+
+	async loadSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				name: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
+				}
+			}
+		};
 	}
 
 	async removeCategory(id: string, name: string) {
 		try {
-			await this.organizationExpenseCategoryService.delete(id);
-
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
-					{
-						name: name
+			const result = await this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: {
+						recordType: 'Expense Category'
 					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+				})
+				.onClose.pipe(first())
+				.toPromise();
 
-			this.loadCategories();
+			if (result) {
+				await this.organizationExpenseCategoryService.delete(id);
+				this.toastrService.primary(
+					this.getTranslation(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
+						{
+							name: name
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.loadCategories();
+			}
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
 		}
 	}
 
-	async editCategory(id: string, name: string) {
+	save(name: string) {
+		if (this.isGridEdit) {
+			this.editCategory(this.selectedExpenseCategory.id, name);
+		} else {
+			this.addCategory(name);
+		}
+	}
+
+	public async editCategory(id: string, name: string) {
 		const expenseCategory = {
 			name: name,
 			tags: this.tags
@@ -88,31 +146,36 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 			id,
 			expenseCategory
 		);
+
+		this.toastrService.primary(
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY',
+				{ name: name }
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+
 		this.loadCategories();
-		this.toastrService.success('Successfully updated');
-		this.showEditDiv = !this.showEditDiv;
-		this.tags = [];
+		this.cancel();
 	}
 
-	private async addCategory(name: string) {
+	public async addCategory(name: string) {
 		if (name) {
 			await this.organizationExpenseCategoryService.create({
 				name,
-				organizationId: this.expenseCategoryId,
+				organizationId: this.organizationId,
 				tags: this.tags
 			});
 
 			this.toastrService.primary(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
-					{
-						name: name
-					}
+					{ name: name }
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
-			this.showAddCard = !this.showAddCard;
+			this.cancel();
 			this.loadCategories();
 		} else {
 			// TODO translate
@@ -121,29 +184,45 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORY_NAME'
 				),
 				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_INVALID_NAME'
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME'
 				)
 			);
 		}
 	}
 
 	private async loadCategories() {
-		if (!this.expenseCategoryId) {
+		if (!this.organizationId) {
 			return;
 		}
-
 		const res = await this.organizationExpenseCategoryService.getAll(
 			{
-				organizationId: this.expenseCategoryId
+				organizationId: this.organizationId
 			},
 			['tags']
 		);
 		if (res) {
 			this.expenseCategories = res.items;
 		}
+		this.emptyListInvoke();
 	}
 
 	selectedTagsEvent(ev) {
 		this.tags = ev;
+	}
+
+	edit(expenseCategory: IOrganizationExpenseCategory) {
+		this.showAddCard = true;
+		this.isGridEdit = true;
+		this.selectedExpenseCategory = expenseCategory;
+		this.tags = expenseCategory.tags;
+	}
+
+	/*
+	 * if empty employment levels then displayed add button
+	 */
+	private emptyListInvoke() {
+		if (this.expenseCategories.length === 0) {
+			this.cancel();
+		}
 	}
 }

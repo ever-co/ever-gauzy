@@ -1,5 +1,5 @@
 import { Base } from '../core/entities/base';
-import { Entity, Column, ManyToOne, ManyToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
 import { Tag as ITag } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from '../organization/organization.entity';
@@ -25,6 +25,8 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { Product } from '../product/product.entity';
 import { Payment } from '../payment/payment.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
+import { User } from '../user/user.entity';
+import { Integration } from '../integration/integration.entity';
 
 @Entity('tag')
 export class Tag extends Base implements ITag {
@@ -39,6 +41,10 @@ export class Tag extends Base implements ITag {
 	@ApiProperty({ type: String })
 	@Column()
 	color?: string;
+
+	@ApiProperty({ type: Boolean, default: false })
+	@Column({ default: false })
+	isSystem?: boolean;
 
 	@ApiProperty()
 	@ManyToOne((type) => Organization)
@@ -137,4 +143,16 @@ export class Tag extends Base implements ITag {
 		(requestApproval) => requestApproval.tags
 	)
 	requestApproval?: RequestApproval[];
+
+	@ManyToMany(() => User)
+	@JoinTable({
+		name: 'tag_user'
+	})
+	users?: User[];
+
+	@ManyToMany(() => Integration)
+	@JoinTable({
+		name: 'integrations_tags'
+	})
+	integrations?: Integration[];
 }
