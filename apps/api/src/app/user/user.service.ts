@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, InsertResult } from 'typeorm';
 import { User } from './user.entity';
@@ -77,5 +77,32 @@ export class UserService extends CrudService<User> {
 		const user = await this.findOne(id);
 		user.hash = hash;
 		return await this.repository.save(user);
+	}
+
+	/*
+	 * Update user profile
+	 */
+	async updateProfile(
+		id: string | number,
+		partialEntity: User,
+		...options: any[]
+	): Promise<User> {
+		try {
+			const user = await this.findOne(id);
+			if (!user) {
+				throw new NotFoundException(`The user was not found`);
+			}
+
+			if (partialEntity['hash']) {
+				const hashPassword = await this.getPasswordHash(
+					partialEntity['hash']
+				);
+				partialEntity['hash'] = hashPassword;
+			}
+
+			return await this.repository.save(partialEntity);
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
 	}
 }

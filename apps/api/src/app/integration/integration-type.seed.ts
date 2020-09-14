@@ -17,6 +17,16 @@ const DEFAULT_INTEGRATION_TYPES = [
 		order: 1
 	},
 	{
+		name: IntegrationTypeNameEnum.FOR_ACCOUNTANTS,
+		groupName: IntegrationTypeGroupEnum.FEATURED,
+		order: 1
+	},
+	{
+		name: IntegrationTypeNameEnum.FOR_SUPPORT_TEAMS,
+		groupName: IntegrationTypeGroupEnum.FEATURED,
+		order: 1
+	},
+	{
 		name: IntegrationTypeNameEnum.CRM,
 		groupName: IntegrationTypeGroupEnum.CATEGORIES,
 		order: 2

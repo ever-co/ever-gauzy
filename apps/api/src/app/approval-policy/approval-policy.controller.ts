@@ -23,7 +23,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('approval-policy')
+@ApiTags('ApprovalPolicy')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {

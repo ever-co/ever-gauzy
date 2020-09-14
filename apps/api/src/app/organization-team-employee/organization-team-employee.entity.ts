@@ -7,7 +7,7 @@ import { OrganizationTeam } from '../organization-team/organization-team.entity'
 import { Employee } from '../employee/employee.entity';
 import { Role } from '../role/role.entity';
 
-@Entity('organization_team_employee')
+@Entity('OrganizationTeamEmployee')
 export class OrganizationTeamEmployee extends Base
 	implements IOrganizationTeamEmployee {
 	@ApiProperty({ type: String })

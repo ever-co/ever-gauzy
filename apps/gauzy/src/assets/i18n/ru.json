@@ -508,7 +508,7 @@
 		"EXPENSES": "Затраты",
 		"RECURRING_EXPENSE": "Периодические расходы",
 		"POSITIONS": "Позиции",
-		"INTEGRATIONS": "Интеграции",
+		"INTEGRATIONS": "Приложения и интеграция",
 		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
@@ -601,7 +601,7 @@
 		"CARDS_GRID": "Сетка карт"
 	},
 	"INTEGRATIONS": {
-		"AVALIABLE_INTEGRATIONS": "Доступная интеграция",
+		"AVALIABLE_INTEGRATIONS": "Доступные приложения и интеграции",
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
@@ -1939,6 +1939,7 @@
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
+			"NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME": "Требуется название категории расходов",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Требуется уровень сотрудника",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
@@ -2084,11 +2085,13 @@
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
+				"UPDATE_VENDOR": "Поставщик {{ name }} успешно обновлен!",
 				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
 				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
 				"ADD_EXPENSE_CATEGORY": "Новая категория {{ name }} успешно добавлена!",
+				"UPDATE_EXPENSE_CATEGORY": "Категория {{ name }} успешно обновлена!",
 				"REMOVE_EXPENSE_CATEGORY": "Категория {{ name }} успешно удалена!",
 				"INVALID_EXPENSE_CATEGORY_NAME": "Пожалуйста, добавьте название категории"
 			},

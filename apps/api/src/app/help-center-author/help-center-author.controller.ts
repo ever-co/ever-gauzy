@@ -22,7 +22,7 @@ import {
 	KnowledgeBaseArticleBulkDeleteCommand
 } from './commands';
 
-@ApiTags('knowledge_base_author')
+@ApiTags('KnowledgeBaseAuthor')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class HelpCenterAuthorController extends CrudController<

@@ -7,7 +7,9 @@ import {
 	Body,
 	Delete,
 	Param,
-	Put, Get, Query
+	Put,
+	Get,
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -18,7 +20,8 @@ import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from '../core/crud';
 
-@ApiTags('Organization-Awards')
+@ApiTags('OrganizationAwards')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationAwardsController extends CrudController<
 	OrganizationAwards
@@ -41,7 +44,6 @@ export class OrganizationAwardsController extends CrudController<
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UseGuards(AuthGuard('jwt'))
 	async create(
 		@Body() entity: DeepPartial<OrganizationAwards>
 	): Promise<OrganizationAwards> {
@@ -64,7 +66,6 @@ export class OrganizationAwardsController extends CrudController<
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UseGuards(AuthGuard('jwt'))
 	async update(
 		@Param('id') id: string,
 		@Body() entity: QueryDeepPartialEntity<OrganizationAwards>
@@ -83,30 +84,29 @@ export class OrganizationAwardsController extends CrudController<
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	@UseGuards(AuthGuard('jwt'))
 	async delete(@Param('id') id: string): Promise<any> {
 		return this.organizationAwardsService.delete(id);
 	}
 
-  @ApiOperation({
-    summary: 'Find Organization Awards.'
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Found Organization Awards',
-    type: OrganizationAwards
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Record not found'
-  })
-  @Get()
-  async findAwardsByOrgId(
-    @Query('data') data: string
-  ): Promise<IPagination<OrganizationAwards>> {
-    const { findInput } = JSON.parse(data);
-    return this.organizationAwardsService.findAll({
-      where: findInput
-    });
-  }
+	@ApiOperation({
+		summary: 'Find Organization Awards.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found Organization Awards',
+		type: OrganizationAwards
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAwardsByOrgId(
+		@Query('data') data: string
+	): Promise<IPagination<OrganizationAwards>> {
+		const { findInput } = JSON.parse(data);
+		return this.organizationAwardsService.findAll({
+			where: findInput
+		});
+	}
 }

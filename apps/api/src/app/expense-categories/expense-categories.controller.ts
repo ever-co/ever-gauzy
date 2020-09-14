@@ -13,7 +13,7 @@ import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from './expense-category.entity';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('expense-categories')
+@ApiTags('ExpenseCategories')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ExpenseCategoriesController extends CrudController<

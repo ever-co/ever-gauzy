@@ -20,7 +20,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { ParseJsonPipe } from '../shared';
 
-@ApiTags('candidate_interview')
+@ApiTags('CandidateInterview')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateInterviewController extends CrudController<

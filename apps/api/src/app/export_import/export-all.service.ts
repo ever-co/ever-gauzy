@@ -115,7 +115,6 @@ export class ExportAllService implements OnDestroy {
 			service: this.availabilitySlotsService,
 			nameFile: 'availability_slots'
 		},
-
 		{ service: this.candidateService, nameFile: 'candidate' },
 		{
 			service: this.candidateCrieationsRatingService,
@@ -123,7 +122,7 @@ export class ExportAllService implements OnDestroy {
 		},
 		{
 			service: this.candidateDocumnetsService,
-			nameFile: 'candidate_documents'
+			nameFile: 'candidate_document'
 		},
 		{
 			service: this.candidateEducationService,
@@ -135,7 +134,7 @@ export class ExportAllService implements OnDestroy {
 		},
 		{
 			service: this.candidateFeedbacksService,
-			nameFile: 'candidate_feedbacks'
+			nameFile: 'candidate_feedback'
 		},
 		{
 			service: this.candidateInterviewService,
@@ -143,23 +142,21 @@ export class ExportAllService implements OnDestroy {
 		},
 		{
 			service: this.candidateInterviewsService,
-			nameFile: 'candidate_interviews'
+			nameFile: 'candidate_interviewer'
 		},
 		{
 			service: this.candidatePersonalQualitiesService,
-			nameFile: 'candidate_personal_qualities'
+			nameFile: 'candidate_personal_quality'
 		},
 		{ service: this.candidateSkillService, nameFile: 'candidate_skill' },
 		{ service: this.candidateSourceService, nameFile: 'candidate_source' },
 		{
 			service: this.candidateTechnologiesService,
-			nameFile: 'candidate_technologies'
+			nameFile: 'candidate_technology'
 		},
 		{ service: this.contactService, nameFile: 'contact' },
-		{ service: this.countryService, nameFile: 'countries' },
-
+		{ service: this.countryService, nameFile: 'country' },
 		{ service: this.dealService, nameFile: 'deal' },
-
 		{ service: this.emailService, nameFile: 'email' },
 		{ service: this.emailTemplate, nameFile: 'email_template' },
 		{ service: this.estimateEmailService, nameFile: 'estimate_email' },
@@ -184,11 +181,9 @@ export class ExportAllService implements OnDestroy {
 			service: this.expenseCategoriesService,
 			nameFile: 'expense_category'
 		},
-
 		{ service: this.goalService, nameFile: 'goal' },
 		{ service: this.goalKpiService, nameFile: 'goal_kpi' },
 		{ service: this.goalTimeFrameService, nameFile: 'goal_time_frame' },
-
 		{ service: this.helpCenterService, nameFile: 'knowledge_base' },
 		{
 			service: this.helpCenterArticleService,
@@ -198,7 +193,6 @@ export class ExportAllService implements OnDestroy {
 			service: this.helpCenterAuthorService,
 			nameFile: 'knowledge_base_author'
 		},
-
 		{ service: this.incomeService, nameFile: 'income' },
 		{ service: this.integrationService, nameFile: 'integration' },
 		{
@@ -221,20 +215,13 @@ export class ExportAllService implements OnDestroy {
 		{ service: this.inviteService, nameFile: 'invite' },
 		{ service: this.invoiceService, nameFile: 'invoice' },
 		{ service: this.invoiceItemService, nameFile: 'invoice_item' },
-
 		{ service: this.keyResultService, nameFile: 'key_result' },
 		{ service: this.keyResultUpdateService, nameFile: 'key_result_update' },
-
 		{ service: this.languageService, nameFile: 'language' },
-
+		{ service: this.organizationService, nameFile: 'organization' },
 		{
 			service: this.organizationAwardsService,
 			nameFile: 'organization_awards'
-		},
-		{ service: this.organizationService, nameFile: 'organization' },
-		{
-			service: this.employeeLevelService,
-			nameFile: 'organization_employee_level'
 		},
 		{
 			service: this.organizationContactService,
@@ -249,12 +236,16 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'organization_document'
 		},
 		{
-			service: this.organizationLanguagesService,
-			nameFile: 'organization_language'
+			service: this.employeeLevelService,
+			nameFile: 'organization_employee_level'
 		},
 		{
 			service: this.organizationEmploymentTypeService,
 			nameFile: 'organization_employment_type'
+		},
+		{
+			service: this.organizationLanguagesService,
+			nameFile: 'organization_languages'
 		},
 		{
 			service: this.organizationPositionsService,
@@ -273,54 +264,49 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'organization_sprint'
 		},
 		{
-			service: this.organizationTeamEmployeeService,
-			nameFile: 'organization_team_employee'
-		},
-		{
 			service: this.organizationTeamService,
 			nameFile: 'organization_team'
+		},
+		{
+			service: this.organizationTeamEmployeeService,
+			nameFile: 'organization_team_employee'
 		},
 		{
 			service: this.organizationVendorsService,
 			nameFile: 'organization_vendor'
 		},
-
 		{ service: this.paymentService, nameFile: 'payment' },
 		{ service: this.pipelineService, nameFile: 'pipeline' },
 		{ service: this.productService, nameFile: 'product' },
 		{ service: this.productCategoryService, nameFile: 'product_category' },
 		{ service: this.productOptionService, nameFile: 'product_option' },
-		{ service: this.productSettingsService, nameFile: 'product_settings' },
 		{ service: this.productTypeService, nameFile: 'product_type' },
 		{ service: this.productVariantService, nameFile: 'product_variant' },
 		{
 			service: this.productVariantPriceService,
 			nameFile: 'product_variant_price'
 		},
+		{
+			service: this.productSettingsService,
+			nameFile: 'product_variant_settings'
+		},
 		{ service: this.proposalService, nameFile: 'proposal' },
-
 		{ service: this.requestApprovalService, nameFile: 'request_approval' },
 		{ service: this.roleService, nameFile: 'role' },
 		{ service: this.rolePermissionsService, nameFile: 'role_permission' },
-
 		{ service: this.screenShotService, nameFile: 'screenshot' },
 		{ service: this.skillSevice, nameFile: 'skill' },
 		{ service: this.stageService, nameFile: 'stage' },
-
 		{ service: this.tagService, nameFile: 'tag' },
 		{ service: this.taskService, nameFile: 'task' },
 		{ service: this.tenantService, nameFile: 'tenant' },
-		{ service: this.timeOffPolicyService, nameFile: 'time-off-policy' },
-		{ service: this.timeOffRequestService, nameFile: 'time-off-request' },
+		{ service: this.timeOffPolicyService, nameFile: 'time_off_policy' },
+		{ service: this.timeOffRequestService, nameFile: 'time_off_request' },
 		{ service: this.timeSheetService, nameFile: 'timesheet' },
 		{ service: this.timeLogService, nameFile: 'time_log' },
 		{ service: this.timeSlotService, nameFile: 'time_slot' },
-
-		{ service: this.userService, nameFile: 'users' },
-		{
-			service: this.userOrganizationService,
-			nameFile: 'user_organization'
-		}
+		{ service: this.userService, nameFile: 'user' },
+		{ service: this.userOrganizationService, nameFile: 'user_organization' }
 	];
 
 	constructor(

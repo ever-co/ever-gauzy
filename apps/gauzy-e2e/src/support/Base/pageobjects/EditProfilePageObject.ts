@@ -3,7 +3,7 @@ export const EditProfilePage = {
 	lastNameInputCss: '#lastNameInput',
 	passwordInputCss: '#passwordInput',
 	repeatPasswordInputCss: '#repeatPasswordInput',
-	emailInpitCss: '#emailInput',
+	emailInputCss: '#emailInput',
 	preferredLanguageCss: '#preferredLanguage',
 	preferredLanguageOptionCss: '.option-list nb-option',
 	saveButtonCss: 'div.actions > button[status="success"]'

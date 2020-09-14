@@ -21,7 +21,7 @@ import { HelpCenterArticleService } from './help-center-article.service';
 import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
 import { CommandBus } from '@nestjs/cqrs';
 
-@ApiTags('knowledge_base_article')
+@ApiTags('KnowledgeBaseArticle')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class HelpCenterArticleController extends CrudController<

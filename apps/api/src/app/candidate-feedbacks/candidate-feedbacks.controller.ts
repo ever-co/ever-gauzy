@@ -24,7 +24,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { FeedbackUpdateCommand } from './commands/candidate-feedbacks.update.command';
 import { FeedbackDeleteCommand } from './commands/candidate-feedbacks.delete.command';
 
-@ApiTags('candidate_feedback')
+@ApiTags('CandidateFeedback')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateFeedbacksController extends CrudController<

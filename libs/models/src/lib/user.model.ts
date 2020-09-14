@@ -77,6 +77,7 @@ export interface UserUpdateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	tags?: Tag[];
 	preferredLanguage?: LanguagesEnum;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 }

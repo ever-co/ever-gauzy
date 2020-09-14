@@ -22,7 +22,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { KnowledgeBaseBulkDeleteCommand } from './commands';
 import { HelpCenterUpdateCommand } from './commands/help-center.bulk.command';
 
-@ApiTags('knowledge_base')
+@ApiTags('KnowledgeBase')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class HelpCenterController extends CrudController<HelpCenter> {
