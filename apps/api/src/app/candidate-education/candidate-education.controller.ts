@@ -1,11 +1,13 @@
 import { CandidateEducationService } from './candidate-education.service';
-import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { CandidateEducation } from './candidate-education.entity';
 import { IPagination } from '../core';
 
-@ApiTags('candidate_education')
+@ApiTags('CandidateEducation')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateEducationController extends CrudController<
 	CandidateEducation
