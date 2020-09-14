@@ -1,0 +1,159 @@
+import * as loginPage from '../support/Base/pages/Login.po';
+import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
+import * as emailTemplatesPage from '../support/Base/pages/EmailTempates.po';
+import { EmailTemplatesPageData } from '../support/Base/pagedata/EmailTempatesPageData';
+import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+
+describe('Validate email templates test', () => {
+	before(() => {
+		cy.visit('/');
+		loginPage.verifyTitle();
+		loginPage.verifyLoginText();
+		loginPage.clearEmailField();
+		loginPage.enterEmail(LoginPageData.email);
+		loginPage.clearPasswordField();
+		loginPage.enterPassword(LoginPageData.password);
+		loginPage.clickLoginButton();
+		dashboradPage.verifyCreateButton();
+	});
+	it('Should be able to validate email templates', () => {
+		cy.visit('/#/pages/settings/email-templates');
+		//tests for Password Reset template
+		emailTemplatesPage.selectLanguageButtonVisible();
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.english);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.passwordResetSubjectEnglish
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(
+			EmailTemplatesPageData.bulgarian
+		);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.passwordResetSubjectBulgarian
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.hebrew);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.passwordResetSubjectHebrew
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.russian);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.passwordResetSubjectRussian
+		);
+		emailTemplatesPage.emailTemplateButtonVisible();
+		emailTemplatesPage.clickEmailTemplateButton();
+		//tests Appointment Confirmation template
+		emailTemplatesPage.selectTemplateButtonVisible();
+		emailTemplatesPage.clickSelectTemplateButton();
+		emailTemplatesPage.selectTemplateOption(
+			EmailTemplatesPageData.appointmentConfirmationTemplateOption
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.english);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.appointmentConfirmationSubjectEnglish
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(
+			EmailTemplatesPageData.bulgarian
+		);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.appointmentConfirmationSubjectBulgarian
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.hebrew);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.appointmentConfirmationSubjectHebrew
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.russian);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.appointmentConfirmationSubjectRussian
+		);
+		emailTemplatesPage.emailTemplateButtonVisible();
+		emailTemplatesPage.clickEmailTemplateButton();
+		//tests for Appointment Cancellation template
+		emailTemplatesPage.clickSelectTemplateButton();
+		emailTemplatesPage.selectTemplateOption(
+			EmailTemplatesPageData.appointmentCancellationTemplateOption
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.english);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.appointmentCancellationSubjectEnglish
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(
+			EmailTemplatesPageData.bulgarian
+		);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.appointmentCancellationSubjectBulgarian
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.hebrew);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.appointmentCancellationSubjectHebrew
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.russian);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.appointmentCancellationSubjectRussian
+		);
+		//tests for Time Off Policy template
+		emailTemplatesPage.clickSelectTemplateButton();
+		emailTemplatesPage.selectTemplateOption(
+			EmailTemplatesPageData.timeOffPolicyTemplateOption
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.english);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.timeOffPolicySubjectEnglish
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(
+			EmailTemplatesPageData.bulgarian
+		);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.timeOffPolicySubjectBulgarian
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.hebrew);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.timeOffPolicySubjectHebrew
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.russian);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.timeOffPolicySubjectRussian
+		);
+		//tests for Task Update template
+		emailTemplatesPage.clickSelectTemplateButton();
+		emailTemplatesPage.selectTemplateOption(
+			EmailTemplatesPageData.taskUpdateTemplateOption
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.english);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.taskUpdateSubjectEnglish
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(
+			EmailTemplatesPageData.bulgarian
+		);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.taskUpdateSubjectBulgarian
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.hebrew);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.taskUpdateSubjectHebrew
+		);
+		emailTemplatesPage.clickSelectLanguageButton();
+		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.russian);
+		emailTemplatesPage.validateEmailTemplateSubject(
+			EmailTemplatesPageData.taskUpdateSubjectRussian
+		);
+	});
+});
