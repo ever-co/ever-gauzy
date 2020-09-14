@@ -58,23 +58,23 @@ export const EmailTemplatesPageData = {
 	interviewerScheduleSubjectRussian: 'Расписание интервью',
 	welcomeUserSubjectEnglish: 'Welcome to Gauzy user@domain.com',
 	welcomeUserSubjectBulgarian: 'Добре дошли в Gauzy™ user@domain.com',
-	welcomeUserSubjectHebrew: 'Welcome to Gauzy user@domain.com',
-	welcomeUserSubjectRussian: 'Welcome to Gauzy user@domain.com',
+	welcomeUserSubjectHebrew: 'ברוך הבא לגוזי! user@domain.com',
+	welcomeUserSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com!',
 	inviteOrganizationClientSubjectEnglish:
 		"John Doe, you've been invited to Gauzy!",
 	inviteOrganizationClientSubjectBulgarian:
 		'Добре дошли в Gauzy™ user@domain.com',
 	inviteOrganizationClientSubjectHebrew: 'ברוך הבא לגוזי! user@domain.com',
 	inviteOrganizationClientSubjectRussian:
-		'Добро пожаловать в Gauzy user@domain.com !',
+		'Добро пожаловать в Gauzy user@domain.com!',
 	inviteEmployeeSubjectEnglish: 'Welcome to Gauzy user@domain.com',
 	inviteEmployeeSubjectBulgarian: 'Добре дошли в Gauzy user@domain.com',
 	inviteEmployeeSubjectHebrew: 'ברוך הבא לגוזי! user@domain.com',
-	inviteEmployeeSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com !',
+	inviteEmployeeSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com!',
 	inviteUserSubjectEnglish: 'Welcome to Gauzy user@domain.com',
 	inviteUserSubjectBulgarian: 'Добре дошли в Gauzy user@domain.com',
 	inviteUserSubjectHebrew: 'ברוך הבא לגוזי! user@domain.com',
-	inviteUserSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com !',
+	inviteUserSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com!',
 	emailInvoiceSubjectEnglish: 'New invoice received user@domain.com',
 	emailEstimateSubjectEnglish: 'New estimate received user@domain.com',
 	//Template Names
