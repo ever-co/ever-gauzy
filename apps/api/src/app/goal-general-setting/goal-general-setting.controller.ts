@@ -17,7 +17,7 @@ import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
 import { Goal } from '../goal/goal.entity';
 
-@ApiTags('goal-general-setting')
+@ApiTags('GoalGeneralSetting')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class GoalGeneralSettingController extends CrudController<

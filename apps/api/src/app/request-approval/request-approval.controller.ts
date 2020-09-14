@@ -28,7 +28,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../shared/decorators/roles';
 import { RequestApprovalStatusCommand } from './commands';
 
-@ApiTags('request-approval')
+@ApiTags('RequestApproval')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class RequestApprovalControler extends CrudController<RequestApproval> {

@@ -24,9 +24,9 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Deal } from '../deal/deal.entity';
 
-@Controller()
 @ApiTags('Pipeline')
 @UseGuards(AuthGuard('jwt'))
+@Controller()
 export class PipelineController extends CrudController<Pipeline> {
 	public constructor(protected pipelineService: PipelineService) {
 		super(pipelineService);

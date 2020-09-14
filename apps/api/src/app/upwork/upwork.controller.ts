@@ -11,7 +11,7 @@ import {
 	Param
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UpworkTransactionService } from './upwork-transaction.service';
 import { UpworkService } from './upwork.service';
@@ -27,7 +27,7 @@ import {
 import { Expense } from '../expense/expense.entity';
 import { Income } from '../income/income.entity';
 import { IPagination } from '../core';
-
+@ApiTags('Integrations')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class UpworkController {

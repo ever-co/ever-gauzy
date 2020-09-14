@@ -17,7 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe } from '../shared';
 import { LanguagesEnum, ProductCategoryTranslated } from '@gauzy/models';
 
-@ApiTags('Product-Categories')
+@ApiTags('ProductCategories')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ProductCategoryController extends CrudController<ProductCategory> {

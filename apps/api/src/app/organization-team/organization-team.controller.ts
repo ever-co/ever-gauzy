@@ -21,7 +21,7 @@ import {
 import { OrganizationTeam } from './organization-team.entity';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Organization-Teams')
+@ApiTags('OrganizationTeam')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationTeamController extends CrudController<

@@ -25,7 +25,7 @@ import { TimeOffPolicyService } from './time-off-policy.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Policy')
+@ApiTags('TimeOffPolicy')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
