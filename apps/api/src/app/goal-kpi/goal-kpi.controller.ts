@@ -17,7 +17,7 @@ import { CrudController } from '../core';
 import { GoalKPI } from './goal-kpi.entity';
 import { GoalKpiService } from './goal-kpi.service';
 
-@ApiTags('goal-kpi')
+@ApiTags('GoalKpi')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class GoalKpiController extends CrudController<GoalKPI> {

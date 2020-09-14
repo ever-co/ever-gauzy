@@ -4,10 +4,11 @@ import { Integration } from './integration.entity';
 import { IntegrationService } from './integration.service';
 import { AuthGuard } from '@nestjs/passport';
 import { IntegrationType } from './integration-type.entity';
-import { ApiResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { IntegrationTypeGetCommand, IntegrationGetCommand } from './commands';
 
+@ApiTags('Integrations')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class IntegrationController extends CrudController<Integration> {

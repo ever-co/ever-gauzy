@@ -5,7 +5,7 @@ import { OrganizationDocuments } from './organization-documents.entity';
 import { OrganizationDocumentsService } from './organization-documents.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('organization-documents')
+@ApiTags('OrganizationDocuments')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationDocumentsController extends CrudController<

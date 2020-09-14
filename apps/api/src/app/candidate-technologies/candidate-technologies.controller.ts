@@ -24,7 +24,7 @@ import {
 	CandidateTechnologiesBulkUpdateCommand
 } from './commands';
 import { ParseJsonPipe } from '../shared';
-@ApiTags('candidate_technology')
+@ApiTags('CandidateTechnology')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateTechnologiesController extends CrudController<

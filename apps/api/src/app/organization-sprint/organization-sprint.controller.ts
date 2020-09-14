@@ -21,7 +21,7 @@ import { OrganizationSprintUpdateInput } from '@gauzy/models';
 import { OrganizationSprintUpdateCommand } from './commands/organization-sprint.update.command';
 import { CommandBus } from '@nestjs/cqrs';
 
-@ApiTags('Organization-Sprint')
+@ApiTags('OrganizationSprint')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationSprintController extends CrudController<

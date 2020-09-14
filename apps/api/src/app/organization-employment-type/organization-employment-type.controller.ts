@@ -14,7 +14,7 @@ import { OrganizationEmploymentType } from './organization-employment-type.entit
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Organization-Employment-Type')
+@ApiTags('OrganizationEmploymentType')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationEmploymentTypeController extends CrudController<
