@@ -16,12 +16,13 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>יָקָר {{name}},</p>
 					<p>
-						Вашето запитване за оборудване {{{equipment_status}}, מכיוון ש {{reason}}
+						Вашето запитване за оборудване {{equipment_status}},
+						מכיוון ש {{reason}}
 					</p>
 				</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>כל טוב,</p>
-                    <p>צוות גאוזי</p>
+					<p>צוות גאוזי</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
@@ -29,11 +30,11 @@
 				></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="https://app.gauzy.co/." style="color:#598bff"
+					<a href="https://app.gauzy.co/." style="color: #598bff;"
 						>Gauzy</a
 					>
 					by
-					<a href="https://ever.co/" style="color:#598bff"
+					<a href="https://ever.co/" style="color: #598bff;"
 						>Ever Co. LTD.</a
 					>
 					All rights reserved.
