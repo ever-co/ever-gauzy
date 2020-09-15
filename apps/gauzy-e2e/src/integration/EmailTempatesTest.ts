@@ -16,9 +16,8 @@ describe('Validate email templates test', () => {
 		loginPage.clickLoginButton();
 		dashboradPage.verifyCreateButton();
 	});
-	it('Should be able to validate email templates', () => {
+	it('Should be able to validate Password Reset template', () => {
 		cy.visit('/#/pages/settings/email-templates');
-		//tests for Password Reset template
 		emailTemplatesPage.selectLanguageButtonVisible();
 		emailTemplatesPage.clickSelectLanguageButton();
 		emailTemplatesPage.selectLanguageOption(EmailTemplatesPageData.english);
@@ -44,7 +43,8 @@ describe('Validate email templates test', () => {
 		);
 		emailTemplatesPage.emailTemplateButtonVisible();
 		emailTemplatesPage.clickEmailTemplateButton();
-		//tests Appointment Confirmation template
+	});
+	it('Should be able to validate Appointment Confirmation template', () => {
 		emailTemplatesPage.selectTemplateButtonVisible();
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
@@ -74,7 +74,8 @@ describe('Validate email templates test', () => {
 		);
 		emailTemplatesPage.emailTemplateButtonVisible();
 		emailTemplatesPage.clickEmailTemplateButton();
-		//tests for Appointment Cancellation template
+	});
+	it('Should be able to validate Appointment Cancellation template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.appointmentCancellationTemplateOption
@@ -101,7 +102,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.appointmentCancellationSubjectRussian
 		);
-		//tests for Time Off Policy template
+	});
+	it('Should be able to validate Time Off Policy template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.timeOffPolicyTemplateOption
@@ -128,7 +130,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.timeOffPolicySubjectRussian
 		);
-		//tests for Task Update template
+	});
+	it('Should be able to validate Task Update template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.taskUpdateTemplateOption
@@ -155,7 +158,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.taskUpdateSubjectRussian
 		);
-		//tests for Equipment Create template
+	});
+	it('Should be able to validate Equipment Create template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.equipmentCreateTemplateOption
@@ -182,7 +186,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.equipmentCreateSubjectRussian
 		);
-		//tests for Equipment Request template
+	});
+	it('Should be able to validate Equipment Request template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.equipmentRequestTemplateOption
@@ -209,7 +214,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.equipmentRequestSubjectRussian
 		);
-		//tests for Time Sheet Overview template
+	});
+	it('Should be able to validate Time Sheet Overview template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.timeSheetOverviewTemplateOption
@@ -236,7 +242,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.timeSheetOverviewSubjectRussian
 		);
-		//tests for Time Sheet Submit template
+	});
+	it('Should be able to validate Time Sheet Submit template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.timeSheetSubmitTemplateOption
@@ -263,7 +270,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.timeSheetSubmitSubjectRussian
 		);
-		//tests for Time Sheet Actions template
+	});
+	it('Should be able to validate Time Sheet Actions template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.timeSheetActionsTemplateOption
@@ -290,7 +298,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.timeSheetActionsSubjectRussian
 		);
-		//tests for Time Sheet Delete template
+	});
+	it('Should be able to validate Time Sheet Delete template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.timeSheetDeleteTemplateOption
@@ -317,7 +326,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.timeSheetDeleteSubjectRussian
 		);
-		//tests for Candidate Interview Schedule template
+	});
+	it('Should be able to validate Candidate Interview Schedule template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.candidateInterviewScheduleTemplateOption
@@ -344,7 +354,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.candidateInterviewScheduleSubjectRussian
 		);
-		//tests for Interviewer Schedule template
+	});
+	it('Should be able to validate Interviewer Schedule template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.interviewerScheduleTemplateOption
@@ -371,7 +382,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.interviewerScheduleSubjectRussian
 		);
-		//tests for Welcome User template
+	});
+	it('Should be able to validate Welcome User template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.welcomeUserTemplateOption
@@ -398,7 +410,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.welcomeUserSubjectRussian
 		);
-		//tests for Invite Organization Client template
+	});
+	it('Should be able to validate Invite Organization Client template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.inviteOrganizationClientTemplateOption
@@ -425,7 +438,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.inviteOrganizationClientSubjectRussian
 		);
-		//tests for Invite Employee template
+	});
+	it('Should be able to validate Invite Employee template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.inviteEmployeeTemplateOption
@@ -452,7 +466,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.inviteEmployeeSubjectRussian
 		);
-		//tests for Invite User template
+	});
+	it('Should be able to validate Invite User template', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.inviteUserTemplateOption
@@ -479,7 +494,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.inviteUserSubjectRussian
 		);
-		//tests for Email Invoice and Email Estimate
+	});
+	it('Should be able to validate Email Invoice', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.emailInvoiceTemplateOption
@@ -489,6 +505,8 @@ describe('Validate email templates test', () => {
 		emailTemplatesPage.validateEmailTemplateSubject(
 			EmailTemplatesPageData.emailInvoiceSubjectEnglish
 		);
+	});
+	it('Should be able to validate Email Estimate', () => {
 		emailTemplatesPage.clickSelectTemplateButton();
 		emailTemplatesPage.selectTemplateOption(
 			EmailTemplatesPageData.emailEstimateTemplateOption
