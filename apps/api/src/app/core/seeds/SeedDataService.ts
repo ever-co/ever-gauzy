@@ -365,6 +365,7 @@ export class SeedDataService {
 				this.connection = await createConnection({
 					...env.database,
 					...this.overrideDbConfig,
+					// TODO: possible to do it like this: [__dirname + '/../../entity/**.entity{.ts,.js}'] so we don't need hardcoded allEntities
 					entities: allEntities
 				} as ConnectionOptions);
 			} catch (error) {
