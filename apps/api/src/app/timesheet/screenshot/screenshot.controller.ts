@@ -4,8 +4,7 @@ import {
 	HttpStatus,
 	Post,
 	Body,
-	UseInterceptors,
-	UploadedFile
+	UseInterceptors
 } from '@nestjs/common';
 import { Screenshot } from '../screenshot.entity';
 import { CrudController } from '../../core/crud/crud.controller';
@@ -17,6 +16,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
 import { FileStorage } from '../../core/file-storage';
+import { UploadedFileStorage } from '../../core/file-storage/uploaded-file-storage';
 
 @ApiTags('Screenshot')
 @UseGuards(AuthGuard('jwt'))
@@ -39,16 +39,23 @@ export class ScreenshotController extends CrudController<Screenshot> {
 	@Post('/')
 	@UseInterceptors(
 		FileInterceptor('file', {
-			storage: new FileStorage({
-				dest: path.join('screenshots', moment().format('YYYY/MM/DD')),
+			storage: new FileStorage().storage({
+				dest: () => {
+					return path.join(
+						'screenshots',
+						moment().format('YYYY/MM/DD')
+					);
+				},
 				prefix: 'screenshots'
 			})
 		})
 	)
 	async upload(
 		@Body() entity: Screenshot,
-		@UploadedFile() file
+		@UploadedFileStorage()
+		file
 	): Promise<Screenshot> {
+		console.log('upload', { file });
 		const thumbName = `thumb-${file.filename}`;
 		await new Promise((resolve, reject) => {
 			sharp(file.path)
@@ -72,8 +79,8 @@ export class ScreenshotController extends CrudController<Screenshot> {
 			thumbName
 		);
 		entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
-
 		const screenshot = await this.screenshotService.create(entity);
+
 		return this.screenshotService.findOne(screenshot.id);
 	}
 }
