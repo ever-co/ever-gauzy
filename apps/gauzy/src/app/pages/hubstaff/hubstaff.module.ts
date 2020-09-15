@@ -13,7 +13,9 @@ import {
 	NbToggleModule,
 	NbDialogModule,
 	NbDatepickerModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbActionsModule,
+	NbContextMenuModule
 } from '@nebular/theme';
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -52,6 +54,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NbCheckboxModule,
 		NbToggleModule,
+		NbActionsModule,
+		NbContextMenuModule,
 		ThemeModule,
 		NbDatepickerModule,
 		BackNavigationModule,

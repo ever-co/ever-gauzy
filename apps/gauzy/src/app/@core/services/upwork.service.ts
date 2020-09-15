@@ -7,7 +7,8 @@ import {
 	IAccessToken,
 	IEngagement,
 	IUpworkApiConfig,
-	IIntegrationMap
+	IIntegrationMap,
+	IntegrationEnum
 } from '@gauzy/models';
 
 @Injectable({
@@ -77,6 +78,8 @@ export class UpworkService {
 	 * Check remeber state for upwork integration
 	 */
 	checkRemeberState() {
-		return this.http.get<any>(`/api/integrations/upwork/check/state`);
+		return this.http.get<any>(
+			`/api/integration/check/state/${IntegrationEnum.UPWORK}`
+		);
 	}
 }

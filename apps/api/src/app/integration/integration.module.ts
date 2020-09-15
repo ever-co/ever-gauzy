@@ -6,11 +6,13 @@ import { IntegrationService } from './integration.service';
 import { IntegrationController } from './integration.controller';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
+import { IntegrationTenantModule } from '../integration-tenant/integration-tenant.module';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Integration, IntegrationType]),
-		CqrsModule
+		CqrsModule,
+		IntegrationTenantModule
 	],
 	controllers: [IntegrationController],
 	providers: [IntegrationService, ...CommandHandlers]

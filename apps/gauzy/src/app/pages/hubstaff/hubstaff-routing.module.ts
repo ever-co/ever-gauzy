@@ -6,7 +6,13 @@ import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
 const routes: Routes = [
 	{
 		path: '',
-		component: HubstaffAuthorizeComponent
+		component: HubstaffAuthorizeComponent,
+		data: { state: true }
+	},
+	{
+		path: 'regenerate',
+		component: HubstaffAuthorizeComponent,
+		data: { state: false }
 	},
 	{
 		path: ':id',
