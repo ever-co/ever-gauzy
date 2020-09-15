@@ -6,7 +6,6 @@ export const UploadedFileStorage = createParamDecorator(
 	(data: ProviderEnum, ctx: ExecutionContext): UploadedFile => {
 		const request = ctx.switchToHttp().getRequest();
 		const provider = new FileStorage().getProvider(data);
-
 		return provider.mapUploadedFile(request.file);
 	}
 );

@@ -56,6 +56,7 @@ export class ScreenshotController extends CrudController<Screenshot> {
 		@UploadedFileStorage()
 		file
 	): Promise<Screenshot> {
+		console.log('upload', { file });
 		const thumbName = `thumb-${file.filename}`;
 
 		let fileContent;
