@@ -10,5 +10,7 @@ export const OrganizationTagsPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	editTagButtonCss: 'div.mb-3 > button[status="info"]',
-	deleteTagButtonCss: 'div.mb-3 > button[status="danger"]'
+	deleteTagButtonCss: 'div.mb-3 > button[status="danger"]',
+	confirmDeletetagButtonCss: 'nb-card-footer > button[status="danger"]',
+	cancelDeleteTagButtonCss: 'nb-card-footer > button[status="info"]'
 };

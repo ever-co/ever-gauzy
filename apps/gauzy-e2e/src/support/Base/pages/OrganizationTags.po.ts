@@ -105,3 +105,19 @@ export const deleteTagButtonVisible = () => {
 export const clickDeleteTagButton = () => {
 	clickButton(OrganizationTagsPage.deleteTagButtonCss);
 };
+
+export const cancelDeleteTagButtonVisible = () => {
+	verifyElementIsVisible(OrganizationTagsPage.cancelDeleteTagButtonCss);
+};
+
+export const clickCancelDeleteTagButton = () => {
+	clickButton(OrganizationTagsPage.cancelDeleteTagButtonCss);
+};
+
+export const confirmDeleteTagButtonVisible = () => {
+	verifyElementIsVisible(OrganizationTagsPage.confirmDeletetagButtonCss);
+};
+
+export const clickConfirmDeleteTagButton = () => {
+	clickButton(OrganizationTagsPage.confirmDeletetagButtonCss);
+};

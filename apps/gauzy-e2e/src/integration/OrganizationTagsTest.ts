@@ -16,7 +16,7 @@ describe('Organization tags test', () => {
 		loginPage.clickLoginButton();
 		dashboradPage.verifyCreateButton();
 	});
-	it('Should be able to remove user', () => {
+	it('Should be able to create, edit and delete tag', () => {
 		cy.visit('/#/pages/organization/tags');
 		organizationTagsUserPage.gridButtonVisible();
 		organizationTagsUserPage.clickGridButton();
@@ -33,5 +33,41 @@ describe('Organization tags test', () => {
 		organizationTagsUserPage.enterTagColorData(
 			OrganizationTagsPageData.tagColor
 		);
+		organizationTagsUserPage.checkboxTenantLevelVisible();
+		organizationTagsUserPage.clickCheckboxTenantLevel();
+		organizationTagsUserPage.tagDescriptionTextareaVisible();
+		organizationTagsUserPage.enterTagDescriptionData(
+			OrganizationTagsPageData.tagDescription
+		);
+		organizationTagsUserPage.saveTagButtonVisible();
+		organizationTagsUserPage.clickSaveTagButton();
+		organizationTagsUserPage.tagsTableDataVisible();
+		organizationTagsUserPage.selectTableRow(0);
+		organizationTagsUserPage.selectTableRow(0);
+		organizationTagsUserPage.editTagButtonVisible();
+		organizationTagsUserPage.clickEditTagButton();
+		organizationTagsUserPage.enterTagNameData(
+			OrganizationTagsPageData.tageName
+		);
+		organizationTagsUserPage.enterTagColorData(
+			OrganizationTagsPageData.tagColor
+		);
+		organizationTagsUserPage.clickCheckboxTenantLevel();
+		organizationTagsUserPage.enterTagDescriptionData(
+			OrganizationTagsPageData.tagDescription
+		);
+		organizationTagsUserPage.saveTagButtonVisible();
+		organizationTagsUserPage.clickSaveTagButton();
+		organizationTagsUserPage.selectTableRow(0);
+		organizationTagsUserPage.selectTableRow(0);
+		organizationTagsUserPage.deleteTagButtonVisible();
+		organizationTagsUserPage.clickDeleteTagButton();
+		organizationTagsUserPage.cancelDeleteTagButtonVisible();
+		organizationTagsUserPage.clickCancelDeleteTagButton();
+		organizationTagsUserPage.selectTableRow(0);
+		organizationTagsUserPage.selectTableRow(0);
+		organizationTagsUserPage.clickDeleteTagButton();
+		organizationTagsUserPage.confirmDeleteTagButtonVisible();
+		organizationTagsUserPage.clickConfirmDeleteTagButton();
 	});
 });
