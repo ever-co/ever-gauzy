@@ -13,6 +13,8 @@ import { ITwitterConfig } from './ITwitterConfig';
 import { IFiverrConfig } from './IFiverrConfig';
 import { IKeycloakConfig } from './IKeycloakConfig';
 import { IAuth0Config } from './IAuth0Config';
+import { AWSConfig } from './AWSConfig';
+import { ProviderEnum } from '../app/core/file-storage/models';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -22,6 +24,10 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 export interface Env {
 	LOG_LEVEL?: LogLevel;
 	[key: string]: string;
+}
+
+export interface FileSystem {
+	name: ProviderEnum;
 }
 
 /**
@@ -40,6 +46,9 @@ export interface IEnvironment {
 	EXPRESS_SESSION_SECRET: string;
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS?: number;
 	JWT_SECRET?: string;
+
+	fileSystem: FileSystem;
+	awsConfig?: AWSConfig;
 
 	database: TypeOrmModuleOptions;
 
