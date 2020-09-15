@@ -1,6 +1,7 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface RecurringExpenseModel extends IBaseEntityModel {
+export interface IRecurringExpenseModel
+	extends IBasePerTenantAndOrganizationEntityModel {
 	startDay: number;
 	startMonth: number;
 	startYear: number;
@@ -16,9 +17,9 @@ export interface RecurringExpenseModel extends IBaseEntityModel {
 	employeeId?: string;
 }
 
-export interface RecurringExpenseByMonthFindInput extends IBaseEntityModel {
+export interface IRecurringExpenseByMonthFindInput {
 	employeeId?: string;
-  organizationId?: string;
+	organizationId?: string;
 	month?: number;
 	year?: number;
 }
@@ -27,7 +28,7 @@ export interface RecurringExpenseByMonthFindInput extends IBaseEntityModel {
  * categoryName, value and currency are the new values.
  * startDay, startMonth, startYear represent the date when this was edited.
  */
-export interface RecurringExpenseEditInput extends IBaseEntityModel {
+export interface IRecurringExpenseEditInput {
 	startDay: number;
 	startMonth: number;
 	startYear: number;
@@ -37,13 +38,13 @@ export interface RecurringExpenseEditInput extends IBaseEntityModel {
 	startDateUpdateType?: string;
 }
 
-export interface RecurringExpenseDeleteInput {
+export interface IRecurringExpenseDeleteInput {
 	deletionType: RecurringExpenseDeletionEnum;
 	month: number;
 	year: number;
 }
 
-export interface RecurringExpenseOrderFields {
+export interface IRecurringExpenseOrderFields {
 	startDate?: 'ASC' | 'DESC';
 }
 
@@ -54,7 +55,7 @@ export interface IFindStartDateUpdateTypeInput {
 
 export interface IStartUpdateTypeInfo {
 	value: StartDateUpdateTypeEnum;
-	conflicts: RecurringExpenseModel[];
+	conflicts: IRecurringExpenseModel[];
 }
 
 export enum RecurringExpenseDeletionEnum {

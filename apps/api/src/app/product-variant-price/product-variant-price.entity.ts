@@ -1,15 +1,13 @@
 import { Entity, Column, OneToOne } from 'typeorm';
-import {
-	ProductVariantPrice as IProductVariantPrice,
-	CurrenciesEnum
-} from '@gauzy/models';
+import { IProductVariantPrice, CurrenciesEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsEnum } from 'class-validator';
 import { ProductVariant } from '../product-variant/product-variant.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('product_variant_price')
-export class ProductVariantPrice extends TenantOrganizationBase implements IProductVariantPrice {
+export class ProductVariantPrice extends TenantOrganizationBase
+	implements IProductVariantPrice {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })

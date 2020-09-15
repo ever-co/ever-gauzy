@@ -1,13 +1,13 @@
-import { AppointmentEmployees as IAppointmentEmployees } from '@gauzy/models';
+import { IAppointmentEmployee, IEmployeeAppointment } from '@gauzy/models';
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { EmployeeAppointment } from '../employee-appointment';
-import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('appointment_employees')
-export class AppointmentEmployees extends Base
-	implements IAppointmentEmployees {
+export class AppointmentEmployee extends TenantOrganizationBase
+	implements IAppointmentEmployee {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -27,5 +27,5 @@ export class AppointmentEmployees extends Base
 		{ onDelete: 'SET NULL' }
 	)
 	@JoinColumn()
-	employeeAppointment: EmployeeAppointment;
+	employeeAppointment: IEmployeeAppointment;
 }

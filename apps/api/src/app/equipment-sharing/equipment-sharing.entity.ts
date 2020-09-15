@@ -8,7 +8,7 @@ import {
 	ManyToOne
 } from 'typeorm';
 import {
-	EquipmentSharing as IEquipmentSharing,
+	IEquipmentSharing,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
@@ -20,7 +20,8 @@ import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sh
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('equipment_sharing')
-export class EquipmentSharing extends TenantOrganizationBase implements IEquipmentSharing {
+export class EquipmentSharing extends TenantOrganizationBase
+	implements IEquipmentSharing {
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })

@@ -1,20 +1,20 @@
-import { IEducation, Candidate } from '@gauzy/models';
+import { ICandidateEducation, ICandidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { CandidateEducation } from './candidate-education.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
-const candidateEducations: IEducation[] = [
+const candidateEducations: ICandidateEducation[] = [
 	{
 		schoolName: 'MIT',
 		degree: 'Master',
 		completionDate: new Date(2017, 4, 4),
-		field: 'Computer Science',
+		field: 'Computer Science'
 	}
 ];
 
 export const createCandidateEducations = async (
 	connection: Connection,
-	candidates: Candidate[] | void
+	candidates: ICandidate[] | void
 ): Promise<CandidateEducation[]> => {
 	let defaultCandidateEducation = [];
 
@@ -30,7 +30,7 @@ export const createCandidateEducations = async (
 			degree: education.degree,
 			completionDate: education.completionDate,
 			field: education.field,
-			candidateId: candidate.id,
+			candidateId: candidate.id
 		}));
 		defaultCandidateEducation = [
 			...defaultCandidateEducation,
@@ -45,8 +45,8 @@ export const createCandidateEducations = async (
 export const createRandomCandidateEducations = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
-): Promise<Map<Candidate, CandidateEducation[]>> => {
+	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+): Promise<Map<ICandidate, CandidateEducation[]>> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
 			'Warning: tenantCandidatesMap not found, CandidateEducation will not be created'
@@ -55,7 +55,7 @@ export const createRandomCandidateEducations = async (
 	}
 
 	let candidateEducation = [];
-	const candidateEducationsMap: Map<Candidate, any[]> = new Map();
+	const candidateEducationsMap: Map<ICandidate, any[]> = new Map();
 
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);
@@ -66,8 +66,8 @@ export const createRandomCandidateEducations = async (
 				degree: education.degree,
 				completionDate: education.completionDate,
 				field: education.field,
-				candidateId: candidate.id,
-      }));
+				candidateId: candidate.id
+			}));
 			candidateEducationsMap.set(candidate, educations);
 			candidateEducation = [...candidateEducations, ...educations];
 		});

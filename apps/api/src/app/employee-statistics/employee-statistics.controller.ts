@@ -1,8 +1,8 @@
 import {
-	AggregatedEmployeeStatistic,
-	EmployeeStatistics,
-	MonthAggregatedEmployeeStatistics,
-	EmployeeStatisticsHistory
+	IAggregatedEmployeeStatistic,
+	IEmployeeStatistics,
+	IMonthAggregatedEmployeeStatistics,
+	IEmployeeStatisticsHistory
 } from '@gauzy/models';
 import {
 	Controller,
@@ -41,7 +41,7 @@ export class EmployeeStatisticsController {
 	@Get('/aggregate')
 	async findAggregatedByOrganizationId(
 		@Query('data') data?: string
-	): Promise<AggregatedEmployeeStatistic[]> {
+	): Promise<IAggregatedEmployeeStatistic[]> {
 		const { findInput } = JSON.parse(data);
 		/**
 		 * JSON parse changes Date object to String type
@@ -65,7 +65,7 @@ export class EmployeeStatisticsController {
 	async findAllByEmloyeeId(
 		@Param('id') id: string,
 		@Query('data') data?: string
-	): Promise<EmployeeStatistics> {
+	): Promise<IEmployeeStatistics> {
 		const { findInput } = JSON.parse(data);
 		return this.employeeStatisticsService.getStatisticsByEmployeeId(
 			id,
@@ -85,7 +85,7 @@ export class EmployeeStatisticsController {
 	@Get('/months')
 	async findAggregatedStatisticsByEmployeeId(
 		@Query('data') data?: string
-	): Promise<MonthAggregatedEmployeeStatistics> {
+	): Promise<IMonthAggregatedEmployeeStatistics> {
 		const { findInput } = JSON.parse(data);
 		/**
 		 * JSON parse changes Date object to String type
@@ -109,7 +109,7 @@ export class EmployeeStatisticsController {
 	@Get('/history')
 	async findEmployeeStatisticsHistory(
 		@Query('data') data?: string
-	): Promise<EmployeeStatisticsHistory[]> {
+	): Promise<IEmployeeStatisticsHistory[]> {
 		const { findInput } = JSON.parse(data);
 		/**
 		 * JSON parse changes Date object to String type

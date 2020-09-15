@@ -16,8 +16,8 @@ import { CrudController, IPagination } from '../core';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { OrganizationSprintService } from './organization-sprint.service';
 import { AuthGuard } from '@nestjs/passport';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
-import { OrganizationSprintUpdateInput } from '@gauzy/models';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
+import { IOrganizationSprintUpdateInput } from '@gauzy/models';
 import { OrganizationSprintUpdateCommand } from './commands/organization-sprint.update.command';
 import { CommandBus } from '@nestjs/cqrs';
 
@@ -40,7 +40,7 @@ export class OrganizationSprintController extends CrudController<
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found projects',
-		type: OrganizationProjects
+		type: OrganizationProject
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -95,7 +95,7 @@ export class OrganizationSprintController extends CrudController<
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: OrganizationSprintUpdateInput
+		@Body() entity: IOrganizationSprintUpdateInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationSprintUpdateCommand(id, entity)

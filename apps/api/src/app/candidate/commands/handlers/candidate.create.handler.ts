@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Candidate } from '@gauzy/models';
+import { ICandidate } from '@gauzy/models';
 import { CandidateCreateCommand } from '../candidate.create.command';
 import { CandidateService } from '../../candidate.service';
 
@@ -8,7 +8,7 @@ export class CandidateCreateHandler
 	implements ICommandHandler<CandidateCreateCommand> {
 	constructor(private readonly candidateService: CandidateService) {}
 
-	public async execute(command: CandidateCreateCommand): Promise<Candidate> {
+	public async execute(command: CandidateCreateCommand): Promise<ICandidate> {
 		const { input } = command;
 		return await this.candidateService.create(input);
 	}

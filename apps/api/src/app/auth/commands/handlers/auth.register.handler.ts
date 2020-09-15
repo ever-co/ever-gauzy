@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthRegisterCommand } from '../auth.register.command';
 import { AuthService } from '../../auth.service';
-import { User, RolesEnum } from '@gauzy/models';
+import { IUser, RolesEnum } from '@gauzy/models';
 import { UserService } from '../../../user/user.service';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 
@@ -13,7 +13,7 @@ export class AuthRegisterHandler
 		private readonly userService: UserService
 	) {}
 
-	public async execute(command: AuthRegisterCommand): Promise<User> {
+	public async execute(command: AuthRegisterCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 
 		if (

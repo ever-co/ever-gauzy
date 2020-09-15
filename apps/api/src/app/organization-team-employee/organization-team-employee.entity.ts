@@ -1,4 +1,4 @@
-import { OrganizationTeamEmployee as IOrganizationTeamEmployee } from '@gauzy/models';
+import { IOrganizationTeamEmployee } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';

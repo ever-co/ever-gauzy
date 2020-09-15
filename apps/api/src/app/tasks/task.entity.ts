@@ -12,8 +12,8 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 
-import { Task as ITask, TaskStatusEnum } from '@gauzy/models';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { ITask, TaskStatusEnum } from '@gauzy/models';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Employee } from '../employee/employee.entity';
@@ -53,13 +53,13 @@ export class Task extends Base implements ITask {
 	@IsOptional()
 	dueDate?: Date;
 
-	@ApiProperty({ type: OrganizationProjects })
-	@ManyToOne((type) => OrganizationProjects, {
+	@ApiProperty({ type: OrganizationProject })
+	@ManyToOne((type) => OrganizationProject, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	project?: OrganizationProjects;
+	project?: OrganizationProject;
 
 	@OneToMany((type) => TimeLog, (timeLog) => timeLog.task)
 	timeLogs?: TimeLog[];

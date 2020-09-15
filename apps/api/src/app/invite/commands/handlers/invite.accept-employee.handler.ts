@@ -1,4 +1,4 @@
-import { Invite, InviteStatusEnum } from '@gauzy/models';
+import { IInvite, InviteStatusEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
@@ -32,7 +32,7 @@ export class InviteAcceptEmployeeHandler
 
 	public async execute(
 		command: InviteAcceptEmployeeCommand
-	): Promise<UpdateResult | Invite> {
+	): Promise<UpdateResult | IInvite> {
 		const { input, languageCode } = command;
 
 		const invite = await this.inviteService.findOne({
@@ -90,7 +90,7 @@ export class InviteAcceptEmployeeHandler
 		});
 	}
 
-	updateEmployeeMemberships = (invite: Invite, employee: Employee) => {
+	updateEmployeeMemberships = (invite: IInvite, employee: Employee) => {
 		//Update project members
 		if (invite.projects)
 			invite.projects.forEach((project) => {

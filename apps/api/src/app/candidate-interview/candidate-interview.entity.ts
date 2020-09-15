@@ -8,15 +8,16 @@ import {
 	ICandidateInterviewers,
 	ICandidateTechnologies,
 	ICandidatePersonalQualities,
-	Candidate as ICandidate
+	ICandidate
 } from '@gauzy/models';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 import { Candidate } from '../candidate/candidate.entity';
-import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate_interview')
-export class CandidateInterview extends Base implements ICandidateInterview {
+export class CandidateInterview extends TenantOrganizationBase
+	implements ICandidateInterview {
 	@ApiProperty({ type: String })
 	@Column()
 	title: string;

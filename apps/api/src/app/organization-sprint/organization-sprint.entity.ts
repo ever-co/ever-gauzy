@@ -1,8 +1,5 @@
 import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
-import {
-	OrganizationSprint as IOrganizationSprint,
-	SprintStartDayEnum
-} from '@gauzy/models';
+import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Organization } from '../organization/organization.entity';
 import {
@@ -13,24 +10,18 @@ import {
 	IsOptional,
 	IsString
 } from 'class-validator';
-import { TenantBase } from '../core/entities/tenant-base';
 import { Task } from '../tasks/task.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_sprint')
-export class OrganizationSprint extends TenantBase
+export class OrganizationSprint extends TenantOrganizationBase
 	implements IOrganizationSprint {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	name: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -66,9 +57,9 @@ export class OrganizationSprint extends TenantBase
 	@Column({ nullable: true })
 	dayStart?: number;
 
-	@ApiProperty({ type: OrganizationProjects })
+	@ApiProperty({ type: OrganizationProject })
 	@ManyToOne(
-		(type) => OrganizationProjects,
+		(type) => OrganizationProject,
 		(project) => project.organizationSprints,
 		{
 			nullable: true,
@@ -76,7 +67,7 @@ export class OrganizationSprint extends TenantBase
 		}
 	)
 	@JoinColumn()
-	project?: OrganizationProjects;
+	project?: OrganizationProject;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
@@ -87,7 +78,4 @@ export class OrganizationSprint extends TenantBase
 	@OneToMany((type) => Task, (task) => task.organizationSprint)
 	@JoinColumn()
 	tasks?: Task[];
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization?: Organization;
 }

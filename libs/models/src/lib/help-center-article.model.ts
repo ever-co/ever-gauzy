@@ -1,7 +1,8 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee} from '..';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee } from '..';
 
-export interface IHelpCenterArticle extends IBaseEntityModel {
+export interface IHelpCenterArticle
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description?: string;
 	data?: string;
@@ -9,11 +10,12 @@ export interface IHelpCenterArticle extends IBaseEntityModel {
 	draft: boolean;
 	privacy: boolean;
 	categoryId: string;
-	employees?: Employee[];
+	employees?: IEmployee[];
 	authors?: IHelpCenterAuthor[];
 }
 
-export interface IHelpCenterAuthor extends IBaseEntityModel {
+export interface IHelpCenterAuthor
+	extends IBasePerTenantAndOrganizationEntityModel {
 	articleId: string;
 	employeeId: string;
 	articles?: IHelpCenterArticle[];

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-	IAvailabilitySlots,
+	IAvailabilitySlot,
 	IAvailabilitySlotsCreateInput,
 	IAvailabilitySlotsFindInput
 } from '@gauzy/models';
@@ -15,7 +15,7 @@ export class AvailabilitySlotsService {
 
 	create(createInput: IAvailabilitySlotsCreateInput): Promise<any> {
 		return this.http
-			.post<IAvailabilitySlots>(
+			.post<IAvailabilitySlot>(
 				this.AVAILABILITY_SLOTS_BASE_URI,
 				createInput
 			)
@@ -25,7 +25,7 @@ export class AvailabilitySlotsService {
 
 	createBulk(createInput: IAvailabilitySlotsCreateInput[]): Promise<any> {
 		return this.http
-			.post<IAvailabilitySlots[]>(
+			.post<IAvailabilitySlot[]>(
 				this.AVAILABILITY_SLOTS_BASE_URI + '/bulk',
 				createInput
 			)
@@ -36,10 +36,10 @@ export class AvailabilitySlotsService {
 	getAll(
 		relations?: string[],
 		findInput?: IAvailabilitySlotsFindInput
-	): Promise<{ items: IAvailabilitySlots[]; total: number }> {
+	): Promise<{ items: IAvailabilitySlot[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: IAvailabilitySlots[]; total: number }>(
+			.get<{ items: IAvailabilitySlot[]; total: number }>(
 				this.AVAILABILITY_SLOTS_BASE_URI,
 				{
 					params: { data }

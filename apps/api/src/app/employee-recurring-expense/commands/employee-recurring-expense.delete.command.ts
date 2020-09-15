@@ -1,4 +1,4 @@
-import { RecurringExpenseDeleteInput } from '@gauzy/models';
+import { IRecurringExpenseDeleteInput } from '@gauzy/models';
 import { ICommand } from '@nestjs/cqrs';
 
 export class EmployeeRecurringExpenseDeleteCommand implements ICommand {
@@ -6,6 +6,6 @@ export class EmployeeRecurringExpenseDeleteCommand implements ICommand {
 
 	constructor(
 		public readonly id: string,
-		public readonly deleteInput: RecurringExpenseDeleteInput
+		public readonly deleteInput: IRecurringExpenseDeleteInput
 	) {}
 }

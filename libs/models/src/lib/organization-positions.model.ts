@@ -1,19 +1,19 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag } from './tag-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ITag } from './tag-entity.model';
 
-export interface OrganizationPositions extends IBaseEntityModel {
+export interface IOrganizationPositions
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
-	tags: Tag[];
+	tags: ITag[];
 }
 
-export interface OrganizationPositionsFindInput extends IBaseEntityModel {
+export interface IOrganizationPositionsFindInput {
 	name?: string;
 	organizationId?: string;
 }
 
-export interface OrganizationPositionsCreateInput {
+export interface IOrganizationPositionsCreateInput {
 	name: string;
 	organizationId: string;
-	tags: Tag[];
+	tags: ITag[];
 }

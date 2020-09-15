@@ -1,36 +1,32 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from './employee.model';
-import { OrganizationTeam } from './organization-team-model';
-import { Equipment } from './equipment.model';
-import { ITenant } from './tenant.model';
-import { Organization } from './organization.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee } from './employee.model';
+import { IOrganizationTeam } from './organization-team-model';
+import { IEquipment } from './equipment.model';
 
-export interface EquipmentSharing extends IBaseEntityModel {
+export interface IEquipmentSharing
+	extends IBasePerTenantAndOrganizationEntityModel {
 	equipmentId?: string;
 	shareRequestDay?: Date;
 	shareStartDay?: Date;
 	shareEndDay?: Date;
 	status?: number;
 	equipmentSharingPolicyId?: string;
-	employees?: Employee[];
-	teams?: OrganizationTeam[];
-	equipment?: Equipment;
+	employees?: IEmployee[];
+	teams?: IOrganizationTeam[];
+	equipment?: IEquipment;
 	name?: string;
 	createdBy?: string;
 	createdByName?: string;
-	organizationId?: string;
-	organization?: Organization;
-	tenant?: ITenant;
 }
 
-export interface EquipmentSharingRequest extends IBaseEntityModel {
+export interface IEquipmentSharingRequest {
 	equipmentId: string;
 	equipment: string;
 	shareRequestDay: Date;
 	shareStartDay: Date;
 	shareEndDay: Date;
 	status: number;
-	equpmentSharingPolicyId?: string;
+	equipmentSharingPolicyId?: string;
 	employees?: string[];
 	teams?: string[];
 	organizationId?: string;

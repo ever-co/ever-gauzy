@@ -11,11 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
-import {
-	UserOrganization as IUserOrganization,
-	RolesEnum,
-	LanguagesEnum
-} from '@gauzy/models';
+import { IUserOrganization, RolesEnum, LanguagesEnum } from '@gauzy/models';
 import { UserOrganizationService } from './user-organization.services';
 import { IPagination } from '../core';
 import { UserOrganization } from './user-organization.entity';

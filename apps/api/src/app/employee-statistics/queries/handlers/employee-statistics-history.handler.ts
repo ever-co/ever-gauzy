@@ -3,9 +3,9 @@ import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../employee-statistics.service';
 import { startOfMonth, subMonths } from 'date-fns';
 import {
-	EmployeeStatisticsHistory,
+	IEmployeeStatisticsHistory,
 	EmployeeStatisticsHistoryEnum,
-	EmployeeStatisticsHistoryFindInput,
+	IEmployeeStatisticsHistoryFindInput,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import { EmployeeStatisticsHistoryQuery } from '../employee-statistics-history.query';
@@ -24,7 +24,7 @@ export class EmployeeStatisticsHistoryQueryHandler
 
 	public async execute(
 		command: EmployeeStatisticsHistoryQuery
-	): Promise<EmployeeStatisticsHistory[]> {
+	): Promise<IEmployeeStatisticsHistory[]> {
 		const { input } = command;
 
 		switch (input.type) {
@@ -43,8 +43,8 @@ export class EmployeeStatisticsHistoryQueryHandler
 	}
 
 	private async _incomeHistory(
-		input: EmployeeStatisticsHistoryFindInput
-	): Promise<EmployeeStatisticsHistory[]> {
+		input: IEmployeeStatisticsHistoryFindInput
+	): Promise<IEmployeeStatisticsHistory[]> {
 		// 1. Fetch employee's incomes for past N months from given date
 		const {
 			items: incomes
@@ -53,7 +53,7 @@ export class EmployeeStatisticsHistoryQueryHandler
 			input.valueDate,
 			input.months
 		);
-		const history: EmployeeStatisticsHistory[] = [];
+		const history: IEmployeeStatisticsHistory[] = [];
 		// 2. Populate  EmployeeStatisticsHistory
 		incomes.forEach(({ amount, clientName, valueDate, notes, isBonus }) => {
 			history.push({ valueDate, amount, notes, clientName, isBonus });
@@ -73,9 +73,9 @@ export class EmployeeStatisticsHistoryQueryHandler
 	}
 
 	private async _expenseHistory(
-		input: EmployeeStatisticsHistoryFindInput
-	): Promise<EmployeeStatisticsHistory[]> {
-		const history: EmployeeStatisticsHistory[] = [];
+		input: IEmployeeStatisticsHistoryFindInput
+	): Promise<IEmployeeStatisticsHistory[]> {
+		const history: IEmployeeStatisticsHistory[] = [];
 
 		// 1. Employee One time expenses
 		await this._loadEmployeeExpenses(input, history);
@@ -94,8 +94,8 @@ export class EmployeeStatisticsHistoryQueryHandler
 	}
 
 	private async _loadEmployeeExpenses(
-		input: EmployeeStatisticsHistoryFindInput,
-		history: EmployeeStatisticsHistory[]
+		input: IEmployeeStatisticsHistoryFindInput,
+		history: IEmployeeStatisticsHistory[]
 	) {
 		// 1. Fetch employee's  one time expenses for past N months from given date
 		const {
@@ -121,8 +121,8 @@ export class EmployeeStatisticsHistoryQueryHandler
 	}
 
 	private async _loadEmployeeRecurringExpenses(
-		input: EmployeeStatisticsHistoryFindInput,
-		history: EmployeeStatisticsHistory[]
+		input: IEmployeeStatisticsHistoryFindInput,
+		history: IEmployeeStatisticsHistory[]
 	) {
 		// 1. Fetch employee's  recurring expenses
 		const {
@@ -173,8 +173,8 @@ export class EmployeeStatisticsHistoryQueryHandler
 	}
 
 	private async _loadOrganizationSplitExpenses(
-		input: EmployeeStatisticsHistoryFindInput,
-		history: EmployeeStatisticsHistory[]
+		input: IEmployeeStatisticsHistoryFindInput,
+		history: IEmployeeStatisticsHistory[]
 	) {
 		// 1. Fetch employee's split expenses for past N months from given date
 		const splitExpensesMap = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
@@ -201,8 +201,8 @@ export class EmployeeStatisticsHistoryQueryHandler
 	}
 
 	private async _loadOrganizationRecurringSplitExpenses(
-		input: EmployeeStatisticsHistoryFindInput,
-		history: EmployeeStatisticsHistory[]
+		input: IEmployeeStatisticsHistoryFindInput,
+		history: IEmployeeStatisticsHistory[]
 	) {
 		// 1. Fetch employee's Organization Recurring split expenses for past N months from given date
 		const splitExpensesMap = await this.employeeStatisticsService.organizationRecurringSplitExpenses(

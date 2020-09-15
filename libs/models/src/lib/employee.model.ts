@@ -1,49 +1,44 @@
 import {
-	User,
-	Tag,
-	Skill,
-	OrganizationDepartment,
-	OrganizationPositions
+	IUser,
+	ITag,
+	ISkill,
+	IOrganizationDepartment,
+	IOrganizationPositions
 } from '..';
-import { Organization, OrganizationFindInput } from './organization.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { UserFindInput } from './user.model';
-import { OrganizationTeam } from './organization-team-model';
-import { Contact as IContact } from './contact.model';
-import { ITenant } from '@gauzy/models';
-import { OrganizationEmploymentType } from './organization-employment-type.model';
-import { RequestApprovalEmployee } from './request-approval-employee.model';
+import { IOrganization, IOrganizationFindInput } from './organization.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IUserFindInput } from './user.model';
+import { IOrganizationTeam } from './organization-team-model';
+import { IContact } from './contact.model';
+import { IOrganizationEmploymentType } from './organization-employment-type.model';
+import { IRequestApprovalEmployee } from './request-approval-employee.model';
 
-export interface Employee extends IContact, IBaseEntityModel {
+export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
 	endWork?: any;
 	startedWorkOn?: any;
-	user: User;
+	user: IUser;
 	userId: string;
-	organization?: Organization;
-	organizationId: string;
 	valueDate?: Date;
 	isActive: boolean;
 	short_description?: string;
 	description?: string;
-	teams?: OrganizationTeam[];
+	teams?: IOrganizationTeam[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
-	tenant: ITenant;
-	tenantId?: string;
-	organizationDepartments?: OrganizationDepartment[];
-	organizationPosition?: OrganizationPositions;
-	tags: Tag[];
-	skills: Skill[];
+	organizationDepartments?: IOrganizationDepartment[];
+	organizationPosition?: IOrganizationPositions;
+	tags: ITag[];
+	skills: ISkill[];
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
 	employeeLevel?: string;
 	anonymousBonus?: boolean;
-	organizationEmploymentTypes?: OrganizationEmploymentType[];
-	requestApprovalEmployee?: RequestApprovalEmployee[];
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
+	requestApprovalEmployee?: IRequestApprovalEmployee[];
 	contact: IContact;
 	averageIncome?: number;
 	totalWorkHours?: number;
@@ -57,22 +52,22 @@ export interface Employee extends IContact, IBaseEntityModel {
 	show_payperiod?: boolean;
 }
 
-export interface EmployeeFindInput extends IBaseEntityModel {
-	organization?: OrganizationFindInput;
-	user?: UserFindInput;
+export interface IEmployeeFindInput {
+	organization?: IOrganizationFindInput;
+	user?: IUserFindInput;
 	valueDate?: Date;
-  organizationId?: string;
-	tags?: Tag[];
-	skills?: Skill[];
+	organizationId?: string;
+	tags?: ITag[];
+	skills?: ISkill[];
 }
 
-export interface EmployeeUpdateInput {
+export interface IEmployeeUpdateInput {
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
-	organizationDepartment?: OrganizationDepartment;
-	organizationPosition?: OrganizationPositions;
+	organizationDepartment?: IOrganizationDepartment;
+	organizationPosition?: IOrganizationPositions;
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
@@ -81,19 +76,19 @@ export interface EmployeeUpdateInput {
 	averageIncome?: number;
 	averageExpenses?: number;
 	averageBonus?: number;
-	skills?: Skill[];
+	skills?: ISkill[];
 }
 
-export interface EmployeeCreateInput {
-	user: User;
-	organization: Organization;
+export interface IEmployeeCreateInput {
+	user: IUser;
+	organization: IOrganization;
 	password?: string;
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
-	members?: Employee[];
-	tags?: Tag[];
-	skills?: Skill[];
+	members?: IEmployee[];
+	tags?: ITag[];
+	skills?: ISkill[];
 	startedWorkOn?: any;
 	short_description?: string;
 	description?: string;
@@ -108,18 +103,18 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
-export interface EmployeeLevel {
+export interface IEmployeeLevel {
 	id: string;
 	level: string;
 	organizationId: string;
-	tag?: Tag[];
-	skills?: Skill[];
+	tag?: ITag[];
+	skills?: ISkill[];
 }
 
-export interface EmployeeLevelInput {
+export interface IEmployeeLevelInput {
 	id?: string;
 	level: string;
 	organizationId: string;
-	tags?: Tag[];
-	skills?: Skill[];
+	tags?: ITag[];
+	skills?: ISkill[];
 }

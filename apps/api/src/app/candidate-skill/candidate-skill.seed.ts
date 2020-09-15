@@ -1,4 +1,4 @@
-import { ISkill, Candidate } from '@gauzy/models';
+import { ISkill, ICandidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { CandidateSkill } from './candidate-skill.entity';
 import { Tenant } from '../tenant/tenant.entity';
@@ -11,7 +11,7 @@ const createCandiateSkills: ISkill[] = [
 
 export const createCandidateSkills = async (
 	connection: Connection,
-	candidates: Candidate[] | void
+	candidates: ICandidate[] | void
 ): Promise<CandidateSkill[]> => {
 	let defaultCandidateSkills = [];
 
@@ -25,7 +25,7 @@ export const createCandidateSkills = async (
 	candidates.forEach((candidate) => {
 		const skills = createCandiateSkills.map((skill) => ({
 			name: skill.name,
-			candidateId: candidate.id,
+			candidateId: candidate.id
 		}));
 		defaultCandidateSkills = [...defaultCandidateSkills, ...skills];
 	});
@@ -38,8 +38,8 @@ export const createCandidateSkills = async (
 export const createRandomCandidateSkills = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
-): Promise<Map<Candidate, CandidateSkill[]>> => {
+	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+): Promise<Map<ICandidate, CandidateSkill[]>> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
 			'Warning: tenantCandidatesMap not found, CandidateSkills will not be created'
@@ -48,7 +48,7 @@ export const createRandomCandidateSkills = async (
 	}
 
 	let candidateSkills = [];
-	const candidateSkillsMap: Map<Candidate, any[]> = new Map();
+	const candidateSkillsMap: Map<ICandidate, any[]> = new Map();
 
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);
@@ -56,7 +56,7 @@ export const createRandomCandidateSkills = async (
 		(candidates || []).forEach((candidate) => {
 			const skills = createCandiateSkills.map((skill) => ({
 				name: skill.name,
-				candidateId: candidate.id,
+				candidateId: candidate.id
 			}));
 
 			candidateSkillsMap.set(candidate, skills);

@@ -1,4 +1,4 @@
-import { Employee, EmployeeCreateInput, LanguagesEnum } from '@gauzy/models';
+import { IEmployee, IEmployeeCreateInput, LanguagesEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthService } from '../../../auth/auth.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
@@ -16,7 +16,7 @@ export class EmployeeCreateHandler
 		private readonly emailService: EmailService
 	) {}
 
-	public async execute(command: EmployeeCreateCommand): Promise<Employee> {
+	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
 		const { input } = command;
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
 		const inputWithHash = await this._addHashAndLanguage(
@@ -40,7 +40,7 @@ export class EmployeeCreateHandler
 	}
 
 	private async _addHashAndLanguage(
-		input: EmployeeCreateInput,
+		input: IEmployeeCreateInput,
 		languageCode: LanguagesEnum
 	) {
 		input.user.hash = await this.authService.getPasswordHash(

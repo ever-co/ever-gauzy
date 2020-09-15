@@ -7,21 +7,22 @@ import {
 	IsBoolean,
 	IsDate
 } from 'class-validator';
-import { IAvailabilitySlots } from '@gauzy/models';
+import { IAvailabilitySlot, IEmployee } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('availability_slots')
-export class AvailabilitySlots extends TenantOrganizationBase implements IAvailabilitySlots {
+export class AvailabilitySlot extends TenantOrganizationBase
+	implements IAvailabilitySlot {
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@IsOptional()
 	@RelationId(
-		(availabilitySlots: AvailabilitySlots) => availabilitySlots.employee
+		(availabilitySlots: AvailabilitySlot) => availabilitySlots.employee
 	)
 	@Column({ nullable: true })
 	readonly employeeId?: string;

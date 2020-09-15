@@ -8,11 +8,7 @@ import {
 	ManyToMany
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import {
-	Payment as IPayment,
-	CurrenciesEnum,
-	PaymentMethodEnum
-} from '@gauzy/models';
+import { IPayment, CurrenciesEnum, PaymentMethodEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsEnum,
@@ -27,7 +23,7 @@ import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Organization } from '../organization/organization.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 @Entity('payment')
@@ -115,12 +111,12 @@ export class Payment extends Base implements IPayment {
 	@RelationId((payment: Payment) => payment.tenant)
 	readonly tenantId?: string;
 
-	@ApiPropertyOptional({ type: OrganizationProjects })
-	@ManyToOne((type) => OrganizationProjects, (project) => project.payments, {
+	@ApiPropertyOptional({ type: OrganizationProject })
+	@ManyToOne((type) => OrganizationProject, (project) => project.payments, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	project?: OrganizationProjects;
+	project?: OrganizationProject;
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()

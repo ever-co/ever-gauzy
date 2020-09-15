@@ -1,6 +1,6 @@
 import {
-	RecurringExpenseEditInput,
-	RecurringExpenseModel,
+	IRecurringExpenseEditInput,
+	IRecurringExpenseModel,
 	StartDateUpdateTypeEnum
 } from '@gauzy/models';
 import { BadRequestException } from '@nestjs/common';
@@ -20,13 +20,13 @@ import { CrudService, getLastDayOfMonth } from '../../core';
  * For description of difference in each StartDateUpdateTypeEnum please refer to FindRecurringExpenseStartDateUpdateTypeHandler
  */
 export abstract class RecurringExpenseEditHandler<
-	T extends RecurringExpenseModel
+	T extends IRecurringExpenseModel
 > {
 	constructor(private readonly crudService: CrudService<T>) {}
 
 	public async executeCommand(
 		id: string,
-		input: RecurringExpenseEditInput
+		input: IRecurringExpenseEditInput
 	): Promise<any> {
 		const originalExpense: any = await this.crudService.findOne(id);
 
@@ -60,7 +60,7 @@ export abstract class RecurringExpenseEditHandler<
 	 */
 	private updateExpenseStartDateAndValue = async (
 		id: string,
-		input: RecurringExpenseEditInput
+		input: IRecurringExpenseEditInput
 	) => {
 		//TODO: Fix typescript
 		const updateObject: any = {
@@ -87,8 +87,8 @@ export abstract class RecurringExpenseEditHandler<
 	 */
 	private increaseSafe = async (
 		id: string,
-		input: RecurringExpenseEditInput,
-		originalExpense: RecurringExpenseModel | any
+		input: IRecurringExpenseEditInput,
+		originalExpense: IRecurringExpenseModel | any
 	) => {
 		const originalEndDate = new Date(
 			originalExpense.endYear,
@@ -162,8 +162,8 @@ export abstract class RecurringExpenseEditHandler<
 	 */
 	private reduceConflict = async (
 		id: string,
-		input: RecurringExpenseEditInput,
-		originalExpense: RecurringExpenseModel
+		input: IRecurringExpenseEditInput,
+		originalExpense: IRecurringExpenseModel
 	) => {
 		//1. Find conflicting expense
 		const conflictingExpense = await this.findConflictingExpense(

@@ -1,37 +1,33 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization, OrganizationFindInput } from './organization.model';
-import { LanguagesEnum, User } from './user.model';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganization, IOrganizationFindInput } from './organization.model';
+import { LanguagesEnum, IUser } from './user.model';
 
-export interface UserOrganization extends IBaseEntityModel {
+export interface IUserOrganization
+	extends IBasePerTenantAndOrganizationEntityModel {
 	userId: string;
-	organizationId: string;
 	isDefault: boolean;
 	isActive: boolean;
-	user?: User;
-	organization?: Organization;
-	tenant: ITenant;
-	tenantId?: string;
+	user?: IUser;
 }
 
-export interface UserOrganizationFindInput extends IBaseEntityModel {
+export interface IUserOrganizationFindInput {
 	userId?: string;
 	organizationId?: string;
 	isDefault?: boolean;
 	isActive?: boolean;
-	organization?: OrganizationFindInput;
+	organization?: IOrganizationFindInput;
 }
 
-export interface UserOrganizationCreateInput {
+export interface IUserOrganizationCreateInput {
 	userId: string;
 	organizationId: string;
 	isDefault?: boolean;
 	isActive?: boolean;
-	organization?: Organization;
+	organization?: IOrganization;
 }
 
-export interface UserOrganizationDeleteInput {
+export interface IUserOrganizationDeleteInput {
 	userOrganizationId: string;
-	requestingUser: User;
+	requestingUser: IUser;
 	language?: LanguagesEnum;
 }

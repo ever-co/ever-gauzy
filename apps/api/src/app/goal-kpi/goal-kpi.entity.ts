@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { KPI as IKPI, KpiMetricEnum } from '@gauzy/models';
+import { IKPI, KpiMetricEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 import { Employee } from '../employee/employee.entity';

@@ -1,7 +1,7 @@
 import {
 	IStartUpdateTypeInfo,
 	PermissionsEnum,
-	RecurringExpenseEditInput
+	IRecurringExpenseEditInput
 } from '@gauzy/models';
 import {
 	Body,
@@ -107,7 +107,7 @@ export class EmployeeRecurringExpenseController extends CrudController<
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: RecurringExpenseEditInput
+		@Body() entity: IRecurringExpenseEditInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new EmployeeRecurringExpenseEditCommand(id, entity)

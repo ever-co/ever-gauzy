@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AvailabilitySlotsCreateCommand } from '../availability-slots.create.command';
-import { AvailabilitySlots } from '../../availability-slots.entity';
+import { AvailabilitySlot } from '../../availability-slots.entity';
 import { AvailabilitySlotsService } from '../../availability-slots.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
@@ -16,10 +16,10 @@ export class AvailabilitySlotsCreateHandler
 
 	public async execute(
 		command: AvailabilitySlotsCreateCommand
-	): Promise<AvailabilitySlots> {
+	): Promise<AvailabilitySlot> {
 		const { input } = command;
 
-		const availabilitySlots = new AvailabilitySlots();
+		const availabilitySlots = new AvailabilitySlot();
 		const employee = input.employeeId
 			? await this.employeeService.findOne(input.employeeId)
 			: null;

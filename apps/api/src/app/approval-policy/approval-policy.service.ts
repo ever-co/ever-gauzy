@@ -4,8 +4,8 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository, Not, In } from 'typeorm';
 import {
-	ApprovalPolicy as IApprovalPolicy,
-	ApprovalPolicyCreateInput as IApprovalPolicyCreateInput,
+	IApprovalPolicy,
+	IApprovalPolicyCreateInput,
 	ApprovalPolicyTypesStringEnum
 } from '@gauzy/models';
 

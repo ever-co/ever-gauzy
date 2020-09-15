@@ -1,4 +1,9 @@
-import { Deal as IDeal } from '@gauzy/models';
+import {
+	IDeal,
+	IUser,
+	IPipelineStage,
+	IOrganizationContact
+} from '@gauzy/models';
 import { User } from '../user/user.entity';
 import {
 	Column,
@@ -32,7 +37,7 @@ export class Deal extends TenantOrganizationBase implements IDeal {
 	@JoinColumn({ name: 'createdByUserId' })
 	@ManyToOne(() => User)
 	@ApiProperty({ type: User })
-	public createdBy: User;
+	public createdBy: IUser;
 
 	@RelationId(({ stage }: Deal) => stage)
 	@ApiProperty({ type: String })
@@ -44,7 +49,7 @@ export class Deal extends TenantOrganizationBase implements IDeal {
 	@ManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
 	@ApiProperty({ type: PipelineStage })
 	@JoinColumn()
-	public stage: PipelineStage;
+	public stage: IPipelineStage;
 
 	@ApiProperty({ type: String })
 	@IsOptional()
@@ -55,7 +60,7 @@ export class Deal extends TenantOrganizationBase implements IDeal {
 	@OneToOne(() => OrganizationContact, { onDelete: 'CASCADE' })
 	@ApiProperty({ type: OrganizationContact })
 	@JoinColumn()
-	public client: OrganizationContact;
+	public client: IOrganizationContact;
 
 	@ApiProperty({ type: String })
 	@IsNotEmpty()

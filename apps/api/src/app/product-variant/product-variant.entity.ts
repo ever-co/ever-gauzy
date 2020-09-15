@@ -9,10 +9,7 @@ import {
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	ProductVariant as IProductVariant,
-	BillingInvoicingPolicyEnum
-} from '@gauzy/models';
+import { IProductVariant, BillingInvoicingPolicyEnum } from '@gauzy/models';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
 import { ProductOption } from '../product-option/product-option.entity';
 import { ProductVariantSettings } from '../product-settings/product-settings.entity';
@@ -21,7 +18,8 @@ import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('product_variant')
-export class ProductVariant extends TenantOrganizationBase implements IProductVariant {
+export class ProductVariant extends TenantOrganizationBase
+	implements IProductVariant {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })

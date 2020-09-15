@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core';
 import { Contact } from './contact.entity';
-import { ContactCreateInput } from '@gauzy/models';
+import { IContactCreateInput } from '@gauzy/models';
 
 @Injectable()
 export class ContactService extends CrudService<Contact> {
@@ -14,7 +14,7 @@ export class ContactService extends CrudService<Contact> {
 		super(contactRepository);
 	}
 
-	async saveContact(contactRequest: ContactCreateInput): Promise<Contact> {
+	async saveContact(contactRequest: IContactCreateInput): Promise<Contact> {
 		return this.contactRepository.save(contactRequest);
 	}
 }

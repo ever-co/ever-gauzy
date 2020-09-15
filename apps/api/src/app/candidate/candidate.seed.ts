@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import { User, ISeedUsers } from '@gauzy/models';
+import { IUser, ISeedUsers } from '@gauzy/models';
 // import { LanguagesEnum } from '@gauzy/models';
 // import { CandidateSource } from '../candidate-source/candidate-source.entity';
 
@@ -11,7 +11,7 @@ export const createDefaultCandidates = async (
 	defaultData: {
 		tenant: Tenant;
 		org: Organization;
-		users: User[];
+		users: IUser[];
 	}
 ): Promise<Candidate[]> => {
 	/*

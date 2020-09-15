@@ -1,12 +1,7 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization } from './organization.model';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface EquipmentSharingPolicy extends IBaseEntityModel {
+export interface IEquipmentSharingPolicy
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	description?: string;
-	organization?: Organization;
-	organizationId?: string;
-  tenantId?: string;
-	tenant?: ITenant;
 }

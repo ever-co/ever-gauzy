@@ -1,11 +1,12 @@
 import { Column, Entity, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { OrganizationAwards as IOrganizationAwards } from '@gauzy/models';
+import { IOrganizationAwards } from '@gauzy/models';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_awards')
-export class OrganizationAwards extends TenantOrganizationBase implements IOrganizationAwards {
+export class OrganizationAwards extends TenantOrganizationBase
+	implements IOrganizationAwards {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

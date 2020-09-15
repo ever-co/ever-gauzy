@@ -1,4 +1,4 @@
-import { EmployeeAppointment as IEmployeeAppointment } from '@gauzy/models';
+import { IEmployeeAppointment } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -15,12 +15,13 @@ import {
 	ManyToOne,
 	RelationId
 } from 'typeorm';
-import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { AppointmentEmployee } from '../appointment-employees/appointment-employees.entity';
 import { Employee } from '../employee/employee.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('employee_appointment')
-export class EmployeeAppointment extends TenantOrganizationBase implements IEmployeeAppointment {
+export class EmployeeAppointment extends TenantOrganizationBase
+	implements IEmployeeAppointment {
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -97,14 +98,14 @@ export class EmployeeAppointment extends TenantOrganizationBase implements IEmpl
 	@Column({ nullable: true })
 	status?: string;
 
-	@ApiProperty({ type: AppointmentEmployees, isArray: true })
+	@ApiProperty({ type: AppointmentEmployee, isArray: true })
 	@OneToMany(
-		(type) => AppointmentEmployees,
+		(type) => AppointmentEmployee,
 		(entity) => entity.employeeAppointment,
 		{
 			onDelete: 'SET NULL'
 		}
 	)
 	@JoinColumn()
-	invitees?: AppointmentEmployees[];
+	invitees?: AppointmentEmployee[];
 }

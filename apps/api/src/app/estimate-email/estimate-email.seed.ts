@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee, Organization } from '@gauzy/models';
+import { IEmployee, IOrganization } from '@gauzy/models';
 import { EstimateEmail } from './estimate-email.entity';
 import * as faker from 'faker';
 import { sign } from 'jsonwebtoken';
@@ -9,8 +9,8 @@ import { environment as env } from '@env-api/environment';
 export const createRandomEstimateEmail = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<EstimateEmail[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
@@ -31,7 +31,6 @@ export const createRandomEstimateEmail = async (
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 
 		for (const tenantEmployee of tenantEmployees) {
-
 			const estimateEmail = new EstimateEmail();
 			let newDate = faker.date.recent();
 			newDate.setMinutes(faker.date.recent().getMinutes() + 15);

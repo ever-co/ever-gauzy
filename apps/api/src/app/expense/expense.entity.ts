@@ -18,7 +18,14 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
+import {
+	IExpense,
+	CurrenciesEnum,
+	IOrganizationVendor,
+	IExpenseCategory,
+	ITag,
+	IEmployee
+} from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
@@ -32,12 +39,12 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 	@JoinTable({
 		name: 'tag_expense'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((expense: Expense) => expense.employee)
@@ -63,7 +70,7 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 		nullable: false
 	})
 	@JoinColumn()
-	vendor: OrganizationVendor;
+	vendor: IOrganizationVendor;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((expense: Expense) => expense.vendor)
@@ -74,7 +81,7 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 		nullable: false
 	})
 	@JoinColumn()
-	category: ExpenseCategory;
+	category: IExpenseCategory;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((expense: Expense) => expense.category)

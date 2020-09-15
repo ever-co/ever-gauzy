@@ -1,9 +1,9 @@
 import { ICandidateInterviewers } from './candidate-interviewers.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ICandidateCriterionsRating } from './candidate-criterions-rating.model';
-import { Organization } from './organization.model';
 
-export interface ICandidateFeedback extends IBaseEntityModel {
+export interface ICandidateFeedback
+	extends IBasePerTenantAndOrganizationEntityModel {
 	description: string;
 	candidateId?: string;
 	rating: number;
@@ -12,10 +12,9 @@ export interface ICandidateFeedback extends IBaseEntityModel {
 	interviewer?: ICandidateInterviewers;
 	interviewTitle?: string;
 	criterionsRating?: ICandidateCriterionsRating[];
-  organization?: Organization;
 }
 
-export interface ICandidateFeedbackFindInput extends IBaseEntityModel {
+export interface ICandidateFeedbackFindInput {
 	description?: string;
 	candidateId?: string;
 	rating?: number;

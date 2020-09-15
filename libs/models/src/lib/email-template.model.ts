@@ -1,14 +1,15 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { LanguagesEnum } from './user.model';
 
-export interface EmailTemplate extends IBaseEntityModel {
+export interface IEmailTemplate
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	mjml?: string;
 	hbs: string;
 	languageCode: string;
 }
 
-export interface EmailTemplateFindInput extends IBaseEntityModel {
+export interface IEmailTemplateFindInput {
 	name?: string;
 	languageCode?: string;
 }
@@ -19,8 +20,8 @@ export enum EmailTemplateNameEnum {
 	APPOINTMENT_CANCELLATION = 'appointment-cancellation',
 	TIME_OFF_POLICY_ACTION = 'time-off-report-action',
 	TASK_UPDATE = 'task-update',
-  equipment = 'equipment',
-  equipment_request = 'equipment-request',
+	EQUIPMENT = 'equipment',
+	EQUIPMENT_REQUEST = 'equipment-request',
 	TIME_SHEET_OVERVIEW = 'timesheet-overview',
 	TIME_SHEET_SUBMIT = 'timesheet-submit',
 	TIME_SHEET_ACTION = 'timesheet-action',

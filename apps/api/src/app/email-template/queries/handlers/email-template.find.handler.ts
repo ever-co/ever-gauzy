@@ -5,7 +5,7 @@ import {
 	ICustomizableEmailTemplate,
 	LanguagesEnum,
 	EmailTemplateNameEnum,
-	EmailTemplate
+	IEmailTemplate
 } from '@gauzy/models';
 import { IsNull } from 'typeorm';
 
@@ -48,7 +48,7 @@ export class FindEmailTemplateHandler
 			record
 		}: {
 			success: boolean;
-			record?: EmailTemplate;
+			record?: IEmailTemplate;
 		} = await this.emailTemplateService.findOneOrFail({
 			languageCode,
 			name: `${name}/${type}`,

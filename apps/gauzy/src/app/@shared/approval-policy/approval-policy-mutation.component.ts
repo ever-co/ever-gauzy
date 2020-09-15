@@ -4,7 +4,7 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
 	ApprovalPolicy,
 	Employee,
-	ApprovalPolicyCreateInput,
+	IApprovalPolicyCreateInput,
 	ApprovalPolicyTypesEnum
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
@@ -65,7 +65,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	}
 
 	async saveApprovalPolicy() {
-		const apprPolicy: ApprovalPolicyCreateInput = {
+		const apprPolicy: IApprovalPolicyCreateInput = {
 			name: this.form.value['name'],
 			description: this.form.value['description'],
 			organizationId: this.organizationId,

@@ -1,13 +1,13 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee } from '@gauzy/models';
+import { IEmployee } from '@gauzy/models';
 import { EmployeeSetting } from './employee-setting.entity';
 import * as faker from 'faker';
 
 export const createRandomEmployeeSetting = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>
 ): Promise<EmployeeSetting[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(

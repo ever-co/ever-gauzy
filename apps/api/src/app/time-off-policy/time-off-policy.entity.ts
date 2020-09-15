@@ -9,7 +9,7 @@ import {
 	JoinColumn
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { TimeOffPolicy as ITimeOffPolicy } from '@gauzy/models';
+import { ITimeOffPolicy } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 import { Employee } from '../employee/employee.entity';

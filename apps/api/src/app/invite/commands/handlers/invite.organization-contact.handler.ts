@@ -1,5 +1,5 @@
 import {
-	OrganizationContact,
+	IOrganizationContact,
 	ContactOrganizationInviteStatus,
 	RolesEnum
 } from '@gauzy/models';
@@ -27,12 +27,12 @@ export class InviteOrganizationContactHandler
 
 	public async execute(
 		command: InviteOrganizationContactCommand
-	): Promise<OrganizationContact> {
+	): Promise<IOrganizationContact> {
 		const {
 			input: { id, originalUrl, inviterUser, languageCode }
 		} = command;
 
-		const organizationContact: OrganizationContact = await this.organizationContactService.findOne(
+		const organizationContact: IOrganizationContact = await this.organizationContactService.findOne(
 			id
 		);
 

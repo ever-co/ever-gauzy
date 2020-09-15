@@ -1,13 +1,7 @@
-import { Email as IEmail } from '@gauzy/models';
+import { IEmail, IEmailTemplate, IUser } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { User } from '../user/user.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
@@ -21,7 +15,7 @@ export class Email extends TenantOrganizationBase implements IEmail {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	emailTemplate: EmailTemplate;
+	emailTemplate: IEmailTemplate;
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()
@@ -54,5 +48,5 @@ export class Email extends TenantOrganizationBase implements IEmail {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	user?: User;
+	user?: IUser;
 }

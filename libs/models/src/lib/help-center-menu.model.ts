@@ -1,9 +1,7 @@
 import { IHelpCenterArticle } from './help-center-article.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization } from './organization.model';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IHelpCenter extends IBaseEntityModel {
+export interface IHelpCenter extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	icon: string;
 	flag: string;
@@ -17,8 +15,4 @@ export interface IHelpCenter extends IBaseEntityModel {
 	parent?: IHelpCenter;
 	article?: IHelpCenterArticle[];
 	parentId?: string;
-	organizationId?: string;
-	organization?: Organization;
-	tenant?: ITenant;
-	tenantId?: string;
 }

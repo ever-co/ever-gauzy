@@ -1,4 +1,4 @@
-import { EditEntityByMemberInput, PermissionsEnum } from '@gauzy/models';
+import { IEditEntityByMemberInput, PermissionsEnum } from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -97,7 +97,7 @@ export class OrganizationContactController extends CrudController<
 	@Put('employee')
 	@UseGuards(AuthGuard('jwt'))
 	async updateEmployee(
-		@Body() entity: EditEntityByMemberInput
+		@Body() entity: IEditEntityByMemberInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationContactEditByEmployeeCommand(entity)

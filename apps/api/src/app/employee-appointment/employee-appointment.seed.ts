@@ -1,10 +1,10 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee, Organization } from '@gauzy/models';
+import { IEmployee, IOrganization } from '@gauzy/models';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
-import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { AppointmentEmployee } from '../appointment-employees/appointment-employees.entity';
 
 const agendas = [
 	'Meeting',
@@ -14,10 +14,10 @@ const agendas = [
 ];
 
 export const createDefaultEmployeeAppointment = async (
-  connection: Connection,
-  tenant: Tenant,
-  employees: Employee[],
-  organizations
+	connection: Connection,
+	tenant: Tenant,
+	employees: IEmployee[],
+	organizations
 ): Promise<EmployeeAppointment[]> => {
 	if (!employees) {
 		console.warn(
@@ -39,7 +39,7 @@ export const createDefaultEmployeeAppointment = async (
 			employeesAppointments,
 			employee,
 			[organizations],
-      tenant
+			tenant
 		);
 	}
 	await connection.manager.save(employeesAppointments);
@@ -48,8 +48,8 @@ export const createDefaultEmployeeAppointment = async (
 export const createRandomEmployeeAppointment = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<EmployeeAppointment[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
@@ -76,7 +76,7 @@ export const createRandomEmployeeAppointment = async (
 				employeesAppointments,
 				tenantEmployee,
 				tenantOrgs,
-        tenant
+				tenant
 			);
 		}
 	}
@@ -87,12 +87,12 @@ const dataOperation = async (
 	employeesAppointments,
 	tenantEmployee,
 	organizations,
-  tenant
+	tenant
 ) => {
 	for (const organization of organizations) {
 		const employeesAppointment = new EmployeeAppointment();
 
-		const invitees = await connection.manager.find(AppointmentEmployees, {
+		const invitees = await connection.manager.find(AppointmentEmployee, {
 			where: [{ employeeId: tenantEmployee.id }]
 		});
 
@@ -111,8 +111,8 @@ const dataOperation = async (
 			.toDate();
 		employeesAppointment.invitees = invitees;
 		employeesAppointment.agenda = faker.random.arrayElement(agendas);
-    employeesAppointment.tenant = tenant;
-    employeesAppointments.push(employeesAppointment);
+		employeesAppointment.tenant = tenant;
+		employeesAppointments.push(employeesAppointment);
 	}
 
 	await connection.manager.save(employeesAppointments);

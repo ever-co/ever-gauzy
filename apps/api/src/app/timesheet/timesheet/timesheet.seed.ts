@@ -1,9 +1,6 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import {
-	TimesheetStatus,
-	OrganizationProjects,
-} from '@gauzy/models';
+import { TimesheetStatus, IOrganizationProject } from '@gauzy/models';
 import { Timesheet } from '../timesheet.entity';
 import { Employee } from '../../employee/employee.entity';
 import * as moment from 'moment';
@@ -15,7 +12,7 @@ import chalk from 'chalk';
 export const createDefaultTimeSheet = async (
 	connection: Connection,
 	employees: Employee[],
-	defaultProjects: OrganizationProjects[] | void,
+	defaultProjects: IOrganizationProject[] | void,
 	noOfTimeLogsPerTimeSheet
 ) => {
 	if (!defaultProjects) {
@@ -100,7 +97,7 @@ export const createDefaultTimeSheet = async (
 
 export const createRandomTimesheet = async (
 	connection: Connection,
-	defaultProjects: OrganizationProjects[] | void,
+	defaultProjects: IOrganizationProject[] | void,
 	noOfTimeLogsPerTimeSheet
 ) => {
 	if (!defaultProjects) {

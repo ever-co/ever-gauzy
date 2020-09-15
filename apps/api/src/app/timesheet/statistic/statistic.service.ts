@@ -4,24 +4,24 @@ import { Repository, In, Between } from 'typeorm';
 import * as _ from 'underscore';
 import {
 	PermissionsEnum,
-	GetActivitiesStatistics,
-	GetTimeSlotStatistics,
-	GetTasksStatistics,
-	GetProjectsStatistics,
-	GetMembersStatistics,
-	GetCountsStatistics,
-	CountsStatistics,
-	MembersStatistics,
-	ActivitiesStatistics,
-	TimeSlotStatistics,
-	ProjectsStatistics,
-	GetManualTimesStatistics,
-	ManualTimesStatistics
+	IGetActivitiesStatistics,
+	IGetTimeSlotStatistics,
+	IGetTasksStatistics,
+	IGetProjectsStatistics,
+	IGetMembersStatistics,
+	IGetCountsStatistics,
+	ICountsStatistics,
+	IMembersStatistics,
+	IActivitiesStatistics,
+	ITimeSlotStatistics,
+	IProjectsStatistics,
+	IGetManualTimesStatistics,
+	IManualTimesStatistics
 } from '@gauzy/models';
 import { TimeSlot } from '../time-slot.entity';
 import { Employee } from '../../employee/employee.entity';
 import { RequestContext } from '../../core/context';
-import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { Task } from '../../tasks/task.entity';
 import { Activity } from '../activity.entity';
 import * as moment from 'moment';
@@ -31,9 +31,9 @@ import { environment } from '@env-api/environment';
 @Injectable()
 export class StatisticService {
 	constructor(
-		@InjectRepository(OrganizationProjects)
+		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<
-			OrganizationProjects
+			OrganizationProject
 		>,
 		@InjectRepository(Task)
 		private readonly taskRepository: Repository<Task>,
@@ -47,7 +47,7 @@ export class StatisticService {
 		private readonly timeLogRepository: Repository<TimeLog>
 	) {}
 
-	async getcounts(request: GetCountsStatistics): Promise<CountsStatistics> {
+	async getcounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
@@ -144,24 +144,24 @@ export class StatisticService {
 		return {
 			employeesCount,
 			projectsCount,
-			weekActivites: parseFloat(
+			weekActivities: parseFloat(
 				parseFloat(weekActivites.overall + '').toFixed(1)
 			),
 			weekDuration: weekActivites.duration,
-			todayActivites: parseFloat(
+			todayActivities: parseFloat(
 				parseFloat(todayActivites.overall + '').toFixed(1)
 			),
 			todayDuration: todayActivites.duration
 		};
 	}
 
-	async getMembers(request: GetMembersStatistics) {
+	async getMembers(request: IGetMembersStatistics) {
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
 
 		const query = this.employeeRepository.createQueryBuilder();
-		const employees: MembersStatistics[] = await query
+		const employees: IMembersStatistics[] = await query
 			.select(`"${query.alias}".id`)
 			.addSelect(
 				`("user"."firstName" || ' ' ||  "user"."lastName")`,
@@ -169,8 +169,11 @@ export class StatisticService {
 			)
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
-				`${environment.database.type === 'sqlite' ? 
-				'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+				`${
+					environment.database.type === 'sqlite'
+						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+				}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.user`, 'user')
@@ -258,8 +261,11 @@ export class StatisticService {
 				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
 				member.weekHours = await weekHoursQuery
 					.select(
-						`${environment.database.type === 'sqlite' ? 
-						'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+						`${
+							environment.database.type === 'sqlite'
+								? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+								: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+						}`,
 						`duration`
 					)
 					.addSelect(
@@ -283,7 +289,7 @@ export class StatisticService {
 		return employees;
 	}
 
-	async getProjects(request: GetProjectsStatistics) {
+	async getProjects(request: IGetProjectsStatistics) {
 		const query = this.organizationProjectsRepository.createQueryBuilder();
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').format();
@@ -293,8 +299,11 @@ export class StatisticService {
 		query
 			.select(`"${query.alias}".*`)
 			.addSelect(
-				`${environment.database.type === 'sqlite' ? 
-					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+				`${
+					environment.database.type === 'sqlite'
+						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+				}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
@@ -323,13 +332,16 @@ export class StatisticService {
 			.addGroupBy(`"${query.alias}"."id"`)
 			.limit(5);
 
-		let projects: ProjectsStatistics[] = await query.getRawMany();
+		let projects: IProjectsStatistics[] = await query.getRawMany();
 
 		const totalDuerationQuery = this.organizationProjectsRepository.createQueryBuilder();
 		totalDuerationQuery
 			.select(
-				`${environment.database.type === 'sqlite' ? 
-				'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)': 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+				`${
+					environment.database.type === 'sqlite'
+						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+				}`,
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -375,7 +387,7 @@ export class StatisticService {
 		return projects;
 	}
 
-	async getTasks(request: GetTasksStatistics) {
+	async getTasks(request: IGetTasksStatistics) {
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
@@ -403,8 +415,11 @@ export class StatisticService {
 				.innerJoin(`${query.alias}.project`, 'project')
 				.select(`"${query.alias}".*`)
 				.addSelect(
-					`${environment.database.type === 'sqlite' ? 
-					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+					`${
+						environment.database.type === 'sqlite'
+							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+					}`,
 					`duration`
 				)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
@@ -424,8 +439,11 @@ export class StatisticService {
 			const totalDuerationQuery = this.taskRepository.createQueryBuilder();
 			const totalDueration = await totalDuerationQuery
 				.select(
-					`${environment.database.type === 'sqlite' ? 
-					'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)' : 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'}`,
+					`${
+						environment.database.type === 'sqlite'
+							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+					}`,
 					`duration`
 				)
 				.innerJoin(`${totalDuerationQuery.alias}.timeLogs`, 'timeLogs')
@@ -450,7 +468,7 @@ export class StatisticService {
 		}
 	}
 
-	async manualTimes(request: GetManualTimesStatistics) {
+	async manualTimes(request: IGetManualTimesStatistics) {
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
@@ -485,7 +503,7 @@ export class StatisticService {
 				}
 			});
 
-			const mapedTimeLogs: ManualTimesStatistics[] = timeLogs.map(
+			const mapedTimeLogs: IManualTimesStatistics[] = timeLogs.map(
 				(timeLog) => {
 					return {
 						id: timeLog.id,
@@ -496,7 +514,7 @@ export class StatisticService {
 							'imageUrl'
 						]),
 						project: _.pick(timeLog.employee.user, ['name'])
-					} as ManualTimesStatistics;
+					} as IManualTimesStatistics;
 				}
 			);
 			return mapedTimeLogs;
@@ -505,7 +523,7 @@ export class StatisticService {
 		}
 	}
 
-	async getActivites(request: GetActivitiesStatistics) {
+	async getActivites(request: IGetActivitiesStatistics) {
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
@@ -546,7 +564,7 @@ export class StatisticService {
 				.orderBy(`"duration"`, 'DESC')
 				.limit(5);
 
-			let activites: ActivitiesStatistics[] = await query.getRawMany();
+			let activites: IActivitiesStatistics[] = await query.getRawMany();
 
 			/*
 			 * Fetch total duration of the week for calculate duration percentage
@@ -581,8 +599,8 @@ export class StatisticService {
 		}
 	}
 
-	async getEmployeeTimeSlots(request: GetTimeSlotStatistics) {
-		let employees: TimeSlotStatistics[] = [];
+	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics) {
+		let employees: ITimeSlotStatistics[] = [];
 
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').format();

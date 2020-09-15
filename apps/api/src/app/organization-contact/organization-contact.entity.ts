@@ -18,11 +18,17 @@ import {
 	IsEnum
 } from 'class-validator';
 import {
-	OrganizationContact as IOrganizationContact,
+	IOrganizationContact,
 	ContactOrganizationInviteStatus,
-	ContactType
+	ContactType,
+	ITag,
+	IContact,
+	IOrganizationProject,
+	IInvoice,
+	IEmployee,
+	IPayment
 } from '@gauzy/models';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
@@ -31,18 +37,19 @@ import { Payment } from '../payment/payment.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_contact')
-export class OrganizationContact extends TenantOrganizationBase implements IOrganizationContact {
+export class OrganizationContact extends TenantOrganizationBase
+	implements IOrganizationContact {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationContact)
 	@JoinTable({
 		name: 'tag_organization_contact'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne(() => Contact, { nullable: true, cascade: true })
 	@JoinColumn()
-	contact: Contact;
+	contact: IContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId(
@@ -82,18 +89,18 @@ export class OrganizationContact extends TenantOrganizationBase implements IOrga
 	@Column({ nullable: true })
 	inviteStatus?: string;
 
-	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
+	@ApiPropertyOptional({ type: OrganizationProject, isArray: true })
 	@OneToMany(
-		(type) => OrganizationProjects,
+		(type) => OrganizationProject,
 		(project) => project.organizationContact
 	)
 	@JoinColumn()
-	projects?: OrganizationProjects[];
+	projects?: IOrganizationProject[];
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
 	@OneToMany((type) => Invoice, (invoices) => invoices.toContact)
 	@JoinColumn()
-	invoices?: Invoice[];
+	invoices?: IInvoice[];
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()
@@ -105,7 +112,7 @@ export class OrganizationContact extends TenantOrganizationBase implements IOrga
 	@JoinTable({
 		name: 'organization_contact_employee'
 	})
-	members?: Employee[];
+	members?: IEmployee[];
 
 	@ApiProperty({ type: String, enum: ContactType })
 	@IsEnum(ContactType)
@@ -123,5 +130,5 @@ export class OrganizationContact extends TenantOrganizationBase implements IOrga
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	payments?: Payment[];
+	payments?: IPayment[];
 }

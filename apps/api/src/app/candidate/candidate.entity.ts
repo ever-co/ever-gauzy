@@ -3,14 +3,19 @@ import { ICandidateSource } from './../../../../../libs/models/src/lib/candidate
 import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import {
-	Candidate as ICandidate,
+	ICandidate,
 	PayPeriodEnum,
-	IEducation,
-	IExperience,
-	ISkill,
+	ICandidateEducation,
+	ICandidateExperience,
 	ICandidateFeedback,
 	ICandidateDocument,
-	CandidateStatus
+	CandidateStatus,
+	ICandidateSkill,
+	IOrganizationPositions,
+	IOrganizationEmploymentType,
+	IOrganizationDepartment,
+	IContact,
+	ITag
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
@@ -44,12 +49,12 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@JoinTable({
 		name: 'tag_candidate'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
 	@JoinColumn()
-	contact: Contact;
+	contact: IContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.contact)
@@ -60,7 +65,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(candidateEducation) => candidateEducation.candidate
 	)
 	@JoinColumn()
-	educations: IEducation[];
+	educations: ICandidateEducation[];
 
 	@OneToMany(
 		(type) => CandidateInterview,
@@ -74,14 +79,14 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(candidateExperience) => candidateExperience.candidate
 	)
 	@JoinColumn()
-	experience: IExperience[];
+	experience: ICandidateExperience[];
 
 	@OneToMany(
 		(type) => CandidateSkill,
 		(candidateSkill) => candidateSkill.candidate
 	)
 	@JoinColumn()
-	skills: ISkill[];
+	skills: ICandidateSkill[];
 
 	@ApiProperty({ type: CandidateSource })
 	@OneToOne((type) => CandidateSource, {
@@ -127,7 +132,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
 	@JoinColumn()
-	organizationPosition?: OrganizationPositions;
+	organizationPosition?: IOrganizationPositions;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.organizationPosition)
@@ -168,14 +173,14 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(organizationDepartment) => organizationDepartment.members,
 		{ cascade: true }
 	)
-	organizationDepartments?: OrganizationDepartment[];
+	organizationDepartments?: IOrganizationDepartment[];
 
 	@ManyToMany(
 		(type) => OrganizationEmploymentType,
 		(organizationEmploymentType) => organizationEmploymentType.members,
 		{ cascade: true }
 	)
-	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()

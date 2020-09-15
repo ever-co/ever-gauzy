@@ -2,13 +2,13 @@ import { Connection } from 'typeorm';
 import { PipelineStage } from './pipeline-stage.entity';
 import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { Pipeline } from '../pipeline/pipeline.entity';
 
 export const createRandomPipelineStage = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<PipelineStage[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

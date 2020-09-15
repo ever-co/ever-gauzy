@@ -2,17 +2,21 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { Tenant } from '../../tenant/tenant.entity';
 import { Base } from './base';
-import { IsString } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
+import { IBasePerTenantEntityModel, ITenant } from '@gauzy/models';
 
-export abstract class TenantBase extends Base {
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { onDelete: 'CASCADE' })
+export abstract class TenantBase extends Base
+	implements IBasePerTenantEntityModel {
+	@ApiProperty({ type: Tenant, readOnly: true })
+	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	tenant: Tenant;
+	@IsOptional()
+	tenant?: ITenant;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((t: TenantBase) => t.tenant)
 	@IsString()
-	@Column()
-	readonly tenantId?: string;
+	@IsOptional()
+	@Column({ nullable: true })
+	tenantId?: string;
 }

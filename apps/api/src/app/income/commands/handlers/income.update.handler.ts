@@ -3,7 +3,7 @@ import { IncomeService } from '../../income.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../../employee-statistics';
 import { IncomeUpdateCommand } from '../income.update.command';
-import { Income } from '@gauzy/models';
+import { IIncome } from '@gauzy/models';
 
 @CommandHandler(IncomeUpdateCommand)
 export class IncomeUpdateHandler
@@ -42,8 +42,8 @@ export class IncomeUpdateHandler
 
 	public async updateIncome(
 		incomeId: string,
-		entity: Income
-	): Promise<Income> {
+		entity: IIncome
+	): Promise<IIncome> {
 		const id = incomeId;
 		return this.incomeService.create({
 			id,

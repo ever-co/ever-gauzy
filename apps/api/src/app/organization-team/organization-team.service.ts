@@ -8,8 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import {
-	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
-	OrganizationTeam as IOrganizationTeam,
+	IOrganizationTeamCreateInput,
+	IOrganizationTeam,
 	RolesEnum
 } from '@gauzy/models';
 import { IPagination } from '../core';

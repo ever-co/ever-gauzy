@@ -1,4 +1,4 @@
-import { EmployeeCreateInput } from '@gauzy/models';
+import { IEmployeeCreateInput } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
@@ -15,7 +15,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		super(employeeRepository);
 	}
 
-	async createBulk(input: EmployeeCreateInput[]): Promise<Employee[]> {
+	async createBulk(input: IEmployeeCreateInput[]): Promise<Employee[]> {
 		return Promise.all(
 			input.map((emp) => {
 				emp.user.tenant = {

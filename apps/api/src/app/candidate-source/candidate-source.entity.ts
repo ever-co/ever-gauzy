@@ -3,9 +3,11 @@ import { ICandidateSource } from '@gauzy/models';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate_source')
-export class CandidateSource extends Base implements ICandidateSource {
+export class CandidateSource extends TenantOrganizationBase
+	implements ICandidateSource {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

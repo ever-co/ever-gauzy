@@ -1,8 +1,4 @@
-import {
-	InviteStatusEnum,
-	Organization as IOrganization,
-	RolesEnum
-} from '@gauzy/models';
+import { InviteStatusEnum, IOrganization, RolesEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
@@ -61,6 +57,7 @@ export class InviteAcceptOrganizationContactHandler
 			name: RolesEnum.SUPER_ADMIN,
 			tenant
 		});
+
 		this.rolePermissionService.updateRoles(tenant, role);
 
 		// 4. Create user account for contact and link role, tenant and organization
@@ -84,8 +81,10 @@ export class InviteAcceptOrganizationContactHandler
 
 		// TODO Make invite and contact as one to one, since an invite is not shared by multiple contacts
 		const organizationContactId = organizationContact[0].id;
+
 		await this.organizationContactService.update(organizationContactId, {
-			contactOrganizationId: contactOrg.id,
+			tenant: tenant,
+			organizationId: contactOrg.id,
 			inviteStatus: InviteStatusEnum.ACCEPTED
 		});
 

@@ -5,10 +5,7 @@ import { Controller, UseGuards, Query, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import {
-	PermissionsEnum,
-	InvoiceEstimateHistory as IInvoiceEstimateHistory
-} from '@gauzy/models';
+import { PermissionsEnum, IInvoiceEstimateHistory } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { InvoiceEstimateHistoryService } from './invoice-estimate-history.service';
 

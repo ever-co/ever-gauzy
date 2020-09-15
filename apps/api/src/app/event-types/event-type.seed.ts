@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee, Organization } from '@gauzy/models';
+import { IEmployee, IOrganization } from '@gauzy/models';
 import { EventType } from './event-type.entity';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
@@ -8,8 +8,8 @@ import { Tag } from '../tags/tag.entity';
 export const createRandomEventType = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<EventType[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
@@ -59,7 +59,7 @@ export const createRandomEventType = async (
 export const createDefaultEventTypes = async (
 	connection: Connection,
 	tenant: Tenant,
-	orgs: Organization[]
+	orgs: IOrganization[]
 ): Promise<void> => {
 	const eventTypes: EventType[] = [];
 	console.log('tenant', tenant);

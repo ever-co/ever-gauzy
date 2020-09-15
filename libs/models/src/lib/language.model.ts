@@ -1,6 +1,6 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface Language extends IBaseEntityModel {
+export interface ILanguage extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	code?: string;
 	is_system?: boolean;
@@ -9,11 +9,11 @@ export interface Language extends IBaseEntityModel {
 	isSelected?: boolean;
 }
 
-export interface LanguageName {
+export interface ILanguageName {
 	name?: string;
 }
 
-export interface LanguageFindInput extends IBaseEntityModel {
+export interface ILanguageFindInput {
 	name?: string;
 	code?: string;
 	is_system?: boolean;

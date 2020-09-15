@@ -8,6 +8,7 @@ export * from './lib/candidate-experience.model';
 export * from './lib/candidate-education.model';
 export * from './lib/candidate-interviewers.model';
 export * from './lib/candidate-skill.model';
+export * from './lib/skill-entity.model';
 export * from './lib/candidate-feedback.model';
 export * from './lib/candidate-interview.model';
 export * from './lib/candidate-source.model';
@@ -39,7 +40,6 @@ export * from './lib/entity-with-members.model';
 export * from './lib/role-permission.model';
 export * from './lib/email-template.model';
 export * from './lib/tag-entity.model';
-export * from './lib/skill-entity.model';
 export * from './lib/recurring-expense.model';
 export * from './lib/organization-employment-type.model';
 export * from './lib/equipment.model';
@@ -84,5 +84,9 @@ export * from './lib/organization-document.model';
 export * from './lib/employee-award.model';
 export * from './lib/invoice-estimate-history.model';
 
-export { Role, RolesEnum } from './lib/role.model';
-export { BaseEntityModel } from './lib/base-entity.model';
+export { IRole, RolesEnum } from './lib/role.model';
+export { IBaseEntityModel as BaseEntityModel } from './lib/base-entity.model';
+export {
+	IBasePerTenantAndOrganizationEntityModel,
+	IBasePerTenantEntityModel
+} from './lib/base-entity.model';

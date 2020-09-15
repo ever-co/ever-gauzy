@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
-import { OrganizationProjects } from './organization-projects.entity';
+import { OrganizationProject } from './organization-projects.entity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 
 @Injectable()
 export class OrganizationProjectsService extends TenantAwareCrudService<
-	OrganizationProjects
+	OrganizationProject
 > {
 	constructor(
-		@InjectRepository(OrganizationProjects)
+		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<
-			OrganizationProjects
+			OrganizationProject
 		>
 	) {
 		super(organizationProjectsRepository);
@@ -19,7 +19,7 @@ export class OrganizationProjectsService extends TenantAwareCrudService<
 
 	async findByEmployee(
 		id: string,
-		filter?: FindManyOptions<OrganizationProjects>
+		filter?: FindManyOptions<OrganizationProject>
 	): Promise<any> {
 		const query = this.organizationProjectsRepository
 			.createQueryBuilder('organization_project')

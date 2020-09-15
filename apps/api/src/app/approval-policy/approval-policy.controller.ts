@@ -3,8 +3,8 @@ import { ApprovalPolicy } from './approval-policy.entity';
 import { ApprovalPolicyService } from './approval-policy.service';
 import {
 	PermissionsEnum,
-	ApprovalPolicyCreateInput as IApprovalPolicyCreateInput,
-	ApprovalPolicyUpdateInput as IApprovalPolicyUpdateInput
+	IApprovalPolicyCreateInput,
+	IApprovalPolicyUpdateInput
 } from '@gauzy/models';
 import {
 	Query,

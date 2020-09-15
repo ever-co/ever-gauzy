@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	EmailTemplate,
-	EmailTemplateFindInput,
+	IEmailTemplate,
+	IEmailTemplateFindInput,
 	ICustomizeEmailTemplateFindInput,
 	ICustomizableEmailTemplate,
 	IEmailTemplateSaveInput
@@ -17,12 +17,12 @@ export class EmailTemplateService {
 
 	getAll(
 		relations?: string[],
-		findInput?: EmailTemplateFindInput
-	): Promise<{ items: EmailTemplate[]; total: number }> {
+		findInput?: IEmailTemplateFindInput
+	): Promise<{ items: IEmailTemplate[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: EmailTemplate[]; total: number }>(
+			.get<{ items: IEmailTemplate[]; total: number }>(
 				`/api/email-template`,
 				{
 					params: { data }
@@ -56,9 +56,9 @@ export class EmailTemplateService {
 			.toPromise();
 	}
 
-	saveEmailTemplate(data: IEmailTemplateSaveInput): Promise<EmailTemplate> {
+	saveEmailTemplate(data: IEmailTemplateSaveInput): Promise<IEmailTemplate> {
 		return this.http
-			.post<EmailTemplate>(`/api/email-template/saveTemplate`, {
+			.post<IEmailTemplate>(`/api/email-template/saveTemplate`, {
 				data
 			})
 			.pipe(first())

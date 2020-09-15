@@ -31,10 +31,7 @@ import { Permissions } from '../shared/decorators/permissions';
 import { RequestContext } from '../core/context';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserCreateCommand } from './commands';
-import {
-	UserCreateInput as IUserCreateInput,
-	UserUpdateInput as IUserUpdateInput
-} from '@gauzy/models';
+import { IUserCreateInput, IUserUpdateInput } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('User')

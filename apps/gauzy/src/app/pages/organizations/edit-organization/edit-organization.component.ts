@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Organization, PermissionsEnum } from '@gauzy/models';
+import { IOrganization, PermissionsEnum } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { first, takeUntil, switchMap, tap } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
@@ -19,8 +19,8 @@ import { OrganizationEditStore } from '../../../@core/services/organization-edit
 })
 export class EditOrganizationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	selectedOrg: Organization;
-	selectedOrgFromHeader: Organization;
+	selectedOrg: IOrganization;
+	selectedOrgFromHeader: IOrganization;
 	employeesCount: number;
 	private _ngDestroy$ = new Subject<void>();
 

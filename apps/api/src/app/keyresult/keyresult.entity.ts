@@ -7,7 +7,7 @@ import {
 	OneToMany
 } from 'typeorm';
 import {
-	KeyResult as IKeyResult,
+	IKeyResult,
 	KeyResultTypeEnum,
 	KeyResultDeadlineEnum
 } from '@gauzy/models';
@@ -16,7 +16,7 @@ import { IsOptional, IsEnum } from 'class-validator';
 import { Goal } from '../goal/goal.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { Employee } from '../employee/employee.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
 import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
@@ -71,11 +71,11 @@ export class KeyResult extends TenantOrganizationBase implements IKeyResult {
 	@IsOptional()
 	lead?: Employee;
 
-	@ApiProperty({ type: OrganizationProjects })
-	@ManyToOne((type) => OrganizationProjects, { nullable: true })
+	@ApiProperty({ type: OrganizationProject })
+	@ManyToOne((type) => OrganizationProject, { nullable: true })
 	@JoinColumn({ name: 'projectId' })
 	@IsOptional()
-	project?: OrganizationProjects;
+	project?: OrganizationProject;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((keyResult: KeyResult) => keyResult.project)

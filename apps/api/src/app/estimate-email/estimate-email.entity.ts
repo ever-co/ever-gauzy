@@ -1,4 +1,4 @@
-import { EstimateEmail as IEstimateEmail } from '@gauzy/models';
+import { IEstimateEmail } from '@gauzy/models';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEmail, IsString } from 'class-validator';
 import { Column, Entity } from 'typeorm';

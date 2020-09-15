@@ -1,34 +1,28 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationProjects } from './organization-projects.model';
-import { Employee } from './employee.model';
-import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
-import { Organization, OrganizationCreateInput } from './organization.model';
-import { User, LanguagesEnum } from './user.model';
-import { Tag } from './tag-entity.model';
-import { Contact as IContact } from './contact.model';
-import { ITenant } from './tenant.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { IEmployee } from './employee.model';
+import { IBaseEntityWithMembers } from './entity-with-members.model';
+import { IOrganizationCreateInput } from './organization.model';
+import { IUser, LanguagesEnum } from './user.model';
+import { ITag } from './tag-entity.model';
+import { IContact } from './contact.model';
 
-export interface OrganizationContact extends IContact, IBaseEntityWithMembers {
+export interface IOrganizationContact extends IBaseEntityWithMembers {
 	name: string;
 	contactType: string;
-	organizationId: string;
 	primaryEmail: string;
 	emailAddresses?: string[];
 	primaryPhone: string;
 	phones?: string[];
-	projects?: OrganizationProjects[];
+	projects?: IOrganizationProject[];
 	notes?: string;
-	members?: Employee[];
+	members?: IEmployee[];
 	imageUrl?: string;
-	organization?: Organization;
-	tenant: ITenant;
-	tenantId?: string;
 	inviteStatus?: string;
-	tags: Tag[];
+	tags: ITag[];
 	contact: IContact;
 }
 
-export interface OrganizationContactFindInput extends IBaseEntityModel {
+export interface IOrganizationContactFindInput {
 	name?: string;
 	organizationId?: string;
 	primaryEmail?: string;
@@ -37,9 +31,7 @@ export interface OrganizationContactFindInput extends IBaseEntityModel {
 	imageUrl?: string;
 }
 
-export interface OrganizationContactCreateInput
-	extends IContact,
-		IBaseEntityModel {
+export interface IOrganizationContactCreateInput extends IContact {
 	name: string;
 	organizationId: string;
 	contactId?: string;
@@ -47,21 +39,22 @@ export interface OrganizationContactCreateInput
 	emailAddresses?: string[];
 	primaryPhone?: string;
 	phones?: string[];
-	projects?: OrganizationProjects[];
+	projects?: IOrganizationProject[];
 	notes?: string;
 	imageUrl?: string;
 	contactType?: string;
 }
 
-export interface OrganizationContactInviteInput extends IBaseEntityModel {
+export interface IOrganizationContactInviteInput {
+	id: string;
 	languageCode: LanguagesEnum;
 	originalUrl?: string;
-	inviterUser?: User;
+	inviterUser?: IUser;
 }
 export interface IOrganizationContactRegistrationInput {
-	user: User;
+	user: IUser;
 	password: string;
-	contactOrganization: OrganizationCreateInput;
+	contactOrganization: IOrganizationCreateInput;
 }
 export interface IOrganizationContactAcceptInviteInput
 	extends IOrganizationContactRegistrationInput {

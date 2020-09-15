@@ -1,16 +1,16 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { OrganizationSprint } from './organization-sprint.entity';
-import { Organization, SprintStartDayEnum } from '@gauzy/models';
+import { IOrganization, SprintStartDayEnum } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import * as moment from 'moment';
 import { Task } from '../tasks/task.entity';
 
 export const createRandomOrganizationSprint = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ) => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
@@ -24,7 +24,7 @@ export const createRandomOrganizationSprint = async (
 		const orgs = tenantOrganizationsMap.get(tenant);
 		for (const org of orgs) {
 			const orgProjects = await connection.manager.find(
-				OrganizationProjects,
+				OrganizationProject,
 				{
 					where: [{ organization: org }]
 				}

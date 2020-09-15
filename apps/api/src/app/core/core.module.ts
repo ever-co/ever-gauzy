@@ -29,7 +29,7 @@ import { EmployeeRecurringExpense } from '../employee-recurring-expense/employee
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { OrganizationAwards } from '../organization-awards/organization-awards.entity';
@@ -76,12 +76,12 @@ import { Integration } from '../integration/integration.entity';
 import { IntegrationType } from '../integration/integration-type.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import { EmployeeAppointment } from '../employee-appointment';
-import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { AppointmentEmployee } from '../appointment-employees/appointment-employees.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { EventType } from '../event-types/event-type.entity';
-import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
+import { AvailabilitySlot } from '../availability-slots/availability-slots.entity';
 import { ProductTypeTranslation } from '../product-type/product-type-translation.entity';
 import { HelpCenter } from '../help-center/help-center.entity';
 import { HelpCenterAuthor } from './../help-center-author/help-center-author.entity';
@@ -128,7 +128,7 @@ const entities = [
 	OrganizationDepartment,
 	OrganizationContact,
 	OrganizationPositions,
-	OrganizationProjects,
+	OrganizationProject,
 	OrganizationVendor,
 	OrganizationRecurringExpense,
 	EmployeeRecurringExpense,
@@ -207,9 +207,9 @@ const entities = [
 	ApprovalPolicy,
 	EquipmentSharingPolicy,
 	EmployeeAppointment,
-	AppointmentEmployees,
+	AppointmentEmployee,
 	EventType,
-	AvailabilitySlots,
+	AvailabilitySlot,
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
 	Pipeline,

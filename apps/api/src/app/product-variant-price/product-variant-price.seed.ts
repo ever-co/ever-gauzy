@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { CurrenciesEnum, Organization } from '@gauzy/models';
+import { CurrenciesEnum, IOrganization } from '@gauzy/models';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
@@ -10,7 +10,7 @@ import { ProductVariant } from '../product-variant/product-variant.entity';
 export const createRandomProductVariantPrice = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<ProductVariantPrice[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

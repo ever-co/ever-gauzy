@@ -9,7 +9,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { OrganizationPositions as IOrganizationPositions } from '@gauzy/models';
+import { IOrganizationPositions } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Organization } from '../organization/organization.entity';
 

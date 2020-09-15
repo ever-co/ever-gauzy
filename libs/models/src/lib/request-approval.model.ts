@@ -1,38 +1,35 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { RequestApprovalEmployee } from './request-approval-employee.model';
-import { Employee } from './employee.model';
-import { OrganizationTeam } from './organization-team-model';
-import { RequestApprovalTeam } from './request-approval-team.model';
-import { ApprovalPolicy } from './approval-policy.model';
-import { Tag } from './tag-entity.model';
-import { Organization } from './organization.model';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IRequestApprovalEmployee } from './request-approval-employee.model';
+import { IEmployee } from './employee.model';
+import { IOrganizationTeam } from './organization-team-model';
+import { IRequestApprovalTeam } from './request-approval-team.model';
+import { IApprovalPolicy } from './approval-policy.model';
+import { ITag } from './tag-entity.model';
 
-export interface RequestApproval extends IBaseEntityModel {
-	employeeApprovals?: RequestApprovalEmployee[];
-	teamApprovals?: RequestApprovalTeam[];
-	employees?: Employee[];
-	teams?: OrganizationTeam[];
+export interface IRequestApproval
+	extends IBasePerTenantAndOrganizationEntityModel {
+	employeeApprovals?: IRequestApprovalEmployee[];
+	teamApprovals?: IRequestApprovalTeam[];
+	employees?: IEmployee[];
+	teams?: IOrganizationTeam[];
 	name?: string;
 	min_count?: number;
 	status?: number;
 	approvalPolicyId?: string;
-	approvalPolicy?: ApprovalPolicy;
-	tags?: Tag[];
-  organization?: Organization;
-  tenant: ITenant;
+	approvalPolicy?: IApprovalPolicy;
+	tags?: ITag[];
 }
 
-export interface RequestApprovalCreateInput extends IBaseEntityModel {
-	employeeApprovals?: RequestApprovalEmployee[];
-	teamApprovals?: RequestApprovalTeam[];
-	teams?: OrganizationTeam[];
-	employees?: Employee[];
+export interface IRequestApprovalCreateInput {
+	employeeApprovals?: IRequestApprovalEmployee[];
+	teamApprovals?: IRequestApprovalTeam[];
+	teams?: IOrganizationTeam[];
+	employees?: IEmployee[];
 	name?: string;
 	min_count?: number;
 	status?: number;
 	approvalPolicyId?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
 export enum RequestApprovalStatusTypesEnum {

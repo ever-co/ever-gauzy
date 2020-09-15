@@ -1,13 +1,15 @@
 import { ICandidatePersonalQualities } from './candidate-personal-qualities.model';
-import { Employee } from './employee.model';
+import { IEmployee } from './employee.model';
 import {
-  ICandidateFeedback,
-  ICandidateInterviewers,
-  ICandidateTechnologies,
-  Candidate, Organization, ITenant
+	ICandidateFeedback,
+	ICandidateInterviewers,
+	ICandidateTechnologies,
+	ICandidate
 } from '@gauzy/models';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-export interface ICandidateInterview extends IBaseEntityModel {
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+
+export interface ICandidateInterview
+	extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];
@@ -16,15 +18,15 @@ export interface ICandidateInterview extends IBaseEntityModel {
 	endTime: Date;
 	note?: string;
 	feedbacks?: ICandidateFeedback[];
-	employees?: Employee[];
+	employees?: IEmployee[];
 	technologies?: ICandidateTechnologies[];
 	personalQualities?: ICandidatePersonalQualities[];
-	candidate: Candidate;
+	candidate: ICandidate;
 	rating?: number;
 	isArchived?: boolean;
 }
 
-export interface ICandidateInterviewFindInput extends IBaseEntityModel {
+export interface ICandidateInterviewFindInput {
 	title?: string;
 	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];
@@ -35,8 +37,6 @@ export interface ICandidateInterviewFindInput extends IBaseEntityModel {
 	feedbacks?: ICandidateFeedback[];
 	technologies?: ICandidateTechnologies[];
 	personalQualities?: ICandidatePersonalQualities[];
-  organization?: Organization;
-  tenant?: ITenant;
 }
 
 export interface ICandidateInterviewCreateInput {

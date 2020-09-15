@@ -1,7 +1,4 @@
-import {
-	GoalGeneralSetting as IGoalGeneralSetting,
-	GoalOwnershipEnum
-} from '@gauzy/models';
+import { IGoalGeneralSetting, GoalOwnershipEnum } from '@gauzy/models';
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';

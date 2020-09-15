@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	CandidateCreateInput as ICandidateCreateInput,
-	CandidateFindInput,
-	Candidate,
-	CandidateUpdateInput,
+	ICandidateCreateInput,
+	ICandidateFindInput,
+	ICandidate,
+	ICandidateUpdateInput,
 	CandidateStatus
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
@@ -16,10 +16,10 @@ export class CandidatesService {
 
 	getAll(
 		relations?: string[],
-		findInput?: CandidateFindInput
-	): Observable<{ items: Candidate[]; total: number }> {
+		findInput?: ICandidateFindInput
+	): Observable<{ items: ICandidate[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http.get<{ items: Candidate[]; total: number }>(
+		return this.http.get<{ items: ICandidate[]; total: number }>(
 			`/api/candidate`,
 			{
 				params: { data }
@@ -27,66 +27,69 @@ export class CandidatesService {
 		);
 	}
 
-	getCandidateById(id: string, relations?: string[]): Promise<Candidate> {
+	getCandidateById(id: string, relations?: string[]): Promise<ICandidate> {
 		const data = JSON.stringify({ relations });
 		return this.http
-			.get<Candidate>(`/api/candidate/${id}`, {
+			.get<ICandidate>(`/api/candidate/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	delete(id: string): Promise<Candidate> {
+	delete(id: string): Promise<ICandidate> {
 		return this.http
-			.delete<Candidate>(`/api/candidate/${id}`)
+			.delete<ICandidate>(`/api/candidate/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
-	update(id: string, updateInput: CandidateUpdateInput): Promise<any> {
+
+	update(id: string, updateInput: ICandidateUpdateInput): Promise<any> {
 		return this.http
 			.put(`/api/candidate/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	create(createInput: ICandidateCreateInput): Observable<Candidate> {
-		return this.http.post<Candidate>('/api/candidate/create', createInput);
+	create(createInput: ICandidateCreateInput): Observable<ICandidate> {
+		return this.http.post<ICandidate>('/api/candidate/create', createInput);
 	}
 
-	createBulk(createInput: ICandidateCreateInput[]): Observable<Candidate[]> {
-		return this.http.post<Candidate[]>(
+	createBulk(createInput: ICandidateCreateInput[]): Observable<ICandidate[]> {
+		return this.http.post<ICandidate[]>(
 			'/api/candidate/createBulk',
 			createInput
 		);
 	}
 
-	setCandidateAsArchived(id: string): Promise<Candidate> {
+	setCandidateAsArchived(id: string): Promise<ICandidate> {
 		return this.http
-			.put<Candidate>(`/api/candidate/${id}`, { isArchived: true })
+			.put<ICandidate>(`/api/candidate/${id}`, { isArchived: true })
 			.pipe(first())
 			.toPromise();
 	}
 
-	setCandidateAsHired(id: string): Promise<Candidate> {
+	setCandidateAsHired(id: string): Promise<ICandidate> {
 		return this.http
-			.put<Candidate>(`/api/candidate/${id}`, {
+			.put<ICandidate>(`/api/candidate/${id}`, {
 				status: CandidateStatus.HIRED
 			})
 			.pipe(first())
 			.toPromise();
 	}
-	setCandidateAsRejected(id: string): Promise<Candidate> {
+
+	setCandidateAsRejected(id: string): Promise<ICandidate> {
 		return this.http
-			.put<Candidate>(`/api/candidate/${id}`, {
+			.put<ICandidate>(`/api/candidate/${id}`, {
 				status: CandidateStatus.REJECTED
 			})
 			.pipe(first())
 			.toPromise();
 	}
-	setCandidateAsApplied(id: string): Promise<Candidate> {
+
+	setCandidateAsApplied(id: string): Promise<ICandidate> {
 		return this.http
-			.put<Candidate>(`/api/candidate/${id}`, {
+			.put<ICandidate>(`/api/candidate/${id}`, {
 				status: CandidateStatus.APPLIED
 			})
 			.pipe(first())

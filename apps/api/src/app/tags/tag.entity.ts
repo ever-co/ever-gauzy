@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
-import { Tag as ITag } from '@gauzy/models';
+import { ITag } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { Candidate } from '../candidate/candidate.entity';
 import { Employee } from '../employee/employee.entity';
@@ -12,7 +12,7 @@ import { Task } from '../tasks/task.entity';
 import { Proposal } from '../proposal/proposal.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
@@ -84,10 +84,10 @@ export class Tag extends TenantOrganizationBase implements ITag {
 	organizationTeam?: OrganizationTeam[];
 
 	@ManyToMany(
-		(type) => OrganizationProjects,
+		(type) => OrganizationProject,
 		(organizationProject) => organizationProject.tags
 	)
-	organizationProject?: OrganizationProjects[];
+	organizationProject?: OrganizationProject[];
 
 	@ManyToMany(
 		(type) => OrganizationPositions,

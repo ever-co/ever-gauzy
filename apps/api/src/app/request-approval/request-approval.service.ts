@@ -9,9 +9,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository } from 'typeorm';
 import {
-	RequestApproval as IRequestApproval,
+	IRequestApproval,
 	RequestApprovalStatusTypesEnum,
-	RequestApprovalCreateInput as IRequestApprovalCreateInput
+	IRequestApprovalCreateInput
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';

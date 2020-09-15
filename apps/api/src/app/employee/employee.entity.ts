@@ -1,7 +1,18 @@
 import {
 	CurrenciesEnum,
-	Employee as IEmployee,
-	PayPeriodEnum
+	IEmployee,
+	PayPeriodEnum,
+	ITag,
+	IContact,
+	ISkill,
+	IUser,
+	IOrganizationPositions,
+	IOrganizationTeam,
+	ITimeLog,
+	IOrganizationDepartment,
+	IOrganizationEmploymentType,
+	IInvoiceItem,
+	IRequestApprovalEmployee
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -42,12 +53,12 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@JoinTable({
 		name: 'tag_employee'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
 	@JoinColumn()
-	contact: Contact;
+	contact: IContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.contact)
@@ -57,7 +68,7 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@JoinTable({
 		name: 'skill_employee'
 	})
-	skills: Skill[];
+	skills: ISkill[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -66,7 +77,7 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	user: User;
+	user: IUser;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.user)
@@ -76,7 +87,7 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
 	@JoinColumn()
-	organizationPosition?: OrganizationPositions;
+	organizationPosition?: IOrganizationPositions;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.organizationPosition)
@@ -142,10 +153,10 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 		(type) => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.employee
 	)
-	teams?: OrganizationTeam[];
+	teams?: IOrganizationTeam[];
 
 	@OneToMany((type) => TimeLog, (timeLog) => timeLog.employee)
-	timeLogs?: TimeLog[];
+	timeLogs?: ITimeLog[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -170,14 +181,14 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 		(organizationDepartment) => organizationDepartment.members,
 		{ cascade: true }
 	)
-	organizationDepartments?: OrganizationDepartment[];
+	organizationDepartments?: IOrganizationDepartment[];
 
 	@ManyToMany(
 		(type) => OrganizationEmploymentType,
 		(organizationEmploymentType) => organizationEmploymentType.members,
 		{ cascade: true }
 	)
-	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
@@ -193,13 +204,13 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	invoiceItems?: InvoiceItem[];
+	invoiceItems?: IInvoiceItem[];
 
 	@OneToMany(
 		(type) => RequestApprovalEmployee,
 		(requestApprovals) => requestApprovals.employee
 	)
-	requestApprovals?: RequestApprovalEmployee[];
+	requestApprovals?: IRequestApprovalEmployee[];
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

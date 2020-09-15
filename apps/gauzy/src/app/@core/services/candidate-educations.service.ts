@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
 	IEducationCreateInput,
-	IEducation,
+	ICandidateEducation,
 	IEducationFindInput
 } from '@gauzy/models';
 
@@ -13,9 +13,9 @@ import {
 export class CandidateEducationsService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: IEducationCreateInput): Promise<IEducation> {
+	create(createInput: IEducationCreateInput): Promise<ICandidateEducation> {
 		return this.http
-			.post<IEducation>('/api/candidate-educations', createInput)
+			.post<ICandidateEducation>('/api/candidate-educations', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -25,7 +25,7 @@ export class CandidateEducationsService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 		return this.http
-			.get<{ items: IEducation[]; total: number }>(
+			.get<{ items: ICandidateEducation[]; total: number }>(
 				`/api/candidate-educations`,
 				{
 					params: { data }

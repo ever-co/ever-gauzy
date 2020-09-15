@@ -4,7 +4,7 @@ import { InvoiceItemService } from './invoice-item.service';
 import { ApiTags } from '@nestjs/swagger';
 import { Controller, UseGuards, Get, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { InvoiceItem as IInvoiceItem } from '@gauzy/models';
+import { IInvoiceItem } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 
 @ApiTags('InvoiceItem')

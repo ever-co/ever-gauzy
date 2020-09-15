@@ -1,16 +1,38 @@
 import {
 	PermissionsEnum,
-	RolePermissions as IRolePermissions,
-	RolesEnum
+	IRolePermission as IRolePermissions,
+	RolesEnum,
+	ITenant
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty } from 'class-validator';
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
-import { TenantBase } from '../core/entities/tenant-base';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+	Column,
+	Entity,
+	Index,
+	ManyToOne,
+	JoinColumn,
+	RelationId
+} from 'typeorm';
 import { Role } from '../role/role.entity';
+import { Base } from '../core/entities/base';
+import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('role_permission')
-export class RolePermissions extends TenantBase implements IRolePermissions {
+export class RolePermissions extends Base implements IRolePermissions {
+	@ApiProperty({ type: Tenant, readOnly: true })
+	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	@IsOptional()
+	tenant?: ITenant;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((t: RolePermissions) => t.tenant)
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	tenantId?: string;
+
 	@ApiProperty({ type: String, enum: RolesEnum })
 	@IsEnum(RolesEnum)
 	@IsNotEmpty()
@@ -29,9 +51,6 @@ export class RolePermissions extends TenantBase implements IRolePermissions {
 	@Column({ nullable: true, default: false })
 	enabled: boolean;
 
-	@ManyToOne(
-		(type) => Role,
-		(role) => role.rolePermissions
-	)
+	@ManyToOne((type) => Role, (role) => role.rolePermissions)
 	role!: Role;
 }

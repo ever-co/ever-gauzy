@@ -1,8 +1,8 @@
 import { Connection } from 'typeorm';
 import {
-	TimeOffPolicy as ITimeOfPolicy,
-	Organization,
-	Employee
+	ITimeOffPolicy as ITimeOfPolicy,
+	IOrganization,
+	IEmployee
 } from '@gauzy/models';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
@@ -11,8 +11,8 @@ import * as faker from 'faker';
 export const createDefaultTimeOffPolicy = async (
 	connection: Connection,
 	defaultData: {
-		org: Organization;
-		employees: Employee[];
+		org: IOrganization;
+		employees: IEmployee[];
 	}
 ): Promise<ITimeOfPolicy> => {
 	const defaultTimeOffPolicy = new TimeOffPolicy();
@@ -42,7 +42,7 @@ const insertDefaultPolicy = async (
 export const createRandomTimeOffPolicies = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<TimeOffPolicy[]> => {
 	let policies: TimeOffPolicy[] = [];
 	const policyArray = [

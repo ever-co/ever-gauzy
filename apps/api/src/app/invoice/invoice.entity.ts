@@ -1,5 +1,5 @@
 import {
-	Invoice as IInvoice,
+	IInvoice,
 	CurrenciesEnum,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum

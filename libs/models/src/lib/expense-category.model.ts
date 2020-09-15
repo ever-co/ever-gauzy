@@ -1,12 +1,8 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization } from './organization.model';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IExpenseCategory extends IBaseEntityModel {
+export interface IExpenseCategory
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
-	organization?: Organization;
-	tenant: ITenant;
 }
 
 export enum ExpenseCategoriesEnum {

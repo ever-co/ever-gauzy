@@ -3,8 +3,8 @@ import { Expense } from './expense.entity';
 import * as faker from 'faker';
 import {
 	CurrenciesEnum,
-	Organization,
-	Employee,
+	IOrganization,
+	IEmployee,
 	IExpenseCategory,
 	IOrganizationVendor
 } from '@gauzy/models';
@@ -18,9 +18,9 @@ import * as moment from 'moment';
 export const createDefaultExpenses = async (
 	connection: Connection,
 	defaultData: {
-    organizations: Organization[];
-    tenant: Tenant;
-		employees: Employee[];
+		organizations: IOrganization[];
+		tenant: Tenant;
+		employees: IEmployee[];
 		categories: IExpenseCategory[] | void;
 		organizationVendors: IOrganizationVendor[] | void;
 	}
@@ -51,119 +51,123 @@ export const createDefaultExpenses = async (
 		console.error('Cannot find income data csv');
 	}
 
-  for (const organization of defaultData.organizations) {
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on('data', (data) => expensesFromFile.push(data))
-      .on('end', async () => {
+	for (const organization of defaultData.organizations) {
+		fs.createReadStream(filePath)
+			.pipe(csv())
+			.on('data', (data) => expensesFromFile.push(data))
+			.on('end', async () => {
+				defaultExpenses = expensesFromFile.map((seedExpense) => {
+					const expense = new Expense();
+					const foundEmployee = defaultData.employees.find(
+						(emp) => emp.user.email === seedExpense.email
+					);
 
-        defaultExpenses = expensesFromFile.map((seedExpense) => {
-          const expense = new Expense();
-          const foundEmployee = defaultData.employees.find(
-            (emp) => emp.user.email === seedExpense.email
-          );
+					const foundCategory = (defaultData.categories || []).find(
+						(category) => seedExpense.categoryName === category.name
+					);
 
-          const foundCategory = (defaultData.categories || []).find(
-            (category) => seedExpense.categoryName === category.name
-          );
+					const foundVendor = (
+						defaultData.organizationVendors || []
+					).find((vendor) => seedExpense.vendorName === vendor.name);
 
-          const foundVendor = (
-            defaultData.organizationVendors || []
-          ).find((vendor) => seedExpense.vendorName === vendor.name);
+					expense.employee = foundEmployee;
+					expense.organization = organization;
+					expense.tenant = organization.tenant;
+					expense.amount = Math.abs(seedExpense.amount);
+					expense.vendor = foundVendor;
+					expense.category = foundCategory;
+					expense.currency = seedExpense.currency;
+					expense.valueDate = faker.date.between(
+						new Date(),
+						moment(new Date()).add(10, 'days').toDate()
+					);
+					expense.notes = seedExpense.notes;
 
-          expense.employee = foundEmployee;
-          expense.organization = organization;
-          expense.tenant = organization.tenant;
-          expense.amount = Math.abs(seedExpense.amount);
-          expense.vendor = foundVendor;
-          expense.category = foundCategory;
-          expense.currency = seedExpense.currency;
-          expense.valueDate = faker.date.between(new Date(), moment(new Date()).add(10, 'days').toDate());
-          expense.notes = seedExpense.notes;
+					return expense;
+				});
 
-          return expense;
-        });
-
-        await insertExpense(connection, defaultExpenses);
-      });
-  }
+				await insertExpense(connection, defaultExpenses);
+			});
+	}
 
 	return expensesFromFile;
 };
 
 export const createRandomExpenses = async (
-  connection: Connection,
-  tenants: Tenant[],
-  tenantEmployeeMap: Map<Tenant, Employee[]>,
-  organizationVendorsMap: Map<Organization, OrganizationVendor[]> | void,
-  categoriesMap: Map<Organization, ExpenseCategory[]> | void
+	connection: Connection,
+	tenants: Tenant[],
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	organizationVendorsMap: Map<IOrganization, OrganizationVendor[]> | void,
+	categoriesMap: Map<IOrganization, ExpenseCategory[]> | void
 ): Promise<void> => {
+	if (!categoriesMap) {
+		console.warn(
+			'Warning: categoriesMap not found, RandomExpenses will not be created'
+		);
+		return;
+	}
 
-  if (!categoriesMap) {
-    console.warn(
-      'Warning: categoriesMap not found, RandomExpenses will not be created'
-    );
-    return;
-  }
+	if (!organizationVendorsMap) {
+		console.warn(
+			'Warning: organizationVendorsMap not found, RandomExpenses will not be created'
+		);
+		return;
+	}
 
-  if (!organizationVendorsMap) {
-    console.warn(
-      'Warning: organizationVendorsMap not found, RandomExpenses will not be created'
-    );
-    return;
-  }
+	const currencies = Object.values(CurrenciesEnum);
 
-  const currencies = Object.values(CurrenciesEnum);
+	const notesArray = [
+		'Windows 10',
+		'MultiSport Card',
+		'Angular Masterclass',
+		'Drive',
+		'Rent for September'
+	];
 
-  const notesArray = [
-    'Windows 10',
-    'MultiSport Card',
-    'Angular Masterclass',
-    'Drive',
-    'Rent for September'
-  ];
+	for (const tenant of tenants) {
+		const randomExpenses: Expense[] = [];
 
-  for (const tenant of tenants) {
-    const randomExpenses: Expense[] = [];
+		const employees = tenantEmployeeMap.get(tenant);
 
-    const employees = tenantEmployeeMap.get(tenant);
+		for (const employee of employees) {
+			const organizationVendors = organizationVendorsMap.get(
+				employee.organization
+			);
+			const categories = categoriesMap.get(employee.organization);
 
-    for (const employee of employees) {
-      const organizationVendors = organizationVendorsMap.get(
-        employee.organization
-      );
-      const categories = categoriesMap.get(employee.organization);
+			for (let index = 0; index < 100; index++) {
+				const expense = new Expense();
 
-      for (let index = 0; index < 100; index++) {
-        const expense = new Expense();
+				const currentIndex = faker.random.number({
+					min: 0,
+					max: index % 5
+				});
 
-        const currentIndex = faker.random.number({
-          min: 0,
-          max: index % 5
-        });
+				expense.organization = employee.organization;
+				expense.tenant = tenant;
+				expense.employee = employee;
+				expense.amount = faker.random.number({ min: 10, max: 999 });
+				expense.vendor =
+					organizationVendors[
+						currentIndex % organizationVendors.length
+					];
+				expense.category = categories[currentIndex % categories.length];
+				expense.currency =
+					currencies[(index % currencies.length) + 1 - 1];
+				expense.valueDate = faker.date.between(
+					new Date(),
+					moment(new Date()).add(10, 'days').toDate()
+				);
+				expense.notes = notesArray[currentIndex];
 
-        expense.organization = employee.organization;
-        expense.tenant = tenant;
-        expense.employee = employee;
-        expense.amount = faker.random.number({ min: 10, max: 999 });
-        expense.vendor =
-          organizationVendors[
-          currentIndex % organizationVendors.length
-            ];
-        expense.category = categories[currentIndex % categories.length];
-        expense.currency =
-          currencies[(index % currencies.length) + 1 - 1];
-        expense.valueDate = faker.date.between(new Date(), moment(new Date()).add(10, 'days').toDate());
-        expense.notes = notesArray[currentIndex];
+				randomExpenses.push(expense);
+			}
+		}
 
-        randomExpenses.push(expense);
-      }
-    }
+		await insertExpense(connection, randomExpenses);
+	}
 
-    await insertExpense(connection, randomExpenses);
-  }
-
-  return;
+	return;
 };
 
 const insertExpense = async (

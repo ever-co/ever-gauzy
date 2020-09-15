@@ -12,7 +12,7 @@ import {
 	CandidateStatus,
 	ICandidateInterviewers,
 	ICandidateCriterionsRating,
-	Candidate as ICandidate,
+	ICandidate,
 	ICandidateInterview
 } from '@gauzy/models';
 import { IsEnum, IsOptional } from 'class-validator';
@@ -20,10 +20,11 @@ import { CandidateInterviewers } from '../candidate-interviewers/candidate-inter
 import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate_feedback')
-export class CandidateFeedback extends Base implements ICandidateFeedback {
+export class CandidateFeedback extends TenantOrganizationBase
+	implements ICandidateFeedback {
 	@ApiProperty({ type: String })
 	@Column()
 	description: string;

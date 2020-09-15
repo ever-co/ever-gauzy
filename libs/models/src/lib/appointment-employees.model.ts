@@ -1,8 +1,9 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { EmployeeAppointment } from './employee-appointment.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployeeAppointment } from './employee-appointment.model';
 
-export interface AppointmentEmployees extends IBaseEntityModel {
+export interface IAppointmentEmployee
+	extends IBasePerTenantAndOrganizationEntityModel {
 	appointmentId: string;
 	employeeId: string;
-	employeeAppointment: EmployeeAppointment;
+	employeeAppointment: IEmployeeAppointment;
 }

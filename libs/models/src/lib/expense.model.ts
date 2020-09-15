@@ -1,17 +1,13 @@
-import { Employee, EmployeeFindInput } from './employee.model';
-import { Organization, OrganizationFindInput } from './organization.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag } from './tag-entity.model';
+import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IOrganizationFindInput } from './organization.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ITag } from './tag-entity.model';
 import { IExpenseCategory } from './expense-category.model';
-import { IOrganizationVendor, ITenant } from '..';
+import { IOrganizationVendor } from './organization-vendors.model';
 
-export interface Expense extends IBaseEntityModel {
-	employee?: Employee;
+export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
+	employee?: IEmployee;
 	employeeId?: string;
-	organization?: Organization;
-	organizationId: string;
-	tenant: ITenant;
-	tenantId?: string
 	amount: number;
 	vendor: IOrganizationVendor;
 	vendorId: string;
@@ -31,11 +27,11 @@ export interface Expense extends IBaseEntityModel {
 	rateValue?: number;
 	receipt?: string;
 	splitExpense?: boolean;
-	tags?: Tag[];
+	tags?: ITag[];
 	status?: string;
 }
 
-export interface ExpenseCreateInput {
+export interface IExpenseCreateInput {
 	employeeId?: string;
 	amount: number;
 	typeOfExpense?: string;
@@ -48,7 +44,7 @@ export interface ExpenseCreateInput {
 	notes?: string;
 	valueDate: Date;
 	currency?: string;
-  organizationId?: string;
+	organizationId?: string;
 	purpose?: string;
 	taxType?: string;
 	taxLabel?: string;
@@ -56,13 +52,13 @@ export interface ExpenseCreateInput {
 	receipt?: string;
 	splitExpense?: boolean;
 	reference?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 	status?: string;
 }
 
-export interface ExpenseFindInput extends IBaseEntityModel {
-	employee?: EmployeeFindInput;
-	organization?: OrganizationFindInput;
+export interface IExpenseFindInput {
+	employee?: IEmployeeFindInput;
+	organization?: IOrganizationFindInput;
 	vendorName?: string;
 	vendorId?: string;
 	typeOfExpense?: string;
@@ -82,13 +78,13 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	rateValue?: number;
 	receipt?: string;
 	splitExpense?: boolean;
-	tags?: Tag[];
+	tags?: ITag[];
 	status?: string;
 }
 
-export interface ExpenseUpdateInput {
+export interface IExpenseUpdateInput {
 	employeeId?: string;
-  organizationId?: string;
+	organizationId?: string;
 	amount?: number;
 	vendorName?: string;
 	vendorId?: string;
@@ -107,16 +103,16 @@ export interface ExpenseUpdateInput {
 	rateValue?: number;
 	receipt?: string;
 	splitExpense?: boolean;
-	tags?: Tag[];
+	tags?: ITag[];
 	status?: string;
 }
 
-export interface SplitExpenseOutput extends Expense {
+export interface ISplitExpenseOutput extends IExpense {
 	originalValue?: number;
 	employeeCount?: number;
 }
 
-export interface SplitExpenseFindInput {
+export interface ISplitExpenseFindInput {
 	relations?: string[];
 	filterDate?: string;
 	employeeId: string;

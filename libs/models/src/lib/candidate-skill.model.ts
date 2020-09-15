@@ -1,9 +1,12 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-export interface ISkill extends IBaseEntityModel {
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+
+export interface ICandidateSkill
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	candidateId?: string;
 }
-export interface ISkillFindInput extends IBaseEntityModel {
+
+export interface ISkillFindInput {
 	name?: string;
 	candidateId?: string;
 }

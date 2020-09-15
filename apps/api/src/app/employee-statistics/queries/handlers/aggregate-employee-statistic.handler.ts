@@ -1,8 +1,8 @@
 import {
-	AggregatedEmployeeStatistic,
-	EmployeeStatisticSum,
-	MonthAggregatedSplitExpense,
-	StatisticSum
+	IAggregatedEmployeeStatistic,
+	IEmployeeStatisticSum,
+	IMonthAggregatedSplitExpense,
+	IStatisticSum
 } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { startOfMonth, subMonths } from 'date-fns';
@@ -23,7 +23,7 @@ export class AggregateOrganizationQueryHandler
 
 	public async execute(
 		command: AggregatedEmployeeStatisticQuery
-	): Promise<AggregatedEmployeeStatistic> {
+	): Promise<IAggregatedEmployeeStatistic> {
 		const {
 			input: { filterDate, organizationId }
 		} = command;
@@ -59,7 +59,7 @@ export class AggregateOrganizationQueryHandler
 			true
 		);
 
-		const employeeMap: Map<string, EmployeeStatisticSum> = new Map();
+		const employeeMap: Map<string, IEmployeeStatisticSum> = new Map();
 
 		employees.forEach((employee) => {
 			// Hide user hash
@@ -97,7 +97,7 @@ export class AggregateOrganizationQueryHandler
 		}
 
 		const employeeStats = [...employeeMap.values()];
-		const total: StatisticSum = employeeStats.reduce(
+		const total: IStatisticSum = employeeStats.reduce(
 			this._aggregateEmployeeStats,
 			{ income: 0, expense: 0, bonus: 0, profit: 0 }
 		);
@@ -110,7 +110,7 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadIncomeAndDirectBonus(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, EmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>
 	) {
 		// Fetch employees' incomes for past N months from given date
 		const {
@@ -132,7 +132,7 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadEmployeeExpenses(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, EmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>
 	) {
 		// Fetch employees' expenses for past N months from given date
 		const {
@@ -151,7 +151,7 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadEmployeeRecurringExpenses(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, EmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>
 	) {
 		// Fetch employees' recurring expenses for past N months from given date
 		const {
@@ -204,7 +204,7 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadOrganizationSplitExpenses(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, EmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>
 	) {
 		const employeeIds = [...employeeMap.keys()];
 
@@ -217,7 +217,7 @@ export class AggregateOrganizationQueryHandler
 		);
 
 		//Since we are only calculating for one month, we only expect one value here.
-		const monthSplitExpense: MonthAggregatedSplitExpense = expenses
+		const monthSplitExpense: IMonthAggregatedSplitExpense = expenses
 			.values()
 			.next().value;
 
@@ -233,7 +233,7 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadOrganizationRecurringSplitExpenses(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, EmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>
 	) {
 		const employeeIds = [...employeeMap.keys()];
 
@@ -245,7 +245,7 @@ export class AggregateOrganizationQueryHandler
 		);
 
 		//Since we are only calculating for one month, we only expect one value here.
-		const monthSplitExpense: MonthAggregatedSplitExpense = organizationRecurringSplitExpenses
+		const monthSplitExpense: IMonthAggregatedSplitExpense = organizationRecurringSplitExpenses
 			.values()
 			.next().value;
 
@@ -261,14 +261,14 @@ export class AggregateOrganizationQueryHandler
 		}
 	}
 
-	private _calculateProfit(employeeMap: Map<string, EmployeeStatisticSum>) {
+	private _calculateProfit(employeeMap: Map<string, IEmployeeStatisticSum>) {
 		employeeMap.forEach((emp) => {
 			emp.profit = Number((emp.income - emp.expense).toFixed(2));
 		});
 	}
 
 	private async _loadEmployeeBonus(
-		employeeMap: Map<string, EmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>
 	) {
 		const employeeIds = [...employeeMap.keys()];
 		const {
@@ -289,9 +289,9 @@ export class AggregateOrganizationQueryHandler
 	}
 
 	private _aggregateEmployeeStats(
-		accumulator: StatisticSum,
-		value: StatisticSum
-	): StatisticSum {
+		accumulator: IStatisticSum,
+		value: IStatisticSum
+	): IStatisticSum {
 		accumulator.income = Number(
 			(accumulator.income + value.income).toFixed(2)
 		);

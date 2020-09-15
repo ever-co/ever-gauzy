@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee, Organization } from '@gauzy/models';
+import { IEmployee, IOrganization } from '@gauzy/models';
 import { RequestApprovalTeam } from './request-approval-team.entity';
 import * as faker from 'faker';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
@@ -10,8 +10,8 @@ import { OrganizationTeam } from '../organization-team/organization-team.entity'
 export const createRandomRequestApprovalTeam = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<RequestApprovalTeam[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

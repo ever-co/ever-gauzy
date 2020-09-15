@@ -1,4 +1,12 @@
-import { Invite as IInvite, InviteStatusEnum } from '@gauzy/models';
+import {
+	IInvite,
+	InviteStatusEnum,
+	IOrganizationDepartment,
+	IOrganizationContact,
+	IOrganizationProject,
+	IUser,
+	IRole
+} from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import {
@@ -11,7 +19,7 @@ import {
 	ManyToOne,
 	RelationId
 } from 'typeorm';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Role } from '../role/role.entity';
 import { User } from '../user/user.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
@@ -57,28 +65,28 @@ export class Invite extends TenantOrganizationBase implements IInvite {
 	@ApiPropertyOptional({ type: Role })
 	@ManyToOne((type) => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	role?: Role;
+	role?: IRole;
 
 	@ApiPropertyOptional({ type: User })
 	@ManyToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	invitedBy?: User;
+	invitedBy?: IUser;
 
-	@ManyToMany((type) => OrganizationProjects)
+	@ManyToMany((type) => OrganizationProject)
 	@JoinTable({
 		name: 'invite_organization_project'
 	})
-	projects?: OrganizationProjects[];
+	projects?: IOrganizationProject[];
 
 	@ManyToMany((type) => OrganizationContact)
 	@JoinTable({
 		name: 'invite_organization_contact'
 	})
-	organizationContact?: OrganizationContact[];
+	organizationContact?: IOrganizationContact[];
 
 	@ManyToMany((type) => OrganizationDepartment)
 	@JoinTable({
 		name: 'invite_organization_department'
 	})
-	departments?: OrganizationDepartment[];
+	departments?: IOrganizationDepartment[];
 }

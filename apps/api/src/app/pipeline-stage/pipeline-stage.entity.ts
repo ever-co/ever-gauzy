@@ -1,4 +1,4 @@
-import { PipelineStage as IStage } from '@gauzy/models';
+import { IPipelineStage as IStage } from '@gauzy/models';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';

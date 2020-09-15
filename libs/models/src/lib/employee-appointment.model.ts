@@ -1,11 +1,11 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { AppointmentEmployees } from './appointment-employees.model';
-import { Employee, EmployeeFindInput } from './employee.model';
-import { Organization, OrganizationFindInput } from './organization.model';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IAppointmentEmployee } from './appointment-employees.model';
+import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IOrganizationFindInput } from './organization.model';
 
-export interface EmployeeAppointment extends IBaseEntityModel {
-	employee?: Employee;
+export interface IEmployeeAppointment
+	extends IBasePerTenantAndOrganizationEntityModel {
+	employee?: IEmployee;
 	employeeId?: string;
 	description?: string;
 	location?: string;
@@ -17,19 +17,16 @@ export interface EmployeeAppointment extends IBaseEntityModel {
 	bufferTimeInMins?: Number;
 	breakTimeInMins?: Number;
 	breakStartTime?: Date;
-	invitees?: AppointmentEmployees[];
-	organizationId: string;
+	invitees?: IAppointmentEmployee[];
 	emails?: string;
 	status?: string;
-	organization?: Organization;
-	tenant: ITenant;
 }
 
-export interface IEmployeeAppointmentFindInput extends IBaseEntityModel {
-	employee?: EmployeeFindInput;
+export interface IEmployeeAppointmentFindInput {
+	employee?: IEmployeeFindInput;
 	employeeId?: string;
 	status?: string;
-	organization?: OrganizationFindInput;
+	organization?: IOrganizationFindInput;
 }
 
 export interface IEmployeeAppointmentCreateInput {
@@ -46,7 +43,7 @@ export interface IEmployeeAppointmentCreateInput {
 	breakStartTime?: Date;
 	organizationId?: string;
 	emails?: string;
-	invitees?: AppointmentEmployees[];
+	invitees?: IAppointmentEmployee[];
 }
 
 export interface IEmployeeAppointmentUpdateInput {
@@ -63,5 +60,5 @@ export interface IEmployeeAppointmentUpdateInput {
 	breakStartTime?: Date;
 	organizationId?: string;
 	status?: string;
-	invitees?: AppointmentEmployees[];
+	invitees?: IAppointmentEmployee[];
 }
