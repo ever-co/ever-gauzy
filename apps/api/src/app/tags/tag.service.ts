@@ -23,11 +23,16 @@ export class TagService extends CrudService<Tag> {
 		return item;
 	}
 
-	async findTagsByOrgLevel(relations: any, orgId: any): Promise<any> {
+	async findTagsByOrgLevel(
+		relations: any,
+		organizationId: any,
+		tenantId: string
+	): Promise<any> {
 		const allTags = await this.tagRepository.find({
 			where: [
 				{
-					organization: orgId,
+					organizationId,
+					tenantId,
 					isSystem: false
 				}
 			],
@@ -39,7 +44,8 @@ export class TagService extends CrudService<Tag> {
 		const allTags = await this.tagRepository.find({
 			where: [
 				{
-					tenant: tenantId,
+					tenantId,
+					organizationId: null,
 					isSystem: false
 				}
 			],

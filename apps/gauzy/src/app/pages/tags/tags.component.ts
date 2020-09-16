@@ -209,6 +209,7 @@ export class TagsComponent extends TranslationBaseComponent
 		if (this.selectedOrganization) {
 			const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
 				this.selectedOrganization.id,
+				this.selectedOrganization.tenantId,
 				['organization']
 			);
 			const tagsByTenantLevel = await this.tagsService.getAllTagsByTenantLevel(
