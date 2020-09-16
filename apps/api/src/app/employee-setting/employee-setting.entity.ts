@@ -10,10 +10,11 @@ import {
 } from 'class-validator';
 import { IEmployeeSetting, CurrenciesEnum } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
-import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('employee_setting')
-export class EmployeeSetting extends Base implements IEmployeeSetting {
+export class EmployeeSetting extends TenantOrganizationBase
+	implements IEmployeeSetting {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

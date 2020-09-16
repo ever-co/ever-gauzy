@@ -1,39 +1,19 @@
-import {
-	Entity,
-	Index,
-	Column,
-	ManyToMany,
-	JoinTable,
-	RelationId,
-	ManyToOne,
-	JoinColumn
-} from 'typeorm';
-import { Base } from '../core/entities/base';
+import { Entity, Index, Column, ManyToMany, JoinTable } from 'typeorm';
 import { ITimeOffPolicy } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('time_off_policy')
-export class TimeOffPolicy extends Base implements ITimeOffPolicy {
+export class TimeOffPolicy extends TenantOrganizationBase
+	implements ITimeOffPolicy {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((policy: TimeOffPolicy) => policy.organization)
-	@IsString()
-	@Column({ nullable: true })
-	organizationId: string;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()

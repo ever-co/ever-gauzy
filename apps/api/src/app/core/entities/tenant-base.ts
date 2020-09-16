@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { Tenant } from '../../tenant/tenant.entity';
 import { Base } from './base';
 import { IsString, IsOptional } from 'class-validator';
@@ -17,6 +17,7 @@ export abstract class TenantBase extends Base
 	@RelationId((t: TenantBase) => t.tenant)
 	@IsString()
 	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	tenantId?: string;
 }

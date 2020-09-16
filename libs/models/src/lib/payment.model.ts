@@ -11,7 +11,7 @@ export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
 	tags?: ITag[];
 	note?: string;
 	recordedBy?: IUser;
-	userId?: string;
+	employeeId?: string;
 	paymentDate?: Date;
 	amount?: number;
 	currency?: string;

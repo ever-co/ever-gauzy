@@ -27,6 +27,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	approvalPolicy: IApprovalPolicy;
 	employees: IEmployee[] = [];
 	organizationId: string;
+	// TODO: remove from here, we should never use TenantId in the client app
 	tenantId: string;
 	isHasType = true;
 
@@ -65,7 +66,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	}
 
 	async saveApprovalPolicy() {
-		const apprPolicy: IApprovalPolicyCreateInput = {
+		const approvalPolicy: IApprovalPolicyCreateInput = {
 			name: this.form.value['name'],
 			description: this.form.value['description'],
 			organizationId: this.organizationId,
@@ -74,7 +75,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 		};
 
 		let result: IApprovalPolicy;
-		result = await this.approvalPolicyService.save(apprPolicy);
+		result = await this.approvalPolicyService.save(approvalPolicy);
 
 		this.closeDialog(result);
 	}

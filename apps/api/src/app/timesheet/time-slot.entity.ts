@@ -9,7 +9,6 @@ import {
 	OneToMany,
 	ManyToMany
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
 	ITimeSlot,
 	ITimeSlotMinute,
@@ -26,10 +25,11 @@ import { Screenshot } from './screenshot.entity';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 import { TimeLog } from './time-log.entity';
 import { Activity } from './activity.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('time_slot')
 @Unique(['employeeId', 'startedAt'])
-export class TimeSlot extends Base implements ITimeSlot {
+export class TimeSlot extends TenantOrganizationBase implements ITimeSlot {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()

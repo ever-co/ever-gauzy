@@ -1,10 +1,11 @@
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IHelpCenterArticle } from '@gauzy/models';
-import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('knowledge_base_article')
-export class HelpCenterArticle extends Base implements IHelpCenterArticle {
+export class HelpCenterArticle extends TenantOrganizationBase
+	implements IHelpCenterArticle {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

@@ -26,6 +26,7 @@ export class Role extends Base implements IRole {
 	@RelationId((t: Role) => t.tenant)
 	@IsString()
 	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	tenantId?: string;
 

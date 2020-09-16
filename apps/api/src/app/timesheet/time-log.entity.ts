@@ -8,7 +8,6 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
 	ITimeLog,
 	TimeLogType,
@@ -29,9 +28,10 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { Task } from '../tasks/task.entity';
 import * as moment from 'moment';
 import { TimeSlot } from './time-slot.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('time_log')
-export class TimeLog extends Base implements ITimeLog {
+export class TimeLog extends TenantOrganizationBase implements ITimeLog {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()

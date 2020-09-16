@@ -1,14 +1,13 @@
-import { Entity, Column, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Tag } from '../tags/tag.entity';
-import { Base } from '../core/entities/base';
-import { Organization } from '../organization/organization.entity';
 import { IsString, IsNotEmpty } from 'class-validator';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity({
 	name: 'organization_employee_level'
 })
-export class EmployeeLevel extends Base {
+export class EmployeeLevel extends TenantOrganizationBase {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.employeeLevel)
 	@JoinTable({
@@ -21,13 +20,4 @@ export class EmployeeLevel extends Base {
 	@IsNotEmpty()
 	@Column()
 	level: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization?: Organization;
 }

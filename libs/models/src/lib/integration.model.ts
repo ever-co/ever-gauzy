@@ -1,5 +1,4 @@
 import { SafeResourceUrl } from '@angular/platform-browser';
-import { ITenant } from './tenant.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProjectsCreateInput } from '..';
 
@@ -31,7 +30,6 @@ export interface IIntegrationViewModel {
 
 export interface IIntegrationTenant
 	extends IBasePerTenantAndOrganizationEntityModel {
-	tenant: ITenant;
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];
 }

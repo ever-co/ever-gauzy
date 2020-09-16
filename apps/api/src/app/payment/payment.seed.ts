@@ -54,9 +54,7 @@ export const createDefaultPayment = async (
 			payment.overdue = faker.random.boolean();
 			payment.tenant = tenant;
 			payment.tags = invoice.tags;
-
-			// TODO: which user we need to set here, employee?
-			payment.userId = faker.random.arrayElement(employees).id;
+			payment.employeeId = faker.random.arrayElement(employees).id;
 			payment.recordedBy = faker.random.arrayElement(users);
 
 			payments.push(payment);
@@ -121,9 +119,9 @@ export const createRandomPayment = async (
 				payment.overdue = faker.random.boolean();
 				payment.tenant = tenant;
 				payment.tags = tags;
-
-				// TODO: which user we need to set here, employee?
-				payment.userId = faker.random.arrayElement(tenantEmployees).id;
+				payment.employeeId = faker.random.arrayElement(
+					tenantEmployees
+				).id;
 				payment.recordedBy = faker.random.arrayElement(users);
 
 				payments.push(payment);

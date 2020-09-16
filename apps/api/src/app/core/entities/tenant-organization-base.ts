@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { Organization } from '../../organization/organization.entity';
 import { IsOptional, IsString } from 'class-validator';
 import { TenantBase } from './tenant-base';
@@ -23,6 +23,7 @@ export abstract class TenantOrganizationBase extends Base
 	@RelationId((it: TenantOrganizationBase) => it.organization)
 	@IsString()
 	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	organizationId?: string;
 
@@ -36,6 +37,7 @@ export abstract class TenantOrganizationBase extends Base
 	@RelationId((t: TenantBase) => t.tenant)
 	@IsString()
 	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	tenantId?: string;
 }

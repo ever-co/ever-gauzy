@@ -30,6 +30,7 @@ export class RolePermissions extends Base implements IRolePermissions {
 	@RelationId((t: RolePermissions) => t.tenant)
 	@IsString()
 	@IsOptional()
+	@Index()
 	@Column({ nullable: true })
 	tenantId?: string;
 

@@ -7,7 +7,6 @@ import {
 	CreateDateColumn,
 	AfterLoad
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
 	IActivity,
 	ActivityType,
@@ -31,9 +30,10 @@ import { Employee } from '../employee/employee.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
 import { environment as env } from '@env-api/environment';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('activity')
-export class Activity extends Base implements IActivity {
+export class Activity extends TenantOrganizationBase implements IActivity {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()

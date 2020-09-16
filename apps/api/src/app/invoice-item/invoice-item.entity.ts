@@ -1,4 +1,3 @@
-import { Base } from '../core/entities/base';
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import { IInvoiceItem } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -8,9 +7,11 @@ import { Task } from '../tasks/task.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Product } from '../product/product.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('invoice_item')
-export class InvoiceItem extends Base implements IInvoiceItem {
+export class InvoiceItem extends TenantOrganizationBase
+	implements IInvoiceItem {
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()

@@ -5,10 +5,10 @@ import {
 	ICandidateInterview
 } from '@gauzy/models';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate_personal_quality')
-export class CandidatePersonalQualities extends Base
+export class CandidatePersonalQualities extends TenantOrganizationBase
 	implements ICandidatePersonalQualities {
 	@ApiProperty({ type: String })
 	@Column()

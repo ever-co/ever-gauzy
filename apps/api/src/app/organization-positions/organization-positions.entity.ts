@@ -1,20 +1,12 @@
-import {
-	Column,
-	Entity,
-	Index,
-	ManyToMany,
-	JoinTable,
-	ManyToOne
-} from 'typeorm';
+import { Column, Entity, Index, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { IOrganizationPosition } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_position')
-export class OrganizationPositions extends Base
+export class OrganizationPositions extends TenantOrganizationBase
 	implements IOrganizationPosition {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationPosition)
@@ -29,13 +21,4 @@ export class OrganizationPositions extends Base
 	@Index()
 	@Column()
 	name: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization?: Organization;
 }

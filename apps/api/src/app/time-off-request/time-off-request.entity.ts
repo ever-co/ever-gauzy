@@ -6,7 +6,6 @@ import {
 	JoinTable,
 	ManyToOne
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { ITimeOff as ITimeOffRequest, StatusTypesEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -18,19 +17,16 @@ import {
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('time_off_request')
-export class TimeOffRequest extends Base implements ITimeOffRequest {
+export class TimeOffRequest extends TenantOrganizationBase
+	implements ITimeOffRequest {
 	@ManyToMany((type) => Employee, { cascade: true })
 	@JoinTable({
 		name: 'time_off_request_employee'
 	})
 	employees?: Employee[];
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@Column()
-	organizationId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()

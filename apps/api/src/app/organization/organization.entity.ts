@@ -65,6 +65,7 @@ export class Organization extends Base implements IOrganization {
 	@RelationId((t: TenantBase) => t.tenant)
 	@IsString()
 	@IsOptional()
+	@Index()
 	@Column()
 	tenantId?: string;
 
@@ -370,11 +371,6 @@ export class Organization extends Base implements IOrganization {
 		name: 'skill_organization'
 	})
 	skills: ISkill[];
-
-	@ApiPropertyOptional({ type: String })
-	@IsOptional()
-	@Column({ nullable: true })
-	organizationId?: string;
 
 	@ApiPropertyOptional({ type: Payment, isArray: true })
 	@OneToMany((type) => Payment, (payment) => payment.organization, {

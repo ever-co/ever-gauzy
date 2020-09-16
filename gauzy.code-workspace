@@ -16,6 +16,7 @@
 		"deepscan.enable": true,
 		"cSpell.words": [
 			"Upwork",
+			"timesheet",
 			"toastr"
 		]
 	},

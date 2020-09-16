@@ -12,7 +12,8 @@ import {
 	IOrganizationDepartment,
 	IOrganizationEmploymentType,
 	IInvoiceItem,
-	IRequestApprovalEmployee
+	IRequestApprovalEmployee,
+	IPayment
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -45,6 +46,7 @@ import { Skill } from '../skills/skill.entity';
 import { Contact } from '../contact/contact.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Payment } from '../payment/payment.entity';
 
 @Entity('employee')
 export class Employee extends TenantOrganizationBase implements IEmployee {
@@ -204,6 +206,11 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	})
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payments) => payments.recordedBy)
+	@JoinColumn()
+	payments?: IPayment[];
 
 	@OneToMany(
 		(type) => RequestApprovalEmployee,

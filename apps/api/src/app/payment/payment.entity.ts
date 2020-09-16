@@ -3,11 +3,9 @@ import {
 	Column,
 	ManyToOne,
 	JoinColumn,
-	RelationId,
 	JoinTable,
 	ManyToMany
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { IPayment, CurrenciesEnum, PaymentMethodEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -18,16 +16,15 @@ import {
 	IsNumber,
 	IsBoolean
 } from 'class-validator';
-import { Tenant } from '../tenant/tenant.entity';
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { Invoice } from '../invoice/invoice.entity';
-import { Organization } from '../organization/organization.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('payment')
-export class Payment extends Base implements IPayment {
+export class Payment extends TenantOrganizationBase implements IPayment {
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
@@ -41,28 +38,11 @@ export class Payment extends Base implements IPayment {
 	@JoinColumn()
 	invoice?: Invoice;
 
-	@ApiPropertyOptional({ type: Organization })
-	@ManyToOne(
-		(type) => Organization,
-		(organization) => organization.payments,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
-	@JoinColumn()
-	organization?: Organization;
-
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
-	organizationId?: string;
-
-	@ApiPropertyOptional({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	userId?: string;
+	employeeId?: string;
 
 	@ApiPropertyOptional({ type: User })
 	@ManyToOne((type) => User)
@@ -101,15 +81,6 @@ export class Payment extends Base implements IPayment {
 	@IsBoolean()
 	@Column({ nullable: true })
 	overdue?: boolean;
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant?: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((payment: Payment) => payment.tenant)
-	readonly tenantId?: string;
 
 	@ApiPropertyOptional({ type: OrganizationProject })
 	@ManyToOne((type) => OrganizationProject, (project) => project.payments, {
