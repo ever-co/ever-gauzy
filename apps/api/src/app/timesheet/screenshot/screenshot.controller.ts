@@ -55,19 +55,29 @@ export class ScreenshotController extends CrudController<Screenshot> {
 		@UploadedFileStorage()
 		file
 	): Promise<Screenshot> {
-		console.log('upload', { file });
 		const thumbName = `thumb-${file.filename}`;
-		await new Promise((resolve, reject) => {
-			sharp(file.path)
-				.resize(250, 150)
-				.toFile(path.join(file.destination, thumbName), (err, info) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-					resolve(info);
-				});
-		});
+
+		let fileContent;
+		try {
+			fileContent = await new FileStorage()
+				.getProvider()
+				.getFile(file.key);
+		} catch (error) {}
+
+		console.log('file', { file });
+
+		const data = await sharp(Buffer.from(fileContent))
+			.resize(250, 150)
+			.toBuffer();
+		await new FileStorage().getProvider().putFile(data);
+		// .toFile(path.join(file.destination, thumbName), (err, info) => {
+		// 	if (err) {
+		// 		reject(err);
+		// 		return;
+		// 	}
+		// 	resolve(info);
+		// });
+
 		entity.file = path.join(
 			'screenshots',
 			moment().format('YYYY/MM/DD'),

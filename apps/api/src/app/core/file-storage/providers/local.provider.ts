@@ -1,21 +1,21 @@
-import { FileStorageOption, FileSystemProvider } from '../models';
+import { FileStorageOption, UploadedFile } from '../models';
 import * as multer from 'multer';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as moment from 'moment';
 import { environment } from '@env-api/environment';
+import { Provider } from './provider';
+import { join, resolve } from 'path';
 
-export class LocalProvider implements FileSystemProvider {
+export class LocalProvider extends Provider {
 	static instance: LocalProvider;
 	name = 'local';
 	tenantId = '';
 	config = {
 		rootPath: environment.isElectron
-			? path.resolve(environment.gauzyUserPath, 'public')
-			: path.resolve(process.cwd(), 'apps', 'api', 'public'),
+			? resolve(environment.gauzyUserPath, 'public')
+			: resolve(process.cwd(), 'apps', 'api', 'public'),
 		baseUrl: environment.baseUrl + '/public'
 	};
-	constructor() {}
 
 	getInstance() {
 		if (!LocalProvider.instance) {
@@ -49,17 +49,11 @@ export class LocalProvider implements FileSystemProvider {
 					dir = dest;
 				}
 
-				fs.mkdirSync(
-					path.join(this.config.rootPath, this.tenantId, dir),
-					{
-						recursive: true
-					}
-				);
+				fs.mkdirSync(join(this.config.rootPath, this.tenantId, dir), {
+					recursive: true
+				});
 
-				callback(
-					null,
-					path.join(this.config.rootPath, this.tenantId, dir)
-				);
+				callback(null, join(this.config.rootPath, this.tenantId, dir));
 			},
 			filename: (_req, file, callback) => {
 				let fileNameString = '';
@@ -79,5 +73,32 @@ export class LocalProvider implements FileSystemProvider {
 				callback(null, fileNameString);
 			}
 		});
+	}
+
+	async getFile(file: string): Promise<string> {
+		const buffer = fs.readFileSync(this.path(file), { encoding: 'utf8' });
+		const content = buffer.toString();
+		return await content;
+	}
+
+	async putFile(fileContent: string, path: string = ''): Promise<any> {
+		console.log('putFile');
+		return new Promise((resolve, reject) => {
+			fs.writeFile(path, fileContent, (err, data) => {
+				console.log('putFile', err, data);
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			});
+		});
+	}
+
+	mapUploadedFile(file): UploadedFile {
+		if (file.path) {
+			file.key = file.path.replace(this.config.rootPath, '');
+		}
+		return file;
 	}
 }
