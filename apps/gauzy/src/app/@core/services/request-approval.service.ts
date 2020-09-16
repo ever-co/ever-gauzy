@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { RequestApproval, RequestApprovalCreateInput } from '@gauzy/models';
+import { IRequestApproval, IRequestApprovalCreateInput } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -12,13 +12,16 @@ export class RequestApprovalService {
 	getAll(
 		relations?: string[],
 		findInput?: string
-	): Promise<{ items: RequestApproval[] }> {
+	): Promise<{ items: IRequestApproval[] }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: RequestApproval[] }>(`${this.REQUETS_APPROVAL_URL}`, {
-				params: { data }
-			})
+			.get<{ items: IRequestApproval[] }>(
+				`${this.REQUETS_APPROVAL_URL}`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -26,11 +29,11 @@ export class RequestApprovalService {
 	getByEmployeeId(
 		id: string,
 		relations?: string[]
-	): Promise<{ items: RequestApproval[] }> {
+	): Promise<{ items: IRequestApproval[] }> {
 		const data = JSON.stringify({ relations });
 
 		return this.http
-			.get<{ items: RequestApproval[] }>(
+			.get<{ items: IRequestApproval[] }>(
 				`${this.REQUETS_APPROVAL_URL}/employee/${id}`,
 				{
 					params: { data }
@@ -48,11 +51,11 @@ export class RequestApprovalService {
 	}
 
 	save(
-		requestApproval: RequestApprovalCreateInput
-	): Promise<RequestApproval> {
+		requestApproval: IRequestApprovalCreateInput
+	): Promise<IRequestApproval> {
 		if (!requestApproval.id) {
 			return this.http
-				.post<RequestApproval>(
+				.post<IRequestApproval>(
 					this.REQUETS_APPROVAL_URL,
 					requestApproval
 				)
@@ -60,7 +63,7 @@ export class RequestApprovalService {
 				.toPromise();
 		} else {
 			return this.http
-				.put<RequestApproval>(
+				.put<IRequestApproval>(
 					`${this.REQUETS_APPROVAL_URL}/${requestApproval.id}`,
 					requestApproval
 				)
@@ -69,9 +72,9 @@ export class RequestApprovalService {
 		}
 	}
 
-	approvalRequestByAdmin(id: string): Promise<RequestApproval> {
+	approvalRequestByAdmin(id: string): Promise<IRequestApproval> {
 		return this.http
-			.put<RequestApproval>(
+			.put<IRequestApproval>(
 				`${this.REQUETS_APPROVAL_URL}/approval/${id}`,
 				null
 			)
@@ -79,9 +82,9 @@ export class RequestApprovalService {
 			.toPromise();
 	}
 
-	refuseRequestByAdmin(id: string): Promise<RequestApproval> {
+	refuseRequestByAdmin(id: string): Promise<IRequestApproval> {
 		return this.http
-			.put<RequestApproval>(
+			.put<IRequestApproval>(
 				`${this.REQUETS_APPROVAL_URL}/refuse/${id}`,
 				null
 			)

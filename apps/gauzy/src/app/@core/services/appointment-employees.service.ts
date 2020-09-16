@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IAppointmentEmployees } from '@gauzy/models';
+import { IAppointmentEmployee } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
@@ -10,40 +10,40 @@ export class AppointmentEmployeesService {
 
 	constructor(private http: HttpClient) {}
 
-	getAll(): Promise<{ items: IAppointmentEmployees[] }> {
+	getAll(): Promise<{ items: IAppointmentEmployee[] }> {
 		return this.http
-			.get<{ items: IAppointmentEmployees[] }>(this.URI)
+			.get<{ items: IAppointmentEmployee[] }>(this.URI)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getById(id: string = ''): Observable<IAppointmentEmployees[]> {
-		return this.http.get<IAppointmentEmployees[]>(this.URI + '/' + id);
+	getById(id: string = ''): Observable<IAppointmentEmployee[]> {
+		return this.http.get<IAppointmentEmployee[]>(this.URI + '/' + id);
 	}
 
 	findEmployeeAppointments(
 		id: string = ''
-	): Observable<IAppointmentEmployees[]> {
-		return this.http.get<IAppointmentEmployees[]>(
+	): Observable<IAppointmentEmployee[]> {
+		return this.http.get<IAppointmentEmployee[]>(
 			this.URI + '/findEmployeeAppointments/' + id
 		);
 	}
 
 	add(
-		appointmentEmployees: IAppointmentEmployees
-	): Promise<IAppointmentEmployees> {
+		appointmentEmployees: IAppointmentEmployee
+	): Promise<IAppointmentEmployee> {
 		return this.http
-			.post<IAppointmentEmployees>(this.URI, appointmentEmployees)
+			.post<IAppointmentEmployee>(this.URI, appointmentEmployees)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(
 		id: string,
-		appointmentEmployees: IAppointmentEmployees
-	): Promise<IAppointmentEmployees> {
+		appointmentEmployees: IAppointmentEmployee
+	): Promise<IAppointmentEmployee> {
 		return this.http
-			.put<IAppointmentEmployees>(
+			.put<IAppointmentEmployee>(
 				`${this.URI}/${id}`,
 				appointmentEmployees
 			)

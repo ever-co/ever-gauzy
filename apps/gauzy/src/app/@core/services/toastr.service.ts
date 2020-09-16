@@ -16,16 +16,16 @@ export class ToastrService {
 		title: string = 'TOASTR.TITLE.SUCCESS',
 		translationParams: Object = {}
 	) {
-		let displayMesage = '';
+		let displayMessage = '';
 
 		if (message && message.message && typeof message.message === 'string') {
-			displayMesage = message.message;
+			displayMessage = message.message;
 		} else {
-			displayMesage = message;
+			displayMessage = message;
 		}
 
 		this.nbToastrService.success(
-			this.getTranslation(displayMesage, translationParams),
+			this.getTranslation(displayMessage, translationParams),
 			this.getTranslation(title)
 		);
 	}
@@ -35,22 +35,22 @@ export class ToastrService {
 		title: string = 'TOASTR.TITLE.ERROR',
 		translationParams: Object = {}
 	) {
-		let displayMesage = '';
+		let displayMessage = '';
 
 		if (
 			error.error &&
 			error.error.message &&
 			typeof error.error.message === 'string'
 		) {
-			displayMesage = error.error.message;
+			displayMessage = error.error.message;
 		} else if (error.message && typeof error.message === 'string') {
-			displayMesage = error.message;
+			displayMessage = error.message;
 		} else {
-			displayMesage = error;
+			displayMessage = error;
 		}
 
 		this.nbToastrService.danger(
-			this.getTranslation(displayMesage, translationParams),
+			this.getTranslation(displayMessage, translationParams),
 			this.getTranslation(title)
 		);
 	}

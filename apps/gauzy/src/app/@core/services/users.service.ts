@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { User, UserFindInput } from '@gauzy/models';
+import { IUser, IUserFindInput } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -9,28 +9,28 @@ export class UsersService {
 
 	API_URL = '/api/user';
 
-	getMe(relations?: string[]): Promise<User> {
+	getMe(relations?: string[]): Promise<IUser> {
 		const data = JSON.stringify({ relations });
 
 		return this.http
-			.get<User>(`${this.API_URL}/me`, {
+			.get<IUser>(`${this.API_URL}/me`, {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	getUserByEmail(emailId: string): Promise<User> {
+	getUserByEmail(emailId: string): Promise<IUser> {
 		return this.http
-			.get<User>(`${this.API_URL}/email/${emailId}`)
+			.get<IUser>(`${this.API_URL}/email/${emailId}`)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getUserById(id: string, relations?: string[]): Promise<User> {
+	getUserById(id: string, relations?: string[]): Promise<IUser> {
 		const data = JSON.stringify({ relations });
 		return this.http
-			.get<User>(`${this.API_URL}/${id}`, {
+			.get<IUser>(`${this.API_URL}/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -39,18 +39,18 @@ export class UsersService {
 
 	getAll(
 		relations?: string[],
-		findInput?: UserFindInput
-	): Promise<{ items: User[]; total: number }> {
+		findInput?: IUserFindInput
+	): Promise<{ items: IUser[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: User[]; total: number }>(`${this.API_URL}`, {
+			.get<{ items: IUser[]; total: number }>(`${this.API_URL}`, {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(userId: string, updateInput: UserFindInput) {
+	update(userId: string, updateInput: IUserFindInput) {
 		return this.http
 			.put(`${this.API_URL}/${userId}`, updateInput)
 			.pipe(first())

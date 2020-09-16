@@ -1,34 +1,34 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Tag } from '@gauzy/models';
+import { ITag } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
 export class TagsService {
 	constructor(private http: HttpClient) {}
 
-	insertTags(createTags: Tag[]): Promise<Tag[]> {
+	insertTags(createTags: ITag[]): Promise<ITag[]> {
 		return this.http
-			.post<Tag[]>('/api/tags', createTags)
+			.post<ITag[]>('/api/tags', createTags)
 			.pipe(first())
 			.toPromise();
 	}
 
-	insertTag(createTag: Tag): Promise<Tag> {
+	insertTag(createTag: ITag): Promise<ITag> {
 		return this.http
-			.post<Tag>('/api/tags', createTag)
+			.post<ITag>('/api/tags', createTag)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAllTags(
 		relations?: string[],
-		findInput?: Tag
-	): Promise<{ items: Tag[] }> {
+		findInput?: ITag
+	): Promise<{ items: ITag[] }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: Tag[] }>(`/api/tags`, {
+			.get<{ items: ITag[] }>(`/api/tags`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -39,15 +39,15 @@ export class TagsService {
 		return this.http.delete(`/api/tags/${id}`).pipe(first()).toPromise();
 	}
 
-	update(id: string, updateInput: Tag) {
+	update(id: string, updateInput: ITag) {
 		return this.http
 			.put(`/api/tags/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
-	findByName(name: string): Promise<{ item: Tag }> {
+	findByName(name: string): Promise<{ item: ITag }> {
 		return this.http
-			.get<{ item: Tag }>(`/api/tags/getByName/${name}`)
+			.get<{ item: ITag }>(`/api/tags/getByName/${name}`)
 			.pipe(first())
 			.toPromise();
 	}

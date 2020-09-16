@@ -21,6 +21,7 @@ export interface IRequestApproval
 }
 
 export interface IRequestApprovalCreateInput {
+	id?: string;
 	employeeApprovals?: IRequestApprovalEmployee[];
 	teamApprovals?: IRequestApprovalTeam[];
 	teams?: IOrganizationTeam[];

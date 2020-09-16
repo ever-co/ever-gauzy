@@ -74,9 +74,9 @@ export class UpworkService {
 	}
 
 	/*
-	 * Check remeber state for upwork integration
+	 * Check remember state for upwork integration
 	 */
-	checkRemeberState() {
+	checkRememberState() {
 		return this.http.get<any>(`/api/integrations/upwork/check/state`);
 	}
 }
