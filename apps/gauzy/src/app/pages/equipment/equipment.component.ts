@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { Equipment, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IEquipment, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,12 +24,12 @@ export class EquipmentComponent extends TranslationBaseComponent
 	implements OnInit {
 	settingsSmartTable: object;
 	loading = true;
-	selectedEquipment: Equipment;
+	selectedEquipment: IEquipment;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	tags: any;
 	selectedTags: any;
-	equipmentsData: Equipment[];
+	equipmentsData: IEquipment[];
 	private _ngDestroy$ = new Subject<void>();
 	disableButton = true;
 	viewComponentName: ComponentEnum;
@@ -133,7 +133,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/organization/equipment-sharing']);
 	}
 
-	async save(selectedItem?: Equipment) {
+	async save(selectedItem?: IEquipment) {
 		if (selectedItem) {
 			this.selectEquipment({
 				isSelected: true,
@@ -165,7 +165,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete(selectedItem?: Equipment) {
+	async delete(selectedItem?: IEquipment) {
 		if (selectedItem) {
 			this.selectEquipment({
 				isSelected: true,

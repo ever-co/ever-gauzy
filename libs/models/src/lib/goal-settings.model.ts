@@ -92,6 +92,7 @@ export enum KpiOperatorEnum {
 }
 
 export interface ISettingFindInput {
+	id?: string;
 	employee?: IEmployeeFindInput;
 	organization?: IOrganizationFindInput;
 }

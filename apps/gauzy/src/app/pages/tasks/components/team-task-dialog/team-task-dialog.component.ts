@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import {
-	Task,
-	OrganizationProjects,
-	Employee,
-	OrganizationTeam,
-	Tag
+	ITask,
+	IOrganizationProject,
+	IEmployee,
+	IOrganizationTeam,
+	ITag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
@@ -37,15 +37,15 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
-	projects: OrganizationProjects[];
+	projects: IOrganizationProject[];
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
-	employees: Employee[] = [];
-	teams: OrganizationTeam[] = [];
+	employees: IEmployee[] = [];
+	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
 	selectedTeams: string[];
-	selectedTask: Task;
+	selectedTask: ITask;
 	organizationId: string;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 
 	constructor(
 		public dialogRef: NbDialogRef<TeamTaskDialogComponent>,
@@ -86,7 +86,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		estimate,
 		dueDate,
 		tags
-	}: Task) {
+	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedTeams = (teams || []).map((team) => team.id);
 		// employee id of logged in user, if value is null, disable the save button
@@ -121,7 +121,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		this.tags = this.form.get('tags').value || [];
 	}
 
-	addNewProject = (name: string): Promise<OrganizationProjects> => {
+	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
@@ -155,7 +155,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 

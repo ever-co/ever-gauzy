@@ -2,10 +2,10 @@ import { Component } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit } from '@angular/core';
 import {
-	Invoice,
+	IInvoice,
 	InvoiceTypeEnum,
 	InvoiceStatusTypesEnum,
-	InvoiceItem
+	IInvoiceItem
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
@@ -29,12 +29,12 @@ import { InvoiceItemService } from '../../../@core/services/invoice-item.service
 })
 export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	invoice: Invoice;
+	invoice: IInvoice;
 	form: FormGroup;
 	isEstimate: boolean;
 	saveAndSend: boolean;
-	invoiceItems: InvoiceItem[];
-	createdInvoice: Invoice;
+	invoiceItems: IInvoiceItem[];
+	createdInvoice: IInvoice;
 
 	constructor(
 		readonly translateService: TranslateService,

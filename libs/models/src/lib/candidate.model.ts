@@ -7,7 +7,7 @@ import { IUserFindInput, IUser } from './user.model';
 import { IOrganizationTeam } from './organization-team-model';
 import {
 	IOrganizationDepartment,
-	IOrganizationPositions,
+	IOrganizationPosition,
 	ITag,
 	IContact
 } from '@gauzy/models';
@@ -23,7 +23,7 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	status?: string;
 	teams?: IOrganizationTeam[];
 	organizationDepartments?: IOrganizationDepartment[];
-	organizationPosition?: IOrganizationPositions;
+	organizationPosition?: IOrganizationPosition;
 	tags: ITag[];
 	appliedDate?: Date;
 	hiredDate?: Date;
@@ -54,6 +54,7 @@ export enum CandidateStatus {
 }
 
 export interface ICandidateFindInput {
+	id?: string;
 	organization?: IOrganizationFindInput;
 	user?: IUserFindInput;
 	valueDate?: Date;
@@ -66,7 +67,7 @@ export interface ICandidateUpdateInput {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
-	organizationPosition?: IOrganizationPositions;
+	organizationPosition?: IOrganizationPosition;
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;

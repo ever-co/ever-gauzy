@@ -2,9 +2,9 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import {
-	Candidate,
-	CandidateUpdateInput,
-	UserUpdateInput,
+	ICandidate,
+	ICandidateUpdateInput,
+	IUserUpdateInput,
 	ICandidateInterview
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +32,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	routeParams: Params;
-	selectedCandidate: Candidate;
+	selectedCandidate: ICandidate;
 	candidateName = 'Candidate';
 	tabs: any[];
 	interviewList: ICandidateInterview[];
@@ -201,7 +201,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 		this.location.back();
 	}
 
-	private async submitCandidateForm(value: CandidateUpdateInput) {
+	private async submitCandidateForm(value: ICandidateUpdateInput) {
 		if (value) {
 			try {
 				await this.candidatesService.update(
@@ -227,7 +227,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	 * This is to update the User details of an Candidate.
 	 * Do NOT use this function to update any details which are NOT stored in the User Entity.
 	 */
-	private async submitUserForm(value: UserUpdateInput) {
+	private async submitUserForm(value: IUserUpdateInput) {
 		if (value) {
 			try {
 				await this.userService.update(

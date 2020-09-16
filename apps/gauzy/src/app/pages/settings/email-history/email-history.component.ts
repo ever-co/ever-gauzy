@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { EmailService } from '../../../@core/services/email.service';
-import { Email, Organization } from '@gauzy/models';
+import { IEmail, IOrganization } from '@gauzy/models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
@@ -16,13 +16,13 @@ import { EmailFiltersComponent } from './email-filters/email-filters.component';
 export class EmailHistoryComponent implements OnInit, OnDestroy {
 	private _onDestroy$ = new Subject<void>();
 
-	private _selectedOrganization: Organization;
+	private _selectedOrganization: IOrganization;
 
 	loading = true;
 
-	emails: Email[];
+	emails: IEmail[];
 
-	selectedEmail: Email;
+	selectedEmail: IEmail;
 
 	filteredCount: Number;
 
@@ -54,7 +54,7 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	selectEmail(email: Email) {
+	selectEmail(email: IEmail) {
 		this.selectedEmail = email;
 	}
 

@@ -2,13 +2,13 @@ import { OnInit, Component, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
-	RequestApproval,
-	Employee,
-	OrganizationTeam,
-	ApprovalPolicy,
-	RequestApprovalCreateInput,
+	IRequestApproval,
+	IEmployee,
+	IOrganizationTeam,
+	IApprovalPolicy,
+	IRequestApprovalCreateInput,
 	ApprovalPolicyTypesStringEnum,
-	Tag
+	ITag
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,17 +28,17 @@ import { RequestApprovalService } from '../../@core/services/request-approval.se
 export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
-	requestApproval: RequestApproval;
+	requestApproval: IRequestApproval;
 	organizationId: string;
 	participants = 'employees';
 	selectedMembers: string[];
 	selectedTeams: string[];
-	employees: Employee[] = [];
-	approvalPolicies: ApprovalPolicy[] = [];
-	teams: OrganizationTeam[];
+	employees: IEmployee[] = [];
+	approvalPolicies: IApprovalPolicy[] = [];
+	teams: IOrganizationTeam[];
 	selectedEmployees: string[] = [];
 	selectedApprovalPolicy: string[] = [];
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -198,7 +198,7 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	async closeDialog(requestApproval?: RequestApproval) {
+	async closeDialog(requestApproval?: IRequestApproval) {
 		const members: any[] = [];
 		const listEmployees: any[] = [];
 		if (requestApproval) {
@@ -229,7 +229,7 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 		if (!this.form.get('id').value) {
 			delete this.form.value['id'];
 		}
-		const requestApproval: RequestApprovalCreateInput = {
+		const requestApproval: IRequestApprovalCreateInput = {
 			name: this.form.value['name'],
 			approvalPolicyId: this.form.value['approvalPolicyId'],
 			min_count: this.form.value['min_count'],
@@ -239,12 +239,12 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 			tags: this.form.get('tags').value
 		};
 
-		let result: RequestApproval;
+		let result: IRequestApproval;
 		result = await this.requestApprovalService.save(requestApproval);
 		this.closeDialog(result);
 	}
 
-	selectedTagsEvent(currentTagSelection: Tag[]) {
+	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.form.get('tags').setValue(currentTagSelection);
 	}
 

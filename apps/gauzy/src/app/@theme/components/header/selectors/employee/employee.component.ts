@@ -13,7 +13,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { Tag, Organization, Skill } from '@gauzy/models';
+import { ITag, IOrganization, ISkill } from '@gauzy/models';
 import { ActivatedRoute } from '@angular/router';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 
@@ -26,8 +26,8 @@ export interface SelectedEmployee {
 	lastName: string;
 	imageUrl: string;
 	defaultType?: DEFAULT_TYPE;
-	tags?: Tag[];
-	skills?: Skill[];
+	tags?: ITag[];
+	skills?: ISkill[];
 }
 
 export enum DEFAULT_TYPE {
@@ -87,7 +87,7 @@ export class EmployeeSelectorComponent
 		return this._selectedDate;
 	}
 
-	private _selectedOrganization?: Organization;
+	private _selectedOrganization?: IOrganization;
 	private _selectedDate?: Date;
 
 	@Output()
@@ -213,7 +213,7 @@ export class EmployeeSelectorComponent
 	}
 
 	loadWorkingEmployeesIfRequired = async (
-		org: Organization,
+		org: IOrganization,
 		selectedDate: Date
 	) => {
 		//If no organization, then something is wrong

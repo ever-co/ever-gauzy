@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Goal, GoalFindInput } from '@gauzy/models';
+import { IGoal, IGoalFindInput } from '@gauzy/models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
 
 interface IGoalResponse {
-	items: Goal[];
+	items: IGoal[];
 	count: number;
 }
 
@@ -20,23 +20,23 @@ export class GoalService {
 		private toastrService: NbToastrService
 	) {}
 
-	createGoal(goal): Promise<Goal> {
+	createGoal(goal): Promise<IGoal> {
 		return this._http
-			.post<Goal>(`${this.API_URL}/create`, goal)
+			.post<IGoal>(`${this.API_URL}/create`, goal)
 			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
 
-	update(id: string, goal: Goal): Promise<Goal> {
+	update(id: string, goal: IGoal): Promise<IGoal> {
 		return this._http
-			.put<Goal>(`${this.API_URL}/${id}`, goal)
+			.put<IGoal>(`${this.API_URL}/${id}`, goal)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAllGoals(
 		relations?: string[],
-		findInput?: GoalFindInput
+		findInput?: IGoalFindInput
 	): Promise<IGoalResponse> {
 		const data = JSON.stringify({ relations, findInput });
 		return this._http

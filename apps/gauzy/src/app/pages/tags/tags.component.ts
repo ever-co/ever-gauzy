@@ -3,7 +3,7 @@ import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.componen
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TagsService } from '../../@core/services/tags.service';
-import { Tag, Organization, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first, takeUntil } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
@@ -24,12 +24,12 @@ export class TagsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = false;
-	selectedTag: Tag;
+	selectedTag: ITag;
 	smartTableSource = new LocalDataSource();
-	tag: Tag;
+	tag: ITag;
 	form: FormGroup;
 	disableButton = true;
-	private selectedOrganization: Organization;
+	private selectedOrganization: IOrganization;
 	private subscribeTakingSelectedOrganziation: Subscription;
 	private allTags = [];
 	private _ngDestroy$ = new Subject<void>();
@@ -37,7 +37,7 @@ export class TagsComponent extends TranslationBaseComponent
 	private filterOption: any;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	tagsData: Tag[];
+	tagsData: ITag[];
 	@ViewChild('tagsTable') tagsTable;
 
 	constructor(
@@ -127,7 +127,7 @@ export class TagsComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete(selectedItem?: Tag) {
+	async delete(selectedItem?: ITag) {
 		if (selectedItem) {
 			this.selectTag({
 				isSelected: true,
@@ -149,7 +149,7 @@ export class TagsComponent extends TranslationBaseComponent
 		}
 		this.disableButton = true;
 	}
-	async edit(selectedItem?: Tag) {
+	async edit(selectedItem?: ITag) {
 		if (selectedItem) {
 			this.selectTag({
 				isSelected: true,

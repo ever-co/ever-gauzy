@@ -11,6 +11,7 @@ export interface IUserOrganization
 }
 
 export interface IUserOrganizationFindInput {
+	id?: string;
 	userId?: string;
 	organizationId?: string;
 	isDefault?: boolean;

@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { KeyResult } from '@gauzy/models';
+import { IKeyResult } from '@gauzy/models';
 import { Observable, throwError } from 'rxjs';
 import { tap, catchError, first } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
 
 interface IKeyResultResponse {
-	items: KeyResult[];
+	items: IKeyResult[];
 	count: number;
 }
 
@@ -20,9 +20,9 @@ export class KeyResultService {
 		private toastrService: NbToastrService
 	) {}
 
-	createKeyResult(keyResult): Promise<KeyResult> {
+	createKeyResult(keyResult): Promise<IKeyResult> {
 		return this._http
-			.post<KeyResult>(`${this.API_URL}/create`, keyResult)
+			.post<IKeyResult>(`${this.API_URL}/create`, keyResult)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary('Key Result Created', 'Success')
@@ -32,9 +32,9 @@ export class KeyResultService {
 			.toPromise();
 	}
 
-	createBulkKeyResult(keyResults): Promise<KeyResult[]> {
+	createBulkKeyResult(keyResults): Promise<IKeyResult[]> {
 		return this._http
-			.post<KeyResult[]>(`${this.API_URL}/createBulk`, keyResults)
+			.post<IKeyResult[]>(`${this.API_URL}/createBulk`, keyResults)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary('Key Results Created', 'Success')
@@ -44,9 +44,9 @@ export class KeyResultService {
 			.toPromise();
 	}
 
-	async update(id: string, keyResult: KeyResult): Promise<KeyResult> {
+	async update(id: string, keyResult: IKeyResult): Promise<IKeyResult> {
 		return this._http
-			.put<KeyResult>(`${this.API_URL}/${id}`, keyResult)
+			.put<IKeyResult>(`${this.API_URL}/${id}`, keyResult)
 			.pipe(first())
 			.toPromise();
 	}

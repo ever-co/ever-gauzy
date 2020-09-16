@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import {
-	Expense,
+	IExpense,
 	PermissionsEnum,
 	IExpenseCategory,
 	IOrganizationVendor,
-	Tag,
+	ITag,
 	ComponentLayoutStyleEnum,
-	Employee
+	IEmployee
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -52,12 +52,12 @@ export interface ExpenseViewModel {
 	purpose: string;
 	taxType: string;
 	taxLabel: string;
-	employee: Employee;
+	employee: IEmployee;
 	employeeName: string;
 	rateValue: number;
 	receipt: string;
 	splitExpense: boolean;
-	tags: Tag[];
+	tags: ITag[];
 	status: string;
 }
 
@@ -321,7 +321,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	openEditExpenseDialog(selectedItem?: Expense) {
+	openEditExpenseDialog(selectedItem?: IExpense) {
 		if (selectedItem) {
 			this.selectExpense({
 				isSelected: true,
@@ -367,7 +367,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	openDuplicateExpenseDialog(selectedItem?: Expense) {
+	openDuplicateExpenseDialog(selectedItem?: IExpense) {
 		if (selectedItem) {
 			this.selectExpense({
 				isSelected: true,
@@ -394,7 +394,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	async deleteExpense(selectedItem?: Expense) {
+	async deleteExpense(selectedItem?: IExpense) {
 		if (selectedItem) {
 			this.selectExpense({
 				isSelected: true,

@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
-	OrganizationSprint,
-	Organization,
+	IOrganizationSprint,
+	IOrganization,
 	ITenant,
-	GetSprintsOptions,
-	Task
+	IGetSprintsOptions,
+	ITask
 } from '@gauzy/models';
 import { SprintService } from 'apps/gauzy/src/app/@core/services/organization-sprint.service';
 import { tap, take, map, switchMap } from 'rxjs/operators';
@@ -15,11 +15,11 @@ import { tap, take, map, switchMap } from 'rxjs/operators';
 })
 export class SprintStoreService {
 	private _sprints$: BehaviorSubject<
-		OrganizationSprint[]
+		IOrganizationSprint[]
 	> = new BehaviorSubject([]);
-	sprints$: Observable<OrganizationSprint[]> = this._sprints$.asObservable();
+	sprints$: Observable<IOrganizationSprint[]> = this._sprints$.asObservable();
 
-	private get sprints(): OrganizationSprint[] {
+	private get sprints(): IOrganizationSprint[] {
 		return this._sprints$.getValue();
 	}
 
@@ -29,32 +29,32 @@ export class SprintStoreService {
 		}
 	}
 
-	fetchSprints(findInput: GetSprintsOptions = {}) {
+	fetchSprints(findInput: IGetSprintsOptions = {}) {
 		this.sprintService
 			.getAllSprints(findInput)
 			.pipe(tap(({ items }) => this.loadAllSprints(items)))
 			.subscribe();
 	}
 
-	loadAllSprints(sprints: OrganizationSprint[]): void {
+	loadAllSprints(sprints: IOrganizationSprint[]): void {
 		this._sprints$.next(sprints);
 	}
 
 	createSprint(
-		newSprint: OrganizationSprint
-	): Observable<OrganizationSprint> {
+		newSprint: IOrganizationSprint
+	): Observable<IOrganizationSprint> {
 		return this.sprintService.createSprint(newSprint).pipe(
-			tap((createdSprint: OrganizationSprint) => {
+			tap((createdSprint: IOrganizationSprint) => {
 				const sprints = [...this.sprints, createdSprint];
-				this._sprints$.next(sprints as OrganizationSprint[]);
+				this._sprints$.next(sprints as IOrganizationSprint[]);
 			}),
 			take(1)
 		);
 	}
 
 	updateSprint(
-		editedSprint: OrganizationSprint
-	): Observable<OrganizationSprint> {
+		editedSprint: IOrganizationSprint
+	): Observable<IOrganizationSprint> {
 		return this.sprintService
 			.editSprint(editedSprint.id, editedSprint)
 			.pipe(
@@ -73,7 +73,7 @@ export class SprintStoreService {
 		return this.sprintService.deleteSprint(id).pipe(
 			tap(() => {
 				const newState = this.sprints.filter(
-					(sprint: OrganizationSprint) => sprint.id !== id
+					(sprint: IOrganizationSprint) => sprint.id !== id
 				);
 				this._sprints$.next(newState);
 			}),
@@ -83,22 +83,22 @@ export class SprintStoreService {
 
 	moveTaskToSprint(
 		sprintId: string,
-		task: Task
-	): Observable<OrganizationSprint> {
+		task: ITask
+	): Observable<IOrganizationSprint> {
 		return this.sprints$.pipe(
-			map((sprints: OrganizationSprint[]) =>
+			map((sprints: IOrganizationSprint[]) =>
 				sprints.find(
-					(sprint: OrganizationSprint) => sprint.id === sprintId
+					(sprint: IOrganizationSprint) => sprint.id === sprintId
 				)
 			),
-			switchMap(({ tasks }: OrganizationSprint) =>
+			switchMap(({ tasks }: IOrganizationSprint) =>
 				this.sprintService.editSprint(sprintId, {
 					tasks: [...tasks, task]
 				})
 			),
-			tap((updatedSprint: OrganizationSprint) => {
+			tap((updatedSprint: IOrganizationSprint) => {
 				// const sprints = [...this.sprints];
-				// const newState = sprints.map((sprint: OrganizationSprint): OrganizationSprint =>
+				// const newState = sprints.map((sprint: IOrganizationSprint): IOrganizationSprint =>
 				//   sprint.id === updatedSprint.id ? updatedSprint : sprint
 				// );
 				// this._sprints$.next(newState);

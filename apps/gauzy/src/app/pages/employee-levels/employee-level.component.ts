@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
-	EmployeeLevelInput,
-	Tag,
+	IEmployeeLevelInput,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
@@ -26,9 +26,9 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 	showAddCard: boolean;
 	showEditDiv: boolean;
 
-	employeeLevels: EmployeeLevelInput[] = [];
-	selectedEmployeeLevel: EmployeeLevelInput;
-	tags: Tag[] = [];
+	employeeLevels: IEmployeeLevelInput[] = [];
+	selectedEmployeeLevel: IEmployeeLevelInput;
+	tags: ITag[] = [];
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -145,7 +145,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 		this.loadEmployeeLevels();
 		this.cancel();
 	}
-	edit(employeeLevel: EmployeeLevelInput) {
+	edit(employeeLevel: IEmployeeLevelInput) {
 		this.showAddCard = true;
 		this.isGridEdit = true;
 		this.selectedEmployeeLevel = employeeLevel;
@@ -182,7 +182,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 		}
 	}
 
-	showEditCard(employeeLevel: EmployeeLevelInput) {
+	showEditCard(employeeLevel: IEmployeeLevelInput) {
 		this.tags = employeeLevel.tags;
 		this.showEditDiv = true;
 		this.selectedEmployeeLevel = employeeLevel;

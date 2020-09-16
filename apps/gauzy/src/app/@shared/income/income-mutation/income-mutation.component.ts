@@ -7,10 +7,10 @@ import {
 } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import {
-	Income,
+	IIncome,
 	OrganizationSelectInput,
-	Tag,
-	OrganizationContact,
+	ITag,
+	IOrganizationContact,
 	ContactType
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
@@ -33,16 +33,16 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
-	income?: Income;
+	income?: IIncome;
 	currencies = Object.values(CurrenciesEnum);
 
 	form: FormGroup;
 	notes: AbstractControl;
 
 	organizationId: string;
-	organizationContact: OrganizationContact;
+	organizationContact: IOrganizationContact;
 	organizationContacts: Object[] = [];
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 
 	averageIncome = 0;
 	averageBonus = 0;
@@ -129,7 +129,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	}
 	addNewOrganizationContact = (
 		name: string
-	): Promise<OrganizationContact> => {
+	): Promise<IOrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -203,7 +203,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			this.currency.setValue(orgData.currency);
 		}
 	}
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 }

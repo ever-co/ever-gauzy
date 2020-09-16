@@ -12,7 +12,7 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import { Invite, UserRegistrationInput, Tag, ITenant } from '@gauzy/models';
+import { IInvite, IUserRegistrationInput, ITag, ITenant } from '@gauzy/models';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
@@ -27,11 +27,11 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 	private ngDestroy$ = new Subject<void>();
 
 	@Input()
-	invitation: Invite;
+	invitation: IInvite;
 
 	@Output()
-	submitForm: EventEmitter<UserRegistrationInput> = new EventEmitter<
-		UserRegistrationInput
+	submitForm: EventEmitter<IUserRegistrationInput> = new EventEmitter<
+		IUserRegistrationInput
 	>();
 
 	//Fields for the form
@@ -41,7 +41,7 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 	repeatPassword: AbstractControl;
 	agreeTerms: AbstractControl;
 	tenant: ITenant;
-	tags: Tag[];
+	tags: ITag[];
 
 	matchPassword: boolean;
 	repeatPasswordErrorMsg: string;
@@ -139,16 +139,10 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 			this.submitForm.emit({
 				user: {
 					firstName: this.fullName.value
-						? this.fullName.value
-								.split(' ')
-								.slice(0, -1)
-								.join(' ')
+						? this.fullName.value.split(' ').slice(0, -1).join(' ')
 						: null,
 					lastName: this.fullName.value
-						? this.fullName.value
-								.split(' ')
-								.slice(-1)
-								.join(' ')
+						? this.fullName.value.split(' ').slice(-1).join(' ')
 						: null,
 					email: this.invitation.email,
 					role: this.invitation.role,

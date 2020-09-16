@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	InvoiceEstimateHistory,
-	InvoiceEstimateHistoryFindInput
+	IInvoiceEstimateHistory,
+	IInvoiceEstimateHistoryFindInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -12,11 +12,11 @@ export class InvoiceEstimateHistoryService {
 
 	getAll(
 		relations?: string[],
-		findInput?: InvoiceEstimateHistoryFindInput
-	): Promise<{ items: InvoiceEstimateHistory[] }> {
+		findInput?: IInvoiceEstimateHistoryFindInput
+	): Promise<{ items: IInvoiceEstimateHistory[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: InvoiceEstimateHistory[] }>(
+			.get<{ items: IInvoiceEstimateHistory[] }>(
 				'/api/invoice-estimate-history',
 				{
 					params: { data }
@@ -27,10 +27,10 @@ export class InvoiceEstimateHistoryService {
 	}
 
 	add(
-		invoiceEstimateHistory: InvoiceEstimateHistory
-	): Promise<InvoiceEstimateHistory> {
+		invoiceEstimateHistory: IInvoiceEstimateHistory
+	): Promise<IInvoiceEstimateHistory> {
 		return this.http
-			.post<InvoiceEstimateHistory>(
+			.post<IInvoiceEstimateHistory>(
 				'/api/invoice-estimate-history',
 				invoiceEstimateHistory
 			)

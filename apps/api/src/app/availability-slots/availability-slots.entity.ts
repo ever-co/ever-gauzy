@@ -22,7 +22,7 @@ export class AvailabilitySlot extends TenantOrganizationBase
 	@ApiProperty({ type: String, readOnly: true })
 	@IsOptional()
 	@RelationId(
-		(availabilitySlots: AvailabilitySlot) => availabilitySlots.employee
+		(availabilitySlot: AvailabilitySlot) => availabilitySlot.employee
 	)
 	@Column({ nullable: true })
 	readonly employeeId?: string;

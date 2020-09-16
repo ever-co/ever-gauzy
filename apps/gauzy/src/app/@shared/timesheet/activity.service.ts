@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Activity, IGetActivitiesInput, DailyActivity } from '@gauzy/models';
+import { IActivity, IGetActivitiesInput, IDailyActivity } from '@gauzy/models';
 import { toParams } from 'libs/utils';
 
 @Injectable({
@@ -11,7 +11,7 @@ export class ActivityService {
 
 	getActivites(request: IGetActivitiesInput) {
 		return this.http
-			.get<Activity[]>('/api/timesheet/activity', {
+			.get<IActivity[]>('/api/timesheet/activity', {
 				params: toParams(request)
 			})
 			.toPromise();
@@ -19,7 +19,7 @@ export class ActivityService {
 
 	getDailyActivites(request: IGetActivitiesInput) {
 		return this.http
-			.get<DailyActivity[]>('/api/timesheet/activity/daily', {
+			.get<IDailyActivity[]>('/api/timesheet/activity/daily', {
 				params: toParams(request)
 			})
 			.toPromise();

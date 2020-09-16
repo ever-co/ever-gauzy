@@ -5,7 +5,7 @@ import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
-import { Tag, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ITag, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
 import { Store } from '../../../@core/services/store.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
@@ -26,7 +26,7 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 	expenseCategories: IOrganizationExpenseCategory[];
 
 	selectedExpenseCategory: IOrganizationExpenseCategory;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;

@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ProductOption } from '@gauzy/models';
+import { IProductOption } from '@gauzy/models';
 
 export interface OptionCreateInput {
 	name: string;
@@ -16,7 +16,7 @@ export interface VariantCreateInput {
 	styleUrls: ['./variant-form.component.scss']
 })
 export class VariantFormComponent {
-	@Input() options: ProductOption[];
+	@Input() options: IProductOption[];
 	@Output() variantCreateInputsUpdated = new EventEmitter<
 		VariantCreateInput[]
 	>();

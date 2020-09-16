@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { TimeSlot, PermissionsEnum } from '@gauzy/models';
+import { ITimeSlot, PermissionsEnum } from '@gauzy/models';
 import { prgressStatus } from 'libs/utils';
 import { TimeLogsLable } from 'apps/gauzy/src/app/static-data/timesheet';
 import { TimesheetService } from '../../timesheet.service';
@@ -15,7 +15,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	prgressStatus = prgressStatus;
 	TimeLogsLable = TimeLogsLable;
 	PermissionsEnum = PermissionsEnum;
-	@Input() timeSlot: TimeSlot;
+	@Input() timeSlot: ITimeSlot;
 
 	constructor(
 		private dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,

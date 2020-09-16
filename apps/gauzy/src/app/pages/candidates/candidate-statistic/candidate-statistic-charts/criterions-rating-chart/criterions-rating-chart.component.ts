@@ -3,9 +3,9 @@ import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
-	Candidate,
+	ICandidate,
 	ICandidateInterview,
-	Employee,
+	IEmployee,
 	ICandidateFeedback
 } from '@gauzy/models';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
@@ -19,12 +19,12 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
 	interviews = [];
-	currentEmployee: Employee[] = [];
+	currentEmployee: IEmployee[] = [];
 	disabledIds = [];
 	feedbacks: ICandidateFeedback[];
-	@Input() candidates: Candidate[];
+	@Input() candidates: ICandidate[];
 	@Input() interviewList: ICandidateInterview[];
-	@Input() employeeList: Employee[];
+	@Input() employeeList: IEmployee[];
 	data: any;
 	options: any;
 	currentInterview: ICandidateInterview;

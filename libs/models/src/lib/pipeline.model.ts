@@ -11,7 +11,9 @@ export interface IPipeline extends IBasePerTenantAndOrganizationEntityModel {
 	isActive: boolean;
 }
 
-export type IPipelineFindInput = Partial<Pick<IPipeline, 'id'>>;
+export type IPipelineFindInput = Partial<
+	Pick<IPipeline, 'id' | 'organizationId'>
+>;
 
 export interface IPipelineCreateInput {
 	stages?: IPipelineStageCreateInput[];

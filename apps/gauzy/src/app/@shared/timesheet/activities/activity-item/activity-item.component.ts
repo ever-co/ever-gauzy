@@ -6,7 +6,7 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
-import { DailyActivity } from '@gauzy/models';
+import { IDailyActivity } from '@gauzy/models';
 @Component({
 	selector: 'ngx-activity-item',
 	templateUrl: './activity-item.component.html',
@@ -14,15 +14,15 @@ import { DailyActivity } from '@gauzy/models';
 })
 export class ActivityItemComponent implements OnInit, OnDestroy {
 	childOpen: boolean;
-	private _item: DailyActivity;
+	private _item: IDailyActivity;
 
 	@Output() loadChild: EventEmitter<any> = new EventEmitter();
 	@Input() allowChild = false;
 	@Input()
-	public get item(): DailyActivity {
+	public get item(): IDailyActivity {
 		return this._item;
 	}
-	public set item(value: DailyActivity) {
+	public set item(value: IDailyActivity) {
 		value.durationPercentage = parseFloat(
 			parseInt(value.durationPercentage + '', 10).toFixed(1)
 		);

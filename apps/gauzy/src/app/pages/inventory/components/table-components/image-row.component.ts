@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { ProductCategoryTranslated } from '@gauzy/models';
+import { IProductCategoryTranslated } from '@gauzy/models';
 
 @Component({
 	template: `
@@ -29,5 +29,5 @@ import { ProductCategoryTranslated } from '@gauzy/models';
 export class ImageRowComponent implements ViewCell {
 	@Input()
 	value: string | number;
-	rowData: ProductCategoryTranslated;
+	rowData: IProductCategoryTranslated;
 }

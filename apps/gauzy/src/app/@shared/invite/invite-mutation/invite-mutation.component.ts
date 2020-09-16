@@ -1,10 +1,10 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import {
 	InvitationTypeEnum,
-	Invite,
-	OrganizationProjects,
-	OrganizationContact,
-	OrganizationDepartment
+	IInvite,
+	IOrganizationProject,
+	IOrganizationContact,
+	IOrganizationDepartment
 } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,9 +36,9 @@ export class InviteMutationComponent extends TranslationBaseComponent
 	@ViewChild('emailInviteForm')
 	emailInviteForm: EmailInviteFormComponent;
 
-	organizationProjects: OrganizationProjects[];
-	organizationContact: OrganizationContact[];
-	organizationDepartments: OrganizationDepartment[];
+	organizationProjects: IOrganizationProject[];
+	organizationContact: IOrganizationContact[];
+	organizationDepartments: IOrganizationDepartment[];
 
 	constructor(
 		private dialogRef: NbDialogRef<InviteMutationComponent>,
@@ -97,7 +97,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		this.organizationDepartments = res.items;
 	}
 
-	closeDialog(savedInvites: Invite[] = []) {
+	closeDialog(savedInvites: IInvite[] = []) {
 		this.dialogRef.close(savedInvites);
 	}
 

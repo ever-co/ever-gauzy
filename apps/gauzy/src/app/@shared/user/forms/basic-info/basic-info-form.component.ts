@@ -7,7 +7,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum, Tag, ITenant, User } from '@gauzy/models';
+import { RolesEnum, ITag, ITenant, IUser } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
@@ -33,7 +33,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	@Input() public isCandidate: boolean;
 	@Input() public isSuperAdmin: boolean;
 	@Input() public createdById: string;
-	@Input() public selectedTags: Tag[];
+	@Input() public selectedTags: ITag[];
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -56,7 +56,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	hiredDate: any;
 	rejectDate: any;
 	source: any;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	items: any;
 	createEmployee: any;
 
@@ -184,7 +184,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 				.pipe(first())
 				.toPromise();
 
-			const user: User = {
+			const user: IUser = {
 				firstName: this.firstName.value,
 				lastName: this.lastName.value,
 				email: this.email.value,
@@ -224,7 +224,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		this.imageUrl.setValue('');
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 

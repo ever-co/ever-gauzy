@@ -2,8 +2,8 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	EquipmentSharing,
-	ApprovalPolicy,
+	IEquipmentSharing,
+	IApprovalPolicy,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -23,7 +23,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EquipmentSharingPolicyComponent } from './table-components/equipment-sharing-policy/equipment-sharing-policy.component';
 
 export interface SelectedEquipmentSharing {
-	data: EquipmentSharing;
+	data: IEquipmentSharing;
 	isSelected: false;
 }
 
@@ -35,15 +35,15 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
-	selectedEquipmentSharing: EquipmentSharing;
+	selectedEquipmentSharing: IEquipmentSharing;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
 	selectedEmployeeId: string;
 	ngDestroy$ = new Subject<void>();
-	approvalPolicies: ApprovalPolicy[] = [];
+	approvalPolicies: IApprovalPolicy[] = [];
 	selectedOrgId: string;
-	equipmentsData: EquipmentSharing[];
+	equipmentsData: IEquipmentSharing[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private _ngDestroy$ = new Subject<void>();
@@ -221,7 +221,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		}
 	}
 
-	async save(isCreate: boolean, selectedItem?: EquipmentSharing) {
+	async save(isCreate: boolean, selectedItem?: IEquipmentSharing) {
 		let dialog;
 		if (selectedItem) {
 			this.selectEquipmentSharing({
@@ -252,7 +252,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete(selectedItem?: EquipmentSharing) {
+	async delete(selectedItem?: IEquipmentSharing) {
 		if (selectedItem) {
 			this.selectEquipmentSharing({
 				isSelected: true,

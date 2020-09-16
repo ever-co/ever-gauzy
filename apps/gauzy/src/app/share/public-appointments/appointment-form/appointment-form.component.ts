@@ -3,7 +3,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { IEventType, Employee } from '@gauzy/models';
+import { IEventType, IEmployee } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
 
@@ -17,7 +17,7 @@ export class AppointmentFormComponent extends TranslationBaseComponent
 	selectedRange: { start: Date; end: Date };
 	selectedEventType: IEventType;
 	allowedDuration: Number;
-	employee: Employee;
+	employee: IEmployee;
 
 	constructor(
 		private route: ActivatedRoute,

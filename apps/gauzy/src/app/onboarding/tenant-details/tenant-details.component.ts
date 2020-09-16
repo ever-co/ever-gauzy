@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { OrganizationCreateInput } from '@gauzy/models';
+import { IOrganizationCreateInput } from '@gauzy/models';
 import { User } from '@sentry/browser';
 import { UsersService } from '../../@core/services/users.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
@@ -35,7 +35,7 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	async onboardUser(formData: OrganizationCreateInput) {
+	async onboardUser(formData: IOrganizationCreateInput) {
 		const tenant = await this.tenantService.create({ name: formData.name });
 		await this.organizationsService.create({ ...formData, tenant });
 		this.router.navigate(['/onboarding/complete']);

@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil, first } from 'rxjs/operators';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
-import { Employee, EmployeeAppointment } from '@gauzy/models';
+import { IEmployee, IEmployeeAppointment } from '@gauzy/models';
 import * as moment from 'moment';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { NbDialogService } from '@nebular/theme';
@@ -17,8 +17,8 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	loading: boolean = true;
-	employee: Employee;
-	appointment: EmployeeAppointment;
+	employee: IEmployee;
+	appointment: IEmployeeAppointment;
 	participants: string;
 	duration: string;
 	editLink: string;

@@ -6,7 +6,7 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
-import { OrganizationPermissionsEnum, TimeSlot } from '@gauzy/models';
+import { OrganizationPermissionsEnum, ITimeSlot } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
@@ -19,7 +19,7 @@ import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-sc
 	styleUrls: ['./screenshots-item.component.scss']
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
-	private _timeSlot: TimeSlot;
+	private _timeSlot: ITimeSlot;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 
 	@Input() selectionMode = false;
@@ -30,11 +30,11 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	@Output() toggle: EventEmitter<any> = new EventEmitter();
 
 	@Input()
-	public get timeSlot(): TimeSlot {
+	public get timeSlot(): ITimeSlot {
 		return this._timeSlot;
 	}
 	s;
-	public set timeSlot(timeSlot: TimeSlot) {
+	public set timeSlot(timeSlot: ITimeSlot) {
 		if (timeSlot) {
 			timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
 			timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();

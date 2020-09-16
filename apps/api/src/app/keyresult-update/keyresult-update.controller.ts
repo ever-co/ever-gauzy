@@ -16,7 +16,7 @@ import { CrudController } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { KeyResultUpdateService } from './keyresult-update.service';
-import { IKeyResultUpdates } from '@gauzy/models';
+import { IKeyResultUpdate } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { CommandBus } from '@nestjs/cqrs';
 import { KeyResultUpdateBulkDeleteCommand } from './commands';
@@ -25,7 +25,7 @@ import { KeyResultUpdateBulkDeleteCommand } from './commands';
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class KeyResultUpdateController extends CrudController<
-	IKeyResultUpdates
+	IKeyResultUpdate
 > {
 	constructor(
 		private readonly commandBus: CommandBus,
@@ -46,7 +46,7 @@ export class KeyResultUpdateController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/create')
-	async createKeyResult(@Body() entity: IKeyResultUpdates): Promise<any> {
+	async createKeyResult(@Body() entity: IKeyResultUpdate): Promise<any> {
 		return this.keyResultUpdateService.create(entity);
 	}
 
@@ -86,8 +86,8 @@ export class KeyResultUpdateController extends CrudController<
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: IKeyResultUpdates
-	): Promise<IKeyResultUpdates> {
+		@Body() entity: IKeyResultUpdate
+	): Promise<IKeyResultUpdate> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {

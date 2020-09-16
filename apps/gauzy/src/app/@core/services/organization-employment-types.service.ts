@@ -3,9 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import {
-	OrganizationEmploymentType,
-	OrganizationEmploymentTypeFindInput,
-	OrganizationEmploymentTypeCreateInput
+	IOrganizationEmploymentType,
+	IOrganizationEmploymentTypeFindInput,
+	IOrganizationEmploymentTypeCreateInput
 } from '@gauzy/models';
 
 @Injectable()
@@ -15,12 +15,12 @@ export class OrganizationEmploymentTypesService {
 
 	getAll(
 		relations?: string[],
-		findInput?: OrganizationEmploymentTypeFindInput
-	): Observable<{ items: OrganizationEmploymentType[]; total: number }> {
+		findInput?: IOrganizationEmploymentTypeFindInput
+	): Observable<{ items: IOrganizationEmploymentType[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http.get<{
-			items: OrganizationEmploymentType[];
+			items: IOrganizationEmploymentType[];
 			total: number;
 		}>(this.API_URL, {
 			params: { data }
@@ -28,9 +28,9 @@ export class OrganizationEmploymentTypesService {
 	}
 
 	addEmploymentType(
-		employmentType: OrganizationEmploymentTypeCreateInput
-	): Observable<OrganizationEmploymentTypeCreateInput> {
-		return this.http.post<OrganizationEmploymentTypeCreateInput>(
+		employmentType: IOrganizationEmploymentTypeCreateInput
+	): Observable<IOrganizationEmploymentTypeCreateInput> {
+		return this.http.post<IOrganizationEmploymentTypeCreateInput>(
 			this.API_URL,
 			employmentType
 		);

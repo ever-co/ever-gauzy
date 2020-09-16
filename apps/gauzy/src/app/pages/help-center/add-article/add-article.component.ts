@@ -1,4 +1,8 @@
-import { IHelpCenterArticle, Employee, IHelpCenterAuthor } from '@gauzy/models';
+import {
+	IHelpCenterArticle,
+	IEmployee,
+	IHelpCenterAuthor
+} from '@gauzy/models';
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -44,7 +48,7 @@ export class AddArticleComponent extends TranslationBaseComponent
 	public selectedPrivacy = false;
 	public selectedStatus = false;
 	public membersChanged = false;
-	employees: Employee[];
+	employees: IEmployee[];
 	authors: IHelpCenterAuthor[];
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { Candidate } from '@gauzy/models';
+import { ICandidate } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 @Component({
@@ -11,7 +11,7 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
-	selectedCandidate: Candidate;
+	selectedCandidate: ICandidate;
 
 	constructor(
 		private fb: FormBuilder,
@@ -38,7 +38,7 @@ export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _initializeForm(candidate: Candidate) {
+	private _initializeForm(candidate: ICandidate) {
 		this.form = this.fb.group({
 			appliedDate: [candidate.appliedDate],
 			hiredDate: [candidate.hiredDate],

@@ -13,9 +13,9 @@ import {
 	TaxTypesEnum,
 	ExpenseTypesEnum,
 	IOrganizationVendor,
-	Tag,
-	OrganizationContact,
-	OrganizationProjects,
+	ITag,
+	IOrganizationContact,
+	IOrganizationProject,
 	ExpenseStatusesEnum,
 	ContactType
 } from '@gauzy/models';
@@ -60,12 +60,12 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	expenseStatuses = Object.values(ExpenseStatusesEnum);
 	expenseCategories: IOrganizationExpenseCategory[];
 	vendors: IOrganizationVendor[];
-	organizationContact: OrganizationContact;
+	organizationContact: IOrganizationContact;
 	organizationContacts: {
 		name: string;
 		organizationContactId: string;
 	}[] = [];
-	project: OrganizationProjects;
+	project: IOrganizationProject;
 	projects: { name: string; projectId: string }[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
 	calculatedValue = '0';
@@ -75,7 +75,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	showWarning = false;
 	disable = true;
 	loading = false;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	selectedTags: any;
 	valueDate: AbstractControl;
 	amount: AbstractControl;
@@ -217,7 +217,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	addNewOrganizationContact = (
 		name: string
-	): Promise<OrganizationContact> => {
+	): Promise<IOrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -238,7 +238,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		}
 	};
 
-	addNewProject = (name: string): Promise<OrganizationProjects> => {
+	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
@@ -416,7 +416,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			});
 	}
 
-	selectedTagsHandler(currentSelection: Tag) {
+	selectedTagsHandler(currentSelection: ITag) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 

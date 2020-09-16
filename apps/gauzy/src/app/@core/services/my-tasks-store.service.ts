@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Task } from '@gauzy/models';
+import { ITask } from '@gauzy/models';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
@@ -8,15 +8,17 @@ import { TasksService } from './tasks.service';
 	providedIn: 'root'
 })
 export class MyTasksStoreService {
-	private _myTasks$: BehaviorSubject<Task[]> = new BehaviorSubject([]);
-	public myTasks$: Observable<Task[]> = this._myTasks$
+	private _myTasks$: BehaviorSubject<ITask[]> = new BehaviorSubject([]);
+	public myTasks$: Observable<ITask[]> = this._myTasks$
 		.asObservable()
 		.pipe(map(this._mapToViewModel));
 
-	private _selectedTask$: BehaviorSubject<Task> = new BehaviorSubject(null);
-	public selectedTask$: Observable<Task> = this._selectedTask$.asObservable();
+	private _selectedTask$: BehaviorSubject<ITask> = new BehaviorSubject(null);
+	public selectedTask$: Observable<
+		ITask
+	> = this._selectedTask$.asObservable();
 
-	get myTasks(): Task[] {
+	get myTasks(): ITask[] {
 		return this._myTasks$.getValue();
 	}
 
@@ -40,11 +42,11 @@ export class MyTasksStoreService {
 		}));
 	}
 
-	loadAllTasks(tasks: Task[]): void {
+	loadAllTasks(tasks: ITask[]): void {
 		this._myTasks$.next(tasks);
 	}
 
-	createTask(task: Task): void {
+	createTask(task: ITask): void {
 		this._taskService
 			.createTask(task)
 			.pipe(
@@ -56,7 +58,7 @@ export class MyTasksStoreService {
 			.subscribe();
 	}
 
-	editTask(task: Task): void {
+	editTask(task: ITask): void {
 		this._taskService
 			.editTask(task)
 			.pipe(
@@ -84,7 +86,7 @@ export class MyTasksStoreService {
 			.subscribe();
 	}
 
-	selectTask(task: Task) {
+	selectTask(task: ITask) {
 		this._selectedTask$.next(task);
 	}
 }

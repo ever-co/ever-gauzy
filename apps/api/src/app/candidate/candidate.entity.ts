@@ -11,7 +11,7 @@ import {
 	ICandidateDocument,
 	CandidateStatus,
 	ICandidateSkill,
-	IOrganizationPositions,
+	IOrganizationPosition,
 	IOrganizationEmploymentType,
 	IOrganizationDepartment,
 	IContact,
@@ -132,7 +132,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
 	@JoinColumn()
-	organizationPosition?: IOrganizationPositions;
+	organizationPosition?: IOrganizationPosition;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.organizationPosition)

@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { Product, ProductFindInput, IProductCreateInput } from '@gauzy/models';
+import {
+	IProduct,
+	IProductFindInput,
+	IProductCreateInput
+} from '@gauzy/models';
 
 @Injectable()
 export class ProductService {
@@ -11,12 +15,12 @@ export class ProductService {
 
 	getAll(
 		relations?: string[],
-		findInput?: ProductFindInput,
+		findInput?: IProductFindInput,
 		languageCode?: string
-	): Promise<{ items: Product[] }> {
+	): Promise<{ items: IProduct[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: Product[] }>(
+			.get<{ items: IProduct[] }>(
 				`${this.PRODUCTS_URL}/local/${languageCode}`,
 				{
 					params: { data }
@@ -30,23 +34,23 @@ export class ProductService {
 		const data = JSON.stringify({ relations });
 
 		return this.http
-			.get<Product>(`${this.PRODUCTS_URL}/${id}`, {
+			.get<IProduct>(`${this.PRODUCTS_URL}/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	create(product: IProductCreateInput): Promise<Product> {
+	create(product: IProductCreateInput): Promise<IProduct> {
 		return this.http
-			.post<Product>(`${this.PRODUCTS_URL}/create`, product)
+			.post<IProduct>(`${this.PRODUCTS_URL}/create`, product)
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(product: Product): Promise<Product> {
+	update(product: IProduct): Promise<IProduct> {
 		return this.http
-			.put<Product>(`${this.PRODUCTS_URL}/${product.id}`, product)
+			.put<IProduct>(`${this.PRODUCTS_URL}/${product.id}`, product)
 			.pipe(first())
 			.toPromise();
 	}

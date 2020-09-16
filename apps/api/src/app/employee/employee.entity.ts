@@ -6,7 +6,7 @@ import {
 	IContact,
 	ISkill,
 	IUser,
-	IOrganizationPositions,
+	IOrganizationPosition,
 	IOrganizationTeam,
 	ITimeLog,
 	IOrganizationDepartment,
@@ -87,7 +87,7 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
 	@JoinColumn()
-	organizationPosition?: IOrganizationPositions;
+	organizationPosition?: IOrganizationPosition;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.organizationPosition)

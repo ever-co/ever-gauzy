@@ -57,6 +57,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
+	regionCode?: string;
 	requireReason?: boolean;
 	requireDescription?: boolean;
 	requireProject?: boolean;

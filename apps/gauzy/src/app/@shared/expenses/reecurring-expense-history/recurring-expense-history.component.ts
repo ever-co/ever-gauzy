@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { RecurringExpenseModel } from '@gauzy/models';
+import { IRecurringExpenseModel } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { monthNames } from '../../../@core/utils/date';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -12,7 +12,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 export class RecurringExpenseHistoryComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
-	recordsData: RecurringExpenseModel[] = [];
+	recordsData: IRecurringExpenseModel[] = [];
 
 	@Output()
 	closeHistory = new EventEmitter<void>();

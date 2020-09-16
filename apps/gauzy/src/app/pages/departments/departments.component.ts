@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import {
-	Employee,
-	OrganizationDepartment,
-	OrganizationDepartmentCreateInput,
-	Tag,
+	IEmployee,
+	IOrganizationDepartment,
+	IOrganizationDepartmentCreateInput,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
@@ -30,10 +30,10 @@ export class DepartmentsComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	organizationId: string;
 	showAddCard: boolean;
-	departments: OrganizationDepartment[];
-	employees: Employee[] = [];
-	departmentToEdit: OrganizationDepartment;
-	tags: Tag[];
+	departments: IOrganizationDepartment[];
+	employees: IEmployee[] = [];
+	departmentToEdit: IOrganizationDepartment;
+	tags: ITag[];
 	isGridEdit: boolean;
 	disableButton: boolean;
 	selectedDepartment: any;
@@ -160,7 +160,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editDepartment(department: OrganizationDepartment) {
+	async editDepartment(department: IOrganizationDepartment) {
 		this.departmentToEdit = department
 			? department
 			: this.selectedDepartment;
@@ -169,7 +169,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 	}
 
 	private async addOrEditDepartment(
-		input: OrganizationDepartmentCreateInput
+		input: IOrganizationDepartmentCreateInput
 	) {
 		if (input.name) {
 			this.departmentToEdit

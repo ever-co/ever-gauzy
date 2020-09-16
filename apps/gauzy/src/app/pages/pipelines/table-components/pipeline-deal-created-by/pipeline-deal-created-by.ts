@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { Deal } from '@gauzy/models';
+import { IDeal } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-pipeline-deal-created-by',
@@ -12,5 +12,5 @@ export class PipelineDealCreatedByComponent implements ViewCell {
 	value: string | number;
 
 	@Input()
-	rowData: Deal;
+	rowData: IDeal;
 }

@@ -8,13 +8,13 @@ import {
 	OnDestroy
 } from '@angular/core';
 import {
-	TimeLogFilters,
+	ITimeLogFilters,
 	TimeLogType,
 	TimeLogSourceEnum,
-	Organization,
+	IOrganization,
 	PermissionsEnum,
 	OrganizationPermissionsEnum,
-	Employee
+	IEmployee
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
@@ -37,7 +37,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 
 	@Input() dateRange: 'day' | 'week' | 'month' = 'day';
-	private _filters: TimeLogFilters = {
+	private _filters: ITimeLogFilters = {
 		employeeIds: [],
 		source: [],
 		logType: [],
@@ -46,17 +46,17 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	futureDateAllowed: boolean;
 
 	@Input()
-	public get filters(): TimeLogFilters {
+	public get filters(): ITimeLogFilters {
 		return this._filters;
 	}
-	public set filters(value: TimeLogFilters) {
+	public set filters(value: ITimeLogFilters) {
 		this._filters = value;
 		this.activityLevel = {
 			start: value.activityLevel.start || 0,
 			end: value.activityLevel.end || 100
 		};
 	}
-	@Output() filtersChange: EventEmitter<TimeLogFilters> = new EventEmitter();
+	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
 	@Input() hasProjectFilter = true;
 	@Input() hasDateRangeFilter = true;
@@ -76,8 +76,8 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		step: 5
 	};
 	private date: Date;
-	organization: Organization;
-	employees: Employee[];
+	organization: IOrganization;
+	employees: IEmployee[];
 	public get selectedDate(): Date {
 		return this.date;
 	}
@@ -139,7 +139,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
 					this.loadEmployees();

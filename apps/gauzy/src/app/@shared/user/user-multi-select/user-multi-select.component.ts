@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { User } from '@gauzy/models';
+import { IUser } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-user-multi-select',
@@ -7,7 +7,7 @@ import { User } from '@gauzy/models';
 })
 export class UserSelectComponent {
 	@Input() selectedUserIds: string[];
-	@Input() allUsers: User[];
+	@Input() allUsers: IUser[];
 
 	@Output() selectedChange = new EventEmitter();
 

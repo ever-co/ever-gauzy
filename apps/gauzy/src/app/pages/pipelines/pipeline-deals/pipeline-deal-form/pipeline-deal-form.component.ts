@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Pipeline, Contact } from '@gauzy/models';
+import { IPipeline, IContact } from '@gauzy/models';
 import { PipelinesService } from '../../../../@core/services/pipelines.service';
 import { DealsService } from '../../../../@core/services/deals.service';
 import { AppStore, Store } from '../../../../@core/services/store.service';
@@ -16,9 +16,9 @@ import { OrganizationContactService } from 'apps/gauzy/src/app/@core/services/or
 })
 export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	form: FormGroup;
-	pipeline: Pipeline;
-	clients: Contact[];
-	selectedClient: Contact;
+	pipeline: IPipeline;
+	clients: IContact[];
+	selectedClient: IContact;
 	probabilities = [0, 1, 2, 3, 4, 5];
 	selectedProbability: number;
 	mode: 'CREATE' | 'EDIT' = 'CREATE';

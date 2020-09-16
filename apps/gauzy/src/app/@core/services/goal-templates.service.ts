@@ -2,15 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbToastrService } from '@nebular/theme';
 import {
-	GoalTemplate,
-	KeyResultTemplate,
-	GoalKPITemplate
+	IGoalTemplate,
+	IKeyResultTemplate,
+	IGoalKPITemplate
 } from '@gauzy/models';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
 interface IGoalTemplateResponse {
-	items: GoalTemplate[];
+	items: IGoalTemplate[];
 	count: number;
 }
 
@@ -27,16 +27,16 @@ export class GoalTemplatesService {
 		private toastrService: NbToastrService
 	) {}
 
-	createGoalTemplate(goalTemplate): Promise<GoalTemplate> {
+	createGoalTemplate(goalTemplate): Promise<IGoalTemplate> {
 		return this._http
-			.post<GoalTemplate>(`${this.GOAL_URL}/create`, goalTemplate)
+			.post<IGoalTemplate>(`${this.GOAL_URL}/create`, goalTemplate)
 			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
 
-	createKeyResultTemplate(keyResultTemplate): Promise<KeyResultTemplate> {
+	createKeyResultTemplate(keyResultTemplate): Promise<IKeyResultTemplate> {
 		return this._http
-			.post<KeyResultTemplate>(
+			.post<IKeyResultTemplate>(
 				`${this.KEYRESULT_URL}/create`,
 				keyResultTemplate
 			)
@@ -44,9 +44,9 @@ export class GoalTemplatesService {
 			.toPromise();
 	}
 
-	createGoalKpiTemplate(goalKpiTemplate): Promise<GoalKPITemplate> {
+	createGoalKpiTemplate(goalKpiTemplate): Promise<IGoalKPITemplate> {
 		return this._http
-			.post<GoalKPITemplate>(
+			.post<IGoalKPITemplate>(
 				`${this.GOAL_KPI_URL}/create`,
 				goalKpiTemplate
 			)

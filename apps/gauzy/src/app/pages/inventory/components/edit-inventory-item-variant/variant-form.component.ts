@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	CurrenciesEnum,
 	BillingInvoicingPolicyEnum,
-	ProductVariant
+	IProductVariant
 } from '@gauzy/models';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
@@ -16,12 +16,12 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
 
-export interface OptionCreateInput {
+export interface IOptionCreateInput {
 	name: string;
 	code: string;
 }
 
-export interface VariantCreateInput {
+export interface IVariantCreateInput {
 	options: string[];
 }
 
@@ -32,7 +32,7 @@ export interface VariantCreateInput {
 })
 export class InventoryVariantFormComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	itemVariant: ProductVariant;
+	itemVariant: IProductVariant;
 	hoverState: boolean;
 	currencies = Object.values(CurrenciesEnum);
 	billingInvoicingPolicies = Object.values(BillingInvoicingPolicyEnum);

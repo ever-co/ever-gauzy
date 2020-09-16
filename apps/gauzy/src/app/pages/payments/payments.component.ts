@@ -7,13 +7,13 @@ import { Store } from '../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
-	Payment,
+	IPayment,
 	ComponentLayoutStyleEnum,
-	Invoice,
-	Organization,
+	IInvoice,
+	IOrganization,
 	OrganizationSelectInput,
-	OrganizationContact,
-	OrganizationProjects
+	IOrganizationContact,
+	IOrganizationProject
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -56,18 +56,18 @@ export class PaymentsComponent extends TranslationBaseComponent
 
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	selectedPayment: Payment;
-	payments: Payment[];
-	paymentsData: Payment[];
+	selectedPayment: IPayment;
+	payments: IPayment[];
+	paymentsData: IPayment[];
 	private _ngDestroy$ = new Subject<void>();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	invoices: Invoice[];
-	organization: Organization;
+	invoices: IInvoice[];
+	organization: IOrganization;
 	disableButton = true;
 	currency: string;
-	organizationContacts: OrganizationContact[];
-	projects: OrganizationProjects[];
+	organizationContacts: IOrganizationContact[];
+	projects: IOrganizationProject[];
 
 	ngOnInit() {
 		this.loadSmartTable();

@@ -4,10 +4,10 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import {
 	IGetTimeLogInput,
-	Organization,
-	TimeLog,
-	OrganizationProjects,
-	TimeLogFilters,
+	IOrganization,
+	ITimeLog,
+	IOrganizationProject,
+	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
@@ -21,7 +21,7 @@ import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-
 import { NgxPermissionsService } from 'ngx-permissions';
 
 interface WeeklyDayData {
-	project?: OrganizationProjects;
+	project?: IOrganizationProject;
 	dates: any;
 }
 
@@ -33,9 +33,9 @@ interface WeeklyDayData {
 export class WeeklyComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	today: Date = new Date();
-	logRequest: TimeLogFilters = {};
+	logRequest: ITimeLogFilters = {};
 	updateLogs$: Subject<any> = new Subject();
-	organization: Organization;
+	organization: IOrganization;
 
 	weekData: WeeklyDayData[] = [];
 	weekDayList: string[] = [];
@@ -71,7 +71,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 			});
 
@@ -105,7 +105,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.weekDayList = Object.keys(range);
 	}
 
-	filtersChange($event: TimeLogFilters) {
+	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.updateWeekDayList();
 		this.updateLogs$.next();
@@ -124,15 +124,15 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.loading = true;
 		this.timesheetService
 			.getTimeLogs(request)
-			.then((logs: TimeLog[]) => {
+			.then((logs: ITimeLog[]) => {
 				this.weekData = _.chain(logs)
 					.groupBy('projectId')
-					.map((innerLogs: TimeLog[], _projectId) => {
+					.map((innerLogs: ITimeLog[], _projectId) => {
 						const byDate = _.chain(innerLogs)
 							.groupBy((log) =>
 								moment(log.startedAt).format('YYYY-MM-DD')
 							)
-							.mapObject((res: TimeLog[]) => {
+							.mapObject((res: ITimeLog[]) => {
 								const sum = res.reduce(
 									(iteratee: any, log: any) => {
 										return iteratee + log.duration;
@@ -156,7 +156,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			.finally(() => (this.loading = false));
 	}
 
-	openAddEdit(timeLog?: TimeLog) {
+	openAddEdit(timeLog?: ITimeLog) {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
 			.onClose.pipe(untilDestroyed(this))
@@ -167,7 +167,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	openAddByDateProject(date, project: OrganizationProjects) {
+	openAddByDateProject(date, project: IOrganizationProject) {
 		const minutes = moment().minutes();
 		const stoppedAt = new Date(
 			moment(date).format('YYYY-MM-DD') +

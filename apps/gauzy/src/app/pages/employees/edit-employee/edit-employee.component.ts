@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-	Employee,
-	EmployeeRecurringExpense,
-	Organization,
+	IEmployee,
+	IEmployeeRecurringExpense,
+	IOrganization,
 	PermissionsEnum
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,15 +25,15 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 export class EditEmployeeComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	selectedEmployee: Employee;
+	selectedEmployee: IEmployee;
 	selectedDate: Date;
 	selectedEmployeeFromHeader: SelectedEmployee;
-	selectedEmployeeRecurringExpense: EmployeeRecurringExpense[];
+	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[];
 	selectedRowIndexToShow: number;
 	employeeName = 'Employee';
 	hasEditPermission = false;
 	fetchedHistories: Object = {};
-	selectedOrganization: Organization;
+	selectedOrganization: IOrganization;
 
 	constructor(
 		private route: ActivatedRoute,

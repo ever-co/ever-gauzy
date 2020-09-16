@@ -10,17 +10,17 @@ import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
-	Employee,
-	KeyResult,
+	IEmployee,
+	IKeyResult,
 	KeyResultTypeEnum,
 	KeyResultDeadlineEnum,
 	KeyResultWeightEnum,
 	GoalLevelEnum,
-	OrganizationTeam,
+	IOrganizationTeam,
 	RolesEnum,
-	Goal,
-	KPI,
-	GoalGeneralSetting,
+	IGoal,
+	IKPI,
+	IGoalGeneralSetting,
 	CurrenciesEnum,
 	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
@@ -38,17 +38,17 @@ import { endOfTomorrow } from 'date-fns';
 	styleUrls: ['./edit-keyresults.component.scss']
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
-	employees: Employee[];
+	employees: IEmployee[];
 	keyResultsForm: FormGroup;
-	data: KeyResult;
+	data: IKeyResult;
 	showAllEmployees = false;
-	settings: GoalGeneralSetting;
+	settings: IGoalGeneralSetting;
 	orgId: string;
 	orgName: string;
 	currenciesEnum = CurrenciesEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	helperText = '';
-	teams: OrganizationTeam[] = [];
+	teams: IOrganizationTeam[] = [];
 	hideOrg = false;
 	hideTeam = false;
 	hideEmployee = false;
@@ -58,7 +58,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	goalDeadline: string;
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
 	minDate = endOfTomorrow();
-	KPIs: Array<KPI>;
+	KPIs: Array<IKPI>;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
@@ -220,7 +220,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		}
 		// Create objective from keyResult
 		if (!!this.keyResultsForm.value.assignAsObjective) {
-			const objectiveData: Goal = {
+			const objectiveData: IGoal = {
 				name: this.keyResultsForm.value.name,
 				description: this.keyResultsForm.value.description,
 				lead: this.keyResultsForm.value.lead,

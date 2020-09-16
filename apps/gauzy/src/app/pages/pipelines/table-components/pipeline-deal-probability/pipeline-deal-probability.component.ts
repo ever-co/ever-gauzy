@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { Deal } from '@gauzy/models';
+import { IDeal } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-pipeline-deal-probability',
@@ -11,11 +11,11 @@ export class PipelineDealProbabilityComponent implements ViewCell, OnInit {
 	value: string | number;
 
 	@Input()
-    rowData: Deal;
+	rowData: IDeal;
 
-    probability: number;
+	probability: number;
 
-    ngOnInit() {
-        this.probability = this.rowData.probability;
-    }
+	ngOnInit() {
+		this.probability = this.rowData.probability;
+	}
 }

@@ -1,6 +1,6 @@
 import { DefaultEditor } from 'ng2-smart-table';
 import { OnInit, OnDestroy, Component } from '@angular/core';
-import { Expense } from '@gauzy/models';
+import { IExpense } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
@@ -23,8 +23,8 @@ import { ExpensesService } from '../../../@core/services/expenses.service';
 })
 export class InvoiceExpensesSelectorComponent extends DefaultEditor
 	implements OnInit, OnDestroy {
-	expense: Expense;
-	expenses: Expense[];
+	expense: IExpense;
+	expenses: IExpense[];
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(

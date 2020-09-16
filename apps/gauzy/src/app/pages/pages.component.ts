@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Organization, PermissionsEnum } from '@gauzy/models';
+import { IOrganization, PermissionsEnum } from '@gauzy/models';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -35,7 +35,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	isAdmin: boolean;
 	isEmployee: boolean;
-	_selectedOrganization: Organization;
+	_selectedOrganization: IOrganization;
 
 	MENU_ITEMS: GaMenuItem[] = [
 		{

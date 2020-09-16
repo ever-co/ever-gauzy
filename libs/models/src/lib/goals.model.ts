@@ -42,12 +42,12 @@ export interface IKeyResult extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: string;
 	task?: ITask;
 	taskId?: string;
-	updates?: Array<IKeyResultUpdates>;
+	updates?: Array<IKeyResultUpdate>;
 	kpi?: IKPI;
 	kpiId?: string;
 }
 
-export interface IKeyResultUpdates
+export interface IKeyResultUpdate
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	keyResultId?: string;

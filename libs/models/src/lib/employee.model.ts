@@ -3,7 +3,7 @@ import {
 	ITag,
 	ISkill,
 	IOrganizationDepartment,
-	IOrganizationPositions
+	IOrganizationPosition
 } from '..';
 import { IOrganization, IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
@@ -29,7 +29,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	organizationDepartments?: IOrganizationDepartment[];
-	organizationPosition?: IOrganizationPositions;
+	organizationPosition?: IOrganizationPosition;
 	tags: ITag[];
 	skills: ISkill[];
 	offerDate?: Date;
@@ -53,6 +53,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 }
 
 export interface IEmployeeFindInput {
+	id?: string;
 	organization?: IOrganizationFindInput;
 	user?: IUserFindInput;
 	valueDate?: Date;
@@ -67,7 +68,7 @@ export interface IEmployeeUpdateInput {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
-	organizationPosition?: IOrganizationPositions;
+	organizationPosition?: IOrganizationPosition;
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;

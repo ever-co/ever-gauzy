@@ -88,7 +88,7 @@ export interface IProductVariant
 	billingInvoicingPolicy: string;
 	internalReference: string;
 	options: IProductOption[];
-	settings: IProductVariantSettings;
+	settings: IProductVariantSetting;
 	product?: IProduct;
 }
 
@@ -110,7 +110,7 @@ export interface IProductVariantPrice
 	productVariant: IProductVariant;
 }
 
-export interface IProductVariantSettings
+export interface IProductVariantSetting
 	extends IBasePerTenantAndOrganizationEntityModel {
 	isSubscription: boolean;
 	isPurchaseAutomatically: boolean;

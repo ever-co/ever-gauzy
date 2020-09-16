@@ -1,10 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
 import {
-	Task,
-	OrganizationProjects,
-	Employee,
-	OrganizationTeam,
-	Tag
+	ITask,
+	IOrganizationProject,
+	IEmployee,
+	IOrganizationTeam,
+	ITag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
@@ -40,19 +40,19 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
-	projects: OrganizationProjects[];
+	projects: IOrganizationProject[];
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
-	employees: Employee[] = [];
-	teams: OrganizationTeam[] = [];
+	employees: IEmployee[] = [];
+	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
 	selectedTeams: string[];
-	selectedTask: Task;
+	selectedTask: ITask;
 	organizationId: string;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	participants = 'employees';
 
 	@Input() createTask = false;
-	@Input() task: Partial<Task> = {};
+	@Input() task: Partial<ITask> = {};
 
 	constructor(
 		public dialogRef: NbDialogRef<AddTaskDialogComponent>,
@@ -102,7 +102,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 		estimate,
 		dueDate,
 		tags
-	}: Task) {
+	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedMembers = (members || []).map((member) => member.id);
 		this.selectedTeams = (teams || []).map((team) => team.id);
@@ -132,7 +132,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 		this.tags = this.form.get('tags').value || [];
 	}
 
-	addNewProject = (name: string): Promise<OrganizationProjects> => {
+	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
@@ -200,7 +200,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 

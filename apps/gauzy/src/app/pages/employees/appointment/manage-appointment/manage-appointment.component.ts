@@ -18,9 +18,9 @@ import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
-	Employee,
-	EmployeeAppointment,
-	IAvailabilitySlots
+	IEmployee,
+	IEmployeeAppointment,
+	IAvailabilitySlot
 } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -43,16 +43,16 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
-	employees: Employee[];
-	@Input() employee: Employee;
-	@Input() employeeAppointment: EmployeeAppointment;
+	employees: IEmployee[];
+	@Input() employee: IEmployee;
+	@Input() employeeAppointment: IEmployeeAppointment;
 	@Input() disabled: boolean;
 	@Input() appointmentID: string;
 	@Input() allowedDuration: number;
 	@Input() hidePrivateFields: boolean = false;
 	@Input() timezone: string;
 
-	@Output() save = new EventEmitter<EmployeeAppointment>();
+	@Output() save = new EventEmitter<IEmployeeAppointment>();
 	@Output() cancel = new EventEmitter<string>();
 
 	timezoneOffset: string;
@@ -295,8 +295,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		);
 
 		this.employees.map((e) => {
-			const dateSpecificSlots: IAvailabilitySlots[] = [];
-			const recurringSlots: IAvailabilitySlots[] = [];
+			const dateSpecificSlots: IAvailabilitySlot[] = [];
+			const recurringSlots: IAvailabilitySlot[] = [];
 
 			slots.forEach((s) => {
 				if (s.employeeId === e.id && s.type === 'Recurring') {
@@ -407,9 +407,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		const added = ev.find((o) => !this.selectedEmployeeIds.includes(o));
 
 		if (added) {
-			const slots: IAvailabilitySlots[] = this.employeeAvailability[
-				added
-			];
+			const slots: IAvailabilitySlot[] = this.employeeAvailability[added];
 			const slotInSelectedRange = slots.find(
 				(s) =>
 					moment(startDateTime).isBetween(

@@ -6,15 +6,15 @@ import {
 	NavigationEnd
 } from '@angular/router';
 import {
-	Role,
+	IRole,
 	InvitationTypeEnum,
 	PermissionsEnum,
-	UserOrganization,
-	Organization,
-	UserOrganizationCreateInput,
+	IUserOrganization,
+	IOrganization,
+	IUserOrganizationCreateInput,
 	RolesEnum,
-	User,
-	Tag,
+	IUser,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -40,7 +40,7 @@ interface UserViewModel {
 	id: string;
 	roleName?: string;
 	role?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
 @Component({
@@ -54,15 +54,15 @@ export class UsersComponent extends TranslationBaseComponent
 	sourceSmartTable = new LocalDataSource();
 	selectedUser: UserViewModel;
 	selectedOrganizationId: string;
-	UserRole: Role;
+	UserRole: IRole;
 	userToRemoveId: string;
-	userToRemove: UserOrganization;
+	userToRemove: IUserOrganization;
 
 	private _ngDestroy$ = new Subject<void>();
 
 	userName = 'User';
 
-	organization: Organization;
+	organization: IOrganization;
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
@@ -70,14 +70,14 @@ export class UsersComponent extends TranslationBaseComponent
 	hasSuperAdminPermission = false;
 	organizationInvitesAllowed = false;
 	showAddCard: boolean;
-	userToEdit: UserOrganization;
-	users: User[] = [];
-	tags: Tag[];
+	userToEdit: IUserOrganization;
+	users: IUser[] = [];
+	tags: ITag[];
 	selectedTags: any;
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	userData: User[];
+	userData: IUser[];
 	@ViewChild('usersTable') usersTable;
 
 	constructor(
@@ -199,7 +199,7 @@ export class UsersComponent extends TranslationBaseComponent
 		}
 	}
 
-	async addOrEditUser(user: UserOrganizationCreateInput) {
+	async addOrEditUser(user: IUserOrganizationCreateInput) {
 		if (user.isActive) {
 			await this.userOrganizationsService
 				.create(user)
@@ -235,7 +235,7 @@ export class UsersComponent extends TranslationBaseComponent
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 
-	edit(selectedItem?: User) {
+	edit(selectedItem?: IUser) {
 		if (selectedItem) {
 			this.selectUserTmp({
 				isSelected: true,
@@ -249,7 +249,7 @@ export class UsersComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/users/invites/']);
 	}
 
-	async delete(selectedItem?: User) {
+	async delete(selectedItem?: IUser) {
 		if (selectedItem) {
 			this.selectUserTmp({
 				isSelected: true,

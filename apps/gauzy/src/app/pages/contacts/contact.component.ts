@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import {
-	Employee,
-	OrganizationContact,
-	OrganizationContactCreateInput,
-	OrganizationProjects,
+	IEmployee,
+	IOrganizationContact,
+	IOrganizationContactCreateInput,
+	IOrganizationProject,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import {
@@ -40,11 +40,11 @@ export class ContactComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	organizationId: string;
 	showAddCard: boolean;
-	organizationContact: OrganizationContact[] = [];
-	projectsWithoutOrganizationContact: OrganizationProjects[];
+	organizationContact: IOrganizationContact[] = [];
+	projectsWithoutOrganizationContact: IOrganizationProject[];
 	selectProjects: string[] = [];
-	employees: Employee[] = [];
-	organizationContactToEdit: OrganizationContact;
+	employees: IEmployee[] = [];
+	organizationContactToEdit: IOrganizationContact;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	settingsSmartTable: object;
@@ -218,7 +218,7 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 
 	private async addOrEditOrganizationContact(
-		organizationContact: OrganizationContactCreateInput
+		organizationContact: IOrganizationContactCreateInput
 	) {
 		const contact = {
 			country: organizationContact.country,
@@ -281,7 +281,7 @@ export class ContactComponent extends TranslationBaseComponent
 		);
 		if (res) {
 			const result = [];
-			res.items.forEach(async (contact: OrganizationContact) => {
+			res.items.forEach(async (contact: IOrganizationContact) => {
 				result.push({
 					...contact,
 					contact_name: contact.name,
@@ -337,7 +337,7 @@ export class ContactComponent extends TranslationBaseComponent
 		this.showAddCard = !this.showAddCard;
 	}
 
-	async editOrganizationContact(organizationContact: OrganizationContact) {
+	async editOrganizationContact(organizationContact: IOrganizationContact) {
 		await this.loadProjectsWithoutOrganizationContacts();
 		this.organizationContactToEdit = organizationContact
 			? organizationContact
@@ -352,7 +352,7 @@ export class ContactComponent extends TranslationBaseComponent
 		this.showAddCard = true;
 	}
 
-	async invite(selectedOrganizationContact?: OrganizationContact) {
+	async invite(selectedOrganizationContact?: IOrganizationContact) {
 		try {
 			const dialog = this.dialogService.open(InviteContactComponent, {
 				context: {

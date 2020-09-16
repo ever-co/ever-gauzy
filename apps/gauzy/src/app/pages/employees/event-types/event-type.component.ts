@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { IEventType, Tag, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IEventType, ITag, ComponentLayoutStyleEnum } from '@gauzy/models';
 import {
 	ActivatedRoute,
 	Router,
@@ -29,7 +29,7 @@ export interface EventTypeViewModel {
 	isActive: boolean;
 	duration: Number;
 	durationUnit: string;
-	tags: Tag[];
+	tags: ITag[];
 }
 @Component({
 	templateUrl: './event-type.component.html',
@@ -46,7 +46,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 	selectedEmployeeId: string;
 	employeeName: string;
 	_selectedOrganizationId: string;
-	tags?: Tag[];
+	tags?: ITag[];
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
