@@ -1,7 +1,6 @@
 import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
 import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Organization } from '../organization/organization.entity';
 import {
 	IsBoolean,
 	IsDate,
