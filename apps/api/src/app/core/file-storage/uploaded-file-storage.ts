@@ -1,13 +1,12 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { FileStorage } from './file-storage';
+import { ProviderEnum, UploadedFile } from './models';
 
 export const UploadedFileStorage = createParamDecorator(
-	(data: unknown, ctx: ExecutionContext) => {
+	(data: ProviderEnum, ctx: ExecutionContext): UploadedFile => {
 		const request = ctx.switchToHttp().getRequest();
-		const file = request.file;
-		if (!request.file.filename) {
-			file.filename = file.originalname;
-		}
+		const provider = new FileStorage().getProvider(data);
 
-		return file;
+		return provider.mapUploadedFile(request.file);
 	}
 );

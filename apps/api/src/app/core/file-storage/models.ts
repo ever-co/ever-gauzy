@@ -17,19 +17,14 @@ export enum ProviderEnum {
 	S3 = 's3'
 }
 
-export interface FileSystemProviderStatic {
-	instance?: FileSystemProvider;
-	name?: string;
-	url?(path: string): string;
-	path?(path: string): string;
-}
-
-export interface FileSystemProvider {
-	name: string;
-	tenantId?: string;
-	config: FileSystem;
-	url(path: string): string;
-	path(path: string): string;
-	getInstance(): FileSystemProvider;
-	handler(options: FileStorageOption): StorageEngine;
+export interface UploadedFile {
+	fieldname: string;
+	key: string; // path of the file in storage
+	originalname: string; // orignal file name
+	size: number; // files in bytes
+	encoding?: string;
+	mimetype?: string;
+	filename: string;
+	url: string; // file public url
+	path: string; // Full path of the file
 }
