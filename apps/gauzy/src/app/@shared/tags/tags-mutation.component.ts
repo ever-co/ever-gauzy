@@ -36,6 +36,7 @@ export class TagsMutationComponent extends TranslationBaseComponent
 	}
 
 	async addTag() {
+		const { tenantId } = this.store.selectedOrganization;
 		if (this.isTenantLevelChecked) {
 			const tagWithTenantLevel = await this.tagsService.insertTag(
 				Object.assign({
@@ -43,7 +44,7 @@ export class TagsMutationComponent extends TranslationBaseComponent
 					description: this.form.value.description,
 					color: this.color,
 					organization: null,
-					tenant: this.store.selectedOrganization.tenantId
+					tenantId: tenantId
 				})
 			);
 			this.closeDialog(tagWithTenantLevel);
@@ -53,14 +54,16 @@ export class TagsMutationComponent extends TranslationBaseComponent
 					name: this.form.value.name,
 					description: this.form.value.description,
 					color: this.color,
-					organization: this.store.selectedOrganization,
-					tenant: null
+					organizationId: this.store.selectedOrganization.id,
+					tenantId: tenantId
 				})
 			);
 			this.closeDialog(tagWithoutTenantLevel);
 		}
 	}
+
 	async editTag() {
+		const { tenantId } = this.store.selectedOrganization;
 		if (this.isTenantLevelChecked) {
 			const tagWithTenantLevel = await this.tagsService.update(
 				this.tag.id,
@@ -69,7 +72,7 @@ export class TagsMutationComponent extends TranslationBaseComponent
 					description: this.form.value.description,
 					color: this.color,
 					organization: null,
-					tenant: this.store.selectedOrganization.tenantId
+					tenantId: tenantId
 				})
 			);
 			this.closeDialog(tagWithTenantLevel);
@@ -80,8 +83,8 @@ export class TagsMutationComponent extends TranslationBaseComponent
 					name: this.form.value.name,
 					description: this.form.value.description,
 					color: this.color,
-					organization: this.store.selectedOrganization,
-					tenant: null
+					organizationId: this.store.selectedOrganization.id,
+					tenantId: tenantId
 				})
 			);
 			this.closeDialog(tagWithoutTenantLevel);

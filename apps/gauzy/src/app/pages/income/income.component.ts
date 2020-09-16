@@ -406,7 +406,7 @@ export class IncomeComponent extends TranslationBaseComponent
 
 		try {
 			const { items } = await this.incomeService.getAll(
-				['employee', 'employee.user', 'tags'],
+				['employee', 'employee.user', 'tags', 'organization'],
 				findObj,
 				this.selectedDate
 			);
