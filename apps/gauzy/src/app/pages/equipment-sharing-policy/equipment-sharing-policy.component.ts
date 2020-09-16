@@ -2,9 +2,9 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	EquipmentSharing,
+	IEquipmentSharing,
 	ComponentLayoutStyleEnum,
-	EquipmentSharingPolicy
+	IEquipmentSharingPolicy
 } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
@@ -26,12 +26,12 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
-	selectedEquipmentSharingPolicy: EquipmentSharingPolicy;
+	selectedEquipmentSharingPolicy: IEquipmentSharingPolicy;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
 	ngDestroy$ = new Subject<void>();
-	equipmentSharingPolicyData: EquipmentSharingPolicy[];
+	equipmentSharingPolicyData: IEquipmentSharingPolicy[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private selectedOrganizationId: string;
@@ -105,7 +105,7 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 		};
 	}
 
-	async save(selectedItem?: EquipmentSharingPolicy) {
+	async save(selectedItem?: IEquipmentSharingPolicy) {
 		if (selectedItem) {
 			this.selectEquipmentSharingPolicy({
 				isSelected: true,
@@ -139,7 +139,7 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete(selectedItem?: EquipmentSharing) {
+	async delete(selectedItem?: IEquipmentSharing) {
 		if (selectedItem) {
 			this.selectEquipmentSharingPolicy({
 				isSelected: true,
@@ -177,7 +177,7 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedEquipmentSharingPolicy = null;
-		let findInput: EquipmentSharingPolicy = {};
+		let findInput: IEquipmentSharingPolicy = {};
 		let policies = [];
 		if (this.selectedOrganizationId) {
 			findInput = {

@@ -1,4 +1,4 @@
-import { SplitExpenseOutput } from '@gauzy/models';
+import { ISplitExpenseOutput } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { IPagination } from '../../../core';
 import { EmployeeService } from '../../../employee/employee.service';
@@ -24,7 +24,7 @@ export class FindSplitExpenseHandler
 
 	public async execute(
 		query: FindSplitExpenseQuery
-	): Promise<IPagination<SplitExpenseOutput>> {
+	): Promise<IPagination<ISplitExpenseOutput>> {
 		const {
 			findInput: { relations, filterDate, employeeId }
 		} = query;

@@ -16,9 +16,9 @@ import bootstrapPlugin from '@fullcalendar/bootstrap';
 import * as moment from 'moment';
 import {
 	IGetTimeLogInput,
-	Organization,
-	TimeLog,
-	TimeLogFilters,
+	IOrganization,
+	ITimeLog,
+	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
@@ -44,11 +44,11 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
 	calendarOptions: CalendarOptions;
 	updateLogs$: Subject<any> = new Subject();
-	organization: Organization;
+	organization: IOrganization;
 	employeeId: string;
 	loading: boolean;
 	futureDateAllowed: boolean;
-	logRequest: TimeLogFilters = {};
+	logRequest: ITimeLogFilters = {};
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -126,7 +126,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			});
 	}
 
-	filtersChange($event: TimeLogFilters) {
+	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.updateLogs$.next();
 	}
@@ -156,9 +156,9 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.loading = true;
 		this.timesheetService
 			.getTimeLogs(request)
-			.then((logs: TimeLog[]) => {
+			.then((logs: ITimeLog[]) => {
 				const events = logs.map(
-					(log: TimeLog): EventInput => {
+					(log: ITimeLog): EventInput => {
 						const title = log.project
 							? log.project.name
 							: 'No project';
@@ -244,7 +244,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		return isOverflowing;
 	}
 
-	openDialog(timeLog?: TimeLog | Partial<TimeLog>) {
+	openDialog(timeLog?: ITimeLog | Partial<ITimeLog>) {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
 			.onClose.subscribe(() => {
@@ -252,7 +252,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			});
 	}
 
-	updateTimeLog(id: string, timeLog: TimeLog | Partial<TimeLog>) {
+	updateTimeLog(id: string, timeLog: ITimeLog | Partial<ITimeLog>) {
 		this.loading = true;
 		this.timesheetService.updateTime(id, timeLog).then(() => {
 			this.loading = false;

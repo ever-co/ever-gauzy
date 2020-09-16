@@ -1,16 +1,13 @@
 import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
-import {
-	KeyResultUpdates as IKeyResultUpdate,
-	KeyResultUpdateStatusEnum
-} from '@gauzy/models';
+import { IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
-import { TenantBase } from '../core/entities/tenant-base';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('key_result_update')
-export class KeyResultUpdate extends TenantBase implements IKeyResultUpdate {
+export class KeyResultUpdate extends TenantOrganizationBase
+	implements IKeyResultUpdate {
 	@ApiProperty({ type: Number })
 	@Column()
 	update: number;
@@ -39,11 +36,4 @@ export class KeyResultUpdate extends TenantBase implements IKeyResultUpdate {
 	@RelationId((keyResult: KeyResultUpdate) => keyResult.keyResult)
 	@Column({ nullable: true })
 	keyResultId?: string;
-
-	@ApiProperty({ type: String })
-	@Column({ nullable: true })
-	organizationId: string;
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization?: Organization;
 }

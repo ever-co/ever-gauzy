@@ -10,7 +10,7 @@ import { IntegrationSetting } from '../integration-setting/integration-setting.e
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
 import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
@@ -35,7 +35,7 @@ import { RolePermissionsModule } from '../role-permissions/role-permissions.modu
 			Tenant,
 			IntegrationSetting,
 			IntegrationMap,
-			OrganizationProjects,
+			OrganizationProject,
 			IntegrationEntitySetting,
 			IntegrationEntitySettingTiedEntity,
 			Role,

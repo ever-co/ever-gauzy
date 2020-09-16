@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Product } from '@gauzy/models';
+import { IProduct } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -23,8 +23,8 @@ import { DefaultEditor } from 'ng2-smart-table';
 })
 export class InvoiceProductsSelectorComponent extends DefaultEditor
 	implements OnInit, OnDestroy {
-	product: Product;
-	products: Product[];
+	product: IProduct;
+	products: IProduct[];
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(private store: Store, private productService: ProductService) {

@@ -1,4 +1,4 @@
-import { Organization, RolesEnum } from '@gauzy/models';
+import { IOrganization, RolesEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RoleService } from '../../../role/role.service';
 import { UserService } from '../../../user/user.service';
@@ -20,7 +20,7 @@ export class OrganizationCreateHandler
 
 	public async execute(
 		command: OrganizationCreateCommand
-	): Promise<Organization> {
+	): Promise<IOrganization> {
 		const { input } = command;
 
 		//1. Get roleId for Super Admin user of the Tenant
@@ -42,7 +42,7 @@ export class OrganizationCreateHandler
 		});
 
 		// 3. Create organization
-		const createdOrganization: Organization = await this.organizationService.create(
+		const createdOrganization: IOrganization = await this.organizationService.create(
 			{
 				...input,
 				show_profits: false,

@@ -1,4 +1,4 @@
-import { InvoiceEstimateHistory as IInvoiceEstimateHistory } from '@gauzy/models';
+import { IInvoiceEstimateHistory } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';

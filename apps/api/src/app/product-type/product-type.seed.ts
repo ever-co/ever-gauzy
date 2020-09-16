@@ -1,7 +1,7 @@
 import * as seed from './product-type.seed.json';
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Organization, ProductTypesIconsEnum } from '@gauzy/models';
+import { IOrganization, ProductTypesIconsEnum } from '@gauzy/models';
 import { ProductType } from './product-type.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
@@ -10,7 +10,7 @@ import { ProductTypeTranslation } from './product-type-translation.entity';
 
 export const createDefaultProductTypes = async (
 	connection: Connection,
-	organizations: Organization[]
+	organizations: IOrganization[]
 ): Promise<ProductType[]> => {
 	const seedProductTypes = [];
 
@@ -47,7 +47,7 @@ const insertProductTypes = async (
 export const createRandomProductType = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<ProductType[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

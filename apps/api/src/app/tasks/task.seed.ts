@@ -6,7 +6,7 @@ import { HttpService } from '@nestjs/common';
 import { TaskStatusEnum } from '@gauzy/models';
 import { Task } from './task.entity';
 import { Tag } from '../tags/tag.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { User } from '../user/user.entity';
 
@@ -46,7 +46,7 @@ export const createDefaultTask = async (
 	const tags: Tag[] = await createTags(connection, labels);
 
 	const defaultProjects = await connection
-		.getRepository(OrganizationProjects)
+		.getRepository(OrganizationProject)
 		.createQueryBuilder()
 		.getMany();
 
@@ -87,7 +87,7 @@ export const createDefaultTask = async (
 
 export const createRandomTask = async (
 	connection: Connection,
-	projects: OrganizationProjects[] | void
+	projects: OrganizationProject[] | void
 ) => {
 	if (!projects) {
 		console.warn(

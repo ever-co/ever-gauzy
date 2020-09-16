@@ -1,24 +1,22 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag } from '..';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ITag } from './tag-entity.model';
 
-export interface IOrganizationVendor extends IBaseEntityModel {
+export interface IOrganizationVendor
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	phone?: string;
 	website?: string;
 	email?: string;
-	organizationId: string;
-	tags?: Tag[];
-	tenant: ITenant;
+	tags?: ITag[];
 }
 
-export interface IOrganizationVendorFindInput extends IBaseEntityModel {
+export interface IOrganizationVendorFindInput {
 	name?: string;
 	phone?: string;
 	website?: string;
 	email?: string;
 	organizationId?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
 export interface IOrganizationVendorCreateInput {
@@ -27,7 +25,7 @@ export interface IOrganizationVendorCreateInput {
 	website?: string;
 	email?: string;
 	organizationId: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
 export enum OrganizationVendorEnum {

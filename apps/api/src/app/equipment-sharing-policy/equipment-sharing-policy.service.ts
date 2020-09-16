@@ -2,7 +2,7 @@ import { CrudService, IPagination } from '../core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
-import { EquipmentSharingPolicy as IEquipmentSharingPolicy } from '@gauzy/models';
+import { IEquipmentSharingPolicy } from '@gauzy/models';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 
 @Injectable()

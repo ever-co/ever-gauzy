@@ -1,12 +1,12 @@
-import { BaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface OrganizationDocument extends BaseEntityModel {
+export interface IOrganizationDocument
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	organizationId?: string;
 	documentUrl?: string;
 }
 
-export interface OrganizationDocumentFindInput extends BaseEntityModel {
+export interface IOrganizationDocumentFindInput {
 	name?: string;
 	organizationId: string;
 }

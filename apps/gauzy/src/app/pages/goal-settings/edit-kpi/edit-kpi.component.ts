@@ -7,10 +7,10 @@ import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
-	Employee,
+	IEmployee,
 	KpiMetricEnum,
 	KpiOperatorEnum,
-	KPI,
+	IKPI,
 	CurrenciesEnum,
 	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
@@ -25,8 +25,8 @@ import { GoalSettingsService } from '../../../@core/services/goal-settings.servi
 export class EditKpiComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	kpiForm: FormGroup;
-	employees: Employee[];
-	selectedKPI: KPI;
+	employees: IEmployee[];
+	selectedKPI: IKPI;
 	type: string;
 	helper = '';
 	currenciesEnum = CurrenciesEnum;

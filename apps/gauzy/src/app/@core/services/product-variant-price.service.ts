@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ProductVariantPrice } from '@gauzy/models';
+import { IProductVariantPrice } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -10,10 +10,10 @@ export class ProductVariantPriceService {
 	constructor(private http: HttpClient) {}
 
 	updateProductVariantPrice(
-		productVariantPrice: ProductVariantPrice
-	): Promise<ProductVariantPrice> {
+		productVariantPrice: IProductVariantPrice
+	): Promise<IProductVariantPrice> {
 		return this.http
-			.put<ProductVariantPrice>(
+			.put<IProductVariantPrice>(
 				`${this.PRODUCT_VARIANT_PRICE_URL}/${productVariantPrice.id}`,
 				productVariantPrice
 			)

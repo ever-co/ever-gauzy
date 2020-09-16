@@ -3,9 +3,9 @@ import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import {
-	Proposal,
+	IProposal,
 	PermissionsEnum,
-	Tag,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
@@ -23,7 +23,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 export interface ProposalViewModel {
-	tags?: Tag[];
+	tags?: ITag[];
 	valueDate: Date;
 	id: string;
 	employeeId?: string;
@@ -160,7 +160,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/sales/proposals/register']);
 	}
 
-	details(selectedItem?: Proposal) {
+	details(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
@@ -172,7 +172,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		]);
 	}
 
-	delete(selectedItem?: Proposal) {
+	delete(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
@@ -208,7 +208,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			});
 	}
 
-	switchToAccepted(selectedItem?: Proposal) {
+	switchToAccepted(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
@@ -247,7 +247,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			});
 	}
 
-	switchToSent(selectedItem?: Proposal) {
+	switchToSent(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
@@ -363,7 +363,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 	private async _loadTableData(orgId?: string) {
 		this.showTable = false;
 		this.selectedProposal = null;
-		let items: Proposal[];
+		let items: IProposal[];
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
 				['employee', 'organization', 'tags'],

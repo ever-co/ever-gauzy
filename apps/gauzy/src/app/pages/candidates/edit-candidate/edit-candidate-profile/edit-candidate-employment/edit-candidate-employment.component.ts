@@ -2,12 +2,12 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Params } from '@angular/router';
 import {
-	Organization,
-	OrganizationDepartment,
-	OrganizationEmploymentType,
-	OrganizationPositions,
-	Tag,
-	Candidate
+	IOrganization,
+	IOrganizationDepartment,
+	IOrganizationEmploymentType,
+	IOrganizationPosition,
+	ITag,
+	ICandidate
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
@@ -29,14 +29,14 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	paramSubscription: Subscription;
 	hoverState: boolean;
 	routeParams: Params;
-	selectedCandidate: Candidate;
+	selectedCandidate: ICandidate;
 	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
-	employmentTypes: OrganizationEmploymentType[];
-	selectedOrganization: Organization;
-	departments: OrganizationDepartment[] = [];
-	positions: OrganizationPositions[] = [];
-	tags: Tag[] = [];
+	employmentTypes: IOrganizationEmploymentType[];
+	selectedOrganization: IOrganization;
+	departments: IOrganizationDepartment[] = [];
+	positions: IOrganizationPosition[] = [];
+	tags: ITag[] = [];
 	selectedTags: any;
 
 	constructor(
@@ -74,7 +74,7 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 
 	private async getDepartments() {
 		const { items } = await this.organizationDepartmentsService.getAll([], {
-			organizationId: this.selectedCandidate.orgId
+			organizationId: this.selectedCandidate.organizationId
 		});
 		this.departments = items;
 	}
@@ -111,11 +111,11 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 
-	private _initializeForm(candidate: Candidate) {
+	private _initializeForm(candidate: ICandidate) {
 		this.form = this.fb.group({
 			organizationEmploymentTypes: [
 				candidate.organizationEmploymentTypes || null

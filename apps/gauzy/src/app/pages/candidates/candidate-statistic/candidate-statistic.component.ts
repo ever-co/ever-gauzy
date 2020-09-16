@@ -1,4 +1,4 @@
-import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
+import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/models';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
@@ -15,12 +15,12 @@ import { Store } from '../../../@core/services/store.service';
 export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	candidateRating: number;
-	candidates: Candidate[] = null;
+	candidates: ICandidate[] = null;
 	names: string[] = [];
 	selectedOrganizationId: string;
 	rating: number[] = [];
 	interviewList: ICandidateInterview[];
-	employeeList: Employee[];
+	employeeList: IEmployee[];
 	constructor(
 		private candidatesService: CandidatesService,
 		private candidateFeedbacksService: CandidateFeedbacksService,

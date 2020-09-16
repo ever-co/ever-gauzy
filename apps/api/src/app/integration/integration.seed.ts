@@ -2,6 +2,7 @@ import { Connection } from 'typeorm';
 import { IntegrationEnum, IntegrationTypeNameEnum } from '@gauzy/models';
 import { IntegrationType } from './integration-type.entity';
 import { Integration } from './integration.entity';
+import { Tenant } from '../tenant/tenant.entity';
 
 const DEFAULT_INTEGRATIONS = [
 	{
@@ -32,6 +33,7 @@ const DEFAULT_INTEGRATIONS = [
 
 export const createDefaultIntegrations = async (
 	connection: Connection,
+  tenant: Tenant,
 	integrationTypes: IntegrationType[] | void
 ): Promise<Integration[]> => {
 	if (!integrationTypes) {
@@ -47,6 +49,7 @@ export const createDefaultIntegrations = async (
 			entity.name = name;
 			entity.imgSrc = imgSrc;
 			entity.isComingSoon = isComingSoon;
+			entity.tenant = tenant;
 			entity.integrationTypes = integrationTypes.filter((it) =>
 				integrationTypesMap.includes(it.name)
 			);

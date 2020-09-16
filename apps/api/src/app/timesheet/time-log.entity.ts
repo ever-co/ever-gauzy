@@ -10,15 +10,21 @@ import {
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import {
-	TimeLog as ITimeLog,
+	ITimeLog,
 	TimeLogType,
-	TimeLogSourceEnum
+	TimeLogSourceEnum,
+	ITimesheet,
+	IEmployee,
+	ITask,
+	IOrganizationProject,
+	IOrganizationContact,
+	ITimeSlot
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { Timesheet } from './timesheet.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Task } from '../tasks/task.entity';
 import * as moment from 'moment';
@@ -29,7 +35,7 @@ export class TimeLog extends Base implements ITimeLog {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
-	employee: Employee;
+	employee: IEmployee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.employee)
@@ -39,7 +45,7 @@ export class TimeLog extends Base implements ITimeLog {
 	@ApiProperty({ type: Timesheet })
 	@ManyToOne(() => Timesheet, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	timesheet?: Timesheet;
+	timesheet?: ITimesheet;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.timesheet)
@@ -52,12 +58,12 @@ export class TimeLog extends Base implements ITimeLog {
 	@JoinTable({
 		name: 'time_slot_time_logs'
 	})
-	timeSlots?: TimeSlot[];
+	timeSlots?: ITimeSlot[];
 
-	@ApiProperty({ type: OrganizationProjects })
-	@ManyToOne(() => OrganizationProjects, { nullable: true })
+	@ApiProperty({ type: OrganizationProject })
+	@ManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn()
-	project?: OrganizationProjects;
+	project?: IOrganizationProject;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.project)
@@ -67,7 +73,7 @@ export class TimeLog extends Base implements ITimeLog {
 	@ApiProperty({ type: Task })
 	@ManyToOne(() => Task, { nullable: true })
 	@JoinColumn()
-	task?: Task;
+	task?: ITask;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.task)
@@ -77,7 +83,7 @@ export class TimeLog extends Base implements ITimeLog {
 	@ApiProperty({ type: OrganizationContact })
 	@ManyToOne(() => OrganizationContact, { nullable: true })
 	@JoinColumn()
-	organizationContact?: OrganizationContact;
+	organizationContact?: IOrganizationContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)

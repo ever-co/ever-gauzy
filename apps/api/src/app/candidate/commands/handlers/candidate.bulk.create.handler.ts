@@ -1,5 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Candidate, CandidateCreateInput, LanguagesEnum } from '@gauzy/models';
+import {
+	ICandidate,
+	ICandidateCreateInput,
+	LanguagesEnum
+} from '@gauzy/models';
 import { AuthService } from '../../../auth/auth.service';
 import { EmailService } from '../../../email';
 import { CandidateBulkCreateCommand } from '../candidate.bulk.create.command';
@@ -16,7 +20,7 @@ export class CandidateBulkCreateHandler
 
 	public async execute(
 		command: CandidateBulkCreateCommand
-	): Promise<Candidate[]> {
+	): Promise<ICandidate[]> {
 		const { input, languageCode } = command;
 		const inputWithHash = await this._loadPasswordHash(input);
 
@@ -29,7 +33,7 @@ export class CandidateBulkCreateHandler
 	}
 
 	private _sendWelcomeEmail(
-		candidates: Candidate[],
+		candidates: ICandidate[],
 		languageCode: LanguagesEnum
 	) {
 		candidates.forEach((candidate) =>
@@ -41,7 +45,7 @@ export class CandidateBulkCreateHandler
 		);
 	}
 
-	private async _loadPasswordHash(input: CandidateCreateInput[]) {
+	private async _loadPasswordHash(input: ICandidateCreateInput[]) {
 		const mappedInput = input.map(async (entity) => {
 			entity.user.hash = await this.authService.getPasswordHash(
 				entity.password

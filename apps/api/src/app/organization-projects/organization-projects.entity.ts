@@ -19,30 +19,37 @@ import {
 	IsBoolean
 } from 'class-validator';
 import {
-	OrganizationProjects as IOrganizationProjects,
+	IOrganizationProject,
 	CurrenciesEnum,
-	TaskListTypeEnum
+	TaskListTypeEnum,
+	IOrganizationContact,
+	IInvoiceItem,
+	ITag,
+	ITask,
+	ITimeLog,
+	IEmployee,
+	IOrganizationSprint,
+	IPayment
 } from '@gauzy/models';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Employee } from '../employee/employee.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
-import { TenantBase } from '../core/entities/tenant-base';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { Task } from '../tasks/task.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { Payment } from '../payment/payment.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
 
 @Entity('organization_project')
-export class OrganizationProjects extends TenantBase
-	implements IOrganizationProjects {
+export class OrganizationProject extends TenantOrganizationBase
+	implements IOrganizationProject {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationProject)
 	@JoinTable({
 		name: 'tag_organization_project'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -67,20 +74,20 @@ export class OrganizationProjects extends TenantBase
 		}
 	)
 	@JoinColumn()
-	organizationContact?: OrganizationContact;
+	organizationContact?: IOrganizationContact;
 
 	@ApiProperty({ type: String })
-	@RelationId((contact: OrganizationProjects) => contact.organizationContact)
+	@RelationId((contact: OrganizationProject) => contact.organizationContact)
 	@Column({ nullable: true })
 	organizationContactId?: string;
 
 	@ApiProperty({ type: Task })
 	@OneToMany((type) => Task, (task) => task.project)
 	@JoinColumn()
-	tasks?: Task[];
+	tasks?: ITask[];
 
 	@OneToMany((type) => TimeLog, (timeLog) => timeLog.project)
-	timeLogs?: TimeLog[];
+	timeLogs?: ITimeLog[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -116,17 +123,14 @@ export class OrganizationProjects extends TenantBase
 	@JoinTable({
 		name: 'organization_project_employee'
 	})
-	members?: Employee[];
+	members?: IEmployee[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.project, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	invoiceItems?: InvoiceItem[];
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization?: Organization;
+	invoiceItems?: IInvoiceItem[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -137,7 +141,7 @@ export class OrganizationProjects extends TenantBase
 	@ApiPropertyOptional({ type: OrganizationSprint })
 	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.project)
 	@JoinColumn()
-	organizationSprints?: OrganizationSprint[];
+	organizationSprints?: IOrganizationSprint[];
 
 	@ApiProperty({ type: String, enum: TaskListTypeEnum })
 	@IsEnum(TaskListTypeEnum)
@@ -149,7 +153,7 @@ export class OrganizationProjects extends TenantBase
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	payments?: Payment[];
+	payments?: IPayment[];
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()

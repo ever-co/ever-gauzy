@@ -1,14 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-	AggregatedEmployeeStatistic,
-	AggregatedEmployeeStatisticFindInput,
-	EmployeeStatistics,
-	EmployeeStatisticsFindInput,
-	MonthAggregatedEmployeeStatisticsFindInput,
-	MonthAggregatedEmployeeStatistics,
-	EmployeeStatisticsHistoryFindInput,
-	EmployeeStatisticsHistory
+	IAggregatedEmployeeStatistic,
+	IAggregatedEmployeeStatisticFindInput,
+	IEmployeeStatistics,
+	IEmployeeStatisticsFindInput,
+	IMonthAggregatedEmployeeStatisticsFindInput,
+	IMonthAggregatedEmployeeStatistics,
+	IEmployeeStatisticsHistoryFindInput,
+	IEmployeeStatisticsHistory
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -25,12 +25,12 @@ export class EmployeeStatisticsService {
 	 * If date is provided in findInput it will return only for the month selected.
 	 */
 	getAggregateStatisticsByOrganizationId(
-		findInput?: AggregatedEmployeeStatisticFindInput
-	): Promise<AggregatedEmployeeStatistic> {
+		findInput?: IAggregatedEmployeeStatisticFindInput
+	): Promise<IAggregatedEmployeeStatistic> {
 		const data = JSON.stringify({ findInput });
 
 		return this.http
-			.get<AggregatedEmployeeStatistic>(
+			.get<IAggregatedEmployeeStatistic>(
 				`/api/employee-statistics/aggregate`,
 				{
 					params: { data }
@@ -49,12 +49,12 @@ export class EmployeeStatisticsService {
 	 */
 	getStatisticsByEmployeeId(
 		employeeId: string,
-		findInput?: EmployeeStatisticsFindInput
-	): Promise<EmployeeStatistics> {
+		findInput?: IEmployeeStatisticsFindInput
+	): Promise<IEmployeeStatistics> {
 		const data = JSON.stringify({ findInput });
 
 		return this.http
-			.get<EmployeeStatistics>(
+			.get<IEmployeeStatistics>(
 				`/api/employee-statistics/months/${employeeId}`,
 				{
 					params: { data }
@@ -63,18 +63,19 @@ export class EmployeeStatisticsService {
 			.pipe(first())
 			.toPromise();
 	}
+
 	/**
 	 * Gets the statistics for the selected employee for the last N months.
 	 * @param findInput Object containing valueDate, employeeId, Months.
 	 * @returns Promise<MonthAggregatedEmployeeStatistics[]>
 	 */
 	getAggregatedStatisticsByEmployeeId(
-		findInput: MonthAggregatedEmployeeStatisticsFindInput
-	): Promise<MonthAggregatedEmployeeStatistics[]> {
+		findInput: IMonthAggregatedEmployeeStatisticsFindInput
+	): Promise<IMonthAggregatedEmployeeStatistics[]> {
 		const data = JSON.stringify({ findInput });
 
 		return this.http
-			.get<MonthAggregatedEmployeeStatistics[]>(
+			.get<IMonthAggregatedEmployeeStatistics[]>(
 				`/api/employee-statistics/months`,
 				{
 					params: { data }
@@ -90,12 +91,12 @@ export class EmployeeStatisticsService {
 	 * @returns Promise<EmployeeStatisticsHistory[]
 	 */
 	getEmployeeStatisticsHistory(
-		findInput: EmployeeStatisticsHistoryFindInput
-	): Promise<EmployeeStatisticsHistory[]> {
+		findInput: IEmployeeStatisticsHistoryFindInput
+	): Promise<IEmployeeStatisticsHistory[]> {
 		const data = JSON.stringify({ findInput });
 
 		return this.http
-			.get<EmployeeStatisticsHistory[]>(
+			.get<IEmployeeStatisticsHistory[]>(
 				`/api/employee-statistics/history`,
 				{
 					params: { data }

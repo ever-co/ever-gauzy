@@ -25,10 +25,20 @@ import {
 	BonusTypeEnum,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	Organization as IOrganization,
+	IOrganization,
 	WeekDaysEnum,
 	MinimumProjectSizeEnum,
-	CurrencyPosition
+	CurrencyPosition,
+	IContact,
+	ITag,
+	IInvoice,
+	IEmployee,
+	IDeal,
+	ISkill,
+	IPayment,
+	IOrganizationSprint,
+	IInvoiceEstimateHistory,
+	ITenant
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
@@ -40,20 +50,35 @@ import { OrganizationSprint } from '../organization-sprint/organization-sprint.e
 import { Employee } from '../employee/employee.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 import { Deal } from '../deal/deal.entity';
+import { Base } from '../core/entities/base';
+import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('organization')
-export class Organization extends TenantBase implements IOrganization {
+export class Organization extends Base implements IOrganization {
+	@ApiProperty({ type: Tenant, readOnly: true })
+	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	@IsOptional()
+	tenant?: ITenant;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((t: TenantBase) => t.tenant)
+	@IsString()
+	@IsOptional()
+	@Column()
+	tenantId?: string;
+
 	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_organizations'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
 	@JoinColumn()
-	contact: Contact;
+	contact: IContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((organization: Organization) => organization.contact)
@@ -62,17 +87,17 @@ export class Organization extends TenantBase implements IOrganization {
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
 	@OneToMany((type) => Invoice, (invoices) => invoices.fromOrganization)
 	@JoinColumn()
-	invoices?: Invoice[];
+	invoices?: IInvoice[];
 
 	@ApiProperty({ type: Employee })
 	@OneToMany(() => Employee, (employee) => employee.organization)
 	@JoinColumn()
-	employees?: Employee[];
+	employees?: IEmployee[];
 
 	@ApiProperty({ type: Deal })
 	@OneToMany(() => Deal, (deal) => deal.organization)
 	@JoinColumn()
-	deals?: Deal[];
+	deals?: IDeal[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -344,7 +369,7 @@ export class Organization extends TenantBase implements IOrganization {
 	@JoinTable({
 		name: 'skill_organization'
 	})
-	skills: Skill[];
+	skills: ISkill[];
 
 	@ApiPropertyOptional({ type: String })
 	@IsOptional()
@@ -356,7 +381,7 @@ export class Organization extends TenantBase implements IOrganization {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	payments?: Payment[];
+	payments?: IPayment[];
 
 	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()
@@ -366,7 +391,7 @@ export class Organization extends TenantBase implements IOrganization {
 	@ApiPropertyOptional({ type: OrganizationSprint, isArray: true })
 	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.organization)
 	@JoinColumn()
-	organizationSprints?: OrganizationSprint[];
+	organizationSprints?: IOrganizationSprint[];
 
 	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
 	@OneToMany(
@@ -377,7 +402,7 @@ export class Organization extends TenantBase implements IOrganization {
 		}
 	)
 	@JoinColumn()
-	invoiceEstimateHistories?: InvoiceEstimateHistory[];
+	invoiceEstimateHistories?: IInvoiceEstimateHistory[];
 
 	@ApiProperty({ type: String })
 	@Column()

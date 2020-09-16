@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { Employee, Organization, LanguagesEnum } from '@gauzy/models';
+import { IEmployee, IOrganization, LanguagesEnum } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject, Subscription } from 'rxjs';
@@ -25,8 +25,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	paramSubscription: Subscription;
 	hoverState: boolean;
 	routeParams: Params;
-	selectedEmployee: Employee;
-	selectedOrganization: Organization;
+	selectedEmployee: IEmployee;
+	selectedOrganization: IOrganization;
 	languages: string[] = Object.values(LanguagesEnum);
 
 	constructor(
@@ -66,7 +66,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _initializeForm(employee: Employee) {
+	private _initializeForm(employee: IEmployee) {
 		this.form = this.fb.group({
 			username: [employee.user.username],
 			email: [employee.user.email, Validators.required],

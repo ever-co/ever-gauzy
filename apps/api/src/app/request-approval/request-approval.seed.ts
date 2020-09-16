@@ -66,6 +66,7 @@ export const createRandomRequestApproval = async (
 			});
 
 			requestApproval.employeeApprovals = requestApprovalEmployees;
+			requestApproval.tenant = tenant;
 			requestApprovals.push(requestApproval);
 		}
 	});

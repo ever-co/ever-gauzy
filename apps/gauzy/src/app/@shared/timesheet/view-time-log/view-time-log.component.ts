@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { TimeLog, OrganizationPermissionsEnum } from '@gauzy/models';
+import { ITimeLog, OrganizationPermissionsEnum } from '@gauzy/models';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from '../edit-time-log-modal/edit-time-log-modal.component';
@@ -14,7 +14,7 @@ import { TimesheetService } from '../timesheet.service';
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	@Input() timelogs: TimeLog[];
+	@Input() timelogs: ITimeLog[];
 	@Input() callback: CallableFunction;
 
 	constructor(
@@ -52,7 +52,7 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	viewLog(timeLog: TimeLog) {
+	viewLog(timeLog: ITimeLog) {
 		this.nbDialogService
 			.open(ViewTimeLogModalComponent, {
 				context: {

@@ -1,5 +1,5 @@
 import { Base } from '../core/entities/base';
-import { Pipeline as IPipeline } from '@gauzy/models';
+import { IPipeline } from '@gauzy/models';
 import { Organization } from '../organization/organization.entity';
 import {
 	AfterInsert,

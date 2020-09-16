@@ -1,7 +1,7 @@
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Base } from '../core/entities/base';
 import { IHelpCenterArticle } from '@gauzy/models';
+import { Base } from '../core/entities/base';
 
 @Entity('knowledge_base_article')
 export class HelpCenterArticle extends Base implements IHelpCenterArticle {

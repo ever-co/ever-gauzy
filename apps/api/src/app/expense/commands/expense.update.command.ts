@@ -1,8 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import { Expense } from '@gauzy/models';
+import { IExpense } from '@gauzy/models';
 
 export class ExpenseUpdateCommand implements ICommand {
 	static readonly type = '[Expense] Update';
 
-	constructor(public readonly id: string, public readonly entity: Expense) {}
+	constructor(public readonly id: string, public readonly entity: IExpense) {}
 }

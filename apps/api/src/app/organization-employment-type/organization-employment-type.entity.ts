@@ -1,4 +1,4 @@
-import { OrganizationEmploymentType as IOrganizationEmploymentType } from '@gauzy/models';
+import { IOrganizationEmploymentType } from '@gauzy/models';
 import { IsNotEmpty } from 'class-validator';
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
 import { Base } from '../core/entities/base';

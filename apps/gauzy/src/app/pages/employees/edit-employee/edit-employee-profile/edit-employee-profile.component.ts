@@ -1,7 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Employee, EmployeeUpdateInput, UserUpdateInput } from '@gauzy/models';
+import {
+	IEmployee,
+	IEmployeeUpdateInput,
+	IUserUpdateInput
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';
@@ -29,7 +33,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
 	routeParams: Params;
-	selectedEmployee: Employee;
+	selectedEmployee: IEmployee;
 	employeeName = 'Employee';
 
 	tabs: any[];
@@ -134,7 +138,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 			}
 		];
 	}
-	private async submitEmployeeForm(value: EmployeeUpdateInput) {
+	private async submitEmployeeForm(value: IEmployeeUpdateInput) {
 		if (value) {
 			try {
 				await this.employeeService.update(
@@ -160,7 +164,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	 * This is to update the User details of an Employee.
 	 * Do NOT use this function to update any details which are NOT stored in the User Entity.
 	 */
-	private async submitUserForm(value: UserUpdateInput) {
+	private async submitUserForm(value: IUserUpdateInput) {
 		if (value) {
 			try {
 				await this.userService.update(

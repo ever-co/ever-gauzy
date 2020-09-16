@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Country, Organization } from '@gauzy/models';
+import { ICountry, IOrganization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
@@ -19,8 +19,8 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
-	selectedOrganization: Organization;
-	countries: Country[];
+	selectedOrganization: IOrganization;
+	countries: ICountry[];
 	form: FormGroup;
 
 	constructor(
@@ -78,7 +78,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 		);
 	}
 
-	private async _initializeForm(organization: Organization) {
+	private async _initializeForm(organization: IOrganization) {
 		//Load countries before initializing the form
 		await this.loadCountries();
 

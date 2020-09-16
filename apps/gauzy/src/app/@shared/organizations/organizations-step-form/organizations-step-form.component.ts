@@ -9,13 +9,13 @@ import {
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	BonusTypeEnum,
-	Country,
+	ICountry,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	DEFAULT_PROFIT_BASED_BONUS,
 	RegionsEnum,
 	WeekDaysEnum,
-	Tag
+	ITag
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import * as moment from 'moment';
@@ -36,7 +36,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 
 	hoverState: boolean;
 	currencies: string[] = Object.values(CurrenciesEnum);
-	countries: Country[];
+	countries: ICountry[];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
@@ -50,7 +50,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	orgLocationForm: FormGroup;
 	orgBonusForm: FormGroup;
 	orgSettingsForm: FormGroup;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 
 	@Output()
 	createOrganization = new EventEmitter();
@@ -208,7 +208,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 		this.createOrganization.emit(consolidatedFormValues);
 	}
 
-	selectedTagsEvent(currentSelection: Tag[]) {
+	selectedTagsEvent(currentSelection: ITag[]) {
 		this.orgMainForm.get('tags').setValue(currentSelection);
 	}
 

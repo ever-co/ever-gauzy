@@ -1,4 +1,4 @@
-import { OrganizationCreateInput, PermissionsEnum } from '@gauzy/models';
+import { IOrganizationCreateInput, PermissionsEnum } from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -122,7 +122,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	async create(
-		@Body() entity: OrganizationCreateInput
+		@Body() entity: IOrganizationCreateInput
 	): Promise<Organization> {
 		return this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
@@ -130,7 +130,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: OrganizationCreateInput,
+		@Body() entity: IOrganizationCreateInput,
 		...options: any[]
 	): Promise<any> {
 		return this.organizationService.create({

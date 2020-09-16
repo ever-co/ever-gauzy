@@ -1,30 +1,30 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Language } from '@gauzy/models';
+import { ILanguage } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
 export class LanguagesService {
 	constructor(private http: HttpClient) {}
 
-	insertLanguage(createLanguage: Language): Promise<Language> {
+	insertLanguage(createLanguage: ILanguage): Promise<ILanguage> {
 		return this.http
-			.post<Language>('/api/languages', createLanguage)
+			.post<ILanguage>('/api/languages', createLanguage)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getAllLanguages(): Promise<{ items: Language[] }> {
+	getAllLanguages(): Promise<{ items: ILanguage[] }> {
 		return this.http
-			.get<{ items: Language[] }>(`/api/languages`)
+			.get<{ items: ILanguage[] }>(`/api/languages`)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getSystemLanguages(): Promise<{ items: Language[] }> {
+	getSystemLanguages(): Promise<{ items: ILanguage[] }> {
 		const option = JSON.stringify({ is_system: true });
 		return this.http
-			.get<{ items: Language[] }>(`/api/languages`, {
+			.get<{ items: ILanguage[] }>(`/api/languages`, {
 				params: { option }
 			})
 			.pipe(first())
@@ -38,16 +38,16 @@ export class LanguagesService {
 			.toPromise();
 	}
 
-	update(id: string, updateInput: Language) {
+	update(id: string, updateInput: ILanguage) {
 		return this.http
 			.put(`/api/languages/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	findByName(name: string): Promise<{ item: Language }> {
+	findByName(name: string): Promise<{ item: ILanguage }> {
 		return this.http
-			.get<{ item: Language }>(`/api/languages/getByName/${name}`)
+			.get<{ item: ILanguage }>(`/api/languages/getByName/${name}`)
 			.pipe(first())
 			.toPromise();
 	}

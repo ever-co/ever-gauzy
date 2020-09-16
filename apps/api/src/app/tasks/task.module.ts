@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { CommandHandlers } from './commands/handlers';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
@@ -16,7 +16,7 @@ import { Role } from '../role/role.entity';
 	imports: [
 		TypeOrmModule.forFeature([
 			Task,
-			OrganizationProjects,
+			OrganizationProject,
 			User,
 			Employee,
 			Role

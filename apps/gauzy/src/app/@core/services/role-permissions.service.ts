@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-	RolePermissions,
-	RolePermissionsCreateInput,
-	RolePermissionsUpdateInput
+	IRolePermission,
+	IRolePermissionCreateInput,
+	IRolePermissionUpdateInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -13,7 +13,7 @@ export class RolePermissionsService {
 
 	getRolePermissions(
 		findInput?: any
-	): Promise<{ items: RolePermissions[]; total: number }> {
+	): Promise<{ items: IRolePermission[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 		return this.http
 			.get<any>(`/api/role-permissions`, {
@@ -23,14 +23,14 @@ export class RolePermissionsService {
 			.toPromise();
 	}
 
-	create(createInput: RolePermissionsCreateInput): Promise<RolePermissions> {
+	create(createInput: IRolePermissionCreateInput): Promise<IRolePermission> {
 		return this.http
-			.post<RolePermissions>('/api/role-permissions', createInput)
+			.post<IRolePermission>('/api/role-permissions', createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(id: string, updateInput: RolePermissionsUpdateInput): Promise<any> {
+	update(id: string, updateInput: IRolePermissionUpdateInput): Promise<any> {
 		return this.http
 			.put(`/api/role-permissions/${id}`, updateInput)
 			.pipe(first())

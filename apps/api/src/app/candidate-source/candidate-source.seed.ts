@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import { Candidate, ICandidateSource } from '@gauzy/models';
+import { ICandidate, ICandidateSource } from '@gauzy/models';
 import { CandidateSource } from './candidate-source.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
@@ -23,7 +23,7 @@ const candidateSourceList: ICandidateSource[] = [
 
 export const createCandidateSources = async (
 	connection: Connection,
-	candidates: Candidate[] | void
+	candidates: ICandidate[] | void
 ): Promise<CandidateSource[]> => {
 	if (!candidates) {
 		console.warn(
@@ -51,8 +51,8 @@ export const createCandidateSources = async (
 export const createRandomCandidateSources = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
-): Promise<Map<Candidate, CandidateSource[]>> => {
+	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+): Promise<Map<ICandidate, CandidateSource[]>> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
 			'Warning: tenantCandidatesMap not found, CandidateSources will not be created'
@@ -61,7 +61,7 @@ export const createRandomCandidateSources = async (
 	}
 
 	let candidateSources = [];
-	const candidateSourcesMap: Map<Candidate, CandidateSource[]> = new Map();
+	const candidateSourcesMap: Map<ICandidate, CandidateSource[]> = new Map();
 
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);

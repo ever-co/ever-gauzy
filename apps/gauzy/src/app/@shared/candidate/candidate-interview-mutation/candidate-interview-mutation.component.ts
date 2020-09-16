@@ -10,9 +10,9 @@ import {
 } from '@angular/core';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import {
-	Candidate,
+	ICandidate,
 	ICandidateInterview,
-	Employee,
+	IEmployee,
 	IDateRange,
 	ICandidatePersonalQualities,
 	ICandidateTechnologies
@@ -40,7 +40,7 @@ import { CandidateStore } from '../../../@core/services/candidate-store.service'
 export class CandidateInterviewMutationComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 	@Input() editData: ICandidateInterview;
-	@Input() selectedCandidate: Candidate = null;
+	@Input() selectedCandidate: ICandidate = null;
 	@Input() interviewId = null;
 	@Input() isCalendar: boolean;
 	@Input() selectedRangeCalendar: IDateRange;
@@ -59,8 +59,8 @@ export class CandidateInterviewMutationComponent
 	interviewerForm: FormGroup;
 	interview: any;
 	private _ngDestroy$ = new Subject<void>();
-	employees: Employee[] = [];
-	candidates: Candidate[] = [];
+	employees: IEmployee[] = [];
+	candidates: ICandidate[] = [];
 	selectedInterviewers: string[];
 	criterionsId = null;
 	isTitleExist = false;

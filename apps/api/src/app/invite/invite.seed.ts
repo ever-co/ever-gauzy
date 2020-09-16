@@ -36,6 +36,7 @@ export const createDefaultEmployeeInviteSent = async (
       invitee.role = faker.random.arrayElement([employeeRole[0], candidateRole[0]]);
       invitee.status = faker.random.arrayElement(invitationStatus);
       invitee.token = createToken(invitee.email);
+      invitee.tenant = tenant;
       totalInvites.push(invitee);
     }
   });
@@ -73,6 +74,7 @@ export const createRandomEmployeeInviteSent = async (
         invitee.role = faker.random.arrayElement([employeeRole[0], candidateRole[0]]);
 				invitee.status = faker.random.arrayElement(invitationStatus);
 				invitee.token = createToken(invitee.email);
+				invitee.tenant = tenant;
 				totalInvites.push(invitee);
 			}
 		});

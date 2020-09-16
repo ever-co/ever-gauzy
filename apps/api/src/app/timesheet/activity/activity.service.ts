@@ -8,7 +8,7 @@ import { RequestContext } from '../../core/context';
 import {
 	PermissionsEnum,
 	IGetActivitiesInput,
-	DailyActivity
+	IDailyActivity
 } from '@gauzy/models';
 
 @Injectable()
@@ -20,9 +20,9 @@ export class ActivityService extends CrudService<Activity> {
 		super(activityRepository);
 	}
 
-	async getDailyActivites(
+	async getDailyActivities(
 		request: IGetActivitiesInput
-	): Promise<DailyActivity[]> {
+	): Promise<IDailyActivity[]> {
 		const query = this.filterQuery(request);
 
 		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
@@ -53,7 +53,7 @@ export class ActivityService extends CrudService<Activity> {
 		return await query.getMany();
 	}
 
-	async getActivites(request: IGetActivitiesInput) {
+	async getActivities(request: IGetActivitiesInput) {
 		const query = this.filterQuery(request);
 		if (
 			RequestContext.hasPermission(

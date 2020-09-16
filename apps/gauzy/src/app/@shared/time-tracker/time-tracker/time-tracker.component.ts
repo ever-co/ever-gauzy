@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
 import {
 	TimeLogType,
-	Organization,
-	User,
+	IOrganization,
+	IUser,
 	IDateRange,
 	OrganizationPermissionsEnum
 } from '@gauzy/models';
@@ -29,8 +29,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	running: boolean;
 	today: Date = new Date();
 	selectedRange: IDateRange = { start: null, end: null };
-	user: User;
-	organization: Organization;
+	user: IUser;
+	organization: IOrganization;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	allowFutureDate: boolean;
 	@ViewChild(NgForm) form: NgForm;
@@ -106,11 +106,11 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 			});
 
-		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: User) => {
+		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: IUser) => {
 			this.user = user;
 		});
 

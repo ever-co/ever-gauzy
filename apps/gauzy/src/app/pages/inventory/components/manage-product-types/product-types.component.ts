@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {
-	Organization,
-	ProductTypeTranslated,
+	IOrganization,
+	IProductTypeTranslated,
 	LanguagesEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
@@ -28,9 +28,9 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
-	selectedProductType: ProductTypeTranslated;
-	productData: ProductTypeTranslated[];
-	selectedOrganization: Organization;
+	selectedProductType: IProductTypeTranslated;
+	productData: IProductTypeTranslated[];
+	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
 	private _ngDestroy$ = new Subject<void>();
@@ -133,7 +133,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		});
 	}
 
-	async save(selectedItem?: ProductTypeTranslated) {
+	async save(selectedItem?: IProductTypeTranslated) {
 		if (selectedItem) {
 			this.selectProductType({
 				isSelected: true,
@@ -164,7 +164,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete(selectedItem?: ProductTypeTranslated) {
+	async delete(selectedItem?: IProductTypeTranslated) {
 		if (selectedItem) {
 			this.selectProductType({
 				isSelected: true,

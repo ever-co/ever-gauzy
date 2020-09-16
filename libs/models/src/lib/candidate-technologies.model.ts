@@ -1,13 +1,13 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface ICandidateTechnologies extends IBaseEntityModel {
+export interface ICandidateTechnologies
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	interviewId?: string;
 	rating?: number;
-	// rating?: ICandidateCriterionsRating;
 }
 
-export interface ICandidateTechnologiesFindInput extends IBaseEntityModel {
+export interface ICandidateTechnologiesFindInput {
 	name?: string;
 	interviewId?: string;
 	rating?: number;

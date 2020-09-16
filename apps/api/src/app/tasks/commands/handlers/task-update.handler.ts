@@ -1,4 +1,4 @@
-import { Task, ITaskUpdateInput } from '@gauzy/models';
+import { ITask, ITaskUpdateInput } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TaskService } from '../../task.service';
 import { TaskUpdateCommand } from '../task-update.command';
@@ -7,7 +7,7 @@ import { TaskUpdateCommand } from '../task-update.command';
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	constructor(private readonly _taskService: TaskService) {}
 
-	public async execute(command: TaskUpdateCommand): Promise<Task> {
+	public async execute(command: TaskUpdateCommand): Promise<ITask> {
 		const { input } = command;
 		const { id } = input;
 
@@ -20,7 +20,7 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	public async updateTask(
 		id: string,
 		request: ITaskUpdateInput
-	): Promise<Task> {
+	): Promise<ITask> {
 		const task = await this._taskService.findOne(id);
 		if (task) {
 			delete request.id;

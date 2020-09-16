@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { TagsService } from '../../@core/services/tags.service';
-import { Tag } from '@gauzy/models';
+import { ITag } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
@@ -16,7 +16,7 @@ export class TagsMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	selectedColor: string[] = [];
 	form: FormGroup;
-	tag: Tag;
+	tag: ITag;
 	private isTenantLevelChecked = false;
 
 	public color = '';
@@ -88,7 +88,7 @@ export class TagsMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	async closeDialog(tag?: Tag) {
+	async closeDialog(tag?: ITag) {
 		this.dialogRef.close(tag);
 	}
 

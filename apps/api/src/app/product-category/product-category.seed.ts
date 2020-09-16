@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { ProductCategory } from './product-category.entity';
 import * as seed from './product-category.seed.json';
 import * as faker from 'faker';
@@ -7,7 +7,7 @@ import { ProductCategoryTranslation } from './product-category-translation.entit
 
 export const createDefaultProductCategories = async (
 	connection: Connection,
-	organizations: Organization[]
+	organizations: IOrganization[]
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories = [];
 

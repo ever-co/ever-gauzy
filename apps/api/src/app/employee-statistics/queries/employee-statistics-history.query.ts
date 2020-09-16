@@ -1,8 +1,8 @@
 import { IQuery } from '@nestjs/cqrs';
-import { EmployeeStatisticsHistoryFindInput } from '@gauzy/models';
+import { IEmployeeStatisticsHistoryFindInput } from '@gauzy/models';
 
 export class EmployeeStatisticsHistoryQuery implements IQuery {
 	static readonly type = '[EmployeeStatistics] History';
 
-	constructor(public readonly input: EmployeeStatisticsHistoryFindInput) {}
+	constructor(public readonly input: IEmployeeStatisticsHistoryFindInput) {}
 }

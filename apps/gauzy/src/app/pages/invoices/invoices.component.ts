@@ -11,10 +11,10 @@ import {
 	NbPopoverDirective
 } from '@nebular/theme';
 import {
-	Invoice,
+	IInvoice,
 	PermissionsEnum,
-	Tag,
-	Organization,
+	ITag,
+	IOrganization,
 	InvoiceTypeEnum,
 	ComponentLayoutStyleEnum,
 	InvoiceStatusTypesEnum,
@@ -22,8 +22,8 @@ import {
 	InvoiceColumnsEnum,
 	EstimateColumnsEnum,
 	CurrenciesEnum,
-	OrganizationContact,
-	InvoiceEstimateHistory
+	IOrganizationContact,
+	IInvoiceEstimateHistory
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -51,13 +51,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	selectedInvoice: Invoice;
+	selectedInvoice: IInvoice;
 	loading = true;
 	disableButton = true;
 	hasInvoiceEditPermission: boolean;
-	invoices: Invoice[];
-	tags: Tag[] = [];
-	organization: Organization;
+	invoices: IInvoice[];
+	tags: ITag[] = [];
+	organization: IOrganization;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	invoiceStatusTypes = Object.values(InvoiceStatusTypesEnum);
@@ -70,10 +70,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 	columns = Object.values(InvoiceColumnsEnum);
 	currencies = Object.values(CurrenciesEnum);
 	form: FormGroup;
-	organizationContacts: OrganizationContact[];
+	organizationContacts: IOrganizationContact[];
 	duplicate: boolean;
 	perPage = 10;
-	histories: InvoiceEstimateHistory[];
+	histories: IInvoiceEstimateHistory[];
 	selectedInvoiceHistories = [];
 
 	private _ngDestroy$ = new Subject<void>();
@@ -181,7 +181,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.nbMenuService.onItemClick().pipe(first());
 	}
 
-	selectMenu(selectedItem?: Invoice) {
+	selectMenu(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -213,7 +213,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	edit(selectedItem?: Invoice) {
+	edit(selectedItem?: IInvoice) {
 		this.invoicesService.changeValue(false);
 		if (selectedItem) {
 			this.selectInvoice({
@@ -233,7 +233,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async duplicated(selectedItem?: Invoice) {
+	async duplicated(selectedItem?: IInvoice) {
 		this.invoicesService.changeValue(true);
 		if (selectedItem) {
 			this.selectInvoice({
@@ -327,7 +327,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	download(selectedItem?: Invoice) {
+	download(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -342,7 +342,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		});
 	}
 
-	async send(selectedItem?: Invoice) {
+	async send(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -368,7 +368,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async convert(selectedItem?: Invoice) {
+	async convert(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -395,7 +395,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		await this.loadSettings();
 	}
 
-	async delete(selectedItem?: Invoice) {
+	async delete(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -446,7 +446,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		]);
 	}
 
-	email(selectedItem?: Invoice) {
+	email(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -496,7 +496,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 						if (res) {
 							this.organizationContacts = res.items;
 						}
-						const invoiceVM: Invoice[] = items.map((i) => {
+						const invoiceVM: IInvoice[] = items.map((i) => {
 							return {
 								id: i.id,
 								invoiceNumber: i.invoiceNumber,
@@ -815,7 +815,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectedTagsEvent(currentTagSelection: Tag[]) {
+	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.tags = currentTagSelection;
 	}
 

@@ -27,16 +27,16 @@ export const createDefaultOrganizationDepartments = async (
 	});
 	const departments: OrganizationDepartment[] = [];
 
-	for(let defaultOrganization of defaultOrganizations) {
-    organizationDepartmentsArray.forEach((name) => {
-      const department = new OrganizationDepartment();
-      department.tags = [tag];
-      department.name = name;
-      department.organizationId = defaultOrganization.id;
-      department.tenant = defaultOrganization.tenant;
-      departments.push(department);
-    });
-  }
+	for (const defaultOrganization of defaultOrganizations) {
+		organizationDepartmentsArray.forEach((name) => {
+			const department = new OrganizationDepartment();
+			department.tags = [tag];
+			department.name = name;
+			department.organizationId = defaultOrganization.id;
+			department.tenant = defaultOrganization.tenant;
+			departments.push(department);
+		});
+	}
 	return await connection.manager.save(departments);
 };
 

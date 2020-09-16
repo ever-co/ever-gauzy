@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
-import { ProductOption } from '@gauzy/models';
+import { IProductOption } from '@gauzy/models';
 
 export interface OptionCreateInput {
 	name: string;
@@ -12,13 +12,13 @@ export interface OptionCreateInput {
 	styleUrls: ['./options-form.component.scss']
 })
 export class OptionsFormComponent implements OnInit {
-	activeOption: ProductOption;
+	activeOption: IProductOption;
 	activeOptionName: string;
 	optionMode = 'create';
 
-	@Input() options: ProductOption[];
-	@Output() optionsUpdated = new EventEmitter<ProductOption[]>();
-	@Output() optionDeleted = new EventEmitter<ProductOption>();
+	@Input() options: IProductOption[];
+	@Output() optionsUpdated = new EventEmitter<IProductOption[]>();
+	@Output() optionDeleted = new EventEmitter<IProductOption>();
 
 	ngOnInit(): void {
 		this.resetOptionForm();
@@ -45,7 +45,7 @@ export class OptionsFormComponent implements OnInit {
 		this.resetOptionForm();
 	}
 
-	onRemoveOption(optionInput: ProductOption) {
+	onRemoveOption(optionInput: IProductOption) {
 		if (!optionInput) return;
 
 		this.options = this.options.filter(
@@ -56,7 +56,7 @@ export class OptionsFormComponent implements OnInit {
 		this.resetOptionForm();
 	}
 
-	onEditOption(optionTarget: ProductOption) {
+	onEditOption(optionTarget: IProductOption) {
 		if (!optionTarget) return;
 
 		this.optionMode = 'edit';

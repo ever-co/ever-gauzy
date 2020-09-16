@@ -1,11 +1,11 @@
 import { Column, Entity } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
-import { Base } from '../core/entities/base';
-import { Contact as IContact } from '../../../../../libs/models/src/lib/contact.model';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { IContact } from '@gauzy/models';
 
 @Entity('contact')
-export class Contact extends Base implements IContact {
+export class Contact extends TenantOrganizationBase implements IContact {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsOptional()

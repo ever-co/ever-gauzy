@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import {
-	Organization,
-	UserOrganizationCreateInput,
+	IOrganization,
+	IUserOrganizationCreateInput,
 	RolesEnum
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
@@ -27,10 +27,10 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input()
-	organization: Organization;
+	organization: IOrganization;
 
 	form: FormGroup;
-	organizations: Organization[];
+	organizations: IOrganization[];
 	selectedOrganizationsId: string[];
 	routeParams: Params;
 	showAddCard: boolean;
@@ -74,7 +74,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 		this.loadPage();
 	}
 
-	async addOrg(user: UserOrganizationCreateInput) {
+	async addOrg(user: IUserOrganizationCreateInput) {
 		if (user.isActive) {
 			await this.userOrganizationsService
 				.create(user)

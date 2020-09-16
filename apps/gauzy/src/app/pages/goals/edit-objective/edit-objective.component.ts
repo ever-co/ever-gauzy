@@ -2,14 +2,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
-	Employee,
-	Goal,
-	GoalTimeFrame,
+	IEmployee,
+	IGoal,
+	IGoalTimeFrame,
 	GoalLevelEnum,
 	TimeFrameStatusEnum,
 	RolesEnum,
-	OrganizationTeam,
-	GoalGeneralSetting,
+	IOrganizationTeam,
+	IGoalGeneralSetting,
 	GoalOwnershipEnum
 } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
@@ -28,9 +28,9 @@ import { isFuture } from 'date-fns';
 })
 export class EditObjectiveComponent implements OnInit, OnDestroy {
 	objectiveForm: FormGroup;
-	employees: Employee[];
-	data: Goal;
-	timeFrames: GoalTimeFrame[] = [];
+	employees: IEmployee[];
+	data: IGoal;
+	timeFrames: IGoalTimeFrame[] = [];
 	orgId: string;
 	orgName: string;
 	goalLevelEnum = GoalLevelEnum;
@@ -38,8 +38,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	hideTeam = false;
 	hideOrg = false;
 	helperText = '';
-	settings: GoalGeneralSetting;
-	teams: OrganizationTeam[] = [];
+	settings: IGoalGeneralSetting;
+	teams: IOrganizationTeam[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
 
@@ -70,7 +70,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 					? this.data.ownerEmployee.id
 					: !!this.data.ownerTeam
 					? this.data.ownerTeam.id
-					: this.data.ownerOrg.id
+					: this.data.organization.id
 			});
 			if (this.data.level === GoalLevelEnum.TEAM) {
 				this.getTeams();
@@ -153,7 +153,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				? 'ownerEmployee'
 				: this.objectiveForm.value.level === GoalLevelEnum.TEAM
 				? 'ownerTeam'
-				: 'ownerOrg'
+				: 'organization'
 		] = this.objectiveForm.value.owner;
 		delete objectiveData.owner;
 		this.closeDialog(objectiveData);

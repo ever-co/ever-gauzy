@@ -1,22 +1,18 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationProjects, Task } from '@gauzy/models';
-import { Organization } from '../../../../apps/api/src/app/organization/organization.entity';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganizationProject, ITask } from '@gauzy/models';
 
-export interface OrganizationSprint extends IBaseEntityModel {
+export interface IOrganizationSprint
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	projectId: string;
-	organizationId: string;
 	goal?: string;
 	length: number; // Duration of Sprint. Default value - 7 (days)
 	startDate?: Date;
 	endDate?: Date;
 	dayStart?: number; // Enum ((Sunday-Saturday) => (0-7))
-	project?: OrganizationProjects;
+	project?: IOrganizationProject;
 	isActive?: boolean;
-	tasks?: Task[];
-	tenant: ITenant;
-	organization?: Organization;
+	tasks?: ITask[];
 }
 
 export enum SprintStartDayEnum {
@@ -29,14 +25,14 @@ export enum SprintStartDayEnum {
 	SATURDAY = 7
 }
 
-export interface OrganizationSprintUpdateInput {
+export interface IOrganizationSprintUpdateInput {
 	name: string;
 	goal?: string;
 	length: number;
 	startDate?: Date;
 	endDate?: Date;
 	dayStart?: number;
-	project?: OrganizationProjects;
+	project?: IOrganizationProject;
 	isActive?: boolean;
-	tasks?: Task[];
+	tasks?: ITask[];
 }

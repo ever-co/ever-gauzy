@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { EquipmentSharing } from '@gauzy/models';
+import { IEquipmentSharing } from '@gauzy/models';
 
 @Injectable()
 export class EquipmentSharingService {
@@ -9,25 +9,25 @@ export class EquipmentSharingService {
 
 	constructor(private http: HttpClient) {}
 
-	getAll(): Promise<EquipmentSharing[]> {
+	getAll(): Promise<IEquipmentSharing[]> {
 		return this.http
-			.get<EquipmentSharing[]>(`${this.EQUIPMENT_SHARING_URL}`)
+			.get<IEquipmentSharing[]>(`${this.EQUIPMENT_SHARING_URL}`)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getOrganization(id): Promise<EquipmentSharing[]> {
+	getOrganization(id): Promise<IEquipmentSharing[]> {
 		return this.http
-			.get<EquipmentSharing[]>(
+			.get<IEquipmentSharing[]>(
 				`${this.EQUIPMENT_SHARING_URL}/organization/` + id
 			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getEmployee(id): Promise<EquipmentSharing[]> {
+	getEmployee(id): Promise<IEquipmentSharing[]> {
 		return this.http
-			.get<EquipmentSharing[]>(
+			.get<IEquipmentSharing[]>(
 				`${this.EQUIPMENT_SHARING_URL}/employee/` + id
 			)
 			.pipe(first())
@@ -42,11 +42,11 @@ export class EquipmentSharingService {
 	}
 
 	create(
-		equipmentSharing: EquipmentSharing,
+		equipmentSharing: IEquipmentSharing,
 		id: string
-	): Promise<EquipmentSharing> {
+	): Promise<IEquipmentSharing> {
 		return this.http
-			.post<EquipmentSharing>(
+			.post<IEquipmentSharing>(
 				`${this.EQUIPMENT_SHARING_URL}/organization/${id}`,
 				equipmentSharing
 			)
@@ -56,10 +56,10 @@ export class EquipmentSharingService {
 
 	update(
 		id: string,
-		equipmentSharing: EquipmentSharing
-	): Promise<EquipmentSharing> {
+		equipmentSharing: IEquipmentSharing
+	): Promise<IEquipmentSharing> {
 		return this.http
-			.put<EquipmentSharing>(
+			.put<IEquipmentSharing>(
 				`${this.EQUIPMENT_SHARING_URL}/${id}`,
 				equipmentSharing
 			)
@@ -67,9 +67,9 @@ export class EquipmentSharingService {
 			.toPromise();
 	}
 
-	approval(id): Promise<EquipmentSharing> {
+	approval(id): Promise<IEquipmentSharing> {
 		return this.http
-			.put<EquipmentSharing>(
+			.put<IEquipmentSharing>(
 				`${this.EQUIPMENT_SHARING_URL}/approval/${id}`,
 				null
 			)
@@ -77,9 +77,9 @@ export class EquipmentSharingService {
 			.toPromise();
 	}
 
-	refuse(id): Promise<EquipmentSharing> {
+	refuse(id): Promise<IEquipmentSharing> {
 		return this.http
-			.put<EquipmentSharing>(
+			.put<IEquipmentSharing>(
 				`${this.EQUIPMENT_SHARING_URL}/refuse/${id}`,
 				null
 			)

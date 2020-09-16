@@ -20,7 +20,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import {
 	PermissionsEnum,
-	CandidateCreateInput as ICandidateCreateInput,
+	ICandidateCreateInput,
 	LanguagesEnum
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';

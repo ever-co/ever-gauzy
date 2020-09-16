@@ -1,11 +1,14 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationTeam, Employee, Role } from '..';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganizationTeam } from './organization-team-model';
+import { IEmployee } from './employee.model';
+import { IRole } from './role.model';
 
-export interface OrganizationTeamEmployee extends IBaseEntityModel {
+export interface IOrganizationTeamEmployee
+	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: string;
 	employeeId: string;
 	roleId?: string;
-	organizationTeam: OrganizationTeam;
-	employee: Employee;
-	role?: Role;
+	organizationTeam: IOrganizationTeam;
+	employee: IEmployee;
+	role?: IRole;
 }

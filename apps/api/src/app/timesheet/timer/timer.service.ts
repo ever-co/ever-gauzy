@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
-import { TimeLogType, TimerStatus } from '@gauzy/models';
+import { TimeLogType, ITimerStatus } from '@gauzy/models';
 import * as moment from 'moment';
 import { TimeSheetService } from '../timesheet/timesheet.service';
 import { TimeSlotService } from '../time-slot/time-slot.service';
@@ -29,7 +29,7 @@ export class TimerService {
 		private readonly employeeRepository: Repository<Employee>
 	) {}
 
-	async getTimerStatus(): Promise<TimerStatus> {
+	async getTimerStatus(): Promise<ITimerStatus> {
 		const user = RequestContext.currentUser();
 		const employee = await this.employeeRepository.findOne({
 			userId: user.id
@@ -48,7 +48,7 @@ export class TimerService {
 				startedAt: 'DESC'
 			}
 		});
-		const stauts: TimerStatus = {
+		const stauts: ITimerStatus = {
 			duration: 0,
 			running: false,
 			lastLog: null

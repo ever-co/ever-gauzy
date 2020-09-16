@@ -1,5 +1,5 @@
 import {
-	EmployeeCreateInput as IEmployeeCreateInput,
+	IEmployeeCreateInput,
 	PermissionsEnum,
 	LanguagesEnum
 } from '@gauzy/models';

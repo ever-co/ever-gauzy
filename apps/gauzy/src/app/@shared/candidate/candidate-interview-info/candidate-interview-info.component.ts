@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
-import { ICandidateInterview, Candidate } from '@gauzy/models';
+import { ICandidateInterview, ICandidate } from '@gauzy/models';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
@@ -20,7 +20,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	@Input() interviewId: any; //from calendar
 	@Input() interviewList: ICandidateInterview[];
 	@Input() isSlider: boolean;
-	@Input() selectedCandidate: Candidate; //from profile
+	@Input() selectedCandidate: ICandidate; //from profile
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
 	interviewerNames = [];

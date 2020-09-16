@@ -1,4 +1,4 @@
-import { ICandidateDocument, Candidate } from '@gauzy/models';
+import { ICandidateDocument, ICandidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { CandidateDocument } from './candidate-documents.entity';
@@ -7,17 +7,20 @@ const candidateDocumentList: ICandidateDocument[] = [
 	{
 		name: 'Document 1',
 		documentUrl:
-			'http://res.cloudinary.com/evereq/image/upload/v1587742725/everbie-products-images/n07vjqa8pa8dfinkzqdy.pdf'
+			'http://res.cloudinary.com/evereq/image/upload/v1587742725/everbie-products-images/n07vjqa8pa8dfinkzqdy.pdf',
+		tenant: {}
 	},
 	{
 		name: 'Document 2',
 		documentUrl:
-			'http://res.cloudinary.com/evereq/raw/upload/v1587742757/everbie-products-images/wxjghcvuysc3imrx7z2t.docx'
+			'http://res.cloudinary.com/evereq/raw/upload/v1587742757/everbie-products-images/wxjghcvuysc3imrx7z2t.docx',
+		tenant: {}
 	}
 ];
 export const createCandidateDocuments = async (
 	connection: Connection,
-	candidates: Candidate[] | void
+	tenant: Tenant,
+	candidates: ICandidate[] | void
 ): Promise<CandidateDocument[]> => {
 	let defaultCandidateDocuments = [];
 
@@ -32,7 +35,8 @@ export const createCandidateDocuments = async (
 		const documents = candidateDocumentList.map((document) => ({
 			name: document.name,
 			documentUrl: document.documentUrl,
-			candidateId: candidate.id
+			candidateId: candidate.id,
+			tenant: tenant
 		}));
 
 		defaultCandidateDocuments = [
@@ -49,8 +53,8 @@ export const createCandidateDocuments = async (
 export const createRandomCandidateDocuments = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, Candidate[]> | void
-): Promise<Map<Candidate, CandidateDocument[]>> => {
+	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+): Promise<Map<ICandidate, CandidateDocument[]>> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
 			'Warning: tenantCandidatesMap not found, CandidateDocuments will not be created'
@@ -59,7 +63,7 @@ export const createRandomCandidateDocuments = async (
 	}
 
 	let candidateDocuments = [];
-	const candidateDocumentsMap: Map<Candidate, any[]> = new Map();
+	const candidateDocumentsMap: Map<ICandidate, any[]> = new Map();
 
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);
@@ -68,7 +72,8 @@ export const createRandomCandidateDocuments = async (
 			const documents = candidateDocumentList.map((document) => ({
 				name: document.name,
 				documentUrl: document.documentUrl,
-				candidateId: candidate.id
+				candidateId: candidate.id,
+				tenant: tenant
 			}));
 
 			candidateDocumentsMap.set(candidate, documents);

@@ -6,9 +6,9 @@ import {
 	NavigationEnd
 } from '@angular/router';
 import {
-	Income,
+	IIncome,
 	PermissionsEnum,
-	Tag,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -56,11 +56,11 @@ export class IncomeComponent extends TranslationBaseComponent
 	employeeName: string;
 	loading = true;
 	hasEditPermission = false;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	viewComponentName: ComponentEnum;
-	incomes: Income[];
+	incomes: IIncome[];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	selectedIncome: Income;
+	selectedIncome: IIncome;
 	averageIncome = 0;
 	averageBonus = 0;
 
@@ -231,7 +231,7 @@ export class IncomeComponent extends TranslationBaseComponent
 							employeeId: result.employee
 								? result.employee.id
 								: null,
-							orgId: this.store.selectedOrganization.id,
+							organizationId: this.store.selectedOrganization.id,
 							notes: result.notes,
 							currency: result.currency,
 							isBonus: result.isBonus,
@@ -273,7 +273,7 @@ export class IncomeComponent extends TranslationBaseComponent
 		this.disableButton = !isSelected;
 		this.selectedIncome = selectedIncome;
 	}
-	async editIncome(selectedItem?: Income) {
+	async editIncome(selectedItem?: IIncome) {
 		if (selectedItem) {
 			this.selectIncome({
 				isSelected: true,
@@ -327,7 +327,7 @@ export class IncomeComponent extends TranslationBaseComponent
 			});
 	}
 
-	async deleteIncome(selectedItem?: Income) {
+	async deleteIncome(selectedItem?: IIncome) {
 		if (selectedItem) {
 			this.selectIncome({
 				isSelected: true,
@@ -387,7 +387,7 @@ export class IncomeComponent extends TranslationBaseComponent
 			this.smartTableSettings['columns']['employeeName'] = {
 				title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 				type: 'string',
-				valuePrepareFunction: (_, income: Income) => {
+				valuePrepareFunction: (_, income: IIncome) => {
 					const user = income.employee ? income.employee.user : null;
 
 					if (user) {
@@ -410,7 +410,7 @@ export class IncomeComponent extends TranslationBaseComponent
 				findObj,
 				this.selectedDate
 			);
-			const incomeVM: Income[] = items.map((i) => {
+			const incomeVM: IIncome[] = items.map((i) => {
 				return {
 					id: i.id,
 					amount: i.amount,
@@ -418,6 +418,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					clientId: i.clientId,
 					valueDate: i.valueDate,
 					organization: i.organization,
+					organizationId: i.organization.id,
 					employee: i.employee,
 					employeeId: i.employee ? i.employee.id : null,
 					employeeName: i.employee ? i.employee.user.name : null,

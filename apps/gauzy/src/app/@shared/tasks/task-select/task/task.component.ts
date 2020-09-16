@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
-import { Task } from '@gauzy/models';
+import { ITask } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from '../../../../@core/services/tasks.service';
 import { NbDialogService } from '@nebular/theme';
@@ -54,7 +54,7 @@ export class TaskSelectorComponent
 		return this.val;
 	}
 
-	tasks: Task[];
+	tasks: ITask[];
 	val: any;
 	loadTasks$: Subject<any> = new Subject();
 

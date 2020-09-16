@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
-import { Employee, Organization } from '@gauzy/models';
+import { IEmployee, IOrganization } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { Role } from '../role/role.entity';
@@ -9,8 +9,8 @@ import { Role } from '../role/role.entity';
 export const createRandomOrganizationTeamEmployee = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ) => {
 	if (!tenantEmployeeMap) {
 		console.warn(

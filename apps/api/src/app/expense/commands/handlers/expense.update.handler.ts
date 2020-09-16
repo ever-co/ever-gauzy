@@ -3,7 +3,7 @@ import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../../employee-statistics';
 import { ExpenseUpdateCommand } from '../expense.update.command';
-import { Expense } from '@gauzy/models';
+import { IExpense } from '@gauzy/models';
 
 @CommandHandler(ExpenseUpdateCommand)
 export class ExpenseUpdateHandler
@@ -39,8 +39,8 @@ export class ExpenseUpdateHandler
 
 	public async updateExpense(
 		expenseId: string,
-		entity: Expense
-	): Promise<Expense> {
+		entity: IExpense
+	): Promise<IExpense> {
 		const id = expenseId;
 		return this.expenseService.create({
 			id,

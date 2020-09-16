@@ -1,24 +1,20 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee, EmployeeFindInput } from './employee.model';
-import { Organization, OrganizationFindInput } from './organization.model';
-import { Tag } from '..';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IOrganizationFindInput } from './organization.model';
+import { ITag } from './tag-entity.model';
 
-export interface Proposal extends IBaseEntityModel {
+export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	organizationId?: string;
-	employee?: Employee;
-	organization?: Organization;
+	employee?: IEmployee;
 	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: string;
-	tags?: Tag[];
-	tenant: ITenant;
+	tags?: ITag[];
 }
 
-export interface ProposalCreateInput {
+export interface IProposalCreateInput {
 	employeeId?: string;
 	organizationId?: string;
 	jobPostUrl?: string;
@@ -26,20 +22,20 @@ export interface ProposalCreateInput {
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
-export interface ProposalFindInput extends IBaseEntityModel {
+export interface IProposalFindInput {
 	employeeId?: string;
 	organizationId?: string;
-	employee?: EmployeeFindInput;
-	organization?: OrganizationFindInput;
+	employee?: IEmployeeFindInput;
+	organization?: IOrganizationFindInput;
 	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
 export enum ProposalStatusEnum {

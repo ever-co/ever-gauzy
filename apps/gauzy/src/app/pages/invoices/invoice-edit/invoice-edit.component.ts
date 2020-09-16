@@ -4,21 +4,21 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	Invoice,
-	OrganizationContact,
+	IInvoice,
+	IOrganizationContact,
 	CurrenciesEnum,
 	OrganizationSelectInput,
-	InvoiceItem,
-	Organization,
-	Employee,
+	IInvoiceItem,
+	IOrganization,
+	IEmployee,
 	PermissionsEnum,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
-	Tag,
-	Task,
-	OrganizationProjects,
-	Product,
-	Expense,
+	ITag,
+	ITask,
+	IOrganizationProject,
+	IProduct,
+	IExpense,
 	ExpenseTypesEnum
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
@@ -83,23 +83,23 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	formItemNumber: number;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
-	invoice: Invoice;
-	organization: Organization;
+	invoice: IInvoice;
+	organization: IOrganization;
 	itemsToDelete: string[] = [];
-	invoiceItems: InvoiceItem[];
-	selectedOrganizationContact: OrganizationContact;
-	organizationContacts: OrganizationContact[];
-	employees: Employee[];
-	projects: OrganizationProjects[];
-	products: Product[];
+	invoiceItems: IInvoiceItem[];
+	selectedOrganizationContact: IOrganizationContact;
+	organizationContacts: IOrganizationContact[];
+	employees: IEmployee[];
+	projects: IOrganizationProject[];
+	products: IProduct[];
 	currencies = Object.values(CurrenciesEnum);
 	invoiceDate: Date;
 	dueDate: Date;
 	hasInvoiceEditPermission: boolean;
-	tags: Tag[] = [];
-	tasks: Task[];
-	expenses: Expense[] = [];
-	observableTasks: Observable<Task[]>;
+	tags: ITag[] = [];
+	tasks: ITask[];
+	expenses: IExpense[] = [];
+	observableTasks: Observable<ITask[]>;
 	duplicate: boolean;
 	discountAfterTax: boolean;
 	subtotal = 0;
@@ -178,7 +178,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		});
 	}
 
-	seedFormData(invoice: Invoice) {
+	seedFormData(invoice: IInvoice) {
 		this.form.get('invoiceNumber').setValue(invoice.invoiceNumber);
 		this.form.get('invoiceDate').setValue(new Date(invoice.invoiceDate));
 		this.form.get('dueDate').setValue(new Date(invoice.dueDate));
@@ -1029,7 +1029,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		]);
 	}
 
-	selectedTagsEvent(currentTagSelection: Tag[]) {
+	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.tags = currentTagSelection;
 	}
 

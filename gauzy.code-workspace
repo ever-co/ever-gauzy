@@ -13,7 +13,11 @@
 		"search.usePCRE2": true,
 		"git.ignoreLimitWarning": true,
 		"checkpoints.showActiveFileOnly": true,
-		"deepscan.enable": true
+		"deepscan.enable": true,
+		"cSpell.words": [
+			"Upwork",
+			"toastr"
+		]
 	},
 	"launch": {
 		"configurations": [

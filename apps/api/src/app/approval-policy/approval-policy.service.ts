@@ -4,8 +4,8 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository, Not, In } from 'typeorm';
 import {
-	ApprovalPolicy as IApprovalPolicy,
-	ApprovalPolicyCreateInput as IApprovalPolicyCreateInput,
+	IApprovalPolicy,
+	IApprovalPolicyCreateInput,
 	ApprovalPolicyTypesStringEnum
 } from '@gauzy/models';
 
@@ -68,7 +68,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
-			approvalPolicy.tenantId = entity.tenantId;
+			approvalPolicy.tenant = entity.tenant;
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
@@ -89,7 +89,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			);
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
-			approvalPolicy.tenantId = entity.tenantId;
+			approvalPolicy.tenant = entity.tenant;
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()

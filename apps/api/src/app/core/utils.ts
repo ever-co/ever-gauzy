@@ -1,5 +1,5 @@
 import { sample } from 'lodash';
-import { User as IUser } from '@gauzy/models';
+import { IUser } from '@gauzy/models';
 import * as moment from 'moment';
 
 namespace Utils {

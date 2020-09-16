@@ -1,6 +1,6 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface InvoiceItem extends IBaseEntityModel {
+export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	description: string;
 	price: number;
@@ -16,6 +16,6 @@ export interface InvoiceItem extends IBaseEntityModel {
 	applyDiscount?: boolean;
 }
 
-export interface InvoiceItemFindInput {
+export interface IInvoiceItemFindInput {
 	invoiceId?: string;
 }

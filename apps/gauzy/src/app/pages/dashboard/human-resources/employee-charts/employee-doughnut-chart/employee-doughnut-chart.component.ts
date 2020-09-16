@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
 import { TranslateService } from '@ngx-translate/core';
-import { MonthAggregatedEmployeeStatistics } from '@gauzy/models';
+import { IMonthAggregatedEmployeeStatistics } from '@gauzy/models';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 @Component({
@@ -43,7 +43,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 	noData = false;
 
 	@Input()
-	employeeStatistics: MonthAggregatedEmployeeStatistics[];
+	employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 
 	constructor(
 		private themeService: NbThemeService,
@@ -142,7 +142,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 					tooltips: {
 						enabled: true,
 						callbacks: {
-							label: function(tooltipItem, data) {
+							label: function (tooltipItem, data) {
 								return data.labels[tooltipItem.index] || '';
 							}
 						}

@@ -1,27 +1,25 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee, EmployeeFindInput } from './employee.model';
-import { OrganizationFindInput, Organization } from './organization.model';
-import { OrganizationProjects } from './organization-projects.model';
-import { Task } from './task-entity.model';
-import { OrganizationTeam } from './organization-team-model';
-import { KPI } from './goal-settings.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IOrganizationFindInput } from './organization.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { ITask } from './task-entity.model';
+import { IOrganizationTeam } from './organization-team-model';
+import { IKPI } from './goal-settings.model';
 
-export interface Goal extends IBaseEntityModel {
+export interface IGoal extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description?: string;
-	ownerOrg?: Organization;
-	ownerTeam?: OrganizationTeam;
-	ownerEmployee?: Employee;
-	lead?: Employee;
+	ownerTeam?: IOrganizationTeam;
+	ownerEmployee?: IEmployee;
+	lead?: IEmployee;
 	deadline: string;
 	level: string;
 	progress: number;
-	organizationId: string;
-	keyResults?: Array<KeyResult>;
-	alignedKeyResult?: KeyResult;
+	keyResults?: Array<IKeyResult>;
+	alignedKeyResult?: IKeyResult;
 }
 
-export interface KeyResult extends IBaseEntityModel {
+export interface IKeyResult extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	name: string;
 	description?: string;
@@ -31,25 +29,26 @@ export interface KeyResult extends IBaseEntityModel {
 	initialValue?: number;
 	update: number;
 	progress: number;
-	owner: Employee;
-	lead?: Employee;
+	owner: IEmployee;
+	lead?: IEmployee;
 	deadline: string;
 	hardDeadline?: Date;
 	softDeadline?: Date;
 	status?: string;
 	weight?: string;
 	goalId?: string;
-	goal?: Goal;
-	project?: OrganizationProjects;
+	goal?: IGoal;
+	project?: IOrganizationProject;
 	projectId?: string;
-	task?: Task;
+	task?: ITask;
 	taskId?: string;
-	updates?: Array<KeyResultUpdates>;
-	kpi?: KPI;
+	updates?: Array<IKeyResultUpdate>;
+	kpi?: IKPI;
 	kpiId?: string;
 }
 
-export interface KeyResultUpdates extends IBaseEntityModel {
+export interface IKeyResultUpdate
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	keyResultId?: string;
 	owner: string;
@@ -72,9 +71,9 @@ export enum KeyResultWeightEnum {
 	INCREASE_BY_4X = '4'
 }
 
-export interface GoalFindInput extends IBaseEntityModel {
-	employee?: EmployeeFindInput;
-	organization?: OrganizationFindInput;
+export interface IGoalFindInput {
+	employee?: IEmployeeFindInput;
+	organization?: IOrganizationFindInput;
 }
 
 export enum KeyResultTypeEnum {

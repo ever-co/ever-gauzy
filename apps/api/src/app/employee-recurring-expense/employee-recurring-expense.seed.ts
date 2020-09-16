@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import {
 	CurrenciesEnum,
-	Employee,
+	IEmployee,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
@@ -12,7 +12,7 @@ import * as moment from 'moment';
 export const createRandomEmployeeRecurringExpense = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>
 ): Promise<EmployeeRecurringExpense[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(

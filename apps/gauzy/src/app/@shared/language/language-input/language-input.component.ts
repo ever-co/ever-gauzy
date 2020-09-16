@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { LanguagesService } from '../../../@core/services/languages.service';
-import { Language } from '@gauzy/models';
+import { ILanguage } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-language-input',
@@ -8,23 +8,23 @@ import { Language } from '@gauzy/models';
 	styleUrls: ['./language-input.component.scss']
 })
 export class LanguageInputComponent implements OnInit {
-	languages: Language[];
+	languages: ILanguage[];
 	loading = false;
 
 	@Input('selectedLanguage')
-	selectedLanguage: Language;
+	selectedLanguage: ILanguage;
 
 	@Output()
-	selectedLanguageEvent = new EventEmitter<Language>();
+	selectedLanguageEvent = new EventEmitter<ILanguage>();
 
 	constructor(private readonly languagesService: LanguagesService) {}
 
-	async onChange(currentSelection: Language) {
+	async onChange(currentSelection: ILanguage) {
 		this.selectedLanguageEvent.emit(currentSelection);
 	}
 
 	addLanguage = async (languageName: string) => {
-		const newLanguage: Language = {
+		const newLanguage: ILanguage = {
 			name: languageName,
 			color: '#' + Math.floor(Math.random() * 16777215).toString(16),
 			description: ''

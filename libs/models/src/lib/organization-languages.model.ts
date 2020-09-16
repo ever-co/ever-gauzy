@@ -1,31 +1,30 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import {
-	Language,
-	LanguageFindInput,
-	Organization,
-	OrganizationFindInput
+	ILanguage,
+	ILanguageFindInput,
+	IOrganization,
+	IOrganizationFindInput
 } from '@gauzy/models';
 
-export interface OrganizationLanguages extends IBaseEntityModel {
-	organization: Organization;
-	organizationId: string;
-	language: Language;
+export interface IOrganizationLanguages
+	extends IBasePerTenantAndOrganizationEntityModel {
+	language: ILanguage;
 	languageId: string;
 	level: string;
 	name: string;
 }
 
-export interface OrganizationLanguagesFindInput extends IBaseEntityModel {
-	language?: LanguageFindInput;
-	organization?: OrganizationFindInput;
+export interface IOrganizationLanguagesFindInput {
+	language?: ILanguageFindInput;
+	organization?: IOrganizationFindInput;
 	organizationId?: string;
 	level?: string;
 	name?: string;
 }
 
-export interface OrganizationLanguagesCreateInput {
-	language: Language;
-	organization: Organization;
+export interface IOrganizationLanguagesCreateInput {
+	language: ILanguage;
+	organization: IOrganization;
 	level: string;
 	name: string;
 }

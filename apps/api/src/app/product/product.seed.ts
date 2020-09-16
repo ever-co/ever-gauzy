@@ -3,13 +3,13 @@ import { Product } from './product.entity';
 import { ProductType } from '../product-type/product-type.entity';
 import { ProductCategory } from '../product-category/product-category.entity';
 import * as faker from 'faker';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 
 export const createDefaultProducts = async (
 	connection: Connection,
 	tenant: Tenant,
-	organizations?: Organization[]
+	organizations?: IOrganization[]
 ) => {
 	const productTypes = await connection.manager.find(ProductType);
 	const productCategories = await connection.manager.find(ProductCategory);
@@ -44,7 +44,7 @@ const insertProduct = async (
 export const createRandomProduct = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<Product[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

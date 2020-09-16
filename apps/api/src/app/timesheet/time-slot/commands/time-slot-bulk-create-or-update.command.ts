@@ -1,8 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import { TimeSlot } from '@gauzy/models';
+import { ITimeSlot } from '@gauzy/models';
 
 export class TimeSlotBulkCreateOrUpdateCommand implements ICommand {
 	static readonly type = '[TimeSlot] bulk create / update';
 
-	constructor(public readonly slots: TimeSlot[]) {}
+	constructor(public readonly slots: ITimeSlot[]) {}
 }

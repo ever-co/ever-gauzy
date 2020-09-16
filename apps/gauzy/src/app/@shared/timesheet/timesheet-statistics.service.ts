@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	GetTimeSlotStatistics,
-	GetActivitiesStatistics,
-	GetProjectsStatistics,
-	GetMembersStatistics,
-	GetTasksStatistics,
-	GetCountsStatistics,
-	CountsStatistics,
-	MembersStatistics,
-	ActivitiesStatistics,
-	TimeSlotStatistics,
-	ProjectsStatistics,
-	TasksStatistics,
-	ManualTimesStatistics
+	IGetTimeSlotStatistics,
+	IGetActivitiesStatistics,
+	IGetProjectsStatistics,
+	IGetMembersStatistics,
+	IGetTasksStatistics,
+	IGetCountsStatistics,
+	ICountsStatistics,
+	IMembersStatistics,
+	IActivitiesStatistics,
+	ITimeSlotStatistics,
+	IProjectsStatistics,
+	ITasksStatistics,
+	IManualTimesStatistics
 } from '@gauzy/models';
 import { toParams } from 'libs/utils';
 
@@ -23,38 +23,41 @@ import { toParams } from 'libs/utils';
 export class TimesheetStatisticsService {
 	constructor(private http: HttpClient) {}
 
-	getCounts(request: GetCountsStatistics) {
+	getCounts(request: IGetCountsStatistics) {
 		const params = toParams(request);
 		return this.http
-			.get<CountsStatistics>('/api/timesheet/statistics/counts', {
+			.get<ICountsStatistics>('/api/timesheet/statistics/counts', {
 				params
 			})
 			.toPromise();
 	}
 
-	getTimeSlots(request?: GetTimeSlotStatistics) {
+	getTimeSlots(request?: IGetTimeSlotStatistics) {
 		const params = toParams(request);
 		return this.http
-			.get<TimeSlotStatistics[]>('/api/timesheet/statistics/time-slots', {
-				params
-			})
+			.get<ITimeSlotStatistics[]>(
+				'/api/timesheet/statistics/time-slots',
+				{
+					params
+				}
+			)
 			.toPromise();
 	}
 
-	getActivities(request?: GetActivitiesStatistics) {
+	getActivities(request?: IGetActivitiesStatistics) {
 		const params = toParams(request);
 		return this.http
-			.get<ActivitiesStatistics[]>(
+			.get<IActivitiesStatistics[]>(
 				'/api/timesheet/statistics/activities',
 				{ params }
 			)
 			.toPromise();
 	}
 
-	getTasks(request: GetTasksStatistics) {
+	getTasks(request: IGetTasksStatistics) {
 		const params = toParams(request);
 		return this.http
-			.get<TasksStatistics[]>('/api/timesheet/statistics/tasks', {
+			.get<ITasksStatistics[]>('/api/timesheet/statistics/tasks', {
 				params
 			})
 			.toPromise();
@@ -63,26 +66,26 @@ export class TimesheetStatisticsService {
 	getManualTimes(request: any) {
 		const params = toParams(request);
 		return this.http
-			.get<ManualTimesStatistics[]>(
+			.get<IManualTimesStatistics[]>(
 				'/api/timesheet/statistics/manual-times',
 				{ params }
 			)
 			.toPromise();
 	}
 
-	getProjects(request?: GetProjectsStatistics) {
+	getProjects(request?: IGetProjectsStatistics) {
 		const params = toParams(request);
 		return this.http
-			.get<ProjectsStatistics[]>('/api/timesheet/statistics/projects', {
+			.get<IProjectsStatistics[]>('/api/timesheet/statistics/projects', {
 				params
 			})
 			.toPromise();
 	}
 
-	getMembers(request: GetMembersStatistics) {
+	getMembers(request: IGetMembersStatistics) {
 		const params = toParams(request);
 		return this.http
-			.get<MembersStatistics[]>('/api/timesheet/statistics/members', {
+			.get<IMembersStatistics[]>('/api/timesheet/statistics/members', {
 				params
 			})
 			.toPromise();

@@ -1,9 +1,9 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Base } from '../core/entities/base';
 import { IsString } from 'class-validator';
 import { ICandidateCriterionsRating } from '@gauzy/models';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
+import { Base } from '../core/entities/base';
 
 @Entity('candidate_criterion_rating')
 export class CandidateCriterionsRating extends Base

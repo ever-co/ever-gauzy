@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {
 	RecurringExpenseDefaultCategoriesEnum,
 	EmployeeStatisticsHistoryEnum as HistoryType,
-	EmployeeStatisticsHistory
+	IEmployeeStatisticsHistory
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -18,7 +18,7 @@ import { IncomeExpenseAmountComponent } from '../../table-components/income-amou
 export class RecordsHistoryComponent extends TranslationBaseComponent
 	implements OnInit {
 	type: HistoryType;
-	recordsData: EmployeeStatisticsHistory[];
+	recordsData: IEmployeeStatisticsHistory[];
 	smartTableSource = new LocalDataSource();
 	translatedType: string;
 

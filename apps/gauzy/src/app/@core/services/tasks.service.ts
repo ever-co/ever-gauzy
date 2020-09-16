@@ -2,14 +2,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbToastrService } from '@nebular/theme';
 import { Observable, throwError } from 'rxjs';
-import { Task, GetTaskOptions, GetTaskByEmployeeOptions } from '@gauzy/models';
+import {
+	ITask,
+	IGetTaskOptions,
+	IGetTaskByEmployeeOptions
+} from '@gauzy/models';
 import { tap, catchError, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { toParams } from 'libs/utils';
 
 interface ITaskResponse {
-	items: Task[];
+	items: ITask[];
 	count: number;
 }
 
@@ -27,7 +31,7 @@ export class TasksService extends TranslationBaseComponent {
 		super(translateService);
 	}
 
-	getAllTasks(findInput: GetTaskOptions = {}): Observable<ITaskResponse> {
+	getAllTasks(findInput: IGetTaskOptions = {}): Observable<ITaskResponse> {
 		const data = JSON.stringify({
 			relations: [
 				'project',
@@ -47,10 +51,10 @@ export class TasksService extends TranslationBaseComponent {
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
-	getAllTasksByEmployee(id, findInput: GetTaskByEmployeeOptions = {}) {
+	getAllTasksByEmployee(id, findInput: IGetTaskByEmployeeOptions = {}) {
 		const data = toParams(findInput);
 		return this._http
-			.get<Task[]>(`${this.API_URL}/employee/${id}`, {
+			.get<ITask[]>(`${this.API_URL}/employee/${id}`, {
 				params: data
 			})
 			.pipe(catchError((error) => this.errorHandler(error)))
@@ -64,7 +68,7 @@ export class TasksService extends TranslationBaseComponent {
 	}
 
 	getTeamTasks(
-		findInput: GetTaskOptions = {},
+		findInput: IGetTaskOptions = {},
 		employeeId = ''
 	): Observable<ITaskResponse> {
 		const data = JSON.stringify({
@@ -81,13 +85,13 @@ export class TasksService extends TranslationBaseComponent {
 
 	getById(id: string) {
 		return this._http
-			.get<Task>(`${this.API_URL}/${id}`)
+			.get<ITask>(`${this.API_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
-	createTask(task): Observable<Task> {
-		return this._http.post<Task>(this.API_URL, task).pipe(
+	createTask(task): Observable<ITask> {
+		return this._http.post<ITask>(this.API_URL, task).pipe(
 			tap(() =>
 				this.toastrService.primary(
 					this.getTranslation('TASKS_PAGE.TASK_ADDED'),
@@ -98,8 +102,8 @@ export class TasksService extends TranslationBaseComponent {
 		);
 	}
 
-	editTask(task: Task): Observable<Task> {
-		return this._http.put<Task>(`${this.API_URL}/${task.id}`, task).pipe(
+	editTask(task: ITask): Observable<ITask> {
+		return this._http.put<ITask>(`${this.API_URL}/${task.id}`, task).pipe(
 			tap(() =>
 				this.toastrService.primary(
 					this.getTranslation('TASKS_PAGE.TASK_UPDATED'),

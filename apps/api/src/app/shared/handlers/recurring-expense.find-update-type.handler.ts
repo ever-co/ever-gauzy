@@ -1,7 +1,7 @@
 import {
 	IFindStartDateUpdateTypeInput,
 	IStartUpdateTypeInfo,
-	RecurringExpenseModel,
+	IRecurringExpenseModel,
 	StartDateUpdateTypeEnum
 } from '@gauzy/models';
 import { Between, Not } from 'typeorm';
@@ -22,7 +22,7 @@ import { CrudService, getLastDayOfMonth } from '../../core';
  * *safe: An expense update is 'safe' when there is no other expense with the same parentRecurringExpenseId for the new start date.
  */
 export abstract class FindRecurringExpenseStartDateUpdateTypeHandler<
-	T extends RecurringExpenseModel
+	T extends IRecurringExpenseModel
 > {
 	constructor(private readonly crudService: CrudService<T>) {}
 

@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import * as moment from 'moment';
-import { OrganizationSprint } from '@gauzy/models';
+import { IOrganizationSprint } from '@gauzy/models';
 
 const DEFAULTS = {
 	name: 'Sprint',
@@ -15,7 +15,7 @@ const DEFAULTS = {
 })
 export class SprintDialogComponent implements OnInit {
 	@Input() action: 'create' | 'edit';
-	@Input() sprintData?: OrganizationSprint;
+	@Input() sprintData?: IOrganizationSprint;
 	@Input() dialogRef?: any;
 	@Input() options?: any = {
 		sprintIndex: 0

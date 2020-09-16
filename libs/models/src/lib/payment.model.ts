@@ -1,41 +1,36 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization } from './organization.model';
-import { Invoice } from './invoice.model';
-import { ITenant } from './tenant.model';
-import { Tag } from '..';
-import { User } from './user.model';
-import { OrganizationContact } from './organization-contact.model';
-import { OrganizationProjects } from './organization-projects.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IInvoice } from './invoice.model';
+import { ITag } from './tag-entity.model';
+import { IUser } from './user.model';
+import { IOrganizationContact } from './organization-contact.model';
+import { IOrganizationProject } from './organization-projects.model';
 
-export interface Payment extends IBaseEntityModel {
-	invoice?: Invoice;
+export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
+	invoice?: IInvoice;
 	invoiceId?: string;
-	organization?: Organization;
-	organizationId?: string;
-	tenant?: ITenant;
-	tags?: Tag[];
+	tags?: ITag[];
 	note?: string;
-	recordedBy?: User;
+	recordedBy?: IUser;
 	userId?: string;
 	paymentDate?: Date;
 	amount?: number;
 	currency?: string;
 	overdue?: boolean;
 	paymentMethod?: string;
-	contact?: OrganizationContact;
+	contact?: IOrganizationContact;
 	contactId?: string;
-	project?: OrganizationProjects;
+	project?: IOrganizationProject;
 	projectId?: string;
 }
 
-export interface PaymentUpdateInput {
+export interface IPaymentUpdateInput {
 	amount?: number;
 	note?: string;
 	currency?: string;
 	paymentDate?: Date;
 }
 
-export interface PaymentFindInput {
+export interface IPaymentFindInput {
 	invoiceId?: string;
 	organizationId?: string;
 }

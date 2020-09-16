@@ -1,34 +1,39 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationProjects, Tag, InvoiceItem, OrganizationSprint } from '..';
-import { Employee } from './employee.model';
-import { OrganizationTeam } from './organization-team-model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import {
+	IOrganizationProject,
+	ITag,
+	IInvoiceItem,
+	IOrganizationSprint
+} from '..';
+import { IEmployee } from './employee.model';
+import { IOrganizationTeam } from './organization-team-model';
 
-export interface Task extends IBaseEntityModel {
+export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	description?: string;
 	status?: string;
 	dueDate?: Date;
 	estimate?: number;
-	project?: OrganizationProjects;
+	project?: IOrganizationProject;
 	projectId?: string;
-	tags?: Tag[];
-	members?: Employee[];
-	invoiceItems?: InvoiceItem[];
-	teams?: OrganizationTeam[];
-	organizationSprint?: OrganizationSprint;
+	tags?: ITag[];
+	members?: IEmployee[];
+	invoiceItems?: IInvoiceItem[];
+	teams?: IOrganizationTeam[];
+	organizationSprint?: IOrganizationSprint;
 	organizationSprintId?: string;
 }
 
-export interface GetTaskOptions {
+export interface IGetTaskOptions {
 	projectId?: string;
 	organizationId?: string;
 }
-export interface GetTaskByEmployeeOptions {
+export interface IGetTaskByEmployeeOptions {
 	relations?: string[];
-	where?: GetTaskOptions;
+	where?: IGetTaskOptions;
 }
 
-export interface GetSprintsOptions {
+export interface IGetSprintsOptions {
 	projectId?: string;
 	organizationId?: string;
 }
@@ -40,7 +45,7 @@ export enum TaskStatusEnum {
 	COMPLETED = 'Completed'
 }
 
-export interface ITaskCreateInput extends Task {
+export interface ITaskCreateInput extends ITask {
 	creatorId?: string;
 }
 export interface ITaskUpdateInput extends ITaskCreateInput {

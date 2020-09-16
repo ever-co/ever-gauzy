@@ -7,7 +7,7 @@ import {
 	OneToMany
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Timesheet as ITimesheet, TimesheetStatus } from '@gauzy/models';
+import { ITimesheet, TimesheetStatus } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,

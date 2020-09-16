@@ -15,9 +15,9 @@ import { Permissions } from '../shared/decorators/permissions';
 import { CrudController } from '../core/crud/crud.controller';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import {
-	TimeOffPolicyCreateInput as ITimeOffPolicyCreateInput,
-	TimeOffPolicyUpdateInput as ITimeOffPolicyUpdateInput,
-	TimeOffPolicy as ITimeOffPolicy,
+	ITimeOffPolicyCreateInput,
+	ITimeOffPolicyUpdateInput,
+	ITimeOffPolicy,
 	PermissionsEnum
 } from '@gauzy/models';
 import { IPagination } from '../core';

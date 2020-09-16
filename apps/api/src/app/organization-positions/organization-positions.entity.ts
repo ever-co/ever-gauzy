@@ -9,13 +9,13 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { OrganizationPositions as IOrganizationPositions } from '@gauzy/models';
+import { IOrganizationPosition } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Organization } from '../organization/organization.entity';
 
 @Entity('organization_position')
 export class OrganizationPositions extends Base
-	implements IOrganizationPositions {
+	implements IOrganizationPosition {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationPosition)
 	@JoinTable({

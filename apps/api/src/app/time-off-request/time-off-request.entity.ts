@@ -7,7 +7,7 @@ import {
 	ManyToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { TimeOff as ITimeOffRequest, StatusTypesEnum } from '@gauzy/models';
+import { ITimeOff as ITimeOffRequest, StatusTypesEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,

@@ -2,8 +2,8 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
-	ProductCategoryTranslatable,
-	ProductCategoryTranslation,
+	IProductCategoryTranslatable,
+	IProductCategoryTranslation,
 	LanguagesEnum
 } from '@gauzy/models';
 
@@ -25,7 +25,7 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 	private ngDestroy$ = new Subject<void>();
 
 	form: FormGroup;
-	@Input() productCategory: ProductCategoryTranslatable;
+	@Input() productCategory: IProductCategoryTranslatable;
 	selectedLanguage: string;
 
 	hoverState: boolean;
@@ -34,10 +34,10 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 
 	languages: Array<object>;
 	translations = [];
-	activeTranslation: ProductCategoryTranslation;
+	activeTranslation: IProductCategoryTranslation;
 
 	constructor(
-		public dialogRef: NbDialogRef<ProductCategoryTranslatable>,
+		public dialogRef: NbDialogRef<IProductCategoryTranslatable>,
 		readonly translationService: TranslateService,
 		private fb: FormBuilder,
 		private productCategoryService: ProductCategoryService,
@@ -56,14 +56,12 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 		this.setActiveTranslation();
 
 		this._initializeForm();
-		this.languages = this.translateService
-			.getLangs()
-			.map((l) => ({
-				code: l,
-				title: Object.keys(LanguagesEnum).find(
-					(lang) => LanguagesEnum[lang] === l
-				)
-			}));
+		this.languages = this.translateService.getLangs().map((l) => ({
+			code: l,
+			title: Object.keys(LanguagesEnum).find(
+				(lang) => LanguagesEnum[lang] === l
+			)
+		}));
 		this.form.valueChanges
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((formValue) => {
@@ -78,7 +76,7 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 			translations: this.translations
 		};
 
-		let productCategory: ProductCategoryTranslatable;
+		let productCategory: IProductCategoryTranslatable;
 
 		if (!this.productCategory) {
 			productCategory = await this.productCategoryService.create(
@@ -94,7 +92,7 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 		this.closeDialog(productCategory);
 	}
 
-	async closeDialog(productCategory?: ProductCategoryTranslatable) {
+	async closeDialog(productCategory?: IProductCategoryTranslatable) {
 		this.dialogRef.close(productCategory);
 	}
 

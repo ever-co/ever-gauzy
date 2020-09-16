@@ -10,40 +10,28 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsDate } from 'class-validator';
-import { Proposal as IProposal } from '@gauzy/models';
+import { IProposal, IEmployee, ITag } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('proposal')
-export class Proposal extends TenantBase implements IProposal {
+export class Proposal extends TenantOrganizationBase implements IProposal {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.proposal)
 	@JoinTable({ name: 'tag_proposal' })
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	employee: Employee;
+	employee: IEmployee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((proposal: Proposal) => proposal.employee)
 	@IsString()
 	@Column({ nullable: true })
 	readonly employeeId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((proposal: Proposal) => proposal.organization)
-	@IsString()
-	@Column({ nullable: true })
-	readonly organizationId?: string;
 
 	@ApiProperty({ type: String })
 	@Index()

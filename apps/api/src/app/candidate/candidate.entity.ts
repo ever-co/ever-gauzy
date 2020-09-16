@@ -3,14 +3,19 @@ import { ICandidateSource } from './../../../../../libs/models/src/lib/candidate
 import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import {
-	Candidate as ICandidate,
+	ICandidate,
 	PayPeriodEnum,
-	IEducation,
-	IExperience,
-	ISkill,
+	ICandidateEducation,
+	ICandidateExperience,
 	ICandidateFeedback,
 	ICandidateDocument,
-	CandidateStatus
+	CandidateStatus,
+	ICandidateSkill,
+	IOrganizationPosition,
+	IOrganizationEmploymentType,
+	IOrganizationDepartment,
+	IContact,
+	ITag
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
@@ -30,27 +35,26 @@ import { OrganizationEmploymentType } from '../organization-employment-type/orga
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
-import { Organization } from '../organization/organization.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { Contact } from '../contact/contact.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate')
-export class Candidate extends TenantBase implements ICandidate {
+export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@ManyToMany((type) => Tag, (tag) => tag.candidate)
 	@JoinTable({
 		name: 'tag_candidate'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
 	@JoinColumn()
-	contact: Contact;
+	contact: IContact;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.contact)
@@ -61,7 +65,7 @@ export class Candidate extends TenantBase implements ICandidate {
 		(candidateEducation) => candidateEducation.candidate
 	)
 	@JoinColumn()
-	educations: IEducation[];
+	educations: ICandidateEducation[];
 
 	@OneToMany(
 		(type) => CandidateInterview,
@@ -75,14 +79,14 @@ export class Candidate extends TenantBase implements ICandidate {
 		(candidateExperience) => candidateExperience.candidate
 	)
 	@JoinColumn()
-	experience: IExperience[];
+	experience: ICandidateExperience[];
 
 	@OneToMany(
 		(type) => CandidateSkill,
 		(candidateSkill) => candidateSkill.candidate
 	)
 	@JoinColumn()
-	skills: ISkill[];
+	skills: ICandidateSkill[];
 
 	@ApiProperty({ type: CandidateSource })
 	@OneToOne((type) => CandidateSource, {
@@ -128,20 +132,11 @@ export class Candidate extends TenantBase implements ICandidate {
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
 	@JoinColumn()
-	organizationPosition?: OrganizationPositions;
+	organizationPosition?: IOrganizationPosition;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.organizationPosition)
 	readonly organizationPositionId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: false })
-	@RelationId((candidate: Candidate) => candidate.organization)
-	orgId: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -178,14 +173,14 @@ export class Candidate extends TenantBase implements ICandidate {
 		(organizationDepartment) => organizationDepartment.members,
 		{ cascade: true }
 	)
-	organizationDepartments?: OrganizationDepartment[];
+	organizationDepartments?: IOrganizationDepartment[];
 
 	@ManyToMany(
 		(type) => OrganizationEmploymentType,
 		(organizationEmploymentType) => organizationEmploymentType.members,
 		{ cascade: true }
 	)
-	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()

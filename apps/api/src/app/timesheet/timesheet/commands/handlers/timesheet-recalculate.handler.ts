@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TimeSheetService } from '../../timesheet.service';
-import { Timesheet } from '@gauzy/models';
+import { ITimesheet } from '@gauzy/models';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TimeSlot } from '../../../time-slot.entity';
 import { Between, Repository } from 'typeorm';
@@ -17,7 +17,7 @@ export class TimesheetRecalculateHandler
 
 	public async execute(
 		command: TimesheetRecalculateCommand
-	): Promise<Timesheet> {
+	): Promise<ITimesheet> {
 		const { id } = command;
 
 		const timesheet = await this.timesheetService.findOne(id);

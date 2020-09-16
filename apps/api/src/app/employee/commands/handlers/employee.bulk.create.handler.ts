@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../employee.service';
-import { Employee, EmployeeCreateInput, LanguagesEnum } from '@gauzy/models';
+import { IEmployee, IEmployeeCreateInput, LanguagesEnum } from '@gauzy/models';
 import { EmployeeBulkCreateCommand } from '../employee.bulk.create.command';
 import { AuthService } from '../../../auth/auth.service';
 import { EmailService } from '../../../email';
@@ -18,7 +18,7 @@ export class EmployeeBulkCreateHandler
 
 	public async execute(
 		command: EmployeeBulkCreateCommand
-	): Promise<Employee[]> {
+	): Promise<IEmployee[]> {
 		const { input, languageCode } = command;
 		const inputWithHash = await this._loadPasswordHash(input);
 
@@ -29,7 +29,7 @@ export class EmployeeBulkCreateHandler
 		const usersWithOrganizations = createdEmployees.map((employee) =>
 			this.userOrganizationService.addUserToOrganization(
 				employee.user,
-				employee.orgId
+				employee.organizationId
 			)
 		);
 
@@ -41,7 +41,7 @@ export class EmployeeBulkCreateHandler
 	}
 
 	private _sendWelcomeEmail(
-		employees: Employee[],
+		employees: IEmployee[],
 		languageCode: LanguagesEnum
 	) {
 		employees.forEach((employee) =>
@@ -53,7 +53,7 @@ export class EmployeeBulkCreateHandler
 		);
 	}
 
-	private async _loadPasswordHash(input: EmployeeCreateInput[]) {
+	private async _loadPasswordHash(input: IEmployeeCreateInput[]) {
 		const mappedInput = input.map(async (entity) => {
 			entity.user.hash = await this.authService.getPasswordHash(
 				entity.password

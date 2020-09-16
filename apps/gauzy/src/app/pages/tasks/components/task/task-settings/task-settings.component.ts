@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Task, OrganizationProjects, TaskListTypeEnum } from '@gauzy/models';
+import { ITask, IOrganizationProject, TaskListTypeEnum } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { map, tap, switchMap, take } from 'rxjs/operators';
 import { TasksStoreService } from '../../../../../@core/services/tasks-store.service';
@@ -11,9 +11,9 @@ import { ActivatedRoute } from '@angular/router';
 	styleUrls: ['./task-settings.component.scss']
 })
 export class TaskSettingsComponent {
-	tasks$: Observable<Task[]>;
-	projects$: Observable<OrganizationProjects[]>;
-	project$: Observable<OrganizationProjects>;
+	tasks$: Observable<ITask[]>;
+	projects$: Observable<IOrganizationProject[]>;
+	project$: Observable<IOrganizationProject>;
 
 	constructor(
 		private _store: TasksStoreService,
@@ -24,9 +24,9 @@ export class TaskSettingsComponent {
 		this.project$ = this.route.params.pipe(
 			switchMap(({ id: currentProjectId }: { id: string }) =>
 				this.tasks$.pipe(
-					map((tasks: Task[]) => {
+					map((tasks: ITask[]) => {
 						const projectTasks = tasks.filter(
-							({ projectId }: Task) =>
+							({ projectId }: ITask) =>
 								projectId === currentProjectId
 						);
 						if (projectTasks.length > 0) {
@@ -45,7 +45,7 @@ export class TaskSettingsComponent {
 	changeProject(evt: TaskListTypeEnum): void {
 		this.project$
 			.pipe(
-				tap(({ id }: OrganizationProjects) => {
+				tap(({ id }: IOrganizationProject) => {
 					this._store.updateTasksViewMode(id, evt);
 				}),
 				take(1)

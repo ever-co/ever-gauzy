@@ -10,7 +10,14 @@ import {
 	ManyToMany
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { TimeSlot as ITimeSlot } from '@gauzy/models';
+import {
+	ITimeSlot,
+	ITimeSlotMinute,
+	IActivity,
+	IScreenshot,
+	IEmployee,
+	ITimeLog
+} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
@@ -26,7 +33,7 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeSlot: TimeSlot) => timeSlot.employee)
@@ -36,12 +43,12 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@ApiProperty({ type: Screenshot })
 	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
 	@JoinColumn()
-	screenshots?: Screenshot[];
+	screenshots?: IScreenshot[];
 
 	@ApiProperty({ type: Activity })
 	@OneToMany(() => Activity, (activites) => activites.timeSlot)
 	@JoinColumn()
-	activites?: Activity[];
+	activities?: IActivity[];
 
 	@ApiProperty({ type: TimeSlotMinute })
 	@OneToMany(
@@ -49,10 +56,10 @@ export class TimeSlot extends Base implements ITimeSlot {
 		(timeSlotMinute) => timeSlotMinute.timeSlot
 	)
 	@JoinColumn()
-	timeSlotMinutes?: TimeSlotMinute[];
+	timeSlotMinutes?: ITimeSlotMinute[];
 
 	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots)
-	timeLogs?: TimeLog[];
+	timeLogs?: ITimeLog[];
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

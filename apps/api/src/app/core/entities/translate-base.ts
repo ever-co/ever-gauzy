@@ -1,8 +1,5 @@
 import { Base } from './base';
-import {
-	Translation as ITranslation,
-	Translatable as ITranslatable
-} from '@gauzy/models';
+import { ITranslation, ITranslatable } from '@gauzy/models';
 
 export abstract class TranslationBase extends Base
 	implements ITranslation<TranslatableBase> {

@@ -8,12 +8,9 @@ import {
 	Max,
 	IsEnum
 } from 'class-validator';
-import { Base } from '../core/entities/base';
-import {
-	EmployeeSetting as IEmployeeSetting,
-	CurrenciesEnum
-} from '@gauzy/models';
+import { IEmployeeSetting, CurrenciesEnum } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
+import { Base } from '../core/entities/base';
 
 @Entity('employee_setting')
 export class EmployeeSetting extends Base implements IEmployeeSetting {

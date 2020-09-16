@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Task } from '@gauzy/models';
+import { ITask } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { DefaultEditor } from 'ng2-smart-table';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
@@ -21,15 +21,15 @@ import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 })
 export class InvoiceTasksSelectorComponent extends DefaultEditor
 	implements OnInit {
-	tasks: Task[] = [];
-	task: Task;
+	tasks: ITask[] = [];
+	task: ITask;
 
 	constructor(private tasksStore: TasksStoreService) {
 		super();
 		this.observableTasks = this.tasksStore.tasks$;
 	}
 
-	observableTasks: Observable<Task[]>;
+	observableTasks: Observable<ITask[]>;
 
 	ngOnInit() {
 		this._loadTasks();

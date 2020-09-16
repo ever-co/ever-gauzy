@@ -1,11 +1,11 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Base } from '../core/entities/base';
 import {
 	ICandidatePersonalQualities,
 	ICandidateInterview
 } from '@gauzy/models';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { Base } from '../core/entities/base';
 
 @Entity('candidate_personal_quality')
 export class CandidatePersonalQualities extends Base

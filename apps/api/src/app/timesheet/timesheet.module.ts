@@ -25,7 +25,7 @@ import { TimesheetCommandHandlers } from './timesheet/commands/handlers';
 import { TimeLogCommandHandlers } from './time-log/commands/handlers';
 import { StatisticService } from './statistic/statistic.service';
 import { StatisticController } from './statistic/statistic.controller';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { Organization } from '../organization/organization.entity';
@@ -53,7 +53,7 @@ import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
 			Timesheet,
 			Employee,
 			TimeSlotMinute,
-			OrganizationProjects,
+			OrganizationProject,
 			Task,
 			Email,
 			EmailTemplate,

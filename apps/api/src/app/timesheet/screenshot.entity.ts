@@ -7,7 +7,7 @@ import {
 	AfterLoad
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Screenshot as IScreenshot } from '@gauzy/models';
+import { IScreenshot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';

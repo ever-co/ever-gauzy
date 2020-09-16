@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { RolesEnum, User, Tag } from '@gauzy/models';
+import { RolesEnum, IUser, ITag } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
@@ -12,7 +12,7 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 export class UserMutationComponent implements OnInit {
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
-	tags: Tag[];
+	tags: ITag[];
 	selectedTags: any;
 
 	@Input() public isSuperAdmin: boolean;
@@ -28,7 +28,7 @@ export class UserMutationComponent implements OnInit {
 		this.tags = ev;
 	}
 
-	closeDialog(user: User = null) {
+	closeDialog(user: IUser = null) {
 		this.dialogRef.close({ user });
 	}
 

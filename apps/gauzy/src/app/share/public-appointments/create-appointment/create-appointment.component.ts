@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Employee, IEventType } from '@gauzy/models';
+import { IEmployee, IEventType } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
@@ -11,12 +11,12 @@ import { AppointmentComponent } from '../../../pages/employees/appointment/appoi
 
 @Component({
 	templateUrl: './create-appointment.component.html',
-	styleUrls: ['../public-appointments.component.scss'],
+	styleUrls: ['../public-appointments.component.scss']
 })
 export class CreateAppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	employee: Employee;
+	employee: IEmployee;
 	eventType: IEventType;
 	loading = true;
 	public appointmentFormURL: string;

@@ -3,12 +3,12 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Subject } from 'rxjs';
 import {
-	Organization,
-	TimeLogFilters,
+	IOrganization,
+	ITimeLogFilters,
 	IGetActivitiesInput,
 	ActivityType,
-	DailyActivity,
-	Activity
+	IDailyActivity,
+	IActivity
 } from '@gauzy/models';
 import { debounceTime } from 'rxjs/operators';
 import { toUTC, toLocal } from 'libs/utils';
@@ -26,11 +26,11 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	loading: boolean;
 	apps: {
 		hour: string;
-		activities: DailyActivity[];
+		activities: IDailyActivity[];
 	}[];
 	request: any;
 	updateLogs$: Subject<any> = new Subject();
-	organization: Organization;
+	organization: IOrganization;
 	type: 'apps' | 'urls';
 
 	constructor(
@@ -49,7 +49,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 				this.updateLogs$.next();
 			});
@@ -73,12 +73,12 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	async filtersChange($event: TimeLogFilters) {
+	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
 		this.updateLogs$.next();
 	}
 
-	loadChild(item: DailyActivity) {
+	loadChild(item: IDailyActivity) {
 		const date = toLocal(item.date).format('YYYY-MM-DD') + ' ' + item.time;
 		const request: IGetActivitiesInput = {
 			startDate: toUTC(date).format('YYYY-MM-DD HH:mm:ss'),
@@ -90,7 +90,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 
 		this.activityService.getActivites(request).then((items) => {
 			item.childItems = items.map(
-				(activite: Activity): DailyActivity => {
+				(activite: IActivity): IDailyActivity => {
 					return {
 						sessions: 1,
 						duration: activite.duration,

@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	IDateRange,
-	Organization,
-	TimeLogFilters,
-	Timesheet,
+	IOrganization,
+	ITimeLogFilters,
+	ITimesheet,
 	TimesheetStatus,
 	IGetTimesheetInput
 } from '@gauzy/models';
@@ -27,13 +27,13 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 	styleUrls: ['./approvals.component.scss']
 })
 export class ApprovalsComponent implements OnInit, OnDestroy {
-	timeSheets: Timesheet[];
+	timeSheets: ITimesheet[];
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
 	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
-	organization: Organization;
+	organization: IOrganization;
 	addEditTimeRequest: any = {
 		isBillable: true,
 		projectId: null,
@@ -53,7 +53,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	];
 	dialogRef: NbDialogRef<any>;
 	canChangeSelectedEmployee: boolean;
-	logRequest: TimeLogFilters = {};
+	logRequest: ITimeLogFilters = {};
 
 	updateLogs$: Subject<any> = new Subject();
 	loading: boolean;
@@ -78,7 +78,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 				this.updateLogs$.next();
 			});
@@ -203,7 +203,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	redirectToView(timesheet: Timesheet) {
+	redirectToView(timesheet: ITimesheet) {
 		this.router.navigate(['/pages/employees/timesheets/', timesheet.id]);
 	}
 

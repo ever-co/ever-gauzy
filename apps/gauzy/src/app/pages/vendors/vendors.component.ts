@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	IOrganizationVendor,
-	Tag,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
@@ -32,7 +32,7 @@ export class VendorsComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedVendor: IOrganizationVendor;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;

@@ -1,7 +1,4 @@
-import {
-	CurrenciesEnum,
-	OrganizationRecurringExpense as IOrganizationRecurringExpense
-} from '@gauzy/models';
+import { CurrenciesEnum, IOrganizationRecurringExpense } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsDate,

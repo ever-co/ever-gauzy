@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { MonthAggregatedEmployeeStatistics } from '@gauzy/models';
+import { IMonthAggregatedEmployeeStatistics } from '@gauzy/models';
 import { NbThemeService } from '@nebular/theme';
 import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
 import { Subject } from 'rxjs';
@@ -41,7 +41,7 @@ export class EmployeeStackedBarChartComponent
 	noData = false;
 
 	@Input()
-	employeeStatistics: MonthAggregatedEmployeeStatistics[];
+	employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 
 	constructor(private themeService: NbThemeService) {}
 

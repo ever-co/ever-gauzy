@@ -1,10 +1,10 @@
 import {
 	BonusTypeEnum,
-	EmployeeStatistics,
-	EmployeeStatisticsFindInput,
+	IEmployeeStatistics,
+	IEmployeeStatisticsFindInput,
 	DEFAULT_PROFIT_BASED_BONUS,
 	DEFAULT_REVENUE_BASED_BONUS,
-	MonthAggregatedSplitExpense
+	IMonthAggregatedSplitExpense
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { EmployeeService } from '../employee/employee.service';
@@ -42,8 +42,8 @@ export class EmployeeStatisticsService {
 
 	async getStatisticsByEmployeeId(
 		employeeId: string,
-		findInput?: EmployeeStatisticsFindInput
-	): Promise<EmployeeStatistics> {
+		findInput?: IEmployeeStatisticsFindInput
+	): Promise<IEmployeeStatistics> {
 		const mappedEmployeeIncome = (
 			await this.incomeService.findAllIncomes(
 				{
@@ -326,7 +326,7 @@ export class EmployeeStatisticsService {
 	 * in last N months(lastNMonths),till the specified Date(searchMonth)
 	 * lastNMonths = 1, for last 1 month and 12 for an year
 	 *
-	 * @returns {Promise<Map<string, MonthAggregatedSplitExpense>>} A map with
+	 * @returns {Promise<Map<string, IMonthAggregatedSplitExpense>>} A map with
 	 * the key as 'month-year' for every month in the range & for which at least
 	 * one expense is available
 	 */
@@ -334,7 +334,7 @@ export class EmployeeStatisticsService {
 		employeeId: string,
 		searchMonth: Date,
 		lastNMonths: number
-	): Promise<Map<string, MonthAggregatedSplitExpense>> => {
+	): Promise<Map<string, IMonthAggregatedSplitExpense>> => {
 		// 1 Get Employee's Organization
 		const employee = await this.employeeService.findOne({
 			where: {
@@ -356,7 +356,7 @@ export class EmployeeStatisticsService {
 
 		const monthlySplitExpenseMap: Map<
 			string,
-			MonthAggregatedSplitExpense
+			IMonthAggregatedSplitExpense
 		> = new Map();
 
 		// 3 Find the number of active employees for each month, and split the expenses among the active employees for each month
@@ -444,7 +444,7 @@ export class EmployeeStatisticsService {
 
 		const monthlySplitExpenseMap: Map<
 			string,
-			MonthAggregatedSplitExpense
+			IMonthAggregatedSplitExpense
 		> = new Map();
 
 		/**
@@ -503,7 +503,7 @@ export class EmployeeStatisticsService {
 					);
 
 					// Add a new map entry if the key(month-year) does not already exist
-					const newStat: MonthAggregatedSplitExpense = {
+					const newStat: IMonthAggregatedSplitExpense = {
 						month: date.getMonth(),
 						year: date.getFullYear(),
 						splitExpense: Number((amount / splitAmong).toFixed(2)),

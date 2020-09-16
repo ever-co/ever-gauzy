@@ -7,10 +7,10 @@ import {
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
 	RolesEnum,
-	User,
-	Role,
-	CandidateCreateInput,
-	Candidate,
+	IUser,
+	IRole,
+	ICandidateCreateInput,
+	ICandidate,
 	ICandidateDocument,
 	ICandidateSource
 } from '@gauzy/models';
@@ -41,8 +41,8 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 
 	form: FormGroup;
 	formCV: FormGroup;
-	role: Role;
-	candidates: CandidateCreateInput[] = [];
+	role: IRole;
+	candidates: ICandidateCreateInput[] = [];
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateMutationComponent>,
 		protected organizationsService: OrganizationsService,
@@ -68,12 +68,12 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			.toPromise();
 	}
 
-	closeDialog(candidate: Candidate[] = null) {
+	closeDialog(candidate: ICandidate[] = null) {
 		this.dialogRef.close(candidate);
 	}
 
 	addCandidate() {
-		const user: User = {
+		const user: IUser = {
 			username: this.form.get('username').value,
 			firstName: this.form.get('firstName').value,
 			lastName: this.form.get('lastName').value,
@@ -99,7 +99,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			documents = [{ name: 'CV', documentUrl: cvUrl }];
 		}
 
-		const newCandidate: CandidateCreateInput = {
+		const newCandidate: ICandidateCreateInput = {
 			user,
 			cvUrl,
 			documents,
@@ -134,7 +134,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	async updateSource(createdCandidates: Candidate[]) {
+	async updateSource(createdCandidates: ICandidate[]) {
 		const updateInput = [];
 		const all = await this.candidatesService
 			.getAll(['user'])

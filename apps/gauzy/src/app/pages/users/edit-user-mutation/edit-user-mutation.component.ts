@@ -7,7 +7,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Organization, UserOrganization, RolesEnum } from '@gauzy/models';
+import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/models';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,9 +23,9 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 	@Input()
-	userOrganization: UserOrganization;
+	userOrganization: IUserOrganization;
 	@Input()
-	organization: Organization;
+	organization: IOrganization;
 
 	@Output()
 	canceled = new EventEmitter();

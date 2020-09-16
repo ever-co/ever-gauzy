@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EquipmentSharingPolicy } from '@gauzy/models';
+import { IEquipmentSharingPolicy } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -11,11 +11,11 @@ export class EquipmentSharingPolicyService {
 
 	getAll(
 		relations?: string[],
-		findInput?: EquipmentSharingPolicy
+		findInput?: IEquipmentSharingPolicy
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: EquipmentSharingPolicy[]; total: number }>(
+			.get<{ items: IEquipmentSharingPolicy[]; total: number }>(
 				`${this.EQUIPMENT_SHARING_POLICY_URL}`,
 				{
 					params: { data }
@@ -33,11 +33,11 @@ export class EquipmentSharingPolicyService {
 	}
 
 	save(
-		equipmentSharingPolicy: EquipmentSharingPolicy
-	): Promise<EquipmentSharingPolicy> {
+		equipmentSharingPolicy: IEquipmentSharingPolicy
+	): Promise<IEquipmentSharingPolicy> {
 		if (!equipmentSharingPolicy.id) {
 			return this.http
-				.post<EquipmentSharingPolicy>(
+				.post<IEquipmentSharingPolicy>(
 					this.EQUIPMENT_SHARING_POLICY_URL,
 					equipmentSharingPolicy
 				)
@@ -45,7 +45,7 @@ export class EquipmentSharingPolicyService {
 				.toPromise();
 		} else {
 			return this.http
-				.put<EquipmentSharingPolicy>(
+				.put<IEquipmentSharingPolicy>(
 					`${this.EQUIPMENT_SHARING_POLICY_URL}/${equipmentSharingPolicy.id}`,
 					equipmentSharingPolicy
 				)

@@ -5,17 +5,17 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import {
 	CurrenciesEnum,
-	Invoice,
-	OrganizationContact,
-	Organization,
-	OrganizationProjects,
-	Task,
-	Employee,
+	IInvoice,
+	IOrganizationContact,
+	IOrganization,
+	IOrganizationProject,
+	ITask,
+	IEmployee,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
-	Product,
-	Tag,
-	Expense,
+	IProduct,
+	ITag,
+	IExpense,
 	ExpenseTypesEnum,
 	ExpenseStatusesEnum,
 	ContactType,
@@ -56,27 +56,27 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	loading = true;
 	form: FormGroup;
-	invoice?: Invoice;
-	createdInvoice: Invoice;
+	invoice?: IInvoice;
+	createdInvoice: IInvoice;
 	formInvoiceNumber: number;
 	currencies = Object.values(CurrenciesEnum);
 	invoiceTypes = Object.values(InvoiceTypeEnum);
 	smartTableSource = new LocalDataSource();
 	generatedTask: string;
-	organization: Organization;
-	selectedTasks: Task[];
-	observableTasks: Observable<Task[]>;
-	tasks: Task[];
-	organizationContact: OrganizationContact;
-	organizationContacts: OrganizationContact[];
-	selectedProjects: OrganizationProjects[];
-	projects: OrganizationProjects[];
-	employees: Employee[];
+	organization: IOrganization;
+	selectedTasks: ITask[];
+	observableTasks: Observable<ITask[]>;
+	tasks: ITask[];
+	organizationContact: IOrganizationContact;
+	organizationContacts: IOrganizationContact[];
+	selectedProjects: IOrganizationProject[];
+	projects: IOrganizationProject[];
+	employees: IEmployee[];
 	selectedEmployeeIds: string[];
-	products: Product[];
-	selectedProducts: Product[];
-	expenses: Expense[];
-	selectedExpenses: Expense[];
+	products: IProduct[];
+	selectedProducts: IProduct[];
+	expenses: IExpense[];
+	selectedExpenses: IExpense[];
 	invoiceType: string;
 	selectedInvoiceType: string;
 	shouldLoadTable: boolean;
@@ -90,7 +90,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	discountAfterTax: boolean;
 	subtotal = 0;
 	total = 0;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	get currency() {
 		return this.form.get('currency');
@@ -1100,7 +1100,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	addNewOrganizationContact = (
 		name: string
-	): Promise<OrganizationContact> => {
+	): Promise<IOrganizationContact> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
@@ -1135,7 +1135,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			this.loadSmartTable();
 		});
 	}
-	selectedTagsEvent(currentTagSelection: Tag[]) {
+	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.tags = currentTagSelection;
 	}
 

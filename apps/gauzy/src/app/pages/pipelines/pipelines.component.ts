@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	PermissionsEnum,
-	Pipeline,
+	IPipeline,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { AppStore, Store } from '../../@core/services/store.service';
@@ -62,11 +62,11 @@ export class PipelinesComponent extends TranslationBaseComponent
 		}
 	};
 
-	pipelineData: Pipeline[];
+	pipelineData: IPipeline[];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	pipelines = new LocalDataSource([] as Pipeline[]);
+	pipelines = new LocalDataSource([] as IPipeline[]);
 	viewComponentName: ComponentEnum;
-	pipeline: Pipeline;
+	pipeline: IPipeline;
 	organizationId: string;
 	name: string;
 	CAN_EDIT_SALES_PIPELINES = false;

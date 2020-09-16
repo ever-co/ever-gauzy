@@ -17,7 +17,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { AvailabilitySlotsCreateCommand } from './commands/availability-slots.create.command';
-import { AvailabilitySlots } from './availability-slots.entity';
+import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { AvailabilitySlotsBulkCreateCommand } from './commands/availability-slots.bulk.create.command';
 
@@ -25,7 +25,7 @@ import { AvailabilitySlotsBulkCreateCommand } from './commands/availability-slot
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class AvailabilitySlotsController extends CrudController<
-	AvailabilitySlots
+	AvailabilitySlot
 > {
 	constructor(
 		private readonly availabilitySlotsService: AvailabilitySlotsService,
@@ -38,7 +38,7 @@ export class AvailabilitySlotsController extends CrudController<
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found availability slots',
-		type: AvailabilitySlots
+		type: AvailabilitySlot
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -47,7 +47,7 @@ export class AvailabilitySlotsController extends CrudController<
 	@Get()
 	async findAllAvailabilitySlots(
 		@Query('data') data: string
-	): Promise<IPagination<AvailabilitySlots>> {
+	): Promise<IPagination<AvailabilitySlot>> {
 		const { relations, findInput } = JSON.parse(data);
 
 		return this.availabilitySlotsService.findAll({
@@ -70,7 +70,7 @@ export class AvailabilitySlotsController extends CrudController<
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: AvailabilitySlots,
+		@Body() entity: AvailabilitySlot,
 		...options: any[]
 	): Promise<any> {
 		return this.availabilitySlotsService.create({
@@ -93,7 +93,7 @@ export class AvailabilitySlotsController extends CrudController<
 	async create(
 		@Body() entity: IAvailabilitySlotsCreateInput,
 		...options: any[]
-	): Promise<AvailabilitySlots> {
+	): Promise<AvailabilitySlot> {
 		return this.commandBus.execute(
 			new AvailabilitySlotsCreateCommand(entity)
 		);

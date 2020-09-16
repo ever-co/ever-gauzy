@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { CrudController } from '../core';
 import { AuthGuard } from '@nestjs/passport';
-import { EquipmentSharingPolicy as IEquipmentSharingPolicy } from '@gauzy/models';
+import { IEquipmentSharingPolicy } from '@gauzy/models';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';

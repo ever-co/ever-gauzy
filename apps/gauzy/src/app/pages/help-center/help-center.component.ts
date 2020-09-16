@@ -3,7 +3,7 @@ import {
 	IHelpCenterArticle,
 	IHelpCenter,
 	IHelpCenterAuthor,
-	Employee
+	IEmployee
 } from '@gauzy/models';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -39,7 +39,7 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	}
 	public showData: boolean[] = [];
 	public dataArray: SafeHtml[] = [];
-	public employees: Employee[] = [];
+	public employees: IEmployee[] = [];
 	public articleList: IHelpCenterArticle[] = [];
 	public isResetSelect = false;
 	public filteredArticles: IHelpCenterArticle[] = [];

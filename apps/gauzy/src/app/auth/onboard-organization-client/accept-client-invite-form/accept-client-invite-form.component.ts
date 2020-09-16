@@ -13,11 +13,11 @@ import {
 	Validators
 } from '@angular/forms';
 import {
-	Invite,
+	IInvite,
 	IOrganizationContactRegistrationInput,
 	ITenant,
-	OrganizationCreateInput,
-	Tag
+	IOrganizationCreateInput,
+	ITag
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -33,7 +33,7 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 	private ngDestroy$ = new Subject<void>();
 
 	@Input()
-	invitation: Invite;
+	invitation: IInvite;
 
 	@Output()
 	submitForm = new EventEmitter<IOrganizationContactRegistrationInput>();
@@ -45,9 +45,9 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 	repeatPassword: AbstractControl;
 	agreeTerms: AbstractControl;
 	tenant: ITenant;
-	tags: Tag[];
+	tags: ITag[];
 
-	organizationCreateInput: OrganizationCreateInput;
+	organizationCreateInput: IOrganizationCreateInput;
 
 	matchPassword: boolean;
 	addedOrganization: boolean;

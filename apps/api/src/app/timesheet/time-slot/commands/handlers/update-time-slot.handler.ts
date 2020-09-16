@@ -47,14 +47,14 @@ export class UpdateTimeSlotHandler
 			}
 
 			let newActivites = [];
-			if (input.activites) {
-				newActivites = input.activites.map((activity) => {
+			if (input.activities) {
+				newActivites = input.activities.map((activity) => {
 					activity = new Activity(activity);
 					activity.employeeId = timeSlot.employeeId;
 					return activity;
 				});
 				await this.activityRepository.save(newActivites);
-				input.activites = (timeSlot.activites || []).concat(
+				input.activities = (timeSlot.activities || []).concat(
 					newActivites
 				);
 			}

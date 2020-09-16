@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { OrganizationDocument, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IOrganizationDocument, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { OrganizationDocumentsService } from 'apps/gauzy/src/app/@core/services/organization-documents.service';
 import { first, takeUntil } from 'rxjs/operators';
@@ -30,7 +30,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 	formDocument: FormGroup;
 	documentUrl = '';
 	documentId = null;
-	documentList: OrganizationDocument[];
+	documentList: IOrganizationDocument[];
 	showAddCard = false;
 	loading = false;
 	settingsSmartTable: object;
@@ -134,7 +134,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 		}
 	}
 
-	private _createDocument(formValue: OrganizationDocument) {
+	private _createDocument(formValue: IOrganizationDocument) {
 		this.organizationDocumentsService
 			.create({
 				...formValue,
@@ -174,7 +174,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 			);
 	}
 
-	private _updateDocument(formValue: OrganizationDocument) {
+	private _updateDocument(formValue: IOrganizationDocument) {
 		this.organizationDocumentsService
 			.update(this.documentId, { ...formValue })
 			.pipe(first())
@@ -198,7 +198,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 		this.form.controls.documents.reset();
 	}
 
-	editDocument(document: OrganizationDocument) {
+	editDocument(document: IOrganizationDocument) {
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.documents.patchValue([document]);
 		this.documentId = document.id;

@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	Income,
-	IncomeCreateInput as IIncomeCreateInput,
-	IncomeFindInput as IIncomeFindInput,
-	IncomeUpdateInput as IIncomeUpdateInput
+	IIncome,
+	IIncomeCreateInput,
+	IIncomeFindInput,
+	IIncomeUpdateInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -12,9 +12,9 @@ import { first } from 'rxjs/operators';
 export class IncomeService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: IIncomeCreateInput): Promise<Income> {
+	create(createInput: IIncomeCreateInput): Promise<IIncome> {
 		return this.http
-			.post<Income>('/api/income/create', createInput)
+			.post<IIncome>('/api/income/create', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -23,11 +23,11 @@ export class IncomeService {
 		relations?: string[],
 		findInput?: IIncomeFindInput,
 		filterDate?: Date
-	): Promise<{ items: Income[]; total: number }> {
+	): Promise<{ items: IIncome[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http
-			.get<{ items: Income[]; total: number }>(`/api/income/me`, {
+			.get<{ items: IIncome[]; total: number }>(`/api/income/me`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -38,11 +38,11 @@ export class IncomeService {
 		relations?: string[],
 		findInput?: IIncomeFindInput,
 		filterDate?: Date
-	): Promise<{ items: Income[]; total: number }> {
+	): Promise<{ items: IIncome[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http
-			.get<{ items: Income[]; total: number }>(`/api/income`, {
+			.get<{ items: IIncome[]; total: number }>(`/api/income`, {
 				params: { data }
 			})
 			.pipe(first())
