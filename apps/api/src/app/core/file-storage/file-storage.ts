@@ -1,9 +1,10 @@
-import { FileStorageOption, FileSystemProvider, ProviderEnum } from './models';
+import { FileStorageOption, ProviderEnum } from './models';
 import * as Providers from './providers';
 import { environment } from '@env-api/environment';
+import { Provider } from './providers/provider';
 
 export class FileStorage {
-	providers: { [key: string]: FileSystemProvider } = {};
+	providers: { [key: string]: Provider } = {};
 	config: FileStorageOption = {
 		dest: ''
 	};
@@ -23,19 +24,16 @@ export class FileStorage {
 		return this;
 	}
 
-	provider(providerName: ProviderEnum) {
-		this.config.provider = providerName;
+	setProvider(providerName: ProviderEnum) {
+		if (providerName) {
+			this.config.provider = providerName;
+		}
 		return this;
 	}
 
-	url(filePath: string) {
-		const instance = this.getProviderInstance();
-		return instance.url(filePath);
-	}
-
-	path(filePath: string) {
-		const instance = this.getProviderInstance();
-		return instance.path(filePath);
+	getProvider(providerName?: ProviderEnum) {
+		this.setProvider(providerName);
+		return this.getProviderInstance();
 	}
 
 	storage(option?: FileStorageOption) {
@@ -49,7 +47,7 @@ export class FileStorage {
 		return resp;
 	}
 
-	getProviderInstance(): FileSystemProvider {
+	getProviderInstance() {
 		return this.providers[this.config.provider].getInstance();
 	}
 
@@ -58,7 +56,7 @@ export class FileStorage {
 			if (Object.prototype.hasOwnProperty.call(Providers, key)) {
 				const className = Providers[key];
 				if (className.instance === undefined) {
-					const provider: FileSystemProvider = new className();
+					const provider: Provider = new className();
 					this.providers[provider.name] = provider;
 
 					className.instance = provider;
