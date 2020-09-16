@@ -28,6 +28,12 @@ import { CommandHandlers } from './commands/handlers';
 		RolePermissionsModule,
 		CqrsModule
 	],
+	exports: [
+		IntegrationTenantService,
+		IntegrationSettingService,
+		TenantService,
+		IntegrationEntitySettingService
+	],
 	controllers: [IntegrationTenantController],
 	providers: [
 		IntegrationTenantService,

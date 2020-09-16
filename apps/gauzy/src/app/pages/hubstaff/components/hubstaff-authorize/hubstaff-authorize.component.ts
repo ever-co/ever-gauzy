@@ -15,6 +15,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	authorizeForm: FormGroup;
 	clientSecretForm: FormGroup;
 	hubStaffAppCode: string;
+	rememberState: boolean;
 
 	constructor(
 		private _activatedRoute: ActivatedRoute,
@@ -45,6 +46,49 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 				takeUntil(this._ngDestroy$)
 			)
 			.subscribe();
+
+		if (!this.hubStaffAppCode) {
+			this.subscribeRouteData();
+		}
+	}
+
+	private subscribeRouteData() {
+		this._activatedRoute.data
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((data: any) => {
+				if (data.hasOwnProperty('state')) {
+					this.rememberState = data['state'];
+					// if remember state is true
+					if (this.rememberState) {
+						this._checkRemeberState();
+					}
+				}
+			});
+	}
+
+	/**
+	 * Hubstaff integration remember state API call
+	 */
+	private _checkRemeberState() {
+		this._hubstaffService
+			.checkRemeberState()
+			.pipe(
+				tap((res) => {
+					if (res.success) {
+						const { record } = res;
+						this._redirectToHubstaffIntegration(record.id);
+					}
+				}),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Hubstaff integration remember state API call
+	 */
+	private _redirectToHubstaffIntegration(integrationId) {
+		this._router.navigate(['pages/integrations/hubstaff', integrationId]);
 	}
 
 	authorizeHubstaff() {
@@ -56,10 +100,13 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 		const { client_secret } = this.clientSecretForm.value;
 		this._hubstaffService
 			.addIntegration(this.hubStaffAppCode, client_secret)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(({ id }) =>
-				this._router.navigate(['pages/integrations/hubstaff', id])
-			);
+			.pipe(
+				tap(({ id }) => {
+					this._redirectToHubstaffIntegration(id);
+				}),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy() {

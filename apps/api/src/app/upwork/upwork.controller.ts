@@ -222,24 +222,4 @@ export class UpworkController {
 			relations
 		);
 	}
-
-	@ApiOperation({
-		summary: 'Check upwork remember state for logged upwork user.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Check State'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
-	})
-	@Get('check/state')
-	async checkRememberState(): Promise<any> {
-		return await this._upworkService.checkRemeberState();
-	}
 }
