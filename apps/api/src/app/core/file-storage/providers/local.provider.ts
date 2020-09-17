@@ -75,10 +75,14 @@ export class LocalProvider extends Provider {
 		});
 	}
 
-	async getFile(file: string): Promise<string> {
-		const buffer = fs.readFileSync(this.path(file), { encoding: 'utf8' });
-		const content = buffer.toString();
-		return await content;
+	async getFile(file: string, buffer = false): Promise<any> {
+		const bufferData = await fs.promises.readFile(this.path(file), 'utf-8');
+		console.log('getFile');
+		if (buffer) {
+			return bufferData;
+		} else {
+			return bufferData.toString();
+		}
 	}
 
 	async putFile(fileContent: string, path: string = ''): Promise<any> {
