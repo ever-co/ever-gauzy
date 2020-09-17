@@ -120,6 +120,7 @@ export class S3Provider extends Provider {
 
 	mapUploadedFile(file): UploadedFile {
 		file.filename = file.originalname;
+		file.url = file.location;
 		return file;
 	}
 }

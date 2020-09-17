@@ -64,7 +64,7 @@ export const environment: IEnvironment = {
 	JWT_SECRET: 'secretKey',
 
 	fileSystem: {
-		name: ProviderEnum.S3
+		name: ProviderEnum.LOCAL
 	},
 
 	awsConfig: {
