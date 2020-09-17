@@ -208,6 +208,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 			{
 				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				filterDate: new Date()
 			}
 		);

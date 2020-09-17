@@ -455,7 +455,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		const organizationContacts = await this.organizationContactService.getAll(
 			[],
 			{
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			}
 		);
 
@@ -501,7 +502,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				const expenses = await this.expensesService.getAll([], {
 					typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
 					organization: {
-						id: this.organization.id
+						id: this.organization.id,
+						tenantId: this.organization.tenantId
 					}
 				});
 
@@ -557,13 +559,16 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				discountValue: invoiceData.discountValue,
 				discountType: invoiceData.discountType,
 				tax: invoiceData.tax,
+				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
+				tax2Type: invoiceData.tax2Type,
 				terms: invoiceData.terms,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
 				organizationContactId: invoiceData.organizationContact.id,
 				toContact: invoiceData.organizationContact,
 				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				tags: this.tags,
 				status: status,
 				sentTo: sendTo
@@ -621,7 +626,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 
 			if (this.isEstimate) {
@@ -660,7 +666,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 		} else {
 			this.toastrService.danger(
@@ -722,6 +729,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				organizationContactId: invoiceData.organizationContact.id,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				invoiceType: this.invoice.invoiceType,
 				tags: this.tags,
 				isEstimate: this.isEstimate,

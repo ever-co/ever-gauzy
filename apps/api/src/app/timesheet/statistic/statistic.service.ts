@@ -65,8 +65,9 @@ export class StatisticService {
 		) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.organizationEmployeesIds(
-				request.organizationId
+			employeeIds = await this.getEmployeesIds(
+				request.organizationId,
+				request.tenantId
 			);
 		}
 
@@ -318,9 +319,13 @@ export class StatisticService {
 			query.leftJoin(`${query.alias}.members`, 'members');
 			query.where(`members.id = :employeeId`, { employeeId });
 		} else {
-			query.where(`"organizationId" = :organizationId`, {
-				organizationId: request.organizationId
-			});
+			query
+				.where(`"organizationId" = :organizationId`, {
+					organizationId: request.organizationId
+				})
+				.andWhere(`"tenantId" = :tenantId`, {
+					tenantId: request.tenantId
+				});
 		}
 
 		query
@@ -334,8 +339,8 @@ export class StatisticService {
 
 		let projects: IProjectsStatistics[] = await query.getRawMany();
 
-		const totalDuerationQuery = this.organizationProjectsRepository.createQueryBuilder();
-		totalDuerationQuery
+		const totalDurationQuery = this.organizationProjectsRepository.createQueryBuilder();
+		totalDurationQuery
 			.select(
 				`${
 					environment.database.type === 'sqlite'
@@ -356,27 +361,31 @@ export class StatisticService {
 			)
 		) {
 			const employeeId = user.employeeId;
-			totalDuerationQuery.leftJoin(
-				`${totalDuerationQuery.alias}.members`,
+			totalDurationQuery.leftJoin(
+				`${totalDurationQuery.alias}.members`,
 				'members'
 			);
-			totalDuerationQuery.where(`members.id = :employeeId`, {
+			totalDurationQuery.where(`members.id = :employeeId`, {
 				employeeId
 			});
 		} else {
-			totalDuerationQuery.where(`"organizationId" = :organizationId`, {
-				organizationId: request.organizationId
-			});
+			totalDurationQuery
+				.where(`"organizationId" = :organizationId`, {
+					organizationId: request.organizationId
+				})
+				.andWhere(`"tenantId" = :tenantId`, {
+					tenantId: request.tenantId
+				});
 		}
 
-		totalDuerationQuery.andWhere(
+		totalDurationQuery.andWhere(
 			`"timeLogs"."startedAt" BETWEEN :start AND :end`,
 			{
 				start,
 				end
 			}
 		);
-		const totalDueration = await totalDuerationQuery.getRawOne();
+		const totalDueration = await totalDurationQuery.getRawOne();
 
 		projects = projects.map((project) => {
 			project.durationPercentage =
@@ -404,8 +413,9 @@ export class StatisticService {
 		) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.organizationEmployeesIds(
-				request.organizationId
+			employeeIds = await this.getEmployeesIds(
+				request.organizationId,
+				request.tenantId
 			);
 		}
 
@@ -434,10 +444,9 @@ export class StatisticService {
 				.addGroupBy(`"${query.alias}"."id"`)
 				.limit(5)
 				.getRawMany();
-			console.log('satu', tasks.length);
 
-			const totalDuerationQuery = this.taskRepository.createQueryBuilder();
-			const totalDueration = await totalDuerationQuery
+			const totalDurationQuery = this.taskRepository.createQueryBuilder();
+			const totalDuration = await totalDurationQuery
 				.select(
 					`${
 						environment.database.type === 'sqlite'
@@ -446,7 +455,7 @@ export class StatisticService {
 					}`,
 					`duration`
 				)
-				.innerJoin(`${totalDuerationQuery.alias}.timeLogs`, 'timeLogs')
+				.innerJoin(`${totalDurationQuery.alias}.timeLogs`, 'timeLogs')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -455,10 +464,10 @@ export class StatisticService {
 					end
 				})
 				.getRawOne();
-			console.log('dua', totalDueration);
+			console.log('dua', totalDuration);
 			tasks = tasks.map((task) => {
 				task.durationPercentage =
-					(task.duration * 100) / totalDueration.duration;
+					(task.duration * 100) / totalDuration.duration;
 				return task;
 			});
 
@@ -485,8 +494,9 @@ export class StatisticService {
 		) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.organizationEmployeesIds(
-				request.organizationId
+			employeeIds = await this.getEmployeesIds(
+				request.organizationId,
+				request.tenantId
 			);
 		}
 
@@ -541,8 +551,9 @@ export class StatisticService {
 		) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.organizationEmployeesIds(
-				request.organizationId
+			employeeIds = await this.getEmployeesIds(
+				request.organizationId,
+				request.tenantId
 			);
 		}
 
@@ -569,14 +580,14 @@ export class StatisticService {
 			/*
 			 * Fetch total duration of the week for calculate duration percentage
 			 */
-			const totalDuerationQuery = this.activityRepository.createQueryBuilder();
-			const totalDueration = await totalDuerationQuery
+			const totalDurationQuery = this.activityRepository.createQueryBuilder();
+			const totalDueration = await totalDurationQuery
 				.select(
-					`SUM("${totalDuerationQuery.alias}"."duration")`,
+					`SUM("${totalDurationQuery.alias}"."duration")`,
 					`duration`
 				)
 				.andWhere(
-					`"${totalDuerationQuery.alias}"."employeeId" IN(:...employeeId)`,
+					`"${totalDurationQuery.alias}"."employeeId" IN(:...employeeId)`,
 					{
 						employeeId: employeeIds
 					}
@@ -636,9 +647,13 @@ export class StatisticService {
 			const employeeId = user.employeeId;
 			query.andWhere(`"${query.alias}".id = :employeeId`, { employeeId });
 		} else {
-			query.where('"organizationId" = :organizationId', {
-				organizationId: request.organizationId
-			});
+			query
+				.where('"organizationId" = :organizationId', {
+					organizationId: request.organizationId
+				})
+				.andWhere('"tenantId" = :tenantId', {
+					tenantId: request.tenantId
+				});
 		}
 
 		employees = await query.getRawMany();
@@ -666,11 +681,12 @@ export class StatisticService {
 		return employees;
 	}
 
-	private async organizationEmployeesIds(organizationId: string) {
+	private async getEmployeesIds(organizationId: string, tenantId: string) {
 		const employees = await this.employeeRepository
 			.createQueryBuilder()
 			.select(['id'])
 			.andWhere('"organizationId" = :organizationId', { organizationId })
+			.andWhere('"tenantId" = :tenantId', { tenantId })
 			.getRawMany();
 		return _.pluck(employees, 'id');
 	}

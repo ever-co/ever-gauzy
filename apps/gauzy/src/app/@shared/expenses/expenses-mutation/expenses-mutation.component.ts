@@ -53,6 +53,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	form: FormGroup;
 	expense: ExpenseViewModel;
 	organizationId: string;
+	tenantId: string;
 	typeOfExpense: string;
 	expenseTypes = Object.values(ExpenseTypesEnum);
 	currencies = Object.values(CurrenciesEnum);
@@ -115,15 +116,21 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async getDefaultData() {
+		console.log(this.store.selectedOrganization);
+
 		this.organizationId = this.store.selectedOrganization.id;
+		this.tenantId = this.store.selectedOrganization.tenantId;
+
 		const { items: category } = await this.expenseCategoriesStore.getAll({
-			organizationId: this.organizationId
+			organizationId: this.organizationId,
+			tenantId: this.tenantId
 		});
+
 		this.expenseCategories = category;
-		this.organizationId = this.store.selectedOrganization.id;
 		const { items: vendors } = await this.organizationVendorsService.getAll(
 			{
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			}
 		);
 		this.vendors = vendors;
@@ -188,7 +195,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			);
 			return await this.expenseCategoriesStore.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -208,7 +216,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			);
 			return this.organizationVendorsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -231,7 +240,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			return this.organizationContactService.create({
 				name,
 				contactType: ContactType.CLIENT,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -252,7 +262,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -355,7 +366,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	private async loadOrganizationContacts() {
 		const res = await this.organizationContactService.getAll(['projects'], {
-			organizationId: this.organizationId
+			organizationId: this.organizationId,
+			tenantId: this.tenantId
 		});
 
 		if (res) {
@@ -372,7 +384,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		const res = await this.organizationProjectsService.getAll(
 			['organizationContact'],
 			{
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			}
 		);
 

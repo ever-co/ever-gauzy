@@ -3,10 +3,14 @@ import { IEmployee } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITimeSlot, ITimeLog } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
+import { IOrganization } from './organization.model';
+import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IGetTimeSlotStatistics {
 	employeeId?: string;
 	organizationId: string;
+	tenantId: string;
 	date?: Date;
 	onlyMe?: boolean;
 }
@@ -22,6 +26,7 @@ export interface ITimeSlotStatistics extends IEmployee {
 export interface IGetActivitiesStatistics {
 	employeeId?: string;
 	organizationId: string;
+	tenantId: string;
 	date?: Date;
 	onlyMe?: boolean;
 }
@@ -35,18 +40,24 @@ export interface IActivitiesStatistics {
 
 export interface IGetProjectsStatistics {
 	organizationId: string;
+	tenantId: string;
 	employeeId?: string;
 	date?: Date;
 	onlyMe?: boolean;
 }
 
 export interface IProjectsStatistics extends IOrganizationProject {
+	//base per tenant organization
+	organizationId?: string;
+	organization?: IOrganization;
+	tenantId?: string;
+	tenant?: ITenant;
 	duration?: number;
 	durationPercentage?: number;
 }
 
-export interface IGetTasksStatistics {
-	organizationId: string;
+export interface IGetTasksStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	date?: Date;
 	onlyMe?: boolean;
@@ -57,8 +68,8 @@ export interface ITasksStatistics extends ITask {
 	durationPercentage?: number;
 }
 
-export interface IGetManualTimesStatistics {
-	organizationId: string;
+export interface IGetManualTimesStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	date?: Date;
 	onlyMe?: boolean;
@@ -70,8 +81,8 @@ export interface IManualTimesStatistics
 	project?: Pick<IOrganizationProject, 'name'>;
 }
 
-export interface IGetMembersStatistics {
-	organizationId: string;
+export interface IGetMembersStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	date?: Date;
 }
 
@@ -93,8 +104,8 @@ export interface IMembersStatistics {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetCountsStatistics {
-	organizationId: string;
+export interface IGetCountsStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	date?: Date;
 	onlyMe?: boolean;
 }

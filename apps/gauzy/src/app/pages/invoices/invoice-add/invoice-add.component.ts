@@ -437,6 +437,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				totalValue: +this.total.toFixed(2),
 				toContact: invoiceData.organizationContact,
 				organizationContactId: invoiceData.organizationContact.id,
+				tenantId: invoiceData.organizationContact.tenantId,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
@@ -487,7 +488,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 
 			if (this.isEstimate) {
@@ -526,7 +528,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 		} else {
 			this.toastrService.danger(
@@ -689,7 +692,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 					const projects = await this.organizationProjectsService.getAll(
 						[],
-						{ organizationId: organization.id }
+						{
+							organizationId: organization.id,
+							tenantId: organization.tenantId
+						}
 					);
 					this.projects = projects.items;
 					this.organization = organization;
@@ -707,7 +713,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					const res = await this.organizationContactService.getAll(
 						['projects'],
 						{
-							organizationId: organization.id
+							organizationId: organization.id,
+							tenantId: organization.tenantId
 						}
 					);
 
@@ -728,7 +735,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					const expenses = await this.expensesService.getAll([], {
 						typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
 						organization: {
-							id: organization.id
+							id: organization.id,
+							tenantId: organization.tenantId
 						}
 					});
 					this.expenses = expenses.items;

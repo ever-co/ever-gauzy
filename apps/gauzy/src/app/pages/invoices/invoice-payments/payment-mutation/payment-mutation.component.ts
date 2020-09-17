@@ -13,7 +13,6 @@ import {
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { PaymentService } from '../../../../@core/services/payment.service';
 import { Store } from '../../../../@core/services/store.service';
 
 @Component({
@@ -27,7 +26,6 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<PaymentMutationComponent>,
-		private paymentService: PaymentService,
 		private store: Store,
 		private toastrService: NbToastrService
 	) {

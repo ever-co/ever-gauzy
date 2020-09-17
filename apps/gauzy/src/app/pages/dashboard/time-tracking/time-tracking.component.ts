@@ -90,8 +90,10 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 
 	getTimeSlots() {
 		const timeSlotRequest: IGetTimeSlotStatistics = {
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
+
 		this.timeSlotLoading = true;
 		this.timesheetStatisticsService
 			.getTimeSlots(timeSlotRequest)
@@ -109,7 +111,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 
 	getCounts() {
 		const request: IGetCountsStatistics = {
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService
@@ -124,7 +127,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 
 	getActivities() {
 		const activityRequest: IGetActivitiesStatistics = {
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.activitiesLoading = true;
 		this.timesheetStatisticsService
@@ -148,7 +152,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 	getProjects() {
 		const projectRequest: IGetProjectsStatistics = {
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.projectsLoading = true;
 		this.timesheetStatisticsService
@@ -163,7 +168,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 
 	getTasks() {
 		const taskRequest: IGetTasksStatistics = {
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.tasksLoading = true;
 		this.timesheetStatisticsService
@@ -178,7 +184,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 
 	getManualTimes() {
 		const request: IGetManualTimesStatistics = {
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.manualTimeLoading = true;
 		this.timesheetStatisticsService
@@ -193,7 +200,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 
 	getMembers() {
 		const memberRequest: IGetMembersStatistics = {
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.memberLoading = true;
 		this.timesheetStatisticsService

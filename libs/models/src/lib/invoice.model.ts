@@ -35,7 +35,8 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	historyRecords?: IInvoiceEstimateHistory[];
 }
 
-export interface IInvoiceUpdateInput {
+export interface IInvoiceUpdateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate?: Date;
 	invoiceNumber?: number;
 	dueDate?: Date;
@@ -51,7 +52,6 @@ export interface IInvoiceUpdateInput {
 	totalValue?: number;
 	organizationContactId?: string;
 	toContact?: IOrganizationContact;
-	organizationId?: string;
 	invoiceType?: string;
 	sentTo?: string;
 	tags?: ITag[];
@@ -60,8 +60,8 @@ export interface IInvoiceUpdateInput {
 	isEstimate?: boolean;
 }
 
-export interface IInvoiceFindInput {
-	organizationId?: string;
+export interface IInvoiceFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContactId?: string;
 	invoiceId?: string;
 	sentTo?: string;

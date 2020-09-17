@@ -25,7 +25,7 @@ export class AggregateOrganizationQueryHandler
 		command: AggregatedEmployeeStatisticQuery
 	): Promise<IAggregatedEmployeeStatistic> {
 		const {
-			input: { filterDate, organizationId }
+			input: { filterDate, organizationId, tenantId }
 		} = command;
 
 		// Calculate transactions for 1 month if filterDate is available,
@@ -55,6 +55,7 @@ export class AggregateOrganizationQueryHandler
 			items: employees
 		} = await this.employeeService.findWorkingEmployees(
 			organizationId,
+			tenantId,
 			filterDate,
 			true
 		);

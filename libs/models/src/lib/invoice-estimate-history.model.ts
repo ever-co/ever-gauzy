@@ -11,7 +11,8 @@ export interface IInvoiceEstimateHistory
 	invoiceId: string;
 }
 
-export interface IInvoiceEstimateHistoryFindInput {
+export interface IInvoiceEstimateHistoryFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	action?: string;
 	userId?: string;
 	invoiceId?: string;

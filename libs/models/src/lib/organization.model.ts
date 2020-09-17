@@ -80,6 +80,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 
 export interface IOrganizationFindInput {
 	id?: string;
+	tenantId?: string;
 	name?: string;
 	profile_link?: string;
 	valueDate?: Date;

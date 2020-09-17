@@ -19,6 +19,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 export class ExpenseCategoriesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationId: string;
+	tenantId: string;
 
 	showAddCard: boolean;
 	showEditDiv: boolean;
@@ -49,6 +50,7 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationId = organization.id;
+					this.tenantId = organization.tenantId;
 					this.loadCategories();
 					this.loadSmartTable();
 				}
@@ -164,6 +166,7 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 			await this.organizationExpenseCategoryService.create({
 				name,
 				organizationId: this.organizationId,
+				tenantId: this.tenantId,
 				tags: this.tags
 			});
 
@@ -196,7 +199,8 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 		}
 		const res = await this.organizationExpenseCategoryService.getAll(
 			{
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			},
 			['tags']
 		);

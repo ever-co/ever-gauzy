@@ -51,10 +51,16 @@ export class EmployeesService {
 
 	getWorking(
 		organizationId: string,
+		tenantId: string,
 		forMonth: Date,
 		withUser: boolean
 	): Promise<{ items: IEmployee[]; total: number }> {
-		const data = JSON.stringify({ organizationId, forMonth, withUser });
+		const data = JSON.stringify({
+			organizationId,
+			tenantId,
+			forMonth,
+			withUser
+		});
 		return this.http
 			.get<{ items: IEmployee[]; total: number }>(
 				`/api/employee/working`,

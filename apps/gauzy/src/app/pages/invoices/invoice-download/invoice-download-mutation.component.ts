@@ -93,7 +93,8 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 			user: this.store.user,
 			userId: this.store.userId,
 			organization: this.invoice.fromOrganization,
-			organizationId: this.invoice.fromOrganization.id
+			organizationId: this.invoice.fromOrganization.id,
+			tenantId: this.invoice.fromOrganization.tenantId
 		});
 
 		this.toastrService.primary(

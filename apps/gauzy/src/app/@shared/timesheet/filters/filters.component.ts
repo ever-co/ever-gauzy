@@ -197,6 +197,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	private async loadEmployees(): Promise<void> {
 		const { items = [] } = await this.employeesService.getWorking(
 			this.organization.id,
+			this.organization.tenantId,
 			this.selectedDate,
 			true
 		);
