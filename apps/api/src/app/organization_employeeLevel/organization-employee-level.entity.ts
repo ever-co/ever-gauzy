@@ -4,9 +4,7 @@ import { Tag } from '../tags/tag.entity';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
-@Entity({
-	name: 'organization_employee_level'
-})
+@Entity({ name: 'organization_employee_level' })
 export class EmployeeLevel extends TenantOrganizationBase {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.employeeLevel)

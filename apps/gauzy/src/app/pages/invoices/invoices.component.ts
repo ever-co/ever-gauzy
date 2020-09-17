@@ -261,6 +261,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			organizationContactName: this.selectedInvoice.toContact?.name,
 			fromOrganization: this.organization,
 			organizationId: this.selectedInvoice.organizationId,
+			tenantId: this.selectedInvoice.tenantId,
 			invoiceType: this.selectedInvoice.invoiceType,
 			tags: this.selectedInvoice.tags,
 			isEstimate: this.isEstimate,
@@ -303,7 +304,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 			user: this.store.user,
 			userId: this.store.userId,
 			organization: this.organization,
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		});
 
 		if (this.isEstimate) {
@@ -386,7 +388,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 			user: this.store.user,
 			userId: this.store.userId,
 			organization: this.organization,
-			organizationId: this.organization.id
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		});
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
@@ -483,13 +486,15 @@ export class InvoicesComponent extends TranslationBaseComponent
 							],
 							{
 								organizationId: org.id,
+								tenantId: org.tenantId,
 								isEstimate: this.isEstimate
 							}
 						);
 						const res = await this.organizationContactService.getAll(
 							[],
 							{
-								organizationId: org.id
+								organizationId: org.id,
+								tenantId: org.tenantId
 							}
 						);
 
@@ -533,7 +538,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 						const histories = await this.invoiceEstimateHistoryService.getAll(
 							['invoice', 'user', 'organization'],
 							{
-								organizationId: this.organization.id
+								organizationId: this.organization.id,
+								tenantId: this.organization.tenantId
 							}
 						);
 						this.histories = histories.items;

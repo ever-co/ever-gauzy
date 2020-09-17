@@ -41,6 +41,7 @@ export interface IMonthAggregatedSplitExpense {
 
 export interface IAggregatedEmployeeStatisticFindInput {
 	organizationId: string;
+	tenantId: string;
 	filterDate: Date;
 }
 

@@ -126,6 +126,7 @@ export class EditTimeLogModalComponent
 						items = []
 					} = await this.employeesService.getWorking(
 						this.organization.id,
+						this.organization.tenantId,
 						this.selectedRange.start,
 						true
 					);

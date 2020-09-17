@@ -7,14 +7,15 @@ export interface IOrganizationExpenseCategory
 	tags?: ITag[];
 }
 
-export interface IOrganizationExpenseCategoryFindInput {
+export interface IOrganizationExpenseCategoryFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	organizationId?: string;
 }
 
-export interface IOrganizationExpenseCategoryCreateInput {
+export interface IOrganizationExpenseCategoryCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
 	tags?: ITag[];
 }
 

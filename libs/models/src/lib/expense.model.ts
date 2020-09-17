@@ -31,7 +31,8 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	status?: string;
 }
 
-export interface IExpenseCreateInput {
+export interface IExpenseCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	amount: number;
 	typeOfExpense?: string;
@@ -44,7 +45,6 @@ export interface IExpenseCreateInput {
 	notes?: string;
 	valueDate: Date;
 	currency?: string;
-	organizationId?: string;
 	purpose?: string;
 	taxType?: string;
 	taxLabel?: string;

@@ -30,9 +30,9 @@ export interface IPaymentUpdateInput {
 	paymentDate?: Date;
 }
 
-export interface IPaymentFindInput {
+export interface IPaymentFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceId?: string;
-	organizationId?: string;
 }
 
 export enum PaymentMethodEnum {

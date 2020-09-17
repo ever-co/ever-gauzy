@@ -10,6 +10,7 @@ import { ITag } from './tag-entity.model';
 import { ITask } from './task-entity.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IPayment } from './payment.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IOrganizationProject extends IBaseEntityWithMembers {
 	name: string;
@@ -43,9 +44,9 @@ export enum TaskListTypeEnum {
 	SPRINT = 'SPRINT'
 }
 
-export interface IOrganizationProjectsFindInput {
+export interface IOrganizationProjectsFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	organizationId?: string;
 	organizationContactId?: string;
 	organizationContact?: IOrganizationContact;
 	members?: IEmployee[];
@@ -55,9 +56,9 @@ export interface IOrganizationProjectsFindInput {
 	billingFlat?: boolean;
 }
 
-export interface IOrganizationProjectsCreateInput {
+export interface IOrganizationProjectsCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: string;
 	startDate?: Date;

@@ -64,9 +64,11 @@ export class AccountingComponent implements OnInit, OnDestroy {
 
 	loadData = async (organization) => {
 		if (organization) {
+			const { tenantId } = organization;
 			this.aggregatedEmployeeStatistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 				{
 					organizationId: organization.id,
+					tenantId,
 					filterDate:
 						this.selectedDate || this.store.selectedDate || null
 				}

@@ -9,7 +9,8 @@ import {
 	IIncome,
 	PermissionsEnum,
 	ITag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -68,6 +69,7 @@ export class IncomeComponent extends TranslationBaseComponent
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
+	private _selectedOrganization: IOrganization;
 
 	async ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -119,6 +121,7 @@ export class IncomeComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
+					this._selectedOrganization = org;
 					this._selectedOrganizationId = org.id;
 					if (this.loading) {
 						this._loadEmployeeIncomeData(
@@ -232,6 +235,7 @@ export class IncomeComponent extends TranslationBaseComponent
 								? result.employee.id
 								: null,
 							organizationId: this.store.selectedOrganization.id,
+							tenantId: this.store.selectedOrganization.id,
 							notes: result.notes,
 							currency: result.currency,
 							isBonus: result.isBonus,
@@ -381,7 +385,8 @@ export class IncomeComponent extends TranslationBaseComponent
 		if (orgId) {
 			findObj = {
 				organization: {
-					id: orgId
+					id: orgId,
+					tenantId: this._selectedOrganization.tenantId
 				}
 			};
 			this.smartTableSettings['columns']['employeeName'] = {

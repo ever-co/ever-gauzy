@@ -16,7 +16,8 @@ export interface IIncome extends IBasePerTenantAndOrganizationEntityModel {
 	tags: ITag[];
 }
 
-export interface IIncomeCreateInput {
+export interface IIncomeCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	amount: number;
 	clientName: string;
 	clientId: string;

@@ -378,6 +378,7 @@ export class EmployeeStatisticsService {
 					total: splitAmong
 				} = await this.employeeService.findWorkingEmployees(
 					employee.organization.id,
+					employee.organization.tenantId,
 					expense.valueDate,
 					false
 				);
@@ -498,6 +499,7 @@ export class EmployeeStatisticsService {
 						total: splitAmong
 					} = await this.employeeService.findWorkingEmployees(
 						employee.organization.id,
+						employee.organization.tenantId,
 						date,
 						false
 					);

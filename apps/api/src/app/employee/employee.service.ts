@@ -36,6 +36,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findWorkingEmployees(
 		organizationId: string,
+		tenantId: string,
 		forMonth: Date,
 		withUser: boolean
 	): Promise<{ total: number; items: Employee[] }> {
@@ -43,6 +44,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			.createQueryBuilder('employee')
 			.where('"employee"."organizationId" = :organizationId', {
 				organizationId
+			})
+			.where('"employee"."tenantId" = :tenantId', {
+				tenantId
 			})
 			.andWhere('"employee"."startedWorkOn" <= :startedWorkOnCondition', {
 				startedWorkOnCondition: moment(forMonth).endOf('month').toDate()

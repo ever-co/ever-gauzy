@@ -238,6 +238,7 @@ export class EmployeeSelectorComponent
 
 		const { items } = await this.employeesService.getWorking(
 			org.id,
+			org.tenantId,
 			selectedDate,
 			true
 		);

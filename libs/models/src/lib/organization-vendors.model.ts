@@ -10,21 +10,21 @@ export interface IOrganizationVendor
 	tags?: ITag[];
 }
 
-export interface IOrganizationVendorFindInput {
+export interface IOrganizationVendorFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	phone?: string;
 	website?: string;
 	email?: string;
-	organizationId?: string;
 	tags?: ITag[];
 }
 
-export interface IOrganizationVendorCreateInput {
+export interface IOrganizationVendorCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	phone?: string;
 	website?: string;
 	email?: string;
-	organizationId: string;
 	tags?: ITag[];
 }
 
