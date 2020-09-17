@@ -18,6 +18,8 @@ import * as sharp from 'sharp';
 import { FileStorage } from '../../core/file-storage';
 import { UploadedFileStorage } from '../../core/file-storage/uploaded-file-storage';
 import * as Jimp from 'jimp';
+import * as os from 'os';
+import * as fs from 'fs';
 
 @ApiTags('Screenshot')
 @UseGuards(AuthGuard('jwt'))
@@ -56,60 +58,42 @@ export class ScreenshotController extends CrudController<Screenshot> {
 		@UploadedFileStorage()
 		file
 	): Promise<Screenshot> {
-		const thumbName = `thumb-${file.filename}`;
-
-		let fileContent;
+		let thumb;
 		try {
-			fileContent = await new FileStorage()
+			const fileContent = await new FileStorage()
 				.getProvider()
-				.getFile(file.key, true);
-		} catch (error) {}
+				.getFile(file.key);
 
-		//const fileBuffer = Buffer.from(fileContent);
+			const tempPath = path.join(os.tmpdir(), 'screenshot-thumb-');
+			const folder = await fs.promises.mkdtemp(tempPath);
+			const file_name = path.join(
+				folder,
+				'screenshot-' + moment().unix()
+			);
+			await fs.promises.writeFile(file_name, fileContent);
 
-		let data = await sharp(fileContent)
-			.resize(250, 150)
-			.toBuffer({ resolveWithObject: true })
-			.then((img) => {
-				console.log('{ img: img.toString() }');
-				return img;
-			})
-			.catch((error) => {
-				console.log({ error });
-			});
+			console.log(file_name);
+			const data = await sharp(file_name)
+				.resize(250, 150)
+				.toBuffer({ resolveWithObject: true });
 
-		data = await Jimp.read(fileContent)
-			.then(async (lenna) => {
-				console.log('{ lenna }');
-				// return await lenna
-				// 	.resize(250, 150) // resize
-				// 	.getBufferAsync(Jimp.AUTO); // save
-			})
-			.catch((err) => {
-				console.log({ err });
-				// Handle an exception.
-			});
-		console.log({ data });
+			await fs.promises.unlink(file_name);
 
-		//await new FileStorage().getProvider().putFile(data);
-		// .toFile(path.join(file.destination, thumbName), (err, info) => {
-		// 	if (err) {
-		// 		reject(err);
-		// 		return;
-		// 	}
-		// 	resolve(info);
-		// });
+			const thumbName = `thumb-${file.filename}`;
+			const thumbDir = path.dirname(file.key);
+			thumb = await new FileStorage()
+				.getProvider()
+				.putFile(
+					data.toString('utf-8'),
+					path.join(thumbDir, thumbName)
+				);
+			console.log({ thumb });
+		} catch (error) {
+			console.log(error);
+		}
 
-		entity.file = path.join(
-			'screenshots',
-			moment().format('YYYY/MM/DD'),
-			file.filename
-		);
-		entity.thumb = path.join(
-			'screenshots',
-			moment().format('YYYY/MM/DD'),
-			thumbName
-		);
+		entity.file = file.key;
+		entity.thumb = thumb.key;
 		entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 		const screenshot = await this.screenshotService.create(entity);
 

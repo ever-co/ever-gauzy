@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as moment from 'moment';
 import { environment } from '@env-api/environment';
 import { Provider } from './provider';
-import { join, resolve } from 'path';
+import { basename, dirname, join, resolve } from 'path';
 
 export class LocalProvider extends Provider {
 	static instance: LocalProvider;
@@ -77,7 +77,7 @@ export class LocalProvider extends Provider {
 
 	async getFile(file: string, buffer = false): Promise<any> {
 		const bufferData = await fs.promises.readFile(this.path(file), 'utf-8');
-		console.log('getFile');
+		console.log('getFile', bufferData);
 		if (buffer) {
 			return bufferData;
 		} else {
@@ -86,14 +86,22 @@ export class LocalProvider extends Provider {
 	}
 
 	async putFile(fileContent: string, path: string = ''): Promise<any> {
-		console.log('putFile');
 		return new Promise((resolve, reject) => {
-			fs.writeFile(path, fileContent, (err, data) => {
-				console.log('putFile', err, data);
+			const fullPath = join(this.config.rootPath, path);
+			fs.writeFile(fullPath, fileContent, (err, data) => {
+				const stats = fs.statSync(fullPath);
+				const baseName = basename(path);
+
+				const file = {
+					originalname: baseName, // orignal file name
+					size: stats.size, // files in bytes
+					filename: baseName,
+					path: fullPath // Full path of the file
+				};
 				if (err) {
 					reject(err);
 				} else {
-					resolve(data);
+					resolve(this.mapUploadedFile(file));
 				}
 			});
 		});
@@ -101,8 +109,9 @@ export class LocalProvider extends Provider {
 
 	mapUploadedFile(file): UploadedFile {
 		if (file.path) {
-			file.key = file.path.replace(this.config.rootPath, '');
+			file.key = file.path.replace(this.config.rootPath + '/', '');
 		}
+		file.url = this.url(file.key);
 		return file;
 	}
 }
