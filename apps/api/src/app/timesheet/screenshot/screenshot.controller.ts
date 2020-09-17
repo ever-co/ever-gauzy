@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import * as sharp from 'sharp';
 import { FileStorage } from '../../core/file-storage';
 import { UploadedFileStorage } from '../../core/file-storage/uploaded-file-storage';
+import * as Jimp from 'jimp';
 
 @ApiTags('Screenshot')
 @UseGuards(AuthGuard('jwt'))
@@ -61,15 +62,36 @@ export class ScreenshotController extends CrudController<Screenshot> {
 		try {
 			fileContent = await new FileStorage()
 				.getProvider()
-				.getFile(file.key);
+				.getFile(file.key, true);
 		} catch (error) {}
 
-		console.log('file', { file });
+		//const fileBuffer = Buffer.from(fileContent);
 
-		const data = await sharp(Buffer.from(fileContent))
+		let data = await sharp(fileContent)
 			.resize(250, 150)
-			.toBuffer();
-		await new FileStorage().getProvider().putFile(data);
+			.toBuffer({ resolveWithObject: true })
+			.then((img) => {
+				console.log('{ img: img.toString() }');
+				return img;
+			})
+			.catch((error) => {
+				console.log({ error });
+			});
+
+		data = await Jimp.read(fileContent)
+			.then(async (lenna) => {
+				console.log('{ lenna }');
+				// return await lenna
+				// 	.resize(250, 150) // resize
+				// 	.getBufferAsync(Jimp.AUTO); // save
+			})
+			.catch((err) => {
+				console.log({ err });
+				// Handle an exception.
+			});
+		console.log({ data });
+
+		//await new FileStorage().getProvider().putFile(data);
 		// .toFile(path.join(file.destination, thumbName), (err, info) => {
 		// 	if (err) {
 		// 		reject(err);

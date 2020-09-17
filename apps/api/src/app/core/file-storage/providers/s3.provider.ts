@@ -77,14 +77,18 @@ export class S3Provider extends Provider {
 		});
 	}
 
-	async getFile(file: string): Promise<string> {
+	async getFile(file: string, buffer = false): Promise<any> {
 		const s3 = this.getS3Instance();
 		const params = {
 			Bucket: this.getS3Bucket(),
 			Key: file
 		};
 		const data = await s3.getObject(params).promise();
-		return data.Body.toString('utf-8');
+		if (buffer) {
+			return data.Body;
+		} else {
+			return data.Body.toString('utf-8');
+		}
 	}
 
 	async putFile(fileContent: string, path: string = ''): Promise<any> {

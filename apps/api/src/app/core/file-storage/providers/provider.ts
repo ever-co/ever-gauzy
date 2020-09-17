@@ -12,7 +12,7 @@ export abstract class Provider {
 	abstract url(path: string): string;
 	abstract path(path: string): string;
 	abstract handler(options: FileStorageOption): StorageEngine;
-	abstract getFile(file: string): Promise<string>;
+	abstract getFile(file: string, buffer: boolean): Promise<string>;
 	abstract putFile(fileContent: string, path?: string): Promise<any>;
 	abstract getInstance(): Provider;
 
