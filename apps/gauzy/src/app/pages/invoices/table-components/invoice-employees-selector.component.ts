@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Employee } from '@gauzy/models';
+import { IEmployee } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { DefaultEditor } from 'ng2-smart-table';
 import { Store } from '../../../@core/services/store.service';
@@ -31,8 +31,8 @@ import { Subject } from 'rxjs';
 })
 export class InvoiceEmployeesSelectorComponent extends DefaultEditor
 	implements OnInit, OnDestroy {
-	employee: Employee;
-	employees: Employee[];
+	employee: IEmployee;
+	employees: IEmployee[];
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(

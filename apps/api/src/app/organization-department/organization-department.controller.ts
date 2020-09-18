@@ -1,6 +1,6 @@
 import {
-	EditEntityByMemberInput,
-	OrganizationDepartmentCreateInput,
+	IEditEntityByMemberInput,
+	IOrganizationDepartmentCreateInput,
 	PermissionsEnum
 } from '@gauzy/models';
 import {
@@ -26,7 +26,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Organization-Department')
+@ApiTags('OrganizationDepartment')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationDepartmentController extends CrudController<
@@ -101,7 +101,7 @@ export class OrganizationDepartmentController extends CrudController<
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
 	async updateEmployee(
-		@Body() entity: EditEntityByMemberInput
+		@Body() entity: IEditEntityByMemberInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationDepartmentEditByEmployeeCommand(entity)
@@ -126,7 +126,7 @@ export class OrganizationDepartmentController extends CrudController<
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: OrganizationDepartmentCreateInput
+		@Body() entity: IOrganizationDepartmentCreateInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationDepartmentUpdateCommand(id, entity)

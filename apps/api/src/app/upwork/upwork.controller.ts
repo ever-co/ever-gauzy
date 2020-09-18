@@ -11,7 +11,7 @@ import {
 	Param
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UpworkTransactionService } from './upwork-transaction.service';
 import { UpworkService } from './upwork.service';
@@ -27,7 +27,7 @@ import {
 import { Expense } from '../expense/expense.entity';
 import { Income } from '../income/income.entity';
 import { IPagination } from '../core';
-
+@ApiTags('Integrations')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class UpworkController {
@@ -221,25 +221,5 @@ export class UpworkController {
 			filter,
 			relations
 		);
-	}
-
-	@ApiOperation({
-		summary: 'Check upwork remember state for logged upwork user.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Check State'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
-	})
-	@Get('check/state')
-	async checkRememberState(): Promise<any> {
-		return await this._upworkService.checkRemeberState();
 	}
 }

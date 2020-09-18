@@ -2,11 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import {
-	KeyResult,
-	KeyResultUpdates,
+	IKeyResult,
+	IKeyResultUpdate,
 	KeyResultTypeEnum,
 	KeyResultUpdateStatusEnum,
-	KPI,
+	IKPI,
 	KpiOperatorEnum
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,8 +23,8 @@ import { Store } from '../../../@core/services/store.service';
 export class KeyResultUpdateComponent extends TranslationBaseComponent
 	implements OnInit {
 	keyResultUpdateForm: FormGroup;
-	keyResult: KeyResult;
-	KPI: KPI;
+	keyResult: IKeyResult;
+	KPI: IKPI;
 	keyResultTypeEnum = KeyResultTypeEnum;
 	hideStatus = false;
 	updateStatusEnum = KeyResultUpdateStatusEnum;
@@ -119,7 +119,7 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent
 		}
 		this.keyResult.status = this.keyResultUpdateForm.value.newStatus;
 		try {
-			const update: KeyResultUpdates = {
+			const update: IKeyResultUpdate = {
 				keyResultId: this.keyResult.id,
 				owner: this.keyResult.owner.id,
 				update: this.keyResult.update,

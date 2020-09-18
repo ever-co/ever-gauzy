@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
-	Employee,
-	OrganizationProjects,
-	Tag,
+	IEmployee,
+	IOrganizationProject,
+	ITag,
 	ContactType
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
@@ -21,13 +21,13 @@ import { Store } from '../../../@core/services/store.service';
 export class ContactMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
-	employees: Employee[];
+	employees: IEmployee[];
 	@Input()
 	organizationId: string;
 	@Input()
 	organizationContact?: any;
 	@Input()
-	projectsWithoutOrganizationContact: OrganizationProjects[];
+	projectsWithoutOrganizationContact: IOrganizationProject[];
 	@Input() isGridEdit: boolean;
 	@Input()
 	contactType: string;
@@ -41,8 +41,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];
-	allProjects: OrganizationProjects[] = [];
-	tags: Tag[] = [];
+	allProjects: IOrganizationProject[] = [];
+	tags: ITag[] = [];
 	selectedproject: Object[] = [];
 	contactTypes = [];
 	hoverState: boolean;
@@ -205,7 +205,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		this.toastrService.danger(error, 'Error');
 	}
 
-	addNewProject = (name: string): Promise<OrganizationProjects> => {
+	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(

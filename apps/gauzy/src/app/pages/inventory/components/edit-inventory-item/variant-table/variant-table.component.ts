@@ -2,7 +2,7 @@ import { Component, ViewChild, OnInit, Input } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { ProductVariant } from '@gauzy/models';
+import { IProductVariant } from '@gauzy/models';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -12,7 +12,7 @@ import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
 
 export interface SelectedProductVariant {
-	data: ProductVariant;
+	data: IProductVariant;
 	isSelected: false;
 }
 
@@ -25,9 +25,9 @@ export class VariantTableComponent extends TranslationBaseComponent
 	@ViewChild('variantTable') variantTable;
 	@Input() variants$: BehaviorSubject<any[]>;
 	@Input() productId: string;
-	variants: ProductVariant[];
+	variants: IProductVariant[];
 
-	selectedItem: ProductVariant;
+	selectedItem: IProductVariant;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	loading = true;

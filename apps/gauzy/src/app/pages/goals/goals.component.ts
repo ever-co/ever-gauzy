@@ -12,7 +12,7 @@ import {
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
-import { Goal, KeyResult, GoalGeneralSetting } from '@gauzy/models';
+import { IGoal, IKeyResult, IGoalGeneralSetting } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { GoalService } from '../../@core/services/goal.service';
@@ -39,7 +39,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	isEmployee = false;
 	selectedFilter = 'all';
 	objectiveGroup = 'timeFrames';
-	goalGeneralSettings: GoalGeneralSetting;
+	goalGeneralSettings: IGoalGeneralSetting;
 	goalTimeFrames: Array<string> = [];
 	filters = [
 		{
@@ -65,10 +65,10 @@ export class GoalsComponent extends TranslationBaseComponent
 		{ title: 'Time Frames', value: 'timeFrames' }
 	];
 	private _ngDestroy$ = new Subject<void>();
-	goals: Goal[];
-	allGoals: Goal[];
+	goals: IGoal[];
+	allGoals: IGoal[];
 	noGoals = true;
-	keyResult: KeyResult[];
+	keyResult: IKeyResult[];
 	constructor(
 		private store: Store,
 		readonly translateService: TranslateService,
@@ -134,7 +134,7 @@ export class GoalsComponent extends TranslationBaseComponent
 					'keyResults.goal',
 					'ownerEmployee',
 					'ownerEmployee.user',
-					'ownerOrg',
+					'organization',
 					'ownerTeam',
 					'lead',
 					'lead.user',
@@ -144,7 +144,7 @@ export class GoalsComponent extends TranslationBaseComponent
 					'alignedKeyResult.goal',
 					'alignedKeyResult.goal.ownerEmployee',
 					'alignedKeyResult.goal.ownerEmployee.user',
-					'alignedKeyResult.goal.ownerOrg',
+					'alignedKeyResult.goal.organization',
 					'alignedKeyResult.goal.ownerTeam',
 					'alignedKeyResult.owner',
 					'alignedKeyResult.lead',
@@ -491,7 +491,7 @@ export class GoalsComponent extends TranslationBaseComponent
 		return Math.round(+weight * (100 / weightSum));
 	}
 
-	async keyResultUpdate(index, selectedKeyResult: KeyResult) {
+	async keyResultUpdate(index, selectedKeyResult: IKeyResult) {
 		const keyResultDialog = this.dialogService.open(
 			KeyResultUpdateComponent,
 			{

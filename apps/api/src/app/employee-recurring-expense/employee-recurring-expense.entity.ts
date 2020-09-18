@@ -1,7 +1,4 @@
-import {
-	CurrenciesEnum,
-	EmployeeRecurringExpense as IEmployeeRecurringExpense
-} from '@gauzy/models';
+import { CurrenciesEnum, IEmployeeRecurringExpense } from '@gauzy/models';
 import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -16,10 +13,10 @@ import {
 } from 'class-validator';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { Employee } from '../employee/employee.entity';
-import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('employee_recurring_expense')
-export class EmployeeRecurringExpense extends Base
+export class EmployeeRecurringExpense extends TenantOrganizationBase
 	implements IEmployeeRecurringExpense {
 	@ApiProperty({ type: String })
 	@IsString()

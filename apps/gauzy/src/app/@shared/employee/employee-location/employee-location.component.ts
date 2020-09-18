@@ -1,7 +1,7 @@
 import { OnInit, OnDestroy, Component, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { Employee, Country, Candidate } from '@gauzy/models';
+import { IEmployee, ICountry, ICandidate } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
@@ -17,15 +17,14 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
-	selectedEmployee: Employee;
-	selectedCandidate: Candidate;
-	countries: Country[];
+	selectedEmployee: IEmployee;
+	selectedCandidate: ICandidate;
+	countries: ICountry[];
 
 	constructor(
 		private fb: FormBuilder,
 		private candidateStore: CandidateStore,
 		private employeeStore: EmployeeStore,
-
 		private countryService: CountryService
 	) {}
 
@@ -74,7 +73,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private async _initializeForm(role: Employee | Candidate) {
+	private async _initializeForm(role: IEmployee | ICandidate) {
 		await this.loadCountries();
 
 		this.form = this.fb.group({

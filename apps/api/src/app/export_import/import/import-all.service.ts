@@ -10,9 +10,9 @@ import { User } from '../../user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Tag } from '../../tags/tag.entity';
 import { Activity } from '../../timesheet/activity.entity';
-import { AvailabilitySlots } from '../../availability-slots/availability-slots.entity';
+import { AvailabilitySlot } from '../../availability-slots/availability-slots.entity';
 import { ApprovalPolicy } from '../../approval-policy/approval-policy.entity';
-import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
+import { AppointmentEmployee } from '../../appointment-employees/appointment-employees.entity';
 import { CandidateTechnologies } from '../../candidate-technologies/candidate-technologies.entity';
 import { CandidateSource } from '../../candidate-source/candidate-source.entity';
 import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
@@ -79,7 +79,7 @@ import { OrganizationDocuments } from '../../organization-documents/organization
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { OrganizationLanguages } from '../../organization-languages/organization-languages.entity';
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
-import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import { OrganizationTeam } from '../../organization-team/organization-team.entity';
@@ -107,17 +107,17 @@ export class ImportAllService implements OnDestroy {
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
 
-		@InjectRepository(AppointmentEmployees)
+		@InjectRepository(AppointmentEmployee)
 		private readonly appointmentEmployeesRepository: Repository<
-			AppointmentEmployees
+			AppointmentEmployee
 		>,
 
 		@InjectRepository(ApprovalPolicy)
 		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>,
 
-		@InjectRepository(AvailabilitySlots)
+		@InjectRepository(AvailabilitySlot)
 		private readonly availabilitySlotsRepository: Repository<
-			AvailabilitySlots
+			AvailabilitySlot
 		>,
 
 		@InjectRepository(Candidate)
@@ -342,9 +342,9 @@ export class ImportAllService implements OnDestroy {
 			OrganizationPositions
 		>,
 
-		@InjectRepository(OrganizationProjects)
+		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<
-			OrganizationProjects
+			OrganizationProject
 		>,
 
 		@InjectRepository(OrganizationRecurringExpense)

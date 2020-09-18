@@ -1,4 +1,4 @@
-import { OrganizationContact } from '@gauzy/models';
+import { IOrganizationContact } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationContactCreateCommand } from '../organization-contact-create.command';
 import { OrganizationContactService } from '../../organization-contact.service';
@@ -12,7 +12,7 @@ export class OrganizationContactCreateHandler
 
 	public async execute(
 		command: OrganizationContactCreateCommand
-	): Promise<OrganizationContact> {
+	): Promise<IOrganizationContact> {
 		const { input } = command;
 
 		return await this.organizationContactService.create(input);

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-user-organizations-multi-select',
@@ -7,7 +7,7 @@ import { Organization } from '@gauzy/models';
 })
 export class UserOrganizationsSelectComponent {
 	@Input() selectedOrganizationsId: string[];
-	@Input() allOrganizations: Organization[];
+	@Input() allOrganizations: IOrganization[];
 
 	@Output() selectedChange = new EventEmitter();
 

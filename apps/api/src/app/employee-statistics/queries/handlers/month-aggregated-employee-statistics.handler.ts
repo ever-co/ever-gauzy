@@ -1,6 +1,6 @@
 import {
-	MonthAggregatedEmployeeStatistics,
-	MonthAggregatedEmployeeStatisticsFindInput,
+	IMonthAggregatedEmployeeStatistics,
+	IMonthAggregatedEmployeeStatisticsFindInput,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
@@ -23,7 +23,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 
 	public async execute(
 		command: MonthAggregatedEmployeeStatisticsQuery
-	): Promise<MonthAggregatedEmployeeStatistics[]> {
+	): Promise<IMonthAggregatedEmployeeStatistics[]> {
 		const { input } = command;
 
 		/**
@@ -33,7 +33,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		 */
 		const statisticsMap: Map<
 			string,
-			MonthAggregatedEmployeeStatistics
+			IMonthAggregatedEmployeeStatistics
 		> = new Map();
 
 		// 1. Populate Income and Direct Bonus in statisticsMap
@@ -71,8 +71,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	 * Adds a new map entry if the key(month-year) does not already exist
 	 */
 	private async _loadEmployeeIncomeAndDirectBonus(
-		input: MonthAggregatedEmployeeStatisticsFindInput,
-		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
+		input: IMonthAggregatedEmployeeStatisticsFindInput,
+		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
 		// Fetch employee's incomes for past N months from given date
 		const {
@@ -98,7 +98,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 					: stat.directIncomeBonus;
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
-				const newStat: MonthAggregatedEmployeeStatistics = {
+				const newStat: IMonthAggregatedEmployeeStatistics = {
 					month: income.valueDate.getMonth(),
 					year: income.valueDate.getFullYear(),
 					income: Number(amount.toFixed(2)),
@@ -124,8 +124,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	 * Adds a new map entry if the key(month-year) does not already exist
 	 */
 	private async _loadEmployeeExpenses(
-		input: MonthAggregatedEmployeeStatisticsFindInput,
-		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
+		input: IMonthAggregatedEmployeeStatisticsFindInput,
+		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
 		// Fetch employee's expenses for past N months from given date
 		const {
@@ -148,7 +148,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
-				const newStat: MonthAggregatedEmployeeStatistics = {
+				const newStat: IMonthAggregatedEmployeeStatistics = {
 					month: expense.valueDate.getMonth(),
 					year: expense.valueDate.getFullYear(),
 					income: 0,
@@ -172,8 +172,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	 * Adds a new map entry if the key(month-year) does not already exist
 	 */
 	private async _loadEmployeeRecurringExpenses(
-		input: MonthAggregatedEmployeeStatisticsFindInput,
-		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
+		input: IMonthAggregatedEmployeeStatisticsFindInput,
+		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
 		const {
 			items: employeeRecurringExpenses
@@ -233,7 +233,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 						  );
 				} else {
 					// Add a new map entry if the key(month-year) does not already exist
-					const newStat: MonthAggregatedEmployeeStatistics = {
+					const newStat: IMonthAggregatedEmployeeStatistics = {
 						month: date.getMonth(),
 						year: date.getFullYear(),
 						income: 0,
@@ -261,8 +261,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	 * Adds a new map entry if the key(month-year) does not already exist
 	 */
 	private async _loadOrganizationSplitExpenses(
-		input: MonthAggregatedEmployeeStatisticsFindInput,
-		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
+		input: IMonthAggregatedEmployeeStatisticsFindInput,
+		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
 		// Fetch split expenses and the number of employees the expense need to be split among
 		// the split among will be different for every month, depending upon the number of active employees in the month
@@ -284,7 +284,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
-				const newStat: MonthAggregatedEmployeeStatistics = {
+				const newStat: IMonthAggregatedEmployeeStatistics = {
 					month: value.month,
 					year: value.year,
 					income: 0,
@@ -310,8 +310,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 
 	 */
 	private async _loadOrganizationRecurringSplitExpenses(
-		input: MonthAggregatedEmployeeStatisticsFindInput,
-		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
+		input: IMonthAggregatedEmployeeStatisticsFindInput,
+		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
 		const splitExpensesMap = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
 			input.employeeId,
@@ -331,7 +331,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
-				const newStat: MonthAggregatedEmployeeStatistics = {
+				const newStat: IMonthAggregatedEmployeeStatistics = {
 					month: value.month,
 					year: value.year,
 					income: 0,
@@ -354,7 +354,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	 */
 
 	private _calculateProfit(
-		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
+		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
 		// For every stat entry in the map, update profit value
 		statisticsMap.forEach((stat) => {
@@ -370,8 +370,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	 * For every stat entry in the map, update bonus value
 	 */
 	private async _loadEmployeeBonus(
-		input: MonthAggregatedEmployeeStatisticsFindInput,
-		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
+		input: IMonthAggregatedEmployeeStatisticsFindInput,
+		statisticsMap: Map<string, IMonthAggregatedEmployeeStatistics>
 	) {
 		const {
 			organization: { bonusType, bonusPercentage }

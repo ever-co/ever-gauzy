@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../@core/services/invoices.service';
-import { EstimateEmail, EstimateStatusTypesEnum } from '@gauzy/models';
+import { IEstimateEmail, EstimateStatusTypesEnum } from '@gauzy/models';
 import { EstimateEmailService } from '../../@core/services/estimate-email.service';
 
 @Component({
@@ -16,7 +16,7 @@ export class EstimateEmailComponent implements OnInit {
 
 	token: string;
 	isAccepted: boolean;
-	estimateEmail: EstimateEmail;
+	estimateEmail: IEstimateEmail;
 	errorMessage: string;
 	loading = true;
 

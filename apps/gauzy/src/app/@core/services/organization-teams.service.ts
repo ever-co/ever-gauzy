@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	OrganizationTeam,
-	OrganizationTeamFindInput,
-	OrganizationTeamCreateInput
+	IOrganizationTeam,
+	IOrganizationTeamFindInput,
+	IOrganizationTeamCreateInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -21,10 +21,10 @@ export class OrganizationTeamsService {
 	// 5) Display all teams: show team name and members - avatar + full name for each member;
 
 	create(
-		createInput: OrganizationTeamCreateInput
-	): Promise<OrganizationTeam> {
+		createInput: IOrganizationTeamCreateInput
+	): Promise<IOrganizationTeam> {
 		return this.http
-			.post<OrganizationTeam>(
+			.post<IOrganizationTeam>(
 				'/api/organization-team/create',
 				createInput
 			)
@@ -34,12 +34,12 @@ export class OrganizationTeamsService {
 
 	getAll(
 		relations?: string[],
-		findInput?: OrganizationTeamFindInput
+		findInput?: IOrganizationTeamFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: OrganizationTeam[]; total: number }>(
+			.get<{ items: IOrganizationTeam[]; total: number }>(
 				`/api/organization-team`,
 				{
 					params: { data }
@@ -49,7 +49,10 @@ export class OrganizationTeamsService {
 			.toPromise();
 	}
 
-	update(id: string, updateInput: OrganizationTeamCreateInput): Promise<any> {
+	update(
+		id: string,
+		updateInput: IOrganizationTeamCreateInput
+	): Promise<any> {
 		return this.http
 			.put(`/api/organization-team/${id}`, updateInput)
 			.pipe(first())
@@ -65,13 +68,13 @@ export class OrganizationTeamsService {
 
 	getMyTeams(
 		relations?: string[],
-		findInput?: OrganizationTeamFindInput,
+		findInput?: IOrganizationTeamFindInput,
 		employeeId: string = ''
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, employeeId });
 
 		return this.http
-			.get<{ items: OrganizationTeam[]; total: number }>(
+			.get<{ items: IOrganizationTeam[]; total: number }>(
 				`/api/organization-team/me`,
 				{
 					params: { data }

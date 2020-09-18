@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AvailabilitySlotsBulkCreateCommand } from '../availability-slots.bulk.create.command';
-import { AvailabilitySlots } from '../../availability-slots.entity';
+import { AvailabilitySlot } from '../../availability-slots.entity';
 import { AvailabilitySlotsService } from '../../availability-slots.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
@@ -16,7 +16,7 @@ export class AvailabilitySlotsBulkCreateHandler
 
 	public async execute(
 		command: AvailabilitySlotsBulkCreateCommand
-	): Promise<AvailabilitySlots[]> {
+	): Promise<AvailabilitySlot[]> {
 		const { input } = command;
 		const availabilitySlotsArray = [];
 
@@ -28,7 +28,7 @@ export class AvailabilitySlotsBulkCreateHandler
 		);
 
 		for (let o of input) {
-			const availabilitySlots = new AvailabilitySlots();
+			const availabilitySlots = new AvailabilitySlot();
 
 			availabilitySlots.employee = employee;
 			availabilitySlots.organization = organization;

@@ -1,8 +1,8 @@
 import { environment as env, environment } from '@env-api/environment';
 import {
-	UserRegistrationInput as IUserRegistrationInput,
+	IUserRegistrationInput,
 	LanguagesEnum,
-	RolePermissions
+	IRolePermission
 } from '@gauzy/models';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
@@ -55,7 +55,7 @@ export class AuthService {
 			tokenData.role = user.role.name;
 			if (user.role.rolePermissions) {
 				tokenData.permissions = user.role.rolePermissions.map(
-					(rolePermission: RolePermissions) =>
+					(rolePermission: IRolePermission) =>
 						rolePermission.permission
 				);
 			} else {

@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Invoice, InvoiceFindInput, InvoiceUpdateInput } from '@gauzy/models';
+import {
+	IInvoice,
+	IInvoiceFindInput,
+	IInvoiceUpdateInput
+} from '@gauzy/models';
 import { first } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
 
@@ -13,20 +17,20 @@ export class InvoicesService {
 
 	getAll(
 		relations?: string[],
-		findInput?: InvoiceFindInput
-	): Promise<{ items: Invoice[] }> {
+		findInput?: IInvoiceFindInput
+	): Promise<{ items: IInvoice[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: Invoice[] }>('/api/invoices', {
+			.get<{ items: IInvoice[] }>('/api/invoices', {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	getHighestInvoiceNumber(): Promise<Invoice> {
+	getHighestInvoiceNumber(): Promise<IInvoice> {
 		return this.http
-			.get<Invoice>('/api/invoices/highest')
+			.get<IInvoice>('/api/invoices/highest')
 			.pipe(first())
 			.toPromise();
 	}
@@ -34,40 +38,40 @@ export class InvoicesService {
 	getById(id: string, relations?: string[]) {
 		const data = JSON.stringify({ relations });
 		return this.http
-			.get<Invoice>(`/api/invoices/${id}`, {
+			.get<IInvoice>(`/api/invoices/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	add(invoice: Invoice): Promise<Invoice> {
+	add(invoice: IInvoice): Promise<IInvoice> {
 		return this.http
-			.post<Invoice>('/api/invoices', invoice)
+			.post<IInvoice>('/api/invoices', invoice)
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(id: string, updateInput: InvoiceUpdateInput): Promise<Invoice> {
+	update(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
 		return this.http
-			.put<Invoice>(`/api/invoices/${id}`, updateInput)
+			.put<IInvoice>(`/api/invoices/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	updateWithoutAuth(
 		id: string,
-		updateInput: InvoiceUpdateInput
-	): Promise<Invoice> {
+		updateInput: IInvoiceUpdateInput
+	): Promise<IInvoice> {
 		return this.http
-			.put<Invoice>(`/api/invoices/estimate/${id}`, updateInput)
+			.put<IInvoice>(`/api/invoices/estimate/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	edit(invoice: Invoice): Promise<Invoice> {
+	edit(invoice: IInvoice): Promise<IInvoice> {
 		return this.http
-			.put<Invoice>(`/api/invoices/${invoice.id}`, invoice)
+			.put<IInvoice>(`/api/invoices/${invoice.id}`, invoice)
 			.pipe(first())
 			.toPromise();
 	}

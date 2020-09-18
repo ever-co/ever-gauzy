@@ -1,11 +1,12 @@
-import { EstimateEmail as IEstimateEmail } from '@gauzy/models';
+import { IEstimateEmail } from '@gauzy/models';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEmail, IsString } from 'class-validator';
 import { Column, Entity } from 'typeorm';
-import { Base } from '../core/entities/base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('estimate_email')
-export class EstimateEmail extends Base implements IEstimateEmail {
+export class EstimateEmail extends TenantOrganizationBase
+	implements IEstimateEmail {
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Column()

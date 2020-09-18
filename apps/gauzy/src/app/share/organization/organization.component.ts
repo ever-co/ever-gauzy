@@ -6,11 +6,11 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { EmployeesService } from '../../@core/services';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	Organization,
-	OrganizationAwards,
-	OrganizationLanguages,
+	IOrganization,
+	IOrganizationAwards,
+	IOrganizationLanguages,
 	PermissionsEnum,
-	OrganizationContact
+	IOrganizationContact
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -37,14 +37,14 @@ export enum CURRENCY {
 })
 export class OrganizationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organization: Organization;
+	organization: IOrganization;
 	hasEditPermission = false;
 	belongsToOrganization = false;
 
 	private _ngDestroy$ = new Subject<void>();
 
-	organization_languages: OrganizationLanguages[];
-	awards: OrganizationAwards[];
+	organization_languages: IOrganizationLanguages[];
+	awards: IOrganizationAwards[];
 	loading = true;
 	bonuses_paid = 0;
 	total_clients = 0;
@@ -61,7 +61,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	imageUpdateButton = false;
 	moment = moment;
 	currencies = Object.values(CURRENCY);
-	clients: OrganizationContact[];
+	clients: IOrganizationContact[];
 	tabTitle = 'Profile';
 
 	constructor(
@@ -208,6 +208,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 			{
 				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				filterDate: new Date()
 			}
 		);

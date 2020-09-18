@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
-	Proposal,
-	ProposalCreateInput as IProposalCreateInput,
-	ProposalFindInput as IProposalFindInput
+	IProposal,
+	IProposalCreateInput,
+	IProposalFindInput
 } from '@gauzy/models';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class ProposalsService {
 
 	create(createInput: IProposalCreateInput): Promise<any> {
 		return this.http
-			.post<Proposal>('/api/proposal/create', createInput)
+			.post<IProposal>('/api/proposal/create', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -36,11 +36,11 @@ export class ProposalsService {
 		relations?: string[],
 		findInput?: IProposalFindInput,
 		filterDate?: Date
-	): Promise<{ items: Proposal[]; total: number }> {
+	): Promise<{ items: IProposal[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http
-			.get<{ items: Proposal[]; total: number }>(`/api/proposal`, {
+			.get<{ items: IProposal[]; total: number }>(`/api/proposal`, {
 				params: { data }
 			})
 			.pipe(first())

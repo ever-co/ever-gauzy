@@ -2,11 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
 	KeyResultTypeEnum,
-	KeyResult,
+	IKeyResult,
 	KeyResultWeightEnum,
 	KeyResultDeadlineEnum,
-	KPI,
-	GoalGeneralSetting,
+	IKPI,
+	IGoalGeneralSetting,
 	CurrenciesEnum,
 	KeyResultNumberUnitsEnum
 } from '@gauzy/models';
@@ -25,15 +25,15 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	weightForm: FormGroup;
 	typeForm: FormGroup;
 	data: {
-		selectedKeyResult: KeyResult;
-		allKeyResults: KeyResult[];
-		settings: GoalGeneralSetting;
+		selectedKeyResult: IKeyResult;
+		allKeyResults: IKeyResult[];
+		settings: IGoalGeneralSetting;
 		orgId: string;
 	};
 	keyResultTypeEnum = KeyResultTypeEnum;
 	keyResultWeightEnum = KeyResultWeightEnum;
 	keyResultWeight: any;
-	KPIs: KPI[];
+	KPIs: IKPI[];
 	currenciesEnum = CurrenciesEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	private _ngDestroy$ = new Subject<void>();

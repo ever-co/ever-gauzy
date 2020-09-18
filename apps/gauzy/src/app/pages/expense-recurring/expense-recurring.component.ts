@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import {
-	Organization,
-	OrganizationRecurringExpense,
-	Tag,
+	IOrganization,
+	IOrganizationRecurringExpense,
+	ITag,
 	PermissionsEnum,
 	RecurringExpenseDefaultCategoriesEnum,
 	RecurringExpenseDeletionEnum
@@ -31,16 +31,16 @@ import { Store } from '../../@core/services/store.service';
 })
 export class ExpenseRecurringComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	selectedOrg: Organization;
+	selectedOrg: IOrganization;
 	selectedDate: Date;
-	selectedOrgFromHeader: Organization;
-	selectedOrgRecurringExpense: OrganizationRecurringExpense[];
+	selectedOrgFromHeader: IOrganization;
+	selectedOrgRecurringExpense: IOrganizationRecurringExpense[];
 	selectedRowIndexToShow: number;
 	editExpenseId: string;
 	hasEditExpensePermission = false;
 	private _ngDestroy$ = new Subject<void>();
 	fetchedHistories: Object = {};
-	tags: Tag[];
+	tags: ITag[];
 
 	loading = true;
 	constructor(

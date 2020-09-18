@@ -1,13 +1,13 @@
 import {
 	DefaultValueDateTypeEnum,
-	Organization,
+	IOrganization,
 	PermissionsEnum,
-	RolePermissions,
-	User,
+	IRolePermission,
+	IUser,
 	LanguagesEnum,
 	OrganizationPermissionsEnum,
-	OrganizationProjects,
-	Language
+	IOrganizationProject,
+	ILanguage
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
@@ -23,14 +23,14 @@ import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 
 export interface AppState {
-	user: User;
-	userRolePermissions: RolePermissions[];
-	selectedOrganization: Organization;
+	user: IUser;
+	userRolePermissions: IRolePermission[];
+	selectedOrganization: IOrganization;
 	selectedEmployee: SelectedEmployee;
 	selectedProposal: ProposalViewModel;
-	selectedProject: OrganizationProjects;
+	selectedProject: IOrganizationProject;
 	selectedDate: Date;
-	systemLanguages: Language[];
+	systemLanguages: ILanguage[];
 }
 
 export interface PersistState {
@@ -170,7 +170,7 @@ export class Store {
 		);
 	}
 
-	get selectedOrganization(): Organization {
+	get selectedOrganization(): IOrganization {
 		const { selectedOrganization } = this.appQuery.getValue();
 		return selectedOrganization;
 	}
@@ -186,26 +186,26 @@ export class Store {
 		return selectedEmployee;
 	}
 
-	set selectedOrganization(organization: Organization) {
+	set selectedOrganization(organization: IOrganization) {
 		this.appStore.update({
 			selectedOrganization: organization
 		});
 		this.loadPermissions();
 	}
 
-	set selectedProject(project: OrganizationProjects) {
+	set selectedProject(project: IOrganizationProject) {
 		this.appStore.update({
 			selectedProject: project
 		});
 	}
 
-	set systemLanguages(languages: Language[]) {
+	set systemLanguages(languages: ILanguage[]) {
 		this.appStore.update({
 			systemLanguages: languages
 		});
 	}
 
-	get systemLanguages(): Language[] {
+	get systemLanguages(): ILanguage[] {
 		const { systemLanguages } = this.appQuery.getValue();
 		return systemLanguages;
 	}
@@ -221,23 +221,23 @@ export class Store {
 		});
 	}
 
-	get userId(): User['id'] | null {
+	get userId(): IUser['id'] | null {
 		const { userId } = this.persistQuery.getValue();
 		return userId;
 	}
 
-	set userId(id: User['id'] | null) {
+	set userId(id: IUser['id'] | null) {
 		this.persistStore.update({
 			userId: id
 		});
 	}
 
-	get user(): User {
+	get user(): IUser {
 		const { user } = this.appQuery.getValue();
 		return user;
 	}
 
-	set user(user: User) {
+	set user(user: IUser) {
 		this.appStore.update({
 			user: user
 		});
@@ -274,12 +274,12 @@ export class Store {
 		});
 	}
 
-	get userRolePermissions(): RolePermissions[] {
+	get userRolePermissions(): IRolePermission[] {
 		const { userRolePermissions } = this.appQuery.getValue();
 		return userRolePermissions;
 	}
 
-	set userRolePermissions(rolePermissions: RolePermissions[]) {
+	set userRolePermissions(rolePermissions: IRolePermission[]) {
 		this.appStore.update({
 			userRolePermissions: rolePermissions
 		});

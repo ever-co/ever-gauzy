@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
-	OrganizationPositions,
-	Tag,
+	IOrganizationPosition,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
@@ -23,11 +23,11 @@ export class PositionsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationId: string;
 	showAddCard: boolean;
-	positions: OrganizationPositions[];
-	selectedPosition: OrganizationPositions;
+	positions: IOrganizationPosition[];
+	selectedPosition: IOrganizationPosition;
 	showEditDiv: boolean;
 	positionsExist: boolean;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -97,7 +97,7 @@ export class PositionsComponent extends TranslationBaseComponent
 			this.loadPositions();
 		}
 	}
-	edit(position: OrganizationPositions) {
+	edit(position: IOrganizationPosition) {
 		this.showAddCard = true;
 		this.isGridEdit = true;
 		this.selectedPosition = position;
@@ -171,7 +171,7 @@ export class PositionsComponent extends TranslationBaseComponent
 		this.isGridEdit = false;
 		this.tags = [];
 	}
-	showEditCard(position: OrganizationPositions) {
+	showEditCard(position: IOrganizationPosition) {
 		this.tags = position.tags;
 		this.showEditDiv = true;
 		this.selectedPosition = position;

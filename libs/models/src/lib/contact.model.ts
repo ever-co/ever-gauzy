@@ -1,10 +1,10 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface Contact {
+export interface IContact extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	name?: string;
 	firstName?: string;
-	lastname?: string;
+	lastName?: string;
 	country?: string;
 	city?: string;
 	address?: string;
@@ -16,10 +16,10 @@ export interface Contact {
 	website?: string;
 }
 
-export interface ContactFindInput extends IBaseEntityModel {
+export interface IContactFindInput {
 	name?: string;
 	firstName?: string;
-	lastname?: string;
+	lastName?: string;
 	country?: string;
 	city?: string;
 	address?: string;
@@ -31,10 +31,10 @@ export interface ContactFindInput extends IBaseEntityModel {
 	website?: string;
 }
 
-export interface ContactCreateInput extends IBaseEntityModel {
+export interface IContactCreateInput {
 	name?: string;
 	firstName?: string;
-	lastname?: string;
+	lastName?: string;
 	country?: string;
 	city?: string;
 	address?: string;

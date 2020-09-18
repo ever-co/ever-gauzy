@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import {
-	EmployeeAppointment,
+	IEmployeeAppointment,
 	IEmployeeAppointmentCreateInput,
 	IEmployeeAppointmentFindInput,
 	IEmployeeAppointmentUpdateInput
@@ -18,9 +18,9 @@ export class EmployeeAppointmentService {
 	getAll(
 		relations?: string[],
 		findInput?: IEmployeeAppointmentFindInput
-	): Observable<{ items: EmployeeAppointment[] }> {
+	): Observable<{ items: IEmployeeAppointment[] }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http.get<{ items: EmployeeAppointment[] }>(
+		return this.http.get<{ items: IEmployeeAppointment[] }>(
 			this.EMPLOYEE_APPOINTMENT_URL,
 			{
 				params: { data }
@@ -44,8 +44,8 @@ export class EmployeeAppointmentService {
 			.toPromise();
 	}
 
-	getById(id: string = ''): Observable<EmployeeAppointment> {
-		return this.http.get<EmployeeAppointment>(
+	getById(id: string = ''): Observable<IEmployeeAppointment> {
+		return this.http.get<IEmployeeAppointment>(
 			this.EMPLOYEE_APPOINTMENT_URL + '/' + id
 		);
 	}
@@ -65,7 +65,7 @@ export class EmployeeAppointmentService {
 		employeeAppointment: IEmployeeAppointmentUpdateInput
 	): Promise<any> {
 		return this.http
-			.put<EmployeeAppointment>(
+			.put<IEmployeeAppointment>(
 				`${this.EMPLOYEE_APPOINTMENT_URL}/${id}`,
 				employeeAppointment
 			)

@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
-	Organization,
+	IOrganization,
 	RecurringExpenseDefaultCategoriesEnum,
-	RecurringExpenseModel,
-	Employee
+	IRecurringExpenseModel,
+	IEmployee
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -18,19 +18,19 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
-	recurringExpense: RecurringExpenseModel;
+	recurringExpense: IRecurringExpenseModel;
 
 	@Input()
-	employees: Employee[];
+	employees: IEmployee[];
 
 	@Input()
 	splitExpense?: boolean;
 
 	@Input()
-	fetchedHistories: RecurringExpenseModel[];
+	fetchedHistories: IRecurringExpenseModel[];
 
 	@Input()
-	selectedOrganization: Organization;
+	selectedOrganization: IOrganization;
 
 	@Output()
 	editRecurringExpense = new EventEmitter<void>();
@@ -43,7 +43,7 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 
 	showMenu = false;
 	showHistory = false;
-	currentEmployee: Employee;
+	currentEmployee: IEmployee;
 
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);

@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, forwardRef, OnDestroy } from '@angular/core';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
-import { OrganizationContact } from '@gauzy/models';
+import { IOrganizationContact } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
@@ -20,7 +20,7 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 export class ContactSelectorComponent implements OnInit, OnDestroy {
 	private _contactId: string | string[];
 	private _employeeId: string;
-	contacts: OrganizationContact[];
+	contacts: IOrganizationContact[];
 
 	@Input() disabled = false;
 	@Input() multiple = false;

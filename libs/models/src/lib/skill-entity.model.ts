@@ -1,12 +1,12 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface Skill extends IBaseEntityModel {
+export interface ISkill extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	description?: string;
 	color?: string;
 	isSelected?: boolean;
 }
 
-export interface SkillName {
+export interface ISkillName {
 	name?: string;
 }

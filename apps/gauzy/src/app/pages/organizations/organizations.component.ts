@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
-	Organization,
+	IOrganization,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
@@ -25,9 +25,9 @@ import { UsersOrganizationsService } from '../../@core/services/users-organizati
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 
 interface SelectedRow {
-	data: Organization;
+	data: IOrganization;
 	isSelected: boolean;
-	selected: Organization[];
+	selected: IOrganization[];
 	source: LocalDataSource;
 }
 
@@ -57,10 +57,10 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	@ViewChild('settingsTable') settingsTable;
 
 	settingsSmartTable: object;
-	selectedOrganization: Organization;
+	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
 
-	organizations: Organization[] = [];
+	organizations: IOrganization[] = [];
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -181,7 +181,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editOrganization(selectedItem?: Organization) {
+	async editOrganization(selectedItem?: IOrganization) {
 		if (selectedItem) {
 			this.selectOrganization({
 				isSelected: true,
@@ -193,7 +193,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		]);
 	}
 
-	async deleteOrganization(selectedItem?: Organization) {
+	async deleteOrganization(selectedItem?: IOrganization) {
 		if (selectedItem) {
 			this.selectOrganization({
 				isSelected: true,

@@ -3,7 +3,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { Invoice, Payment, InvoiceStatusTypesEnum } from '@gauzy/models';
+import { IInvoice, IPayment, InvoiceStatusTypesEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -18,7 +18,7 @@ import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 
 export interface SelectedPayment {
-	data: Payment;
+	data: IPayment;
 	isSelected: false;
 }
 
@@ -43,14 +43,14 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 	}
 
 	invoiceId: string;
-	invoice: Invoice;
-	payments: Payment[];
+	invoice: IInvoice;
+	payments: IPayment[];
 	totalPaid = 0;
 	leftToPay = 0;
 	barWidth = 0;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	selectedPayment: Payment;
+	selectedPayment: IPayment;
 	disableButton = true;
 
 	@ViewChild('paymentsTable') paymentsTable;

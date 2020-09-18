@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ApprovalPolicy, ApprovalPolicyCreateInput } from '@gauzy/models';
+import { IApprovalPolicy, IApprovalPolicyCreateInput } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -11,12 +11,12 @@ export class ApprovalPolicyService {
 
 	getAll(
 		relations?: string[],
-		findInput?: ApprovalPolicy
+		findInput?: IApprovalPolicy
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: ApprovalPolicy[]; total: number }>(
+			.get<{ items: IApprovalPolicy[]; total: number }>(
 				`${this.APPROVAL_POLICY_URL}`,
 				{
 					params: { data }
@@ -28,12 +28,12 @@ export class ApprovalPolicyService {
 
 	getForRequestApproval(
 		relations?: string[],
-		findInput?: ApprovalPolicy
+		findInput?: IApprovalPolicy
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: ApprovalPolicy[]; total: number }>(
+			.get<{ items: IApprovalPolicy[]; total: number }>(
 				`${this.APPROVAL_POLICY_URL}/requestapproval`,
 				{
 					params: { data }
@@ -50,15 +50,15 @@ export class ApprovalPolicyService {
 			.toPromise();
 	}
 
-	save(approvalPolicy: ApprovalPolicyCreateInput): Promise<ApprovalPolicy> {
+	save(approvalPolicy: IApprovalPolicyCreateInput): Promise<IApprovalPolicy> {
 		if (!approvalPolicy.id) {
 			return this.http
-				.post<ApprovalPolicy>(this.APPROVAL_POLICY_URL, approvalPolicy)
+				.post<IApprovalPolicy>(this.APPROVAL_POLICY_URL, approvalPolicy)
 				.pipe(first())
 				.toPromise();
 		} else {
 			return this.http
-				.put<ApprovalPolicy>(
+				.put<IApprovalPolicy>(
 					`${this.APPROVAL_POLICY_URL}/${approvalPolicy.id}`,
 					approvalPolicy
 				)

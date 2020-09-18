@@ -8,7 +8,7 @@ import {
 import { AuthService } from '../../../@core/services/auth.service';
 import {
 	RolesEnum,
-	Employee,
+	IEmployee,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
@@ -33,7 +33,7 @@ export interface TimeOffPolicyVM {
 	name: string;
 	requiresApproval: boolean;
 	paid: boolean;
-	employees: Employee[];
+	employees: IEmployee[];
 }
 
 @Component({

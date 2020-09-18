@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -23,11 +23,11 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
 	public loading = true;
-	public selectedApprovalPolicy: ApprovalPolicy;
+	public selectedApprovalPolicy: IApprovalPolicy;
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
 	public hasEditPermission = false;
-	approvalData: ApprovalPolicy[];
+	approvalData: IApprovalPolicy[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private ngDestroy$ = new Subject<void>();
@@ -92,7 +92,7 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedApprovalPolicy = null;
-		let findInput: ApprovalPolicy = {};
+		let findInput: IApprovalPolicy = {};
 		if (this.selectedOrganizationId) {
 			findInput = {
 				organizationId: this.selectedOrganizationId
@@ -133,7 +133,7 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		});
 	}
 
-	async save(selectedItem?: ApprovalPolicy) {
+	async save(selectedItem?: IApprovalPolicy) {
 		if (selectedItem) {
 			this.selectApprovalPolicy({
 				isSelected: true,
@@ -173,7 +173,7 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		this.selectedApprovalPolicy = selectedApprovalPolicy;
 	}
 
-	async delete(selectedItem?: ApprovalPolicy) {
+	async delete(selectedItem?: IApprovalPolicy) {
 		if (selectedItem) {
 			this.selectApprovalPolicy({
 				isSelected: true,

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Task, TaskListTypeEnum } from '@gauzy/models';
+import { ITask, TaskListTypeEnum } from '@gauzy/models';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
@@ -8,15 +8,17 @@ import { TasksService } from './tasks.service';
 	providedIn: 'root'
 })
 export class TasksStoreService {
-	private _tasks$: BehaviorSubject<Task[]> = new BehaviorSubject([]);
-	public tasks$: Observable<Task[]> = this._tasks$
+	private _tasks$: BehaviorSubject<ITask[]> = new BehaviorSubject([]);
+	public tasks$: Observable<ITask[]> = this._tasks$
 		.asObservable()
 		.pipe(map(this._mapToViewModel));
 
-	private _selectedTask$: BehaviorSubject<Task> = new BehaviorSubject(null);
-	public selectedTask$: Observable<Task> = this._selectedTask$.asObservable();
+	private _selectedTask$: BehaviorSubject<ITask> = new BehaviorSubject(null);
+	public selectedTask$: Observable<
+		ITask
+	> = this._selectedTask$.asObservable();
 
-	get tasks(): Task[] {
+	get tasks(): ITask[] {
 		return this._tasks$.getValue();
 	}
 
@@ -44,7 +46,7 @@ export class TasksStoreService {
 		}));
 	}
 
-	loadAllTasks(tasks: Task[]): void {
+	loadAllTasks(tasks: ITask[]): void {
 		this._tasks$.next(tasks);
 	}
 
@@ -53,7 +55,7 @@ export class TasksStoreService {
 		viewModeType: TaskListTypeEnum
 	): void {
 		this._tasks$.next([
-			...this.tasks.map((task: Task) => {
+			...this.tasks.map((task: ITask) => {
 				if (
 					task.projectId === projectId &&
 					task.project.taskListType !== viewModeType
@@ -68,7 +70,7 @@ export class TasksStoreService {
 		]);
 	}
 
-	createTask(task: Task): void {
+	createTask(task: ITask): void {
 		console.log('createdTask[0] in store service: ', task);
 		this._taskService
 			.createTask(task)
@@ -85,7 +87,7 @@ export class TasksStoreService {
 			.subscribe();
 	}
 
-	editTask(task: Task): void {
+	editTask(task: ITask): void {
 		this._taskService
 			.editTask(task)
 			.pipe(
@@ -113,7 +115,7 @@ export class TasksStoreService {
 			.subscribe();
 	}
 
-	selectTask(task: Task) {
+	selectTask(task: ITask) {
 		this._selectedTask$.next(task);
 	}
 }

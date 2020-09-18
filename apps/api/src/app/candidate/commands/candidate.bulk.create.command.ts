@@ -1,8 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import {
-	CandidateCreateInput as ICandidateCreateInput,
-	LanguagesEnum
-} from '@gauzy/models';
+import { ICandidateCreateInput, LanguagesEnum } from '@gauzy/models';
 
 export class CandidateBulkCreateCommand implements ICommand {
 	static readonly type = '[Candidate] Register';

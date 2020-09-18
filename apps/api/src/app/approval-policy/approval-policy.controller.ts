@@ -3,8 +3,8 @@ import { ApprovalPolicy } from './approval-policy.entity';
 import { ApprovalPolicyService } from './approval-policy.service';
 import {
 	PermissionsEnum,
-	ApprovalPolicyCreateInput as IApprovalPolicyCreateInput,
-	ApprovalPolicyUpdateInput as IApprovalPolicyUpdateInput
+	IApprovalPolicyCreateInput,
+	IApprovalPolicyUpdateInput
 } from '@gauzy/models';
 import {
 	Query,
@@ -23,7 +23,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('approval-policy')
+@ApiTags('ApprovalPolicy')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {

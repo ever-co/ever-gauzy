@@ -1,12 +1,13 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import {
-	Expense,
+	IExpense,
 	PermissionsEnum,
 	IExpenseCategory,
 	IOrganizationVendor,
-	Tag,
+	ITag,
 	ComponentLayoutStyleEnum,
-	Employee
+	IEmployee,
+	IOrganization
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -27,7 +28,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
-import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
@@ -52,12 +52,12 @@ export interface ExpenseViewModel {
 	purpose: string;
 	taxType: string;
 	taxLabel: string;
-	employee: Employee;
+	employee: IEmployee;
 	employeeName: string;
 	rateValue: number;
 	receipt: string;
 	splitExpense: boolean;
-	tags: Tag[];
+	tags: ITag[];
 	status: string;
 }
 
@@ -84,6 +84,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 	disableButton = true;
 	averageExpense = 0;
 	@ViewChild('expensesTable') expensesTable;
+
+	selectedOrganization: IOrganization;
 
 	loadSettingsSmartTable() {
 		this.smartTableSettings = {
@@ -154,7 +156,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService,
-		private expenseCategoriesStore: ExpenseCategoriesStoreService,
 		private readonly router: Router
 	) {
 		super(translateService);
@@ -205,6 +206,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
+					this.selectedOrganization = org;
 					this._selectedOrganizationId = org.id;
 					if (this.loading) {
 						this._loadTableData(
@@ -287,7 +289,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 			await this.expenseService.create({
 				...completedForm,
 				employeeId: formData.employee ? formData.employee.id : null,
-				orgId: this.store.selectedOrganization.id
+				organizationId: this.store.selectedOrganization.id,
+				tenantId: this.store.selectedOrganization.tenantId
 			});
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
@@ -321,7 +324,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	openEditExpenseDialog(selectedItem?: Expense) {
+	openEditExpenseDialog(selectedItem?: IExpense) {
 		if (selectedItem) {
 			this.selectExpense({
 				isSelected: true,
@@ -367,7 +370,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	openDuplicateExpenseDialog(selectedItem?: Expense) {
+	openDuplicateExpenseDialog(selectedItem?: IExpense) {
 		if (selectedItem) {
 			this.selectExpense({
 				isSelected: true,
@@ -394,7 +397,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			});
 	}
 
-	async deleteExpense(selectedItem?: Expense) {
+	async deleteExpense(selectedItem?: IExpense) {
 		if (selectedItem) {
 			this.selectExpense({
 				isSelected: true,

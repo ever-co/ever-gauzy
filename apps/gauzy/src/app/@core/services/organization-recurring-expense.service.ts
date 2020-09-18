@@ -3,11 +3,11 @@ import { Injectable } from '@angular/core';
 import {
 	IFindStartDateUpdateTypeInput,
 	IStartUpdateTypeInfo,
-	OrganizationRecurringExpense,
-	OrganizationRecurringExpenseFindInput,
-	OrganizationRecurringExpenseForEmployeeOutput,
-	RecurringExpenseDeleteInput,
-	RecurringExpenseOrderFields
+	IOrganizationRecurringExpense,
+	IOrganizationRecurringExpenseFindInput,
+	IOrganizationRecurringExpenseForEmployeeOutput,
+	IRecurringExpenseDeleteInput,
+	IRecurringExpenseOrderFields
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -19,26 +19,26 @@ export class OrganizationRecurringExpenseService {
 
 	constructor(private http: HttpClient) {}
 
-	create(createInput: OrganizationRecurringExpense): Promise<any> {
+	create(createInput: IOrganizationRecurringExpense): Promise<any> {
 		return this.http
-			.post<OrganizationRecurringExpense>(this.API_URL, createInput)
+			.post<IOrganizationRecurringExpense>(this.API_URL, createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAll(
 		relations?: string[],
-		findInput?: OrganizationRecurringExpenseFindInput,
-		order?: RecurringExpenseOrderFields
+		findInput?: IOrganizationRecurringExpenseFindInput,
+		order?: IRecurringExpenseOrderFields
 	): Promise<{
-		items: OrganizationRecurringExpense[];
+		items: IOrganizationRecurringExpense[];
 		total: number;
 	}> {
 		const data = JSON.stringify({ relations, findInput, order });
 
 		return this.http
 			.get<{
-				items: OrganizationRecurringExpense[];
+				items: IOrganizationRecurringExpense[];
 				total: number;
 			}>(this.API_URL, {
 				params: { data }
@@ -48,16 +48,16 @@ export class OrganizationRecurringExpenseService {
 	}
 
 	getAllByMonth(
-		findInput?: OrganizationRecurringExpenseFindInput
+		findInput?: IOrganizationRecurringExpenseFindInput
 	): Promise<{
-		items: OrganizationRecurringExpense[];
+		items: IOrganizationRecurringExpense[];
 		total: number;
 	}> {
 		const data = JSON.stringify({ findInput });
 
 		return this.http
 			.get<{
-				items: OrganizationRecurringExpense[];
+				items: IOrganizationRecurringExpense[];
 				total: number;
 			}>(`${this.API_URL}/month`, {
 				params: { data }
@@ -66,7 +66,10 @@ export class OrganizationRecurringExpenseService {
 			.toPromise();
 	}
 
-	delete(id: string, deleteInput: RecurringExpenseDeleteInput): Promise<any> {
+	delete(
+		id: string,
+		deleteInput: IRecurringExpenseDeleteInput
+	): Promise<any> {
 		const data = JSON.stringify({ deleteInput });
 
 		return this.http
@@ -79,7 +82,7 @@ export class OrganizationRecurringExpenseService {
 
 	update(
 		id: string,
-		updateInput: OrganizationRecurringExpense
+		updateInput: IOrganizationRecurringExpense
 	): Promise<any> {
 		return this.http
 			.put(`${this.API_URL}/${id}`, updateInput)
@@ -89,16 +92,16 @@ export class OrganizationRecurringExpenseService {
 
 	getSplitExpensesForEmployee(
 		orgId: string,
-		findInput?: OrganizationRecurringExpenseFindInput
+		findInput?: IOrganizationRecurringExpenseFindInput
 	): Promise<{
-		items: OrganizationRecurringExpenseForEmployeeOutput[];
+		items: IOrganizationRecurringExpenseForEmployeeOutput[];
 		total: number;
 	}> {
 		const data = JSON.stringify({ findInput });
 
 		return this.http
 			.get<{
-				items: OrganizationRecurringExpenseForEmployeeOutput[];
+				items: IOrganizationRecurringExpenseForEmployeeOutput[];
 				total: number;
 			}>(`${this.API_URL}/employee/${orgId}`, {
 				params: { data }

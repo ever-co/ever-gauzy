@@ -1,7 +1,7 @@
 import {
-	ExpenseCreateInput as IExpenseCreateInput,
+	IExpenseCreateInput,
 	PermissionsEnum,
-	SplitExpenseOutput
+	ISplitExpenseOutput
 } from '@gauzy/models';
 import {
 	Body,
@@ -96,7 +96,7 @@ export class ExpenseController extends CrudController<Expense> {
 	async findAllSplitExpenses(
 		@Query('data') data: string,
 		@Param('employeeId') employeeId: string
-	): Promise<IPagination<SplitExpenseOutput>> {
+	): Promise<IPagination<ISplitExpenseOutput>> {
 		const { relations, filterDate } = JSON.parse(data);
 
 		return await this.queryBus.execute(

@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Country, Organization } from '@gauzy/models';
+import { ICountry, IOrganization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationEditStore } from '../../../../@core/services/organization-edit-store.service';
@@ -27,13 +27,13 @@ export enum ListsInputType {
 })
 export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	implements OnInit {
-	@Input() organization: Organization;
+	@Input() organization: IOrganization;
 
 	departments: string[] = [];
 	positions: string[] = [];
 	vendors: string[] = [];
 	employeesCount: number;
-	countries: Country[] = [];
+	countries: ICountry[] = [];
 	test: any;
 
 	private _ngOnDestroy$ = new Subject();

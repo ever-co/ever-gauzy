@@ -6,9 +6,9 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { first, take, takeUntil } from 'rxjs/operators';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
-	Product,
-	ProductTypeTranslated,
-	ProductCategoryTranslated,
+	IProduct,
+	IProductTypeTranslated,
+	IProductCategoryTranslated,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -28,11 +28,11 @@ export class TableInventoryComponent extends TranslationBaseComponent
 	implements OnInit {
 	settingsSmartTable: object;
 	loading = true;
-	selectedProduct: Product;
+	selectedProduct: IProduct;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	selectedLanguage: string;
-	inventoryData: Product[];
+	inventoryData: IProduct[];
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
@@ -99,7 +99,7 @@ export class TableInventoryComponent extends TranslationBaseComponent
 				type: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
-					valuePrepareFunction: (type: ProductTypeTranslated) => {
+					valuePrepareFunction: (type: IProductTypeTranslated) => {
 						return type ? type.name : '';
 					}
 				},
@@ -109,7 +109,7 @@ export class TableInventoryComponent extends TranslationBaseComponent
 					),
 					type: 'string',
 					valuePrepareFunction: (
-						category: ProductCategoryTranslated
+						category: IProductCategoryTranslated
 					) => {
 						return category ? category.name : '';
 					}
@@ -142,7 +142,7 @@ export class TableInventoryComponent extends TranslationBaseComponent
 		this.router.navigate([`/pages/organization/inventory/create`]);
 	}
 
-	onEditInventoryItem(selectedItem?: Product) {
+	onEditInventoryItem(selectedItem?: IProduct) {
 		if (selectedItem) {
 			this.selectProduct({
 				isSelected: true,
@@ -154,7 +154,7 @@ export class TableInventoryComponent extends TranslationBaseComponent
 		]);
 	}
 
-	async delete(selectedItem?: Product) {
+	async delete(selectedItem?: IProduct) {
 		if (selectedItem) {
 			this.selectProduct({
 				isSelected: true,

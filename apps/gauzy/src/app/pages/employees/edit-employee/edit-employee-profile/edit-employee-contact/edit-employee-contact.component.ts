@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {
-	EditEntityByMemberInput,
-	Employee,
-	OrganizationContact
+	IEditEntityByMemberInput,
+	IEmployee,
+	IOrganizationContact
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,10 +20,10 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
-	organizationContact: OrganizationContact[] = [];
-	employeeContact: OrganizationContact[] = [];
+	organizationContact: IOrganizationContact[] = [];
+	employeeContact: IOrganizationContact[] = [];
 
-	selectedEmployee: Employee;
+	selectedEmployee: IEmployee;
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
@@ -45,7 +45,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent
 			});
 	}
 
-	async submitForm(formInput: EditEntityByMemberInput, removed: boolean) {
+	async submitForm(formInput: IEditEntityByMemberInput, removed: boolean) {
 		try {
 			if (formInput.member) {
 				await this.organizationContactService.updateByEmployee(

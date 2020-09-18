@@ -2,9 +2,9 @@ import { CrudController, IPagination } from '../core';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalService } from './request-approval.service';
 import {
-	RequestApproval as IRequestApproval,
+	IRequestApproval,
 	PermissionsEnum,
-	RequestApprovalCreateInput as IRequestApprovalCreateInput,
+	IRequestApprovalCreateInput,
 	RolesEnum,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
@@ -28,7 +28,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../shared/decorators/roles';
 import { RequestApprovalStatusCommand } from './commands';
 
-@ApiTags('request-approval')
+@ApiTags('RequestApproval')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class RequestApprovalControler extends CrudController<RequestApproval> {

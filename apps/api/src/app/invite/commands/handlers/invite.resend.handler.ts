@@ -1,4 +1,4 @@
-import { Invite, InviteStatusEnum } from '@gauzy/models';
+import { IInvite, InviteStatusEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { InviteService } from '../../invite.service';
@@ -11,7 +11,7 @@ export class InviteResendHandler
 
 	public async execute(
 		command: InviteResendCommand
-	): Promise<UpdateResult | Invite> {
+	): Promise<UpdateResult | IInvite> {
 		const { input } = command;
 
 		const expireDate = new Date();

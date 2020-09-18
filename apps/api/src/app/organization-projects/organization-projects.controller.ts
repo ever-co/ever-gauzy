@@ -1,5 +1,5 @@
 import {
-	EditEntityByMemberInput,
+	IEditEntityByMemberInput,
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/models';
@@ -20,16 +20,17 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationProjectEditByEmployeeCommand } from './commands/organization-project.edit-by-employee.command';
-import { OrganizationProjects } from './organization-projects.entity';
+import { OrganizationProject } from './organization-projects.entity';
 import { OrganizationProjectsService } from './organization-projects.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Organization-Projects')
+@ApiTags('OrganizationProjects')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationProjectsController extends CrudController<
-	OrganizationProjects
+	OrganizationProject
 > {
 	constructor(
 		private readonly organizationProjectsService: OrganizationProjectsService,
@@ -44,7 +45,7 @@ export class OrganizationProjectsController extends CrudController<
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found projects',
-		type: OrganizationProjects
+		type: OrganizationProject
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -53,7 +54,7 @@ export class OrganizationProjectsController extends CrudController<
 	@Get('employee/:id')
 	async findByEmployee(
 		@Param('id') id: string
-	): Promise<IPagination<OrganizationProjects>> {
+	): Promise<IPagination<OrganizationProject>> {
 		return this.organizationProjectsService.findByEmployee(id);
 	}
 
@@ -63,7 +64,7 @@ export class OrganizationProjectsController extends CrudController<
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found projects',
-		type: OrganizationProjects
+		type: OrganizationProject
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -73,7 +74,7 @@ export class OrganizationProjectsController extends CrudController<
 	async findAllEmployees(
 		@Query('data') data: string,
 		@Request() req
-	): Promise<IPagination<OrganizationProjects>> {
+	): Promise<IPagination<OrganizationProject>> {
 		const { relations, findInput } = JSON.parse(data);
 		return this.organizationProjectsService.findAll({
 			where: findInput,
@@ -101,7 +102,7 @@ export class OrganizationProjectsController extends CrudController<
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
 	async updateEmployee(
-		@Body() entity: EditEntityByMemberInput
+		@Body() entity: IEditEntityByMemberInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationProjectEditByEmployeeCommand(entity)
@@ -140,12 +141,11 @@ export class OrganizationProjectsController extends CrudController<
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'))
 	@Put(':id')
 	async updateProject(
 		@Param('id') id: string,
-		@Body() entity: OrganizationProjects
-	): Promise<OrganizationProjects> {
+		@Body() entity: OrganizationProject
+	): Promise<OrganizationProject> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {

@@ -1,11 +1,11 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { GoalTemplatesService } from '../../../@core/services/goal-templates.service';
 import {
-	GoalTemplate,
-	GoalTimeFrame,
+	IGoalTemplate,
+	IGoalTimeFrame,
 	TimeFrameStatusEnum,
-	Employee,
-	OrganizationTeam,
+	IEmployee,
+	IOrganizationTeam,
 	GoalLevelEnum,
 	KeyResultWeightEnum,
 	KeyResultTypeEnum
@@ -32,12 +32,12 @@ import { KeyResultService } from '../../../@core/services/keyresult.service';
 	styleUrls: ['./goal-template-select.component.scss']
 })
 export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
-	goalTemplates: GoalTemplate[];
-	selectedGoalTemplate: GoalTemplate;
-	timeFrames: GoalTimeFrame[] = [];
+	goalTemplates: IGoalTemplate[];
+	selectedGoalTemplate: IGoalTemplate;
+	timeFrames: IGoalTimeFrame[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
-	employees: Employee[];
-	teams: OrganizationTeam[] = [];
+	employees: IEmployee[];
+	teams: IOrganizationTeam[] = [];
 	orgId: string;
 	orgName: string;
 	goalDetailsForm: FormGroup;
@@ -135,7 +135,7 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 					? 'ownerEmployee'
 					: this.goalDetailsForm.value.level === GoalLevelEnum.TEAM
 					? 'ownerTeam'
-					: 'ownerOrg'
+					: 'organization'
 			] = this.goalDetailsForm.value.owner;
 			delete goal.owner;
 			delete goal.keyResults;

@@ -7,61 +7,68 @@ import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 
 export const createDefaultProposals = async (
-  connection: Connection,
-  employees: Employee[],
-  organizations: Organization[],
-  noOfProposalsPerOrganization: number
+	connection: Connection,
+	tenant: Tenant,
+	employees: Employee[],
+	organizations: Organization[],
+	noOfProposalsPerOrganization: number
 ): Promise<Proposal[]> => {
-  let proposals: Proposal[] = [];
-  for (const organization of organizations) {
-    const tags = await connection.manager.find(Tag, { where: [{ organization: organization }] });
-    for (let i = 0; i < noOfProposalsPerOrganization; i++) {
-      let proposal = new Proposal();
-      proposal.employee = faker.random.arrayElement(employees);
-      proposal.jobPostUrl = faker.internet.url();
-      proposal.jobPostContent = faker.name.jobTitle();
-      proposal.organization = organization;
-      proposal.status = faker.random.arrayElement(['ACCEPTED', 'SENT']);
-      proposal.tags = [faker.random.arrayElement(tags)];
-      proposal.valueDate = faker.date.recent();
-      proposal.proposalContent = faker.name.jobDescriptor();
-      proposals.push(proposal);
-    }
-  }
+	let proposals: Proposal[] = [];
+	for (const organization of organizations) {
+		const tags = await connection.manager.find(Tag, {
+			where: [{ organization: organization }]
+		});
+		for (let i = 0; i < noOfProposalsPerOrganization; i++) {
+			let proposal = new Proposal();
+			proposal.employee = faker.random.arrayElement(employees);
+			proposal.jobPostUrl = faker.internet.url();
+			proposal.jobPostContent = faker.name.jobTitle();
+			proposal.organization = organization;
+			proposal.status = faker.random.arrayElement(['ACCEPTED', 'SENT']);
+			proposal.tags = [faker.random.arrayElement(tags)];
+			proposal.valueDate = faker.date.recent();
+			proposal.proposalContent = faker.name.jobDescriptor();
+			proposal.tenant = tenant;
+			proposals.push(proposal);
+		}
+	}
 
-  return await connection.manager.save(proposals);
-
+	return await connection.manager.save(proposals);
 };
 
 export const createRandomProposals = async (
-  connection: Connection,
-  tenants: Tenant[],
-  tenantEmployeeMap: Map<Tenant, Employee[]>,
-  tenantOrganizationsMap: Map<Tenant, Organization[]>,
-  noOfProposalsPerOrganization: number
+	connection: Connection,
+	tenants: Tenant[],
+	tenantEmployeeMap: Map<Tenant, Employee[]>,
+	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	noOfProposalsPerOrganization: number
 ): Promise<Proposal[]> => {
-  let proposals: Proposal[] = [];
-  for(const tenant of tenants) {
-    let organizations = tenantOrganizationsMap.get(tenant);
-    let employees = tenantEmployeeMap.get(tenant);
-    for(const organization of organizations){
-      const tags = await connection.manager.find(Tag, { where: [{ organization: organization }] });
-      for (let i = 0; i < noOfProposalsPerOrganization; i++) {
-        let proposal = new Proposal();
-        proposal.employee = faker.random.arrayElement(employees);
-        proposal.jobPostUrl = faker.internet.url();
-        proposal.jobPostContent = faker.name.jobTitle();
-        proposal.organization = organization;
-        proposal.status = faker.random.arrayElement(["ACCEPTED", "SENT"]);
-        proposal.tags = [faker.random.arrayElement(tags)];
-        proposal.valueDate = faker.date.recent();
-        proposal.proposalContent = faker.name.jobDescriptor();
-        proposals.push(proposal);
-      }
+	let proposals: Proposal[] = [];
+	for (const tenant of tenants) {
+		let organizations = tenantOrganizationsMap.get(tenant);
+		let employees = tenantEmployeeMap.get(tenant);
+		for (const organization of organizations) {
+			const tags = await connection.manager.find(Tag, {
+				where: [{ organization: organization }]
+			});
+			for (let i = 0; i < noOfProposalsPerOrganization; i++) {
+				let proposal = new Proposal();
+				proposal.employee = faker.random.arrayElement(employees);
+				proposal.jobPostUrl = faker.internet.url();
+				proposal.jobPostContent = faker.name.jobTitle();
+				proposal.organization = organization;
+				proposal.status = faker.random.arrayElement([
+					'ACCEPTED',
+					'SENT'
+				]);
+				proposal.tags = [faker.random.arrayElement(tags)];
+				proposal.valueDate = faker.date.recent();
+				proposal.proposalContent = faker.name.jobDescriptor();
+				proposal.tenant = tenant;
+				proposals.push(proposal);
+			}
+		}
+	}
 
-    }
-  }
-
-  return await connection.manager.save(proposals);
-
+	return await connection.manager.save(proposals);
 };

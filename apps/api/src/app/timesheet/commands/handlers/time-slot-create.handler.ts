@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
-import { TimeSlot } from '@gauzy/models';
+import { ITimeSlot } from '@gauzy/models';
 import { TimeSlotCreateCommand } from '../time-slot-create.command';
 import { TimeSlotService } from '../../time-slot/time-slot.service';
 
@@ -10,7 +10,7 @@ export class TimeSlotCreateHandler
 	implements ICommandHandler<TimeSlotCreateCommand> {
 	constructor(private _timeSlotService: TimeSlotService) {}
 
-	public async execute(command: TimeSlotCreateCommand): Promise<TimeSlot> {
+	public async execute(command: TimeSlotCreateCommand): Promise<ITimeSlot> {
 		try {
 			const { input } = command;
 			const {
@@ -20,7 +20,7 @@ export class TimeSlotCreateHandler
 				mouse,
 				overall,
 				time_slot
-			}: TimeSlot = input;
+			}: ITimeSlot = input;
 
 			return await this._timeSlotService.create({
 				employeeId,

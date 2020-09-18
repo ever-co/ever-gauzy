@@ -3,22 +3,22 @@ import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet
 import { Store } from '../../../@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import {
-	Organization,
-	GetTimeSlotStatistics,
-	GetActivitiesStatistics,
-	GetProjectsStatistics,
-	GetTasksStatistics,
-	GetMembersStatistics,
+	IOrganization,
+	IGetTimeSlotStatistics,
+	IGetActivitiesStatistics,
+	IGetProjectsStatistics,
+	IGetTasksStatistics,
+	IGetMembersStatistics,
 	PermissionsEnum,
-	GetCountsStatistics,
-	CountsStatistics,
-	MembersStatistics,
-	ActivitiesStatistics,
-	TimeSlotStatistics,
-	ProjectsStatistics,
-	TasksStatistics,
-	GetManualTimesStatistics,
-	ManualTimesStatistics
+	IGetCountsStatistics,
+	ICountsStatistics,
+	IMembersStatistics,
+	IActivitiesStatistics,
+	ITimeSlotStatistics,
+	IProjectsStatistics,
+	ITasksStatistics,
+	IGetManualTimesStatistics,
+	IManualTimesStatistics
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -32,14 +32,14 @@ import * as moment from 'moment';
 	styleUrls: ['./time-tracking.component.scss']
 })
 export class TimeTrackingComponent implements OnInit, OnDestroy {
-	timeSlotEmployees: TimeSlotStatistics[] = [];
-	activities: ActivitiesStatistics[] = [];
-	projects: ProjectsStatistics[] = [];
-	tasks: TasksStatistics[] = [];
-	members: MembersStatistics[] = [];
-	manualTimes: ManualTimesStatistics[] = [];
-	counts: CountsStatistics;
-	organization: Organization;
+	timeSlotEmployees: ITimeSlotStatistics[] = [];
+	activities: IActivitiesStatistics[] = [];
+	projects: IProjectsStatistics[] = [];
+	tasks: ITasksStatistics[] = [];
+	members: IMembersStatistics[] = [];
+	manualTimes: IManualTimesStatistics[] = [];
+	counts: ICountsStatistics;
+	organization: IOrganization;
 	updateLogs$: Subject<any> = new Subject();
 	timeSlotLoading = true;
 	activitiesLoading = true;
@@ -70,7 +70,7 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			});
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
 					this.updateLogs$.next();
@@ -89,9 +89,11 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getTimeSlots() {
-		const timeSlotRequest: GetTimeSlotStatistics = {
-			organizationId: this.organization.id
+		const timeSlotRequest: IGetTimeSlotStatistics = {
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
+
 		this.timeSlotLoading = true;
 		this.timesheetStatisticsService
 			.getTimeSlots(timeSlotRequest)
@@ -108,8 +110,9 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getCounts() {
-		const request: GetCountsStatistics = {
-			organizationId: this.organization.id
+		const request: IGetCountsStatistics = {
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService
@@ -123,8 +126,9 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getActivities() {
-		const activityRequest: GetActivitiesStatistics = {
-			organizationId: this.organization.id
+		const activityRequest: IGetActivitiesStatistics = {
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.activitiesLoading = true;
 		this.timesheetStatisticsService
@@ -147,8 +151,9 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			});
 	}
 	getProjects() {
-		const projectRequest: GetProjectsStatistics = {
-			organizationId: this.organization.id
+		const projectRequest: IGetProjectsStatistics = {
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.projectsLoading = true;
 		this.timesheetStatisticsService
@@ -162,8 +167,9 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getTasks() {
-		const taskRequest: GetTasksStatistics = {
-			organizationId: this.organization.id
+		const taskRequest: IGetTasksStatistics = {
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.tasksLoading = true;
 		this.timesheetStatisticsService
@@ -177,8 +183,9 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getManualTimes() {
-		const request: GetManualTimesStatistics = {
-			organizationId: this.organization.id
+		const request: IGetManualTimesStatistics = {
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.manualTimeLoading = true;
 		this.timesheetStatisticsService
@@ -192,8 +199,9 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getMembers() {
-		const memberRequest: GetMembersStatistics = {
-			organizationId: this.organization.id
+		const memberRequest: IGetMembersStatistics = {
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		};
 		this.memberLoading = true;
 		this.timesheetStatisticsService

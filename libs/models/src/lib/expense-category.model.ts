@@ -1,8 +1,8 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IExpenseCategory extends IBaseEntityModel {
+export interface IExpenseCategory
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
 }
 
 export enum ExpenseCategoriesEnum {

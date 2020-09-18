@@ -1,9 +1,11 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization } from './organization.model';
-
-export interface ITenant extends IBaseEntityModel {
+export interface ITenant {
+	id?: string;
 	name?: string;
-	organizations?: Organization[];
+
+	readonly createdAt?: Date;
+	readonly updatedAt?: Date;
+
+	// organizations?: IOrganization[];
 }
 
 export interface ITenantCreateInput {

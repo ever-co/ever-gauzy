@@ -6,15 +6,16 @@ import {
 	JoinColumn,
 	Unique
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { ITimeSlotMinute } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
-@Entity('time_slot_minutes')
+@Entity('time_slot_minute')
 @Unique(['timeSlotId', 'datetime'])
-export class TimeSlotMinute extends Base implements ITimeSlotMinute {
+export class TimeSlotMinute extends TenantOrganizationBase
+	implements ITimeSlotMinute {
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

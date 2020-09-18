@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { Observable, Subject } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
 
-import { OrganizationSprint, OrganizationProjects } from '@gauzy/models';
+import { IOrganizationSprint, IOrganizationProject } from '@gauzy/models';
 import { SprintStoreService } from '../../../../../../../@core/services/organization-sprint-store.service';
 import { ItemActionType } from '../../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
 
@@ -13,15 +13,15 @@ import { ItemActionType } from '../../../../../../../@shared/components/editable
 	templateUrl: './tasks-sprint-settings-view.component.html'
 })
 export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
-	@Input() project: OrganizationProjects;
-	sprints$: Observable<OrganizationSprint[]> = this.store.sprints$.pipe(
-		map((sprints: OrganizationSprint[]): OrganizationSprint[] =>
+	@Input() project: IOrganizationProject;
+	sprints$: Observable<IOrganizationSprint[]> = this.store.sprints$.pipe(
+		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
 			sprints.filter(
-				(sprint: OrganizationSprint) =>
+				(sprint: IOrganizationSprint) =>
 					sprint.projectId === this.project.id
 			)
 		),
-		map((sprints: OrganizationSprint[]): OrganizationSprint[] => {
+		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] => {
 			return sprints.sort((sprint, nextSprint) =>
 				sprint.startDate < nextSprint.startDate ? -1 : 1
 			);
@@ -39,11 +39,11 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 		data
 	}: {
 		actionType: ItemActionType;
-		data: OrganizationSprint;
+		data: IOrganizationSprint;
 	}): void {
 		switch (actionType) {
 			case 'create':
-				const createSprintInput: OrganizationSprint = {
+				const createSprintInput: IOrganizationSprint = {
 					...data,
 					organizationId: this.project.organizationId,
 					projectId: this.project.id

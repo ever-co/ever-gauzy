@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Invoice, InvoiceTypeEnum } from '@gauzy/models';
+import { IInvoice, InvoiceTypeEnum } from '@gauzy/models';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { EmployeesService } from '../../../@core/services';
@@ -19,7 +19,7 @@ import { Store } from '../../../@core/services/store.service';
 	templateUrl: './invoice-download-mutation.component.html'
 })
 export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
-	invoice: Invoice;
+	invoice: IInvoice;
 	isEstimate: boolean;
 	tableBody: any;
 
@@ -93,7 +93,8 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 			user: this.store.user,
 			userId: this.store.userId,
 			organization: this.invoice.fromOrganization,
-			organizationId: this.invoice.fromOrganization.id
+			organizationId: this.invoice.fromOrganization.id,
+			tenantId: this.invoice.fromOrganization.tenantId
 		});
 
 		this.toastrService.primary(

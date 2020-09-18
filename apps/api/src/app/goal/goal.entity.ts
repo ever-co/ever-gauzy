@@ -1,15 +1,14 @@
-import { Goal as IGoal, GoalLevelEnum } from '@gauzy/models';
+import { IGoal, GoalLevelEnum } from '@gauzy/models';
 import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { KeyResult } from '../keyresult/keyresult.entity';
-import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('goal')
-export class Goal extends TenantBase implements IGoal {
+export class Goal extends TenantOrganizationBase implements IGoal {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -18,11 +17,6 @@ export class Goal extends TenantBase implements IGoal {
 	@Column()
 	@IsOptional()
 	description?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization)
-	@JoinColumn()
-	ownerOrg?: Organization;
 
 	@ManyToOne((type) => OrganizationTeam)
 	@JoinColumn()
@@ -50,13 +44,6 @@ export class Goal extends TenantBase implements IGoal {
 	@ApiProperty({ type: Number })
 	@Column()
 	progress: number;
-
-	@ApiProperty({ type: String })
-	@Column({ nullable: true })
-	organizationId: string;
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization?: Organization;
 
 	@ApiProperty({ type: KeyResult })
 	@OneToMany((type) => KeyResult, (keyResult) => keyResult.goal)

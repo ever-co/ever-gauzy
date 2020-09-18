@@ -9,11 +9,11 @@ import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/can
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { FormGroup } from '@angular/forms';
 import {
-	Candidate,
+	ICandidate,
 	ICandidateInterview,
 	ICandidateInterviewers,
 	ComponentLayoutStyleEnum,
-	Employee,
+	IEmployee,
 	ICandidateFeedback
 } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -40,7 +40,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
 	candidateId: string;
-	selectedCandidate: Candidate;
+	selectedCandidate: ICandidate;
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
 	form: FormGroup;
@@ -53,8 +53,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	tableInterviewList = [];
-	employeeList: Employee[];
-	candidates: Candidate[];
+	employeeList: IEmployee[];
+	candidates: ICandidate[];
 	allInterviews: ICandidateInterview[];
 	allFeedbacks: ICandidateFeedback[];
 	constructor(
@@ -241,7 +241,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				const employees = [];
 				interview.interviewers.forEach(
 					(interviewer: ICandidateInterviewers) => {
-						this.employeeList.forEach((employee: Employee) => {
+						this.employeeList.forEach((employee: IEmployee) => {
 							if (interviewer.employeeId === employee.id) {
 								interviewer.employeeImageUrl =
 									employee.user.imageUrl;

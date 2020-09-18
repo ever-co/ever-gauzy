@@ -1,7 +1,7 @@
 import {
 	IStartUpdateTypeInfo,
-	OrganizationRecurringExpenseForEmployeeOutput,
-	RecurringExpenseEditInput
+	IOrganizationRecurringExpenseForEmployeeOutput,
+	IRecurringExpenseEditInput
 } from '@gauzy/models';
 import {
 	Body,
@@ -31,8 +31,8 @@ import { OrganizationRecurringExpenseFindSplitExpenseQuery } from './queries/org
 import { OrganizationRecurringExpenseStartDateUpdateTypeQuery } from './queries/organization-recurring-expense.update-type.query';
 
 @ApiTags('OrganizationRecurringExpense')
-@Controller()
 @UseGuards(AuthGuard('jwt'))
+@Controller()
 export class OrganizationRecurringExpenseController extends CrudController<
 	OrganizationRecurringExpense
 > {
@@ -126,7 +126,7 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	async getSplitExpensesForEmployee(
 		@Query('data') data: string,
 		@Param('orgId') orgId: string
-	): Promise<IPagination<OrganizationRecurringExpenseForEmployeeOutput>> {
+	): Promise<IPagination<IOrganizationRecurringExpenseForEmployeeOutput>> {
 		const { findInput } = JSON.parse(data);
 
 		return this.queryBus.execute(
@@ -155,7 +155,7 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: RecurringExpenseEditInput
+		@Body() entity: IRecurringExpenseEditInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationRecurringExpenseEditCommand(id, entity)

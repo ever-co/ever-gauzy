@@ -1,4 +1,4 @@
-import { Employee, EmployeeUpdateInput, UserFindInput } from '@gauzy/models';
+import { IEmployee, IEmployeeUpdateInput, IUserFindInput } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
 
@@ -7,46 +7,46 @@ import { Injectable } from '@angular/core';
  */
 @Injectable()
 export class EmployeeStore {
-	private _selectedEmployee: Employee;
-	private _userForm: UserFindInput;
-	private _employeeForm: EmployeeUpdateInput;
+	private _selectedEmployee: IEmployee;
+	private _userForm: IUserFindInput;
+	private _employeeForm: IEmployeeUpdateInput;
 
-	selectedEmployee$: BehaviorSubject<Employee> = new BehaviorSubject(
+	selectedEmployee$: BehaviorSubject<IEmployee> = new BehaviorSubject(
 		this.selectedEmployee
 	);
 
-	userForm$: BehaviorSubject<UserFindInput> = new BehaviorSubject(
+	userForm$: BehaviorSubject<IUserFindInput> = new BehaviorSubject(
 		this.userForm
 	);
 
-	employeeForm$: BehaviorSubject<EmployeeUpdateInput> = new BehaviorSubject(
+	employeeForm$: BehaviorSubject<IEmployeeUpdateInput> = new BehaviorSubject(
 		this.employeeForm
 	);
 
-	set selectedEmployee(employee: Employee) {
+	set selectedEmployee(employee: IEmployee) {
 		this._selectedEmployee = employee;
 		this.selectedEmployee$.next(employee);
 	}
 
-	get selectedEmployee(): Employee {
+	get selectedEmployee(): IEmployee {
 		return this._selectedEmployee;
 	}
 
-	set userForm(user: UserFindInput) {
+	set userForm(user: IUserFindInput) {
 		this._userForm = user;
 		this.userForm$.next(user);
 	}
 
-	get userForm(): UserFindInput {
+	get userForm(): IUserFindInput {
 		return this._userForm;
 	}
 
-	set employeeForm(employee: EmployeeUpdateInput) {
+	set employeeForm(employee: IEmployeeUpdateInput) {
 		this._employeeForm = employee;
 		this.employeeForm$.next(employee);
 	}
 
-	get employeeForm(): EmployeeUpdateInput {
+	get employeeForm(): IEmployeeUpdateInput {
 		return this._employeeForm;
 	}
 

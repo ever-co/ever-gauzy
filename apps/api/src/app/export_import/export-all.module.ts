@@ -33,7 +33,7 @@ import { InviteService } from '../invite/invite.service';
 import { Invite } from '../invite/invite.entity';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
@@ -81,7 +81,7 @@ import { ScreenshotService } from '../timesheet/screenshot/screenshot.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
 import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
-import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { AppointmentEmployee } from '../appointment-employees/appointment-employees.entity';
 import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { CandidateService } from '../candidate/candidate.service';
@@ -99,7 +99,7 @@ import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { OrganizationSprintService } from '../organization-sprint/organization-sprint.service';
-import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
+import { AvailabilitySlot } from '../availability-slots/availability-slots.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateExperience } from '../candidate-experience/candidate-experience.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
@@ -204,9 +204,9 @@ import { UpworkOffersService } from '../upwork/upwork-offers.service';
 		CqrsModule,
 		TypeOrmModule.forFeature([
 			Activity,
-			AppointmentEmployees,
+			AppointmentEmployee,
 			ApprovalPolicy,
-			AvailabilitySlots,
+			AvailabilitySlot,
 
 			Candidate,
 			CandidateCriterionsRating,
@@ -273,7 +273,7 @@ import { UpworkOffersService } from '../upwork/upwork-offers.service';
 			OrganizationEmploymentType,
 			OrganizationLanguages,
 			OrganizationPositions,
-			OrganizationProjects,
+			OrganizationProject,
 			OrganizationRecurringExpense,
 			OrganizationSprint,
 			OrganizationTeam,

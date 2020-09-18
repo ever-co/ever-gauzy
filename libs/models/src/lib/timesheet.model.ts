@@ -1,17 +1,19 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag, Task, Employee, EmployeeFindInput } from '..';
-import { OrganizationContact } from './organization-contact.model';
-import { OrganizationProjects } from './organization-projects.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganizationContact } from './organization-contact.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { ITask } from './task-entity.model';
+import { ITag } from './tag-entity.model';
 
-export interface Pagination {
+export interface IPagination {
 	limit?: number;
 	page?: number;
 }
 
-export interface Timesheet extends IBaseEntityModel {
-	employee: Employee;
-	approvedBy?: Employee;
-	timeLogs?: TimeLog[];
+export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
+	employee: IEmployee;
+	approvedBy?: IEmployee;
+	timeLogs?: ITimeLog[];
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
@@ -41,10 +43,10 @@ export interface ITimesheetCreateInput {
 	status?: string;
 }
 
-export interface TimeSheetFindInput {
+export interface ITimeSheetFindInput {
 	employeeId: string;
 	approvedById?: string;
-	employee: EmployeeFindInput;
+	employee: IEmployeeFindInput;
 	isBilled?: boolean;
 	status?: string;
 	startedAt: Date;
@@ -84,14 +86,14 @@ export interface IDateRange {
 	start: Date;
 	end: Date;
 }
-export interface TimeLog extends IBaseEntityModel {
+export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
-	employee: Employee;
-	timesheet?: Timesheet;
-	task?: Task;
-	timeSlots?: TimeSlot[];
-	project?: OrganizationProjects;
-	organizationContact?: OrganizationContact;
+	employee: IEmployee;
+	timesheet?: ITimesheet;
+	task?: ITask;
+	timeSlots?: ITimeSlot[];
+	project?: IOrganizationProject;
+	organizationContact?: IOrganizationContact;
 	source?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
@@ -147,7 +149,7 @@ export enum TimeLogSourceEnum {
 	UPWORK = 'UPWORK'
 }
 
-export interface TimeLogFilters {
+export interface ITimeLogFilters {
 	organizationId?: string;
 	startDate?: Date | string;
 	endDate?: Date | string;
@@ -161,15 +163,15 @@ export interface TimeLogFilters {
 	};
 }
 
-export interface TimeSlot extends IBaseEntityModel {
+export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
 	employeeId: string;
-	employee?: Employee;
-	activities?: Activity[];
-	screenshots?: Screenshot[];
-	timeLogs?: TimeLog[];
-	timeSlotMinutes?: TimeSlotMinute[];
-	project?: OrganizationProjects;
+	employee?: IEmployee;
+	activities?: IActivity[];
+	screenshots?: IScreenshot[];
+	timeLogs?: ITimeLog[];
+	timeSlotMinutes?: ITimeSlotMinute[];
+	project?: IOrganizationProject;
 	projectId?: string;
 	duration?: number;
 	keyboard?: number;
@@ -177,36 +179,38 @@ export interface TimeSlot extends IBaseEntityModel {
 	overall?: number;
 	startedAt: Date;
 	stoppedAt?: Date;
-	tags?: Tag[];
-	activites?: Activity[];
+	tags?: ITag[];
 }
 
-export interface ITimeSlotTimeLogs extends IBaseEntityModel {
-	timeLogs: TimeLog[];
-	timeSlots: TimeSlot[];
+export interface ITimeSlotTimeLogs
+	extends IBasePerTenantAndOrganizationEntityModel {
+	timeLogs: ITimeLog[];
+	timeSlots: ITimeSlot[];
 	timeLogId: string;
 	timeSlotId: string;
 }
 
-export interface ITimeSlotMinute extends Omit<IBaseEntityModel, 'tenantId'> {
-	timeSlot?: TimeSlot;
+export interface ITimeSlotMinute
+	extends IBasePerTenantAndOrganizationEntityModel {
+	timeSlot?: ITimeSlot;
+	timeSlotId?: string;
 	keyboard?: number;
 	mouse?: number;
 	datetime?: Date;
 }
 
-export interface Activity extends IBaseEntityModel {
+export interface IActivity extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	description?: string;
-	employee?: Employee;
+	employee?: IEmployee;
 	employeeId?: string;
-	timeSlot?: TimeSlot;
+	timeSlot?: ITimeSlot;
 	timeSlotId?: string;
-	project?: OrganizationProjects;
+	project?: IOrganizationProject;
 	projectId?: string;
-	task?: Task;
+	task?: ITask;
 	taskId?: string;
-	metaData?: string | URLMetaData;
+	metaData?: string | IURLMetaData;
 	date: string;
 	time: string;
 	duration?: number;
@@ -215,7 +219,7 @@ export interface Activity extends IBaseEntityModel {
 	id?: string;
 }
 
-export interface DailyActivity {
+export interface IDailyActivity {
 	[x: string]: any;
 	sessions?: number;
 	duration?: number;
@@ -224,15 +228,7 @@ export interface DailyActivity {
 	title?: string;
 	description?: string;
 	durationPercentage?: number;
-	childItems?: DailyActivity[];
-}
-
-export interface TimeSlotMinute extends IBaseEntityModel {
-	timeSlot?: TimeSlot;
-	timeSlotId?: string;
-	keyboard?: number;
-	mouse?: number;
-	datetime?: Date;
+	childItems?: IDailyActivity[];
 }
 
 export interface ICreateActivityInput {
@@ -255,7 +251,7 @@ export enum ActivityType {
 	APP = 'APP'
 }
 
-export interface URLMetaData {
+export interface IURLMetaData {
 	title?: string;
 	description?: string;
 	image?: string;
@@ -269,9 +265,9 @@ export interface ICreateScreenshotInput {
 	recordedAt: Date | string;
 }
 
-export interface Screenshot extends IBaseEntityModel {
+export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
-	timeSlot?: TimeSlot;
+	timeSlot?: ITimeSlot;
 	timeSlotId?: string;
 	file: string;
 	thumb?: string;
@@ -280,16 +276,16 @@ export interface Screenshot extends IBaseEntityModel {
 	recordedAt?: Date;
 }
 
-export interface ScreenshotMap {
+export interface IScreenshotMap {
 	startTime: string;
 	endTime: string;
-	timeSlots: TimeSlot[];
+	timeSlots: ITimeSlot[];
 }
 
-export interface TimerStatus {
+export interface ITimerStatus {
 	duration: number;
 	running: boolean;
-	lastLog?: TimeLog;
+	lastLog?: ITimeLog;
 }
 
 export interface ITimerToggleInput {
@@ -318,7 +314,7 @@ export interface IManualTimeInput {
 	isBillable?: boolean;
 }
 
-export interface IGetTimeLogInput extends TimeLogFilters {
+export interface IGetTimeLogInput extends ITimeLogFilters {
 	timesheetId?: string;
 }
 
@@ -331,16 +327,16 @@ export interface IGetTimeLogConflictInput {
 	relations?: string[];
 }
 
-export interface IGetTimeSlotInput extends TimeLogFilters {
+export interface IGetTimeSlotInput extends ITimeLogFilters {
 	relations?: string[];
 }
 
-export interface IGetActivitiesInput extends TimeLogFilters, Pagination {
+export interface IGetActivitiesInput extends ITimeLogFilters, IPagination {
 	relations?: string[];
 	types?: string[];
 	titles?: string[];
 }
 
 export interface IBulkActivitiesInput {
-	activities: Activity[];
+	activities: IActivity[];
 }

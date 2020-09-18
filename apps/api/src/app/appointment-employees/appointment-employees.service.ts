@@ -1,17 +1,17 @@
 import { CrudService } from '../core';
-import { AppointmentEmployees } from './appointment-employees.entity';
+import { AppointmentEmployee } from './appointment-employees.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppointmentEmployeesService extends CrudService<
-	AppointmentEmployees
+	AppointmentEmployee
 > {
 	constructor(
-		@InjectRepository(AppointmentEmployees)
+		@InjectRepository(AppointmentEmployee)
 		private readonly appointmentEmployeesRepository: Repository<
-			AppointmentEmployees
+			AppointmentEmployee
 		>
 	) {
 		super(appointmentEmployeesRepository);

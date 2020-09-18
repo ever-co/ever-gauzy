@@ -1,15 +1,15 @@
 import {
-	Payment,
-	Organization,
-	OrganizationContact,
-	Invoice
+	IPayment,
+	IOrganization,
+	IOrganizationContact,
+	IInvoice
 } from '@gauzy/models';
 
 export async function generatePdf(
-	invoice: Invoice,
-	payments: Payment[],
-	organization: Organization,
-	organizationContact: OrganizationContact,
+	invoice: IInvoice,
+	payments: IPayment[],
+	organization: IOrganization,
+	organizationContact: IOrganizationContact,
 	totalPaid: number
 ) {
 	const body = [];

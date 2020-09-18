@@ -13,7 +13,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IManualTimeInput,
-	TimeLog,
+	ITimeLog,
 	IGetTimeLogInput,
 	OrganizationPermissionsEnum,
 	PermissionsEnum,
@@ -30,7 +30,7 @@ import { FindOneOptions } from 'typeorm';
 @ApiTags('TimeLog')
 @UseGuards(AuthGuard('jwt'))
 @Controller('time-log')
-export class TimeLogController extends CrudController<TimeLog> {
+export class TimeLogController extends CrudController<ITimeLog> {
 	constructor(private readonly timeLogService: TimeLogService) {
 		super(timeLogService);
 	}
@@ -42,7 +42,7 @@ export class TimeLogController extends CrudController<TimeLog> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/')
-	async getLogs(@Query() entity: IGetTimeLogInput): Promise<TimeLog[]> {
+	async getLogs(@Query() entity: IGetTimeLogInput): Promise<ITimeLog[]> {
 		return this.timeLogService.getTimeLogs(entity);
 	}
 
@@ -55,8 +55,8 @@ export class TimeLogController extends CrudController<TimeLog> {
 	@Get('/conflict')
 	async getConflict(
 		@Query() entity: IGetTimeLogConflictInput
-	): Promise<TimeLog[]> {
-		return this.timeLogService.checkConfictTime(entity);
+	): Promise<ITimeLog[]> {
+		return this.timeLogService.checkConflictTime(entity);
 	}
 
 	@ApiOperation({ summary: 'Find Timer Log by id' })
@@ -72,7 +72,7 @@ export class TimeLogController extends CrudController<TimeLog> {
 	async findOne(
 		@Param('id') id: string,
 		@Query() options: FindOneOptions
-	): Promise<TimeLog> {
+	): Promise<ITimeLog> {
 		return this.timeLogService.findOne(id, options);
 	}
 
@@ -89,7 +89,7 @@ export class TimeLogController extends CrudController<TimeLog> {
 	@Post('/')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(OrganizationPermissionsEnum.ALLOW_MANUAL_TIME)
-	async addManualTime(@Body() entity: IManualTimeInput): Promise<TimeLog> {
+	async addManualTime(@Body() entity: IManualTimeInput): Promise<ITimeLog> {
 		let employeeId: string;
 		if (
 			RequestContext.hasPermission(
@@ -125,7 +125,7 @@ export class TimeLogController extends CrudController<TimeLog> {
 	async updateManualTime(
 		@Param('id') id: string,
 		@Body() entity: IManualTimeInput
-	): Promise<TimeLog> {
+	): Promise<ITimeLog> {
 		return this.timeLogService.updateTime(id, entity);
 	}
 

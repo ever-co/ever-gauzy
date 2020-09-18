@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormGroup, Validators } from '@angular/forms';
-import { KeyResultTypeEnum, GoalGeneralSetting, KPI } from '@gauzy/models';
+import { KeyResultTypeEnum, IGoalGeneralSetting, IKPI } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { EditKpiComponent } from '../../../pages/goal-settings/edit-kpi/edit-kpi.component';
 import { first } from 'rxjs/operators';
@@ -13,9 +13,9 @@ import { GoalSettingsService } from '../../../@core/services/goal-settings.servi
 })
 export class KeyresultTypeSelectComponent {
 	@Input() parentFormGroup: FormGroup;
-	@Input() settings: GoalGeneralSetting;
+	@Input() settings: IGoalGeneralSetting;
 	@Input() orgId: string;
-	@Input() KPIs: Array<KPI>;
+	@Input() KPIs: Array<IKPI>;
 	@Input() numberUnits: string[];
 	@Input() enableHelperText = true;
 

@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { OrganizationContact } from '@gauzy/models';
+import { IOrganizationContact } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { UsersService } from '../../../@core/services';
@@ -37,7 +37,7 @@ export class InviteContactComponent extends TranslationBaseComponent
 	contactType: string;
 
 	@Input()
-	organizationContact?: OrganizationContact = undefined;
+	organizationContact?: IOrganizationContact = undefined;
 
 	ngOnInit(): void {
 		this.form = this.fb.group(
@@ -80,7 +80,7 @@ export class InviteContactComponent extends TranslationBaseComponent
 	}
 
 	async inviteContact() {
-		const organizationContact: OrganizationContact = await this.addOrEditOrganizationContact();
+		const organizationContact: IOrganizationContact = await this.addOrEditOrganizationContact();
 		try {
 			if (organizationContact) {
 				const invited = this.inviteService.inviteOrganizationContact(
@@ -96,7 +96,7 @@ export class InviteContactComponent extends TranslationBaseComponent
 		}
 	}
 
-	async addOrEditOrganizationContact(): Promise<OrganizationContact> {
+	async addOrEditOrganizationContact(): Promise<IOrganizationContact> {
 		try {
 			if (this.organizationContact) {
 				return await this.organizationContactService.create({

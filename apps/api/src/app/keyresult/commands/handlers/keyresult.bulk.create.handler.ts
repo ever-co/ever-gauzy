@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { KeyResultBulkCreateCommand } from '../keyresult.bulk.create.command';
-import { KeyResult } from '@gauzy/models';
+import { IKeyResult } from '@gauzy/models';
 import { KeyResultService } from '../../keyresult.service';
 
 @CommandHandler(KeyResultBulkCreateCommand)
@@ -10,7 +10,7 @@ export class KeyResultBulkCreateHandler
 
 	public async execute(
 		command: KeyResultBulkCreateCommand
-	): Promise<KeyResult[]> {
+	): Promise<IKeyResult[]> {
 		const { input } = command;
 		const createdKeyResults = await this.keyResultService.createBulk(input);
 		return createdKeyResults;

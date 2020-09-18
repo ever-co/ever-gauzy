@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EstimateEmailFindInput, EstimateEmail } from '@gauzy/models';
+import { IEstimateEmailFindInput, IEstimateEmail } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -9,12 +9,12 @@ export class EstimateEmailService {
 
 	validate(
 		relations: string[],
-		findInput: EstimateEmailFindInput
-	): Promise<EstimateEmail> {
+		findInput: IEstimateEmailFindInput
+	): Promise<IEstimateEmail> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<EstimateEmail>(`/api/estimate-email/validate`, {
+			.get<IEstimateEmail>(`/api/estimate-email/validate`, {
 				params: { data }
 			})
 			.pipe(first())

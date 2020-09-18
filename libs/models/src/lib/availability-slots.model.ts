@@ -1,22 +1,21 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee, EmployeeFindInput } from './employee.model';
-import { Organization, OrganizationFindInput } from './organization.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IOrganizationFindInput } from './organization.model';
 
-export interface IAvailabilitySlots extends IBaseEntityModel {
+export interface IAvailabilitySlot
+	extends IBasePerTenantAndOrganizationEntityModel {
 	startTime: Date;
 	endTime: Date;
 	allDay: boolean;
 	type: string;
 	employeeId?: string;
-	organizationId: string;
-	employee?: Employee;
-	organization: Organization;
+	employee?: IEmployee;
 }
 
-export interface IAvailabilitySlotsFindInput extends IBaseEntityModel {
+export interface IAvailabilitySlotsFindInput {
 	type?: string;
-	employee?: EmployeeFindInput;
-	organization?: OrganizationFindInput;
+	employee?: IEmployeeFindInput;
+	organization?: IOrganizationFindInput;
 }
 
 export interface IAvailabilitySlotsCreateInput {

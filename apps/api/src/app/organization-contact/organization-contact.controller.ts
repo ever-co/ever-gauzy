@@ -1,4 +1,4 @@
-import { EditEntityByMemberInput, PermissionsEnum } from '@gauzy/models';
+import { IEditEntityByMemberInput, PermissionsEnum } from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -21,7 +21,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Organization-Contact')
+@ApiTags('OrganizationContact')
 @Controller()
 export class OrganizationContactController extends CrudController<
 	OrganizationContact
@@ -45,6 +45,7 @@ export class OrganizationContactController extends CrudController<
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(AuthGuard('jwt'))
 	@Get('employee/:id')
 	async findByEmployee(
 		@Param('id') id: string
@@ -64,6 +65,7 @@ export class OrganizationContactController extends CrudController<
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(AuthGuard('jwt'))
 	@Get()
 	async findAllEmployees(
 		@Query('data') data: string
@@ -95,7 +97,7 @@ export class OrganizationContactController extends CrudController<
 	@Put('employee')
 	@UseGuards(AuthGuard('jwt'))
 	async updateEmployee(
-		@Body() entity: EditEntityByMemberInput
+		@Body() entity: IEditEntityByMemberInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationContactEditByEmployeeCommand(entity)

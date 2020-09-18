@@ -19,7 +19,7 @@ import { TimeLogCreateCommand } from './commands/time-log-create.command';
 import { TimeLogUpdateCommand } from './commands/time-log-update.command';
 import { TimeLogDeleteCommand } from './commands/time-log-delete.command';
 import { DeleteTimeSpanCommand } from './commands/delete-time-span.command';
-import { GetConfictTimeLogCommand } from './commands/get-confict-time-log.command';
+import { IGetConflictTimeLogCommand } from './commands/get-conflict-time-log.command';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
@@ -155,7 +155,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			);
 		}
 
-		const confict = await this.checkConfictTime({
+		const conflict = await this.checkConflictTime({
 			employeeId: request.employeeId,
 			startDate: request.startedAt,
 			endDate: request.stoppedAt,
@@ -166,16 +166,18 @@ export class TimeLogService extends CrudService<TimeLog> {
 			start: new Date(request.startedAt),
 			end: new Date(request.stoppedAt)
 		};
-		for (let index = 0; index < confict.length; index++) {
+
+		for (let index = 0; index < conflict.length; index++) {
 			await this.commandBus.execute(
-				new DeleteTimeSpanCommand(times, confict[index])
+				new DeleteTimeSpanCommand(times, conflict[index])
 			);
 		}
 
-		const timelog = await this.commandBus.execute(
+		const timeLog = await this.commandBus.execute(
 			new TimeLogCreateCommand(request)
 		);
-		return timelog;
+
+		return timeLog;
 	}
 
 	async updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
@@ -202,7 +204,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 
 		const timeLog = await this.timeLogRepository.findOne(request.id);
 		if (request.startedAt || request.stoppedAt) {
-			const confict = await this.checkConfictTime({
+			const conflict = await this.checkConflictTime({
 				employeeId: timeLog.employeeId,
 				startDate: request.startedAt || timeLog.startedAt,
 				endDate: request.stoppedAt || timeLog.stoppedAt,
@@ -214,9 +216,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 				end: new Date(request.stoppedAt)
 			};
 
-			for (let index = 0; index < confict.length; index++) {
+			for (let index = 0; index < conflict.length; index++) {
 				await this.commandBus.execute(
-					new DeleteTimeSpanCommand(times, confict[index])
+					new DeleteTimeSpanCommand(times, conflict[index])
 				);
 			}
 		}
@@ -248,9 +250,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 		);
 	}
 
-	async checkConfictTime(request: IGetTimeLogConflictInput) {
+	async checkConflictTime(request: IGetTimeLogConflictInput) {
 		return await this.commandBus.execute(
-			new GetConfictTimeLogCommand(request)
+			new IGetConflictTimeLogCommand(request)
 		);
 	}
 

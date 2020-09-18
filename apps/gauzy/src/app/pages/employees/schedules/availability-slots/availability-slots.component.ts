@@ -7,11 +7,11 @@ import interactionPlugin from '@fullcalendar/interaction';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import * as moment from 'moment';
 import {
-	Organization,
+	IOrganization,
 	PermissionsEnum,
-	Employee,
+	IEmployee,
 	IAvailabilitySlotsCreateInput,
-	TimeOff
+	ITimeOff
 } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
@@ -36,8 +36,8 @@ export interface IAvailabilitySlotsView {
 	type?: string;
 	employeeId?: string;
 	organizationId?: string;
-	employee?: Employee;
-	organization?: Organization;
+	employee?: IEmployee;
+	organization?: IOrganization;
 }
 
 @Component({
@@ -72,7 +72,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 		right: 'dayGridMonth,timeGridWeek'
 	};
 	removedEvents: EventInput[] = [];
-	timeOff: TimeOff[];
+	timeOff: ITimeOff[];
 	public loading: boolean = true;
 
 	constructor(
@@ -377,10 +377,10 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 
 	private _prepareEvent(
 		slot: IAvailabilitySlotsView,
-		isDayOff: TimeOff = null
+		isDayOff: ITimeOff = null
 	) {
-		let eventStartTime = slot.startTime;
-		let eventEndTime = slot.endTime;
+		const eventStartTime = slot.startTime;
+		const eventEndTime = slot.endTime;
 
 		if (
 			this.calendarEvents.find(

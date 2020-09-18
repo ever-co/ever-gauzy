@@ -2,79 +2,78 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { Role } from './role.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag } from './tag-entity.model';
-import { Employee } from './employee.model';
-import { ITenant, Payment } from '@gauzy/models';
+import { IRole } from './role.model';
+import { IBasePerTenantEntityModel } from './base-entity.model';
+import { ITag } from './tag-entity.model';
+import { IEmployee } from './employee.model';
+import { IPayment } from './payment.model';
 
-export interface User extends IBaseEntityModel {
+export interface IUser extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
 	name?: string;
 	firstName?: string;
 	lastName?: string;
 	email?: string;
 	username?: string;
-	role?: Role;
+	role?: IRole;
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	employee?: Employee;
+	employee?: IEmployee;
 	employeeId?: string;
-	tenant?: ITenant;
-	tags?: Tag[];
+	tags?: ITag[];
 	preferredLanguage?: string;
-	payments?: Payment[];
+	payments?: IPayment[];
 	paymentsId?: string;
 	preferredComponentLayout?: string;
 }
 
-export interface UserFindInput extends IBaseEntityModel {
+export interface IUserFindInput {
 	thirdPartyId?: string;
 	firstName?: string;
 	lastName?: string;
 	email?: string;
 	username?: string;
-	role?: Role;
+	role?: IRole;
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 	preferredLanguage?: LanguagesEnum;
 }
 
-export interface UserRegistrationInput {
-	user: User;
+export interface IUserRegistrationInput {
+	user: IUser;
 	password?: string;
 	originalUrl?: string;
 	organizationId?: string;
 	createdById?: string;
 }
 
-export interface UserCreateInput {
+export interface IUserCreateInput {
 	firstName?: string;
 	lastName?: string;
 	email?: string;
 	username?: string;
-	role?: Role;
+	role?: IRole;
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 	preferredLanguage?: LanguagesEnum;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 }
 
-export interface UserUpdateInput {
+export interface IUserUpdateInput {
 	firstName?: string;
 	lastName?: string;
 	email?: string;
 	username?: string;
-	role?: Role;
+	role?: IRole;
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 	preferredLanguage?: LanguagesEnum;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 }

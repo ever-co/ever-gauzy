@@ -16,14 +16,13 @@ import {
 	IsOptional,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { IEventType } from '@gauzy/models';
-import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('event_type')
-export class EventType extends Base implements IEventType {
+export class EventType extends TenantOrganizationBase implements IEventType {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.eventType)
 	@JoinTable({ name: 'tag_event_type' })
@@ -38,16 +37,6 @@ export class EventType extends Base implements IEventType {
 	@RelationId((eventType: EventType) => eventType.employee)
 	@Column({ nullable: true })
 	readonly employeeId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((eventType: EventType) => eventType.organization)
-	@Column({ nullable: true })
-	readonly organizationId: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

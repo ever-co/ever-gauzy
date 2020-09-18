@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDateService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { GoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/models';
+import { IGoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
@@ -28,7 +28,7 @@ import {
 export class EditTimeFrameComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	timeFrameForm: FormGroup;
-	timeFrame: GoalTimeFrame;
+	timeFrame: IGoalTimeFrame;
 	type: string;
 	predefinedTimeFrames = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;

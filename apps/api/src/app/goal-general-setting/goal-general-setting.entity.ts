@@ -1,15 +1,11 @@
-import {
-	GoalGeneralSetting as IGoalGeneralSetting,
-	GoalOwnershipEnum
-} from '@gauzy/models';
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { IGoalGeneralSetting, GoalOwnershipEnum } from '@gauzy/models';
+import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { TenantBase } from '../core/entities/tenant-base';
 import { IsEnum } from 'class-validator';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('goal_general_setting')
-export class GoalGeneralSetting extends TenantBase
+export class GoalGeneralSetting extends TenantOrganizationBase
 	implements IGoalGeneralSetting {
 	@ApiProperty({ type: Number })
 	@Column()
@@ -40,7 +36,4 @@ export class GoalGeneralSetting extends TenantBase
 	@ApiProperty({ type: Boolean })
 	@Column()
 	krTypeTask: boolean;
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization: Organization;
 }

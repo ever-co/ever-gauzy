@@ -4,6 +4,7 @@ import { CrudController } from '../core';
 import { Skill } from './skill.entity';
 import { SkillService } from './skill.service';
 import { AuthGuard } from '@nestjs/passport';
+
 @ApiTags('Skills')
 @UseGuards(AuthGuard('jwt'))
 @Controller()

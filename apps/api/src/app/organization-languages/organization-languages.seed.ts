@@ -2,45 +2,47 @@ import { Connection } from 'typeorm';
 import { OrganizationLanguages } from './organization-languages.entity';
 import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { Language } from '../language/language.entity';
 
 const defaultLanguageLevel = {
-  Bulgarian: 'Native or Bilingual',
-  Russian: 'Native or Bilingual',
-  Ukrainian: 'Native or Bilingual',
-  English: 'Fluent',
-  Hebrew: 'Conversational'
+	Bulgarian: 'Native or Bilingual',
+	Russian: 'Native or Bilingual',
+	Ukrainian: 'Native or Bilingual',
+	English: 'Fluent',
+	Hebrew: 'Conversational'
 };
 export const createDefaultOrganizationLanguage = async (
-  connection: Connection,
-  defaultOrganizations: Organization[]
+	connection: Connection,
+	defaultOrganizations: IOrganization[]
 ): Promise<OrganizationLanguages[]> => {
-  let mapOrganizationLanguage: OrganizationLanguages[] = [];
+	let mapOrganizationLanguage: OrganizationLanguages[] = [];
 
-  const allLanguage = await connection.manager.find(Language, {});
+	const allLanguage = await connection.manager.find(Language, {});
 
-  for (const defaultOrganization of defaultOrganizations) {
-    for (const language of allLanguage) {
-      let organization = new OrganizationLanguages();
+	for (const defaultOrganization of defaultOrganizations) {
+		for (const language of allLanguage) {
+			let organization = new OrganizationLanguages();
 
-      organization.organization = defaultOrganization;
-      organization.language = language;
-      organization.name = language.name;
-      organization.level = (defaultLanguageLevel[language.name]) ? defaultLanguageLevel[language.name] : 'intermediate';
+			organization.organization = defaultOrganization;
+			organization.language = language;
+			organization.name = language.name;
+			organization.level = defaultLanguageLevel[language.name]
+				? defaultLanguageLevel[language.name]
+				: 'intermediate';
 
-      mapOrganizationLanguage.push(organization);
-    }
-  }
+			mapOrganizationLanguage.push(organization);
+		}
+	}
 
-  await insertRandomOrganizationLanguage(connection, mapOrganizationLanguage);
-  return mapOrganizationLanguage;
+	await insertRandomOrganizationLanguage(connection, mapOrganizationLanguage);
+	return mapOrganizationLanguage;
 };
 
 export const createRandomOrganizationLanguage = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<OrganizationLanguages[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
@@ -63,9 +65,11 @@ export const createRandomOrganizationLanguage = async (
 			organization.organization = tenantOrg;
 			organization.language = language;
 			organization.name = language.name;
-      organization.level = (defaultLanguageLevel[language.name]) ? defaultLanguageLevel[language.name] : 'intermediate';
+			organization.level = defaultLanguageLevel[language.name]
+				? defaultLanguageLevel[language.name]
+				: 'intermediate';
 
-      mapOrganizationLanguage.push(organization);
+			mapOrganizationLanguage.push(organization);
 		}
 	}
 

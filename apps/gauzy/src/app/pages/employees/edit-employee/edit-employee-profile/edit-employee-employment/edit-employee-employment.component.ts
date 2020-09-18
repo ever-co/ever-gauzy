@@ -2,13 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Params } from '@angular/router';
 import {
-	Employee,
-	Organization,
-	OrganizationDepartment,
-	OrganizationEmploymentType,
-	OrganizationPositions,
-	Tag,
-	Skill
+	IEmployee,
+	IOrganization,
+	IOrganizationDepartment,
+	IOrganizationEmploymentType,
+	IOrganizationPosition,
+	ITag,
+	ISkill
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
@@ -31,16 +31,16 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	paramSubscription: Subscription;
 	hoverState: boolean;
 	routeParams: Params;
-	selectedEmployee: Employee;
+	selectedEmployee: IEmployee;
 	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
-	employmentTypes: OrganizationEmploymentType[];
+	employmentTypes: IOrganizationEmploymentType[];
 	employeeLevels: { level: string; organizationId: string }[] = [];
-	selectedOrganization: Organization;
-	departments: OrganizationDepartment[] = [];
-	positions: OrganizationPositions[] = [];
-	tags: Tag[] = [];
-	skills: Skill[] = [];
+	selectedOrganization: IOrganization;
+	departments: IOrganizationDepartment[] = [];
+	positions: IOrganizationPosition[] = [];
+	tags: ITag[] = [];
+	skills: ISkill[] = [];
 	selectedTags: any;
 
 	constructor(
@@ -124,15 +124,15 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 
-	selectedSkillsHandler(currentSelection: Skill[]) {
+	selectedSkillsHandler(currentSelection: ISkill[]) {
 		this.form.get('skills').setValue(currentSelection);
 	}
 
-	private _initializeForm(employee: Employee) {
+	private _initializeForm(employee: IEmployee) {
 		this.form = this.fb.group({
 			organizationEmploymentTypes: [
 				employee.organizationEmploymentTypes || null

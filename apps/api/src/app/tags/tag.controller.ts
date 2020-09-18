@@ -8,13 +8,16 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination } from '../core';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+
 @ApiTags('Tags')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TagController extends CrudController<Tag> {
 	constructor(private readonly tagService: TagService) {
@@ -41,8 +44,12 @@ export class TagController extends CrudController<Tag> {
 
 	@Get('getByOrgId')
 	async getAllTagsByOrgLevel(@Query('data') data: any): Promise<any> {
-		const { relations, orgId } = JSON.parse(data);
-		return this.tagService.findTagsByOrgLevel(relations, orgId);
+		const { relations, organizationId, tenantId } = JSON.parse(data);
+		return this.tagService.findTagsByOrgLevel(
+			relations,
+			organizationId,
+			tenantId
+		);
 	}
 	@Get('getByTenantId')
 	async getAllTagsByTenantLevel(@Query('data') data: any): Promise<any> {

@@ -7,7 +7,7 @@ import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Tag } from '@gauzy/models';
+import { ITag } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-proposal-edit',
@@ -27,7 +27,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	}
 
 	proposal: ProposalViewModel;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	form: FormGroup;
 
 	ngOnInit() {

@@ -19,7 +19,7 @@ import { TaskService } from './task.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
-import { PermissionsEnum, GetTaskByEmployeeOptions } from '@gauzy/models';
+import { PermissionsEnum, IGetTaskByEmployeeOptions } from '@gauzy/models';
 import { EmployeeService } from '../employee/employee.service';
 import { RequestContext } from '../core/context';
 
@@ -109,7 +109,7 @@ export class TaskController extends CrudController<Task> {
 	@Get('employee/:id')
 	async getAllTasksByEmployee(
 		@Param('id') employeeId: string,
-		@Body() findInput: GetTaskByEmployeeOptions
+		@Body() findInput: IGetTaskByEmployeeOptions
 	) {
 		return this.taskService.getAllTasksByEmployee(employeeId, findInput);
 	}

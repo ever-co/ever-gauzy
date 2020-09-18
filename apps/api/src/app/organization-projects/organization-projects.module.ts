@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { OrganizationProjects } from './organization-projects.entity';
+import { OrganizationProject } from './organization-projects.entity';
 import { OrganizationProjectsController } from './organization-projects.controller';
 import { OrganizationProjectsService } from './organization-projects.service';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -10,7 +10,7 @@ import { UserService } from '../user/user.service';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([OrganizationProjects, User]),
+		TypeOrmModule.forFeature([OrganizationProject, User]),
 		CqrsModule
 	],
 	controllers: [OrganizationProjectsController],

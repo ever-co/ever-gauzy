@@ -1,10 +1,12 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface Translation<T> extends IBaseEntityModel {
-	reference?: Translatable<T>;
+export interface ITranslation<T>
+	extends IBasePerTenantAndOrganizationEntityModel {
+	reference?: ITranslatable<T>;
 	languageCode: string;
 }
 
-export interface Translatable<T> extends IBaseEntityModel {
-	translations?: Translation<T>[];
+export interface ITranslatable<T>
+	extends IBasePerTenantAndOrganizationEntityModel {
+	translations?: ITranslation<T>[];
 }

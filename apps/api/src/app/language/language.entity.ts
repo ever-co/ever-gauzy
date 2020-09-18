@@ -1,6 +1,6 @@
 import { Base } from '../core/entities/base';
 import { Entity, Column, Unique } from 'typeorm';
-import { Language as ILanguage } from '@gauzy/models';
+import { ILanguage } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 

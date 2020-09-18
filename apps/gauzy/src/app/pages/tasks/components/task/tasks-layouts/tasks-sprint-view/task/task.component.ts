@@ -6,7 +6,7 @@ import {
 	OnInit,
 	OnDestroy
 } from '@angular/core';
-import { Task, Employee, TaskStatusEnum } from '@gauzy/models';
+import { ITask, IEmployee, TaskStatusEnum } from '@gauzy/models';
 import { NbMenuService } from '@nebular/theme';
 import { tap, filter, map, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -17,13 +17,13 @@ import { Subject } from 'rxjs';
 	styleUrls: ['./task.component.css']
 })
 export class SprintTaskComponent implements OnInit, OnDestroy {
-	@Input() task: Task & { employees: Employee[] };
+	@Input() task: ITask & { employees: IEmployee[] };
 	@Output() taskActionEvent: EventEmitter<{
 		action: string;
-		task: Task;
+		task: ITask;
 	}> = new EventEmitter();
 	@Output() changeStatusEvent: EventEmitter<
-		Partial<Task>
+		Partial<ITask>
 	> = new EventEmitter();
 	taskStatusList: any;
 	taskActions: any;
@@ -76,7 +76,7 @@ export class SprintTaskComponent implements OnInit, OnDestroy {
 	//   this.toggleItemEvent.emit(item);
 	// }
 
-	changeStatus(evt: Partial<Task>): void {
+	changeStatus(evt: Partial<ITask>): void {
 		this.changeStatusEvent.emit(evt);
 	}
 

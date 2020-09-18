@@ -1,4 +1,4 @@
-import { Timesheet } from '@gauzy/models';
+import { ITimesheet } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TimesheetCreateCommand } from '..';
 import { TimeSheetService } from '../../timesheet/timesheet.service';
@@ -9,7 +9,7 @@ export class TimesheetCreateHandler
 	implements ICommandHandler<TimesheetCreateCommand> {
 	constructor(private _timesheetService: TimeSheetService) {}
 
-	public async execute(command: TimesheetCreateCommand): Promise<Timesheet> {
+	public async execute(command: TimesheetCreateCommand): Promise<ITimesheet> {
 		try {
 			const { input } = command;
 			const {

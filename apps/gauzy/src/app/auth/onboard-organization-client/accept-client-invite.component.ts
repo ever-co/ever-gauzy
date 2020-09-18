@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Invite, IOrganizationContactRegistrationInput } from '@gauzy/models';
+import { IInvite, IOrganizationContactRegistrationInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { InviteService } from '../../@core/services/invite.service';
@@ -12,7 +12,7 @@ import { SetLanguageBaseComponent } from '../../@shared/language-base/set-langua
 })
 export class AcceptClientInvitePage extends SetLanguageBaseComponent
 	implements OnInit {
-	invitation: Invite;
+	invitation: IInvite;
 	loading = true;
 	inviteLoadErrorMessage = '';
 

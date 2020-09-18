@@ -1,4 +1,4 @@
-import { EditEntityByMemberInput } from '@gauzy/models';
+import { IEditEntityByMemberInput } from '@gauzy/models';
 import { In } from 'typeorm';
 import { CrudService } from '../../core/crud';
 
@@ -6,7 +6,7 @@ export abstract class UpdateEntityByMembersHandler {
 	//TODO: Change CrudService<any> to be more specific
 	constructor(private readonly crudService: CrudService<any>) {}
 
-	public async executeCommand(input: EditEntityByMemberInput): Promise<any> {
+	public async executeCommand(input: IEditEntityByMemberInput): Promise<any> {
 		const { addedEntityIds, removedEntityIds, member } = input;
 
 		if (addedEntityIds && addedEntityIds.length > 0) {

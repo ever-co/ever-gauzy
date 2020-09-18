@@ -1,11 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	TimeLog,
+	ITimeLog,
 	ITimerToggleInput,
 	TimeLogType,
-	TimerStatus,
-	Organization
+	ITimerStatus,
+	IOrganization
 } from '@gauzy/models';
 import { toLocal } from 'libs/utils';
 import * as moment from 'moment';
@@ -86,7 +86,7 @@ export class TimeTrackerService implements OnDestroy {
 		private http: HttpClient
 	) {
 		this.getTimerStatus()
-			.then((status: TimerStatus) => {
+			.then((status: ITimerStatus) => {
 				this.duration = status.duration;
 				if (status.lastLog && !status.lastLog.stoppedAt) {
 					this.current_session_duration = moment().diff(
@@ -105,7 +105,7 @@ export class TimeTrackerService implements OnDestroy {
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 			});
 	}
@@ -161,15 +161,15 @@ export class TimeTrackerService implements OnDestroy {
 		});
 	}
 
-	getTimerStatus(): Promise<TimerStatus> {
+	getTimerStatus(): Promise<ITimerStatus> {
 		return this.http
-			.get<TimerStatus>('/api/timesheet/timer/status')
+			.get<ITimerStatus>('/api/timesheet/timer/status')
 			.toPromise();
 	}
 
-	toggleTimer(request: ITimerToggleInput): Promise<TimeLog> {
+	toggleTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		return this.http
-			.post<TimeLog>('/api/timesheet/timer/toggle', request)
+			.post<ITimeLog>('/api/timesheet/timer/toggle', request)
 			.toPromise();
 	}
 

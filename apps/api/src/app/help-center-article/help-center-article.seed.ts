@@ -1,15 +1,16 @@
 import { Connection } from 'typeorm';
 import { HelpCenterArticle } from './help-center-article.entity';
 import * as faker from 'faker';
+import { Tenant } from '../tenant/tenant.entity';
 
 export const createHelpCenterArticle = async (
 	connection: Connection,
+	tenants: Tenant[],
 	numberOfHelpCenterArticle
 ): Promise<HelpCenterArticle[]> => {
 	let HelpCenterArticles: HelpCenterArticle[] = [];
 
 	const booleanAry = [true, false];
-
 	for (let i = 0; i <= numberOfHelpCenterArticle; i++) {
 		let article = new HelpCenterArticle();
 

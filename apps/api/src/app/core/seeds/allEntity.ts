@@ -1,4 +1,4 @@
-import { AvailabilitySlots } from '../../availability-slots/availability-slots.entity';
+import { AvailabilitySlot } from '../../availability-slots/availability-slots.entity';
 import { TimeOffPolicy } from '../../time-off-policy/time-off-policy.entity';
 import { TimeOffRequest } from '../../time-off-request/time-off-request.entity';
 import { Proposal } from '../../proposal/proposal.entity';
@@ -34,7 +34,7 @@ import { OrganizationDocuments } from '../../organization-documents/organization
 import { OrganizationVendor } from '../../organization-vendors/organization-vendors.entity';
 import { OrganizationDepartment } from '../../organization-department/organization-department.entity';
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
-import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { OrganizationAwards } from '../../organization-awards/organization-awards.entity';
 import { OrganizationLanguages } from '../../organization-languages/organization-languages.entity';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
@@ -57,7 +57,7 @@ import { OrganizationEmploymentType } from '../../organization-employment-type/o
 import { Equipment } from '../../equipment/equipment.entity';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { ProductCategory } from '../../product-category/product-category.entity';
-import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
+import { AppointmentEmployee } from '../../appointment-employees/appointment-employees.entity';
 import { EmployeeAppointment } from '../../employee-appointment';
 import { ProductType } from '../../product-type/product-type.entity';
 import { CandidateSource } from '../../candidate-source/candidate-source.entity';
@@ -104,9 +104,9 @@ import { EmployeeAward } from '../../employee-award/employee-award.entity';
 import { GoalKPITemplate } from '../../goal-kpi-template/goal-kpi-template.entity';
 
 export const allEntities = [
-	AppointmentEmployees,
+	AppointmentEmployee,
 	ApprovalPolicy,
-	AvailabilitySlots,
+	AvailabilitySlot,
 	Candidate,
 	CandidateCriterionsRating,
 	CandidateDocument,
@@ -169,7 +169,7 @@ export const allEntities = [
 	OrganizationEmploymentType,
 	OrganizationLanguages,
 	OrganizationPositions,
-	OrganizationProjects,
+	OrganizationProject,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
 	OrganizationTeam,

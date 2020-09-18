@@ -1,10 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import {
-	Employee,
-	Organization,
-	OrganizationContact,
-	OrganizationProjects,
-	OrganizationProjectsCreateInput,
+	IEmployee,
+	IOrganization,
+	IOrganizationContact,
+	IOrganizationProject,
+	IOrganizationProjectsCreateInput,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
@@ -42,15 +42,15 @@ export class ProjectsComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 
-	organization: Organization;
+	organization: IOrganization;
 	showAddCard: boolean;
-	projects: OrganizationProjects[];
-	organizationContacts: OrganizationContact[];
-	employees: Employee[] = [];
-	projectToEdit: OrganizationProjects;
+	projects: IOrganizationProject[];
+	organizationContacts: IOrganizationContact[];
+	employees: IEmployee[] = [];
+	projectToEdit: IOrganizationProject;
 	viewPrivateProjects: boolean;
 	disableButton = true;
-	selectedProject: OrganizationProjects;
+	selectedProject: IOrganizationProject;
 	smartTableSource = new LocalDataSource();
 
 	@ViewChild('projectsTable') projectsTable;
@@ -175,7 +175,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 		project
 	}: {
 		action: 'add' | 'edit';
-		project: OrganizationProjectsCreateInput;
+		project: IOrganizationProjectsCreateInput;
 	}) {
 		switch (action) {
 			case 'add':
@@ -335,7 +335,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editProject(project: OrganizationProjects) {
+	async editProject(project: IOrganizationProject) {
 		this.projectToEdit = project;
 		this.showAddCard = true;
 	}

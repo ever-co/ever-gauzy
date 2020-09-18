@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { Organization, Candidate } from '@gauzy/models';
+import { IOrganization, ICandidate } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -25,8 +25,8 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	paramSubscription: Subscription;
 	hoverState: boolean;
 	routeParams: Params;
-	selectedCandidate: Candidate;
-	selectedOrganization: Organization;
+	selectedCandidate: ICandidate;
+	selectedOrganization: IOrganization;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -65,7 +65,7 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _initializeForm(candidate: Candidate) {
+	private _initializeForm(candidate: ICandidate) {
 		this.form = this.fb.group({
 			username: [candidate.user.username],
 			email: [candidate.user.email, Validators.required],

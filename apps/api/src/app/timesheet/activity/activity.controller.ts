@@ -22,41 +22,41 @@ export class ActivityController extends CrudController<Activity> {
 		super(activityService);
 	}
 
-	@ApiOperation({ summary: 'Get Activites' })
+	@ApiOperation({ summary: 'Get Activities' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/')
-	async getActivites(@Query() request: IGetActivitiesInput) {
+	async getActivities(@Query() request: IGetActivitiesInput) {
 		const defaultParams: Partial<IGetActivitiesInput> = {
 			page: 0,
 			limit: 30
 		};
 		request = Object.assign({}, defaultParams, request);
-		return this.activityService.getActivites(request);
+		return this.activityService.getActivities(request);
 	}
 
-	@ApiOperation({ summary: 'Get Daily Activites' })
+	@ApiOperation({ summary: 'Get Daily Activities' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/daily')
-	async getDailyActivites(@Query() request: IGetActivitiesInput) {
-		return this.activityService.getDailyActivites(request);
+	async getDailyActivities(@Query() request: IGetActivitiesInput) {
+		return this.activityService.getDailyActivities(request);
 	}
 
-	@ApiOperation({ summary: 'Save bulk Activites' })
+	@ApiOperation({ summary: 'Save bulk Activities' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/bulk')
-	async bulkSaveActivites(@Body() entities: IBulkActivitiesInput) {
+	async bulkSaveActivities(@Body() entities: IBulkActivitiesInput) {
 		return this.activityService.bulkSave(entities.activities);
 	}
 }

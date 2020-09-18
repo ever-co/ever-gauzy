@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Candidate } from '@gauzy/models';
+import { ICandidate } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-candidate-multi-select',
@@ -7,7 +7,7 @@ import { Candidate } from '@gauzy/models';
 })
 export class CandidateMultiSelectComponent {
 	@Input() selectedCandidateIds: string[];
-	@Input() allCandidates: Candidate[];
+	@Input() allCandidates: ICandidate[];
 
 	@Output() selectedChange = new EventEmitter();
 

@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
-	Organization,
+	IOrganization,
 	PermissionGroups,
-	RolePermissions,
+	IRolePermission,
 	RolesEnum,
-	User
+	IUser
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,9 +23,9 @@ import { Store } from '../../../@core/services/store.service';
 export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	private currentUser: User;
+	private currentUser: IUser;
 
-	organization: Organization;
+	organization: IOrganization;
 
 	adminRole: RolesEnum = RolesEnum.ADMIN;
 	selectedRole: RolesEnum = RolesEnum.EMPLOYEE;
@@ -39,7 +39,7 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	permissionGroups = PermissionGroups;
 
 	enabledPermissions = {};
-	allPermissions: RolePermissions[] = [];
+	allPermissions: IRolePermission[] = [];
 
 	constructor(
 		readonly translateService: TranslateService,

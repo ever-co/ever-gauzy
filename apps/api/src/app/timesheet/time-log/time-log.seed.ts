@@ -1,11 +1,16 @@
 import { Connection, In } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
-import { TimeLogSourceEnum, TimeLogType, TimeSlot } from '@gauzy/models';
+import {
+	TimeLogSourceEnum,
+	TimeLogType,
+	ITimeSlot,
+	IOrganizationProject
+} from '@gauzy/models';
 import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
 import { Timesheet } from '../timesheet.entity';
-import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { Screenshot } from '../screenshot.entity';
@@ -13,11 +18,11 @@ import { Screenshot } from '../screenshot.entity';
 export const createRandomTimeLogs = async (
 	connection: Connection,
 	timeSheets: Timesheet[],
-	defaultProjects: OrganizationProjects[],
+	defaultProjects: IOrganizationProject[],
 	noOfTimeLogsPerTimeSheet
 ) => {
 	let query = connection
-		.getRepository(OrganizationProjects)
+		.getRepository(OrganizationProject)
 		.createQueryBuilder()
 		.where({
 			id: In(_.pluck(defaultProjects, 'id'))
@@ -33,8 +38,8 @@ export const createRandomTimeLogs = async (
 		timeSheetChunkIndex < timeSheetChunk.length;
 		timeSheetChunkIndex++
 	) {
-		let timeSlots: TimeSlot[] = [];
-		const timelogs: TimeLog[] = [];
+		let timeSlots: ITimeSlot[] = [];
+		const timeLogs: TimeLog[] = [];
 		const screenshotsPromise: Promise<Screenshot[]>[] = [];
 
 		for (
@@ -114,14 +119,14 @@ export const createRandomTimeLogs = async (
 						false
 					]);
 					timelog.deletedAt = null;
-					timelogs.push(timelog);
+					timeLogs.push(timelog);
 				}
 			}
 		}
 
 		const savedtimeSlot = await connection.manager.save(timeSlots);
 
-		for (const timelog of timelogs) {
+		for (const timelog of timeLogs) {
 			if (timelog.logType === TimeLogType.TRACKED) {
 				timeSlots = savedtimeSlot.filter(
 					(x) => x.employeeId === timelog.employeeId
@@ -149,7 +154,7 @@ export const createRandomTimeLogs = async (
 			});
 
 		await connection.manager.save(screenshots);
-		await connection.manager.save(timelogs);
+		await connection.manager.save(timeLogs);
 	}
 };
 

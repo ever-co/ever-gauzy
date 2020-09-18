@@ -1,6 +1,6 @@
 import {
-	RecurringExpenseByMonthFindInput,
-	RecurringExpenseModel
+	IRecurringExpenseByMonthFindInput,
+	IRecurringExpenseModel
 } from '@gauzy/models';
 import { IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { CrudService, getLastDayOfMonth, IPagination } from '../../core';
@@ -14,13 +14,13 @@ import { CrudService, getLastDayOfMonth, IPagination } from '../../core';
  * If year is same, compare month
  */
 export abstract class FindRecurringExpenseByMonthHandler<
-	T extends RecurringExpenseModel
+	T extends IRecurringExpenseModel
 > {
 	//TODO: Change CrudService<any> to be more specific
 	constructor(private readonly crudService: CrudService<T>) {}
 
 	public async executeCommand(
-		input: RecurringExpenseByMonthFindInput | any
+		input: IRecurringExpenseByMonthFindInput | any
 	): Promise<IPagination<T>> {
 		const lastDayOfMonth = getLastDayOfMonth(input.year, input.month);
 		const inputStartDate = new Date(

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Candidate } from '@gauzy/models';
+import { ICandidate } from '@gauzy/models';
 import { FormControl } from '@angular/forms';
 
 @Component({
@@ -10,7 +10,7 @@ export class CandidateSelectComponent {
 	@Input() selectedCandidateId: string;
 	@Input() placeholder: string;
 	@Input() disabledIds: string[];
-	@Input() allCandidates: Candidate[];
+	@Input() allCandidates: ICandidate[];
 	@Input() isAllMembers = false;
 	@Input() disabled = false;
 	@Input() isPlaceholderSelected = false;

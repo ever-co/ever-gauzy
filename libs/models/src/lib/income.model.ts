@@ -1,13 +1,11 @@
-import { Employee, EmployeeFindInput } from './employee.model';
-import { Organization, OrganizationFindInput } from './organization.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag } from './tag-entity.model';
+import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IOrganizationFindInput } from './organization.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ITag } from './tag-entity.model';
 
-export interface Income extends IBaseEntityModel {
-	employee?: Employee;
+export interface IIncome extends IBasePerTenantAndOrganizationEntityModel {
+	employee?: IEmployee;
 	employeeId?: string;
-	organization: Organization;
-	orgId: string;
 	amount: number;
 	clientId?: string;
 	clientName: string;
@@ -15,10 +13,11 @@ export interface Income extends IBaseEntityModel {
 	valueDate?: Date;
 	notes?: string;
 	isBonus?: boolean;
-	tags: Tag[];
+	tags: ITag[];
 }
 
-export interface IncomeCreateInput {
+export interface IIncomeCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	amount: number;
 	clientName: string;
 	clientId: string;
@@ -26,13 +25,13 @@ export interface IncomeCreateInput {
 	currency?: string;
 	employeeId?: string;
 	notes?: string;
-	orgId?: string;
+	organizationId?: string;
 	isBonus?: boolean;
 	reference?: string;
-	tags: Tag[];
+	tags: ITag[];
 }
 
-export interface IncomeUpdateInput {
+export interface IIncomeUpdateInput {
 	amount?: number;
 	clientName?: string;
 	clientId?: string;
@@ -41,12 +40,12 @@ export interface IncomeUpdateInput {
 	currency?: string;
 	notes?: string;
 	isBonus?: boolean;
-	tags: Tag[];
+	tags: ITag[];
 }
 
-export interface IncomeFindInput extends IBaseEntityModel {
-	employee?: EmployeeFindInput;
-	organization?: OrganizationFindInput;
+export interface IIncomeFindInput {
+	employee?: IEmployeeFindInput;
+	organization?: IOrganizationFindInput;
 	amount?: number;
 	isBonus?: boolean;
 	clientId?: string;

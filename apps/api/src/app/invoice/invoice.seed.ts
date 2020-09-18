@@ -10,6 +10,7 @@ import * as _ from 'underscore';
 
 export const createDefaultInvoice = async (
 	connection: Connection,
+	tenant: Tenant,
 	defaultOrganizations: Organization[],
 	noOfInvoicePerOrganization: number
 ) => {
@@ -73,6 +74,7 @@ export const createDefaultInvoice = async (
 			invoice.organizationId = organization.id;
 			invoice.status = 'Active';
 			invoice.totalValue = faker.random.number(99999);
+			invoice.tenant = tenant;
 			invoices.push(invoice);
 		}
 	}
@@ -150,6 +152,7 @@ export const createRandomInvoice = async (
 				invoice.organizationId = organization.id;
 				invoice.status = 'Active';
 				invoice.totalValue = faker.random.number(99999);
+				invoice.tenant = tenant;
 				invoices.push(invoice);
 			}
 		}

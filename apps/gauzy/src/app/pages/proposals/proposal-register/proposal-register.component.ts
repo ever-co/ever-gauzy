@@ -9,7 +9,7 @@ import {
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
-import { ProposalStatusEnum, Tag } from '@gauzy/models';
+import { ProposalStatusEnum, ITag } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,7 +29,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 
 	form: FormGroup;
 	private _selectedOrganizationId: string;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	public ckConfig: any = {
 		width: '100%',
 		height: '320'

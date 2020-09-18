@@ -1,18 +1,14 @@
 import { Column, Entity } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OrganizationDocument as IOrganizationDocument } from '@gauzy/models';
+import { IOrganizationDocument } from '@gauzy/models';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_document')
-export class OrganizationDocuments extends Base
+export class OrganizationDocuments extends TenantOrganizationBase
 	implements IOrganizationDocument {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	organizationId: string;
 
 	@ApiPropertyOptional({ type: String })
 	@Column()

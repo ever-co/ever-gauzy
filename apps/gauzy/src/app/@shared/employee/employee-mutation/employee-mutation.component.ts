@@ -7,10 +7,10 @@ import {
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
 	RolesEnum,
-	Employee,
-	User,
-	Role,
-	EmployeeCreateInput
+	IEmployee,
+	IUser,
+	IRole,
+	IEmployeeCreateInput
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
@@ -31,8 +31,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 	form: FormGroup;
-	role: Role;
-	employees: EmployeeCreateInput[] = [];
+	role: IRole;
+	employees: IEmployeeCreateInput[] = [];
 	constructor(
 		protected dialogRef: NbDialogRef<EmployeeMutationComponent>,
 		protected organizationsService: OrganizationsService,
@@ -56,12 +56,12 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			.toPromise();
 	}
 
-	closeDialog(employee: Employee[] = null) {
+	closeDialog(employee: IEmployee[] = null) {
 		this.dialogRef.close(employee);
 	}
 
 	addEmployee() {
-		const user: User = {
+		const user: IUser = {
 			username: this.form.get('username').value,
 			firstName: this.form.get('firstName').value,
 			lastName: this.form.get('lastName').value,
@@ -76,7 +76,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		const acceptDate = this.form.get('acceptDate').value || null;
 		const rejectDate = this.form.get('rejectDate').value || null;
 
-		const newEmployee: EmployeeCreateInput = {
+		const newEmployee: IEmployeeCreateInput = {
 			user,
 			startedWorkOn: this.form.get('startedWorkOn').value || null,
 			password: this.form.get('password').value,

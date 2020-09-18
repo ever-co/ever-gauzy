@@ -1,4 +1,9 @@
-import { Equipment as IEquipment, CurrenciesEnum } from '@gauzy/models';
+import {
+	IEquipment,
+	CurrenciesEnum,
+	IEquipmentSharing,
+	ITag
+} from '@gauzy/models';
 import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -11,14 +16,14 @@ import {
 } from 'class-validator';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
 import { Tag } from '../tags/tag.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('equipment')
-export class Equipment extends TenantBase implements IEquipment {
+export class Equipment extends TenantOrganizationBase implements IEquipment {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.equipment)
 	@JoinTable({ name: 'tag_equipment' })
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -71,5 +76,5 @@ export class Equipment extends TenantBase implements IEquipment {
 		(type) => EquipmentSharing,
 		(equipmentSharing) => equipmentSharing.equipment
 	)
-	equipmentSharings: EquipmentSharing[];
+	equipmentSharings: IEquipmentSharing[];
 }

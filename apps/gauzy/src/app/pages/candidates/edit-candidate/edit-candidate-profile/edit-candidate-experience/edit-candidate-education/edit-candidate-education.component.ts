@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
 import { CandidateEducationsService } from 'apps/gauzy/src/app/@core/services/candidate-educations.service';
-import { IEducation, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ICandidateEducation, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -23,14 +23,14 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	showAddCard: boolean;
 	educationId = null;
 	candidateId: string;
-	educationList: IEducation[] = [];
+	educationList: ICandidateEducation[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	selectedEducation: IEducation;
+	selectedEducation: ICandidateEducation;
 	disableButton = true;
 	@ViewChild('educationTable') educationTable;
 	constructor(
@@ -73,8 +73,8 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			})
 		);
 	}
-	editEducation(education: IEducation) {
-		const selectedItem: IEducation = education
+	editEducation(education: ICandidateEducation) {
+		const selectedItem: ICandidateEducation = education
 			? education
 			: this.selectedEducation;
 		this.showAddCard = !this.showAddCard;
@@ -218,8 +218,8 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			);
 		}
 	}
-	async removeEducation(education: IEducation) {
-		const selectedItem: IEducation = education
+	async removeEducation(education: ICandidateEducation) {
+		const selectedItem: ICandidateEducation = education
 			? education
 			: this.selectedEducation;
 		try {

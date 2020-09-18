@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AvailabilitySlots } from './availability-slots.entity';
+import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { AvailabilitySlotsController } from './availability-slots.controller';
 import { CommandHandlers } from './commands/handlers';
@@ -14,7 +14,7 @@ import { UserModule } from '../user/user.module';
 @Module({
 	imports: [
 		UserModule,
-		TypeOrmModule.forFeature([AvailabilitySlots, Employee, Organization]),
+		TypeOrmModule.forFeature([AvailabilitySlot, Employee, Organization]),
 		CqrsModule
 	],
 	controllers: [AvailabilitySlotsController],

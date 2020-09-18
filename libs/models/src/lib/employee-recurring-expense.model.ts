@@ -1,18 +1,18 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { RecurringExpenseModel } from './recurring-expense.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IRecurringExpenseModel } from './recurring-expense.model';
 
-export interface EmployeeRecurringExpense extends RecurringExpenseModel {
+export interface IEmployeeRecurringExpense extends IRecurringExpenseModel {
 	employeeId: string;
 }
 
-export interface EmployeeRecurringExpenseByMonthFindInput
-	extends IBaseEntityModel {
+export interface IEmployeeRecurringExpenseByMonthFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	month?: number;
 	year?: number;
 }
 
-export interface EmployeeRecurringExpenseFindInput {
+export interface IEmployeeRecurringExpenseFindInput {
 	month?: number;
 	year?: number;
 	parentRecurringExpenseId?: string;

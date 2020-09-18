@@ -4,8 +4,8 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import {
 	IGetTimeLogInput,
-	TimeLog,
-	Timesheet,
+	ITimeLog,
+	ITimesheet,
 	TimesheetStatus,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
@@ -32,7 +32,7 @@ export class ViewComponent implements OnInit, OnDestroy {
 	TimesheetStatus = TimesheetStatus;
 	timeLogs: any;
 	updateLogs$: Subject<any> = new Subject();
-	timesheet: Timesheet;
+	timesheet: ITimesheet;
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -64,11 +64,11 @@ export class ViewComponent implements OnInit, OnDestroy {
 
 		this.timesheetService
 			.getTimeSheet(this.logRequest.timesheetId)
-			.then((timesheet: Timesheet) => {
+			.then((timesheet: ITimesheet) => {
 				this.timesheet = timesheet;
 			});
 
-		this.timesheetService.getTimeLogs(request).then((logs: TimeLog[]) => {
+		this.timesheetService.getTimeLogs(request).then((logs: ITimeLog[]) => {
 			this.timeLogs = _.chain(logs)
 				.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
 				.value();

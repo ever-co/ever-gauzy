@@ -30,7 +30,7 @@ import {
 	CandidateInterviewersBulkCreateCommand
 } from './commands';
 
-@ApiTags('candidate_interviewer')
+@ApiTags('CandidateInterviewer')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateInterviewersController extends CrudController<

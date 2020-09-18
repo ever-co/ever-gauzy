@@ -2,18 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	Invoice,
+	IInvoice,
 	CurrenciesEnum,
-	Payment,
+	IPayment,
 	PaymentMethodEnum,
-	Organization,
-	OrganizationContact,
-	OrganizationProjects,
-	Tag
+	IOrganization,
+	IOrganizationContact,
+	IOrganizationProject,
+	ITag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { PaymentService } from '../../../../@core/services/payment.service';
 import { Store } from '../../../../@core/services/store.service';
 
 @Component({
@@ -27,26 +26,25 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<PaymentMutationComponent>,
-		private paymentService: PaymentService,
 		private store: Store,
 		private toastrService: NbToastrService
 	) {
 		super(translateService);
 	}
 
-	invoice: Invoice;
-	invoices: Invoice[];
-	organization: Organization;
-	payment: Payment;
+	invoice: IInvoice;
+	invoices: IInvoice[];
+	organization: IOrganization;
+	payment: IPayment;
 	form: FormGroup;
 	currencies = Object.values(CurrenciesEnum);
 	paymentMethods = Object.values(PaymentMethodEnum);
 	currencyString: string;
-	organizationContact: OrganizationContact;
-	organizationContacts: OrganizationContact[];
-	project: OrganizationProjects;
-	projects: OrganizationProjects[];
-	tags: Tag[] = [];
+	organizationContact: IOrganizationContact;
+	organizationContacts: IOrganizationContact[];
+	project: IOrganizationProject;
+	projects: IOrganizationProject[];
+	tags: ITag[] = [];
 	get currency() {
 		return this.form.get('currency');
 	}
@@ -173,7 +171,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		return d1 > d2;
 	}
 
-	selectedTagsEvent(currentTagSelection: Tag[]) {
+	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.tags = currentTagSelection;
 	}
 

@@ -1,6 +1,4 @@
-import { Base } from '../core/entities/base';
-import { Pipeline as IPipeline } from '@gauzy/models';
-import { Organization } from '../organization/organization.entity';
+import { IPipeline } from '@gauzy/models';
 import {
 	AfterInsert,
 	AfterLoad,
@@ -8,34 +6,20 @@ import {
 	BeforeInsert,
 	Column,
 	Entity,
-	JoinColumn,
-	ManyToOne,
-	OneToMany,
-	RelationId
+	OneToMany
 } from 'typeorm';
 import { IsNotEmpty, IsString, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('pipeline')
-export class Pipeline extends Base implements IPipeline {
+export class Pipeline extends TenantOrganizationBase implements IPipeline {
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
 		cascade: ['insert']
 	})
 	@ApiProperty({ type: PipelineStage })
 	public stages: PipelineStage[];
-
-	@ManyToOne(() => Organization)
-	@ApiProperty({ type: Organization })
-	@JoinColumn()
-	public organization: Organization;
-
-	@RelationId(({ organization }: Pipeline) => organization)
-	@ApiProperty({ type: String })
-	@IsNotEmpty()
-	@IsString()
-	@Column()
-	public organizationId: string;
 
 	@Column({ nullable: true, type: 'text' })
 	@ApiProperty({ type: String })

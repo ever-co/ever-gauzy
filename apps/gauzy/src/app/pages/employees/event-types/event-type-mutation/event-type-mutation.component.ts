@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { EventTypeViewModel } from '../event-type.component';
-import { Tag } from '@gauzy/models';
+import { ITag } from '@gauzy/models';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -18,7 +18,7 @@ export enum COMPONENT_TYPE {
 export class EventTypeMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	public form: FormGroup;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;

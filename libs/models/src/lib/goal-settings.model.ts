@@ -1,16 +1,17 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization, OrganizationFindInput } from './organization.model';
-import { Employee, EmployeeFindInput } from './employee.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganizationFindInput } from './organization.model';
+import { IEmployee, IEmployeeFindInput } from './employee.model';
 
-export interface GoalTimeFrame extends IBaseEntityModel {
+export interface IGoalTimeFrame
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	status: string;
 	startDate: Date;
 	endDate: Date;
-	organization: Organization;
 }
 
-export interface GoalGeneralSetting extends IBaseEntityModel {
+export interface IGoalGeneralSetting
+	extends IBasePerTenantAndOrganizationEntityModel {
 	maxObjectives: number;
 	maxKeyResults: number;
 	employeeCanCreateObjective: boolean;
@@ -20,25 +21,27 @@ export interface GoalGeneralSetting extends IBaseEntityModel {
 	krTypeTask: boolean;
 }
 
-export interface KPI extends IBaseEntityModel {
+export interface IKPI extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description: string;
 	type: string;
 	unit?: string;
 	currentValue: number;
 	targetValue: number;
-	lead?: Employee;
+	lead?: IEmployee;
 	operator: string;
 }
 
-export interface GoalTemplate extends IBaseEntityModel {
+export interface IGoalTemplate
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	level: string;
-	keyResults?: Array<KeyResultTemplate>;
+	keyResults?: Array<IKeyResultTemplate>;
 	category?: string;
 }
 
-export interface KeyResultTemplate extends IBaseEntityModel {
+export interface IKeyResultTemplate
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	type: string;
 	unit?: string;
@@ -47,20 +50,21 @@ export interface KeyResultTemplate extends IBaseEntityModel {
 	initialValue?: number;
 	hardDeadline?: Date;
 	softDeadline?: Date;
-	goal: GoalTemplate;
+	goal: IGoalTemplate;
 	goalId?: string;
-	kpi?: GoalKPITemplate;
+	kpi?: IGoalKPITemplate;
 	kpiId?: string;
 }
 
-export interface GoalKPITemplate extends IBaseEntityModel {
+export interface IGoalKPITemplate
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description: string;
 	type: string;
 	unit?: string;
 	currentValue?: number;
 	targetValue?: number;
-	lead?: Employee;
+	lead?: IEmployee;
 	operator: string;
 }
 
@@ -87,14 +91,15 @@ export enum KpiOperatorEnum {
 	LESSER_THAN_EQUAL_TO = '<='
 }
 
-export interface SettingFindInput extends IBaseEntityModel {
-	employee?: EmployeeFindInput;
-	organization?: OrganizationFindInput;
+export interface ISettingFindInput {
+	id?: string;
+	employee?: IEmployeeFindInput;
+	organization?: IOrganizationFindInput;
 }
 
-export interface GoalTimeFrameFindInput extends IBaseEntityModel {
+export interface IGoalTimeFrameFindInput {
 	name?: string;
-	organization?: OrganizationFindInput;
+	organization?: IOrganizationFindInput;
 }
 
 export enum GoalOwnershipEnum {

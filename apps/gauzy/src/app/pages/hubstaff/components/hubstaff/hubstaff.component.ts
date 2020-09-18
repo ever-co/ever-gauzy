@@ -10,15 +10,16 @@ import {
 	catchError,
 	finalize,
 	first,
-	takeUntil
+	map
 } from 'rxjs/operators';
 import { IHubstaffOrganization, IHubstaffProject } from '@gauzy/models';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ngx-hubstaff',
@@ -29,7 +30,6 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 export class HubstaffComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('projectsTable') projectsTable;
-	private _ngDestroy$: Subject<void> = new Subject();
 	settingsSmartTable: object;
 	organizations$: Observable<IHubstaffOrganization[]>;
 	projects$: Observable<IHubstaffProject[]>;
@@ -37,9 +37,10 @@ export class HubstaffComponent extends TranslationBaseComponent
 	projects: IHubstaffProject[];
 	selectedOrganization: IHubstaffOrganization;
 	selectedProjects: IHubstaffProject[];
-	loading: boolean = true;
+	loading: boolean;
 	integrationId: string;
 	organizationId: string;
+	supportContextActions: NbMenuItem[];
 
 	constructor(
 		public translateService: TranslateService,
@@ -49,27 +50,53 @@ export class HubstaffComponent extends TranslationBaseComponent
 		private toastrService: ToastrService,
 		private _dialogService: NbDialogService,
 		private _store: Store,
-		private _titlecasePipe: TitleCasePipe
+		private _titlecasePipe: TitleCasePipe,
+		private nbMenuService: NbMenuService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
+		this._loadActions();
 		this._applyTranslationOnSmartTable();
 		this._setTokenAndloadOrganizations();
-		this._store.selectedOrganization$.subscribe(
-			(organization) =>
-				(this.organizationId = organization ? organization.id : null)
-		);
+
+		this._store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe(
+				(organization) =>
+					(this.organizationId = organization
+						? organization.id
+						: null)
+			);
+
+		this.nbMenuService
+			.onItemClick()
+			.pipe(
+				map(({ item: { title } }) => title),
+				untilDestroyed(this)
+			)
+			.subscribe((title) => {
+				if (title === 'Settings') {
+					this.setSettings();
+				}
+			});
 	}
+
+	ngOnDestroy(): void {}
 
 	private _setTokenAndloadOrganizations() {
 		this.integrationId = this._activatedRoute.snapshot.params.id;
-		this._hubstaffService.getIntegration(this.integrationId).subscribe();
+		this._hubstaffService
+			.getIntegration(this.integrationId)
+			.pipe(untilDestroyed(this))
+			.subscribe();
+
 		this.organizations$ = this._hubstaffService
 			.getToken(this.integrationId)
 			.pipe(
+				tap(() => (this.loading = true)),
 				switchMap(() =>
 					this._hubstaffService.getOrganizations(this.integrationId)
 				),
@@ -84,9 +111,12 @@ export class HubstaffComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSettingsSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSettingsSmartTable();
+				this._loadActions();
+			});
 	}
 
 	loadSettingsSmartTable() {
@@ -181,7 +211,7 @@ export class HubstaffComponent extends TranslationBaseComponent
 					return of(null);
 				}),
 				finalize(() => (this.loading = false)),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -192,7 +222,6 @@ export class HubstaffComponent extends TranslationBaseComponent
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
-
 		if (!data) {
 			this._hubstaffService.resetSettings();
 			return;
@@ -209,13 +238,22 @@ export class HubstaffComponent extends TranslationBaseComponent
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	private _loadActions() {
+		this.supportContextActions = [
+			{
+				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
+				icon: 'text-outline',
+				link: `pages/integrations/hubstaff/regenerate`
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
+				icon: 'settings-2-outline'
+			}
+		];
 	}
 }

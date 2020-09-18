@@ -7,13 +7,13 @@ import {
 	AbstractControl
 } from '@angular/forms';
 import {
-	EquipmentSharing,
-	Equipment,
+	IEquipmentSharing,
+	IEquipment,
 	RequestApprovalStatusTypesEnum,
 	RequestApprovalStatus,
-	Employee,
-	OrganizationTeam,
-	EquipmentSharingPolicy
+	IEmployee,
+	IOrganizationTeam,
+	IEquipmentSharingPolicy
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -55,18 +55,18 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		super(translationService);
 	}
 	form: FormGroup;
-	equipmentSharing: EquipmentSharing;
-	employees: Employee[];
+	equipmentSharing: IEquipmentSharing;
+	employees: IEmployee[];
 	disabled: boolean;
 	selectedOrgId: string;
 	requestStatus: number;
 	participants = 'employees';
 
-	teams: OrganizationTeam[];
-	equipmentItems: Equipment[];
+	teams: IOrganizationTeam[];
+	equipmentItems: IEquipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
-	equipmentSharingPolicies: EquipmentSharingPolicy[] = [];
+	equipmentSharingPolicies: IEquipmentSharingPolicy[] = [];
 	selectedEquipmentSharingPolicy: string;
 	requestStatuses = Object.values(RequestApprovalStatus);
 
@@ -77,7 +77,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	filter = this.datePickerFilterPredicate.bind(this);
 
 	periodsUnderUse = [];
-	selectedItem: Equipment;
+	selectedItem: IEquipment;
 	shareRequestDay: AbstractControl;
 	shareStartDay: AbstractControl;
 	shareEndDay: AbstractControl;
@@ -183,7 +183,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			status: this.requestStatus,
 			name: this.form.value['name']
 		};
-		let equipmentSharing: EquipmentSharing;
+		let equipmentSharing: IEquipmentSharing;
 
 		if (this.equipmentSharing) {
 			shareRequest.createdBy = this.equipmentSharing.createdBy;
@@ -202,7 +202,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.closeDialog(equipmentSharing);
 	}
 
-	async closeDialog(equipmentSharing?: EquipmentSharing) {
+	async closeDialog(equipmentSharing?: IEquipmentSharing) {
 		this.dialogRef.close(equipmentSharing);
 	}
 

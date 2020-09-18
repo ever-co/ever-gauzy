@@ -1,7 +1,7 @@
 import { OnInit, Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { EquipmentSharingPolicy } from '@gauzy/models';
+import { IEquipmentSharingPolicy } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
@@ -14,7 +14,7 @@ export class EquipmentSharingPolicyMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
-	equipmentSharingPolicy: EquipmentSharingPolicy;
+	equipmentSharingPolicy: IEquipmentSharingPolicy;
 	organizationId: string;
 	isHasType = true;
 
@@ -57,19 +57,19 @@ export class EquipmentSharingPolicyMutationComponent
 		});
 	}
 
-	async closeDialog(requipmentSharingPolicy?: EquipmentSharingPolicy) {
+	async closeDialog(requipmentSharingPolicy?: IEquipmentSharingPolicy) {
 		this.dialogRef.close(requipmentSharingPolicy);
 	}
 
 	async saveEquipmentSharingPolicy() {
-		const equipPolicy: EquipmentSharingPolicy = {
+		const equipPolicy: IEquipmentSharingPolicy = {
 			name: this.form.value['name'],
 			description: this.form.value['description'],
 			organizationId: this.organizationId,
 			id: this.form.value['id']
 		};
 
-		let result: EquipmentSharingPolicy;
+		let result: IEquipmentSharingPolicy;
 		result = await this.equipmentSharingPolicyService.save(equipPolicy);
 
 		this.closeDialog(result);

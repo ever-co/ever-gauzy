@@ -1,5 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { BaseEntityWithMembers, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	IBaseEntityWithMembers,
+	ComponentLayoutStyleEnum
+} from '@gauzy/models';
 
 @Component({
 	selector: 'ga-entity-with-members-card',
@@ -7,9 +10,9 @@ import { BaseEntityWithMembers, ComponentLayoutStyleEnum } from '@gauzy/models';
 	styleUrls: ['./entity-with-members-card.component.scss']
 })
 export class EntityWithMembersCardComponent {
-	@Input() entityWithMembers: BaseEntityWithMembers;
+	@Input() entityWithMembers: IBaseEntityWithMembers;
 
-	@Input() public: BaseEntityWithMembers;
+	@Input() public: IBaseEntityWithMembers;
 
 	@Output() remove = new EventEmitter();
 

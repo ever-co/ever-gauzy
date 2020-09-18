@@ -3,7 +3,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { Invoice, InvoiceTypeEnum } from '@gauzy/models';
+import { IInvoice, InvoiceTypeEnum } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
@@ -23,7 +23,7 @@ import { ExpensesService } from '../../../@core/services/expenses.service';
 export class InvoiceViewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	invoiceId: string;
-	invoice: Invoice;
+	invoice: IInvoice;
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input() isEstimate: boolean;

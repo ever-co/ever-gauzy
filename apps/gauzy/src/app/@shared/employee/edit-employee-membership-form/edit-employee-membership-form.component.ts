@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
-	BaseEntityWithMembers,
-	EditEntityByMemberInput,
-	Employee
+	IBaseEntityWithMembers,
+	IEditEntityByMemberInput,
+	IEmployee
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
 
@@ -15,14 +15,14 @@ import { Subject } from 'rxjs';
 export class EditEmployeeMembershipFormComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
-	@Input() organizationEntities: BaseEntityWithMembers[];
-	@Input() employeeEntities: BaseEntityWithMembers[];
-	@Input() selectedEmployee: Employee;
+	@Input() organizationEntities: IBaseEntityWithMembers[];
+	@Input() employeeEntities: IBaseEntityWithMembers[];
+	@Input() selectedEmployee: IEmployee;
 	@Input() placeholder: string;
 	@Input() title: string;
 
-	@Output() entitiesAdded = new EventEmitter<EditEntityByMemberInput>();
-	@Output() entitiesRemoved = new EventEmitter<EditEntityByMemberInput>();
+	@Output() entitiesAdded = new EventEmitter<IEditEntityByMemberInput>();
+	@Output() entitiesRemoved = new EventEmitter<IEditEntityByMemberInput>();
 
 	showAddCard: boolean;
 

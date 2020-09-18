@@ -63,7 +63,6 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.currency = currency;
 		defaultOrganization.defaultValueDateType = defaultValueDateType;
 		defaultOrganization.imageUrl = imageUrl;
-		defaultOrganization.tenant = tenant;
 		defaultOrganization.invitesAllowed = true;
 		defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
 		defaultOrganization.bonusPercentage = 10;
@@ -124,6 +123,7 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.separateInvoiceItemTaxAndDiscount = faker.random.boolean();
 		defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
 		defaultOrganization.totalEmployees = faker.random.number(4);
+		defaultOrganization.tenant = tenant;
 		defaultOrganization.valueDate = moment(new Date())
 			.add(faker.random.number(10), 'days')
 			.toDate();
@@ -176,7 +176,6 @@ export const createRandomOrganizations = async (
 					300,
 					logoAbbreviation
 				);
-				organization.tenant = tenant;
 				organization.invitesAllowed = true;
 				organization.overview = faker.name.jobDescriptor();
 				organization.short_description = faker.name.jobDescriptor();
@@ -239,6 +238,7 @@ export const createRandomOrganizations = async (
 				organization.separateInvoiceItemTaxAndDiscount = faker.random.boolean();
 				organization.startWeekOn = WeekDaysEnum.MONDAY;
 				organization.totalEmployees = faker.random.number(4);
+				organization.tenant = tenant;
 				organization.valueDate = moment(new Date())
 					.add(faker.random.number(10), 'days')
 					.toDate();

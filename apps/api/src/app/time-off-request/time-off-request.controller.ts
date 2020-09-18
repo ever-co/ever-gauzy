@@ -17,11 +17,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { TimeOffRequestService } from './time-off-request.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
-import {
-	TimeOffCreateInput as ITimeOffCreateInput,
-	StatusTypesEnum
-} from '@gauzy/models';
-import { TimeOff as ITimeOff, PermissionsEnum } from '@gauzy/models';
+import { ITimeOffCreateInput, StatusTypesEnum } from '@gauzy/models';
+import { ITimeOff, PermissionsEnum } from '@gauzy/models';
 import { IPagination } from '../core';
 import { CommandBus } from '@nestjs/cqrs';
 import { TimeOffStatusCommand } from './commands';

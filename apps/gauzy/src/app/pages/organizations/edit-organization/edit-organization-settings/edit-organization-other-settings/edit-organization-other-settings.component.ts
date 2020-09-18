@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	AlignmentOptions,
 	DefaultValueDateTypeEnum,
-	Organization,
+	IOrganization,
 	WeekDaysEnum,
 	RegionsEnum,
 	CurrenciesEnum,
@@ -31,7 +31,7 @@ export class EditOrganizationOtherSettingsComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
-	organization: Organization;
+	organization: IOrganization;
 	form: FormGroup;
 
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);

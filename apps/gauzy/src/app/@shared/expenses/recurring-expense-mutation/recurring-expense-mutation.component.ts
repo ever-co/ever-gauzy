@@ -3,10 +3,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
-	RecurringExpenseModel,
+	IRecurringExpenseModel,
 	RecurringExpenseDefaultCategoriesEnum,
 	StartDateUpdateTypeEnum,
-	Employee
+	IEmployee
 } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { first } from 'rxjs/operators';
@@ -72,11 +72,11 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		}
 	];
 	@Input() isAdd: true;
-	recurringExpense?: RecurringExpenseModel;
+	recurringExpense?: IRecurringExpenseModel;
 	componentType: COMPONENT_TYPE;
 	currencies = Object.values(CurrenciesEnum);
 	selectedDate: Date;
-	conflicts: RecurringExpenseModel[] = [];
+	conflicts: IRecurringExpenseModel[] = [];
 
 	constructor(
 		private fb: FormBuilder,
@@ -145,7 +145,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	}
 
 	async closeAndSubmit() {
-		let employee: Employee;
+		let employee: IEmployee;
 		if (this.recurringExpense) {
 			employee = await this.employeesService.getEmployeeById(
 				this.recurringExpense.employeeId

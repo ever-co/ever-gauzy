@@ -1,10 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import {
-	Employee,
-	Organization,
-	OrganizationTeamCreateInput,
-	OrganizationTeam,
-	Tag,
+	IEmployee,
+	IOrganization,
+	IOrganizationTeamCreateInput,
+	IOrganizationTeam,
+	ITag,
 	RolesEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
@@ -29,19 +29,19 @@ import { EmployeeWithLinksComponent } from '../../@shared/table-components/emplo
 })
 export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
-	selectedOrg: Organization;
+	selectedOrg: IOrganization;
 	@ViewChild('teamTable') teamTable;
 	organizationId: string;
 	showAddCard: boolean;
 	disableButton = true;
 	selectedTeam: any;
 	showTable: boolean;
-	teams: OrganizationTeam[];
-	employees: Employee[] = [];
+	teams: IOrganizationTeam[];
+	employees: IEmployee[] = [];
 	isGridEdit: boolean;
-	teamToEdit: OrganizationTeam;
+	teamToEdit: IOrganizationTeam;
 	loading = true;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
@@ -94,7 +94,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 						: this.selectedTeam;
 			});
 	}
-	async addOrEditTeam(team: OrganizationTeamCreateInput) {
+	async addOrEditTeam(team: IOrganizationTeamCreateInput) {
 		if (team.name && team.name.trim().length && team.members.length) {
 			if (this.teamToEdit) {
 				try {
@@ -189,7 +189,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 		}
 	}
 
-	editTeam(team: OrganizationTeam) {
+	editTeam(team: IOrganizationTeam) {
 		this.showAddCard = !this.showAddCard;
 		this.teamToEdit = team ? team : this.selectedTeam;
 		this.isGridEdit = team ? false : true;
@@ -237,7 +237,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 		);
 		if (teams) {
 			const result = [];
-			teams.forEach((team: OrganizationTeam) => {
+			teams.forEach((team: IOrganizationTeam) => {
 				team.managers = team.members.filter(
 					(member) =>
 						member.role && member.role.name === RolesEnum.MANAGER

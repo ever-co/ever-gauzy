@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { Tenant } from './tenant.entity';
-import { ITenantCreateInput, RolesEnum, ITenant, User } from '@gauzy/models';
+import { ITenantCreateInput, RolesEnum, ITenant, IUser } from '@gauzy/models';
 import { RoleService } from '../role/role.service';
 import { UserService } from '../user/user.service';
 import { RolePermissionsService } from '../role-permissions/role-permissions.service';
@@ -22,7 +22,7 @@ export class TenantService extends CrudService<Tenant> {
 
 	public async onboardTenant(
 		entity: ITenantCreateInput,
-		user: User
+		user: IUser
 	): Promise<ITenant> {
 		const tenant = await this.create(entity);
 		const role = await this.roleService.create({

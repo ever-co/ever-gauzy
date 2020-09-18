@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import {
-	TimeLog,
+	ITimeLog,
 	IGetTimeLogInput,
 	IManualTimeInput,
 	TimesheetStatus,
-	Timesheet,
+	ITimesheet,
 	IGetTimesheetInput,
 	IGetTimeLogConflictInput,
 	IGetTimeSlotInput,
-	TimeSlot
+	ITimeSlot
 } from '@gauzy/models';
 import { toParams } from 'libs/utils';
 
@@ -21,24 +21,24 @@ export class TimesheetService {
 
 	constructor(private http: HttpClient) {}
 
-	addTime(request: IManualTimeInput): Promise<TimeLog> {
+	addTime(request: IManualTimeInput): Promise<ITimeLog> {
 		return this.http
-			.post<TimeLog>('/api/timesheet/time-log', request)
+			.post<ITimeLog>('/api/timesheet/time-log', request)
 			.toPromise();
 	}
 
 	updateTime(
 		id: string,
-		request: TimeLog | Partial<TimeLog>
-	): Promise<TimeLog> {
+		request: ITimeLog | Partial<ITimeLog>
+	): Promise<ITimeLog> {
 		return this.http
-			.put<TimeLog>('/api/timesheet/time-log/' + id, request)
+			.put<ITimeLog>('/api/timesheet/time-log/' + id, request)
 			.toPromise();
 	}
 
-	checkOverlaps(request: IGetTimeLogConflictInput): Promise<TimeLog[]> {
+	checkOverlaps(request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
 		return this.http
-			.get<TimeLog[]>('/api/timesheet/time-log/conflict', {
+			.get<ITimeLog[]>('/api/timesheet/time-log/conflict', {
 				params: toParams(request)
 			})
 			.toPromise();
@@ -48,7 +48,7 @@ export class TimesheetService {
 		return this.http
 			.get('/api/timesheet/' + id)
 			.toPromise()
-			.then((data: Timesheet) => {
+			.then((data: ITimesheet) => {
 				return data;
 			});
 	}
@@ -57,7 +57,7 @@ export class TimesheetService {
 		return this.http
 			.get('/api/timesheet', { params: toParams(request) })
 			.toPromise()
-			.then((data: Timesheet[]) => {
+			.then((data: ITimesheet[]) => {
 				return data;
 			});
 	}
@@ -83,7 +83,7 @@ export class TimesheetService {
 	getTimeLogs(request?: IGetTimeLogInput) {
 		const params = toParams(request);
 		return this.http
-			.get<TimeLog[]>('/api/timesheet/time-log', { params })
+			.get<ITimeLog[]>('/api/timesheet/time-log', { params })
 			.toPromise();
 	}
 
@@ -92,21 +92,21 @@ export class TimesheetService {
 		return this.http
 			.get(`/api/timesheet/time-log/${id}`, { params })
 			.toPromise()
-			.then((data: TimeLog) => {
+			.then((data: ITimeLog) => {
 				return data;
 			});
 	}
 	getTimeSlot(id, request?: IGetTimeSlotInput) {
 		const params = toParams(request);
 		return this.http
-			.get<TimeSlot>(`/api/timesheet/time-slot/${id}`, { params })
+			.get<ITimeSlot>(`/api/timesheet/time-slot/${id}`, { params })
 			.toPromise();
 	}
 
 	getTimeSlots(request?: IGetTimeSlotInput) {
 		const params = toParams(request);
 		return this.http
-			.get<TimeSlot[]>('/api/timesheet/time-slot', { params })
+			.get<ITimeSlot[]>('/api/timesheet/time-slot', { params })
 			.toPromise();
 	}
 

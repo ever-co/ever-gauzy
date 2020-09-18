@@ -7,11 +7,12 @@ import {
 } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import {
-	Income,
+	IIncome,
 	OrganizationSelectInput,
-	Tag,
-	OrganizationContact,
-	ContactType
+	ITag,
+	IOrganizationContact,
+	ContactType,
+	IOrganization
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -33,19 +34,19 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
-	income?: Income;
+	income?: IIncome;
 	currencies = Object.values(CurrenciesEnum);
 
 	form: FormGroup;
 	notes: AbstractControl;
 
-	organizationId: string;
-	organizationContact: OrganizationContact;
+	organizationContact: IOrganizationContact;
 	organizationContacts: Object[] = [];
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 
 	averageIncome = 0;
 	averageBonus = 0;
+	selectedOrganization: IOrganization;
 
 	get valueDate() {
 		return this.form.get('valueDate').value;
@@ -99,10 +100,13 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	}
 
 	private async _getOrganizationContacts() {
-		this.organizationId = this.store.selectedOrganization.id;
+		this.selectedOrganization = this.store.selectedOrganization;
+
 		const { items } = await this.organizationContactService.getAll([], {
-			organizationId: this.store.selectedOrganization.id
+			organizationId: this.selectedOrganization.id,
+			tenantId: this.selectedOrganization.tenantId
 		});
+
 		items.forEach((i) => {
 			this.organizationContacts = [
 				...this.organizationContacts,
@@ -129,7 +133,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	}
 	addNewOrganizationContact = (
 		name: string
-	): Promise<OrganizationContact> => {
+	): Promise<IOrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -143,7 +147,8 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			return this.organizationContactService.create({
 				name,
 				contactType: ContactType.CLIENT,
-				organizationId: this.organizationId
+				organizationId: this.selectedOrganization.id,
+				tenantId: this.selectedOrganization.id
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -203,7 +208,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			this.currency.setValue(orgData.currency);
 		}
 	}
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 }

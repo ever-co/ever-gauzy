@@ -14,10 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
 import { CrudController } from '../core/crud/crud.controller';
-import {
-	ProposalCreateInput as IProposalCreateInput,
-	Proposal as IProposal
-} from '@gauzy/models';
+import { IProposalCreateInput, IProposal } from '@gauzy/models';
 import { IPagination } from '../core';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum } from '@gauzy/models';

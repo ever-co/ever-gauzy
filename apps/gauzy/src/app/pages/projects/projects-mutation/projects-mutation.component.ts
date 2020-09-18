@@ -2,12 +2,12 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	CurrenciesEnum,
-	Employee,
-	Organization,
-	OrganizationContact,
-	OrganizationProjects,
+	IEmployee,
+	IOrganization,
+	IOrganizationContact,
+	IOrganizationProject,
 	ProjectBillingEnum,
-	Tag,
+	ITag,
 	ProjectOwnerEnum,
 	TaskListTypeEnum,
 	ContactType
@@ -27,11 +27,11 @@ import { OrganizationContactService } from '../../../@core/services/organization
 export class ProjectsMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
-	employees: Employee[];
+	employees: IEmployee[];
 	@Input()
-	organization: Organization;
+	organization: IOrganization;
 	@Input()
-	project: OrganizationProjects;
+	project: IOrganizationProject;
 
 	@Output()
 	canceled = new EventEmitter();
@@ -50,7 +50,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	public: Boolean = true;
 	billable: Boolean = true;
 	billingFlat: Boolean;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	organizationId: string;
 	owners: string[] = Object.values(ProjectOwnerEnum);
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
@@ -197,7 +197,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 
 	addNewOrganizationContact = (
 		name: string
-	): Promise<OrganizationContact> => {
+	): Promise<IOrganizationContact> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(

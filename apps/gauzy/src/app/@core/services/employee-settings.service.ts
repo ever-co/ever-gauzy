@@ -1,38 +1,52 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EmployeeSetting, EmployeeSettingFindInput, } from '@gauzy/models';
+import { IEmployeeSetting, IEmployeeSettingFindInput } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable({
-    providedIn: 'root'
+	providedIn: 'root'
 })
 export class EmployeeSettingService {
+	constructor(private http: HttpClient) {}
 
-    constructor(private http: HttpClient) { }
+	create(createInput: IEmployeeSetting): Promise<any> {
+		return this.http
+			.post<IEmployeeSetting>('/api/employee-setting', createInput)
+			.pipe(first())
+			.toPromise();
+	}
 
-    create(createInput: EmployeeSetting): Promise<any> {
-        return this.http.post<EmployeeSetting>('/api/employee-setting', createInput).pipe(first()).toPromise();
-    }
+	getAll(
+		relations?: string[],
+		findInput?: IEmployeeSettingFindInput
+	): Promise<{
+		items: IEmployeeSetting[];
+		total: number;
+	}> {
+		const data = JSON.stringify({ relations, findInput });
 
-    getAll(relations?: string[], findInput?: EmployeeSettingFindInput): Promise<{
-        items: EmployeeSetting[],
-        total: number
-    }> {
-        const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<{
+				items: IEmployeeSetting[];
+				total: number;
+			}>('/api/employee-setting', {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
 
-        return this.http.get<{
-            items: EmployeeSetting[],
-            total: number
-        }>('/api/employee-setting', {
-            params: { data }
-        }).pipe(first()).toPromise();
-    }
+	delete(id: string): Promise<any> {
+		return this.http
+			.delete(`/api/employee-setting/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
 
-    delete(id: string): Promise<any> {
-        return this.http.delete(`/api/employee-setting/${id}`).pipe(first()).toPromise();
-    }
-
-    update(id: string, updateInput: EmployeeSetting): Promise<any> {
-        return this.http.put(`/api/employee-setting/${id}`, updateInput).pipe(first()).toPromise();
-    }
+	update(id: string, updateInput: IEmployeeSetting): Promise<any> {
+		return this.http
+			.put(`/api/employee-setting/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
 }

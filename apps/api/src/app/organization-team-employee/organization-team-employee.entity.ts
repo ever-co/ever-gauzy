@@ -1,14 +1,14 @@
-import { OrganizationTeamEmployee as IOrganizationTeamEmployee } from '@gauzy/models';
-import { Base } from '../core/entities/base';
+import { IOrganizationTeamEmployee } from '@gauzy/models';
 import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { Employee } from '../employee/employee.entity';
 import { Role } from '../role/role.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_team_employee')
-export class OrganizationTeamEmployee extends Base
+export class OrganizationTeamEmployee extends TenantOrganizationBase
 	implements IOrganizationTeamEmployee {
 	@ApiProperty({ type: String })
 	@IsString()

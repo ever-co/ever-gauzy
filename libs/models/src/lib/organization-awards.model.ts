@@ -1,18 +1,18 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface OrganizationAwards extends IBaseEntityModel {
+export interface IOrganizationAwards
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
 	year: string;
 }
 
-export interface OrganizationAwardsFindInput extends IBaseEntityModel {
+export interface IOrganizationAwardsFindInput {
 	name?: string;
 	organizationId?: string;
 	year?: string;
 }
 
-export interface OrganizationAwardsCreateInput {
+export interface IOrganizationAwardsCreateInput {
 	name: string;
 	organizationId: string;
 	year: string;

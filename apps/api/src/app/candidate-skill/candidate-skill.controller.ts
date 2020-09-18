@@ -19,7 +19,7 @@ import { RoleGuard } from '../shared/guards/auth/role.guard';
 import { Roles } from '../shared/decorators/roles';
 import { RolesEnum } from '@gauzy/models';
 
-@ApiTags('candidate_skill')
+@ApiTags('CandidateSkill')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateSkillController extends CrudController<CandidateSkill> {

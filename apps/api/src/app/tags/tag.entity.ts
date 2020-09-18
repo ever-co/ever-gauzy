@@ -1,9 +1,6 @@
-import { Base } from '../core/entities/base';
-import { Entity, Column, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
-import { Tag as ITag } from '@gauzy/models';
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
+import { ITag } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { Employee } from '../employee/employee.entity';
 import { Equipment } from '../equipment/equipment.entity';
@@ -15,7 +12,7 @@ import { Task } from '../tasks/task.entity';
 import { Proposal } from '../proposal/proposal.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
@@ -27,9 +24,10 @@ import { Payment } from '../payment/payment.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { User } from '../user/user.entity';
 import { Integration } from '../integration/integration.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('tag')
-export class Tag extends Base implements ITag {
+export class Tag extends TenantOrganizationBase implements ITag {
 	@ApiProperty({ type: String })
 	@Column()
 	name?: string;
@@ -45,14 +43,6 @@ export class Tag extends Base implements ITag {
 	@ApiProperty({ type: Boolean, default: false })
 	@Column({ default: false })
 	isSystem?: boolean;
-
-	@ApiProperty()
-	@ManyToOne((type) => Organization)
-	organization?: Organization;
-
-	@ApiProperty()
-	@ManyToOne((type) => Tenant)
-	tenant?: Tenant;
 
 	@ManyToMany((type) => Candidate, (candidate) => candidate.tags)
 	candidate?: Candidate[];
@@ -94,10 +84,10 @@ export class Tag extends Base implements ITag {
 	organizationTeam?: OrganizationTeam[];
 
 	@ManyToMany(
-		(type) => OrganizationProjects,
+		(type) => OrganizationProject,
 		(organizationProject) => organizationProject.tags
 	)
-	organizationProject?: OrganizationProjects[];
+	organizationProject?: OrganizationProject[];
 
 	@ManyToMany(
 		(type) => OrganizationPositions,

@@ -8,7 +8,11 @@ import {
 	OnChanges
 } from '@angular/core';
 import { SprintStoreService } from '../../../../../../@core/services/organization-sprint-store.service';
-import { Task, OrganizationSprint, OrganizationProjects } from '@gauzy/models';
+import {
+	ITask,
+	IOrganizationSprint,
+	IOrganizationProject
+} from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { map, tap, filter, take } from 'rxjs/operators';
 import {
@@ -26,26 +30,26 @@ import { TasksStoreService } from '../../../../../../@core/services/tasks-store.
 	templateUrl: './tasks-sprint-view.component.html',
 	styleUrls: ['./tasks-sprint-view.component.scss']
 })
-export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
+export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask>
 	implements OnInit, OnChanges {
-	@Input() tasks: Task[] = [];
-	sprints: OrganizationSprint[] = [];
-	@Input() project: OrganizationProjects;
-	backlogTasks: Task[] = [];
+	@Input() tasks: ITask[] = [];
+	sprints: IOrganizationSprint[] = [];
+	@Input() project: IOrganizationProject;
+	backlogTasks: ITask[] = [];
 	@Output() createTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() editTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() deleteTaskEvent: EventEmitter<any> = new EventEmitter();
-	sprints$: Observable<OrganizationSprint[]> = this.store$.sprints$.pipe(
-		filter((sprints: OrganizationSprint[]) => Boolean(sprints.length)),
-		map((sprints: OrganizationSprint[]): OrganizationSprint[] =>
+	sprints$: Observable<IOrganizationSprint[]> = this.store$.sprints$.pipe(
+		filter((sprints: IOrganizationSprint[]) => Boolean(sprints.length)),
+		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
 			sprints.filter(
-				(sprint: OrganizationSprint) =>
+				(sprint: IOrganizationSprint) =>
 					sprint.projectId === this.project.id
 			)
 		),
-		tap((sprints: OrganizationSprint[]) => {
+		tap((sprints: IOrganizationSprint[]) => {
 			this.sprintIds = [
-				...sprints.map((sprint: OrganizationSprint) => sprint.id),
+				...sprints.map((sprint: IOrganizationSprint) => sprint.id),
 				'backlog'
 			];
 		})
@@ -71,12 +75,12 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 		];
 	}
 
-	reduceTasks(tasks: Task[]): void {
-		this.sprints$.subscribe((availableSprints: OrganizationSprint[]) => {
+	reduceTasks(tasks: ITask[]): void {
+		this.sprints$.subscribe((availableSprints: IOrganizationSprint[]) => {
 			const sprints = availableSprints.reduce(
 				(
-					acc: { [key: string]: OrganizationSprint },
-					sprint: OrganizationSprint
+					acc: { [key: string]: IOrganizationSprint },
+					sprint: IOrganizationSprint
 				) => {
 					acc[sprint.id] = { ...sprint, tasks: [] };
 					return acc;
@@ -106,11 +110,11 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 		this.createTaskEvent.emit();
 	}
 
-	editTask(selectedItem: Task): void {
+	editTask(selectedItem: ITask): void {
 		this.editTaskEvent.emit(this.selectedItem || selectedItem);
 	}
 
-	deleteTask(selectedItem: Task): void {
+	deleteTask(selectedItem: ITask): void {
 		this.deleteTaskEvent.emit(selectedItem);
 	}
 
@@ -139,7 +143,7 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 		}
 	}
 
-	taskAction(evt: { action: string; task: Task }): void {
+	taskAction(evt: { action: string; task: ITask }): void {
 		switch (evt.action) {
 			case 'EDIT_TASK':
 				this.editTask(evt.task);
@@ -151,7 +155,7 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 		}
 	}
 
-	changeTaskStatus({ id, status, title }: Partial<Task>): void {
+	changeTaskStatus({ id, status, title }: Partial<ITask>): void {
 		this.taskStore.editTask({
 			id,
 			status,
@@ -159,7 +163,7 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 		});
 	}
 
-	completeSprint(sprint: OrganizationSprint, evt: any): void {
+	completeSprint(sprint: IOrganizationSprint, evt: any): void {
 		this.preventExpand(evt);
 		this.store$
 			.updateSprint({
@@ -170,7 +174,7 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<Task>
 			.subscribe();
 	}
 
-	trackByFn(task: Task): string | null {
+	trackByFn(task: ITask): string | null {
 		return task.id ? task.id : null;
 	}
 

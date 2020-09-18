@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, OnDestroy } from '@angular/core';
 import { Store } from '../../@core/services/store.service';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import * as moment from 'moment';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 
@@ -14,7 +14,7 @@ export class TimeFormatPipe implements PipeTransform, OnDestroy {
 	constructor(private store: Store) {
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((org: Organization) => {
+			.subscribe((org: IOrganization) => {
 				this.format = org ? org.timeFormat : 12;
 			});
 	}

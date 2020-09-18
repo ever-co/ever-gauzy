@@ -1,8 +1,8 @@
 import {
-	AggregatedEmployeeStatistic,
-	EmployeeStatistics,
-	MonthAggregatedEmployeeStatistics,
-	EmployeeStatisticsHistory
+	IAggregatedEmployeeStatistic,
+	IEmployeeStatistics,
+	IMonthAggregatedEmployeeStatistics,
+	IEmployeeStatisticsHistory
 } from '@gauzy/models';
 import {
 	Controller,
@@ -12,15 +12,17 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { QueryBus } from '@nestjs/cqrs';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { parseISO } from 'date-fns';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { AggregatedEmployeeStatisticQuery } from './queries/aggregate-employee-statistic.query';
 import { MonthAggregatedEmployeeStatisticsQuery } from './queries/month-aggregated-employee-statistics.query';
 import { EmployeeStatisticsHistoryQuery } from './queries/employee-statistics-history.query';
-import { AuthGuard } from '@nestjs/passport';
 
+@ApiTags('EmployeeStatistics')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(
@@ -39,7 +41,7 @@ export class EmployeeStatisticsController {
 	@Get('/aggregate')
 	async findAggregatedByOrganizationId(
 		@Query('data') data?: string
-	): Promise<AggregatedEmployeeStatistic[]> {
+	): Promise<IAggregatedEmployeeStatistic[]> {
 		const { findInput } = JSON.parse(data);
 		/**
 		 * JSON parse changes Date object to String type
@@ -60,11 +62,10 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/months/:id')
-	@UseGuards(AuthGuard('jwt'))
 	async findAllByEmloyeeId(
 		@Param('id') id: string,
 		@Query('data') data?: string
-	): Promise<EmployeeStatistics> {
+	): Promise<IEmployeeStatistics> {
 		const { findInput } = JSON.parse(data);
 		return this.employeeStatisticsService.getStatisticsByEmployeeId(
 			id,
@@ -82,10 +83,9 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/months')
-	@UseGuards(AuthGuard('jwt'))
 	async findAggregatedStatisticsByEmployeeId(
 		@Query('data') data?: string
-	): Promise<MonthAggregatedEmployeeStatistics> {
+	): Promise<IMonthAggregatedEmployeeStatistics> {
 		const { findInput } = JSON.parse(data);
 		/**
 		 * JSON parse changes Date object to String type
@@ -107,10 +107,9 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/history')
-	@UseGuards(AuthGuard('jwt'))
 	async findEmployeeStatisticsHistory(
 		@Query('data') data?: string
-	): Promise<EmployeeStatisticsHistory[]> {
+	): Promise<IEmployeeStatisticsHistory[]> {
 		const { findInput } = JSON.parse(data);
 		/**
 		 * JSON parse changes Date object to String type

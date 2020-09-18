@@ -10,8 +10,8 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { first, takeUntil } from 'rxjs/operators';
 import {
-	Candidate,
-	Employee,
+	ICandidate,
+	IEmployee,
 	IDateRange,
 	ICandidateInterview
 } from '@gauzy/models';
@@ -41,8 +41,8 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 	candidateList: EventInput[] = [];
 	employeeList: EventInput[] = [];
 	isEmployee = false;
-	candidates: Candidate[] = [];
-	employees: Employee[] = [];
+	candidates: ICandidate[] = [];
+	employees: IEmployee[] = [];
 	calendarEvents: EventInput[] = [];
 	interviewList: ICandidateInterview[];
 	constructor(

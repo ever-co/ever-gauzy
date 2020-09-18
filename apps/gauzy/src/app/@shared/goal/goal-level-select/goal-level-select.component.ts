@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { GoalLevelEnum, OrganizationTeam, Employee } from '@gauzy/models';
+import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/models';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
 
 @Component({
@@ -11,12 +11,12 @@ import { OrganizationTeamsService } from '../../../@core/services/organization-t
 export class GoalLevelSelectComponent {
 	@Input() parentFormGroup: FormGroup;
 	@Input() orgId: string;
-	@Input() teams: OrganizationTeam[] = [];
+	@Input() teams: IOrganizationTeam[] = [];
 	@Input() hideOrg = false;
 	@Input() hideEmployee = false;
 	@Input() hideTeam = false;
 	@Input() helperText = '';
-	@Input() employees: Employee[];
+	@Input() employees: IEmployee[];
 	@Input() orgName: string;
 	@Input() enableHelperText = false;
 	@Input() alignedGoal = false;

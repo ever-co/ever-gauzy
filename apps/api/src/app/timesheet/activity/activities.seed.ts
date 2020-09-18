@@ -3,7 +3,7 @@ import * as _ from 'underscore';
 import * as moment from 'moment';
 import { ActivityType } from '@gauzy/models';
 import { Activity } from '../activity.entity';
-import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { Connection } from 'typeorm';
 import { Employee } from '../../employee/employee.entity';
 
@@ -24,10 +24,10 @@ export const createRandomActivities = async (connection: Connection) => {
 	const employees = await connection.getRepository(Employee).find();
 
 	let query = connection
-		.getRepository(OrganizationProjects)
+		.getRepository(OrganizationProject)
 		.createQueryBuilder();
 	query = query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-	const projects: OrganizationProjects[] = await query.getMany();
+	const projects: OrganizationProject[] = await query.getMany();
 
 	const appNames: string[] = _.shuffle(AppsNames);
 
