@@ -5,8 +5,9 @@ import * as moment from 'moment';
 import { environment } from '@env-api/environment';
 import { Provider } from './provider';
 import { basename, dirname, join, resolve } from 'path';
+import { RequestContext } from '../../context';
 
-export class LocalProvider extends Provider {
+export class LocalProvider extends Provider<LocalProvider> {
 	static instance: LocalProvider;
 	name = 'local';
 	tenantId = '';
@@ -49,11 +50,18 @@ export class LocalProvider extends Provider {
 					dir = dest;
 				}
 
-				fs.mkdirSync(join(this.config.rootPath, this.tenantId, dir), {
+				const user = RequestContext.currentUser();
+				const fullPath = join(
+					this.config.rootPath,
+					user ? user.tenantId : '',
+					dir
+				);
+
+				fs.mkdirSync(fullPath, {
 					recursive: true
 				});
 
-				callback(null, join(this.config.rootPath, this.tenantId, dir));
+				callback(null, fullPath);
 			},
 			filename: (_req, file, callback) => {
 				let fileNameString = '';
@@ -75,34 +83,35 @@ export class LocalProvider extends Provider {
 		});
 	}
 
-	async getFile(file: string, buffer = false): Promise<any> {
-		const bufferData = await fs.promises.readFile(this.path(file), 'utf-8');
-		console.log('getFile', bufferData);
-		if (buffer) {
-			return bufferData;
-		} else {
-			return bufferData.toString();
-		}
+	async getFile(file: string): Promise<Buffer> {
+		return await fs.promises.readFile(this.path(file));
 	}
 
-	async putFile(fileContent: string, path: string = ''): Promise<any> {
-		return new Promise((resolve, reject) => {
+	async deleteFile(path: string): Promise<void> {
+		return await fs.promises.unlink(this.path(path));
+	}
+
+	async putFile(
+		fileContent: string | Buffer | URL,
+		path: string = ''
+	): Promise<UploadedFile> {
+		return new Promise((putFileResolve, reject) => {
 			const fullPath = join(this.config.rootPath, path);
-			fs.writeFile(fullPath, fileContent, (err, data) => {
+			fs.writeFile(fullPath, fileContent, (err) => {
+				if (err) {
+					reject(err);
+					return;
+				}
+
 				const stats = fs.statSync(fullPath);
 				const baseName = basename(path);
-
 				const file = {
 					originalname: baseName, // orignal file name
 					size: stats.size, // files in bytes
 					filename: baseName,
 					path: fullPath // Full path of the file
 				};
-				if (err) {
-					reject(err);
-				} else {
-					resolve(this.mapUploadedFile(file));
-				}
+				putFileResolve(this.mapUploadedFile(file));
 			});
 		});
 	}

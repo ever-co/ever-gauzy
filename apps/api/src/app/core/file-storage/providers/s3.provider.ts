@@ -1,23 +1,22 @@
 import { FileStorageOption, UploadedFile } from '../models';
 import * as multerS3 from 'multer-s3';
-import { join, resolve } from 'path';
+import { basename, join, resolve } from 'path';
 import * as moment from 'moment';
 import { environment } from '@env-api/environment';
 import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
+import { RequestContext } from '../../context';
 
-export class S3Provider extends Provider {
+export class S3Provider extends Provider<S3Provider> {
 	static instance: S3Provider;
 
 	name = 's3';
 	tenantId: string;
 
 	config = {
-		rootPath: environment.isElectron
-			? resolve(environment.gauzyUserPath, 'public')
-			: resolve(process.cwd(), 'apps', 'api', 'public'),
-		baseUrl: environment.baseUrl + '/public'
+		rootPath: '',
+		baseUrl: ''
 	};
 
 	getInstance() {
@@ -31,11 +30,13 @@ export class S3Provider extends Provider {
 		return environment.awsConfig.s3.bucket;
 	}
 
-	url(filePath: string) {
-		if (filePath && filePath.startsWith('http')) {
-			return filePath;
-		}
-		return filePath ? this.config.baseUrl + '/' + filePath : null;
+	url(key: string) {
+		const url = this.getS3Instance().getSignedUrl('getObject', {
+			Bucket: this.getS3Bucket(),
+			Key: key,
+			Expires: 3600
+		});
+		return url;
 	}
 
 	path(filePath: string) {
@@ -72,40 +73,52 @@ export class S3Provider extends Provider {
 				} else {
 					dir = dest;
 				}
-				callback(null, join(dir, fileNameString));
+				const user = RequestContext.currentUser();
+				callback(
+					null,
+					join(user ? user.tenantId : '', dir, fileNameString)
+				);
 			}
 		});
 	}
 
-	async getFile(file: string, buffer = false): Promise<any> {
+	async getFile(file: string): Promise<Buffer> {
 		const s3 = this.getS3Instance();
 		const params = {
 			Bucket: this.getS3Bucket(),
 			Key: file
 		};
 		const data = await s3.getObject(params).promise();
-		if (buffer) {
-			return data.Body;
-		} else {
-			return data.Body.toString('utf-8');
-		}
+		return data.Body as Buffer;
 	}
 
 	async putFile(fileContent: string, path: string = ''): Promise<any> {
-		console.log('putFile s3');
-		return new Promise((resolve, reject) => {
+		return new Promise((putFileResolve, reject) => {
+			const fileName = basename(path);
 			const s3 = this.getS3Instance();
 			const params = {
 				Bucket: this.getS3Bucket(),
 				Body: fileContent,
-				Key: path
+				Key: path,
+				ContentDisposition: `inline; ${fileName}`
 			};
-			s3.putObject(params, (err, data: AWS.S3.PutObjectOutput) => {
-				console.log('putFile', err, data);
+			s3.putObject(params, async (err) => {
 				if (err) {
 					reject(err);
 				} else {
-					resolve(data);
+					const size = await s3
+						.headObject({ Key: path, Bucket: this.getS3Bucket() })
+						.promise()
+						.then((res) => res.ContentLength);
+
+					const file = {
+						originalname: fileName, // orignal file name
+						size: size, // files in bytes
+						filename: fileName,
+						path: path, // Full path of the file
+						key: path // Full path of the file
+					};
+					putFileResolve(this.mapUploadedFile(file));
 				}
 			});
 		});
@@ -120,7 +133,7 @@ export class S3Provider extends Provider {
 
 	mapUploadedFile(file): UploadedFile {
 		file.filename = file.originalname;
-		file.url = file.location;
+		file.url = this.url(file.key); // file.location;
 		return file;
 	}
 }

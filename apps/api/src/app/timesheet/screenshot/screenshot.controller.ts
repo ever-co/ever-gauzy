@@ -17,9 +17,8 @@ import * as moment from 'moment';
 import * as sharp from 'sharp';
 import { FileStorage } from '../../core/file-storage';
 import { UploadedFileStorage } from '../../core/file-storage/uploaded-file-storage';
-import * as Jimp from 'jimp';
-import * as os from 'os';
 import * as fs from 'fs';
+import { tempFile } from '../../core/utils';
 
 @ApiTags('Screenshot')
 @UseGuards(AuthGuard('jwt'))
@@ -59,35 +58,35 @@ export class ScreenshotController extends CrudController<Screenshot> {
 		file
 	): Promise<Screenshot> {
 		let thumb;
+
 		try {
 			const fileContent = await new FileStorage()
 				.getProvider()
 				.getFile(file.key);
 
-			const tempPath = path.join(os.tmpdir(), 'screenshot-thumb-');
-			const folder = await fs.promises.mkdtemp(tempPath);
-			const file_name = path.join(
-				folder,
-				'screenshot-' + moment().unix()
-			);
-			await fs.promises.writeFile(file_name, fileContent);
-
-			console.log(file_name);
-			const data = await sharp(file_name)
-				.resize(250, 150)
-				.toBuffer({ resolveWithObject: true });
-
-			await fs.promises.unlink(file_name);
-
+			const inputFile = await tempFile('screenshot-thumb');
+			const outputFile = await tempFile('screenshot-thumb');
+			await fs.promises.writeFile(inputFile, fileContent);
+			await new Promise((resolve, reject) => {
+				sharp(inputFile)
+					.resize(250, 150)
+					.toFile(outputFile, (error: any, data: any) => {
+						if (error) {
+							reject(error);
+						} else {
+							resolve(data);
+						}
+					});
+			});
 			const thumbName = `thumb-${file.filename}`;
 			const thumbDir = path.dirname(file.key);
+			const data = await fs.promises.readFile(outputFile);
+			await fs.promises.unlink(inputFile);
+			await fs.promises.unlink(outputFile);
+
 			thumb = await new FileStorage()
 				.getProvider()
-				.putFile(
-					data.toString('utf-8'),
-					path.join(thumbDir, thumbName)
-				);
-			console.log({ thumb });
+				.putFile(data, path.join(thumbDir, thumbName));
 		} catch (error) {
 			console.log(error);
 		}
