@@ -5,7 +5,7 @@ import {
 	IOrganizationDepartment,
 	IOrganizationPosition
 } from '..';
-import { IOrganization, IOrganizationFindInput } from './organization.model';
+import { IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IUserFindInput } from './user.model';
 import { IOrganizationTeam } from './organization-team-model';
@@ -58,6 +58,7 @@ export interface IEmployeeFindInput {
 	user?: IUserFindInput;
 	valueDate?: Date;
 	organizationId?: string;
+	tenantId?: string;
 	tags?: ITag[];
 	skills?: ISkill[];
 }
@@ -80,9 +81,9 @@ export interface IEmployeeUpdateInput {
 	skills?: ISkill[];
 }
 
-export interface IEmployeeCreateInput {
+export interface IEmployeeCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	user: IUser;
-	organization: IOrganization;
 	password?: string;
 	offerDate?: Date;
 	acceptDate?: Date;
@@ -118,4 +119,9 @@ export interface IEmployeeLevelInput {
 	organizationId: string;
 	tags?: ITag[];
 	skills?: ISkill[];
+}
+
+export interface IEmployeeLevelFindInput {
+	organizationId?: string;
+	tenantId: string;
 }

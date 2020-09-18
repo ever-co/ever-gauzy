@@ -50,14 +50,14 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	}
 
 	addTag = async (tagName: string) => {
+		this.loading = true;
 		const newTag: ITag = {
 			name: tagName,
 			color: '#' + Math.floor(Math.random() * 16777215).toString(16),
 			description: '',
-			organization: this.selectedOrganization
+			organization: this.selectedOrganization,
+			tenantId: this.selectedOrganization.tenantId
 		};
-
-		this.loading = true;
 		const tag = await this.tagsService.insertTag(newTag);
 		this.loading = false;
 		return tag;

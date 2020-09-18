@@ -70,7 +70,8 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 				if (this.organization) {
 					this.organizationEmploymentTypesService
 						.getAll(['tags'], {
-							organizationId: this.organization.id
+							organizationId: this.organization.id,
+							tenantId: this.organization.tenantId
 						})
 						.pipe(untilDestroyed(this))
 						.subscribe((types) => {
@@ -119,6 +120,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 			const newEmploymentType = {
 				name: this.form.get('name').value,
 				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				tags: this.tags
 			};
 			this.organizationEmploymentTypesService

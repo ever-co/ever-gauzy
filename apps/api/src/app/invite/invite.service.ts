@@ -104,6 +104,7 @@ export class InviteService extends CrudService<Invite> {
 			organizationContactIds,
 			departmentIds,
 			organizationId,
+			tenantId,
 			invitedById
 		} = emailInvites;
 
@@ -164,6 +165,7 @@ export class InviteService extends CrudService<Invite> {
 			invite.email = email;
 			invite.roleId = roleId;
 			invite.organizationId = organizationId;
+			invite.tenantId = tenantId;
 			invite.invitedById = invitedById;
 			invite.status = InviteStatusEnum.INVITED;
 			invite.expireDate = expireDate;

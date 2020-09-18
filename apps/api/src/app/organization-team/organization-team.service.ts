@@ -80,6 +80,7 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 			return this.create({
 				tags,
 				organizationId,
+				tenantId,
 				name,
 				members: teamEmployees
 			});

@@ -81,6 +81,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			startedWorkOn: this.form.get('startedWorkOn').value || null,
 			password: this.form.get('password').value,
 			organization: this.store.selectedOrganization,
+			tenantId: this.store.selectedOrganization.tenantId,
 			offerDate,
 			acceptDate,
 			rejectDate,

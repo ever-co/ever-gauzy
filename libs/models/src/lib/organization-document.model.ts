@@ -6,7 +6,7 @@ export interface IOrganizationDocument
 	documentUrl?: string;
 }
 
-export interface IOrganizationDocumentFindInput {
+export interface IOrganizationDocumentFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	organizationId: string;
 }

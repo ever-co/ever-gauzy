@@ -35,12 +35,12 @@ export interface IInviteResendInput {
 	invitedById: string;
 }
 
-export interface ICreateEmailInvitesInput {
+export interface ICreateEmailInvitesInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	emailIds: string[];
 	projectIds?: string[];
 	organizationContactIds?: string[];
 	departmentIds?: string[];
-	organizationId: string;
 	roleId: string;
 	invitedById: string;
 	inviteType: any;
@@ -63,8 +63,8 @@ export interface ICreateEmailInvitesOutput {
 	ignored: number;
 }
 
-export interface IInviteFindInput {
-	organizationId?: string;
+export interface IInviteFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	invitationType?: InvitationTypeEnum;
 }
 

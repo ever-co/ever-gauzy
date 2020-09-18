@@ -1123,7 +1123,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return this.organizationContactService.create({
 				name,
 				contactType: ContactType.CLIENT,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.organization.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);

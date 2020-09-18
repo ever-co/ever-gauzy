@@ -9,7 +9,8 @@ import {
 	NbInputModule,
 	NbTooltipModule,
 	NbSelectModule,
-	NbActionsModule
+	NbActionsModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -50,6 +51,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbTooltipModule,
 		FileUploaderModule,
 		NgSelectModule,
+		NbSpinnerModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
