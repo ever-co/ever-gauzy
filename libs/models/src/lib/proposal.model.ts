@@ -1,6 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { IOrganizationFindInput } from './organization.model';
 import { ITag } from './tag-entity.model';
 
 export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {

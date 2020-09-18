@@ -5,7 +5,7 @@ import {
 	IOrganizationDepartment,
 	IOrganizationPosition
 } from '..';
-import { IOrganization, IOrganizationFindInput } from './organization.model';
+import { IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IUserFindInput } from './user.model';
 import { IOrganizationTeam } from './organization-team-model';
