@@ -52,7 +52,7 @@ export class Screenshot extends TenantOrganizationBase implements IScreenshot {
 
 	@AfterLoad()
 	afterLoad?() {
-		this.fullUrl = FileStorage.url(this.file);
-		this.thumbUrl = FileStorage.url(this.thumb);
+		this.fullUrl = new FileStorage().getProvider().url(this.file);
+		this.thumbUrl = new FileStorage().getProvider().url(this.thumb);
 	}
 }
