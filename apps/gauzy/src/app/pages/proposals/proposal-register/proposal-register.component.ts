@@ -9,7 +9,7 @@ import {
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
-import { ProposalStatusEnum, ITag } from '@gauzy/models';
+import { ProposalStatusEnum, ITag, IOrganization } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +28,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	employeeSelector: EmployeeSelectorComponent;
 
 	form: FormGroup;
-	private _selectedOrganizationId: string;
+	selectedOrganization: IOrganization;
 	tags: ITag[] = [];
 	public ckConfig: any = {
 		width: '100%',
@@ -54,7 +54,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
-					this._selectedOrganizationId = org.id;
+					this.selectedOrganization = org;
 				}
 			});
 	}
@@ -78,13 +78,14 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	public async registerProposal() {
 		if (this.form.valid) {
 			const result = this.form.value;
-			const selectedEmployee = this.employeeSelector.selectedEmployee.id;
+			const selectedEmployee = this.employeeSelector.selectedEmployee;
 
 			try {
 				if (selectedEmployee) {
 					await this.proposalsService.create({
-						employeeId: selectedEmployee,
-						organizationId: this._selectedOrganizationId,
+						employeeId: selectedEmployee.id,
+						organizationId: this.selectedOrganization.id,
+						tenantId: this.selectedOrganization.tenantId,
 						jobPostUrl: result.jobPostUrl,
 						valueDate: result.valueDate,
 						jobPostContent: result.jobPostContent,

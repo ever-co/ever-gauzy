@@ -12,12 +12,12 @@ export interface IPipeline extends IBasePerTenantAndOrganizationEntityModel {
 }
 
 export type IPipelineFindInput = Partial<
-	Pick<IPipeline, 'id' | 'organizationId'>
+	Pick<IPipeline, 'id' | 'organizationId' | 'tenantId'>
 >;
 
-export interface IPipelineCreateInput {
+export interface IPipelineCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	stages?: IPipelineStageCreateInput[];
-	organizationId: string;
 	description?: string;
 	name: string;
 	isActive: boolean;

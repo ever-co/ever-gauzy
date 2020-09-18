@@ -48,6 +48,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 	selectedTeams: string[];
 	selectedTask: ITask;
 	organizationId: string;
+	tenantId: string;
 	tags: ITag[] = [];
 	participants = 'employees';
 
@@ -75,17 +76,21 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 		this.loadEmployees();
 		this.loadTeams();
 
-		console.log(Object.assign({}, initialTaskValue, this.task));
-
 		this.initializeForm(Object.assign({}, initialTaskValue, this.task));
 	}
 
 	private async loadProjects() {
 		const organizationId = this._organizationsStore.selectedOrganization.id;
+		const tenantId = this._organizationsStore.selectedOrganization.tenantId;
+
+		this.organizationId = organizationId;
+		this.tenantId = tenantId;
+
 		const { items } = await this.organizationProjectsService.getAll(
 			['organization'],
 			{
-				organizationId
+				organizationId,
+				tenantId
 			}
 		);
 
@@ -126,7 +131,9 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 			dueDate: [dueDate],
 			description: [description],
 			tags: [tags],
-			teams: [this.selectedTeams]
+			teams: [this.selectedTeams],
+			organizationId: [this.organizationId],
+			tenantId: [this.tenantId]
 		});
 
 		this.tags = this.form.get('tags').value || [];
@@ -134,6 +141,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
+		this.tenantId = this.store.selectedOrganization.tenantId;
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -146,7 +154,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -206,16 +215,19 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 
 	private async loadEmployees() {
 		const organizationId = this._organizationsStore.selectedOrganization.id;
-		if (!organizationId) {
+		const tenantId = this._organizationsStore.selectedOrganization.tenantId;
+		if (!organizationId || !tenantId) {
 			return;
 		}
 
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: organizationId } })
+			.getAll(['user'], {
+				organization: { id: organizationId, tenantId }
+			})
 			.pipe(first())
 			.toPromise();
 
-		this.employees = items;
+		if (items) this.employees = items;
 	}
 
 	onMembersSelected(members: string[]) {

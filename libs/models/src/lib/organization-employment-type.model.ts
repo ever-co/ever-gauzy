@@ -16,12 +16,13 @@ export interface IOrganizationEmploymentType
 	tags: ITag[];
 }
 
-export interface IOrganizationEmploymentTypeFindInput {
+export interface IOrganizationEmploymentTypeFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationId?: string;
 }
 
-export interface IOrganizationEmploymentTypeCreateInput {
+export interface IOrganizationEmploymentTypeCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
 	tags: ITag[];
 }

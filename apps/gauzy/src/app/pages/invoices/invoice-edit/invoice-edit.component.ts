@@ -465,21 +465,20 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		switch (this.invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.employeeService
-					.getAll(['user'])
+					.getAll(['user'], {
+						organizationId: this.organization.id,
+						tenantId: this.organization.tenantId
+					})
 					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe(async (employees) => {
-						this.employees = employees.items.filter((emp) => {
-							return (
-								emp.orgId === this.organization.id ||
-								this.organization.id === ''
-							);
-						});
+					.subscribe(({ items }) => {
+						this.employees = items;
 					});
 				break;
 
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				const projects = await this.projectService.getAll([], {
-					organizationId: this.organization.id
+					organizationId: this.organization.id,
+					tenantId: this.organization.tenantId
 				});
 				this.projects = projects.items;
 				break;

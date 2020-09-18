@@ -58,6 +58,7 @@ export interface IEmployeeFindInput {
 	user?: IUserFindInput;
 	valueDate?: Date;
 	organizationId?: string;
+	tenantId?: string;
 	tags?: ITag[];
 	skills?: ISkill[];
 }
@@ -118,4 +119,9 @@ export interface IEmployeeLevelInput {
 	organizationId: string;
 	tags?: ITag[];
 	skills?: ISkill[];
+}
+
+export interface IEmployeeLevelFindInput {
+	organizationId?: string;
+	tenantId: string;
 }

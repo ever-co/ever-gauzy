@@ -8,14 +8,14 @@ import {
 import {
 	InvitationTypeEnum,
 	PermissionsEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -51,6 +51,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 	sourceSmartTable = new LocalDataSource();
 	selectedEmployee: EmployeeViewModel;
 	employeeData: EmployeeViewModel[];
+	selectedOrganization: IOrganization;
 	selectedOrganizationId: string;
 	viewComponentName: ComponentEnum;
 	disableButton = true;
@@ -92,8 +93,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService,
-		private employeeStatisticsService: EmployeeStatisticsService
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translate);
 		this.setView();
@@ -122,6 +122,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrganization = organization;
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
@@ -214,7 +215,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 			context: {
 				invitationType: InvitationTypeEnum.EMPLOYEE,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId
+				currentUserId: this.store.userId,
+				selectedOrganization: this.selectedOrganization
 			}
 		});
 
@@ -334,7 +336,10 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 		const { items } = await this.employeesService
 			.getAll(['user', 'tags'], {
-				organization: { id: this.selectedOrganizationId }
+				organization: {
+					id: this.selectedOrganizationId,
+					tenantId: this.selectedOrganization.tenantId
+				}
 			})
 			.pipe(first())
 			.toPromise();

@@ -6,7 +6,8 @@ import {
 	IProposal,
 	PermissionsEnum,
 	ITag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
@@ -78,6 +79,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 	disableButton = true;
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
+	selectedOrganization: IOrganization;
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -109,6 +111,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
+					this.selectedOrganization = org;
 					this._selectedOrganizationId = org.id;
 					this._loadTableData(this._selectedOrganizationId);
 				}
@@ -363,13 +366,16 @@ export class ProposalsComponent extends TranslationBaseComponent
 	private async _loadTableData(orgId?: string) {
 		this.showTable = false;
 		this.selectedProposal = null;
+		this.disableButton = true;
+
 		let items: IProposal[];
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
 				['employee', 'organization', 'tags'],
 				{
 					employeeId: this.selectedEmployeeId,
-					organizationId: this._selectedOrganizationId
+					organizationId: this._selectedOrganizationId,
+					tenantId: this.selectedOrganization.tenantId
 				},
 				this.selectedDate
 			);
@@ -379,7 +385,10 @@ export class ProposalsComponent extends TranslationBaseComponent
 		} else {
 			const response = await this.proposalsService.getAll(
 				['organization', 'employee', 'employee.user', 'tags'],
-				{ organizationId: orgId },
+				{
+					organizationId: orgId,
+					tenantId: this.selectedOrganization.tenantId
+				},
 				this.selectedDate
 			);
 

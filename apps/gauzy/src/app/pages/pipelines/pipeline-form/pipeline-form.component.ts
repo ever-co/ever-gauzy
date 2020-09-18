@@ -43,6 +43,7 @@ export class PipelineFormComponent implements OnInit {
 				this.pipeline.organizationId || '',
 				Validators.required
 			],
+			tenantId: [this.pipeline.tenantId || ''],
 			name: [this.pipeline.name || '', Validators.required],
 			...(id ? { id: [id, Validators.required] } : {}),
 			description: [this.pipeline.description],
@@ -60,8 +61,6 @@ export class PipelineFormComponent implements OnInit {
 			value,
 			value: { id }
 		} = this.form;
-
-		console.log(this.form.value);
 
 		Promise.race([
 			id
