@@ -81,9 +81,9 @@ export interface IEmployeeUpdateInput {
 	skills?: ISkill[];
 }
 
-export interface IEmployeeCreateInput {
+export interface IEmployeeCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	user: IUser;
-	organization: IOrganization;
 	password?: string;
 	offerDate?: Date;
 	acceptDate?: Date;

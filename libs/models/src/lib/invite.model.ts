@@ -63,8 +63,8 @@ export interface ICreateEmailInvitesOutput {
 	ignored: number;
 }
 
-export interface IInviteFindInput {
-	organizationId?: string;
+export interface IInviteFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	invitationType?: InvitationTypeEnum;
 }
 

@@ -3,7 +3,8 @@ import {
 	InvitationTypeEnum,
 	RolesEnum,
 	PermissionsEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,6 +23,7 @@ import { DepartmentNamesComponent } from './department-names/department-names.co
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 interface InviteViewModel {
 	email: string;
@@ -46,6 +48,7 @@ export class InvitesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input()
 	invitationType: InvitationTypeEnum;
+
 	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -53,13 +56,13 @@ export class InvitesComponent extends TranslationBaseComponent
 	selectedOrganizationId: string;
 	viewComponentName: ComponentEnum;
 	disableButton = true;
-	private _ngDestroy$ = new Subject<void>();
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	invitedName = 'Employee / User';
 	manageInvites: InviteViewModel[];
 	loading = true;
 
 	hasInviteEditPermission = false;
+	selectedOrganization: IOrganization;
 
 	@ViewChild('employeesTable') employeesTable;
 
@@ -77,22 +80,23 @@ export class InvitesComponent extends TranslationBaseComponent
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrganization = organization;
 					this.selectedOrganizationId = organization.id;
 					this.loadPage();
 				}
 			});
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -103,11 +107,13 @@ export class InvitesComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 	}
 
+	ngOnDestroy(): void {}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.MANAGE_INVITES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -131,7 +137,8 @@ export class InvitesComponent extends TranslationBaseComponent
 			context: {
 				invitationType: this.invitationType,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId
+				currentUserId: this.store.userId,
+				selectedOrganization: this.selectedOrganization
 			}
 		});
 
@@ -176,7 +183,8 @@ export class InvitesComponent extends TranslationBaseComponent
 					'departments'
 				],
 				{
-					organizationId: this.selectedOrganizationId
+					organizationId: this.selectedOrganizationId,
+					tenantId: this.selectedOrganization.tenantId
 				}
 			);
 			invites = items.filter((invite) => {
@@ -319,7 +327,7 @@ export class InvitesComponent extends TranslationBaseComponent
 						)
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -354,7 +362,7 @@ export class InvitesComponent extends TranslationBaseComponent
 					email: this.selectedInvite.email
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -383,15 +391,8 @@ export class InvitesComponent extends TranslationBaseComponent
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this._loadSmartTableSettings();
-			});
-	}
-
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this._loadSmartTableSettings();
+		});
 	}
 }

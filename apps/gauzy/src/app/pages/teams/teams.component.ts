@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	IEmployee,
 	IOrganization,
@@ -22,16 +22,18 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 @Component({
 	selector: 'ga-teams',
 	templateUrl: './teams.component.html',
 	styleUrls: ['./teams.component.scss']
 })
-export class TeamsComponent extends TranslationBaseComponent implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
+export class TeamsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	selectedOrg: IOrganization;
 	@ViewChild('teamTable') teamTable;
 	organizationId: string;
+	tenantId: string;
 	showAddCard: boolean;
 	disableButton = true;
 	selectedTeam: any;
@@ -62,10 +64,11 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationId = organization.id;
+					this.tenantId = organization.tenantId;
 					this.loadTeams();
 					this.loadEmployees();
 					this.loadSmartTable();
@@ -73,7 +76,7 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 				}
 			});
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.showAddCard = !this.showAddCard;
@@ -81,11 +84,14 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 				}
 			});
 	}
+
+	ngOnDestroy(): void {}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.TEAMS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedTeam =
@@ -209,7 +215,10 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 
 		const { items } = await this.employeesService
 			.getAll(['user', 'tags'], {
-				organization: { id: this.organizationId }
+				organization: {
+					id: this.organizationId,
+					tenantId: this.tenantId
+				}
 			})
 			.pipe(first())
 			.toPromise();
@@ -232,7 +241,8 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 		const { items: teams } = await this.organizationTeamsService.getAll(
 			['members', 'tags', 'members.role'],
 			{
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			}
 		);
 		if (teams) {
@@ -305,8 +315,10 @@ export class TeamsComponent extends TranslationBaseComponent implements OnInit {
 		};
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 }
