@@ -61,15 +61,15 @@ export const environment: IEnvironment = {
 	JWT_SECRET: 'secretKey',
 
 	fileSystem: {
-		name: ProviderEnum.LOCAL
+		name: (process.env.FILE_PROVIDER as ProviderEnum) || ProviderEnum.LOCAL
 	},
 
 	awsConfig: {
 		accessKeyId: process.env.AWS_IAM_USER_KEY,
 		secretAccessKey: process.env.AWS_IAM_USER_SECRET,
-		region: 'us-east-1',
+		region: process.env.AWS_REGION,
 		s3: {
-			bucket: 'gauzy'
+			bucket: process.env.AWS_S3_BUCKET
 		}
 	},
 
