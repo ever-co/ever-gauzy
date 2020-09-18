@@ -47,7 +47,7 @@ export class FileStorage {
 		return resp;
 	}
 
-	getProviderInstance() {
+	getProviderInstance(): Provider<any> {
 		return this.providers[this.config.provider].getInstance();
 	}
 

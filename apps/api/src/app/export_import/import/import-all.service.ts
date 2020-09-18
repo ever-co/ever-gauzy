@@ -100,6 +100,7 @@ import { ProductOption } from '../../product-option/product-option.entity';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { Product } from '../../product/product.entity';
 import { convertToDatetime } from '../../core/utils';
+import { FileStorage } from '../../core/file-storage';
 
 @Injectable()
 export class ImportAllService implements OnDestroy {
@@ -608,11 +609,21 @@ export class ImportAllService implements OnDestroy {
 
 	public unzipAndParse(filePath, cleanup: boolean = false) {
 		fs.createReadStream(filePath)
-			.pipe(unzipper.Extract({ path: this.__dirname }))
-			.on('close', () => {
-				console.log('Starting Import');
-				this.parse(cleanup);
-			});
+	public async unzipAndParse(filePath, cleanup: boolean = false) {
+		const file = await new FileStorage().getProvider().getFile(filePath);
+
+		await unzipper.Open.buffer(file).then((d) =>
+			d.extract({ path: this.__dirname })
+		);
+
+		this.parse(cleanup);
+
+		// fs.createReadStream(file)
+		// 	.pipe(unzipper.Extract({ path: this.__dirname }))
+		// 	.on('close', () => {
+		// 		console.log('Starting Import');
+		// 		this.parse(cleanup);
+		// 	});
 	}
 
 	parse(cleanup: boolean = false) {
