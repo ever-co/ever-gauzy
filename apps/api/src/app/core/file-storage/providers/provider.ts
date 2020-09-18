@@ -1,7 +1,7 @@
 import { StorageEngine } from 'multer';
 import { FileStorageOption, FileSystem, UploadedFile } from '../models';
 
-export abstract class Provider {
+export abstract class Provider<T> {
 	static instance: any;
 	tenantId?: string;
 	abstract name: string;
@@ -12,9 +12,12 @@ export abstract class Provider {
 	abstract url(path: string): string;
 	abstract path(path: string): string;
 	abstract handler(options: FileStorageOption): StorageEngine;
-	abstract getFile(file: string, buffer?: boolean): Promise<string>;
-	abstract putFile(fileContent: string, path?: string): Promise<UploadedFile>;
-	abstract getInstance(): Provider;
+	abstract getFile(file: string): Promise<Buffer>;
+	abstract putFile(
+		fileContent: string | Buffer | URL,
+		path?: string
+	): Promise<UploadedFile>;
+	abstract getInstance(): T;
 
 	mapUploadedFile(file): UploadedFile {
 		return file;

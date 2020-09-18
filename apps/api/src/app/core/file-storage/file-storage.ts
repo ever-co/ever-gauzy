@@ -4,7 +4,7 @@ import { environment } from '@env-api/environment';
 import { Provider } from './providers/provider';
 
 export class FileStorage {
-	providers: { [key: string]: Provider } = {};
+	providers: { [key: string]: Provider<any> } = {};
 	config: FileStorageOption = {
 		dest: ''
 	};
@@ -56,7 +56,7 @@ export class FileStorage {
 			if (Object.prototype.hasOwnProperty.call(Providers, key)) {
 				const className = Providers[key];
 				if (className.instance === undefined) {
-					const provider: Provider = new className();
+					const provider: Provider<any> = new className();
 					this.providers[provider.name] = provider;
 
 					className.instance = provider;
