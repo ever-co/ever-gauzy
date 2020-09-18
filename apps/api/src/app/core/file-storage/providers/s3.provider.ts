@@ -15,8 +15,7 @@ export class S3Provider extends Provider<S3Provider> {
 	tenantId: string;
 
 	config = {
-		rootPath: '',
-		baseUrl: ''
+		rootPath: ''
 	};
 
 	getInstance() {
@@ -76,30 +75,35 @@ export class S3Provider extends Provider<S3Provider> {
 				const user = RequestContext.currentUser();
 				callback(
 					null,
-					join(user ? user.tenantId : '', dir, fileNameString)
+					join(
+						this.config.rootPath,
+						user ? user.tenantId : '',
+						dir,
+						fileNameString
+					)
 				);
 			}
 		});
 	}
 
-	async getFile(file: string): Promise<Buffer> {
+	async getFile(key: string): Promise<Buffer> {
 		const s3 = this.getS3Instance();
 		const params = {
 			Bucket: this.getS3Bucket(),
-			Key: file
+			Key: key
 		};
 		const data = await s3.getObject(params).promise();
 		return data.Body as Buffer;
 	}
 
-	async putFile(fileContent: string, path: string = ''): Promise<any> {
+	async putFile(fileContent: string, key: string = ''): Promise<any> {
 		return new Promise((putFileResolve, reject) => {
-			const fileName = basename(path);
+			const fileName = basename(key);
 			const s3 = this.getS3Instance();
 			const params = {
 				Bucket: this.getS3Bucket(),
 				Body: fileContent,
-				Key: path,
+				Key: key,
 				ContentDisposition: `inline; ${fileName}`
 			};
 			s3.putObject(params, async (err) => {
@@ -107,7 +111,7 @@ export class S3Provider extends Provider<S3Provider> {
 					reject(err);
 				} else {
 					const size = await s3
-						.headObject({ Key: path, Bucket: this.getS3Bucket() })
+						.headObject({ Key: key, Bucket: this.getS3Bucket() })
 						.promise()
 						.then((res) => res.ContentLength);
 
@@ -115,11 +119,25 @@ export class S3Provider extends Provider<S3Provider> {
 						originalname: fileName, // orignal file name
 						size: size, // files in bytes
 						filename: fileName,
-						path: path, // Full path of the file
-						key: path // Full path of the file
+						path: key, // Full path of the file
+						key: key // Full path of the file
 					};
 					putFileResolve(this.mapUploadedFile(file));
 				}
+			});
+		});
+	}
+
+	deleteFile(key: string): Promise<void> {
+		const s3 = this.getS3Instance();
+		const params = {
+			Bucket: this.getS3Bucket(),
+			Key: key
+		};
+		return new Promise((deleteFileResolve, reject) => {
+			s3.deleteObject(params, function (err, data) {
+				if (err) reject(err);
+				else deleteFileResolve();
 			});
 		});
 	}

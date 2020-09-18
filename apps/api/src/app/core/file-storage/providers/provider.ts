@@ -17,6 +17,7 @@ export abstract class Provider<T> {
 		fileContent: string | Buffer | URL,
 		path?: string
 	): Promise<UploadedFile>;
+	abstract deleteFile(path: string): Promise<void>;
 	abstract getInstance(): T;
 
 	mapUploadedFile(file): UploadedFile {

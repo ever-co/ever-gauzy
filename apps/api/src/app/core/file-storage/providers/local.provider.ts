@@ -87,8 +87,8 @@ export class LocalProvider extends Provider<LocalProvider> {
 		return await fs.promises.readFile(this.path(file));
 	}
 
-	async deleteFile(path: string): Promise<void> {
-		return await fs.promises.unlink(this.path(path));
+	async deleteFile(file: string): Promise<void> {
+		return await fs.promises.unlink(this.path(file));
 	}
 
 	async putFile(

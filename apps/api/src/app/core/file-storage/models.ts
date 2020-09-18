@@ -7,7 +7,7 @@ export interface FileStorageOption {
 
 export interface FileSystem {
 	rootPath: string;
-	baseUrl: string;
+	baseUrl?: string;
 }
 
 export enum ProviderEnum {
