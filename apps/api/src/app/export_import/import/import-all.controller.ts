@@ -43,7 +43,6 @@ export class ImportAllController implements OnDestroy {
 	)
 	@Post()
 	async parse(@Body() { importType }, @UploadedFile() file) {
-		console.log({ file });
 		this.importAllService.removeExtractedFiles();
 		await this.importAllService.unzipAndParse(
 			file.key,

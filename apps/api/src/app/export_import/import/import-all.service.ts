@@ -607,8 +607,6 @@ export class ImportAllService implements OnDestroy {
 		}
 	}
 
-	public unzipAndParse(filePath, cleanup: boolean = false) {
-		fs.createReadStream(filePath)
 	public async unzipAndParse(filePath, cleanup: boolean = false) {
 		const file = await new FileStorage().getProvider().getFile(filePath);
 
