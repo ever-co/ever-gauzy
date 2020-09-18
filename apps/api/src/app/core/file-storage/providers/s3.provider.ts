@@ -1,6 +1,6 @@
 import { FileStorageOption, UploadedFile } from '../models';
 import * as multerS3 from 'multer-s3';
-import { basename, join, resolve } from 'path';
+import { basename, join } from 'path';
 import * as moment from 'moment';
 import { environment } from '@env-api/environment';
 import * as AWS from 'aws-sdk';

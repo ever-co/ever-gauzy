@@ -1,5 +1,3 @@
-import { StorageEngine } from 'multer';
-
 export interface FileStorageOption {
 	dest: string | CallableFunction;
 	provider?: ProviderEnum;

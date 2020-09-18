@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as moment from 'moment';
 import { environment } from '@env-api/environment';
 import { Provider } from './provider';
-import { basename, dirname, join, resolve } from 'path';
+import { basename, join, resolve } from 'path';
 import { RequestContext } from '../../context';
 
 export class LocalProvider extends Provider<LocalProvider> {
