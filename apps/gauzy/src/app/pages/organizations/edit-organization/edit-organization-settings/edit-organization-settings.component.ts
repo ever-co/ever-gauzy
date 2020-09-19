@@ -1,13 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { ICountry, IOrganization } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationEditStore } from '../../../../@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
-import { OrganizationsService } from '../../../../@core/services/organizations.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 
 export enum ListsInputType {
@@ -42,10 +39,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 
 	constructor(
 		private route: ActivatedRoute,
-		private organizationService: OrganizationsService,
-		private toastrService: NbToastrService,
-		readonly translateService: TranslateService,
-		private organizationEditStore: OrganizationEditStore
+		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}

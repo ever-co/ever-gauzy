@@ -11,14 +11,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Store } from '../../@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Subject } from 'rxjs';
 
 @Component({
 	templateUrl: './equipment.component.html',
@@ -40,6 +40,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 
 	@ViewChild('equipmentTable') equipmentTable;
 	selectedOrganization: IOrganization;
+	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -58,7 +59,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 
 		this.router.events
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -66,7 +67,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 			});
 
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -75,13 +76,16 @@ export class EquipmentComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -230,7 +234,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
