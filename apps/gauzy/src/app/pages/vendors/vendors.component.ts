@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	IOrganizationVendor,
 	ITag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
@@ -26,7 +27,7 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 })
 export class VendorsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationId: string;
+	selectedOrganization: IOrganization;
 	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
 	viewComponentName: ComponentEnum;
@@ -59,7 +60,7 @@ export class VendorsComponent extends TranslationBaseComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
-					this.organizationId = organization.id;
+					this.selectedOrganization = organization;
 					this.loadVendors();
 				}
 			});
@@ -72,7 +73,9 @@ export class VendorsComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		console.log(this);
+	}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
@@ -156,14 +159,18 @@ export class VendorsComponent extends TranslationBaseComponent
 	async createVendor() {
 		if (!this.form.invalid) {
 			const name = this.form.get('name').value;
+			const { id: organizationId, tenantId } = this.selectedOrganization;
+
 			await this.organizationVendorsService.create({
 				name: this.form.get('name').value,
 				phone: this.form.get('phone').value,
 				email: this.form.get('email').value,
 				website: this.form.get('website').value,
-				organizationId: this.organizationId,
+				organizationId,
+				tenantId,
 				tags: this.tags
 			});
+
 			this.toastrService.primary(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
@@ -216,12 +223,16 @@ export class VendorsComponent extends TranslationBaseComponent
 
 	async updateVendor(vendor: IOrganizationVendor) {
 		const name = this.form.get('name').value;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+
 		await this.organizationVendorsService.update(vendor.id, {
 			name: this.form.get('name').value,
 			phone: this.form.get('phone').value,
 			email: this.form.get('email').value,
 			website: this.form.get('website').value,
-			tags: this.tags
+			tags: this.tags,
+			organizationId,
+			tenantId
 		});
 
 		this.toastrService.primary(
@@ -238,12 +249,15 @@ export class VendorsComponent extends TranslationBaseComponent
 	}
 
 	private async loadVendors() {
-		if (!this.organizationId) {
+		if (!this.selectedOrganization) {
 			return;
 		}
+
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.organizationVendorsService.getAll(
 			{
-				organizationId: this.organizationId
+				organizationId,
+				tenantId
 			},
 			['tags']
 		);
