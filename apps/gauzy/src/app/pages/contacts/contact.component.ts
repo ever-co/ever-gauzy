@@ -1,10 +1,11 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, OnDestroy } from '@angular/core';
 import {
 	IEmployee,
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
 	IOrganizationProject,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import {
 	ActivatedRoute,
@@ -14,8 +15,7 @@ import {
 } from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { EmployeesService } from '../../@core/services';
@@ -29,6 +29,7 @@ import { EmployeeWithLinksComponent } from '../../@shared/table-components/emplo
 import { TaskTeamsComponent } from '../../@shared/table-components/task-teams/task-teams.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-contact',
@@ -36,9 +37,9 @@ import { ContactActionComponent } from './table-components/contact-action/contac
 	styleUrls: ['./contact.component.scss']
 })
 export class ContactComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
+	implements OnInit, OnDestroy {
 	organizationId: string;
+	selectedOrganization: IOrganization;
 	showAddCard: boolean;
 	organizationContact: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContact: IOrganizationProject[];
@@ -72,9 +73,10 @@ export class ContactComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrganization = organization;
 					this.organizationId = organization.id;
 					this.loadOrganizationContacts();
 					this.loadProjectsWithoutOrganizationContacts();
@@ -83,16 +85,15 @@ export class ContactComponent extends TranslationBaseComponent
 					this._applyTranslationOnSmartTable();
 				}
 			});
-
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.add();
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -101,6 +102,9 @@ export class ContactComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 	}
+
+	ngOnDestroy(): void {}
+
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -207,7 +211,7 @@ export class ContactComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.CONTACTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedContact =
@@ -217,7 +221,7 @@ export class ContactComponent extends TranslationBaseComponent
 			});
 	}
 
-	private async addOrEditOrganizationContact(
+	public async addOrEditOrganizationContact(
 		organizationContact: IOrganizationContactCreateInput
 	) {
 		const contact = {
@@ -270,15 +274,19 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 
 	private async loadOrganizationContacts() {
-		if (!this.organizationId) {
+		if (!this.selectedOrganization) {
 			return;
 		}
+
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.organizationContactService.getAll(
 			['projects', 'members', 'members.user', 'tags', 'contact'],
 			{
-				organizationId: this.organizationId
+				organizationId,
+				tenantId
 			}
 		);
+
 		if (res) {
 			const result = [];
 			res.items.forEach(async (contact: IOrganizationContact) => {
@@ -306,10 +314,12 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.organizationProjectsService.getAll(
 			['organizationContact'],
 			{
-				organizationId: this.organizationId,
+				organizationId,
+				tenantId,
 				organizationContact: null
 			}
 		);
@@ -320,12 +330,14 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 
 	private async loadEmployees() {
-		if (!this.organizationId) {
+		if (!this.selectedOrganization) {
 			return;
 		}
-
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: this.organizationId } })
+			.getAll(['user'], {
+				organization: { id: organizationId, tenantId }
+			})
 			.pipe(first())
 			.toPromise();
 
@@ -356,9 +368,10 @@ export class ContactComponent extends TranslationBaseComponent
 		try {
 			const dialog = this.dialogService.open(InviteContactComponent, {
 				context: {
-					organizationId: this.organizationId,
+					organizationId: this.selectedOrganization.id,
 					organizationContact: selectedOrganizationContact,
-					contactType: this.contactType
+					contactType: this.contactType,
+					selectedOrganization: this.selectedOrganization
 				}
 			});
 
@@ -387,8 +400,10 @@ export class ContactComponent extends TranslationBaseComponent
 		}
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 }
