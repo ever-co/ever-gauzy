@@ -113,10 +113,9 @@ export interface IEmployeeLevel {
 	skills?: ISkill[];
 }
 
-export interface IEmployeeLevelInput {
-	id?: string;
+export interface IEmployeeLevelInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	level: string;
-	organizationId: string;
 	tags?: ITag[];
 	skills?: ISkill[];
 }

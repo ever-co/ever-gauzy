@@ -12,8 +12,8 @@ export interface IOrganizationPositionFindInput
 	name?: string;
 }
 
-export interface IOrganizationPositionCreateInput {
+export interface IOrganizationPositionCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
 	tags: ITag[];
 }
