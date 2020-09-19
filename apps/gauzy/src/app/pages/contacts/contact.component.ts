@@ -15,7 +15,8 @@ import {
 } from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { EmployeesService } from '../../@core/services';
@@ -29,7 +30,6 @@ import { EmployeeWithLinksComponent } from '../../@shared/table-components/emplo
 import { TaskTeamsComponent } from '../../@shared/table-components/task-teams/task-teams.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-contact',
@@ -38,6 +38,7 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 })
 export class ContactComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	private _ngDestroy$ = new Subject<void>();
 	organizationId: string;
 	selectedOrganization: IOrganization;
 	showAddCard: boolean;
@@ -73,7 +74,7 @@ export class ContactComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -86,14 +87,14 @@ export class ContactComponent extends TranslationBaseComponent
 				}
 			});
 		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.add();
 				}
 			});
 		this.router.events
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -103,7 +104,10 @@ export class ContactComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -211,7 +215,7 @@ export class ContactComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.CONTACTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedContact =
@@ -401,7 +405,7 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});

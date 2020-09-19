@@ -10,7 +10,7 @@ import {
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
@@ -18,7 +18,6 @@ import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	templateUrl: './equipment-sharing-policy.component.html',
@@ -36,6 +35,7 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 	equipmentSharingPolicyData: IEquipmentSharingPolicy[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	private _ngDestroy$ = new Subject<void>();
 	selectedOrganization: IOrganization;
 
 	@ViewChild('equipmentSharingPolicyTable')
@@ -55,7 +55,7 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrganization = org;
@@ -67,7 +67,7 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 
 		this.router.events
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -79,7 +79,7 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.EQUIPMENT_SHARING_POLICY;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -202,11 +202,14 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 }

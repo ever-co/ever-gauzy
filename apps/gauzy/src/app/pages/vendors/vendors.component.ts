@@ -8,7 +8,8 @@ import {
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -18,7 +19,6 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-vendors',
@@ -38,6 +38,7 @@ export class VendorsComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	currentVendor: IOrganizationVendor;
+	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: NbToastrService,
@@ -57,7 +58,7 @@ export class VendorsComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -65,7 +66,7 @@ export class VendorsComponent extends TranslationBaseComponent
 				}
 			});
 		this.router.events
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -74,7 +75,8 @@ export class VendorsComponent extends TranslationBaseComponent
 	}
 
 	ngOnDestroy(): void {
-		console.log(this);
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 
 	private _initializeForm() {
@@ -91,7 +93,7 @@ export class VendorsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.VENDORS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 
@@ -273,7 +275,7 @@ export class VendorsComponent extends TranslationBaseComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});

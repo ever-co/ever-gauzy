@@ -22,9 +22,10 @@ import { EquipmentSharingService } from '../../@core/services/equipment-sharing.
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 
 export interface RequestEmployee {
 	id: string;
@@ -71,6 +72,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	selectedEquipmentSharingPolicy: string;
 	requestStatuses = Object.values(RequestApprovalStatus);
 
+	private _ngDestroy$ = new Subject<void>();
+
 	date1 = new Date();
 	date2 = new Date();
 	filter = this.datePickerFilterPredicate.bind(this);
@@ -83,7 +86,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -103,7 +106,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		return parseInt(value, 10);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	async initializeForm() {
 		this.form = this.fb.group({
@@ -232,7 +238,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 				organizationId: id,
 				tenantId
 			})
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(({ items }) => {
 				this.employees = items;
 			});
@@ -301,7 +307,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 		this.form
 			.get('equipment')
-			.valueChanges.pipe(untilDestroyed(this))
+			.valueChanges.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((valueId) => {
 				this.selectedItem = this.equipmentItems.find((item) => {
 					return item.id === valueId;
@@ -322,79 +328,83 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 				}
 			});
 
-		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((form) => {
-			//check if start day is after share request day
-			if (this.shareStartDay.value <= this.shareRequestDay.value) {
-				this.shareStartDay.setErrors({
-					invalid: true,
-					beforeRequestDay: true,
-					beforeRequestDayMsg: this.getTranslation(
-						'EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_REQUEST_DAY_ERR'
+		this.form.valueChanges
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((form) => {
+				//check if start day is after share request day
+				if (this.shareStartDay.value <= this.shareRequestDay.value) {
+					this.shareStartDay.setErrors({
+						invalid: true,
+						beforeRequestDay: true,
+						beforeRequestDayMsg: this.getTranslation(
+							'EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_REQUEST_DAY_ERR'
+						)
+					});
+				}
+
+				//check if user selects longer period than allowed
+				const diffDays = Math.ceil(
+					Math.abs(
+						(this.shareEndDay.value - this.shareStartDay.value) /
+							oneDay
 					)
-				});
-			}
+				);
 
-			//check if user selects longer period than allowed
-			const diffDays = Math.ceil(
-				Math.abs(
-					(this.shareEndDay.value - this.shareStartDay.value) / oneDay
-				)
-			);
+				if (
+					this.selectedItem &&
+					this.selectedItem.maxSharePeriod &&
+					diffDays + 1 > this.selectedItem.maxSharePeriod
+				) {
+					this.shareEndDay.setErrors({
+						invalid: true,
+						exceedAllowedDays: true,
+						exceedAllowedDaysMsg:
+							this.getTranslation(
+								'EQUIPMENT_SHARING_PAGE.MESSAGES.EXCEED_PERIOD_ERR'
+							) + this.selectedItem.maxSharePeriod
+					});
+				}
 
-			if (
-				this.selectedItem &&
-				this.selectedItem.maxSharePeriod &&
-				diffDays + 1 > this.selectedItem.maxSharePeriod
-			) {
-				this.shareEndDay.setErrors({
-					invalid: true,
-					exceedAllowedDays: true,
-					exceedAllowedDaysMsg:
-						this.getTranslation(
-							'EQUIPMENT_SHARING_PAGE.MESSAGES.EXCEED_PERIOD_ERR'
-						) + this.selectedItem.maxSharePeriod
-				});
-			}
+				// check of share end date after share start date
+				if (this.shareEndDay.value < this.shareStartDay.value) {
+					this.shareEndDay.setErrors({
+						invalid: true,
+						beforeStartDate: true,
+						beforeStartDateMsg: this.getTranslation(
+							'EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_START_DATE_ERR'
+						)
+					});
+				}
 
-			// check of share end date after share start date
-			if (this.shareEndDay.value < this.shareStartDay.value) {
-				this.shareEndDay.setErrors({
-					invalid: true,
-					beforeStartDate: true,
-					beforeStartDateMsg: this.getTranslation(
-						'EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_START_DATE_ERR'
-					)
-				});
-			}
+				//check if end date is after period in use
+				//
+				//find nearest period in use and get start date
+				const followingPeriods = [...this.periodsUnderUse]
+					.sort((a, b) => a.startDate - b.startDate)
+					.filter((period) => {
+						return period.startDate > this.shareStartDay.value;
+					});
 
-			//check if end date is after period in use
-			//
-			//find nearest period in use and get start date
-			const followingPeriods = [...this.periodsUnderUse]
-				.sort((a, b) => a.startDate - b.startDate)
-				.filter((period) => {
-					return period.startDate > this.shareStartDay.value;
-				});
+				const dateItemToBeReturned =
+					followingPeriods.length > 0
+						? followingPeriods[0].startDate
+						: null;
 
-			const dateItemToBeReturned =
-				followingPeriods.length > 0
-					? followingPeriods[0].startDate
-					: null;
-
-			if (
-				dateItemToBeReturned &&
-				this.shareEndDay.value > dateItemToBeReturned
-			) {
-				this.shareEndDay.setErrors({
-					invalid: true,
-					itemInUse: true,
-					itemInUseMsg:
-						this.getTranslation(
-							'EQUIPMENT_SHARING_PAGE.MESSAGES.ITEM_RETURNED_BEFORE_ERR'
-						) + dateItemToBeReturned.toLocaleString().split(',')[0]
-				});
-			}
-		});
+				if (
+					dateItemToBeReturned &&
+					this.shareEndDay.value > dateItemToBeReturned
+				) {
+					this.shareEndDay.setErrors({
+						invalid: true,
+						itemInUse: true,
+						itemInUseMsg:
+							this.getTranslation(
+								'EQUIPMENT_SHARING_PAGE.MESSAGES.ITEM_RETURNED_BEFORE_ERR'
+							) +
+							dateItemToBeReturned.toLocaleString().split(',')[0]
+					});
+				}
+			});
 	}
 
 	checkIfDateBetweenPeriods(
