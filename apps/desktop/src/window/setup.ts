@@ -17,7 +17,6 @@ export function createSetupWindow(setupWindow, value) {
 }
 
 const windowSetting = () => {
-	const sizes = screen.getPrimaryDisplay().workAreaSize;
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: true,

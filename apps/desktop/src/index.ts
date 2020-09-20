@@ -105,8 +105,9 @@ try {
 		if (process.platform === 'darwin') {
 			const screenCapturePermission = hasScreenCapturePermission();
 			if (!screenCapturePermission) {
-				const haspromp = hasPromptedForPermission();
-				const sysPref = await openSystemPreferences();
+				if (!hasPromptedForPermission()) {
+					await openSystemPreferences();
+				}
 			}
 		}
 		// the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)

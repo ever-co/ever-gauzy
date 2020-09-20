@@ -7,10 +7,10 @@ import { LocalStore } from './getSetStore';
 import Form from 'form-data';
 import fetch from 'node-fetch';
 import { BrowserWindow, screen } from 'electron';
+import screenshot from 'screenshot-desktop';
 
 const captureOnlyActiveWindow = async (displays, timeSlotId, activeScreen) => {
 	const display = displays.find((x) => x.id === activeScreen.id.toString());
-	console.log(display);
 	const result = await uploadScreenShot(
 		display.img,
 		display.name,
@@ -39,10 +39,6 @@ const captureAllWindow = async (displays, timeSlotId, activeScreen) => {
 	return result;
 };
 
-const captureSelectedWindow = (displays, idxScreen) => {
-	// soon
-};
-
 const uploadScreenShot = async (img, name, timeSlotId) => {
 	/* start upload */
 	const fileName = `screenshot-${moment().format(
@@ -51,7 +47,8 @@ const uploadScreenShot = async (img, name, timeSlotId) => {
 	try {
 		const appInfo = LocalStore.beforeRequestParams();
 		const form = new Form();
-		form.append('file', Buffer.from(img), {
+		const bufferImg = Buffer.isBuffer(img) ? img : Buffer.from(img);
+		form.append('file', bufferImg, {
 			contentType: 'image/png',
 			filename: fileName
 		});
@@ -87,15 +84,17 @@ const writeScreenshotLocally = (img, fileName) => {
 const detectActiveWindow = () => {
 	const allScreen = screen.getAllDisplays();
 	const cursorPosition = screen.getCursorScreenPoint();
-	const currentPosition = allScreen.find((item) => {
+	let idx = null;
+	const currentPosition = allScreen.find((item, i) => {
 		if (
 			cursorPosition.x >= item.bounds.x &&
 			cursorPosition.x <= item.bounds.width + item.bounds.x
 		) {
+			idx = i;
 			return item;
 		}
 	});
-	return currentPosition;
+	return {...currentPosition, index: idx};
 };
 
 const showCapturedToRenderer = (
@@ -171,6 +170,7 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 				break;
 		}
 
+
 		// show to render
 		showCapturedToRenderer(
 			timeTrackerWindow,
@@ -180,5 +180,28 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 		);
 	} catch (error) {
 		console.log('error scree', error);
+	}
+}
+
+// method using screenshot-desktop lib
+export async function captureScreen(timeTrackerWindow, notificationWindow, timeSlotId) {
+	try {
+		const displays = await screenshot.listDisplays();
+		const activeWindow = detectActiveWindow();
+		const allDisplays = [];
+		await Promise.all(displays.map(async (display, i) => {
+			const img = await screenshot({ screen: display.id});
+			allDisplays.push({
+				img: img,
+				name: `Screen ${i}`,
+				id: i === activeWindow.index ? activeWindow.id.toString() : display.id
+			})
+		}))
+		takeshot(timeTrackerWindow, {
+			timeSlotId: timeSlotId,
+			screens: allDisplays
+		}, notificationWindow);
+	} catch (error) {
+		console.log('error', error);
 	}
 }

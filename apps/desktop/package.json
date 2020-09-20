@@ -27,7 +27,7 @@
 		"electron-reload": "~1.5.0",
 		"electron-store": "~5.1.0",
 		"electron-updater": "~4.2.0",
-		"typeorm": "^0.2.24",
+		"typeorm": "^0.2.26",
 		"typeorm-express-query-builder": "^1.2.0"
 	},
 	"dependencies": {
@@ -38,6 +38,8 @@
 		"moment": "^2.25.3",
 		"node-fetch": "^2.6.0",
 		"node-notifier": "^7.0.1",
-		"sharp": "^0.25.2"
+		"screenshot-desktop": "^1.12.2",
+		"sharp": "^0.25.2",
+		"app-root-path": "^3.0.0"
 	}
 }

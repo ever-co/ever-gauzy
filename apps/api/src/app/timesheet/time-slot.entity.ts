@@ -46,7 +46,7 @@ export class TimeSlot extends TenantOrganizationBase implements ITimeSlot {
 	screenshots?: IScreenshot[];
 
 	@ApiProperty({ type: Activity })
-	@OneToMany(() => Activity, (activites) => activites.timeSlot)
+	@OneToMany(() => Activity, (activities) => activities.timeSlot)
 	@JoinColumn()
 	activities?: IActivity[];
 

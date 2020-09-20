@@ -4,7 +4,8 @@ import { metaData } from '../local-data/coding-activity';
 import TimerHandler from './timer';
 import moment from 'moment';
 import { LocalStore } from './getSetStore';
-import { takeshot } from './screenshot';
+import { takeshot, captureScreen } from './screenshot';
+import { environment } from '../environments/environtment.electron';
 export function ipcMainHandler(store, startServer, knex) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
@@ -155,9 +156,19 @@ export function ipcTimer(
 			timeSlotId: arg.timeSlotId
 		});
 		// after update time slot do upload screenshot
-		timeTrackerWindow.webContents.send('take_screenshot', {
-			timeSlotId: arg.timeSlotId
-		});
+		// check config
+		switch (environment.SCREENSHOTS_ENGINE_METHOD) {
+			case 'ElectronDesktopCapturer':
+				timeTrackerWindow.webContents.send('take_screenshot', {
+					timeSlotId: arg.timeSlotId
+				});
+				break;
+			case 'ScreenshotDesktopLib':
+				captureScreen(timeTrackerWindow, NotificationWindow, arg.timeSlotId);
+				break;
+			default:
+				break;
+		}
 	});
 
 	ipcMain.on('save_screen_shoot', (event, arg) => {

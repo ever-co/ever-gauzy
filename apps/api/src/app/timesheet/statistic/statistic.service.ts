@@ -574,7 +574,7 @@ export class StatisticService {
 				.orderBy(`"duration"`, 'DESC')
 				.limit(5);
 
-			let activites: IActivitiesStatistics[] = await query.getRawMany();
+			let activities: IActivitiesStatistics[] = await query.getRawMany();
 
 			/*
 			 * Fetch total duration of the week for calculate duration percentage
@@ -597,13 +597,13 @@ export class StatisticService {
 				})
 				.getRawOne();
 
-			activites = activites.map((activity) => {
+			activities = activities.map((activity) => {
 				activity.durationPercentage =
 					(activity.duration * 100) / totalDueration.duration;
 				return activity;
 			});
 
-			return activites;
+			return activities;
 		} else {
 			return [];
 		}
