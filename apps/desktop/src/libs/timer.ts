@@ -18,7 +18,7 @@ export default class Timerhandler {
 	notificationDesktop = new NotificationDesktop();
 	timeSlotStart = null;
 
-	async startTimer(win2, knex, win3) {
+	async startTimer(setupWindow, knex, timeTrackerWindow) {
 		this.notificationDesktop.startTimeNotification(true);
 		this.configs = LocalStore.getStore('configs');
 		const ProjectInfo = LocalStore.getStore('project');
@@ -34,7 +34,7 @@ export default class Timerhandler {
 			userId: appInfo.employeeId
 		});
 
-		win2.webContents.send('time_toggle', {
+		setupWindow.webContents.send('time_toggle', {
 			...LocalStore.beforeRequestParams(),
 			timerId: this.lastTimer[0]
 		});
@@ -48,7 +48,7 @@ export default class Timerhandler {
 				});
 
 				if (ProjectInfo && ProjectInfo.aw && ProjectInfo.aw.isAw) {
-					win2.webContents.send('collect_data', {
+					setupWindow.webContents.send('collect_data', {
 						start: this.timeStart.utc().format(),
 						end: moment().utc().format(),
 						tpURL: ProjectInfo.aw.host,
@@ -56,7 +56,7 @@ export default class Timerhandler {
 						timerId: this.lastTimer[0]
 					});
 
-					win2.webContents.send('collect_afk', {
+					setupWindow.webContents.send('collect_afk', {
 						start: this.timeStart.utc().format(),
 						end: moment().utc().format(),
 						tpURL: ProjectInfo.aw.host,
@@ -66,7 +66,7 @@ export default class Timerhandler {
 				}
 
 				this.calculateTimeRecord();
-				win3.webContents.send('timer_push', {
+				timeTrackerWindow.webContents.send('timer_push', {
 					second: this.timeRecordSecond,
 					minute: this.timeRecordMinute,
 					hours: this.timeRecordHours
@@ -84,29 +84,30 @@ export default class Timerhandler {
 		this.timeRecordMinute = now.diff(moment(this.timeStart), 'minutes');
 	}
 
-	updateTime(win2, knex, win3) {
+	updateTime(setupWindow, knex, timeTrackerWindow) {
+		const appSetting = LocalStore.getStore('appSetting');
 		this.intervalUpdateTime = setInterval(() => {
-			this.getSetActivity(knex, win2, this.timeSlotStart);
+			this.getSetActivity(knex, setupWindow, this.timeSlotStart);
 			this.timeSlotStart = moment();
-		}, 60 * 1000 * 1);
+		}, 60 * 1000 * appSetting.timer.updatePeriode);
 	}
 
-	updateToggle(win2, knex, isStop) {
+	updateToggle(setupWindow, knex, isStop) {
 		const params: any = {
 			...LocalStore.beforeRequestParams(),
 			timerId: this.lastTimer[0]
 		};
 		if (isStop) params.manualTimeSlot = true;
-		win2.webContents.send('update_toggle_timer', params);
+		setupWindow.webContents.send('update_toggle_timer', params);
 	}
 
-	getSetTimeSlot(win2, knex) {
+	getSetTimeSlot(setupWindow, knex) {
 		TimerData.getTimer(knex, this.lastTimer[0]).then((timerD) => {
 			TimerData.getAfk(knex, this.lastTimer[0]).then((afk) => {});
 		});
 	}
 
-	async getSetActivity(knex, win2, lastTimeSlot) {
+	async getSetActivity(knex, setupWindow, lastTimeSlot) {
 		const now = moment();
 		const userInfo = LocalStore.beforeRequestParams();
 		// get aw activity
@@ -172,7 +173,7 @@ export default class Timerhandler {
 		const allActivities = [...awActivities, ...wakatimeHeartbeats];
 
 		// send Activity to gauzy
-		win2.webContents.send('set_time_slot', {
+		setupWindow.webContents.send('set_time_slot', {
 			...userInfo,
 			duration: now.diff(moment(lastTimeSlot), 'seconds'),
 			keyboard: duration,
@@ -187,10 +188,10 @@ export default class Timerhandler {
 		});
 	}
 
-	stopTime(win2, win3, knex) {
+	stopTime(setupWindow, timeTrackerWindow, knex) {
 		this.notificationDesktop.startTimeNotification(false);
-		this.updateToggle(win2, knex, true);
-		this.getSetActivity(knex, win2, this.timeSlotStart);
+		this.updateToggle(setupWindow, knex, true);
+		this.getSetActivity(knex, setupWindow, this.timeSlotStart);
 		clearInterval(this.intevalTimer);
 		clearInterval(this.intervalUpdateTime);
 	}

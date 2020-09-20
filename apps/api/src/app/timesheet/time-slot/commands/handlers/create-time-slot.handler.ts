@@ -59,7 +59,7 @@ export class CreateTimeSlotHandler
 		}
 
 		timeSlot = await this.timeSlotRepository.findOne(timeSlot.id, {
-			relations: ['timeLogs', 'screenshots', 'activites']
+			relations: ['timeLogs', 'screenshots', 'activities']
 		});
 
 		return timeSlot;

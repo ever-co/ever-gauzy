@@ -10,6 +10,9 @@ const dbType =
 		: 'postgres';
 
 let databaseConfig: TypeOrmModuleOptions;
+if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
+	require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
+}
 
 switch (dbType) {
 	case 'postgres':

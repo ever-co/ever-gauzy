@@ -6,7 +6,8 @@ import { Tag } from '../tags/tag.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('expense_category')
-export class ExpenseCategory extends TenantOrganizationBase implements IExpenseCategory {
+export class ExpenseCategory extends TenantOrganizationBase
+	implements IExpenseCategory {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.expenseCategory)
 	@JoinTable({

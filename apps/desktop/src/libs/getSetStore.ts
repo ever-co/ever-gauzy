@@ -30,5 +30,32 @@ export const LocalStore = {
 		} catch (error) {
 			console.log(error);
 		}
+	},
+
+	setDefaultApplicationSetting: () => {
+		try {
+			const config = store.get('appSetting');
+			if (!config) {
+				const defaultAppSetting = {
+					monitor: {
+						captured: 'all' // ['all', 'active-only']
+					},
+					timer: {
+						updatePeriode: 1 // [1, 5, 10]
+					}
+				};
+				store.set({
+					appSetting: defaultAppSetting
+				});
+			}
+		} catch (error) {
+			console.log('error set store', error);
+		}
+	},
+
+	updateApplicationSetting: (values) => {
+		store.set({
+			appSetting: values
+		});
 	}
 };

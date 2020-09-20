@@ -3,7 +3,6 @@ module.exports = (config) => {
 		'amqp-connection-manager': 'amqp-connection-manager',
 		amqplib: 'amqplib',
 		atpl: 'atpl',
-		'aws-sdk': 'aws-sdk',
 		'babel-core': 'babel-core',
 		'bracket-template': 'bracket-template',
 		'coffee-script': 'coffee-script',

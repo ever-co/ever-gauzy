@@ -250,7 +250,7 @@ export const createDefaultEmployees = async (
 			Object.keys(CurrenciesEnum)
 		);
 		employee.reWeeklyLimit = faker.random.number(40);
-    employee.tenant = defaultTenant;
+		employee.tenant = defaultTenant;
 
 		await insertEmployee(connection, employee);
 		employees.push(employee);

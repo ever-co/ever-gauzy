@@ -1,6 +1,5 @@
 import { app } from 'electron';
-import screenshot from 'screenshot-desktop';
-import { writeFileSync, createReadStream, unlinkSync} from 'fs';
+import { writeFileSync } from 'fs';
 import moment from 'moment';
 import * as url from 'url';
 import * as path from 'path';
@@ -8,84 +7,201 @@ import { LocalStore } from './getSetStore';
 import Form from 'form-data';
 import fetch from 'node-fetch';
 import { BrowserWindow, screen } from 'electron';
-export async function takeshot(win3, timeSlotId, win4) {
-    try {
-        const displays = await screenshot.listDisplays();
-        const sizes = screen.getPrimaryDisplay().size;
-        const allScreen = screen.getAllDisplays();
-        const cursorPosition = screen.getCursorScreenPoint();
-        const currentPosition = allScreen.findIndex((item) => {
-            if (cursorPosition.x >= item.bounds.x && cursorPosition.x <= (item.bounds.width + item.bounds.x)) {
-                return item;
-            }
-        })
-        const img = await screenshot({ screen: displays[currentPosition].id });
-        const imgName = `screenshot-${moment().format('YYYYMMDDHHmmss')}.png`;
-        const imgLocation = app.getPath('userData');
-        const appInfo = LocalStore.beforeRequestParams();
-        const form = new Form();
-        form.append('file', img, {
-            contentType: 'image/png',
-            filename: imgName,
-          });
-        form.append('timeSlotId', timeSlotId);
-        try {
-            const test = await fetch(`${appInfo.apiHost}/api/timesheet/screenshot`, {
-                method: 'POST',
-                body: form,
-                headers: {
-                    'Authorization': `Bearer ${appInfo.token}`
-                }
-            })
-            const res = await test.json();
-            // unlinkSync(`${imgLocation}/${imgName}`);
-            win3.webContents.send('show_last_capture', {
-                ...LocalStore.beforeRequestParams(),
-                timeSlotId: timeSlotId
-            });
+import screenshot from 'screenshot-desktop';
 
-            // preparing window screenshot
-            const screenCaptureWindow = {
-                width: 350,
-                height: 230,
-                frame: false,
-                webPreferences: {
-                    nodeIntegration: true,
-                    webSecurity: false
-                }
-            }
-            
+const captureOnlyActiveWindow = async (displays, timeSlotId, activeScreen) => {
+	const display = displays.find((x) => x.id === activeScreen.id.toString());
+	const result = await uploadScreenShot(
+		display.img,
+		display.name,
+		timeSlotId
+	);
+	return [result];
+};
 
-            win4 = new BrowserWindow({
-                ...screenCaptureWindow,
-                x: sizes.width - (screenCaptureWindow.width + 15),
-                y: 0 + 15,
-                
-            });
-            const urlpath = url.format({
-                pathname: path.join(__dirname, '../ui/index.html'),
-                protocol: 'file:',
-                slashes: true,
-                hash: '/screen-capture'
-            });
-            win4.loadURL(urlpath)
-            win4.hide();
-            // win4.webContents.openDevTools();
-            setTimeout(() => {
-                win4.show();
-                win4.webContents.send('show_popup_screen_capture', {
-                    imgUrl: res.thumbUrl
-                })
-            }, 1000);
-            setTimeout(() => {
-                win4.close();
-            }, 6000);
-        } catch (error) {
-            // store to local data if upload failed
-            writeFileSync(`${imgLocation}/${imgName}`, img);
-            console.log('upload error', error);
-        }
-    } catch (error) {
-        console.log('error scree', error);
-    }
+const captureAllWindow = async (displays, timeSlotId, activeScreen) => {
+	const result = [];
+	await Promise.all(
+		displays.map(async (display) => {
+			const res = await uploadScreenShot(
+				display.img,
+				display.name,
+				timeSlotId
+			);
+			if (display.id === activeScreen.id.toString()) {
+				result.push({
+					...res,
+					name: display.name
+				});
+			}
+		})
+	);
+	return result;
+};
+
+const uploadScreenShot = async (img, name, timeSlotId) => {
+	/* start upload */
+	const fileName = `screenshot-${moment().format(
+		'YYYYMMDDHHmmss'
+	)}-${name}.png`;
+	try {
+		const appInfo = LocalStore.beforeRequestParams();
+		const form = new Form();
+		const bufferImg = Buffer.isBuffer(img) ? img : Buffer.from(img);
+		form.append('file', bufferImg, {
+			contentType: 'image/png',
+			filename: fileName
+		});
+		form.append('timeSlotId', timeSlotId);
+		const response = await fetch(
+			`${appInfo.apiHost}/api/timesheet/screenshot`,
+			{
+				method: 'POST',
+				body: form,
+				headers: {
+					Authorization: `Bearer ${appInfo.token}`
+				}
+			}
+		);
+		const res = await response.json();
+		return res;
+	} catch (e) {
+		console.log('upload error', e);
+		// write file on local directory if upload got error
+		const localImg = writeScreenshotLocally(img, fileName);
+		return {
+			thumbUrl: localImg
+		};
+	}
+};
+
+const writeScreenshotLocally = (img, fileName) => {
+	const imgLocation = app.getPath('userData');
+	writeFileSync(`${imgLocation}/${fileName}`, img);
+	return `${imgLocation}/${fileName}`;
+};
+
+const detectActiveWindow = () => {
+	const allScreen = screen.getAllDisplays();
+	const cursorPosition = screen.getCursorScreenPoint();
+	let idx = null;
+	const currentPosition = allScreen.find((item, i) => {
+		if (
+			cursorPosition.x >= item.bounds.x &&
+			cursorPosition.x <= item.bounds.width + item.bounds.x
+		) {
+			idx = i;
+			return item;
+		}
+	});
+	return {...currentPosition, index: idx};
+};
+
+const showCapturedToRenderer = (
+	timeTrackerWindow,
+	NotificationWindow,
+	timeSlotId,
+	thumbUrl
+) => {
+	const sizes = screen.getPrimaryDisplay().size;
+	timeTrackerWindow.webContents.send('show_last_capture', {
+		...LocalStore.beforeRequestParams(),
+		timeSlotId: timeSlotId
+	});
+
+	// preparing window screenshot
+	const screenCaptureWindow = {
+		width: 350,
+		height: 230,
+		frame: false,
+		webPreferences: {
+			nodeIntegration: true,
+			webSecurity: false
+		}
+	};
+
+	NotificationWindow = new BrowserWindow({
+		...screenCaptureWindow,
+		x: sizes.width - (screenCaptureWindow.width + 15),
+		y: 0 + 15
+	});
+	const urlpath = url.format({
+		pathname: path.join(__dirname, '../ui/index.html'),
+		protocol: 'file:',
+		slashes: true,
+		hash: '/screen-capture'
+	});
+	NotificationWindow.loadURL(urlpath);
+	NotificationWindow.hide();
+
+	setTimeout(() => {
+		NotificationWindow.show();
+		NotificationWindow.webContents.send('show_popup_screen_capture', {
+			imgUrl: thumbUrl
+		});
+	}, 1000);
+	setTimeout(() => {
+		NotificationWindow.close();
+	}, 6000);
+};
+
+export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
+	try {
+		const displays = arg.screens;
+		const appSetting = LocalStore.getStore('appSetting');
+		let captured = null;
+		const activeWindow = detectActiveWindow();
+		switch (appSetting.monitor.captured) {
+			case 'all':
+				captured = await captureAllWindow(
+					displays,
+					arg.timeSlotId,
+					activeWindow
+				);
+				break;
+			case 'active-only':
+				captured = await captureOnlyActiveWindow(
+					displays,
+					arg.timeSlotId,
+					activeWindow
+				);
+				break;
+			default:
+				break;
+		}
+
+
+		// show to render
+		showCapturedToRenderer(
+			timeTrackerWindow,
+			NotificationWindow,
+			arg.timeSlotId,
+			captured[0].thumbUrl
+		);
+	} catch (error) {
+		console.log('error scree', error);
+	}
+}
+
+// method using screenshot-desktop lib
+export async function captureScreen(timeTrackerWindow, notificationWindow, timeSlotId) {
+	try {
+		const displays = await screenshot.listDisplays();
+		const activeWindow = detectActiveWindow();
+		const allDisplays = [];
+		await Promise.all(displays.map(async (display, i) => {
+			const img = await screenshot({ screen: display.id});
+			allDisplays.push({
+				img: img,
+				name: `Screen ${i}`,
+				id: i === activeWindow.index ? activeWindow.id.toString() : display.id
+			})
+		}))
+		takeshot(timeTrackerWindow, {
+			timeSlotId: timeSlotId,
+			screens: allDisplays
+		}, notificationWindow);
+	} catch (error) {
+		console.log('error', error);
+	}
 }

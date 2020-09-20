@@ -62,7 +62,7 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
-			.get(`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activites&relations[]=employee`, {
+			.get(`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`, {
 				headers: headers
 			})
 			.pipe()

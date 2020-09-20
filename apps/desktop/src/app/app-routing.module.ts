@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { SetupComponent } from './pages/setup/setup.component';
 import { TimeTrackerComponent } from './pages/time-tracker/time-tracker.component';
 import { ScreenCaptureComponent } from './pages/screen-capture/screen-capture.component';
+import { SettingsComponent } from './pages/settings/settings.component';
 
 const routes: Routes = [
 	{
@@ -16,6 +17,10 @@ const routes: Routes = [
 	{
 		path: 'screen-capture',
 		component: ScreenCaptureComponent
+	},
+	{
+		path: 'settings',
+		component: SettingsComponent
 	}
 ];
 

@@ -96,23 +96,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 		);
 
-		this.electronService.ipcRenderer.on(
-			'take_screen_shoot',
-			(event, arg) => {
-				const thumbSize = this.determineScreenshot();
-				this.electronService.desktopCapturer
-					.getSources({ types: ['screen'], thumbnailSize: thumbSize })
-					.then((sources) => {
-						sources.forEach(async (source) => {
-							if (source.name === 'Screen 1') {
-								event.sender.send('save_screen_shoot', {
-									buffer: source.thumbnail.toPNG()
-								});
-							}
+		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) => {
+			const thumbSize = this.determineScreenshot();
+			this.electronService.desktopCapturer
+				.getSources({ types: ['screen'], thumbnailSize: thumbSize })
+				.then((sources) => {
+					const screens = [];
+					sources.forEach(async (source, i) => {
+						screens.push({
+							img: source.thumbnail.toPNG(),
+							name: source.name,
+							id: source.display_id
 						});
 					});
-			}
-		);
+					event.sender.send('save_screen_shoot', {
+						screens: screens,
+						timeSlotId: arg.timeSlotId
+					});
+				});
+		});
 
 		this.electronService.ipcRenderer.on(
 			'refresh_time_log',
@@ -120,14 +122,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.getTodayTime(arg);
 				this.getLastTimeSlotImage(arg);
 			}
-		)
+		);
 
 		this.electronService.ipcRenderer.on(
 			'show_last_capture',
 			(event, arg) => {
 				this.getLastTimeSlotImage(arg);
 			}
-		)
+		);
 	}
 
 	ngOnInit(): void {
@@ -345,11 +347,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	getTodayTime(arg) {
-		this.timeTrackerService.getTimeLogs(arg).then((res:any) => {
+		this.timeTrackerService.getTimeLogs(arg).then((res: any) => {
 			if (res && res.length > 0) {
 				this.countDurationToday(res);
 			}
-		})
+		});
 	}
 
 	countDurationToday(items) {
@@ -359,14 +361,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		};
 		items.forEach((item) => {
 			const stopItem = item.stoppedAt ? item.stoppedAt : new Date();
-			const itemDurationHours = moment(stopItem).diff(moment(item.startedAt), 'hours');
-			const itemDurationSeconds = moment(stopItem).diff(moment(item.startedAt), 'seconds');
+			const itemDurationHours = moment(stopItem).diff(
+				moment(item.startedAt),
+				'hours'
+			);
+			const itemDurationSeconds = moment(stopItem).diff(
+				moment(item.startedAt),
+				'seconds'
+			);
 			workToday.hours += itemDurationHours;
 			workToday.seconds += itemDurationSeconds;
-		})
+		});
 		this.todayDuration = {
 			hours: this.formatingDuration('hours', workToday.hours),
-			minutes: this.formatingDuration('minutes', Math.floor(workToday.seconds/60))
+			minutes: this.formatingDuration(
+				'minutes',
+				Math.floor(workToday.seconds / 60)
+			)
 		};
 		this._cdr.detectChanges();
 	}
@@ -374,33 +385,40 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	formatingDuration(timeEntity, val) {
 		switch (timeEntity) {
 			case 'hours': {
-				return val.toString().length > 1 ? `${val}` : `0${val}`
+				return val.toString().length > 1 ? `${val}` : `0${val}`;
 			}
 			case 'minutes': {
 				const minteBackTime = val % 60;
-				return val.toString().length > 1 ? `${minteBackTime}` : `0${minteBackTime}`
+				return val.toString().length > 1
+					? `${minteBackTime}`
+					: `0${minteBackTime}`;
 			}
 			default:
-				return '00'
+				return '00';
 		}
 	}
 
 	getLastTimeSlotImage(arg) {
 		this.timeTrackerService.getTimeSlot(arg).then((res: any) => {
-			this.lastScreenCapture = res.screenshots && res.screenshots.length > 0 ? res.screenshots[0] : '';
+			this.lastScreenCapture =
+				res.screenshots && res.screenshots.length > 0
+					? res.screenshots[0]
+					: '';
 			if (this.lastScreenCapture.createdAt) {
-				this.lastScreenCapture.textTime = moment(this.lastScreenCapture.createdAt).fromNow();
+				this.lastScreenCapture.textTime = moment(
+					this.lastScreenCapture.createdAt
+				).fromNow();
 			}
 			this._cdr.detectChanges();
-		})
+		});
 	}
 
 	getUserInfo(arg) {
-		this.timeTrackerService.getUserDetail(arg).then((res:any) => {
+		this.timeTrackerService.getUserDetail(arg).then((res: any) => {
 			if (res.employee && res.employee.organization) {
 				this.userOrganization = res.employee.organization;
 				this._cdr.detectChanges();
 			}
-		})
+		});
 	}
 }

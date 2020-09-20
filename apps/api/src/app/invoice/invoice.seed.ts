@@ -10,7 +10,7 @@ import * as _ from 'underscore';
 
 export const createDefaultInvoice = async (
 	connection: Connection,
-  tenant: Tenant,
+	tenant: Tenant,
 	defaultOrganizations: Organization[],
 	noOfInvoicePerOrganization: number
 ) => {

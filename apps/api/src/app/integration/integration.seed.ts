@@ -33,7 +33,7 @@ const DEFAULT_INTEGRATIONS = [
 
 export const createDefaultIntegrations = async (
 	connection: Connection,
-  tenant: Tenant,
+	tenant: Tenant,
 	integrationTypes: IntegrationType[] | void
 ): Promise<Integration[]> => {
 	if (!integrationTypes) {

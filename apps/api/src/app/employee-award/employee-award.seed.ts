@@ -11,7 +11,7 @@ const MOCK_AWARDS = [
 
 export const createDefaultEmployeeAwards = async (
 	connection: Connection,
-  tenant: Tenant,
+	tenant: Tenant,
 	employee: Employee
 ): Promise<EmployeeAward[]> => {
 	const awards: EmployeeAward[] = MOCK_AWARDS.map(({ name, year }) => {
