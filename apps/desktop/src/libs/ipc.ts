@@ -157,7 +157,8 @@ export function ipcTimer(
 		});
 		// after update time slot do upload screenshot
 		// check config
-		switch (environment.SCREENSHOTS_ENGINE_METHOD) {
+		const appSetting = LocalStore.getStore('appSetting');
+		switch (appSetting.SCREENSHOTS_ENGINE_METHOD || environment.SCREENSHOTS_ENGINE_METHOD) {
 			case 'ElectronDesktopCapturer':
 				timeTrackerWindow.webContents.send('take_screenshot', {
 					timeSlotId: arg.timeSlotId

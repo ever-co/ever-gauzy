@@ -1,4 +1,4 @@
-import { screen, BrowserWindow } from 'electron';
+import { BrowserWindow } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 export function createSetupWindow(setupWindow, value) {
