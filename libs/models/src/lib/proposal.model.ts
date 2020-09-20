@@ -1,6 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { IOrganizationFindInput } from './organization.model';
 import { ITag } from './tag-entity.model';
 
 export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
@@ -14,9 +13,9 @@ export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
 	tags?: ITag[];
 }
 
-export interface IProposalCreateInput {
+export interface IProposalCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	organizationId?: string;
 	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
@@ -25,11 +24,10 @@ export interface IProposalCreateInput {
 	tags?: ITag[];
 }
 
-export interface IProposalFindInput {
+export interface IProposalFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	organizationId?: string;
 	employee?: IEmployeeFindInput;
-	organization?: IOrganizationFindInput;
 	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;

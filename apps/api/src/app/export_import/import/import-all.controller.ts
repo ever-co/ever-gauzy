@@ -35,7 +35,7 @@ export class ImportAllController implements OnDestroy {
 
 	@UseInterceptors(
 		FileInterceptor('file', {
-			storage: new FileStorage({
+			storage: new FileStorage().storage({
 				dest: path.join('import'),
 				prefix: 'import'
 			})
@@ -44,8 +44,10 @@ export class ImportAllController implements OnDestroy {
 	@Post()
 	async parse(@Body() { importType }, @UploadedFile() file) {
 		this.importAllService.removeExtractedFiles();
-
-		this.importAllService.unzipAndParse(file.path, importType === 'clean');
+		await this.importAllService.unzipAndParse(
+			file.key,
+			importType === 'clean'
+		);
 
 		return;
 	}

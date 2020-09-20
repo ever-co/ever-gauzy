@@ -5,6 +5,7 @@ require('dotenv').config();
 import * as path from 'path';
 import { IEnvironment } from './ienvironment';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { ProviderEnum } from '../app/core/file-storage/models';
 
 const dbType =
 	process.env.DB_TYPE && process.env.DB_TYPE === 'sqlite'
@@ -63,6 +64,19 @@ export const environment: IEnvironment = {
 	EXPRESS_SESSION_SECRET: 'gauzy',
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 	JWT_SECRET: 'secretKey',
+
+	fileSystem: {
+		name: (process.env.FILE_PROVIDER as ProviderEnum) || ProviderEnum.LOCAL
+	},
+
+	awsConfig: {
+		accessKeyId: process.env.AWS_IAM_USER_KEY,
+		secretAccessKey: process.env.AWS_IAM_USER_SECRET,
+		region: process.env.AWS_REGION,
+		s3: {
+			bucket: process.env.AWS_S3_BUCKET
+		}
+	},
 
 	database: databaseConfig,
 

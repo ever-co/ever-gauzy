@@ -10,9 +10,9 @@ export interface IOrganizationTeam
 	tags?: ITag[];
 }
 
-export interface IOrganizationTeamFindInput {
+export interface IOrganizationTeamFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	organizationId?: string;
 	tags?: ITag[];
 }
 

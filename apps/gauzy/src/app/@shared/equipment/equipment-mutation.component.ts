@@ -1,7 +1,7 @@
 import { OnInit, Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { IEquipment, CurrenciesEnum, ITag } from '@gauzy/models';
+import { IEquipment, CurrenciesEnum, ITag, IOrganization } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 	selectedCurrency;
 	tags: ITag[] = [];
 	selectedTags: any;
+	selectedOrganization: IOrganization;
 
 	constructor(
 		public dialogRef: NbDialogRef<EquipmentMutationComponent>,
@@ -75,7 +76,9 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		const equipment = await this.equipmentService.save({
 			...this.form.value,
 			currency: this.selectedCurrency,
-			tags: this.tags
+			tags: this.tags,
+			organizationId: this.selectedOrganization.id,
+			tenantId: this.selectedOrganization.tenantId
 		});
 		this.closeDialog(equipment);
 	}

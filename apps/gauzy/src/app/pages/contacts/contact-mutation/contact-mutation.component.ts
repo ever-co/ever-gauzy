@@ -4,7 +4,8 @@ import {
 	IEmployee,
 	IOrganizationProject,
 	ITag,
-	ContactType
+	ContactType,
+	IOrganization
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,6 +32,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	@Input() isGridEdit: boolean;
 	@Input()
 	contactType: string;
+	@Input()
+	organization: IOrganization;
 
 	@Output()
 	canceled = new EventEmitter();
@@ -77,9 +80,11 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 
 	private async _getProjects() {
-		this.organizationId = this.store.selectedOrganization.id;
+		const { id: organizationId, tenantId } = this.organization;
+		this.organizationId = organizationId;
 		const { items } = await this.organizationProjectsService.getAll([], {
-			organizationId: this.store.selectedOrganization.id
+			organizationId,
+			tenantId
 		});
 		items.forEach((i) => {
 			this.selectedproject = [
@@ -218,7 +223,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.organization.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -249,6 +255,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 					? this.organizationContact.id
 					: undefined,
 				organizationId: this.organizationId,
+				tenantId: this.organization.tenantId,
 				name: this.form.value['name'],
 				primaryEmail: this.form.value['primaryEmail'],
 				primaryPhone: this.form.value['primaryPhone'],

@@ -1,6 +1,9 @@
 import { sample } from 'lodash';
 import { IUser } from '@gauzy/models';
 import * as moment from 'moment';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -76,4 +79,10 @@ export function convertToDatetime(datetime, format = 'YYYY-MM-DD HH:mm:ss') {
 	}
 
 	return null;
+}
+
+export async function tempFile(prefix) {
+	const tempPath = path.join(os.tmpdir(), prefix);
+	const folder = await fs.promises.mkdtemp(tempPath);
+	return path.join(folder, prefix + moment().unix() + Math.random() * 10000);
 }

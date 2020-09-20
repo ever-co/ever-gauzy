@@ -4,12 +4,13 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	IEquipmentSharing,
 	ComponentLayoutStyleEnum,
-	IEquipmentSharingPolicy
+	IEquipmentSharingPolicy,
+	IOrganization
 } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { takeUntil, first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
@@ -34,8 +35,8 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 	equipmentSharingPolicyData: IEquipmentSharingPolicy[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	private selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
+	selectedOrganization: IOrganization;
 
 	@ViewChild('equipmentSharingPolicyTable')
 	equipmentSharingPolicyTable;
@@ -54,19 +55,19 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
-					this.selectedOrganizationId = org.id;
+					this.selectedOrganization = org;
 					this.loadSettings();
 				}
 			});
 
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadSettings();
+
 		this.router.events
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -117,7 +118,7 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 			{
 				context: {
 					equipmentSharingPolicy: this.selectedEquipmentSharingPolicy,
-					organizationId: this.selectedOrganizationId
+					selectedOrganization: this.selectedOrganization
 				}
 			}
 		);
@@ -179,9 +180,11 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 		this.selectedEquipmentSharingPolicy = null;
 		let findInput: IEquipmentSharingPolicy = {};
 		let policies = [];
-		if (this.selectedOrganizationId) {
+		if (this.selectedOrganization) {
+			const { id: organizationId, tenantId } = this.selectedOrganization;
 			findInput = {
-				organizationId: this.selectedOrganizationId
+				organizationId,
+				tenantId
 			};
 		}
 
@@ -198,13 +201,15 @@ export class EquipmentSharingPolicyComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
 	ngOnDestroy() {
-		this.ngDestroy$.next();
-		this.ngDestroy$.complete();
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

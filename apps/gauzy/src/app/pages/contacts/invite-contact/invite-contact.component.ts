@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { IOrganizationContact } from '@gauzy/models';
+import { IOrganization, IOrganizationContact } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { UsersService } from '../../../@core/services';
@@ -38,6 +38,9 @@ export class InviteContactComponent extends TranslationBaseComponent
 
 	@Input()
 	organizationContact?: IOrganizationContact = undefined;
+
+	@Input()
+	selectedOrganization: IOrganization;
 
 	ngOnInit(): void {
 		this.form = this.fb.group(
@@ -101,6 +104,7 @@ export class InviteContactComponent extends TranslationBaseComponent
 			if (this.organizationContact) {
 				return await this.organizationContactService.create({
 					...this.organizationContact,
+					tenantId: this.selectedOrganization.tenantId,
 					contactType: this.contactType,
 					imageUrl:
 						'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
@@ -109,6 +113,7 @@ export class InviteContactComponent extends TranslationBaseComponent
 			} else if (this.form.valid) {
 				return await this.organizationContactService.create({
 					organizationId: this.organizationId,
+					tenantId: this.selectedOrganization.tenantId,
 					contactType: this.contactType,
 					imageUrl:
 						'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',

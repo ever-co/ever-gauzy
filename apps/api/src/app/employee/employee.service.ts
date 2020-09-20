@@ -45,7 +45,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			.where('"employee"."organizationId" = :organizationId', {
 				organizationId
 			})
-			.where('"employee"."tenantId" = :tenantId', {
+			.andWhere('"employee"."tenantId" = :tenantId', {
 				tenantId
 			})
 			.andWhere('"employee"."startedWorkOn" <= :startedWorkOnCondition', {

@@ -14,3 +14,8 @@ export interface IEquipment extends IBasePerTenantAndOrganizationEntityModel {
 	equipmentSharings: IEquipmentSharing[];
 	tags: ITag[];
 }
+
+export interface IEquipmentFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
+	organizationId?: string;
+}

@@ -4,7 +4,8 @@ import {
 	IInvite,
 	IOrganizationProject,
 	IOrganizationContact,
-	IOrganizationDepartment
+	IOrganizationDepartment,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,6 +27,9 @@ export class InviteMutationComponent extends TranslationBaseComponent
 
 	@Input()
 	selectedOrganizationId: string;
+
+	@Input()
+	selectedOrganization: IOrganization;
 
 	@Input()
 	currentUserId: string;
@@ -77,24 +81,36 @@ export class InviteMutationComponent extends TranslationBaseComponent
 	}
 
 	async loadProjects() {
-		const res = await this.organizationProjectsService.getAll([], {
-			organizationId: this.selectedOrganizationId
-		});
-		this.organizationProjects = res.items;
+		const { items = [] } = await this.organizationProjectsService.getAll(
+			[],
+			{
+				organizationId: this.selectedOrganizationId,
+				tenantId: this.selectedOrganization.tenantId
+			}
+		);
+		this.organizationProjects = items;
 	}
 
 	async loadOrganizationContacts() {
-		const res = await this.organizationContactService.getAll([], {
-			organizationId: this.selectedOrganizationId
-		});
-		this.organizationContact = res.items;
+		const { items = [] } = await this.organizationContactService.getAll(
+			[],
+			{
+				organizationId: this.selectedOrganizationId,
+				tenantId: this.selectedOrganization.tenantId
+			}
+		);
+		this.organizationContact = items;
 	}
 
 	async loadDepartments() {
-		const res = await this.organizationDepartmentsService.getAll([], {
-			organizationId: this.selectedOrganizationId
-		});
-		this.organizationDepartments = res.items;
+		const { items = [] } = await this.organizationDepartmentsService.getAll(
+			[],
+			{
+				organizationId: this.selectedOrganizationId,
+				tenantId: this.selectedOrganization.tenantId
+			}
+		);
+		this.organizationDepartments = items;
 	}
 
 	closeDialog(savedInvites: IInvite[] = []) {

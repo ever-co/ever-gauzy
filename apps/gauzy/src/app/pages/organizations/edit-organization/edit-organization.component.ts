@@ -9,6 +9,7 @@ import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationEditStore } from '../../../@core/services/organization-edit-store.service';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -57,6 +58,15 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 				takeUntil(this._ngDestroy$)
 			)
 			.subscribe();
+
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((organization) => {
+				if (organization) {
+					this.selectedOrg = organization;
+					this.loadEmployeesCount();
+				}
+			});
 	}
 
 	canEditPublicPage() {
@@ -78,7 +88,12 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 
 	private async loadEmployeesCount() {
 		const { total } = await this.employeesService
-			.getAll([], { organization: { id: this.selectedOrg.id } })
+			.getAll([], {
+				organization: {
+					id: this.selectedOrg.id,
+					tenantId: this.selectedOrg.tenantId
+				}
+			})
 			.pipe(first())
 			.toPromise();
 
