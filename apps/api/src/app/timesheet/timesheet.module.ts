@@ -33,6 +33,7 @@ import { Email } from '../email/email.entity';
 import { EmailService } from '../email/email.service';
 import { EmailModule } from '../email';
 import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
+import { ActivityCommandHandlers } from './activity/commands/handlers';
 
 @Module({
 	controllers: [
@@ -74,6 +75,7 @@ import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
 		...TimeLogCommandHandlers,
 		...TimesheetCommandHandlers,
 		...TimeSlotCommandHandlers,
+		...ActivityCommandHandlers,
 		...CommandHandlers
 	],
 	exports: [

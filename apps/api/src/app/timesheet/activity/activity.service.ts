@@ -8,14 +8,18 @@ import { RequestContext } from '../../core/context';
 import {
 	PermissionsEnum,
 	IGetActivitiesInput,
-	IDailyActivity
+	IDailyActivity,
+	IBulkActivitiesInput
 } from '@gauzy/models';
+import { CommandBus } from '@nestjs/cqrs';
+import { BulkActivitesSaveCommand } from './commands/bulk-activites-save.command';
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {
 	constructor(
 		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>
+		private readonly activityRepository: Repository<Activity>,
+		private readonly commandBus: CommandBus
 	) {
 		super(activityRepository);
 	}
@@ -76,16 +80,8 @@ export class ActivityService extends CrudService<Activity> {
 		return await query.getMany();
 	}
 
-	bulkSave(activities: Activity[]) {
-		return (
-			this.activityRepository
-				.createQueryBuilder()
-				.insert()
-				.values(activities)
-				//.onConflict('("employeeId", "date") DO UPDATE SET duration = EXCLUDED.duration + duration;')
-				.returning('*')
-				.execute()
-		);
+	bulkSave(input: IBulkActivitiesInput) {
+		return this.commandBus.execute(new BulkActivitesSaveCommand(input));
 	}
 
 	private filterQuery(request: IGetActivitiesInput) {
