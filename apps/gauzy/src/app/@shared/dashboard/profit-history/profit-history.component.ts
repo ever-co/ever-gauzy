@@ -4,7 +4,7 @@ import { DateViewComponent } from '../../table-components/date-view/date-view.co
 import { Store } from '../../../@core/services/store.service';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
-import { EmployeeStatisticsHistory } from '@gauzy/models';
+import { IEmployeeStatisticsHistory } from '@gauzy/models';
 
 @Component({
 	templateUrl: './profit-history.component.html',
@@ -14,8 +14,8 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 	smartTableSettings;
 	smartTableSource = new LocalDataSource();
 	recordsData: {
-		incomes: EmployeeStatisticsHistory[];
-		expenses: EmployeeStatisticsHistory[];
+		incomes: IEmployeeStatisticsHistory[];
+		expenses: IEmployeeStatisticsHistory[];
 		incomeTotal: number;
 		expenseTotal: number;
 		profit: number;

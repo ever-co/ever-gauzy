@@ -1,8 +1,17 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from './employee.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee } from './employee.model';
 
-export interface TimeOffPolicy extends IBaseEntityModel {
-	employees?: Employee[];
+export interface ITimeOffPolicy
+	extends IBasePerTenantAndOrganizationEntityModel {
+	employees?: IEmployee[];
+	// teams?: OrganizationTeams[];
+	name?: string;
+	requiresApproval?: boolean;
+	paid?: boolean;
+}
+
+export interface ITimeOffPolicyCreateInput {
+	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
 	organizationId?: string;
 	name?: string;
@@ -10,8 +19,8 @@ export interface TimeOffPolicy extends IBaseEntityModel {
 	paid?: boolean;
 }
 
-export interface TimeOffPolicyCreateInput extends IBaseEntityModel {
-	employees?: Employee[];
+export interface ITimeOffPolicyUpdateInput {
+	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
 	organizationId?: string;
 	name?: string;
@@ -19,8 +28,8 @@ export interface TimeOffPolicyCreateInput extends IBaseEntityModel {
 	paid?: boolean;
 }
 
-export interface TimeOffPolicyUpdateInput extends IBaseEntityModel {
-	employees?: Employee[];
+export interface ITimeOffPolicyFindInput {
+	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
 	organizationId?: string;
 	name?: string;
@@ -28,20 +37,10 @@ export interface TimeOffPolicyUpdateInput extends IBaseEntityModel {
 	paid?: boolean;
 }
 
-export interface TimeOffPolicyFindInput extends IBaseEntityModel {
-	employees?: Employee[];
-	// teams?: OrganizationTeams[];
-	organizationId?: string;
-	name?: string;
-	requiresApproval?: boolean;
-	paid?: boolean;
-}
-
-export interface TimeOff extends IBaseEntityModel {
-	employees?: Employee[];
-	organizationId?: string;
+export interface ITimeOff extends IBasePerTenantAndOrganizationEntityModel {
+	employees?: IEmployee[];
 	description?: string;
-	policy?: TimeOffPolicy;
+	policy?: ITimeOffPolicy;
 	start?: Date;
 	end?: Date;
 	requestDate?: Date;
@@ -50,20 +49,20 @@ export interface TimeOff extends IBaseEntityModel {
 	documentUrl?: string;
 }
 
-export interface TimeOffFindInput extends IBaseEntityModel {
+export interface ITimeOffFindInput {
 	employeeId?: string;
 	organizationId?: string;
 }
 
-export interface TimeOffUpdateInput {
+export interface ITimeOffUpdateInput {
 	status?: string;
 }
 
-export interface TimeOffCreateInput {
-	employees?: Employee[];
+export interface ITimeOffCreateInput {
+	employees?: IEmployee[];
 	organizationId?: string;
 	description?: string;
-	policy?: TimeOffPolicy;
+	policy?: ITimeOffPolicy;
 	start?: Date;
 	end?: Date;
 	requestDate?: Date;

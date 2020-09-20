@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-	EmployeeRecurringExpense,
-	EmployeeRecurringExpenseByMonthFindInput,
-	EmployeeRecurringExpenseFindInput,
+	IEmployeeRecurringExpense,
+	IEmployeeRecurringExpenseByMonthFindInput,
+	IEmployeeRecurringExpenseFindInput,
 	IFindStartDateUpdateTypeInput,
 	IStartUpdateTypeInfo,
-	RecurringExpenseDeleteInput,
-	RecurringExpenseOrderFields
+	IRecurringExpenseDeleteInput,
+	IRecurringExpenseOrderFields
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -19,26 +19,26 @@ export class EmployeeRecurringExpenseService {
 
 	constructor(private http: HttpClient) {}
 
-	create(createInput: EmployeeRecurringExpense): Promise<any> {
+	create(createInput: IEmployeeRecurringExpense): Promise<any> {
 		return this.http
-			.post<EmployeeRecurringExpense>(this.API_URL, createInput)
+			.post<IEmployeeRecurringExpense>(this.API_URL, createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAll(
 		relations?: string[],
-		findInput?: EmployeeRecurringExpenseFindInput,
-		order?: RecurringExpenseOrderFields
+		findInput?: IEmployeeRecurringExpenseFindInput,
+		order?: IRecurringExpenseOrderFields
 	): Promise<{
-		items: EmployeeRecurringExpense[];
+		items: IEmployeeRecurringExpense[];
 		total: number;
 	}> {
 		const data = JSON.stringify({ relations, findInput, order });
 
 		return this.http
 			.get<{
-				items: EmployeeRecurringExpense[];
+				items: IEmployeeRecurringExpense[];
 				total: number;
 			}>(this.API_URL, {
 				params: { data }
@@ -49,16 +49,16 @@ export class EmployeeRecurringExpenseService {
 
 	getAllByMonth(
 		relations?: string[],
-		findInput?: EmployeeRecurringExpenseByMonthFindInput
+		findInput?: IEmployeeRecurringExpenseByMonthFindInput
 	): Promise<{
-		items: EmployeeRecurringExpense[];
+		items: IEmployeeRecurringExpense[];
 		total: number;
 	}> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
 			.get<{
-				items: EmployeeRecurringExpense[];
+				items: IEmployeeRecurringExpense[];
 				total: number;
 			}>(`${this.API_URL}/month`, {
 				params: { data }
@@ -67,7 +67,10 @@ export class EmployeeRecurringExpenseService {
 			.toPromise();
 	}
 
-	delete(id: string, deleteInput: RecurringExpenseDeleteInput): Promise<any> {
+	delete(
+		id: string,
+		deleteInput: IRecurringExpenseDeleteInput
+	): Promise<any> {
 		const data = JSON.stringify({ deleteInput });
 
 		return this.http
@@ -78,7 +81,7 @@ export class EmployeeRecurringExpenseService {
 			.toPromise();
 	}
 
-	update(id: string, updateInput: EmployeeRecurringExpense): Promise<any> {
+	update(id: string, updateInput: IEmployeeRecurringExpense): Promise<any> {
 		return this.http
 			.put(`${this.API_URL}/${id}`, updateInput)
 			.pipe(first())

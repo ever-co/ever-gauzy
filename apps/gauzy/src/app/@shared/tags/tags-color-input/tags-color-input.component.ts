@@ -7,7 +7,7 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { TagsService } from '../../../@core/services/tags.service';
-import { Tag, Organization } from '@gauzy/models';
+import { ITag, IOrganization } from '@gauzy/models';
 import { getContrastColor } from 'libs/utils';
 import { Store } from '../../../@core/services/store.service';
 import { Subscription } from 'rxjs';
@@ -18,9 +18,9 @@ import { Subscription } from 'rxjs';
 	styleUrls: ['./tags-color-input.component.scss']
 })
 export class TagsColorInputComponent implements OnInit, OnDestroy {
-	tags: Tag[];
+	tags: ITag[];
 	loading = false;
-	private selectedOrganization: Organization;
+	private selectedOrganization: IOrganization;
 	private subscribeTakingSelectedOrganziation: Subscription;
 
 	@Input('isOrgLevel')
@@ -30,12 +30,12 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	isTenantLevel: boolean = false;
 
 	@Input('selectedTags')
-	selectedTags: Tag[];
+	selectedTags: ITag[];
 
 	selectedTagIds: string[];
 
 	@Output()
-	selectedTagsEvent = new EventEmitter<Tag[]>();
+	selectedTagsEvent = new EventEmitter<ITag[]>();
 
 	constructor(
 		private readonly tagsService: TagsService,
@@ -50,14 +50,14 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	}
 
 	addTag = async (tagName: string) => {
-		const newTag: Tag = {
+		this.loading = true;
+		const newTag: ITag = {
 			name: tagName,
 			color: '#' + Math.floor(Math.random() * 16777215).toString(16),
 			description: '',
-			organization: this.selectedOrganization
+			organization: this.selectedOrganization,
+			tenantId: this.selectedOrganization.tenantId
 		};
-
-		this.loading = true;
 		const tag = await this.tagsService.insertTag(newTag);
 		this.loading = false;
 		return tag;
@@ -71,7 +71,7 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 			}
 		);
 
-		this.selectedTagIds = this.selectedTags?.map((tag: Tag) => tag.id);
+		this.selectedTagIds = this.selectedTags?.map((tag: ITag) => tag.id);
 	}
 
 	async getAllTags() {
@@ -79,6 +79,7 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 			if (this.isOrgLevel) {
 				const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
 					this.selectedOrganization.id,
+					this.selectedOrganization.tenantId,
 					['organization']
 				);
 				this.tags = tagsByOrgLevel;

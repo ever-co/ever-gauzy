@@ -3,9 +3,14 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import {
-	User as IUser,
+	IUser,
+	IRole,
 	LanguagesEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	ITag,
+	IEmployee,
+	IPayment,
+	ITenant
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -28,32 +33,35 @@ import {
 	ManyToMany,
 	JoinTable,
 	OneToOne,
-	AfterLoad,
-	OneToMany
+	AfterLoad
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { Role } from '../role/role.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { Tag } from '../tags/tag.entity';
 import { Employee } from '../employee/employee.entity';
-import { Payment } from '../payment/payment.entity';
+import { Base } from '../core/entities/base';
+import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('user')
 export class User extends Base implements IUser {
+	@ApiProperty({ type: Tenant, readOnly: true })
+	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	@IsOptional()
+	tenant?: ITenant;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((t: User) => t.tenant)
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	tenantId?: string;
+
 	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_user'
 	})
-	tags?: Tag[];
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant?: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((user: User) => user.tenant)
-	readonly tenantId?: string;
+	tags?: ITag[];
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()
@@ -94,12 +102,12 @@ export class User extends Base implements IUser {
 	username?: string;
 
 	@OneToOne('Employee', (employee: Employee) => employee.user)
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiPropertyOptional({ type: Role })
 	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	role?: Role;
+	role?: IRole;
 
 	@ApiPropertyOptional({ type: String, readOnly: true })
 	@RelationId((user: User) => user.role)
@@ -116,17 +124,6 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
-
-	@ApiPropertyOptional({ type: Payment, isArray: true })
-	@OneToMany((type) => Payment, (payments) => payments.recordedBy)
-	@JoinColumn()
-	payments?: Payment[];
-
-	@ApiPropertyOptional({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	paymentsId?: string;
 
 	@ApiProperty({ type: String, enum: LanguagesEnum })
 	@IsEnum(LanguagesEnum)

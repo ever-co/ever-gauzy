@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { RequestApproval, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IRequestApproval, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -32,7 +32,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
 	public loading = true;
-	public selectedRequestApproval: RequestApproval;
+	public selectedRequestApproval: IRequestApproval;
 	public listApprovals: IApprovalsData[] = [];
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
@@ -43,7 +43,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	private ngDestroy$ = new Subject<void>();
 	private selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
-	requestApprovalData: RequestApproval[];
+	requestApprovalData: IRequestApproval[];
 
 	@ViewChild('requestApprovalTable') requestApprovalTable;
 
@@ -281,7 +281,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/organization/approval-policy']);
 	}
 
-	async save(isCreate: boolean, selectedItem?: RequestApproval) {
+	async save(isCreate: boolean, selectedItem?: IRequestApproval) {
 		let dialog;
 		if (selectedItem) {
 			this.selectRequestApproval({
@@ -312,7 +312,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete(selectedItem?: RequestApproval) {
+	async delete(selectedItem?: IRequestApproval) {
 		if (selectedItem) {
 			this.selectRequestApproval({
 				isSelected: true,

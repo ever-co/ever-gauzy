@@ -3,10 +3,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import {
 	CurrenciesEnum,
-	Employee,
+	IEmployee,
 	OrganizationSelectInput,
 	PayPeriodEnum,
-	Candidate
+	ICandidate
 } from '@gauzy/models';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
@@ -28,8 +28,8 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	paramSubscription: Subscription;
 	hoverState: boolean;
 	routeParams: Params;
-	selectedEmployee: Employee;
-	selectedCandidate: Candidate;
+	selectedEmployee: IEmployee;
+	selectedCandidate: ICandidate;
 
 	currencies = Object.values(CurrenciesEnum);
 	payPeriods = Object.values(PayPeriodEnum);
@@ -73,7 +73,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private async _initializeForm(role: Employee | Candidate) {
+	private async _initializeForm(role: IEmployee | ICandidate) {
 		const currencyValue =
 			role.billRateCurrency || (await this.getDefaultCurrency(role));
 
@@ -93,9 +93,9 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		this._ngDestroy$.complete();
 	}
 
-	private async getDefaultCurrency(role: Employee | Candidate) {
+	private async getDefaultCurrency(role: IEmployee | ICandidate) {
 		const orgData = await this.organizationsService
-			.getById(role.orgId, [OrganizationSelectInput.currency])
+			.getById(role.organizationId, [OrganizationSelectInput.currency])
 			.pipe(first())
 			.toPromise();
 

@@ -1,4 +1,4 @@
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
 
@@ -7,18 +7,18 @@ import { Injectable } from '@angular/core';
  */
 @Injectable()
 export class OrganizationEditStore {
-	private _selectedOrganization: Organization;
+	private _selectedOrganization: IOrganization;
 
-	selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(
+	selectedOrganization$: BehaviorSubject<IOrganization> = new BehaviorSubject(
 		this.selectedOrganization
 	);
 
-	set selectedOrganization(organization: Organization) {
+	set selectedOrganization(organization: IOrganization) {
 		this._selectedOrganization = organization;
 		this.selectedOrganization$.next(organization);
 	}
 
-	get selectedOrganization(): Organization {
+	get selectedOrganization(): IOrganization {
 		return this._selectedOrganization;
 	}
 

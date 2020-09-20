@@ -1,12 +1,13 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface ICandidatePersonalQualities extends IBaseEntityModel {
+export interface ICandidatePersonalQualities
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	interviewId?: string;
 	rating?: number;
 }
 
-export interface ICandidatePersonalQualitiesFindInput extends IBaseEntityModel {
+export interface ICandidatePersonalQualitiesFindInput {
 	name?: string;
 	interviewId?: string;
 	rating?: number;

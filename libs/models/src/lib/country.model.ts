@@ -1,6 +1,6 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface Country extends IBaseEntityModel {
+export interface ICountry extends IBasePerTenantAndOrganizationEntityModel {
 	isoCode: string;
 	country: string;
 }

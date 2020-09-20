@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Employee, Tag } from '@gauzy/models';
+import { IEmployee, ITag } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-departments-mutation',
@@ -8,7 +8,7 @@ import { Employee, Tag } from '@gauzy/models';
 })
 export class DepartmentsMutationComponent implements OnInit {
 	@Input()
-	employees: Employee[];
+	employees: IEmployee[];
 	@Input()
 	organizationId: string;
 	@Input()
@@ -24,7 +24,7 @@ export class DepartmentsMutationComponent implements OnInit {
 	members: string[];
 	name: string;
 	selectedEmployeeIds: string[];
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 
 	ngOnInit() {
 		if (this.department) {

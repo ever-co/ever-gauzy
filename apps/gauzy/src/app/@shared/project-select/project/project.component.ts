@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
-import { OrganizationProjects } from '@gauzy/models';
+import { IOrganizationProject } from '@gauzy/models';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -23,7 +23,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	private _projectId: string | string[];
 	private _employeeId: string;
 	private _organizationContactId: string;
-	projects: OrganizationProjects[];
+	projects: IOrganizationProject[];
 
 	@Input() disabled = false;
 	@Input() multiple = false;

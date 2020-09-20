@@ -1,82 +1,92 @@
-import { User } from './user.model';
-import { Employee } from './employee.model';
-import { TimeSlot } from 'apps/api/src/app/timesheet/time-slot.entity';
-import { OrganizationProjects } from 'apps/api/src/app/organization-projects/organization-projects.entity';
-import { Task } from './task-entity.model';
-import { TimeLog } from 'apps/api/src/app/timesheet/time-log.entity';
+import { IUser } from './user.model';
+import { IEmployee } from './employee.model';
+import { ITask } from './task-entity.model';
+import { ITimeSlot, ITimeLog } from './timesheet.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { IOrganization } from './organization.model';
+import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface GetTimeSlotStatistics {
+export interface IGetTimeSlotStatistics {
 	employeeId?: string;
 	organizationId: string;
+	tenantId: string;
 	date?: Date;
 	onlyMe?: boolean;
 }
 
-export interface TimeSlotStatistics extends Employee {
+export interface ITimeSlotStatistics extends IEmployee {
 	user_name?: string;
 	startedAt?: Date;
 	user_image_url?: string;
-	timeSlots?: TimeSlot[];
-	user: Pick<User, 'name' | 'imageUrl'>;
+	timeSlots?: ITimeSlot[];
+	user: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface GetActivitiesStatistics {
+export interface IGetActivitiesStatistics {
 	employeeId?: string;
 	organizationId: string;
+	tenantId: string;
 	date?: Date;
 	onlyMe?: boolean;
 }
 
-export interface ActivitiesStatistics {
+export interface IActivitiesStatistics {
 	durationPercentage?: number;
 	duration?: number;
 	title?: string;
 	sessions?: number;
 }
 
-export interface GetProjectsStatistics {
+export interface IGetProjectsStatistics {
 	organizationId: string;
+	tenantId: string;
 	employeeId?: string;
 	date?: Date;
 	onlyMe?: boolean;
 }
 
-export interface ProjectsStatistics extends OrganizationProjects {
+export interface IProjectsStatistics extends IOrganizationProject {
+	//base per tenant organization
+	organizationId?: string;
+	organization?: IOrganization;
+	tenantId?: string;
+	tenant?: ITenant;
 	duration?: number;
 	durationPercentage?: number;
 }
 
-export interface GetTasksStatistics {
-	organizationId: string;
+export interface IGetTasksStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	date?: Date;
 	onlyMe?: boolean;
 }
 
-export interface TasksStatistics extends Task {
+export interface ITasksStatistics extends ITask {
 	duration?: number;
 	durationPercentage?: number;
 }
 
-export interface GetManualTimesStatistics {
-	organizationId: string;
+export interface IGetManualTimesStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	date?: Date;
 	onlyMe?: boolean;
 }
 
-export interface ManualTimesStatistics
-	extends Pick<TimeLog, 'id' | 'startedAt' | 'duration'> {
-	user?: Pick<User, 'name' | 'imageUrl'>;
-	project?: Pick<OrganizationProjects, 'name'>;
+export interface IManualTimesStatistics
+	extends Pick<ITimeLog, 'id' | 'startedAt' | 'duration'> {
+	user?: Pick<IUser, 'name' | 'imageUrl'>;
+	project?: Pick<IOrganizationProject, 'name'>;
 }
 
-export interface GetMembersStatistics {
-	organizationId: string;
+export interface IGetMembersStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	date?: Date;
 }
 
-export interface MembersStatistics {
+export interface IMembersStatistics {
 	id?: string;
 	user_name?: string;
 	user_image_url?: string;
@@ -91,20 +101,20 @@ export interface MembersStatistics {
 		overall: number;
 		employeeId: string;
 	};
-	user?: Pick<User, 'name' | 'imageUrl'>;
+	user?: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface GetCountsStatistics {
-	organizationId: string;
+export interface IGetCountsStatistics
+	extends IBasePerTenantAndOrganizationEntityModel {
 	date?: Date;
 	onlyMe?: boolean;
 }
 
-export interface CountsStatistics {
+export interface ICountsStatistics {
 	employeesCount: number;
 	projectsCount: number;
-	weekActivites: number;
+	weekActivities: number;
 	weekDuration: number;
-	todayActivites: number;
+	todayActivities: number;
 	todayDuration: number;
 }

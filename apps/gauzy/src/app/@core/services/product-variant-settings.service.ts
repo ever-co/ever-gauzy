@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ProductVariantSettings } from '@gauzy/models';
+import { IProductVariantSetting } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -10,10 +10,10 @@ export class ProductVariantSettingsService {
 	constructor(private http: HttpClient) {}
 
 	updateProductVariantSettings(
-		productVariantSettings: ProductVariantSettings
-	): Promise<ProductVariantSettings> {
+		productVariantSettings: IProductVariantSetting
+	): Promise<IProductVariantSetting> {
 		return this.http
-			.put<ProductVariantSettings>(
+			.put<IProductVariantSetting>(
 				`${this.PRODUCT_VARIANT_SETTINGS_URL}/${productVariantSettings.id}`,
 				productVariantSettings
 			)
@@ -21,9 +21,9 @@ export class ProductVariantSettingsService {
 			.toPromise();
 	}
 
-	getProductVariantSettings(): Promise<ProductVariantSettings[]> {
+	getProductVariantSettings(): Promise<IProductVariantSetting[]> {
 		return this.http
-			.get<ProductVariantSettings[]>(this.PRODUCT_VARIANT_SETTINGS_URL)
+			.get<IProductVariantSetting[]>(this.PRODUCT_VARIANT_SETTINGS_URL)
 			.pipe(first())
 			.toPromise();
 	}

@@ -1,6 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { PermissionsEnum, Candidate, ICandidateInterview } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	ICandidate,
+	ICandidateInterview
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
@@ -22,7 +26,7 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 export class EditCandidateComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	selectedCandidate: Candidate;
+	selectedCandidate: ICandidate;
 	candidateName = 'Candidate';
 	interviewList: ICandidateInterview[];
 	hasEditPermission = false;

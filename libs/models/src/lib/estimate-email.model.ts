@@ -1,12 +1,13 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface EstimateEmail extends IBaseEntityModel {
+export interface IEstimateEmail
+	extends IBasePerTenantAndOrganizationEntityModel {
 	token?: string;
 	email?: string;
 	expireDate?: Date;
 }
 
-export interface EstimateEmailFindInput {
+export interface IEstimateEmailFindInput {
 	token?: string;
 	email?: string;
 }

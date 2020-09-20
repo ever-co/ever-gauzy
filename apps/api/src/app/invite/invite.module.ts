@@ -10,7 +10,7 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
 import { SharedModule } from '../shared';
 import { User } from '../user/user.entity';
@@ -38,7 +38,7 @@ import { RolePermissions } from '../role-permissions/role-permissions.entity';
 			Employee,
 			User,
 			UserOrganization,
-			OrganizationProjects,
+			OrganizationProject,
 			OrganizationContact,
 			OrganizationDepartment,
 			Organization,

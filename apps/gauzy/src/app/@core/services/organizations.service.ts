@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	Organization,
+	IOrganization,
 	OrganizationSelectInput,
-	OrganizationCreateInput,
-	OrganizationFindInput
+	IOrganizationCreateInput,
+	IOrganizationFindInput
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -13,14 +13,14 @@ import { first } from 'rxjs/operators';
 export class OrganizationsService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: OrganizationCreateInput): Promise<Organization> {
+	create(createInput: IOrganizationCreateInput): Promise<IOrganization> {
 		return this.http
-			.post<Organization>('/api/organization', createInput)
+			.post<IOrganization>('/api/organization', createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(id: string, updateInput: OrganizationCreateInput): Promise<any> {
+	update(id: string, updateInput: IOrganizationCreateInput): Promise<any> {
 		return this.http
 			.put(`/api/organization/${id}`, updateInput)
 			.pipe(first())
@@ -36,11 +36,11 @@ export class OrganizationsService {
 
 	getAll(
 		relations?: string[],
-		findInput?: OrganizationFindInput
-	): Promise<{ items: Organization[]; total: number }> {
+		findInput?: IOrganizationFindInput
+	): Promise<{ items: IOrganization[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: Organization[]; total: number }>(
+			.get<{ items: IOrganization[]; total: number }>(
 				`/api/organization`,
 				{
 					params: { data }
@@ -54,9 +54,9 @@ export class OrganizationsService {
 		id: string = '',
 		select?: OrganizationSelectInput[],
 		relations?: string[]
-	): Observable<Organization> {
+	): Observable<IOrganization> {
 		const data = JSON.stringify({ relations });
-		return this.http.get<Organization>(
+		return this.http.get<IOrganization>(
 			`/api/organization/${id}/${JSON.stringify(select || '')}`,
 			{
 				params: { data }
@@ -68,9 +68,9 @@ export class OrganizationsService {
 		profile_link: string = '',
 		select?: OrganizationSelectInput[],
 		relations?: string[]
-	): Observable<Organization> {
+	): Observable<IOrganization> {
 		const option = JSON.stringify(relations || '');
-		return this.http.get<Organization>(
+		return this.http.get<IOrganization>(
 			`/api/organization/profile/${profile_link}/${JSON.stringify(
 				select || ''
 			)}/${option}`

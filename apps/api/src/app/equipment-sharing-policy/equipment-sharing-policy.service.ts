@@ -2,7 +2,7 @@ import { CrudService, IPagination } from '../core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
-import { EquipmentSharingPolicy as IEquipmentSharingPolicy } from '@gauzy/models';
+import { IEquipmentSharingPolicy } from '@gauzy/models';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 
 @Injectable()
@@ -35,6 +35,7 @@ export class EquipmentSharingPolicyService extends CrudService<
 
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
+			policy.tenantId = entity.tenantId;
 			policy.description = entity.description;
 			return this.equipmentSharingRepository.save(policy);
 		} catch (error) {

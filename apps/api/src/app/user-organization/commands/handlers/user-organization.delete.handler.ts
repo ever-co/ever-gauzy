@@ -5,8 +5,7 @@ import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../user-organization.services';
 import { DeleteResult } from 'typeorm';
 import { RoleService } from '../../../role/role.service';
-import { RolesEnum, LanguagesEnum } from '@gauzy/models';
-import { User } from '../../../user/user.entity';
+import { RolesEnum, LanguagesEnum, IUser } from '@gauzy/models';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 
@@ -72,7 +71,7 @@ export class UserOrganizationDeleteHandler
 	}
 
 	private async _removeSuperAdmin(
-		requestingUser: User,
+		requestingUser: IUser,
 		userId: string,
 		language: LanguagesEnum
 	): Promise<UserOrganization | DeleteResult> {

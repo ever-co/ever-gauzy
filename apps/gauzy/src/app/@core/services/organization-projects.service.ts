@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	OrganizationProjectsCreateInput,
-	OrganizationProjects,
-	OrganizationProjectsFindInput,
-	EditEntityByMemberInput,
+	IOrganizationProjectsCreateInput,
+	IOrganizationProject,
+	IOrganizationProjectsFindInput,
+	IEditEntityByMemberInput,
 	TaskListTypeEnum
 } from '@gauzy/models';
 import { first, take } from 'rxjs/operators';
@@ -17,19 +17,19 @@ export class OrganizationProjectsService {
 	constructor(private http: HttpClient) {}
 	private readonly API_URL = '/api/organization-projects';
 	create(
-		createInput: OrganizationProjectsCreateInput
-	): Promise<OrganizationProjects> {
+		createInput: IOrganizationProjectsCreateInput
+	): Promise<IOrganizationProject> {
 		return this.http
-			.post<OrganizationProjects>(this.API_URL, createInput)
+			.post<IOrganizationProject>(this.API_URL, createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	edit(
-		editInput: Partial<OrganizationProjectsCreateInput & { id: string }>
-	): Promise<OrganizationProjects> {
+		editInput: Partial<IOrganizationProjectsCreateInput & { id: string }>
+	): Promise<IOrganizationProject> {
 		return this.http
-			.put<OrganizationProjects>(
+			.put<IOrganizationProject>(
 				`${this.API_URL}/${editInput.id}`,
 				editInput
 			)
@@ -39,11 +39,11 @@ export class OrganizationProjectsService {
 
 	getAllByEmployee(
 		id: string,
-		findInput: OrganizationProjectsFindInput = {}
-	): Promise<OrganizationProjects[]> {
+		findInput: IOrganizationProjectsFindInput = {}
+	): Promise<IOrganizationProject[]> {
 		const data = toParams({ findInput });
 		return this.http
-			.get<OrganizationProjects[]>(`${this.API_URL}/employee/${id}`, {
+			.get<IOrganizationProject[]>(`${this.API_URL}/employee/${id}`, {
 				params: data
 			})
 			.pipe(first())
@@ -52,12 +52,12 @@ export class OrganizationProjectsService {
 
 	getAll(
 		relations: string[],
-		findInput?: OrganizationProjectsFindInput
+		findInput?: IOrganizationProjectsFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: OrganizationProjects[]; total: number }>(
+			.get<{ items: IOrganizationProject[]; total: number }>(
 				`${this.API_URL}`,
 				{
 					params: { data }
@@ -68,12 +68,12 @@ export class OrganizationProjectsService {
 	}
 	getById(id: string) {
 		return this.http
-			.get<OrganizationProjects>(`${this.API_URL}/${id}`)
+			.get<IOrganizationProject>(`${this.API_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
-	updateByEmployee(updateInput: EditEntityByMemberInput): Promise<any> {
+	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
 		return this.http
 			.put(`${this.API_URL}/employee`, updateInput)
 			.pipe(first())

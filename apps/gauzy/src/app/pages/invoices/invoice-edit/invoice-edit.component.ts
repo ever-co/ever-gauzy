@@ -4,21 +4,21 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	Invoice,
-	OrganizationContact,
+	IInvoice,
+	IOrganizationContact,
 	CurrenciesEnum,
 	OrganizationSelectInput,
-	InvoiceItem,
-	Organization,
-	Employee,
+	IInvoiceItem,
+	IOrganization,
+	IEmployee,
 	PermissionsEnum,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
-	Tag,
-	Task,
-	OrganizationProjects,
-	Product,
-	Expense,
+	ITag,
+	ITask,
+	IOrganizationProject,
+	IProduct,
+	IExpense,
 	ExpenseTypesEnum
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
@@ -83,23 +83,23 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	formItemNumber: number;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
-	invoice: Invoice;
-	organization: Organization;
+	invoice: IInvoice;
+	organization: IOrganization;
 	itemsToDelete: string[] = [];
-	invoiceItems: InvoiceItem[];
-	selectedOrganizationContact: OrganizationContact;
-	organizationContacts: OrganizationContact[];
-	employees: Employee[];
-	projects: OrganizationProjects[];
-	products: Product[];
+	invoiceItems: IInvoiceItem[];
+	selectedOrganizationContact: IOrganizationContact;
+	organizationContacts: IOrganizationContact[];
+	employees: IEmployee[];
+	projects: IOrganizationProject[];
+	products: IProduct[];
 	currencies = Object.values(CurrenciesEnum);
 	invoiceDate: Date;
 	dueDate: Date;
 	hasInvoiceEditPermission: boolean;
-	tags: Tag[] = [];
-	tasks: Task[];
-	expenses: Expense[] = [];
-	observableTasks: Observable<Task[]>;
+	tags: ITag[] = [];
+	tasks: ITask[];
+	expenses: IExpense[] = [];
+	observableTasks: Observable<ITask[]>;
 	duplicate: boolean;
 	discountAfterTax: boolean;
 	subtotal = 0;
@@ -178,7 +178,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		});
 	}
 
-	seedFormData(invoice: Invoice) {
+	seedFormData(invoice: IInvoice) {
 		this.form.get('invoiceNumber').setValue(invoice.invoiceNumber);
 		this.form.get('invoiceDate').setValue(new Date(invoice.invoiceDate));
 		this.form.get('dueDate').setValue(new Date(invoice.dueDate));
@@ -455,7 +455,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		const organizationContacts = await this.organizationContactService.getAll(
 			[],
 			{
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			}
 		);
 
@@ -464,21 +465,20 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		switch (this.invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.employeeService
-					.getAll(['user'])
+					.getAll(['user'], {
+						organizationId: this.organization.id,
+						tenantId: this.organization.tenantId
+					})
 					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe(async (employees) => {
-						this.employees = employees.items.filter((emp) => {
-							return (
-								emp.orgId === this.organization.id ||
-								this.organization.id === ''
-							);
-						});
+					.subscribe(({ items }) => {
+						this.employees = items;
 					});
 				break;
 
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				const projects = await this.projectService.getAll([], {
-					organizationId: this.organization.id
+					organizationId: this.organization.id,
+					tenantId: this.organization.tenantId
 				});
 				this.projects = projects.items;
 				break;
@@ -501,7 +501,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				const expenses = await this.expensesService.getAll([], {
 					typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
 					organization: {
-						id: this.organization.id
+						id: this.organization.id,
+						tenantId: this.organization.tenantId
 					}
 				});
 
@@ -557,13 +558,16 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				discountValue: invoiceData.discountValue,
 				discountType: invoiceData.discountType,
 				tax: invoiceData.tax,
+				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
+				tax2Type: invoiceData.tax2Type,
 				terms: invoiceData.terms,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
 				organizationContactId: invoiceData.organizationContact.id,
 				toContact: invoiceData.organizationContact,
 				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				tags: this.tags,
 				status: status,
 				sentTo: sendTo
@@ -621,7 +625,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 
 			if (this.isEstimate) {
@@ -660,7 +665,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 		} else {
 			this.toastrService.danger(
@@ -722,6 +728,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				organizationContactId: invoiceData.organizationContact.id,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				invoiceType: this.invoice.invoiceType,
 				tags: this.tags,
 				isEstimate: this.isEstimate,
@@ -1029,7 +1036,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		]);
 	}
 
-	selectedTagsEvent(currentTagSelection: Tag[]) {
+	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.tags = currentTagSelection;
 	}
 

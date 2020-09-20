@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
-import { Employee, TimeOffPolicy, TimeOff } from '@gauzy/models';
+import { IEmployee, ITimeOffPolicy, ITimeOff } from '@gauzy/models';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
 import { TimeOffService } from '../../../@core/services/time-off.service';
@@ -29,12 +29,12 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
-	@Input() type: TimeOff | string;
+	@Input() type: ITimeOff | string;
 
 	form: FormGroup;
-	policies: TimeOffPolicy[] = [];
-	orgEmployees: Employee[];
-	employeesArr: Employee[] = [];
+	policies: ITimeOffPolicy[] = [];
+	orgEmployees: IEmployee[];
+	employeesArr: IEmployee[] = [];
 	holidays = [];
 	selectedEmployee: any;
 	documentUrl: any;
@@ -44,7 +44,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	status: string;
 	holidayName: string;
 	organizationId: string;
-	policy: TimeOffPolicy;
+	policy: ITimeOffPolicy;
 	startDate: Date = null;
 	endDate: Date = null;
 	requestDate: Date;
@@ -205,11 +205,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			.subscribe((res) => (this.orgEmployees = res.items));
 	}
 
-	onPolicySelected(policy: TimeOffPolicy) {
+	onPolicySelected(policy: ITimeOffPolicy) {
 		this.policy = policy;
 	}
 
-	onEmployeesSelected(employees: Employee[]) {
+	onEmployeesSelected(employees: IEmployee[]) {
 		this.employeesArr = employees;
 	}
 

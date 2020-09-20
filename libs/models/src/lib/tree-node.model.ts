@@ -1,5 +1,5 @@
-export interface TreeNode<T> {
+export interface ITreeNode<T> {
 	data: T;
-	children?: TreeNode<T>[];
+	children?: ITreeNode<T>[];
 	expanded?: boolean;
 }

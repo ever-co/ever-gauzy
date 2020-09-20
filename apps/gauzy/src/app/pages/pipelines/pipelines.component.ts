@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	PermissionsEnum,
-	Pipeline,
+	IPipeline,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { AppStore, Store } from '../../@core/services/store.service';
@@ -11,12 +11,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Subscription, Subject } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	templateUrl: './pipelines.component.html',
@@ -45,14 +45,8 @@ export class PipelinesComponent extends TranslationBaseComponent
 				width: '15%',
 				renderComponent: StatusBadgeComponent,
 				valuePrepareFunction: (cell, row) => {
-					let badgeClass;
-					if (row.isActive) {
-						badgeClass = 'success';
-						cell = 'Active';
-					} else {
-						badgeClass = 'warning';
-						cell = 'Inactive';
-					}
+					const badgeClass = row.isActive ? 'success' : 'warning';
+					cell = row.isActive ? 'Active' : 'Inactive';
 					return {
 						text: cell,
 						class: badgeClass
@@ -62,17 +56,16 @@ export class PipelinesComponent extends TranslationBaseComponent
 		}
 	};
 
-	pipelineData: Pipeline[];
+	pipelineData: IPipeline[];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	pipelines = new LocalDataSource([] as Pipeline[]);
+	pipelines = new LocalDataSource([] as IPipeline[]);
 	viewComponentName: ComponentEnum;
-	pipeline: Pipeline;
+	pipeline: IPipeline;
 	organizationId: string;
+	tenantId: string;
 	name: string;
 	CAN_EDIT_SALES_PIPELINES = false;
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
-	private permissionSubscription: Subscription;
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private pipelinesService: PipelinesService,
@@ -88,6 +81,7 @@ export class PipelinesComponent extends TranslationBaseComponent
 		appStore.akitaPreUpdate = (previous, next) => {
 			if (previous.selectedOrganization !== next.selectedOrganization) {
 				this.organizationId = next.selectedOrganization?.id;
+				this.tenantId = next.selectedOrganization?.tenantId;
 				// noinspection JSIgnoredPromiseFromCall
 				this.updatePipelines();
 			}
@@ -98,23 +92,24 @@ export class PipelinesComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.permissionSubscription = this.store.userRolePermissions$.subscribe(
-			() => {
+		this.store.userRolePermissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
 				this.CAN_EDIT_SALES_PIPELINES = this.store.hasPermission(
 					PermissionsEnum.EDIT_SALES_PIPELINES
 				);
-			}
-		);
+			});
 
 		if (!this.organizationId) {
 			setTimeout(async () => {
 				this.organizationId = this.store.selectedOrganization?.id;
+				this.tenantId = this.store.selectedOrganization?.tenantId;
 				await this.updatePipelines();
 			});
 		}
 
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -126,18 +121,19 @@ export class PipelinesComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.PROPOSALS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
 	}
 
 	async updatePipelines(): Promise<void> {
-		const { organizationId: value } = this;
-		const organizationId = value || void 0;
+		let { organizationId, tenantId } = this;
+		organizationId = organizationId || void 0;
+		tenantId = tenantId || void 0;
 
 		await this.pipelinesService
-			.find(['stages'], { organizationId })
+			.find(['stages'], { organizationId, tenantId })
 			.then(({ items }) => {
 				this.pipelineData = items;
 				this.pipelines.load(items);
@@ -177,9 +173,9 @@ export class PipelinesComponent extends TranslationBaseComponent
 	}
 
 	async createPipeline(): Promise<void> {
-		const { name, organizationId } = this;
+		const { name, organizationId, tenantId } = this;
 
-		await this.goto({ pipeline: { name, organizationId } });
+		await this.goto({ pipeline: { name, organizationId, tenantId } });
 		delete this.name;
 	}
 
@@ -212,7 +208,6 @@ export class PipelinesComponent extends TranslationBaseComponent
 
 	ngOnDestroy(): void {
 		this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
-		this.permissionSubscription.unsubscribe();
 		clearTimeout();
 	}
 }

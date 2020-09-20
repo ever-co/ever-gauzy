@@ -6,7 +6,7 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import { PipelineStageUpdateInput } from '@gauzy/models';
+import { IPipelineStageUpdateInput } from '@gauzy/models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -18,7 +18,7 @@ import { first } from 'rxjs/operators';
 })
 export class StageFormComponent implements OnInit {
 	@Input('values')
-	stages: PipelineStageUpdateInput[];
+	stages: IPipelineStageUpdateInput[];
 
 	@Input()
 	pipelineId: string;
@@ -52,7 +52,7 @@ export class StageFormComponent implements OnInit {
 			id,
 			name,
 			description
-		}: Omit<PipelineStageUpdateInput, 'pipelineId'> = {} as any
+		}: Omit<IPipelineStageUpdateInput, 'pipelineId'> = {} as any
 	): void {
 		const { pipelineId } = this;
 

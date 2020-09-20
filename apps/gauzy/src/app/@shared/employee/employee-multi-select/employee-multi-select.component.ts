@@ -6,7 +6,7 @@ import {
 	OnInit,
 	forwardRef
 } from '@angular/core';
-import { Employee } from '@gauzy/models';
+import { IEmployee } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 
 @Component({
@@ -40,13 +40,13 @@ export class EmployeeSelectComponent implements OnInit {
 		}
 	}
 
-	employees: Employee[];
-	private _allEmployees: Employee[];
+	employees: IEmployee[];
+	private _allEmployees: IEmployee[];
 	@Input()
-	public get allEmployees(): Employee[] {
+	public get allEmployees(): IEmployee[] {
 		return this._allEmployees;
 	}
-	public set allEmployees(value: Employee[]) {
+	public set allEmployees(value: IEmployee[]) {
 		this._allEmployees = value;
 		this.employees = this._allEmployees;
 	}

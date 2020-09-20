@@ -1,8 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import { ExpenseCreateInput as IExpenseCreateInput } from '@gauzy/models';
+import { IExpenseCreateInput } from '@gauzy/models';
 
 export class ExpenseCreateCommand implements ICommand {
-  static readonly type = '[Expense] Create';
+	static readonly type = '[Expense] Create';
 
-  constructor(public readonly input: IExpenseCreateInput) { }
+	constructor(public readonly input: IExpenseCreateInput) {}
 }

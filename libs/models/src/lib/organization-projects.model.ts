@@ -1,41 +1,39 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from './employee.model';
-import { OrganizationContact } from './organization-contact.model';
+import { IEmployee } from './employee.model';
+import { IOrganizationContact } from './organization-contact.model';
 import {
 	CurrenciesEnum,
 	ProjectBillingEnum,
 	ProjectOwnerEnum
 } from './organization.model';
-import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
-import { Tag } from './tag-entity.model';
-import { Task } from './task-entity.model';
-import { ITenant } from './tenant.model';
-import { OrganizationSprint, Payment } from '@gauzy/models';
+import { IBaseEntityWithMembers } from './entity-with-members.model';
+import { ITag } from './tag-entity.model';
+import { ITask } from './task-entity.model';
+import { IOrganizationSprint } from './organization-sprint.model';
+import { IPayment } from './payment.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface OrganizationProjects extends IBaseEntityWithMembers {
+export interface IOrganizationProject extends IBaseEntityWithMembers {
 	name: string;
-	organizationId: string;
-	organizationContact?: OrganizationContact;
+	organizationContact?: IOrganizationContact;
 	organizationContactId?: string;
 	startDate?: Date;
 	endDate?: Date;
 	billing: string;
 	currency: string;
-	members?: Employee[];
+	members?: IEmployee[];
 	public: boolean;
-	tags: Tag[];
+	tags: ITag[];
 	owner: string;
-	tasks?: Task[];
-	tenant: ITenant;
-	organizationSprints?: OrganizationSprint[];
+	tasks?: ITask[];
+	organizationSprints?: IOrganizationSprint[];
 	taskListType: string;
-	payments?: Payment[];
+	payments?: IPayment[];
 	// prefix to project tasks / issues, e.g. GA-XXXX (GA is prefix)
 	code?: string;
 	description?: string;
 	// the color of project which is used in UI
 	color?: string;
-	// is project billible?
+	// is project billable?
 	billable?: boolean;
 	// true if the project is flat rate, false if the project is time / materials billable
 	billingFlat?: boolean;
@@ -46,30 +44,30 @@ export enum TaskListTypeEnum {
 	SPRINT = 'SPRINT'
 }
 
-export interface OrganizationProjectsFindInput extends IBaseEntityModel {
+export interface IOrganizationProjectsFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	organizationId?: string;
 	organizationContactId?: string;
-	organizationContact?: OrganizationContact;
-	members?: Employee[];
+	organizationContact?: IOrganizationContact;
+	members?: IEmployee[];
 	public?: boolean;
-	tags?: Tag[];
+	tags?: ITag[];
 	billable?: boolean;
 	billingFlat?: boolean;
 }
 
-export interface OrganizationProjectsCreateInput {
+export interface IOrganizationProjectsCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
-	organizationContact?: OrganizationContact;
+	organizationContact?: IOrganizationContact;
 	organizationContactId?: string;
 	startDate?: Date;
 	endDate?: Date;
 	billing?: ProjectBillingEnum;
 	currency?: CurrenciesEnum;
-	members?: Employee[];
+	members?: IEmployee[];
 	public?: boolean;
-	tags?: Tag[];
+	tags?: ITag[];
 	owner?: ProjectOwnerEnum;
 	code?: string;
 	description?: string;
@@ -79,7 +77,7 @@ export interface OrganizationProjectsCreateInput {
 	status?: string;
 }
 
-export interface OrganizationProjectsUpdateInput
-	extends OrganizationProjectsCreateInput {
+export interface IOrganizationProjectsUpdateInput
+	extends IOrganizationProjectsCreateInput {
 	id?: string;
 }

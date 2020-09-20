@@ -3,10 +3,11 @@ import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import {
-	Proposal,
+	IProposal,
 	PermissionsEnum,
-	Tag,
-	ComponentLayoutStyleEnum
+	ITag,
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
@@ -23,7 +24,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 export interface ProposalViewModel {
-	tags?: Tag[];
+	tags?: ITag[];
 	valueDate: Date;
 	id: string;
 	employeeId?: string;
@@ -78,6 +79,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 	disableButton = true;
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
+	selectedOrganization: IOrganization;
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -109,6 +111,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
+					this.selectedOrganization = org;
 					this._selectedOrganizationId = org.id;
 					this._loadTableData(this._selectedOrganizationId);
 				}
@@ -160,7 +163,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.router.navigate(['/pages/sales/proposals/register']);
 	}
 
-	details(selectedItem?: Proposal) {
+	details(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
@@ -172,7 +175,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		]);
 	}
 
-	delete(selectedItem?: Proposal) {
+	delete(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
@@ -208,7 +211,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			});
 	}
 
-	switchToAccepted(selectedItem?: Proposal) {
+	switchToAccepted(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
@@ -247,7 +250,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			});
 	}
 
-	switchToSent(selectedItem?: Proposal) {
+	switchToSent(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
@@ -363,13 +366,16 @@ export class ProposalsComponent extends TranslationBaseComponent
 	private async _loadTableData(orgId?: string) {
 		this.showTable = false;
 		this.selectedProposal = null;
-		let items: Proposal[];
+		this.disableButton = true;
+
+		let items: IProposal[];
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
 				['employee', 'organization', 'tags'],
 				{
 					employeeId: this.selectedEmployeeId,
-					organizationId: this._selectedOrganizationId
+					organizationId: this._selectedOrganizationId,
+					tenantId: this.selectedOrganization.tenantId
 				},
 				this.selectedDate
 			);
@@ -379,7 +385,10 @@ export class ProposalsComponent extends TranslationBaseComponent
 		} else {
 			const response = await this.proposalsService.getAll(
 				['organization', 'employee', 'employee.user', 'tags'],
-				{ organizationId: orgId },
+				{
+					organizationId: orgId,
+					tenantId: this.selectedOrganization.tenantId
+				},
 				this.selectedDate
 			);
 

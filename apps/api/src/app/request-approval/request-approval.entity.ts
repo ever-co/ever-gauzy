@@ -16,20 +16,18 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { Base } from '../core/entities/base';
-import {
-	RequestApproval as IRequestApproval,
-	ApprovalPolicyTypesStringEnum
-} from '@gauzy/models';
+import { IRequestApproval, ApprovalPolicyTypesStringEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber, IsEnum } from 'class-validator';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
 import { Tag } from '../tags/tag.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('request_approval')
-export class RequestApproval extends Base implements IRequestApproval {
+export class RequestApproval extends TenantOrganizationBase
+	implements IRequestApproval {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Invite, RolesEnum, UserRegistrationInput } from '@gauzy/models';
+import { IInvite, RolesEnum, IUserRegistrationInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { InviteService } from '../../@core/services/invite.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,7 +12,7 @@ import { SetLanguageBaseComponent } from '../../@shared/language-base/set-langua
 })
 export class AcceptInvitePage extends SetLanguageBaseComponent
 	implements OnInit, OnDestroy {
-	invitation: Invite;
+	invitation: IInvite;
 	loading = true;
 	inviteLoadErrorMessage = '';
 
@@ -48,7 +48,7 @@ export class AcceptInvitePage extends SetLanguageBaseComponent
 		this.loading = false;
 	};
 
-	submitForm = async (userRegistrationInput: UserRegistrationInput) => {
+	submitForm = async (userRegistrationInput: IUserRegistrationInput) => {
 		try {
 			const { organization } = this.invitation;
 

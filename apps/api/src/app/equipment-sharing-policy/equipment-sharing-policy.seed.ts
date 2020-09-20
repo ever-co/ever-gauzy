@@ -1,12 +1,13 @@
 import { Connection } from 'typeorm';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
 export const createDefaultEquipmentSharingPolicyForOrg = async (
 	connection: Connection,
 	defaultData: {
-		orgs: Organization[];
+		orgs: IOrganization[];
+		tenant: Tenant;
 	}
 ): Promise<void> => {
 	const promises = [];
@@ -16,6 +17,7 @@ export const createDefaultEquipmentSharingPolicyForOrg = async (
 		defaultEquipmentSharingPolicy.name = 'Default Approval Policy';
 		defaultEquipmentSharingPolicy.organizationId = org.id;
 		defaultEquipmentSharingPolicy.description = 'Default approval policy';
+		defaultEquipmentSharingPolicy.tenant = defaultData.tenant;
 		promises.push(
 			insertDefaultPolicy(connection, defaultEquipmentSharingPolicy)
 		);
@@ -39,7 +41,7 @@ const insertDefaultPolicy = async (
 export const createRandomEquipmentSharingPolicyForOrg = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<EquipmentSharingPolicy[]> => {
 	const policies: EquipmentSharingPolicy[] = [];
 	const policyArray = ['Equipment Sharing Policy'];
@@ -51,6 +53,7 @@ export const createRandomEquipmentSharingPolicyForOrg = async (
 				policy.description = name;
 				policy.name = name;
 				policy.organization = org;
+				policy.tenant = tenant;
 				policies.push(policy);
 			});
 		});

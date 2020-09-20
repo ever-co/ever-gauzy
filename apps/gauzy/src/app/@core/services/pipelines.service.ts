@@ -2,26 +2,26 @@ import { Store } from './store.service';
 import { HttpClient } from '@angular/common/http';
 import { Service } from './service';
 import {
-	Deal,
-	Pipeline,
-	PipelineCreateInput,
-	PipelineFindInput
+	IDeal,
+	IPipeline,
+	IPipelineCreateInput,
+	IPipelineFindInput
 } from '@gauzy/models';
 import { Injectable } from '@angular/core';
 
 @Injectable()
 export class PipelinesService extends Service<
-	Pipeline,
-	PipelineFindInput,
-	PipelineCreateInput
+	IPipeline,
+	IPipelineFindInput,
+	IPipelineCreateInput
 > {
 	public constructor(protected store: Store, protected http: HttpClient) {
 		super({ http, basePath: '/api/pipelines' });
 	}
 
-	public findDeals(id: string): Promise<{ items: Deal[]; total: number }> {
+	public findDeals(id: string): Promise<{ items: IDeal[]; total: number }> {
 		return this.http
-			.get<{ items: Deal[]; total: number }>(
+			.get<{ items: IDeal[]; total: number }>(
 				`${this.basePath}/${id}/deals`
 			)
 			.toPromise();

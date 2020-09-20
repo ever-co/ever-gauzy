@@ -1,4 +1,3 @@
-import { Base } from '../core/entities/base';
 import {
 	Entity,
 	Column,
@@ -11,9 +10,8 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
-
-import { Task as ITask, TaskStatusEnum } from '@gauzy/models';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { ITask, TaskStatusEnum } from '@gauzy/models';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Employee } from '../employee/employee.entity';
@@ -21,9 +19,10 @@ import { OrganizationTeam } from '../organization-team/organization-team.entity'
 import { User } from '../user/user.entity';
 import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('task')
-export class Task extends Base implements ITask {
+export class Task extends TenantOrganizationBase implements ITask {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.task)
 	@JoinTable({
@@ -53,13 +52,13 @@ export class Task extends Base implements ITask {
 	@IsOptional()
 	dueDate?: Date;
 
-	@ApiProperty({ type: OrganizationProjects })
-	@ManyToOne((type) => OrganizationProjects, {
+	@ApiProperty({ type: OrganizationProject })
+	@ManyToOne((type) => OrganizationProject, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	project?: OrganizationProjects;
+	project?: OrganizationProject;
 
 	@OneToMany((type) => TimeLog, (timeLog) => timeLog.task)
 	timeLogs?: TimeLog[];

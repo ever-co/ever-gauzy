@@ -10,9 +10,9 @@ import { User } from '../../user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Tag } from '../../tags/tag.entity';
 import { Activity } from '../../timesheet/activity.entity';
-import { AvailabilitySlots } from '../../availability-slots/availability-slots.entity';
+import { AvailabilitySlot } from '../../availability-slots/availability-slots.entity';
 import { ApprovalPolicy } from '../../approval-policy/approval-policy.entity';
-import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
+import { AppointmentEmployee } from '../../appointment-employees/appointment-employees.entity';
 import { CandidateTechnologies } from '../../candidate-technologies/candidate-technologies.entity';
 import { CandidateSource } from '../../candidate-source/candidate-source.entity';
 import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
@@ -79,7 +79,7 @@ import { OrganizationDocuments } from '../../organization-documents/organization
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { OrganizationLanguages } from '../../organization-languages/organization-languages.entity';
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
-import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
 import { OrganizationTeam } from '../../organization-team/organization-team.entity';
@@ -100,6 +100,7 @@ import { ProductOption } from '../../product-option/product-option.entity';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { Product } from '../../product/product.entity';
 import { convertToDatetime } from '../../core/utils';
+import { FileStorage } from '../../core/file-storage';
 
 @Injectable()
 export class ImportAllService implements OnDestroy {
@@ -107,17 +108,17 @@ export class ImportAllService implements OnDestroy {
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
 
-		@InjectRepository(AppointmentEmployees)
+		@InjectRepository(AppointmentEmployee)
 		private readonly appointmentEmployeesRepository: Repository<
-			AppointmentEmployees
+			AppointmentEmployee
 		>,
 
 		@InjectRepository(ApprovalPolicy)
 		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>,
 
-		@InjectRepository(AvailabilitySlots)
+		@InjectRepository(AvailabilitySlot)
 		private readonly availabilitySlotsRepository: Repository<
-			AvailabilitySlots
+			AvailabilitySlot
 		>,
 
 		@InjectRepository(Candidate)
@@ -342,9 +343,9 @@ export class ImportAllService implements OnDestroy {
 			OrganizationPositions
 		>,
 
-		@InjectRepository(OrganizationProjects)
+		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<
-			OrganizationProjects
+			OrganizationProject
 		>,
 
 		@InjectRepository(OrganizationRecurringExpense)
@@ -606,13 +607,21 @@ export class ImportAllService implements OnDestroy {
 		}
 	}
 
-	public unzipAndParse(filePath, cleanup: boolean = false) {
-		fs.createReadStream(filePath)
-			.pipe(unzipper.Extract({ path: this.__dirname }))
-			.on('close', () => {
-				console.log('Starting Import');
-				this.parse(cleanup);
-			});
+	public async unzipAndParse(filePath, cleanup: boolean = false) {
+		const file = await new FileStorage().getProvider().getFile(filePath);
+
+		await unzipper.Open.buffer(file).then((d) =>
+			d.extract({ path: this.__dirname })
+		);
+
+		this.parse(cleanup);
+
+		// fs.createReadStream(file)
+		// 	.pipe(unzipper.Extract({ path: this.__dirname }))
+		// 	.on('close', () => {
+		// 		console.log('Starting Import');
+		// 		this.parse(cleanup);
+		// 	});
 	}
 
 	parse(cleanup: boolean = false) {

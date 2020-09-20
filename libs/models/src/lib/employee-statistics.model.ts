@@ -1,24 +1,24 @@
-import { User } from './user.model';
-import { Expense } from './expense.model';
-import { OrganizationRecurringExpense } from './organization-recurring-expense.model';
+import { IUser } from './user.model';
+import { IExpense } from './expense.model';
+import { IOrganizationRecurringExpense } from './organization-recurring-expense.model';
 
-export interface EmployeeStatisticsFindInput {
+export interface IEmployeeStatisticsFindInput {
 	valueDate: Date;
 }
 
-export interface EmployeeStatistics {
+export interface IEmployeeStatistics {
 	expenseStatistics: number[];
 	incomeStatistics: number[];
 	profitStatistics: number[];
 	bonusStatistics: number[];
 }
-export interface MonthAggregatedEmployeeStatisticsFindInput {
+export interface IMonthAggregatedEmployeeStatisticsFindInput {
 	employeeId: string;
 	valueDate: Date;
 	months: number;
 }
 
-export interface MonthAggregatedEmployeeStatistics {
+export interface IMonthAggregatedEmployeeStatistics {
 	month: number;
 	year: number;
 	income: number;
@@ -29,38 +29,39 @@ export interface MonthAggregatedEmployeeStatistics {
 	directIncomeBonus: number;
 }
 
-export interface MonthAggregatedSplitExpense {
+export interface IMonthAggregatedSplitExpense {
 	month: number;
 	year: number;
-	expense?: Expense[];
-	recurringExpense?: OrganizationRecurringExpense[];
+	expense?: IExpense[];
+	recurringExpense?: IOrganizationRecurringExpense[];
 	splitExpense: number;
 	splitAmong: number;
 	valueDate?: Date;
 }
 
-export interface AggregatedEmployeeStatisticFindInput {
+export interface IAggregatedEmployeeStatisticFindInput {
 	organizationId: string;
+	tenantId: string;
 	filterDate: Date;
 }
 
-export interface StatisticSum {
+export interface IStatisticSum {
 	expense: number;
 	income: number;
 	profit: number;
 	bonus: number;
 }
 
-export interface EmployeeStatisticSum extends StatisticSum {
+export interface IEmployeeStatisticSum extends IStatisticSum {
 	employee: {
 		id: string;
-		user: User;
+		user: IUser;
 	};
 }
 
-export interface AggregatedEmployeeStatistic {
-	total: StatisticSum;
-	employees: EmployeeStatisticSum[];
+export interface IAggregatedEmployeeStatistic {
+	total: IStatisticSum;
+	employees: IEmployeeStatisticSum[];
 }
 
 export enum EmployeeStatisticsHistoryEnum {
@@ -72,7 +73,7 @@ export enum EmployeeStatisticsHistoryEnum {
 	PROFIT = 'PROFIT'
 }
 
-export interface EmployeeStatisticsHistory {
+export interface IEmployeeStatisticsHistory {
 	valueDate: Date;
 	amount: number;
 	notes?: string;
@@ -83,14 +84,14 @@ export interface EmployeeStatisticsHistory {
 	isBonus?: boolean;
 	isSalary?: boolean;
 	source?: 'employee' | 'org';
-	splitExpense?: SplitExpense;
+	splitExpense?: ISplitExpense;
 }
-export interface SplitExpense {
+export interface ISplitExpense {
 	originalValue: number;
 	employeeCount: number;
 }
 
-export interface EmployeeStatisticsHistoryFindInput
-	extends MonthAggregatedEmployeeStatisticsFindInput {
+export interface IEmployeeStatisticsHistoryFindInput
+	extends IMonthAggregatedEmployeeStatisticsFindInput {
 	type: EmployeeStatisticsHistoryEnum;
 }

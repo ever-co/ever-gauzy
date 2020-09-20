@@ -1,11 +1,9 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { RolePermissions } from './role-permission.model';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantEntityModel } from './base-entity.model';
+import { IRolePermission } from './role-permission.model';
 
-export interface Role extends IBaseEntityModel {
+export interface IRole extends IBasePerTenantEntityModel {
 	name: string;
-	rolePermissions: RolePermissions[];
-	tenant: ITenant;
+	rolePermissions: IRolePermission[];
 }
 
 export enum RolesEnum {

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { OrganizationProjects } from '@gauzy/models';
+import { IOrganizationProject } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -23,8 +23,8 @@ import { DefaultEditor } from 'ng2-smart-table';
 })
 export class InvoiceProjectsSelectorComponent extends DefaultEditor
 	implements OnInit, OnDestroy {
-	project: OrganizationProjects;
-	projects: OrganizationProjects[];
+	project: IOrganizationProject;
+	projects: IOrganizationProject[];
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(

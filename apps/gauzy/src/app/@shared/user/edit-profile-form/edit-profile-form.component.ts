@@ -15,10 +15,10 @@ import {
 import { UsersService } from '../../../@core/services/users.service';
 import { Store } from '../../../@core/services/store.service';
 import {
-	User,
-	UserFindInput,
+	IUser,
+	IUserFindInput,
 	RolesEnum,
-	Tag,
+	ITag,
 	LanguagesEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
@@ -39,7 +39,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	hoverState: boolean;
 	roleName: string;
 
-	accountInfo: UserFindInput;
+	accountInfo: IUserFindInput;
 	password: AbstractControl;
 	repeatPassword: AbstractControl;
 
@@ -47,11 +47,11 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	repeatPasswordErrorMsg: string;
 
 	matchPassword = true;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	selectedTags: any;
 
 	@Input()
-	selectedUser: User;
+	selectedUser: IUser;
 
 	@Input()
 	allowRoleChange = false;
@@ -197,7 +197,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _initializeForm(user: User) {
+	private _initializeForm(user: IUser) {
 		this.form = this.fb.group({
 			firstName: [user.firstName],
 			lastName: [user.lastName],
@@ -235,7 +235,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		this.validations.repeatPasswordControl();
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 

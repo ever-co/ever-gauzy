@@ -5,17 +5,17 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import {
 	CurrenciesEnum,
-	Invoice,
-	OrganizationContact,
-	Organization,
-	OrganizationProjects,
-	Task,
-	Employee,
+	IInvoice,
+	IOrganizationContact,
+	IOrganization,
+	IOrganizationProject,
+	ITask,
+	IEmployee,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
-	Product,
-	Tag,
-	Expense,
+	IProduct,
+	ITag,
+	IExpense,
 	ExpenseTypesEnum,
 	ExpenseStatusesEnum,
 	ContactType,
@@ -56,27 +56,27 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	loading = true;
 	form: FormGroup;
-	invoice?: Invoice;
-	createdInvoice: Invoice;
+	invoice?: IInvoice;
+	createdInvoice: IInvoice;
 	formInvoiceNumber: number;
 	currencies = Object.values(CurrenciesEnum);
 	invoiceTypes = Object.values(InvoiceTypeEnum);
 	smartTableSource = new LocalDataSource();
 	generatedTask: string;
-	organization: Organization;
-	selectedTasks: Task[];
-	observableTasks: Observable<Task[]>;
-	tasks: Task[];
-	organizationContact: OrganizationContact;
-	organizationContacts: OrganizationContact[];
-	selectedProjects: OrganizationProjects[];
-	projects: OrganizationProjects[];
-	employees: Employee[];
+	organization: IOrganization;
+	selectedTasks: ITask[];
+	observableTasks: Observable<ITask[]>;
+	tasks: ITask[];
+	organizationContact: IOrganizationContact;
+	organizationContacts: IOrganizationContact[];
+	selectedProjects: IOrganizationProject[];
+	projects: IOrganizationProject[];
+	employees: IEmployee[];
 	selectedEmployeeIds: string[];
-	products: Product[];
-	selectedProducts: Product[];
-	expenses: Expense[];
-	selectedExpenses: Expense[];
+	products: IProduct[];
+	selectedProducts: IProduct[];
+	expenses: IExpense[];
+	selectedExpenses: IExpense[];
 	invoiceType: string;
 	selectedInvoiceType: string;
 	shouldLoadTable: boolean;
@@ -90,7 +90,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	discountAfterTax: boolean;
 	subtotal = 0;
 	total = 0;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	get currency() {
 		return this.form.get('currency');
@@ -437,6 +437,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				totalValue: +this.total.toFixed(2),
 				toContact: invoiceData.organizationContact,
 				organizationContactId: invoiceData.organizationContact.id,
+				tenantId: invoiceData.organizationContact.tenantId,
 				fromOrganization: this.organization,
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
@@ -487,7 +488,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 
 			if (this.isEstimate) {
@@ -526,7 +528,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 		} else {
 			this.toastrService.danger(
@@ -689,7 +692,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 					const projects = await this.organizationProjectsService.getAll(
 						[],
-						{ organizationId: organization.id }
+						{
+							organizationId: organization.id,
+							tenantId: organization.tenantId
+						}
 					);
 					this.projects = projects.items;
 					this.organization = organization;
@@ -707,7 +713,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					const res = await this.organizationContactService.getAll(
 						['projects'],
 						{
-							organizationId: organization.id
+							organizationId: organization.id,
+							tenantId: organization.tenantId
 						}
 					);
 
@@ -728,7 +735,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					const expenses = await this.expensesService.getAll([], {
 						typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
 						organization: {
-							id: organization.id
+							id: organization.id,
+							tenantId: organization.tenantId
 						}
 					});
 					this.expenses = expenses.items;
@@ -1100,7 +1108,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	addNewOrganizationContact = (
 		name: string
-	): Promise<OrganizationContact> => {
+	): Promise<IOrganizationContact> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
@@ -1115,7 +1123,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return this.organizationContactService.create({
 				name,
 				contactType: ContactType.CLIENT,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.organization.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -1135,7 +1144,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			this.loadSmartTable();
 		});
 	}
-	selectedTagsEvent(currentTagSelection: Tag[]) {
+	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.tags = currentTagSelection;
 	}
 

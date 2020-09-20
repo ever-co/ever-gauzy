@@ -1,11 +1,11 @@
-import { OrganizationVendorEnum, Organization } from '@gauzy/models';
+import { OrganizationVendorEnum, IOrganization } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { OrganizationVendor } from './organization-vendors.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
 export const createOrganizationVendors = async (
 	connection: Connection,
-	organizations: Organization[]
+	organizations: IOrganization[]
 ): Promise<OrganizationVendor[]> => {
 	let defaultOrganizationVendors: OrganizationVendor[] = [];
 
@@ -31,11 +31,11 @@ export const createOrganizationVendors = async (
 export const createRandomOrganizationVendors = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
-): Promise<Map<Organization, OrganizationVendor[]>> => {
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+): Promise<Map<IOrganization, OrganizationVendor[]>> => {
 	let organizationVendors: OrganizationVendor[] = [];
 	const organizationVendorsMap: Map<
-		Organization,
+		IOrganization,
 		OrganizationVendor[]
 	> = new Map();
 

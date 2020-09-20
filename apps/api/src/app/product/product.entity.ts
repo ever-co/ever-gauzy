@@ -8,7 +8,7 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { Product as IProduct } from '@gauzy/models';
+import { IProduct } from '@gauzy/models';
 import { ProductVariant } from '../product-variant/product-variant.entity';
 import { ProductType } from '../product-type/product-type.entity';
 import { ProductCategory } from '../product-category/product-category.entity';
@@ -17,10 +17,10 @@ import { IsString, IsOptional } from 'class-validator';
 import { ProductOption } from '../product-option/product-option.entity';
 import { Tag } from '../tags/tag.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('product')
-export class Product extends TenantBase implements IProduct {
+export class Product extends TenantOrganizationBase implements IProduct {
 	@ManyToMany((type) => Tag, (tag) => tag.product)
 	@JoinTable({
 		name: 'tag_product'

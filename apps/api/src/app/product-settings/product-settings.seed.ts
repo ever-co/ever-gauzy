@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { ProductVariantSettings } from './product-settings.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
@@ -10,7 +10,7 @@ import { ProductVariant } from '../product-variant/product-variant.entity';
 export const createRandomProductVariantSettings = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<ProductVariantSettings[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
@@ -51,6 +51,7 @@ export const createRandomProductVariantSettings = async (
 						productVariantSetting.canBeRented = faker.random.boolean();
 						productVariantSetting.isEquipment = faker.random.boolean();
 						productVariantSetting.trackInventory = faker.random.boolean();
+						productVariantSetting.tenant = tenant;
 
 						productVariantSettings.push(productVariantSetting);
 					}

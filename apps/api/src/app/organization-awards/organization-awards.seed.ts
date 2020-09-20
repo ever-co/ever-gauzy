@@ -13,6 +13,7 @@ let defaultAwardsData = {
 
 export const createDefaultAwards = async (
   connection: Connection,
+  tenant: Tenant,
   organizations: Organization[]
 ): Promise<OrganizationAwards[]> => {
   let awards :OrganizationAwards[] = [];
@@ -23,6 +24,7 @@ export const createDefaultAwards = async (
         award.name= awardsName;
         award.year = defaultAwardsData[awardsName];
         award.organization = org;
+        award.tenant = tenant;
         awards.push(award);
     }
   }
@@ -45,6 +47,7 @@ export const createRandomAwards = async (
         award.name=awardsData[i];
         award.year = faker.random.number({min:1990,max:2020}).toString();
         award.organization = org;
+        award.tenant = tenant;
         awards.push(award);
       }
     }

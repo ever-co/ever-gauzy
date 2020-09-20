@@ -18,41 +18,38 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
-import { Organization } from '../organization/organization.entity';
+import {
+	IExpense,
+	CurrenciesEnum,
+	IOrganizationVendor,
+	IExpenseCategory,
+	ITag,
+	IEmployee
+} from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('expense')
-export class Expense extends TenantBase implements IExpense {
+export class Expense extends TenantOrganizationBase implements IExpense {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.expense)
 	@JoinTable({
 		name: 'tag_expense'
 	})
-	tags: Tag[];
+	tags: ITag[];
 
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((expense: Expense) => expense.employee)
 	@Column({ nullable: true })
 	readonly employeeId?: string;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((expense: Expense) => expense.organization)
-	readonly orgId: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
@@ -73,7 +70,7 @@ export class Expense extends TenantBase implements IExpense {
 		nullable: false
 	})
 	@JoinColumn()
-	vendor: OrganizationVendor;
+	vendor: IOrganizationVendor;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((expense: Expense) => expense.vendor)
@@ -84,7 +81,7 @@ export class Expense extends TenantBase implements IExpense {
 		nullable: false
 	})
 	@JoinColumn()
-	category: ExpenseCategory;
+	category: IExpenseCategory;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((expense: Expense) => expense.category)

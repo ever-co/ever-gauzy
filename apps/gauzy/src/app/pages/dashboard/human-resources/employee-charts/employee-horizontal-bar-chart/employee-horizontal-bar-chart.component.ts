@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, OnChanges } from '@angular/core';
-import { MonthAggregatedEmployeeStatistics } from '@gauzy/models';
+import { IMonthAggregatedEmployeeStatistics } from '@gauzy/models';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -39,7 +39,7 @@ export class EmployeeHorizontalBarChartComponent
 	selectedDate: Date;
 	noData = false;
 	@Input()
-	employeeStatistics: MonthAggregatedEmployeeStatistics[];
+	employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 
 	constructor(private themeService: NbThemeService) {}
 

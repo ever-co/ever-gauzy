@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import 'rxjs/add/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { User, Tag, ITenant } from '@gauzy/models';
+import { IUser, ITag, ITenant } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
@@ -93,7 +93,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		};
 
 		return this.authService.login(loginInput).pipe(
-			map((res: { user?: User; token?: string }) => {
+			map((res: { user?: IUser; token?: string }) => {
 				let user, token;
 
 				if (res) {
@@ -152,7 +152,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		confirmPassword: string;
 		terms: boolean;
 		tenant: ITenant;
-		tags: Tag[];
+		tags: ITag[];
 	}): Observable<NbAuthResult> {
 		const {
 			email,

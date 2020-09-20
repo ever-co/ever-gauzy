@@ -1,9 +1,8 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { EquipmentSharing } from './equipment-sharing.model';
-import { Tag } from './tag-entity.model';
-import { ITenant } from './tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEquipmentSharing } from './equipment-sharing.model';
+import { ITag } from './tag-entity.model';
 
-export interface Equipment extends IBaseEntityModel {
+export interface IEquipment extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	type: string;
 	serialNumber?: string;
@@ -12,7 +11,11 @@ export interface Equipment extends IBaseEntityModel {
 	currency: string;
 	maxSharePeriod: number;
 	autoApproveShare: boolean;
-	equipmentSharings: EquipmentSharing[];
-	tags: Tag[];
-	tenant: ITenant;
+	equipmentSharings: IEquipmentSharing[];
+	tags: ITag[];
+}
+
+export interface IEquipmentFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
+	organizationId?: string;
 }

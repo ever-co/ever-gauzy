@@ -1,22 +1,22 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag } from '..';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ITag } from './tag-entity.model';
 
-export interface IOrganizationExpenseCategory extends IBaseEntityModel {
+export interface IOrganizationExpenseCategory
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
 export interface IOrganizationExpenseCategoryFindInput
-	extends IBaseEntityModel {
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	organizationId?: string;
 }
 
-export interface IOrganizationExpenseCategoryCreateInput {
+export interface IOrganizationExpenseCategoryCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
 export enum OrganizationExpenseCategoryEnum {

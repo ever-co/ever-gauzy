@@ -21,11 +21,6 @@ export abstract class Base implements IBaseEntityModel {
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
 
-	// @ApiPropertyOptional({ type: String })
-	// @Column()
-	// @Generated('uuid')
-	// tenantId?: string;
-
 	@ApiProperty({
 		type: 'string',
 		format: 'date-time',

@@ -5,10 +5,10 @@ import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import {
-	Employee,
-	Skill,
-	OrganizationEmploymentType,
-	Tag,
+	IEmployee,
+	ISkill,
+	IOrganizationEmploymentType,
+	ITag,
 	PayPeriodEnum,
 	CurrenciesEnum,
 	LanguagesEnum,
@@ -39,9 +39,9 @@ export class PublicPageEmployeeMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$: Subject<void> = new Subject();
-	employee: Employee;
+	employee: IEmployee;
 	form: FormGroup;
-	employmentTypes$: Observable<OrganizationEmploymentType[]>;
+	employmentTypes$: Observable<IOrganizationEmploymentType[]>;
 	employeeLevels: { level: string; organizationId: string }[] = [];
 	payPeriods = Object.values(PayPeriodEnum);
 	currencies = Object.values(CurrenciesEnum);
@@ -146,11 +146,11 @@ export class PublicPageEmployeeMutationComponent
 		});
 	}
 
-	selectedSkillsHandler(skill: Skill) {
+	selectedSkillsHandler(skill: ISkill) {
 		this.form.get('skills').setValue(skill);
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 

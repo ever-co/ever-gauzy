@@ -2,8 +2,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationProjectUpdateCommand } from '../organization-project.update.command';
 import { OrganizationProjectsService } from '../../organization-projects.service';
 import {
-	OrganizationProjects,
-	OrganizationProjectsUpdateInput
+	IOrganizationProject,
+	IOrganizationProjectsUpdateInput
 } from '@gauzy/models';
 
 @CommandHandler(OrganizationProjectUpdateCommand)
@@ -15,7 +15,7 @@ export class OrganizationProjectUpdateHandler
 
 	public async execute(
 		command: OrganizationProjectUpdateCommand
-	): Promise<OrganizationProjects> {
+	): Promise<IOrganizationProject> {
 		const { input } = command;
 		const { id } = input;
 
@@ -24,8 +24,8 @@ export class OrganizationProjectUpdateHandler
 
 	private async updateProject(
 		id: string,
-		request: OrganizationProjectsUpdateInput
-	): Promise<OrganizationProjects> {
+		request: IOrganizationProjectsUpdateInput
+	): Promise<IOrganizationProject> {
 		const project = await this._organizationProjectsService.findOne(id);
 		if (project) {
 			delete request.id;

@@ -2,33 +2,31 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { Role } from './role.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { User, UserRegistrationInput, LanguagesEnum } from './user.model';
-import { OrganizationProjects } from './organization-projects.model';
-import { Organization } from './organization.model';
-import { OrganizationContact } from './organization-contact.model';
-import { OrganizationDepartment } from './organization-department.model';
+import { IRole } from './role.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IUser, IUserRegistrationInput, LanguagesEnum } from './user.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { IOrganization } from './organization.model';
+import { IOrganizationContact } from './organization-contact.model';
+import { IOrganizationDepartment } from './organization-department.model';
 
-export interface Invite extends IBaseEntityModel {
+export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	token: string;
 	email: string;
-	organizationId: string;
 	roleId: string;
 	invitedById: string;
 	status: string;
 	expireDate: Date;
-	role?: Role;
-	invitedBy?: User;
-	projects?: OrganizationProjects[];
-	organizationContacts?: OrganizationContact[];
-	departments?: OrganizationDepartment[];
-	organization?: Organization;
+	role?: IRole;
+	invitedBy?: IUser;
+	projects?: IOrganizationProject[];
+	organizationContacts?: IOrganizationContact[];
+	departments?: IOrganizationDepartment[];
 }
 
-export interface IInviteAcceptInput extends UserRegistrationInput {
+export interface IInviteAcceptInput extends IUserRegistrationInput {
 	inviteId: string;
-	organization: Organization;
+	organization: IOrganization;
 	originalUrl?: string;
 }
 
@@ -37,12 +35,12 @@ export interface IInviteResendInput {
 	invitedById: string;
 }
 
-export interface ICreateEmailInvitesInput {
+export interface ICreateEmailInvitesInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	emailIds: string[];
 	projectIds?: string[];
 	organizationContactIds?: string[];
 	departmentIds?: string[];
-	organizationId: string;
 	roleId: string;
 	invitedById: string;
 	inviteType: any;
@@ -60,22 +58,22 @@ export interface ICreateOrganizationContactInviteInput {
 }
 
 export interface ICreateEmailInvitesOutput {
-	items: Invite[];
+	items: IInvite[];
 	total: number;
 	ignored: number;
 }
 
-export interface InviteFindInput {
-	organizationId?: string;
+export interface IInviteFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	invitationType?: InvitationTypeEnum;
 }
 
-export interface PublicInviteFindInput {
+export interface IPublicInviteFindInput {
 	email: string;
 	token: string;
 }
 
-export interface InviteUpdateInput {
+export interface IInviteUpdateInput {
 	status: InviteStatusEnum;
 }
 

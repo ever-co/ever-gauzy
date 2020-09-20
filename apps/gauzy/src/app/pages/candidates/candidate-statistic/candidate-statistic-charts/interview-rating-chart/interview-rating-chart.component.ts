@@ -2,7 +2,7 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
+import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 
@@ -15,9 +15,9 @@ export class InterviewRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
 	interviews = [];
-	@Input() candidates: Candidate[];
-	@Input() interviewList: Candidate[];
-	@Input() employeeList: Employee[];
+	@Input() candidates: ICandidate[];
+	@Input() interviewList: ICandidate[];
+	@Input() employeeList: IEmployee[];
 	data: any;
 	options: any;
 	currentInterview: ICandidateInterview;

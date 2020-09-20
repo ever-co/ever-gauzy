@@ -11,7 +11,7 @@ import { CrudService } from '../core';
 import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
 import { RequestContext } from '../core/context';
-import { GetTaskByEmployeeOptions } from '@gauzy/models';
+import { IGetTaskByEmployeeOptions } from '@gauzy/models';
 
 @Injectable()
 export class TaskService extends CrudService<Task> {
@@ -80,7 +80,7 @@ export class TaskService extends CrudService<Task> {
 
 	async getAllTasksByEmployee(
 		employeeId: string,
-		filter: GetTaskByEmployeeOptions
+		filter: IGetTaskByEmployeeOptions
 	) {
 		const query = await this.taskRepository
 			.createQueryBuilder('task')

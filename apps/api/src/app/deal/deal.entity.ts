@@ -1,4 +1,9 @@
-import { Deal as IDeal } from '@gauzy/models';
+import {
+	IDeal,
+	IUser,
+	IPipelineStage,
+	IOrganizationContact
+} from '@gauzy/models';
 import { User } from '../user/user.entity';
 import {
 	Column,
@@ -18,12 +23,11 @@ import {
 	IsOptional
 } from 'class-validator';
 import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('deal')
-export class Deal extends TenantBase implements IDeal {
+export class Deal extends TenantOrganizationBase implements IDeal {
 	@ApiProperty({ type: String })
 	@IsNotEmpty()
 	@IsString()
@@ -33,7 +37,7 @@ export class Deal extends TenantBase implements IDeal {
 	@JoinColumn({ name: 'createdByUserId' })
 	@ManyToOne(() => User)
 	@ApiProperty({ type: User })
-	public createdBy: User;
+	public createdBy: IUser;
 
 	@RelationId(({ stage }: Deal) => stage)
 	@ApiProperty({ type: String })
@@ -45,19 +49,7 @@ export class Deal extends TenantBase implements IDeal {
 	@ManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
 	@ApiProperty({ type: PipelineStage })
 	@JoinColumn()
-	public stage: PipelineStage;
-
-	@ManyToOne(() => Organization, { onDelete: 'CASCADE' })
-	@ApiProperty({ type: Organization })
-	@JoinColumn()
-	public organization: Organization;
-
-	@RelationId(({ organization }: Deal) => organization)
-	@ApiProperty({ type: String })
-	@IsNotEmpty()
-	@IsString()
-	@Column()
-	public organizationId: string;
+	public stage: IPipelineStage;
 
 	@ApiProperty({ type: String })
 	@IsOptional()
@@ -68,7 +60,7 @@ export class Deal extends TenantBase implements IDeal {
 	@OneToOne(() => OrganizationContact, { onDelete: 'CASCADE' })
 	@ApiProperty({ type: OrganizationContact })
 	@JoinColumn()
-	public client: OrganizationContact;
+	public client: IOrganizationContact;
 
 	@ApiProperty({ type: String })
 	@IsNotEmpty()

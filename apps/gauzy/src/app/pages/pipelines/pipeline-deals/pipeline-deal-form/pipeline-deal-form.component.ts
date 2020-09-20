@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Pipeline, Contact } from '@gauzy/models';
+import { IPipeline, IContact } from '@gauzy/models';
 import { PipelinesService } from '../../../../@core/services/pipelines.service';
 import { DealsService } from '../../../../@core/services/deals.service';
 import { AppStore, Store } from '../../../../@core/services/store.service';
@@ -16,9 +16,9 @@ import { OrganizationContactService } from 'apps/gauzy/src/app/@core/services/or
 })
 export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	form: FormGroup;
-	pipeline: Pipeline;
-	clients: Contact[];
-	selectedClient: Contact;
+	pipeline: IPipeline;
+	clients: IContact[];
+	selectedClient: IContact;
 	probabilities = [0, 1, 2, 3, 4, 5];
 	selectedProbability: number;
 	mode: 'CREATE' | 'EDIT' = 'CREATE';
@@ -27,6 +27,7 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
+	private _selectedOrganizationTenantId: string;
 
 	constructor(
 		private router: Router,
@@ -83,7 +84,12 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 				await this.dealsService
 					.find(dealId)
 					.then(({ title, stageId, createdBy, probability }) => {
-						this.form.patchValue({ title, stageId, createdBy });
+						this.form.patchValue({
+							title,
+							stageId,
+							createdBy,
+							probability
+						});
 						this.selectedProbability = probability;
 					});
 			}
@@ -95,10 +101,14 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				this._selectedOrganizationId = org.id;
+				this._selectedOrganizationTenantId = org.tenantId;
 			});
 
 		this.clientsService
-			.getAll([], { organizationId: this._selectedOrganizationId })
+			.getAll([], {
+				organizationId: this._selectedOrganizationId,
+				tenantId: this._selectedOrganizationTenantId
+			})
 			.then((res) => (this.clients = res.items));
 	}
 
@@ -114,13 +124,19 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 			? this.dealsService.update(
 					this.id,
 					Object.assign(
-						{ organizationId: this._selectedOrganizationId },
+						{
+							organizationId: this._selectedOrganizationId,
+							tenantId: this._selectedOrganizationTenantId
+						},
 						value
 					)
 			  )
 			: this.dealsService.create(
 					Object.assign(
-						{ organizationId: this._selectedOrganizationId },
+						{
+							organizationId: this._selectedOrganizationId,
+							tenantId: this._selectedOrganizationTenantId
+						},
 						value
 					)
 			  )

@@ -3,7 +3,7 @@ import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
-	Candidate,
+	ICandidate,
 	ICandidateInterview,
 	ICandidateFeedback,
 	ICandidateTechnologies,
@@ -20,7 +20,7 @@ export class AverageCriterionsRatingChartComponent implements OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
 	feedbacks: ICandidateFeedback[];
-	@Input() candidates: Candidate[];
+	@Input() candidates: ICandidate[];
 	@Input() interviewList: ICandidateInterview[];
 	data: any;
 	options: any;

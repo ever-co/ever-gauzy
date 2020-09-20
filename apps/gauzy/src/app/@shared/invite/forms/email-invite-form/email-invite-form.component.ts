@@ -3,10 +3,11 @@ import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
 import {
 	ICreateEmailInvitesOutput,
 	InvitationTypeEnum,
-	OrganizationProjects,
+	IOrganizationProject,
 	RolesEnum,
-	OrganizationContact,
-	OrganizationDepartment
+	IOrganizationContact,
+	IOrganizationDepartment,
+	IOrganization
 } from '@gauzy/models';
 import { InviteService } from '../../../../@core/services/invite.service';
 import { RoleService } from '../../../../@core/services/role.service';
@@ -20,13 +21,13 @@ import { Store } from '../../../../@core/services/store.service';
 	styleUrls: ['email-invite-form.component.scss']
 })
 export class EmailInviteFormComponent implements OnInit {
-	@Input() public organizationProjects: OrganizationProjects[];
+	@Input() public organizationProjects: IOrganizationProject[];
 
-	@Input() public organizationContact: OrganizationContact[];
+	@Input() public organizationContact: IOrganizationContact[];
 
-	@Input() public organizationDepartments: OrganizationDepartment[];
+	@Input() public organizationDepartments: IOrganizationDepartment[];
 
-	@Input() public selectedOrganizationId: string;
+	@Input() public selectedOrganization: IOrganization;
 
 	@Input() public currentUserId: string;
 
@@ -165,7 +166,8 @@ export class EmailInviteFormComponent implements OnInit {
 				departmentIds: this.departments.value,
 				organizationContactIds: this.organizationContacts.value,
 				roleId: role.id,
-				organizationId: this.selectedOrganizationId,
+				organizationId: this.selectedOrganization.id,
+				tenantId: this.selectedOrganization.tenantId,
 				invitedById: this.currentUserId,
 				inviteType: this.router.url,
 				startedWorkOn: this.startedWorkOn

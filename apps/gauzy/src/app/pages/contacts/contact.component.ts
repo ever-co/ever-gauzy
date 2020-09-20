@@ -1,10 +1,11 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, OnDestroy } from '@angular/core';
 import {
-	Employee,
-	OrganizationContact,
-	OrganizationContactCreateInput,
-	OrganizationProjects,
-	ComponentLayoutStyleEnum
+	IEmployee,
+	IOrganizationContact,
+	IOrganizationContactCreateInput,
+	IOrganizationProject,
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import {
 	ActivatedRoute,
@@ -36,15 +37,16 @@ import { ContactActionComponent } from './table-components/contact-action/contac
 	styleUrls: ['./contact.component.scss']
 })
 export class ContactComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	organizationId: string;
+	selectedOrganization: IOrganization;
 	showAddCard: boolean;
-	organizationContact: OrganizationContact[] = [];
-	projectsWithoutOrganizationContact: OrganizationProjects[];
+	organizationContact: IOrganizationContact[] = [];
+	projectsWithoutOrganizationContact: IOrganizationProject[];
 	selectProjects: string[] = [];
-	employees: Employee[] = [];
-	organizationContactToEdit: OrganizationContact;
+	employees: IEmployee[] = [];
+	organizationContactToEdit: IOrganizationContact;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	settingsSmartTable: object;
@@ -75,6 +77,7 @@ export class ContactComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrganization = organization;
 					this.organizationId = organization.id;
 					this.loadOrganizationContacts();
 					this.loadProjectsWithoutOrganizationContacts();
@@ -83,7 +86,6 @@ export class ContactComponent extends TranslationBaseComponent
 					this._applyTranslationOnSmartTable();
 				}
 			});
-
 		this.route.queryParamMap
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
@@ -101,6 +103,12 @@ export class ContactComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 	}
+
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
+
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -217,8 +225,8 @@ export class ContactComponent extends TranslationBaseComponent
 			});
 	}
 
-	private async addOrEditOrganizationContact(
-		organizationContact: OrganizationContactCreateInput
+	public async addOrEditOrganizationContact(
+		organizationContact: IOrganizationContactCreateInput
 	) {
 		const contact = {
 			country: organizationContact.country,
@@ -270,18 +278,22 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 
 	private async loadOrganizationContacts() {
-		if (!this.organizationId) {
+		if (!this.selectedOrganization) {
 			return;
 		}
+
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.organizationContactService.getAll(
 			['projects', 'members', 'members.user', 'tags', 'contact'],
 			{
-				organizationId: this.organizationId
+				organizationId,
+				tenantId
 			}
 		);
+
 		if (res) {
 			const result = [];
-			res.items.forEach(async (contact: OrganizationContact) => {
+			res.items.forEach(async (contact: IOrganizationContact) => {
 				result.push({
 					...contact,
 					contact_name: contact.name,
@@ -306,10 +318,12 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.organizationProjectsService.getAll(
 			['organizationContact'],
 			{
-				organizationId: this.organizationId,
+				organizationId,
+				tenantId,
 				organizationContact: null
 			}
 		);
@@ -320,12 +334,14 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 
 	private async loadEmployees() {
-		if (!this.organizationId) {
+		if (!this.selectedOrganization) {
 			return;
 		}
-
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: this.organizationId } })
+			.getAll(['user'], {
+				organization: { id: organizationId, tenantId }
+			})
 			.pipe(first())
 			.toPromise();
 
@@ -337,7 +353,7 @@ export class ContactComponent extends TranslationBaseComponent
 		this.showAddCard = !this.showAddCard;
 	}
 
-	async editOrganizationContact(organizationContact: OrganizationContact) {
+	async editOrganizationContact(organizationContact: IOrganizationContact) {
 		await this.loadProjectsWithoutOrganizationContacts();
 		this.organizationContactToEdit = organizationContact
 			? organizationContact
@@ -352,13 +368,14 @@ export class ContactComponent extends TranslationBaseComponent
 		this.showAddCard = true;
 	}
 
-	async invite(selectedOrganizationContact?: OrganizationContact) {
+	async invite(selectedOrganizationContact?: IOrganizationContact) {
 		try {
 			const dialog = this.dialogService.open(InviteContactComponent, {
 				context: {
-					organizationId: this.organizationId,
+					organizationId: this.selectedOrganization.id,
 					organizationContact: selectedOrganizationContact,
-					contactType: this.contactType
+					contactType: this.contactType,
+					selectedOrganization: this.selectedOrganization
 				}
 			});
 
@@ -387,8 +404,10 @@ export class ContactComponent extends TranslationBaseComponent
 		}
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 }

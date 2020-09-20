@@ -9,7 +9,7 @@ import { EmployeesService } from '../../@core/services';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { catchError } from 'rxjs/operators';
 import { EMPTY, Observable } from 'rxjs';
-import { Employee } from '@gauzy/models';
+import { IEmployee } from '@gauzy/models';
 
 @Injectable({
 	providedIn: 'root'
@@ -24,7 +24,7 @@ export class EmployeeResolver implements Resolve<any> {
 	resolve(
 		route: ActivatedRouteSnapshot,
 		state: RouterStateSnapshot
-	): Observable<Employee> {
+	): Observable<IEmployee> {
 		return this.employeesService
 			.getPublicById(route.params.employeeId, [
 				'user',

@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import {
-	Organization,
+	IOrganization,
 	PermissionsEnum,
 	RecurringExpenseDefaultCategoriesEnum,
 	RecurringExpenseDeletionEnum,
-	EmployeeRecurringExpense,
-	Employee
+	IEmployeeRecurringExpense,
+	IEmployee
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -32,16 +32,16 @@ import { EmployeeRecurringExpenseService } from '../../@core/services/employee-r
 export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	selectedEmployee: Employee;
+	selectedEmployee: IEmployee;
 	selectedDate: Date;
-	employeeList: Employee[];
+	employeeList: IEmployee[];
 	selectedEmployeeFromHeader: SelectedEmployee;
-	selectedEmployeeRecurringExpense: EmployeeRecurringExpense[];
+	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[];
 	selectedRowIndexToShow: number;
 	employeeName = 'Employee';
 	hasEditExpensePermission = false;
 	fetchedHistories: Object = {};
-	selectedOrganization: Organization;
+	selectedOrganization: IOrganization;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -281,7 +281,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 
 	private _recurringExpenseMutationResultTransform(
 		result
-	): EmployeeRecurringExpense {
+	): IEmployeeRecurringExpense {
 		return {
 			employeeId: result.employee.id,
 			categoryName: result.categoryName,

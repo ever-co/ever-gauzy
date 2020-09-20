@@ -1,7 +1,7 @@
 import {
-	UserFindInput,
-	Candidate,
-	CandidateUpdateInput,
+	IUserFindInput,
+	ICandidate,
+	ICandidateUpdateInput,
 	ICandidateInterview
 } from '@gauzy/models';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -12,18 +12,18 @@ import { Injectable } from '@angular/core';
  */
 @Injectable()
 export class CandidateStore {
-	private _selectedCandidate: Candidate;
-	private _userForm: UserFindInput;
-	private _candidateForm: CandidateUpdateInput;
-	selectedCandidate$: BehaviorSubject<Candidate> = new BehaviorSubject(
+	private _selectedCandidate: ICandidate;
+	private _userForm: IUserFindInput;
+	private _candidateForm: ICandidateUpdateInput;
+	selectedCandidate$: BehaviorSubject<ICandidate> = new BehaviorSubject(
 		this.selectedCandidate
 	);
-	userForm$: BehaviorSubject<UserFindInput> = new BehaviorSubject(
+	userForm$: BehaviorSubject<IUserFindInput> = new BehaviorSubject(
 		this.userForm
 	);
-	candidateForm$: BehaviorSubject<CandidateUpdateInput> = new BehaviorSubject(
-		this.candidateForm
-	);
+	candidateForm$: BehaviorSubject<
+		ICandidateUpdateInput
+	> = new BehaviorSubject(this.candidateForm);
 	private _interviewList$: BehaviorSubject<
 		ICandidateInterview[]
 	> = new BehaviorSubject([]);
@@ -39,30 +39,30 @@ export class CandidateStore {
 		this._interviewList$.next(interviewList);
 	}
 
-	set selectedCandidate(candidate: Candidate) {
+	set selectedCandidate(candidate: ICandidate) {
 		this._selectedCandidate = candidate;
 		this.selectedCandidate$.next(candidate);
 	}
 
-	get selectedCandidate(): Candidate {
+	get selectedCandidate(): ICandidate {
 		return this._selectedCandidate;
 	}
 
-	set userForm(user: UserFindInput) {
+	set userForm(user: IUserFindInput) {
 		this._userForm = user;
 		this.userForm$.next(user);
 	}
 
-	get userForm(): UserFindInput {
+	get userForm(): IUserFindInput {
 		return this._userForm;
 	}
 
-	set candidateForm(candidate: CandidateUpdateInput) {
+	set candidateForm(candidate: ICandidateUpdateInput) {
 		this._candidateForm = candidate;
 		this.candidateForm$.next(candidate);
 	}
 
-	get candidateForm(): CandidateUpdateInput {
+	get candidateForm(): ICandidateUpdateInput {
 		return this._candidateForm;
 	}
 

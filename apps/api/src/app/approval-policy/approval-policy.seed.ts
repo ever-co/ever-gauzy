@@ -1,12 +1,12 @@
 import { Connection } from 'typeorm';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
 export const createDefaultApprovalPolicyForOrg = async (
 	connection: Connection,
 	defaultData: {
-		orgs: Organization[];
+		orgs: IOrganization[];
 	}
 ): Promise<void> => {
 	const promises = [];
@@ -14,10 +14,10 @@ export const createDefaultApprovalPolicyForOrg = async (
 	defaultData.orgs.forEach((org) => {
 		const defaultApprovalPolicy = new ApprovalPolicy();
 		defaultApprovalPolicy.name = 'Default Approval Policy';
-		defaultApprovalPolicy.organizationId = org.id;
+		// defaultApprovalPolicy.organizationId = org.id;
 		defaultApprovalPolicy.description = 'Default approval policy';
 		defaultApprovalPolicy.approvalType = 'DEFAULT_APPROVAL_POLICY';
-		defaultApprovalPolicy.tenantId = org.tenant.id;
+		// defaultApprovalPolicy.tenant = org.tenant;
 		promises.push(insertDefaultPolicy(connection, defaultApprovalPolicy));
 	});
 
@@ -39,10 +39,10 @@ const insertDefaultPolicy = async (
 export const createRandomApprovalPolicyForOrg = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<ApprovalPolicy[]> => {
-	let policies: ApprovalPolicy[] = [];
-	let policyArray = [
+	const policies: ApprovalPolicy[] = [];
+	const policyArray = [
 		'Trade Policy',
 		'Union Budget',
 		'Definition, Licensing Policies and Registration',
@@ -53,16 +53,16 @@ export const createRandomApprovalPolicyForOrg = async (
 		'Time Off',
 		'Equipment Sharing'
 	];
+
 	for (const tenant of tenants) {
 		const orgs = tenantOrganizationsMap.get(tenant);
 		orgs.forEach((org) => {
 			policyArray.forEach((name) => {
-				let policy = new ApprovalPolicy();
+				const policy = new ApprovalPolicy();
 				policy.description = name;
 				policy.name = name;
 				policy.tenant = tenant;
-				policy.organization = org;
-				policy.tenantId = tenant.id;
+				policy.organizationId = org.id;
 				policy.approvalType = name.replace(/\s+/g, '_').toUpperCase();
 				policies.push(policy);
 			});

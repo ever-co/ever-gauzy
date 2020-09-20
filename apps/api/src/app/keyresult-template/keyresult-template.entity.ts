@@ -1,17 +1,17 @@
 import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
 import {
-	KeyResultTemplate as IKeyResultTemplate,
+	IKeyResultTemplate,
 	KeyResultTypeEnum,
 	KeyResultDeadlineEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
-import { TenantBase } from '../core/entities/tenant-base';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
 import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('key_result_template')
-export class KeyResultTemplate extends TenantBase
+export class KeyResultTemplate extends TenantOrganizationBase
 	implements IKeyResultTemplate {
 	@ApiProperty({ type: String })
 	@Column()

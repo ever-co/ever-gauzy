@@ -83,14 +83,12 @@ export class UpworkComponent extends TranslationBaseComponent
 	loadActions() {
 		this.supportContextActions = [
 			{
-				title: this.getTranslation(
-					'INTEGRATIONS.UPWORK_PAGE.RE_INTEGRATE'
-				),
+				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
 				link: `pages/integrations/upwork/regenerate`
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.SETTINGS'),
+				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline',
 				link: `pages/integrations/upwork/${this.integrationId}/settings`
 			}

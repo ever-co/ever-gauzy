@@ -5,7 +5,7 @@ import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
-import { Tag, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ITag, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
 import { Store } from '../../../@core/services/store.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
@@ -19,6 +19,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 export class ExpenseCategoriesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationId: string;
+	tenantId: string;
 
 	showAddCard: boolean;
 	showEditDiv: boolean;
@@ -26,7 +27,7 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 	expenseCategories: IOrganizationExpenseCategory[];
 
 	selectedExpenseCategory: IOrganizationExpenseCategory;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -49,6 +50,7 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationId = organization.id;
+					this.tenantId = organization.tenantId;
 					this.loadCategories();
 					this.loadSmartTable();
 				}
@@ -164,6 +166,7 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 			await this.organizationExpenseCategoryService.create({
 				name,
 				organizationId: this.organizationId,
+				tenantId: this.tenantId,
 				tags: this.tags
 			});
 
@@ -196,7 +199,8 @@ export class ExpenseCategoriesComponent extends TranslationBaseComponent
 		}
 		const res = await this.organizationExpenseCategoryService.getAll(
 			{
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			},
 			['tags']
 		);

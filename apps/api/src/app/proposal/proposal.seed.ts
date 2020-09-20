@@ -8,6 +8,7 @@ import { Organization } from '../organization/organization.entity';
 
 export const createDefaultProposals = async (
   connection: Connection,
+  tenant: Tenant,
   employees: Employee[],
   organizations: Organization[],
   noOfProposalsPerOrganization: number
@@ -25,6 +26,7 @@ export const createDefaultProposals = async (
       proposal.tags = [faker.random.arrayElement(tags)];
       proposal.valueDate = faker.date.recent();
       proposal.proposalContent = faker.name.jobDescriptor();
+      proposal.tenant = tenant;
       proposals.push(proposal);
     }
   }
@@ -56,6 +58,7 @@ export const createRandomProposals = async (
         proposal.tags = [faker.random.arrayElement(tags)];
         proposal.valueDate = faker.date.recent();
         proposal.proposalContent = faker.name.jobDescriptor();
+        proposal.tenant = tenant;
         proposals.push(proposal);
       }
 

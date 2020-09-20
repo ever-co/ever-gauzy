@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
-	User,
+	IUser,
 	RolesEnum,
-	UserRegistrationInput as IUserRegistrationInput,
+	IUserRegistrationInput,
 	PermissionsEnum
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
@@ -20,21 +20,21 @@ export class AuthService {
 			.toPromise();
 	}
 
-	login(loginInput): Observable<{ user?: User; token?: string }> {
-		return this.http.post<{ user?: User; token?: string }>(
+	login(loginInput): Observable<{ user?: IUser; token?: string }> {
+		return this.http.post<{ user?: IUser; token?: string }>(
 			'/api/auth/login',
 			loginInput
 		);
 	}
 
-	register(registerInput: IUserRegistrationInput): Observable<User> {
-		return this.http.post<User>('/api/auth/register', registerInput);
+	register(registerInput: IUserRegistrationInput): Observable<IUser> {
+		return this.http.post<IUser>('/api/auth/register', registerInput);
 	}
 
 	requestPassword(
 		requestPasswordInput
 	): Observable<{ id?: string; token?: string }> {
-		return this.http.post<{ user?: User; token?: string }>(
+		return this.http.post<{ user?: IUser; token?: string }>(
 			'/api/auth/request-password',
 			requestPasswordInput
 		);

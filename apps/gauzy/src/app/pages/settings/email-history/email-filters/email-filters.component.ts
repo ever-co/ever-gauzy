@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EmailTemplateService } from 'apps/gauzy/src/app/@core/services/email-template.service';
-import { EmailTemplate, Email } from '@gauzy/models';
+import { IEmailTemplate, IEmail } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { EmailService } from 'apps/gauzy/src/app/@core/services/email.service';
 
@@ -16,13 +16,13 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 		private emailService: EmailService
 	) {}
 
-	emailTemplates: EmailTemplate[];
+	emailTemplates: IEmailTemplate[];
 
 	selectedTemplateId: string;
 
 	emailTo: string;
 
-	emails?: Email;
+	emails?: IEmail;
 
 	to: Object[] = [];
 
@@ -65,7 +65,7 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	cancel(emails: Email[] = []) {
+	cancel(emails: IEmail[] = []) {
 		this.dialogRef.close(emails);
 	}
 

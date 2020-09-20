@@ -6,9 +6,9 @@ import { CrudService } from '../core/crud/crud.service';
 import { IPagination } from '../core';
 import { Employee } from '../employee/employee.entity';
 import {
-	TimeOffPolicyCreateInput as ITimeOffPolicyCreateInput,
-	TimeOffPolicyUpdateInput as ITimeOffPolicyUpdateInput,
-	TimeOffPolicy as ITimeOffPolicy
+	ITimeOffPolicyCreateInput,
+	ITimeOffPolicyUpdateInput,
+	ITimeOffPolicy
 } from '@gauzy/models';
 
 @Injectable()

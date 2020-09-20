@@ -1,17 +1,19 @@
-import { ExpenseCategoriesEnum, Organization } from '@gauzy/models';
+import { ExpenseCategoriesEnum, IOrganization } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { ExpenseCategory } from './expense-category.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
 export const createExpenseCategories = async (
 	connection: Connection,
-	organizations: Organization[]
+	tenant: Tenant,
+	organizations: IOrganization[]
 ): Promise<ExpenseCategory[]> => {
 	let defaultExpenseCategories: ExpenseCategory[] = [];
 	organizations.forEach((organization) => {
 		const category = Object.values(ExpenseCategoriesEnum).map((name) => ({
 			name,
-			organizationId: organization.id
+			organizationId: organization.id,
+			tenant: tenant
 		}));
 		defaultExpenseCategories = [...defaultExpenseCategories, ...category];
 	});
@@ -24,10 +26,10 @@ export const createExpenseCategories = async (
 export const createRandomExpenseCategories = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationMap: Map<Tenant, Organization[]>
-): Promise<Map<Organization, ExpenseCategory[]>> => {
+	tenantOrganizationMap: Map<Tenant, IOrganization[]>
+): Promise<Map<IOrganization, ExpenseCategory[]>> => {
 	let expenseCategories: ExpenseCategory[] = [];
-	const expenseCategoryMap: Map<Organization, ExpenseCategory[]> = new Map();
+	const expenseCategoryMap: Map<IOrganization, ExpenseCategory[]> = new Map();
 
 	(tenants || []).forEach((tenant) => {
 		const organizations = tenantOrganizationMap.get(tenant);
@@ -35,7 +37,8 @@ export const createRandomExpenseCategories = async (
 			const category = Object.values(ExpenseCategoriesEnum).map(
 				(name) => ({
 					name,
-					organizationId: organization.id
+					organizationId: organization.id,
+					tenant: tenant
 				})
 			);
 			expenseCategoryMap.set(organization, category);

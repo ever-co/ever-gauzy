@@ -1,8 +1,8 @@
 import {
-	OrganizationRecurringExpense,
-	RecurringExpenseDeleteInput,
+	IOrganizationRecurringExpense,
+	IRecurringExpenseDeleteInput,
 	RecurringExpenseDeletionEnum,
-	RecurringExpenseModel
+	IRecurringExpenseModel
 } from '@gauzy/models';
 import { BadRequestException } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
@@ -18,14 +18,14 @@ import { CrudService, getLastDayOfMonth } from '../../core';
  * TODO: Fix typescript, remove usage of :any
  */
 export abstract class RecurringExpenseDeleteHandler<
-	T extends RecurringExpenseModel
+	T extends IRecurringExpenseModel
 > {
 	constructor(private readonly crudService: CrudService<T>) {}
 
 	public async executeCommand(
 		id: string,
-		deleteInput: RecurringExpenseDeleteInput
-	): Promise<OrganizationRecurringExpense | UpdateResult | DeleteResult> {
+		deleteInput: IRecurringExpenseDeleteInput
+	): Promise<IOrganizationRecurringExpense | UpdateResult | DeleteResult> {
 		let result;
 		switch (deleteInput.deletionType) {
 			case RecurringExpenseDeletionEnum.ALL:
@@ -63,8 +63,8 @@ export abstract class RecurringExpenseDeleteHandler<
 	 */
 	private async deleteOneMonthOnly(
 		id: string,
-		deleteInput: RecurringExpenseDeleteInput
-	): Promise<OrganizationRecurringExpense | UpdateResult | DeleteResult> {
+		deleteInput: IRecurringExpenseDeleteInput
+	): Promise<IOrganizationRecurringExpense | UpdateResult | DeleteResult> {
 		const originalExpense = await this.crudService.findOne(id);
 
 		const deleteDate = new Date(deleteInput.year, deleteInput.month);
@@ -102,7 +102,7 @@ export abstract class RecurringExpenseDeleteHandler<
 	 */
 	private async updateEndDateToLastMonth(
 		id: string,
-		deleteInput: RecurringExpenseDeleteInput
+		deleteInput: IRecurringExpenseDeleteInput
 	): Promise<any> {
 		const endMonth = deleteInput.month > 0 ? deleteInput.month - 1 : 11; //Because input.startMonth needs to be deleted
 		const endYear =
@@ -125,8 +125,8 @@ export abstract class RecurringExpenseDeleteHandler<
 	 * @param originalExpense The original (non modified) expense
 	 */
 	private async createExpenseFromNextMonth(
-		deleteInput: RecurringExpenseDeleteInput,
-		originalExpense: RecurringExpenseModel | any
+		deleteInput: IRecurringExpenseDeleteInput,
+		originalExpense: IRecurringExpenseModel | any
 	): Promise<any> {
 		const nextStartDate = new Date(
 			deleteInput.year,

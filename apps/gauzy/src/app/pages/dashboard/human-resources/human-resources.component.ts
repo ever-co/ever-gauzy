@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import {
 	BonusTypeEnum,
 	EmployeeStatisticsHistoryEnum,
-	MonthAggregatedEmployeeStatistics,
-	Organization
+	IMonthAggregatedEmployeeStatistics,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -25,7 +25,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
-	selectedOrganization: Organization;
+	selectedOrganization: IOrganization;
 
 	incomeCurrency: string;
 	expenseCurrency: string;
@@ -34,7 +34,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	incomePermissionsError = false;
 	expensePermissionError = false;
 
-	employeeStatistics: MonthAggregatedEmployeeStatistics[];
+	employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 	expense = 0;
 	expenseWithoutSalary: number;
 	income: number;
@@ -179,7 +179,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	private _statsSum = (
-		employeeStatistics: MonthAggregatedEmployeeStatistics[],
+		employeeStatistics: IMonthAggregatedEmployeeStatistics[],
 		key: string
 	): number =>
 		Number(employeeStatistics.reduce((a, b) => a + b[key], 0).toFixed(2));

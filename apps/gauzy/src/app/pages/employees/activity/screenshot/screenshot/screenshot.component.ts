@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
-	TimeLogFilters,
-	Organization,
-	TimeSlot,
+	ITimeLogFilters,
+	IOrganization,
+	ITimeSlot,
 	IGetTimeSlotInput,
-	ScreenshotMap
+	IScreenshotMap
 } from '@gauzy/models';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { debounceTime } from 'rxjs/operators';
@@ -23,9 +23,9 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 	styleUrls: ['./screenshot.component.scss']
 })
 export class ScreenshotComponent implements OnInit, OnDestroy {
-	request: TimeLogFilters;
+	request: ITimeLogFilters;
 	loading: boolean;
-	timeSlots: ScreenshotMap[];
+	timeSlots: IScreenshotMap[];
 	checkAllCheckbox: any;
 	selectedIds: any = {};
 	updateLogs$: Subject<any> = new Subject();
@@ -33,7 +33,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	screenshotsUrls: { thumbUrl: string; fullUrl: string }[] = [];
 	selectedIdsCount = 0;
 	allSelected = false;
-	orignalTimeSlots: TimeSlot[];
+	orignalTimeSlots: ITimeSlot[];
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -44,7 +44,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 				this.updateLogs$.next();
 			});
@@ -56,7 +56,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	async filtersChange($event: TimeLogFilters) {
+	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
 		this.updateLogs$.next();
 	}
@@ -137,7 +137,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 
 	ngOnDestroy(): void {}
 
-	private groupTimeSlots(timeSlots: TimeSlot[]) {
+	private groupTimeSlots(timeSlots: ITimeSlot[]) {
 		this.selectedIds = {};
 		if (this.checkAllCheckbox) {
 			this.checkAllCheckbox.checked = false;
@@ -158,7 +158,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			})
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))
 			.mapObject(
-				(hourTimeSlots: TimeSlot[], hour): ScreenshotMap => {
+				(hourTimeSlots: ITimeSlot[], hour): IScreenshotMap => {
 					const byMinutes = _.indexBy(hourTimeSlots, (timeSlot) =>
 						moment(timeSlot.localStartedAt).format('mm')
 					);

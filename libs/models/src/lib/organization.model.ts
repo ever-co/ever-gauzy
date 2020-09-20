@@ -1,12 +1,12 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantEntityModel } from './base-entity.model';
 import {
 	ITenant,
-	Tag,
-	Skill,
-	OrganizationSprint,
-	Employee
+	ITag,
+	ISkill,
+	IOrganizationSprint,
+	IEmployee
 } from '@gauzy/models';
-import { Contact as IContact } from './contact.model';
+import { IContact } from './contact.model';
 
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'allowManualTime',
@@ -15,7 +15,7 @@ export enum OrganizationPermissionsEnum {
 	ALLOW_FUTURE_DATE = 'futureDateAllowed'
 }
 
-export interface Organization extends IBaseEntityModel, IContact {
+export interface IOrganization extends IBasePerTenantEntityModel {
 	name: string;
 	profile_link: string;
 	valueDate?: Date;
@@ -35,7 +35,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	show_clients_count?: boolean;
 	show_employees_count?: boolean;
 	overview: string;
-	skills: Skill[];
+	skills: ISkill[];
 	currency: string;
 	isActive: boolean;
 	defaultValueDateType: string;
@@ -49,15 +49,15 @@ export interface Organization extends IBaseEntityModel, IContact {
 	numberFormat?: string;
 	bonusType?: string;
 	bonusPercentage?: number;
-	tenant: ITenant;
-	employees?: Employee[];
+	employees?: IEmployee[];
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
-	tags: Tag[];
+	tags: ITag[];
 	futureDateAllowed?: boolean;
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
+	regionCode?: string;
 	requireReason?: boolean;
 	requireDescription?: boolean;
 	requireProject?: boolean;
@@ -67,7 +67,7 @@ export interface Organization extends IBaseEntityModel, IContact {
 	registrationDate?: Date;
 	contact: IContact;
 	separateInvoiceItemTaxAndDiscount?: boolean;
-	organizationSprints?: OrganizationSprint[];
+	organizationSprints?: IOrganizationSprint[];
 	minimumProjectSize?: string;
 	show_clients?: boolean;
 	// "left" and "right" values, used to know where to put currency symbol relative to amount
@@ -78,18 +78,20 @@ export interface Organization extends IBaseEntityModel, IContact {
 	discountAfterTax?: boolean;
 }
 
-export interface OrganizationFindInput extends IBaseEntityModel {
+export interface IOrganizationFindInput {
+	id?: string;
+	tenantId?: string;
 	name?: string;
 	profile_link?: string;
 	valueDate?: Date;
 	imageUrl?: string;
 	currency?: CurrenciesEnum;
 	isActive?: boolean;
-	skills?: Skill[];
-	tags?: Tag[];
+	skills?: ISkill[];
+	tags?: ITag[];
 }
 
-export interface OrganizationCreateInput extends IContact {
+export interface IOrganizationCreateInput extends IContact {
 	name: string;
 	profile_link: string;
 	valueDate?: Date;
@@ -115,9 +117,9 @@ export interface OrganizationCreateInput extends IContact {
 	bonusPercentage?: number;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
-	tags?: Tag[];
+	tags?: ITag[];
 	tenant: ITenant;
-	skills?: Skill[];
+	skills?: ISkill[];
 	minimumProjectSize?: string;
 	show_clients?: boolean;
 	website?: string;

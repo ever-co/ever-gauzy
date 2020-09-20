@@ -1,5 +1,7 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-export interface IEducation extends IBaseEntityModel {
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+
+export interface ICandidateEducation
+	extends IBasePerTenantAndOrganizationEntityModel {
 	schoolName: string;
 	degree: string;
 	completionDate: Date;
@@ -7,7 +9,8 @@ export interface IEducation extends IBaseEntityModel {
 	notes?: string;
 	candidateId?: string;
 }
-export interface IEducationFindInput extends IBaseEntityModel {
+
+export interface IEducationFindInput {
 	schoolName?: string;
 	degree?: string;
 	completionDate?: Date;

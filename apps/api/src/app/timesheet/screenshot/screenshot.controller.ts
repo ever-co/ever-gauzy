@@ -4,8 +4,7 @@ import {
 	HttpStatus,
 	Post,
 	Body,
-	UseInterceptors,
-	UploadedFile
+	UseInterceptors
 } from '@nestjs/common';
 import { Screenshot } from '../screenshot.entity';
 import { CrudController } from '../../core/crud/crud.controller';
@@ -17,6 +16,9 @@ import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
 import { FileStorage } from '../../core/file-storage';
+import { UploadedFileStorage } from '../../core/file-storage/uploaded-file-storage';
+import * as fs from 'fs';
+import { tempFile } from '../../core/utils';
 
 @ApiTags('Screenshot')
 @UseGuards(AuthGuard('jwt'))
@@ -39,41 +41,61 @@ export class ScreenshotController extends CrudController<Screenshot> {
 	@Post('/')
 	@UseInterceptors(
 		FileInterceptor('file', {
-			storage: new FileStorage({
-				dest: path.join('screenshots', moment().format('YYYY/MM/DD')),
+			storage: new FileStorage().storage({
+				dest: () => {
+					return path.join(
+						'screenshots',
+						moment().format('YYYY/MM/DD')
+					);
+				},
 				prefix: 'screenshots'
 			})
 		})
 	)
 	async upload(
 		@Body() entity: Screenshot,
-		@UploadedFile() file
+		@UploadedFileStorage()
+		file
 	): Promise<Screenshot> {
-		const thumbName = `thumb-${file.filename}`;
-		await new Promise((resolve, reject) => {
-			sharp(file.path)
-				.resize(250, 150)
-				.toFile(path.join(file.destination, thumbName), (err, info) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-					resolve(info);
-				});
-		});
-		entity.file = path.join(
-			'screenshots',
-			moment().format('YYYY/MM/DD'),
-			file.filename
-		);
-		entity.thumb = path.join(
-			'screenshots',
-			moment().format('YYYY/MM/DD'),
-			thumbName
-		);
-		entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
+		let thumb;
 
+		try {
+			const fileContent = await new FileStorage()
+				.getProvider()
+				.getFile(file.key);
+
+			const inputFile = await tempFile('screenshot-thumb');
+			const outputFile = await tempFile('screenshot-thumb');
+			await fs.promises.writeFile(inputFile, fileContent);
+			await new Promise((resolve, reject) => {
+				sharp(inputFile)
+					.resize(250, 150)
+					.toFile(outputFile, (error: any, data: any) => {
+						if (error) {
+							reject(error);
+						} else {
+							resolve(data);
+						}
+					});
+			});
+			const thumbName = `thumb-${file.filename}`;
+			const thumbDir = path.dirname(file.key);
+			const data = await fs.promises.readFile(outputFile);
+			await fs.promises.unlink(inputFile);
+			await fs.promises.unlink(outputFile);
+
+			thumb = await new FileStorage()
+				.getProvider()
+				.putFile(data, path.join(thumbDir, thumbName));
+		} catch (error) {
+			console.log(error);
+		}
+
+		entity.file = file.key;
+		entity.thumb = thumb.key;
+		entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 		const screenshot = await this.screenshotService.create(entity);
+
 		return this.screenshotService.findOne(screenshot.id);
 	}
 }

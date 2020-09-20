@@ -2,10 +2,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	Employee,
-	Organization,
-	OrganizationEmploymentType,
-	Tag,
+	IEmployee,
+	IOrganization,
+	IOrganizationEmploymentType,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
@@ -27,12 +27,12 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	showAddCard: Boolean;
-	selectedEmployee: Employee;
-	organization: Organization;
-	organizationEmploymentTypes: OrganizationEmploymentType[];
-	tags: Tag[] = [];
+	selectedEmployee: IEmployee;
+	organization: IOrganization;
+	organizationEmploymentTypes: IOrganizationEmploymentType[];
+	tags: ITag[] = [];
 	showEditDiv: Boolean = true;
-	selectedOrgEmpType: OrganizationEmploymentType;
+	selectedOrgEmpType: IOrganizationEmploymentType;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
@@ -70,7 +70,8 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 				if (this.organization) {
 					this.organizationEmploymentTypesService
 						.getAll(['tags'], {
-							organizationId: this.organization.id
+							organizationId: this.organization.id,
+							tenantId: this.organization.tenantId
 						})
 						.pipe(untilDestroyed(this))
 						.subscribe((types) => {
@@ -119,6 +120,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 			const newEmploymentType = {
 				name: this.form.get('name').value,
 				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				tags: this.tags
 			};
 			this.organizationEmploymentTypesService
@@ -193,13 +195,13 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
-	gridEdit(empType: OrganizationEmploymentType) {
+	gridEdit(empType: IOrganizationEmploymentType) {
 		this.showAddCard = true;
 		this.tags = empType.tags;
 		this.selectedOrgEmpType = empType;
 		this.form.patchValue(empType);
 	}
-	showEditCard(orgEmpType: OrganizationEmploymentType) {
+	showEditCard(orgEmpType: IOrganizationEmploymentType) {
 		this.showEditDiv = true;
 		this.selectedOrgEmpType = orgEmpType;
 		this.tags = orgEmpType.tags;

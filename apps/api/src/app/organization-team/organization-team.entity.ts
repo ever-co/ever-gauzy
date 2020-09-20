@@ -8,14 +8,15 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Base } from '../core/entities/base';
-import { OrganizationTeam as IOrganizationTeam } from '@gauzy/models';
+import { IOrganizationTeam } from '@gauzy/models';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_team')
-export class OrganizationTeam extends Base implements IOrganizationTeam {
+export class OrganizationTeam extends TenantOrganizationBase
+	implements IOrganizationTeam {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationTeam)
 	@JoinTable({
@@ -29,12 +30,6 @@ export class OrganizationTeam extends Base implements IOrganizationTeam {
 	@Index()
 	@Column()
 	name: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
 
 	@OneToMany(
 		(type) => OrganizationTeamEmployee,

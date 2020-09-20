@@ -3,11 +3,10 @@ import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
-	OrganizationProjects as IOrganizationProjects,
-	OrganizationContact as IOrganizationContact,
-	OrganizationDepartment as IOrganizationDepartment,
-	Role as IOrganizationRole,
-	User,
+	IOrganizationProject,
+	IOrganizationContact,
+	IOrganizationDepartment,
+	IUser,
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
 	LanguagesEnum
@@ -17,7 +16,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Invite } from './invite.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
@@ -31,9 +30,9 @@ import { UserService } from '../user/user.service';
 export class InviteService extends CrudService<Invite> {
 	constructor(
 		@InjectRepository(Invite) inviteRepository: Repository<Invite>,
-		@InjectRepository(OrganizationProjects)
+		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<
-			OrganizationProjects
+			OrganizationProject
 		>,
 
 		@InjectRepository(OrganizationContact)
@@ -105,10 +104,11 @@ export class InviteService extends CrudService<Invite> {
 			organizationContactIds,
 			departmentIds,
 			organizationId,
+			tenantId,
 			invitedById
 		} = emailInvites;
 
-		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
+		const projects: IOrganizationProject[] = await this.organizationProjectsRepository.findByIds(
 			projectIds || []
 		);
 
@@ -124,9 +124,7 @@ export class InviteService extends CrudService<Invite> {
 			organizationId
 		);
 
-		const role: IOrganizationRole = await this.roleRepository.findOne(
-			roleId
-		);
+		const role: Role = await this.roleRepository.findOne(roleId);
 
 		const user = await this.userService.findOne(invitedById, {
 			relations: ['role']
@@ -167,6 +165,7 @@ export class InviteService extends CrudService<Invite> {
 			invite.email = email;
 			invite.roleId = roleId;
 			invite.organizationId = organizationId;
+			invite.tenantId = tenantId;
 			invite.invitedById = invitedById;
 			invite.status = InviteStatusEnum.INVITED;
 			invite.expireDate = expireDate;
@@ -233,7 +232,7 @@ export class InviteService extends CrudService<Invite> {
 			organizationId
 		);
 
-		const inviterUser: User = await this.userService.findOne(invitedById);
+		const inviterUser: IUser = await this.userService.findOne(invitedById);
 
 		const inviteExpiryPeriod =
 			organization && organization.inviteExpiryPeriod

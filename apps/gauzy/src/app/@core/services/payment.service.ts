@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Payment, PaymentFindInput, PaymentUpdateInput } from '@gauzy/models';
+import {
+	IPayment,
+	IPaymentFindInput,
+	IPaymentUpdateInput
+} from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -9,27 +13,27 @@ export class PaymentService {
 
 	getAll(
 		relations?: string[],
-		findInput?: PaymentFindInput
-	): Promise<{ items: Payment[] }> {
+		findInput?: IPaymentFindInput
+	): Promise<{ items: IPayment[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: Payment[] }>('/api/payments', {
+			.get<{ items: IPayment[] }>('/api/payments', {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	add(payment: Payment): Promise<Payment> {
+	add(payment: IPayment): Promise<IPayment> {
 		return this.http
-			.post<Payment>('/api/payments', payment)
+			.post<IPayment>('/api/payments', payment)
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(id: string, updateInput: PaymentUpdateInput): Promise<Payment> {
+	update(id: string, updateInput: IPaymentUpdateInput): Promise<IPayment> {
 		return this.http
-			.put<Payment>(`/api/payments/${id}`, updateInput)
+			.put<IPayment>(`/api/payments/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

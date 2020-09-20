@@ -1,10 +1,12 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { RequestApproval, OrganizationTeam } from '..';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IRequestApproval } from './request-approval.model';
+import { IOrganizationTeam } from './organization-team-model';
 
-export interface RequestApprovalTeam extends IBaseEntityModel {
+export interface IRequestApprovalTeam
+	extends IBasePerTenantAndOrganizationEntityModel {
 	requestApprovalId: string;
 	teamId: string;
 	status: number;
-	requestApproval: RequestApproval;
-	team: OrganizationTeam;
+	requestApproval: IRequestApproval;
+	team: IOrganizationTeam;
 }

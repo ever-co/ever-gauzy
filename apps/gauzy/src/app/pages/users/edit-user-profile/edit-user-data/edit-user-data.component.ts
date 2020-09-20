@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { User } from '@gauzy/models';
+import { IUser } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { UsersOrganizationsService } from '../../../../@core/services/users-organizations.service';
@@ -18,7 +18,7 @@ export class EditUserDataComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	routeParams: Params;
-	selectedUser: User;
+	selectedUser: IUser;
 
 	constructor(
 		private route: ActivatedRoute,

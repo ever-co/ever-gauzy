@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { BillingInvoicingPolicyEnum, Organization } from '@gauzy/models';
+import { BillingInvoicingPolicyEnum, IOrganization } from '@gauzy/models';
 import { ProductVariant } from './product-variant.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
@@ -12,7 +12,7 @@ import { ProductVariantPrice } from '../product-variant-price/product-variant-pr
 export const createRandomProductVariant = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>,
 	numberOfVariantPerProduct
 ): Promise<ProductVariant[]> => {
 	if (!tenantOrganizationsMap) {
@@ -59,6 +59,7 @@ export const createRandomProductVariant = async (
 						productVariant.settings = new ProductVariantSettings();
 						productVariant.price = new ProductVariantPrice();
 						productVariant.product = product;
+						productVariant.tenant = tenant;
 
 						productVariants.push(productVariant);
 					}

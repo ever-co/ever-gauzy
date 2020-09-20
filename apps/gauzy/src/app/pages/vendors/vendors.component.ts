@@ -1,13 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	IOrganizationVendor,
-	Tag,
-	ComponentLayoutStyleEnum
+	ITag,
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -17,7 +19,6 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-vendors',
@@ -26,17 +27,18 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 })
 export class VendorsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationId: string;
+	selectedOrganization: IOrganization;
 	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedVendor: IOrganizationVendor;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	currentVendor: IOrganizationVendor;
+	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: NbToastrService,
@@ -56,15 +58,15 @@ export class VendorsComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
-					this.organizationId = organization.id;
+					this.selectedOrganization = organization;
 					this.loadVendors();
 				}
 			});
 		this.router.events
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -72,7 +74,10 @@ export class VendorsComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
@@ -88,7 +93,7 @@ export class VendorsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.VENDORS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 
@@ -156,14 +161,18 @@ export class VendorsComponent extends TranslationBaseComponent
 	async createVendor() {
 		if (!this.form.invalid) {
 			const name = this.form.get('name').value;
+			const { id: organizationId, tenantId } = this.selectedOrganization;
+
 			await this.organizationVendorsService.create({
 				name: this.form.get('name').value,
 				phone: this.form.get('phone').value,
 				email: this.form.get('email').value,
 				website: this.form.get('website').value,
-				organizationId: this.organizationId,
+				organizationId,
+				tenantId,
 				tags: this.tags
 			});
+
 			this.toastrService.primary(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
@@ -216,12 +225,16 @@ export class VendorsComponent extends TranslationBaseComponent
 
 	async updateVendor(vendor: IOrganizationVendor) {
 		const name = this.form.get('name').value;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+
 		await this.organizationVendorsService.update(vendor.id, {
 			name: this.form.get('name').value,
 			phone: this.form.get('phone').value,
 			email: this.form.get('email').value,
 			website: this.form.get('website').value,
-			tags: this.tags
+			tags: this.tags,
+			organizationId,
+			tenantId
 		});
 
 		this.toastrService.primary(
@@ -238,12 +251,15 @@ export class VendorsComponent extends TranslationBaseComponent
 	}
 
 	private async loadVendors() {
-		if (!this.organizationId) {
+		if (!this.selectedOrganization) {
 			return;
 		}
+
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.organizationVendorsService.getAll(
 			{
-				organizationId: this.organizationId
+				organizationId,
+				tenantId
 			},
 			['tags']
 		);
@@ -259,7 +275,7 @@ export class VendorsComponent extends TranslationBaseComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});

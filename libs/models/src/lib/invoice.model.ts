@@ -1,12 +1,12 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization } from './organization.model';
-import { OrganizationContact } from './organization-contact.model';
-import { InvoiceItem } from './invoice-item.model';
-import { Tag } from './tag-entity.model';
-import { Payment } from './payment.model';
-import { InvoiceEstimateHistory } from './invoice-estimate-history.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganization } from './organization.model';
+import { IOrganizationContact } from './organization-contact.model';
+import { IInvoiceItem } from './invoice-item.model';
+import { ITag } from './tag-entity.model';
+import { IPayment } from './payment.model';
+import { IInvoiceEstimateHistory } from './invoice-estimate-history.model';
 
-export interface Invoice extends IBaseEntityModel {
+export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate: Date;
 	invoiceNumber: number;
 	dueDate: Date;
@@ -22,21 +22,21 @@ export interface Invoice extends IBaseEntityModel {
 	totalValue?: number;
 	organizationContactId?: string;
 	organizationContactName?: string;
-	organizationId?: string;
-	fromOrganization?: Organization;
-	toContact?: OrganizationContact;
-	invoiceItems?: InvoiceItem[];
+	fromOrganization?: IOrganization;
+	toContact?: IOrganizationContact;
+	invoiceItems?: IInvoiceItem[];
 	invoiceType?: string;
 	sentTo?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 	isEstimate?: boolean;
 	status?: string;
-	payments?: Payment[];
+	payments?: IPayment[];
 	isAccepted?: boolean;
-	historyRecords?: InvoiceEstimateHistory[];
+	historyRecords?: IInvoiceEstimateHistory[];
 }
 
-export interface InvoiceUpdateInput {
+export interface IInvoiceUpdateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate?: Date;
 	invoiceNumber?: number;
 	dueDate?: Date;
@@ -51,23 +51,22 @@ export interface InvoiceUpdateInput {
 	terms?: string;
 	totalValue?: number;
 	organizationContactId?: string;
-	toContact?: OrganizationContact;
-	organizationId?: string;
+	toContact?: IOrganizationContact;
 	invoiceType?: string;
 	sentTo?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 	status?: string;
 	isAccepted?: boolean;
 	isEstimate?: boolean;
 }
 
-export interface InvoiceFindInput {
-	organizationId?: string;
+export interface IInvoiceFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContactId?: string;
 	invoiceId?: string;
 	sentTo?: string;
 	invoiceNumber?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 	isEstimate?: boolean;
 }
 

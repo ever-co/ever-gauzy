@@ -1,24 +1,23 @@
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import {
-	BaseEntityModel,
-	Organization,
-	PipelineStage,
-	PipelineStageCreateInput
-} from '@gauzy/models';
+	IPipelineStageCreateInput,
+	IPipelineStage
+} from './pipeline-stage.model';
 
-export interface Pipeline extends BaseEntityModel, PipelineCreateInput {
-	organization: Organization;
-	stages: PipelineStage[];
+export interface IPipeline extends IBasePerTenantAndOrganizationEntityModel {
+	stages: IPipelineStage[];
 	description: string;
+	name: string;
 	isActive: boolean;
 }
 
-export type PipelineFindInput = Partial<
-	Pick<Pipeline, 'id' | 'organizationId'>
+export type IPipelineFindInput = Partial<
+	Pick<IPipeline, 'id' | 'organizationId' | 'tenantId'>
 >;
 
-export interface PipelineCreateInput {
-	stages?: PipelineStageCreateInput[];
-	organizationId: string;
+export interface IPipelineCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
+	stages?: IPipelineStageCreateInput[];
 	description?: string;
 	name: string;
 	isActive: boolean;

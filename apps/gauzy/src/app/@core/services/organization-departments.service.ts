@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-	EditEntityByMemberInput,
-	OrganizationDepartment,
-	OrganizationDepartmentCreateInput,
-	OrganizationDepartmentFindInput
+	IEditEntityByMemberInput,
+	IOrganizationDepartment,
+	IOrganizationDepartmentCreateInput,
+	IOrganizationDepartmentFindInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -15,10 +15,10 @@ export class OrganizationDepartmentsService {
 	constructor(private http: HttpClient) {}
 
 	create(
-		createInput: OrganizationDepartmentCreateInput
-	): Promise<OrganizationDepartment> {
+		createInput: IOrganizationDepartmentCreateInput
+	): Promise<IOrganizationDepartment> {
 		return this.http
-			.post<OrganizationDepartment>(
+			.post<IOrganizationDepartment>(
 				'/api/organization-department',
 				createInput
 			)
@@ -26,9 +26,9 @@ export class OrganizationDepartmentsService {
 			.toPromise();
 	}
 
-	getAllByEmployee(id: string): Promise<OrganizationDepartment[]> {
+	getAllByEmployee(id: string): Promise<IOrganizationDepartment[]> {
 		return this.http
-			.get<OrganizationDepartment[]>(
+			.get<IOrganizationDepartment[]>(
 				`/api/organization-department/employee/${id}`
 			)
 			.pipe(first())
@@ -37,12 +37,12 @@ export class OrganizationDepartmentsService {
 
 	getAll(
 		relations?: string[],
-		findInput?: OrganizationDepartmentFindInput
+		findInput?: IOrganizationDepartmentFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: OrganizationDepartment[]; total: number }>(
+			.get<{ items: IOrganizationDepartment[]; total: number }>(
 				`/api/organization-department`,
 				{
 					params: { data }
@@ -54,7 +54,7 @@ export class OrganizationDepartmentsService {
 
 	update(
 		id: string,
-		updateInput: OrganizationDepartmentCreateInput
+		updateInput: IOrganizationDepartmentCreateInput
 	): Promise<any> {
 		return this.http
 			.put(`/api/organization-department/${id}`, updateInput)
@@ -62,7 +62,7 @@ export class OrganizationDepartmentsService {
 			.toPromise();
 	}
 
-	updateByEmployee(updateInput: EditEntityByMemberInput): Promise<any> {
+	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
 		return this.http
 			.put(`/api/organization-department/employee`, updateInput)
 			.pipe(first())

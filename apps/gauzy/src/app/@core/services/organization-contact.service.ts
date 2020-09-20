@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	OrganizationContactCreateInput,
-	OrganizationContact,
-	OrganizationContactFindInput,
-	EditEntityByMemberInput
+	IOrganizationContactCreateInput,
+	IOrganizationContact,
+	IOrganizationContactFindInput,
+	IEditEntityByMemberInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -15,17 +15,20 @@ export class OrganizationContactService {
 	constructor(private http: HttpClient) {}
 
 	create(
-		createInput: OrganizationContactCreateInput
-	): Promise<OrganizationContact> {
+		createInput: IOrganizationContactCreateInput
+	): Promise<IOrganizationContact> {
 		return this.http
-			.post<OrganizationContact>('/api/organization-contact', createInput)
+			.post<IOrganizationContact>(
+				'/api/organization-contact',
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getAllByEmployee(id: string): Promise<OrganizationContact[]> {
+	getAllByEmployee(id: string): Promise<IOrganizationContact[]> {
 		return this.http
-			.get<OrganizationContact[]>(
+			.get<IOrganizationContact[]>(
 				`/api/organization-contact/employee/${id}`
 			)
 			.pipe(first())
@@ -34,19 +37,19 @@ export class OrganizationContactService {
 
 	getById(id: string) {
 		return this.http
-			.get<OrganizationContact>(`/api/organization-contact/${id}`)
+			.get<IOrganizationContact>(`/api/organization-contact/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAll(
 		relations?: string[],
-		findInput?: OrganizationContactFindInput
+		findInput?: IOrganizationContactFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: OrganizationContact[]; total: number }>(
+			.get<{ items: IOrganizationContact[]; total: number }>(
 				`/api/organization-contact`,
 				{
 					params: { data }
@@ -59,7 +62,7 @@ export class OrganizationContactService {
 	getByName(
 		relations?: string[],
 		findInput?: string
-	): Promise<OrganizationContactFindInput> {
+	): Promise<IOrganizationContactFindInput> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get(`/api/organization-contact`, { params: { data } })
@@ -67,7 +70,7 @@ export class OrganizationContactService {
 			.toPromise();
 	}
 
-	updateByEmployee(updateInput: EditEntityByMemberInput): Promise<any> {
+	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
 		return this.http
 			.put(`/api/organization-contact/employee`, updateInput)
 			.pipe(first())

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {
-	EditEntityByMemberInput,
-	Employee,
-	OrganizationProjects
+	IEditEntityByMemberInput,
+	IEmployee,
+	IOrganizationProject
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,10 +20,10 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
-	organizationProjects: OrganizationProjects[] = [];
-	employeeProjects: OrganizationProjects[] = [];
+	organizationProjects: IOrganizationProject[] = [];
+	employeeProjects: IOrganizationProject[] = [];
 
-	selectedEmployee: Employee;
+	selectedEmployee: IEmployee;
 
 	constructor(
 		private readonly organizationProjectsService: OrganizationProjectsService,
@@ -45,7 +45,7 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 			});
 	}
 
-	async submitForm(formInput: EditEntityByMemberInput, removed: boolean) {
+	async submitForm(formInput: IEditEntityByMemberInput, removed: boolean) {
 		try {
 			if (formInput.member) {
 				await this.organizationProjectsService.updateByEmployee(

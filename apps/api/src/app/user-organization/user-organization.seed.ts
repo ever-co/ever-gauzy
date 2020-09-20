@@ -1,8 +1,8 @@
 import { Connection } from 'typeorm';
 import {
-	Organization,
-	User,
-	UserOrganization as IUserOrganization,
+	IOrganization,
+	IUser,
+	IUserOrganization,
 	ISeedUsers
 } from '@gauzy/models';
 import { UserOrganization } from './user-organization.entity';
@@ -11,8 +11,8 @@ import { Tenant } from '../tenant/tenant.entity';
 export const createDefaultUsersOrganizations = async (
 	connection: Connection,
 	defaultData: {
-		organizations: Organization[];
-		users: User[];
+		organizations: IOrganization[];
+		users: IUser[];
 	}
 ): Promise<IUserOrganization[]> => {
 	let userOrganization: IUserOrganization;
@@ -37,8 +37,8 @@ export const createDefaultUsersOrganizations = async (
 export const createRandomUsersOrganizations = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantSuperAdminsMap: Map<Tenant, User[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>,
+	tenantSuperAdminsMap: Map<Tenant, IUser[]>,
 	tenantUsersMap: Map<Tenant, ISeedUsers>,
 	employeesPerOrganization: number
 ): Promise<IUserOrganization[]> => {

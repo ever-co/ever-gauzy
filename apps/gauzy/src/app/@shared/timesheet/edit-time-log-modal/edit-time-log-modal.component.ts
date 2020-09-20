@@ -7,9 +7,9 @@ import {
 } from '@angular/core';
 import {
 	IDateRange,
-	Organization,
-	TimeLog,
-	Employee,
+	IOrganization,
+	ITimeLog,
+	IEmployee,
 	PermissionsEnum,
 	OrganizationPermissionsEnum,
 	IGetTimeLogConflictInput
@@ -41,25 +41,25 @@ export class EditTimeLogModalComponent
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
 	loading: boolean;
-	overlaps: TimeLog[] = [];
+	overlaps: ITimeLog[] = [];
 
 	selectedRange: IDateRange = { start: null, end: null };
-	organization: Organization;
+	organization: IOrganization;
 
 	employee: SelectedEmployee;
-	employees: Employee[];
+	employees: IEmployee[];
 	futureDateAllowed: boolean;
 	loadEmployees$: Subject<any> = new Subject();
 
 	form: FormGroup;
 
-	private _timeLog: TimeLog | Partial<TimeLog>;
+	private _timeLog: ITimeLog | Partial<ITimeLog>;
 	changeSelectedEmployee: boolean;
 	@Input()
-	public get timeLog(): TimeLog | Partial<TimeLog> {
+	public get timeLog(): ITimeLog | Partial<ITimeLog> {
 		return this._timeLog || {};
 	}
-	public set timeLog(value: TimeLog | Partial<TimeLog>) {
+	public set timeLog(value: ITimeLog | Partial<ITimeLog>) {
 		this._timeLog = Object.assign({}, value);
 
 		this.mode = this._timeLog && this._timeLog.id ? 'update' : 'create';
@@ -126,6 +126,7 @@ export class EditTimeLogModalComponent
 						items = []
 					} = await this.employeesService.getWorking(
 						this.organization.id,
+						this.organization.tenantId,
 						this.selectedRange.start,
 						true
 					);
@@ -168,7 +169,7 @@ export class EditTimeLogModalComponent
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 			});
 	}

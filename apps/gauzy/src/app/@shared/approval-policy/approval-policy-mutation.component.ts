@@ -2,9 +2,9 @@ import { OnInit, Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
-	ApprovalPolicy,
-	Employee,
-	ApprovalPolicyCreateInput,
+	IApprovalPolicy,
+	IEmployee,
+	IApprovalPolicyCreateInput,
 	ApprovalPolicyTypesEnum
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
@@ -24,9 +24,10 @@ export interface SelectedApprovalPolicy {
 export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
-	approvalPolicy: ApprovalPolicy;
-	employees: Employee[] = [];
+	approvalPolicy: IApprovalPolicy;
+	employees: IEmployee[] = [];
 	organizationId: string;
+	// TODO: remove from here, we should never use TenantId in the client app
 	tenantId: string;
 	isHasType = true;
 
@@ -60,12 +61,12 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 		});
 	}
 
-	async closeDialog(approvalPolicy?: ApprovalPolicy) {
+	async closeDialog(approvalPolicy?: IApprovalPolicy) {
 		this.dialogRef.close(approvalPolicy);
 	}
 
 	async saveApprovalPolicy() {
-		const apprPolicy: ApprovalPolicyCreateInput = {
+		const approvalPolicy: IApprovalPolicyCreateInput = {
 			name: this.form.value['name'],
 			description: this.form.value['description'],
 			organizationId: this.organizationId,
@@ -73,8 +74,8 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 			id: this.form.value['id']
 		};
 
-		let result: ApprovalPolicy;
-		result = await this.approvalPolicyService.save(apprPolicy);
+		let result: IApprovalPolicy;
+		result = await this.approvalPolicyService.save(approvalPolicy);
 
 		this.closeDialog(result);
 	}

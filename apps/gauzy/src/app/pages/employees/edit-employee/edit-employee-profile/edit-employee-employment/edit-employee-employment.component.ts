@@ -2,13 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Params } from '@angular/router';
 import {
-	Employee,
-	Organization,
-	OrganizationDepartment,
-	OrganizationEmploymentType,
-	OrganizationPositions,
-	Tag,
-	Skill
+	IEmployee,
+	IOrganization,
+	IOrganizationDepartment,
+	IOrganizationEmploymentType,
+	IOrganizationPosition,
+	ITag,
+	ISkill
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
@@ -16,8 +16,8 @@ import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/service
 import { OrganizationEmploymentTypesService } from 'apps/gauzy/src/app/@core/services/organization-employment-types.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Subject, Subscription } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
 
 @Component({
@@ -31,16 +31,16 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	paramSubscription: Subscription;
 	hoverState: boolean;
 	routeParams: Params;
-	selectedEmployee: Employee;
+	selectedEmployee: IEmployee;
 	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
-	employmentTypes: OrganizationEmploymentType[];
+	employmentTypes: IOrganizationEmploymentType[];
 	employeeLevels: { level: string; organizationId: string }[] = [];
-	selectedOrganization: Organization;
-	departments: OrganizationDepartment[] = [];
-	positions: OrganizationPositions[] = [];
-	tags: Tag[] = [];
-	skills: Skill[] = [];
+	selectedOrganization: IOrganization;
+	departments: IOrganizationDepartment[] = [];
+	positions: IOrganizationPosition[] = [];
+	tags: ITag[] = [];
+	skills: ISkill[] = [];
 	selectedTags: any;
 
 	constructor(
@@ -56,17 +56,11 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (emp) => {
 				this.selectedEmployee = emp;
-
-				if (this.selectedEmployee) {
-					this.getDepartments();
-					this._initializeForm(this.selectedEmployee);
-				}
-
 				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
+					.pipe(untilDestroyed(this))
 					.subscribe((organization) => {
 						this.selectedOrganization = organization;
 						if (this.selectedOrganization) {
@@ -75,31 +69,37 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 							this.getEmployeeLevels();
 						}
 					});
+
+				if (this.selectedEmployee) {
+					this.getDepartments();
+					this._initializeForm(this.selectedEmployee);
+				}
 			});
 	}
 
 	private async getDepartments() {
 		const { items } = await this.organizationDepartmentsService.getAll([], {
-			organizationId: this.selectedEmployee.orgId
+			organizationId: this.selectedOrganization.id,
+			tenantId: this.selectedOrganization.tenantId
 		});
 		this.departments = items;
 	}
 
-	private getPositions() {
-		this.organizationPositionsService
-			.getAll({ organizationId: this.selectedOrganization.id })
-			.then((data) => {
-				const { items } = data;
-				this.positions = items;
-			});
+	private async getPositions() {
+		const { items } = await this.organizationPositionsService.getAll({
+			organizationId: this.selectedOrganization.id,
+			tenantId: this.selectedOrganization.tenantId
+		});
+		this.positions = items;
 	}
 
 	private getEmploymentTypes() {
 		this.organizationEmploymentTypeService
 			.getAll([], {
-				organizationId: this.selectedOrganization.id
+				organizationId: this.selectedOrganization.id,
+				tenantId: this.selectedOrganization.tenantId
 			})
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((types) => {
 				this.employmentTypes = types.items;
 			});
@@ -107,7 +107,9 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 
 	private async getEmployeeLevels() {
 		const { items } = await this.employeeLevelService.getAll(
-			this.selectedOrganization.id
+			this.selectedOrganization.id,
+			[],
+			{ tenantId: this.selectedOrganization.tenantId }
 		);
 		this.employeeLevels = items;
 	}
@@ -124,15 +126,15 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 
-	selectedSkillsHandler(currentSelection: Skill[]) {
+	selectedSkillsHandler(currentSelection: ISkill[]) {
 		this.form.get('skills').setValue(currentSelection);
 	}
 
-	private _initializeForm(employee: Employee) {
+	private _initializeForm(employee: IEmployee) {
 		this.form = this.fb.group({
 			organizationEmploymentTypes: [
 				employee.organizationEmploymentTypes || null

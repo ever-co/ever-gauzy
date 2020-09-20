@@ -3,12 +3,12 @@ import { Injectable } from '@angular/core';
 import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
-	Invite,
-	InviteFindInput,
-	PublicInviteFindInput,
+	IInvite,
+	IInviteFindInput,
+	IPublicInviteFindInput,
 	IInviteAcceptInput,
 	IInviteResendInput,
-	OrganizationContact,
+	IOrganizationContact,
 	IOrganizationContactAcceptInviteInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
@@ -28,12 +28,12 @@ export class InviteService {
 
 	getAll(
 		relations: string[],
-		findInput?: InviteFindInput
-	): Promise<{ items: Invite[]; total: number }> {
+		findInput?: IInviteFindInput
+	): Promise<{ items: IInvite[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: Invite[]; total: number }>(`/api/invite/all`, {
+			.get<{ items: IInvite[]; total: number }>(`/api/invite/all`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -42,12 +42,12 @@ export class InviteService {
 
 	validateInvite(
 		relations: string[],
-		findInput: PublicInviteFindInput
-	): Promise<Invite> {
+		findInput: IPublicInviteFindInput
+	): Promise<IInvite> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<Invite>(`/api/invite/validate`, {
+			.get<IInvite>(`/api/invite/validate`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -93,9 +93,9 @@ export class InviteService {
 
 	inviteOrganizationContact(
 		organizationContactId: string
-	): Promise<OrganizationContact> {
+	): Promise<IOrganizationContact> {
 		return this.http
-			.put<OrganizationContact>(
+			.put<IOrganizationContact>(
 				`/api/invite/organization-contact/${organizationContactId}`,
 				{}
 			)

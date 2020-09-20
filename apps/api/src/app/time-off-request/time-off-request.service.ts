@@ -10,7 +10,7 @@ import { Repository } from 'typeorm';
 import { TimeOffRequest } from './time-off-request.entity';
 import { CrudService } from '../core/crud/crud.service';
 import {
-	TimeOffCreateInput as ITimeOffCreateInput,
+	ITimeOffCreateInput,
 	RequestApprovalStatusTypesEnum,
 	StatusTypesEnum,
 	StatusTypesMapRequestApprovalEnum,

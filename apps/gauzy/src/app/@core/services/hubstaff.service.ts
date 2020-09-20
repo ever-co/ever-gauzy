@@ -9,7 +9,8 @@ import {
 	IIntegrationEntitySetting,
 	DefaultValueDateTypeEnum,
 	IIntegrationMap,
-	IntegrationEntity
+	IntegrationEntity,
+	IntegrationEnum
 } from '@gauzy/models';
 import { v4 as uuid } from 'uuid';
 import { Store } from './store.service';
@@ -280,5 +281,14 @@ export class HubstaffService {
 			billable,
 			description
 		}));
+	}
+
+	/*
+	 * Check remeber state for upwork integration
+	 */
+	checkRemeberState() {
+		return this._http.get<any>(
+			`/api/integration/check/state/${IntegrationEnum.HUBSTAFF}`
+		);
 	}
 }

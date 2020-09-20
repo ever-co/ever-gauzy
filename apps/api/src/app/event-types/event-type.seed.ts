@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee, Organization } from '@gauzy/models';
+import { IEmployee, IOrganization } from '@gauzy/models';
 import { EventType } from './event-type.entity';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
@@ -8,8 +8,8 @@ import { Tag } from '../tags/tag.entity';
 export const createRandomEventType = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<EventType[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
@@ -46,6 +46,7 @@ export const createRandomEventType = async (
 				event.organization = tenantOrg;
 				event.employee = tenantEmployee;
 				event.tags = tags;
+				event.tenant = tenant;
 
 				eventTypes.push(event);
 			}
@@ -57,9 +58,11 @@ export const createRandomEventType = async (
 
 export const createDefaultEventTypes = async (
 	connection: Connection,
-	orgs: Organization[]
+	tenant: Tenant,
+	orgs: IOrganization[]
 ): Promise<void> => {
 	const eventTypes: EventType[] = [];
+	console.log('tenant', tenant);
 
 	orgs.forEach((org) => {
 		const eventType = new EventType();
@@ -69,6 +72,7 @@ export const createDefaultEventTypes = async (
 		eventType.durationUnit = 'Minute(s)';
 		eventType.isActive = true;
 		eventType.organization = org;
+		eventType.tenant = tenant;
 		eventTypes.push(eventType);
 
 		const eventTypeOne = new EventType();

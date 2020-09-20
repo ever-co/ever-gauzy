@@ -6,8 +6,7 @@ import {
 	JoinColumn,
 	OneToMany
 } from 'typeorm';
-import { Base } from '../core/entities/base';
-import { Timesheet as ITimesheet, TimesheetStatus } from '@gauzy/models';
+import { ITimesheet, TimesheetStatus } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,
@@ -18,9 +17,10 @@ import {
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { TimeLog } from './time-log.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('timesheet')
-export class Timesheet extends Base implements ITimesheet {
+export class Timesheet extends TenantOrganizationBase implements ITimesheet {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()

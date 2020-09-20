@@ -1,7 +1,4 @@
-import {
-	CurrenciesEnum,
-	OrganizationRecurringExpense as IOrganizationRecurringExpense
-} from '@gauzy/models';
+import { CurrenciesEnum, IOrganizationRecurringExpense } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsDate,
@@ -14,21 +11,12 @@ import {
 	Min,
 	IsBoolean
 } from 'class-validator';
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
-
-import { Base } from '../core/entities/base';
-import { Organization } from '../organization/organization.entity';
+import { Column, Entity, Index } from 'typeorm';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_recurring_expense')
-export class OrganizationRecurringExpense extends Base
+export class OrganizationRecurringExpense extends TenantOrganizationBase
 	implements IOrganizationRecurringExpense {
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	organizationId: string;
-
 	@ApiProperty({ type: Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsNotEmpty()
@@ -117,7 +105,4 @@ export class OrganizationRecurringExpense extends Base
 	@Index()
 	@Column({ nullable: true })
 	parentRecurringExpenseId?: string;
-
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization: Organization;
 }

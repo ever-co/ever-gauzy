@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
 import { CandidateExperienceService } from 'apps/gauzy/src/app/@core/services/candidate-experience.service';
-import { IExperience, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ICandidateExperience, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -23,11 +23,11 @@ export class EditCandidateExperienceFormComponent
 	showAddCard: boolean;
 	experienceId = null;
 	disableButton = true;
-	experienceList: IExperience[] = [];
+	experienceList: ICandidateExperience[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
 	form: FormGroup;
-	selectedExperience: IExperience;
+	selectedExperience: ICandidateExperience;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
@@ -80,7 +80,7 @@ export class EditCandidateExperienceFormComponent
 			this.sourceSmartTable.load(res.items);
 		}
 	}
-	editExperience(experience: IExperience) {
+	editExperience(experience: ICandidateExperience) {
 		const selectedItem = experience ? experience : this.selectedExperience;
 		this.showAddCard = true;
 		this.form.controls.experience.patchValue([selectedItem]);
@@ -149,7 +149,7 @@ export class EditCandidateExperienceFormComponent
 			);
 		}
 	}
-	async removeExperience(experience: IExperience) {
+	async removeExperience(experience: ICandidateExperience) {
 		const selectedItem = experience ? experience : this.selectedExperience;
 		try {
 			await this.candidateExperienceService.delete(selectedItem.id);

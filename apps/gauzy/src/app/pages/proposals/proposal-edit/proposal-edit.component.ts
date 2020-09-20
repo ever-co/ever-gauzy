@@ -1,4 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	OnInit
+} from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { ProposalViewModel } from '../proposals.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
@@ -7,28 +12,33 @@ import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Tag } from '@gauzy/models';
+import { ITag } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-proposal-edit',
 	templateUrl: './proposal-edit.component.html'
 })
 export class ProposalEditComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, AfterViewInit {
 	constructor(
 		private store: Store,
 		private fb: FormBuilder,
 		private router: Router,
 		private toastrService: NbToastrService,
 		private proposalsService: ProposalsService,
-		private translate: TranslateService
+		private translate: TranslateService,
+		private cdRef: ChangeDetectorRef
 	) {
 		super(translate);
 	}
 
 	proposal: ProposalViewModel;
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	form: FormGroup;
+	public ckConfig: any = {
+		width: '100%',
+		height: '320'
+	};
 
 	ngOnInit() {
 		this.proposal = this.store.selectedProposal;
@@ -38,6 +48,10 @@ export class ProposalEditComponent extends TranslationBaseComponent
 		}
 
 		this._initializeForm();
+	}
+
+	ngAfterViewInit(): void {
+		this.cdRef.detectChanges();
 	}
 
 	private _initializeForm() {
@@ -53,7 +67,6 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	async editProposal() {
 		if (this.form.valid) {
 			const result = this.form.value;
-
 			try {
 				await this.proposalsService.update(this.proposal.id, {
 					jobPostContent: result.jobPostContent,
@@ -82,6 +95,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 			}
 		}
 	}
+
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}

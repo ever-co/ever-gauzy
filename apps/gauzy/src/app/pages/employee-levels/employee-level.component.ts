@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
-	EmployeeLevelInput,
-	Tag,
-	ComponentLayoutStyleEnum
+	IEmployeeLevelInput,
+	ITag,
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,13 +23,13 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 export class EmployeeLevelComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationId: string;
-
+	selectedOrganization: IOrganization;
 	showAddCard: boolean;
 	showEditDiv: boolean;
 
-	employeeLevels: EmployeeLevelInput[] = [];
-	selectedEmployeeLevel: EmployeeLevelInput;
-	tags: Tag[] = [];
+	employeeLevels: IEmployeeLevelInput[] = [];
+	selectedEmployeeLevel: IEmployeeLevelInput;
+	tags: ITag[] = [];
 	isGridEdit: boolean;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -51,6 +52,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrganization = organization;
 					this.organizationId = organization.id;
 					this.loadEmployeeLevels();
 					this.loadSmartTable();
@@ -63,7 +65,10 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 	private async loadEmployeeLevels() {
 		const { items } = await this.employeeLevelService.getAll(
 			this.organizationId,
-			['tags']
+			['tags'],
+			{
+				tenantId: this.selectedOrganization.tenantId
+			}
 		);
 
 		if (items) {
@@ -104,6 +109,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 			await this.employeeLevelService.create({
 				level,
 				organizationId: this.organizationId,
+				tenantId: this.selectedOrganization.tenantId,
 				tags: this.tags
 			});
 
@@ -134,6 +140,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 		const employeeLevel = {
 			level: employeeLevelName,
 			organizationId: this.organizationId,
+			tenantId: this.selectedOrganization.tenantId,
 			tags: this.tags
 		};
 		await this.employeeLevelService.update(id, employeeLevel);
@@ -145,7 +152,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 		this.loadEmployeeLevels();
 		this.cancel();
 	}
-	edit(employeeLevel: EmployeeLevelInput) {
+	edit(employeeLevel: IEmployeeLevelInput) {
 		this.showAddCard = true;
 		this.isGridEdit = true;
 		this.selectedEmployeeLevel = employeeLevel;
@@ -182,7 +189,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 		}
 	}
 
-	showEditCard(employeeLevel: EmployeeLevelInput) {
+	showEditCard(employeeLevel: IEmployeeLevelInput) {
 		this.tags = employeeLevel.tags;
 		this.showEditDiv = true;
 		this.selectedEmployeeLevel = employeeLevel;

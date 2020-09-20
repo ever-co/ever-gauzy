@@ -46,14 +46,14 @@ export class CreateTimeSlotHandler
 			await this.timeSlotRepository.update(timeSlot.id, input);
 		} else {
 			timeSlot = new TimeSlot(input);
-			if (input.activites) {
-				input.activites = input.activites.map((activity) => {
+			if (input.activities) {
+				input.activities = input.activities.map((activity) => {
 					activity = new Activity(activity);
 					activity.employeeId = timeSlot.employeeId;
 					return activity;
 				});
-				timeSlot.activites = input.activites;
-				await this.activityRepository.save(timeSlot.activites);
+				timeSlot.activities = input.activities;
+				await this.activityRepository.save(timeSlot.activities);
 			}
 			await this.timeSlotRepository.save(timeSlot);
 		}

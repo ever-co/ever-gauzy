@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
+import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
 
@@ -11,8 +11,8 @@ import { CandidatesService } from '../../../../../@core/services/candidates.serv
 export class CandidateEmailComponent implements OnInit {
 	@Input() isCandidate: boolean;
 	@Input() templateData: ICandidateInterview;
-	@Input() selectedCandidate: Candidate;
-	@Input() employees: Employee[];
+	@Input() selectedCandidate: ICandidate;
+	@Input() employees: IEmployee[];
 	form: FormGroup;
 	employeeList: string;
 	dateTemplate: string;

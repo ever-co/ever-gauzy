@@ -2,10 +2,15 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { PermissionsEnum, Role, RolesEnum } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	IRole,
+	RolesEnum,
+	ITenant,
+	IRolePermission
+} from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { RolePermissions } from './role-permissions.entity';
-import { Tenant } from '../tenant/tenant.entity';
 
 export const defaultRolePermissions = [
 	{
@@ -167,10 +172,10 @@ export const defaultRolePermissions = [
 
 export const createRolePermissions = async (
 	connection: Connection,
-	roles: Role[],
-	tenants: Tenant[]
-): Promise<RolePermissions[]> => {
-	const rolePermissions: RolePermissions[] = [];
+	roles: IRole[],
+	tenants: ITenant[]
+): Promise<IRolePermission[]> => {
+	const rolePermissions: IRolePermission[] = [];
 
 	tenants.forEach((t) => {
 		defaultRolePermissions.forEach((r) => {

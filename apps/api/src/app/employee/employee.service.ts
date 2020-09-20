@@ -1,4 +1,4 @@
-import { EmployeeCreateInput } from '@gauzy/models';
+import { IEmployeeCreateInput } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
@@ -15,7 +15,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		super(employeeRepository);
 	}
 
-	async createBulk(input: EmployeeCreateInput[]): Promise<Employee[]> {
+	async createBulk(input: IEmployeeCreateInput[]): Promise<Employee[]> {
 		return Promise.all(
 			input.map((emp) => {
 				emp.user.tenant = {
@@ -36,6 +36,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findWorkingEmployees(
 		organizationId: string,
+		tenantId: string,
 		forMonth: Date,
 		withUser: boolean
 	): Promise<{ total: number; items: Employee[] }> {
@@ -43,6 +44,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			.createQueryBuilder('employee')
 			.where('"employee"."organizationId" = :organizationId', {
 				organizationId
+			})
+			.andWhere('"employee"."tenantId" = :tenantId', {
+				tenantId
 			})
 			.andWhere('"employee"."startedWorkOn" <= :startedWorkOnCondition', {
 				startedWorkOnCondition: moment(forMonth).endOf('month').toDate()

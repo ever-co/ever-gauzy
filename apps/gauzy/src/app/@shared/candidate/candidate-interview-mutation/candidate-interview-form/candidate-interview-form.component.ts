@@ -10,7 +10,7 @@ import {
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, IDateRange, ICandidateInterview } from '@gauzy/models';
+import { IEmployee, IDateRange, ICandidateInterview } from '@gauzy/models';
 import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
@@ -28,7 +28,7 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 
 	yesterday = new Date();
 	form: any;
-	employees: Employee[];
+	employees: IEmployee[];
 	employeeIds: string[];
 	isMeeting: boolean;
 	interviewNames: string[];

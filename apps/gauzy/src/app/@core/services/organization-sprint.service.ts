@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbToastrService } from '@nebular/theme';
 import { Observable, throwError } from 'rxjs';
-import { Task, OrganizationSprint, GetSprintsOptions } from '@gauzy/models';
+import { ITask, IOrganizationSprint, IGetSprintsOptions } from '@gauzy/models';
 import { tap, catchError, first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 interface ITaskResponse {
-	items: Task[];
+	items: ITask[];
 	count: number;
 }
 
@@ -26,7 +26,7 @@ export class SprintService extends TranslationBaseComponent {
 		super(translateService);
 	}
 
-	getAllSprints(findInput: GetSprintsOptions = {}): Observable<any> {
+	getAllSprints(findInput: IGetSprintsOptions = {}): Observable<any> {
 		const data = JSON.stringify({
 			relations: [
 				// 'tasks'
@@ -48,13 +48,13 @@ export class SprintService extends TranslationBaseComponent {
 
 	getById(id: string) {
 		return this._http
-			.get<Task>(`${this.API_URL}/${id}`)
+			.get<ITask>(`${this.API_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
-	createSprint(sprint: OrganizationSprint): Observable<OrganizationSprint> {
-		return this._http.post<OrganizationSprint>(this.API_URL, sprint).pipe(
+	createSprint(sprint: IOrganizationSprint): Observable<IOrganizationSprint> {
+		return this._http.post<IOrganizationSprint>(this.API_URL, sprint).pipe(
 			tap(() => {
 				this.toastrService.primary(
 					this.getTranslation('SPRINTS_PAGE.SPRINT_ADDED'),
@@ -67,10 +67,10 @@ export class SprintService extends TranslationBaseComponent {
 
 	editSprint(
 		sprintId: string,
-		sprint: Partial<OrganizationSprint>
-	): Observable<OrganizationSprint> {
+		sprint: Partial<IOrganizationSprint>
+	): Observable<IOrganizationSprint> {
 		return this._http
-			.put<OrganizationSprint>(`${this.API_URL}/${sprintId}`, sprint)
+			.put<IOrganizationSprint>(`${this.API_URL}/${sprintId}`, sprint)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary(

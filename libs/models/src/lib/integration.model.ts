@@ -1,7 +1,6 @@
 import { SafeResourceUrl } from '@angular/platform-browser';
-import { ITenant } from './tenant.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationProjectsCreateInput } from '..';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganizationProjectsCreateInput } from '..';
 
 export interface IIntegrationSetting {
 	integration: IIntegrationTenant;
@@ -29,19 +28,20 @@ export interface IIntegrationViewModel {
 	isComingSoon?: boolean;
 }
 
-export interface IIntegrationTenant extends IBaseEntityModel {
-	tenant: ITenant;
+export interface IIntegrationTenant
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];
 }
 
-export interface IIntegration extends IBaseEntityModel {
+export interface IIntegration extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	imgSrc?: string;
 	integrationTypes?: IIntegrationType[];
 }
 
-export interface IIntegrationType extends IBaseEntityModel {
+export interface IIntegrationType
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	groupName: string;
 	order: number;
@@ -54,7 +54,7 @@ export interface IIntegrationFilter {
 }
 
 export interface IIntegrationMapSyncProject {
-	organizationProjectCreateInput: OrganizationProjectsCreateInput;
+	organizationProjectCreateInput: IOrganizationProjectsCreateInput;
 	integrationId: string;
 	sourceId: string;
 }

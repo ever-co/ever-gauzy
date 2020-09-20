@@ -2,15 +2,15 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import {
-	KeyResult,
-	KeyResultUpdates,
+	IKeyResult,
+	IKeyResultUpdate,
 	KeyResultDeadlineEnum,
 	RolesEnum,
 	KeyResultTypeEnum,
-	Task,
+	ITask,
 	TaskStatusEnum,
 	KeyResultUpdateStatusEnum,
-	KPI
+	IKPI
 } from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first, takeUntil } from 'rxjs/operators';
@@ -34,16 +34,16 @@ import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/a
 })
 export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	src: string;
-	keyResult: KeyResult;
-	updates: KeyResultUpdates[];
+	keyResult: IKeyResult;
+	updates: IKeyResultUpdate[];
 	keyResultDeadlineEnum = KeyResultDeadlineEnum;
 	keyResultTypeEnum = KeyResultTypeEnum;
 	isUpdatable = true;
 	startDate: Date;
 	today = new Date();
 	loading = true;
-	task: Task;
-	kpi: KPI;
+	task: ITask;
+	kpi: IKPI;
 	endDate: Date;
 	private _ngDestroy$ = new Subject<void>();
 	ownerName: string;
@@ -212,7 +212,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 						taskResponse.status === TaskStatusEnum.COMPLETED
 							? KeyResultUpdateStatusEnum.ON_TRACK
 							: KeyResultUpdateStatusEnum.NONE;
-					const update: KeyResultUpdates = {
+					const update: IKeyResultUpdate = {
 						keyResultId: this.keyResult.id,
 						owner: this.keyResult.owner.id,
 						update: this.keyResult.update,

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Goal, KeyResult, KeyResultUpdates } from '@gauzy/models';
+import { IGoal, IKeyResult, IKeyResultUpdate } from '@gauzy/models';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
@@ -19,10 +19,10 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class GoalDetailsComponent extends TranslationBaseComponent
 	implements OnInit {
-	goal: Goal;
+	goal: IGoal;
 	src: string;
 	ownerName: string;
-	updates: Array<KeyResultUpdates> = [];
+	updates: Array<IKeyResultUpdate> = [];
 	constructor(
 		private dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private employeeService: EmployeesService,
@@ -43,9 +43,9 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 			);
 			this.src = employee.user.imageUrl;
 			this.ownerName = employee.user.name;
-		} else if (!!this.goal.ownerOrg) {
-			this.ownerName = this.goal.ownerOrg.name;
-			this.src = this.goal.ownerOrg.imageUrl;
+		} else if (!!this.goal.organization) {
+			this.ownerName = this.goal.organization.name;
+			this.src = this.goal.organization.imageUrl;
 		} else {
 			this.ownerName = this.goal.ownerTeam.name;
 		}
@@ -135,7 +135,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 
 	calculateGoalProgress(keyResults) {
 		const progressTotal = keyResults.reduce(
-			(a: number, b: KeyResult) => a + b.progress * +b.weight,
+			(a: number, b: IKeyResult) => a + b.progress * +b.weight,
 			0
 		);
 		const weightTotal = keyResults.reduce((a, b) => a + +b.weight, 0);

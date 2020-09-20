@@ -1,5 +1,5 @@
 import { ICandidateSource } from '@gauzy/models';
-import { CurrenciesEnum, DefaultValueDateTypeEnum, User } from '..';
+import { CurrenciesEnum, DefaultValueDateTypeEnum, IUser } from '..';
 import { LanguagesEnum } from './user.model';
 
 export interface IDefaultUser {
@@ -30,9 +30,9 @@ export interface IDefaultOrganization {
 }
 
 export interface ISeedUsers {
-	adminUsers: User[];
-	employeeUsers: User[];
-	candidateUsers: User[];
+	adminUsers: IUser[];
+	employeeUsers: IUser[];
+	candidateUsers: IUser[];
 }
 
 export interface IDefaultProductCategory {

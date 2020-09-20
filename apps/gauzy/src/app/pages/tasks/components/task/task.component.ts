@@ -15,9 +15,9 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 
 import {
-	Task,
-	Tag,
-	OrganizationProjects,
+	ITask,
+	ITag,
+	IOrganizationProject,
 	ComponentLayoutStyleEnum,
 	TaskListTypeEnum
 } from '@gauzy/models';
@@ -55,19 +55,19 @@ export class TaskComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
-	projects$: Observable<OrganizationProjects[]>;
-	availableTasks$: Observable<Task[]>;
-	tasks$: Observable<Task[]>;
-	myTasks$: Observable<Task[]>;
-	teamTasks$: Observable<Task[]>;
-	selectedTask: Task;
-	tags: Tag[];
+	projects$: Observable<IOrganizationProject[]>;
+	availableTasks$: Observable<ITask[]>;
+	tasks$: Observable<ITask[]>;
+	myTasks$: Observable<ITask[]>;
+	teamTasks$: Observable<ITask[]>;
+	selectedTask: ITask;
+	tags: ITag[];
 	view: string;
 	viewComponentName: ComponentEnum;
 	teams;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
-	selectedProject$: Observable<OrganizationProjects>;
+	selectedProject$: Observable<IOrganizationProject>;
 	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
 
 	constructor(
@@ -112,13 +112,13 @@ export class TaskComponent extends TranslationBaseComponent
 
 	initProjectFilter(): void {
 		this.selectedProject$ = this._organizationsStore.selectedProject$.pipe(
-			tap((selectedProject: OrganizationProjects) => {
+			tap((selectedProject: IOrganizationProject) => {
 				if (!!selectedProject) {
 					this.viewMode = selectedProject.taskListType as TaskListTypeEnum;
 					this.availableTasks$ = this.availableTasks$.pipe(
-						map((tasks: Task[]) =>
+						map((tasks: ITask[]) =>
 							tasks.filter(
-								(task: Task) =>
+								(task: ITask) =>
 									task?.project?.id === selectedProject.id
 							)
 						)
@@ -129,12 +129,12 @@ export class TaskComponent extends TranslationBaseComponent
 			})
 		);
 		this.projects$ = this.availableTasks$.pipe(
-			map((tasks: Task[]): OrganizationProjects[] => {
+			map((tasks: ITask[]): IOrganizationProject[] => {
 				return uniqBy(
 					tasks
 						.filter((t) => t.project)
 						.map(
-							(task: Task): OrganizationProjects => task.project
+							(task: ITask): IOrganizationProject => task.project
 						),
 					'id'
 				);
@@ -142,7 +142,7 @@ export class TaskComponent extends TranslationBaseComponent
 		);
 	}
 
-	selectProject(project: OrganizationProjects | null): void {
+	selectProject(project: IOrganizationProject | null): void {
 		this._organizationsStore.selectedProject = project;
 		this.initTasks();
 		this.viewMode = !!project
@@ -151,9 +151,9 @@ export class TaskComponent extends TranslationBaseComponent
 
 		if (!!project) {
 			this.availableTasks$ = this.availableTasks$.pipe(
-				map((tasks: Task[]) =>
+				map((tasks: ITask[]) =>
 					tasks.filter(
-						(task: Task) => task?.project?.id === project.id
+						(task: ITask) => task?.project?.id === project.id
 					)
 				)
 			);
@@ -353,7 +353,7 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editTaskDialog(selectedItem?: Task) {
+	async editTaskDialog(selectedItem?: ITask) {
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
@@ -402,7 +402,7 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 	}
 
-	async duplicateTaskDialog(selectedItem?: Task) {
+	async duplicateTaskDialog(selectedItem?: ITask) {
 		this.selectTask({
 			isSelected: true,
 			data: selectedItem
@@ -415,7 +415,7 @@ export class TaskComponent extends TranslationBaseComponent
 				}
 			});
 		} else if (this.isMyTasksPage()) {
-			const selectedTask: Task = Object.assign({}, this.selectedTask);
+			const selectedTask: ITask = Object.assign({}, this.selectedTask);
 			// while duplicate my task, default selected employee should be logged in employee
 			selectedTask.members = null;
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
@@ -449,7 +449,7 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 	}
 
-	async deleteTask(selectedItem?: Task) {
+	async deleteTask(selectedItem?: ITask) {
 		this.selectTask({
 			isSelected: true,
 			data: selectedItem
@@ -506,7 +506,7 @@ export class TaskComponent extends TranslationBaseComponent
 		return this.view === 'team-tasks';
 	}
 
-	openTasksSettings(selectedProject: OrganizationProjects): void {
+	openTasksSettings(selectedProject: IOrganizationProject): void {
 		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject
 		});

@@ -8,7 +8,8 @@ import {
 	Get,
 	Put,
 	Param,
-	Body
+	Body,
+	Query
 } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -34,8 +35,16 @@ export class EquipmentController extends CrudController<Equipment> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEquipmentSharings(): Promise<IPagination<Equipment>> {
-		return this.equipmentService.getAll();
+	async findAllEquipmentSharings(
+		@Query('data') data: string
+	): Promise<IPagination<Equipment>> {
+		const { relations, findInput } = JSON.parse(data);
+		return await this.equipmentService.findAll({
+			where: {
+				...findInput
+			},
+			relations
+		});
 	}
 	@Put(':id')
 	async update(

@@ -1,8 +1,8 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
-import { OrganizationProjects } from './organization-projects.entity';
-import { Organization, TaskListTypeEnum } from '@gauzy/models';
+import { OrganizationProject } from './organization-projects.entity';
+import { IOrganization, TaskListTypeEnum } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
@@ -15,14 +15,14 @@ const defaultProjects = [
 
 export const createDefaultOrganizationProjects = async (
 	connection: Connection,
-	defaultOrganizations: Organization[]
+	defaultOrganizations: IOrganization[]
 ) => {
 	const tag = await connection.getRepository(Tag).create({
 		name: 'Web',
 		description: '',
 		color: faker.commerce.color()
 	});
-	const projects: OrganizationProjects[] = [];
+	const projects: OrganizationProject[] = [];
 
 	for (let index = 0; index < defaultProjects.length; index++) {
 		const name = defaultProjects[index];
@@ -35,7 +35,7 @@ export const createDefaultOrganizationProjects = async (
 			organizationContacts
 		);
 
-		const project = new OrganizationProjects();
+		const project = new OrganizationProject();
 		project.tags = [tag];
 		project.name = name;
 		project.organizationContact = organizationContact;
@@ -53,7 +53,7 @@ export const createDefaultOrganizationProjects = async (
 export const createRandomOrganizationProjects = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>,
 	tags: Tag[] | void,
 	maxProjectsPerOrganization
 ) => {
@@ -64,7 +64,7 @@ export const createRandomOrganizationProjects = async (
 		return;
 	}
 
-	const projects: OrganizationProjects[] = [];
+	const projects: OrganizationProject[] = [];
 	for (const tenant of tenants) {
 		const projectsPerOrganization =
 			Math.floor(Math.random() * (maxProjectsPerOrganization - 5)) + 5;
@@ -80,7 +80,7 @@ export const createRandomOrganizationProjects = async (
 			let orgTags: Tag[] = [];
 			orgTags = tags.filter((x) => (x.organization = org));
 			for (let i = 0; i < projectsPerOrganization; i++) {
-				const project = new OrganizationProjects();
+				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
 				project.name = faker.company.companyName();
 				project.organizationContact = organizationContact;

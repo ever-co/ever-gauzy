@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Task, OrganizationProjects, Employee } from '@gauzy/models';
+import { ITask, IOrganizationProject, IEmployee } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
@@ -32,11 +32,11 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
-	projects: OrganizationProjects[];
+	projects: IOrganizationProject[];
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
-	employees: Employee[] = [];
+	employees: IEmployee[] = [];
 	selectedMembers: string[];
-	selectedTask: Task;
+	selectedTask: ITask;
 	organizationId: string;
 	selectedTags: any;
 	participants = 'employees';
@@ -84,7 +84,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 		estimate,
 		dueDate,
 		tags
-	}: Task) {
+	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		// select members from database of default value
 		this.selectedMembers = (members || []).map((member) => member.id);
@@ -118,7 +118,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 		});
 	}
 
-	addNewProject = (name: string): Promise<OrganizationProjects> => {
+	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(

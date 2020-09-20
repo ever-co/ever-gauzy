@@ -5,7 +5,7 @@ import { Task } from '../tasks/task.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Invoice } from '../invoice/invoice.entity';
 
 let invoiceItems: InvoiceItem[] = [];
@@ -21,7 +21,7 @@ export const createRandomInvoiceItem = async (
 		let organizations = tenantOrganizationsMap.get(tenant);
 		let employees = tenantEmployeeMap.get(tenant);
 		for (const organization of organizations) {
-			let projects = await connection.manager.find(OrganizationProjects, {
+			let projects = await connection.manager.find(OrganizationProject, {
 				where: [{ organizationId: organization.id }]
 			});
 			invoiceItemForTasks(tasks, employees, invoices);
@@ -56,7 +56,7 @@ function invoiceItemForTasks(
 }
 
 function invoiceItemForProjects(
-	project: OrganizationProjects[],
+	project: OrganizationProject[],
 	employees: Employee[],
 	invoices: Invoice[]
 ) {

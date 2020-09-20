@@ -5,8 +5,8 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import {
 	ICandidateInterview,
-	Candidate,
-	Employee,
+	ICandidate,
+	IEmployee,
 	ICandidateFeedback,
 	ICandidateInterviewers,
 	ComponentLayoutStyleEnum
@@ -43,9 +43,9 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
 	tableInterviewList = [];
-	candidates: Candidate[];
+	candidates: ICandidate[];
 	averageRating: number;
-	employeeList: Employee[];
+	employeeList: IEmployee[];
 	allInterviews: ICandidateInterview[];
 	interviewTitle: ICandidateInterview[];
 	allFeedbacks: ICandidateFeedback[];
@@ -145,7 +145,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				const employees = [];
 				interview.interviewers.forEach(
 					(interviewer: ICandidateInterviewers) => {
-						this.employeeList.forEach((employee: Employee) => {
+						this.employeeList.forEach((employee: IEmployee) => {
 							if (interviewer.employeeId === employee.id) {
 								interviewer.employeeImageUrl =
 									employee.user.imageUrl;

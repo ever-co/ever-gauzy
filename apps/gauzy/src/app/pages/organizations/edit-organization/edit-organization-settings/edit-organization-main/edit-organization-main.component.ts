@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CurrenciesEnum, Organization, Tag } from '@gauzy/models';
+import { CurrenciesEnum, IOrganization, ITag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
@@ -19,13 +19,13 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
-	organization: Organization;
+	organization: IOrganization;
 	imageUrl: string;
 	hoverState: boolean;
 	employeesCount: number;
 	form: FormGroup;
 	currencies: string[] = Object.values(CurrenciesEnum);
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 	selectedTags: any;
 
 	constructor(
@@ -108,7 +108,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		this.tags = this.form.get('tags').value || [];
 	}
 
-	selectedTagsEvent(currentSelection: Tag[]) {
+	selectedTagsEvent(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 }

@@ -7,13 +7,14 @@ import {
 	AbstractControl
 } from '@angular/forms';
 import {
-	EquipmentSharing,
-	Equipment,
+	IEquipmentSharing,
+	IEquipment,
 	RequestApprovalStatusTypesEnum,
 	RequestApprovalStatus,
-	Employee,
-	OrganizationTeam,
-	EquipmentSharingPolicy
+	IEmployee,
+	IOrganizationTeam,
+	IEquipmentSharingPolicy,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,8 +22,8 @@ import { EquipmentSharingService } from '../../@core/services/equipment-sharing.
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
-import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 
@@ -35,7 +36,7 @@ export interface RequestEmployee {
 }
 
 @Component({
-	selector: 'ngx-equipment-mutation',
+	selector: 'ngx-equipment-sharing-mutation',
 	templateUrl: './equipment-sharing-mutation.component.html',
 	styleUrls: ['./equipment-sharing-mutation.component.scss']
 })
@@ -54,19 +55,20 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	) {
 		super(translationService);
 	}
+
 	form: FormGroup;
-	equipmentSharing: EquipmentSharing;
-	employees: Employee[];
+	equipmentSharing: IEquipmentSharing;
+	employees: IEmployee[];
 	disabled: boolean;
-	selectedOrgId: string;
+	selectedOrganization: IOrganization;
 	requestStatus: number;
 	participants = 'employees';
 
-	teams: OrganizationTeam[];
-	equipmentItems: Equipment[];
+	teams: IOrganizationTeam[];
+	equipmentItems: IEquipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
-	equipmentSharingPolicies: EquipmentSharingPolicy[] = [];
+	equipmentSharingPolicies: IEquipmentSharingPolicy[] = [];
 	selectedEquipmentSharingPolicy: string;
 	requestStatuses = Object.values(RequestApprovalStatus);
 
@@ -77,20 +79,27 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	filter = this.datePickerFilterPredicate.bind(this);
 
 	periodsUnderUse = [];
-	selectedItem: Equipment;
+	selectedItem: IEquipment;
 	shareRequestDay: AbstractControl;
 	shareStartDay: AbstractControl;
 	shareEndDay: AbstractControl;
 
 	ngOnInit(): void {
-		this.initializeForm();
-		this.loadEquipmentItems();
-		this.loadSelectedOrganization();
-		this.loadEmployees();
-		this.loadTeams();
-		this.loadEquipmentSharingPolicy();
-		this.loadRequestStatus();
-		this.validateForm();
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.selectedOrganization = organization;
+
+					this.initializeForm();
+					this.loadEquipmentItems();
+					this.loadEmployees();
+					this.loadTeams();
+					this.loadEquipmentSharingPolicy();
+					this.loadRequestStatus();
+					this.validateForm();
+				}
+			});
 	}
 
 	parseInt(value) {
@@ -101,6 +110,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}
+
 	async initializeForm() {
 		this.form = this.fb.group({
 			equipment: [
@@ -149,9 +159,11 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	}
 
 	async loadEquipmentSharingPolicy() {
+		const { id, tenantId } = this.selectedOrganization;
 		this.equipmentSharingPolicies = (
 			await this.equipmentSharingPolicyService.getAll([], {
-				organizationId: this.selectedOrgId
+				organizationId: id,
+				tenantId: tenantId
 			})
 		).items;
 	}
@@ -181,9 +193,12 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			shareStartDay: this.form.value['shareStartDay'],
 			shareEndDay: this.form.value['shareEndDay'],
 			status: this.requestStatus,
-			name: this.form.value['name']
+			name: this.form.value['name'],
+			organizationId: this.selectedOrganization.id,
+			tenantId: this.selectedOrganization.tenantId
 		};
-		let equipmentSharing: EquipmentSharing;
+
+		let equipmentSharing: IEquipmentSharing;
 
 		if (this.equipmentSharing) {
 			shareRequest.createdBy = this.equipmentSharing.createdBy;
@@ -195,50 +210,48 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		} else {
 			equipmentSharing = await this.equipmentSharingService.create(
 				shareRequest,
-				this.selectedOrgId
+				this.selectedOrganization.id
 			);
 		}
 
 		this.closeDialog(equipmentSharing);
 	}
 
-	async closeDialog(equipmentSharing?: EquipmentSharing) {
+	async closeDialog(equipmentSharing?: IEquipmentSharing) {
 		this.dialogRef.close(equipmentSharing);
 	}
 
 	async loadEquipmentItems() {
-		this.equipmentItems = (await this.equipmentService.getAll()).items;
+		const { id, tenantId } = this.selectedOrganization;
+		this.equipmentItems = (
+			await this.equipmentService.getAll(['equipmentSharings'], {
+				organizationId: id,
+				tenantId
+			})
+		).items;
 	}
 
 	async loadEmployees() {
+		const { id, tenantId } = this.selectedOrganization;
 		this.employeesService
-			.getAll(['user'])
+			.getAll(['user'], {
+				organizationId: id,
+				tenantId
+			})
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items.filter((emp) => {
-					return (
-						emp.orgId === this.selectedOrgId ||
-						this.selectedOrgId === ''
-					);
-				});
+			.subscribe(({ items }) => {
+				this.employees = items;
 			});
 	}
 
 	async loadTeams() {
+		const { id, tenantId } = this.selectedOrganization;
 		this.teams = (
-			await this.organizationTeamsService.getAll(['members'])
-		).items.filter((org) => {
-			return (
-				org.organizationId === this.selectedOrgId ||
-				this.selectedOrgId === ''
-			);
-		});
-	}
-
-	async loadSelectedOrganization() {
-		this.selectedOrgId = this.store.selectedOrganization
-			? this.store.selectedOrganization.id
-			: '';
+			await this.organizationTeamsService.getAll(['members'], {
+				organizationId: id,
+				tenantId
+			})
+		).items;
 	}
 
 	loadRequestStatus() {
@@ -301,14 +314,18 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 				});
 
 				this.periodsUnderUse = [];
-				this.selectedItem.equipmentSharings.forEach(
-					(equipmentSharing) => {
-						this.periodsUnderUse.push({
-							startDate: new Date(equipmentSharing.shareStartDay),
-							endDate: new Date(equipmentSharing.shareEndDay)
-						});
-					}
-				);
+				if (this.selectedItem.equipmentSharings.length > 0) {
+					this.selectedItem.equipmentSharings.forEach(
+						(equipmentSharing) => {
+							this.periodsUnderUse.push({
+								startDate: new Date(
+									equipmentSharing.shareStartDay
+								),
+								endDate: new Date(equipmentSharing.shareEndDay)
+							});
+						}
+					);
+				}
 			});
 
 		this.form.valueChanges

@@ -3,7 +3,7 @@ import { NbDialogService } from '@nebular/theme';
 import {
 	StatusTypesEnum,
 	PermissionsEnum,
-	TimeOff,
+	ITimeOff,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
@@ -32,9 +32,9 @@ export class TimeOffComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
-	timeOffData: TimeOff[];
-	selectedTimeOffRecord: TimeOff;
-	timeOffRequest: TimeOff;
+	timeOffData: ITimeOff[];
+	selectedTimeOffRecord: ITimeOff;
+	timeOffRequest: ITimeOff;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedDate: Date;
@@ -146,7 +146,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			this.sourceSmartTable.load(this.tableData);
 		} else {
 			const filteredData = [...this.tableData].filter(
-				(record: TimeOff) => !record.isHoliday
+				(record: ITimeOff) => !record.isHoliday
 			);
 			this.timeOffData = filteredData;
 			this.sourceSmartTable.load(filteredData);
@@ -160,12 +160,12 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	detectStatusChange(status: string) {
-		let filteredData: TimeOff[];
+		let filteredData: ITimeOff[];
 
 		switch (status) {
 			case 'REQUESTED':
 				filteredData = [...this.tableData].filter(
-					(record: TimeOff) => record.status === 'Requested'
+					(record: ITimeOff) => record.status === 'Requested'
 				);
 				this.isRecordSelected = false;
 				this.timeOffData = filteredData;
@@ -173,7 +173,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				break;
 			case 'APPROVED':
 				filteredData = [...this.tableData].filter(
-					(record: TimeOff) => record.status === 'Approved'
+					(record: ITimeOff) => record.status === 'Approved'
 				);
 				this.isRecordSelected = false;
 				this.timeOffData = filteredData;
@@ -181,7 +181,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				break;
 			case 'DENIED':
 				filteredData = [...this.tableData].filter(
-					(record: TimeOff) => record.status === 'Denied'
+					(record: ITimeOff) => record.status === 'Denied'
 				);
 				this.isRecordSelected = false;
 				this.timeOffData = filteredData;
@@ -208,7 +208,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 		this.selectedTimeOffRecord = selectedTimeOffRecord;
 	}
 
-	approveDaysOff(selectedItem?: TimeOff) {
+	approveDaysOff(selectedItem?: ITimeOff) {
 		if (selectedItem) {
 			this.selectRecord({
 				isSelected: true,
@@ -252,7 +252,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 		}
 	}
 
-	denyDaysOff(selectedItem?: TimeOff) {
+	denyDaysOff(selectedItem?: ITimeOff) {
 		if (selectedItem) {
 			this.selectRecord({
 				isSelected: true,
@@ -291,7 +291,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 		}
 	}
 
-	deleteRequest(selectedItem?: TimeOff) {
+	deleteRequest(selectedItem?: ITimeOff) {
 		if (selectedItem) {
 			this.selectRecord({
 				isSelected: true,
@@ -463,7 +463,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.subscribe(
 				(res) => {
 					this.tableData = [];
-					res.items.forEach((result: TimeOff) => {
+					res.items.forEach((result: ITimeOff) => {
 						let employeeName: string;
 						let employeeImage: string;
 						let extendedDescription = '';

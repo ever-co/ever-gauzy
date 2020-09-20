@@ -1,6 +1,6 @@
 import {
-	ProductCategoryTranslated,
-	Organization,
+	IProductCategoryTranslated,
+	IOrganization,
 	LanguagesEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
@@ -28,9 +28,9 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
-	selectedProductCategory: ProductCategoryTranslated;
-	productData: ProductCategoryTranslated[];
-	selectedOrganization: Organization;
+	selectedProductCategory: IProductCategoryTranslated;
+	productData: IProductCategoryTranslated[];
+	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
 	viewComponentName: ComponentEnum;
@@ -134,7 +134,7 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		});
 	}
 
-	async save(selectedItem?: ProductCategoryTranslated) {
+	async save(selectedItem?: IProductCategoryTranslated) {
 		if (selectedItem) {
 			this.selectProductCategory({
 				isSelected: true,
@@ -170,7 +170,7 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async delete(selectedItem?: ProductCategoryTranslated) {
+	async delete(selectedItem?: IProductCategoryTranslated) {
 		if (selectedItem) {
 			this.selectProductCategory({
 				isSelected: true,

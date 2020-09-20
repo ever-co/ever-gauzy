@@ -4,7 +4,7 @@
 
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as cls from 'cls-hooked';
-import { User, PermissionsEnum, LanguagesEnum } from '@gauzy/models';
+import { IUser, PermissionsEnum, LanguagesEnum } from '@gauzy/models';
 import { ExtractJwt } from 'passport-jwt';
 import { verify } from 'jsonwebtoken';
 import { environment as env } from '@env-api/environment';
@@ -39,12 +39,12 @@ export class RequestContext {
 		return null;
 	}
 
-	static currentUser(throwError?: boolean): User {
+	static currentUser(throwError?: boolean): IUser {
 		const requestContext = RequestContext.currentRequestContext();
 
 		if (requestContext) {
 			// tslint:disable-next-line
-			const user: User = requestContext.request['user'];
+			const user: IUser = requestContext.request['user'];
 
 			if (user) {
 				return user;

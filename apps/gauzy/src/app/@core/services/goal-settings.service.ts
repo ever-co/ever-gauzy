@@ -1,28 +1,28 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
-	GoalTimeFrame,
-	KPI,
-	SettingFindInput,
-	GoalGeneralSetting,
-	GoalTimeFrameFindInput
+	IGoalTimeFrame,
+	IKPI,
+	ISettingFindInput,
+	IGoalGeneralSetting,
+	IGoalTimeFrameFindInput
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { throwError } from 'rxjs';
 import { catchError, tap, first } from 'rxjs/operators';
 
 interface IGoalTimeFrameResponse {
-	items: GoalTimeFrame[];
+	items: IGoalTimeFrame[];
 	count: number;
 }
 
 interface IKpiResponse {
-	items: KPI[];
+	items: IKPI[];
 	count: number;
 }
 
 interface IGeneralSettingResponse {
-	items: GoalGeneralSetting[];
+	items: IGoalGeneralSetting[];
 	count: number;
 }
 
@@ -39,9 +39,9 @@ export class GoalSettingsService {
 	) {}
 
 	// Goal Time Frame
-	createTimeFrame(timeFrame): Promise<GoalTimeFrame> {
+	createTimeFrame(timeFrame): Promise<IGoalTimeFrame> {
 		return this._http
-			.post<GoalTimeFrame>(`${this.TIME_FRAME_URL}/create`, timeFrame)
+			.post<IGoalTimeFrame>(`${this.TIME_FRAME_URL}/create`, timeFrame)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary('Time Frame Created', 'Success')
@@ -52,7 +52,7 @@ export class GoalSettingsService {
 	}
 
 	getAllTimeFrames(
-		findInput: GoalTimeFrameFindInput
+		findInput: IGoalTimeFrameFindInput
 	): Promise<IGoalTimeFrameResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
@@ -72,10 +72,10 @@ export class GoalSettingsService {
 
 	updateTimeFrame(
 		id: string,
-		goalTimeFrame: GoalTimeFrame
-	): Promise<GoalTimeFrame> {
+		goalTimeFrame: IGoalTimeFrame
+	): Promise<IGoalTimeFrame> {
 		return this._http
-			.put<GoalTimeFrame>(`${this.TIME_FRAME_URL}/${id}`, goalTimeFrame)
+			.put<IGoalTimeFrame>(`${this.TIME_FRAME_URL}/${id}`, goalTimeFrame)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary('Time Frame Updated', 'Success')
@@ -85,9 +85,9 @@ export class GoalSettingsService {
 	}
 
 	// KPI
-	createKPI(kpi): Promise<KPI> {
+	createKPI(kpi): Promise<IKPI> {
 		return this._http
-			.post<KPI>(`${this.KPI_URL}/create`, kpi)
+			.post<IKPI>(`${this.KPI_URL}/create`, kpi)
 			.pipe(
 				tap(() => this.toastrService.primary('KPI Created', 'Success')),
 				catchError((error) => this.errorHandler(error))
@@ -95,7 +95,7 @@ export class GoalSettingsService {
 			.toPromise();
 	}
 
-	getAllKPI(findInput?: SettingFindInput): Promise<IKpiResponse> {
+	getAllKPI(findInput?: ISettingFindInput): Promise<IKpiResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
 			.get<IKpiResponse>(`${this.KPI_URL}/all`, {
@@ -112,9 +112,9 @@ export class GoalSettingsService {
 			.toPromise();
 	}
 
-	updateKPI(id: string, kpiData: KPI): Promise<KPI> {
+	updateKPI(id: string, kpiData: IKPI): Promise<IKPI> {
 		return this._http
-			.put<KPI>(`${this.KPI_URL}/${id}`, kpiData)
+			.put<IKPI>(`${this.KPI_URL}/${id}`, kpiData)
 			.pipe(
 				tap(() => this.toastrService.primary('KPI Updated', 'Success'))
 			)
@@ -123,7 +123,7 @@ export class GoalSettingsService {
 
 	// General Goal Settings
 	getAllGeneralSettings(
-		findInput?: SettingFindInput
+		findInput?: ISettingFindInput
 	): Promise<IGeneralSettingResponse> {
 		const data = JSON.stringify({ findInput });
 		return this._http
@@ -136,10 +136,10 @@ export class GoalSettingsService {
 
 	updateGeneralSettings(
 		id: string,
-		generalSettingData: GoalGeneralSetting
-	): Promise<GoalGeneralSetting> {
+		generalSettingData: IGoalGeneralSetting
+	): Promise<IGoalGeneralSetting> {
 		return this._http
-			.put<GoalGeneralSetting>(
+			.put<IGoalGeneralSetting>(
 				`${this.GENERAL_SETTINGS_URL}/${id}`,
 				generalSettingData
 			)

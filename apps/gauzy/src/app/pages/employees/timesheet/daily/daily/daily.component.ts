@@ -2,11 +2,11 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {
 	IGetTimeLogInput,
-	TimeLog,
-	Organization,
+	ITimeLog,
+	IOrganization,
 	IDateRange,
 	PermissionsEnum,
-	TimeLogFilters,
+	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
@@ -33,7 +33,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class DailyComponent implements OnInit, OnDestroy {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
-	timeLogs: TimeLog[];
+	timeLogs: ITimeLog[];
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
@@ -42,7 +42,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
-	organization: Organization;
+	organization: IOrganization;
 	addEditTimeRequest: any = {
 		isBillable: true,
 		projectId: null,
@@ -56,7 +56,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			title: 'Delete'
 		}
 	];
-	logRequest: TimeLogFilters = {};
+	logRequest: ITimeLogFilters = {};
 
 	updateLogs$: Subject<any> = new Subject();
 	loading: boolean;
@@ -81,7 +81,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization: Organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 				this.updateLogs$.next();
 			});
@@ -95,7 +95,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
-	async filtersChange($event: TimeLogFilters) {
+	async filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.selectedDate = new Date(this.logRequest.startDate);
 		this.updateLogs$.next();
@@ -176,7 +176,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 				}
 			});
 	}
-	openEdit(timeLog: TimeLog) {
+	openEdit(timeLog: ITimeLog) {
 		this.dialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
 			.onClose.pipe(untilDestroyed(this))
@@ -187,7 +187,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	openView(timeLog: TimeLog) {
+	openView(timeLog: ITimeLog) {
 		this.dialogService
 			.open(ViewTimeLogModalComponent, {
 				context: {

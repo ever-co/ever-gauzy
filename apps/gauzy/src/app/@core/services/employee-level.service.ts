@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EmployeeLevelInput, EmployeeLevel } from '@gauzy/models';
+import {
+	IEmployeeLevelInput,
+	IEmployeeLevel,
+	IEmployeeLevelFindInput
+} from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable({
@@ -11,15 +15,16 @@ export class EmployeeLevelService {
 
 	getAll(
 		orgId: string,
-		relations?: string[]
+		relations?: string[],
+		findInput?: IEmployeeLevelFindInput
 	): Promise<{
-		items: EmployeeLevel[];
+		items: IEmployeeLevel[];
 		total: number;
 	}> {
-		const data = JSON.stringify({ relations: relations || [] });
+		const data = JSON.stringify({ relations: relations || [], findInput });
 		return this.http
 			.get<{
-				items: EmployeeLevel[];
+				items: IEmployeeLevel[];
 				total: number;
 			}>(`/api/employee-level/${orgId}`, {
 				params: { data }
@@ -28,7 +33,7 @@ export class EmployeeLevelService {
 			.toPromise();
 	}
 
-	create(employeeLevel: EmployeeLevelInput) {
+	create(employeeLevel: IEmployeeLevelInput) {
 		return this.http
 			.post('/api/employee-level', employeeLevel)
 			.pipe(first())
@@ -42,7 +47,7 @@ export class EmployeeLevelService {
 			.toPromise();
 	}
 
-	update(id: string, employeeLevel: EmployeeLevelInput) {
+	update(id: string, employeeLevel: IEmployeeLevelInput) {
 		return this.http
 			.put(`/api/employee-level/${id}`, employeeLevel)
 			.pipe(first())

@@ -7,12 +7,15 @@ import {
 	CreateDateColumn,
 	AfterLoad
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import {
-	Activity as IActivity,
+	IActivity,
 	ActivityType,
 	TimeLogSourceEnum,
-	URLMetaData
+	IURLMetaData,
+	IEmployee,
+	ITask,
+	ITimeSlot,
+	IOrganizationProject
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -24,26 +27,27 @@ import {
 } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
 import { Employee } from '../employee/employee.entity';
-import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
 import { environment as env } from '@env-api/environment';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('activity')
-export class Activity extends Base implements IActivity {
+export class Activity extends TenantOrganizationBase implements IActivity {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.employee)
 	@Column()
 	employeeId?: string;
 
-	@ApiProperty({ type: OrganizationProjects })
-	@ManyToOne(() => OrganizationProjects, { nullable: true })
+	@ApiProperty({ type: OrganizationProject })
+	@ManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn()
-	project?: OrganizationProjects;
+	project?: IOrganizationProject;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.project)
@@ -53,7 +57,7 @@ export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true })
 	@JoinColumn()
-	timeSlot?: TimeSlot;
+	timeSlot?: ITimeSlot;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.timeSlot)
@@ -63,7 +67,7 @@ export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: Task })
 	@ManyToOne(() => Task, { nullable: true })
 	@JoinColumn()
-	task?: Task;
+	task?: ITask;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.task)
@@ -86,7 +90,7 @@ export class Activity extends Base implements IActivity {
 		nullable: true,
 		type: env.database.type === 'sqlite' ? 'text' : 'json'
 	})
-	metaData?: string | URLMetaData;
+	metaData?: string | IURLMetaData;
 
 	@ApiProperty({ type: 'date' })
 	@IsDateString()

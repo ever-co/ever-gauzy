@@ -1,12 +1,12 @@
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Base } from '../core/entities/base';
 import { Employee } from '../employee/employee.entity';
 import { IEmployeeAward } from '@gauzy/models';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('employee_award')
-export class EmployeeAward extends Base implements IEmployeeAward {
+export class EmployeeAward extends TenantOrganizationBase implements IEmployeeAward {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

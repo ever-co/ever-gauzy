@@ -10,7 +10,7 @@ import { User } from '../../user/user.entity';
 import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { Activity } from '../../timesheet/activity.entity';
 import { ApprovalPolicy } from '../../approval-policy/approval-policy.entity';
-import { AvailabilitySlots } from '../../availability-slots/availability-slots.entity';
+import { AvailabilitySlot } from '../../availability-slots/availability-slots.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
 import { CandidateEducation } from '../../candidate-education/candidate-education.entity';
@@ -42,7 +42,7 @@ import { OrganizationDepartment } from '../../organization-department/organizati
 import { OrganizationDocuments } from '../../organization-documents/organization-documents.entity';
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
-import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { OrganizationTeam } from '../../organization-team/organization-team.entity';
 import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
 import { OrganizationVendor } from '../../organization-vendors/organization-vendors.entity';
@@ -68,7 +68,7 @@ import { TimeOffRequest } from '../../time-off-request/time-off-request.entity';
 import { Income } from '../../income/income.entity';
 import { Integration } from '../../integration/integration.entity';
 import { Invite } from '../../invite/invite.entity';
-import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
+import { AppointmentEmployee } from '../../appointment-employees/appointment-employees.entity';
 import { CandidateCriterionsRating } from '../../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { Contact } from '../../contact/contact.entity';
 import { EmployeeAppointment } from '../../employee-appointment';
@@ -109,9 +109,9 @@ import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
 
 		TypeOrmModule.forFeature([
 			Activity,
-			AppointmentEmployees,
+			AppointmentEmployee,
 			ApprovalPolicy,
-			AvailabilitySlots,
+			AvailabilitySlot,
 
 			Candidate,
 			CandidateDocument,
@@ -178,7 +178,7 @@ import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
 			OrganizationEmploymentType,
 			OrganizationLanguages,
 			OrganizationPositions,
-			OrganizationProjects,
+			OrganizationProject,
 			OrganizationRecurringExpense,
 			OrganizationSprint,
 			OrganizationTeam,

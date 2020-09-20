@@ -6,15 +6,15 @@ import {
 	JoinColumn,
 	AfterLoad
 } from 'typeorm';
-import { Base } from '../core/entities/base';
-import { Screenshot as IScreenshot } from '@gauzy/models';
+import { IScreenshot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
 import { FileStorage } from '../core/file-storage';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('screenshot')
-export class Screenshot extends Base implements IScreenshot {
+export class Screenshot extends TenantOrganizationBase implements IScreenshot {
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -52,7 +52,7 @@ export class Screenshot extends Base implements IScreenshot {
 
 	@AfterLoad()
 	afterLoad?() {
-		this.fullUrl = FileStorage.url(this.file);
-		this.thumbUrl = FileStorage.url(this.thumb);
+		this.fullUrl = new FileStorage().getProvider().url(this.file);
+		this.thumbUrl = new FileStorage().getProvider().url(this.thumb);
 	}
 }

@@ -1,13 +1,13 @@
 import { Connection } from 'typeorm';
-import { EmployeeLevelInput } from '@gauzy/models';
+import { IEmployeeLevelInput } from '@gauzy/models';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { Organization } from '../organization/organization.entity';
 
 export const createEmployeeLevels = async (
 	connection: Connection,
 	organizations: Organization[]
-): Promise<EmployeeLevelInput[]> => {
-	let employeeLevels: EmployeeLevelInput[] = [];
+): Promise<IEmployeeLevelInput[]> => {
+	let employeeLevels: IEmployeeLevelInput[] = [];
 
 	for (let i = 0; i < organizations.length; i++) {
 		const orgArray = [
@@ -40,7 +40,7 @@ export const createEmployeeLevels = async (
 
 const insertLevel = async (
 	connection: Connection,
-	employeeLevel: EmployeeLevelInput
+	employeeLevel: IEmployeeLevelInput
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()

@@ -6,7 +6,7 @@ import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { LocalDataSource } from 'ng2-smart-table';
-import { Invoice, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IInvoice, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
@@ -22,8 +22,8 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	selectedInvoice: Invoice;
-	invoices: Invoice[];
+	selectedInvoice: IInvoice;
+	invoices: IInvoice[];
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -86,7 +86,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 			});
 	}
 
-	view(selectedItem?: Invoice) {
+	view(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -104,7 +104,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 		}
 	}
 
-	async accept(selectedItem?: Invoice) {
+	async accept(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -117,7 +117,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 		await this.getInvoices();
 	}
 
-	async reject(selectedItem?: Invoice) {
+	async reject(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,

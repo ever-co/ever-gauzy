@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-	Expense,
-	ExpenseCreateInput as IExpenseCreateInput,
-	ExpenseFindInput as IExpenseFindInput,
-	ExpenseUpdateInput as IExpenseUpdateInput,
-	SplitExpenseOutput
+	IExpense,
+	IExpenseCreateInput,
+	IExpenseFindInput,
+	IExpenseUpdateInput,
+	ISplitExpenseOutput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -17,7 +17,7 @@ export class ExpensesService {
 
 	create(createInput: IExpenseCreateInput): Promise<any> {
 		return this.http
-			.post<Expense>('/api/expense/create', createInput)
+			.post<IExpense>('/api/expense/create', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -25,11 +25,11 @@ export class ExpensesService {
 	getMyAllWithSplitExpenses(
 		relations?: string[],
 		filterDate?: Date
-	): Promise<{ items: SplitExpenseOutput[]; total: number }> {
+	): Promise<{ items: ISplitExpenseOutput[]; total: number }> {
 		const data = JSON.stringify({ relations, filterDate });
 
 		return this.http
-			.get<{ items: SplitExpenseOutput[]; total: number }>(
+			.get<{ items: ISplitExpenseOutput[]; total: number }>(
 				`/api/expense/me`,
 				{
 					params: { data }
@@ -41,7 +41,7 @@ export class ExpensesService {
 
 	getById(id: string) {
 		return this.http
-			.get<Expense>(`/api/expense/${id}`)
+			.get<IExpense>(`/api/expense/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -50,11 +50,11 @@ export class ExpensesService {
 		employeeId: string,
 		relations?: string[],
 		filterDate?: Date
-	): Promise<{ items: SplitExpenseOutput[]; total: number }> {
+	): Promise<{ items: ISplitExpenseOutput[]; total: number }> {
 		const data = JSON.stringify({ relations, filterDate });
 
 		return this.http
-			.get<{ items: SplitExpenseOutput[]; total: number }>(
+			.get<{ items: ISplitExpenseOutput[]; total: number }>(
 				`/api/expense/include-split/${employeeId}`,
 				{
 					params: { data }
@@ -68,11 +68,11 @@ export class ExpensesService {
 		relations?: string[],
 		findInput?: IExpenseFindInput,
 		filterDate?: Date
-	): Promise<{ items: Expense[]; total: number }> {
+	): Promise<{ items: IExpense[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http
-			.get<{ items: Expense[]; total: number }>(`/api/expense`, {
+			.get<{ items: IExpense[]; total: number }>(`/api/expense`, {
 				params: { data }
 			})
 			.pipe(first())

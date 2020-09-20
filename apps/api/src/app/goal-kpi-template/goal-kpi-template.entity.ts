@@ -1,12 +1,17 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { GoalKPITemplate as IKPITemplate, KpiMetricEnum } from '@gauzy/models';
+import {
+	IGoalKPITemplate as IKPITemplate,
+	KpiMetricEnum,
+	IEmployee
+} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
-import { TenantBase } from '../core/entities/tenant-base';
 import { Employee } from '../employee/employee.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('goal_kpi_template')
-export class GoalKPITemplate extends TenantBase implements IKPITemplate {
+export class GoalKPITemplate extends TenantOrganizationBase
+	implements IKPITemplate {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -33,7 +38,7 @@ export class GoalKPITemplate extends TenantBase implements IKPITemplate {
 	@ManyToOne((type) => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
-	lead: Employee;
+	lead: IEmployee;
 
 	@ApiProperty({ type: Number })
 	@Column()

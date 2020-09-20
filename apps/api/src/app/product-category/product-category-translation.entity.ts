@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import {
-	ProductTypeTranslation as IProductCategoryTranslation,
+	IProductTypeTranslation as IProductCategoryTranslation,
 	LanguagesEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';

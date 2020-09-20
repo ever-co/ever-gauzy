@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { ProductOption } from './product-option.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
@@ -9,7 +9,7 @@ import { Product } from '../product/product.entity';
 export const createRandomProductOption = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenantOrganizationsMap: Map<Tenant, IOrganization[]>,
 	numberOfOptionPerProduct
 ): Promise<ProductOption[]> => {
 	if (!tenantOrganizationsMap) {
@@ -41,6 +41,7 @@ export const createRandomProductOption = async (
 						productOption.name = faker.company.companyName();
 						productOption.code = product.code;
 						productOption.product = product;
+						productOption.tenant = tenant;
 
 						productOptions.push(productOption);
 					}

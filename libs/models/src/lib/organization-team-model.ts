@@ -1,25 +1,25 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationTeamEmployee } from './organization-team-employee-model';
-import { Tag } from '..';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganizationTeamEmployee } from './organization-team-employee-model';
+import { ITag } from './tag-entity.model';
 
-export interface OrganizationTeam extends IBaseEntityModel {
+export interface IOrganizationTeam
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
-	members?: OrganizationTeamEmployee[];
-	managers?: OrganizationTeamEmployee[];
-	tags?: Tag[];
+	members?: IOrganizationTeamEmployee[];
+	managers?: IOrganizationTeamEmployee[];
+	tags?: ITag[];
 }
 
-export interface OrganizationTeamFindInput extends IBaseEntityModel {
+export interface IOrganizationTeamFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	organizationId?: string;
-	tags?: Tag[];
+	tags?: ITag[];
 }
 
-export interface OrganizationTeamCreateInput {
+export interface IOrganizationTeamCreateInput {
 	name: string;
 	organizationId: string;
 	members?: string[];
 	managers?: string[];
-	tags?: Tag[];
+	tags?: ITag[];
 }

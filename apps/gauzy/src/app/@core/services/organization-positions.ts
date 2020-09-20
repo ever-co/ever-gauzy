@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	OrganizationPositionsCreateInput,
-	OrganizationPositions,
-	OrganizationPositionsFindInput
+	IOrganizationPositionCreateInput,
+	IOrganizationPosition,
+	IOrganizationPositionFindInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -14,10 +14,10 @@ export class OrganizationPositionsService {
 	constructor(private http: HttpClient) {}
 
 	create(
-		createInput: OrganizationPositionsCreateInput
-	): Promise<OrganizationPositions> {
+		createInput: IOrganizationPositionCreateInput
+	): Promise<IOrganizationPosition> {
 		return this.http
-			.post<OrganizationPositions>(
+			.post<IOrganizationPosition>(
 				'/api/organization-positions',
 				createInput
 			)
@@ -26,13 +26,13 @@ export class OrganizationPositionsService {
 	}
 
 	getAll(
-		findInput?: OrganizationPositionsFindInput,
+		findInput?: IOrganizationPositionFindInput,
 		relations?: string[]
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: OrganizationPositions[]; total: number }>(
+			.get<{ items: IOrganizationPosition[]; total: number }>(
 				`/api/organization-positions`,
 				{
 					params: { data }

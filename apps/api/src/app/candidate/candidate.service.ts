@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Candidate } from './candidate.entity';
-import { CandidateCreateInput } from '@gauzy/models';
+import { ICandidateCreateInput } from '@gauzy/models';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 		super(candidateRepository);
 	}
 
-	async createBulk(input: CandidateCreateInput[]) {
+	async createBulk(input: ICandidateCreateInput[]) {
 		return Promise.all(
 			input.map((candidate) => {
 				candidate.user.tenant = {

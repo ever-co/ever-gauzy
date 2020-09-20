@@ -20,7 +20,7 @@ import {
 	ICandidateInterview,
 	ICandidateTechnologies,
 	ICandidatePersonalQualities,
-	Employee,
+	IEmployee,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
@@ -64,7 +64,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	currentFeedback: ICandidateFeedback;
 	isCancel = false;
 	loading: boolean;
-	employeeList: Employee[];
+	employeeList: IEmployee[];
 	selectedFeedback: ICandidateFeedback;
 	isEmployeeReset: boolean;
 	selectInterview: FormControl = new FormControl();

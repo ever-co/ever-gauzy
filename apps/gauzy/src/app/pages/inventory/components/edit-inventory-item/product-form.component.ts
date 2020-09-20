@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
-	Product,
-	ProductOption,
-	Tag,
-	ProductTypeTranslated,
+	IProduct,
+	IProductOption,
+	ITag,
+	IProductTypeTranslated,
 	IVariantOptionCombination,
-	ProductCategoryTranslated,
-	ProductVariant,
+	IProductCategoryTranslated,
+	IProductVariant,
 	LanguagesEnum
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,21 +31,21 @@ import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product
 export class ProductFormComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
-	inventoryItem: Product;
+	inventoryItem: IProduct;
 
 	hoverState: boolean;
 	selectedOrganizationId = '';
-	productTypes: ProductTypeTranslated[];
-	productCategories: ProductCategoryTranslated[];
+	productTypes: IProductTypeTranslated[];
+	productCategories: IProductCategoryTranslated[];
 
-	options: Array<ProductOption> = [];
-	deletedOptions: Array<ProductOption> = [];
+	options: Array<IProductOption> = [];
+	deletedOptions: Array<IProductOption> = [];
 
 	optionsCombinations: Array<IVariantOptionCombination> = [];
-	variants$: BehaviorSubject<ProductVariant[]> = new BehaviorSubject([]);
+	variants$: BehaviorSubject<IProductVariant[]> = new BehaviorSubject([]);
 
 	languages: any[];
-	tags: Tag[] = [];
+	tags: ITag[] = [];
 
 	private ngDestroy$ = new Subject<void>();
 
@@ -209,7 +209,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 		}
 
 		try {
-			let productResult: Product;
+			let productResult: IProduct;
 
 			if (!productRequest['id']) {
 				productResult = await this.productService.create(
@@ -244,11 +244,11 @@ export class ProductFormComponent extends TranslationBaseComponent
 		}
 	}
 
-	onOptionsUpdated(options: ProductOption[]) {
+	onOptionsUpdated(options: IProductOption[]) {
 		this.options = options;
 	}
 
-	onOptionDeleted(option: ProductOption) {
+	onOptionDeleted(option: IProductOption) {
 		this.deletedOptions.push(option);
 	}
 
@@ -263,7 +263,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.location.back();
 	}
 
-	selectedTagsEvent(currentSelection: Tag[]) {
+	selectedTagsEvent(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 

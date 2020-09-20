@@ -15,7 +15,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import {
 	ComponentLayoutStyleEnum,
 	GoalOwnershipEnum,
-	GoalGeneralSetting
+	IGoalGeneralSetting
 } from '@gauzy/models';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { FormGroup, FormBuilder } from '@angular/forms';
@@ -40,7 +40,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
 	goalTimeFrames: any[];
-	goalGeneralSettings: GoalGeneralSetting;
+	goalGeneralSettings: IGoalGeneralSetting;
 	goalOwnershipEnum = GoalOwnershipEnum;
 	predefinedTimeFrames = [];
 	@ViewChild('smartTable') smartTable;

@@ -1,47 +1,43 @@
 import { ICandidateInterview } from './candidate-interview.model';
 import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
-import { Organization, OrganizationFindInput } from './organization.model';
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { UserFindInput, User } from './user.model';
-import { OrganizationTeam } from './organization-team-model';
+import { IOrganization, IOrganizationFindInput } from './organization.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IUserFindInput, IUser } from './user.model';
+import { IOrganizationTeam } from './organization-team-model';
 import {
-	ITenant,
-	OrganizationDepartment,
-	OrganizationPositions,
-	Tag,
-	Contact as IContact
+	IOrganizationDepartment,
+	IOrganizationPosition,
+	ITag,
+	IContact
 } from '@gauzy/models';
-import { OrganizationEmploymentType } from './organization-employment-type.model';
-import { IExperience } from './candidate-experience.model';
-import { ISkill } from './candidate-skill.model';
-import { IEducation } from './candidate-education.model';
+import { IOrganizationEmploymentType } from './organization-employment-type.model';
+import { ICandidateExperience } from './candidate-experience.model';
+import { ICandidateSkill } from './candidate-skill.model';
+import { ICandidateEducation } from './candidate-education.model';
 import { ICandidateDocument } from './candidate-document.model';
 
-export interface Candidate extends IBaseEntityModel, IContact {
-	user: User;
+export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
+	user: IUser;
 	userId: string;
-	organization: Organization;
-	orgId: string;
 	status?: string;
-	teams?: OrganizationTeam[];
-	tenant: ITenant;
-	organizationDepartments?: OrganizationDepartment[];
-	organizationPosition?: OrganizationPositions;
-	tags: Tag[];
+	teams?: IOrganizationTeam[];
+	organizationDepartments?: IOrganizationDepartment[];
+	organizationPosition?: IOrganizationPosition;
+	tags: ITag[];
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
 	candidateLevel?: string;
-	organizationEmploymentTypes?: OrganizationEmploymentType[];
-	experience?: IExperience[];
-	skills?: ISkill[];
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
+	experience?: ICandidateExperience[];
+	skills?: ICandidateSkill[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	documents?: ICandidateDocument[];
-	educations?: IEducation[];
+	educations?: ICandidateEducation[];
 	source?: ICandidateSource;
 	cvUrl?: string;
 	feedbacks?: ICandidateFeedback[];
@@ -57,45 +53,46 @@ export enum CandidateStatus {
 	HIRED = 'HIRED'
 }
 
-export interface CandidateFindInput extends IBaseEntityModel {
-	organization?: OrganizationFindInput;
-	user?: UserFindInput;
+export interface ICandidateFindInput {
+	id?: string;
+	organization?: IOrganizationFindInput;
+	user?: IUserFindInput;
 	valueDate?: Date;
-	orgId?: string;
+	organizationId?: string;
 }
 
-export interface CandidateUpdateInput {
+export interface ICandidateUpdateInput {
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
-	organizationDepartment?: OrganizationDepartment;
-	organizationPosition?: OrganizationPositions;
+	organizationDepartment?: IOrganizationDepartment;
+	organizationPosition?: IOrganizationPosition;
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
 	cvUrl?: string;
 }
 
-export interface CandidateCreateInput {
-	user: User;
-	organization: Organization;
+export interface ICandidateCreateInput {
+	user: IUser;
+	organization: IOrganization;
 	password?: string;
 	appliedDate?: Date;
 	hiredDate?: Date;
 	source?: ICandidateSource;
 	rejectDate?: Date;
 	cvUrl?: string;
-	members?: Candidate[];
-	tags?: Tag[];
+	members?: ICandidate[];
+	tags?: ITag[];
 	documents: ICandidateDocument[];
 }
-export interface CandidateLevel {
+export interface ICandidateLevel {
 	id: string;
 	level: string;
 	organizationId: string;
 }
-export interface CandidateLevelInput {
+export interface ICandidateLevelInput {
 	level: string;
 	organizationId: string;
 }

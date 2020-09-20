@@ -1,13 +1,10 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { RecurringExpenseModel } from './recurring-expense.model';
+import { IRecurringExpenseModel } from './recurring-expense.model';
 
-export interface OrganizationRecurringExpense extends RecurringExpenseModel {
-	organizationId: string;
+export interface IOrganizationRecurringExpense extends IRecurringExpenseModel {
 	splitExpense: boolean;
 }
 
-export interface OrganizationRecurringExpenseFindInput
-	extends IBaseEntityModel {
+export interface IOrganizationRecurringExpenseFindInput {
 	organizationId?: string;
 	month?: number;
 	year?: number;
@@ -17,15 +14,14 @@ export interface OrganizationRecurringExpenseFindInput
 	parentRecurringExpenseId?: string;
 }
 
-export interface OrganizationRecurringExpenseByMonthFindInput
-	extends IBaseEntityModel {
+export interface IOrganizationRecurringExpenseByMonthFindInput {
 	organizationId?: string;
 	month?: number;
 	year?: number;
 }
 
-export interface OrganizationRecurringExpenseForEmployeeOutput
-	extends OrganizationRecurringExpense {
+export interface IOrganizationRecurringExpenseForEmployeeOutput {
+	splitExpense: boolean;
 	originalValue: number;
 	employeeCount: number;
 }

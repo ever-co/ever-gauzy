@@ -79,7 +79,7 @@ import {
 	createOrganizationVendors,
 	createRandomOrganizationVendors
 } from '../../organization-vendors/organization-vendors.seed';
-import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import {
 	createDefaultCandidates,
 	createRandomCandidates
@@ -311,7 +311,7 @@ export class SeedDataService {
 	connection: Connection;
 	log = console.log;
 	organizations: Organization[];
-	defaultProjects: OrganizationProjects[] | void;
+	defaultProjects: OrganizationProject[] | void;
 	tenant: Tenant;
 	roles: Role[];
 	superAdminUsers: User[];
@@ -365,6 +365,7 @@ export class SeedDataService {
 				this.connection = await createConnection({
 					...env.database,
 					...this.overrideDbConfig,
+					// TODO: possible to do it like this: [__dirname + '/../../entity/**.entity{.ts,.js}'] so we don't need hardcoded allEntities
 					entities: allEntities
 				} as ConnectionOptions);
 			} catch (error) {
@@ -561,7 +562,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Integrations',
-			createDefaultIntegrations(this.connection, integrationTypes)
+			createDefaultIntegrations(
+				this.connection,
+				this.tenant,
+				integrationTypes
+			)
 		);
 	}
 
@@ -572,7 +577,11 @@ export class SeedDataService {
 		//Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
 			'Expense Categories',
-			createExpenseCategories(this.connection, this.organizations)
+			createExpenseCategories(
+				this.connection,
+				this.tenant,
+				this.organizations
+			)
 		);
 
 		await this.tryExecute(
@@ -681,7 +690,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Candidate Documents',
-			createCandidateDocuments(this.connection, defaultCandidates)
+			createCandidateDocuments(
+				this.connection,
+				this.tenant,
+				defaultCandidates
+			)
 		);
 		await this.tryExecute(
 			'Default candidate interview',
@@ -724,6 +737,7 @@ export class SeedDataService {
 			'Default Expenses',
 			createDefaultExpenses(this.connection, {
 				organizations: this.organizations,
+				tenant: this.tenant,
 				employees: this.defaultEmployees,
 				categories,
 				organizationVendors
@@ -798,7 +812,8 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Equipment Sharing Policies',
 			createDefaultEquipmentSharingPolicyForOrg(this.connection, {
-				orgs: this.organizations
+				orgs: this.organizations,
+				tenant: this.tenant
 			})
 		);
 
@@ -816,6 +831,7 @@ export class SeedDataService {
 			'Default Proposals',
 			createDefaultProposals(
 				this.connection,
+				this.tenant,
 				this.defaultEmployees,
 				this.organizations,
 				randomSeedConfig.proposalsSharingPerOrganizations || 30
@@ -832,20 +848,30 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Awards',
-			createDefaultAwards(this.connection, this.organizations)
+			createDefaultAwards(
+				this.connection,
+				this.tenant,
+				this.organizations
+			)
 		);
 
 		await this.tryExecute(
 			'Default Employee Awards',
 			createDefaultEmployeeAwards(
 				this.connection,
+				this.tenant,
 				this.defaultEmployees[0]
 			)
 		);
 
 		await this.tryExecute(
 			'Default Invoices',
-			createDefaultInvoice(this.connection, this.organizations, 50)
+			createDefaultInvoice(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				50
+			)
 		);
 
 		await this.tryExecute(
@@ -860,7 +886,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Event Types',
-			createDefaultEventTypes(this.connection, this.organizations)
+			createDefaultEventTypes(
+				this.connection,
+				this.tenant,
+				this.organizations
+			)
 		);
 
 		await this.tryExecute(
@@ -872,6 +902,7 @@ export class SeedDataService {
 			'Default Employee Appointment',
 			createDefaultEmployeeAppointment(
 				this.connection,
+				this.tenant,
 				this.defaultEmployees,
 				this.organizations[0]
 			)
@@ -941,6 +972,7 @@ export class SeedDataService {
 			'Help Center Articles',
 			createHelpCenterArticle(
 				this.connection,
+				[this.tenant],
 				randomSeedConfig.noOfHelpCenterArticle || 5
 			)
 		);
@@ -957,6 +989,7 @@ export class SeedDataService {
 			'Default Availability Slots',
 			createDefaultAvailabilitySlots(
 				this.connection,
+				[this.tenant],
 				this.organizations[0],
 				this.defaultEmployees,
 				randomSeedConfig.availabilitySlotsPerOrganization || 20
@@ -967,6 +1000,7 @@ export class SeedDataService {
 			'default Email Sent',
 			createDefaultEmailSent(
 				this.connection,
+				this.tenant,
 				this.organizations[0],
 				randomSeedConfig.emailsPerOrganization || 20
 			)
@@ -1536,6 +1570,7 @@ export class SeedDataService {
 			'Random Help Center Articles',
 			createHelpCenterArticle(
 				this.connection,
+				tenants,
 				randomSeedConfig.noOfHelpCenterArticle || 5
 			)
 		);

@@ -3,7 +3,7 @@ import { Store } from '../../../@core/services/store.service';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { AggregatedEmployeeStatistic, Organization } from '@gauzy/models';
+import { IAggregatedEmployeeStatistic, IOrganization } from '@gauzy/models';
 import {
 	SelectedEmployee,
 	ALL_EMPLOYEES_SELECTED
@@ -21,9 +21,9 @@ import { Router } from '@angular/router';
 export class AccountingComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
-	aggregatedEmployeeStatistics: AggregatedEmployeeStatistic;
+	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDate: Date;
-	selectedOrganization: Organization;
+	selectedOrganization: IOrganization;
 	selectedEmployee: SelectedEmployee;
 
 	constructor(
@@ -64,9 +64,11 @@ export class AccountingComponent implements OnInit, OnDestroy {
 
 	loadData = async (organization) => {
 		if (organization) {
+			const { tenantId } = organization;
 			this.aggregatedEmployeeStatistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 				{
 					organizationId: organization.id,
+					tenantId,
 					filterDate:
 						this.selectedDate || this.store.selectedDate || null
 				}

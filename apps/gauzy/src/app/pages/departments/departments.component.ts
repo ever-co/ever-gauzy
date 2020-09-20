@@ -1,17 +1,16 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
-	Employee,
-	OrganizationDepartment,
-	OrganizationDepartmentCreateInput,
-	Tag,
+	IEmployee,
+	IOrganizationDepartment,
+	IOrganizationDepartmentCreateInput,
+	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -19,6 +18,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-departments',
@@ -26,14 +26,14 @@ import { EmployeeWithLinksComponent } from '../../@shared/table-components/emplo
 	styleUrls: ['./departments.component.scss']
 })
 export class DepartmentsComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
+	implements OnInit, OnDestroy {
 	organizationId: string;
+	tenantId: string;
 	showAddCard: boolean;
-	departments: OrganizationDepartment[];
-	employees: Employee[] = [];
-	departmentToEdit: OrganizationDepartment;
-	tags: Tag[];
+	departments: IOrganizationDepartment[];
+	employees: IEmployee[] = [];
+	departmentToEdit: IOrganizationDepartment;
+	tags: ITag[];
 	isGridEdit: boolean;
 	disableButton: boolean;
 	selectedDepartment: any;
@@ -57,10 +57,11 @@ export class DepartmentsComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationId = organization.id;
+					this.tenantId = organization.tenantId;
 					this.loadDepartments();
 					this.loadEmployees();
 					this.loadSmartTable();
@@ -68,6 +69,8 @@ export class DepartmentsComponent extends TranslationBaseComponent
 				}
 			});
 	}
+
+	ngOnDestroy(): void {}
 
 	cancel() {
 		this.departmentToEdit = null;
@@ -111,7 +114,12 @@ export class DepartmentsComponent extends TranslationBaseComponent
 			return;
 		}
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: this.organizationId } })
+			.getAll(['user'], {
+				organization: {
+					id: this.organizationId,
+					tenantId: this.tenantId
+				}
+			})
 			.pipe(first())
 			.toPromise();
 
@@ -122,7 +130,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.DEPARTMENTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedDepartment =
@@ -160,7 +168,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async editDepartment(department: OrganizationDepartment) {
+	async editDepartment(department: IOrganizationDepartment) {
 		this.departmentToEdit = department
 			? department
 			: this.selectedDepartment;
@@ -168,8 +176,8 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		this.showAddCard = true;
 	}
 
-	private async addOrEditDepartment(
-		input: OrganizationDepartmentCreateInput
+	public async addOrEditDepartment(
+		input: IOrganizationDepartmentCreateInput
 	) {
 		if (input.name) {
 			this.departmentToEdit
@@ -211,7 +219,8 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		const res = await this.organizationDepartmentsService.getAll(
 			['members', 'members.user', 'tags'],
 			{
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			}
 		);
 		if (res) {
@@ -230,8 +239,10 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		}
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 }

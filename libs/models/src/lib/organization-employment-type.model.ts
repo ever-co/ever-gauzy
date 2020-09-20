@@ -1,5 +1,5 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tag } from '..';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ITag } from './tag-entity.model';
 
 export enum GenericEmploymentTypes {
 	INTERN = 'Intern',
@@ -10,18 +10,19 @@ export enum GenericEmploymentTypes {
 	CONTRACTOR = 'Contractor'
 }
 
-export interface OrganizationEmploymentType extends IBaseEntityModel {
+export interface IOrganizationEmploymentType
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
-	tags: Tag[];
+	tags: ITag[];
 }
 
-export interface OrganizationEmploymentTypeFindInput {
+export interface IOrganizationEmploymentTypeFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationId?: string;
 }
 
-export interface OrganizationEmploymentTypeCreateInput {
+export interface IOrganizationEmploymentTypeCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	organizationId: string;
-	tags: Tag[];
+	tags: ITag[];
 }

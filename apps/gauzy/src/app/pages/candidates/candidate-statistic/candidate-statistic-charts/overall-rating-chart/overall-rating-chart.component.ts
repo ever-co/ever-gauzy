@@ -2,7 +2,7 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Candidate } from '@gauzy/models';
+import { ICandidate } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-overall-rating-chart',
@@ -33,7 +33,7 @@ import { Candidate } from '@gauzy/models';
 export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
-	@Input() candidates: Candidate[];
+	@Input() candidates: ICandidate[];
 	data: any;
 	options: any;
 	backgroundColor: string[] = [];

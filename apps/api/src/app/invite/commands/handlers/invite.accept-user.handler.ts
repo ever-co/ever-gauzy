@@ -1,4 +1,4 @@
-import { Invite, InviteStatusEnum } from '@gauzy/models';
+import { IInvite, InviteStatusEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
@@ -23,7 +23,7 @@ export class InviteAcceptUserHandler
 
 	public async execute(
 		command: InviteAcceptUserCommand
-	): Promise<UpdateResult | Invite> {
+	): Promise<UpdateResult | IInvite> {
 		const { input, languageCode } = command;
 
 		const organization = await this.organizationService.findOne(

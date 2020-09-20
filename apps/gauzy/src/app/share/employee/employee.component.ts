@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, of } from 'rxjs';
 import { map, tap, takeUntil } from 'rxjs/operators';
-import { PermissionsEnum, Employee, IEmployeeAward } from '@gauzy/models';
+import { PermissionsEnum, IEmployee, IEmployeeAward } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
@@ -25,7 +25,7 @@ export class EmployeeComponent extends TranslationBaseComponent
 	hasEditPermission$: Observable<boolean>;
 	imageUrl: string;
 	imageUpdateButton: boolean;
-	employee$: Observable<Employee>;
+	employee$: Observable<IEmployee>;
 	hoverState: boolean;
 	employeeAwards: IEmployeeAward[];
 

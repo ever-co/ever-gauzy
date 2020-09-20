@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Deal, Pipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IDeal, IPipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { PipelinesService } from '../../../@core/services/pipelines.service';
 import {
 	ActivatedRoute,
@@ -28,12 +28,12 @@ import { PipelineDealProbabilityComponent } from '../table-components/pipeline-d
 })
 export class PipelineDealsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	deals = new LocalDataSource([] as Deal[]);
-	dealsData: Deal[];
-	filteredDeals: Deal[];
-	pipeline: Pipeline;
+	deals = new LocalDataSource([] as IDeal[]);
+	dealsData: IDeal[];
+	filteredDeals: IDeal[];
+	pipeline: IPipeline;
 	stageId: string;
-	deal: Deal;
+	deal: IDeal;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 

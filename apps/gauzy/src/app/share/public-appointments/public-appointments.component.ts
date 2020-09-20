@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
-import { TimeOff, Employee, IEventType } from '@gauzy/models';
+import { ITimeOff, IEmployee, IEventType } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { timeOff } from './test-data';
 import { takeUntil } from 'rxjs/operators';
@@ -18,9 +18,9 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 export class PublicAppointmentsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	employee: Employee;
+	employee: IEmployee;
 	eventTypes: IEventType[];
-	timeOff: TimeOff[] = timeOff;
+	timeOff: ITimeOff[] = timeOff;
 	loading = true;
 	_selectedOrganizationId: string;
 

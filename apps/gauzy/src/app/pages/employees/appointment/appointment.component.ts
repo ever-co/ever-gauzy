@@ -19,11 +19,11 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import {
-	EmployeeAppointment,
-	TimeOff,
+	IEmployeeAppointment,
+	ITimeOff,
 	IEventType,
-	Employee,
-	IAvailabilitySlots,
+	IEmployee,
+	IAvailabilitySlot,
 	PermissionsEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
@@ -61,7 +61,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 	appointmentFormURL: string;
 
 	@Input('employee')
-	employee: Employee;
+	employee: IEmployee;
 
 	@Input('selectedEventType')
 	selectedEventType: IEventType;
@@ -77,11 +77,11 @@ export class AppointmentComponent extends TranslationBaseComponent
 	calendarEvents: EventInput[] = [];
 	_selectedOrganizationId: string;
 	_selectedEmployeeId: string;
-	slots: IAvailabilitySlots[];
-	dateSpecificSlots: IAvailabilitySlots[];
-	recurringSlots: IAvailabilitySlots[];
-	appointments: EmployeeAppointment[];
-	timeOff: TimeOff[];
+	slots: IAvailabilitySlot[];
+	dateSpecificSlots: IAvailabilitySlot[];
+	recurringSlots: IAvailabilitySlot[];
+	appointments: IEmployeeAppointment[];
+	timeOff: ITimeOff[];
 	hiddenDays: number[] = [];
 	headerToolbarOptions: {
 		left: string;
@@ -114,7 +114,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 
 		this.calendarOptions = {
 			eventClick: (event) => {
-				let eventObject = event.event;
+				const eventObject = event.event;
 				if (eventObject.extendedProps['type'] !== 'BookedSlot') {
 					this.router.navigate(
 						[
@@ -511,7 +511,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 			});
 	}
 
-	getAvailabilitySlots(slot: IAvailabilitySlots) {
+	getAvailabilitySlots(slot: IAvailabilitySlot) {
 		const appointmentsOnDay = this.appointments
 			.filter(
 				(o) =>
@@ -593,7 +593,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 			);
 	}
 
-	private _prepareEvent(appointment: EmployeeAppointment) {
+	private _prepareEvent(appointment: IEmployeeAppointment) {
 		let eventStartTime = appointment.startDateTime;
 		let eventEndTime = appointment.endDateTime;
 

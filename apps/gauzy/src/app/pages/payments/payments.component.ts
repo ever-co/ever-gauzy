@@ -7,13 +7,13 @@ import { Store } from '../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
-	Payment,
+	IPayment,
 	ComponentLayoutStyleEnum,
-	Invoice,
-	Organization,
+	IInvoice,
+	IOrganization,
 	OrganizationSelectInput,
-	OrganizationContact,
-	OrganizationProjects
+	IOrganizationContact,
+	IOrganizationProject
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -56,18 +56,18 @@ export class PaymentsComponent extends TranslationBaseComponent
 
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	selectedPayment: Payment;
-	payments: Payment[];
-	paymentsData: Payment[];
+	selectedPayment: IPayment;
+	payments: IPayment[];
+	paymentsData: IPayment[];
 	private _ngDestroy$ = new Subject<void>();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	invoices: Invoice[];
-	organization: Organization;
+	invoices: IInvoice[];
+	organization: IOrganization;
 	disableButton = true;
 	currency: string;
-	organizationContacts: OrganizationContact[];
-	projects: OrganizationProjects[];
+	organizationContacts: IOrganizationContact[];
+	projects: IOrganizationProject[];
 
 	ngOnInit() {
 		this.loadSmartTable();
@@ -105,6 +105,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 					this.currency = orgData.currency;
 					const invoices = await this.invoicesService.getAll([], {
 						organizationId: org.id,
+						tenantId: org.tenantId,
 						isEstimate: false
 					});
 					this.invoices = invoices.items;
@@ -112,7 +113,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 					const { items } = await this.paymentService.getAll(
 						['invoice', 'recordedBy', 'contact', 'project', 'tags'],
 						{
-							organizationId: org.id
+							organizationId: org.id,
+							tenantId: org.tenantId
 						}
 					);
 					for (const payment of items) {
@@ -126,7 +128,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 					const res = await this.organizationContactService.getAll(
 						[],
 						{
-							organizationId: org.id
+							organizationId: org.id,
+							tenantId: org.tenantId
 						}
 					);
 
@@ -136,7 +139,10 @@ export class PaymentsComponent extends TranslationBaseComponent
 
 					const projects = await this.organizationProjectsService.getAll(
 						[],
-						{ organizationId: org.id }
+						{
+							organizationId: org.id,
+							tenantId: org.tenantId
+						}
 					);
 					this.projects = projects.items;
 					this.smartTableSource.load(items);
@@ -160,6 +166,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 
 		if (result) {
 			result['organizationId'] = this.organization.id;
+			result['tenantId'] = this.organization.tenantId;
 			await this.paymentService.add(result);
 			await this.loadSettings();
 			if (result.invoice) {
@@ -170,7 +177,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 					user: this.store.user,
 					userId: this.store.userId,
 					organization: this.organization,
-					organizationId: this.organization.id
+					organizationId: this.organization.id,
+					tenantId: this.organization.tenantId
 				});
 			}
 		}
@@ -201,7 +209,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 		}
 	}
@@ -222,7 +231,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 			this.toastrService.primary(
 				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),

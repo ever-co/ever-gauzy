@@ -2,12 +2,12 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import {
-	Income,
-	Organization,
-	Skill,
-	OrganizationAwards,
-	Language,
-	OrganizationLanguages,
+	IIncome,
+	IOrganization,
+	ISkill,
+	IOrganizationAwards,
+	ILanguage,
+	IOrganizationLanguages,
 	ClientFocusEnum,
 	MinimumProjectSizeEnum
 } from '@gauzy/models';
@@ -25,8 +25,8 @@ import * as moment from 'moment';
 })
 export class PublicPageMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	income?: Income;
-	organization?: Organization;
+	income?: IIncome;
+	organization?: IOrganization;
 	currencies = Object.values(CurrenciesEnum);
 	client_focus = Object.values(ClientFocusEnum);
 	minimumProjectSizes = Object.values(MinimumProjectSizeEnum);
@@ -37,11 +37,11 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 	languageExist: boolean;
 	organizationId: string;
 	form: FormGroup;
-	selectedLanguage: Language;
-	awards: OrganizationAwards[];
-	organization_languages: OrganizationLanguages[];
-	skills: Skill[] = [];
-	languages: Language[] = [];
+	selectedLanguage: ILanguage;
+	awards: IOrganizationAwards[];
+	organization_languages: IOrganizationLanguages[];
+	skills: ISkill[] = [];
+	languages: ILanguage[] = [];
 	moment = moment;
 
 	get totalEmployees() {
@@ -90,7 +90,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 
 	editPublicPage() {
 		if (this.form.valid) {
-			let formValue = Object.assign(this.form.value);
+			const formValue = Object.assign(this.form.value);
 			if (!formValue.client_focus) {
 				formValue.client_focus = this.organization.client_focus;
 			}
@@ -190,9 +190,9 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 	}
 
 	private async addLanguage(
-		language: Language,
+		language: ILanguage,
 		level: string,
-		organization: Organization,
+		organization: IOrganization,
 		name: string
 	) {
 		if (language && level && name) {

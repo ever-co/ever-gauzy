@@ -1,14 +1,13 @@
-import { InvoiceEstimateHistory as IInvoiceEstimateHistory } from '@gauzy/models';
-import { Base } from '../core/entities/base';
+import { IInvoiceEstimateHistory } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from '../user/user.entity';
 import { Invoice } from '../invoice/invoice.entity';
-import { Organization } from '../organization/organization.entity';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('invoice_estimate_history')
-export class InvoiceEstimateHistory extends Base
+export class InvoiceEstimateHistory extends TenantOrganizationBase
 	implements IInvoiceEstimateHistory {
 	@ApiProperty({ type: String })
 	@IsString()
@@ -34,20 +33,4 @@ export class InvoiceEstimateHistory extends Base
 	})
 	@JoinColumn()
 	invoice: Invoice;
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne(
-		(type) => Organization,
-		(organization) => organization.invoiceEstimateHistories,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
-	@JoinColumn()
-	organization: Organization;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@Column()
-	organizationId: string;
 }

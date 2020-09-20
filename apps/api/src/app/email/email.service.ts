@@ -1,8 +1,8 @@
 import { environment } from '@env-api/environment';
 import {
-	OrganizationContact,
-	OrganizationDepartment,
-	OrganizationProjects,
+	IOrganizationContact,
+	IOrganizationDepartment,
+	IOrganizationProject,
 	LanguagesEnum
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
@@ -36,9 +36,9 @@ export interface InviteEmployeeModel {
 	organization: Organization;
 	languageCode: LanguagesEnum;
 	invitedBy: User;
-	projects?: OrganizationProjects[];
-	organizationContacts?: OrganizationContact[];
-	departments?: OrganizationDepartment[];
+	projects?: IOrganizationProject[];
+	organizationContacts?: IOrganizationContact[];
+	departments?: IOrganizationDepartment[];
 	originUrl?: string;
 }
 
@@ -161,7 +161,7 @@ export class EmailService extends CrudService<IEmail> {
 	}
 
 	inviteOrganizationContact(
-		organizationContact: OrganizationContact,
+		organizationContact: IOrganizationContact,
 		inviterUser: User,
 		organization: Organization,
 		invite: Invite,

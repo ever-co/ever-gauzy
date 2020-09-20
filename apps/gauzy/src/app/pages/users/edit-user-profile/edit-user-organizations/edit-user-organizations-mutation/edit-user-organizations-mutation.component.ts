@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
-import { Organization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
 import { FormGroup, FormBuilder } from '@angular/forms';
@@ -15,7 +15,7 @@ export class EditUserOrganizationsMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
-	organization: Organization;
+	organization: IOrganization;
 
 	@Output()
 	canceled = new EventEmitter();
@@ -23,7 +23,7 @@ export class EditUserOrganizationsMutationComponent
 	addOrg = new EventEmitter();
 
 	form: FormGroup;
-	organizations: Organization[];
+	organizations: IOrganization[];
 	selectedOrganizationsId: string[];
 	selectedUserId: string;
 	userId: string;

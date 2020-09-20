@@ -1,32 +1,26 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface ApprovalPolicy extends IBaseEntityModel {
-	organizationId?: string;
-	tenantId?: string;
+export interface IApprovalPolicy
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	description?: string;
 	approvalType?: string;
 }
 
-export interface ApprovalPolicyCreateInput extends IBaseEntityModel {
-	organizationId?: string;
-	tenantId?: string;
+export interface IApprovalPolicyCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	description?: string;
 	approvalType?: string;
 }
 
-export interface ApprovalPolicyUpdateInput extends IBaseEntityModel {
-	organizationId?: string;
-	tenantId?: string;
+export interface IApprovalPolicyUpdateInput {
 	name?: string;
 	description?: string;
 	approvalType?: string;
 }
 
-export interface ApprovalPolicyFindInput extends IBaseEntityModel {
-	organizationId?: string;
-	tenantId?: string;
+export interface IApprovalPolicyFindInput {
 	name?: string;
 	description?: string;
 	nameConstapprovalType?: string;

@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
-import { User, Tag } from '@gauzy/models';
+import { IUser, ITag } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -21,10 +21,10 @@ export class EditUserProfileComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	routeParams: Params;
-	selectedUser: User;
+	selectedUser: IUser;
 
 	tabs: any[];
-	tags: Tag[];
+	tags: ITag[];
 
 	constructor(
 		private route: ActivatedRoute,

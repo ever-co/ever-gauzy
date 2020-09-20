@@ -1,7 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { first } from 'rxjs/operators';
-import { ProductTypeTranslatable, ProductTypeTranslated } from '@gauzy/models';
+import {
+	IProductTypeTranslatable,
+	IProductTypeTranslated
+} from '@gauzy/models';
 
 @Injectable()
 export class ProductTypeService {
@@ -9,9 +12,9 @@ export class ProductTypeService {
 
 	constructor(private http: HttpClient) {}
 
-	getById(id: string = ''): Promise<ProductTypeTranslatable> {
+	getById(id: string = ''): Promise<IProductTypeTranslatable> {
 		return this.http
-			.get<ProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`)
+			.get<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -19,12 +22,15 @@ export class ProductTypeService {
 	getAll(
 		relations?: string[],
 		findInput?: any
-	): Promise<{ items: ProductTypeTranslatable[] }> {
+	): Promise<{ items: IProductTypeTranslatable[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: ProductTypeTranslatable[] }>(this.PRODUCT_TYPES_URL, {
-				params: { data }
-			})
+			.get<{ items: IProductTypeTranslatable[] }>(
+				this.PRODUCT_TYPES_URL,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -33,10 +39,10 @@ export class ProductTypeService {
 		langCode: string,
 		relations?: string[],
 		findInput?: any
-	): Promise<{ items: ProductTypeTranslated[] }> {
+	): Promise<{ items: IProductTypeTranslated[] }> {
 		const data = JSON.stringify({ relations, findInput, langCode });
 		return this.http
-			.get<{ items: ProductTypeTranslated[] }>(
+			.get<{ items: IProductTypeTranslated[] }>(
 				`${this.PRODUCT_TYPES_URL}`,
 				{
 					params: { data }
@@ -47,10 +53,10 @@ export class ProductTypeService {
 	}
 
 	create(
-		productTypeRequest: ProductTypeTranslatable
-	): Promise<ProductTypeTranslatable> {
+		productTypeRequest: IProductTypeTranslatable
+	): Promise<IProductTypeTranslatable> {
 		return this.http
-			.post<ProductTypeTranslatable>(
+			.post<IProductTypeTranslatable>(
 				`${this.PRODUCT_TYPES_URL}`,
 				productTypeRequest
 			)
@@ -59,10 +65,10 @@ export class ProductTypeService {
 	}
 
 	update(
-		productTypeRequest: ProductTypeTranslatable
-	): Promise<ProductTypeTranslatable> {
+		productTypeRequest: IProductTypeTranslatable
+	): Promise<IProductTypeTranslatable> {
 		return this.http
-			.put<ProductTypeTranslatable>(
+			.put<IProductTypeTranslatable>(
 				`${this.PRODUCT_TYPES_URL}/${productTypeRequest.id}`,
 				productTypeRequest
 			)
@@ -70,9 +76,9 @@ export class ProductTypeService {
 			.toPromise();
 	}
 
-	delete(id: string): Promise<ProductTypeTranslatable> {
+	delete(id: string): Promise<IProductTypeTranslatable> {
 		return this.http
-			.delete<ProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`)
+			.delete<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { KeyResultUpdates } from '@gauzy/models';
+import { IKeyResultUpdate } from '@gauzy/models';
 import { throwError } from 'rxjs';
 import { tap, catchError, first } from 'rxjs/operators';
 import { NbToastrService } from '@nebular/theme';
@@ -15,9 +15,9 @@ export class KeyResultUpdateService {
 		private toastrService: NbToastrService
 	) {}
 
-	createUpdate(keyResultUpdate): Promise<KeyResultUpdates> {
+	createUpdate(keyResultUpdate): Promise<IKeyResultUpdate> {
 		return this._http
-			.post<KeyResultUpdates>(`${this.API_URL}/create`, keyResultUpdate)
+			.post<IKeyResultUpdate>(`${this.API_URL}/create`, keyResultUpdate)
 			.pipe(
 				tap(() =>
 					this.toastrService.primary('Update Added', 'Success')

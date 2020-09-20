@@ -1,10 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
 import {
-	Task,
-	OrganizationProjects,
-	Employee,
-	OrganizationTeam,
-	Tag
+	ITask,
+	IOrganizationProject,
+	IEmployee,
+	IOrganizationTeam,
+	ITag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
@@ -40,19 +40,20 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
-	projects: OrganizationProjects[];
+	projects: IOrganizationProject[];
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
-	employees: Employee[] = [];
-	teams: OrganizationTeam[] = [];
+	employees: IEmployee[] = [];
+	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
 	selectedTeams: string[];
-	selectedTask: Task;
+	selectedTask: ITask;
 	organizationId: string;
-	tags: Tag[] = [];
+	tenantId: string;
+	tags: ITag[] = [];
 	participants = 'employees';
 
 	@Input() createTask = false;
-	@Input() task: Partial<Task> = {};
+	@Input() task: Partial<ITask> = {};
 
 	constructor(
 		public dialogRef: NbDialogRef<AddTaskDialogComponent>,
@@ -75,17 +76,21 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 		this.loadEmployees();
 		this.loadTeams();
 
-		console.log(Object.assign({}, initialTaskValue, this.task));
-
 		this.initializeForm(Object.assign({}, initialTaskValue, this.task));
 	}
 
 	private async loadProjects() {
 		const organizationId = this._organizationsStore.selectedOrganization.id;
+		const tenantId = this._organizationsStore.selectedOrganization.tenantId;
+
+		this.organizationId = organizationId;
+		this.tenantId = tenantId;
+
 		const { items } = await this.organizationProjectsService.getAll(
 			['organization'],
 			{
-				organizationId
+				organizationId,
+				tenantId
 			}
 		);
 
@@ -102,7 +107,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 		estimate,
 		dueDate,
 		tags
-	}: Task) {
+	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedMembers = (members || []).map((member) => member.id);
 		this.selectedTeams = (teams || []).map((team) => team.id);
@@ -126,14 +131,17 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 			dueDate: [dueDate],
 			description: [description],
 			tags: [tags],
-			teams: [this.selectedTeams]
+			teams: [this.selectedTeams],
+			organizationId: [this.organizationId],
+			tenantId: [this.tenantId]
 		});
 
 		this.tags = this.form.get('tags').value || [];
 	}
 
-	addNewProject = (name: string): Promise<OrganizationProjects> => {
+	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
+		this.tenantId = this.store.selectedOrganization.tenantId;
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -146,7 +154,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -200,22 +209,25 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectedTagsHandler(currentSelection: Tag[]) {
+	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 
 	private async loadEmployees() {
 		const organizationId = this._organizationsStore.selectedOrganization.id;
-		if (!organizationId) {
+		const tenantId = this._organizationsStore.selectedOrganization.tenantId;
+		if (!organizationId || !tenantId) {
 			return;
 		}
 
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: organizationId } })
+			.getAll(['user'], {
+				organization: { id: organizationId, tenantId }
+			})
 			.pipe(first())
 			.toPromise();
 
-		this.employees = items;
+		if (items) this.employees = items;
 	}
 
 	onMembersSelected(members: string[]) {

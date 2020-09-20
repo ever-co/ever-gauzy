@@ -3,11 +3,11 @@ import { HelpCenterAuthor } from './help-center-author.entity';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
 import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
-import { Employee } from '@gauzy/models';
+import { IEmployee } from '@gauzy/models';
 
 export const createDefaultHelpCenterAuthor = async (
 	connection: Connection,
-	defaultEmployees: Employee[]
+	defaultEmployees: IEmployee[]
 ): Promise<HelpCenterAuthor[]> => {
 	if (!defaultEmployees) {
 		console.warn(
@@ -33,7 +33,7 @@ export const createDefaultHelpCenterAuthor = async (
 export const createRandomHelpCenterAuthor = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]> | void
+	tenantEmployeeMap: Map<Tenant, IEmployee[]> | void
 ): Promise<HelpCenterAuthor[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
@@ -43,7 +43,7 @@ export const createRandomHelpCenterAuthor = async (
 	}
 
 	let mapEmployeeToArticles: HelpCenterAuthor[] = [];
-	let employees: Employee[] = [];
+	let employees: IEmployee[] = [];
 
 	const allArticle = await connection.manager.find(HelpCenterArticle, {});
 	for (const tenant of tenants) {
@@ -79,7 +79,7 @@ const operateData = async (
 	connection,
 	mapEmployeeToArticles,
 	allArticle,
-	employees: Employee[]
+	employees: IEmployee[]
 ) => {
 	for (let i = 0; i < allArticle.length; i++) {
 		const employee = faker.random.arrayElement(employees);

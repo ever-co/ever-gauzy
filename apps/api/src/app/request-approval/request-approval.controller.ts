@@ -2,9 +2,9 @@ import { CrudController, IPagination } from '../core';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalService } from './request-approval.service';
 import {
-	RequestApproval as IRequestApproval,
+	IRequestApproval,
 	PermissionsEnum,
-	RequestApprovalCreateInput as IRequestApprovalCreateInput,
+	IRequestApprovalCreateInput,
 	RolesEnum,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
