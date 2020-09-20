@@ -35,6 +35,7 @@ export class EquipmentSharingPolicyService extends CrudService<
 
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
+			policy.tenantId = entity.tenantId;
 			policy.description = entity.description;
 			return this.equipmentSharingRepository.save(policy);
 		} catch (error) {

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IEquipment } from '@gauzy/models';
+import { IEquipment, IEquipmentFindInput } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -9,9 +9,15 @@ export class EquipmentService {
 
 	constructor(private http: HttpClient) {}
 
-	getAll(): Promise<{ items: IEquipment[] }> {
+	getAll(
+		relations?: string[],
+		findInput?: IEquipmentFindInput
+	): Promise<{ items: IEquipment[] }> {
+		const data = JSON.stringify({ relations: relations || [], findInput });
 		return this.http
-			.get<{ items: IEquipment[] }>(`${this.EQUIPMENT_URL}`)
+			.get<{ items: IEquipment[] }>(`${this.EQUIPMENT_URL}`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}

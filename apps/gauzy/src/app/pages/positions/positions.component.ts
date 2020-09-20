@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	IOrganizationPosition,
 	ITag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
@@ -33,6 +34,8 @@ export class PositionsComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
+	selectedOrganization: IOrganization;
+
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly toastrService: NbToastrService,
@@ -48,6 +51,7 @@ export class PositionsComponent extends TranslationBaseComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrganization = organization;
 					this.organizationId = organization.id;
 					this.loadPositions();
 					this.loadSmartTable();
@@ -126,6 +130,8 @@ export class PositionsComponent extends TranslationBaseComponent
 	async editPosition(id: string, name: string) {
 		await this.organizationPositionsService.update(id, {
 			name: name,
+			organizationId: this.organizationId,
+			tenantId: this.selectedOrganization.tenantId,
 			tags: this.tags
 		});
 		this.loadPositions();
@@ -137,6 +143,7 @@ export class PositionsComponent extends TranslationBaseComponent
 			await this.organizationPositionsService.create({
 				name,
 				organizationId: this.organizationId,
+				tenantId: this.selectedOrganization.tenantId,
 				tags: this.tags
 			});
 
@@ -180,7 +187,8 @@ export class PositionsComponent extends TranslationBaseComponent
 	private async loadPositions() {
 		const res = await this.organizationPositionsService.getAll(
 			{
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.selectedOrganization.tenantId
 			},
 			['tags']
 		);
