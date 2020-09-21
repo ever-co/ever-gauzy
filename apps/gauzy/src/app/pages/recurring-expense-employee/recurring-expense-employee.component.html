@@ -38,19 +38,26 @@
 			</div>
 		</div>
 
-		<ga-recurring-expense-block
-			*ngFor="
-				let expense of selectedEmployeeRecurringExpense;
-				let i = index
+		<ng-container
+			*ngIf="
+				selectedEmployeeRecurringExpense.length &&
+				this.employeeList.length
 			"
-			(editRecurringExpense)="editEmployeeRecurringExpense(i)"
-			(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
-			(fetchRecurringExpenseHistory)="fetchHistory(i)"
-			[fetchedHistories]="fetchedHistories[i]"
-			[recurringExpense]="expense"
-			[selectedOrganization]="selectedOrganization"
-			[employees]="employeeList"
 		>
-		</ga-recurring-expense-block>
+			<ga-recurring-expense-block
+				*ngFor="
+					let expense of selectedEmployeeRecurringExpense;
+					let i = index
+				"
+				(editRecurringExpense)="editEmployeeRecurringExpense(i)"
+				(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
+				(fetchRecurringExpenseHistory)="fetchHistory(i)"
+				[fetchedHistories]="fetchedHistories[i]"
+				[recurringExpense]="expense"
+				[selectedOrganization]="selectedOrganization"
+				[employees]="employeeList"
+			>
+			</ga-recurring-expense-block>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
