@@ -53,12 +53,11 @@ export enum CandidateStatus {
 	HIRED = 'HIRED'
 }
 
-export interface ICandidateFindInput {
+export interface ICandidateFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
-	organization?: IOrganizationFindInput;
 	user?: IUserFindInput;
 	valueDate?: Date;
-	organizationId?: string;
 }
 
 export interface ICandidateUpdateInput {

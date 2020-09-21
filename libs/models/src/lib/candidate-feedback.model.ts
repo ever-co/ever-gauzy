@@ -14,7 +14,8 @@ export interface ICandidateFeedback
 	criterionsRating?: ICandidateCriterionsRating[];
 }
 
-export interface ICandidateFeedbackFindInput {
+export interface ICandidateFeedbackFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	description?: string;
 	candidateId?: string;
 	rating?: number;

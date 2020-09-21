@@ -7,7 +7,11 @@ import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
 import { CandidateEducationsService } from 'apps/gauzy/src/app/@core/services/candidate-educations.service';
-import { ICandidateEducation, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	ICandidateEducation,
+	ComponentLayoutStyleEnum,
+	IOrganization
+} from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -20,8 +24,8 @@ import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/d
 })
 export class EditCandidateEducationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	selectedOrganization: IOrganization;
 	showAddCard: boolean;
-	educationId = null;
 	candidateId: string;
 	educationList: ICandidateEducation[] = [];
 	private _ngDestroy$ = new Subject<void>();
@@ -50,19 +54,20 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			.subscribe(async (candidate) => {
 				if (candidate) {
 					this.candidateId = candidate.id;
-					this._initializeForm();
-					this.loadEducations();
-					this.loadSmartTable();
+					this.selectedOrganization = this.store.selectedOrganization;
+
+					await this._initializeForm();
+					await this.loadEducations();
+					await this.loadSmartTable();
 					this._applyTranslationOnSmartTable();
 				}
 			});
 	}
-
 	private async _initializeForm() {
 		this.form = new FormGroup({
 			educations: this.fb.array([])
 		});
-		const educationForm = this.form.controls.educations as FormArray;
+		const educationForm = this.educations;
 		educationForm.push(
 			this.fb.group({
 				schoolName: ['', Validators.required],
@@ -78,8 +83,8 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			? education
 			: this.selectedEducation;
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.educations.patchValue([selectedItem]);
-		this.educationId = education ? education.id : null;
+		this.educations.patchValue([selectedItem]);
+		this.selectedEducation = selectedItem;
 	}
 	selectEducation({ isSelected, data }) {
 		const selectedEducation = isSelected ? data : null;
@@ -91,26 +96,28 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.educations.reset();
+		this.educations.reset();
 	}
 	cancel() {
 		this.showAddCard = false;
-		this.form.controls.educations.value.length = 0;
-		this.educationId = null;
+		this.educations.value.length = 0;
+		this.selectedEducation = null;
 		this.form.reset();
 	}
 	add() {
 		this.showAddCard = true;
+		this.selectedEducation = null;
 		this.form.reset();
 	}
 	private async loadEducations() {
-		const res = await this.candidateEducationsService.getAll({
-			candidateId: this.candidateId
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { items = [] } = await this.candidateEducationsService.getAll({
+			candidateId: this.candidateId,
+			organizationId,
+			tenantId
 		});
-		if (res) {
-			this.educationList = res.items;
-			this.sourceSmartTable.load(res.items);
-		}
+		this.educationList = items;
+		this.sourceSmartTable.load(items);
 	}
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -167,56 +174,50 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			});
 	}
 	async submitForm() {
-		const educationForm = this.form.controls.educations as FormArray;
-		if (educationForm.valid) {
-			const formValue = { ...educationForm.value[0] };
-			if (
-				(this.dataLayoutStyle === 'CARDS_GRID' &&
-					this.educationId !== null) ||
-				(this.dataLayoutStyle === 'TABLE' &&
-					this.selectedEducation !== null)
-			) {
-				//editing existing education
-				try {
-					await this.candidateEducationsService.update(
-						this.educationId
-							? this.educationId
-							: this.selectedEducation.id,
-						{
-							...formValue
-						}
-					);
-					this.loadEducations();
-					this.toastrSuccess('UPDATED');
-					this.showAddCard = !this.showAddCard;
-					educationForm.reset();
-				} catch (error) {
-					this.toastrError(error);
-				}
-				this.educationId = null;
-			} else {
-				//creating education
-				try {
-					await this.candidateEducationsService.create({
-						...formValue,
-						candidateId: this.candidateId
-					});
-					this.toastrSuccess('CREATED');
-					this.loadEducations();
-					this.showAddCard = !this.showAddCard;
-					educationForm.reset();
-				} catch (error) {
-					this.toastrError(error);
-				}
-			}
-		} else {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const educationForm = this.educations;
+		if (educationForm.invalid) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'),
 				this.getTranslation(
 					'TOASTR.MESSAGE.CANDIDATE_EDUCATION_REQUIRED'
 				)
 			);
+			return;
 		}
+		const formValue = { ...educationForm.value[0] };
+		if (this.selectedEducation) {
+			//editing existing education
+			try {
+				await this.candidateEducationsService.update(
+					this.selectedEducation.id,
+					{
+						...formValue,
+						organizationId,
+						tenantId
+					}
+				);
+				this.toastrSuccess('UPDATED');
+				this.loadEducations();
+			} catch (error) {
+				this.toastrError(error);
+			}
+		} else {
+			//creating education
+			try {
+				await this.candidateEducationsService.create({
+					...formValue,
+					candidateId: this.candidateId,
+					organizationId,
+					tenantId
+				});
+				this.toastrSuccess('CREATED');
+				this.loadEducations();
+			} catch (error) {
+				this.toastrError(error);
+			}
+		}
+		this.cancel();
 	}
 	async removeEducation(education: ICandidateEducation) {
 		const selectedItem: ICandidateEducation = education
@@ -232,7 +233,6 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			this.toastrError(error);
 		}
 	}
-
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
@@ -241,7 +241,6 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);
 	}
-
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
@@ -249,12 +248,21 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		);
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	/*
+	 * Getter for educations form controls array
+	 */
+	get educations(): FormArray {
+		return this.form.get('educations') as FormArray;
 	}
 }

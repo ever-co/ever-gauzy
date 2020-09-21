@@ -26,7 +26,8 @@ export interface ICandidateInterview
 	isArchived?: boolean;
 }
 
-export interface ICandidateInterviewFindInput {
+export interface ICandidateInterviewFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	title?: string;
 	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];

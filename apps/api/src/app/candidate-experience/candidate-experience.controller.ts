@@ -34,7 +34,10 @@ export class CandidateExperienceController extends CrudController<
 	async findExperience(
 		@Query('data') data: string
 	): Promise<IPagination<CandidateExperience>> {
-		const { findInput } = JSON.parse(data);
-		return this.candidateExperienceService.findAll({ where: findInput });
+		const { findInput, relations } = JSON.parse(data);
+		return this.candidateExperienceService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 }

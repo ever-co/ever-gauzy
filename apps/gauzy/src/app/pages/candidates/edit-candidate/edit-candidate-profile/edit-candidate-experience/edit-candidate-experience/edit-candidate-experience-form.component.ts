@@ -7,7 +7,11 @@ import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
 import { CandidateExperienceService } from 'apps/gauzy/src/app/@core/services/candidate-experience.service';
-import { ICandidateExperience, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	ICandidateExperience,
+	ComponentLayoutStyleEnum,
+	IOrganization
+} from '@gauzy/models';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -20,8 +24,8 @@ import { LocalDataSource } from 'ng2-smart-table';
 export class EditCandidateExperienceFormComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	selectedOrganization: IOrganization;
 	showAddCard: boolean;
-	experienceId = null;
 	disableButton = true;
 	experienceList: ICandidateExperience[] = [];
 	private _ngDestroy$ = new Subject<void>();
@@ -49,6 +53,8 @@ export class EditCandidateExperienceFormComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
 				if (candidate) {
+					this.selectedOrganization = this.store.selectedOrganization;
+
 					this.candidateId = candidate.id;
 					this._initializeForm();
 					this.loadExperience();
@@ -59,96 +65,96 @@ export class EditCandidateExperienceFormComponent
 	}
 	private async _initializeForm() {
 		this.form = new FormGroup({
-			experience: this.fb.array([])
+			experiences: this.fb.array([])
 		});
-		const experienceForm = this.form.controls.experience as FormArray;
+		const experienceForm = this.experiences;
 		experienceForm.push(
 			this.fb.group({
 				occupation: ['', Validators.required],
-				organization: ['', Validators.required],
+				// organization: ['', Validators.required],
 				duration: ['', Validators.required],
 				description: ['']
 			})
 		);
 	}
 	private async loadExperience() {
-		const res = await this.candidateExperienceService.getAll({
-			candidateId: this.candidateId
-		});
-		if (res) {
-			this.experienceList = res.items;
-			this.sourceSmartTable.load(res.items);
-		}
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { items = [] } = await this.candidateExperienceService.getAll(
+			{
+				candidateId: this.candidateId,
+				organizationId,
+				tenantId
+			},
+			['organization']
+		);
+		this.experienceList = items;
+		this.sourceSmartTable.load(items);
 	}
 	editExperience(experience: ICandidateExperience) {
 		const selectedItem = experience ? experience : this.selectedExperience;
 		this.showAddCard = true;
-		this.form.controls.experience.patchValue([selectedItem]);
-		this.experienceId = experience ? experience.id : null;
+		this.experiences.patchValue([selectedItem]);
+		this.selectedExperience = selectedItem;
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.experience.reset();
+		this.experiences.reset();
 	}
 	cancel() {
 		this.showAddCard = false;
-		this.form.controls.experience.value.length = 0;
-		this.experienceId = null;
+		this.experiences.value.length = 0;
+		this.selectedExperience = null;
 		this.form.reset();
 	}
 
 	async submitForm() {
-		const experienceForm = this.form.controls.experience as FormArray;
-		if (experienceForm.valid) {
-			const formValue = { ...experienceForm.value[0] };
-			if (
-				(this.dataLayoutStyle === 'CARDS_GRID' &&
-					this.experienceId !== null) ||
-				(this.dataLayoutStyle === 'TABLE' &&
-					this.selectedExperience !== null)
-			) {
-				//editing existing experience
-				try {
-					await this.candidateExperienceService.update(
-						this.experienceId
-							? this.experienceId
-							: this.selectedExperience.id,
-						{
-							...formValue
-						}
-					);
-					this.loadExperience();
-					this.toastrSuccess('UPDATED');
-					this.showAddCard = !this.showAddCard;
-					this.form.controls.experience.reset();
-				} catch (error) {
-					this.toastrError(error);
-				}
-				this.experienceId = null;
-			} else {
-				//creating experience
-				try {
-					await this.candidateExperienceService.create({
-						...formValue,
-						candidateId: this.candidateId
-					});
-					this.toastrSuccess('CREATED');
-					this.loadExperience();
-					this.showAddCard = !this.showAddCard;
-					this.form.controls.experience.reset();
-				} catch (error) {
-					this.toastrError(error);
-				}
-			}
-		} else {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const experienceForm = this.experiences;
+		if (experienceForm.invalid) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'),
 				this.getTranslation(
 					'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_REQUIRED'
 				)
 			);
+			return;
 		}
+
+		const formValue = { ...experienceForm.value[0] };
+		if (this.selectedExperience) {
+			//editing existing experience
+			try {
+				await this.candidateExperienceService.update(
+					this.selectedExperience.id,
+					{
+						...formValue,
+						organizationId,
+						tenantId
+					}
+				);
+				this.loadExperience();
+				this.toastrSuccess('UPDATED');
+			} catch (error) {
+				this.toastrError(error);
+			}
+		} else {
+			//creating experience
+			try {
+				await this.candidateExperienceService.create({
+					...formValue,
+					candidateId: this.candidateId,
+					organizationId,
+					tenantId
+				});
+				this.toastrSuccess('CREATED');
+				this.loadExperience();
+			} catch (error) {
+				this.toastrError(error);
+			}
+		}
+		this.cancel();
 	}
+
 	async removeExperience(experience: ICandidateExperience) {
 		const selectedItem = experience ? experience : this.selectedExperience;
 		try {
@@ -171,6 +177,7 @@ export class EditCandidateExperienceFormComponent
 	}
 	add() {
 		this.showAddCard = true;
+		this.selectedExperience = null;
 		this.form.reset();
 	}
 	async loadSmartTable() {
@@ -187,7 +194,15 @@ export class EditCandidateExperienceFormComponent
 					title: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.ORGANIZATION'
 					),
-					type: 'string'
+					type: 'string',
+					valuePrepareFunction: (value, item) => {
+						if (item.hasOwnProperty('organization')) {
+							return item.organization
+								? item.organization.name
+								: null;
+						}
+						return value;
+					}
 				},
 				duration: {
 					title: this.getTranslation(
@@ -241,5 +256,12 @@ export class EditCandidateExperienceFormComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	/*
+	 * Getter for educations form controls array
+	 */
+	get experiences(): FormArray {
+		return this.form.get('experiences') as FormArray;
 	}
 }

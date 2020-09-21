@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	PermissionsEnum,
 	InvitationTypeEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -61,6 +62,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	candidateData: CandidateViewModel[];
+	selectedOrganization: IOrganization;
 
 	@ViewChild('candidatesTable') candidatesTable;
 	constructor(
@@ -99,6 +101,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrganization = organization;
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
@@ -226,7 +229,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 			context: {
 				invitationType: InvitationTypeEnum.CANDIDATE,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId
+				currentUserId: this.store.userId,
+				selectedOrganization: this.selectedOrganization
 			}
 		});
 		await dialog.onClose.pipe(first()).toPromise();
@@ -239,18 +243,24 @@ export class CandidatesComponent extends TranslationBaseComponent
 	}
 	async getCandidateSource(id: string) {
 		this.candidateSource = null;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.candidateSourceService.getAll({
-			candidateId: id
+			candidateId: id,
+			organizationId,
+			tenantId
 		});
 		if (res) {
 			return (this.candidateSource = res.items[0]);
 		}
 	}
 	async getCandidateRating(id: string) {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer'],
 			{
-				candidateId: id
+				candidateId: id,
+				organizationId,
+				tenantId
 			}
 		);
 		if (res) {
@@ -262,13 +272,14 @@ export class CandidatesComponent extends TranslationBaseComponent
 	}
 	private async loadPage() {
 		this.selectedCandidate = null;
-
 		const { items } = await this.candidatesService
 			.getAll(['user', 'source', 'tags'], {
-				organization: { id: this.selectedOrganizationId }
+				organizationId: this.selectedOrganizationId,
+				tenantId: this.selectedOrganization.tenantId
 			})
 			.pipe(first())
 			.toPromise();
+
 		const { name } = this.store.selectedOrganization;
 
 		let candidatesVm = [];

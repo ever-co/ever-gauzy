@@ -8,7 +8,11 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { takeUntil } from 'rxjs/operators';
 import { CandidateDocumentsService } from 'apps/gauzy/src/app/@core/services/candidate-documents.service';
 import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-cv/candidate-cv.component';
-import { ICandidateDocument, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	ICandidateDocument,
+	ComponentLayoutStyleEnum,
+	IOrganization
+} from '@gauzy/models';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -36,6 +40,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	documentUrl = '';
+	selectedOrganization: IOrganization;
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateDocumentsService: CandidateDocumentsService,
@@ -53,6 +58,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
 				if (candidate) {
+					this.selectedOrganization = this.store.selectedOrganization;
 					this.candidateId = candidate.id;
 					this._initializeForm();
 					this.loadDocuments();
@@ -106,17 +112,18 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		};
 	}
 	private async loadDocuments() {
-		const res = await this.candidateDocumentsService.getAll({
-			candidateId: this.candidateId
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { items = [] } = await this.candidateDocumentsService.getAll({
+			candidateId: this.candidateId,
+			organizationId,
+			tenantId
 		});
-		if (res) {
-			this.documentList = res.items;
-			this.smartTableSource.load(res.items);
-		}
+		this.documentList = items;
+		this.smartTableSource.load(items);
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.documents.reset();
+		this.documents.reset();
 	}
 
 	editDocument(doc: ICandidateDocument) {
@@ -128,12 +135,12 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 
 	cancel() {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.documents.value.length = 0;
+		this.documents.value.length = 0;
 		this.documentUrl = '';
 	}
 
 	async submitForm() {
-		const documentForm = this.form.controls.documents as FormArray;
+		const documentForm = this.documents;
 		const formValue = { ...documentForm.value[0] };
 		this.formCv = this.candidateCv.form;
 		formValue.documentUrl = this.formCv.get('cvUrl').value;
@@ -159,8 +166,11 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	}
 	async updateDocument(formValue: ICandidateDocument) {
 		try {
+			const { id: organizationId, tenantId } = this.selectedOrganization;
 			await this.candidateDocumentsService.update(this.documentId, {
-				...formValue
+				...formValue,
+				organizationId,
+				tenantId
 			});
 			this.loadDocuments();
 			this.toastrSuccess('UPDATED');
@@ -174,14 +184,17 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	}
 	async createDocument(formValue: ICandidateDocument) {
 		try {
+			const { id: organizationId, tenantId } = this.selectedOrganization;
 			await this.candidateDocumentsService.create({
 				...formValue,
-				candidateId: this.candidateId
+				candidateId: this.candidateId,
+				organizationId,
+				tenantId
 			});
 			this.toastrSuccess('CREATED');
 			this.loadDocuments();
 			this.showAddCard = !this.showAddCard;
-			this.form.controls.documents.reset();
+			this.documents.reset();
 		} catch (error) {
 			this.toastrError(error);
 		}
@@ -219,12 +232,20 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		);
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+	/*
+	 * Getter for candidate documents form controls array
+	 */
+	get documents(): FormArray {
+		return this.form.get('documents') as FormArray;
 	}
 }
