@@ -1,5 +1,4 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganization } from './organization.model';
 
 export interface ICandidateExperience
 	extends IBasePerTenantAndOrganizationEntityModel {

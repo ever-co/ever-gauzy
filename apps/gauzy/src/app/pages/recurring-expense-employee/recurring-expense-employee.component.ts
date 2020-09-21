@@ -323,9 +323,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		if (employeeId) {
 			this.selectedEmployeeRecurringExpense = (
 				await this.employeeRecurringExpenseService.getAllByMonth([], {
-					employeeId: employeeId
-						? employeeId
-						: this.selectedEmployee.id,
+					employeeId,
 					year: this.selectedDate.getFullYear(),
 					month: this.selectedDate.getMonth(),
 					organizationId,
