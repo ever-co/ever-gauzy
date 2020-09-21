@@ -40,7 +40,8 @@ export interface ICandidateInterviewFindInput
 	personalQualities?: ICandidatePersonalQualities[];
 }
 
-export interface ICandidateInterviewCreateInput {
+export interface ICandidateInterviewCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];

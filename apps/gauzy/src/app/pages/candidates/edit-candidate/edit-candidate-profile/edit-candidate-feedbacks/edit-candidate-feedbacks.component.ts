@@ -21,7 +21,8 @@ import {
 	ICandidateTechnologies,
 	ICandidatePersonalQualities,
 	IEmployee,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -74,6 +75,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	sourceSmartTable = new LocalDataSource();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	selectedOrganization: IOrganization;
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -95,19 +97,28 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
 				if (candidate) {
+					this.selectedOrganization = this.store.selectedOrganization;
 					this.candidateId = candidate.id;
 					this._initializeForm();
 					this.loadInterviews();
+					this.getEmployees();
 					this.loadSmartTable();
 					this._applyTranslationOnSmartTable();
 				}
 			});
+
+		this.selectInterview.setValue('all');
+	}
+	async getEmployees() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
-			.getAll(['user'])
+			.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
 			.pipe(first())
 			.toPromise();
 		this.employeeList = items;
-		this.selectInterview.setValue('all');
 	}
 	setView() {
 		this.viewComponentName = ComponentEnum.FEEDBACKS;
@@ -126,7 +137,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.form = new FormGroup({
 			feedbacks: this.fb.array([])
 		});
-		const feedbackForm = this.form.controls.feedbacks as FormArray;
+		const feedbackForm = this.feedbacks;
 		feedbackForm.push(
 			this.fb.group({
 				description: ['', Validators.required],
@@ -188,9 +199,10 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		};
 	}
 	private async loadFeedbacks() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer', 'criterionsRating'],
-			{ candidateId: this.candidateId }
+			{ candidateId: this.candidateId, organizationId, tenantId }
 		);
 		if (res) {
 			this.feedbackList = res.items;
@@ -288,12 +300,16 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		return res;
 	}
 	async loadInterviews() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const result = await this.candidateInterviewService.getAll(
 			['feedbacks', 'interviewers', 'technologies', 'personalQualities'],
-			{ candidateId: this.candidateId }
+			{ candidateId: this.candidateId, organizationId, tenantId }
 		);
 		const { items } = await this.candidatesService
-			.getAll(['user', 'interview', 'feedbacks'])
+			.getAll(['user', 'interview', 'feedbacks'], {
+				organizationId,
+				tenantId
+			})
 			.pipe(first())
 			.toPromise();
 		if (result) {
@@ -380,6 +396,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	async updateFeedback(formValue: ICandidateFeedback) {
 		try {
+			const { id: organizationId, tenantId } = this.selectedOrganization;
 			await this.candidateCriterionsRatingService.updateBulk(
 				this.currentFeedback.criterionsRating,
 				formValue['technologies'],
@@ -393,13 +410,15 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 						? formValue.rating
 						: this.averageRating,
 				interviewer: this.feedbackInterviewer,
-				status: this.status
+				status: this.status,
+				organizationId,
+				tenantId
 			});
-			this.loadInterviews();
 			this.toastrSuccess('UPDATED');
+			this.loadInterviews();
 			this.setStatus(this.status);
 			this.showAddCard = !this.showAddCard;
-			this.form.controls.feedbacks.reset();
+			this.feedbacks.reset();
 		} catch (error) {
 			this.toastrError(error);
 		}
@@ -407,14 +426,17 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	async createFeedback(formValue: ICandidateFeedback) {
 		try {
+			const { id: organizationId, tenantId } = this.selectedOrganization;
 			await this.candidateFeedbacksService.create({
 				...formValue,
-				candidateId: this.candidateId
+				candidateId: this.candidateId,
+				organizationId,
+				tenantId
 			});
 			this.toastrSuccess('CREATED');
 			this.loadInterviews();
 			this.showAddCard = !this.showAddCard;
-			this.form.controls.feedbacks.reset();
+			this.feedbacks.reset();
 		} catch (error) {
 			this.toastrError(error);
 		}
@@ -501,7 +523,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	cancel() {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.feedbacks.reset();
+		this.feedbacks.reset();
 		this.form.reset();
 		this.status = null;
 		this.feedbackInterviewer = null;
@@ -516,5 +538,11 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+	/*
+	 * Getter for candidate feedback form controls array
+	 */
+	get feedbacks(): FormArray {
+		return this.form.get('feedbacks') as FormArray;
 	}
 }
