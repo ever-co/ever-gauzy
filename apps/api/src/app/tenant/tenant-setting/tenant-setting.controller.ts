@@ -43,7 +43,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	@Get()
 	async get() {
 		const user = RequestContext.currentUser();
-		return this.tenantSettingService.findAll({
+		return this.tenantSettingService.get({
 			where: {
 				tenantId: user.tenantId
 			}

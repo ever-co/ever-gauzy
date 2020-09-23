@@ -113,6 +113,7 @@ import { GoalTemplate } from '../goal-template/goal-template.entity';
 import { EmployeeAward } from '../employee-award/employee-award.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
+import { TenantSetting } from '../tenant/tenant-setting/tenant-setting.entity';
 
 const entities = [
 	Invite,
@@ -144,6 +145,7 @@ const entities = [
 	TimeOffRequest,
 	RolePermissions,
 	Tenant,
+	TenantSetting,
 	EmailTemplate,
 	Tag,
 	Skill,
