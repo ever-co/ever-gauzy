@@ -1,3 +1,8 @@
+import {
+	FileStorageProviderEnum,
+	S3FileStorageProviderConfig
+} from './file-provider';
+
 export interface ITenant {
 	id?: string;
 	name?: string;
@@ -10,4 +15,8 @@ export interface ITenant {
 
 export interface ITenantCreateInput {
 	name: string;
+}
+
+export interface ITenantSetting extends S3FileStorageProviderConfig {
+	fileStorageProvider: FileStorageProviderEnum;
 }

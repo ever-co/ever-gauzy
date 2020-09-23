@@ -17,12 +17,14 @@ import {
 	IEmployee
 } from '@gauzy/models';
 import * as moment from 'moment';
+import * as _ from 'underscore';
 import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Options, ChangeContext } from 'ng5-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ngx-filters',
@@ -124,6 +126,10 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		// 	if (query.employeeId) {
 		// 		this.filters.employeeId = query.employeeId;
 		// 	}
+		// }
+
+		// if (this.activatedRoute.snapshot.queryParams){
+		// 	const requestParams = _.get(this.activatedRoute.snapshot.queryParams)
 		// }
 
 		this.selectedDate = this.today;

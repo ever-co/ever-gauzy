@@ -1,4 +1,4 @@
-import { FileStorageOption, UploadedFile } from '../models';
+import { FileStorageOption, UploadedFile } from '@gauzy/models';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
@@ -7,6 +7,7 @@ import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
+import { getRepository } from 'typeorm';
 
 export class S3Provider extends Provider<S3Provider> {
 	static instance: S3Provider;
@@ -36,6 +37,10 @@ export class S3Provider extends Provider<S3Provider> {
 			Expires: 3600
 		});
 		return url;
+	}
+
+	async getAwsDetails() {
+		//	await getRepository();
 	}
 
 	path(filePath: string) {
