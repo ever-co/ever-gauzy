@@ -1,4 +1,4 @@
-import { FileStorageOption, UploadedFile } from '@gauzy/models';
+import { FileStorageOption, ITenantSetting, UploadedFile } from '@gauzy/models';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
@@ -7,7 +7,9 @@ import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
-import { getRepository } from 'typeorm';
+import { getRepository, In } from 'typeorm';
+import { TenantSetting } from '../../../tenant/tenant-setting/tenant-setting.entity';
+import * as _ from 'underscore';
 
 export class S3Provider extends Provider<S3Provider> {
 	static instance: S3Provider;
@@ -15,19 +17,31 @@ export class S3Provider extends Provider<S3Provider> {
 	name = 's3';
 	tenantId: string;
 
-	config = {
-		rootPath: ''
+	config: {
+		rootPath: string;
+		aws_access_key_id: string;
+		aws_secret_access_key: string;
+		aws_default_region: string;
+		aws_bucket: string;
 	};
+
+	constructor() {
+		super();
+		this.config = {
+			rootPath: '',
+			aws_access_key_id: environment.awsConfig.accessKeyId,
+			aws_secret_access_key: environment.awsConfig.secretAccessKey,
+			aws_default_region: environment.awsConfig.region,
+			aws_bucket: environment.awsConfig.s3.bucket
+		};
+	}
 
 	getInstance() {
 		if (!S3Provider.instance) {
 			S3Provider.instance = new S3Provider();
 		}
+		//await this.setAwsDetails();
 		return S3Provider.instance;
-	}
-
-	getS3Bucket() {
-		return environment.awsConfig.s3.bucket;
 	}
 
 	url(key: string) {
@@ -39,8 +53,30 @@ export class S3Provider extends Provider<S3Provider> {
 		return url;
 	}
 
-	async getAwsDetails() {
-		//	await getRepository();
+	async setAwsDetails() {
+		const user = RequestContext.currentUser();
+		const settingsRow = await getRepository(TenantSetting).find({
+			where: {
+				tenantId: user.tenantId,
+				name: In([
+					'aws_access_key_id',
+					'aws_secret_access_key',
+					'aws_default_region',
+					'aws_bucket'
+				])
+			}
+		});
+		let settings: ITenantSetting = _.object(
+			_.pluck(settingsRow, 'name'),
+			_.pluck(settingsRow, 'value')
+		);
+
+		if (settings.aws_access_key_id) {
+			this.config = {
+				...this.config,
+				...settings
+			};
+		}
 	}
 
 	path(filePath: string) {
@@ -149,9 +185,13 @@ export class S3Provider extends Provider<S3Provider> {
 
 	private getS3Instance() {
 		return new AWS.S3({
-			accessKeyId: environment.awsConfig.accessKeyId,
-			secretAccessKey: environment.awsConfig.secretAccessKey
+			accessKeyId: this.config.aws_access_key_id,
+			secretAccessKey: this.config.aws_secret_access_key
 		});
+	}
+
+	getS3Bucket() {
+		return this.config.aws_default_region;
 	}
 
 	mapUploadedFile(file): UploadedFile {
