@@ -5,12 +5,14 @@ export interface ICandidateSource
 	name: string;
 	candidateId?: string;
 }
-export interface ICandidateSourceFindInput {
+export interface ICandidateSourceFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	candidateId?: string;
 }
 
-export interface ICandidateSourceCreateInput {
+export interface ICandidateSourceCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	candidateId: string;
 }

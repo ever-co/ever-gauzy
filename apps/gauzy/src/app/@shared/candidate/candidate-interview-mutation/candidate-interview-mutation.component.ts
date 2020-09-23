@@ -15,7 +15,8 @@ import {
 	IEmployee,
 	IDateRange,
 	ICandidatePersonalQualities,
-	ICandidateTechnologies
+	ICandidateTechnologies,
+	IOrganization
 } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
@@ -75,6 +76,8 @@ export class CandidateInterviewMutationComponent
 	};
 	personalQualities: ICandidatePersonalQualities[] = null;
 	technologies: ICandidateTechnologies[];
+	selectedCandidateId: string;
+	selectedOrganization: IOrganization;
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
 		protected employeesService: EmployeesService,
@@ -102,6 +105,7 @@ export class CandidateInterviewMutationComponent
 			.pipe(first())
 			.toPromise();
 		this.candidates = items;
+		this.selectedOrganization = this.store.selectedOrganization;
 	}
 
 	titleExist(value: boolean) {
@@ -144,8 +148,12 @@ export class CandidateInterviewMutationComponent
 	}
 
 	async getEmployees(employeeIds: string[]) {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
-			.getAll(['user'])
+			.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
 			.pipe(first())
 			.toPromise();
 		const employeeList = items;
@@ -172,9 +180,12 @@ export class CandidateInterviewMutationComponent
 	}
 
 	async createInterview(interview: ICandidateInterview) {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		interview = await this.candidateInterviewService.create({
 			...this.emptyInterview,
-			candidateId: this.selectedCandidate.id
+			candidateId: this.selectedCandidate.id,
+			organizationId,
+			tenantId
 		});
 		this.addInterviewers(interview.id, this.selectedInterviewers);
 		this.candidateCriterionsForm.loadFormData();

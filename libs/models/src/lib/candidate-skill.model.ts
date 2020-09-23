@@ -6,12 +6,14 @@ export interface ICandidateSkill
 	candidateId?: string;
 }
 
-export interface ISkillFindInput {
+export interface ISkillFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	candidateId?: string;
 }
 
-export interface ISkillCreateInput {
+export interface ISkillCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	candidateId?: string;
 }

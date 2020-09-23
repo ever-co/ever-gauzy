@@ -6,7 +6,8 @@ import {
 	IRecurringExpenseModel,
 	RecurringExpenseDefaultCategoriesEnum,
 	StartDateUpdateTypeEnum,
-	IEmployee
+	IEmployee,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { first } from 'rxjs/operators';
@@ -77,6 +78,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	currencies = Object.values(CurrenciesEnum);
 	selectedDate: Date;
 	conflicts: IRecurringExpenseModel[] = [];
+	selectedOrganization: IOrganization;
 
 	constructor(
 		private fb: FormBuilder,

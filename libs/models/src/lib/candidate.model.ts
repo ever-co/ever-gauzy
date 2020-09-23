@@ -1,7 +1,7 @@
 import { ICandidateInterview } from './candidate-interview.model';
 import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
-import { IOrganization, IOrganizationFindInput } from './organization.model';
+import { IOrganization } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IUserFindInput, IUser } from './user.model';
 import { IOrganizationTeam } from './organization-team-model';
@@ -53,12 +53,11 @@ export enum CandidateStatus {
 	HIRED = 'HIRED'
 }
 
-export interface ICandidateFindInput {
+export interface ICandidateFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
-	organization?: IOrganizationFindInput;
 	user?: IUserFindInput;
 	valueDate?: Date;
-	organizationId?: string;
 }
 
 export interface ICandidateUpdateInput {

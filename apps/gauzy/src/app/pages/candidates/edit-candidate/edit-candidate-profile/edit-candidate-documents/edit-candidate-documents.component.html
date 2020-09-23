@@ -19,8 +19,7 @@
 					<div formArrayName="documents">
 						<div
 							*ngFor="
-								let document of form.controls.documents
-									?.controls;
+								let document of documents?.controls;
 								let i = index
 							"
 						>

@@ -28,12 +28,9 @@
 		></ga-layout-selector>
 		<div *ngIf="showAddCard" class="row m-0 w-100">
 			<form class="col-10" [formGroup]="form" *ngIf="form">
-				<div formArrayName="experience">
+				<div formArrayName="experiences">
 					<div
-						*ngFor="
-							let exp of form.controls.experience?.controls;
-							let i = index
-						"
+						*ngFor="let exp of experiences?.controls; let i = index"
 					>
 						<div [formGroupName]="i" class="experience-add-card">
 							<div class="col-6 add-card-wrapp">
@@ -49,7 +46,7 @@
 									}}"
 									fullWidth
 								/>
-								<input
+								<!-- <input
 									#addInput
 									class="col-10"
 									nbInput
@@ -60,7 +57,7 @@
 											| translate
 									}}"
 									fullWidth
-								/>
+								/> -->
 								<input
 									#addInput
 									class="col-10"

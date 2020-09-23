@@ -11,7 +11,12 @@ import {
 import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { takeUntil, first } from 'rxjs/operators';
+import {
+	takeUntil,
+	first,
+	distinctUntilChanged,
+	debounceTime
+} from 'rxjs/operators';
 import { monthNames } from '../../@core/utils/date';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
 import {
@@ -34,9 +39,9 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	selectedEmployee: IEmployee;
 	selectedDate: Date;
-	employeeList: IEmployee[];
+	employeeList: IEmployee[] = [];
 	selectedEmployeeFromHeader: SelectedEmployee;
-	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[];
+	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[] = [];
 	selectedRowIndexToShow: number;
 	employeeName = 'Employee';
 	hasEditExpensePermission = false;
@@ -56,13 +61,14 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
-		this.loadEmployees();
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((date) => {
 				this.selectedDate = date;
 				if (this.selectedEmployeeFromHeader) {
-					this._loadEmployeeRecurringExpense();
+					this._loadEmployeeRecurringExpense(
+						this.selectedEmployeeFromHeader.id
+					);
 				}
 			});
 
@@ -77,50 +83,57 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (params) => {
-				const id = params.id;
+				if (params.hasOwnProperty('id')) {
+					const id = params.id;
+					const { items } = await this.employeeService
+						.getAll(
+							['user', 'organizationPosition', 'tags', 'skills'],
+							{ id }
+						)
+						.pipe(first())
+						.toPromise();
 
-				const { items } = await this.employeeService
-					.getAll(
-						['user', 'organizationPosition', 'tags', 'skills'],
-						{ id }
-					)
-					.pipe(first())
-					.toPromise();
+					this.selectedEmployee = items[0];
 
-				this.selectedEmployee = items[0];
+					this.store.selectedEmployee = {
+						id: items[0].id,
+						firstName: items[0].user.firstName,
+						lastName: items[0].user.lastName,
+						imageUrl: items[0].user.imageUrl,
+						tags: items[0].user.tags,
+						skills: items[0].skills
+					};
 
-				this.store.selectedEmployee = {
-					id: items[0].id,
-					firstName: items[0].user.firstName,
-					lastName: items[0].user.lastName,
-					imageUrl: items[0].user.imageUrl,
-					tags: items[0].user.tags,
-					skills: items[0].skills
-				};
-
-				const checkUsername = this.selectedEmployee.user.username;
-				this.employeeName = checkUsername ? checkUsername : 'Employee';
-
-				if (this.selectedDate) {
-					this._loadEmployeeRecurringExpense();
+					const checkUsername = this.selectedEmployee.user.username;
+					this.employeeName = checkUsername
+						? checkUsername
+						: 'Employee';
 				}
-				this.store.selectedEmployee$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((employee) => {
-						if (employee && employee.id) {
-							this.selectedEmployeeFromHeader = employee;
-							this._loadEmployeeRecurringExpense(employee.id);
-						} else {
-							this.selectedEmployeeFromHeader = null;
-							this._loadEmployeeRecurringExpense(null);
-						}
-					});
 
 				this.store.selectedOrganization$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((organization) => {
 						if (organization) {
 							this.selectedOrganization = organization;
+							this.selectedEmployeeFromHeader = null;
+							this.loadEmployees();
+
+							this.store.selectedEmployee = this.selectedEmployeeFromHeader;
+						}
+					});
+
+				this.store.selectedEmployee$
+					.pipe(
+						distinctUntilChanged(),
+						debounceTime(300),
+						takeUntil(this._ngDestroy$)
+					)
+					.subscribe((employee) => {
+						if (employee && typeof employee.id === 'string') {
+							this.selectedEmployeeFromHeader = employee;
+							this._loadEmployeeRecurringExpense(employee.id);
+						} else {
+							this._loadEmployeeRecurringExpense(null);
 						}
 					});
 			});
@@ -167,8 +180,9 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 					this.employeeName + ' recurring expense set.',
 					'Success'
 				);
+
 				this._loadEmployeeRecurringExpense(
-					this.selectedEmployeeFromHeader === null
+					!this.selectedEmployeeFromHeader
 						? null
 						: this.selectedEmployeeFromHeader.id
 				);
@@ -282,7 +296,10 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	private _recurringExpenseMutationResultTransform(
 		result
 	): IEmployeeRecurringExpense {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		return {
+			organizationId,
+			tenantId,
 			employeeId: result.employee.id,
 			categoryName: result.categoryName,
 			value: result.value,
@@ -301,26 +318,32 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	}
 
 	private async _loadEmployeeRecurringExpense(employeeId?: string) {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.fetchedHistories = {};
-		if (employeeId !== null) {
+		if (employeeId) {
 			this.selectedEmployeeRecurringExpense = (
 				await this.employeeRecurringExpenseService.getAllByMonth([], {
-					employeeId: employeeId
-						? employeeId
-						: this.selectedEmployee.id,
+					employeeId,
 					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth()
+					month: this.selectedDate.getMonth(),
+					organizationId,
+					tenantId
 				})
 			).items;
 		} else {
 			this.selectedEmployeeRecurringExpense = (
-				await this.employeeRecurringExpenseService.getAll()
+				await this.employeeRecurringExpenseService.getAll([], {
+					organizationId,
+					tenantId
+				})
 			).items;
 		}
 	}
 	async loadEmployees() {
+		this.employeeList = [];
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeeService
-			.getAll(['user'])
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
 		this.employeeList = items;

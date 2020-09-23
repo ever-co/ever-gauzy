@@ -1,4 +1,9 @@
-import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/models';
+import {
+	ICandidate,
+	ICandidateInterview,
+	IEmployee,
+	IOrganization
+} from '@gauzy/models';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
@@ -18,6 +23,7 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	candidates: ICandidate[] = null;
 	names: string[] = [];
 	selectedOrganizationId: string;
+	selectedOrganization: IOrganization;
 	rating: number[] = [];
 	interviewList: ICandidateInterview[];
 	employeeList: IEmployee[];
@@ -34,6 +40,7 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrganization = organization;
 					this.selectedOrganizationId = organization.id;
 					this.loadData();
 					this.loadEmployee();
@@ -44,7 +51,8 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	async loadData() {
 		const { items } = await this.candidatesService
 			.getAll(['user', 'interview', 'feedbacks'], {
-				organization: { id: this.selectedOrganizationId }
+				organizationId: this.selectedOrganizationId,
+				tenantId: this.selectedOrganization.tenantId
 			})
 			.pipe(first())
 			.toPromise();

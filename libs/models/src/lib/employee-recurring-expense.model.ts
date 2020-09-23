@@ -12,7 +12,8 @@ export interface IEmployeeRecurringExpenseByMonthFindInput
 	year?: number;
 }
 
-export interface IEmployeeRecurringExpenseFindInput {
+export interface IEmployeeRecurringExpenseFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	month?: number;
 	year?: number;
 	parentRecurringExpenseId?: string;
