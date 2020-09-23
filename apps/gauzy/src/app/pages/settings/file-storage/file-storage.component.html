@@ -1,12 +1,13 @@
 <nb-card>
 	<nb-card-body>
 		<div class="form-group">
-			<label class="label cols-sm-3">File Provider</label>
+			<label class="label cols-sm-3">{{
+				'SETTINGS_FILE_STORAGE.FILE_PROVIDER' | translate
+			}}</label>
 			<nb-select
 				class="d-block"
 				size="medium"
 				[(selected)]="settings.fileStorageProvider"
-				placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
 				fullWidth
 			>
 				<nb-option
@@ -22,58 +23,79 @@
 		>
 			<nb-card>
 				<nb-card-header>
-					<h6>S3 Details</h6>
+					<h6>
+						{{ 'SETTINGS_FILE_STORAGE.S3_DETAILS' | translate }}
+					</h6>
 				</nb-card-header>
 				<nb-card-body>
 					<div class="form-group row">
-						<label class="label col-sm-3">Access Key Id</label>
+						<label class="label col-sm-3">{{
+							'SETTINGS_FILE_STORAGE.ACCESS_KEY_ID' | translate
+						}}</label>
 						<div class="col-sm-9">
 							<input
 								name="aws_access_key_id"
 								[(ngModel)]="settings.aws_access_key_id"
 								nbInput
-								size="large"
+								fullWidth
 								class="w-100"
-								placeholder="AWS access key Id"
+								[placeholder]="
+									'SETTINGS_FILE_STORAGE.ACCESS_KEY_ID'
+										| translate
+								"
 							/>
 						</div>
 					</div>
 					<div class="form-group row">
-						<label class="label col-sm-3">Secret Access Key</label>
+						<label class="label col-sm-3">{{
+							'SETTINGS_FILE_STORAGE.SECRET_ACCESS_KEY'
+								| translate
+						}}</label>
 						<div class="col-sm-9">
 							<input
 								name="aws_secret_access_key"
 								[(ngModel)]="settings.aws_secret_access_key"
 								nbInput
-								size="large"
+								fullWidth
 								class="w-100"
-								placeholder="AWS secret access key"
+								[placeholder]="
+									'SETTINGS_FILE_STORAGE.SECRET_ACCESS_KEY'
+										| translate
+								"
 							/>
 						</div>
 					</div>
 					<div class="form-group row">
-						<label class="label col-sm-3">Region</label>
+						<label class="label col-sm-3">{{
+							'SETTINGS_FILE_STORAGE.REGION' | translate
+						}}</label>
 						<div class="col-sm-9">
 							<input
 								name="aws_default_region"
 								[(ngModel)]="settings.aws_default_region"
 								nbInput
-								size="large"
+								fullWidth
 								class="w-100"
-								placeholder="AWS region"
+								[placeholder]="
+									'SETTINGS_FILE_STORAGE.REGION' | translate
+								"
 							/>
 						</div>
 					</div>
 					<div class="form-group row">
-						<label class="label col-sm-3">Bucket</label>
+						<label class="label col-sm-3">{{
+							'SETTINGS_FILE_STORAGE.BUCKET' | translate
+						}}</label>
 						<div class="col-sm-9">
 							<input
 								name="aws_bucket"
 								[(ngModel)]="settings.aws_bucket"
 								nbInput
-								size="large"
+								fullWidth
 								class="w-100"
-								placeholder="AWS s3 bucket"
+								[placeholder]="
+									'SETTINGS_FILE_STORAGE.BUCKET' | translate
+								"
 							/>
 						</div>
 					</div>

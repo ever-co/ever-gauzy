@@ -1,7 +1,7 @@
 import { ITenantSetting } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { FindManyOptions, In, Repository } from 'typeorm';
 import { CrudService } from '../../core/crud';
 import { TenantSetting } from './tenant-setting.entity';
 import * as _ from 'underscore';
@@ -14,6 +14,13 @@ export class TenantSettingService extends CrudService<TenantSetting> {
 		private tenantSettingRepository: Repository<TenantSetting>
 	) {
 		super(tenantSettingRepository);
+	}
+
+	async get(requrst?: FindManyOptions) {
+		const settings: TenantSetting[] = await this.tenantSettingRepository.find(
+			requrst
+		);
+		return _.object(_.pluck(settings, 'name'), _.pluck(settings, 'value'));
 	}
 
 	async saveSettngs(input: ITenantSetting): Promise<ITenantSetting> {
