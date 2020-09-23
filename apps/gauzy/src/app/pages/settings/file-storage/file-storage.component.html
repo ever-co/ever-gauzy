@@ -1,0 +1,89 @@
+<nb-card>
+	<nb-card-body>
+		<div class="form-group">
+			<label class="label cols-sm-3">File Provider</label>
+			<nb-select
+				class="d-block"
+				size="medium"
+				[(selected)]="settings.fileStorageProvider"
+				placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
+				fullWidth
+			>
+				<nb-option
+					*ngFor="let providerName of fileStorageProviders"
+					[value]="providerName.value"
+				>
+					{{ providerName.label | titlecase }}
+				</nb-option>
+			</nb-select>
+		</div>
+		<ng-template
+			[ngIf]="settings.fileStorageProvider == FileStorageProviderEnum.S3"
+		>
+			<nb-card>
+				<nb-card-header>
+					<h6>S3 Details</h6>
+				</nb-card-header>
+				<nb-card-body>
+					<div class="form-group row">
+						<label class="label col-sm-3">Access Key Id</label>
+						<div class="col-sm-9">
+							<input
+								name="aws_access_key_id"
+								[(ngModel)]="settings.aws_access_key_id"
+								nbInput
+								size="large"
+								class="w-100"
+								placeholder="AWS access key Id"
+							/>
+						</div>
+					</div>
+					<div class="form-group row">
+						<label class="label col-sm-3">Secret Access Key</label>
+						<div class="col-sm-9">
+							<input
+								name="aws_secret_access_key"
+								[(ngModel)]="settings.aws_secret_access_key"
+								nbInput
+								size="large"
+								class="w-100"
+								placeholder="AWS secret access key"
+							/>
+						</div>
+					</div>
+					<div class="form-group row">
+						<label class="label col-sm-3">Region</label>
+						<div class="col-sm-9">
+							<input
+								name="aws_default_region"
+								[(ngModel)]="settings.aws_default_region"
+								nbInput
+								size="large"
+								class="w-100"
+								placeholder="AWS region"
+							/>
+						</div>
+					</div>
+					<div class="form-group row">
+						<label class="label col-sm-3">Bucket</label>
+						<div class="col-sm-9">
+							<input
+								name="aws_bucket"
+								[(ngModel)]="settings.aws_bucket"
+								nbInput
+								size="large"
+								class="w-100"
+								placeholder="AWS s3 bucket"
+							/>
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</ng-template>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button class="mr-3" (click)="submit()" nbButton status="success">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

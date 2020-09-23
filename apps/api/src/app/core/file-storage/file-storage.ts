@@ -1,4 +1,4 @@
-import { FileStorageOption, ProviderEnum } from './models';
+import { FileStorageOption, FileStorageProviderEnum } from '@gauzy/models';
 import * as Providers from './providers';
 import { environment } from '@env-api/environment';
 import { Provider } from './providers/provider';
@@ -19,19 +19,19 @@ export class FileStorage {
 			...this.config,
 			...config,
 			provider: (config.provider ||
-				environment.fileSystem.name) as ProviderEnum
+				environment.fileSystem.name) as FileStorageProviderEnum
 		};
 		return this;
 	}
 
-	setProvider(providerName: ProviderEnum) {
+	setProvider(providerName: FileStorageProviderEnum) {
 		if (providerName) {
 			this.config.provider = providerName;
 		}
 		return this;
 	}
 
-	getProvider(providerName?: ProviderEnum) {
+	getProvider(providerName?: FileStorageProviderEnum) {
 		this.setProvider(providerName);
 		return this.getProviderInstance();
 	}

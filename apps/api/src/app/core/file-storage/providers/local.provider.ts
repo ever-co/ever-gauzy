@@ -1,4 +1,4 @@
-import { FileStorageOption, UploadedFile } from '../models';
+import { FileStorageOption, UploadedFile } from '@gauzy/models';
 import * as multer from 'multer';
 import * as fs from 'fs';
 import * as moment from 'moment';
