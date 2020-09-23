@@ -2,7 +2,7 @@ require('dotenv').config();
 import * as path from 'path';
 import { IEnvironment } from './ienvironment';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { ProviderEnum } from '../app/core/file-storage/models';
+import { FileStorageProviderEnum } from '@gauzy/models';
 
 const dbType =
 	process.env.DB_TYPE && process.env.DB_TYPE === 'sqlite'
@@ -64,7 +64,9 @@ export const environment: IEnvironment = {
 	JWT_SECRET: 'secretKey',
 
 	fileSystem: {
-		name: (process.env.FILE_PROVIDER as ProviderEnum) || ProviderEnum.LOCAL
+		name:
+			(process.env.FILE_PROVIDER as FileStorageProviderEnum) ||
+			FileStorageProviderEnum.LOCAL
 	},
 
 	awsConfig: {

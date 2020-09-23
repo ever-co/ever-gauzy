@@ -14,7 +14,7 @@ import { IFiverrConfig } from './IFiverrConfig';
 import { IKeycloakConfig } from './IKeycloakConfig';
 import { IAuth0Config } from './IAuth0Config';
 import { AWSConfig } from './AWSConfig';
-import { ProviderEnum } from '../app/core/file-storage/models';
+import { FileStorageProviderEnum } from '@gauzy/models';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -27,7 +27,7 @@ export interface Env {
 }
 
 export interface FileSystem {
-	name: ProviderEnum;
+	name: FileStorageProviderEnum;
 }
 
 /**

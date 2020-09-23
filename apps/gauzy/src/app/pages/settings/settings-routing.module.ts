@@ -5,6 +5,7 @@ import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { SettingsComponent } from './settings.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
 import { EmailTemplatesComponent } from '../email-templates/email-templates.component';
+import { FileStorageComponent } from './file-storage/file-storage.component';
 
 const routes: Routes = [
 	{
@@ -29,6 +30,10 @@ const routes: Routes = [
 					import('../import-export/import-export.module').then(
 						(m) => m.ImportExportModule
 					)
+			},
+			{
+				path: 'file-storage',
+				component: FileStorageComponent
 			},
 			{
 				path: 'danger-zone',

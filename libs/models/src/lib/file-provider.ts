@@ -1,6 +1,6 @@
 export interface FileStorageOption {
 	dest: string | CallableFunction;
-	provider?: ProviderEnum;
+	provider?: FileStorageProviderEnum;
 	prefix?: string;
 	filename?: string | CallableFunction;
 }
@@ -10,7 +10,7 @@ export interface FileSystem {
 	baseUrl?: string;
 }
 
-export enum ProviderEnum {
+export enum FileStorageProviderEnum {
 	LOCAL = 'local',
 	S3 = 's3'
 }
@@ -25,4 +25,11 @@ export interface UploadedFile {
 	filename: string;
 	url: string; // file public url
 	path: string; // Full path of the file
+}
+
+export interface S3FileStorageProviderConfig {
+	aws_access_key_id?: string;
+	aws_secret_access_key?: string;
+	aws_default_region?: string;
+	aws_bucket?: string;
 }
