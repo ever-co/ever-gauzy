@@ -57,6 +57,6 @@ export class ActivityController extends CrudController<Activity> {
 	})
 	@Post('/bulk')
 	async bulkSaveActivities(@Body() entities: IBulkActivitiesInput) {
-		return this.activityService.bulkSave(entities.activities);
+		return this.activityService.bulkSave(entities);
 	}
 }

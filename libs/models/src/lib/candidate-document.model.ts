@@ -7,13 +7,15 @@ export interface ICandidateDocument
 	documentUrl: string;
 }
 
-export interface ICandidateDocumentFindInput {
+export interface ICandidateDocumentFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	candidateId?: string;
 	documentUrl?: string;
 }
 
-export interface ICandidateDocumentCreateInput {
+export interface ICandidateDocumentCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	candidateId?: string;
 	documentUrl: string;

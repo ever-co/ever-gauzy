@@ -4,6 +4,7 @@ import { AvailabilitySlot } from '../../availability-slots.entity';
 import { AvailabilitySlotsService } from '../../availability-slots.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(AvailabilitySlotsBulkCreateCommand)
 export class AvailabilitySlotsBulkCreateHandler
@@ -27,11 +28,14 @@ export class AvailabilitySlotsBulkCreateHandler
 			input[0].organizationId
 		);
 
-		for (let o of input) {
+		const { tenantId } = RequestContext.currentUser();
+
+		for (const o of input) {
 			const availabilitySlots = new AvailabilitySlot();
 
 			availabilitySlots.employee = employee;
 			availabilitySlots.organization = organization;
+			availabilitySlots.tenantId = tenantId;
 			availabilitySlots.allDay = o.allDay || false;
 			availabilitySlots.startTime = o.startTime;
 			availabilitySlots.endTime = o.endTime;

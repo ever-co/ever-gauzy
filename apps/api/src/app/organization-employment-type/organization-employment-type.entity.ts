@@ -11,7 +11,7 @@ export class OrganizationEmploymentType extends TenantOrganizationBase
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationEmploymentType)
 	@JoinTable({
-		name: 'tag_organization_employment_types'
+		name: 'tag_organization_employment_type'
 	})
 	tags: Tag[];
 

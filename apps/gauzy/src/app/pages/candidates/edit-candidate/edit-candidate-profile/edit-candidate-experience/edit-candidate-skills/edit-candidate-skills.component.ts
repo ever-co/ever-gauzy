@@ -7,7 +7,7 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { takeUntil } from 'rxjs/operators';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
-import { ISkill, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ISkill, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/models';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -19,6 +19,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
+	selectedOrganization: IOrganization;
 	showAddCard: boolean;
 	showEditDiv = [];
 	skillId = null;
@@ -46,6 +47,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
 				if (candidate) {
+					this.selectedOrganization = this.store.selectedOrganization;
 					this.candidateId = candidate.id;
 					this._initializeForm();
 					this.loadSkills();
@@ -58,7 +60,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 		this.form = new FormGroup({
 			skills: this.fb.array([])
 		});
-		const skillForm = this.form.controls.skills as FormArray;
+		const skillForm = this.skills;
 		skillForm.push(
 			this.fb.group({
 				name: ['', Validators.required]
@@ -80,12 +82,13 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			});
 	}
 	private async loadSkills() {
-		const res = await this.candidateSkillsService.getAll({
-			candidateId: this.candidateId
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { items = [] } = await this.candidateSkillsService.getAll({
+			candidateId: this.candidateId,
+			organizationId,
+			tenantId
 		});
-		if (res) {
-			this.skillList = res.items;
-		}
+		this.skillList = items;
 	}
 	showEditCard(index: number, id: string) {
 		this.showEditDiv[index] = true;
@@ -102,7 +105,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	}
 	submitForm() {
 		if (this.skillId) {
-			const skillForm = this.form.controls.skills as FormArray;
+			const skillForm = this.skills;
 			if (skillForm.valid) {
 				const formValue = { ...skillForm.value[0] };
 				this.editSkill(formValue.name);
@@ -119,7 +122,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 				});
 				this.loadSkills();
 				this.toastrSuccess('UPDATED');
-				(this.form.controls.skills as FormArray).reset();
+				this.skills.reset();
 				this.showEditDiv[index] = !this.showEditDiv[index];
 				this.showAddCard = false;
 			} catch (error) {
@@ -148,7 +151,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	}
 	gridEdit(skill: ISkill) {
 		this.showAddCard = true;
-		this.form.controls.skills.patchValue([skill]);
+		this.skills.patchValue([skill]);
 		this.skillId = skill.id;
 	}
 	cancel(index: number) {
@@ -160,13 +163,16 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 		this.form.controls.skills.reset();
 	}
 	async addSkill() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const skillForm = this.form.controls.skills as FormArray;
 		if (skillForm.valid) {
 			const formValue = { ...skillForm.value[0] };
 			try {
 				await this.candidateSkillsService.create({
 					...formValue,
-					candidateId: this.candidateId
+					candidateId: this.candidateId,
+					organizationId,
+					tenantId
 				});
 				this.toastrSuccess('CREATED');
 				this.loadSkills();
@@ -204,5 +210,12 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	/*
+	 * Getter for candidate skills form controls array
+	 */
+	get skills(): FormArray {
+		return this.form.get('skills') as FormArray;
 	}
 }

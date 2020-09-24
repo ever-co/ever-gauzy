@@ -84,19 +84,31 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 						}
 					);
 				}
-				if (request.organizationId) {
+
+				//check organization and tenant for timelogs
+				let { organizationId = null, tenantId = null } = request;
+				if (typeof organizationId === 'string') {
 					qb.andWhere(
-						'"employee"."organizationId" = :organizationId',
-						{ organizationId: request.organizationId }
+						`"${qb.alias}"."organizationId" = :organizationId`,
+						{
+							organizationId
+						}
 					);
 				}
+				//if not found tenantId then get from current user session
+				if (typeof tenantId !== 'string') {
+					const user = RequestContext.currentUser();
+					tenantId = user.tenantId;
+				}
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				});
 
 				if (request.projectIds) {
 					qb.andWhere('"timeLog"."projectId" IN (:...projectIds)', {
 						projectIds: request.projectIds
 					});
 				}
-
 				if (request.activityLevel) {
 					qb.andWhere(
 						`"${qb.alias}"."overall" BETWEEN :start AND :end`,

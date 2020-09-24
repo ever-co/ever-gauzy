@@ -50,7 +50,7 @@ export class Integration extends TenantOrganizationBase
 
 	@ManyToMany(() => Tag)
 	@JoinTable({
-		name: 'integrations_tags'
+		name: 'tag_integration'
 	})
 	tags?: Tag[];
 }

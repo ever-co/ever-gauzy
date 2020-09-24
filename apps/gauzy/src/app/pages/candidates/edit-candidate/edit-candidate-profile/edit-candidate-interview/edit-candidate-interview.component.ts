@@ -14,7 +14,8 @@ import {
 	ICandidateInterviewers,
 	ComponentLayoutStyleEnum,
 	IEmployee,
-	ICandidateFeedback
+	ICandidateFeedback,
+	IOrganization
 } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
@@ -41,6 +42,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: ICandidate;
+	selectedOrganization: IOrganization;
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
 	form: FormGroup;
@@ -59,7 +61,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	allFeedbacks: ICandidateFeedback[];
 	constructor(
 		private dialogService: NbDialogService,
-		translate: TranslateService,
 		private candidatesService: CandidatesService,
 		private employeesService: EmployeesService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
@@ -69,7 +70,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		private store: Store,
 		private toastrService: NbToastrService
 	) {
-		super(translate);
+		super(translateService);
 		this.setView();
 	}
 	ngOnInit() {
@@ -77,6 +78,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
 				if (candidate) {
+					this.selectedOrganization = this.store.selectedOrganization;
 					this.candidateId = candidate.id;
 					this.loadInterview();
 					this.loadSmartTable();
@@ -212,14 +214,20 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 
 	private async loadInterview() {
 		this.loading = true;
-		const res = await this.candidateFeedbacksService.getAll([
-			'interviewer'
-		]);
-		if (res) {
-			this.allFeedbacks = res.items;
-		}
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const {
+			items: allFeedbacks = []
+		} = await this.candidateFeedbacksService.getAll(['interviewer'], {
+			organizationId,
+			tenantId
+		});
+		this.allFeedbacks = allFeedbacks;
+
 		const { items } = await this.employeesService
-			.getAll(['user'])
+			.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
 			.pipe(first())
 			.toPromise();
 		this.employeeList = items;
@@ -231,7 +239,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				'personalQualities',
 				'candidate'
 			],
-			{ candidateId: this.candidateId }
+			{ candidateId: this.candidateId, organizationId, tenantId }
 		);
 		if (interviews) {
 			this.interviewList = interviews.items;
@@ -398,12 +406,15 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		);
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}
+	openEmployees(employeeId?: string) {}
 }

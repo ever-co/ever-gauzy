@@ -61,7 +61,7 @@ export class UpdateTimeSlotHandler
 			await this.timeSlotRepository.update(id, input);
 
 			timeSlot = await this.timeSlotRepository.findOne(id, {
-				relations: ['timeLogs', 'screenshots', 'activites']
+				relations: ['timeLogs', 'screenshots', 'activities']
 			});
 			return timeSlot;
 		} else {

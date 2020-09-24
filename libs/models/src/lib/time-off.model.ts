@@ -49,9 +49,9 @@ export interface ITimeOff extends IBasePerTenantAndOrganizationEntityModel {
 	documentUrl?: string;
 }
 
-export interface ITimeOffFindInput {
+export interface ITimeOffFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	organizationId?: string;
 }
 
 export interface ITimeOffUpdateInput {

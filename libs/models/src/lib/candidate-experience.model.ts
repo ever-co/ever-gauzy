@@ -1,5 +1,4 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganization } from './organization.model';
 
 export interface ICandidateExperience
 	extends IBasePerTenantAndOrganizationEntityModel {
@@ -9,18 +8,17 @@ export interface ICandidateExperience
 	candidateId?: string;
 }
 
-export interface IExperienceFindInput {
+export interface IExperienceFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	occupation?: string;
-	organization?: string;
-	tenant?: string;
 	duration?: string;
 	description?: string;
 	candidateId?: string;
 }
 
-export interface IExperienceCreateInput {
+export interface IExperienceCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	occupation: string;
-	organization: IOrganization;
 	duration: string;
 	description?: string;
 	candidateId?: string;

@@ -51,6 +51,8 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = 'Request time off';
 			requestApproval.min_count = 1;
+			requestApproval.organizationId = timeOffRequestSaved.organizationId;
+			requestApproval.tenantId = timeOffRequestSaved.tenantId;
 
 			await this.requestApprovalRepository.save(requestApproval);
 			return timeOffRequestSaved;
@@ -63,7 +65,8 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 		try {
 			const allRequests = await this.timeOffRequestRepository.find({
 				where: {
-					organizationId: findInput['organizationId']
+					organizationId: findInput['organizationId'],
+					tenantId: findInput['tenantId']
 				},
 				relations
 			});

@@ -6,6 +6,8 @@ import { WakatimeModule } from './wakatime/wakatime.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Wakatime } from './wakatime/wakatime.entity';
 
+require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
+
 @Module({
 	imports: [
 		TypeOrmModule.forRoot({
@@ -14,7 +16,7 @@ import { Wakatime } from './wakatime/wakatime.entity';
 				? `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`
 				: '',
 			keepConnectionAlive: true,
-			logging: false,
+			logging: true,
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: true,
 			entities: [Wakatime],

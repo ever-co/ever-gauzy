@@ -1092,7 +1092,7 @@ export class UpworkService {
 					const gauzyExpense = await this.commandBus.execute(
 						new ExpenseCreateCommand({
 							employeeId,
-              organizationId: organizationId,
+							organizationId: organizationId,
 							amount,
 							category,
 							valueDate: new Date(
@@ -1196,7 +1196,7 @@ export class UpworkService {
 				const gauzyIncome = await this.commandBus.execute(
 					new IncomeCreateCommand({
 						employeeId,
-            organizationId: organizationId,
+						organizationId: organizationId,
 						clientName,
 						clientId,
 						amount,

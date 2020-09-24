@@ -10,18 +10,22 @@ import { ComponentLayoutStyleEnum } from '@gauzy/models';
 			style="display: flex; align-items: center;"
 			class="{{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
 		>
-			<div *ngIf="rowData.imageUrl" class="image-container">
-				<img [src]="rowData.imageUrl" />
+			<div *ngIf="rowData?.imageUrl" class="image-container">
+				<img [src]="rowData?.imageUrl" />
 			</div>
 			<div
-				*ngIf="rowData.fullName"
+				*ngIf="rowData?.fullName"
 				class="d-block"
 				style="margin-left:15px;"
 			>
-				{{ rowData.fullName }}
+				{{ rowData?.fullName }}
 			</div>
-			<div *ngIf="rowData.name" class="d-block" style="margin-left:15px;">
-				{{ rowData.name }}
+			<div
+				*ngIf="rowData?.name"
+				class="d-block"
+				style="margin-left:15px;"
+			>
+				{{ rowData?.name }}
 			</div>
 		</div>
 		<div
@@ -32,9 +36,9 @@ import { ComponentLayoutStyleEnum } from '@gauzy/models';
 				*ngFor="let tag of rowData?.tags"
 				class="color"
 				position="centered"
-				[style.background]="tag.color"
-				[style.color]="backgroundContrast(tag.color)"
-				text="{{ tag.name }}"
+				[style.background]="tag?.color"
+				[style.color]="backgroundContrast(tag?.color)"
+				text="{{ tag?.name }}"
 			>
 			</nb-badge>
 		</div>

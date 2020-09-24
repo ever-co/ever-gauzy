@@ -69,9 +69,9 @@
 		"moment": "^2.25.3",
 		"knex": "^0.21.1",
 		"sharp": "^0.25.2",
-		"screenshot-desktop": "^1.12.2",
 		"mac-screen-capture-permissions": "^1.1.0",
 		"form-data": "^3.0.0",
-		"node-fetch": "^2.6.0"
+		"node-fetch": "^2.6.0",
+		"screenshot-desktop": "^1.12.2"
 	}
 }

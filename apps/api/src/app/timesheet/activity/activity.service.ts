@@ -8,14 +8,18 @@ import { RequestContext } from '../../core/context';
 import {
 	PermissionsEnum,
 	IGetActivitiesInput,
-	IDailyActivity
+	IDailyActivity,
+	IBulkActivitiesInput
 } from '@gauzy/models';
+import { CommandBus } from '@nestjs/cqrs';
+import { BulkActivitesSaveCommand } from './commands/bulk-activites-save.command';
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {
 	constructor(
 		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>
+		private readonly activityRepository: Repository<Activity>,
+		private readonly commandBus: CommandBus
 	) {
 		super(activityRepository);
 	}
@@ -76,16 +80,8 @@ export class ActivityService extends CrudService<Activity> {
 		return await query.getMany();
 	}
 
-	bulkSave(activities: Activity[]) {
-		return (
-			this.activityRepository
-				.createQueryBuilder()
-				.insert()
-				.values(activities)
-				//.onConflict('("employeeId", "date") DO UPDATE SET duration = EXCLUDED.duration + duration;')
-				.returning('*')
-				.execute()
-		);
+	bulkSave(input: IBulkActivitiesInput) {
+		return this.commandBus.execute(new BulkActivitesSaveCommand(input));
 	}
 
 	private filterQuery(request: IGetActivitiesInput) {
@@ -96,7 +92,6 @@ export class ActivityService extends CrudService<Activity> {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
 		}
-
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -133,18 +128,30 @@ export class ActivityService extends CrudService<Activity> {
 					}
 				);
 			}
-
 			if (request.titles) {
 				qb.andWhere(`"${query.alias}"."title" IN (:...title)`, {
 					title: request.titles
 				});
 			}
-
 			if (request.organizationId) {
-				qb.andWhere('"employee"."organizationId" = :organizationId', {
-					organizationId: request.organizationId
-				});
+				qb.andWhere(
+					`"${query.alias}"."organizationId" = :organizationId`,
+					{
+						organizationId: request.organizationId
+					}
+				);
 			}
+
+			let { tenantId } = request;
+			//if not found tenantId then get from current user session
+			if (!tenantId) {
+				const user = RequestContext.currentUser();
+				tenantId = user.tenantId;
+			}
+			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId: tenantId
+			});
+
 			if (request.activityLevel) {
 				qb.andWhere(
 					`"${query.alias}"."duration" BETWEEN :start AND :end`,
@@ -173,7 +180,6 @@ export class ActivityService extends CrudService<Activity> {
 					});
 				}
 			}
-
 			if (request.types) {
 				qb.andWhere(`"${query.alias}"."type" IN (:...type)`, {
 					type: request.types

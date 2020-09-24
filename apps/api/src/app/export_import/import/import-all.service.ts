@@ -508,8 +508,8 @@ export class ImportAllService implements OnDestroy {
 
 		activity: this.activityRepository,
 		approval_policy: this.approvalPolicyRepository,
-		availability_slots: this.availabilitySlotsRepository,
-		appointment_employees: this.appointmentEmployeesRepository,
+		availability_slot: this.availabilitySlotsRepository,
+		appointment_employee: this.appointmentEmployeesRepository,
 
 		deal: this.dealRepository,
 		email_template: this.emailTemplateRepository,
@@ -519,7 +519,7 @@ export class ImportAllService implements OnDestroy {
 		employee_appointment: this.employeeAppointmentRepository,
 		employee_recurring_expense: this.employeeRecurringExpenseRepository,
 		employee_setting: this.employeeSettingRepository,
-		equipmet: this.equipmentRepository,
+		equipment: this.equipmentRepository,
 		event_types: this.eventTypeRepository,
 		expense_category: this.expenseCategoryRepository,
 		expense: this.expenseRepository,
@@ -543,7 +543,7 @@ export class ImportAllService implements OnDestroy {
 		knowledge_base_article: this.HelpCenterArticleRepository,
 		knowledge_base_author: this.HelpCenterAuthorRepository,
 
-		organization_awards: this.organizationAwardsRepository,
+		organization_award: this.organizationAwardsRepository,
 		organization_contact: this.organizationContactRepository,
 		organization_department: this.organizationDepartmentRepository,
 		organization_document: this.documentRepository,

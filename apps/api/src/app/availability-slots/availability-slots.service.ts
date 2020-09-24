@@ -21,7 +21,7 @@ export class AvailabilitySlotsService extends CrudService<AvailabilitySlot> {
 		filter?: FindManyOptions<AvailabilitySlot>
 	): Promise<IPagination<AvailabilitySlot>> {
 		const total = await this.repository.count(filter);
-		let items = await this.repository.find(filter);
+		const items = await this.repository.find(filter);
 
 		return { items, total };
 	}

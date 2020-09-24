@@ -1,0 +1,38 @@
+.center-card {
+  text-align: center;
+  cursor: pointer;
+}
+
+.all-monitor_icon {
+  font-size: 50px;
+}
+
+.title-tile {
+  font-size: 18px;
+  font-weight: bolder;
+  margin-bottom: 10px;
+}
+
+.subtitle-tile {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.menu-item {
+  cursor: pointer;
+}
+
+.menu-item-active {
+  font-weight: bolder;
+}
+
+.monitor-many {
+  position: absolute;
+  top: -9px;
+  left: 70px;
+  z-index: 0;
+}
+
+.selected {
+  color: #00d68f;
+}

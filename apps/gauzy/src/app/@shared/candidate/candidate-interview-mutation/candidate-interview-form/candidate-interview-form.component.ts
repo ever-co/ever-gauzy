@@ -10,10 +10,16 @@ import {
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { IEmployee, IDateRange, ICandidateInterview } from '@gauzy/models';
+import {
+	IEmployee,
+	IDateRange,
+	ICandidateInterview,
+	IOrganization
+} from '@gauzy/models';
 import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-candidate-interview-form',
@@ -36,15 +42,19 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	isTitleExisted: boolean;
 	selectedRange: IDateRange = { start: null, end: null };
 	private _ngDestroy$ = new Subject<void>();
+	selectedOrganization: IOrganization;
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private dialogService: NbDialogService,
 		private employeeService: EmployeesService,
-		private cdRef: ChangeDetectorRef
+		private cdRef: ChangeDetectorRef,
+		private store: Store
 	) {}
 
 	ngOnInit() {
+		this.selectedOrganization = this.store.selectedOrganization;
+
 		this.yesterday.setDate(this.yesterday.getDate() - 1);
 		this.loadFormData();
 		this.form.valueChanges.subscribe((item) => {
@@ -67,8 +77,13 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 				}
 			}
 		});
+
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.employeeService
-			.getAll(['user'])
+			.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;

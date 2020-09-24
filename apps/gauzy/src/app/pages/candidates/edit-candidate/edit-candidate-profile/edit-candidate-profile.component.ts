@@ -5,7 +5,8 @@ import {
 	ICandidate,
 	ICandidateUpdateInput,
 	IUserUpdateInput,
-	ICandidateInterview
+	ICandidateInterview,
+	IOrganization
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -18,6 +19,7 @@ import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-candidate-profile',
@@ -37,6 +39,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	tabs: any[];
 	interviewList: ICandidateInterview[];
 	futureInterviews: ICandidateInterview[];
+	selectedOrganization: IOrganization;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -48,7 +51,8 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 		private errorHandler: ErrorHandlingService,
 		private dialogService: NbDialogService,
 		private readonly candidateInterviewService: CandidateInterviewService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -58,9 +62,15 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
 				this.routeParams = params;
-				this._loadCandidateData();
+				this.store.selectedOrganization$
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe((organization) => {
+						if (organization) {
+							this.selectedOrganization = this.store.selectedOrganization;
+							this._loadCandidateData();
+						}
+					});
 			});
-
 		this.candidateStore.userForm$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((value) => {
@@ -76,9 +86,14 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	}
 
 	private async loadInterviews() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const interviews = await this.candidateInterviewService.getAll(
 			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
-			{ candidateId: this.selectedCandidate.id }
+			{
+				candidateId: this.selectedCandidate.id,
+				organizationId,
+				tenantId
+			}
 		);
 		if (interviews) {
 			this.interviewList = interviews.items;
@@ -252,10 +267,19 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 
 	private async _loadCandidateData() {
 		const { id } = this.routeParams;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.candidatesService
-			.getAll(['user', 'tags', 'contact'], { id })
+			.getAll(['user', 'tags', 'contact'], {
+				id,
+				organizationId,
+				tenantId
+			})
 			.pipe(first())
 			.toPromise();
+
+		if (items.length === 0) {
+			return false;
+		}
 
 		this.selectedCandidate = items[0];
 		const checkUsername = this.selectedCandidate.user.username;

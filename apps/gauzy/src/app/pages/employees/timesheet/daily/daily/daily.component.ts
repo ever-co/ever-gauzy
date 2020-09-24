@@ -16,7 +16,7 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
+import { filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
@@ -73,26 +73,26 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.nbMenuService
 			.onItemClick()
 			.pipe(
-				takeUntil(this._ngDestroy$),
+				untilDestroyed(this),
 				filter(({ tag }) => tag === 'time-logs-bulk-acton'),
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
 
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				this.updateLogs$.next();
+				if (organization) {
+					this.organization = organization;
+					this.updateLogs$.next();
+				}
 			});
 
 		this.updateLogs$
-			.pipe(takeUntil(this._ngDestroy$), debounceTime(500))
+			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
 				this.getLogs();
 			});
-
-		this.updateLogs$.next();
 	}
 
 	async filtersChange($event: ITimeLogFilters) {
@@ -109,6 +109,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 		const request: IGetTimeLogInput = {
 			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId,
 			...this.logRequest,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
@@ -242,7 +243,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	ngOnDestroy() {
+	ngOnDestroy(): void {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}

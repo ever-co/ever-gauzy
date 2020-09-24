@@ -72,7 +72,10 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
+				if (organization) {
+					this.organization = organization;
+					this.updateLogs$.next();
+				}
 			});
 
 		this.updateLogs$
@@ -88,8 +91,6 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
 				);
 			});
-
-		this.updateLogs$.next();
 	}
 
 	updateWeekDayList() {
@@ -118,7 +119,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeIds ? { employeeId: employeeIds } : {}),
-			organizationId: this.organization ? this.organization.id : null
+			organizationId: this.organization ? this.organization.id : null,
+			tenantId: this.organization ? this.organization.tenantId : null
 		};
 
 		this.loading = true;

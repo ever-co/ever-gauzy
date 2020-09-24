@@ -79,8 +79,10 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				this.updateLogs$.next();
+				if (organization) {
+					this.organization = organization;
+					this.updateLogs$.next();
+				}
 			});
 
 		this.updateLogs$
@@ -88,8 +90,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.getTimeSheets();
 			});
-
-		this.updateLogs$.next();
 	}
 
 	filtersChange($event) {
@@ -104,6 +104,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		const { startDate, endDate } = this.logRequest;
 		const request: IGetTimesheetInput = {
 			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId,
 			...this.logRequest,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
@@ -207,5 +208,5 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		this.router.navigate(['/pages/employees/timesheets/', timesheet.id]);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }

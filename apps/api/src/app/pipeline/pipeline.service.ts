@@ -32,14 +32,15 @@ export class PipelineService extends CrudService<Pipeline> {
 	public async findDeals(pipelineId: string) {
 		const items: Deal[] = await this.dealRepository
 			.createQueryBuilder('deal')
-			.leftJoin('deal.stage', 'stage')
-			.where('stage.pipelineId = :pipelineId', { pipelineId })
-			.groupBy('stage.id')
+			.leftJoin('deal.stage', 'pipeline_stage')
+			.where('pipeline_stage.pipelineId = :pipelineId', { pipelineId })
+			.groupBy('pipeline_stage.id')
 			// FIX: error: column "deal.id" must appear in the GROUP BY clause or be used in an aggregate function
 			.addGroupBy('deal.id')
 			// END_FIX
-			.orderBy('stage.index', 'ASC')
+			.orderBy('pipeline_stage.index', 'ASC')
 			.getMany();
+
 		const { length: total } = items;
 
 		for (const deal of items) {

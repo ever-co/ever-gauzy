@@ -26,7 +26,8 @@ export interface ICandidateInterview
 	isArchived?: boolean;
 }
 
-export interface ICandidateInterviewFindInput {
+export interface ICandidateInterviewFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	title?: string;
 	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];
@@ -39,7 +40,8 @@ export interface ICandidateInterviewFindInput {
 	personalQualities?: ICandidatePersonalQualities[];
 }
 
-export interface ICandidateInterviewCreateInput {
+export interface ICandidateInterviewCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];

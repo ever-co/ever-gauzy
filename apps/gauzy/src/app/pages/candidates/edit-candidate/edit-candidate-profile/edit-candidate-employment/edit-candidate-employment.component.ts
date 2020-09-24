@@ -80,8 +80,9 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	}
 
 	private getPositions() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.organizationPositionsService
-			.getAll({ organizationId: this.selectedOrganization.id })
+			.getAll({ organizationId, tenantId })
 			.then((data) => {
 				const { items } = data;
 				this.positions = items;
@@ -89,10 +90,9 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	}
 
 	private getEmploymentTypes() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.organizationEmploymentTypeService
-			.getAll([], {
-				organizationId: this.selectedOrganization.id
-			})
+			.getAll([], { organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((types) => {
 				this.employmentTypes = types.items;

@@ -73,13 +73,13 @@ export interface ISubmitTimesheetInput {
 	status: 'submit' | 'unsubmit';
 }
 
-export interface IGetTimesheetInput {
+export interface IGetTimesheetInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	startDate?: string;
 	endDate?: string;
 	projectId?: string[];
 	clientId?: string[];
 	employeeIds?: string[];
-	organizationId?: string;
 }
 
 export interface IDateRange {
@@ -149,8 +149,8 @@ export enum TimeLogSourceEnum {
 	UPWORK = 'UPWORK'
 }
 
-export interface ITimeLogFilters {
-	organizationId?: string;
+export interface ITimeLogFilters
+	extends IBasePerTenantAndOrganizationEntityModel {
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];
@@ -338,5 +338,7 @@ export interface IGetActivitiesInput extends ITimeLogFilters, IPagination {
 }
 
 export interface IBulkActivitiesInput {
+	employeeId: string;
+	projectId?: string;
 	activities: IActivity[];
 }

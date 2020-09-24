@@ -24,9 +24,10 @@ export class CandidateExperienceService {
 	}
 
 	getAll(
-		findInput?: IExperienceFindInput
+		findInput?: IExperienceFindInput,
+		relations?: string[]
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		const data = JSON.stringify({ findInput, relations });
 		return this.http
 			.get<{ items: ICandidateExperience[]; total: number }>(
 				`/api/candidate-experience`,

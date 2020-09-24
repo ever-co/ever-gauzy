@@ -6,7 +6,8 @@ import { IEmployeeAward } from '@gauzy/models';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('employee_award')
-export class EmployeeAward extends TenantOrganizationBase implements IEmployeeAward {
+export class EmployeeAward extends TenantOrganizationBase
+	implements IEmployeeAward {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

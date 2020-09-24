@@ -22,4 +22,5 @@ export interface Environment {
 	NO_INTERNET_LOGO: string;
 	SENTRY_DNS?: string;
 	HUBSTAFF_REDIRECT_URI?: string;
+	IS_ELECTRON: boolean;
 }

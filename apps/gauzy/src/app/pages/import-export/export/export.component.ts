@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+
 export interface IEntityModel {
 	name: string;
 	value: string;
@@ -11,6 +12,7 @@ export interface IEntityModel {
 	isGroup?: boolean;
 	entities?: IEntityModel[];
 }
+
 @Component({
 	selector: 'ngx-download',
 	templateUrl: './export.component.html',
@@ -19,7 +21,7 @@ export interface IEntityModel {
 export class ExportComponent implements OnInit, OnDestroy {
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
-	checkedAll: boolean = true;
+	checkedAll = true;
 
 	constructor(private exportAll: ExportAllService, private router: Router) {}
 
@@ -130,8 +132,8 @@ export class ExportComponent implements OnInit, OnDestroy {
 				entities: []
 			},
 			{
-				name: 'Availability Slots',
-				value: 'availability_slots',
+				name: 'Availability Slot',
+				value: 'availability_slot',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -242,7 +244,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 				entities: this.getKeyResultEntities()
 			},
 			{
-				name: 'Knowlwdge Base',
+				name: 'Knowledge Base',
 				value: 'knowledge_base',
 				checked: true,
 				isGroup: true,
@@ -312,7 +314,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 			},
 			{
 				name: 'Stage',
-				value: 'stage',
+				value: 'pipeline_stage',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -448,7 +450,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 		return [
 			{
 				name: 'Organization Awards',
-				value: 'organization_awards',
+				value: 'organization_award',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -572,7 +574,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 
 	getEmployeeEntities(): IEntityModel[] {
 		return [
-			// { name: 'Appointment Employees', value: 'appointment_employees', checked: true, isGroup: false, entities: [] },
+			// { name: 'Appointment Employees', value: 'appointment_employee', checked: true, isGroup: false, entities: [] },
 			{
 				name: 'Employee Appointment',
 				value: 'employee_appointment',
@@ -582,7 +584,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 			},
 			// { name: 'Employee Award', value: 'employee_award', checked: true, isGroup: false, entities: [] },
 			{
-				name: 'Employee Reccuring Expense',
+				name: 'Employee Recurring Expense',
 				value: 'employee_recurring_expense',
 				checked: true,
 				isGroup: false,
@@ -707,8 +709,8 @@ export class ExportComponent implements OnInit, OnDestroy {
 				entities: []
 			},
 			{
-				name: 'Product Variant Settings',
-				value: 'product_variant_settings',
+				name: 'Product Variant Setting',
+				value: 'product_variant_setting',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -720,7 +722,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 		return [
 			{
 				name: 'Request Approval Tag',
-				value: 'request_approval_tag',
+				value: 'tag_request_approval',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -834,15 +836,15 @@ export class ExportComponent implements OnInit, OnDestroy {
 				entities: []
 			},
 			{
-				name: 'Tag Organization Employment Types',
-				value: 'tag_organization__mployment_types',
+				name: 'Tag Organization Employment Type',
+				value: 'tag_organization_employment_type',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: 'Tag Organization Expense Categories',
-				value: 'tag_organization_expense_categories',
+				name: 'Tag Organization Expense Category',
+				value: 'tag_organization_expense_category',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -877,7 +879,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 			},
 			{
 				name: 'Tag Organizations',
-				value: 'tag_organizations',
+				value: 'tag_organization',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -1009,7 +1011,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 
 	getInvoiceEntities(): IEntityModel[] {
 		return [
-			// { name: 'Invoice Esitmate History', value: 'invoice_estimate_history', checked: true, isGroup: false, entities: [] },
+			// { name: 'Invoice Estimate History', value: 'invoice_estimate_history', checked: true, isGroup: false, entities: [] },
 			{
 				name: 'Invoice Item',
 				value: 'invoice_item',
@@ -1036,7 +1038,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 	getRoleEntities(): IEntityModel[] {
 		return [
 			{
-				name: 'Role Permissiom',
+				name: 'Role Permission',
 				value: 'role_permission',
 				checked: true,
 				isGroup: false,

@@ -5,9 +5,10 @@ import TimerHandler from './timer';
 import { LocalStore } from './getSetStore';
 import { ipcMain } from 'electron';
 import { TimerData } from '../local-data/timer';
+import { createSettingsWindow } from '../window/settings';
 export default class TrayIcon {
 	tray: Tray;
-	constructor(win2, knex, win3, auth) {
+	constructor(setupWindow, knex, timeTrackerWindow, auth, settingsWindow) {
 		const timerHandler = new TimerHandler();
 		const store = new Store();
 		const iconPath = path.join(
@@ -42,19 +43,27 @@ export default class TrayIcon {
 				click(menuItem) {
 					const projectSelect = store.get('project');
 					if (projectSelect && projectSelect.projectId) {
-						win3.show();
+						timeTrackerWindow.show();
 						setTimeout(() => {
-							win3.webContents.send('start_from_tray');
+							timeTrackerWindow.webContents.send(
+								'start_from_tray'
+							);
 						}, 1000);
 					} else {
-						win3.show();
+						timeTrackerWindow.show();
 						setTimeout(async () => {
-							const lastTime:any = await TimerData.getLastTimer(knex, LocalStore.beforeRequestParams());
-							win3.webContents.send(
+							const lastTime: any = await TimerData.getLastTimer(
+								knex,
+								LocalStore.beforeRequestParams()
+							);
+							timeTrackerWindow.webContents.send(
 								'timer_tracker_show',
 								{
 									...LocalStore.beforeRequestParams(),
-									timeSlotId: lastTime && lastTime.length > 0 ? lastTime[0].timeSlotId : null
+									timeSlotId:
+										lastTime && lastTime.length > 0
+											? lastTime[0].timeSlotId
+											: null
 								}
 							);
 						}, 1000);
@@ -66,9 +75,9 @@ export default class TrayIcon {
 				label: 'Stop Tracking Time',
 				enabled: false,
 				click(menuItem) {
-					win3.show();
+					timeTrackerWindow.show();
 					setTimeout(() => {
-						win3.webContents.send('stop_from_tray');
+						timeTrackerWindow.webContents.send('stop_from_tray');
 					}, 1000);
 				}
 			},
@@ -77,15 +86,21 @@ export default class TrayIcon {
 				label: 'Open Time Tracker',
 				enabled: true,
 				click(menuItem) {
-					win3.show();
+					timeTrackerWindow.show();
 					setTimeout(async () => {
-						const lastTime:any = await TimerData.getLastTimer(knex, LocalStore.beforeRequestParams());
+						const lastTime: any = await TimerData.getLastTimer(
+							knex,
+							LocalStore.beforeRequestParams()
+						);
 						console.log('last', lastTime);
-						win3.webContents.send(
+						timeTrackerWindow.webContents.send(
 							'timer_tracker_show',
 							{
 								...LocalStore.beforeRequestParams(),
-								timeSlotId: lastTime && lastTime.length > 0 ? lastTime[0].timeSlotId : null
+								timeSlotId:
+									lastTime && lastTime.length > 0
+										? lastTime[0].timeSlotId
+										: null
 							}
 						);
 					}, 1000);
@@ -95,7 +110,16 @@ export default class TrayIcon {
 				id: '4',
 				label: 'Setting',
 				click() {
-					win2.webContents.send('open_setting_page');
+					const appSetting = LocalStore.getStore('appSetting');
+					if (!settingsWindow) {
+						settingsWindow = createSettingsWindow(settingsWindow);
+					}
+					settingsWindow.show();
+					setTimeout(() => {
+						settingsWindow.webContents.send('app_setting', {
+							setting: appSetting
+						});
+					}, 500);
 				}
 			},
 			{

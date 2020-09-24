@@ -10,7 +10,8 @@ export interface ICandidateEducation
 	candidateId?: string;
 }
 
-export interface IEducationFindInput {
+export interface IEducationFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	schoolName?: string;
 	degree?: string;
 	completionDate?: Date;
@@ -19,7 +20,8 @@ export interface IEducationFindInput {
 	candidateId?: string;
 }
 
-export interface IEducationCreateInput {
+export interface IEducationCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	schoolName: string;
 	degree: string;
 	completionDate: Date;
