@@ -40,12 +40,14 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		this.activatedRoute.params.subscribe((params) => {
-			if (params.type) {
-				this.type = params.type;
-				this.updateLogs$.next();
-			}
-		});
+		this.activatedRoute.params
+			.pipe(untilDestroyed(this))
+			.subscribe((params) => {
+				if (params.type) {
+					this.type = params.type;
+					this.updateLogs$.next();
+				}
+			});
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
@@ -115,6 +117,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 
 		const request: IGetActivitiesInput = {
 			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId,
 			...this.request,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),

@@ -90,11 +90,26 @@ export class TimeSheetService extends CrudService<Timesheet> {
 					}
 				);
 				qb.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
-				if (request.organizationId) {
+				//check organization and tenant for timelogs
+				const { organizationId = null } = request;
+				if (typeof organizationId === 'string') {
 					qb.andWhere(
-						'"employee"."organizationId" = :organizationId',
+						`"${qb.alias}"."organizationId" = :organizationId`,
 						{ organizationId: request.organizationId }
 					);
+				}
+
+				//check organization and tenant for timelogs
+				let { tenantId = null } = request;
+				//if not found tenantId then get from current user session
+				if (typeof tenantId !== 'string') {
+					const user = RequestContext.currentUser();
+					tenantId = user.tenantId;
+				}
+				if (tenantId) {
+					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
 				}
 			}
 		});

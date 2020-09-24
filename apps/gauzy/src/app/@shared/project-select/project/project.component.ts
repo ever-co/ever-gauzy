@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
-import { IOrganizationProject } from '@gauzy/models';
+import { IOrganization, IOrganizationProject } from '@gauzy/models';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -24,6 +24,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	private _employeeId: string;
 	private _organizationContactId: string;
 	projects: IOrganizationProject[];
+	organization: IOrganization;
 
 	@Input() disabled = false;
 	@Input() multiple = false;
@@ -77,7 +78,10 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 						{
 							organizationContactId: this.organizationContactId,
 							...(this.organizationId
-								? { organizationId: this.organizationId }
+								? {
+										organizationId: this.organizationId,
+										tenantId: this.organization.tenantId
+								  }
 								: {})
 						}
 					);
@@ -87,7 +91,10 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					} = await this.organizationProjects.getAll([], {
 						organizationContactId: this.organizationContactId,
 						...(this.organizationId
-							? { organizationId: this.organizationId }
+							? {
+									organizationId: this.organizationId,
+									tenantId: this.organization.tenantId
+							  }
 							: {})
 					});
 					this.projects = items;
@@ -96,6 +103,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 
 		this.store.selectedOrganization$.subscribe((organization) => {
 			if (organization) {
+				this.organization = organization;
 				this.organizationId = organization.id;
 				this.loadProjects$.next();
 			}

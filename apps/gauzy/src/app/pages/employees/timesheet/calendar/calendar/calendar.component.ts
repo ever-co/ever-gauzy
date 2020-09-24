@@ -148,6 +148,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
 		const request: IGetTimeLogInput = {
 			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId,
 			...this.logRequest,
 			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss')

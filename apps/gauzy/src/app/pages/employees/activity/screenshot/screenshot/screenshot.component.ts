@@ -70,6 +70,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 
 		const request: IGetTimeSlotInput = {
 			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId,
 			...this.request,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),

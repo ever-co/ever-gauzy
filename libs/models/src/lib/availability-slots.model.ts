@@ -18,11 +18,22 @@ export interface IAvailabilitySlotsFindInput {
 	organization?: IOrganizationFindInput;
 }
 
-export interface IAvailabilitySlotsCreateInput {
+export interface IAvailabilitySlotsCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	type: string;
 	allDay: boolean;
 	startTime: Date;
 	endTime: Date;
 	employeeId?: string;
-	organizationId: string;
+}
+
+export interface IAvailabilitySlotsView
+	extends IBasePerTenantAndOrganizationEntityModel {
+	id?: string;
+	startTime: Date;
+	endTime: Date;
+	allDay: boolean;
+	type?: string;
+	employeeId?: string;
+	employee?: IEmployee;
 }
