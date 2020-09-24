@@ -16,7 +16,7 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
+import { filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
