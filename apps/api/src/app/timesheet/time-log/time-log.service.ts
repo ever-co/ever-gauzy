@@ -101,7 +101,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 						{ projectIds: request.projectIds }
 					);
 				}
-
 				if (request.activityLevel) {
 					// qb.andWhere('"overall" BETWEEN :start AND :end', request.activityLevel);
 				}
@@ -127,6 +126,23 @@ export class TimeLogService extends CrudService<TimeLog> {
 						});
 					}
 				}
+
+				//check organization and tenant for timelogs
+				let { organizationId = null, tenantId = null } = request;
+				if (typeof organizationId === 'string') {
+					qb.andWhere(
+						`"${qb.alias}"."organizationId" = :organizationId`,
+						{ organizationId: request.organizationId }
+					);
+				}
+				//if not found tenantId then get from current user session
+				if (typeof tenantId !== 'string') {
+					const user = RequestContext.currentUser();
+					tenantId = user.tenantId;
+				}
+				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				});
 			}
 		});
 		return logs;

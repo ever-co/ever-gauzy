@@ -12,7 +12,7 @@ import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -24,7 +24,8 @@ import {
 	IEventType,
 	IEmployee,
 	IAvailabilitySlot,
-	PermissionsEnum
+	PermissionsEnum,
+	IOrganization
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
@@ -53,6 +54,7 @@ import { first } from 'rxjs/operators';
 export class AppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
+	organization: IOrganization;
 
 	@Input('showHeader')
 	showHeader: boolean = true;
@@ -204,6 +206,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
+					this.organization = org;
 					this._selectedOrganizationId = org.id;
 					if (org.timeZone && !this.selectedEventType) {
 						this.selectedTimeZoneName = org.timeZone;
@@ -221,7 +224,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 			});
 
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(takeUntil(this._ngDestroy$), debounceTime(500))
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this._selectedEmployeeId = employee.id;
@@ -245,6 +248,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		const data = await this.timeOffService
 			.getAllTimeOffRecords(['employees', 'employees.user'], {
 				organizationId: this._selectedOrganizationId,
+				tenantId: this.organization.tenantId,
 				employeeId:
 					this._selectedEmployeeId ||
 					(this.employee && this.employee.id) ||
@@ -265,26 +269,12 @@ export class AppointmentComponent extends TranslationBaseComponent
 	}
 
 	renderAppointmentsAndSlots(employeeId: string) {
-		let findObj;
-
-		if (employeeId) {
-			findObj = {
-				status: null,
-				employee: {
-					id: employeeId
-				}
-			};
-		} else {
-			findObj = {
-				status: null,
-				organization: {
-					id: this._selectedOrganizationId
-				},
-				employee: {
-					id: null
-				}
-			};
-		}
+		const findObj = {
+			status: null,
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId,
+			employeeId: employeeId || null
+		};
 
 		this.employeeAppointmentService
 			.getAll(['employee', 'employee.user'], findObj)
@@ -299,7 +289,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 				employeeId &&
 					(await this.fetchEmployeeAppointments(employeeId));
 
-				this._fetchAvailableSlots(employeeId);
+				await this._fetchAvailableSlots(employeeId);
 				this.calendarComponent
 					.getApi()
 					.setOption('timeZone', this.selectedTimeZoneName);
@@ -321,7 +311,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 	}
 
 	renderBookedAppointments(appointments) {
-		for (let appointment of appointments) {
+		for (const appointment of appointments) {
 			this.checkAndAddEventToCalendar(
 				moment(appointment.startDateTime).utc().format(),
 				moment(appointment.endDateTime).utc().format(),
@@ -343,22 +333,20 @@ export class AppointmentComponent extends TranslationBaseComponent
 	}
 
 	private async _fetchAvailableSlots(employeeId: string) {
-		let findObj = {};
+		const findObj = {
+			organization: {
+				id: this._selectedOrganizationId
+			},
+			tenantId: this.organization.tenantId
+		};
 
 		if (employeeId) {
-			findObj = {
-				employee: {
-					id: employeeId
-				}
+			findObj['employee'] = {
+				id: employeeId
 			};
 		} else {
-			findObj = {
-				organization: {
-					id: this._selectedOrganizationId
-				},
-				employee: {
-					id: null
-				}
+			findObj['employee'] = {
+				id: null
 			};
 		}
 
