@@ -11,7 +11,7 @@ export class ExpenseCategory extends TenantOrganizationBase
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.expenseCategory)
 	@JoinTable({
-		name: 'tag_organization_expense_categories'
+		name: 'tag_organization_expense_category'
 	})
 	tags?: Tag[];
 

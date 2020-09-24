@@ -61,7 +61,7 @@ const dataOperation = async (
 	tenant
 ) => {
 	for (let i = 0; i < noOfAvailabilitySlotsPerOrganization; i++) {
-		let slot = new AvailabilitySlot();
+		const slot = new AvailabilitySlot();
 		slot.allDay = faker.random.boolean();
 		slot.employee = faker.random.arrayElement([
 			faker.random.arrayElement(employees),

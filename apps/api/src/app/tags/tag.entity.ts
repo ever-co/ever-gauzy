@@ -142,7 +142,7 @@ export class Tag extends TenantOrganizationBase implements ITag {
 
 	@ManyToMany(() => Integration)
 	@JoinTable({
-		name: 'integrations_tags'
+		name: 'tag_integration'
 	})
 	integrations?: Integration[];
 }

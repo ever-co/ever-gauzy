@@ -72,7 +72,7 @@ export class Organization extends Base implements IOrganization {
 	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({
-		name: 'tag_organizations'
+		name: 'tag_organization'
 	})
 	tags: ITag[];
 

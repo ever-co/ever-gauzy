@@ -5,7 +5,7 @@ import { IsString, IsNotEmpty } from 'class-validator';
 import { EmployeeAppointment } from '../employee-appointment';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
-@Entity('appointment_employees')
+@Entity('appointment_employee')
 export class AppointmentEmployee extends TenantOrganizationBase
 	implements IAppointmentEmployee {
 	@ApiProperty({ type: String })

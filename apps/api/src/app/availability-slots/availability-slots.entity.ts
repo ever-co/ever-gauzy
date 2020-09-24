@@ -11,7 +11,7 @@ import { IAvailabilitySlot, IEmployee } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
-@Entity('availability_slots')
+@Entity('availability_slot')
 export class AvailabilitySlot extends TenantOrganizationBase
 	implements IAvailabilitySlot {
 	@ApiProperty({ type: Employee })

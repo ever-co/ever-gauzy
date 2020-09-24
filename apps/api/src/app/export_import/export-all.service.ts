@@ -108,12 +108,12 @@ export class ExportAllService implements OnDestroy {
 		{ service: this.activityService, nameFile: 'activity' },
 		{
 			service: this.appointmentEmployeeService,
-			nameFile: 'appointment_employees'
+			nameFile: 'appointment_employee'
 		},
 		{ service: this.approvalPolicyService, nameFile: 'approval_policy' },
 		{
 			service: this.availabilitySlotsService,
-			nameFile: 'availability_slots'
+			nameFile: 'availability_slot'
 		},
 		{ service: this.candidateService, nameFile: 'candidate' },
 		{
@@ -221,7 +221,7 @@ export class ExportAllService implements OnDestroy {
 		{ service: this.organizationService, nameFile: 'organization' },
 		{
 			service: this.organizationAwardsService,
-			nameFile: 'organization_awards'
+			nameFile: 'organization_award'
 		},
 		{
 			service: this.organizationContactService,
@@ -288,15 +288,15 @@ export class ExportAllService implements OnDestroy {
 		},
 		{
 			service: this.productSettingsService,
-			nameFile: 'product_variant_settings'
+			nameFile: 'product_variant_setting'
 		},
 		{ service: this.proposalService, nameFile: 'proposal' },
 		{ service: this.requestApprovalService, nameFile: 'request_approval' },
 		{ service: this.roleService, nameFile: 'role' },
 		{ service: this.rolePermissionsService, nameFile: 'role_permission' },
 		{ service: this.screenShotService, nameFile: 'screenshot' },
-		{ service: this.skillSevice, nameFile: 'skill' },
-		{ service: this.stageService, nameFile: 'stage' },
+		{ service: this.skillService, nameFile: 'skill' },
+		{ service: this.stageService, nameFile: 'pipeline_stage' },
 		{ service: this.tagService, nameFile: 'tag' },
 		{ service: this.taskService, nameFile: 'task' },
 		{ service: this.tenantService, nameFile: 'tenant' },
@@ -401,7 +401,7 @@ export class ExportAllService implements OnDestroy {
 		private rolePermissionsService: RolePermissionsService,
 
 		private screenShotService: ScreenshotService,
-		private skillSevice: SkillService,
+		private skillService: SkillService,
 		private stageService: StageService,
 
 		private tagService: TagService,

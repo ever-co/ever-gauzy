@@ -20,16 +20,15 @@ export const createDefaultTeams = async (
 			name: 'Employees',
 			defaultMembers: [
 				'admin@ever.co',
+				'ruslan@ever.co',
 				'alish@ever.co',
 				'blagovest@ever.co',
 				'elvis@ever.co',
-				'emil@ever.co',
 				'hristo@ever.co',
 				'alex@ever.co',
 				'pavel@ever.co',
 				'yavor@ever.co',
 				'tsvetelina@ever.co',
-				'everq@ever.co',
 				'julia@ever.co'
 			],
 			manager: ['ruslan@ever.co']
@@ -62,13 +61,13 @@ export const createDefaultTeams = async (
 		team.name = teams[i].name;
 		team.organizationId = organization.id;
 
-		const emps = employees.filter(
+		const filteredEmployees = employees.filter(
 			(e) => (teams[i].defaultMembers || []).indexOf(e.user.email) > -1
 		);
 
 		const teamEmployees: OrganizationTeamEmployee[] = [];
 
-		emps.forEach((emp) => {
+		filteredEmployees.forEach((emp) => {
 			const teamEmployee = new OrganizationTeamEmployee();
 			teamEmployee.employeeId = emp.id;
 			teamEmployees.push(teamEmployee);
@@ -108,11 +107,11 @@ export const createRandomTeam = async (
 	const organizationTeams: OrganizationTeam[] = [];
 
 	for (const tenant of tenants) {
-		let organizations = tenantOrganizationsMap.get(tenant);
-		let employees = tenantOrganizationsMap.get(tenant);
+		const organizations = tenantOrganizationsMap.get(tenant);
+		const employees = tenantOrganizationsMap.get(tenant);
 
 		for (const organization of organizations) {
-			for (let name of teamNames) {
+			for (const name of teamNames) {
 				const team = new OrganizationTeam();
 				team.name = name;
 				team.organizationId = organization.id;
@@ -151,10 +150,12 @@ export const createRandomTeam = async (
 		}
 	}
 
-	let uniqueTeams = organizationTeams.filter(function (elem, index, self) {
+	const uniqueTeams = organizationTeams.filter(function (elem, index, self) {
 		return index === self.indexOf(elem);
 	});
+
 	await insertOrganizationTeam(connection, uniqueTeams);
+
 	return uniqueTeams;
 };
 

@@ -95,7 +95,7 @@ export class RequestApproval extends TenantOrganizationBase
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.requestApproval)
 	@JoinTable({
-		name: 'request-approval-tag'
+		name: 'tag_request_approval'
 	})
 	tags?: Tag[];
 

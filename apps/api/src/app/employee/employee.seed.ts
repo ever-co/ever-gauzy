@@ -64,17 +64,6 @@ export const createDefaultEmployees = async (
 			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
-			email: 'emil@ever.co',
-			password: '123456',
-			firstName: 'Emil',
-			lastName: 'Momchilov',
-			imageUrl: 'assets/images/avatars/emil.jpg',
-			startedWorkOn: '2019-01-21',
-			endWork: null,
-			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
 			email: 'hristo@ever.co',
 			password: '123456',
 			firstName: 'Hristo',
@@ -149,17 +138,6 @@ export const createDefaultEmployees = async (
 			startedWorkOn: '2020-03-02',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'everq@ever.co',
-			password: '123456',
-			firstName: 'Ruslan',
-			lastName: 'Konviser',
-			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			startedWorkOn: '2018-08-01',
-			endWork: null,
-			employeeLevel: 'C',
 			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{

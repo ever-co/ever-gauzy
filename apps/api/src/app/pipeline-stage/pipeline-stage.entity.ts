@@ -5,7 +5,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Pipeline } from '../pipeline/pipeline.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
-@Entity('stage')
+@Entity('pipeline_stage')
 export class PipelineStage extends TenantOrganizationBase implements IStage {
 	@ManyToOne(() => Pipeline, { onDelete: 'CASCADE' })
 	@ApiProperty({ type: Pipeline })
