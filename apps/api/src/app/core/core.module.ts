@@ -114,6 +114,7 @@ import { EmployeeAward } from '../employee-award/employee-award.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
 import { TenantSetting } from '../tenant/tenant-setting/tenant-setting.entity';
+import { FileStorageModule } from './file-storage';
 
 const entities = [
 	Invite,
@@ -236,7 +237,8 @@ const entities = [
 				// migrations,
 			}),
 			inject: [ConfigService]
-		})
+		}),
+		FileStorageModule
 		/*
     TerminusModule.forRootAsync({
       // Inject the TypeOrmHealthIndicator provided by nestjs/terminus

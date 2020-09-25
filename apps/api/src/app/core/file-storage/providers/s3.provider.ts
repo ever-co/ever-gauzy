@@ -24,6 +24,7 @@ export class S3Provider extends Provider<S3Provider> {
 		aws_default_region: string;
 		aws_bucket: string;
 	};
+	fetchSetting = false;
 
 	constructor() {
 		super();
@@ -40,7 +41,7 @@ export class S3Provider extends Provider<S3Provider> {
 		if (!S3Provider.instance) {
 			S3Provider.instance = new S3Provider();
 		}
-		//await this.setAwsDetails();
+		this.setAwsDetails();
 		return S3Provider.instance;
 	}
 
@@ -53,30 +54,22 @@ export class S3Provider extends Provider<S3Provider> {
 		return url;
 	}
 
-	async setAwsDetails() {
-		const user = RequestContext.currentUser();
-		const settingsRow = await getRepository(TenantSetting).find({
-			where: {
-				tenantId: user.tenantId,
-				name: In([
-					'aws_access_key_id',
-					'aws_secret_access_key',
-					'aws_default_region',
-					'aws_bucket'
-				])
+	setAwsDetails() {
+		const request = RequestContext.currentRequest();
+		if (request) {
+			const settings = request['tenantSettings'];
+			if (settings.aws_access_key_id && settings.aws_secret_access_key) {
+				this.config = {
+					...this.config,
+					aws_access_key_id: settings.aws_access_key_id,
+					aws_secret_access_key: settings.aws_secret_access_key,
+					aws_default_region: settings.aws_default_region,
+					aws_bucket: settings.aws_bucket
+				};
 			}
-		});
-		let settings: ITenantSetting = _.object(
-			_.pluck(settingsRow, 'name'),
-			_.pluck(settingsRow, 'value')
-		);
-
-		if (settings.aws_access_key_id) {
-			this.config = {
-				...this.config,
-				...settings
-			};
 		}
+
+		console.log(this.config);
 	}
 
 	path(filePath: string) {
@@ -84,8 +77,8 @@ export class S3Provider extends Provider<S3Provider> {
 	}
 
 	handler({ dest, filename, prefix }: FileStorageOption): StorageEngine {
-		AWS.config.update({ region: environment.awsConfig.region });
-
+		this.setAwsDetails();
+		AWS.config.update({ region: this.config.aws_default_region });
 		return multerS3({
 			s3: this.getS3Instance(),
 			bucket: environment.awsConfig.s3.bucket,
@@ -184,6 +177,7 @@ export class S3Provider extends Provider<S3Provider> {
 	}
 
 	private getS3Instance() {
+		this.setAwsDetails();
 		return new AWS.S3({
 			accessKeyId: this.config.aws_access_key_id,
 			secretAccessKey: this.config.aws_secret_access_key
@@ -191,6 +185,7 @@ export class S3Provider extends Provider<S3Provider> {
 	}
 
 	getS3Bucket() {
+		this.setAwsDetails();
 		return this.config.aws_default_region;
 	}
 
