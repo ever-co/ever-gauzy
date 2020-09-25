@@ -82,10 +82,10 @@ export function ipcMainHandler(store, startServer, knex) {
 		});
 	});
 
-	ipcMain.on('return_time_log', (event, arg) => {
+	ipcMain.on('return_toggle_api', (event, arg) => {
 		TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
-			timeLogId: arg.timeLogId
+			timeLogId: arg.result.id
 		});
 	});
 

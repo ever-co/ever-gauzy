@@ -6,12 +6,14 @@ import {
     RouterStateSnapshot
 } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ElectronService } from 'ngx-electron';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
         private readonly router: Router,
         private authService: AuthService,
+        private electronService: ElectronService
     ) { }
 
     async canActivate(
@@ -26,6 +28,11 @@ export class AuthGuard implements CanActivate {
         }
 
         // not logged in so redirect to login page with the return url
+        if (this.electronService.isElectronApp) {
+			try {
+				this.electronService.ipcRenderer.send('logout');
+			} catch (error) {}
+		}
         this.router.navigate(['/auth/login'], {
             queryParams: { returnUrl: state.url }
         });
