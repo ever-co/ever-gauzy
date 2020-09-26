@@ -126,6 +126,10 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		// 	}
 		// }
 
+		// if (this.activatedRoute.snapshot.queryParams){
+		// 	const requestParams = _.get(this.activatedRoute.snapshot.queryParams)
+		// }
+
 		this.selectedDate = this.today;
 		this.updateLogs$.pipe(untilDestroyed(this)).subscribe(() => {
 			Object.keys(this.filters).forEach((key) =>

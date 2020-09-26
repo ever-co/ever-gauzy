@@ -83,6 +83,7 @@ export * from './lib/contact.model';
 export * from './lib/organization-document.model';
 export * from './lib/employee-award.model';
 export * from './lib/invoice-estimate-history.model';
+export * from './lib/file-provider';
 
 export { IRole, RolesEnum } from './lib/role.model';
 export { IBaseEntityModel as BaseEntityModel } from './lib/base-entity.model';

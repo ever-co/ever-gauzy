@@ -30,6 +30,7 @@ import { EmailFiltersComponent } from './email-history/email-filters/email-filte
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmailTemplatesModule } from '../email-templates/email-templates.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { FileStorageComponent } from './file-storage/file-storage.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -67,6 +68,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	entryComponents: [EditRolesPermissionsComponent, DangerZoneComponent],
 	declarations: [
+		FileStorageComponent,
 		SettingsComponent,
 		EditRolesPermissionsComponent,
 		DangerZoneComponent,
