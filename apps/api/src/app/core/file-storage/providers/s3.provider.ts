@@ -1,4 +1,4 @@
-import { FileStorageOption, ITenantSetting, UploadedFile } from '@gauzy/models';
+import { FileStorageOption, UploadedFile } from '@gauzy/models';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
@@ -7,9 +7,15 @@ import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
-import { getRepository, In } from 'typeorm';
-import { TenantSetting } from '../../../tenant/tenant-setting/tenant-setting.entity';
 import * as _ from 'underscore';
+
+export interface S3Config {
+	rootPath: string;
+	aws_access_key_id: string;
+	aws_secret_access_key: string;
+	aws_default_region: string;
+	aws_bucket: string;
+}
 
 export class S3Provider extends Provider<S3Provider> {
 	static instance: S3Provider;
@@ -17,18 +23,14 @@ export class S3Provider extends Provider<S3Provider> {
 	name = 's3';
 	tenantId: string;
 
-	config: {
-		rootPath: string;
-		aws_access_key_id: string;
-		aws_secret_access_key: string;
-		aws_default_region: string;
-		aws_bucket: string;
-	};
+	config: S3Config;
+	defaultConfig: S3Config;
+
 	fetchSetting = false;
 
 	constructor() {
 		super();
-		this.config = {
+		this.config = this.defaultConfig = {
 			rootPath: '',
 			aws_access_key_id: environment.awsConfig.accessKeyId,
 			aws_secret_access_key: environment.awsConfig.secretAccessKey,
@@ -58,18 +60,25 @@ export class S3Provider extends Provider<S3Provider> {
 		const request = RequestContext.currentRequest();
 		if (request) {
 			const settings = request['tenantSettings'];
-			if (settings.aws_access_key_id && settings.aws_secret_access_key) {
+			if (
+				settings.aws_access_key_id &&
+				!_.isEmpty(settings.aws_access_key_id.trim()) &&
+				settings.aws_secret_access_key &&
+				!_.isEmpty(settings.aws_secret_access_key.trim())
+			) {
 				this.config = {
-					...this.config,
+					...this.defaultConfig,
 					aws_access_key_id: settings.aws_access_key_id,
 					aws_secret_access_key: settings.aws_secret_access_key,
 					aws_default_region: settings.aws_default_region,
 					aws_bucket: settings.aws_bucket
 				};
 			}
+		} else {
+			this.config = {
+				...this.defaultConfig
+			};
 		}
-
-		console.log(this.config);
 	}
 
 	path(filePath: string) {
@@ -77,11 +86,9 @@ export class S3Provider extends Provider<S3Provider> {
 	}
 
 	handler({ dest, filename, prefix }: FileStorageOption): StorageEngine {
-		this.setAwsDetails();
-		AWS.config.update({ region: this.config.aws_default_region });
 		return multerS3({
 			s3: this.getS3Instance(),
-			bucket: environment.awsConfig.s3.bucket,
+			bucket: this.getS3Bucket(),
 			metadata: function (_req, file, cb) {
 				cb(null, { fieldName: file.fieldname });
 			},
@@ -126,6 +133,7 @@ export class S3Provider extends Provider<S3Provider> {
 			Bucket: this.getS3Bucket(),
 			Key: key
 		};
+
 		const data = await s3.getObject(params).promise();
 		return data.Body as Buffer;
 	}
@@ -140,6 +148,7 @@ export class S3Provider extends Provider<S3Provider> {
 				Key: key,
 				ContentDisposition: `inline; ${fileName}`
 			};
+
 			s3.putObject(params, async (err) => {
 				if (err) {
 					reject(err);
@@ -169,7 +178,7 @@ export class S3Provider extends Provider<S3Provider> {
 			Key: key
 		};
 		return new Promise((deleteFileResolve, reject) => {
-			s3.deleteObject(params, function (err, data) {
+			s3.deleteObject(params, function (err) {
 				if (err) reject(err);
 				else deleteFileResolve();
 			});
@@ -180,13 +189,14 @@ export class S3Provider extends Provider<S3Provider> {
 		this.setAwsDetails();
 		return new AWS.S3({
 			accessKeyId: this.config.aws_access_key_id,
-			secretAccessKey: this.config.aws_secret_access_key
+			secretAccessKey: this.config.aws_secret_access_key,
+			region: this.config.aws_default_region
 		});
 	}
 
 	getS3Bucket() {
 		this.setAwsDetails();
-		return this.config.aws_default_region;
+		return this.config.aws_bucket;
 	}
 
 	mapUploadedFile(file): UploadedFile {

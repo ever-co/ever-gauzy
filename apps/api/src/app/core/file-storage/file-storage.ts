@@ -42,7 +42,10 @@ export class FileStorage {
 		if (this.config.provider && this.providers[this.config.provider]) {
 			resp = this.providers[this.config.provider].handler(this.config);
 		} else {
-			throw new Error(`Provider "${this.config.provider}" is not valid.`);
+			const provides = Object.values(FileStorageProviderEnum).join(', ');
+			throw new Error(
+				`Provider "${this.config.provider}" is not valid. Provider must be ${provides}`
+			);
 		}
 		return resp;
 	}

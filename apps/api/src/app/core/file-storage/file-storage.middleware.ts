@@ -1,17 +1,5 @@
-import {
-	NestModule,
-	MiddlewareConsumer,
-	Injectable,
-	NestMiddleware,
-	NestInterceptor,
-	ExecutionContext,
-	CallHandler
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import * as _ from 'underscore';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 import { TenantSettingService } from '../../tenant/tenant-setting/tenant-setting.service';
-import { RequestContext } from '../context';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()
@@ -22,8 +10,6 @@ export class FileStorageMiddleware implements NestMiddleware {
 		const authHeader = req.headers.authorization;
 		const token = authHeader.split(' ')[1];
 		const data: any = jwt.decode(token);
-
-		console.log({ data, token });
 
 		let tenantSettings = {};
 		if (data && data.tenantId) {
