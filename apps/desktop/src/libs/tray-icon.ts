@@ -31,6 +31,15 @@ export default class TrayIcon {
 				}
 			}
 		];
+		const unAuthMenu = [
+			{
+				id: '0',
+				label: 'quit',
+				click() {
+					app.quit();
+				}
+			}
+		];
 		const menuAuth = [
 			{
 				id: '0',
@@ -161,5 +170,9 @@ export default class TrayIcon {
 			contextMenu = menuAuth;
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
+
+		ipcMain.on('logout', () => {
+			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
+		})
 	}
 }

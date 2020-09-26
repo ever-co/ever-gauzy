@@ -114,7 +114,6 @@ export const TimerData = {
 	},
 
 	getLastTimer: async (knex, appInfo) => {
-		console.log('userinfo', appInfo);
 		const result = await knex('timer').where({
 			projectId: appInfo.projectId,
 			userId: appInfo.employeeId

@@ -110,6 +110,7 @@ export default class Timerhandler {
 	async getSetActivity(knex, setupWindow, lastTimeSlot) {
 		const now = moment();
 		const userInfo = LocalStore.beforeRequestParams();
+		const lastSavedTime = await TimerData.getLastTimer(knex, userInfo)
 		// get aw activity
 		let awActivities = await TimerData.getWindowEvent(
 			knex,
@@ -184,7 +185,8 @@ export default class Timerhandler {
 			idsAw: idsAw,
 			idsWakatime: idsWakatime,
 			idAfk: idAfk,
-			timerId: this.lastTimer[0]
+			timerId: this.lastTimer[0],
+			timeLogId: lastSavedTime[0].timeLogId
 		});
 	}
 
