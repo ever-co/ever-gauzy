@@ -1,9 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {
-	FileStorageProviderEnum,
-	ITenantSetting,
-	S3FileStorageProviderConfig
-} from '@gauzy/models';
+import { FileStorageProviderEnum, ITenantSetting } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TenantService } from '../../../@core/services/tenant.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
