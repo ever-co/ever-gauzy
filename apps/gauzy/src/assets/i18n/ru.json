@@ -2409,5 +2409,13 @@
 		"CONFIRM": "Подтвердить",
 		"ALERT": "Оповещение",
 		"DELETE_CONFIRM": "Оповещение"
+	},
+	"SETTINGS_FILE_STORAGE": {
+		"FILE_PROVIDER": "Поставщик файлов",
+		"S3_DETAILS": "Детали S3",
+		"ACCESS_KEY_ID": "ID ключа доступа",
+		"SECRET_ACCESS_KEY": "Секретный ключ доступа",
+		"REGION": "Регион",
+		"BUCKET": "Ведро"
 	}
 }
