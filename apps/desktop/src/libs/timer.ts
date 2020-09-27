@@ -19,6 +19,11 @@ export default class Timerhandler {
 	timeSlotStart = null;
 
 	async startTimer(setupWindow, knex, timeTrackerWindow) {
+		// store timer is start to electron-store
+		const appSetting = LocalStore.getStore('appSetting');
+		appSetting.timerStarted = true;
+		LocalStore.updateApplicationSetting(appSetting);
+
 		this.notificationDesktop.startTimeNotification(true);
 		this.configs = LocalStore.getStore('configs');
 		const ProjectInfo = LocalStore.getStore('project');
@@ -87,7 +92,7 @@ export default class Timerhandler {
 	updateTime(setupWindow, knex, timeTrackerWindow) {
 		const appSetting = LocalStore.getStore('appSetting');
 		this.intervalUpdateTime = setInterval(() => {
-			this.getSetActivity(knex, setupWindow, this.timeSlotStart);
+			this.getSetActivity(knex, setupWindow, this.timeSlotStart, false);
 			this.timeSlotStart = moment();
 		}, 60 * 1000 * appSetting.timer.updatePeriode);
 	}
@@ -107,7 +112,7 @@ export default class Timerhandler {
 		});
 	}
 
-	async getSetActivity(knex, setupWindow, lastTimeSlot) {
+	async getSetActivity(knex, setupWindow, lastTimeSlot, quitApp) {
 		const now = moment();
 		const userInfo = LocalStore.beforeRequestParams();
 		const lastSavedTime = await TimerData.getLastTimer(knex, userInfo)
@@ -186,14 +191,18 @@ export default class Timerhandler {
 			idsWakatime: idsWakatime,
 			idAfk: idAfk,
 			timerId: this.lastTimer[0],
-			timeLogId: lastSavedTime[0].timeLogId
+			timeLogId: lastSavedTime[0].timeLogId,
+			quitApp: quitApp
 		});
 	}
 
-	stopTime(setupWindow, timeTrackerWindow, knex) {
+	stopTime(setupWindow, timeTrackerWindow, knex, quitApp) {
+		const appSetting = LocalStore.getStore('appSetting');
+		appSetting.timerStarted = false;
+		LocalStore.updateApplicationSetting(appSetting);
 		this.notificationDesktop.startTimeNotification(false);
 		this.updateToggle(setupWindow, knex, true);
-		this.getSetActivity(knex, setupWindow, this.timeSlotStart);
+		this.getSetActivity(knex, setupWindow, this.timeSlotStart, quitApp);
 		clearInterval(this.intevalTimer);
 		clearInterval(this.intervalUpdateTime);
 	}

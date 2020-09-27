@@ -10,14 +10,14 @@
 									class="start-button"
 									icon="play-circle"
 									*ngIf="!start"
-									(click)="toggleStart()"
+									(click)="toggleStart(true)"
 								>
 								</nb-icon>
 								<nb-icon
 									class="start-button"
 									icon="stop-circle-outline"
 									*ngIf="start"
-									(click)="toggleStart()"
+									(click)="toggleStart(false)"
 								>
 								</nb-icon>
 							</div>
@@ -40,11 +40,6 @@
 												>
 											</div>
 											<div class="col-6">
-												<p
-													*ngIf="loadingAw"
-													[nbSpinner]="loadingAw"
-													nbSpinnerStatus="info"
-												></p>
 												<nb-icon
 													*ngIf="
 														awCheck && !loadingAw

@@ -18,7 +18,6 @@ export default class TrayIcon {
 			'icons',
 			'icon_16x16.png'
 		);
-		console.log(iconPath);
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
@@ -52,7 +51,7 @@ export default class TrayIcon {
 				click(menuItem) {
 					const projectSelect = store.get('project');
 					if (projectSelect && projectSelect.projectId) {
-						timeTrackerWindow.show();
+						// timeTrackerWindow.show();
 						setTimeout(() => {
 							timeTrackerWindow.webContents.send(
 								'start_from_tray'
@@ -84,7 +83,7 @@ export default class TrayIcon {
 				label: 'Stop Tracking Time',
 				enabled: false,
 				click(menuItem) {
-					timeTrackerWindow.show();
+					// timeTrackerWindow.show();
 					setTimeout(() => {
 						timeTrackerWindow.webContents.send('stop_from_tray');
 					}, 1000);
@@ -101,7 +100,6 @@ export default class TrayIcon {
 							knex,
 							LocalStore.beforeRequestParams()
 						);
-						console.log('last', lastTime);
 						timeTrackerWindow.webContents.send(
 							'timer_tracker_show',
 							{
@@ -158,12 +156,18 @@ export default class TrayIcon {
 		});
 
 		ipcMain.on('update_tray_time_update', (event, arg) => {
-			console.log('update time view');
 			contextMenu[0].label = `Now tracking time - ${arg.hours}h ${arg.minutes}m`;
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
 
 		ipcMain.on('auth_success', (event, arg) => {
+			//check last auth
+			const lastUser = store.get('auth');
+			if (lastUser && lastUser.userId !== arg.userId) {
+				store.set({
+					project: null
+				})
+			}
 			store.set({
 				auth: arg
 			});
@@ -173,6 +177,14 @@ export default class TrayIcon {
 
 		ipcMain.on('logout', () => {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
+			const appSetting = store.get('appSetting');
+			if (appSetting.timerStarted) {
+				setTimeout(() => {
+					timeTrackerWindow.webContents.send('stop_from_tray');
+				}, 1000);
+			}
+			timeTrackerWindow.hide();
+			if (settingsWindow) settingsWindow.hide();
 		})
 	}
 }

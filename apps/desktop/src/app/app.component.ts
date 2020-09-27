@@ -78,7 +78,8 @@ export class AppComponent implements OnInit {
 				}
 				event.sender.send('return_time_slot', {
 					timerId: arg.timerId,
-					timeSlotId: res.id
+					timeSlotId: res.id,
+					quitApp: arg.quitApp
 				})
 			});
 		});
