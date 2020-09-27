@@ -8,6 +8,7 @@ require('sqlite3');
 const Store = require('electron-store');
 import { ipcMainHandler, ipcTimer } from './libs/ipc';
 import TrayIcon from './libs/tray-icon';
+import AppMenu from './libs/menu';
 import DataModel from './local-data/local-table';
 import { LocalStore } from './libs/getSetStore';
 import {
@@ -41,9 +42,11 @@ let NotificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 
 let tray = null;
+let appMenu = null;
 let isAlreadyRun = false;
 let willquit = false;
 let onWaitingServer = false;
+let alreadyQuit = false;
 
 function startServer(value) {
 	process.env.IS_ELECTRON = 'true';
@@ -73,7 +76,6 @@ function startServer(value) {
 	} catch (error) {}
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
-		console.log('app is init');
 		try {
 			if (!isAlreadyRun && value) {
 				onWaitingServer = true;
@@ -139,9 +141,9 @@ try {
 	app.on('window-all-closed', quit);
 
 	ipcMain.on('server_is_ready', () => {
-		console.log('this server is ready');
 		LocalStore.setDefaultApplicationSetting();
 		try {
+			appMenu = new AppMenu();
 			onWaitingServer = false;
 			isAlreadyRun = true;
 			timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
@@ -199,8 +201,21 @@ try {
 		}
 	});
 
-	app.on('before-quit', () => {
-		willquit = true;
+	app.on('before-quit', (e) => {
+		const appSetting = LocalStore.getStore('appSetting');
+		if (appSetting.timerStarted) {
+			e.preventDefault();
+			setTimeout(() => {
+				willquit = true;
+				timeTrackerWindow.webContents.send('stop_from_tray', { quitApp: true});
+			}, 1000);
+		} else {
+			willquit = true;
+			if (!alreadyQuit) {
+				alreadyQuit = true;
+				app.quit();
+			}
+		}
 	});
 } catch (err) {}
 
