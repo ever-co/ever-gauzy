@@ -648,7 +648,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'file',
 					link: '/pages/settings/file-storage',
 					data: {
-						translationKey: 'MENU.IMPORT_EXPORT.FILE_STORAGE'
+						translationKey: 'MENU.FILE_STORAGE'
 					}
 				},
 				{
