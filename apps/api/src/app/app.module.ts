@@ -526,6 +526,7 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 		RolePermissionsModule,
 		HelpCenterArticleModule,
 		TenantModule,
+		TenantSettingModule,
 		TagModule,
 		SkillModule,
 		LanguageModule,

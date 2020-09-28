@@ -2,6 +2,7 @@ import { FileStorageOption, FileStorageProviderEnum } from '@gauzy/models';
 import * as Providers from './providers';
 import { environment } from '@env-api/environment';
 import { Provider } from './providers/provider';
+import { RequestContext } from '../context';
 
 export class FileStorage {
 	providers: { [key: string]: Provider<any> } = {};
@@ -15,6 +16,14 @@ export class FileStorage {
 	}
 
 	setConfig(config: Partial<FileStorageOption> = {}) {
+		const request = RequestContext.currentRequest();
+		let defaultProvider = FileStorageProviderEnum.LOCAL;
+		if (request) {
+			const settings = request['tenantSettings'];
+			if (settings.fileStorageProvider) {
+				defaultProvider = settings.fileStorageProvider;
+			}
+		}
 		this.config = {
 			...this.config,
 			...config,
