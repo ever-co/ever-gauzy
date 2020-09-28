@@ -528,6 +528,7 @@
 		"USERS": "Пользователи",
 		"ROLES": "Роли и Разрешения",
 		"DANGER_ZONE": "Опасная зона",
+		"FILE_STORAGE": "Файловое хранилище",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Импорт/Экспорт",
 			"IMPORT": "Импорт",
