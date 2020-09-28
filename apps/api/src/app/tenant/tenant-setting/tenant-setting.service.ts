@@ -24,7 +24,8 @@ export class TenantSettingService extends CrudService<TenantSetting> {
 	}
 
 	async saveSettngs(input: ITenantSetting): Promise<ITenantSetting> {
-		const settingsName = _.values(input);
+		const settingsName = _.keys(input);
+
 		const user = RequestContext.currentUser();
 		const settings: TenantSetting[] = await this.tenantSettingRepository.find(
 			{
@@ -47,7 +48,7 @@ export class TenantSettingService extends CrudService<TenantSetting> {
 					saveInput.push(
 						new TenantSetting({
 							value: input[key],
-							key,
+							name: key,
 							tenantId: user.tenantId
 						})
 					);

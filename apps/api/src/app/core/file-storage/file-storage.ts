@@ -14,7 +14,7 @@ export class FileStorage {
 		this.setConfig(option);
 	}
 
-	setConfig(config: Partial<FileStorageOption> = {}) {
+	setConfig(config: Partial<FileStorageOption> = {}) {		
 		this.config = {
 			...this.config,
 			...config,

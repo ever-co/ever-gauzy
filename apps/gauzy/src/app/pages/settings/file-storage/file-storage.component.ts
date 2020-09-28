@@ -38,7 +38,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 		});
 	}
 
-	submit() {
+	submit() {		
 		this.tenantService.saveSettings(this.settings).then(() => {
 			this.toastrService.success('Settings saved successfully');
 		});
