@@ -2,7 +2,6 @@ import { FileStorageOption, FileStorageProviderEnum } from '@gauzy/models';
 import * as Providers from './providers';
 import { environment } from '@env-api/environment';
 import { Provider } from './providers/provider';
-import { RequestContext } from '../context';
 
 export class FileStorage {
 	providers: { [key: string]: Provider<any> } = {};
