@@ -16,9 +16,9 @@ export class FileStorage {
 	}
 
 	setConfig(config: Partial<FileStorageOption> = {}) {
-		const request = RequestContext.currentRequest();
+		// const request = RequestContext.currentRequest();
 		// let defaultProvider = FileStorageProviderEnum.LOCAL;
-		// if (request) {
+		// if (z) {
 		// 	const settings = request['tenantSettings'];
 		// 	if (settings.fileStorageProvider) {
 		// 		defaultProvider = settings.fileStorageProvider;
