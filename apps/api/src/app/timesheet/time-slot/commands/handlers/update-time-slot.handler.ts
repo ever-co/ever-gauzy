@@ -51,6 +51,7 @@ export class UpdateTimeSlotHandler
 				newActivites = input.activities.map((activity) => {
 					activity = new Activity(activity);
 					activity.employeeId = timeSlot.employeeId;
+					activity.tenantId = RequestContext.currentTenantId();
 					return activity;
 				});
 				await this.activityRepository.save(newActivites);

@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import { TimeSlot } from '../../../time-slot.entity';
 import * as _ from 'underscore';
 import { TimeSlotBulkCreateCommand } from '../time-slot-bulk-create.command';
+import { RequestContext } from 'apps/api/src/app/core/context';
 
 @CommandHandler(TimeSlotBulkCreateCommand)
 export class TimeSlotBulkCreateHandler
@@ -41,6 +42,11 @@ export class TimeSlotBulkCreateHandler
 					)
 			);
 		}
+
+		slots = slots.map((slot) => {
+			slot.tenantId = RequestContext.currentTenantId();
+			return slot;
+		});
 
 		if (slots.length > 0) {
 			await this.timeSlotRepository.save(slots);

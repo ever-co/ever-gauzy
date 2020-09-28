@@ -4,6 +4,7 @@ import { Between, Repository } from 'typeorm';
 import { TimesheetFirstOrCreateCommand } from '../timesheet-first-or-create.command';
 import { Timesheet } from '../../../timesheet.entity';
 import * as moment from 'moment';
+import { RequestContext } from 'apps/api/src/app/core/context';
 
 @CommandHandler(TimesheetFirstOrCreateCommand)
 export class TimesheetFirstOrCreateHandler
@@ -30,6 +31,7 @@ export class TimesheetFirstOrCreateHandler
 
 		if (!timesheet) {
 			timesheet = await this.timeSheetRepository.save({
+				tenantId: RequestContext.currentTenantId(),
 				employeeId: employeeId,
 				startedAt: from_date.toISOString(),
 				stoppedAt: to_date.toISOString()

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateTimeSlotMinutesCommand } from '../create-time-slot-minutes.command';
 import { TimeSlotMinute } from '../../../time-slot-minute.entity';
 import { UpdateTimeSlotMinutesCommand } from '../update-time-slot-minutes.command';
+import { RequestContext } from 'apps/api/src/app/core/context';
 
 @CommandHandler(CreateTimeSlotMinutesCommand)
 export class CreateTimeSlotMinutesHandler
@@ -34,6 +35,7 @@ export class CreateTimeSlotMinutesHandler
 				})
 			);
 		} else {
+			input.tenantId = RequestContext.currentTenantId();
 			return this.timeSlotMinuteRepository.save(input);
 		}
 	}
