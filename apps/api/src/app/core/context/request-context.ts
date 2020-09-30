@@ -40,14 +40,6 @@ export class RequestContext {
 	}
 
 	static currentTenantId(): string {
-		const request = RequestContext.currentRequest();
-
-		if (request['query'] && request['query'].tenantId) {
-			return request['query'].tenantId;
-		}
-		if (request['body'] && request['body']['tenantId']) {
-			return request['body']['tenantId'];
-		}
 		const user: IUser = RequestContext.currentUser();
 		if (user) {
 			return user.tenantId;
