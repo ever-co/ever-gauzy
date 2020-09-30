@@ -1,6 +1,7 @@
 <ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
 	<div (click)="$event.stopPropagation()">
 		<ng-select
+			[addTag]="createNew"
 			[multiple]="multiple"
 			[clearable]="true"
 			[disabled]="disabled"

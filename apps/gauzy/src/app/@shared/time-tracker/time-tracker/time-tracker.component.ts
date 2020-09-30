@@ -23,7 +23,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
 	isOpen = false;
-	employeesId: string;
+	employeeId: string;
 	time = '00:00:00';
 	current_time = '00:00:00';
 	running: boolean;
@@ -112,6 +112,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: IUser) => {
 			this.user = user;
+			this.employeeId = user.employeeId;
 		});
 
 		this.timeTrackerService.duration$
