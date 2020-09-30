@@ -88,6 +88,16 @@ export class TimerService {
 			request.startedAt
 		);
 
+		let organizationId;
+		if (!request.organizationId) {
+			const employee = await this.employeeRepository.findOne(
+				user.employeeId
+			);
+			organizationId = employee.organizationId;
+		} else {
+			organizationId = request.organizationId;
+		}
+
 		let newTimeLog: TimeLog;
 		if (!lastLog || lastLog.stoppedAt) {
 			newTimeLog = await this.timeLogRepository.save({
@@ -103,6 +113,7 @@ export class TimerService {
 				description: request.description || '',
 				isBillable: request.isBillable || false
 			});
+			console.log({ newTimeLog });
 		} else {
 			const stoppedAt = new Date();
 			if (lastLog.startedAt === stoppedAt) {

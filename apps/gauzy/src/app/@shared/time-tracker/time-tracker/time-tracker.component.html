@@ -133,6 +133,7 @@
 			<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
 			<gauzy-contact-selector
 				name="organizationContactId"
+				[employeeId]="employeeId"
 				[disabled]="running"
 				[(ngModel)]="organizationContactId"
 				#clientInput="ngModel"
@@ -153,6 +154,7 @@
 			<ga-project-selector
 				name="projectId"
 				[organizationContactId]="organizationContactId"
+				[employeeId]="employeeId"
 				[disabled]="running"
 				[(ngModel)]="projectId"
 				#projectInput="ngModel"
@@ -176,6 +178,7 @@
 			<ga-task-selector
 				name="taskId"
 				[projectId]="projectId"
+				[employeeId]="employeeId"
 				[disabled]="running"
 				[(ngModel)]="taskId"
 				#taskInput="ngModel"
@@ -203,7 +206,6 @@
 				#descriptionInput="ngModel"
 				[required]="organization?.requireDescription"
 			></textarea>
-
 			<div
 				*ngIf="descriptionInput.invalid && form.submitted"
 				class="invalid-feedback d-block"

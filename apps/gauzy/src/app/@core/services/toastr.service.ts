@@ -11,11 +11,7 @@ export class ToastrService {
 		private readonly translateService: TranslateService
 	) {}
 
-	success(
-		message: any,
-		title: string = 'TOASTR.TITLE.SUCCESS',
-		translationParams: Object = {}
-	) {
+	success(message: any, title?: string, translationParams: Object = {}) {
 		let displayMessage = '';
 
 		if (message && message.message && typeof message.message === 'string') {
@@ -26,7 +22,7 @@ export class ToastrService {
 
 		this.nbToastrService.success(
 			this.getTranslation(displayMessage, translationParams),
-			this.getTranslation(title)
+			this.getTranslation(title || 'TOASTR.TITLE.SUCCESS')
 		);
 	}
 

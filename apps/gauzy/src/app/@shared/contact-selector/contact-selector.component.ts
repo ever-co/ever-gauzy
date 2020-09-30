@@ -1,9 +1,11 @@
 import { Component, OnInit, Input, forwardRef, OnDestroy } from '@angular/core';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
-import { IOrganizationContact } from '@gauzy/models';
+import { ContactType, IOrganizationContact } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Store } from '../../@core/services/store.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({
 	selector: 'gauzy-contact-selector',
@@ -20,7 +22,7 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 export class ContactSelectorComponent implements OnInit, OnDestroy {
 	private _contactId: string | string[];
 	private _employeeId: string;
-	contacts: IOrganizationContact[];
+	contacts: IOrganizationContact[] = [];
 
 	@Input() disabled = false;
 	@Input() multiple = false;
@@ -46,7 +48,9 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 	loadContacts$: Subject<any> = new Subject();
 
 	constructor(
-		private organizationContactService: OrganizationContactService
+		private organizationContactService: OrganizationContactService,
+		private store: Store,
+		private toastrService: ToastrService
 	) {}
 
 	onChange: any = () => {};
@@ -54,14 +58,18 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.loadContacts$.pipe(untilDestroyed(this)).subscribe(async () => {
+			const organizationId = this.store.selectedOrganization.id;
 			if (this.employeeId) {
-				this.contacts = await this.organizationContactService.getAllByEmployee(
+				const items = await this.organizationContactService.getAllByEmployee(
 					this.employeeId
 				);
+				this.contacts = items;
 			} else {
 				const {
 					items = []
-				} = await this.organizationContactService.getAll([]);
+				} = await this.organizationContactService.getAll([], {
+					organizationId
+				});
 				this.contacts = items;
 			}
 		});
@@ -86,5 +94,28 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
+
+	createNew = async (name: string) => {
+		const organizationId = this.store.selectedOrganization.id;
+		try {
+			const contact = await this.organizationContactService.create({
+				name,
+				organizationId: organizationId,
+				contactType: ContactType.CLIENT,
+				imageUrl:
+					'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
+			});
+			this.contacts.push(contact);
+			this.contactId = contact.id;
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				null,
+				{ name }
+			);
+		} catch (error) {
+			this.toastrService.error(error);
+		}
+	};
+
 	ngOnDestroy() {}
 }

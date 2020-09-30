@@ -287,9 +287,16 @@ export interface ITimerStatus {
 	running: boolean;
 	lastLog?: ITimeLog;
 }
+export interface TimerState {
+	showTimerWindow: boolean;
+	duration: number;
+	current_session_duration: number;
+	running: boolean;
+	timerConfig: ITimerToggleInput;
+}
 
 export interface ITimerToggleInput {
-	//timesheetId?: string;
+	organizationId?: string;
 	projectId?: string;
 	taskId?: string;
 	organizationContactId?: string;
