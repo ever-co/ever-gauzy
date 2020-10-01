@@ -101,12 +101,14 @@ export class TimeTrackerService implements OnDestroy {
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
-				this.timerStore.update({
-					timerConfig: {
-						...this.timerConfig,
-						organizationId: organization.id
-					}
-				});
+				if (organization) {
+					this.timerStore.update({
+						timerConfig: {
+							...this.timerConfig,
+							organizationId: organization.id
+						}
+					});
+				}
 			});
 	}
 

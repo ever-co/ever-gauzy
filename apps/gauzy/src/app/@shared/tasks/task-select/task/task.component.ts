@@ -111,7 +111,7 @@ export class TaskSelectorComponent
 		const organizationId = this.store.selectedOrganization.id;
 		try {
 			const member: any = {
-				id: this.employeeId
+				id: this.employeeId || this.store.user.employeeId
 			};
 
 			const task = await this.tasksService
@@ -119,14 +119,13 @@ export class TaskSelectorComponent
 					title,
 					organizationId: organizationId,
 					members: [member],
-					employeeId: this.employeeId,
-					status: TaskStatusEnum.IN_PROGRESS
+					status: TaskStatusEnum.IN_PROGRESS,
+					...(this.projectId ? { projectId: this.projectId } : {})
 				})
 				.toPromise();
 
-			this.tasks.push(task);
+			this.tasks = this.tasks.concat(task);
 			this.taskId = task.id;
-			//this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', null, { name });
 		} catch (error) {
 			this.toastrService.error(error);
 		}

@@ -190,27 +190,29 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			},
 			this.timeTrackerService.timerConfig
 		);
-
-		this.timesheetService
-			.addTime(addRequestData)
-			.then((timeLog) => {
-				if (
-					moment
-						.utc(timeLog.startedAt)
-						.local()
-						.isSame(new Date(), 'day')
-				) {
-					this.timeTrackerService.duration =
-						this.timeTrackerService.duration + timeLog.duration;
-				}
-				this.form.resetForm();
-				//this.updateTimePickerLimit(new Date());
-				this.selectedRange = { start: null, end: null };
-				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
-			})
-			.catch((error) => {
-				this.toastrService.danger(error);
-			});
+		(addRequestData.organizationId = this.organization.id),
+			this.timesheetService
+				.addTime(addRequestData)
+				.then((timeLog) => {
+					if (
+						moment
+							.utc(timeLog.startedAt)
+							.local()
+							.isSame(new Date(), 'day')
+					) {
+						this.timeTrackerService.duration =
+							this.timeTrackerService.duration + timeLog.duration;
+					}
+					this.form.resetForm();
+					//this.updateTimePickerLimit(new Date());
+					this.selectedRange = { start: null, end: null };
+					this.toastrService.success(
+						'TIMER_TRACKER.ADD_TIME_SUCCESS'
+					);
+				})
+				.catch((error) => {
+					this.toastrService.danger(error);
+				});
 	}
 
 	setTimeType(type: string) {

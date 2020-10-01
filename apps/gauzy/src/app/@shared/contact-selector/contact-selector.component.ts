@@ -39,7 +39,6 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 		this._contactId = val;
 		this.onChange(val);
 		this.onTouched(val);
-		this.loadContacts$.next();
 	}
 	get contactId(): string | string[] {
 		return this._contactId;
@@ -105,10 +104,10 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 				imageUrl:
 					'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
 			});
-			this.contacts.push(contact);
+			this.contacts = this.contacts.concat([contact]);
 			this.contactId = contact.id;
 			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
 				null,
 				{ name }
 			);

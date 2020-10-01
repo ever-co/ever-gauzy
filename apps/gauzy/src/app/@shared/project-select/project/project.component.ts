@@ -133,18 +133,20 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	createNew = async (name: string) => {
-		const organizationId = this.store.selectedOrganization.id;
 		try {
 			const member: any = {
-				id: this.employeeId
+				id: this.employeeId || this.store.user.employeeId
 			};
-			const project = await this.organizationProjects.create({
+			const request = {
 				name,
-				organizationId: organizationId,
-				members: [member]
-			});
-
-			this.projects.push(project);
+				organizationId: this.organizationId,
+				members: [member],
+				...(this.organizationContactId
+					? { contactId: this.organizationContactId }
+					: {})
+			};
+			const project = await this.organizationProjects.create(request);
+			this.projects = this.projects.concat([project]);
 			this.projectId = project.id;
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',

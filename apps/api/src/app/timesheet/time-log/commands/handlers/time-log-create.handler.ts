@@ -30,7 +30,9 @@ export class TimeLogCreateHandler
 
 		const newTimeLog = new TimeLog({
 			startedAt: moment.utc(input.startedAt).toDate(),
-			stoppedAt: moment.utc(input.stoppedAt).toDate(),
+			...(input.stoppedAt
+				? { stoppedAt: moment.utc(input.stoppedAt).toDate() }
+				: {}),
 			timesheetId: timesheet.id,
 			organizationId: input.organizationId,
 			employeeId: input.employeeId,
@@ -44,17 +46,20 @@ export class TimeLogCreateHandler
 			source: input.source || TimeLogSourceEnum.BROWSER
 		});
 
-		let timeSlots = this.timeSlotService.generateTimeSlots(
-			input.startedAt,
-			input.stoppedAt
-		);
-		timeSlots = timeSlots.map((slot) => ({
-			...slot,
-			employeeId: input.employeeId,
-			keyboard: 0,
-			mouse: 0,
-			overall: 0
-		}));
+		let timeSlots = [];
+		if (input.stoppedAt) {
+			timeSlots = this.timeSlotService.generateTimeSlots(
+				input.startedAt,
+				input.stoppedAt
+			);
+			timeSlots = timeSlots.map((slot) => ({
+				...slot,
+				employeeId: input.employeeId,
+				keyboard: 0,
+				mouse: 0,
+				overall: 0
+			}));
+		}
 
 		if (input.timeSlots) {
 			/*
