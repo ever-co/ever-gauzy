@@ -252,7 +252,8 @@ export class EditTimeLogModalComponent
 		const requestData = {
 			..._.omit(this.form.value, ['selectedRange']),
 			startedAt,
-			stoppedAt
+			stoppedAt,
+			organizationId: this.organization.id
 		};
 		this.loading = true;
 		let request;

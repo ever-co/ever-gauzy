@@ -91,6 +91,7 @@ export class TimerService {
 		let newTimeLog: TimeLog;
 		if (!lastLog || lastLog.stoppedAt) {
 			newTimeLog = await this.timeLogRepository.save({
+				tenantId: RequestContext.currentTenantId(),
 				duration: 0,
 				timesheetId: timesheet.id,
 				isBilled: false,

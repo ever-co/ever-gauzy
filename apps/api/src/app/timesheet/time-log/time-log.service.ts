@@ -38,6 +38,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 	async getTimeLogs(request: IGetTimeLogInput) {
 		let employeeIds: string[];
 
+		console.log(RequestContext.currentTenantId());
+
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -128,21 +130,19 @@ export class TimeLogService extends CrudService<TimeLog> {
 				}
 
 				//check organization and tenant for timelogs
-				let { organizationId = null, tenantId = null } = request;
-				if (typeof organizationId === 'string') {
+				if (request.organizationId) {
 					qb.andWhere(
 						`"${qb.alias}"."organizationId" = :organizationId`,
 						{ organizationId: request.organizationId }
 					);
 				}
-				//if not found tenantId then get from current user session
-				if (typeof tenantId !== 'string') {
-					const user = RequestContext.currentUser();
-					tenantId = user.tenantId;
+
+				const tenantId = RequestContext.currentTenantId();
+				if (tenantId) {
+					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
 				}
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
 			}
 		});
 		return logs;
