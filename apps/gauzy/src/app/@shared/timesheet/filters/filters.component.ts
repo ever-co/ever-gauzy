@@ -14,7 +14,8 @@ import {
 	IOrganization,
 	PermissionsEnum,
 	OrganizationPermissionsEnum,
-	IEmployee
+	IEmployee,
+	IUser
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
@@ -149,6 +150,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 					this.loadEmployees();
 				}
 			});
+
+		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: IUser) => {
+			if (user) {
+				this.employeeIds = [user.employeeId];
+			}
+		});
 
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))

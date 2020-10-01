@@ -1,9 +1,4 @@
-import {
-	Injectable,
-	Inject,
-	forwardRef,
-	BadRequestException
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, IsNull } from 'typeorm';
@@ -17,8 +12,6 @@ import {
 	IDateRange
 } from '@gauzy/models';
 import * as moment from 'moment';
-import { TimeSheetService } from '../timesheet/timesheet.service';
-import { TimeSlotService } from '../time-slot/time-slot.service';
 import { CommandBus } from '@nestjs/cqrs';
 import { IGetConflictTimeLogCommand } from '../time-log/commands/get-conflict-time-log.command';
 import { TimeLogCreateCommand } from '../time-log/commands/time-log-create.command';
@@ -28,11 +21,6 @@ import { TimeLogUpdateCommand } from '../time-log/commands/time-log-update.comma
 @Injectable()
 export class TimerService {
 	constructor(
-		@Inject(forwardRef(() => TimeSheetService))
-		private readonly timesheetService: TimeSheetService,
-		@Inject(forwardRef(() => TimeSlotService))
-		private readonly timeSlotService: TimeSlotService,
-
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 
