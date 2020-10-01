@@ -304,6 +304,7 @@ export interface ITimerToggleInput {
 	logType?: TimeLogType;
 	tags?: string[];
 	isBillable?: boolean;
+	manualTimeSlot?: boolean;
 }
 
 export interface IManualTimeInput {
