@@ -39,6 +39,15 @@ export class RequestContext {
 		return null;
 	}
 
+	static currentTenantId(): string {
+		const user: IUser = RequestContext.currentUser();
+		if (user) {
+			return user.tenantId;
+		}
+
+		return null;
+	}
+
 	static currentUser(throwError?: boolean): IUser {
 		const requestContext = RequestContext.currentRequestContext();
 

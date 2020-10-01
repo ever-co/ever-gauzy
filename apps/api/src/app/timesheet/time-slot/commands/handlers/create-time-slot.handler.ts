@@ -78,6 +78,7 @@ export class CreateTimeSlotHandler
 			// timeSlot.activities = input.activities;
 			// await this.activityRepository.save(timeSlot.activities);
 		}
+		timeSlot.tenantId = RequestContext.currentTenantId();
 		await this.timeSlotRepository.save(timeSlot);
 
 		timeSlot = await this.timeSlotRepository.findOne(timeSlot.id, {

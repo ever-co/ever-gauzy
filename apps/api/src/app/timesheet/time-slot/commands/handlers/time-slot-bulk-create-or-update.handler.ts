@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import { TimeSlot } from '../../../time-slot.entity';
 import * as _ from 'underscore';
 import { TimeSlotBulkCreateOrUpdateCommand } from '../time-slot-bulk-create-or-update.command';
+import { RequestContext } from 'apps/api/src/app/core/context';
 
 @CommandHandler(TimeSlotBulkCreateOrUpdateCommand)
 export class TimeSlotBulkCreateOrUpdateHandler
@@ -37,17 +38,18 @@ export class TimeSlotBulkCreateOrUpdateHandler
 							'YYYY-MM-DD HH:mm'
 						) === moment(slot.startedAt).format('YYYY-MM-DD HH:mm')
 				);
+
 				if (oldSlot) {
 					oldSlot.keyboard = slot.keyboard;
 					oldSlot.mouse = slot.mouse;
 					oldSlot.overall = slot.overall;
 					return oldSlot;
 				} else {
+					slot.tenantId = RequestContext.currentTenantId();
 					return slot;
 				}
 			});
 		}
-
 		await this.timeSlotRepository.save(slots);
 		return slots;
 	}
