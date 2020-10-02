@@ -24,6 +24,7 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { ConfirmComponent } from 'apps/gauzy/src/app/@shared/dialogs';
 import { TranslateService } from '@ngx-translate/core';
+import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
 @Component({
 	selector: 'ngx-daily',
@@ -66,6 +67,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private store: Store,
 		private nbMenuService: NbMenuService,
+		private timesheetFilterService: TimesheetFilterService,
 		private translateService: TranslateService
 	) {}
 
@@ -78,6 +80,15 @@ export class DailyComponent implements OnInit, OnDestroy {
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
+
+		// this.timesheetFilterService
+		// 	.filter$
+		// 	.pipe(untilDestroyed(this))
+		// 	.subscribe((filters: ITimeLogFilters) => {
+		// 		this.logRequest = filters;
+		// 		this.selectedDate = new Date(this.logRequest.startDate);
+		// 		this.updateLogs$.next();
+		// 	})
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
@@ -98,6 +109,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 	async filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.selectedDate = new Date(this.logRequest.startDate);
+		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 	async getLogs() {

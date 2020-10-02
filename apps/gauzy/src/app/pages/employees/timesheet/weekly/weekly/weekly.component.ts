@@ -19,6 +19,7 @@ import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.component';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;
@@ -54,6 +55,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	constructor(
 		private timesheetService: TimesheetService,
 		private nbDialogService: NbDialogService,
+		private timesheetFilterService: TimesheetFilterService,
 		private ngxPermissionsService: NgxPermissionsService,
 		private store: Store
 	) {}
@@ -109,6 +111,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.updateWeekDayList();
+		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 

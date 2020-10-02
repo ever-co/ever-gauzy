@@ -31,6 +31,7 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
 @Component({
 	selector: 'ngx-calendar',
@@ -54,6 +55,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		private timesheetService: TimesheetService,
 		private store: Store,
 		private nbDialogService: NbDialogService,
+		private timesheetFilterService: TimesheetFilterService,
 		private ngxPermissionsService: NgxPermissionsService
 	) {
 		this.calendarOptions = {
@@ -128,6 +130,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
+		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 
