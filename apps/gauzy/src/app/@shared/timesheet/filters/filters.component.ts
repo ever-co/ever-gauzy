@@ -24,6 +24,8 @@ import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Options, ChangeContext } from 'ng5-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { TimesheetFilterService } from '../timesheet-filter.service';
+import { take } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-filters',
@@ -53,8 +55,8 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	public set filters(value: ITimeLogFilters) {
 		this._filters = value;
 		this.activityLevel = {
-			start: value.activityLevel.start || 0,
-			end: value.activityLevel.end || 100
+			start: value.activityLevel ? value.activityLevel.start : 0,
+			end: value.activityLevel ? value.activityLevel.end : 100
 		};
 	}
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
@@ -84,10 +86,10 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	}
 	public set selectedDate(value: Date) {
 		this.date = value;
+
 		this.filters.startDate = moment(value).startOf(this.dateRange).toDate();
 		this.filters.endDate = moment(value).endOf(this.dateRange).toDate();
-
-		this.updateLogs$.next();
+		this.triggerFilterChange();
 	}
 
 	private _employeeIds: string | string[];
@@ -102,35 +104,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private store: Store,
+		private timesheetFilterService: TimesheetFilterService,
 		private employeesService: EmployeesService,
 		private ngxPermissionsService: NgxPermissionsService
 	) {}
 
 	ngOnInit() {
-		// if (this.activatedRoute.snapshot.queryParams) {
-		// 	const query = this.activatedRoute.snapshot.queryParams;
-		// 	if (query.startDate) {
-		// 		this.filters.startDate = toLocal(query.startDate).toDate();
-		// 		this.selectedDate = this.filters.startDate;
-		// 	}
-
-		// 	if (query.endDate) {
-		// 		this.filters.endDate = toLocal(query.endDate).toDate();
-		// 	}
-
-		// 	if (query.organizationId) {
-		// 		this.filters.organizationId = query.organizationId;
-		// 	}
-
-		// 	if (query.employeeId) {
-		// 		this.filters.employeeId = query.employeeId;
-		// 	}
-		// }
-
-		// if (this.activatedRoute.snapshot.queryParams){
-		// 	const requestParams = _.get(this.activatedRoute.snapshot.queryParams)
-		// }
-
 		this.selectedDate = this.today;
 		this.updateLogs$.pipe(untilDestroyed(this)).subscribe(() => {
 			Object.keys(this.filters).forEach((key) =>
@@ -141,6 +120,14 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			}
 			this.filtersChange.emit(this.filters);
 		});
+
+		this.timesheetFilterService.filter$
+			.pipe(untilDestroyed(this), take(1))
+			.subscribe((filters: ITimeLogFilters) => {
+				this.filters = Object.assign({}, filters);
+				this.selectedDate = new Date(filters.startDate);
+				this.employeeIds = filters.employeeIds;
+			});
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
@@ -165,7 +152,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 				);
 			});
 
-		this.updateLogs$.next();
+		this.triggerFilterChange();
 	}
 
 	isNextDisabled() {
@@ -198,10 +185,16 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			end: $event.highValue
 		};
 		this.activityLevel = this.filters.activityLevel;
-		this.updateLogs$.next();
+		this.triggerFilterChange();
 	}
 
 	triggerFilterChange(): void {
+		this.updateLogs$.next();
+	}
+
+	celarFilters(): void {
+		const obj = this.timesheetFilterService.clear();
+		this.filters = obj;
 		this.updateLogs$.next();
 	}
 
