@@ -5,6 +5,7 @@ export class TimesheetFirstOrCreateCommand implements ICommand {
 
 	constructor(
 		public readonly date: Date,
-		public readonly employeeId: string
+		public readonly employeeId: string,
+		public readonly organizationId?: string
 	) {}
 }

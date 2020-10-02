@@ -260,7 +260,7 @@ export class EditTimeLogModalComponent
 			stoppedAt,
 			organizationId: this.organization.id
 		};
-		if (requestData.employeeId) {
+		if (!requestData.employeeId) {
 			requestData.employeeId = this.store.user.employeeId;
 		}
 		this.loading = true;
