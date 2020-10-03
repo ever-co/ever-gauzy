@@ -2,24 +2,7 @@ import { Injectable } from '@angular/core';
 import { Query, Store, StoreConfig } from '@datorama/akita';
 import { ITimeLogFilters } from '@gauzy/models';
 
-export function createInitialTimesheetFilterState(): ITimeLogFilters {
-	let timesheetFilter = {
-		employeeIds: [],
-		source: [],
-		logType: [],
-		projectIds: [],
-		startDate: new Date(),
-		endDate: new Date()
-	};
-	try {
-		const filter = '{}'; // localStorage.getItem('timesheetFilter');
-		if (filter) {
-			timesheetFilter = {
-				...timesheetFilter,
-				...JSON.parse(filter)
-			};
-		}
-	} catch (error) {}
+export function initialTimesheetFilterState(): ITimeLogFilters {
 	return {
 		employeeIds: [],
 		source: [],
@@ -27,14 +10,14 @@ export function createInitialTimesheetFilterState(): ITimeLogFilters {
 		projectIds: [],
 		startDate: new Date(),
 		endDate: new Date()
-	} as ITimeLogFilters;
+	};
 }
 
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'timesheet-filter', resettable: true })
 export class TimesheetFilterStore extends Store<ITimeLogFilters> {
 	constructor() {
-		super(createInitialTimesheetFilterState());
+		super(initialTimesheetFilterState());
 	}
 }
 
@@ -64,14 +47,7 @@ export class TimesheetFilterService {
 	}
 
 	clear() {
-		const obj = {
-			employeeIds: [],
-			source: [],
-			logType: [],
-			projectIds: [],
-			startDate: new Date(),
-			endDate: new Date()
-		};
+		const obj = initialTimesheetFilterState();
 		this.timesheetFilterStore.update(obj);
 		return obj;
 	}
