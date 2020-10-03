@@ -51,13 +51,16 @@
 		</div>
 	</div>
 	<div class="col-auto ml-auto">
-		<div class="row align-items-end">
+		<div class="row filter-item-list align-items-end">
 			<ng-template
 				[ngxPermissionsOnly]="[
 					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 				]"
 			>
-				<div class="col-auto ml-auto pr-1" *ngIf="hasEmployeeFilter">
+				<div
+					class="col-auto filter-item ml-auto pr-1"
+					*ngIf="hasEmployeeFilter"
+				>
 					<ga-employee-multi-select
 						class="select-box"
 						name="employeeId"
@@ -70,7 +73,10 @@
 					</ga-employee-multi-select>
 				</div>
 			</ng-template>
-			<div class="col-auto ml-auto pr-1" *ngIf="hasProjectFilter">
+			<div
+				class="col-auto filter-item ml-auto pr-1"
+				*ngIf="hasProjectFilter"
+			>
 				<ga-project-selector
 					name="projectId"
 					[(ngModel)]="filters.projectIds"
@@ -78,7 +84,10 @@
 					[multiple]="true"
 				></ga-project-selector>
 			</div>
-			<div class="col-auto ml-auto pr-1" *ngIf="hasSourceFilter">
+			<div
+				class="col-auto filter-item ml-auto pr-1"
+				*ngIf="hasSourceFilter"
+			>
 				<nb-select
 					multiple
 					[placeholder]="'TIMESHEET.SELECT_SOURCE' | translate"
@@ -93,7 +102,10 @@
 					</nb-option>
 				</nb-select>
 			</div>
-			<div class="col-auto ml-auto pr-1" *ngIf="hasActivityLevelFilter">
+			<div
+				class="col-auto filter-item ml-auto pr-1"
+				*ngIf="hasActivityLevelFilter"
+			>
 				<button
 					class="activity-level-filter text-capitalize"
 					nbButton
@@ -116,7 +128,10 @@
 					</div>
 				</ng-template>
 			</div>
-			<div class="col-auto ml-auto pr-1" *ngIf="hasLogTypeFilter">
+			<div
+				class="col-auto filter-item ml-auto pr-1"
+				*ngIf="hasLogTypeFilter"
+			>
 				<nb-select
 					multiple
 					[placeholder]="'TIMESHEET.SELECT_LOG_TYPE' | translate"
@@ -133,8 +148,8 @@
 			</div>
 
 			<div class="col-auto ml-auto pr-1 clear-fitlers">
-				<button nbButton status="warn" (click)="celarFilters()">
-					Clear Filters
+				<button nbButton status="danger" (click)="celarFilters()">
+					Clear
 				</button>
 			</div>
 		</div>

@@ -104,11 +104,11 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		if (!this.organization) {
 			return;
 		}
-		const { startDate, endDate } = this.logRequest;
+		const { startDate, endDate, employeeIds } = this.logRequest;
 		const request: IGetTimesheetInput = {
 			organizationId: this.organization.id,
 			tenantId: this.organization.tenantId,
-			...this.logRequest,
+			employeeIds,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};

@@ -77,7 +77,7 @@ export interface IGetTimesheetInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	startDate?: string;
 	endDate?: string;
-	projectId?: string[];
+	projectIds?: string[];
 	clientId?: string[];
 	employeeIds?: string[];
 }
