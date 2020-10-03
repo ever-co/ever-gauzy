@@ -43,7 +43,6 @@ export class TimesheetFilterService {
 		return this.timesheetFilterQuery.getValue();
 	}
 	public set filter(value: ITimeLogFilters) {
-		console.log('update filter', value);
 		this.timesheetFilterStore.update(value);
 	}
 
