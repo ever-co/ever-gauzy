@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Query, resetStores, Store, StoreConfig } from '@datorama/akita';
+import { Query, Store, StoreConfig } from '@datorama/akita';
 import { ITimeLogFilters } from '@gauzy/models';
 
 export function createInitialTimesheetFilterState(): ITimeLogFilters {
