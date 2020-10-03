@@ -109,6 +109,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 	async filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.selectedDate = new Date(this.logRequest.startDate);
+		console.log('filtersChange day', $event);
 		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
@@ -122,7 +123,11 @@ export class DailyComponent implements OnInit, OnDestroy {
 		const request: IGetTimeLogInput = {
 			organizationId: this.organization.id,
 			tenantId: this.organization.tenantId,
-			...this.logRequest,
+			employeeIds: this.logRequest.employeeIds,
+			projectIds: this.logRequest.projectIds,
+			source: this.logRequest.source,
+			activityLevel: this.logRequest.activityLevel,
+			logType: this.logRequest.logType,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeIds ? { employeeIds } : {})

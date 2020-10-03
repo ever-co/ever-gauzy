@@ -111,6 +111,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
 		this.updateWeekDayList();
+		console.log('filtersChange week', $event);
 		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
@@ -118,10 +119,13 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	async getLogs() {
 		const { startDate, endDate, employeeIds } = this.logRequest;
 		const request: IGetTimeLogInput = {
-			...this.logRequest,
+			employeeIds: this.logRequest.employeeIds,
+			projectIds: this.logRequest.projectIds,
+			source: this.logRequest.source,
+			activityLevel: this.logRequest.activityLevel,
+			logType: this.logRequest.logType,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeIds ? { employeeId: employeeIds } : {}),
 			organizationId: this.organization ? this.organization.id : null,
 			tenantId: this.organization ? this.organization.tenantId : null
 		};
