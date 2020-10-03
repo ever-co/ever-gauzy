@@ -1,32 +1,32 @@
-import {
-	Injectable,
-	Inject,
-	forwardRef,
-	BadRequestException
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository, MoreThan, IsNull } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
-import { TimeLogType, ITimerStatus } from '@gauzy/models';
+import {
+	TimeLogType,
+	ITimerStatus,
+	IGetTimeLogConflictInput,
+	ITimerToggleInput,
+	IDateRange
+} from '@gauzy/models';
 import * as moment from 'moment';
-import { TimeSheetService } from '../timesheet/timesheet.service';
-import { TimeSlotService } from '../time-slot/time-slot.service';
+import { CommandBus } from '@nestjs/cqrs';
+import { IGetConflictTimeLogCommand } from '../time-log/commands/get-conflict-time-log.command';
+import { TimeLogCreateCommand } from '../time-log/commands/time-log-create.command';
+import { DeleteTimeSpanCommand } from '../time-log/commands/delete-time-span.command';
+import { TimeLogUpdateCommand } from '../time-log/commands/time-log-update.command';
 
 @Injectable()
 export class TimerService {
 	constructor(
-		@Inject(forwardRef(() => TimeSheetService))
-		private readonly timesheetService: TimeSheetService,
-		@Inject(forwardRef(() => TimeSlotService))
-		private readonly timeSlotService: TimeSlotService,
-
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly employeeRepository: Repository<Employee>,
+		private readonly commandBus: CommandBus
 	) {}
 
 	async getTimerStatus(): Promise<ITimerStatus> {
@@ -72,65 +72,80 @@ export class TimerService {
 		return stauts;
 	}
 
-	async toggleTimeLog(request): Promise<TimeLog> {
+	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
 		const user = RequestContext.currentUser();
-		const lastLog = await this.timeLogRepository.findOne({
+		let lastLog = await this.timeLogRepository.findOne({
 			where: {
-				employeeId: user.employeeId
+				employeeId: user.employeeId,
+				stoppedAt: IsNull()
 			},
 			order: {
 				startedAt: 'DESC'
 			}
 		});
 
-		const timesheet = await this.timesheetService.createOrFindTimeSheet(
-			user.employeeId,
-			request.startedAt
-		);
+		if (!lastLog) {
+			let organizationId;
+			if (!request.organizationId) {
+				const employee = await this.employeeRepository.findOne(
+					user.employeeId
+				);
+				organizationId = employee.organizationId;
+			} else {
+				organizationId = request.organizationId;
+			}
 
-		let newTimeLog: TimeLog;
-		if (!lastLog || lastLog.stoppedAt) {
-			newTimeLog = await this.timeLogRepository.save({
+			const newTimeLogInput = {
+				organizationId,
 				tenantId: RequestContext.currentTenantId(),
+				startedAt: moment.utc().toDate(),
 				duration: 0,
-				timesheetId: timesheet.id,
-				isBilled: false,
-				startedAt: new Date(),
 				employeeId: user.employeeId,
 				projectId: request.projectId || null,
 				taskId: request.taskId || null,
-				clientId: request.clientId || null,
+				organizationContactId: request.organizationContactId || null,
 				logType: request.logType || TimeLogType.TRACKED,
 				description: request.description || '',
 				isBillable: request.isBillable || false
-			});
+			};
+
+			return await this.commandBus.execute(
+				new TimeLogCreateCommand(newTimeLogInput)
+			);
 		} else {
 			const stoppedAt = new Date();
 			if (lastLog.startedAt === stoppedAt) {
 				await this.timeLogRepository.delete(lastLog.id);
 				return;
 			}
-			await this.timeLogRepository.update(lastLog.id, {
-				stoppedAt
-			});
-			// await this.timesheetRepository.update(timesheet.id, { duration });
-			newTimeLog = await this.timeLogRepository.findOne(lastLog.id);
 
-			if (!request.manualTimeSlot) {
-				let timeSlots = this.timeSlotService.generateTimeSlots(
-					newTimeLog.startedAt,
-					newTimeLog.stoppedAt
+			lastLog = await this.commandBus.execute(
+				new TimeLogUpdateCommand({ stoppedAt }, lastLog.id)
+			);
+
+			const conflictInput: IGetTimeLogConflictInput = {
+				ignoreId: lastLog.id,
+				startDate: lastLog.startedAt,
+				endDate: lastLog.stoppedAt,
+				employeeId: lastLog.employeeId
+			};
+
+			const conflict = await this.commandBus.execute(
+				new IGetConflictTimeLogCommand(conflictInput)
+			);
+
+			const times: IDateRange = {
+				start: new Date(lastLog.startedAt),
+				end: new Date(lastLog.stoppedAt)
+			};
+
+			for (let index = 0; index < conflict.length; index++) {
+				await this.commandBus.execute(
+					new DeleteTimeSpanCommand(times, conflict[index])
 				);
-				timeSlots = timeSlots.map((slot) => ({
-					...slot,
-					employeeId: user.employeeId,
-					keyboard: 0,
-					mouse: 0,
-					overall: 0
-				}));
-				await this.timeSlotService.bulkCreate(timeSlots);
 			}
+
+			return lastLog;
 		}
-		return newTimeLog;
 	}
 }

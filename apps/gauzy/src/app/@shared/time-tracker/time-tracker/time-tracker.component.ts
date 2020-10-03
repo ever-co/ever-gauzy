@@ -23,7 +23,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
 	isOpen = false;
-	employeesId: string;
+	employeeId: string;
 	time = '00:00:00';
 	current_time = '00:00:00';
 	running: boolean;
@@ -112,6 +112,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: IUser) => {
 			this.user = user;
+			this.employeeId = user.employeeId;
 		});
 
 		this.timeTrackerService.duration$
@@ -189,27 +190,29 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			},
 			this.timeTrackerService.timerConfig
 		);
-
-		this.timesheetService
-			.addTime(addRequestData)
-			.then((timeLog) => {
-				if (
-					moment
-						.utc(timeLog.startedAt)
-						.local()
-						.isSame(new Date(), 'day')
-				) {
-					this.timeTrackerService.duration =
-						this.timeTrackerService.duration + timeLog.duration;
-				}
-				this.form.resetForm();
-				//this.updateTimePickerLimit(new Date());
-				this.selectedRange = { start: null, end: null };
-				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
-			})
-			.catch((error) => {
-				this.toastrService.danger(error);
-			});
+		(addRequestData.organizationId = this.organization.id),
+			this.timesheetService
+				.addTime(addRequestData)
+				.then((timeLog) => {
+					if (
+						moment
+							.utc(timeLog.startedAt)
+							.local()
+							.isSame(new Date(), 'day')
+					) {
+						this.timeTrackerService.duration =
+							this.timeTrackerService.duration + timeLog.duration;
+					}
+					this.form.resetForm();
+					//this.updateTimePickerLimit(new Date());
+					this.selectedRange = { start: null, end: null };
+					this.toastrService.success(
+						'TIMER_TRACKER.ADD_TIME_SUCCESS'
+					);
+				})
+				.catch((error) => {
+					this.toastrService.danger(error);
+				});
 	}
 
 	setTimeType(type: string) {

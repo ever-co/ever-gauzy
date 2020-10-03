@@ -31,6 +31,8 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
+import * as _ from 'underscore';
 
 @Component({
 	selector: 'ngx-calendar',
@@ -54,6 +56,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		private timesheetService: TimesheetService,
 		private store: Store,
 		private nbDialogService: NbDialogService,
+		private timesheetFilterService: TimesheetFilterService,
 		private ngxPermissionsService: NgxPermissionsService
 	) {
 		this.calendarOptions = {
@@ -128,6 +131,10 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
+		if (this.logRequest.date) {
+			this.calendar.getApi().gotoDate(this.logRequest.date);
+		}
+		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 
@@ -145,11 +152,19 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		}
 		const _startDate = moment(arg.start).format('YYYY-MM-DD') + ' 00:00:00';
 		const _endDate = moment(arg.end).format('YYYY-MM-DD') + ' 23:59:59';
+		const appliedFilter = _.pick(
+			this.logRequest,
+			'employeeIds',
+			'projectIds',
+			'source',
+			'activityLevel',
+			'logType'
+		);
 
 		const request: IGetTimeLogInput = {
 			organizationId: this.organization.id,
 			tenantId: this.organization.tenantId,
-			...this.logRequest,
+			...appliedFilter,
 			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
