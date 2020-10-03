@@ -110,7 +110,6 @@ export function isEmpty(value: any) {
 	} else {
 		return (
 			!value ||
-			value === '' ||
 			(value + '').toLocaleLowerCase() === 'null' ||
 			(value + '').toLocaleLowerCase() === 'undefined'
 		);
