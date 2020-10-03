@@ -151,6 +151,7 @@ export enum TimeLogSourceEnum {
 
 export interface ITimeLogFilters
 	extends IBasePerTenantAndOrganizationEntityModel {
+	date?: Date | string;
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];

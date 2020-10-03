@@ -147,7 +147,10 @@
 				</nb-select>
 			</div>
 
-			<div class="col-auto ml-auto pr-1 clear-fitlers">
+			<div
+				class="col-auto ml-auto pr-1 clear-fitlers"
+				*ngIf="hasFilterApplies"
+			>
 				<button nbButton status="danger" (click)="celarFilters()">
 					Clear
 				</button>
