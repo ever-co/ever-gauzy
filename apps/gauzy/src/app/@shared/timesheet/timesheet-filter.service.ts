@@ -9,7 +9,8 @@ export function initialTimesheetFilterState(): ITimeLogFilters {
 		logType: [],
 		projectIds: [],
 		startDate: new Date(),
-		endDate: new Date()
+		endDate: new Date(),
+		date: new Date()
 	};
 }
 
