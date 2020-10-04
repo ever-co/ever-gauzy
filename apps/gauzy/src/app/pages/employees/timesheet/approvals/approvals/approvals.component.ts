@@ -20,6 +20,7 @@ import { Subject } from 'rxjs/internal/Subject';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Router } from '@angular/router';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
+import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
 @Component({
 	selector: 'ngx-approvals',
@@ -63,6 +64,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		private store: Store,
 		private router: Router,
 		private toastrService: ToastrService,
+		private timesheetFilterService: TimesheetFilterService,
 		private nbMenuService: NbMenuService
 	) {}
 
@@ -94,6 +96,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 
 	filtersChange($event) {
 		this.logRequest = $event;
+		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 
@@ -101,11 +104,11 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		if (!this.organization) {
 			return;
 		}
-		const { startDate, endDate } = this.logRequest;
+		const { startDate, endDate, employeeIds } = this.logRequest;
 		const request: IGetTimesheetInput = {
 			organizationId: this.organization.id,
 			tenantId: this.organization.tenantId,
-			...this.logRequest,
+			employeeIds,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};

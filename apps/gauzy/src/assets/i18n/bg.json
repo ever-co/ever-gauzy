@@ -528,6 +528,7 @@
 		"USERS": "Потребители",
 		"ROLES": "Роли и Позволения",
 		"DANGER_ZONE": "Опасна Зона",
+		"FILE_STORAGE": "File Storage",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT": "Import",
@@ -2409,5 +2410,13 @@
 		"CONFIRM": "Потвърждение",
 		"ALERT": "Alert",
 		"DELETE_CONFIRM": "Alert"
+	},
+	"SETTINGS_FILE_STORAGE": {
+		"FILE_PROVIDER": "File provider",
+		"S3_DETAILS": "S3 details",
+		"ACCESS_KEY_ID": "Access key id",
+		"SECRET_ACCESS_KEY": "Secret access key",
+		"REGION": "Region",
+		"BUCKET": "Bucket"
 	}
 }

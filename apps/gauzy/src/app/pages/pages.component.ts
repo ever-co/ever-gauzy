@@ -644,6 +644,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'File storage',
+					icon: 'file',
+					link: '/pages/settings/file-storage',
+					data: {
+						translationKey: 'MENU.FILE_STORAGE'
+					}
+				},
+				{
 					title: 'Payment Gateways',
 					icon: 'credit-card-outline',
 					data: {

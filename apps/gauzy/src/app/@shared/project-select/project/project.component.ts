@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Store } from '../../../@core/services/store.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-project-selector',
@@ -23,7 +24,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	private _projectId: string | string[];
 	private _employeeId: string;
 	private _organizationContactId: string;
-	projects: IOrganizationProject[];
+	projects: IOrganizationProject[] = [];
 	organization: IOrganization;
 
 	@Input() disabled = false;
@@ -56,7 +57,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private organizationProjects: OrganizationProjectsService,
-		private store: Store
+		private store: Store,
+		private toastrService: ToastrService
 	) {}
 
 	set projectId(val: string | string[]) {
@@ -129,5 +131,32 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
+
+	createNew = async (name: string) => {
+		try {
+			const member: any = {
+				id: this.employeeId || this.store.user.employeeId
+			};
+			const request = {
+				name,
+				organizationId: this.organizationId,
+				members: [member],
+				...(this.organizationContactId
+					? { contactId: this.organizationContactId }
+					: {})
+			};
+			const project = await this.organizationProjects.create(request);
+			this.projects = this.projects.concat([project]);
+			this.projectId = project.id;
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				null,
+				{ name }
+			);
+		} catch (error) {
+			this.toastrService.error(error);
+		}
+	};
+
 	ngOnDestroy() {}
 }

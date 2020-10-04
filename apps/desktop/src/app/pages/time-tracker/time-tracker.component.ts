@@ -15,7 +15,7 @@ import * as moment from 'moment';
 	selector: 'ngx-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
-	changeDetection: ChangeDetectionStrategy.Default
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
@@ -51,7 +51,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	};
 	userOrganization: any = {};
 	lastScreenCapture: any = {};
-
+	quitApp = false;
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -64,6 +64,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on(
 			'timer_tracker_show',
 			(event, arg) => {
+				this.taskSelect = '';
+				this.projectSelect = '';
+				this.note = '';
+				const el: HTMLElement = this.selectProjectElement
+					.nativeElement as HTMLElement;
+				setTimeout(() => el.click(), 1000);
 				this.getTask(arg);
 				this.getTodayTime(arg);
 				this.getUserInfo(arg);
@@ -74,11 +80,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('start_from_tray', (event, arg) => {
-			this.toggleStart();
+			this.toggleStart(true);
 		});
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) => {
-			this.toggleStart();
+			if (arg && arg.quitApp) this.quitApp = true;
+			this.toggleStart(false);
 		});
 
 		this.electronService.ipcRenderer.on(
@@ -111,7 +118,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					});
 					event.sender.send('save_screen_shoot', {
 						screens: screens,
-						timeSlotId: arg.timeSlotId
+						timeSlotId: arg.timeSlotId,
+						quitApp: this.quitApp
 					});
 				});
 		});
@@ -142,9 +150,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
-	toggleStart() {
+	toggleStart(val) {
 		if (this.validationField()) {
-			this.start = !this.start;
+			this.start = val;
 			if (this.start) {
 				this.startTime();
 			} else {
@@ -188,6 +196,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	startTime() {
+		console.log('project select', this.projectSelect);
 		if (!this.projectSelect) this.errors.project = true;
 		if (!this.taskSelect) this.errors.task = true;
 		if (!this.errors.task && !this.errors.project) {
@@ -206,7 +215,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	stopTimer() {
-		this.electronService.ipcRenderer.send('stop_timer');
+		this.electronService.ipcRenderer.send('stop_timer', { quitApp: this.quitApp });
 		this.electronService.ipcRenderer.send('update_tray_stop');
 		this.electronService.ipcRenderer.send('update_tray_time_update', {
 			hours: '00',
@@ -223,12 +232,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.timeTrackerService.getTasks(arg).then((res: any) => {
 			this.organization = res.items;
 			this.getProjects(this.organization, arg);
-			this.electronService.ipcRenderer.send('set_project_task', {
-				projectId: arg.projectId,
-				taskId: arg.taskId,
-				note: arg.note,
-				aw: arg.aw
-			});
+			if (arg.projectId) {
+				this.electronService.ipcRenderer.send('set_project_task', {
+					projectId: arg.projectId,
+					taskId: arg.taskId,
+					note: arg.note,
+					aw: arg.aw
+				});
+			} else {
+				console.log('over here');
+				this.projectSelect = '';
+				this.taskSelect = '';
+				this._cdr.detectChanges();
+			}
 		});
 		this._cdr.detectChanges();
 	}

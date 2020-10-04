@@ -77,7 +77,7 @@ export interface IGetTimesheetInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	startDate?: string;
 	endDate?: string;
-	projectId?: string[];
+	projectIds?: string[];
 	clientId?: string[];
 	employeeIds?: string[];
 }
@@ -151,6 +151,7 @@ export enum TimeLogSourceEnum {
 
 export interface ITimeLogFilters
 	extends IBasePerTenantAndOrganizationEntityModel {
+	date?: Date | string;
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];
@@ -287,9 +288,16 @@ export interface ITimerStatus {
 	running: boolean;
 	lastLog?: ITimeLog;
 }
+export interface TimerState {
+	showTimerWindow: boolean;
+	duration: number;
+	current_session_duration: number;
+	running: boolean;
+	timerConfig: ITimerToggleInput;
+}
 
 export interface ITimerToggleInput {
-	//timesheetId?: string;
+	organizationId?: string;
 	projectId?: string;
 	taskId?: string;
 	organizationContactId?: string;
@@ -297,6 +305,7 @@ export interface ITimerToggleInput {
 	logType?: TimeLogType;
 	tags?: string[];
 	isBillable?: boolean;
+	manualTimeSlot?: boolean;
 }
 
 export interface IManualTimeInput {

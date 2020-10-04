@@ -114,11 +114,14 @@ import * as moment from 'moment';
 import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
+import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.module';
 
 @Module({
 	imports: [
 		ServeStaticModule.forRoot({
-			rootPath: environment.isElectron ? path.resolve(environment.gauzyUserPath, 'public') : path.resolve(process.cwd(), 'apps', 'api', 'public'),
+			rootPath: environment.isElectron
+				? path.resolve(environment.gauzyUserPath, 'public')
+				: path.resolve(process.cwd(), 'apps', 'api', 'public'),
 			serveRoot: '/public/'
 		}),
 		MulterModule.register(),
@@ -307,6 +310,10 @@ import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.mod
 					{
 						path: 'role-permissions',
 						module: RolePermissionsModule
+					},
+					{
+						path: '/tenant-setting',
+						module: TenantSettingModule
 					},
 					{
 						path: '/tenant',
@@ -519,6 +526,7 @@ import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.mod
 		RolePermissionsModule,
 		HelpCenterArticleModule,
 		TenantModule,
+		TenantSettingModule,
 		TagModule,
 		SkillModule,
 		LanguageModule,

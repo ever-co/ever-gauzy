@@ -9,6 +9,7 @@ import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands/times
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import * as moment from 'moment';
 import { UpdateEmployeeTotalWorkedHoursCommand } from 'apps/api/src/app/employee/commands';
+import { RequestContext } from 'apps/api/src/app/core/context';
 
 @CommandHandler(TimeLogCreateCommand)
 export class TimeLogCreateHandler
@@ -29,8 +30,11 @@ export class TimeLogCreateHandler
 
 		const newTimeLog = new TimeLog({
 			startedAt: moment.utc(input.startedAt).toDate(),
-			stoppedAt: moment.utc(input.stoppedAt).toDate(),
+			...(input.stoppedAt
+				? { stoppedAt: moment.utc(input.stoppedAt).toDate() }
+				: {}),
 			timesheetId: timesheet.id,
+			organizationId: input.organizationId,
 			employeeId: input.employeeId,
 			projectId: input.projectId || null,
 			taskId: input.taskId || null,
@@ -42,17 +46,20 @@ export class TimeLogCreateHandler
 			source: input.source || TimeLogSourceEnum.BROWSER
 		});
 
-		let timeSlots = this.timeSlotService.generateTimeSlots(
-			input.startedAt,
-			input.stoppedAt
-		);
-		timeSlots = timeSlots.map((slot) => ({
-			...slot,
-			employeeId: input.employeeId,
-			keyboard: 0,
-			mouse: 0,
-			overall: 0
-		}));
+		let timeSlots = [];
+		if (input.stoppedAt) {
+			timeSlots = this.timeSlotService.generateTimeSlots(
+				input.startedAt,
+				input.stoppedAt
+			);
+			timeSlots = timeSlots.map((slot) => ({
+				...slot,
+				employeeId: input.employeeId,
+				keyboard: 0,
+				mouse: 0,
+				overall: 0
+			}));
+		}
 
 		if (input.timeSlots) {
 			/*
@@ -87,6 +94,8 @@ export class TimeLogCreateHandler
 		}
 
 		newTimeLog.timeSlots = await this.timeSlotService.bulkCreate(timeSlots);
+
+		newTimeLog.tenantId = RequestContext.currentTenantId();
 
 		await this.timeLogRepository.save(newTimeLog);
 

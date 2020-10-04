@@ -47,7 +47,6 @@ export const TimerData = {
 			.whereIn('id', data.activityIds)
 			.del()
 			.then((res) => {
-				console.log(res);
 				return res;
 			});
 	},
@@ -86,7 +85,6 @@ export const TimerData = {
 	},
 
 	getWindowEvent: (knex, timerId) => {
-		console.log('update events', timerId);
 		return knex('window-events')
 			.where({
 				timerId: timerId
@@ -114,7 +112,6 @@ export const TimerData = {
 	},
 
 	getLastTimer: async (knex, appInfo) => {
-		console.log('userinfo', appInfo);
 		const result = await knex('timer').where({
 			projectId: appInfo.projectId,
 			userId: appInfo.employeeId

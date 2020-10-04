@@ -99,7 +99,8 @@ export class AppService {
 					mouse: values.mouse,
 					overall: values.overall,
 					startedAt: values.startedAt,
-					activities: values.activities
+					activities: values.activities,
+					timeLogId: values.timeLogId
 				},
 				{
 					headers: headers

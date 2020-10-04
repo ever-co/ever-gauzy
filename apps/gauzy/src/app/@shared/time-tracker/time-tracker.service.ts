@@ -5,7 +5,8 @@ import {
 	ITimerToggleInput,
 	TimeLogType,
 	ITimerStatus,
-	IOrganization
+	IOrganization,
+	TimerState
 } from '@gauzy/models';
 import { toLocal } from 'libs/utils';
 import * as moment from 'moment';
@@ -13,17 +14,10 @@ import { StoreConfig, Store, Query } from '@datorama/akita';
 import { Store as AppStore } from '../../@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 
-export interface TimerState {
-	showTimerWindow: boolean;
-	duration: number;
-	current_session_duration: number;
-	running: boolean;
-	timerConfig: ITimerToggleInput;
-}
-
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {
 		isBillable: true,
+		organizationId: null,
 		projectId: null,
 		taskId: null,
 		organizationContactId: null,
@@ -107,6 +101,14 @@ export class TimeTrackerService implements OnDestroy {
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
+				if (organization) {
+					this.timerStore.update({
+						timerConfig: {
+							...this.timerConfig,
+							organizationId: organization.id
+						}
+					});
+				}
 			});
 	}
 

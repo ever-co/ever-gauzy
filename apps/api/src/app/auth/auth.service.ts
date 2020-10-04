@@ -46,26 +46,7 @@ export class AuthService {
 			return null;
 		}
 
-		const tokenData: any = {
-			id: user.id,
-			employeeId: user.employee ? user.employee.id : null
-		};
-
-		if (user.role) {
-			tokenData.role = user.role.name;
-			if (user.role.rolePermissions) {
-				tokenData.permissions = user.role.rolePermissions.map(
-					(rolePermission: IRolePermission) =>
-						rolePermission.permission
-				);
-			} else {
-				tokenData.permissions = null;
-			}
-		} else {
-			tokenData.role = null;
-		}
-
-		const token = sign(tokenData, env.JWT_SECRET, {}); // Never expires
+		const { token } = await this.createToken(user);
 
 		delete user.hash;
 
@@ -84,12 +65,8 @@ export class AuthService {
 			relations: ['role', 'employee']
 		});
 
-		let token: string;
-
 		if (user && user.id) {
-			const newToken = await this.createToken(user);
-			token = newToken.token;
-
+			const { token } = await this.createToken(user);
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
@@ -255,11 +232,12 @@ export class AuthService {
 				);
 				if (userExist) {
 					const user = await this.userService.getUserByEmail(value);
-					const userId = user.id;
-					const userRole = user.role ? user.role.name : '';
-					const payload = { id: userId, role: userRole };
-					const jwt: string = sign(payload, env.JWT_SECRET, {});
-					response = { success: true, authData: { jwt, userId } };
+					const { token } = await this.createToken(user);
+
+					response = {
+						success: true,
+						authData: { jwt: token, userId: user.id }
+					};
 				}
 			}
 			return response;
@@ -271,8 +249,34 @@ export class AuthService {
 		}
 	}
 
-	async createToken(user: { id?: string }): Promise<{ token: string }> {
-		const token: string = sign({ id: user.id }, env.JWT_SECRET, {});
+	async createToken(user: Partial<User>): Promise<{ token: string }> {
+		if (!user.role || !user.employee) {
+			user = await this.userService.findOne(user.id, {
+				relations: ['role', 'role.rolePermissions', 'employee']
+			});
+		}
+
+		const payload: any = {
+			id: user.id,
+			tenantId: user.tenantId,
+			employeeId: user.employee ? user.employee.id : null
+		};
+
+		if (user.role) {
+			payload.role = user.role.name;
+			if (user.role.rolePermissions) {
+				payload.permissions = user.role.rolePermissions.map(
+					(rolePermission: IRolePermission) =>
+						rolePermission.permission
+				);
+			} else {
+				payload.permissions = null;
+			}
+		} else {
+			payload.role = null;
+		}
+
+		const token: string = sign(payload, env.JWT_SECRET, {});
 		return { token };
 	}
 

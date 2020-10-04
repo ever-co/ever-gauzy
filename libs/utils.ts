@@ -100,3 +100,18 @@ export function isJsObject(object: any) {
 		object !== null && object !== undefined && typeof object === 'object'
 	);
 }
+
+export function isEmpty(value: any) {
+	if (value instanceof Array) {
+		value = value.filter((val) => !isEmpty(val));
+		return value.length === 0;
+	} else if (value && typeof value === 'object') {
+		return Object.keys(value).length === 0;
+	} else {
+		return (
+			!value ||
+			(value + '').toLocaleLowerCase() === 'null' ||
+			(value + '').toLocaleLowerCase() === 'undefined'
+		);
+	}
+}

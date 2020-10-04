@@ -74,7 +74,6 @@ export function ipcMainHandler(store, startServer, knex) {
 	});
 
 	ipcMain.on('return_time_sheet', (event, arg) => {
-		console.log('timesheet return', arg);
 		TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
 			timeSheetId: arg.timeSheetId,
@@ -82,10 +81,10 @@ export function ipcMainHandler(store, startServer, knex) {
 		});
 	});
 
-	ipcMain.on('return_time_log', (event, arg) => {
+	ipcMain.on('return_toggle_api', (event, arg) => {
 		TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
-			timeLogId: arg.timeLogId
+			timeLogId: arg.result.id
 		});
 	});
 
@@ -94,14 +93,12 @@ export function ipcMainHandler(store, startServer, knex) {
 	});
 
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
-		console.log('time readi');
 		const auth = LocalStore.getStore('auth');
 		if (auth) {
 			const lastTime: any = await TimerData.getLastTimer(
 				knex,
 				LocalStore.beforeRequestParams()
 			);
-			console.log('last', lastTime);
 			event.sender.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId:
@@ -147,7 +144,7 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('stop_timer', (event, arg) => {
-		timerHandler.stopTime(setupWindow, timeTrackerWindow, knex);
+		timerHandler.stopTime(setupWindow, timeTrackerWindow, knex, arg.quitApp);
 	});
 
 	ipcMain.on('return_time_slot', (event, arg) => {
@@ -165,7 +162,7 @@ export function ipcTimer(
 				});
 				break;
 			case 'ScreenshotDesktopLib':
-				captureScreen(timeTrackerWindow, NotificationWindow, arg.timeSlotId);
+				captureScreen(timeTrackerWindow, NotificationWindow, arg.timeSlotId, arg.quitApp);
 				break;
 			default:
 				break;

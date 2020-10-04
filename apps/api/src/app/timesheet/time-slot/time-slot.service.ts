@@ -62,12 +62,12 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			],
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				if (request.startDate && request.endDate) {
-					const startDate = moment(request.startDate).format(
-						'YYYY-MM-DD HH:mm:ss'
-					);
-					const endDate = moment(request.endDate).format(
-						'YYYY-MM-DD HH:mm:ss'
-					);
+					const startDate = moment
+						.utc(request.startDate)
+						.format('YYYY-MM-DD HH:mm:ss');
+					const endDate = moment
+						.utc(request.endDate)
+						.format('YYYY-MM-DD HH:mm:ss');
 					qb.andWhere(
 						`"${qb.alias}"."startedAt" Between :startDate AND :endDate`,
 						{
@@ -86,23 +86,20 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 				}
 
 				//check organization and tenant for timelogs
-				let { organizationId = null, tenantId = null } = request;
-				if (typeof organizationId === 'string') {
+				if (request.organizationId) {
 					qb.andWhere(
 						`"${qb.alias}"."organizationId" = :organizationId`,
 						{
-							organizationId
+							organizationId: request.organizationId
 						}
 					);
 				}
-				//if not found tenantId then get from current user session
-				if (typeof tenantId !== 'string') {
-					const user = RequestContext.currentUser();
-					tenantId = user.tenantId;
+				const tenantId = RequestContext.currentTenantId();
+				if (tenantId) {
+					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
 				}
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
 
 				if (request.projectIds) {
 					qb.andWhere('"timeLog"."projectId" IN (:...projectIds)', {

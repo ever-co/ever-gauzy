@@ -146,7 +146,12 @@ export class EditTimeLogModalComponent
 			});
 
 		merge(
-			this.form.get('employeeId').valueChanges,
+			this.form.get('employeeId').valueChanges.pipe(
+				tap((employeeId) => {
+					this.employee = employeeId;
+					return employeeId;
+				})
+			),
 			this.form.get('selectedRange').valueChanges.pipe(
 				tap((value: IDateRange) => {
 					this.selectedRange = value;
@@ -252,8 +257,12 @@ export class EditTimeLogModalComponent
 		const requestData = {
 			..._.omit(this.form.value, ['selectedRange']),
 			startedAt,
-			stoppedAt
+			stoppedAt,
+			organizationId: this.organization.id
 		};
+		if (!requestData.employeeId) {
+			requestData.employeeId = this.store.user.employeeId;
+		}
 		this.loading = true;
 		let request;
 		if (this.mode === 'create') {

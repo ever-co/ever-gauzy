@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
-import { ITask } from '@gauzy/models';
+import { ITask, TaskStatusEnum } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from '../../../../@core/services/tasks.service';
-import { NbDialogService } from '@nebular/theme';
-import { AddTaskDialogComponent } from '../../add-task-dialog/add-task-dialog.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-task-selector',
@@ -54,13 +54,14 @@ export class TaskSelectorComponent
 		return this.val;
 	}
 
-	tasks: ITask[];
+	tasks: ITask[] = [];
 	val: any;
 	loadTasks$: Subject<any> = new Subject();
 
 	constructor(
 		private tasksService: TasksService,
-		private dialogService: NbDialogService
+		private toastrService: ToastrService,
+		private store: Store
 	) {}
 
 	onChange: any = () => {};
@@ -106,24 +107,28 @@ export class TaskSelectorComponent
 		this.disabled = isDisabled;
 	}
 
-	createNew = (name: string) => {
-		this.dialogService
-			.open(AddTaskDialogComponent, {
-				context: {
-					createTask: true,
-					task: {
-						title: name,
-						projectId: this.projectId
-					}
-				}
-			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((task) => {
-				if (task) {
-					this.tasks = this.tasks.concat(task);
-					this.taskId = task.id;
-				}
-			});
+	createNew = async (title: string) => {
+		const organizationId = this.store.selectedOrganization.id;
+		try {
+			const member: any = {
+				id: this.employeeId || this.store.user.employeeId
+			};
+
+			const task = await this.tasksService
+				.createTask({
+					title,
+					organizationId: organizationId,
+					members: [member],
+					status: TaskStatusEnum.IN_PROGRESS,
+					...(this.projectId ? { projectId: this.projectId } : {})
+				})
+				.toPromise();
+
+			this.tasks = this.tasks.concat(task);
+			this.taskId = task.id;
+		} catch (error) {
+			this.toastrService.error(error);
+		}
 	};
 
 	ngOnDestroy() {}

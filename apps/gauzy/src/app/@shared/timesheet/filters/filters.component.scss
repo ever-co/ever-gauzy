@@ -24,6 +24,17 @@ $status: 'basic';
       bottom: 0;
     }
   }
+  .filter-item-list {
+    .filter-item {
+      max-width: 250px;
+    }
+    .select-box,
+    nb-select {
+      max-width: 100%;
+      width: 100%;
+      display: block;
+    }
+  }
   .activity-level-filter {
     background-color: nb-theme(select-outline-#{$status}-background-color);
     border-color: nb-theme(select-outline-#{$status}-border-color);

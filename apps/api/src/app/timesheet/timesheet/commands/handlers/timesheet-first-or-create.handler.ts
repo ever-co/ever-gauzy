@@ -4,13 +4,17 @@ import { Between, Repository } from 'typeorm';
 import { TimesheetFirstOrCreateCommand } from '../timesheet-first-or-create.command';
 import { Timesheet } from '../../../timesheet.entity';
 import * as moment from 'moment';
+import { RequestContext } from 'apps/api/src/app/core/context';
+import { Employee } from 'apps/api/src/app/employee/employee.entity';
 
 @CommandHandler(TimesheetFirstOrCreateCommand)
 export class TimesheetFirstOrCreateHandler
 	implements ICommandHandler<TimesheetFirstOrCreateCommand> {
 	constructor(
 		@InjectRepository(Timesheet)
-		private readonly timeSheetRepository: Repository<Timesheet>
+		private readonly timeSheetRepository: Repository<Timesheet>,
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>
 	) {}
 
 	public async execute(
@@ -28,9 +32,17 @@ export class TimesheetFirstOrCreateHandler
 			}
 		});
 
+		let organizationId: string;
+		if (!command.organizationId) {
+			const employee = await this.employeeRepository.findOne(employeeId);
+			organizationId = employee.organizationId;
+		}
+
 		if (!timesheet) {
 			timesheet = await this.timeSheetRepository.save({
+				tenantId: RequestContext.currentTenantId(),
 				employeeId: employeeId,
+				organizationId,
 				startedAt: from_date.toISOString(),
 				stoppedAt: to_date.toISOString()
 			});

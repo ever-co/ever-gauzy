@@ -101,7 +101,8 @@ const showCapturedToRenderer = (
 	timeTrackerWindow,
 	NotificationWindow,
 	timeSlotId,
-	thumbUrl
+	thumbUrl,
+	quitApp
 ) => {
 	const sizes = screen.getPrimaryDisplay().size;
 	timeTrackerWindow.webContents.send('show_last_capture', {
@@ -142,7 +143,8 @@ const showCapturedToRenderer = (
 	}, 1000);
 	setTimeout(() => {
 		NotificationWindow.close();
-	}, 6000);
+		if (quitApp) app.quit();
+	}, 4000);
 };
 
 export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
@@ -176,15 +178,17 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 			timeTrackerWindow,
 			NotificationWindow,
 			arg.timeSlotId,
-			captured[0].thumbUrl
+			captured[0].thumbUrl,
+			arg.quitApp
 		);
+		
 	} catch (error) {
-		console.log('error scree', error);
+		console.log('error upload', error);
 	}
 }
 
 // method using screenshot-desktop lib
-export async function captureScreen(timeTrackerWindow, notificationWindow, timeSlotId) {
+export async function captureScreen(timeTrackerWindow, notificationWindow, timeSlotId, quitApp) {
 	try {
 		const displays = await screenshot.listDisplays();
 		const activeWindow = detectActiveWindow();
@@ -199,7 +203,8 @@ export async function captureScreen(timeTrackerWindow, notificationWindow, timeS
 		}))
 		takeshot(timeTrackerWindow, {
 			timeSlotId: timeSlotId,
-			screens: allDisplays
+			screens: allDisplays,
+			quitApp
 		}, notificationWindow);
 	} catch (error) {
 		console.log('error', error);
