@@ -117,7 +117,9 @@ export class AuthStrategy extends NbAuthStrategy {
 						this.electronService.ipcRenderer.send('auth_success', {
 							token: token,
 							userId: user.id,
-							employeeId: user.employee ? user.employee.id : null
+							employeeId: user.employee ? user.employee.id : null,
+							organizationId: user.employee ? user.employee.organizationId : null,
+							tenantId: user.tenantId ? user.tenantId : null
 						});
 					} catch (error) {}
 				}

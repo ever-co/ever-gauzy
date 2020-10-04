@@ -138,7 +138,7 @@ export default class TrayIcon {
 			}
 		];
 
-		if (auth) contextMenu = menuAuth;
+		if (auth && auth.employeeId) contextMenu = menuAuth;
 		this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 
 		ipcMain.on('update_tray_start', (event, arg) => {
@@ -171,7 +171,9 @@ export default class TrayIcon {
 			store.set({
 				auth: arg
 			});
-			contextMenu = menuAuth;
+			if (arg.employeeId) {
+				contextMenu = menuAuth;
+			}
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
 

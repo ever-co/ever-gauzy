@@ -24,6 +24,8 @@ export const LocalStore = {
 				employeeId: auth ? auth.employeeId : null,
 				projectId: projectInfo ? projectInfo.projectId : null,
 				taskId: projectInfo ? projectInfo.taskId : null,
+				organizationId: auth ? auth.organizationId : null,
+				tenantId: auth ? auth.tenantId : null,
 				note: projectInfo ? projectInfo.note : null,
 				aw: projectInfo ? projectInfo.aw : null
 			};

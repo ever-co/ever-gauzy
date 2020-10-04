@@ -53,6 +53,8 @@ const uploadScreenShot = async (img, name, timeSlotId) => {
 			filename: fileName
 		});
 		form.append('timeSlotId', timeSlotId);
+		form.append('tenantId', appInfo.tenantId);
+		form.append('organizationId', appInfo.organizationId);
 		const response = await fetch(
 			`${appInfo.apiHost}/api/timesheet/screenshot`,
 			{

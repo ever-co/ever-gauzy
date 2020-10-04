@@ -89,7 +89,9 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 					userId: this.user.id,
 					employeeId: this.user.employee
 						? this.user.employee.id
-						: null
+						: null,
+					organizationId: this.user.employee ? this.user.employee.organizationId : null,
+					tenantId: this.user.tenantId ? this.user.tenantId : null
 				});
 			}
 		} catch (error) {}

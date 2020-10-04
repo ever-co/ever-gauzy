@@ -270,7 +270,7 @@ export class StatisticService {
 						`duration`
 					)
 					.addSelect(
-						'EXTRACT(DOW FROM "timeLogs"."startedAt")',
+						`${environment.database.type === 'sqlite' ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`,
 						'day'
 					)
 					.where({ id: member.id })
@@ -282,7 +282,7 @@ export class StatisticService {
 						}
 					)
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
-					.addGroupBy(`EXTRACT(DOW FROM "timeLogs"."startedAt")`)
+					.addGroupBy(`${environment.database.type === 'sqlite' ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`)
 					.getRawMany();
 			}
 		}
