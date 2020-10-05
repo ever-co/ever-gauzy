@@ -196,7 +196,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	startTime() {
-		console.log('project select', this.projectSelect);
 		if (!this.projectSelect) this.errors.project = true;
 		if (!this.taskSelect) this.errors.task = true;
 		if (!this.errors.task && !this.errors.project) {
@@ -215,7 +214,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	stopTimer() {
-		this.electronService.ipcRenderer.send('stop_timer', { quitApp: this.quitApp });
+		this.electronService.ipcRenderer.send('stop_timer', {
+			quitApp: this.quitApp
+		});
 		this.electronService.ipcRenderer.send('update_tray_stop');
 		this.electronService.ipcRenderer.send('update_tray_time_update', {
 			hours: '00',

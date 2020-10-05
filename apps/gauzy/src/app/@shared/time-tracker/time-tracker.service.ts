@@ -169,11 +169,11 @@ export class TimeTrackerService implements OnDestroy {
 			.toPromise();
 	}
 
-	toggleTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		return this.http
-			.post<ITimeLog>('/api/timesheet/timer/toggle', request)
-			.toPromise();
-	}
+	// toggleTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+	// 	return this.http
+	// 		.post<ITimeLog>('/api/timesheet/timer/toggle', request)
+	// 		.toPromise();
+	// }
 
 	openAndStartTimer() {
 		this.showTimerWindow = true;
@@ -188,12 +188,16 @@ export class TimeTrackerService implements OnDestroy {
 	toggle() {
 		if (this.interval) {
 			this.turnOffTimer();
+			return this.http
+				.post<ITimeLog>('/api/timesheet/timer/stop', this.timerConfig)
+				.toPromise();
 		} else {
 			this.current_session_duration = 0;
 			this.turnOnTimer();
+			return this.http
+				.post<ITimeLog>('/api/timesheet/timer/start', this.timerConfig)
+				.toPromise();
 		}
-
-		this.toggleTimer(this.timerConfig);
 	}
 
 	turnOnTimer() {

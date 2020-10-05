@@ -46,4 +46,34 @@ export class TimerController {
 	async toggleTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
 		return this.timerService.toggleTimeLog(entity);
 	}
+
+	@ApiOperation({ summary: 'Start timer' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The timer has been successfully On.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('/start')
+	async startTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
+		return this.timerService.startTimer(entity);
+	}
+
+	@ApiOperation({ summary: 'Stop timer' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The timer has been successfully Off.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('/stop')
+	async stopTimer(): Promise<ITimeLog> {
+		return this.timerService.stopTimer();
+	}
 }
