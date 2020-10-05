@@ -16,7 +16,8 @@ import {
 	ITimeSlotStatistics,
 	IProjectsStatistics,
 	IGetManualTimesStatistics,
-	IManualTimesStatistics
+	IManualTimesStatistics,
+	TimeLogType
 } from '@gauzy/models';
 import { TimeSlot } from '../time-slot.entity';
 import { Employee } from '../../employee/employee.entity';
@@ -504,6 +505,7 @@ export class StatisticService {
 				relations: ['project', 'employee', 'employee.user'],
 				where: {
 					employeeId: In(employeeIds),
+					logType: TimeLogType.MANUAL,
 					startedAt: Between(start, end)
 				},
 				take: 5,

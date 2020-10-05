@@ -72,7 +72,52 @@ export class TimerService {
 		return stauts;
 	}
 
-	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
+	async startTimer(request: ITimerToggleInput): Promise<TimeLog> {
+		const user = RequestContext.currentUser();
+		const lastLog = await this.timeLogRepository.findOne({
+			where: {
+				employeeId: user.employeeId,
+				stoppedAt: IsNull()
+			},
+			order: {
+				startedAt: 'DESC'
+			}
+		});
+
+		if (lastLog) {
+			await this.stopTimer();
+		}
+
+		let organizationId;
+		if (!request.organizationId) {
+			const employee = await this.employeeRepository.findOne(
+				user.employeeId
+			);
+			organizationId = employee.organizationId;
+		} else {
+			organizationId = request.organizationId;
+		}
+
+		const newTimeLogInput = {
+			organizationId,
+			tenantId: RequestContext.currentTenantId(),
+			startedAt: moment.utc().toDate(),
+			duration: 0,
+			employeeId: user.employeeId,
+			projectId: request.projectId || null,
+			taskId: request.taskId || null,
+			organizationContactId: request.organizationContactId || null,
+			logType: request.logType || TimeLogType.TRACKED,
+			description: request.description || '',
+			isBillable: request.isBillable || false
+		};
+
+		return await this.commandBus.execute(
+			new TimeLogCreateCommand(newTimeLogInput)
+		);
+	}
+
+	async stopTimer(): Promise<TimeLog> {
 		const user = RequestContext.currentUser();
 		let lastLog = await this.timeLogRepository.findOne({
 			where: {
@@ -84,68 +129,116 @@ export class TimerService {
 			}
 		});
 
-		if (!lastLog) {
-			let organizationId;
-			if (!request.organizationId) {
-				const employee = await this.employeeRepository.findOne(
-					user.employeeId
-				);
-				organizationId = employee.organizationId;
-			} else {
-				organizationId = request.organizationId;
-			}
+		const stoppedAt = new Date();
+		if (lastLog.startedAt === stoppedAt) {
+			await this.timeLogRepository.delete(lastLog.id);
+			return;
+		}
 
-			const newTimeLogInput = {
-				organizationId,
-				tenantId: RequestContext.currentTenantId(),
-				startedAt: moment.utc().toDate(),
-				duration: 0,
+		lastLog = await this.commandBus.execute(
+			new TimeLogUpdateCommand({ stoppedAt }, lastLog.id)
+		);
+
+		const conflictInput: IGetTimeLogConflictInput = {
+			ignoreId: lastLog.id,
+			startDate: lastLog.startedAt,
+			endDate: lastLog.stoppedAt,
+			employeeId: lastLog.employeeId
+		};
+
+		const conflict = await this.commandBus.execute(
+			new IGetConflictTimeLogCommand(conflictInput)
+		);
+
+		const times: IDateRange = {
+			start: new Date(lastLog.startedAt),
+			end: new Date(lastLog.stoppedAt)
+		};
+
+		for (let index = 0; index < conflict.length; index++) {
+			await this.commandBus.execute(
+				new DeleteTimeSpanCommand(times, conflict[index])
+			);
+		}
+		return lastLog;
+	}
+
+	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
+		const user = RequestContext.currentUser();
+		const lastLog = await this.timeLogRepository.findOne({
+			where: {
 				employeeId: user.employeeId,
-				projectId: request.projectId || null,
-				taskId: request.taskId || null,
-				organizationContactId: request.organizationContactId || null,
-				logType: request.logType || TimeLogType.TRACKED,
-				description: request.description || '',
-				isBillable: request.isBillable || false
-			};
+				stoppedAt: IsNull()
+			},
+			order: {
+				startedAt: 'DESC'
+			}
+		});
 
-			return await this.commandBus.execute(
-				new TimeLogCreateCommand(newTimeLogInput)
-			);
+		if (!lastLog) {
+			// let organizationId;
+			// if (!request.organizationId) {
+			// 	const employee = await this.employeeRepository.findOne(
+			// 		user.employeeId
+			// 	);
+			// 	organizationId = employee.organizationId;
+			// } else {
+			// 	organizationId = request.organizationId;
+			// }
+
+			// const newTimeLogInput = {
+			// 	organizationId,
+			// 	tenantId: RequestContext.currentTenantId(),
+			// 	startedAt: moment.utc().toDate(),
+			// 	duration: 0,
+			// 	employeeId: user.employeeId,
+			// 	projectId: request.projectId || null,
+			// 	taskId: request.taskId || null,
+			// 	organizationContactId: request.organizationContactId || null,
+			// 	logType: request.logType || TimeLogType.TRACKED,
+			// 	description: request.description || '',
+			// 	isBillable: request.isBillable || false
+			// };
+
+			// return await this.commandBus.execute(
+			// 	new TimeLogCreateCommand(newTimeLogInput)
+			// );
+			return this.startTimer(request);
 		} else {
-			const stoppedAt = new Date();
-			if (lastLog.startedAt === stoppedAt) {
-				await this.timeLogRepository.delete(lastLog.id);
-				return;
-			}
+			// const stoppedAt = new Date();
+			// if (lastLog.startedAt === stoppedAt) {
+			// 	await this.timeLogRepository.delete(lastLog.id);
+			// 	return;
+			// }
 
-			lastLog = await this.commandBus.execute(
-				new TimeLogUpdateCommand({ stoppedAt }, lastLog.id)
-			);
+			// lastLog = await this.commandBus.execute(
+			// 	new TimeLogUpdateCommand({ stoppedAt }, lastLog.id)
+			// );
 
-			const conflictInput: IGetTimeLogConflictInput = {
-				ignoreId: lastLog.id,
-				startDate: lastLog.startedAt,
-				endDate: lastLog.stoppedAt,
-				employeeId: lastLog.employeeId
-			};
+			// const conflictInput: IGetTimeLogConflictInput = {
+			// 	ignoreId: lastLog.id,
+			// 	startDate: lastLog.startedAt,
+			// 	endDate: lastLog.stoppedAt,
+			// 	employeeId: lastLog.employeeId
+			// };
 
-			const conflict = await this.commandBus.execute(
-				new IGetConflictTimeLogCommand(conflictInput)
-			);
+			// const conflict = await this.commandBus.execute(
+			// 	new IGetConflictTimeLogCommand(conflictInput)
+			// );
 
-			const times: IDateRange = {
-				start: new Date(lastLog.startedAt),
-				end: new Date(lastLog.stoppedAt)
-			};
+			// const times: IDateRange = {
+			// 	start: new Date(lastLog.startedAt),
+			// 	end: new Date(lastLog.stoppedAt)
+			// };
 
-			for (let index = 0; index < conflict.length; index++) {
-				await this.commandBus.execute(
-					new DeleteTimeSpanCommand(times, conflict[index])
-				);
-			}
+			// for (let index = 0; index < conflict.length; index++) {
+			// 	await this.commandBus.execute(
+			// 		new DeleteTimeSpanCommand(times, conflict[index])
+			// 	);
+			// }
 
-			return lastLog;
+			// return lastLog;
+			return this.stopTimer();
 		}
 	}
 }

@@ -94,8 +94,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
-				console.log('this.filters', this.logRequest);
-
 				this.getLogs();
 			});
 	}

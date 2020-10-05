@@ -234,13 +234,6 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	}
 
 	hasFilter(): boolean {
-		console.log(
-			this._filters.employeeIds.length >= 2,
-			this._filters.source.length >= 1,
-			this._filters.logType.length >= 1,
-			this._filters.projectIds.length >= 1,
-			this.activityLevel.end < 100 || this.activityLevel.start > 0
-		);
 		return (
 			this._filters.employeeIds.length >= 2 ||
 			this._filters.source.length >= 1 ||
