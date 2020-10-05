@@ -5,7 +5,6 @@ import {
 	IEditEntityByMemberInput,
 	IEmployee
 } from '@gauzy/models';
-import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-edit-employee-membership',

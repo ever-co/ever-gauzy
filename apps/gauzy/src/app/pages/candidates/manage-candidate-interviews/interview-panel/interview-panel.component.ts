@@ -12,7 +12,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/models';
-import { takeUntil, first, debounceTime } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
