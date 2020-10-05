@@ -36,6 +36,7 @@ export class TimeOffPolicyService extends CrudService<TimeOffPolicy> {
 
 		policy.name = entity.name;
 		policy.organizationId = entity.organizationId;
+		policy.tenantId = entity.tenantId;
 		policy.requiresApproval = entity.requiresApproval;
 		policy.paid = entity.paid;
 
@@ -61,6 +62,7 @@ export class TimeOffPolicyService extends CrudService<TimeOffPolicy> {
 
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
+			policy.tenantId = entity.tenantId;
 			policy.requiresApproval = entity.requiresApproval;
 			policy.paid = entity.paid;
 

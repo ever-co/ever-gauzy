@@ -10,19 +10,19 @@ export interface ITimeOffPolicy
 	paid?: boolean;
 }
 
-export interface ITimeOffPolicyCreateInput {
+export interface ITimeOffPolicyCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
-	organizationId?: string;
 	name?: string;
 	requiresApproval?: boolean;
 	paid?: boolean;
 }
 
-export interface ITimeOffPolicyUpdateInput {
+export interface ITimeOffPolicyUpdateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
-	organizationId?: string;
 	name?: string;
 	requiresApproval?: boolean;
 	paid?: boolean;
@@ -47,6 +47,8 @@ export interface ITimeOff extends IBasePerTenantAndOrganizationEntityModel {
 	status?: string;
 	isHoliday?: boolean;
 	documentUrl?: string;
+	fullName?: string;
+	imageUrl?: string;
 }
 
 export interface ITimeOffFindInput
@@ -82,4 +84,11 @@ export enum StatusTypesMapRequestApprovalEnum {
 	Requested = 1,
 	Approved = 2,
 	Denied = 3
+}
+export interface ITimeOffPolicyVM {
+	id: string;
+	name: string;
+	requiresApproval: boolean;
+	paid: boolean;
+	employees: IEmployee[];
 }

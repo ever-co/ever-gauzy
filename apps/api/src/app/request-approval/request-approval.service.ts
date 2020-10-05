@@ -7,11 +7,12 @@ import {
 	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository } from 'typeorm';
+import { Brackets, FindManyOptions, Repository } from 'typeorm';
 import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum,
-	IRequestApprovalCreateInput
+	IRequestApprovalCreateInput,
+	IRequestApprovalFindInput
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
@@ -37,7 +38,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 
 	async findAllRequestApprovals(
 		filter: FindManyOptions<RequestApproval>,
-		organizationId: string
+		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
 		let requestApproval = this.requestApprovalRepository
 			.createQueryBuilder('request_approval')
@@ -65,16 +66,44 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			});
 		}
 
+		const { organizationId, tenantId } = findInput;
 		const [items, total] = await requestApproval
-			.where('approvalPolicy.organizationId =:organizationId', {
-				organizationId
-			})
-			.orWhere('time_off_request.organizationId =:organizationId', {
-				organizationId
-			})
-			.orWhere('equipment_sharing.organizationId =:organizationId', {
-				organizationId
-			})
+			.where(
+				new Brackets((sqb) => {
+					sqb.where(
+						'approvalPolicy.organizationId =:organizationId',
+						{
+							organizationId
+						}
+					).andWhere('approvalPolicy.tenantId =:tenantId', {
+						tenantId
+					});
+				})
+			)
+			.orWhere(
+				new Brackets((sqb) => {
+					sqb.where(
+						'time_off_request.organizationId =:organizationId',
+						{
+							organizationId
+						}
+					).andWhere('time_off_request.tenantId =:tenantId', {
+						tenantId
+					});
+				})
+			)
+			.orWhere(
+				new Brackets((sqb) => {
+					sqb.where(
+						'equipment_sharing.organizationId =:organizationId',
+						{
+							organizationId
+						}
+					).andWhere('equipment_sharing.tenantId =:tenantId', {
+						tenantId
+					});
+				})
+			)
 			.getManyAndCount();
 
 		return { items, total };
@@ -82,12 +111,16 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 
 	async findRequestApprovalsByEmployeeId(
 		id: string,
-		relations: string[]
+		relations: string[],
+		findInput?: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
 		try {
+			const { organizationId, tenantId } = findInput;
 			const result = await this.requestApprovalRepository.find({
 				where: {
-					createdBy: id
+					createdBy: id,
+					organizationId,
+					tenantId
 				}
 			});
 
@@ -164,6 +197,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.name = entity.name;
 			requestApproval.min_count = entity.min_count;
 			requestApproval.tags = entity.tags;
+			requestApproval.organizationId = entity.organizationId;
+			requestApproval.tenantId = entity.tenantId;
 			if (entity.employeeApprovals) {
 				const employees = await this.employeeRepository.findByIds(
 					entity.employeeApprovals,
@@ -177,6 +212,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 					const raEmployees = new RequestApprovalEmployee();
 					raEmployees.employeeId = employee.id;
 					raEmployees.employee = employee;
+					raEmployees.organizationId = entity.organizationId;
+					raEmployees.tenantId = entity.tenantId;
 					raEmployees.status =
 						RequestApprovalStatusTypesEnum.REQUESTED;
 					requestApprovalEmployees.push(raEmployees);
@@ -196,6 +233,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 					raTeam.teamId = team.id;
 					raTeam.team = team;
 					raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
+					raTeam.organizationId = entity.organizationId;
+					raTeam.tenantId = entity.tenantId;
 					requestApprovalTeams.push(raTeam);
 				});
 
@@ -223,6 +262,9 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			requestApproval.approvalPolicyId = entity.approvalPolicyId;
 			requestApproval.min_count = entity.min_count;
 			requestApproval.tags = entity.tags;
+			requestApproval.organizationId = entity.organizationId;
+			requestApproval.tenantId = entity.tenantId;
+
 			await this.repository
 				.createQueryBuilder()
 				.delete()
@@ -250,6 +292,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 					const raEmployees = new RequestApprovalEmployee();
 					raEmployees.employeeId = employee.id;
 					raEmployees.employee = employee;
+					raEmployees.organizationId = entity.organizationId;
+					raEmployees.tenantId = entity.tenantId;
 					raEmployees.status =
 						RequestApprovalStatusTypesEnum.REQUESTED;
 					requestApprovalEmployees.push(raEmployees);
@@ -269,6 +313,8 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 					raTeam.teamId = team.id;
 					raTeam.team = team;
 					raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
+					raTeam.organizationId = entity.organizationId;
+					raTeam.tenantId = entity.tenantId;
 					requestApprovalTeams.push(raTeam);
 				});
 

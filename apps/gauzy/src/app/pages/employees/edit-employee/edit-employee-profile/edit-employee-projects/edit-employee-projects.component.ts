@@ -1,48 +1,62 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	IEditEntityByMemberInput,
 	IEmployee,
+	IOrganization,
 	IOrganizationProject
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-edit-employee-departments',
 	templateUrl: './edit-employee-projects.component.html'
 })
 export class EditEmployeeProjectsComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
-
+	implements OnInit, OnDestroy {
 	organizationProjects: IOrganizationProject[] = [];
 	employeeProjects: IOrganizationProject[] = [];
 
 	selectedEmployee: IEmployee;
+	organization: IOrganization;
+	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private readonly employeeStore: EmployeeStore,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				this.organization = organization;
+			});
+
 		this.employeeStore.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((emp) => {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
-					this.loadDepartments();
+					this.loadProjects();
 				}
 			});
+	}
+
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 
 	async submitForm(formInput: IEditEntityByMemberInput, removed: boolean) {
@@ -51,7 +65,7 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 				await this.organizationProjectsService.updateByEmployee(
 					formInput
 				);
-				this.loadDepartments();
+				this.loadProjects();
 				this.toastrService.primary(
 					this.getTranslation(
 						removed
@@ -69,34 +83,38 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async loadDepartments() {
-		await this.loadSelectedEmployeeDepartments();
-		const orgDepartments = await this.getOrganizationDepartments();
-		const selectedDepartmentIds = this.employeeProjects.map((d) => d.id);
-		this.organizationProjects = orgDepartments.filter(
-			(dep) => selectedDepartmentIds.indexOf(dep.id) < 0
-		);
+	private async loadProjects() {
+		await this.loadSelectedEmployeeProjects();
+		const orgProjects = await this.getOrganizationProjects();
+		const selectedProjectIds = this.employeeProjects.map((d) => d.id);
+		if (orgProjects) {
+			this.organizationProjects = orgProjects.filter(
+				(project) => selectedProjectIds.indexOf(project.id) < 0
+			);
+		}
 	}
 
-	private async loadSelectedEmployeeDepartments() {
-		if (!this.selectedEmployee) {
+	private async loadSelectedEmployeeProjects() {
+		if (!this.organization) {
 			return;
 		}
-
 		this.employeeProjects = await this.organizationProjectsService.getAllByEmployee(
 			this.selectedEmployee.id
 		);
 	}
 
-	private async getOrganizationDepartments() {
-		if (!this.selectedEmployee.orgId) {
+	private async getOrganizationProjects() {
+		if (!this.organization) {
 			return;
 		}
-
-		const res = await this.organizationProjectsService.getAll([], {
-			organizationId: this.selectedEmployee.orgId
-		});
-
-		return res ? res.items : [];
+		const { id: organizationId, tenantId } = this.organization;
+		const { items = [] } = await this.organizationProjectsService.getAll(
+			[],
+			{
+				organizationId,
+				tenantId
+			}
+		);
+		return items;
 	}
 }

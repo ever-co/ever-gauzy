@@ -5,7 +5,8 @@ import {
 	IApprovalPolicy,
 	IEmployee,
 	IApprovalPolicyCreateInput,
-	ApprovalPolicyTypesEnum
+	ApprovalPolicyTypesEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
@@ -30,6 +31,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	// TODO: remove from here, we should never use TenantId in the client app
 	tenantId: string;
 	isHasType = true;
+	organization: IOrganization;
 
 	constructor(
 		public dialogRef: NbDialogRef<ApprovalPolicyMutationComponent>,

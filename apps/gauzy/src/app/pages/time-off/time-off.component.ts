@@ -4,7 +4,8 @@ import {
 	StatusTypesEnum,
 	PermissionsEnum,
 	ITimeOff,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { first, takeUntil } from 'rxjs/operators';
@@ -49,6 +50,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 	showActions = false;
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
+	organization: IOrganization;
 
 	@ViewChild('timeOffTable') timeOffTable;
 
@@ -106,6 +108,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
+					this.organization = org;
 					this._selectedOrganizationId = org.id;
 					this._loadTableData(this._selectedOrganizationId);
 				}
@@ -120,7 +123,6 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 
 		this._loadSmartTableSettings();
-		this._loadTableData(this._selectedOrganizationId);
 	}
 
 	setView() {
@@ -154,7 +156,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	applyTranslationOnSmartTable() {
-		this.translate.onLangChange.subscribe(() => {
+		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
 			this._loadSmartTableSettings();
 		});
 	}
@@ -450,12 +452,14 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	private _loadTableData(orgId?: string) {
+		const { tenantId } = this.organization;
 		this.timeOffService
 			.getAllTimeOffRecords(
 				['employees', 'employees.user', 'policy'],
 				{
 					organizationId: orgId,
-					employeeId: this.selectedEmployeeId || ''
+					tenantId,
+					employeeId: this.selectedEmployeeId || null
 				},
 				this.selectedDate || null
 			)

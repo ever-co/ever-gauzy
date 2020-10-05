@@ -13,8 +13,6 @@ import { Subject } from 'rxjs';
 	styleUrls: ['./edit-employee-membership-form.component.scss']
 })
 export class EditEmployeeMembershipFormComponent implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
-
 	@Input() organizationEntities: IBaseEntityWithMembers[];
 	@Input() employeeEntities: IBaseEntityWithMembers[];
 	@Input() selectedEmployee: IEmployee;

@@ -9,7 +9,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationDocumentsService } from '../../../@core/services/organization-documents.service';
-
+import * as moment from 'moment';
 @Component({
 	selector: 'ngx-time-off-request-mutation',
 	templateUrl: './time-off-request-mutation.component.html',
@@ -44,6 +44,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	status: string;
 	holidayName: string;
 	organizationId: string;
+	tenantId: string;
 	policy: ITimeOffPolicy;
 	startDate: Date = null;
 	endDate: Date = null;
@@ -51,6 +52,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	invalidInterval: boolean;
 	isHoliday = false;
 	isEditMode = false;
+	minDate = new Date(moment().format('YYYY-MM-DD'));
 
 	ngOnInit() {
 		if (this.type === 'holiday') {
@@ -139,6 +141,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 					{
 						employees: this.employeesArr,
 						organizationId: this.organizationId,
+						tenantId: this.tenantId,
 						isHoliday: this.isHoliday
 					},
 					this.form.value
@@ -169,6 +172,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	private async _getFormData() {
 		this.organizationId = this.store.selectedOrganization.id;
+		this.tenantId = this.store.selectedOrganization.tenantId;
 
 		this._getPolicies();
 		this._getOrganizationEmployees();
@@ -179,7 +183,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			const findObj: {} = {
 				organization: {
 					id: this.organizationId
-				}
+				},
+				tenantId: this.tenantId
 			};
 
 			this.timeOffService
@@ -199,7 +204,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 		this.employeesService
 			.getAll(['user', 'tags'], {
-				organization: { id: this.organizationId }
+				organization: { id: this.organizationId },
+				tenantId: this.tenantId
 			})
 			.pipe(first())
 			.subscribe((res) => (this.orgEmployees = res.items));

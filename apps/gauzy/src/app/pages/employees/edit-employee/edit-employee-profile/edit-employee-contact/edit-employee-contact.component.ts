@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	IEditEntityByMemberInput,
 	IEmployee,
+	IOrganization,
 	IOrganizationContact
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
@@ -11,38 +12,51 @@ import { OrganizationContactService } from '../../../../../@core/services/organi
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-employee-departments',
 	templateUrl: './edit-employee-contact.component.html'
 })
 export class EditEmployeeContactComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	organizationContact: IOrganizationContact[] = [];
 	employeeContact: IOrganizationContact[] = [];
 
 	selectedEmployee: IEmployee;
-
+	organization: IOrganization;
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
 		private readonly employeeStore: EmployeeStore,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				this.organization = organization;
+			});
+
 		this.employeeStore.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((emp) => {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
-					this.loadDepartments();
+					this.loadContacts();
 				}
 			});
+	}
+
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 
 	async submitForm(formInput: IEditEntityByMemberInput, removed: boolean) {
@@ -51,7 +65,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent
 				await this.organizationContactService.updateByEmployee(
 					formInput
 				);
-				this.loadDepartments();
+				this.loadContacts();
 				this.toastrService.primary(
 					this.getTranslation(
 						removed
@@ -69,34 +83,38 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async loadDepartments() {
-		await this.loadSelectedEmployeeDepartments();
-		const orgDepartments = await this.getOrganizationDepartments();
-		const selectedDepartmentIds = this.employeeContact.map((d) => d.id);
-		this.organizationContact = orgDepartments.filter(
-			(dep) => selectedDepartmentIds.indexOf(dep.id) < 0
-		);
+	private async loadContacts() {
+		await this.loadSelectedEmployeeContacts();
+		const orgContacts = await this.getOrganizationContact();
+		const selectedContactsIds = this.employeeContact.map((d) => d.id);
+		if (orgContacts) {
+			this.organizationContact = orgContacts.filter(
+				(contact) => selectedContactsIds.indexOf(contact.id) < 0
+			);
+		}
 	}
 
-	private async loadSelectedEmployeeDepartments() {
-		if (!this.selectedEmployee) {
+	private async loadSelectedEmployeeContacts() {
+		if (!this.organization) {
 			return;
 		}
-
 		this.employeeContact = await this.organizationContactService.getAllByEmployee(
 			this.selectedEmployee.id
 		);
 	}
 
-	private async getOrganizationDepartments() {
-		if (!this.selectedEmployee.orgId) {
+	private async getOrganizationContact() {
+		if (!this.organization) {
 			return;
 		}
-
-		const res = await this.organizationContactService.getAll([], {
-			organizationId: this.selectedEmployee.orgId
-		});
-
-		return res ? res.items : [];
+		const { id: organizationId, tenantId } = this.organization;
+		const { items = [] } = await this.organizationContactService.getAll(
+			[],
+			{
+				organizationId,
+				tenantId
+			}
+		);
+		return items;
 	}
 }

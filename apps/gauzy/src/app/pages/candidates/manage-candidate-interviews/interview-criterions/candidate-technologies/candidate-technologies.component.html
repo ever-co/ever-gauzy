@@ -8,8 +8,7 @@
 				<div formArrayName="technologies">
 					<div
 						*ngFor="
-							let technology of form.controls.technologies
-								?.controls;
+							let technology of technologies?.controls;
 							let i = index
 						"
 					>

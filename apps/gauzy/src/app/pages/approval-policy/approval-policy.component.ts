@@ -95,7 +95,8 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		let findInput: IApprovalPolicy = {};
 		if (this.selectedOrganizationId) {
 			findInput = {
-				organizationId: this.selectedOrganizationId
+				organizationId: this.selectedOrganizationId,
+				tenantId: this.selectedTenantId
 			};
 		}
 
