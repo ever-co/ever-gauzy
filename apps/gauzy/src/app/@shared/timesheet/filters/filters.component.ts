@@ -149,7 +149,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			});
 
 		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: IUser) => {
-			if (user && this.employeeIds.length === 0) {
+			if (user && (!this.employeeIds || this.employeeIds.length === 0)) {
 				this.employeeIds = [user.employeeId];
 			}
 		});
@@ -224,7 +224,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		if (
 			this.employees &&
 			this.employees.length > 0 &&
-			this.employeeIds.length === 0
+			(!this.employeeIds || this.employeeIds.length === 0)
 		) {
 			this.filters.employeeIds = [this.employees[0].id];
 			this._employeeIds = this.multipleEmployeSelect

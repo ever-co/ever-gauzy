@@ -41,6 +41,7 @@ export class TimerService {
 
 		const todayLog = await this.timeLogRepository.find({
 			where: {
+				deletedAt: IsNull(),
 				employeeId: employee.id,
 				startedAt: MoreThan(moment().format('YYYY-MM-DD'))
 			},
@@ -76,6 +77,7 @@ export class TimerService {
 		const user = RequestContext.currentUser();
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
+				deletedAt: IsNull(),
 				employeeId: user.employeeId,
 				stoppedAt: IsNull()
 			},
@@ -121,6 +123,7 @@ export class TimerService {
 		const user = RequestContext.currentUser();
 		let lastLog = await this.timeLogRepository.findOne({
 			where: {
+				deletedAt: IsNull(),
 				employeeId: user.employeeId,
 				stoppedAt: IsNull()
 			},
@@ -167,6 +170,7 @@ export class TimerService {
 		const user = RequestContext.currentUser();
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
+				deletedAt: IsNull(),
 				employeeId: user.employeeId,
 				stoppedAt: IsNull()
 			},
