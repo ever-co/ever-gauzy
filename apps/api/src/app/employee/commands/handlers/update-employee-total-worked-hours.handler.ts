@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { TimeLog } from '../../../timesheet/time-log.entity';
+import { environment } from '@env-api/environment';
 
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
 export class UpdateEmployeeTotalWorkedHoursHandler
@@ -23,7 +24,11 @@ export class UpdateEmployeeTotalWorkedHoursHandler
 			const logs = await this.timeLogRepository
 				.createQueryBuilder()
 				.select(
-					`SUM(extract(epoch from ("stoppedAt" - "startedAt")))`,
+					`${
+						environment.database.type === 'sqlite'
+							? 'SUM((julianday("stoppedAt") - julianday("startedAt")) * 86400)'
+							: 'SUM(extract(epoch from ("stoppedAt" - "startedAt")))'
+					}`,
 					`duration`
 				)
 				.where({

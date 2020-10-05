@@ -83,8 +83,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 					});
 				}
 				if (request.startDate && request.endDate) {
-					const startDate = moment.utc(request.startDate).toDate();
-					const endDate = moment.utc(request.endDate).toDate();
+					const startDate = moment.utc(request.startDate).format();
+					const endDate = moment.utc(request.endDate).format();
 					console.log({ startDate, endDate });
 					qb.andWhere('"startedAt" Between :startDate AND :endDate', {
 						startDate,

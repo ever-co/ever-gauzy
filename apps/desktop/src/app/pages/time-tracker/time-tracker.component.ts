@@ -128,7 +128,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			'refresh_time_log',
 			(event, arg) => {
 				this.getTodayTime(arg);
-				this.getLastTimeSlotImage(arg);
 			}
 		);
 

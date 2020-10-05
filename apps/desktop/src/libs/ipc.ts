@@ -152,6 +152,7 @@ export function ipcTimer(
 			id: arg.timerId,
 			timeSlotId: arg.timeSlotId
 		});
+		timeTrackerWindow.webContents.send('refresh_time_log', LocalStore.beforeRequestParams());
 		// after update time slot do upload screenshot
 		// check config
 		const appSetting = LocalStore.getStore('appSetting');

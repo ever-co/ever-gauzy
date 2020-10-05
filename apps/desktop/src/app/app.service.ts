@@ -100,7 +100,9 @@ export class AppService {
 					overall: values.overall,
 					startedAt: values.startedAt,
 					activities: values.activities,
-					timeLogId: values.timeLogId
+					timeLogId: values.timeLogId,
+					organizationId: values.organizationId,
+					tenantId: values.tenantId
 				},
 				{
 					headers: headers
@@ -126,7 +128,9 @@ export class AppService {
 					startedAt: values.startedAt,
 					isBilled: false,
 					status: 'PENDING',
-					stoppedAt: values.stoppedAt
+					stoppedAt: values.stoppedAt,
+					organizationId: values.organizationId,
+					tenantId: values.tenantId
 				},
 				{
 					headers: headers
@@ -276,7 +280,9 @@ export class AppService {
 					projectId: values.projectId,
 					taskId: values.taskId,
 					source: 'Desktop',
-					manualTimeSlot: values.manualTimeSlot
+					manualTimeSlot: values.manualTimeSlot,
+					organizationId: values.organizationId,
+					tenantId: values.tenantId
 				},
 				{
 					headers: headers
