@@ -100,12 +100,13 @@ export class CandidateInterviewMutationComponent
 				this.interviewNames.push(interview.title.toLocaleLowerCase());
 			});
 		}
-		const { items } = await this.candidatesService
-			.getAll(['user'])
+		this.selectedOrganization = this.store.selectedOrganization;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { items = [] } = await this.candidatesService
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
 		this.candidates = items;
-		this.selectedOrganization = this.store.selectedOrganization;
 	}
 
 	titleExist(value: boolean) {
@@ -150,10 +151,7 @@ export class CandidateInterviewMutationComponent
 	async getEmployees(employeeIds: string[]) {
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
-			.getAll(['user'], {
-				organizationId,
-				tenantId
-			})
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
 		const employeeList = items;
@@ -214,10 +212,13 @@ export class CandidateInterviewMutationComponent
 
 	async addInterviewers(interviewId: string, employeeIds: string[]) {
 		try {
-			await this.candidateInterviewersService.createBulk(
+			const { id: organizationId, tenantId } = this.selectedOrganization;
+			await this.candidateInterviewersService.createBulk({
 				interviewId,
-				employeeIds
-			);
+				employeeIds,
+				organizationId,
+				tenantId
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}

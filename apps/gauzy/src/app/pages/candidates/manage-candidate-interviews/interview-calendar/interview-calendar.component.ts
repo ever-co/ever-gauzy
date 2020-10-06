@@ -13,7 +13,8 @@ import {
 	ICandidate,
 	IEmployee,
 	IDateRange,
-	ICandidateInterview
+	ICandidateInterview,
+	IOrganization
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -24,7 +25,8 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewInfoComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import * as _ from 'underscore';
 @Component({
 	selector: 'ga-interview-calendar',
 	templateUrl: './interview-calendar.component.html',
@@ -38,13 +40,14 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 	calendarOptions: CalendarOptions;
 	selectedInterview = true;
 	isCandidate = false;
-	candidateList: EventInput[] = [];
-	employeeList: EventInput[] = [];
+	candidateList: string[] = [];
+	employeeList: string[] = [];
 	isEmployee = false;
 	candidates: ICandidate[] = [];
 	employees: IEmployee[] = [];
 	calendarEvents: EventInput[] = [];
 	interviewList: ICandidateInterview[];
+	organization: IOrganization;
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
@@ -53,33 +56,46 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private candidatesService: CandidatesService,
 		private employeesService: EmployeesService,
-		private candidateStore: CandidateStore
+		private candidateStore: CandidateStore,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
-	async ngOnInit() {
-		this.candidatesService
-			.getAll(['user'])
+
+	ngOnInit() {
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidates) => {
-				this.candidates = candidates.items;
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					const { id: organizationId, tenantId } = organization;
+					this.organization = organization;
+					this.candidatesService
+						.getAll(['user'], { organizationId, tenantId })
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((candidates) => {
+							this.candidates = candidates.items;
+						});
+					this.employeesService
+						.getAll(['user'], { organizationId, tenantId })
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((employees) => {
+							this.employees = employees.items;
+						});
+					this.candidateStore.interviewList$
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe(() => {
+							this.loadInterviews();
+						});
+				}
 			});
-		this.employeesService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
-			});
-		this.loadInterviews();
-		this.candidateStore.interviewList$.subscribe(() => {
-			this.loadInterviews();
-		});
 	}
 
 	async loadInterviews() {
-		const res = await this.candidateInterviewService.getAll([
-			'interviewers'
-		]);
+		const { id: organizationId, tenantId } = this.organization;
+		const res = await this.candidateInterviewService.getAll(
+			['interviewers'],
+			{ organizationId, tenantId }
+		);
 		if (res) {
 			this.interviewList = res.items;
 			this.calendarOptions = {
@@ -119,6 +135,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 
 			this.calendarEvents = [];
 			for (const interview of res.items) {
+				const { interviewers = [] } = interview;
 				this.calendarEvents.push({
 					title: interview.title,
 					start: interview.startTime,
@@ -128,71 +145,60 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 					extendedProps: {
 						id: interview.id
 					},
-					backgroundColor: '#36f'
+					backgroundColor: '#36f',
+					employeeIds: _.pluck(interviewers, 'employeeId')
 				});
 			}
-			this.calendarOptions.events = this.calendarEvents;
+			this.mappedCalendarEvents();
 		}
 	}
 	async onCandidateSelected(ids: string[]) {
-		if (!ids[0]) {
-			//if no one is selected
-			this.isCandidate = false;
-			this.calendarOptions.events = this.isEmployee
-				? this.employeeList
-				: this.calendarEvents;
-		} else {
-			this.calendarOptions.events = this.isEmployee
-				? this.employeeList
-				: this.calendarEvents;
-
-			const result = [];
-			for (const id of ids) {
-				for (const event of this.calendarOptions
-					.events as EventInput[]) {
-					if (event.candidateId === id) {
-						result.push(event);
-					}
-				}
-			}
-			this.isCandidate = true;
-			this.candidateList = result;
-			this.calendarOptions.events = result;
-		}
+		this.isCandidate = !ids.length ? false : true;
+		this.candidateList = ids;
+		this.mappedCalendarEvents();
 	}
 	async onEmployeeSelected(ids: string[]) {
-		if (!ids[0]) {
-			this.isEmployee = false;
-			this.calendarOptions.events = this.isCandidate
-				? this.candidateList
-				: this.calendarEvents;
-		} else {
-			this.calendarOptions.events = this.isCandidate
-				? this.candidateList
-				: this.calendarEvents;
-
-			const result = [];
-
-			for (const event of this.calendarOptions.events as EventInput[]) {
-				const res = await this.candidateInterviewersService.findByInterviewId(
-					event.id as string
-				);
-				if (res) {
-					for (const item of res) {
-						for (const id of ids) {
-							if (item.employeeId === id) {
-								result.push(event);
-							}
-						}
+		this.isEmployee = !ids.length ? false : true;
+		this.employeeList = ids;
+		this.mappedCalendarEvents();
+	}
+	async mappedCalendarEvents() {
+		let result = [];
+		for (const event of this.calendarEvents as EventInput[]) {
+			if (this.isCandidate && this.isEmployee) {
+				let isMatchCandidate,
+					isMatchEmployee = false;
+				if (this.candidateList.includes(event.candidateId)) {
+					isMatchCandidate = true;
+				}
+				for (const id of this.employeeList) {
+					if (event.employeeIds.includes(id)) {
+						isMatchEmployee = true;
 					}
 				}
+				if (isMatchCandidate && isMatchEmployee) {
+					result.push(event);
+				}
+			} else if (this.isCandidate) {
+				if (this.candidateList.includes(event.candidateId)) {
+					result.push(event);
+				}
+			} else if (this.isEmployee) {
+				let isMatchEmployee = false;
+				for (const id of this.employeeList) {
+					if (event.employeeIds.includes(id)) {
+						isMatchEmployee = true;
+					}
+				}
+				if (isMatchEmployee) {
+					result.push(event);
+				}
+			} else {
+				result = this.calendarEvents;
 			}
-			this.employeeList = result;
-			this.calendarOptions.events = result;
-			this.isEmployee = true;
 		}
+		this.calendarOptions.events = result;
 	}
-
 	async getInterviewers() {
 		for (const event of this.calendarOptions.events as EventInput[]) {
 			return await this.candidateInterviewersService.findByInterviewId(

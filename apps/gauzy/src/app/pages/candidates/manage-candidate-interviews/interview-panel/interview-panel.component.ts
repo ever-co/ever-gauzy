@@ -451,9 +451,12 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.MESSAGE.EDIT_PAST_INTERVIEW')
 			);
 		} else {
+			const { id: organizationId, tenantId } = this.organization;
 			const candidate = await this.candidatesService
 				.getAll(['user'], {
-					id: currentInterview.candidate.id
+					id: currentInterview.candidate.id,
+					organizationId,
+					tenantId
 				})
 				.pipe(first())
 				.toPromise();
@@ -523,7 +526,6 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		);
 	}
 	ngOnDestroy() {
-		console.log(this._ngDestroy$);
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}

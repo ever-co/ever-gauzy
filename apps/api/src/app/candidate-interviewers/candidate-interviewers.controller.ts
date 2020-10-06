@@ -93,9 +93,8 @@ export class CandidateInterviewersController extends CrudController<
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('createBulk')
 	async createBulk(@Body() input: any): Promise<ICandidateInterviewers[]> {
-		const { interviewId = null, employeeIds = [] } = input;
 		return this.commandBus.execute(
-			new CandidateInterviewersBulkCreateCommand(interviewId, employeeIds)
+			new CandidateInterviewersBulkCreateCommand(input)
 		);
 	}
 

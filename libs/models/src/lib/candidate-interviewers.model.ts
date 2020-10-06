@@ -8,14 +8,17 @@ export interface ICandidateInterviewers
 	employeeName?: string;
 }
 
-export interface ICandidateInterviewersFindInput {
+export interface ICandidateInterviewersFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	interviewId?: string;
 	employeeId?: string;
 }
 
-export interface ICandidateInterviewersCreateInput {
+export interface ICandidateInterviewersCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	interviewId: string;
-	employeeId: string;
+	employeeId?: string;
+	employeeIds?: string[];
 }
 export interface ICandidateInterviewersDeleteInput {
 	interviewId?: string;

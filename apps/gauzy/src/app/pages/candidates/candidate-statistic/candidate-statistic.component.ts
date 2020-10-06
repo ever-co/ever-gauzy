@@ -49,26 +49,27 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	}
 
 	async loadData() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.candidatesService
 			.getAll(['user', 'interview', 'feedbacks'], {
-				organizationId: this.selectedOrganizationId,
-				tenantId: this.selectedOrganization.tenantId
+				organizationId,
+				tenantId
 			})
 			.pipe(first())
 			.toPromise();
-		const interviews = await this.candidateInterviewService.getAll([
-			'feedbacks',
-			'interviewers',
-			'technologies',
-			'personalQualities'
-		]);
+		const interviews = await this.candidateInterviewService.getAll(
+			['feedbacks', 'interviewers', 'technologies', 'personalQualities'],
+			{ organizationId, tenantId }
+		);
 		if (items && interviews) {
 			this.interviewList = interviews.items;
 			for (const candidate of items) {
 				const feedbacks = await this.candidateFeedbacksService.getAll(
 					['interviewer'],
 					{
-						candidateId: candidate.id
+						candidateId: candidate.id,
+						organizationId,
+						tenantId
 					}
 				);
 				if (feedbacks) {
@@ -83,8 +84,9 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 		}
 	}
 	async loadEmployee() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
-			.getAll(['user'])
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
 		this.employeeList = items;
