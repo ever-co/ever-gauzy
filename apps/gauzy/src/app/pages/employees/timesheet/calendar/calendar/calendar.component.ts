@@ -213,7 +213,13 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	handleEventSelect(event) {
 		this.openDialog({
 			startedAt: event.start,
-			stoppedAt: event.end
+			stoppedAt: event.end,
+			employeeId: this.logRequest.employeeIds
+				? this.logRequest.employeeIds[0]
+				: null,
+			projectId: this.logRequest.projectIds
+				? this.logRequest.projectIds[0]
+				: null
 		});
 	}
 

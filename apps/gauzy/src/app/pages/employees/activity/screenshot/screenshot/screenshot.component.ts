@@ -16,6 +16,7 @@ import * as moment from 'moment';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
 @Component({
 	selector: 'ngx-screenshot',
@@ -37,6 +38,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private timesheetService: TimesheetService,
+		private timesheetFilterService: TimesheetFilterService,
 		private nbDialogService: NbDialogService,
 		private store: Store
 	) {}
@@ -58,6 +60,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 
 	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
+		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 
