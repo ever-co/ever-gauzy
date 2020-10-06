@@ -143,7 +143,6 @@ try {
 	ipcMain.on('server_is_ready', () => {
 		LocalStore.setDefaultApplicationSetting();
 		try {
-			appMenu = new AppMenu();
 			onWaitingServer = false;
 			isAlreadyRun = true;
 			timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
@@ -158,6 +157,7 @@ try {
 					NotificationWindow
 				);
 				const auth = store.get('auth');
+				appMenu = new AppMenu(timeTrackerWindow, settingsWindow, knex);
 				tray = new TrayIcon(
 					setupWindow,
 					knex,
