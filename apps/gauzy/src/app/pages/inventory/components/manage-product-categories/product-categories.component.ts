@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { Store } from '../../../../@core/services/store.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil, first, debounceTime } from 'rxjs/operators';
 import { ImageRowComponent } from '../table-components/image-row.component';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -56,14 +56,17 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
-				this.selectedOrganization = org;
-				this.loadSettings();
+				if (org) {
+					this.selectedOrganization = org;
+					this.loadSettings();
+				}
 			});
-
 		this.store.preferredLanguage$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				this.loadSettings();
+				if (this.selectedOrganization) {
+					this.loadSettings();
+				}
 			});
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
@@ -113,8 +116,9 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedProductCategory = null;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const searchCriteria = this.selectedOrganization
-			? { organization: { id: this.selectedOrganization.id } }
+			? { organization: { id: organizationId }, tenantId }
 			: null;
 
 		const { items } = await this.productCategoryService.getAllTranslated(
@@ -129,9 +133,11 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
 	async save(selectedItem?: IProductCategoryTranslated) {

@@ -11,7 +11,7 @@ import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil, first, distinctUntilChanged } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
@@ -65,19 +65,18 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(distinctUntilChanged(), takeUntil(this.ngDestroy$))
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
 					this.loadSettings();
 				} else {
-					this.selectedEmployeeId = undefined;
+					this.selectedEmployeeId = null;
 					this.loadSettings();
 				}
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(distinctUntilChanged(), takeUntil(this.ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrgId = org.id;
@@ -93,7 +92,6 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 			});
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadSettings();
 	}
 
 	setView() {

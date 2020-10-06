@@ -22,19 +22,8 @@ export class ProductCategory extends TranslatableBase
 	@Column({ nullable: true })
 	imageUrl: string;
 
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId(
-		(productCategory: ProductCategory) => productCategory.organization
-	)
-	readonly organizationId: string;
-
 	@OneToMany((type) => Product, (product) => product.category)
 	products: Product[];
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
 
 	@ApiProperty({ type: ProductCategoryTranslation, isArray: true })
 	@OneToMany(

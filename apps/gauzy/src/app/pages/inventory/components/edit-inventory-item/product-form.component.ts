@@ -8,7 +8,8 @@ import {
 	IVariantOptionCombination,
 	IProductCategoryTranslated,
 	IProductVariant,
-	LanguagesEnum
+	LanguagesEnum,
+	IOrganization
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from 'apps/gauzy/src/app/@core/services/product-type.service';
@@ -46,6 +47,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 	languages: any[];
 	tags: ITag[] = [];
+	organization: IOrganization;
 
 	private ngDestroy$ = new Subject<void>();
 
@@ -75,8 +77,9 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this.ngDestroy$))
-			.subscribe((organization) => {
+			.subscribe((organization: IOrganization) => {
 				if (organization) {
+					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
 					this.loadProductTypes();
 					this.loadProductCategories();

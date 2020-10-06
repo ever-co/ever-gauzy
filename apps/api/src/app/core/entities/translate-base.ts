@@ -1,13 +1,13 @@
-import { Base } from './base';
 import { ITranslation, ITranslatable } from '@gauzy/models';
+import { TenantOrganizationBase } from './tenant-organization-base';
 
-export abstract class TranslationBase extends Base
+export abstract class TranslationBase extends TenantOrganizationBase
 	implements ITranslation<TranslatableBase> {
 	reference: ITranslatable<TranslatableBase>;
 	languageCode: string;
 }
 
-export abstract class TranslatableBase extends Base
+export abstract class TranslatableBase extends TenantOrganizationBase
 	implements ITranslatable<TranslationBase> {
 	translations: ITranslation<TranslationBase>[];
 
