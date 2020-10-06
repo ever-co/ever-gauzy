@@ -6,7 +6,8 @@ import {
 	TimeLogType,
 	ITimerStatus,
 	IOrganization,
-	TimerState
+	TimerState,
+	TimeLogSourceEnum
 } from '@gauzy/models';
 import { toLocal } from 'libs/utils';
 import * as moment from 'moment';
@@ -165,7 +166,11 @@ export class TimeTrackerService implements OnDestroy {
 
 	getTimerStatus(): Promise<ITimerStatus> {
 		return this.http
-			.get<ITimerStatus>('/api/timesheet/timer/status')
+			.get<ITimerStatus>('/api/timesheet/timer/status', {
+				params: {
+					source: TimeLogSourceEnum.BROWSER
+				}
+			})
 			.toPromise();
 	}
 

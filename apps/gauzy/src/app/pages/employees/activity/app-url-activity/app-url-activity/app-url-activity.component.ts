@@ -16,6 +16,7 @@ import { ActivityService } from 'apps/gauzy/src/app/@shared/timesheet/activity.s
 import { ActivatedRoute } from '@angular/router';
 import * as _ from 'underscore';
 import * as moment from 'moment';
+import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
 @Component({
 	selector: 'ngx-app-url-activity',
@@ -36,6 +37,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private activatedRoute: ActivatedRoute,
+		private timesheetFilterService: TimesheetFilterService,
 		private activityService: ActivityService
 	) {}
 
@@ -77,6 +79,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 
 	async filtersChange($event: ITimeLogFilters) {
 		this.request = $event;
+		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 

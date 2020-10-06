@@ -321,10 +321,10 @@ export class StatisticService {
 			query.where(`members.id = :employeeId`, { employeeId });
 		} else {
 			query
-				.where(`"organizationId" = :organizationId`, {
+				.where(`"${query.alias}"."organizationId" = :organizationId`, {
 					organizationId: request.organizationId
 				})
-				.andWhere(`"tenantId" = :tenantId`, {
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId: request.tenantId
 				});
 		}
@@ -351,9 +351,12 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-			.where(`"organizationId" = :organizationId`, {
-				organizationId: request.organizationId
-			});
+			.where(
+				`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
+				{
+					organizationId: request.organizationId
+				}
+			);
 
 		if (
 			(user.employeeId && request.onlyMe) ||
@@ -371,12 +374,18 @@ export class StatisticService {
 			});
 		} else {
 			totalDurationQuery
-				.where(`"organizationId" = :organizationId`, {
-					organizationId: request.organizationId
-				})
-				.andWhere(`"tenantId" = :tenantId`, {
-					tenantId: request.tenantId
-				});
+				.where(
+					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
+					{
+						organizationId: request.organizationId
+					}
+				)
+				.andWhere(
+					`"${totalDurationQuery.alias}"."tenantId" = :tenantId`,
+					{
+						tenantId: request.tenantId
+					}
+				);
 		}
 
 		totalDurationQuery.andWhere(
@@ -649,10 +658,10 @@ export class StatisticService {
 			query.andWhere(`"${query.alias}".id = :employeeId`, { employeeId });
 		} else {
 			query
-				.where('"organizationId" = :organizationId', {
+				.where(`"${query.alias}"."organizationId" = :organizationId`, {
 					organizationId: request.organizationId
 				})
-				.andWhere('"tenantId" = :tenantId', {
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId: request.tenantId
 				});
 		}
