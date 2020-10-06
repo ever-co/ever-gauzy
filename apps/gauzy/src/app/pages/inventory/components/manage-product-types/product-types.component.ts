@@ -117,10 +117,10 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	async loadSettings() {
 		this.selectedProductType = null;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const searchCriteria = this.selectedOrganization
-			? { organization: { id: organizationId }, tenantId }
-			: null;
-
+		const searchCriteria = {
+			organization: { id: organizationId },
+			tenantId
+		};
 		const { items } = await this.productTypeService.getAllTranslated(
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
 			['organization'],

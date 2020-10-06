@@ -1,17 +1,9 @@
-import {
-	Entity,
-	Column,
-	OneToMany,
-	RelationId,
-	ManyToOne,
-	JoinColumn
-} from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { TranslatableBase } from '../core/entities/translate-base';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { Product } from '../product/product.entity';
-import { Organization } from '../organization/organization.entity';
 import { IProductCategoryTranslatable } from '@gauzy/models';
 
 @Entity('product_category')

@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { Store } from '../../../../@core/services/store.service';
-import { takeUntil, first, debounceTime } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { ImageRowComponent } from '../table-components/image-row.component';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -117,10 +117,10 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	async loadSettings() {
 		this.selectedProductCategory = null;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const searchCriteria = this.selectedOrganization
-			? { organization: { id: organizationId }, tenantId }
-			: null;
-
+		const searchCriteria = {
+			organization: { id: organizationId },
+			tenantId
+		};
 		const { items } = await this.productCategoryService.getAllTranslated(
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
 			['organization'],

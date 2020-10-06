@@ -1,16 +1,8 @@
-import {
-	Entity,
-	Column,
-	OneToMany,
-	ManyToOne,
-	JoinColumn,
-	RelationId
-} from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { ProductTypesIconsEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { Product } from '../product/product.entity';
-import { Organization } from '../organization/organization.entity';
 import { TranslatableBase } from '../core/entities/translate-base';
 import { ProductTypeTranslation } from './product-type-translation.entity';
 
