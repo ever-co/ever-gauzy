@@ -60,7 +60,9 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((date) => {
 				this.selectedDate = date;
-				this._loadOrgRecurringExpense();
+				if (this.selectedOrg) {
+					this._loadOrgRecurringExpense();
+				}
 			});
 
 		this.store.userRolePermissions$
@@ -195,7 +197,6 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent
 			})
 			.onClose.pipe(first())
 			.toPromise();
-
 		if (result) {
 			try {
 				const id = this.selectedOrgRecurringExpense[index].id;
@@ -210,9 +211,6 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent
 					this.selectedOrg.name + ' recurring expense edited.',
 					'Success'
 				);
-				setTimeout(() => {
-					this._loadOrgRecurringExpense();
-				}, 300);
 			} catch (error) {
 				this.toastrService.danger(
 					error.error.message || error.message,
@@ -225,11 +223,13 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent
 		this.fetchedHistories = {};
 
 		if (this.selectedOrg && this.selectedDate) {
+			const { id: organizationId, tenantId } = this.selectedOrg;
 			this.selectedOrgRecurringExpense = (
 				await this.organizationRecurringExpenseService.getAllByMonth({
-					organizationId: this.selectedOrg.id,
+					organizationId,
 					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth()
+					month: this.selectedDate.getMonth(),
+					tenantId
 				})
 			).items;
 			this.loading = false;

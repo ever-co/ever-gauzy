@@ -1,7 +1,8 @@
 import {
 	IHelpCenterArticle,
 	IEmployee,
-	IHelpCenterAuthor
+	IHelpCenterAuthor,
+	IOrganization
 } from '@gauzy/models';
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
@@ -14,6 +15,7 @@ import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-add-article',
@@ -34,7 +36,8 @@ export class AddArticleComponent extends TranslationBaseComponent
 		private errorHandler: ErrorHandlingService,
 		private employeeService: EmployeesService,
 		private helpCenterAuthorService: HelpCenterAuthorService,
-		private helpCenterArticleService: HelpCenterArticleService
+		private helpCenterArticleService: HelpCenterArticleService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -52,16 +55,18 @@ export class AddArticleComponent extends TranslationBaseComponent
 	authors: IHelpCenterAuthor[];
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];
-
+	organization: IOrganization;
 	ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.form = this.fb.group({
 			name: ['', Validators.required],
 			desc: ['', Validators.required],
 			data: ['', Validators.required],
 			valid: [null, Validators.required]
 		});
+		const { id: organizationId, tenantId } = this.organization;
 		this.employeeService
-			.getAll(['user'])
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;
@@ -116,7 +121,8 @@ export class AddArticleComponent extends TranslationBaseComponent
 	}
 
 	async submit() {
-		if (this.editType === 'add')
+		const { id: organizationId, tenantId } = this.organization;
+		if (this.editType === 'add') {
 			try {
 				this.article = await this.helpCenterArticleService.create({
 					name: '',
@@ -125,11 +131,14 @@ export class AddArticleComponent extends TranslationBaseComponent
 					draft: false,
 					privacy: false,
 					index: this.length,
-					categoryId: this.id
+					categoryId: this.id,
+					organizationId,
+					tenantId
 				});
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}
+		}
 		if (this.membersChanged) {
 			if (this.editType === 'edit') this.deleteAuthors(this.article.id);
 			this.addAuthors(this.article.id, this.selectedEmployeeIds);
@@ -153,10 +162,13 @@ export class AddArticleComponent extends TranslationBaseComponent
 
 	async addAuthors(articleId: string, employeeIds: string[]) {
 		try {
-			await this.helpCenterAuthorService.createBulk(
+			const { id: organizationId, tenantId } = this.organization;
+			await this.helpCenterAuthorService.createBulk({
+				organizationId,
+				tenantId,
 				articleId,
 				employeeIds
-			);
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}

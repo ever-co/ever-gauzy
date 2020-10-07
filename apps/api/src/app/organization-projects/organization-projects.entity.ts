@@ -58,12 +58,6 @@ export class OrganizationProject extends TenantOrganizationBase
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
-
 	@ApiPropertyOptional({ type: OrganizationContact })
 	@ManyToOne(
 		(type) => OrganizationContact,

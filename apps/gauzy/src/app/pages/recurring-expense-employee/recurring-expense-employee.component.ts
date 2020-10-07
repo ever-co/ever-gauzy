@@ -110,6 +110,23 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 						: 'Employee';
 				}
 
+				this.store.selectedEmployee$
+					.pipe(
+						distinctUntilChanged(),
+						debounceTime(300),
+						takeUntil(this._ngDestroy$)
+					)
+					.subscribe((employee) => {
+						if (this.selectedOrganization) {
+							if (employee && typeof employee.id === 'string') {
+								this.selectedEmployeeFromHeader = employee;
+								this._loadEmployeeRecurringExpense(employee.id);
+							} else {
+								this._loadEmployeeRecurringExpense(null);
+							}
+						}
+					});
+
 				this.store.selectedOrganization$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((organization) => {
@@ -119,21 +136,6 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 							this.loadEmployees();
 
 							this.store.selectedEmployee = this.selectedEmployeeFromHeader;
-						}
-					});
-
-				this.store.selectedEmployee$
-					.pipe(
-						distinctUntilChanged(),
-						debounceTime(300),
-						takeUntil(this._ngDestroy$)
-					)
-					.subscribe((employee) => {
-						if (employee && typeof employee.id === 'string') {
-							this.selectedEmployeeFromHeader = employee;
-							this._loadEmployeeRecurringExpense(employee.id);
-						} else {
-							this._loadEmployeeRecurringExpense(null);
 						}
 					});
 			});

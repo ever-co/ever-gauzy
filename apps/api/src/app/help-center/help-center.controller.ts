@@ -48,9 +48,10 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	async findMenu(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<HelpCenter>> {
-		const { relations = [] } = data;
+		const { relations = [], findInput = null } = data;
 		return this.helpCenterService.findAll({
-			relations
+			relations,
+			where: findInput
 		});
 	}
 

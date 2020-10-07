@@ -72,7 +72,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
 		}
 	];
-	@Input() isAdd: true;
+	@Input() isAdd: boolean;
 	recurringExpense?: IRecurringExpenseModel;
 	componentType: COMPONENT_TYPE;
 	currencies = Object.values(CurrenciesEnum);
@@ -148,11 +148,15 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 
 	async closeAndSubmit() {
 		let employee: IEmployee;
-		if (this.recurringExpense) {
+		if (this.recurringExpense && this.recurringExpense.employeeId) {
 			employee = await this.employeesService.getEmployeeById(
 				this.recurringExpense.employeeId
 			);
 		}
+		const {
+			id: organizationId,
+			tenantId
+		} = this.store.selectedOrganization;
 		let formValues = this.form.getRawValue();
 		formValues = {
 			...formValues,
@@ -160,10 +164,16 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			startDay: formValues.startDate.getDate(),
 			startMonth: formValues.startDate.getMonth(),
 			startYear: formValues.startDate.getFullYear(),
-			employee: this.recurringExpense
-				? employee
-				: this.employeeSelector.selectedEmployee
+			organizationId,
+			tenantId
 		};
+		if (this.recurringExpense && this.recurringExpense.employeeId) {
+			formValues['employee'] = employee;
+		} else {
+			formValues['employee'] = this.employeeSelector
+				? this.employeeSelector.selectedEmployee
+				: null;
+		}
 		this.dialogRef.close(formValues);
 	}
 

@@ -13,12 +13,19 @@ export class ArticleAuthorsBulkCreateHandler
 	public async execute(
 		command: ArticleAuthorsBulkCreateCommand
 	): Promise<IHelpCenterAuthor[]> {
-		const { articleId, employeeIds } = command;
+		const { input } = command;
+		const { articleId, employeeIds, organizationId, tenantId } = input;
+
 		let author: IHelpCenterAuthor;
 		const createInput: IHelpCenterAuthor[] = [];
 
 		for (const employeeId of employeeIds) {
-			author = { articleId: articleId, employeeId: employeeId };
+			author = {
+				articleId: articleId,
+				employeeId: employeeId,
+				organizationId,
+				tenantId
+			};
 			createInput.push(author);
 		}
 		return await this.helpCenterAuthorService.createBulk(createInput);
