@@ -283,6 +283,9 @@ export interface IScreenshotMap {
 	timeSlots: ITimeSlot[];
 }
 
+export interface ITimerStatusInput {
+	source?: TimeLogSourceEnum;
+}
 export interface ITimerStatus {
 	duration: number;
 	running: boolean;
@@ -303,6 +306,7 @@ export interface ITimerToggleInput {
 	organizationContactId?: string;
 	description?: string;
 	logType?: TimeLogType;
+	source?: TimeLogSourceEnum;
 	tags?: string[];
 	isBillable?: boolean;
 	manualTimeSlot?: boolean;
