@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
 	ICandidatePersonalQualities,
-	ICandidatePersonalQualitiesCreateInput
+	ICandidatePersonalQualitiesCreateInput,
+	ICandidatePersonalQualitiesFindInput
 } from '@gauzy/models';
 
 @Injectable()
@@ -35,10 +36,17 @@ export class CandidatePersonalQualitiesService {
 			.toPromise();
 	}
 
-	getAll(): Promise<{ items: any[]; total: number }> {
+	getAll(
+		findInput?: ICandidatePersonalQualitiesFindInput
+	): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ findInput });
+
 		return this.http
 			.get<{ items: ICandidatePersonalQualities[]; total: number }>(
-				`/api/candidate-personal-qualities`
+				`/api/candidate-personal-qualities`,
+				{
+					params: { data }
+				}
 			)
 			.pipe(first())
 			.toPromise();

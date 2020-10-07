@@ -1,17 +1,9 @@
-import {
-	Entity,
-	Column,
-	OneToMany,
-	RelationId,
-	ManyToOne,
-	JoinColumn
-} from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { TranslatableBase } from '../core/entities/translate-base';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { Product } from '../product/product.entity';
-import { Organization } from '../organization/organization.entity';
 import { IProductCategoryTranslatable } from '@gauzy/models';
 
 @Entity('product_category')
@@ -22,19 +14,8 @@ export class ProductCategory extends TranslatableBase
 	@Column({ nullable: true })
 	imageUrl: string;
 
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId(
-		(productCategory: ProductCategory) => productCategory.organization
-	)
-	readonly organizationId: string;
-
 	@OneToMany((type) => Product, (product) => product.category)
 	products: Product[];
-
-	@ApiProperty({ type: Organization })
-	@ManyToOne((type) => Organization, { onDelete: 'CASCADE' })
-	@JoinColumn()
-	organization: Organization;
 
 	@ApiProperty({ type: ProductCategoryTranslation, isArray: true })
 	@OneToMany(

@@ -68,7 +68,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
-			approvalPolicy.tenant = entity.tenant;
+			approvalPolicy.tenantId = entity.tenantId;
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
@@ -89,7 +89,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			);
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
-			approvalPolicy.tenant = entity.tenant;
+			approvalPolicy.tenantId = entity.tenantId;
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()

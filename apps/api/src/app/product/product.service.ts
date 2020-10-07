@@ -3,7 +3,7 @@ import { IPagination } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
-import { IProductCreateInput } from '@gauzy/models';
+import { IProductCreateInput, IProductFindInput } from '@gauzy/models';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 
 @Injectable()
@@ -18,11 +18,12 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	async findAllProducts(
 		langCode?: string,
 		relations?: string[],
-		findInput?: any
+		findInput?: IProductFindInput
 	): Promise<IPagination<Product>> {
-		const total = await this.productRepository.count();
+		const total = await this.productRepository.count(findInput);
 		const items = await this.productRepository.find({
-			relations: relations
+			relations: relations,
+			where: findInput
 		});
 
 		if (langCode) {

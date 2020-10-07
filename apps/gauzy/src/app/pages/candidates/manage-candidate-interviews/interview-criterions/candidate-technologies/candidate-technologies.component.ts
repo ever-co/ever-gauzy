@@ -4,8 +4,10 @@ import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { ICandidateTechnologies } from '@gauzy/models';
+import { ICandidateTechnologies, IOrganization } from '@gauzy/models';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
+import { takeUntil } from 'rxjs/operators';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-candidate-technologies',
@@ -20,18 +22,27 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 	technologyNames: string[] = [];
 	form: FormGroup;
 	editId = null;
+	organization: IOrganization;
 	constructor(
 		private fb: FormBuilder,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private candidateTechnologiesService: CandidateTechnologiesService
+		private candidateTechnologiesService: CandidateTechnologiesService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this._initializeForm();
-		this.loadTechnologies();
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					this.organization = organization;
+					this._initializeForm();
+					this.loadTechnologies();
+				}
+			});
 	}
 
 	cancel() {
@@ -62,7 +73,11 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 	}
 
 	private async loadTechnologies() {
-		const res = await this.candidateTechnologiesService.getAll();
+		const { id: organizationId, tenantId } = this.organization;
+		const res = await this.candidateTechnologiesService.getAll({
+			organizationId,
+			tenantId
+		});
 		if (res) {
 			this.technologiesList = res.items.filter(
 				(item) => !item.interviewId
@@ -74,13 +89,18 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 		}
 	}
 	async save() {
-		const technologiesForm = this.form.controls.technologies as FormArray;
+		const { id: organizationId, tenantId } = this.organization;
+		const technologiesForm = this.technologies as FormArray;
 		const formValue = { ...technologiesForm.value[0] };
+		const targetValue = Object.assign(formValue, {
+			organizationId,
+			tenantId
+		});
 
 		if (this.editId !== null) {
-			this.update(formValue);
+			this.update(targetValue);
 		} else {
-			this.create(formValue);
+			this.create(targetValue);
 		}
 		technologiesForm.reset();
 	}
@@ -165,5 +185,12 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
 		);
+	}
+
+	/*
+	 * Getter for candidate technology form controls array
+	 */
+	get technologies(): FormArray {
+		return this.form.get('technologies') as FormArray;
 	}
 }

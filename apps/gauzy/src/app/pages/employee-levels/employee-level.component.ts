@@ -76,7 +76,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 			this.smartTableSource.load(items);
 		}
 
-		this.emptyListInvoke();
+		await this.emptyListInvoke();
 	}
 	setView() {
 		this.viewComponentName = ComponentEnum.EMPLOYEE_LEVELS;
@@ -217,7 +217,7 @@ export class EmployeeLevelComponent extends TranslationBaseComponent
 	/*
 	 * if empty employment levels then displayed add button
 	 */
-	private emptyListInvoke() {
+	private async emptyListInvoke() {
 		if (this.employeeLevels.length === 0) {
 			this.cancel();
 		}

@@ -8,7 +8,8 @@ import {
 	IVariantOptionCombination,
 	IProductCategoryTranslated,
 	IProductVariant,
-	LanguagesEnum
+	LanguagesEnum,
+	IOrganization
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from 'apps/gauzy/src/app/@core/services/product-type.service';
@@ -46,7 +47,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 	languages: any[];
 	tags: ITag[] = [];
-
+	organization: IOrganization;
+	productId: string;
 	private ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -69,20 +71,19 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.route.params
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe(async (params) => {
-				const productId = params.id || null;
-				this.loadProduct(productId);
+				this.productId = params.id || null;
 			});
-
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this.ngDestroy$))
-			.subscribe((organization) => {
+			.subscribe((organization: IOrganization) => {
 				if (organization) {
+					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
 					this.loadProductTypes();
 					this.loadProductCategories();
+					this.loadProduct(this.productId);
 				}
 			});
-
 		this.store.systemLanguages$
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe((systemLanguages) => {
@@ -137,13 +138,12 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 	async loadProduct(id: string) {
 		if (id) {
-			this.inventoryItem = await this.productService.getById(id, [
-				'category',
-				'type',
-				'options',
-				'variants',
-				'tags'
-			]);
+			const { id: organizationId, tenantId } = this.organization;
+			this.inventoryItem = await this.productService.getById(
+				id,
+				['category', 'type', 'options', 'variants', 'tags'],
+				{ organizationId, tenantId }
+			);
 		}
 
 		this.variants$.next(
@@ -157,32 +157,37 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	async loadProductTypes() {
-		const searchCriteria = this.selectedOrganizationId
-			? { organization: { id: this.selectedOrganizationId } }
-			: null;
-
-		const res = await this.productTypeService.getAllTranslated(
+		const { id: organizationId, tenantId } = this.organization;
+		const searchCriteria = {
+			organization: { id: organizationId },
+			tenantId
+		};
+		const { items = [] } = await this.productTypeService.getAllTranslated(
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
 			[],
 			searchCriteria
 		);
-		this.productTypes = res.items;
+		this.productTypes = items;
 	}
 
 	async loadProductCategories() {
-		const searchCriteria = this.selectedOrganizationId
-			? { organization: { id: this.selectedOrganizationId } }
-			: null;
-
-		const res = await this.productCategoryService.getAllTranslated(
+		const { id: organizationId, tenantId } = this.organization;
+		const searchCriteria = {
+			organization: { id: organizationId },
+			tenantId
+		};
+		const {
+			items = []
+		} = await this.productCategoryService.getAllTranslated(
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
 			[],
 			searchCriteria
 		);
-		this.productCategories = res.items;
+		this.productCategories = items;
 	}
 
 	async onSaveRequest() {
+		const { id: organizationId, tenantId } = this.organization;
 		const productRequest = {
 			tags: this.form.get('tags').value,
 			name: this.form.get('name').value,
@@ -200,7 +205,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 			type: this.productTypes.find((p) => {
 				return p.id === this.form.get('productTypeId').value;
 			}),
-			tenant: this.store.user.tenant,
+			tenantId: tenantId,
+			organizationId: organizationId,
 			language: this.form.get('language').value
 		};
 

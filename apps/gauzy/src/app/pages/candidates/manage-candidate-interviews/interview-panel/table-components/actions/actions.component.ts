@@ -6,12 +6,13 @@ import {
 	OnInit,
 	OnDestroy
 } from '@angular/core';
-import { ICandidateInterview } from '@gauzy/models';
+import { ICandidateInterview, IOrganization } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-interview-actions',
@@ -160,17 +161,20 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent
 	@Input() rowData: any;
 	@Output() updateResult = new EventEmitter<any>();
 	private _ngDestroy$ = new Subject<void>();
-
+	organization: IOrganization;
 	constructor(
 		private candidatesService: CandidatesService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.organization = this.store.selectedOrganization;
+		const { id: organizationId, tenantId } = this.organization;
 		this.candidatesService
-			.getAll(['user'])
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidates) => {
 				candidates.items.forEach((item) => {

@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
-import { ICandidateInterview, ICandidate } from '@gauzy/models';
+import { ICandidateInterview, ICandidate, IOrganization } from '@gauzy/models';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
 import { first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { Store } from '../../../@core/services/store.service';
 @Component({
 	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
@@ -31,6 +32,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	index = 1;
 	isPreviousBtn = false;
 	interviewers = [];
+	organization: IOrganization;
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewInfoComponent>,
 		private candidateInterviewersService: CandidateInterviewersService,
@@ -39,7 +41,8 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private toastrService: NbToastrService,
-		private candidateInterviewService: CandidateInterviewService
+		private candidateInterviewService: CandidateInterviewService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -66,13 +69,18 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 		}
 	}
 	async ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		if (this.interviewId) {
-			const interviews = await this.candidateInterviewService.getAll([
-				'interviewers',
-				'technologies',
-				'personalQualities',
-				'feedbacks'
-			]);
+			const { id: organizationId, tenantId } = this.organization;
+			const interviews = await this.candidateInterviewService.getAll(
+				[
+					'interviewers',
+					'technologies',
+					'personalQualities',
+					'feedbacks'
+				],
+				{ organizationId, tenantId }
+			);
 			if (interviews) {
 				this.interviewList = interviews.items;
 				this.currentInterview = this.interviewList.find(
@@ -81,7 +89,8 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 
 				const candidate = await this.candidatesService.getCandidateById(
 					this.currentInterview.candidateId,
-					['user']
+					['user'],
+					{ organizationId, tenantId }
 				);
 				if (candidate) {
 					this.selectedCandidate = candidate;
@@ -99,8 +108,9 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	}
 
 	async getData(id: string) {
+		const { id: organizationId, tenantId } = this.organization;
 		const { items } = await this.employeesService
-			.getAll(['user'])
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
 		const employeeList = items;

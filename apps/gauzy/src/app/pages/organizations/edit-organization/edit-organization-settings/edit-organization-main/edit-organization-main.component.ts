@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CurrenciesEnum, IOrganization, ITag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 	styleUrls: ['./edit-organization-main.component.scss']
 })
 export class EditOrganizationMainComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: IOrganization;
@@ -58,9 +58,15 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 			});
 	}
 
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
+
 	private async loadEmployeesCount() {
+		const { id: organizationId, tenantId } = this.organization;
 		const { total } = await this.employeesService
-			.getAll([], { organization: { id: this.organization.id } })
+			.getAll([], { organization: { id: organizationId }, tenantId })
 			.pipe(first())
 			.toPromise();
 

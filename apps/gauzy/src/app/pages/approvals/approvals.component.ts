@@ -2,7 +2,11 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { IRequestApproval, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	IRequestApproval,
+	ComponentLayoutStyleEnum,
+	IOrganization
+} from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -44,6 +48,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	private selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
 	requestApprovalData: IRequestApproval[];
+	organization: IOrganization;
 
 	@ViewChild('requestApprovalTable') requestApprovalTable;
 
@@ -74,9 +79,6 @@ export class ApprovalsComponent extends TranslationBaseComponent
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
 					this.loadSettings();
-				} else {
-					this.selectedEmployeeId = undefined;
-					this.loadSettings();
 				}
 			});
 
@@ -84,6 +86,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
+					this.organization = org;
 					this.selectedOrganizationId = org.id;
 					this.loadSettings();
 				}
@@ -91,7 +94,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadSettings();
+		// this.loadSettings();
 		// this.initListApprovals();
 
 		this.router.events
@@ -123,6 +126,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	}
 
 	async loadSettings() {
+		const { id: organizationId, tenantId } = this.organization;
 		this.selectedRequestApproval = null;
 		this.disableButton = true;
 		let items = [];
@@ -130,14 +134,21 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			items = (
 				await this.approvalRequestService.getByEmployeeId(
 					this.selectedEmployeeId,
-					['requestApprovals']
+					['requestApprovals'],
+					{
+						organizationId,
+						tenantId
+					}
 				)
 			).items;
 		} else {
 			items = (
 				await this.approvalRequestService.getAll(
 					['employeeApprovals', 'teamApprovals', 'tags'],
-					this.selectedOrganizationId
+					{
+						organizationId,
+						tenantId
+					}
 				)
 			).items;
 		}

@@ -8,9 +8,10 @@ import {
 import { AuthService } from '../../../@core/services/auth.service';
 import {
 	RolesEnum,
-	IEmployee,
 	PermissionsEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization,
+	ITimeOffPolicyVM
 } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -27,14 +28,6 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { Subject } from 'rxjs/internal/Subject';
-
-export interface TimeOffPolicyVM {
-	id: string;
-	name: string;
-	requiresApproval: boolean;
-	paid: boolean;
-	employees: IEmployee[];
-}
 
 @Component({
 	selector: 'ga-time-off-settings',
@@ -60,9 +53,9 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	private _selectedOrganizationId: string;
 	smartTableSettings: object;
 	hasRole: boolean;
-	selectedPolicy: TimeOffPolicyVM;
+	selectedPolicy: ITimeOffPolicyVM;
 	smartTableSource = new LocalDataSource();
-	timeOffPolicyData: TimeOffPolicyVM[];
+	timeOffPolicyData: ITimeOffPolicyVM[];
 	selectedPolicyId: string;
 	showTable: boolean;
 	loading = false;
@@ -71,6 +64,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	organization: IOrganization;
 
 	@ViewChild('timeOffPolicyTable') timeOffPolicyTable;
 
@@ -90,6 +84,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
+					this.organization = org;
 					this._selectedOrganizationId = org.id;
 					this._loadTableData(this._selectedOrganizationId);
 				}
@@ -157,11 +152,10 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	openAddPolicyDialog() {
 		this.dialogService
 			.open(TimeOffSettingsMutationComponent)
-			.onClose.pipe(first())
+			.onClose.pipe(first(), untilDestroyed(this))
 			.subscribe((formData) => {
 				if (formData) {
 					this.addPolicy(formData);
-					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 	}
@@ -170,7 +164,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 		if (formData) {
 			this.tymeOffService
 				.createPolicy(formData)
-				.pipe(first())
+				.pipe(first(), untilDestroyed(this))
 				.subscribe(
 					() => {
 						this.toastrService.primary(
@@ -187,7 +181,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async openEditPolicyDialog(selectedItem?: TimeOffPolicyVM) {
+	async openEditPolicyDialog(selectedItem?: ITimeOffPolicyVM) {
 		if (selectedItem) {
 			this.selectTimeOffPolicy({
 				isSelected: true,
@@ -206,7 +200,6 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 			.subscribe((formData) => {
 				if (formData) {
 					this.editPolicy(formData);
-					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 	}
@@ -214,7 +207,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	editPolicy(formData) {
 		this.tymeOffService
 			.updatePolicy(this.selectedPolicyId, formData)
-			.pipe(first())
+			.pipe(first(), untilDestroyed(this))
 			.subscribe(
 				() => {
 					this.toastrService.primary(
@@ -228,7 +221,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 			);
 	}
 
-	deletePolicy(selectedItem?: TimeOffPolicyVM) {
+	deletePolicy(selectedItem?: ITimeOffPolicyVM) {
 		if (selectedItem) {
 			this.selectTimeOffPolicy({
 				isSelected: true,
@@ -247,7 +240,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 					if (result) {
 						this.tymeOffService
 							.deletePolicy(this.selectedPolicy.id)
-							.pipe(first())
+							.pipe(first(), untilDestroyed(this))
 							.subscribe(() => {
 								this.toastrService.primary(
 									this.getTranslation(
@@ -284,16 +277,17 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 			findObj = {
 				organization: {
 					id: orgId
-				}
+				},
+				tenantId: this.organization.tenantId
 			};
 
 			this.tymeOffService
 				.getAllPolicies(['employees'], findObj)
-				.pipe(first())
+				.pipe(first(), untilDestroyed(this))
 				.subscribe(
 					(res) => {
 						const items = res.items;
-						const policyVM: TimeOffPolicyVM[] = items.map((i) => {
+						const policyVM: ITimeOffPolicyVM[] = items.map((i) => {
 							return {
 								id: i.id,
 								name: i.name,
@@ -305,6 +299,11 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 						this.timeOffPolicyData = policyVM;
 						this.smartTableSource.load(policyVM);
 						this.showTable = true;
+
+						this.selectTimeOffPolicy({
+							isSelected: false,
+							data: null
+						});
 					},
 					(error) => {
 						this.toastrService.danger(
@@ -319,9 +318,11 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this._loadSettingsSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this._loadSettingsSmartTable();
+			});
 	}
 
 	ngOnDestroy() {}

@@ -7,13 +7,15 @@ export interface ICandidatePersonalQualities
 	rating?: number;
 }
 
-export interface ICandidatePersonalQualitiesFindInput {
+export interface ICandidatePersonalQualitiesFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	interviewId?: string;
 	rating?: number;
 }
 
-export interface ICandidatePersonalQualitiesCreateInput {
+export interface ICandidatePersonalQualitiesCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	interviewId?: string;
 	rating?: number;

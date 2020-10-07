@@ -25,13 +25,12 @@ export class CandidateInterviewersService {
 	}
 
 	createBulk(
-		interviewId: string,
-		employeeIds: string[]
+		createInput: ICandidateInterviewersCreateInput
 	): Promise<ICandidateInterviewers[]> {
 		return this.http
 			.post<ICandidateInterviewers[]>(
 				'/api/candidate-interviewers/createBulk',
-				{ interviewId, employeeIds }
+				createInput
 			)
 			.pipe(first())
 			.toPromise();

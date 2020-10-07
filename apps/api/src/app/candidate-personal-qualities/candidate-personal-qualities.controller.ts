@@ -6,9 +6,10 @@ import {
 	Delete,
 	Param,
 	Get,
-	Query
+	Query,
+	HttpStatus
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
@@ -34,6 +35,27 @@ export class CandidatePersonalQualitiesController extends CrudController<
 		private commandBus: CommandBus
 	) {
 		super(candidatePersonalQualitiesService);
+	}
+
+	@ApiOperation({ summary: 'Find all candidate personal qualities.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found candidate personal qualities',
+		type: CandidatePersonalQualities
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Get()
+	findAllPersonalQualities(@Query('data') data: string): any {
+		const { findInput, relations } = JSON.parse(data);
+		return this.candidatePersonalQualitiesService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@UseGuards(RoleGuard)

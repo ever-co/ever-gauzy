@@ -56,6 +56,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 			.subscribe((params) => {
 				this.routeParams = params;
 				this._loadEmployeeData();
+				this.loadTabs();
 			});
 
 		this.employeeStore.userForm$
@@ -70,7 +71,6 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 				this.submitEmployeeForm(value);
 			});
 
-		this.loadTabs();
 		this._applyTranslationOnTabs();
 	}
 

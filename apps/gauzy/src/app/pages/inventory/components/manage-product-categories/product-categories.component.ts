@@ -56,14 +56,17 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
-				this.selectedOrganization = org;
-				this.loadSettings();
+				if (org) {
+					this.selectedOrganization = org;
+					this.loadSettings();
+				}
 			});
-
 		this.store.preferredLanguage$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				this.loadSettings();
+				if (this.selectedOrganization) {
+					this.loadSettings();
+				}
 			});
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
@@ -113,10 +116,11 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedProductCategory = null;
-		const searchCriteria = this.selectedOrganization
-			? { organization: { id: this.selectedOrganization.id } }
-			: null;
-
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const searchCriteria = {
+			organization: { id: organizationId },
+			tenantId
+		};
 		const { items } = await this.productCategoryService.getAllTranslated(
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
 			['organization'],
@@ -129,9 +133,11 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
 	async save(selectedItem?: IProductCategoryTranslated) {

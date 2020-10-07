@@ -1,11 +1,15 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { IEmployee, IOrganizationTeam } from '@gauzy/models';
+import {
+	IEmployee,
+	IOrganization,
+	IOrganizationTeam,
+	ITimeOffPolicyVM
+} from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
-import { TimeOffPolicyVM } from '../../../pages/time-off/time-off-settings/time-off-settings.component';
 
 @Component({
 	selector: 'ngx-time-off-settings-mutation',
@@ -24,7 +28,7 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	@Input()
 	team?: IOrganizationTeam;
 
-	policy: TimeOffPolicyVM;
+	policy: ITimeOffPolicyVM;
 	organizationId: string;
 	selectedEmployees: string[] = [];
 	employees: IEmployee[] = [];
@@ -32,11 +36,13 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	requiresApproval: boolean;
 	paid: boolean;
 	showWarning = false;
+	organization: IOrganization;
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
+				this.organization = org;
 				this.organizationId = org.id;
 			});
 
@@ -49,7 +55,10 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: this.organizationId } })
+			.getAll(['user'], {
+				organization: { id: this.organizationId },
+				tenantId: this.organization.tenantId
+			})
 			.pipe(first())
 			.toPromise();
 
@@ -79,6 +88,7 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 			this.dialogRef.close({
 				name: this.name,
 				organizationId: this.organizationId,
+				tenantId: this.organization.tenantId,
 				employees: this.selectedEmployees,
 				requiresApproval: this.requiresApproval,
 				paid: this.paid

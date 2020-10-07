@@ -77,20 +77,25 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		this.candidateStore.selectedCandidate$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
+				this.selectedCandidate = candidate;
 				if (candidate) {
 					this.selectedOrganization = this.store.selectedOrganization;
 					this.candidateId = candidate.id;
 					this.loadInterview();
 					this.loadSmartTable();
 					this._applyTranslationOnSmartTable();
+
+					const {
+						id: organizationId,
+						tenantId
+					} = this.selectedOrganization;
+					this.candidatesService
+						.getAll(['user'], { organizationId, tenantId })
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((candidates) => {
+							this.candidates = candidates.items;
+						});
 				}
-				this.selectedCandidate = candidate;
-			});
-		this.candidatesService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidates) => {
-				this.candidates = candidates.items;
 			});
 	}
 	setView() {

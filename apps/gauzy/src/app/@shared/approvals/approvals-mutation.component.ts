@@ -30,6 +30,7 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	form: FormGroup;
 	requestApproval: IRequestApproval;
 	organizationId: string;
+	tenantId: string;
 	participants = 'employees';
 	selectedMembers: string[];
 	selectedTeams: string[];
@@ -78,29 +79,24 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 
 	async loadEmployees() {
 		this.employeesService
-			.getAll(['user'])
+			.getAll(['user'], {
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
+			})
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
-				this.employees = employees.items.filter((emp) => {
-					return (
-						emp.orgId === this.organizationId ||
-						this.organizationId === ''
-					);
-				});
+				const { items } = employees;
+				this.employees = items;
 			});
 	}
 
 	async loadApprovalPolicies() {
 		this.approvalPolicies = (
 			await this.approvalPolicyService.getForRequestApproval([], {
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			})
-		).items.filter((policy) => {
-			return (
-				policy.organizationId === this.organizationId ||
-				this.organizationId === ''
-			);
-		});
+		).items;
 
 		if (this.requestApproval) {
 			if (this.requestApproval.approvalPolicy) {
@@ -117,9 +113,13 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	}
 
 	loadSelectedOrganization() {
-		this.organizationId = this.store.selectedOrganization
-			? this.store.selectedOrganization.id
-			: '';
+		const {
+			id: organizationId = null,
+			tenantId = null
+		} = this.store.selectedOrganization;
+
+		this.organizationId = organizationId;
+		this.tenantId = tenantId;
 	}
 
 	onApprovalPolicySelected(approvalPolicySelection: string[]) {
@@ -128,13 +128,11 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 
 	async loadTeams() {
 		this.teams = (
-			await this.organizationTeamsService.getAll(['members'])
-		).items.filter((org) => {
-			return (
-				org.organizationId === this.organizationId ||
-				this.organizationId === ''
-			);
-		});
+			await this.organizationTeamsService.getAll(['members'], {
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
+			})
+		).items;
 	}
 
 	async initializeForm() {
@@ -236,9 +234,10 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 			employeeApprovals: this.form.value['employees'],
 			teams: this.form.value['teams'],
 			id: this.form.value['id'],
-			tags: this.form.get('tags').value
+			tags: this.form.get('tags').value,
+			organizationId: this.organizationId,
+			tenantId: this.tenantId
 		};
-
 		let result: IRequestApproval;
 		result = await this.requestApprovalService.save(requestApproval);
 		this.closeDialog(result);
