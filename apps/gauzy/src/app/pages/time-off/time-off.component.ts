@@ -13,7 +13,6 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request-mutation.component';
 import { TimeOffService } from '../../@core/services/time-off.service';
 import { LocalDataSource } from 'ng2-smart-table';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -68,7 +67,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.POLICY_EDIT
@@ -76,7 +75,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 
 		this.store.selectedDate$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((date) => {
 				this.selectedDate = date;
 
@@ -90,7 +89,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 
 		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
@@ -105,7 +104,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			});
 
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
 					this.organization = org;
@@ -156,9 +155,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this._loadSmartTableSettings();
-		});
+		this.translate.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this._loadSmartTableSettings();
+			});
 	}
 
 	detectStatusChange(status: string) {
@@ -224,7 +225,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				.updateRequestStatus(requestId, {
 					status: this.selectedTimeOffRecord.status
 				})
-				.pipe(first())
+				.pipe(takeUntil(this._ngDestroy$), first())
 				.subscribe(
 					() => {
 						this.toastrService.success(
@@ -268,7 +269,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				.updateRequestStatus(requestId, {
 					status: this.selectedTimeOffRecord.status
 				})
-				.pipe(first())
+				.pipe(takeUntil(this._ngDestroy$), first())
 				.subscribe(
 					() => {
 						this.toastrService.success(
@@ -309,7 +310,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				if (res) {
 					this.timeOffService
 						.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
-						.pipe(first())
+						.pipe(takeUntil(this._ngDestroy$), first())
 						.subscribe(
 							() => {
 								this.toastrService.success(
@@ -337,7 +338,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: 'request' }
 			})
-			.onClose.pipe(first())
+			.onClose.pipe(takeUntil(this._ngDestroy$), first())
 			.subscribe((res) => {
 				this.timeOffRequest = res;
 				this._createRecord();
@@ -349,7 +350,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: 'holiday' }
 			})
-			.onClose.pipe(first())
+			.onClose.pipe(takeUntil(this._ngDestroy$), first())
 			.subscribe((res) => {
 				if (res) {
 					this.timeOffRequest = res;
@@ -365,7 +366,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: this.selectedTimeOffRecord }
 			})
-			.onClose.pipe(first())
+			.onClose.pipe(takeUntil(this._ngDestroy$), first())
 			.subscribe((res) => {
 				if (res) {
 					const requestId = this.selectedTimeOffRecord.id;
@@ -463,7 +464,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				},
 				this.selectedDate || null
 			)
-			.pipe(first())
+			.pipe(takeUntil(this._ngDestroy$), first())
 			.subscribe(
 				(res) => {
 					this.tableData = [];
@@ -509,7 +510,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 		if (this.timeOffRequest) {
 			this.timeOffService
 				.createRequest(this.timeOffRequest)
-				.pipe(first())
+				.pipe(takeUntil(this._ngDestroy$), first())
 				.subscribe(
 					() => {
 						this.toastrService.success(
@@ -532,7 +533,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 	private _updateRecord(id: string) {
 		this.timeOffService
 			.updateRequest(id, this.timeOffRequest)
-			.pipe(first())
+			.pipe(takeUntil(this._ngDestroy$), first())
 			.subscribe(
 				() => {
 					this.toastrService.success(
@@ -559,5 +560,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 		);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 }

@@ -10,7 +10,8 @@ import {
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '../../@core/services/store.service';
 import { EmployeesService } from '../../@core/services';
@@ -21,7 +22,6 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 @Component({
 	selector: 'ga-teams',
 	templateUrl: './teams.component.html',
@@ -47,6 +47,7 @@ export class TeamsComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
+	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private employeesService: EmployeesService,
@@ -63,9 +64,10 @@ export class TeamsComponent extends TranslationBaseComponent
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.selectedOrg = organization;
 					this.organizationId = organization.id;
 					this.tenantId = organization.tenantId;
 					this.loadTeams();
@@ -75,7 +77,7 @@ export class TeamsComponent extends TranslationBaseComponent
 				}
 			});
 		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.showAddCard = !this.showAddCard;
@@ -84,13 +86,16 @@ export class TeamsComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.TEAMS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedTeam =
@@ -315,7 +320,7 @@ export class TeamsComponent extends TranslationBaseComponent
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});

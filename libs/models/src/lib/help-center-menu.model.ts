@@ -16,3 +16,8 @@ export interface IHelpCenter extends IBasePerTenantAndOrganizationEntityModel {
 	article?: IHelpCenterArticle[];
 	parentId?: string;
 }
+
+export interface IHelpCenterFind
+	extends IBasePerTenantAndOrganizationEntityModel {
+	id?: string;
+}

@@ -8,14 +8,14 @@ import {
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Subject } from 'rxjs';
 @Component({
 	selector: 'ga-positions',
 	templateUrl: './positions.component.html'
@@ -35,6 +35,7 @@ export class PositionsComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	selectedOrganization: IOrganization;
+	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
@@ -48,7 +49,7 @@ export class PositionsComponent extends TranslationBaseComponent
 	}
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -60,7 +61,10 @@ export class PositionsComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -111,7 +115,7 @@ export class PositionsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.POSITIONS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedPosition = null;
@@ -210,7 +214,7 @@ export class PositionsComponent extends TranslationBaseComponent
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});

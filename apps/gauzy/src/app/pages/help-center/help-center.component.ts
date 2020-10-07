@@ -110,7 +110,11 @@ export class HelpCenterComponent extends TranslationBaseComponent
 			}
 		}
 		this.filteredArticles = this.articleList;
-		const res = await this.helpCenterAuthorService.getAll();
+		const { id: organizationId, tenantId } = this.organization;
+		const res = await this.helpCenterAuthorService.getAll([], {
+			organizationId,
+			tenantId
+		});
 		if (res) {
 			this.authors = res.items;
 			for (const article of this.articleList) {

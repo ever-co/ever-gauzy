@@ -8,7 +8,8 @@ import {
 } from '@gauzy/models';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { OrganizationDocumentsService } from 'apps/gauzy/src/app/@core/services/organization-documents.service';
-import { first } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
@@ -18,7 +19,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DocumentUrlTableComponent } from '../../@shared/table-components/document-url/document-url.component';
 import { DocumentDateTableComponent } from '../../@shared/table-components/document-date/document-date.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ga-documents',
@@ -41,7 +41,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
-
+	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private readonly fb: FormBuilder,
 		private dialogService: NbDialogService,
@@ -56,7 +56,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrganization = org;
@@ -84,7 +84,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.DOCUMENTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -146,7 +146,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 				organizationId: this.selectedOrganization.id,
 				tenantId: this.selectedOrganization.tenantId
 			})
-			.pipe(untilDestroyed(this), first())
+			.pipe(takeUntil(this._ngDestroy$), first())
 			.subscribe(
 				() => {
 					this.toastrService.success(
@@ -169,7 +169,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 				organizationId: this.selectedOrganization.id,
 				tenantId: this.selectedOrganization.tenantId
 			})
-			.pipe(untilDestroyed(this), first())
+			.pipe(takeUntil(this._ngDestroy$), first())
 			.subscribe(
 				(data) => {
 					this.documentList = data.items;
@@ -186,7 +186,7 @@ export class DocumentsComponent extends TranslationBaseComponent
 	private _updateDocument(formValue: IOrganizationDocument) {
 		this.organizationDocumentsService
 			.update(this.documentId, { ...formValue })
-			.pipe(untilDestroyed(this), first())
+			.pipe(takeUntil(this._ngDestroy$), first())
 			.subscribe(
 				() => {
 					this.toastrService.success(
@@ -250,11 +250,14 @@ export class DocumentsComponent extends TranslationBaseComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 }

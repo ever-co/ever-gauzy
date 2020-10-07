@@ -1,4 +1,4 @@
-import { IHelpCenter } from '@gauzy/models';
+import { IHelpCenter, IOrganization } from '@gauzy/models';
 import {
 	Component,
 	ViewChild,
@@ -71,13 +71,16 @@ export class SidebarComponent extends TranslationBaseComponent
 	};
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
-
+	organization: IOrganization;
 	ngOnInit() {
-		this.loadMenu();
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
-				if (organization) this.selectedOrganizationId = organization.id;
+				if (organization) {
+					this.organization = organization;
+					this.selectedOrganizationId = organization.id;
+					this.loadMenu();
+				}
 			});
 
 		this.settingsContextMenu = [
@@ -115,7 +118,7 @@ export class SidebarComponent extends TranslationBaseComponent
 			context: {
 				base: null,
 				editType: chosenType,
-				organizationId: this.selectedOrganizationId
+				organization: this.organization
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -133,7 +136,7 @@ export class SidebarComponent extends TranslationBaseComponent
 			context: {
 				base: someNode.data,
 				editType: chosenType,
-				organizationId: this.selectedOrganizationId
+				organization: this.organization
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -284,11 +287,11 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	async loadMenu() {
-		const result = await this.helpService.getAll([
-			'parent',
-			'children',
-			'organization'
-		]);
+		const { id: organizationId, tenantId } = this.organization;
+		const result = await this.helpService.getAll(
+			['parent', 'children', 'organization'],
+			{ organizationId, tenantId }
+		);
 		if (result) {
 			this.tempNodes = result.items;
 			this.nodes = this.tempNodes.filter((item) => item.parent === null);

@@ -27,7 +27,7 @@
 			<ga-teams-mutation
 				*ngIf="showAddCard"
 				[employees]="employees"
-				[organizationId]="organizationId"
+				[organization]="selectedOrg"
 				[team]="teamToEdit"
 				[isGridEdit]="isGridEdit"
 				(canceled)="cancel()"

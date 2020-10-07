@@ -70,9 +70,10 @@ export class HelpCenterAuthorController extends CrudController<
 	async getAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<HelpCenterAuthor>> {
-		const { relations = [] } = data;
+		const { relations = [], findInput = null } = data;
 		return this.helpCenterAuthorService.findAll({
-			relations
+			relations,
+			where: findInput
 		});
 	}
 
@@ -89,9 +90,8 @@ export class HelpCenterAuthorController extends CrudController<
 	@UseGuards(PermissionGuard)
 	@Post('createBulk')
 	async createBulk(@Body() input: any): Promise<HelpCenterAuthor[]> {
-		const { articleId = null, employeeIds = [] } = input;
 		return this.commandBus.execute(
-			new ArticleAuthorsBulkCreateCommand(articleId, employeeIds)
+			new ArticleAuthorsBulkCreateCommand(input)
 		);
 	}
 

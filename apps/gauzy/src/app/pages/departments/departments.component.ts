@@ -10,7 +10,7 @@ import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -18,7 +18,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-departments',
@@ -27,6 +27,7 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 })
 export class DepartmentsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	private _ngDestroy$ = new Subject<void>();
 	organizationId: string;
 	tenantId: string;
 	showAddCard: boolean;
@@ -56,8 +57,9 @@ export class DepartmentsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.cancel();
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationId = organization.id;
@@ -69,12 +71,17 @@ export class DepartmentsComponent extends TranslationBaseComponent
 				}
 			});
 	}
-
-	ngOnDestroy(): void {}
-
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 	cancel() {
 		this.departmentToEdit = null;
-		this.showAddCard = !this.showAddCard;
+		this.showAddCard = false;
+		this.selectDepartment({
+			isSelected: false,
+			data: null
+		});
 	}
 	selectDepartment({ isSelected, data }) {
 		const selectedDepartment = isSelected ? data : null;
@@ -130,7 +137,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.DEPARTMENTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedDepartment =
@@ -164,6 +171,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
+			this.cancel();
 			this.loadDepartments();
 		}
 	}
@@ -240,7 +248,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
