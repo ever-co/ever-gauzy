@@ -457,7 +457,10 @@
 							></ngx-variant-form>
 						</nb-tab>
 						<nb-tab tabTitle="Variants">
-							<ngx-variant-table [variants$]="variants$">
+							<ngx-variant-table
+								[productId]="productId"
+								[variants$]="variants$"
+							>
 							</ngx-variant-table>
 						</nb-tab>
 					</nb-tabset>

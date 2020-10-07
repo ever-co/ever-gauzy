@@ -99,14 +99,13 @@ export class VariantTableComponent extends TranslationBaseComponent
 		]);
 	}
 
-	async selectItem($event: SelectedProductVariant) {
-		if ($event.isSelected) {
-			this.selectedItem = $event.data;
-			this.disableButton = false;
+	async selectItem({ isSelected, data }) {
+		const selectedItem = isSelected ? data : null;
+		if (this.variantTable) {
 			this.variantTable.grid.dataSet.willSelect = false;
-		} else {
-			this.disableButton = true;
 		}
+		this.disableButton = !isSelected;
+		this.selectedItem = selectedItem;
 	}
 
 	async delete() {
@@ -129,8 +128,12 @@ export class VariantTableComponent extends TranslationBaseComponent
 					)
 				);
 
-				this.selectItem = null;
-				this.disableButton = true;
+				if (this.selectedItem) {
+					this.selectItem({
+						isSelected: true,
+						data: null
+					});
+				}
 
 				this.toastrService.success(
 					this.getTranslation(

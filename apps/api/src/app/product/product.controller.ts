@@ -51,10 +51,11 @@ export class ProductController extends CrudController<Product> {
 		@Param('id') id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Product> {
-		const { relations = [] } = data;
+		const { relations = [], findInput = null } = data;
 
 		return this.productService.findById(id, {
-			relations
+			relations,
+			where: findInput
 		});
 	}
 

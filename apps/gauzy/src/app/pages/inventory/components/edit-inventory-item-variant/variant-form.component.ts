@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	CurrenciesEnum,
 	BillingInvoicingPolicyEnum,
-	IProductVariant
+	IProductVariant,
+	IOrganization
 } from '@gauzy/models';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
@@ -15,6 +16,7 @@ import { Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 export interface IOptionCreateInput {
 	name: string;
@@ -38,7 +40,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 	billingInvoicingPolicies = Object.values(BillingInvoicingPolicyEnum);
 
 	form: FormGroup;
-
+	organization: IOrganization;
 	private ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -49,12 +51,21 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 		private productVariantPriceService: ProductVariantPriceService,
 		private productVariantSettingsService: ProductVariantSettingsService,
 		private location: Location,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private readonly store: Store
 	) {
 		super(translationService);
 	}
 
 	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this.ngDestroy$))
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					this.organization = organization;
+				}
+			});
+
 		this.route.params
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe(async (params) => {
@@ -75,6 +86,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		this.form = this.fb.group({
+			imageUrl: [],
 			internationalReference: [
 				this.itemVariant ? this.itemVariant.internalReference : '',
 				[Validators.required]
@@ -158,6 +170,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 	}
 
 	onSaveRequest() {
+		const { id: organizationId, tenantId } = this.organization;
 		const formValue = this.form.value;
 
 		const productVariantRequest = {
@@ -168,14 +181,18 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 				quantity: formValue['quantity'],
 				taxes: formValue['taxes'],
 				enabled: formValue['enabled'],
-				notes: formValue['notes']
+				notes: formValue['notes'],
+				organizationId,
+				tenantId
 			},
 			productVariantPrice: {
 				id: this.itemVariant.price.id,
 				retailPrice: formValue['retailPrice'],
 				retailPriceCurrency: formValue['retailPriceCurrency'],
 				unitCost: formValue['unitCost'],
-				unitCostCurrency: formValue['unitCostCurrency']
+				unitCostCurrency: formValue['unitCostCurrency'],
+				organizationId,
+				tenantId
 			},
 			productVariantSettings: {
 				id: this.itemVariant.settings.id,
@@ -186,7 +203,9 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 				canBeCharged: formValue['canBeCharged'],
 				canBeRented: formValue['canBeRented'],
 				trackInventory: formValue['trackInventory'],
-				isEquipment: formValue['isEquipment']
+				isEquipment: formValue['isEquipment'],
+				organizationId,
+				tenantId
 			}
 		};
 

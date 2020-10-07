@@ -19,7 +19,8 @@ export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	language?: string;
 }
 
-export interface IProductCreateInput {
+export interface IProductCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description: string;
 	enabled: boolean;
@@ -30,12 +31,11 @@ export interface IProductCreateInput {
 	tags?: ITag[];
 	optionCreateInputs?: IProductOption[];
 	optionDeleteInputs?: IProductOption[];
-	tenant: ITenant;
 	language?: string;
 }
 
-export interface IProductFindInput {
-	organizationId?: string;
+export interface IProductFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
 
