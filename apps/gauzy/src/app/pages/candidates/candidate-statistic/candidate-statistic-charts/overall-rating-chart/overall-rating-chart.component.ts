@@ -2,7 +2,7 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ICandidate } from '@gauzy/models';
+import { ICandidate, IEmployee } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-overall-rating-chart',
@@ -34,6 +34,7 @@ export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
 	@Input() candidates: ICandidate[];
+	@Input() employeeList: IEmployee[];
 	data: any;
 	options: any;
 	backgroundColor: string[] = [];
@@ -87,8 +88,11 @@ export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 	async loadData() {
 		for (let i = 0; i < this.candidates.length; i++) {
 			this.labels.push(this.candidates[i].user.name);
-			this.rating.push(parseFloat(this.candidates[i].rating.toFixed(2)));
-
+			if (this.candidates[i].rating) {
+				this.rating.push(
+					parseFloat(this.candidates[i].rating.toFixed(2))
+				);
+			}
 			const color =
 				i % 2 === 0
 					? 'rgba(89, 139, 255, 0.2)'

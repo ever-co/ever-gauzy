@@ -1,6 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
-import { ITenant } from './tenant.model';
 import { ITag } from './tag-entity.model';
 
 export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
@@ -19,7 +18,8 @@ export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	language?: string;
 }
 
-export interface IProductCreateInput {
+export interface IProductCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description: string;
 	enabled: boolean;
@@ -30,12 +30,11 @@ export interface IProductCreateInput {
 	tags?: ITag[];
 	optionCreateInputs?: IProductOption[];
 	optionDeleteInputs?: IProductOption[];
-	tenant: ITenant;
 	language?: string;
 }
 
-export interface IProductFindInput {
-	organizationId?: string;
+export interface IProductFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
 

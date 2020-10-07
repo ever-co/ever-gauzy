@@ -30,9 +30,8 @@ export class ProductService {
 			.toPromise();
 	}
 
-	getById(id: string, relations?: string[]) {
-		const data = JSON.stringify({ relations });
-
+	getById(id: string, relations?: string[], findInput?: IProductFindInput) {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<IProduct>(`${this.PRODUCTS_URL}/${id}`, {
 				params: { data }

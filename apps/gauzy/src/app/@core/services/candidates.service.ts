@@ -27,8 +27,12 @@ export class CandidatesService {
 		);
 	}
 
-	getCandidateById(id: string, relations?: string[]): Promise<ICandidate> {
-		const data = JSON.stringify({ relations });
+	getCandidateById(
+		id: string,
+		relations?: string[],
+		findInput?: ICandidateFindInput
+	): Promise<ICandidate> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<ICandidate>(`/api/candidate/${id}`, {
 				params: { data }

@@ -14,12 +14,14 @@ export class CandidateInterviewersBulkCreateHandler
 	public async execute(
 		command: CandidateInterviewersBulkCreateCommand
 	): Promise<CandidateInterviewers[]> {
-		const { interviewId, employeeIds } = command;
+		const { input } = command;
 		let interviewer: ICandidateInterviewersCreateInput;
 		const createInput: ICandidateInterviewersCreateInput[] = [];
 
+		const { employeeIds, interviewId, organizationId, tenantId } = input;
+
 		for (const employeeId of employeeIds) {
-			interviewer = { interviewId: interviewId, employeeId: employeeId };
+			interviewer = { interviewId, employeeId, organizationId, tenantId };
 			createInput.push(interviewer);
 		}
 		return await this.candidateInterviewersService.createBulk(createInput);

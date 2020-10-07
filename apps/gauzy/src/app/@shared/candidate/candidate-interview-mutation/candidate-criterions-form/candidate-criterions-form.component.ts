@@ -1,12 +1,14 @@
 import {
 	ICandidateTechnologies,
-	ICandidatePersonalQualities
+	ICandidatePersonalQualities,
+	IOrganization
 } from '@gauzy/models';
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { FormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-candidate-criterions-form',
@@ -24,13 +26,16 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 	selectedQualities = [];
 	checkedTech: number[] = [];
 	checkedQual = [];
+	organization: IOrganization;
 	constructor(
 		private readonly fb: FormBuilder,
 		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
+		protected readonly store: Store
 	) {}
 
 	ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.loadCriterions();
 	}
 
@@ -62,7 +67,11 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 		}
 	}
 	private async loadCriterions() {
-		const technologies = await this.candidateTechnologiesService.getAll();
+		const { id: organizationId, tenantId } = this.organization;
+		const technologies = await this.candidateTechnologiesService.getAll({
+			organizationId,
+			tenantId
+		});
 		if (technologies) {
 			this.technologiesList = technologies.items.filter(
 				(item) => !item.interviewId
@@ -75,7 +84,10 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 				);
 			}
 		}
-		const qualities = await this.candidatePersonalQualitiesService.getAll();
+		const qualities = await this.candidatePersonalQualitiesService.getAll({
+			organizationId,
+			tenantId
+		});
 		if (qualities) {
 			this.personalQualitiesList = qualities.items.filter(
 				(item) => !item.interviewId

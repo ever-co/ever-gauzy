@@ -1,4 +1,8 @@
-import { IHelpCenterAuthor } from '@gauzy/models';
+import {
+	IHelpCenterAuthor,
+	IHelpCenterAuthorCreate,
+	IHelpCenterAuthorFind
+} from '@gauzy/models';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
@@ -9,15 +13,12 @@ import { Injectable } from '@angular/core';
 export class HelpCenterAuthorService {
 	constructor(private http: HttpClient) {}
 
-	createBulk(
-		articleId: string,
-		employeeIds: string[]
-	): Promise<IHelpCenterAuthor[]> {
+	createBulk(input: IHelpCenterAuthorCreate): Promise<IHelpCenterAuthor[]> {
 		return this.http
-			.post<IHelpCenterAuthor[]>('/api/help-center-author/createBulk', {
-				articleId,
-				employeeIds
-			})
+			.post<IHelpCenterAuthor[]>(
+				'/api/help-center-author/createBulk',
+				input
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -39,8 +40,11 @@ export class HelpCenterAuthorService {
 			.toPromise();
 	}
 
-	getAll(relations?: string[]): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ relations });
+	getAll(
+		relations?: string[],
+		findInput?: IHelpCenterAuthorFind
+	): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: IHelpCenterAuthor[]; total: number }>(
 				`/api/help-center-author`,

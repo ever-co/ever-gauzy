@@ -7,9 +7,10 @@ import {
 	Param,
 	Get,
 	Put,
-	Query
+	Query,
+	HttpStatus
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
@@ -35,6 +36,27 @@ export class CandidateTechnologiesController extends CrudController<
 		private commandBus: CommandBus
 	) {
 		super(candidateTechnologiesService);
+	}
+
+	@ApiOperation({ summary: 'Find all candidate technologies.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found candidate technologies',
+		type: CandidateTechnologies
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Get()
+	findAllApprovalPolicies(@Query('data') data: string): any {
+		const { findInput, relations } = JSON.parse(data);
+		return this.candidateTechnologiesService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@UseGuards(RoleGuard)

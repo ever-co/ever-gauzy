@@ -9,7 +9,8 @@ import {
 	IEmployee,
 	ICandidateFeedback,
 	ICandidateInterviewers,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -61,6 +62,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	@ViewChild('interviewsTable') interviewsTable;
+	organization: IOrganization;
 	constructor(
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
@@ -77,17 +79,30 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		super(translateService);
 		this.setView();
 	}
-	async ngOnInit() {
-		this.candidatesService
-			.getAll(['user'])
+	ngOnInit() {
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidates) => {
-				this.candidates = candidates.items;
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					const { id: organizationId, tenantId } = organization;
+					this.organization = organization;
+					this.candidatesService
+						.getAll(['user'], {
+							organizationId,
+							tenantId
+						})
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((candidates) => {
+							this.candidates = candidates.items;
+						});
+
+					this.candidateStore.interviewList$
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe(() => {
+							this.loadInterviews();
+						});
+				}
 			});
-		this.loadInterviews();
-		this.candidateStore.interviewList$.subscribe(() => {
-			this.loadInterviews();
-		});
 	}
 	onEmployeeSelected(empIds: string[]) {
 		this.selectedEmployees = empIds;
@@ -117,25 +132,30 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		return this.interviewList;
 	}
 	async loadInterviews() {
-		const res = await this.candidateFeedbacksService.getAll([
-			'interviewer'
-		]);
+		const { id: organizationId, tenantId } = this.organization;
+		const res = await this.candidateFeedbacksService.getAll(
+			['interviewer'],
+			{ organizationId, tenantId }
+		);
 		if (res) {
 			this.allFeedbacks = res.items;
 		}
 		this.loading = true;
 		const { items } = await this.employeesService
-			.getAll(['user'])
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
 		this.employeeList = items;
-		const interviews = await this.candidateInterviewService.getAll([
-			'feedbacks',
-			'interviewers',
-			'technologies',
-			'personalQualities',
-			'candidate'
-		]);
+		const interviews = await this.candidateInterviewService.getAll(
+			[
+				'feedbacks',
+				'interviewers',
+				'technologies',
+				'personalQualities',
+				'candidate'
+			],
+			{ organizationId, tenantId }
+		);
 		if (interviews) {
 			this.interviewList = interviews.items;
 			this.allInterviews = interviews.items;
@@ -431,9 +451,12 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.MESSAGE.EDIT_PAST_INTERVIEW')
 			);
 		} else {
+			const { id: organizationId, tenantId } = this.organization;
 			const candidate = await this.candidatesService
 				.getAll(['user'], {
-					id: currentInterview.candidate.id
+					id: currentInterview.candidate.id,
+					organizationId,
+					tenantId
 				})
 				.pipe(first())
 				.toPromise();

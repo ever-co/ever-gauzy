@@ -8,7 +8,7 @@ import {
 	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -17,7 +17,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
 	selector: 'ga-employment-types',
@@ -37,7 +37,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-
+	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private fb: FormBuilder,
 		private readonly toastrService: NbToastrService,
@@ -51,20 +51,23 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.showEditDiv = !this.showEditDiv;
 		this._initializeForm();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
+		this.cancel();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: ['', Validators.required]
 		});
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => {
 				this.organization = data;
 				if (this.organization) {
@@ -73,7 +76,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 							organizationId: this.organization.id,
 							tenantId: this.organization.tenantId
 						})
-						.pipe(untilDestroyed(this))
+						.pipe(takeUntil(this._ngDestroy$))
 						.subscribe((types) => {
 							this.organizationEmploymentTypes = types.items;
 							this.smartTableSource.load(types.items);
@@ -105,7 +108,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.EMPLOYMENT_TYPE;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedOrgEmpType = null;
@@ -125,7 +128,7 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 			};
 			this.organizationEmploymentTypesService
 				.addEmploymentType(newEmploymentType)
-				.pipe(untilDestroyed(this))
+				.pipe(takeUntil(this._ngDestroy$))
 				.subscribe((data) => {
 					this.organizationEmploymentTypes.push(data);
 				});
@@ -224,25 +227,19 @@ export class EmploymentTypesComponent extends TranslationBaseComponent
 			name: name,
 			tags: this.tags
 		};
-
 		await this.organizationEmploymentTypesService.editEmploymentType(
 			id,
 			orgEmpTypeForEdit
 		);
-		this._initializeForm();
-		this.showEditDiv = !this.showEditDiv;
-		this.showAddCard = false;
-		this.selectedOrgEmpType = null;
-		this.tags = [];
+		this.cancel();
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
 	}
-
 	/*
 	 * if empty employment types then displayed add button
 	 */

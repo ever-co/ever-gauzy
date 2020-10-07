@@ -56,7 +56,6 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 				this.selectedCandidate = candidate;
 
 				if (this.selectedCandidate) {
-					this.getDepartments();
 					this._initializeForm(this.selectedCandidate);
 				}
 
@@ -67,14 +66,17 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 						if (this.selectedOrganization) {
 							this.getPositions();
 							this.getEmploymentTypes();
+							this.getDepartments();
 						}
 					});
 			});
 	}
 
 	private async getDepartments() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.organizationDepartmentsService.getAll([], {
-			organizationId: this.selectedCandidate.organizationId
+			organizationId,
+			tenantId
 		});
 		this.departments = items;
 	}

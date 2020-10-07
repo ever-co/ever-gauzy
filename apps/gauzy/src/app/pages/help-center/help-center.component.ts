@@ -3,7 +3,8 @@ import {
 	IHelpCenterArticle,
 	IHelpCenter,
 	IHelpCenterAuthor,
-	IEmployee
+	IEmployee,
+	IOrganization
 } from '@gauzy/models';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -17,6 +18,7 @@ import { first, takeUntil } from 'rxjs/operators';
 import { HelpCenterAuthorService } from '../../@core/services/help-center-author.service';
 import { EmployeesService } from '../../@core/services';
 import { FormControl } from '@angular/forms';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-help-center',
@@ -33,7 +35,8 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private helpCenterAuthorService: HelpCenterAuthorService,
 		private employeeService: EmployeesService,
-		private sanitizer: DomSanitizer
+		private sanitizer: DomSanitizer,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -49,17 +52,28 @@ export class HelpCenterComponent extends TranslationBaseComponent
 	public authors: IHelpCenterAuthor[] = [];
 	filterParams = { name: '', authorId: '' };
 	loading: boolean;
-
+	organization: IOrganization;
 	ngOnInit() {
-		this.employeeService
-			.getAll(['user'])
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
+			.subscribe((organization) => {
+				if (organization) {
+					const { id: organizationId, tenantId } = organization;
+					this.organization = organization;
+					this.employeeService
+						.getAll(['user'], { organizationId, tenantId })
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((employees) => {
+							this.employees = employees.items;
+						});
+				}
 			});
-		this.search.valueChanges.subscribe((item) => {
-			this.filterByName(item);
-		});
+
+		this.search.valueChanges
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((item) => {
+				this.filterByName(item);
+			});
 	}
 
 	clickedNode(clickedNode: IHelpCenter) {
@@ -96,7 +110,11 @@ export class HelpCenterComponent extends TranslationBaseComponent
 			}
 		}
 		this.filteredArticles = this.articleList;
-		const res = await this.helpCenterAuthorService.getAll();
+		const { id: organizationId, tenantId } = this.organization;
+		const res = await this.helpCenterAuthorService.getAll([], {
+			organizationId,
+			tenantId
+		});
 		if (res) {
 			this.authors = res.items;
 			for (const article of this.articleList) {

@@ -138,7 +138,13 @@ export default class TrayIcon {
 			}
 		];
 
-		if (auth) contextMenu = menuAuth;
+		const menuWindowTime = Menu.getApplicationMenu().getMenuItemById('window-time-track');
+		const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
+		if (auth && auth.employeeId) {
+			contextMenu = menuAuth;
+			menuWindowSetting.enabled = true;
+			menuWindowTime.enabled = true;
+		}
 		this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 
 		ipcMain.on('update_tray_start', (event, arg) => {
@@ -171,12 +177,18 @@ export default class TrayIcon {
 			store.set({
 				auth: arg
 			});
-			contextMenu = menuAuth;
+			if (arg.employeeId) {
+				contextMenu = menuAuth;
+				menuWindowTime.enabled = true;
+				menuWindowSetting.enabled = true;
+			}
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
 
 		ipcMain.on('logout', () => {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
+			menuWindowSetting.enabled = false;
+			menuWindowTime.enabled = false;
 			const appSetting = store.get('appSetting');
 			if (appSetting.timerStarted) {
 				setTimeout(() => {

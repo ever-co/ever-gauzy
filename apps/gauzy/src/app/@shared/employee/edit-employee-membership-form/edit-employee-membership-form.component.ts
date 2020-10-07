@@ -5,7 +5,6 @@ import {
 	IEditEntityByMemberInput,
 	IEmployee
 } from '@gauzy/models';
-import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-edit-employee-membership',
@@ -13,8 +12,6 @@ import { Subject } from 'rxjs';
 	styleUrls: ['./edit-employee-membership-form.component.scss']
 })
 export class EditEmployeeMembershipFormComponent implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
-
 	@Input() organizationEntities: IBaseEntityWithMembers[];
 	@Input() employeeEntities: IBaseEntityWithMembers[];
 	@Input() selectedEmployee: IEmployee;

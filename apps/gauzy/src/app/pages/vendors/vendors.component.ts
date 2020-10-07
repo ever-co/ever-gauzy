@@ -62,6 +62,7 @@ export class VendorsComponent extends TranslationBaseComponent
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
+					this.cancel();
 					this.loadVendors();
 				}
 			});
@@ -145,7 +146,7 @@ export class VendorsComponent extends TranslationBaseComponent
 
 	cancel() {
 		this.form.reset();
-		this.showAddCard = !this.showAddCard;
+		this.showAddCard = false;
 		this.currentVendor = null;
 	}
 

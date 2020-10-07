@@ -32,12 +32,10 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	organization: IOrganization;
 	@Input()
 	project: IOrganizationProject;
-
 	@Output()
 	canceled = new EventEmitter();
 	@Output()
 	addOrEditProject = new EventEmitter();
-
 	@Input()
 	organizationContacts: Object[] = [];
 
@@ -74,9 +72,11 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	}
 
 	private async _getOrganizationContacts() {
-		this.organizationId = this.store.selectedOrganization.id;
+		const { id: organizationId, tenantId } = this.organization;
+		this.organizationId = organizationId;
 		const { items } = await this.organizationContactService.getAll([], {
-			organizationId: this.store.selectedOrganization.id
+			organizationId,
+			tenantId
 		});
 		items.forEach((i) => {
 			this.organizationContacts = [
@@ -112,7 +112,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			name: [this.project ? this.project.name : '', Validators.required],
 			organizationContact: [
 				this.project && this.project.organizationContact
-					? this.project.organizationContactId
+					? this.project.organizationContact
 					: ''
 			],
 			billing: [this.project ? this.project.billing : 'RATE'],

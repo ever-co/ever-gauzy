@@ -140,7 +140,6 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				if (org) {
 					this.organization = org;
 					this._selectedOrganizationId = org.id;
-					this.selectedEmployeeId = null;
 					this.fetchAvailableSlots();
 				}
 			});

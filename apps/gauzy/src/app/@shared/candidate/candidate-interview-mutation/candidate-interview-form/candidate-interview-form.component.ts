@@ -80,10 +80,7 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.employeeService
-			.getAll(['user'], {
-				organizationId,
-				tenantId
-			})
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;

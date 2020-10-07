@@ -2,6 +2,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
+	IOrganization,
 	IProductCategoryTranslatable,
 	IProductCategoryTranslation,
 	LanguagesEnum
@@ -16,7 +17,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-	selector: 'ngx-product-type-mutation',
+	selector: 'ngx-product-category-mutation',
 	templateUrl: './product-category-mutation.component.html',
 	styleUrls: ['./product-category-mutation.component.scss']
 })
@@ -35,6 +36,7 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 	languages: Array<object>;
 	translations = [];
 	activeTranslation: IProductCategoryTranslation;
+	organization: IOrganization;
 
 	constructor(
 		public dialogRef: NbDialogRef<IProductCategoryTranslatable>,
@@ -48,6 +50,7 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.selectedLanguage =
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH;
 		this.translations = this.productCategory
@@ -73,7 +76,8 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 		const productCategoryRequest = {
 			organization: this.store.selectedOrganization,
 			imageUrl: this.form.get('imageUrl').value,
-			translations: this.translations
+			translations: this.translations,
+			tenantId: this.organization.tenantId
 		};
 
 		let productCategory: IProductCategoryTranslatable;
@@ -125,10 +129,13 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 		});
 
 		if (!this.activeTranslation) {
+			const { id: organizationId, tenantId } = this.organization;
 			this.activeTranslation = {
 				languageCode: this.selectedLanguage,
 				name: '',
-				description: ''
+				description: '',
+				organizationId,
+				tenantId
 			};
 
 			this.translations.push(this.activeTranslation);

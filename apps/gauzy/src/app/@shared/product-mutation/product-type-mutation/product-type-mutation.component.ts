@@ -5,7 +5,8 @@ import {
 	ProductTypesIconsEnum,
 	LanguagesEnum,
 	IProductTypeTranslation,
-	IProductTypeTranslatable
+	IProductTypeTranslatable,
+	IOrganization
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -32,6 +33,7 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 
 	translations = [];
 	activeTranslation: IProductTypeTranslation;
+	organization: IOrganization;
 
 	constructor(
 		public dialogRef: NbDialogRef<IProductTypeTranslatable>,
@@ -42,12 +44,9 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 	) {
 		super(translationService);
 	}
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
 
 	ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.selectedLanguage =
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH;
 		this.translations = this.productType
@@ -65,11 +64,17 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 			});
 	}
 
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
+
 	async onSaveRequest() {
 		const productTypeRequest = {
 			organization: this.store.selectedOrganization,
 			icon: this.selectedIcon,
-			translations: this.translations
+			translations: this.translations,
+			tenantId: this.organization.tenantId
 		};
 
 		let productType: IProductTypeTranslatable;
@@ -123,10 +128,13 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 		});
 
 		if (!this.activeTranslation) {
+			const { id: organizationId, tenantId } = this.organization;
 			this.activeTranslation = {
 				languageCode: this.selectedLanguage,
 				name: '',
-				description: ''
+				description: '',
+				organizationId,
+				tenantId
 			};
 
 			this.translations.push(this.activeTranslation);

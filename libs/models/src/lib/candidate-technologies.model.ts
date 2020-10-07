@@ -7,13 +7,15 @@ export interface ICandidateTechnologies
 	rating?: number;
 }
 
-export interface ICandidateTechnologiesFindInput {
+export interface ICandidateTechnologiesFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	interviewId?: string;
 	rating?: number;
 }
 
-export interface ICandidateTechnologiesCreateInput {
+export interface ICandidateTechnologiesCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	interviewId?: string;
 	rating?: number;

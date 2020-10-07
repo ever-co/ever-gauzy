@@ -5,7 +5,9 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
-import { ICandidatePersonalQualities } from '@gauzy/models';
+import { ICandidatePersonalQualities, IOrganization } from '@gauzy/models';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-candidate-personal-qualities',
@@ -21,29 +23,38 @@ export class CandidatePersonalQualitiesComponent
 	editId = null;
 	existedQualNames: string[];
 	qualityNames: string[] = [];
+	organization: IOrganization;
 	constructor(
 		private fb: FormBuilder,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this._initializeForm();
-		this.loadQualities();
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					this.organization = organization;
+					this._initializeForm();
+					this.loadQualities();
+				}
+			});
 	}
 
 	cancel() {
-		(this.form.controls.qualities as FormArray).reset();
+		(this.qualities as FormArray).reset();
 	}
 
 	private async _initializeForm() {
 		this.form = new FormGroup({
 			qualities: this.fb.array([])
 		});
-		const qualitiesForm = this.form.controls.qualities as FormArray;
+		const qualitiesForm = this.qualities as FormArray;
 		qualitiesForm.push(
 			this.fb.group({
 				name: ['', Validators.required]
@@ -64,7 +75,11 @@ export class CandidatePersonalQualitiesComponent
 	}
 
 	private async loadQualities() {
-		const res = await this.candidatePersonalQualitiesService.getAll();
+		const { id: organizationId, tenantId } = this.organization;
+		const res = await this.candidatePersonalQualitiesService.getAll({
+			organizationId,
+			tenantId
+		});
 		if (res) {
 			this.personalQualitiesList = res.items.filter(
 				(item) => !item.interviewId
@@ -76,13 +91,18 @@ export class CandidatePersonalQualitiesComponent
 		}
 	}
 	async save() {
-		const qualitiesForm = this.form.controls.qualities as FormArray;
+		const { id: organizationId, tenantId } = this.organization;
+		const qualitiesForm = this.qualities as FormArray;
 		const formValue = { ...qualitiesForm.value[0] };
+		const targetValue = Object.assign(formValue, {
+			organizationId,
+			tenantId
+		});
 
 		if (this.editId !== null) {
-			this.update(formValue);
+			this.update(targetValue);
 		} else {
-			this.create(formValue);
+			this.create(targetValue);
 		}
 		qualitiesForm.reset();
 	}
@@ -166,5 +186,12 @@ export class CandidatePersonalQualitiesComponent
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
 		);
+	}
+
+	/*
+	 * Getter for candidate qualities form controls array
+	 */
+	get qualities(): FormArray {
+		return this.form.get('qualities') as FormArray;
 	}
 }

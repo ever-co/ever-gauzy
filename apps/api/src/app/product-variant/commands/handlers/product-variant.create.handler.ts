@@ -28,6 +28,7 @@ export class ProductVariantCreateHandler
 		);
 		const productOptions = product.options;
 		const optionCombinations = variantCreateInput.optionCombinations;
+		const { organizationId, tenantId } = variantCreateInput.product;
 
 		const arrVariants = [];
 
@@ -41,6 +42,10 @@ export class ProductVariantCreateHandler
 			newProductVariant.internalReference = variantOptions
 				.map((option) => option.name)
 				.join('-');
+
+			newProductVariant.organizationId = organizationId;
+			newProductVariant.tenantId = tenantId;
+
 			newProductVariant.settings = await this.productVariantSettingsService.createDefaultVariantSettings();
 			newProductVariant.price = await this.productVariantPriceService.createDefaultProductVariantPrice();
 			newProductVariant.product = await this.productService.findOne({

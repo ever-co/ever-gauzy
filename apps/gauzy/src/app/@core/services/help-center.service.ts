@@ -1,4 +1,4 @@
-import { IHelpCenter } from '@gauzy/models';
+import { IHelpCenter, IHelpCenterFind } from '@gauzy/models';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
@@ -16,8 +16,11 @@ export class HelpCenterService {
 			.toPromise();
 	}
 
-	getAll(relations?: string[]): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ relations });
+	getAll(
+		relations?: string[],
+		findInput?: IHelpCenterFind
+	): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: IHelpCenter[]; total: number }>(`/api/help-center`, {
 				params: { data }

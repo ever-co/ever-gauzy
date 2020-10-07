@@ -531,9 +531,11 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		this.interviewers = [];
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

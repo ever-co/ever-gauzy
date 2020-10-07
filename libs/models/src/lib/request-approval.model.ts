@@ -20,7 +20,8 @@ export interface IRequestApproval
 	tags?: ITag[];
 }
 
-export interface IRequestApprovalCreateInput {
+export interface IRequestApprovalCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	employeeApprovals?: IRequestApprovalEmployee[];
 	teamApprovals?: IRequestApprovalTeam[];
@@ -44,3 +45,8 @@ export const RequestApprovalStatus = {
 	APPROVED: 2,
 	REFUSED: 3
 };
+
+export interface IRequestApprovalFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
+	id?: string;
+}

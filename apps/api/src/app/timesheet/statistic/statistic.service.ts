@@ -16,7 +16,8 @@ import {
 	ITimeSlotStatistics,
 	IProjectsStatistics,
 	IGetManualTimesStatistics,
-	IManualTimesStatistics
+	IManualTimesStatistics,
+	TimeLogType
 } from '@gauzy/models';
 import { TimeSlot } from '../time-slot.entity';
 import { Employee } from '../../employee/employee.entity';
@@ -270,7 +271,7 @@ export class StatisticService {
 						`duration`
 					)
 					.addSelect(
-						'EXTRACT(DOW FROM "timeLogs"."startedAt")',
+						`${environment.database.type === 'sqlite' ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`,
 						'day'
 					)
 					.where({ id: member.id })
@@ -282,7 +283,7 @@ export class StatisticService {
 						}
 					)
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
-					.addGroupBy(`EXTRACT(DOW FROM "timeLogs"."startedAt")`)
+					.addGroupBy(`${environment.database.type === 'sqlite' ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`)
 					.getRawMany();
 			}
 		}
@@ -320,10 +321,10 @@ export class StatisticService {
 			query.where(`members.id = :employeeId`, { employeeId });
 		} else {
 			query
-				.where(`"organizationId" = :organizationId`, {
+				.where(`"${query.alias}"."organizationId" = :organizationId`, {
 					organizationId: request.organizationId
 				})
-				.andWhere(`"tenantId" = :tenantId`, {
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId: request.tenantId
 				});
 		}
@@ -350,9 +351,12 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-			.where(`"organizationId" = :organizationId`, {
-				organizationId: request.organizationId
-			});
+			.where(
+				`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
+				{
+					organizationId: request.organizationId
+				}
+			);
 
 		if (
 			(user.employeeId && request.onlyMe) ||
@@ -370,12 +374,18 @@ export class StatisticService {
 			});
 		} else {
 			totalDurationQuery
-				.where(`"organizationId" = :organizationId`, {
-					organizationId: request.organizationId
-				})
-				.andWhere(`"tenantId" = :tenantId`, {
-					tenantId: request.tenantId
-				});
+				.where(
+					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
+					{
+						organizationId: request.organizationId
+					}
+				)
+				.andWhere(
+					`"${totalDurationQuery.alias}"."tenantId" = :tenantId`,
+					{
+						tenantId: request.tenantId
+					}
+				);
 		}
 
 		totalDurationQuery.andWhere(
@@ -504,6 +514,7 @@ export class StatisticService {
 				relations: ['project', 'employee', 'employee.user'],
 				where: {
 					employeeId: In(employeeIds),
+					logType: TimeLogType.MANUAL,
 					startedAt: Between(start, end)
 				},
 				take: 5,
@@ -647,10 +658,10 @@ export class StatisticService {
 			query.andWhere(`"${query.alias}".id = :employeeId`, { employeeId });
 		} else {
 			query
-				.where('"organizationId" = :organizationId', {
+				.where(`"${query.alias}"."organizationId" = :organizationId`, {
 					organizationId: request.organizationId
 				})
-				.andWhere('"tenantId" = :tenantId', {
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId: request.tenantId
 				});
 		}

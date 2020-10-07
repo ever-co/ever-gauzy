@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	IEmployee,
 	IOrganization,
@@ -35,7 +35,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 	styleUrls: ['./projects.component.scss']
 })
 export class ProjectsComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	loading = true;
 	settingsSmartTable: object;
@@ -108,13 +108,22 @@ export class ProjectsComponent extends TranslationBaseComponent
 			});
 	}
 
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
+
 	private async loadEmployees() {
 		if (!this.organization) {
 			return;
 		}
 
+		const { id: organizationId, tenantId } = this.organization;
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: this.organization.id } })
+			.getAll(['user'], {
+				organization: { id: organizationId },
+				tenantId
+			})
 			.pipe(first())
 			.toPromise();
 
@@ -167,7 +176,12 @@ export class ProjectsComponent extends TranslationBaseComponent
 
 	cancel() {
 		this.projectToEdit = null;
-		this.showAddCard = !this.showAddCard;
+		this.showAddCard = false;
+
+		this.selectProject({
+			isSelected: false,
+			data: null
+		});
 	}
 
 	public async addOrEditProject({
@@ -208,8 +222,7 @@ export class ProjectsComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 
-		this.projectToEdit = null;
-		this.showAddCard = !this.showAddCard;
+		this.cancel();
 		this.loadProjects();
 	}
 
@@ -218,12 +231,10 @@ export class ProjectsComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-
+		const { id: organizationId, tenantId } = this.organization;
 		const res = await this.organizationProjectsService.getAll(
 			['organizationContact', 'members', 'members.user', 'tags'],
-			{
-				organizationId: this.organization.id
-			}
+			{ organizationId, tenantId }
 		);
 		if (res) {
 			const canView = [];
@@ -258,11 +269,20 @@ export class ProjectsComponent extends TranslationBaseComponent
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent
 				},
-				organizationContactId: {
+				organizationContact: {
 					title: this.getTranslation(
 						'ORGANIZATIONS_PAGE.EDIT.CONTACT'
 					),
-					type: 'string'
+					type: 'string',
+					class: 'text-center',
+					valuePrepareFunction: (value, item) => {
+						if (item.hasOwnProperty('organizationContact')) {
+							return item.organizationContact
+								? item.organizationContact.name
+								: null;
+						}
+						return value;
+					}
 				},
 				startDate: {
 					title: this.getTranslation(
@@ -317,9 +337,11 @@ export class ProjectsComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
 	private async loadOrganizationContacts() {
@@ -327,8 +349,10 @@ export class ProjectsComponent extends TranslationBaseComponent
 			return;
 		}
 
+		const { id: organizationId, tenantId } = this.organization;
 		const res = await this.organizationContactService.getAll(['projects'], {
-			organizationId: this.organization.id
+			organizationId,
+			tenantId
 		});
 		if (res) {
 			this.organizationContacts = res.items;

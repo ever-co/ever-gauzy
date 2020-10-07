@@ -16,8 +16,8 @@ import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/service
 import { OrganizationEmploymentTypesService } from 'apps/gauzy/src/app/@core/services/organization-employment-types.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Subject, Subscription } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
 
 @Component({
@@ -56,22 +56,22 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (emp) => {
 				this.selectedEmployee = emp;
 				this.store.selectedOrganization$
-					.pipe(untilDestroyed(this))
+					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((organization) => {
 						this.selectedOrganization = organization;
 						if (this.selectedOrganization) {
 							this.getPositions();
 							this.getEmploymentTypes();
 							this.getEmployeeLevels();
+							this.getDepartments();
 						}
 					});
 
 				if (this.selectedEmployee) {
-					this.getDepartments();
 					this._initializeForm(this.selectedEmployee);
 				}
 			});
@@ -99,7 +99,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 				organizationId: this.selectedOrganization.id,
 				tenantId: this.selectedOrganization.tenantId
 			})
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((types) => {
 				this.employmentTypes = types.items;
 			});

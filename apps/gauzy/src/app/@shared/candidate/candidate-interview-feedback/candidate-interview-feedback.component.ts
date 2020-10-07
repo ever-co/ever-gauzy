@@ -11,10 +11,12 @@ import {
 	ICandidateInterviewers,
 	ICandidateTechnologies,
 	ICandidatePersonalQualities,
-	ICandidateInterview
+	ICandidateInterview,
+	IOrganization
 } from '@gauzy/models';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-candidate-interview-feedback',
@@ -48,6 +50,7 @@ export class CandidateInterviewFeedbackComponent
 		status: null,
 		interviewer: null
 	};
+	organization: IOrganization;
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: FormBuilder,
@@ -55,11 +58,13 @@ export class CandidateInterviewFeedbackComponent
 		readonly translateService: TranslateService,
 		private candidatesService: CandidatesService,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
-		private candidateCriterionsRatingService: CandidateCriterionsRatingService
+		private candidateCriterionsRatingService: CandidateCriterionsRatingService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 	ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this._initializeForm();
 		this.loadCriterions();
 		this.loadFeedbacks();
@@ -103,9 +108,10 @@ export class CandidateInterviewFeedbackComponent
 	}
 
 	private async loadFeedbacks() {
+		const { id: organizationId, tenantId } = this.organization;
 		const result = await this.candidateFeedbacksService.getAll(
 			['interviewer'],
-			{ candidateId: this.candidateId }
+			{ candidateId: this.candidateId, organizationId, tenantId }
 		);
 		if (result) {
 			for (const feedback of result.items) {
@@ -138,6 +144,7 @@ export class CandidateInterviewFeedbackComponent
 	}
 
 	async createFeedback() {
+		const { id: organizationId, tenantId } = this.organization;
 		const description = this.form.get('description').value;
 		if (
 			this.form.valid &&
@@ -149,7 +156,9 @@ export class CandidateInterviewFeedbackComponent
 				const feedback = await this.candidateFeedbacksService.create({
 					...this.emptyFeedback,
 					candidateId: this.candidateId,
-					interviewId: this.interviewId
+					interviewId: this.interviewId,
+					organizationId,
+					tenantId
 				});
 				if (
 					this.technologiesList.length !== 0 ||

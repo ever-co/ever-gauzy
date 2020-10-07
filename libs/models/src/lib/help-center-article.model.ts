@@ -20,3 +20,14 @@ export interface IHelpCenterAuthor
 	employeeId: string;
 	articles?: IHelpCenterArticle[];
 }
+
+export interface IHelpCenterAuthorCreate
+	extends IBasePerTenantAndOrganizationEntityModel {
+	articleId: string;
+	employeeIds: string[];
+}
+
+export interface IHelpCenterAuthorFind
+	extends IBasePerTenantAndOrganizationEntityModel {
+	id?: string;
+}

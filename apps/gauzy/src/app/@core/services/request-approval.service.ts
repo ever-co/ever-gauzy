@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IRequestApproval, IRequestApprovalCreateInput } from '@gauzy/models';
+import {
+	IRequestApproval,
+	IRequestApprovalCreateInput,
+	IRequestApprovalFindInput
+} from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -11,7 +15,7 @@ export class RequestApprovalService {
 
 	getAll(
 		relations?: string[],
-		findInput?: string
+		findInput?: IRequestApprovalFindInput
 	): Promise<{ items: IRequestApproval[] }> {
 		const data = JSON.stringify({ relations, findInput });
 
@@ -28,9 +32,10 @@ export class RequestApprovalService {
 
 	getByEmployeeId(
 		id: string,
-		relations?: string[]
+		relations?: string[],
+		findInput?: IRequestApprovalFindInput
 	): Promise<{ items: IRequestApproval[] }> {
-		const data = JSON.stringify({ relations });
+		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
 			.get<{ items: IRequestApproval[] }>(

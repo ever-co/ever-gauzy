@@ -90,9 +90,11 @@ export class TimeLogUpdateHandler
 				mouse: 0,
 				overall: 0
 			}));
-			updateTimeSlots = await this.timeSlotService.bulkCreate(
-				updateTimeSlots
-			);
+			if (!input.manualTimeSlot) {
+				updateTimeSlots = await this.timeSlotService.bulkCreate(
+					updateTimeSlots
+				);
+			}
 
 			timeLog.timeSlots = updateTimeSlots;
 			this.timeLogRepository.save(timeLog);

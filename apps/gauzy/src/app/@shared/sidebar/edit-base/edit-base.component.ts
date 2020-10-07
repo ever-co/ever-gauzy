@@ -3,7 +3,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { IHelpCenter } from '@gauzy/models';
+import { IHelpCenter, IOrganization } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HelpCenterService } from '../../../@core/services/help-center.service';
 
@@ -16,7 +16,7 @@ export class EditBaseComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() base?: IHelpCenter;
 	@Input() editType: string;
-	@Input() organizationId: string;
+	@Input() organization: IOrganization;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		protected dialogRef: NbDialogRef<EditBaseComponent>,
@@ -91,12 +91,14 @@ export class EditBaseComponent extends TranslationBaseComponent
 				icon: `${this.selectedIcon}`,
 				flag: 'base',
 				index: 0,
-				organizationId: this.organizationId,
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
 				description: `${this.form.value.desc}`,
 				language: `${this.selectedLang}`,
-				color: `${this.color}`,
+				color: `${this.form.value.color}`,
 				children: []
 			});
+
 		this.dialogRef.close(this.base);
 	}
 
