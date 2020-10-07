@@ -1,6 +1,5 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { IEmployee, IOrganization, ITag } from '@gauzy/models';
-import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 
 @Component({

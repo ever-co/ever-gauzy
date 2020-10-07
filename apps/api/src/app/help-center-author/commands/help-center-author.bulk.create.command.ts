@@ -1,4 +1,4 @@
-import { IHelpCenterAuthor } from '@gauzy/models';
+import { IHelpCenterAuthorCreate } from '@gauzy/models';
 import { ICommand } from '@nestjs/cqrs';
 
 export class ArticleAuthorsBulkCreateCommand implements ICommand {

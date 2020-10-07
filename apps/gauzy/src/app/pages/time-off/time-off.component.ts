@@ -13,7 +13,6 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request-mutation.component';
 import { TimeOffService } from '../../@core/services/time-off.service';
 import { LocalDataSource } from 'ng2-smart-table';
-import { untilDestroyed } from 'ngx-take-until-destroy';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';

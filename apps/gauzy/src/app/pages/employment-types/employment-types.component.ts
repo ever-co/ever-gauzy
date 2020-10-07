@@ -8,7 +8,7 @@ import {
 	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { first, take, takeUntil } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
