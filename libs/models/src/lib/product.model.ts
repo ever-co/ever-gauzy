@@ -1,6 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
-import { ITenant } from './tenant.model';
 import { ITag } from './tag-entity.model';
 
 export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
