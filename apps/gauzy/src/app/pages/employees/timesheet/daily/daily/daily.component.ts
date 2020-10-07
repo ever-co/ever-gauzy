@@ -94,8 +94,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
-				console.log('this.filters', this.logRequest);
-
 				this.getLogs();
 			});
 	}
@@ -183,7 +181,19 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 	openAdd() {
 		this.dialogService
-			.open(EditTimeLogModalComponent)
+			.open(EditTimeLogModalComponent, {
+				context: {
+					timeLog: {
+						startedAt: new Date(this.logRequest.startDate),
+						employeeId: this.logRequest.employeeIds
+							? this.logRequest.employeeIds[0]
+							: null,
+						projectId: this.logRequest.projectIds
+							? this.logRequest.projectIds[0]
+							: null
+					}
+				}
+			})
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				if (data) {
