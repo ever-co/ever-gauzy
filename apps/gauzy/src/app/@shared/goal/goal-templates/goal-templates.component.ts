@@ -39,14 +39,14 @@ export class GoalTemplatesComponent implements OnInit {
 		});
 	}
 
-	// createGoalTemplate() {
-	// 	const templateForm = {
-	// 		...this.goalTemplateForm.value,
-	// 		keyResult: {
-	// 			...this.keyResultTemplateForm.value
-	// 		}
-	// 	};
-	// }
+	createGoalTemplate() {
+		// 	const templateForm = {
+		// 		...this.goalTemplateForm.value,
+		// 		keyResult: {
+		// 			...this.keyResultTemplateForm.value
+		// 		}
+		// 	};
+	}
 
 	closeDialog() {
 		this.dialogRef.close();
