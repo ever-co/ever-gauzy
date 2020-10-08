@@ -54,21 +54,7 @@ import { Base } from '../core/entities/base';
 import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('organization')
-export class Organization extends Base implements IOrganization {
-	@ApiProperty({ type: Tenant, readOnly: true })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	@IsOptional()
-	tenant?: ITenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((t: TenantBase) => t.tenant)
-	@IsString()
-	@IsOptional()
-	@Index()
-	@Column()
-	tenantId?: string;
-
+export class Organization extends TenantBase implements IOrganization {
 	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({

@@ -38,25 +38,10 @@ import {
 import { Role } from '../role/role.entity';
 import { Tag } from '../tags/tag.entity';
 import { Employee } from '../employee/employee.entity';
-import { Base } from '../core/entities/base';
-import { Tenant } from '../tenant/tenant.entity';
+import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('user')
-export class User extends Base implements IUser {
-	@ApiProperty({ type: Tenant, readOnly: true })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	@IsOptional()
-	tenant?: ITenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((t: User) => t.tenant)
-	@IsString()
-	@IsOptional()
-	@Index()
-	@Column({ nullable: true })
-	tenantId?: string;
-
+export class User extends TenantBase implements IUser {
 	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_user'

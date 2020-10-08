@@ -99,11 +99,12 @@ export class UsersComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
-					this.showAddCard = false;
-					this.loadUsers();
+					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
+					this.cancel();
+					this.loadUsers();
 					this.loadPage();
 				}
 			});
@@ -228,7 +229,8 @@ export class UsersComponent extends TranslationBaseComponent
 				invitationType: InvitationTypeEnum.USER,
 				selectedOrganizationId: this.selectedOrganizationId,
 				currentUserId: this.store.userId,
-				isSuperAdmin: this.hasSuperAdminPermission
+				isSuperAdmin: this.hasSuperAdminPermission,
+				selectedOrganization: this.organization
 			}
 		});
 
@@ -301,19 +303,17 @@ export class UsersComponent extends TranslationBaseComponent
 
 	cancel() {
 		this.userToEdit = null;
-		this.showAddCard = !this.showAddCard;
+		this.showAddCard = false;
 	}
 
 	private async loadUsers() {
 		if (!this.organization) {
 			return;
 		}
-
+		const { id: organizationId, tenantId } = this.organization;
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.tags'],
-			{
-				organization: { id: this.organization.id }
-			}
+			{ organizationId, tenantId }
 		);
 
 		this.users = items.map((user) => user.user);
@@ -373,17 +373,13 @@ export class UsersComponent extends TranslationBaseComponent
 
 	private async loadPage() {
 		this.selectedUser = null;
-
+		const { id: organizationId, tenantId, name } = this.organization;
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.role', 'user.tags'],
-			{
-				organization: { id: this.selectedOrganizationId }
-			}
+			{ organizationId, tenantId }
 		);
 
-		const { name } = this.store.selectedOrganization;
 		const usersVm = [];
-
 		for (const orgUser of items) {
 			if (
 				orgUser.isActive &&
@@ -412,11 +408,10 @@ export class UsersComponent extends TranslationBaseComponent
 		this.sourceSmartTable.load(usersVm);
 
 		if (this.usersTable) {
-			this.usersTable.grid.dataSet.willSelect = 'false';
+			this.usersTable.grid.dataSet.willSelect = false;
 		}
 
 		this.organizationName = name;
-
 		this.loading = false;
 	}
 
