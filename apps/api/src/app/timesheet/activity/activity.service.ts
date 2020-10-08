@@ -146,12 +146,22 @@ export class ActivityService extends CrudService<Activity> {
 				tenantId: RequestContext.currentTenantId()
 			});
 
-			// if (request.activityLevel) {
-			// 	qb.andWhere(
-			// 		`("${query.alias}"."duration" >= :start AND "${query.alias}"."duration" <= :end)`,
-			// 		request.activityLevel
-			// 	);
-			// }
+			const sq = qb
+				.subQuery()
+				.select(
+					`("${qb.alias}".duration * 100 ) / SUM("AvgActivity".duration)`,
+					'per'
+				)
+				.from(Activity, 'AvgActivity')
+				.getQuery();
+
+			if (request.activityLevel) {
+				qb.andWhere(
+					`(${sq} BETWEEN :start AND :end)`,
+					request.activityLevel
+				);
+			}
+
 			if (request.source) {
 				if (request.source instanceof Array) {
 					qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
