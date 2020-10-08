@@ -46,7 +46,6 @@ export class GoalTemplatesComponent implements OnInit {
 				...this.keyResultTemplateForm.value
 			}
 		};
-		console.log(templateForm);
 	}
 
 	closeDialog() {

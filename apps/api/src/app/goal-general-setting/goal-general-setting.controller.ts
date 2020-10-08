@@ -46,7 +46,7 @@ export class GoalGeneralSettingController extends CrudController<
 	})
 	@Get('all')
 	async getAll(@Query('data') data: string) {
-		const { findInput } = JSON.parse(data);
+		const { findInput = null } = JSON.parse(data);
 		return this.goalGeneralSettingService.findAll({
 			where: { ...findInput }
 		});

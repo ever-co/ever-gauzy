@@ -4,7 +4,8 @@ import { NbToastrService } from '@nebular/theme';
 import {
 	IGoalTemplate,
 	IKeyResultTemplate,
-	IGoalKPITemplate
+	IGoalKPITemplate,
+	IGoalTemplateFind
 } from '@gauzy/models';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
@@ -54,9 +55,14 @@ export class GoalTemplatesService {
 			.toPromise();
 	}
 
-	getAllGoalTemplates(): Promise<IGoalTemplateResponse> {
+	getAllGoalTemplates(
+		findInput?: IGoalTemplateFind
+	): Promise<IGoalTemplateResponse> {
+		const data = JSON.stringify({ findInput });
 		return this._http
-			.get<IGoalTemplateResponse>(`${this.GOAL_URL}/all`)
+			.get<IGoalTemplateResponse>(`${this.GOAL_URL}/all`, {
+				params: { data }
+			})
 			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
