@@ -39,7 +39,7 @@
 		"node-fetch": "^2.6.0",
 		"node-notifier": "^7.0.1",
 		"screenshot-desktop": "^1.12.2",
-		"sharp": "^0.25.2",
+		"sharp": "^0.25.4",
 		"app-root-path": "^3.0.0"
 	}
 }
