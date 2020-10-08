@@ -7,7 +7,7 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
-import { TreeComponent, ITreeOptions } from 'angular-tree-component';
+import { TreeComponent, ITreeOptions } from '@circlon/angular-tree-component';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
