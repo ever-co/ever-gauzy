@@ -39,9 +39,9 @@ jobs:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Build Desktop App
-              run: 'yarn build:desktop:linux'
+              run: 'yarn build:desktop:linux:release'
               env:
-                  GH_TOKEN: ${{ secrets.github_token }}
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     release-mac:
         runs-on: ${{ matrix.os }}
@@ -66,9 +66,9 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Build Desktop App
-              run: 'yarn build:desktop:mac'
-              env: # Set the secret as an input
-                  GH_TOKEN: ${{ secrets.github_token }}
+              run: 'yarn build:desktop:mac:release'
+              env:
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     release-windows:
         runs-on: ${{ matrix.os }}
@@ -93,6 +93,6 @@ jobs:
               run: 'yarn bootstrap'
 
             - name: Build Desktop App
-              run: 'yarn build:desktop:windows'
-              env: # Set the secret as an input
-                  GH_TOKEN: ${{ secrets.github_token }}
+              run: 'yarn build:desktop:windows:release'
+              env:
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
