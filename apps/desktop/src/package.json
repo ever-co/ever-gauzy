@@ -41,12 +41,11 @@
 			]
 		},
 		"win": {
-      "publisherName": "Ever Co. LTD",
+      "publisherName": "Ever",
 			"target": [
         { 
           "target": "nsis",
-          "arch": [
-            "ia32",
+          "arch": [            
             "x64"
           ]
         }
