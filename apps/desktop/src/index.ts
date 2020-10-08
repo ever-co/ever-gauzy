@@ -144,36 +144,44 @@ try {
 		LocalStore.setDefaultApplicationSetting();
 		try {
 			onWaitingServer = false;
-			isAlreadyRun = true;
+			// isAlreadyRun = true;
 			timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
-			setTimeout(() => {
-				setupWindow.hide();
-				gauzyWindow = createGauzyWindow(gauzyWindow, serve);
-				ipcTimer(
-					store,
-					knex,
-					setupWindow,
-					timeTrackerWindow,
-					NotificationWindow
-				);
-				const auth = store.get('auth');
-				appMenu = new AppMenu(timeTrackerWindow, settingsWindow, knex);
-				tray = new TrayIcon(
-					setupWindow,
-					knex,
-					timeTrackerWindow,
-					auth,
-					settingsWindow
-				);
-				timeTrackerWindow.on('close', (event) => {
-					if (willquit) {
-						app.quit();
-					} else {
-						event.preventDefault();
-						timeTrackerWindow.hide();
-					}
-				});
-			}, 1000);
+			if (!isAlreadyRun) {
+				setTimeout(() => {
+					setupWindow.hide();
+					if (!gauzyWindow)
+						gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+					ipcTimer(
+						store,
+						knex,
+						setupWindow,
+						timeTrackerWindow,
+						NotificationWindow
+					);
+					const auth = store.get('auth');
+					appMenu = new AppMenu(
+						timeTrackerWindow,
+						settingsWindow,
+						knex
+					);
+					tray = new TrayIcon(
+						setupWindow,
+						knex,
+						timeTrackerWindow,
+						auth,
+						settingsWindow
+					);
+					timeTrackerWindow.on('close', (event) => {
+						if (willquit) {
+							app.quit();
+						} else {
+							event.preventDefault();
+							timeTrackerWindow.hide();
+						}
+					});
+				}, 1000);
+			}
+			isAlreadyRun = true;
 		} catch (error) {
 			console.log(error);
 		}
@@ -207,7 +215,9 @@ try {
 			e.preventDefault();
 			setTimeout(() => {
 				willquit = true;
-				timeTrackerWindow.webContents.send('stop_from_tray', { quitApp: true});
+				timeTrackerWindow.webContents.send('stop_from_tray', {
+					quitApp: true
+				});
 			}, 1000);
 		} else {
 			willquit = true;
