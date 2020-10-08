@@ -18,6 +18,7 @@ export class BulkActivitesSaveHandler
 		const insertActivities = input.activities.map((activity) => {
 			activity = new Activity({
 				employeeId: input.employeeId,
+				organizationId: input.organizationId,
 				tenantId: RequestContext.currentTenantId(),
 				...(input.projectId ? { projectId: input.projectId } : {}),
 				...activity
