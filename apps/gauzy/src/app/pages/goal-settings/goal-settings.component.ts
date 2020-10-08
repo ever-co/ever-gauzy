@@ -79,7 +79,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
 					if (this.selectedTab) {
-						await this._loadTableData(this.selectedTab || null);
+						await this._loadTableData(this.selectedTab);
 					}
 				}
 			});

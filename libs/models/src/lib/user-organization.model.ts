@@ -1,5 +1,4 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganization, IOrganizationFindInput } from './organization.model';
 import { LanguagesEnum, IUser } from './user.model';
 
 export interface IUserOrganization

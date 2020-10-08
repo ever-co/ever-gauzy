@@ -50,8 +50,6 @@ import { OrganizationSprint } from '../organization-sprint/organization-sprint.e
 import { Employee } from '../employee/employee.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 import { Deal } from '../deal/deal.entity';
-import { Base } from '../core/entities/base';
-import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('organization')
 export class Organization extends TenantBase implements IOrganization {

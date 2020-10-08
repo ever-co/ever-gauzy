@@ -8,9 +8,7 @@ import {
 	LanguagesEnum,
 	ComponentLayoutStyleEnum,
 	ITag,
-	IEmployee,
-	IPayment,
-	ITenant
+	IEmployee
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
