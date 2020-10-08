@@ -1,5 +1,6 @@
 {
 	"name": "gauzy-desktop",
+  "productName": "gauzy",
 	"version": "0.1.0",
 	"description": "Gauzy Desktop",
 	"license": "AGPL-3.0",
@@ -27,6 +28,10 @@
 			"buildResources": "icons",
 			"output": "../desktop-packages"
 		},
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
+    },
 		"mac": {
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.png",
@@ -36,8 +41,15 @@
 			]
 		},
 		"win": {
+      "publisherName": "Ever Co. LTD",
 			"target": [
-				"nsis"
+        { 
+          "target": "nsis",
+          "arch": [
+            "ia32",
+            "x64"
+          ]
+        }
 			],
 			"icon": "icon.ico"
 		},
@@ -48,14 +60,22 @@
 				"deb",
 				"tar.gz"
 			],
+      "executableName": "gauzy",
+      "artifactName": "gauzy-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
 		},
 		"nsis": {
-			"createDesktopShortcut": "always",
+      "oneClick": false,
+      "perMachine": true,
+			"createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
 			"installerIcon": "icon.ico",
 			"artifactName": "Gauzy-${version}.${ext}",
-			"deleteAppDataOnUninstall": true
+			"deleteAppDataOnUninstall": true,
+      "menuCategory": true
 		},
 		"files": [
 			"./**/*",
