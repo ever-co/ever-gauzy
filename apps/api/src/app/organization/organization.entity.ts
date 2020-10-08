@@ -37,8 +37,7 @@ import {
 	ISkill,
 	IPayment,
 	IOrganizationSprint,
-	IInvoiceEstimateHistory,
-	ITenant
+	IInvoiceEstimateHistory
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
