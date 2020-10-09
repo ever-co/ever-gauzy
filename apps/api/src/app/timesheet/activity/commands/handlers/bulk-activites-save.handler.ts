@@ -4,20 +4,31 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Activity } from '../../../activity.entity';
 import { Repository } from 'typeorm';
 import { RequestContext } from 'apps/api/src/app/core/context';
+import { Employee } from 'apps/api/src/app/employee/employee.entity';
 
 @CommandHandler(BulkActivitesSaveCommand)
 export class BulkActivitesSaveHandler
 	implements ICommandHandler<BulkActivitesSaveCommand> {
 	constructor(
 		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>
+		private readonly activityRepository: Repository<Activity>,
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>
 	) {}
 
 	public async execute(command: BulkActivitesSaveCommand): Promise<any> {
 		const { input } = command;
+		if (!input.organizationId) {
+			const user = RequestContext.currentUser();
+			const employee = await this.employeeRepository.findOne(
+				user.employeeId
+			);
+			input.organizationId = employee.organizationId;
+		}
 		const insertActivities = input.activities.map((activity) => {
 			activity = new Activity({
 				employeeId: input.employeeId,
+				organizationId: input.organizationId,
 				tenantId: RequestContext.currentTenantId(),
 				...(input.projectId ? { projectId: input.projectId } : {}),
 				...activity

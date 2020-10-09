@@ -352,6 +352,7 @@ export interface IGetActivitiesInput extends ITimeLogFilters, IPagination {
 
 export interface IBulkActivitiesInput {
 	employeeId: string;
+	organizationId?: string;
 	projectId?: string;
 	activities: IActivity[];
 }

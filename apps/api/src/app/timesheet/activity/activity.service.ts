@@ -142,22 +142,26 @@ export class ActivityService extends CrudService<Activity> {
 				);
 			}
 
-			let { tenantId } = request;
-			//if not found tenantId then get from current user session
-			if (!tenantId) {
-				const user = RequestContext.currentUser();
-				tenantId = user.tenantId;
-			}
 			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId: tenantId
+				tenantId: RequestContext.currentTenantId()
 			});
+
+			const sq = qb
+				.subQuery()
+				.select(
+					`("${qb.alias}".duration * 100 ) / SUM("AvgActivity".duration)`,
+					'per'
+				)
+				.from(Activity, 'AvgActivity')
+				.getQuery();
 
 			if (request.activityLevel) {
 				qb.andWhere(
-					`"${query.alias}"."duration" BETWEEN :start AND :end`,
+					`(${sq} BETWEEN :start AND :end)`,
 					request.activityLevel
 				);
 			}
+
 			if (request.source) {
 				if (request.source instanceof Array) {
 					qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {

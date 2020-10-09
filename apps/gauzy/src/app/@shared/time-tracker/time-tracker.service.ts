@@ -91,9 +91,10 @@ export class TimeTrackerService implements OnDestroy {
 				} else {
 					this.current_session_duration = 0;
 				}
-
 				if (status.running) {
 					this.turnOnTimer();
+				} else {
+					this.turnOffTimer();
 				}
 			})
 			.catch(() => {});
