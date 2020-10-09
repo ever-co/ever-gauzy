@@ -17,7 +17,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/selectors.module';
 import { HttpClient } from '@angular/common/http';
 import { SidebarComponent } from './sidebar.component';
-import { TreeModule } from 'angular-tree-component';
+import { TreeModule } from '@circlon/angular-tree-component';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { EditBaseModule } from './edit-base/edit-base.module';
@@ -35,7 +35,7 @@ import { DeleteBaseModule } from './delete-base/delete-base.module';
 		CKEditorModule,
 		NbActionsModule,
 		NbContextMenuModule,
-		TreeModule.forRoot(),
+		TreeModule,
 		NbSelectModule,
 		ThemeModule,
 		FormsModule,
