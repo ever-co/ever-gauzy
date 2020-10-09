@@ -158,7 +158,7 @@ app.on('ready', async () => {
 	require(path.join(__dirname, 'desktop-api/main.js'));
 
 	const configs: any = store.get('configs');
-	if (configs.isSetup) {
+	if (configs && configs.isSetup) {
 		global.variableGlobal = {
 			API_BASE_URL: configs.serverUrl
 				? configs.serverUrl
@@ -168,6 +168,8 @@ app.on('ready', async () => {
 		};
 		setupWindow = createSetupWindow(setupWindow, true);
 		startServer(configs);
+	} else {
+		setupWindow = createSetupWindow(setupWindow, false);
 	}
 
 	ipcMainHandler(store, startServer, knex);
@@ -217,9 +219,8 @@ ipcMain.on('server_is_ready', () => {
 					timeTrackerWindow.hide();
 				}
 			});
-
-			isAlreadyRun = true;
 		}, 1000);
+		isAlreadyRun = true;
 	}
 });
 
@@ -248,6 +249,7 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', (e) => {
+	e.preventDefault();
 	const appSetting = LocalStore.getStore('appSetting');
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
@@ -258,11 +260,7 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
-		willQuit = true;
-		if (!alreadyQuit) {
-			alreadyQuit = true;
-			app.quit();
-		}
+		app.exit(0);
 	}
 });
 
