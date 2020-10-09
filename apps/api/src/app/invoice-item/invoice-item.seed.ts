@@ -8,24 +8,39 @@ import { Employee } from '../employee/employee.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Invoice } from '../invoice/invoice.entity';
 
-let invoiceItems: InvoiceItem[] = [];
+const invoiceItems: InvoiceItem[] = [];
 export const createRandomInvoiceItem = async (
 	connection: Connection,
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, Organization[]>,
 	tenantEmployeeMap: Map<Tenant, Employee[]>
 ) => {
-	let tasks: Task[] = await connection.manager.find(Task);
-	let invoices: Invoice[] = await connection.manager.find(Invoice);
+	const tasks: Task[] = await connection.manager.find(Task);
+	const invoices: Invoice[] = await connection.manager.find(Invoice);
 	for (const tenant of tenants) {
-		let organizations = tenantOrganizationsMap.get(tenant);
-		let employees = tenantEmployeeMap.get(tenant);
+		const organizations = tenantOrganizationsMap.get(tenant);
+		const employees = tenantEmployeeMap.get(tenant);
 		for (const organization of organizations) {
-			let projects = await connection.manager.find(OrganizationProject, {
-				where: [{ organizationId: organization.id }]
-			});
-			invoiceItemForTasks(tasks, employees, invoices);
-			invoiceItemForProjects(projects, employees, invoices);
+			const projects = await connection.manager.find(
+				OrganizationProject,
+				{
+					where: [{ organizationId: organization.id }]
+				}
+			);
+			invoiceItemForTasks(
+				tasks,
+				employees,
+				invoices,
+				tenant,
+				organization
+			);
+			invoiceItemForProjects(
+				projects,
+				employees,
+				invoices,
+				tenant,
+				organization
+			);
 			await connection.manager.save(invoiceItems);
 		}
 	}
@@ -34,10 +49,12 @@ export const createRandomInvoiceItem = async (
 function invoiceItemForTasks(
 	tasks: Task[],
 	employees: Employee[],
-	invoices: Invoice[]
+	invoices: Invoice[],
+	tenant: Tenant,
+	organization: Organization
 ) {
 	for (let i = 0; i < 20; i++) {
-		let invoiceItem = new InvoiceItem();
+		const invoiceItem = new InvoiceItem();
 		invoiceItem.name = faker.company.companyName();
 		invoiceItem.description = faker.random.words();
 		invoiceItem.price = faker.random.number({ min: 1000, max: 10000 });
@@ -51,6 +68,8 @@ function invoiceItemForTasks(
 		invoiceItem.employee = faker.random.arrayElement(employees);
 		invoiceItem.applyDiscount = faker.random.boolean();
 		invoiceItem.applyTax = faker.random.boolean();
+		invoiceItem.tenant = tenant;
+		invoiceItem.organization = organization;
 		invoiceItems.push(invoiceItem);
 	}
 }
@@ -58,10 +77,12 @@ function invoiceItemForTasks(
 function invoiceItemForProjects(
 	project: OrganizationProject[],
 	employees: Employee[],
-	invoices: Invoice[]
+	invoices: Invoice[],
+	tenant: Tenant,
+	organization: Organization
 ) {
 	for (let i = 0; i < 20; i++) {
-		let invoiceItem = new InvoiceItem();
+		const invoiceItem = new InvoiceItem();
 		invoiceItem.name = faker.company.companyName();
 		invoiceItem.description = faker.random.words();
 		invoiceItem.price = faker.random.number({ min: 1000, max: 10000 });
@@ -75,6 +96,8 @@ function invoiceItemForProjects(
 		invoiceItem.employee = faker.random.arrayElement(employees);
 		invoiceItem.applyDiscount = faker.random.boolean();
 		invoiceItem.applyTax = faker.random.boolean();
+		invoiceItem.tenant = tenant;
+		invoiceItem.organization = organization;
 		invoiceItems.push(invoiceItem);
 	}
 }

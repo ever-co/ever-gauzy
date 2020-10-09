@@ -25,6 +25,7 @@ export const createDefaultUsersOrganizations = async (
 		for (const user of defaultUsers) {
 			userOrganization = new UserOrganization();
 			userOrganization.organizationId = org.id;
+			userOrganization.tenant = org.tenant;
 			userOrganization.userId = user.id;
 			usersOrganizations.push(userOrganization);
 		}
@@ -69,6 +70,7 @@ export const createRandomUsersOrganizations = async (
 					const userOrganization = new UserOrganization();
 					userOrganization.organizationId = org.id;
 					userOrganization.userId = user.id;
+					userOrganization.tenant = org.tenant;
 					usersOrganizations.push(userOrganization);
 				}
 			});

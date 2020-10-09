@@ -8,10 +8,12 @@ import {
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultOrganizationRecurringExpense = async (
 	connection: Connection,
-	defaultOrganizations
+	tenant: Tenant,
+	defaultOrganizations: Organization
 ): Promise<OrganizationRecurringExpense[]> => {
 	if (!defaultOrganizations) {
 		console.warn(
@@ -21,12 +23,15 @@ export const createDefaultOrganizationRecurringExpense = async (
 	}
 
 	let mapOrganizationRecurringExpense: OrganizationRecurringExpense[] = [];
-	let expenseCategories = Object.keys(RecurringExpenseDefaultCategoriesEnum);
-	let currency = Object.keys(CurrenciesEnum);
+	const expenseCategories = Object.keys(
+		RecurringExpenseDefaultCategoriesEnum
+	);
+	const currency = Object.keys(CurrenciesEnum);
 
 	// for (const tenantOrg of defaultOrganizations) {
 	mapOrganizationRecurringExpense = await dataOperation(
 		connection,
+		tenant,
 		mapOrganizationRecurringExpense,
 		expenseCategories,
 		defaultOrganizations,
@@ -50,14 +55,17 @@ export const createRandomOrganizationRecurringExpense = async (
 	}
 
 	let mapOrganizationRecurringExpense: OrganizationRecurringExpense[] = [];
-	let expenseCategories = Object.keys(RecurringExpenseDefaultCategoriesEnum);
-	let currency = Object.keys(CurrenciesEnum);
+	const expenseCategories = Object.keys(
+		RecurringExpenseDefaultCategoriesEnum
+	);
+	const currency = Object.keys(CurrenciesEnum);
 
 	for (const tenant of tenants) {
-		let tenantOrganization = tenantOrganizationsMap.get(tenant);
+		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
 			mapOrganizationRecurringExpense = await dataOperation(
 				connection,
+				tenant,
 				mapOrganizationRecurringExpense,
 				expenseCategories,
 				tenantOrg,
@@ -71,19 +79,21 @@ export const createRandomOrganizationRecurringExpense = async (
 
 const dataOperation = async (
 	connection: Connection,
+	tenant: Tenant,
 	mapOrganizationRecurringExpense,
 	expenseCategories,
-	tenantOrg,
+	tenantOrg: Organization,
 	currency
 ) => {
 	for (const expenseCategory of expenseCategories) {
-		let organization = new OrganizationRecurringExpense();
+		const organization = new OrganizationRecurringExpense();
 
-		let startDate = faker.date.past();
-		let endDate = moment(startDate).add(1, 'months').toDate();
+		const startDate = faker.date.past();
+		const endDate = moment(startDate).add(1, 'months').toDate();
 
 		organization.organization = tenantOrg;
 		organization.organizationId = tenantOrg.id;
+		organization.tenant = tenant;
 
 		organization.startDay = startDate.getDate();
 		organization.startMonth = startDate.getMonth() + 1;

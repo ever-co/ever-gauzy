@@ -6,6 +6,7 @@ import { Activity } from '../activity.entity';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { Connection } from 'typeorm';
 import { Employee } from '../../employee/employee.entity';
+import { Tenant } from '../../tenant/tenant.entity';
 
 const AppsNames: string[] = [
 	'Sublime Text',
@@ -18,7 +19,10 @@ const AppsNames: string[] = [
 	'Terminal'
 ];
 
-export const createRandomActivities = async (connection: Connection) => {
+export const createRandomActivities = async (
+	connection: Connection,
+	tenant: Tenant
+) => {
 	const activities: Activity[] = [];
 
 	const employees = await connection.getRepository(Employee).find();
@@ -45,6 +49,8 @@ export const createRandomActivities = async (connection: Connection) => {
 				const task = faker.random.arrayElement(project.tasks);
 
 				const activity = new Activity();
+				activity.organizationId = employee.organizationId;
+				activity.tenant = tenant;
 				activity.employee = employee;
 				activity.project = project;
 				activity.task = task;
@@ -73,6 +79,8 @@ export const createRandomActivities = async (connection: Connection) => {
 					const task = faker.random.arrayElement(project.tasks);
 
 					const activity = new Activity();
+					activity.organizationId = employee.organizationId;
+					activity.tenant = tenant;
 					activity.employee = employee;
 					activity.project = project;
 					activity.task = task;

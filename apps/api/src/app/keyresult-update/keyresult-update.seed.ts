@@ -10,10 +10,12 @@ import {
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultKeyResultUpdates = async (
 	connection: Connection,
 	tenant: Tenant,
+	organization: Organization,
 	keyResults: KeyResult[] | void
 ): Promise<KeyResultUpdate[]> => {
 	const defaultKeyResultUpdates = [];
@@ -27,7 +29,6 @@ export const createDefaultKeyResultUpdates = async (
 		);
 		return;
 	}
-
 	keyResults.forEach(async (keyResult) => {
 		const numberOfUpdates = faker.random.number({ min: 2, max: 10 });
 		for (let i = 0; i < numberOfUpdates; i++) {
@@ -42,6 +43,7 @@ export const createDefaultKeyResultUpdates = async (
 				keyResultUpdate.owner = keyResult.owner.id;
 				keyResultUpdate.keyResult = keyResult;
 				keyResultUpdate.tenant = tenant;
+				keyResultUpdate.organization = organization;
 				keyResultUpdate.status = faker.random.arrayElement([
 					KeyResultUpdateStatusEnum.NEEDS_ATTENTION,
 					KeyResultUpdateStatusEnum.NONE,

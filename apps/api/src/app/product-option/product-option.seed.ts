@@ -42,6 +42,7 @@ export const createRandomProductOption = async (
 						productOption.code = product.code;
 						productOption.product = product;
 						productOption.tenant = tenant;
+						productOption.organization = tenantOrg;
 
 						productOptions.push(productOption);
 					}

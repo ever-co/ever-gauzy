@@ -4,11 +4,12 @@ import * as faker from 'faker';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { IOrganization } from '@gauzy/models';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultEmailSent = async (
 	connection: Connection,
 	tenant: Tenant,
-	Organization,
+	organization: Organization,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
 	const emailTemplates = await connection.getRepository(EmailTemplate).find();
@@ -19,7 +20,7 @@ export const createDefaultEmailSent = async (
 		connection,
 		sentEmails,
 		noOfEmailsPerOrganization,
-		Organization,
+		organization,
 		emailTemplates,
 		tenant
 	);
@@ -38,7 +39,7 @@ export const createRandomEmailSent = async (
 	let sentEmails: Email[] = [];
 	for (const tenant of tenants) {
 		const orgs = tenantOrganizationsMap.get(tenant);
-		for (let org of orgs) {
+		for (const org of orgs) {
 			sentEmails = await dataOperation(
 				connection,
 				sentEmails,
@@ -61,7 +62,7 @@ const dataOperation = async (
 	tenant
 ) => {
 	for (let i = 0; i < noOfEmailsPerOrganization; i++) {
-		let sentEmail = new Email();
+		const sentEmail = new Email();
 		sentEmail.organizationId = organization.id;
 		sentEmail.email = faker.internet.email();
 		sentEmail.emailTemplate = faker.random.arrayElement(

@@ -4,9 +4,12 @@ import { ICandidate, IEmployee } from '@gauzy/models';
 import * as faker from 'faker';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultCandidateInterviewers = async (
 	connection: Connection,
+	tenant: Tenant,
+	organization: Organization,
 	defaultEmployees,
 	defaultCandidates
 ): Promise<CandidateInterviewers[]> => {
@@ -34,6 +37,8 @@ export const createDefaultCandidateInterviewers = async (
 		);
 		candidates = await dataOperation(
 			connection,
+			tenant,
+			organization,
 			candidates,
 			CandidateInterviews,
 			defaultEmployees
@@ -58,8 +63,8 @@ export const createRandomCandidateInterviewers = async (
 	let candidates: CandidateInterviewers[] = [];
 
 	for (const tenant of tenants) {
-		let tenantCandidates = tenantCandidatesMap.get(tenant);
-		let tenantEmployees = tenantEmployeeMap.get(tenant);
+		const tenantCandidates = tenantCandidatesMap.get(tenant);
+		const tenantEmployees = tenantEmployeeMap.get(tenant);
 
 		for (const tenantCandidate of tenantCandidates) {
 			const CandidateInterviews = await connection.manager.find(
@@ -70,6 +75,8 @@ export const createRandomCandidateInterviewers = async (
 			);
 			candidates = await dataOperation(
 				connection,
+				tenant,
+				tenantCandidate.organization,
 				candidates,
 				CandidateInterviews,
 				tenantEmployees
@@ -81,17 +88,21 @@ export const createRandomCandidateInterviewers = async (
 
 const dataOperation = async (
 	connection: Connection,
+	tenant: Tenant,
+	organization: Organization,
 	candidates,
 	CandidateInterviews,
 	tenantEmployees: IEmployee[]
 ) => {
-	for (let interview of CandidateInterviews) {
-		let candidate = new CandidateInterviewers();
+	for (const interview of CandidateInterviews) {
+		const candidate = new CandidateInterviewers();
 
 		candidate.interviewId = interview.id;
 		candidate.interview = interview;
 		candidate.employeeId = faker.random.arrayElement(tenantEmployees).id;
 
+		candidate.tenant = tenant;
+		candidate.organization = organization;
 		candidates.push(candidate);
 	}
 	await connection.manager.save(candidates);

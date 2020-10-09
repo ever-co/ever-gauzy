@@ -58,6 +58,9 @@ export const createRandomRequestApprovalEmployee = async (
 							99
 						);
 
+						requestApprovalEmployee.tenant = tenant;
+						requestApprovalEmployee.organization = tenantOrg;
+
 						requestApprovalEmployees.push(requestApprovalEmployee);
 					}
 				}

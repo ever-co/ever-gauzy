@@ -60,6 +60,7 @@ export const createDefaultTeams = async (
 		const team = new OrganizationTeam();
 		team.name = teams[i].name;
 		team.organizationId = organization.id;
+		team.tenantId = organization.tenantId;
 
 		const filteredEmployees = employees.filter(
 			(e) => (teams[i].defaultMembers || []).indexOf(e.user.email) > -1
@@ -115,6 +116,7 @@ export const createRandomTeam = async (
 				const team = new OrganizationTeam();
 				team.name = name;
 				team.organizationId = organization.id;
+				team.tenant = organization.tenant;
 
 				const emps = _.chain(employees)
 					.shuffle()

@@ -6,10 +6,12 @@ import { Tenant } from '../tenant/tenant.entity';
 import { addDays } from 'date-fns';
 import { IEmployee } from '@gauzy/models';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultEquipmentSharing = async (
 	connection: Connection,
-	tenant,
+	tenant: Tenant,
+	organization: Organization,
 	defaultEmployees,
 	noOfEquipmentSharingPerTenant: number
 ): Promise<EquipmentSharing[]> => {
@@ -28,7 +30,8 @@ export const createDefaultEquipmentSharing = async (
 		noOfEquipmentSharingPerTenant,
 		equipments,
 		defaultEmployees,
-		tenant
+		tenant,
+		organization
 	);
 
 	return await connection.manager.save(equipmentSharings);
@@ -57,7 +60,8 @@ export const createRandomEquipmentSharing = async (
 			noOfEquipmentSharingPerTenant,
 			equipments,
 			employees,
-			tenant
+			tenant,
+			null
 		);
 	}
 	return equipmentSharings;
@@ -69,10 +73,11 @@ const dataOperation = async (
 	noOfEquipmentSharingPerTenant,
 	equipments,
 	employees,
-	tenant
+	tenant,
+	organization
 ) => {
 	for (let i = 0; i < noOfEquipmentSharingPerTenant; i++) {
-		let sharing = new EquipmentSharing();
+		const sharing = new EquipmentSharing();
 		sharing.equipment = faker.random.arrayElement(equipments);
 		sharing.equipmentId = sharing.equipment.id;
 		sharing.shareRequestDay = faker.date.recent(30);
@@ -84,6 +89,7 @@ const dataOperation = async (
 		sharing.status = faker.random.number({ min: 1, max: 3 });
 		// sharing.teams =[faker.random.arrayElement(teams)];
 		sharing.employees = [faker.random.arrayElement(employees)];
+		sharing.organization = organization;
 		sharing.tenant = tenant;
 		equipmentSharings.push(sharing);
 	}

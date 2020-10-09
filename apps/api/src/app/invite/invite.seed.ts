@@ -13,7 +13,7 @@ import * as moment from 'moment';
 export const createDefaultEmployeeInviteSent = async (
 	connection: Connection,
 	tenant: Tenant,
-	Organizations: Organization[],
+	organizations: Organization[],
 	SuperAdmin: User[]
 ): Promise<any> => {
 	const totalInvites: Invite[] = [];
@@ -25,7 +25,7 @@ export const createDefaultEmployeeInviteSent = async (
 	const candidateRole = await connection.getRepository(Role).find({
 		where: [{ tenant: tenant, name: RolesEnum.CANDIDATE }]
 	});
-	Organizations.forEach((org) => {
+	organizations.forEach((org) => {
 		for (let i = 0; i < 10; i++) {
 			const invitee = new Invite();
 			invitee.email = faker.internet.email();

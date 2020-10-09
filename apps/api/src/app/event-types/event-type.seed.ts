@@ -82,6 +82,7 @@ export const createDefaultEventTypes = async (
 		eventTypeOne.durationUnit = 'Minute(s)';
 		eventTypeOne.isActive = true;
 		eventTypeOne.organization = org;
+		eventType.tenant = tenant;
 		eventTypes.push(eventTypeOne);
 
 		const eventTypeTwo = new EventType();
@@ -91,6 +92,7 @@ export const createDefaultEventTypes = async (
 		eventTypeTwo.durationUnit = 'Minute(s)';
 		eventTypeTwo.isActive = true;
 		eventTypeTwo.organization = org;
+		eventType.tenant = tenant;
 		eventTypes.push(eventTypeTwo);
 	});
 

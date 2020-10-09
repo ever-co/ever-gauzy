@@ -16,23 +16,25 @@ export const createRandomAppointmentEmployees = async (
 		return;
 	}
 
-	const AppointEmployees: AppointmentEmployee[] = [];
+	const appointEmployees: AppointmentEmployee[] = [];
 
 	for (const tenant of tenants) {
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		for (const tenantEmployee of tenantEmployees) {
 			for (let i = 0; i < faker.random.number(15); i++) {
-				const Appointemployee = new AppointmentEmployee();
+				const appointemployee = new AppointmentEmployee();
 				//todo: need to verify appointmentId is used anywhere else or not
-				Appointemployee.appointmentId = faker.random
+				appointemployee.appointmentId = faker.random
 					.number({ min: 100000, max: 1000000 })
 					.toString();
-				Appointemployee.employeeId = tenantEmployee.id;
+				appointemployee.employeeId = tenantEmployee.id;
+				appointemployee.organization = tenantEmployee.organization;
+				appointemployee.tenant = tenant;
 
-				AppointEmployees.push(Appointemployee);
+				appointEmployees.push(appointemployee);
 			}
 		}
 	}
 
-	await connection.manager.save(AppointEmployees);
+	await connection.manager.save(appointEmployees);
 };

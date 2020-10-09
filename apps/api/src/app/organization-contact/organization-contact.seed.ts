@@ -87,7 +87,7 @@ export const createRandomOrganizationContact = async (
 	tenantOrganizationsMap: Map<Tenant, Organization[]>,
 	noOfContactsPerOrganization: number
 ): Promise<OrganizationContact[]> => {
-	let organizationContacts: OrganizationContact[] = [];
+	const organizationContacts: OrganizationContact[] = [];
 
 	const contactTypes = Object.values(ContactType);
 
@@ -98,9 +98,9 @@ export const createRandomOrganizationContact = async (
 	const contacts = await connection.manager.find(Contact);
 
 	for (const tenant of tenants) {
-		let organizations = tenantOrganizationsMap.get(tenant);
+		const organizations = tenantOrganizationsMap.get(tenant);
 
-		let employees = tenantEmployeeMap.get(tenant);
+		const employees = tenantEmployeeMap.get(tenant);
 
 		for (const org of organizations) {
 			const tags = await connection.manager.find(Tag, {
@@ -108,7 +108,7 @@ export const createRandomOrganizationContact = async (
 			});
 
 			for (let i = 0; i < noOfContactsPerOrganization; i++) {
-				let orgContact = new OrganizationContact();
+				const orgContact = new OrganizationContact();
 
 				orgContact.contact = faker.random.arrayElement(contacts);
 				orgContact.organization = org;

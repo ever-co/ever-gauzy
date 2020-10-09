@@ -9,7 +9,7 @@ import { Tenant } from '../tenant/tenant.entity';
 export const createDefaultProducts = async (
 	connection: Connection,
 	tenant: Tenant,
-	organizations?: IOrganization[]
+	organization: IOrganization
 ) => {
 	const productTypes = await connection.manager.find(ProductType);
 	const productCategories = await connection.manager.find(ProductCategory);
@@ -26,6 +26,7 @@ export const createDefaultProducts = async (
 				Math.floor(Math.random() * productCategories.length)
 			];
 		product.description = faker.lorem.words();
+		product.organization = organization;
 		product.tenant = tenant;
 
 		products.push(product);
@@ -78,6 +79,7 @@ export const createRandomProduct = async (
 				];
 			product.description = faker.lorem.words();
 			product.tenant = tenant;
+			product.organization = tenantOrg;
 
 			products.push(product);
 		}

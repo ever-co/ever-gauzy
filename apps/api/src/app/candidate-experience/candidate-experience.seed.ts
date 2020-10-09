@@ -17,17 +17,17 @@ export const createRandomCandidateExperience = async (
 		return;
 	}
 
-	let candidates: CandidateExperience[] = [];
+	const candidates: CandidateExperience[] = [];
 
 	for (const tenant of tenants) {
-		let tenantCandidates = tenantCandidatesMap.get(tenant);
-		const Organizations = await connection.manager.find(Organization, {
+		const tenantCandidates = tenantCandidatesMap.get(tenant);
+		const organizations = await connection.manager.find(Organization, {
 			where: [{ tenant: tenant }]
 		});
 		for (const tenantCandidate of tenantCandidates) {
 			for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
-				let candidate = new CandidateExperience();
-				var getExperience =
+				const candidate = new CandidateExperience();
+				let getExperience =
 					(faker.date.past().getDate() -
 						faker.date.past().getDate()) /
 						30 +
@@ -37,10 +37,10 @@ export const createRandomCandidateExperience = async (
 						(faker.date.past().getFullYear() -
 							faker.date.past().getFullYear());
 				getExperience = Number(getExperience.toFixed(2));
-				let val = Math.abs(getExperience);
+				const val = Math.abs(getExperience);
 				candidate.occupation = faker.name.jobArea();
 				candidate.organization = faker.random.arrayElement(
-					Organizations
+					organizations
 				);
 				candidate.duration =
 					val.toString().split('.')[0].toString() + ' months';

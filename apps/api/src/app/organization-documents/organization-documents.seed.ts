@@ -16,6 +16,7 @@ export const createOrganizationDocuments = async (
 
 		requestPaidDaysOff.name = 'Paid Days off Request';
 		requestPaidDaysOff.organizationId = organization.id;
+		requestPaidDaysOff.tenant = organization.tenant;
 		requestPaidDaysOff.documentUrl =
 			'http://res.cloudinary.com/evereq/image/upload/v1595424362/everbie-products-images/qanadywgn3gxte7kwtwu.pdf';
 
@@ -23,6 +24,7 @@ export const createOrganizationDocuments = async (
 		requestUnpaidDaysOff.documentUrl =
 			'http://res.cloudinary.com/evereq/image/upload/v1595506200/everbie-products-images/am3ujibzu660swicfcsw.pdf';
 		requestUnpaidDaysOff.organizationId = organization.id;
+		requestUnpaidDaysOff.tenant = organization.tenant;
 
 		documents.push(requestPaidDaysOff);
 		documents.push(requestUnpaidDaysOff);
@@ -44,7 +46,7 @@ export const createRandomOrganizationDocuments = async (
 	}
 
 	const organizationDocuments: OrganizationDocuments[] = [];
-	let json = {
+	const json = {
 		'Paid Days off Request':
 			'http://res.cloudinary.com/evereq/image/upload/v1595424362/everbie-products-images/qanadywgn3gxte7kwtwu.pdf',
 		'Unpaid Days off Request':
@@ -61,6 +63,7 @@ export const createRandomOrganizationDocuments = async (
 				'Unpaid Days off Request'
 			]);
 			organizationDocument.organizationId = tenantOrg.id;
+			organizationDocument.tenant = tenant;
 			organizationDocument.documentUrl = json[organizationDocument.name];
 
 			organizationDocuments.push(organizationDocument);

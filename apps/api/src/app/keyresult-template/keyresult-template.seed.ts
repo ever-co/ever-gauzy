@@ -3,10 +3,11 @@ import { Tenant } from '../tenant/tenant.entity';
 import { KeyResultTypeEnum } from '@gauzy/models';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
+import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
+import * as faker from 'faker';
 
 const keyResultTemplateDefaultData = [
 	{
-		id: 'fb87b179-e5d1-4cc4-8ad0-a91624e6f2fc',
 		name: 'Improve product performance',
 		level: 'Organization',
 		keyResults: [
@@ -18,8 +19,7 @@ const keyResultTemplateDefaultData = [
 				unit: 'signups',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: 'fb87b179-e5d1-4cc4-8ad0-a91624e6f2fc'
+				softDeadline: null
 			},
 			{
 				name: 'Publish product reviews in over 50 publications',
@@ -29,13 +29,11 @@ const keyResultTemplateDefaultData = [
 				unit: 'publications',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: 'fb87b179-e5d1-4cc4-8ad0-a91624e6f2fc'
+				softDeadline: null
 			}
 		]
 	},
 	{
-		id: 'c8cc1495-668a-4930-8b54-735fca9028e9',
 		name: 'Successfully launch version 2 of our main product',
 		level: 'Organization',
 		keyResults: [
@@ -46,16 +44,13 @@ const keyResultTemplateDefaultData = [
 				targetValue: 500,
 				initialValue: 1000,
 				unit: '',
-				kpiId: 'a77d9bd8-0baa-4548-b153-e9f2bae51760',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: 'c8cc1495-668a-4930-8b54-735fca9028e9'
+				softDeadline: null
 			}
 		]
 	},
 	{
-		id: '08e93b16-0ea1-49f9-8e66-f30a86eea660',
 		name: 'Redesign and launch our new landing page',
 		level: 'Team',
 		keyResults: [
@@ -68,8 +63,7 @@ const keyResultTemplateDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			},
 			{
 				name:
@@ -80,8 +74,7 @@ const keyResultTemplateDefaultData = [
 				unit: 'interviews',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			},
 			{
 				name: 'With development and marketing, launch by September 1st',
@@ -91,8 +84,7 @@ const keyResultTemplateDefaultData = [
 				unit: '',
 				deadline: 'Hard Deadline',
 				hardDeadline: '2020-08-31T18:30:00.000Z',
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			},
 			{
 				name: 'User-test page prototypes on 10 people',
@@ -102,8 +94,7 @@ const keyResultTemplateDefaultData = [
 				unit: 'people',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			},
 			{
 				name:
@@ -114,13 +105,11 @@ const keyResultTemplateDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			}
 		]
 	},
 	{
-		id: '096e4b97-c13c-469f-bb66-5e347b8861fa',
 		name: 'Increase quality of releases and make sure they are timely',
 		level: 'Team',
 		keyResults: [
@@ -131,11 +120,9 @@ const keyResultTemplateDefaultData = [
 				targetValue: 2,
 				initialValue: 15,
 				unit: '',
-				kpiId: '85f89379-f181-4f72-b722-d924df63c7ea',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '096e4b97-c13c-469f-bb66-5e347b8861fa'
+				softDeadline: null
 			},
 			{
 				name: 'Increase unit test coverage to 75% from current 45%',
@@ -145,13 +132,11 @@ const keyResultTemplateDefaultData = [
 				unit: '%',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '096e4b97-c13c-469f-bb66-5e347b8861fa'
+				softDeadline: null
 			}
 		]
 	},
 	{
-		id: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179',
 		name: 'Identify problems with current user interface',
 		level: 'Employee',
 		keyResults: [
@@ -163,8 +148,7 @@ const keyResultTemplateDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179'
+				softDeadline: null
 			},
 			{
 				name: 'Provide solution to reduce time Lag by 85%',
@@ -174,8 +158,7 @@ const keyResultTemplateDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179'
+				softDeadline: null
 			},
 			{
 				name:
@@ -186,8 +169,7 @@ const keyResultTemplateDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179'
+				softDeadline: null
 			},
 			{
 				name: 'Test all features in real time',
@@ -198,8 +180,7 @@ const keyResultTemplateDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179'
+				softDeadline: null
 			}
 		]
 	}
@@ -213,12 +194,15 @@ export const createDefaultKeyResultTemplates = async (
 	const goalTemplates: GoalTemplate[] = await connection.manager.find(
 		GoalTemplate
 	);
+	const goalKPITemplates: GoalKPITemplate[] = await connection.manager.find(
+		GoalKPITemplate
+	);
 	if (goalTemplates && goalTemplates.length > 0) {
 		goalTemplates.forEach((goal) => {
 			const keyResultsOfGoal = keyResultTemplateDefaultData.find(
 				(goalData) => goalData.name === goal.name
 			);
-			keyResultsOfGoal.keyResults.forEach((keyResultData) => {
+			keyResultsOfGoal.keyResults.forEach(async (keyResultData) => {
 				const keyResult = new KeyResultTemplate();
 				keyResult.type = keyResultData.type;
 
@@ -227,7 +211,9 @@ export const createDefaultKeyResultTemplates = async (
 					keyResult.targetValue = 1;
 				} else {
 					if (keyResult.type === KeyResultTypeEnum.KPI) {
-						keyResult.kpiId = keyResultData.kpiId;
+						keyResult.kpi = faker.random.arrayElement(
+							goalKPITemplates
+						);
 					}
 					keyResult.initialValue = keyResultData.initialValue;
 					keyResult.targetValue = keyResultData.targetValue;
@@ -236,6 +222,7 @@ export const createDefaultKeyResultTemplates = async (
 				keyResult.name = keyResultData.name;
 				keyResult.deadline = keyResultData.deadline;
 				keyResult.goal = goal;
+				keyResult.organizationId = goal.organizationId;
 				keyResult.tenant = tenant;
 				defaultKeyResultTemplates.push(keyResult);
 			});

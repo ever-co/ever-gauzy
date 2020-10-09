@@ -3,6 +3,7 @@ import { IntegrationEnum, IntegrationTypeNameEnum } from '@gauzy/models';
 import { IntegrationType } from './integration-type.entity';
 import { Integration } from './integration.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { Organization } from '../organization/organization.entity';
 
 const DEFAULT_INTEGRATIONS = [
 	{
@@ -34,7 +35,8 @@ const DEFAULT_INTEGRATIONS = [
 export const createDefaultIntegrations = async (
 	connection: Connection,
 	tenant: Tenant,
-	integrationTypes: IntegrationType[] | void
+	integrationTypes: IntegrationType[] | void,
+	organization: Organization
 ): Promise<Integration[]> => {
 	if (!integrationTypes) {
 		console.warn(
@@ -43,17 +45,20 @@ export const createDefaultIntegrations = async (
 		return;
 	}
 
-	const integrations = DEFAULT_INTEGRATIONS.map(
+	const integrations: Integration[] = [];
+	DEFAULT_INTEGRATIONS.map(
 		({ name, imgSrc, isComingSoon, integrationTypesMap }) => {
 			const entity = new Integration();
 			entity.name = name;
 			entity.imgSrc = imgSrc;
 			entity.isComingSoon = isComingSoon;
 			entity.tenant = tenant;
+			entity.organization = organization;
 			entity.integrationTypes = integrationTypes.filter((it) =>
 				integrationTypesMap.includes(it.name)
 			);
-			return entity;
+
+			integrations.push(entity);
 		}
 	);
 

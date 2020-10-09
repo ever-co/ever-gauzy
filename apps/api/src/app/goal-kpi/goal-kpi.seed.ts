@@ -6,7 +6,6 @@ import * as faker from 'faker';
 
 const goalKPIData = [
 	{
-		id: 'a77d9bd8-0baa-4548-b153-e9f2bae51760',
 		name: 'Average response time',
 		description: '',
 		type: 'Numerical',
@@ -16,7 +15,6 @@ const goalKPIData = [
 		targetValue: 500
 	},
 	{
-		id: '85f89379-f181-4f72-b722-d924df63c7ea',
 		name: '# of Priority bugs in production',
 		description: '',
 		type: 'Numerical',
@@ -35,12 +33,9 @@ export const createDefaultGoalKpi = async (
 ): Promise<GoalKPI[]> => {
 	const GoalKpis: GoalKPI[] = [];
 
-	organizations.forEach((organization, index) => {
+	organizations.forEach((organization: IOrganization) => {
 		goalKPIData.forEach((goalKPI) => {
 			const goalkpi = new GoalKPI();
-			if (index === 0) {
-				goalkpi.id = goalKPI.id;
-			}
 			goalkpi.name = goalKPI.name;
 			goalkpi.description = ' ';
 			goalkpi.type = goalKPI.type;

@@ -1,7 +1,8 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
 import { GoalTemplate } from './goal-template.entity';
 import { GoalTemplateCategoriesEnum } from '@gauzy/models';
+import { Organization } from '../organization/organization.entity';
+import { Tenant } from '../tenant/tenant.entity';
 
 const defaultGoalTemplateData = [
 	{
@@ -33,16 +34,17 @@ const defaultGoalTemplateData = [
 
 export const createDefaultGoalTemplates = async (
 	connection: Connection,
-	tenant: Tenant
+	tenant: Tenant,
+	organization: Organization
 ): Promise<GoalTemplate[]> => {
 	const defaultGoalTemplates = [];
-
 	defaultGoalTemplateData.forEach((goalData) => {
 		const goalTemplate = new GoalTemplate();
 		goalTemplate.name = goalData.name;
 		goalTemplate.level = goalData.level;
 		goalTemplate.category = goalData.category;
 		goalTemplate.tenant = tenant;
+		goalTemplate.organization = organization;
 		defaultGoalTemplates.push(goalTemplate);
 	});
 

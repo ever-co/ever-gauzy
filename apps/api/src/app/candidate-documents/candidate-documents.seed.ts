@@ -1,5 +1,7 @@
 import { ICandidateDocument, ICandidate } from '@gauzy/models';
+import * as faker from 'faker';
 import { Connection } from 'typeorm';
+import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { CandidateDocument } from './candidate-documents.entity';
 
@@ -20,7 +22,8 @@ const candidateDocumentList: ICandidateDocument[] = [
 export const createCandidateDocuments = async (
 	connection: Connection,
 	tenant: Tenant,
-	candidates: ICandidate[] | void
+	candidates: ICandidate[] | void,
+	organization: Organization
 ): Promise<CandidateDocument[]> => {
 	let defaultCandidateDocuments = [];
 
@@ -30,13 +33,13 @@ export const createCandidateDocuments = async (
 		);
 		return;
 	}
-
 	candidates.forEach((candidate) => {
 		const documents = candidateDocumentList.map((document) => ({
 			name: document.name,
 			documentUrl: document.documentUrl,
 			candidateId: candidate.id,
-			tenant: tenant
+			tenant: tenant,
+			organization: organization
 		}));
 
 		defaultCandidateDocuments = [
@@ -46,7 +49,6 @@ export const createCandidateDocuments = async (
 	});
 
 	insertCandidateDocuments(connection, defaultCandidateDocuments);
-
 	return defaultCandidateDocuments;
 };
 
@@ -65,24 +67,26 @@ export const createRandomCandidateDocuments = async (
 	let candidateDocuments = [];
 	const candidateDocumentsMap: Map<ICandidate, any[]> = new Map();
 
-	(tenants || []).forEach((tenant) => {
+	for await (const tenant of tenants || []) {
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
 		const candidates = tenantCandidatesMap.get(tenant);
-
 		(candidates || []).forEach((candidate) => {
 			const documents = candidateDocumentList.map((document) => ({
 				name: document.name,
 				documentUrl: document.documentUrl,
 				candidateId: candidate.id,
+				organization: faker.random.arrayElement(organizations),
 				tenant: tenant
 			}));
 
 			candidateDocumentsMap.set(candidate, documents);
 			candidateDocuments = [...candidateDocuments, ...documents];
 		});
-	});
+	}
 
 	await insertCandidateDocuments(connection, candidateDocuments);
-
 	return candidateDocumentsMap;
 };
 

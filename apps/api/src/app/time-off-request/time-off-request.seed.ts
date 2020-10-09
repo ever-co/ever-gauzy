@@ -12,20 +12,29 @@ import * as _ from 'underscore';
 const status = Object.values(StatusTypesEnum);
 
 export const createDefaultEmployeeTimeOff = async (
-  connection: Connection,
-  Organization,
-  Employee,
-  noOfEmployeeTimeOffRequest: number
+	connection: Connection,
+	tenant: Tenant,
+	organization: Organization,
+	employees: Employee[],
+	noOfEmployeeTimeOffRequest: number
 ): Promise<TimeOffRequest[]> => {
-  let requests: TimeOffRequest[] = [];
-   // for (const organization of organizations) {
-  let policies = await connection.manager.find(TimeOffPolicy, {
-    where: [{ organizationId: Organization.id }]
-  });
-  requests = await dataOperation(connection, requests, noOfEmployeeTimeOffRequest, Organization, Employee, policies);
-  // }
+	let requests: TimeOffRequest[] = [];
+	// for (const organization of organizations) {
+	const policies = await connection.manager.find(TimeOffPolicy, {
+		where: [{ organizationId: organization.id }]
+	});
+	requests = await dataOperation(
+		connection,
+		tenant,
+		requests,
+		noOfEmployeeTimeOffRequest,
+		organization,
+		employees,
+		policies
+	);
+	// }
 
-  return requests;
+	return requests;
 };
 
 export const createRandomEmployeeTimeOff = async (
@@ -37,38 +46,54 @@ export const createRandomEmployeeTimeOff = async (
 ): Promise<TimeOffRequest[]> => {
 	let requests: TimeOffRequest[] = [];
 	for (const tenant of tenants) {
-		let employees = tenantEmployeeMap.get(tenant);
-		let organizations = tenantOrganizationsMap.get(tenant);
+		const employees = tenantEmployeeMap.get(tenant);
+		const organizations = tenantOrganizationsMap.get(tenant);
 		for (const organization of organizations) {
-			let policies = await connection.manager.find(TimeOffPolicy, {
+			const policies = await connection.manager.find(TimeOffPolicy, {
 				where: [{ organizationId: organization.id }]
 			});
-      requests = await dataOperation(connection, requests, noOfEmployeeTimeOffRequest, organization, employees, policies);
-    }
-  }
-  return requests;;
+			requests = await dataOperation(
+				connection,
+				tenant,
+				requests,
+				noOfEmployeeTimeOffRequest,
+				organization,
+				employees,
+				policies
+			);
+		}
+	}
+	return requests;
 };
 
-
-const dataOperation = async (connection: Connection, requests, noOfEmployeeTimeOffRequest, organization, employees, policies) => {
-  for (let i = 0; i < noOfEmployeeTimeOffRequest; i++) {
-    let request = new TimeOffRequest();
-    request.organizationId = organization.id;
-    request.employees = _.chain(employees)
-      .shuffle()
-      .take(faker.random.number({ min: 1, max: 3 }))
-      .values()
-      .value();
-    request.description = 'Time off';
-    request.isHoliday = faker.random.arrayElement([true, false]);
-    request.start = faker.date.future(0.5);
-    request.end = addDays(request.start, faker.random.number(7));
-    request.policy = faker.random.arrayElement(policies);
-    request.requestDate = faker.date.recent();
-    request.status = faker.random.arrayElement(status);
-    request.documentUrl = '';
-    requests.push(request);
-  }
-  await connection.manager.save(requests);
-  return requests;
+const dataOperation = async (
+	connection: Connection,
+	tenant: Tenant,
+	requests,
+	noOfEmployeeTimeOffRequest,
+	organization,
+	employees,
+	policies
+) => {
+	for (let i = 0; i < noOfEmployeeTimeOffRequest; i++) {
+		const request = new TimeOffRequest();
+		request.organizationId = organization.id;
+		request.tenant = tenant;
+		request.employees = _.chain(employees)
+			.shuffle()
+			.take(faker.random.number({ min: 1, max: 3 }))
+			.values()
+			.value();
+		request.description = 'Time off';
+		request.isHoliday = faker.random.arrayElement([true, false]);
+		request.start = faker.date.future(0.5);
+		request.end = addDays(request.start, faker.random.number(7));
+		request.policy = faker.random.arrayElement(policies);
+		request.requestDate = faker.date.recent();
+		request.status = faker.random.arrayElement(status);
+		request.documentUrl = '';
+		requests.push(request);
+	}
+	await connection.manager.save(requests);
+	return requests;
 };

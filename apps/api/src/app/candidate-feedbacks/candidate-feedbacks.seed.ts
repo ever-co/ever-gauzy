@@ -4,6 +4,7 @@ import { Tenant } from '../tenant/tenant.entity';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import * as faker from 'faker';
+import { Organization } from '../organization/organization.entity';
 
 const candidateFeedbackList: ICandidateFeedback[] = [
 	{
@@ -17,6 +18,8 @@ const candidateFeedbackList: ICandidateFeedback[] = [
 ];
 export const createCandidateFeedbacks = async (
 	connection: Connection,
+	tenant: Tenant,
+	organization: Organization,
 	candidates: ICandidate[] | void
 ): Promise<Map<ICandidate, CandidateFeedback[]>> => {
 	let candidateFeedbacksMap: Map<ICandidate, any[]> = new Map();
@@ -29,6 +32,8 @@ export const createCandidateFeedbacks = async (
 	}
 	candidateFeedbacksMap = await dataOperation(
 		connection,
+		tenant,
+		organization,
 		[],
 		candidateFeedbacksMap,
 		candidates
@@ -49,13 +54,19 @@ export const createRandomCandidateFeedbacks = async (
 		return;
 	}
 
-	let candidateFeedbacks = [];
+	const candidateFeedbacks = [];
 	let candidateFeedbacksMap: Map<ICandidate, any[]> = new Map();
 
-	for (let tenant of tenants) {
+	for (const tenant of tenants) {
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
+		const organization = faker.random.arrayElement(organizations);
 		const candidates = tenantCandidatesMap.get(tenant);
 		candidateFeedbacksMap = await dataOperation(
 			connection,
+			tenant,
+			organization,
 			candidateFeedbacks,
 			candidateFeedbacksMap,
 			candidates
@@ -76,25 +87,29 @@ const insertCandidateFeedbacks = async (
 		.execute();
 };
 
-let dataOperation = async (
+const dataOperation = async (
 	connection: Connection,
+	tenant: Tenant,
+	organization: Organization,
 	candidateFeedbacks,
 	candidateFeedbacksMap,
 	candidates
 ) => {
-	for (let candidate of candidates) {
+	for (const candidate of candidates) {
 		const candidateInterviews = await connection.manager.find(
 			CandidateInterview,
 			{
 				where: [{ candidate: candidate }]
 			}
 		);
-		let interview = faker.random.arrayElement(candidateInterviews);
+		const interview = faker.random.arrayElement(candidateInterviews);
 		const feedbacks = candidateFeedbackList.map((feedback) => ({
 			description: feedback.description,
 			rating: feedback.rating,
 			candidateId: candidate.id,
 			interviewId: interview.id,
+			tenant: tenant,
+			organization: organization,
 			status: faker.random.arrayElement(Object.keys(CandidateStatus))
 		}));
 

@@ -1,10 +1,10 @@
 import { Connection } from 'typeorm';
+import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { GoalKPITemplate } from './goal-kpi-template.entity';
 
 const goalKPIData = [
 	{
-		id: 'a77d9bd8-0baa-4548-b153-e9f2bae51760',
 		name: 'Average response time',
 		description: '',
 		type: 'Numerical',
@@ -14,7 +14,6 @@ const goalKPIData = [
 		targetValue: 500
 	},
 	{
-		id: '85f89379-f181-4f72-b722-d924df63c7ea',
 		name: '# of Priority bugs in production',
 		description: '',
 		type: 'Numerical',
@@ -27,13 +26,12 @@ const goalKPIData = [
 
 export const createDefaultGoalKpiTemplate = async (
 	connection: Connection,
-	tenant: Tenant
+	tenant: Tenant,
+	organization: Organization
 ): Promise<GoalKPITemplate[]> => {
 	const GoalKpiTemplates: GoalKPITemplate[] = [];
-
 	goalKPIData.forEach((goalKPI) => {
 		const goalkpi = new GoalKPITemplate();
-		goalkpi.id = goalKPI.id;
 		goalkpi.name = goalKPI.name;
 		goalkpi.description = ' ';
 		goalkpi.type = goalKPI.type;
@@ -41,6 +39,7 @@ export const createDefaultGoalKpiTemplate = async (
 		goalkpi.unit = goalKPI.unit;
 		goalkpi.currentValue = goalKPI.currentValue;
 		goalkpi.targetValue = goalKPI.targetValue;
+		goalkpi.organization = organization;
 		goalkpi.tenant = tenant;
 		GoalKpiTemplates.push(goalkpi);
 	});

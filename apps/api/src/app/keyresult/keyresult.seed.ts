@@ -11,10 +11,10 @@ import {
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { compareAsc } from 'date-fns';
 import * as moment from 'moment';
+import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 
 const keyResultDefaultData = [
 	{
-		id: 'fb87b179-e5d1-4cc4-8ad0-a91624e6f2fc',
 		name: 'Improve product performance',
 		level: 'Organization',
 		keyResults: [
@@ -26,8 +26,7 @@ const keyResultDefaultData = [
 				unit: 'signups',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: 'fb87b179-e5d1-4cc4-8ad0-a91624e6f2fc'
+				softDeadline: null
 			},
 			{
 				name: 'Publish product reviews in over 50 publications',
@@ -37,13 +36,11 @@ const keyResultDefaultData = [
 				unit: 'publications',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: 'fb87b179-e5d1-4cc4-8ad0-a91624e6f2fc'
+				softDeadline: null
 			}
 		]
 	},
 	{
-		id: 'c8cc1495-668a-4930-8b54-735fca9028e9',
 		name: 'Successfully launch version 2 of our main product',
 		level: 'Organization',
 		keyResults: [
@@ -54,16 +51,13 @@ const keyResultDefaultData = [
 				targetValue: 500,
 				initialValue: 1000,
 				unit: '',
-				kpiId: 'a77d9bd8-0baa-4548-b153-e9f2bae51760',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: 'c8cc1495-668a-4930-8b54-735fca9028e9'
+				softDeadline: null
 			}
 		]
 	},
 	{
-		id: '08e93b16-0ea1-49f9-8e66-f30a86eea660',
 		name: 'Redesign and launch our new landing page',
 		level: 'Team',
 		keyResults: [
@@ -76,8 +70,7 @@ const keyResultDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			},
 			{
 				name:
@@ -88,8 +81,7 @@ const keyResultDefaultData = [
 				unit: 'interviews',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			},
 			{
 				name: 'With development and marketing, launch by September 1st',
@@ -99,8 +91,7 @@ const keyResultDefaultData = [
 				unit: '',
 				deadline: 'Hard Deadline',
 				hardDeadline: '2020-08-31T18:30:00.000Z',
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			},
 			{
 				name: 'User-test page prototypes on 10 people',
@@ -110,8 +101,7 @@ const keyResultDefaultData = [
 				unit: 'people',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			},
 			{
 				name:
@@ -122,13 +112,11 @@ const keyResultDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '08e93b16-0ea1-49f9-8e66-f30a86eea660'
+				softDeadline: null
 			}
 		]
 	},
 	{
-		id: '096e4b97-c13c-469f-bb66-5e347b8861fa',
 		name: 'Increase quality of releases and make sure they are timely',
 		level: 'Team',
 		keyResults: [
@@ -139,11 +127,9 @@ const keyResultDefaultData = [
 				targetValue: 2,
 				initialValue: 15,
 				unit: '',
-				kpiId: '85f89379-f181-4f72-b722-d924df63c7ea',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '096e4b97-c13c-469f-bb66-5e347b8861fa'
+				softDeadline: null
 			},
 			{
 				name: 'Increase unit test coverage to 75% from current 45%',
@@ -153,13 +139,11 @@ const keyResultDefaultData = [
 				unit: '%',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '096e4b97-c13c-469f-bb66-5e347b8861fa'
+				softDeadline: null
 			}
 		]
 	},
 	{
-		id: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179',
 		name: 'Identify problems with current user interface',
 		level: 'Employee',
 		keyResults: [
@@ -171,8 +155,7 @@ const keyResultDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179'
+				softDeadline: null
 			},
 			{
 				name: 'Provide solution to reduce time Lag by 85%',
@@ -182,8 +165,7 @@ const keyResultDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179'
+				softDeadline: null
 			},
 			{
 				name:
@@ -194,8 +176,7 @@ const keyResultDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179'
+				softDeadline: null
 			},
 			{
 				name: 'Test all features in real time',
@@ -206,8 +187,7 @@ const keyResultDefaultData = [
 				unit: '',
 				deadline: 'No Custom Deadline',
 				hardDeadline: null,
-				softDeadline: null,
-				goalId: '1c63dfca-fdf9-41c6-9b65-d434aeb1c179'
+				softDeadline: null
 			}
 		]
 	}
@@ -220,6 +200,7 @@ export const createDefaultKeyResults = async (
 	goals
 ): Promise<KeyResult[]> => {
 	const defaultKeyResults = [];
+	const goalKPIs: GoalKPI[] = await connection.manager.find(GoalKPI);
 	if (goals && goals.length > 0) {
 		goals.forEach((goal) => {
 			const keyResultsOfGoal = keyResultDefaultData.find(
@@ -253,7 +234,7 @@ export const createDefaultKeyResults = async (
 					keyResult.targetValue = 1;
 				} else {
 					if (keyResultData.type === KeyResultTypeEnum.KPI) {
-						keyResult.kpiId = keyResultData.kpiId;
+						keyResult.kpi = faker.random.arrayElement(goalKPIs);
 					}
 					keyResult.initialValue = keyResultData.initialValue;
 					keyResult.targetValue = keyResultData.targetValue;
@@ -264,6 +245,7 @@ export const createDefaultKeyResults = async (
 				keyResult.progress = 0;
 				keyResult.name = keyResultData.name;
 				keyResult.goal = goal;
+				keyResult.organizationId = goal.organizationId;
 				keyResult.tenant = tenant;
 				keyResult.update = keyResult.initialValue;
 				keyResult.status = 'none';
@@ -391,6 +373,7 @@ export const createRandomKeyResult = async (
 			keyResult.progress = 0;
 			keyResult.name = faker.name.jobTitle();
 			keyResult.goal = goal;
+			keyResult.organizationId = goal.organizationId;
 			keyResult.tenant = tenant;
 			keyResult.update = keyResult.initialValue;
 			keyResult.status = 'none';

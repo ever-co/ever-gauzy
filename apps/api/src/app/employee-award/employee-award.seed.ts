@@ -21,6 +21,7 @@ export const createDefaultEmployeeAwards = async (
 		award.employee = employee;
 		award.employeeId = employee.id;
 		award.tenant = tenant;
+		award.organization = employee.organization;
 
 		return award;
 	});
