@@ -9,6 +9,7 @@ import { TimeSlot } from '../../../time-slot.entity';
 import { TimeLog } from '../../../time-log.entity';
 import * as _ from 'underscore';
 import { BulkActivitesSaveCommand } from '../../../activity/commands/bulk-activites-save.command';
+import { Employee } from 'apps/api/src/app/employee/employee.entity';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -18,6 +19,8 @@ export class CreateTimeSlotHandler
 		private readonly timeSlotRepository: Repository<TimeSlot>,
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -79,6 +82,15 @@ export class CreateTimeSlotHandler
 			// await this.activityRepository.save(timeSlot.activities);
 		}
 		timeSlot.tenantId = RequestContext.currentTenantId();
+		if (!timeSlot.organizationId) {
+			const employee = await this.employeeRepository.findOne(
+				input.employeeId
+			);
+			timeSlot.organizationId = employee.organizationId;
+		}
+
+		console.log({ timeSlot });
+
 		await this.timeSlotRepository.save(timeSlot);
 
 		timeSlot = await this.timeSlotRepository.findOne(timeSlot.id, {

@@ -6,13 +6,16 @@ import { TimeSlot } from '../../../time-slot.entity';
 import * as _ from 'underscore';
 import { TimeSlotBulkCreateCommand } from '../time-slot-bulk-create.command';
 import { RequestContext } from 'apps/api/src/app/core/context';
+import { Employee } from 'apps/api/src/app/employee/employee.entity';
 
 @CommandHandler(TimeSlotBulkCreateCommand)
 export class TimeSlotBulkCreateHandler
 	implements ICommandHandler<TimeSlotBulkCreateCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>
+		private readonly timeSlotRepository: Repository<TimeSlot>,
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>
 	) {}
 
 	public async execute(
@@ -43,7 +46,20 @@ export class TimeSlotBulkCreateHandler
 			);
 		}
 
+		let organizationId;
+		if (!slots[0].organizationId) {
+			const employee = await this.employeeRepository.findOne(
+				slots[0].employeeId
+			);
+			organizationId = employee.organizationId;
+		} else {
+			organizationId = slots[0].organizationId;
+		}
+
 		slots = slots.map((slot) => {
+			if (!slot.organizationId) {
+				slot.organizationId = organizationId;
+			}
 			slot.tenantId = RequestContext.currentTenantId();
 			return slot;
 		});
