@@ -3,7 +3,8 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
 	IOrganization,
 	PermissionsEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IUser
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,13 +24,6 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-
-interface SelectedRow {
-	data: IOrganization;
-	isSelected: boolean;
-	selected: IOrganization[];
-	source: LocalDataSource;
-}
 
 @Component({
 	templateUrl: './organizations.component.html',
@@ -67,6 +61,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	loading = true;
 	hasEditPermission = false;
 	hasEditExpensesPermission = false;
+	user: IUser;
 	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -108,10 +103,16 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this._loadSmartTable();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-
+		this.store.user$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((user: IUser) => {
+				if (user) {
+					this.user = user;
+					this._loadSmartTable();
+				}
+			});
 		this.store.userRolePermissions$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
@@ -151,9 +152,11 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSettingsSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSettingsSmartTable();
+			});
 	}
 
 	async addOrganization() {
@@ -223,6 +226,10 @@ export class OrganizationsComponent extends TranslationBaseComponent
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
+				this.selectOrganization({
+					isSelected: false,
+					data: null
+				});
 				this._loadSmartTable();
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -233,9 +240,10 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	private async _loadSmartTable() {
 		try {
 			const { items } = await this.userOrganizationService.getAll(
-				['organization', 'organization.tags'],
+				['organization', 'organization.tags', 'organization.employees'],
 				{
-					userId: this.store.userId
+					userId: this.store.userId,
+					tenantId: this.user.tenantId
 				}
 			);
 
@@ -244,13 +252,14 @@ export class OrganizationsComponent extends TranslationBaseComponent
 			);
 
 			for (const org of this.organizations) {
-				const data = await this.employeesService
-					.getAll([], { organization: { id: org.id } })
-					.pipe(first())
-					.toPromise();
+				// const data = await this.employeesService
+				// 	.getAll([], { organization: { id: org.id }, tenantId: org.tenantId })
+				// 	.pipe(first())
+				// 	.toPromise();
 
-				const activeEmployees = data.items.filter((i) => i.isActive);
+				const activeEmployees = org.employees.filter((i) => i.isActive);
 				org.totalEmployees = activeEmployees.length;
+				delete org['employees'];
 			}
 
 			this.smartTableSource.load(this.organizations);

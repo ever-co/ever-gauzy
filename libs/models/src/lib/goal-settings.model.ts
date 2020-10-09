@@ -40,6 +40,11 @@ export interface IGoalTemplate
 	category?: string;
 }
 
+export interface IGoalTemplateFind
+	extends IBasePerTenantAndOrganizationEntityModel {
+	id?: string;
+}
+
 export interface IKeyResultTemplate
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
@@ -95,6 +100,7 @@ export interface ISettingFindInput {
 	id?: string;
 	employee?: IEmployeeFindInput;
 	organization?: IOrganizationFindInput;
+	tenantId?: string;
 }
 
 export interface IGoalTimeFrameFindInput {

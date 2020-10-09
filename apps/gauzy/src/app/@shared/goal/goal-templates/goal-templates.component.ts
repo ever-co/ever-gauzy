@@ -39,6 +39,7 @@ export class GoalTemplatesComponent implements OnInit {
 		});
 	}
 
+	/* 
 	createGoalTemplate() {
 		const templateForm = {
 			...this.goalTemplateForm.value,
@@ -46,9 +47,8 @@ export class GoalTemplatesComponent implements OnInit {
 				...this.keyResultTemplateForm.value
 			}
 		};
-		console.log(templateForm);
 	}
-
+    */
 	closeDialog() {
 		this.dialogRef.close();
 	}

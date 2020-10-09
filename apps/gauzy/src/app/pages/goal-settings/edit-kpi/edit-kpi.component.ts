@@ -12,7 +12,8 @@ import {
 	KpiOperatorEnum,
 	IKPI,
 	CurrenciesEnum,
-	KeyResultNumberUnitsEnum
+	KeyResultNumberUnitsEnum,
+	IOrganization
 } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
@@ -34,6 +35,7 @@ export class EditKpiComponent extends TranslationBaseComponent
 	kpiOperatorEnum = KpiOperatorEnum;
 	kpiMetricEnum = KpiMetricEnum;
 	private _ngDestroy$ = new Subject<void>();
+	organization: IOrganization;
 	constructor(
 		private fb: FormBuilder,
 		readonly translate: TranslateService,
@@ -46,6 +48,7 @@ export class EditKpiComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this.organization = this.store.selectedOrganization;
 		this.kpiForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
@@ -59,8 +62,9 @@ export class EditKpiComponent extends TranslationBaseComponent
 			],
 			unit: [KeyResultNumberUnitsEnum.ITEMS]
 		});
+		const { id: organizationId, tenantId } = this.organization;
 		this.employeeService
-			.getAll(['user'])
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;
@@ -87,9 +91,11 @@ export class EditKpiComponent extends TranslationBaseComponent
 	}
 
 	async saveKeyResult() {
+		const { id: organizationId, tenantId } = this.organization;
 		const kpiData = {
 			...this.kpiForm.value,
-			organization: this.store.selectedOrganization.id
+			organizationId,
+			tenantId
 		};
 		if (this.type === 'add') {
 			await this.goalSettingsService.createKPI(kpiData).then((res) => {

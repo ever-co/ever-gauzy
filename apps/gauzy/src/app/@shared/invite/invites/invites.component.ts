@@ -123,6 +123,7 @@ export class InvitesComponent extends TranslationBaseComponent
 		if (this.employeesTable) {
 			this.employeesTable.grid.dataSet.willSelect = false;
 		}
+
 		this.disableButton = !isSelected;
 		this.selectedInvite = selectedInvite;
 		if (this.selectedInvite) {
@@ -336,6 +337,11 @@ export class InvitesComponent extends TranslationBaseComponent
 							this.selectedInvite.email + ' has been deleted.',
 							'Success'
 						);
+
+						this.selectEmployeeTmp({
+							isSelected: false,
+							data: null
+						});
 
 						this.loadPage();
 					} catch (error) {

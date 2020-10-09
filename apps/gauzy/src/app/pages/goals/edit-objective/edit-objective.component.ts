@@ -10,7 +10,8 @@ import {
 	RolesEnum,
 	IOrganizationTeam,
 	IGoalGeneralSetting,
-	GoalOwnershipEnum
+	GoalOwnershipEnum,
+	IOrganization
 } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil, first } from 'rxjs/operators';
@@ -42,7 +43,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	teams: IOrganizationTeam[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
-
+	organization: IOrganization;
 	constructor(
 		private dialogRef: NbDialogRef<EditObjectiveComponent>,
 		private fb: FormBuilder,
@@ -54,6 +55,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.objectiveForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
@@ -77,8 +79,9 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			}
 		}
 		this.getTimeFrames();
-		await this.employeeService
-			.getAll(['user'])
+		const { id: organizationId, tenantId } = this.organization;
+		this.employeeService
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;
@@ -99,8 +102,9 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	}
 
 	async getTeams() {
+		const { id: organizationId, tenantId } = this.organization;
 		await this.organizationTeamsService
-			.getAll(['members'], { organizationId: this.orgId })
+			.getAll(['members'], { organizationId, tenantId })
 			.then((res) => {
 				const { items } = res;
 				this.teams = items;
@@ -108,10 +112,12 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	}
 
 	async getTimeFrames() {
+		const { id: organizationId, tenantId } = this.organization;
 		const findObj = {
 			organization: {
-				id: this.orgId
-			}
+				id: organizationId
+			},
+			tenantId
 		};
 		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
 			if (res) {
@@ -145,7 +151,9 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	}
 
 	saveObjective() {
+		const { id: organizationId, tenantId } = this.organization;
 		const objectiveData = {
+			...{ organizationId, tenantId },
 			...this.objectiveForm.value
 		};
 		objectiveData[
@@ -156,6 +164,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				: 'organization'
 		] = this.objectiveForm.value.owner;
 		delete objectiveData.owner;
+		delete objectiveData.organization;
 		this.closeDialog(objectiveData);
 	}
 

@@ -37,8 +37,7 @@ import {
 	ISkill,
 	IPayment,
 	IOrganizationSprint,
-	IInvoiceEstimateHistory,
-	ITenant
+	IInvoiceEstimateHistory
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
@@ -50,25 +49,9 @@ import { OrganizationSprint } from '../organization-sprint/organization-sprint.e
 import { Employee } from '../employee/employee.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 import { Deal } from '../deal/deal.entity';
-import { Base } from '../core/entities/base';
-import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('organization')
-export class Organization extends Base implements IOrganization {
-	@ApiProperty({ type: Tenant, readOnly: true })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	@IsOptional()
-	tenant?: ITenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((t: TenantBase) => t.tenant)
-	@IsString()
-	@IsOptional()
-	@Index()
-	@Column()
-	tenantId?: string;
-
+export class Organization extends TenantBase implements IOrganization {
 	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({

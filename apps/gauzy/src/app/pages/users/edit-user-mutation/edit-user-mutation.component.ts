@@ -58,19 +58,18 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 	}
 
 	private async _loadUsers() {
-		const { items } = await this.usersOrganizationsService.getAll([
-			'user',
-			'user.role',
-			'user.tags'
-		]);
+		const {
+			id: organizationId,
+			tenantId
+		} = this.store.selectedOrganization;
+		const { items } = await this.usersOrganizationsService.getAll(
+			['user', 'user.role', 'user.tags'],
+			{ organizationId, tenantId }
+		);
 
 		const usersVm = [];
-
 		const existedUsers = items
-			.filter(
-				(item) =>
-					item.organizationId === this.store.selectedOrganization.id
-			)
+			.filter((item) => item.organizationId === organizationId)
 			.map((item) => item.userId);
 
 		for (const orgUser of items.filter(
@@ -116,6 +115,7 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 				this.addOrEditUser.emit({
 					userId: this.selectedUsersIds[i],
 					organizationId: organization.id,
+					tenantId: organization.tenantId,
 					isActive: true
 				});
 			}

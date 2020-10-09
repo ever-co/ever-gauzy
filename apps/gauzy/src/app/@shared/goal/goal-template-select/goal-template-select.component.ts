@@ -8,7 +8,8 @@ import {
 	IOrganizationTeam,
 	GoalLevelEnum,
 	KeyResultWeightEnum,
-	KeyResultTypeEnum
+	KeyResultTypeEnum,
+	IOrganization
 } from '@gauzy/models';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { Store } from '../../../@core/services/store.service';
@@ -42,7 +43,7 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 	orgName: string;
 	goalDetailsForm: FormGroup;
 	private _ngDestroy$ = new Subject<void>();
-
+	organization: IOrganization;
 	@ViewChild('stepper') stepper: NbStepperComponent;
 
 	constructor(
@@ -59,6 +60,7 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.goalDetailsForm = this.fb.group({
 			deadline: ['', Validators.required],
 			owner: ['', Validators.required],
@@ -71,13 +73,17 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 			lead: [null]
 		});
 		await this.getTimeFrames();
-		this.goalTemplateService.getAllGoalTemplates().then((res) => {
-			const { items } = res;
-			console.log(items);
-			this.goalTemplates = items;
-		});
-		await this.employeeService
-			.getAll(['user'])
+
+		const { id: organizationId, tenantId } = this.organization;
+		this.goalTemplateService
+			.getAllGoalTemplates({ organizationId, tenantId })
+			.then((res) => {
+				const { items } = res;
+				this.goalTemplates = items;
+			});
+
+		this.employeeService
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;
@@ -85,10 +91,12 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 	}
 
 	async getTimeFrames() {
+		const { id: organizationId, tenantId } = this.organization;
 		const findObj = {
 			organization: {
-				id: this.store.selectedOrganization.id
-			}
+				id: organizationId
+			},
+			tenantId
 		};
 		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
 			if (res) {
@@ -123,12 +131,15 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 		if (!!this.selectedGoalTemplate && !!this.goalDetailsForm.valid) {
 			const goalDetailsFormValue = this.goalDetailsForm.value;
 			delete goalDetailsFormValue.level;
+
+			const { id: organizationId, tenantId } = this.organization;
 			const goal = {
 				...this.selectedGoalTemplate,
 				...goalDetailsFormValue,
 				description: ' ',
 				progress: 0,
-				organizationId: this.store.selectedOrganization.id
+				organizationId,
+				tenantId
 			};
 			goal[
 				this.goalDetailsForm.value.level === GoalLevelEnum.EMPLOYEE
@@ -172,14 +183,14 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 								progress: 0,
 								update: keyResult.initialValue,
 								owner: this.employees[0].id,
-								organizationId: this.orgId,
+								organizationId,
+								tenantId,
 								status: 'none',
 								weight: KeyResultWeightEnum.DEFAULT
 							};
 						}
 					);
 
-					console.log(keyResults);
 					await this.keyResultService
 						.createBulkKeyResult(keyResults)
 						.then((res) => {

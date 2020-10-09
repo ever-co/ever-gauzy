@@ -22,7 +22,8 @@ import {
 	IKPI,
 	IGoalGeneralSetting,
 	CurrenciesEnum,
-	KeyResultNumberUnitsEnum
+	KeyResultNumberUnitsEnum,
+	IOrganization
 } from '@gauzy/models';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
@@ -60,6 +61,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	minDate = endOfTomorrow();
 	KPIs: Array<IKPI>;
 	private _ngDestroy$ = new Subject<void>();
+	organization: IOrganization;
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
 		public fb: FormBuilder,
@@ -73,6 +75,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.keyResultsForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
@@ -115,8 +118,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		} else {
 			await this.getKPI();
 		}
+		const { id: organizationId, tenantId } = this.organization;
 		this.employeeService
-			.getAll(['user'])
+			.getAll(['user'], { organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;
@@ -132,8 +136,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	}
 
 	async getKPI() {
+		const { id: organizationId, tenantId } = this.organization;
 		await this.goalSettingsService
-			.getAllKPI({ organization: { id: this.orgId } })
+			.getAllKPI({ organization: { id: organizationId }, tenantId })
 			.then((kpi) => {
 				const { items } = kpi;
 				this.KPIs = items;
@@ -141,8 +146,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	}
 
 	async getTeams() {
+		const { id: organizationId, tenantId } = this.organization;
 		await this.organizationTeamsService
-			.getAll(['members'], { organizationId: this.orgId })
+			.getAll(['members'], { organizationId, tenantId })
 			.then((res) => {
 				const { items } = res;
 				this.teams = items;
@@ -220,6 +226,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		}
 		// Create objective from keyResult
 		if (!!this.keyResultsForm.value.assignAsObjective) {
+			const { id: organizationId, tenantId } = this.organization;
 			const objectiveData: IGoal = {
 				name: this.keyResultsForm.value.name,
 				description: this.keyResultsForm.value.description,
@@ -227,7 +234,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				deadline: this.goalDeadline,
 				level: this.keyResultsForm.value.level,
 				progress: 0,
-				organizationId: this.orgId,
+				organizationId,
+				tenantId,
 				alignedKeyResult: this.data
 			};
 			objectiveData[
@@ -253,6 +261,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				});
 		}
 
+		const { id: organizationId, tenantId } = this.organization;
 		if (!!this.data) {
 			// Delete all updates and progress when keyresult type is changed.
 			if (this.data.type !== this.keyResultsForm.value.type) {
@@ -282,7 +291,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 					? this.data.update
 					: this.keyResultsForm.value.initialValue,
 				status: this.data.status ? this.data.status : 'none',
-				progress: this.data.progress ? this.data.progress : 0
+				progress: this.data.progress ? this.data.progress : 0,
+				organizationId,
+				tenantId
 			});
 		} else {
 			this.closeDialog({
@@ -290,7 +301,9 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				update: this.keyResultsForm.value.initialValue,
 				status: 'none',
 				progress: 0,
-				weight: KeyResultWeightEnum.DEFAULT
+				weight: KeyResultWeightEnum.DEFAULT,
+				organizationId,
+				tenantId
 			});
 		}
 	}

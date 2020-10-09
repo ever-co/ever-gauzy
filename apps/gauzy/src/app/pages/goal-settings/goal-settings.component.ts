@@ -15,7 +15,8 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import {
 	ComponentLayoutStyleEnum,
 	GoalOwnershipEnum,
-	IGoalGeneralSetting
+	IGoalGeneralSetting,
+	IOrganization
 } from '@gauzy/models';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { FormGroup, FormBuilder } from '@angular/forms';
@@ -34,7 +35,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	smartTableSettings: object;
 	selectedTimeFrame: any = null;
 	selectedKPI: any = null;
-	selectedTab = 'Set Time Frame';
+	selectedTab: string;
 	selectedOrganizationId: string;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -45,6 +46,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	predefinedTimeFrames = [];
 	@ViewChild('smartTable') smartTable;
 	private _ngDestroy$ = new Subject<void>();
+	organization: IOrganization;
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
@@ -58,7 +60,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		this.setView();
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.generalSettingsForm = this.fb.group({
 			maxObjectives: [],
 			maxKeyResults: [],
@@ -70,12 +72,15 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		});
 		this._loadTableSettings(null);
 		this._applyTranslationOnSmartTable();
-		await this.store.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
 				if (organization) {
+					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
-					await this._loadTableData(null);
+					if (this.selectedTab) {
+						await this._loadTableData(this.selectedTab);
+					}
 				}
 			});
 		this.router.events
@@ -99,8 +104,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 			});
 	}
 
-	saveGeneralSettings() {
-		this.goalSettingService
+	async saveGeneralSettings() {
+		await this.goalSettingService
 			.updateGeneralSettings(
 				this.goalGeneralSettings.id,
 				this.generalSettingsForm.value
@@ -119,10 +124,9 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	}
 
 	tabChange(e) {
-		this.selectedTab = e.tabTitle;
-		this._loadTableSettings(e.tabTitle);
-		this._applyTranslationOnSmartTable();
-		this._loadTableData(e.tabTitle);
+		this.selectedTab = e.tabId;
+		this._loadTableSettings(e.tabId);
+		this._loadTableData(e.tabId);
 		if (this.smartTable) {
 			this.selectedKPI = null;
 			this.selectedTimeFrame = null;
@@ -147,23 +151,21 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	}
 
 	private async _loadTableData(tab) {
+		if (!this.organization) {
+			return;
+		}
+
 		this.smartTableData.empty();
 		this.goalTimeFrames = [];
+		const { id: organizationId, tenantId } = this.organization;
 		const findObj = {
 			organization: {
-				id: this.selectedOrganizationId
-			}
+				id: organizationId
+			},
+			tenantId
 		};
-		await this.goalSettingService
-			.getAllGeneralSettings(findObj)
-			.then((generalSettings) => {
-				const { items } = generalSettings;
-				this.goalGeneralSettings = items.pop();
-				this.generalSettingsForm.patchValue({
-					...this.goalGeneralSettings
-				});
-			});
-		if (tab === 'KPI') {
+
+		if (tab === 'kpi') {
 			await this.goalSettingService.getAllKPI(findObj).then((res) => {
 				this.smartTableData.load(res.items);
 				this.goalTimeFrames = res.items;
@@ -171,7 +173,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					this.smartTable.grid.dataSet.willSelect = 'false';
 				}
 			});
-		} else {
+		} else if (tab === 'timeframe') {
 			await this.goalSettingService
 				.getAllTimeFrames(findObj)
 				.then((res) => {
@@ -183,11 +185,21 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 						}
 					}
 				});
+		} else {
+			await this.goalSettingService
+				.getAllGeneralSettings(findObj)
+				.then((generalSettings) => {
+					const { items } = generalSettings;
+					this.goalGeneralSettings = items.pop();
+					this.generalSettingsForm.patchValue({
+						...this.goalGeneralSettings
+					});
+				});
 		}
 	}
 
-	private _loadTableSettings(tab) {
-		if (tab === 'KPI') {
+	private _loadTableSettings(tab: string | null) {
+		if (tab === 'kpi') {
 			this.smartTableSettings = {
 				actions: false,
 				columns: {
@@ -215,7 +227,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 					}
 				}
 			};
-		} else {
+		} else if (tab === 'timeframe') {
 			this.smartTableSettings = {
 				actions: false,
 				columns: {
@@ -276,6 +288,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
+			this.cancel();
 			this._loadTableSettings(null);
 			await this._loadTableData(null);
 		}
@@ -301,8 +314,9 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		});
 		const response = await kpiDialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			this._loadTableSettings('KPI');
-			await this._loadTableData('KPI');
+			this.cancel();
+			this._loadTableSettings('kpi');
+			await this._loadTableData('kpi');
 		}
 	}
 
@@ -336,6 +350,7 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 								),
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
+							this.cancel();
 							this._loadTableSettings(null);
 							await this._loadTableData(null);
 						}
@@ -372,8 +387,9 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 								'KPI Deleted',
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
-							this._loadTableSettings('KPI');
-							await this._loadTableData('KPI');
+							this.cancel();
+							this._loadTableSettings('kpi');
+							await this._loadTableData('kpi');
 						}
 					});
 			}
@@ -397,11 +413,16 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		const goalTemplateDialog = this.dialogService.open(
 			GoalTemplatesComponent
 		);
-		const response = await goalTemplateDialog.onClose
-			.pipe(first())
-			.toPromise();
-		if (!!response) {
-			console.log(response);
-		}
+		await goalTemplateDialog.onClose.pipe(first()).toPromise();
+	}
+
+	/*
+	 * After add/edit/delete refresh selected row
+	 */
+	cancel(): void {
+		this.selectRow({
+			isSelected: false,
+			data: null
+		});
 	}
 }

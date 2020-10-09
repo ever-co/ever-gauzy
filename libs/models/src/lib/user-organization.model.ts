@@ -1,5 +1,4 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganization, IOrganizationFindInput } from './organization.model';
 import { LanguagesEnum, IUser } from './user.model';
 
 export interface IUserOrganization
@@ -10,21 +9,19 @@ export interface IUserOrganization
 	user?: IUser;
 }
 
-export interface IUserOrganizationFindInput {
+export interface IUserOrganizationFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	userId?: string;
-	organizationId?: string;
 	isDefault?: boolean;
 	isActive?: boolean;
-	organization?: IOrganizationFindInput;
 }
 
-export interface IUserOrganizationCreateInput {
+export interface IUserOrganizationCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	userId: string;
-	organizationId: string;
 	isDefault?: boolean;
 	isActive?: boolean;
-	organization?: IOrganization;
 }
 
 export interface IUserOrganizationDeleteInput {
