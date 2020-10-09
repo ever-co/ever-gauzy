@@ -14,17 +14,18 @@ const defaultLanguageLevel = {
 };
 export const createDefaultOrganizationLanguage = async (
 	connection: Connection,
+	tenant: Tenant,
 	defaultOrganizations: IOrganization[]
 ): Promise<OrganizationLanguages[]> => {
-	let mapOrganizationLanguage: OrganizationLanguages[] = [];
-
+	const mapOrganizationLanguage: OrganizationLanguages[] = [];
 	const allLanguage = await connection.manager.find(Language, {});
 
 	for (const defaultOrganization of defaultOrganizations) {
 		for (const language of allLanguage) {
-			let organization = new OrganizationLanguages();
+			const organization = new OrganizationLanguages();
 
 			organization.organization = defaultOrganization;
+			organization.tenant = tenant;
 			organization.language = language;
 			organization.name = language.name;
 			organization.level = defaultLanguageLevel[language.name]
@@ -51,18 +52,18 @@ export const createRandomOrganizationLanguage = async (
 		return;
 	}
 
-	let mapOrganizationLanguage: OrganizationLanguages[] = [];
-
+	const mapOrganizationLanguage: OrganizationLanguages[] = [];
 	const allLanguage = await connection.manager.find(Language, {});
 
 	for (const tenant of tenants) {
-		let tenantOrganization = tenantOrganizationsMap.get(tenant);
+		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
 			const language = faker.random.arrayElement(allLanguage);
 
-			let organization = new OrganizationLanguages();
+			const organization = new OrganizationLanguages();
 
 			organization.organization = tenantOrg;
+			organization.tenant = tenant;
 			organization.language = language;
 			organization.name = language.name;
 			organization.level = defaultLanguageLevel[language.name]

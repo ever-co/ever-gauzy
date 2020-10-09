@@ -8,9 +8,11 @@ import * as _ from 'underscore';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
 import chalk from 'chalk';
+import { Tenant } from '../../tenant/tenant.entity';
 
 export const createDefaultTimeSheet = async (
 	connection: Connection,
+	tenant: Tenant,
 	employees: Employee[],
 	defaultProjects: IOrganizationProject[] | void,
 	noOfTimeLogsPerTimeSheet
@@ -49,9 +51,10 @@ export const createDefaultTimeSheet = async (
 				approvedAt = faker.date.between(startedAt, new Date());
 				submittedAt = faker.date.between(startedAt, approvedAt);
 			}
-
 			const timesheet = new Timesheet();
 			timesheet.employee = employee;
+			timesheet.organization = employee.organization;
+			timesheet.tenant = tenant;
 			timesheet.approvedBy = null;
 			timesheet.startedAt = startedAt;
 			timesheet.stoppedAt = stoppedAt;
@@ -77,6 +80,7 @@ export const createDefaultTimeSheet = async (
 		console.log(chalk.green(`SEEDING Default TimeLogs`));
 		await createRandomTimeLogs(
 			connection,
+			tenant,
 			createdTimesheets,
 			defaultProjects,
 			noOfTimeLogsPerTimeSheet
@@ -87,7 +91,7 @@ export const createDefaultTimeSheet = async (
 
 	try {
 		console.log(chalk.green(`SEEDING Default Activities`));
-		await createRandomActivities(connection);
+		await createRandomActivities(connection, tenant);
 	} catch (error) {
 		console.log(chalk.red(`SEEDING Default Activities`, error));
 	}
@@ -97,6 +101,7 @@ export const createDefaultTimeSheet = async (
 
 export const createRandomTimesheet = async (
 	connection: Connection,
+	tenant: Tenant,
 	defaultProjects: IOrganizationProject[] | void,
 	noOfTimeLogsPerTimeSheet
 ) => {
@@ -149,6 +154,8 @@ export const createRandomTimesheet = async (
 
 				const timesheet = new Timesheet();
 				timesheet.employee = employee;
+				timesheet.organization = employee.organization;
+				timesheet.tenant = tenant;
 				timesheet.approvedBy = null;
 				timesheet.startedAt = startedAt;
 				timesheet.stoppedAt = stoppedAt;
@@ -173,13 +180,14 @@ export const createRandomTimesheet = async (
 	console.log(chalk.green(`SEEDING Random TimeLogs`));
 	await createRandomTimeLogs(
 		connection,
+		tenant,
 		createdTimesheets,
 		defaultProjects,
 		noOfTimeLogsPerTimeSheet
 	);
 
 	console.log(chalk.green(`SEEDING Random Activities`));
-	await createRandomActivities(connection);
+	await createRandomActivities(connection, tenant);
 
 	return createdTimesheets;
 };

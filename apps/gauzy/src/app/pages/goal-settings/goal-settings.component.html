@@ -4,13 +4,16 @@
 			<h4>{{ 'GOALS_PAGE.GOAL_SETTINGS' | translate }}</h4>
 		</div>
 		<ga-layout-selector
-			*ngIf="selectedTab != 'General'"
+			*ngIf="selectedTab != 'general'"
 			componentName="{{ viewComponentName }}"
 		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<nb-tabset (changeTab)="tabChange($event)">
-			<nb-tab tabTitle="General">
+			<nb-tab
+				tabId="general"
+				tabTitle="{{ 'GOALS_PAGE.SETTINGS.GENERAL' | translate }}"
+			>
 				<div>
 					<nb-card>
 						<nb-card-body>
@@ -180,6 +183,7 @@
 				</div>
 			</nb-tab>
 			<nb-tab
+				tabId="timeframe"
 				tabTitle="{{
 					'GOALS_PAGE.SETTINGS.TIME_FRAME_PAGE_TITLE' | translate
 				}}"
@@ -201,7 +205,10 @@
 					</ng-container>
 				</div>
 			</nb-tab>
-			<nb-tab tabTitle="KPI">
+			<nb-tab
+				tabId="kpi"
+				tabTitle="{{ 'GOALS_PAGE.SETTINGS.KPI' | translate }}"
+			>
 				<div class="mb-3">
 					<button
 						nbButton
@@ -220,7 +227,7 @@
 				</div>
 			</nb-tab>
 		</nb-tabset>
-		<ng-container *ngIf="selectedTab != 'General'">
+		<ng-container *ngIf="selectedTab != 'general'">
 			<ng2-smart-table
 				[settings]="smartTableSettings"
 				[source]="smartTableData"
@@ -245,7 +252,7 @@
 	let-selectedItem="selectedItem"
 >
 	<button
-		*ngIf="selectedTab !== 'KPI'"
+		*ngIf="selectedTab !== 'kpi'"
 		nbButton
 		status="info"
 		(click)="editTimeFrame('edit', selectedItem)"
@@ -257,7 +264,7 @@
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
-		*ngIf="selectedTab !== 'KPI'"
+		*ngIf="selectedTab !== 'kpi'"
 		nbButton
 		status="danger"
 		(click)="deleteTimeFrame(selectedItem)"
@@ -270,7 +277,7 @@
 	</button>
 
 	<button
-		*ngIf="selectedTab === 'KPI'"
+		*ngIf="selectedTab === 'kpi'"
 		nbButton
 		status="info"
 		(click)="editKPI('edit', selectedItem)"
@@ -282,7 +289,7 @@
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
-		*ngIf="selectedTab === 'KPI'"
+		*ngIf="selectedTab === 'kpi'"
 		nbButton
 		status="danger"
 		(click)="deleteKPI(selectedItem)"

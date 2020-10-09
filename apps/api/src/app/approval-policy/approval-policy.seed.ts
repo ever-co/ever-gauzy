@@ -14,10 +14,10 @@ export const createDefaultApprovalPolicyForOrg = async (
 	defaultData.orgs.forEach((org) => {
 		const defaultApprovalPolicy = new ApprovalPolicy();
 		defaultApprovalPolicy.name = 'Default Approval Policy';
-		// defaultApprovalPolicy.organizationId = org.id;
+		defaultApprovalPolicy.organization = org;
+		defaultApprovalPolicy.tenant = org.tenant;
 		defaultApprovalPolicy.description = 'Default approval policy';
 		defaultApprovalPolicy.approvalType = 'DEFAULT_APPROVAL_POLICY';
-		// defaultApprovalPolicy.tenant = org.tenant;
 		promises.push(insertDefaultPolicy(connection, defaultApprovalPolicy));
 	});
 

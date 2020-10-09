@@ -31,6 +31,7 @@ export class UserOrganizationService extends CrudService<UserOrganization> {
 
 		const entity: UserOrganization = new UserOrganization();
 		entity.organizationId = organizationId;
+		entity.tenantId = user.tenantId;
 		entity.userId = user.id;
 		return this.create(entity);
 	}
@@ -49,6 +50,7 @@ export class UserOrganizationService extends CrudService<UserOrganization> {
 		organizations.forEach((organization) => {
 			const entity: UserOrganization = new UserOrganization();
 			entity.organizationId = organization.id;
+			entity.tenantId = tenantId;
 			entity.userId = userId;
 			entities.push(entity);
 		});

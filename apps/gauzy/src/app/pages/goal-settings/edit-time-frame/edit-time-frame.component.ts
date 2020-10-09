@@ -2,7 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDateService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { IGoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/models';
+import {
+	IGoalTimeFrame,
+	IOrganization,
+	TimeFrameStatusEnum
+} from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
@@ -33,6 +37,7 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 	predefinedTimeFrames = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
 	private _ngDestroy$ = new Subject<void>();
+	organization: IOrganization;
 	constructor(
 		private dialogRef: NbDialogRef<EditTimeFrameComponent>,
 		private fb: FormBuilder,
@@ -45,6 +50,7 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.timeFrameForm = this.fb.group({
 			name: ['', Validators.required],
 			status: [TimeFrameStatusEnum.ACTIVE, Validators.required],
@@ -129,9 +135,11 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 	}
 
 	async saveTimeFrame() {
+		const { id: organizationId, tenantId } = this.organization;
 		const data = {
 			...this.timeFrameForm.value,
-			organization: this.store.selectedOrganization.id
+			organizationId,
+			tenantId
 		};
 		if (this.type === 'add') {
 			await this.goalSettingsService.createTimeFrame(data).then((res) => {

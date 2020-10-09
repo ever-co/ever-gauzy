@@ -58,6 +58,7 @@ export const createRandomProductVariantPrice = async (
 							Object.keys(CurrenciesEnum)
 						);
 						productVariantPrice.tenant = tenant;
+						productVariant.organization = tenantOrg;
 
 						productVariantPrices.push(productVariantPrice);
 					}

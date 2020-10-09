@@ -61,6 +61,7 @@ export class OrganizationCreateHandler
 		superAdminUsers.forEach((superAdmin) => {
 			const userOrganization = new UserOrganization();
 			userOrganization.organizationId = createdOrganization.id;
+			userOrganization.tenantId = tenantId;
 			userOrganization.userId = superAdmin.id;
 			this.userOrganizationService.create(userOrganization);
 		});

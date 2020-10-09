@@ -59,7 +59,7 @@ export const createDefaultTask = async (
 
 		const task = new Task();
 
-		let project = faker.random.arrayElement(defaultProjects);
+		const project = faker.random.arrayElement(defaultProjects);
 
 		task.tags = _.filter(
 			tags,

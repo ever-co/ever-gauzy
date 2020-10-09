@@ -12,7 +12,12 @@ import {
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
-import { IGoal, IKeyResult, IGoalGeneralSetting } from '@gauzy/models';
+import {
+	IGoal,
+	IKeyResult,
+	IGoalGeneralSetting,
+	IOrganization
+} from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { GoalService } from '../../@core/services/goal.service';
@@ -69,6 +74,7 @@ export class GoalsComponent extends TranslationBaseComponent
 	allGoals: IGoal[];
 	noGoals = true;
 	keyResult: IKeyResult[];
+	organization: IOrganization;
 	constructor(
 		private store: Store,
 		readonly translateService: TranslateService,
@@ -82,25 +88,27 @@ export class GoalsComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
-	async ngOnInit() {
-		await this.store.user$
+	ngOnInit() {
+		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+			if (user) {
+				this.isEmployee = !!user.employee;
+			}
+		});
+		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((user) => {
-				if (user) {
-					this.isEmployee = !!user.employee;
+			.subscribe((emp) => {
+				if (this.organization && emp) {
+					this.employee = emp;
+					this.loadPage();
 				}
 			});
-		await this.store.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (organization) => {
+			.subscribe((organization) => {
 				if (organization) {
+					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
-					await this.store.selectedEmployee$
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe((emp) => {
-							this.employee = emp;
-							this.loadPage();
-						});
+					this.loadPage();
 				}
 			});
 	}
@@ -115,6 +123,10 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	private async loadPage() {
+		if (!this.organization) {
+			return;
+		}
+
 		this.loading = true;
 		const { name } = this.store.selectedOrganization
 			? this.store.selectedOrganization
@@ -123,7 +135,8 @@ export class GoalsComponent extends TranslationBaseComponent
 		const findObj = {
 			organization: {
 				id: this.selectedOrganizationId
-			}
+			},
+			tenantId: this.organization.tenantId
 		};
 		await this.getGoalSettings(findObj);
 		await this.goalService

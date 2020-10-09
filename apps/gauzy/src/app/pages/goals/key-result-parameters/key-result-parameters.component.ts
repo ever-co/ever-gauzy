@@ -8,7 +8,8 @@ import {
 	IKPI,
 	IGoalGeneralSetting,
 	CurrenciesEnum,
-	KeyResultNumberUnitsEnum
+	KeyResultNumberUnitsEnum,
+	IOrganization
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
@@ -16,6 +17,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-key-result-parameters',
@@ -37,15 +39,18 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	currenciesEnum = CurrenciesEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	private _ngDestroy$ = new Subject<void>();
+	organization: IOrganization;
 	constructor(
 		private fb: FormBuilder,
 		private dialogRef: NbDialogRef<KeyResultParametersComponent>,
 		private keyResultService: KeyResultService,
 		private taskService: TasksService,
-		private goalSettingsService: GoalSettingsService
+		private goalSettingsService: GoalSettingsService,
+		private store: Store
 	) {}
 
 	async ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		this.weightForm = this.fb.group({
 			weight: [KeyResultWeightEnum.DEFAULT, Validators.required]
 		});
@@ -106,8 +111,9 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	}
 
 	async getKPI() {
+		const { id: organizationId, tenantId } = this.organization;
 		await this.goalSettingsService
-			.getAllKPI({ organization: { id: this.data.orgId } })
+			.getAllKPI({ organization: { id: organizationId }, tenantId })
 			.then((kpi) => {
 				const { items } = kpi;
 				this.KPIs = items;

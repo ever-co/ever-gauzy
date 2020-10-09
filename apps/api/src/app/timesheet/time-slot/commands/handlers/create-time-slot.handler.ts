@@ -9,6 +9,7 @@ import { TimeSlot } from '../../../time-slot.entity';
 import { TimeLog } from '../../../time-log.entity';
 import * as _ from 'underscore';
 import { BulkActivitesSaveCommand } from '../../../activity/commands/bulk-activites-save.command';
+import { Employee } from 'apps/api/src/app/employee/employee.entity';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -18,6 +19,8 @@ export class CreateTimeSlotHandler
 		private readonly timeSlotRepository: Repository<TimeSlot>,
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -59,26 +62,40 @@ export class CreateTimeSlotHandler
 			timeSlot.timeLogs = await this.timeLogRepository.find({
 				id: In(timeLogIds)
 			});
+		} else {
+			timeSlot.timeLogs = await this.timeLogRepository
+				.createQueryBuilder()
+				.where(`:startedAt BETWEEN "startedAt" AND "stoppedAt"`, {
+					startedAt: timeSlot.startedAt
+				})
+				.orWhere('"startedAt" <= :startedAt AND "stoppedAt" IS NULL', {
+					startedAt: timeSlot.startedAt
+				})
+				.getMany();
 		}
 
 		if (input.activities) {
 			input.activities = await this.commandBus.execute(
 				new BulkActivitesSaveCommand({
 					employeeId: timeSlot.employeeId,
-					projectId: timeSlot.timeLogs[0].projectId,
+					projectId:
+						timeSlot.timeLogs && timeSlot.timeLogs.length > 0
+							? timeSlot.timeLogs[0].projectId
+							: null,
 					activities: input.activities
 				})
 			);
-
-			// input.activities = input.activities.map((activity) => {
-			// 	activity = new Activity(activity);
-			// 	activity.employeeId = timeSlot.employeeId;
-			// 	return activity
-			// });
-			// timeSlot.activities = input.activities;
-			// await this.activityRepository.save(timeSlot.activities);
 		}
 		timeSlot.tenantId = RequestContext.currentTenantId();
+		if (!timeSlot.organizationId) {
+			const employee = await this.employeeRepository.findOne(
+				input.employeeId
+			);
+			timeSlot.organizationId = employee.organizationId;
+		}
+
+		console.log({ timeSlot });
+
 		await this.timeSlotRepository.save(timeSlot);
 
 		timeSlot = await this.timeSlotRepository.findOne(timeSlot.id, {

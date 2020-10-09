@@ -1,5 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { IKeyResult, KeyResultDeadlineEnum, IKPI } from '@gauzy/models';
+import {
+	IKeyResult,
+	KeyResultDeadlineEnum,
+	IKPI,
+	IOrganization
+} from '@gauzy/models';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import {
 	differenceInCalendarDays,
@@ -23,6 +28,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 	loading = true;
 	@Input() keyResult: IKeyResult;
 	@Input() kpi: IKPI;
+	@Input() organization: IOrganization;
 	constructor(
 		private goalSettingsService: GoalSettingsService,
 		private store: Store
@@ -38,7 +44,8 @@ export class KeyResultProgressChartComponent implements OnInit {
 				keyResult.goal.deadline === '' ? null : keyResult.goal.deadline,
 			organization: {
 				id: this.store.selectedOrganization.id
-			}
+			},
+			tenantId: this.organization.tenantId
 		};
 		await this.goalSettingsService
 			.getAllTimeFrames(findInput)

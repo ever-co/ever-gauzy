@@ -19,21 +19,25 @@ const organizationPositionArray = [
 ];
 
 export const seedDefaultOrganizationPosition = async (
-  connection: Connection,
-  Organizations
+	connection: Connection,
+	tenant: Tenant,
+	organizations
 ): Promise<void> => {
-  let positions: OrganizationPositions[] = [];
+	let positions: OrganizationPositions[] = [];
 
-    // Organizations.forEach(({ id: organizationId }) => {
-      const organizationPositions: OrganizationPositions[] = organizationPositionArray.map((name) => {
-        const employmentPosition = new OrganizationPositions();
-        employmentPosition.name = name;
-        employmentPosition.organizationId = Organizations.id;
-        return employmentPosition;
-      });
-      positions = [...positions, ...organizationPositions];
-    // });
-    await insertEmploymentPosition(connection, positions);
+	// organizations.forEach(({ id: organizationId }) => {
+	const organizationPositions: OrganizationPositions[] = organizationPositionArray.map(
+		(name) => {
+			const employmentPosition = new OrganizationPositions();
+			employmentPosition.name = name;
+			employmentPosition.organizationId = organizations.id;
+			employmentPosition.tenant = tenant;
+			return employmentPosition;
+		}
+	);
+	positions = [...positions, ...organizationPositions];
+	// });
+	await insertEmploymentPosition(connection, positions);
 };
 
 export const seedRandomOrganizationPosition = async (
@@ -46,12 +50,15 @@ export const seedRandomOrganizationPosition = async (
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		organizations.forEach(({ id: organizationId }) => {
-			const organizationPositions: OrganizationPositions[] = organizationPositionArray.map((name) => {
-				const employmentPosition = new OrganizationPositions();
-				employmentPosition.name = name;
-				employmentPosition.organizationId = organizationId;
-				return employmentPosition;
-			});
+			const organizationPositions: OrganizationPositions[] = organizationPositionArray.map(
+				(name) => {
+					const employmentPosition = new OrganizationPositions();
+					employmentPosition.name = name;
+					employmentPosition.organizationId = organizationId;
+					employmentPosition.tenant = tenant;
+					return employmentPosition;
+				}
+			);
 			positions = [...positions, ...organizationPositions];
 		});
 		await insertEmploymentPosition(connection, positions);

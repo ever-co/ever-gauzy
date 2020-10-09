@@ -2,6 +2,8 @@ import { ICandidateEducation, ICandidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { CandidateEducation } from './candidate-education.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { Organization } from '../organization/organization.entity';
+import * as faker from 'faker';
 
 const candidateEducations: ICandidateEducation[] = [
 	{
@@ -57,7 +59,10 @@ export const createRandomCandidateEducations = async (
 	let candidateEducation = [];
 	const candidateEducationsMap: Map<ICandidate, any[]> = new Map();
 
-	(tenants || []).forEach((tenant) => {
+	for await (const tenant of tenants || []) {
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
 		const candidates = tenantCandidatesMap.get(tenant);
 
 		(candidates || []).forEach((candidate) => {
@@ -66,15 +71,16 @@ export const createRandomCandidateEducations = async (
 				degree: education.degree,
 				completionDate: education.completionDate,
 				field: education.field,
-				candidateId: candidate.id
+				candidateId: candidate.id,
+				organization: faker.random.arrayElement(organizations),
+				tenant: tenant
 			}));
 			candidateEducationsMap.set(candidate, educations);
 			candidateEducation = [...candidateEducations, ...educations];
 		});
-	});
+	}
 
 	await insertCandidateEducations(connection, candidateEducation);
-
 	return candidateEducationsMap;
 };
 

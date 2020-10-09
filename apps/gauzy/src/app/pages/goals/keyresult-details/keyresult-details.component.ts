@@ -10,7 +10,8 @@ import {
 	ITask,
 	TaskStatusEnum,
 	KeyResultUpdateStatusEnum,
-	IKPI
+	IKPI,
+	IOrganization
 } from '@gauzy/models';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first, takeUntil } from 'rxjs/operators';
@@ -49,6 +50,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	ownerName: string;
 	@ViewChild(KeyResultProgressChartComponent)
 	chart: KeyResultProgressChartComponent;
+	organization: IOrganization;
 	constructor(
 		private dialogRef: NbDialogRef<KeyResultDetailsComponent>,
 		private employeeService: EmployeesService,
@@ -63,6 +65,7 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		this.organization = this.store.selectedOrganization;
 		const employee = await this.employeeService.getEmployeeById(
 			this.keyResult.owner.id,
 			['user']
@@ -77,7 +80,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 			name: this.keyResult.goal.deadline,
 			organization: {
 				id: this.store.selectedOrganization.id
-			}
+			},
+			tenantId: this.organization.tenantId
 		};
 		this.goalSettingsService
 			.getAllTimeFrames(findInput)

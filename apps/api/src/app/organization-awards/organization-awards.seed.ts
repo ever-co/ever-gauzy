@@ -4,7 +4,7 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationAwards } from './organization-awards.entity';
 import * as faker from 'faker';
 
-let defaultAwardsData = {
+const defaultAwardsData = {
 	'Top Software Development Company': 2015,
 	'Upwork Top Rated Development Company 2019': 2019,
 	'Upwork Top Rated Development Company 2018': 2018,
@@ -16,11 +16,11 @@ export const createDefaultAwards = async (
 	tenant: Tenant,
 	organizations: Organization[]
 ): Promise<OrganizationAwards[]> => {
-	let awards: OrganizationAwards[] = [];
-	let awardsNames = Object.keys(defaultAwardsData);
+	const awards: OrganizationAwards[] = [];
+	const awardsNames = Object.keys(defaultAwardsData);
 	for (const org of organizations) {
 		for (const awardsName of awardsNames) {
-			let award = new OrganizationAwards();
+			const award = new OrganizationAwards();
 			award.name = awardsName;
 			award.year = defaultAwardsData[awardsName];
 			award.organization = org;
@@ -36,10 +36,10 @@ export const createRandomAwards = async (
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, Organization[]>
 ): Promise<OrganizationAwards[]> => {
-	let awards: OrganizationAwards[] = [];
+	const awards: OrganizationAwards[] = [];
 	for (const tenant of tenants) {
-		let organizations = tenantOrganizationsMap.get(tenant);
-		let awardsData = [
+		const organizations = tenantOrganizationsMap.get(tenant);
+		const awardsData = [
 			'Best Product',
 			'Best Revenue',
 			'Best Idea',
@@ -48,7 +48,7 @@ export const createRandomAwards = async (
 
 		for (const org of organizations) {
 			for (let i = 0; i < awardsData.length; i++) {
-				let award = new OrganizationAwards();
+				const award = new OrganizationAwards();
 				award.name = awardsData[i];
 				award.year = faker.random
 					.number({ min: 1990, max: 2020 })

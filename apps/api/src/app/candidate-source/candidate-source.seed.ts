@@ -2,6 +2,7 @@ import { Connection } from 'typeorm';
 import { ICandidate, ICandidateSource } from '@gauzy/models';
 import { CandidateSource } from './candidate-source.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { Organization } from '../organization/organization.entity';
 
 const candidateSourceList: ICandidateSource[] = [
 	{
@@ -23,7 +24,9 @@ const candidateSourceList: ICandidateSource[] = [
 
 export const createCandidateSources = async (
 	connection: Connection,
-	candidates: ICandidate[] | void
+	tenant: Tenant,
+	candidates: ICandidate[] | void,
+	organization: Organization
 ): Promise<CandidateSource[]> => {
 	if (!candidates) {
 		console.warn(
@@ -32,13 +35,13 @@ export const createCandidateSources = async (
 		return;
 	}
 
-	let defaultCandidateSources = [];
-
+	let defaultCandidateSources: CandidateSource[] = [];
 	candidates.forEach((candidate) => {
 		const rand = Math.floor(Math.random() * candidateSourceList.length);
 		const sources = {
 			name: candidateSourceList[rand].name,
-			candidateId: candidate.id
+			candidateId: candidate.id,
+			...{ organization, tenant }
 		};
 		defaultCandidateSources = [...defaultCandidateSources, sources];
 	});
@@ -71,7 +74,8 @@ export const createRandomCandidateSources = async (
 		(candidates || []).forEach((candidate) => {
 			const sources: any = {
 				name: candidateSourceList[rand].name,
-				candidateId: candidate.id
+				candidateId: candidate.id,
+				...{ organization: candidate.organization, tenant }
 			};
 
 			candidateSourcesMap.set(candidate, sources);

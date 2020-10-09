@@ -28,17 +28,17 @@ export const createRandomOrganizationTeamEmployee = async (
 	const orgTeamEmployees: OrganizationTeamEmployee[] = [];
 	for (const tenant of tenants) {
 		const orgs = tenantOrganizationsMap.get(tenant);
-		let tenantEmployees = tenantEmployeeMap.get(tenant);
+		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		for (const org of orgs) {
-			const OrganizationTeams = await connection.manager.find(
+			const organizationTeams = await connection.manager.find(
 				OrganizationTeam,
 				{
 					where: [{ organizationId: org.id }]
 				}
 			);
 			const roles = await connection.manager.find(Role, {});
-			let team = faker.random.arrayElement(OrganizationTeams);
-			let employee = faker.random.arrayElement(tenantEmployees);
+			const team = faker.random.arrayElement(organizationTeams);
+			const employee = faker.random.arrayElement(tenantEmployees);
 
 			const orgTeamEmployee = new OrganizationTeamEmployee();
 
@@ -46,6 +46,8 @@ export const createRandomOrganizationTeamEmployee = async (
 			orgTeamEmployee.employeeId = employee.id;
 			orgTeamEmployee.organizationTeam = team;
 			orgTeamEmployee.employee = employee;
+			orgTeamEmployee.organization = org;
+			orgTeamEmployee.tenant = tenant;
 			orgTeamEmployee.role = faker.random.arrayElement(roles);
 
 			orgTeamEmployees.push(orgTeamEmployee);

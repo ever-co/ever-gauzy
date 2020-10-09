@@ -5,6 +5,7 @@ import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { Employee } from '../employee/employee.entity';
+import { Organization } from '../organization/organization.entity';
 
 const approvalTypes = [
 	'Business Trip',
@@ -29,16 +30,20 @@ export const createRandomRequestApproval = async (
 	tenantEmployeeMap: Map<Tenant, Employee[]>,
 	noOfRequestsPerOrganizations: number
 ): Promise<any> => {
-	let requestApprovals: RequestApproval[] = [];
-	let policies: ApprovalPolicy[] = await connection.manager.find(
+	const requestApprovals: RequestApproval[] = [];
+	const policies: ApprovalPolicy[] = await connection.manager.find(
 		ApprovalPolicy
 	);
 
-	tenants.forEach((tenant) => {
+	for await (const tenant of tenants || []) {
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
+
 		for (let i = 0; i < noOfRequestsPerOrganizations; i++) {
-			let tenantPolicy = faker.random.arrayElement(policies);
-			let employees = tenantEmployeeMap.get(tenant);
-			let specificEmployees = employees
+			const tenantPolicy = faker.random.arrayElement(policies);
+			const employees = tenantEmployeeMap.get(tenant);
+			const specificEmployees = employees
 				.sort(() => Math.random() - Math.random())
 				.slice(0, 3);
 
@@ -56,20 +61,25 @@ export const createRandomRequestApproval = async (
 				specificEmployees
 			).id;
 
+			const organization = faker.random.arrayElement(organizations);
+
 			const requestApprovalEmployees: RequestApprovalEmployee[] = [];
 			specificEmployees.forEach((employee) => {
 				const raEmployees = new RequestApprovalEmployee();
 				raEmployees.employeeId = employee.id;
 				raEmployees.employee = employee;
+				raEmployees.tenant = organization;
+				raEmployees.organization = organization;
 				raEmployees.status = requestApproval.status;
 				requestApprovalEmployees.push(raEmployees);
 			});
 
 			requestApproval.employeeApprovals = requestApprovalEmployees;
 			requestApproval.tenant = tenant;
-			requestApprovals.push(requestApproval);
+			(requestApproval.organization = organization),
+				requestApprovals.push(requestApproval);
 		}
-	});
+	}
 
 	await connection
 		.createQueryBuilder()

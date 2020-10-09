@@ -26,6 +26,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	payments?: IPayment[];
 	paymentsId?: string;
 	preferredComponentLayout?: string;
+	fullName?: string;
 }
 
 export interface IUserFindInput {

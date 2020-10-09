@@ -4,7 +4,8 @@ import {
 	HttpStatus,
 	Get,
 	Body,
-	Post
+	Post,
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -36,9 +37,11 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 		description: 'Record not found'
 	})
 	@Get('all')
-	async getAll() {
+	async getAll(@Query('data') data: string) {
+		const { findInput } = JSON.parse(data);
 		return this.goalTemplateService.findAll({
-			relations: ['keyResults', 'keyResults.kpi']
+			relations: ['keyResults', 'keyResults.kpi'],
+			where: { ...findInput }
 		});
 	}
 }

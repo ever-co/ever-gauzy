@@ -795,7 +795,9 @@
 			"WHO_CAN_OWN_OBJECTIVES": "Who can own Objectives?",
 			"WHO_CAN_OWN_KEY_RESULTS": "Who can own Key Results?",
 			"ADD_KPI_TO_KEY_RESULT": "Add KPI to Key Result Type?",
-			"ADD_TASK_TO_KEY_RESULT": "Add Task to Key Result Type?"
+			"ADD_TASK_TO_KEY_RESULT": "Add Task to Key Result Type?",
+			"GENERAL": "כללי",
+			"KPI": "KPI"
 		},
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
