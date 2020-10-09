@@ -1,7 +1,44 @@
 // Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
 
-// import { dialog } from 'electron';
-import { app, BrowserWindow, ipcMain } from 'electron';
+// Import logging for electron and override default console logging
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
+import { app, dialog, BrowserWindow, ipcMain } from 'electron';
+
+// setup logger to catch all unhandled errors and submit as bug reports to our repo
+log.catchErrors({
+	showDialog: false,
+	onError(error, versions, submitIssue) {
+		dialog
+			.showMessageBox({
+				title: 'An error occurred',
+				message: error.message,
+				detail: error.stack,
+				type: 'error',
+				buttons: ['Ignore', 'Report', 'Exit']
+			})
+			.then((result) => {
+				if (result.response === 1) {
+					submitIssue('https://github.com/ever-co/gauzy/issues/new', {
+						title: `Automatic error report for Desktop App ${versions.app}`,
+						body:
+							'Error:\n```' +
+							error.stack +
+							'\n```\n' +
+							`OS: ${versions.os}`
+					});
+					return;
+				}
+
+				if (result.response === 2) {
+					app.quit();
+				}
+			});
+	}
+});
+
 import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
@@ -19,10 +56,19 @@ import {
 import { createGauzyWindow } from './window/gauzy';
 import { createSetupWindow } from './window/setup';
 import { createTimeTrackerWindow } from './window/timeTracker';
+
+// the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
+// C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
+process.env.GAUZY_USER_PATH = app.getPath('userData');
+log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
+
+const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
+log.info(`Sqlite DB path: ${sqlite3filename}`);
+
 const knex = require('knex')({
 	client: 'sqlite3',
 	connection: {
-		filename: `${app.getPath('userData')}/gauzy.sqlite3`
+		filename: sqlite3filename
 	}
 });
 
@@ -44,7 +90,7 @@ let settingsWindow: BrowserWindow = null;
 let tray = null;
 let appMenu = null;
 let isAlreadyRun = false;
-let willquit = false;
+let willQuit = false;
 let onWaitingServer = false;
 let alreadyQuit = false;
 
@@ -74,150 +120,151 @@ function startServer(value) {
 			configs: config
 		});
 	} catch (error) {}
+
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
-		try {
-			if (!isAlreadyRun && value) {
-				onWaitingServer = true;
-				setupWindow.webContents.send('server_ping', {
-					host: value.serverUrl
-						? value.serverUrl
-						: value.port
-						? `http://localhost:${value.port}`
-						: 'http://localhost:3000'
-				});
-			}
-		} catch (error) {
-			console.log(error);
+		if (!isAlreadyRun && value) {
+			onWaitingServer = true;
+			setupWindow.webContents.send('server_ping', {
+				host: value.serverUrl
+					? value.serverUrl
+					: value.port
+					? `http://localhost:${value.port}`
+					: 'http://localhost:3000'
+			});
 		}
 	});
+
 	return true;
 }
 
-try {
-	// app.allowRendererProcessReuse = true;
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+// Added 5000 ms to fix the black background issue while using transparent window.
+// More details at https://github.com/electron/electron/issues/15947
 
-	// This method will be called when Electron has finished
-	// initialization and is ready to create browser windows.
-	// Some APIs can only be used after this event occurs.
-	// Added 5000 ms to fix the black background issue while using transparent window.
-	// More details at https://github.com/electron/electron/issues/15947
-	app.on('ready', async () => {
-		// check premission for mac os
-		if (process.platform === 'darwin') {
-			const screenCapturePermission = hasScreenCapturePermission();
-			if (!screenCapturePermission) {
-				if (!hasPromptedForPermission()) {
-					await openSystemPreferences();
-				}
+app.on('ready', async () => {
+	// check permission for mac os
+	if (process.platform === 'darwin') {
+		const screenCapturePermission = hasScreenCapturePermission();
+		if (!screenCapturePermission) {
+			if (!hasPromptedForPermission()) {
+				await openSystemPreferences();
 			}
 		}
-		// the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
-		process.env.GAUZY_USER_PATH = app.getPath('userData');
-		// C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
-		// dialog.showMessageBox(null, { message: `GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}` });
+	}
 
-		require(path.join(__dirname, 'desktop-api/main.js'));
-		try {
-			const configs: any = store.get('configs');
-			if (configs.isSetup) {
-				global.variableGlobal = {
-					API_BASE_URL: configs.serverUrl
-						? configs.serverUrl
-						: configs.port
-						? `http://localhost:${configs.port}`
-						: 'http://localhost:3000'
-				};
-				setupWindow = createSetupWindow(setupWindow, true);
-				startServer(configs);
-			}
-		} catch (e) {
-			setupWindow = createSetupWindow(setupWindow, false);
-		}
+	require(path.join(__dirname, 'desktop-api/main.js'));
 
-		ipcMainHandler(store, startServer, knex);
-	});
+	const configs: any = store.get('configs');
+	if (configs.isSetup) {
+		global.variableGlobal = {
+			API_BASE_URL: configs.serverUrl
+				? configs.serverUrl
+				: configs.port
+				? `http://localhost:${configs.port}`
+				: 'http://localhost:3000'
+		};
+		setupWindow = createSetupWindow(setupWindow, true);
+		startServer(configs);
+	}
 
-	app.on('window-all-closed', quit);
+	ipcMainHandler(store, startServer, knex);
+});
 
-	ipcMain.on('server_is_ready', () => {
-		LocalStore.setDefaultApplicationSetting();
-		try {
-			onWaitingServer = false;
-			isAlreadyRun = true;
-			timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
-			setTimeout(() => {
-				setupWindow.hide();
+app.on('window-all-closed', quit);
+
+ipcMain.on('server_is_ready', () => {
+	LocalStore.setDefaultApplicationSetting();
+
+	onWaitingServer = false;
+
+	timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
+
+	if (!isAlreadyRun) {
+		setTimeout(() => {
+			setupWindow.hide();
+
+			if (!gauzyWindow)
 				gauzyWindow = createGauzyWindow(gauzyWindow, serve);
-				ipcTimer(
-					store,
-					knex,
-					setupWindow,
-					timeTrackerWindow,
-					NotificationWindow
-				);
-				const auth = store.get('auth');
-				appMenu = new AppMenu(timeTrackerWindow, settingsWindow, knex);
-				tray = new TrayIcon(
-					setupWindow,
-					knex,
-					timeTrackerWindow,
-					auth,
-					settingsWindow
-				);
-				timeTrackerWindow.on('close', (event) => {
-					if (willquit) {
-						app.quit();
-					} else {
-						event.preventDefault();
-						timeTrackerWindow.hide();
-					}
-				});
-			}, 1000);
-		} catch (error) {
-			console.log(error);
-		}
-	});
 
-	ipcMain.on('quit', quit);
+			ipcTimer(
+				store,
+				knex,
+				setupWindow,
+				timeTrackerWindow,
+				NotificationWindow
+			);
 
-	ipcMain.on('minimize', () => {
-		gauzyWindow.minimize();
-	});
+			const auth = store.get('auth');
 
-	ipcMain.on('maximize', () => {
-		gauzyWindow.maximize();
-	});
+			appMenu = new AppMenu(timeTrackerWindow, settingsWindow, knex);
 
-	ipcMain.on('restore', () => {
-		gauzyWindow.restore();
-	});
+			tray = new TrayIcon(
+				setupWindow,
+				knex,
+				timeTrackerWindow,
+				auth,
+				settingsWindow
+			);
 
-	app.on('activate', () => {
+			timeTrackerWindow.on('close', (event) => {
+				if (willQuit) {
+					app.quit();
+				} else {
+					event.preventDefault();
+					timeTrackerWindow.hide();
+				}
+			});
+
+			isAlreadyRun = true;
+		}, 1000);
+	}
+});
+
+ipcMain.on('quit', quit);
+
+ipcMain.on('minimize', () => {
+	gauzyWindow.minimize();
+});
+
+ipcMain.on('maximize', () => {
+	gauzyWindow.maximize();
+});
+
+ipcMain.on('restore', () => {
+	gauzyWindow.restore();
+});
+
+app.on('activate', () => {
+	if (gauzyWindow) {
+		gauzyWindow.show();
+	} else if (!onWaitingServer) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		if (gauzyWindow === null && !onWaitingServer) {
-			createGauzyWindow(gauzyWindow, serve);
-		}
-	});
+		createGauzyWindow(gauzyWindow, serve);
+	}
+});
 
-	app.on('before-quit', (e) => {
-		const appSetting = LocalStore.getStore('appSetting');
-		if (appSetting.timerStarted) {
-			e.preventDefault();
-			setTimeout(() => {
-				willquit = true;
-				timeTrackerWindow.webContents.send('stop_from_tray', { quitApp: true});
-			}, 1000);
-		} else {
-			willquit = true;
-			if (!alreadyQuit) {
-				alreadyQuit = true;
-				app.quit();
-			}
+app.on('before-quit', (e) => {
+	const appSetting = LocalStore.getStore('appSetting');
+	if (appSetting && appSetting.timerStarted) {
+		e.preventDefault();
+		setTimeout(() => {
+			willQuit = true;
+			timeTrackerWindow.webContents.send('stop_from_tray', {
+				quitApp: true
+			});
+		}, 1000);
+	} else {
+		willQuit = true;
+		if (!alreadyQuit) {
+			alreadyQuit = true;
+			app.quit();
 		}
-	});
-} catch (err) {}
+	}
+});
 
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q

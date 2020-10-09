@@ -1,8 +1,11 @@
+import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 
 export function createGauzyWindow(gauzyWindow, serve) {
+	log.info('createGauzyWindow started');
+
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 	mainWindowSettings = windowSetting();
 	gauzyWindow = new BrowserWindow(mainWindowSettings);
@@ -32,10 +35,13 @@ export function createGauzyWindow(gauzyWindow, serve) {
 		// Dereference the window object, usually you would store windows
 		// in an array if your app supports multi windows, this is the time
 		// when you should delete the corresponding element.
-		gauzyWindow = null;
+		gauzyWindow.hide(); // gauzyWindow = null;
 	});
 
 	initMainListener();
+
+	log.info('createGauzyWindow completed');
+
 	return gauzyWindow;
 }
 

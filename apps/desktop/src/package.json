@@ -1,6 +1,6 @@
 {
 	"name": "gauzy-desktop",
-  "productName": "gauzy",
+	"productName": "gauzy",
 	"version": "0.1.0",
 	"description": "Gauzy Desktop",
 	"license": "AGPL-3.0",
@@ -28,10 +28,10 @@
 			"buildResources": "icons",
 			"output": "../desktop-packages"
 		},
-    "publish": {
-      "provider": "github",
-      "releaseType": "release"
-    },
+		"publish": {
+			"provider": "github",
+			"releaseType": "release"
+		},
 		"mac": {
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.png",
@@ -41,14 +41,14 @@
 			]
 		},
 		"win": {
-      "publisherName": "Ever",
+			"publisherName": "Ever",
 			"target": [
-        { 
-          "target": "nsis",
-          "arch": [            
-            "x64"
-          ]
-        }
+				{
+					"target": "nsis",
+					"arch": [
+						"x64"
+					]
+				}
 			],
 			"icon": "icon.ico"
 		},
@@ -59,22 +59,22 @@
 				"deb",
 				"tar.gz"
 			],
-      "executableName": "gauzy",
-      "artifactName": "gauzy-${version}.${ext}",
+			"executableName": "gauzy",
+			"artifactName": "gauzy-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
 		},
 		"nsis": {
-      "oneClick": false,
-      "perMachine": true,
+			"oneClick": false,
+			"perMachine": true,
 			"createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "allowToChangeInstallationDirectory": true,
-      "allowElevation": true,
+			"createStartMenuShortcut": true,
+			"allowToChangeInstallationDirectory": true,
+			"allowElevation": true,
 			"installerIcon": "icon.ico",
 			"artifactName": "Gauzy-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
-      "menuCategory": true
+			"menuCategory": true
 		},
 		"files": [
 			"./**/*",
@@ -84,13 +84,14 @@
 	"dependencies": {
 		"sqlite3": "https://github.com/ever-co/node-sqlite3",
 		"electron-store": "^5.2.0",
+		"electron-log": "^4.2.4",
 		"node-notifier": "^7.0.1",
-		"moment": "^2.25.3",
-		"knex": "^0.21.1",
-		"sharp": "^0.25.2",
+		"moment": "^2.29.0",
+		"knex": "^0.21.6",
+		"sharp": "^0.26.1",
 		"mac-screen-capture-permissions": "^1.1.0",
 		"form-data": "^3.0.0",
-		"node-fetch": "^2.6.0",
+		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.2"
 	}
 }
