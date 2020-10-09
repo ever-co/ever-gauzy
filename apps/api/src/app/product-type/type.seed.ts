@@ -17,10 +17,13 @@ export const createDefaultProductType = async (
 
 			newType.icon = seedProductType.icon;
 			newType.organization = organization;
+			newType.tenant = organization.tenant;
 			newType.translations = [];
 
 			seedProductType.translations.forEach((translation) => {
 				const newTranslation = new ProductTypeTranslation();
+				newTranslation.tenant = organization;
+				newTranslation.tenant = organization.tenant;
 				Object.assign(newTranslation, translation);
 				newType.translations.push(newTranslation);
 			});
@@ -63,10 +66,13 @@ export const createRandomProductType = async (
 
 				productType.icon = seedProductType.icon;
 				productType.organization = tenantOrg;
+				productType.tenant = tenantOrg.tenant;
 				productType.translations = [];
 
 				seedProductType.translations.forEach((translation) => {
 					const newTranslation = new ProductTypeTranslation();
+					newTranslation.organization = tenantOrg;
+					newTranslation.tenant = tenantOrg.tenant;
 					Object.assign(newTranslation, translation);
 					productType.translations.push(newTranslation);
 				});

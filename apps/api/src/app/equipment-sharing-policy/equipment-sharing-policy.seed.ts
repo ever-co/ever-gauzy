@@ -15,9 +15,9 @@ export const createDefaultEquipmentSharingPolicyForOrg = async (
 	defaultData.orgs.forEach((org) => {
 		const defaultEquipmentSharingPolicy = new EquipmentSharingPolicy();
 		defaultEquipmentSharingPolicy.name = 'Default Approval Policy';
-		defaultEquipmentSharingPolicy.organizationId = org.id;
+		defaultEquipmentSharingPolicy.organization = org;
+		defaultEquipmentSharingPolicy.tenant = org.tenant;
 		defaultEquipmentSharingPolicy.description = 'Default approval policy';
-		defaultEquipmentSharingPolicy.tenant = defaultData.tenant;
 		promises.push(
 			insertDefaultPolicy(connection, defaultEquipmentSharingPolicy)
 		);

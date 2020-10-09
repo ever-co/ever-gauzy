@@ -19,6 +19,7 @@ export const createDefaultTimeOffPolicy = async (
 
 	defaultTimeOffPolicy.name = 'Default Policy';
 	defaultTimeOffPolicy.organization = defaultData.org;
+	defaultTimeOffPolicy.tenant = defaultData.org.tenant;
 	defaultTimeOffPolicy.requiresApproval = false;
 	defaultTimeOffPolicy.paid = true;
 	defaultTimeOffPolicy.employees = defaultData.employees;
@@ -44,7 +45,7 @@ export const createRandomTimeOffPolicies = async (
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<TimeOffPolicy[]> => {
-	let policies: TimeOffPolicy[] = [];
+	const policies: TimeOffPolicy[] = [];
 	const policyArray = [
 		'Policy 1',
 		'Policy 2',
@@ -62,9 +63,10 @@ export const createRandomTimeOffPolicies = async (
 		const organizations = tenantOrganizationsMap.get(tenant);
 		(organizations || []).forEach((organization) => {
 			policyArray.forEach((name) => {
-				let policy = new TimeOffPolicy();
+				const policy = new TimeOffPolicy();
 				policy.name = name;
 				policy.organization = organization;
+				policy.tenant = tenant;
 				policy.paid = faker.random.arrayElement([true, false]);
 				policy.requiresApproval = faker.random.arrayElement([
 					true,

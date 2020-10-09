@@ -52,6 +52,7 @@ export const createRandomProductVariantSettings = async (
 						productVariantSetting.isEquipment = faker.random.boolean();
 						productVariantSetting.trackInventory = faker.random.boolean();
 						productVariantSetting.tenant = tenant;
+						productVariantSetting.organization = tenantOrg;
 
 						productVariantSettings.push(productVariantSetting);
 					}

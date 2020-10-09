@@ -9,8 +9,8 @@ import * as moment from 'moment';
 export const createDefaultAvailabilitySlots = async (
 	connection: Connection,
 	tenants: Tenant[],
-	Organizations,
-	Employees,
+	organizations,
+	employees,
 	noOfAvailabilitySlotsPerOrganization: number
 ): Promise<AvailabilitySlot[]> => {
 	let slots: AvailabilitySlot[] = [];
@@ -19,8 +19,8 @@ export const createDefaultAvailabilitySlots = async (
 			connection,
 			slots,
 			noOfAvailabilitySlotsPerOrganization,
-			Employees,
-			Organizations,
+			employees,
+			organizations,
 			tenant
 		);
 	}
@@ -36,8 +36,8 @@ export const createRandomAvailabilitySlots = async (
 ): Promise<AvailabilitySlot[]> => {
 	let slots: AvailabilitySlot[] = [];
 	for (const tenant of tenants) {
-		let organizations = tenantOrganizationsMap.get(tenant);
-		let employees = tenantEmployeeMap.get(tenant);
+		const organizations = tenantOrganizationsMap.get(tenant);
+		const employees = tenantEmployeeMap.get(tenant);
 		for (const org of organizations) {
 			slots = await dataOperation(
 				connection,

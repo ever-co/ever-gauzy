@@ -4,6 +4,7 @@ import {
 	IntegrationTypeGroupEnum,
 	IntegrationTypeNameEnum
 } from '@gauzy/models';
+import { Tenant } from '../tenant/tenant.entity';
 
 const DEFAULT_INTEGRATION_TYPES = [
 	{
@@ -44,11 +45,13 @@ const DEFAULT_INTEGRATION_TYPES = [
 ];
 
 export const createDefaultIntegrationTypes = async (
-	connection: Connection
+	connection: Connection,
+	tenant: Tenant
 ): Promise<IntegrationType[]> => {
 	const integrationTypes = DEFAULT_INTEGRATION_TYPES.map(
 		({ name, groupName, order }) => {
 			const entity = new IntegrationType();
+			entity.tenant = tenant;
 			entity.name = name;
 			entity.groupName = groupName;
 			entity.order = order;

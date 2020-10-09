@@ -30,7 +30,12 @@ export const createDefaultOrganizationProjects = async (
 		const organization = faker.random.arrayElement(defaultOrganizations);
 		const organizationContacts = await connection
 			.getRepository(OrganizationContact)
-			.find({ where: { organizationId: organization.id } });
+			.find({
+				where: {
+					organizationId: organization.id,
+					tenantId: organization.tenantId
+				}
+			});
 		const organizationContact = faker.random.arrayElement(
 			organizationContacts
 		);
@@ -73,7 +78,9 @@ export const createRandomOrganizationProjects = async (
 		for (const org of orgs) {
 			const organizationContacts = await connection
 				.getRepository(OrganizationContact)
-				.find({ where: { organizationId: org.id } });
+				.find({
+					where: { organizationId: org.id, tenantId: org.tenantId }
+				});
 			const organizationContact = faker.random.arrayElement(
 				organizationContacts
 			);

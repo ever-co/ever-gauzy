@@ -22,10 +22,13 @@ export const createCategories = async (
 
 			newCategory.imageUrl = image;
 			newCategory.organization = organization;
+			newCategory.tenant = organization.tenant;
 			newCategory.translations = [];
 
 			seedProductCategory.translations.forEach((translation) => {
 				const newTranslation = new ProductCategoryTranslation();
+				newTranslation.organization = organization;
+				newTranslation.tenant = organization.tenant;
 				Object.assign(newTranslation, translation);
 				newCategory.translations.push(newTranslation);
 			});
@@ -57,16 +60,20 @@ export const createRandomCategories = async (
 		for (const tenantOrg of tenantOrgs) {
 			for (const seedProductCategory of seed) {
 				const newCategory = new ProductCategory();
-				let image =
+				const image =
 					faker.image[seedProductCategory.fakerImageCategory]() ||
 					faker.image.abstract();
 
 				newCategory.imageUrl = image;
 				newCategory.organization = tenantOrg;
+				newCategory.tenant = tenant;
 				newCategory.translations = [];
 
 				seedProductCategory.translations.forEach((translation) => {
 					const newTranslation = new ProductCategoryTranslation();
+					newTranslation.organization = tenantOrg;
+					newTranslation.tenant = tenant;
+
 					Object.assign(newTranslation, translation);
 					newCategory.translations.push(newTranslation);
 				});

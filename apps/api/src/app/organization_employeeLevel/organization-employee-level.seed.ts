@@ -3,44 +3,43 @@ import { IEmployeeLevelInput } from '@gauzy/models';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { Organization } from '../organization/organization.entity';
 
+const DEFAULT_EMPLOYEE_LEVELS = [
+	{
+		level: 'Level A'
+	},
+	{
+		level: 'Level B'
+	},
+	{
+		level: 'Level C'
+	},
+	{
+		level: 'Level D'
+	}
+];
+
 export const createEmployeeLevels = async (
 	connection: Connection,
 	organizations: Organization[]
 ): Promise<IEmployeeLevelInput[]> => {
-	let employeeLevels: IEmployeeLevelInput[] = [];
+	const employeeLevels: IEmployeeLevelInput[] = [];
+	DEFAULT_EMPLOYEE_LEVELS.forEach(({ level }) => {
+		organizations.forEach((organization: Organization) => {
+			const entity = new EmployeeLevel();
+			entity.level = level;
+			entity.organization = organization;
+			entity.tenant = organization.tenant;
+			employeeLevels.push(entity);
+		});
+	});
 
-	for (let i = 0; i < organizations.length; i++) {
-		const orgArray = [
-			{
-				level: 'Level A',
-				organizationId: organizations[i]['id']
-			},
-			{
-				level: 'Level B',
-				organizationId: organizations[i]['id']
-			},
-			{
-				level: 'Level C',
-				organizationId: organizations[i]['id']
-			},
-			{
-				level: 'Level D',
-				organizationId: organizations[i]['id']
-			}
-		];
-		employeeLevels = employeeLevels.concat(orgArray);
-	}
-
-	for (let i = 0; i < employeeLevels.length; i++) {
-		await insertLevel(connection, employeeLevels[i]);
-	}
-
+	insertLevels(connection, employeeLevels);
 	return employeeLevels;
 };
 
-const insertLevel = async (
+const insertLevels = async (
 	connection: Connection,
-	employeeLevel: IEmployeeLevelInput
+	employeeLevel: IEmployeeLevelInput[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()

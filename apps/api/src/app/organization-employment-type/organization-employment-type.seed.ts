@@ -57,6 +57,7 @@ export const seedDefaultEmploymentTypes = async (
 		const employmentType = new OrganizationEmploymentType();
 		employmentType.name = name;
 		employmentType.organizationId = defaultOrganization.id;
+		employmentType.tenantId = defaultOrganization.tenantId;
 		if (name === 'Contract') {
 			employmentType.members = employees;
 		} else if (name === 'Full-time') {
@@ -93,6 +94,7 @@ export const seedRandomEmploymentTypes = async (
 				const employmentType = new OrganizationEmploymentType();
 				employmentType.name = name;
 				employmentType.organizationId = organizationId;
+				employmentType.tenant = tenant;
 				return employmentType;
 			});
 			employmentTypes = [

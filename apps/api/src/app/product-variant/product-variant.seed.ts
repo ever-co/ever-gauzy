@@ -60,6 +60,7 @@ export const createRandomProductVariant = async (
 						productVariant.price = new ProductVariantPrice();
 						productVariant.product = product;
 						productVariant.tenant = tenant;
+						productVariant.organization = tenantOrg;
 
 						productVariants.push(productVariant);
 					}

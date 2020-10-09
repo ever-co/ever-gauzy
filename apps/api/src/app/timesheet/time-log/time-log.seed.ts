@@ -14,9 +14,11 @@ import { OrganizationProject } from '../../organization-projects/organization-pr
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { Screenshot } from '../screenshot.entity';
+import { Tenant } from '../../tenant/tenant.entity';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,
+	tenant: Tenant,
 	timeSheets: Timesheet[],
 	defaultProjects: IOrganizationProject[],
 	noOfTimeLogsPerTimeSheet
@@ -97,6 +99,8 @@ export const createRandomTimeLogs = async (
 						stoppedAt
 					).map((timeSlot) => {
 						timeSlot.employeeId = timesheet.employeeId;
+						timeSlot.organizationId = timesheet.organizationId;
+						timeSlot.tenant = tenant;
 						return timeSlot;
 					});
 					timeSlots = timeSlots.concat(newTimeSlot);
@@ -119,6 +123,8 @@ export const createRandomTimeLogs = async (
 						false
 					]);
 					timelog.deletedAt = null;
+					(timelog.organizationId = timesheet.organizationId),
+						(timelog.tenantId = timesheet.tenantId);
 					timeLogs.push(timelog);
 				}
 			}

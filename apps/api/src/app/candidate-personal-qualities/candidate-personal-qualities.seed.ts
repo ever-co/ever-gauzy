@@ -4,9 +4,12 @@ import { ICandidate } from '@gauzy/models';
 import * as faker from 'faker';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultCandidatePersonalQualities = async (
 	connection: Connection,
+	tenant: Tenant,
+	organization: Organization,
 	defaultCandidates
 ): Promise<CandidatePersonalQualities[]> => {
 	if (!defaultCandidates) {
@@ -26,6 +29,8 @@ export const createDefaultCandidatePersonalQualities = async (
 		);
 		candidates = await dataOperation(
 			connection,
+			tenant,
+			organization,
 			candidates,
 			candidateInterviews
 		);
@@ -47,7 +52,7 @@ export const createRandomCandidatePersonalQualities = async (
 
 	let candidates: CandidatePersonalQualities[] = [];
 	for (const tenant of tenants) {
-		let tenantCandidates = tenantCandidatesMap.get(tenant);
+		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
 			const candidateInterviews = await connection.manager.find(
 				CandidateInterview,
@@ -57,6 +62,8 @@ export const createRandomCandidatePersonalQualities = async (
 			);
 			candidates = await dataOperation(
 				connection,
+				tenant,
+				tenantCandidate.organization,
 				candidates,
 				candidateInterviews
 			);
@@ -67,16 +74,20 @@ export const createRandomCandidatePersonalQualities = async (
 
 const dataOperation = async (
 	connection: Connection,
+	tenant: Tenant,
+	organization: Organization,
 	candidates,
 	CandidateInterviews
 ) => {
-	for (let interview of CandidateInterviews) {
-		let candidate = new CandidatePersonalQualities();
+	for (const interview of CandidateInterviews) {
+		const candidate = new CandidatePersonalQualities();
 
 		candidate.name = faker.name.jobArea();
 		candidate.interviewId = interview.id;
 		candidate.rating = Math.floor(Math.random() * 5) + 1;
 		candidate.interview = interview;
+		candidate.tenant = tenant;
+		candidate.organization = organization;
 
 		candidates.push(candidate);
 	}

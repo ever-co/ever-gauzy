@@ -6,6 +6,7 @@ import { IOrganization } from '@gauzy/models';
 
 export const createDefaultPipeline = async (
 	connection: Connection,
+	tenant: Tenant,
 	tenantOrganizations
 ): Promise<Pipeline[]> => {
 	if (!tenantOrganizations) {
@@ -17,7 +18,12 @@ export const createDefaultPipeline = async (
 
 	let pipelines: Pipeline[] = [];
 	// for (const tenantOrg of tenantOrganizations) {
-	pipelines = await dataOperation(connection, pipelines, tenantOrganizations);
+	pipelines = await dataOperation(
+		connection,
+		tenant,
+		pipelines,
+		tenantOrganizations
+	);
 	// }
 	return pipelines;
 };
@@ -37,9 +43,14 @@ export const createRandomPipeline = async (
 	let pipelines: Pipeline[] = [];
 
 	for (const tenant of tenants) {
-		let tenantOrganization = tenantOrganizationsMap.get(tenant);
+		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
-			pipelines = await dataOperation(connection, pipelines, tenantOrg);
+			pipelines = await dataOperation(
+				connection,
+				tenant,
+				pipelines,
+				tenantOrg
+			);
 		}
 	}
 
@@ -48,13 +59,15 @@ export const createRandomPipeline = async (
 
 const dataOperation = async (
 	connection: Connection,
+	tenant,
 	pipelines,
 	organization
 ) => {
 	for (let i = 0; i <= faker.random.number(10); i++) {
-		let pipeline = new Pipeline();
+		const pipeline = new Pipeline();
 
 		pipeline.organization = organization;
+		pipeline.tenant = tenant;
 		pipeline.organizationId = organization.id;
 		pipeline.name = faker.company.companyName();
 		pipeline.description = faker.name.jobDescriptor();

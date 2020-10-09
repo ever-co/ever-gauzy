@@ -43,11 +43,11 @@ export const createRandomHelpCenterAuthor = async (
 	}
 
 	let mapEmployeeToArticles: HelpCenterAuthor[] = [];
-	let employees: IEmployee[] = [];
+	const employees: IEmployee[] = [];
 
 	const allArticle = await connection.manager.find(HelpCenterArticle, {});
 	for (const tenant of tenants) {
-		let tenantEmployee = tenantEmployeeMap.get(tenant);
+		const tenantEmployee = tenantEmployeeMap.get(tenant);
 		for (const tenantEmp of tenantEmployee) {
 			employees.push(tenantEmp);
 		}
@@ -88,6 +88,8 @@ const operateData = async (
 
 		employeeMap.employeeId = employee.id;
 		employeeMap.articleId = allArticle[i].id;
+		employeeMap.organization = employee.organization;
+		employeeMap.tenant = employee.organization.tenant;
 
 		mapEmployeeToArticles.push(employeeMap);
 	}

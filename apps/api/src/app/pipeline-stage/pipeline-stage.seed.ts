@@ -17,10 +17,10 @@ export const createRandomPipelineStage = async (
 		return;
 	}
 
-	let pipelineStages: PipelineStage[] = [];
+	const pipelineStages: PipelineStage[] = [];
 
 	for (const tenant of tenants) {
-		let tenantOrganization = tenantOrganizationsMap.get(tenant);
+		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
 			const organizationPipeline = await connection.manager.find(
 				Pipeline,
@@ -32,7 +32,7 @@ export const createRandomPipelineStage = async (
 			for (const pipeline of organizationPipeline) {
 				for (let i = 0; i <= faker.random.number(10); i++) {
 					//todo Need to update with real values
-					let pipelineStage = new PipelineStage();
+					const pipelineStage = new PipelineStage();
 
 					pipelineStage.pipeline = pipeline;
 					pipelineStage.pipelineId = pipeline.id;
@@ -40,6 +40,7 @@ export const createRandomPipelineStage = async (
 					pipelineStage.description = faker.name.jobDescriptor();
 					pipelineStage.index = Math.floor(Math.random() * 99999) + 1;
 					pipelineStage.tenant = tenant;
+					pipelineStage.organization = tenantOrg;
 
 					pipelineStages.push(pipelineStage);
 				}

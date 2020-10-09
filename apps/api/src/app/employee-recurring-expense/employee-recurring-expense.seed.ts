@@ -8,6 +8,7 @@ import {
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
+import { Organization } from '../organization/organization.entity';
 
 export const createRandomEmployeeRecurringExpense = async (
 	connection: Connection,
@@ -24,6 +25,9 @@ export const createRandomEmployeeRecurringExpense = async (
 	const employees: EmployeeRecurringExpense[] = [];
 
 	for (const tenant of tenants) {
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 
 		for (const [index, tenantEmployee] of tenantEmployees.entries()) {
@@ -58,6 +62,9 @@ export const createRandomEmployeeRecurringExpense = async (
 			// TODO: some expenses should have a parent if they change "over time"
 			employee.parentRecurringExpenseId = null;
 			employee.employee = tenantEmployee;
+
+			employee.tenant = tenant;
+			employee.organization = faker.random.arrayElement(organizations);
 			employees.push(employee);
 		}
 	}
