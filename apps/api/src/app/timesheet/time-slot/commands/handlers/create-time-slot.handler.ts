@@ -62,24 +62,29 @@ export class CreateTimeSlotHandler
 			timeSlot.timeLogs = await this.timeLogRepository.find({
 				id: In(timeLogIds)
 			});
+		} else {
+			timeSlot.timeLogs = await this.timeLogRepository
+				.createQueryBuilder()
+				.where(`:startedAt BETWEEN "startedAt" AND "stoppedAt"`, {
+					startedAt: timeSlot.startedAt
+				})
+				.orWhere('"startedAt" <= :startedAt AND "stoppedAt" IS NULL', {
+					startedAt: timeSlot.startedAt
+				})
+				.getMany();
 		}
 
 		if (input.activities) {
 			input.activities = await this.commandBus.execute(
 				new BulkActivitesSaveCommand({
 					employeeId: timeSlot.employeeId,
-					projectId: timeSlot.timeLogs[0].projectId,
+					projectId:
+						timeSlot.timeLogs && timeSlot.timeLogs.length > 0
+							? timeSlot.timeLogs[0].projectId
+							: null,
 					activities: input.activities
 				})
 			);
-
-			// input.activities = input.activities.map((activity) => {
-			// 	activity = new Activity(activity);
-			// 	activity.employeeId = timeSlot.employeeId;
-			// 	return activity
-			// });
-			// timeSlot.activities = input.activities;
-			// await this.activityRepository.save(timeSlot.activities);
 		}
 		timeSlot.tenantId = RequestContext.currentTenantId();
 		if (!timeSlot.organizationId) {
