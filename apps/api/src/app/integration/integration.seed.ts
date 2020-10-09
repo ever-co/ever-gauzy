@@ -46,7 +46,7 @@ export const createDefaultIntegrations = async (
 	}
 
 	const integrations: Integration[] = [];
-	DEFAULT_INTEGRATIONS.map(
+	DEFAULT_INTEGRATIONS.forEach(
 		({ name, imgSrc, isComingSoon, integrationTypesMap }) => {
 			const entity = new Integration();
 			entity.name = name;

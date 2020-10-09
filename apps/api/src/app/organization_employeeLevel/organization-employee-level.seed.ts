@@ -23,7 +23,7 @@ export const createEmployeeLevels = async (
 	organizations: Organization[]
 ): Promise<IEmployeeLevelInput[]> => {
 	const employeeLevels: IEmployeeLevelInput[] = [];
-	DEFAULT_EMPLOYEE_LEVELS.map(({ level }) => {
+	DEFAULT_EMPLOYEE_LEVELS.forEach(({ level }) => {
 		organizations.forEach((organization: Organization) => {
 			const entity = new EmployeeLevel();
 			entity.level = level;

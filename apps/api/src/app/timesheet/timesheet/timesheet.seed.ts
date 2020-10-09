@@ -55,7 +55,6 @@ export const createDefaultTimeSheet = async (
 			timesheet.employee = employee;
 			timesheet.organization = employee.organization;
 			timesheet.tenant = tenant;
-			timesheet.employee = employee;
 			timesheet.approvedBy = null;
 			timesheet.startedAt = startedAt;
 			timesheet.stoppedAt = stoppedAt;
