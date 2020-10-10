@@ -639,7 +639,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Projects Task',
-			createDefaultTask(this.connection)
+			createDefaultTask(
+				this.connection,
+				this.tenant,
+				this.organizations[0]
+			)
 		);
 
 		await this.tryExecute(

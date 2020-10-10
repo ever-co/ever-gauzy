@@ -31,7 +31,7 @@ export const createDefaultGoalKpi = async (
 	organizations: IOrganization[],
 	employees: IEmployee[]
 ): Promise<GoalKPI[]> => {
-	const GoalKpis: GoalKPI[] = [];
+	const goalKpis: GoalKPI[] = [];
 
 	organizations.forEach((organization: IOrganization) => {
 		goalKPIData.forEach((goalKPI) => {
@@ -46,22 +46,22 @@ export const createDefaultGoalKpi = async (
 			goalkpi.targetValue = goalKPI.targetValue;
 			goalkpi.organization = organization;
 			goalkpi.tenant = tenant;
-			GoalKpis.push(goalkpi);
+			goalKpis.push(goalkpi);
 		});
 	});
 
-	await insertRandomGoalKpi(connection, GoalKpis);
-	return GoalKpis;
+	await insertRandomGoalKpi(connection, goalKpis);
+	return goalKpis;
 };
 
 const insertRandomGoalKpi = async (
 	connection: Connection,
-	Employees: GoalKPI[]
+	goalKpis: GoalKPI[]
 ) => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(GoalKPI)
-		.values(Employees)
+		.values(goalKpis)
 		.execute();
 };
