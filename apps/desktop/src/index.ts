@@ -48,14 +48,10 @@ import TrayIcon from './libs/tray-icon';
 import AppMenu from './libs/menu';
 import DataModel from './local-data/local-table';
 import { LocalStore } from './libs/getSetStore';
-import {
-	hasPromptedForPermission,
-	hasScreenCapturePermission,
-	openSystemPreferences
-} from 'mac-screen-capture-permissions';
 import { createGauzyWindow } from './window/gauzy';
 import { createSetupWindow } from './window/setup';
 import { createTimeTrackerWindow } from './window/timeTracker';
+import { fork } from 'child_process';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -93,10 +89,13 @@ let isAlreadyRun = false;
 let willQuit = false;
 let onWaitingServer = false;
 let alreadyQuit = false;
+let serverGauzy = null;
+let serverDesktop = null;
 
 function startServer(value) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
+		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
 	} else {
 		process.env.DB_TYPE = 'postgres';
@@ -108,7 +107,8 @@ function startServer(value) {
 	}
 	if (value.isLocalServer) {
 		process.env.port = value.port;
-		require(path.join(__dirname, 'api/main.js'));
+		// require(path.join(__dirname, 'api/main.js'));
+		serverGauzy = fork(path.join(__dirname, 'api/main.js'));
 	}
 
 	try {
@@ -145,17 +145,8 @@ function startServer(value) {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
-	// check permission for mac os
-	if (process.platform === 'darwin') {
-		const screenCapturePermission = hasScreenCapturePermission();
-		if (!screenCapturePermission) {
-			if (!hasPromptedForPermission()) {
-				await openSystemPreferences();
-			}
-		}
-	}
-
-	require(path.join(__dirname, 'desktop-api/main.js'));
+	// require(path.join(__dirname, 'desktop-api/main.js'));
+	serverDesktop = fork(path.join(__dirname, 'desktop-api/main.js'));
 
 	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
@@ -261,6 +252,8 @@ app.on('before-quit', (e) => {
 		}, 1000);
 	} else {
 		app.exit(0);
+		serverDesktop.kill();
+		serverGauzy.kill();
 	}
 });
 

@@ -55,7 +55,9 @@ export class SettingsComponent implements OnInit {
 		});
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.electronService.ipcRenderer.send('request_permission');
+	}
 
 	selectMonitorOption(item) {
 		this.monitorOptionSelected = item.value;
