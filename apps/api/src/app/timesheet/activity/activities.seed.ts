@@ -7,6 +7,7 @@ import { OrganizationProject } from '../../organization-projects/organization-pr
 import { Connection } from 'typeorm';
 import { Employee } from '../../employee/employee.entity';
 import { Tenant } from '../../tenant/tenant.entity';
+import { TimeSlot } from '../time-slot.entity';
 
 const AppsNames: string[] = [
 	'Sublime Text',
@@ -21,11 +22,11 @@ const AppsNames: string[] = [
 
 export const createRandomActivities = async (
 	connection: Connection,
-	tenant: Tenant
-) => {
-	const activities: Activity[] = [];
-
+	tenant: Tenant,
+	timeSlots: TimeSlot[]
+): Promise<Activity[]> => {
 	const employees = await connection.getRepository(Employee).find();
+	const allActivities: Activity[] = [];
 
 	let query = connection
 		.getRepository(OrganizationProject)
@@ -37,8 +38,11 @@ export const createRandomActivities = async (
 
 	for (let day = 0; day < 5; day++) {
 		const date = moment().subtract(day, 'day').toDate();
-
-		employees.forEach((employee) => {
+		for await (const employee of employees || []) {
+			const employeeTimeSlots = timeSlots.filter(
+				(x) => x.employeeId === employee.id
+			);
+			const activities: Activity[] = [];
 			for (
 				let i = 0;
 				i < faker.random.number({ min: 0, max: appNames.length });
@@ -47,12 +51,14 @@ export const createRandomActivities = async (
 				const appName = appNames[i];
 				const project = faker.random.arrayElement(projects);
 				const task = faker.random.arrayElement(project.tasks);
+				const timeSlot = faker.random.arrayElement(employeeTimeSlots);
 
 				const activity = new Activity();
 				activity.organizationId = employee.organizationId;
 				activity.tenant = tenant;
 				activity.employee = employee;
 				activity.project = project;
+				activity.timeSlot = timeSlot;
 				activity.task = task;
 				activity.title = appName;
 				activity.date = moment(date).format('YYYY-MM-DD');
@@ -77,12 +83,16 @@ export const createRandomActivities = async (
 				) {
 					const project = faker.random.arrayElement(projects);
 					const task = faker.random.arrayElement(project.tasks);
+					const timeSlot = faker.random.arrayElement(
+						employeeTimeSlots
+					);
 
 					const activity = new Activity();
 					activity.organizationId = employee.organizationId;
 					activity.tenant = tenant;
 					activity.employee = employee;
 					activity.project = project;
+					activity.timeSlot = timeSlot;
 					activity.task = task;
 					activity.title = url;
 					activity.metaData = {
@@ -102,12 +112,12 @@ export const createRandomActivities = async (
 						max: 100
 					});
 					activity.type = ActivityType.URL;
-
 					activities.push(activity);
 				}
 			}
-		});
-		await connection.manager.save(activities);
+			await connection.manager.save(activities);
+			allActivities.push(...allActivities);
+		}
 	}
-	return activities;
+	return allActivities;
 };

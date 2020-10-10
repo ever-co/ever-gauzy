@@ -1476,6 +1476,7 @@ export class SeedDataService {
 			)
 		);
 
+		const noOfContactsPerOrganization = 10;
 		await this.tryExecute(
 			'Random Organization Contacts',
 			createRandomOrganizationContact(
@@ -1483,17 +1484,18 @@ export class SeedDataService {
 				tenants,
 				tenantEmployeeMap,
 				tenantOrganizationsMap,
-				10
+				noOfContactsPerOrganization
 			)
 		);
 
+		const noOfInvoicePerOrganization = 50;
 		await this.tryExecute(
 			'Random Invoices',
 			createRandomInvoice(
 				this.connection,
 				tenants,
 				tenantOrganizationsMap,
-				50
+				noOfInvoicePerOrganization
 			)
 		);
 

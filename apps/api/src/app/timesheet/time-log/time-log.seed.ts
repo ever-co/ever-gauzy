@@ -30,10 +30,10 @@ export const createRandomTimeLogs = async (
 			id: In(_.pluck(defaultProjects, 'id'))
 		});
 	query = query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-
 	const projects = await query.getMany();
 
 	const timeSheetChunk = _.chunk(timeSheets, 5) as Array<Timesheet[]>;
+	const allTimeSlots: ITimeSlot[] = [];
 
 	for (
 		let timeSheetChunkIndex = 0;
@@ -130,17 +130,18 @@ export const createRandomTimeLogs = async (
 			}
 		}
 
-		const savedtimeSlot = await connection.manager.save(timeSlots);
+		const savedtimeSlots = await connection.manager.save(timeSlots);
+		allTimeSlots.push(...savedtimeSlots);
 
-		for (const timelog of timeLogs) {
+		for await (const timelog of timeLogs) {
 			if (timelog.logType === TimeLogType.TRACKED) {
-				timeSlots = savedtimeSlot.filter(
+				timeSlots = savedtimeSlots.filter(
 					(x) => x.employeeId === timelog.employeeId
 				);
-				for (const timeSlot of timeSlots) {
+				for await (const timeSlot of timeSlots) {
 					for (let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
 						screenshotsPromise.push(
-							createRandomScreenshot(timeSlot)
+							createRandomScreenshot(timeSlot, tenant)
 						);
 					}
 				}
@@ -162,6 +163,7 @@ export const createRandomTimeLogs = async (
 		await connection.manager.save(screenshots);
 		await connection.manager.save(timeLogs);
 	}
+	return allTimeSlots;
 };
 
 function dateRanges(start: Date, stop: Date) {

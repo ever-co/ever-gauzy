@@ -6,7 +6,7 @@ import {
 	JoinColumn,
 	AfterLoad
 } from 'typeorm';
-import { IScreenshot } from '@gauzy/models';
+import { IScreenshot, ITimeSlot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
 import { TimeSlot } from './time-slot.entity';
@@ -18,12 +18,12 @@ export class Screenshot extends TenantOrganizationBase implements IScreenshot {
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	timeSlot?: TimeSlot;
+	timeSlot?: ITimeSlot;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: String })
 	@RelationId((screenshot: Screenshot) => screenshot.timeSlot)
 	@Column({ nullable: true })
-	readonly timeSlotId?: string;
+	timeSlotId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
