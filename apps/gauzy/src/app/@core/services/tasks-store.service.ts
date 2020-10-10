@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ITask, TaskListTypeEnum } from '@gauzy/models';
+import { IOrganization, ITask, TaskListTypeEnum } from '@gauzy/models';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
+import { Store } from './store.service';
 
 @Injectable({
 	providedIn: 'root'
@@ -22,15 +23,25 @@ export class TasksStoreService {
 		return this._tasks$.getValue();
 	}
 
-	constructor(private _taskService: TasksService) {
+	constructor(
+		private _taskService: TasksService,
+		private _organizationsStore: Store
+	) {
 		if (!this.tasks.length) {
-			this.fetchTasks();
+			const organization = this._organizationsStore.selectedOrganization;
+			this.fetchTasks(organization);
 		}
 	}
 
-	fetchTasks() {
+	fetchTasks(organization?: IOrganization) {
+		const findObj = {};
+		if (organization) {
+			const { id: organizationId, tenantId } = organization;
+			findObj['organizationId'] = organizationId;
+			findObj['tenantId'] = tenantId;
+		}
 		this._taskService
-			.getAllTasks()
+			.getAllTasks(findObj)
 			.pipe(tap(({ items }) => this.loadAllTasks(items)))
 			.subscribe();
 	}

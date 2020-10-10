@@ -1467,7 +1467,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Tasks',
-			createRandomTask(this.connection, this.defaultProjects)
+			createRandomTask(this.connection, tenants, this.defaultProjects)
 		);
 
 		await this.tryExecute(

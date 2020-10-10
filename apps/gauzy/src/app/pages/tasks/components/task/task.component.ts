@@ -19,7 +19,8 @@ import {
 	ITag,
 	IOrganizationProject,
 	ComponentLayoutStyleEnum,
-	TaskListTypeEnum
+	TaskListTypeEnum,
+	IOrganization
 } from '@gauzy/models';
 import { TasksStoreService } from '../../../../@core/services/tasks-store.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -66,7 +67,7 @@ export class TaskComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	teams;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-
+	organization: IOrganization;
 	selectedProject$: Observable<IOrganizationProject>;
 	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
 
@@ -89,7 +90,6 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.storeInstance.fetchTasks();
 		this._loadTableSettings();
 		this.initProjectFilter();
 		this._applyTranslationOnSmartTable();
@@ -100,12 +100,31 @@ export class TaskComponent extends TranslationBaseComponent
 					this.setView();
 				}
 			});
-
 		this.route.queryParamMap
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.createTaskDialog();
+				}
+			});
+		this._organizationsStore.selectedEmployee$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((selectedEmployee: SelectedEmployee) => {
+				if (selectedEmployee && this.organization) {
+					this.loadTeams(selectedEmployee.id);
+					this.storeInstance.fetchTasks(
+						this.organization,
+						selectedEmployee.id
+					);
+				}
+			});
+		this._organizationsStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organization = organization;
+					this.loadTeams();
+					this.storeInstance.fetchTasks(this.organization);
 				}
 			});
 	}
@@ -186,20 +205,6 @@ export class TaskComponent extends TranslationBaseComponent
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
 			this._teamTaskStore.fetchTasks();
 			// load teams for the select box of teams column
-			this.loadTeams();
-			this._organizationsStore.selectedEmployee$
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((selectedEmployee: SelectedEmployee) => {
-					if (selectedEmployee) {
-						this.loadTeams(selectedEmployee.id);
-						this.storeInstance.fetchTasks(selectedEmployee.id);
-					}
-				});
-			this._organizationsStore.selectedOrganization$
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe(() => {
-					this.loadTeams();
-				});
 			// this.availableTasks$ = this.teamTasks$;
 		} else {
 			this.view = 'tasks';
@@ -475,23 +480,18 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async loadTeams(employeeId?: string) {
-		if (this._organizationsStore.selectedOrganization) {
-			const organizationId = this._organizationsStore.selectedOrganization
-				.id;
-			if (!organizationId) {
-				return;
-			}
-			this.teams = (
-				await this.organizationTeamsService.getMyTeams(
-					['members'],
-					{},
-					employeeId
-				)
-			).items.filter((org) => {
-				return org.organizationId === organizationId;
-			});
-			this._loadTableSettings();
+		if (!this.organization) {
+			return;
 		}
+		const { id: organizationId, tenantId } = this.organization;
+		this.teams = (
+			await this.organizationTeamsService.getMyTeams(
+				['members'],
+				{ organizationId, tenantId },
+				employeeId
+			)
+		).items;
+		this._loadTableSettings();
 	}
 
 	isTasksPage() {

@@ -39,7 +39,7 @@ export class TasksService extends TranslationBaseComponent {
 				'members',
 				'members.user',
 				'teams',
-				// 'creator'
+				'creator',
 				'organizationSprint'
 			],
 			findInput
@@ -61,9 +61,14 @@ export class TasksService extends TranslationBaseComponent {
 			.toPromise();
 	}
 
-	getMyTasks(): Observable<ITaskResponse> {
+	getMyTasks(findInput: IGetTaskOptions = {}): Observable<ITaskResponse> {
+		const data = JSON.stringify({
+			findInput
+		});
 		return this._http
-			.get<ITaskResponse>(`${this.API_URL}/me`)
+			.get<ITaskResponse>(`${this.API_URL}/me`, {
+				params: { data }
+			})
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 

@@ -91,6 +91,7 @@ export const createDefaultTask = async (
 
 export const createRandomTask = async (
 	connection: Connection,
+	tenants: Tenant[],
 	projects: OrganizationProject[] | void
 ) => {
 	if (!projects) {
@@ -101,9 +102,7 @@ export const createRandomTask = async (
 	}
 
 	const httpService = new HttpService();
-
 	const tasks: Task[] = [];
-
 	const teams = await connection
 		.getRepository(OrganizationTeam)
 		.createQueryBuilder()
@@ -130,31 +129,36 @@ export const createRandomTask = async (
 	labels = _.uniq(labels, (label) => label.name);
 	const tags: Tag[] = await createTags(connection, labels);
 
-	issues.forEach((issue) => {
-		let status = TaskStatusEnum.TODO;
-		if (issue.state === 'open') {
-			status = TaskStatusEnum.IN_PROGRESS;
-		}
+	for await (const tenant of tenants || []) {
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
+		issues.forEach((issue) => {
+			let status = TaskStatusEnum.TODO;
+			if (issue.state === 'open') {
+				status = TaskStatusEnum.IN_PROGRESS;
+			}
 
-		const task = new Task();
+			const task = new Task();
+			task.tags = _.filter(
+				tags,
+				(tag: Tag) =>
+					!!issue.labels.find((label: any) => label.name === tag.name)
+			);
+			task.title = issue.title;
+			task.description = issue.body;
+			task.status = status;
+			task.estimate = null;
+			task.dueDate = null;
+			task.project = faker.random.arrayElement(projects);
+			task.teams = [faker.random.arrayElement(teams)];
+			task.creator = faker.random.arrayElement(users);
+			(task.organization = faker.random.arrayElement(organizations)),
+				(task.tenant = tenant);
+			tasks.push(task);
+		});
+	}
 
-		task.tags = _.filter(
-			tags,
-			(tag: Tag) =>
-				!!issue.labels.find((label: any) => label.name === tag.name)
-		);
-
-		task.title = issue.title;
-		task.description = issue.body;
-		task.status = status;
-		task.estimate = null;
-		task.dueDate = null;
-		task.project = faker.random.arrayElement(projects);
-		task.teams = [faker.random.arrayElement(teams)];
-		task.creator = faker.random.arrayElement(users);
-
-		tasks.push(task);
-	});
 	await connection.manager.save(tasks);
 };
 
