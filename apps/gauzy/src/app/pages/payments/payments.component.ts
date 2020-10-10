@@ -276,7 +276,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 					filter: false,
 					width: '9%',
 					valuePrepareFunction: (cell, row) => {
-						if (cell.firstName && cell.lastName) {
+						if (cell && cell.firstName && cell.lastName) {
 							return `${cell.firstName} ${cell.lastName}`;
 						} else {
 							return ``;

@@ -24,9 +24,9 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	organizationSprintId?: string;
 }
 
-export interface IGetTaskOptions {
+export interface IGetTaskOptions
+	extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: string;
-	organizationId?: string;
 }
 export interface IGetTaskByEmployeeOptions {
 	relations?: string[];
