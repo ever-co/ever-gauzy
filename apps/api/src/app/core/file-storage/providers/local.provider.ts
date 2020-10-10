@@ -117,8 +117,9 @@ export class LocalProvider extends Provider<LocalProvider> {
 	}
 
 	mapUploadedFile(file): UploadedFile {
+		const saparator = process.platform === 'win32' ? '\\' : '/';
 		if (file.path) {
-			file.key = file.path.replace(this.config.rootPath + '/', '');
+			file.key = file.path.replace(this.config.rootPath + saparator, '');
 		}
 		file.url = this.url(file.key);
 		return file;

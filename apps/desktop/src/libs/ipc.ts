@@ -6,6 +6,11 @@ import moment from 'moment';
 import { LocalStore } from './getSetStore';
 import { takeshot, captureScreen } from './screenshot';
 import { environment } from '../environments/environtment.electron';
+import {
+	hasPromptedForPermission,
+	hasScreenCapturePermission,
+	openSystemPreferences
+} from 'mac-screen-capture-permissions';
 export function ipcMainHandler(store, startServer, knex) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
@@ -120,6 +125,17 @@ export function ipcMainHandler(store, startServer, knex) {
 	ipcMain.on('update_app_setting', (event, arg) => {
 		LocalStore.updateApplicationSetting(arg.values);
 	});
+
+	ipcMain.on('request_permission', async (event) => {
+		if (process.platform === 'darwin') {
+			const screenCapturePermission = hasScreenCapturePermission();
+			if (!screenCapturePermission) {
+				if (!hasPromptedForPermission()) {
+					await openSystemPreferences();
+				}
+			}
+		}
+	});
 }
 
 export function ipcTimer(
@@ -144,7 +160,12 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('stop_timer', (event, arg) => {
-		timerHandler.stopTime(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+		timerHandler.stopTime(
+			setupWindow,
+			timeTrackerWindow,
+			knex,
+			arg.quitApp
+		);
 	});
 
 	ipcMain.on('return_time_slot', (event, arg) => {
@@ -152,18 +173,29 @@ export function ipcTimer(
 			id: arg.timerId,
 			timeSlotId: arg.timeSlotId
 		});
-		timeTrackerWindow.webContents.send('refresh_time_log', LocalStore.beforeRequestParams());
+		timeTrackerWindow.webContents.send(
+			'refresh_time_log',
+			LocalStore.beforeRequestParams()
+		);
 		// after update time slot do upload screenshot
 		// check config
 		const appSetting = LocalStore.getStore('appSetting');
-		switch (appSetting.SCREENSHOTS_ENGINE_METHOD || environment.SCREENSHOTS_ENGINE_METHOD) {
+		switch (
+			appSetting.SCREENSHOTS_ENGINE_METHOD ||
+			environment.SCREENSHOTS_ENGINE_METHOD
+		) {
 			case 'ElectronDesktopCapturer':
 				timeTrackerWindow.webContents.send('take_screenshot', {
 					timeSlotId: arg.timeSlotId
 				});
 				break;
 			case 'ScreenshotDesktopLib':
-				captureScreen(timeTrackerWindow, NotificationWindow, arg.timeSlotId, arg.quitApp);
+				captureScreen(
+					timeTrackerWindow,
+					NotificationWindow,
+					arg.timeSlotId,
+					arg.quitApp
+				);
 				break;
 			default:
 				break;
