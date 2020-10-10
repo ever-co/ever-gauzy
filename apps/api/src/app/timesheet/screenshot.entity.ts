@@ -20,10 +20,10 @@ export class Screenshot extends TenantOrganizationBase implements IScreenshot {
 	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((screenshot: Screenshot) => screenshot.timeSlot)
 	@Column({ nullable: true })
-	timeSlotId?: string;
+	readonly timeSlotId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
