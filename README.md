@@ -66,7 +66,7 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality. Note: such Admin user is not an employee, so you will not be able to track time.
 -   You can login with `ruslan@ever.co` and password `admin` to check Desktop Timer and other functionality from "Employee" perspective (such user is an Employee).
 
-Note: Desktop App can connect to [ActivityWatch](https://activitywatch.net)* API to collect more statistics related to running apps and visited Urls. If you need that functionality, you can install [ActivityWatch](https://activitywatch.net)* and make sure it's running and you selected "ActivityWatch" checkbox in Gauzy Desktop App. 
+Note: Desktop App can connect to [ActivityWatch](https://activitywatch.net)[*](https://github.com/ever-co/gauzy/blob/develop/README.md#legal-notice) API to collect more statistics related to running apps and visited Urls. If you need that functionality, you can install [ActivityWatch](https://activitywatch.net)[*](https://github.com/ever-co/gauzy/blob/develop/README.md#legal-notice) and make sure it's running and you selected "ActivityWatch" checkbox in Gauzy Desktop App. 
 
 ## Quick Start
 
