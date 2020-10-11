@@ -78,6 +78,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.argFromMain = arg;
 				this.taskSelect = arg.taskId;
 				this.projectSelect = arg.projectId;
+				this.organizationContactId = arg.organizationContactId;
 				this.note = arg.note;
 				this.getClient(arg);
 				this.getProjects(arg);
