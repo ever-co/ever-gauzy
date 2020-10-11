@@ -1,3 +1,5 @@
+import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 import {
 	Component,
 	OnInit,
@@ -9,7 +11,6 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { IDateRange } from '@gauzy/models';
-import * as moment from 'moment';
 import { merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
@@ -108,7 +109,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 
 	ngAfterViewInit() {
 		this.timezoneOffset =
-			this.timezoneOffset || moment.tz(moment.tz.guess()).format('Z');
+			this.timezoneOffset || timezone.tz(timezone.tz.guess()).format('Z');
 		merge(
 			this.dateModel.valueChanges,
 			this.startTimeModel.valueChanges,

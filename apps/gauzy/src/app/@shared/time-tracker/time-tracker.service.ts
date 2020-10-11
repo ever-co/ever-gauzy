@@ -9,7 +9,7 @@ import {
 	TimerState,
 	TimeLogSourceEnum
 } from '@gauzy/models';
-import { toLocal } from 'libs/utils';
+import { toLocal } from '@gauzy/utils';
 import * as moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
 import { Store as AppStore } from '../../@core/services/store.service';

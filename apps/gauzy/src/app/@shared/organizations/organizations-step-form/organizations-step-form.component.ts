@@ -1,3 +1,5 @@
+import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 import { formatDate } from '@angular/common';
 import {
 	Component,
@@ -18,11 +20,10 @@ import {
 	ITag
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../@core/services/country.service';
+
 @Component({
 	selector: 'ga-organizations-step-form',
 	templateUrl: './organizations-step-form.component.html',

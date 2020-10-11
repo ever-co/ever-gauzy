@@ -10,7 +10,7 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 import { debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { toUTC, toLocal } from 'libs/utils';
+import { toUTC, toLocal } from '@gauzy/utils';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { untilDestroyed } from 'ngx-take-until-destroy';

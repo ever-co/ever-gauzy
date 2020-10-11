@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Message } from '@gauzy/api-interface';
 import { SeedDataService } from './core/seeds/SeedDataService';
 import { UserService } from './user/user.service';
 
@@ -22,9 +21,5 @@ export class AppService {
 		private readonly userService: UserService
 	) {
 		this.seedDBIfEmpty();
-	}
-
-	getData(): Message {
-		return { message: 'Welcome to api!' };
 	}
 }

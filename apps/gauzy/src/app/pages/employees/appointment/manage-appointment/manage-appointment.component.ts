@@ -1,3 +1,5 @@
+import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 import {
 	Component,
 	OnDestroy,
@@ -27,7 +29,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../../@core/services';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { AppointmentEmployeesService } from 'apps/gauzy/src/app/@core/services/appointment-employees.service';
-import * as moment from 'moment';
 import { Store } from '../../../../@core/services/store.service';
 import { AlertModalComponent } from 'apps/gauzy/src/app/@shared/alert-modal/alert-modal.component';
 import { AvailabilitySlotsService } from 'apps/gauzy/src/app/@core/services/availability-slots.service';
@@ -39,7 +40,8 @@ import { EmployeeSelectComponent } from 'apps/gauzy/src/app/@shared/employee/emp
 	templateUrl: './manage-appointment.component.html',
 	styleUrls: ['./manage-appointment.component.scss']
 })
-export class ManageAppointmentComponent extends TranslationBaseComponent
+export class ManageAppointmentComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
@@ -100,9 +102,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		}
 
 		this.timezone =
-			this.timezone || history.state.timezone || moment.tz.guess();
-		this.timezoneOffset = moment.tz(this.timezone).format('Z');
-		moment.tz.setDefault(this.timezone);
+			this.timezone || history.state.timezone || timezone.tz.guess();
+		this.timezoneOffset = timezone.tz(this.timezone).format('Z');
+		timezone.tz.setDefault(this.timezone);
 
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))

@@ -23,7 +23,7 @@ import {
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import _ from 'underscore';
-import { prgressStatus } from 'libs/utils';
+import { progressStatus } from '@gauzy/utils';
 import * as moment from 'moment';
 
 @Component({
@@ -50,7 +50,7 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	manualTimeLoading = true;
 
 	PermissionsEnum = PermissionsEnum;
-	prgressStatus = prgressStatus;
+	progressStatus = progressStatus;
 	startDate: Date;
 	endDate: Date;
 

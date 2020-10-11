@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { getContrastColor } from 'libs/utils';
+import { getContrastColor } from '@gauzy/utils';
 @Component({
 	selector: 'ngx-tags-color',
 	templateUrl: './tags-color.component.html',
-	styleUrls: ['./tags-color.component.scss'],
+	styleUrls: ['./tags-color.component.scss']
 })
 export class TagsColorComponent implements ViewCell {
 	@Input()

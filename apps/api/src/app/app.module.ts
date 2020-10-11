@@ -10,6 +10,7 @@ import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
+import { HomeModule } from './home/home.module';
 import { EmployeeModule } from './employee/employee.module';
 import { RoleModule } from './role/role.module';
 import { OrganizationModule } from './organization/organization.module';
@@ -129,6 +130,7 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 			{
 				path: '',
 				children: [
+					{ path: '/', module: HomeModule },
 					{ path: '/auth', module: AuthModule },
 					{ path: '/user', module: UserModule },
 					{ path: '/employee', module: EmployeeModule },
@@ -470,9 +472,32 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 				]
 			}
 		]),
+		I18nModule.forRoot({
+			fallbackLanguage: LanguagesEnum.ENGLISH,
+			parser: I18nJsonParser,
+			parserOptions: {
+				path: path.join(__dirname, '/assets/i18n/'),
+				watch: !environment.production
+			},
+			resolvers: [new HeaderResolver(['language'])]
+		}),
+		...(environment.sentry
+			? [
+					SentryModule.forRoot({
+						dsn: environment.sentry.dns,
+						debug: true,
+						environment: environment.production
+							? 'production'
+							: 'development', //production, development
+						//release: null, // must create a release in sentry.io dashboard
+						logLevel: LogLevel.Error
+					})
+			  ]
+			: []),
 		CoreModule,
 		AuthModule,
 		UserModule,
+		HomeModule,
 		EmployeeModule,
 		EmployeeRecurringExpenseModule,
 		EmployeeAwardModule,
@@ -546,19 +571,6 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 		StageModule,
 		DealModule,
 		InvoiceEstimateHistoryModule,
-		...(environment.sentry
-			? [
-					SentryModule.forRoot({
-						dsn: environment.sentry.dns,
-						debug: true,
-						environment: environment.production
-							? 'production'
-							: 'development', //production, development
-						//release: null, // must create a release in sentry.io dashboard
-						logLevel: LogLevel.Error
-					})
-			  ]
-			: []),
 		HelpCenterModule,
 		HelpCenterAuthorModule,
 		EquipmentModule,
@@ -581,15 +593,6 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 		ProductVariantSettingsModule,
 		IntegrationEntitySettingModule,
 		IntegrationEntitySettingTiedEntityModule,
-		I18nModule.forRoot({
-			fallbackLanguage: LanguagesEnum.ENGLISH,
-			parser: I18nJsonParser,
-			parserOptions: {
-				path: path.join(__dirname, '/assets/i18n/'),
-				watch: !environment.production
-			},
-			resolvers: [new HeaderResolver(['language'])]
-		}),
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,

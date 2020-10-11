@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 
 export interface EmployeeSchedule {
 	employeeName: string;
@@ -13,7 +13,8 @@ export interface EmployeeSchedule {
 @Component({
 	templateUrl: './employee-schedules.component.html'
 })
-export class EmployeeSchedulesComponent extends TranslationBaseComponent
+export class EmployeeSchedulesComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	employeeSchedule: EmployeeSchedule;
 	constructor(
@@ -25,10 +26,10 @@ export class EmployeeSchedulesComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.employeeSchedule.slots.forEach((s) => {
-			s.startTime = moment(s.startTime)
+			s.startTime = timezone(s.startTime)
 				.tz(this.employeeSchedule.timezone)
 				.format('LLLL');
-			s.endTime = moment(s.endTime)
+			s.endTime = timezone(s.endTime)
 				.tz(this.employeeSchedule.timezone)
 				.format('LLLL');
 		});

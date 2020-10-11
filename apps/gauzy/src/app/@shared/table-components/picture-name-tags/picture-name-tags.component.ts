@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { getContrastColor } from 'libs/utils';
+import { getContrastColor } from '@gauzy/utils';
 import { ViewCell } from 'ng2-smart-table';
 import { ComponentLayoutStyleEnum } from '@gauzy/models';
 

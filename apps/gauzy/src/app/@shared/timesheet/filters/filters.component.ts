@@ -26,7 +26,7 @@ import { Options, ChangeContext } from 'ng5-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TimesheetFilterService } from '../timesheet-filter.service';
 import { debounceTime, take } from 'rxjs/operators';
-import { isEmpty } from 'libs/utils';
+import { isEmpty } from '@gauzy/utils';
 
 @Component({
 	selector: 'ngx-filters',

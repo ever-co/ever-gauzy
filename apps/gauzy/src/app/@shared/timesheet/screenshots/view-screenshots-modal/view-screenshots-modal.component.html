@@ -20,7 +20,7 @@
 			<nb-progress-bar
 				class="mb-1"
 				[value]="timeSlot.overall"
-				[status]="prgressStatus(timeSlot.overall)"
+				[status]="progressStatus(timeSlot.overall)"
 				[displayValue]="true"
 				size="tiny"
 			></nb-progress-bar>
@@ -94,7 +94,7 @@
 			<div class="mt-3 row align-items-center">
 				<div class="col">
 					<div class="mb-2">
-						<strong> 
+						<strong>
 							{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }} :
 						</strong>
 						{{

@@ -54,7 +54,7 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 	return fd;
 }
 
-export function prgressStatus(value) {
+export function progressStatus(value) {
 	if (value >= 75) {
 		return 'success';
 	} else if (value >= 50) {

@@ -9,7 +9,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/models';
-import { toUTC } from 'libs/utils';
+import { toUTC } from '@gauzy/utils';
 import {
 	NbCheckboxComponent,
 	NbDialogService,

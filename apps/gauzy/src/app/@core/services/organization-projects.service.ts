@@ -8,7 +8,7 @@ import {
 	TaskListTypeEnum
 } from '@gauzy/models';
 import { first, take } from 'rxjs/operators';
-import { toParams } from 'libs/utils';
+import { toParams } from '@gauzy/utils';
 
 @Injectable({
 	providedIn: 'root'
