@@ -27,7 +27,7 @@ export class ActivityService extends CrudService<Activity> {
 	async getDailyActivities(
 		request: IGetActivitiesInput
 	): Promise<IDailyActivity[]> {
-		const query = this.filterQuery(request);
+		const query = await this.filterQuery(request);
 
 		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
 		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
@@ -52,13 +52,13 @@ export class ActivityService extends CrudService<Activity> {
 	}
 
 	async getAllActivites(request: IGetActivitiesInput) {
-		const query = this.filterQuery(request);
+		const query = await this.filterQuery(request);
 
 		return await query.getMany();
 	}
 
 	async getActivities(request: IGetActivitiesInput) {
-		const query = this.filterQuery(request);
+		const query = await this.filterQuery(request);
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -84,7 +84,7 @@ export class ActivityService extends CrudService<Activity> {
 		return this.commandBus.execute(new BulkActivitesSaveCommand(input));
 	}
 
-	private filterQuery(request: IGetActivitiesInput) {
+	private async filterQuery(request: IGetActivitiesInput) {
 		let employeeIds: string[];
 
 		const query = this.activityRepository.createQueryBuilder();
@@ -107,7 +107,7 @@ export class ActivityService extends CrudService<Activity> {
 
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 
-		query.where((qb) => {
+		query.where(async (qb) => {
 			if (request.startDate && request.endDate) {
 				const startDate = moment.utc(request.startDate).toDate();
 				const endDate = moment.utc(request.endDate).toDate();
@@ -162,6 +162,8 @@ export class ActivityService extends CrudService<Activity> {
 				);
 			}
 
+			console.log(await query.getRawMany());
+
 			if (request.source) {
 				if (request.source instanceof Array) {
 					qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
@@ -190,6 +192,7 @@ export class ActivityService extends CrudService<Activity> {
 				});
 			}
 		});
+
 		return query;
 	}
 }
