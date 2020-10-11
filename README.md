@@ -214,6 +214,8 @@ Please see the list of third-party software below:
 
 - [ActivityWatch](https://activitywatch.net)
 
+## Copyright
+
 #### Copyright © 2019-present, Ever Co. LTD. All rights reserved.
 
 ![visitors](https://visitor-badge.laobi.icu/badge?page_id=ever-co.gauzy-platform)
