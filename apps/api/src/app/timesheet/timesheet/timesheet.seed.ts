@@ -1,6 +1,10 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { TimesheetStatus, IOrganizationProject } from '@gauzy/models';
+import {
+	TimesheetStatus,
+	IOrganizationProject,
+	ITimeSlot
+} from '@gauzy/models';
 import { Timesheet } from '../timesheet.entity';
 import { Employee } from '../../employee/employee.entity';
 import * as moment from 'moment';
@@ -75,10 +79,10 @@ export const createDefaultTimeSheet = async (
 	await connection.getRepository(Timesheet).save(timesheets);
 
 	const createdTimesheets = await connection.getRepository(Timesheet).find();
-
+	let timeSlots: ITimeSlot[];
 	try {
 		console.log(chalk.green(`SEEDING Default TimeLogs`));
-		await createRandomTimeLogs(
+		timeSlots = await createRandomTimeLogs(
 			connection,
 			tenant,
 			createdTimesheets,
@@ -91,7 +95,7 @@ export const createDefaultTimeSheet = async (
 
 	try {
 		console.log(chalk.green(`SEEDING Default Activities`));
-		await createRandomActivities(connection, tenant);
+		await createRandomActivities(connection, tenant, timeSlots);
 	} catch (error) {
 		console.log(chalk.red(`SEEDING Default Activities`, error));
 	}
@@ -176,18 +180,26 @@ export const createRandomTimesheet = async (
 	await connection.getRepository(Timesheet).save(timesheets);
 
 	const createdTimesheets = await connection.getRepository(Timesheet).find();
+	let timeSlots: ITimeSlot[];
+	try {
+		console.log(chalk.green(`SEEDING Random TimeLogs`));
+		timeSlots = await createRandomTimeLogs(
+			connection,
+			tenant,
+			createdTimesheets,
+			defaultProjects,
+			noOfTimeLogsPerTimeSheet
+		);
+	} catch (error) {
+		console.log(chalk.red(`SEEDING Random TimeLogs`, error));
+	}
 
-	console.log(chalk.green(`SEEDING Random TimeLogs`));
-	await createRandomTimeLogs(
-		connection,
-		tenant,
-		createdTimesheets,
-		defaultProjects,
-		noOfTimeLogsPerTimeSheet
-	);
-
-	console.log(chalk.green(`SEEDING Random Activities`));
-	await createRandomActivities(connection, tenant);
+	try {
+		console.log(chalk.green(`SEEDING Random Activities`));
+		await createRandomActivities(connection, tenant, timeSlots);
+	} catch (error) {
+		console.log(chalk.red(`SEEDING Random Activities`, error));
+	}
 
 	return createdTimesheets;
 };

@@ -49,13 +49,24 @@ In addition, we encourage individual **Freelancers** to join our "Gauzy" revolut
 
 Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your freelance business, agency, studio or in-house teams.
 
-<!--
 ## Demos, Testing and Production
 
+<!--
 -   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary deployed manually)
 -   Gauzy Platform SaaS at <https://app.gauzy.co> (not used yet in production, it's same as demo.gauzy.co for now)
 -->
+
+### Desktop App
+
+-   Download Gauzy Desktop App for your OS. Currently you can get latest release on <https://github.com/ever-co/gauzy/releases/tag/v0.1.0>.
+-   Setup Gauzy Desktop App and run it
+-   Select "Local", "Sqlite" and "Default" (that set port 3000 value for API). Click "Save" and after a couple of seconds (minutes) it will create local Sqlite DB for testing of Gauzy.
+-   Gauzy Desktop App is ready to use. 
+-   You can login with `admin@ever.co` and password `admin` to check Admin functionality. Note: such Admin user is not an employee, so you will not be able to track time.
+-   You can login with `ruslan@ever.co` and password `admin` to check Desktop Timer and other functionality from "Employee" perspective (such user is an Employee).
+
+Note: Desktop App can connect to [ActivityWatch](https://activitywatch.net)[*](https://github.com/ever-co/gauzy/blob/develop/README.md#legal-notice) API to collect more statistics related to running apps and visited Urls. If you need that functionality, you can install [ActivityWatch](https://activitywatch.net)[*](https://github.com/ever-co/gauzy/blob/develop/README.md#legal-notice) and make sure it's running and you selected "ActivityWatch" checkbox in Gauzy Desktop App. 
 
 ## Quick Start
 
@@ -194,6 +205,16 @@ This software is available under following licenses:
 
 Gauzy™ is a trademark of Ever Co. LTD.  
 All other brand and product names are trademarks, registered trademarks or service marks of their respective holders.
+
+## Legal Notice
+
+The links to third-party software are being provided as a convenience and for informational purposes only; they do not constitute an endorsement or an approval of any of the products, services or opinions of the corporation or organization or individual. Ever Co. LTD bears no responsibility for the accuracy, legality or content of the external sites or applications or for that of subsequent links. Contact the external site or application vendor for answers to questions regarding its content.
+
+Please see the list of third-party software below:
+
+- [ActivityWatch](https://activitywatch.net)
+
+## Copyright
 
 #### Copyright © 2019-present, Ever Co. LTD. All rights reserved.
 

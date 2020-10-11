@@ -38,7 +38,9 @@ switch (dbType) {
 	case 'sqlite':
 		databaseConfig = {
 			type: dbType,
-			database: path.join(__dirname, '../../data/gauzy.sqlite3'),
+			database:
+				process.env.DB_PATH ||
+				path.join(__dirname, '../../data/gauzy.sqlite3'),
 			keepConnectionAlive: true,
 			logging: true,
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log

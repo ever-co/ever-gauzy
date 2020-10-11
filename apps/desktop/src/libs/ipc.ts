@@ -6,6 +6,11 @@ import moment from 'moment';
 import { LocalStore } from './getSetStore';
 import { takeshot, captureScreen } from './screenshot';
 import { environment } from '../environments/environtment.electron';
+import {
+	hasPromptedForPermission,
+	hasScreenCapturePermission,
+	openSystemPreferences
+} from 'mac-screen-capture-permissions';
 export function ipcMainHandler(store, startServer, knex) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
@@ -119,6 +124,17 @@ export function ipcMainHandler(store, startServer, knex) {
 
 	ipcMain.on('update_app_setting', (event, arg) => {
 		LocalStore.updateApplicationSetting(arg.values);
+	});
+
+	ipcMain.on('request_permission', async (event) => {
+		if (process.platform === 'darwin') {
+			const screenCapturePermission = hasScreenCapturePermission();
+			if (!screenCapturePermission) {
+				if (!hasPromptedForPermission()) {
+					await openSystemPreferences();
+				}
+			}
+		}
 	});
 }
 

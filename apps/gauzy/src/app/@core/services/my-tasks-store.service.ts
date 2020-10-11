@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ITask } from '@gauzy/models';
+import { IOrganization, ITask } from '@gauzy/models';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
@@ -24,9 +24,15 @@ export class MyTasksStoreService {
 
 	constructor(private _taskService: TasksService) {}
 
-	fetchTasks() {
+	fetchTasks(organization?: IOrganization) {
+		const findObj = {};
+		if (organization) {
+			const { id: organizationId, tenantId } = organization;
+			findObj['organizationId'] = organizationId;
+			findObj['tenantId'] = tenantId;
+		}
 		this._taskService
-			.getMyTasks()
+			.getMyTasks(findObj)
 			.pipe(tap(({ items }) => this.loadAllTasks(items)))
 			.subscribe();
 	}
