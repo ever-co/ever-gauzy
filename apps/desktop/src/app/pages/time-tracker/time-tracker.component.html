@@ -1,8 +1,8 @@
 <nb-layout>
 	<nb-layout-column class="top-space">
 		<div class="row full-height">
-			<div class="col-5 full-height no-padding">
-				<nb-card class="full-height">
+			<div class="col-12 full-height no-padding">
+				<nb-card>
 					<nb-card-body>
 						<div class="row">
 							<div class="col-3">
@@ -29,21 +29,77 @@
 								</div>
 							</div>
 							<div class="col-12 form-group tp-padding">
+								<label>Client</label>
+								<ng-select
+									[class]="
+										errors.client ? 'error-border' : ''
+									"
+									[clearable]="true"
+									placeholder="Client"
+									[(ngModel)]="organizationContactId"
+									[items]="organizationContacts"
+									bindValue="id"
+									bindLabel="name"
+									(ngModelChange)="setClient($event)"
+								>
+								</ng-select>
+							</div>
+							<div class="col-12 form-group">
+								<label>Project</label>
+								<ng-select
+									[class]="
+										errors.project ? 'error-border' : ''
+									"
+									[clearable]="true"
+									placeholder="Client"
+									[(ngModel)]="projectSelect"
+									[items]="projects"
+									bindValue="id"
+									bindLabel="name"
+									(ngModelChange)="setProject($event)"
+								>
+								</ng-select>
+							</div>
+							<div class="col-12 form-group">
+								<label>Task</label>
+								<ng-select
+									[class]="errors.task ? 'error-border' : ''"
+									[clearable]="true"
+									placeholder="Client"
+									[(ngModel)]="taskSelect"
+									[items]="tasks"
+									bindValue="id"
+									bindLabel="title"
+									(ngModelChange)="setTask($event)"
+								>
+								</ng-select>
+							</div>
+							<div class="col-12 form-group">
+								<label>Work ON:</label>
+								<textarea
+									nbInput
+									fullWidth
+									placeholder="Note"
+									status="basic"
+									[(ngModel)]="note"
+									[status]="errors.note ? 'danger' : 'basic'"
+									(ngModelChange)="descriptionChange($event)"
+								></textarea>
+							</div>
+							<div class="col-12 form-group tp-padding">
 								<div class="row">
 									<div class="col-12">
 										<div class="row">
-											<div class="col-6">
+											<div class="col-8">
 												<nb-checkbox
 													[checked]="aw"
 													(change)="setAW($event)"
-													>Activiwatch</nb-checkbox
+													>Activitywatch</nb-checkbox
 												>
 											</div>
-											<div class="col-6">
+											<div class="col-4">
 												<nb-icon
-													*ngIf="
-														awCheck && !loadingAw
-													"
+													*ngIf="awCheck"
 													[icon]="iconAw"
 													[status]="statusIcon"
 												>
@@ -53,104 +109,85 @@
 									</div>
 
 									<div class="col-12">
-										<nb-checkbox [disabled]="true"
-											>Wakatime</nb-checkbox
-										>
+										<div class="row">
+											<div class="col-8">
+												<nb-checkbox [disabled]="true"
+													>Wakatime</nb-checkbox
+												>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
 							<div class="col-12">
 								<div class="row">
 									<div class="col-11 center-text">
-										<h5>
-											{{userOrganization.name ? userOrganization.name : 'UNKNOWN'}}
-										</h5>
+										<span class="org-name">
+											{{
+												userOrganization.name
+													? userOrganization.name
+													: 'UNKNOWN'
+											}}
+										</span>
 									</div>
 									<div class="col-11 center-text">
-										<h6>Total Worked Today {{todayDuration.hours}}:{{todayDuration.minutes}}</h6>
+										<span class="work-today"
+											>Total Worked Today
+											{{ todayDuration.hours }}:{{
+												todayDuration.minutes
+											}}</span
+										>
 									</div>
 								</div>
 							</div>
-							<div class="col-12">
+							<div class="col-12 tp-padding">
 								<div class="row">
 									<div class="col-12 center-text">
 										<nb-card>
 											<nb-card-header>
 												<div class="row">
-													<div class="col-6 screen-capture-label-left"><span>Last screen capture</span></div>
-													<div *ngIf="lastScreenCapture.textTime" class="col-6 screen-capture-label-right"><span>{{lastScreenCapture.textTime}}</span></div>
+													<div
+														class="col-6 screen-capture-label-left"
+													>
+														<span
+															>Last screen
+															capture</span
+														>
+													</div>
+													<div
+														*ngIf="
+															lastScreenCapture.textTime
+														"
+														class="col-6 screen-capture-label-right"
+													>
+														<span>{{
+															lastScreenCapture.textTime
+														}}</span>
+													</div>
 												</div>
 											</nb-card-header>
 											<nb-card-body>
-												<img 
+												<img
 													class="screen-capture-img"
-													*ngIf="lastScreenCapture.fullUrl"
-													[src]="lastScreenCapture.fullUrl"
-												>
+													*ngIf="
+														lastScreenCapture.fullUrl
+													"
+													[src]="
+														lastScreenCapture.fullUrl
+													"
+												/>
 												<nb-icon
-													*ngIf="!lastScreenCapture.fullUrl"
+													*ngIf="
+														!lastScreenCapture.fullUrl
+													"
 													icon="image-outline"
+													class="icon-img-size"
 												>
 												</nb-icon>
 											</nb-card-body>
 										</nb-card>
 									</div>
 								</div>
-							</div>
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</div>
-			<div class="col-7 full-height no-padding">
-				<nb-card class="full-height">
-					<nb-card-body>
-						<div class="row">
-							<div class="col-12">
-								<h5>TASK</h5>
-							</div>
-							<!-- <div class="col-12">
-								<h6>Electron APP</h6>
-							</div> -->
-							<div class="col-12 form-group" #selectRef>
-								<nb-select
-									placeholder="Project"
-									[(ngModel)]="projectSelect"
-									(ngModelChange)="setProject($event)"
-									[status]="
-										errors.project ? 'danger' : 'basic'
-									"
-								>
-									<nb-option
-										[value]="project.id"
-										*ngFor="let project of projects"
-										>{{ project.name }}</nb-option
-									>
-								</nb-select>
-							</div>
-							<div class="col-12 form-group">
-								<nb-select
-									placeholder="Task"
-									[(ngModel)]="taskSelect"
-									(ngModelChange)="setTask($event)"
-									[status]="errors.task ? 'danger' : 'basic'"
-								>
-									<nb-option
-										[value]="task.id"
-										*ngFor="let task of tasks"
-										>{{ task.title }}</nb-option
-									>
-								</nb-select>
-							</div>
-							<div class="col-12">
-								<p>Work ON:</p>
-								<textarea
-									nbInput
-									fullWidth
-									placeholder="Note"
-									status="basic"
-									[(ngModel)]="note"
-									[status]="errors.note ? 'danger' : 'basic'"
-								></textarea>
 							</div>
 						</div>
 					</nb-card-body>

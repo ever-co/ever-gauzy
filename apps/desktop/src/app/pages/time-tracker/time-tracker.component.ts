@@ -4,21 +4,28 @@ import {
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	AfterViewInit,
-	ViewChild,
-	ElementRef
+	forwardRef
 } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { error } from 'console';
 
 @Component({
 	selector: 'ngx-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TimeTrackerComponent),
+			multi: true
+		}
+	]
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
-	@ViewChild('selectRef') selectProjectElement: ElementRef;
 	start: Boolean = false;
 	timeRun: any = {
 		second: '00',
@@ -34,6 +41,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	userData: any;
 	projects: any;
 	tasks: any = [];
+	organizationContacts: any = [];
 	organization: any = {};
 	projectSelect = '';
 	taskSelect = '';
@@ -52,6 +60,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	userOrganization: any = {};
 	lastScreenCapture: any = {};
 	quitApp = false;
+	organizationContactId = null;
+	employeeId = null;
+	argFromMain = null;
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -64,15 +75,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on(
 			'timer_tracker_show',
 			(event, arg) => {
-				this.taskSelect = '';
-				this.projectSelect = '';
-				this.note = '';
-				const el: HTMLElement = this.selectProjectElement
-					.nativeElement as HTMLElement;
-				setTimeout(() => el.click(), 1000);
+				this.argFromMain = arg;
+				this.taskSelect = arg.taskId;
+				this.projectSelect = arg.projectId;
+				this.note = arg.note;
+				this.getClient(arg);
+				this.getProjects(arg);
 				this.getTask(arg);
 				this.getTodayTime(arg);
 				this.getUserInfo(arg);
+
 				if (arg.timeSlotId) {
 					this.getLastTimeSlotImage(arg);
 				}
@@ -95,10 +107,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.setTask(arg.taskId);
 				this.note = arg.note;
 				this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
-				this.selectProjectElement.nativeElement.focus();
-				const el: HTMLElement = this.selectProjectElement
-					.nativeElement as HTMLElement;
-				setTimeout(() => el.click(), 1000);
 				_cdr.detectChanges();
 			}
 		);
@@ -158,8 +166,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.stopTimer();
 				this._cdr.detectChanges();
 			}
-		} else {
-			this.selectProjectElement.nativeElement.focus();
 		}
 	}
 
@@ -195,21 +201,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	startTime() {
-		if (!this.projectSelect) this.errors.project = true;
-		if (!this.taskSelect) this.errors.task = true;
-		if (!this.errors.task && !this.errors.project) {
-			this.electronService.ipcRenderer.send('start_timer', {
-				projectId: this.projectSelect,
-				taskId: this.taskSelect,
-				note: this.note,
-				aw: {
-					host: this.defaultAwAPI,
-					isAw: this.aw
-				}
-			});
+		this.electronService.ipcRenderer.send('start_timer', {
+			projectId: this.projectSelect,
+			taskId: this.taskSelect,
+			note: this.note,
+			organizationContactId: this.organizationContactId,
+			aw: {
+				host: this.defaultAwAPI,
+				isAw: this.aw
+			}
+		});
 
-			this.electronService.ipcRenderer.send('update_tray_start');
-		}
+		this.electronService.ipcRenderer.send('update_tray_start');
 	}
 
 	stopTimer() {
@@ -228,43 +231,58 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		};
 	}
 
-	getTask(arg) {
-		this.timeTrackerService.getTasks(arg).then((res: any) => {
-			this.organization = res.items;
-			this.getProjects(this.organization, arg);
-			if (arg.projectId) {
-				this.electronService.ipcRenderer.send('set_project_task', {
-					projectId: arg.projectId,
-					taskId: arg.taskId,
-					note: arg.note,
-					aw: arg.aw
-				});
-			} else {
-				console.log('over here');
-				this.projectSelect = '';
-				this.taskSelect = '';
-				this._cdr.detectChanges();
-			}
-		});
-		this._cdr.detectChanges();
+	async getTask(arg) {
+		this.tasks = await this.timeTrackerService.getTasks(arg);
 	}
 
-	getProjects(items, arg) {
-		this.projects = items.map((item) => item.project);
-		this._cdr.detectChanges();
+	async getProjects(arg) {
+		this.projects = await this.timeTrackerService.getProjects(arg);
 	}
 
-	setProject(item) {
+	async getClient(arg) {
+		this.organizationContacts = await this.timeTrackerService.getClient(
+			arg
+		);
+	}
+
+	async setClient(item) {
+		this.organizationContactId = item;
+		if (item) {
+			this.projects = this.projects.filter(
+				(p) => p.organizationContactId === item
+			);
+			this.projectSelect = null;
+			this.taskSelect = null;
+			this.errors.client = false;
+		} else {
+			this.projects = await this.timeTrackerService.getProjects(
+				this.argFromMain
+			);
+		}
+	}
+
+	async setProject(item) {
 		this.projectSelect = item;
-		this.tasks = this.organization.filter((t) => t.project.id === item);
+		if (item) {
+			this.tasks = this.tasks.filter((t) => t.projectId === item);
+			this.taskSelect = null;
+			this.errors.project = false;
+		} else {
+			this.tasks = await this.timeTrackerService.getTasks(
+				this.argFromMain
+			);
+		}
 		this.errorBind();
 		this._cdr.detectChanges();
 	}
 
 	setTask(item) {
-		this._cdr.detectChanges();
 		this.taskSelect = item;
-		this.errorBind();
+		if (item) this.errors.task = false;
+	}
+
+	descriptionChange(e) {
+		if (e) this.errors.note = false;
 	}
 
 	setAW(event) {
@@ -319,30 +337,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	validationField() {
 		this.errorBind();
-		if (this.projectSelect && this.taskSelect && this.note) {
-			return true;
-		}
-		return false;
+		const errors = [];
+		const requireField = {
+			task: 'requireTask',
+			project: 'requireProject',
+			client: 'requireClient',
+			note: 'requireDescription'
+		};
+		Object.keys(this.errors).forEach((key) => {
+			if (this.errors[key] && this.userOrganization[requireField[key]])
+				errors.push(true);
+		});
+		return errors.length === 0;
 	}
 
 	errorBind() {
-		if (!this.projectSelect) {
+		if (!this.projectSelect && this.userOrganization.requireProject)
 			this.errors.project = true;
-		} else {
-			this.errors.project = false;
-		}
-
-		if (!this.taskSelect) {
+		if (!this.taskSelect && this.userOrganization.requireTask)
 			this.errors.task = true;
-		} else {
-			this.errors.task = false;
-		}
-
-		if (!this.note) {
+		if (!this.organizationContactId && this.userOrganization.requireClient)
+			this.errors.client = true;
+		if (!this.note && this.userOrganization.requireDescription)
 			this.errors.note = true;
-		} else {
-			this.errors.note = false;
-		}
 	}
 
 	doshoot() {

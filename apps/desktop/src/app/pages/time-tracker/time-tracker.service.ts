@@ -21,9 +21,39 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
-			.get(`${values.apiHost}/api/tasks/me`, {
+			.get(`${values.apiHost}/api/tasks/employee/${values.employeeId}`, {
 				headers: headers
 			})
+			.pipe()
+			.toPromise();
+	}
+
+	getProjects(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.get(
+				`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`,
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	getClient(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.get(
+				`${values.apiHost}/api/organization-contact/employee/${values.employeeId}`,
+				{
+					headers: headers
+				}
+			)
 			.pipe()
 			.toPromise();
 	}
@@ -33,9 +63,12 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
-			.get(`${values.apiHost}/api/user/me?data={"relations":  ["employee", "tenant", "employee.organization"]}`, {
-				headers: headers
-			})
+			.get(
+				`${values.apiHost}/api/user/me?data={"relations":  ["employee", "tenant", "employee.organization"]}`,
+				{
+					headers: headers
+				}
+			)
 			.pipe()
 			.toPromise();
 	}
@@ -62,9 +95,12 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
-			.get(`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`, {
-				headers: headers
-			})
+			.get(
+				`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`,
+				{
+					headers: headers
+				}
+			)
 			.pipe()
 			.toPromise();
 	}

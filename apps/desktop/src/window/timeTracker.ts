@@ -24,15 +24,15 @@ export function createTimeTrackerWindow(timeTrackerWindow) {
 const windowSetting = () => {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
-		resizable: true,
+		resizable: false,
 		focusable: true,
-		fullscreenable: true,
+		fullscreenable: false,
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false
 		},
-		width: 900,
-		height: 600,
+		width: 400,
+		height: 900,
 		title: 'Time Tracker'
 	};
 
