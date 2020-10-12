@@ -25,8 +25,8 @@ const contractSettings = {
 			}
 		},
 		{
-			name: 'Reports',
-			key: 'reports',
+			name: 'Report',
+			key: 'report',
 			relatedTo: ['Income', 'Expense'],
 			sync: true,
 			datePicker: {
@@ -35,8 +35,8 @@ const contractSettings = {
 			}
 		},
 		{
-			name: 'Proposals',
-			key: 'proposals',
+			name: 'Proposal',
+			key: 'proposal',
 			relatedTo: [],
 			sync: true,
 			datePicker: {
@@ -47,21 +47,6 @@ const contractSettings = {
 	],
 	onlyContracts: false
 };
-
-/* const reportSettings = {
-	entitiesToSync: [
-		{
-			name: 'Reports',
-			key: 'reports',
-			relatedTo: ['Income', 'Expense'],
-			sync: true,
-			datePicker: {
-				max: new Date(),
-				selectedDate: new Date()
-			}
-		}
-	]
-} */
 
 @Injectable({
 	providedIn: 'root'
@@ -101,7 +86,10 @@ export class UpworkStoreService {
 	private _reports$: BehaviorSubject<any[]> = new BehaviorSubject(null);
 	public reports$: Observable<any> = this._reports$.asObservable();
 
-	constructor(private _us: UpworkService, private _os: Store) {}
+	constructor(
+		private _upworkService: UpworkService,
+		private _storeService: Store
+	) {}
 
 	getContracts(): Observable<IEngagement[]> {
 		const contracts$ = this._contracts$.getValue();
@@ -110,7 +98,7 @@ export class UpworkStoreService {
 		}
 		return this._config$.pipe(
 			switchMap((config) =>
-				config ? this._us.getContracts(config) : EMPTY
+				config ? this._upworkService.getContracts(config) : EMPTY
 			),
 			tap((contracts) => this._contracts$.next(contracts))
 		);
@@ -128,7 +116,7 @@ export class UpworkStoreService {
 		const integrationId = this._selectedIntegrationId$.getValue();
 		const data = JSON.stringify({ relations, filter: { dateRange } });
 
-		return this._us.getAllReports({ integrationId, data }).pipe(
+		return this._upworkService.getAllReports({ integrationId, data }).pipe(
 			map((reports) => reports.items),
 			tap((reports) => this._reports$.next(reports))
 		);
@@ -140,8 +128,8 @@ export class UpworkStoreService {
 
 	syncContracts(contracts) {
 		const integrationId = this._selectedIntegrationId$.getValue();
-		const { id: organizationId } = this._os.selectedOrganization;
-		return this._us.syncContracts({
+		const { id: organizationId } = this.getSelectedOrganization();
+		return this._upworkService.syncContracts({
 			integrationId,
 			organizationId,
 			contracts,
@@ -163,7 +151,7 @@ export class UpworkStoreService {
 		}
 
 		const integrationId = this._selectedIntegrationId$.getValue();
-		const { id: organizationId } = this._os.selectedOrganization;
+		const { id: organizationId } = this.getSelectedOrganization();
 
 		//map contract provider to get authorize info
 		const {
@@ -171,7 +159,7 @@ export class UpworkStoreService {
 			provider__id: providerId
 		} = contracts.find((contract: IEngagement) => true);
 
-		return this._us.syncContractsRelatedData({
+		return this._upworkService.syncContractsRelatedData({
 			integrationId,
 			organizationId,
 			contracts,
@@ -183,7 +171,7 @@ export class UpworkStoreService {
 		});
 	}
 
-	setSelectedEmployeeId(employeeId) {
+	setSelectedEmployeeId(employeeId: string) {
 		this.employeeId = employeeId;
 	}
 
@@ -194,14 +182,21 @@ export class UpworkStoreService {
 		});
 	}
 
-	getConfig(integrationId): Observable<IUpworkApiConfig> {
+	getConfig(integrationId: string): Observable<IUpworkApiConfig> {
 		this.setSelectedIntegrationId(integrationId);
 		const config$ = this._config$.getValue();
 		if (config$) {
 			return EMPTY;
 		}
-		return this._us
+		return this._upworkService
 			.getConfig(integrationId)
 			.pipe(tap((config) => this._config$.next(config)));
+	}
+
+	/*
+	 * Get selected organization from header dropdown
+	 */
+	getSelectedOrganization() {
+		return this._storeService.selectedOrganization;
 	}
 }

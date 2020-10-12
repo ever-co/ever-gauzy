@@ -1,14 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
-import { IIntegration, IIntegrationType } from '@gauzy/models';
+import { IIntegration, IIntegrationType, ITag } from '@gauzy/models';
 import { IntegrationType } from './integration-type.entity';
 import { IsNumber } from 'class-validator';
 import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Base } from '../core/entities/base';
 
 @Entity('integration')
-export class Integration extends TenantOrganizationBase
-	implements IIntegration {
+export class Integration extends Base implements IIntegration {
 	@ApiProperty({ type: String })
 	@Column({ nullable: false })
 	name: string;
@@ -27,20 +26,20 @@ export class Integration extends TenantOrganizationBase
 
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
-	version: string;
+	version?: string;
 
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
-	docUrl: string;
+	docUrl?: string;
 
 	@ApiProperty({ type: Boolean, default: false })
 	@Column({ default: false })
-	isFreeTrial: string;
+	isFreeTrial?: boolean;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0, type: 'numeric' })
-	freeTrialPeriod: number;
+	freeTrialPeriod?: number;
 
 	@ManyToMany((type) => IntegrationType)
 	@JoinTable({
@@ -52,5 +51,5 @@ export class Integration extends TenantOrganizationBase
 	@JoinTable({
 		name: 'tag_integration'
 	})
-	tags?: Tag[];
+	tags?: ITag[];
 }

@@ -4,6 +4,8 @@ import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import * as faker from 'faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
+import { Organization } from '../organization/organization.entity';
+import { DEFAULT_ENTITY_SETTINGS } from '../hubstaff/hubstaff-entity-settings';
 
 export const createRandomIntegrationEntitySetting = async (
 	connection: Connection,
@@ -11,7 +13,7 @@ export const createRandomIntegrationEntitySetting = async (
 ): Promise<IntegrationEntitySetting[]> => {
 	if (!tenants) {
 		console.warn(
-			'Warning: tenants not found, Integration Entity Setting  will not be created'
+			'Warning: tenants not found, Integration Entity Setting will not be created.'
 		);
 		return;
 	}
@@ -20,6 +22,9 @@ export const createRandomIntegrationEntitySetting = async (
 	const integrationEntitySettingTiedEntities: IntegrationEntitySettingTiedEntity[] = [];
 
 	for (const tenant of tenants) {
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
 		const integrationTenants = await connection.manager.find(
 			IntegrationTenant,
 			{
@@ -32,10 +37,14 @@ export const createRandomIntegrationEntitySetting = async (
 			integrationEntitySetting.integration = integrationTenant;
 			integrationEntitySetting.tiedEntities = integrationEntitySettingTiedEntities;
 			integrationEntitySetting.sync = faker.random.boolean();
+			(integrationEntitySetting.organization = faker.random.arrayElement(
+				organizations
+			)),
+				(integrationEntitySetting.tenant = tenant);
 			//todo: need to understand real values here
-			integrationEntitySetting.entity =
-				'entity-' + faker.random.number(40);
-
+			integrationEntitySetting.entity = faker.random.arrayElement(
+				DEFAULT_ENTITY_SETTINGS
+			)['entity'];
 			integrationEntitySettings.push(integrationEntitySetting);
 		}
 	}

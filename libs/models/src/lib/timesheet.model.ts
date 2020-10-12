@@ -109,7 +109,8 @@ export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel {
 	tags?: string[];
 }
 
-export interface ITimeLogCreateInput {
+export interface ITimeLogCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
 	timesheetId?: string;
 	taskId?: string;
@@ -123,7 +124,8 @@ export interface ITimeLogCreateInput {
 	isBilled?: boolean;
 }
 
-export interface ITimeSlotCreateInput {
+export interface ITimeSlotCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
 	duration: number;
 	keyboard: number;
@@ -258,7 +260,8 @@ export interface IURLMetaData {
 	image?: string;
 }
 
-export interface ICreateScreenshotInput {
+export interface ICreateScreenshotInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	activityTimestamp: string;
 	employeeId?: string;
 	file: string;
