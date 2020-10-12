@@ -592,6 +592,7 @@ export class UpworkService {
 					{
 						contractId: sourceId,
 						employeeId,
+						organizationId,
 						config,
 						timeSlots: cells
 					}
@@ -692,7 +693,12 @@ export class UpworkService {
 	/*
 	 * Get timeslot minute activities
 	 */
-	async syncTimeSlotsActivity({ employeeId, timeSlot, timeSlotActivity }) {
+	async syncTimeSlotsActivity({
+		employeeId,
+		organizationId,
+		timeSlot,
+		timeSlotActivity
+	}) {
 		try {
 			const { minutes } = timeSlotActivity;
 			const { cell_time } = timeSlot;
@@ -722,7 +728,8 @@ export class UpworkService {
 							datetime: new Date(
 								moment.unix(time).format('YYYY-MM-DD HH:mm:ss')
 							),
-							timeSlot: findTimeSlot
+							timeSlot: findTimeSlot,
+							organizationId
 						})
 					);
 					return gauzyTimeSlotMinute;
@@ -743,6 +750,7 @@ export class UpworkService {
 	async getTimeSlotActivitiesByContractId({
 		contractId,
 		employeeId,
+		organizationId,
 		config,
 		timeSlots
 	}) {
@@ -758,6 +766,7 @@ export class UpworkService {
 				const integratedTimeSlotActivities = await this.syncTimeSlotsActivity(
 					{
 						employeeId,
+						organizationId,
 						timeSlot: timeslot,
 						timeSlotActivity
 					}
@@ -806,7 +815,6 @@ export class UpworkService {
 		} = timeSlotsData;
 		const integrationMaps = await timeSlots.map(
 			async ({
-				id,
 				cell_time,
 				screenshot_img,
 				screenshot_img_thmb,
@@ -962,7 +970,8 @@ export class UpworkService {
 			gauzyId: employee.id,
 			integrationId,
 			sourceId: userId,
-			entity: IntegrationEntity.EMPLOYEE
+			entity: IntegrationEntity.EMPLOYEE,
+			organizationId
 		});
 	}
 
@@ -1094,7 +1103,8 @@ export class UpworkService {
 						record: category
 					} = await this._expenseCategoryService.findOneOrFail({
 						where: {
-							name: ExpenseCategoriesEnum.SERVICE_FEE
+							name: ExpenseCategoriesEnum.SERVICE_FEE,
+							organizationId
 						}
 					});
 
@@ -1113,7 +1123,8 @@ export class UpworkService {
 						where: {
 							integrationId,
 							sourceId: reference,
-							entity: IntegrationEntity.EXPENSE
+							entity: IntegrationEntity.EXPENSE,
+							organizationId
 						}
 					});
 
@@ -1124,7 +1135,7 @@ export class UpworkService {
 					const gauzyExpense = await this.commandBus.execute(
 						new ExpenseCreateCommand({
 							employeeId,
-							organizationId: organizationId,
+							organizationId,
 							amount,
 							category,
 							valueDate: new Date(
@@ -1142,7 +1153,8 @@ export class UpworkService {
 						gauzyId: gauzyExpense.id,
 						integrationId,
 						sourceId: reference,
-						entity: IntegrationEntity.EXPENSE
+						entity: IntegrationEntity.EXPENSE,
+						organizationId
 					});
 				})
 		);
@@ -1205,7 +1217,8 @@ export class UpworkService {
 					reference: contractId,
 					valueDate: new Date(
 						moment(worked_on).format('YYYY-MM-DD HH:mm:ss')
-					)
+					),
+					organizationId
 				}
 			});
 
@@ -1216,7 +1229,8 @@ export class UpworkService {
 						where: {
 							gauzyId: income.id,
 							integrationId,
-							entity: IntegrationEntity.INCOME
+							entity: IntegrationEntity.INCOME,
+							organizationId
 						}
 					}
 				);
@@ -1228,7 +1242,7 @@ export class UpworkService {
 				const gauzyIncome = await this.commandBus.execute(
 					new IncomeCreateCommand({
 						employeeId,
-						organizationId: organizationId,
+						organizationId,
 						clientName,
 						clientId,
 						amount,
@@ -1245,7 +1259,8 @@ export class UpworkService {
 					gauzyId: gauzyIncome.id,
 					integrationId,
 					sourceId: contractId,
-					entity: IntegrationEntity.INCOME
+					entity: IntegrationEntity.INCOME,
+					organizationId
 				});
 			}
 
