@@ -1,0 +1,21 @@
+.ng5-slider {
+  .ng5-slider-pointer {
+    background-color: nb-theme(color-primary-500) !important;
+    outline: none;
+    transition: none !important;
+    &:after {
+      &.active {
+        background-color: nb-theme(color-primary-700) !important;
+      }
+    }
+  }
+  .ng5-slider-selection {
+    background-color: nb-theme(color-primary-500) !important;
+  }
+  .ng5-slider-bar-wrapper {
+    transition: none !important;
+  }
+  .ng5-slider-bubble {
+    transition: none !important;
+  }
+}

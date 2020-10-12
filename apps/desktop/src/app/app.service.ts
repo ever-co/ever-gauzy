@@ -102,7 +102,8 @@ export class AppService {
 					activities: values.activities,
 					timeLogId: values.timeLogId,
 					organizationId: values.organizationId,
-					tenantId: values.tenantId
+					tenantId: values.tenantId,
+					organizationContactId: values.organizationContactId
 				},
 				{
 					headers: headers
@@ -130,7 +131,8 @@ export class AppService {
 					status: 'PENDING',
 					stoppedAt: values.stoppedAt,
 					organizationId: values.organizationId,
-					tenantId: values.tenantId
+					tenantId: values.tenantId,
+					organizationContactId: values.organizationContactId
 				},
 				{
 					headers: headers
@@ -282,7 +284,8 @@ export class AppService {
 					source: 'DESKTOP',
 					manualTimeSlot: values.manualTimeSlot,
 					organizationId: values.organizationId,
-					tenantId: values.tenantId
+					tenantId: values.tenantId,
+					organizationContactId: values.organizationContactId
 				},
 				{
 					headers: headers
@@ -300,6 +303,7 @@ export class AppService {
 		const fileUpload: File = values.fileStream;
 		formData.append('file', fileUpload);
 		formData.append('timeSlotId', values.timeSlotId);
+		formData.append('organizationContactId', values.organizationContactId);
 		console.log(values);
 		return this.http
 			.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {

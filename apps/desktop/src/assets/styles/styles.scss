@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Crimson+Text:600i&display=swap');
+
+// themes - our custom or/and out of the box themes
+@import 'themes';
+
+// framework component themes (styles tied to theme variables)
+@import '~@nebular/theme/styles/globals';
+@import '~@nebular/auth/styles/all';
+@import '~@nebular/bootstrap/styles/globals';
+
+// loading progress bar theme
+@import './pace.theme';
+
+@import './overrides';
+@import './site-menu.scss';
+
+// install ng-select default theme
+@import '~@ng-select/ng-select/themes/default.theme.css';
+@import './includes/fullcalendar';
+// @import './includes/tabset';
+@import './includes/ng-select';
+@import './includes/ng5-slider';
+@import './includes/dialog';
+@import './includes/scroll';
+
+// install the framework and custom global styles
+@include nb-install() {
+  // framework global styles
+  @include nb-theme-global();
+  @include nb-auth-global();
+  @include nb-bootstrap-global();
+
+  // loading progress bar
+  @include ngx-pace-theme();
+
+  @include nb-overrides();
+}
