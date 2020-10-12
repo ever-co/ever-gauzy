@@ -28,7 +28,7 @@ jobs:
               run: 'sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
 
             - name: Install Yarn dependencies
-              run: 'yarn install'
+              run: 'yarn install --network-timeout 1000000'
 
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
@@ -60,7 +60,7 @@ jobs:
                   node-version: 14.5
 
             - name: Install Yarn dependencies
-              run: 'yarn install'
+              run: 'yarn install --network-timeout 1000000'
 
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
@@ -87,7 +87,7 @@ jobs:
                   node-version: 14.5
 
             - name: Install Yarn dependencies
-              run: 'yarn install'
+              run: 'yarn install --network-timeout 1000000'
 
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
