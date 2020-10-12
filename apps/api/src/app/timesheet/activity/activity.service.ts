@@ -27,8 +27,7 @@ export class ActivityService extends CrudService<Activity> {
 	async getDailyActivities(
 		request: IGetActivitiesInput
 	): Promise<IDailyActivity[]> {
-		const query = await this.filterQuery(request);
-
+		const query = this.filterQuery(request);
 		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
 		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
 		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
@@ -48,17 +47,17 @@ export class ActivityService extends CrudService<Activity> {
 		query.orderBy(`time`, 'ASC');
 		query.orderBy(`"duration"`, 'DESC');
 
-		return await query.getRawMany();
+		return query.getRawMany();
 	}
 
 	async getAllActivites(request: IGetActivitiesInput) {
-		const query = await this.filterQuery(request);
+		const query = this.filterQuery(request);
 
 		return await query.getMany();
 	}
 
 	async getActivities(request: IGetActivitiesInput) {
-		const query = await this.filterQuery(request);
+		const query = this.filterQuery(request);
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -84,7 +83,7 @@ export class ActivityService extends CrudService<Activity> {
 		return this.commandBus.execute(new BulkActivitesSaveCommand(input));
 	}
 
-	private async filterQuery(request: IGetActivitiesInput) {
+	private filterQuery(request: IGetActivitiesInput) {
 		let employeeIds: string[];
 
 		const query = this.activityRepository.createQueryBuilder();
@@ -106,14 +105,12 @@ export class ActivityService extends CrudService<Activity> {
 		}
 
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-
-		query.where(async (qb) => {
+		query.where((qb) => {
 			if (request.startDate && request.endDate) {
 				const startDate = moment.utc(request.startDate).toDate();
 				const endDate = moment.utc(request.endDate).toDate();
 				qb.andWhere(
 					`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
-					//`"${query.alias}"."date" Between :startDate AND :endDate`,
 					{
 						startDate,
 						endDate
@@ -161,8 +158,6 @@ export class ActivityService extends CrudService<Activity> {
 					request.activityLevel
 				);
 			}
-
-			console.log(await query.getRawMany());
 
 			if (request.source) {
 				if (request.source instanceof Array) {

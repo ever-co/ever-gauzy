@@ -1,4 +1,4 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import * as moment from 'moment';
@@ -8,6 +8,7 @@ import { TimeSlotBulkCreateCommand } from '../time-slot-bulk-create.command';
 import { RequestContext } from 'apps/api/src/app/core/context';
 import { Employee } from 'apps/api/src/app/employee/employee.entity';
 import { TimeLog } from '../../../time-log.entity';
+import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 
 @CommandHandler(TimeSlotBulkCreateCommand)
 export class TimeSlotBulkCreateHandler
@@ -18,7 +19,8 @@ export class TimeSlotBulkCreateHandler
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly employeeRepository: Repository<Employee>,
+		private readonly commandBus: CommandBus
 	) {}
 
 	public async execute(
@@ -83,6 +85,16 @@ export class TimeSlotBulkCreateHandler
 			await this.timeSlotRepository.save(slots);
 		}
 		slots = insertedSlots.concat(slots);
-		return slots;
+
+		const dates = slots.map((slot) => new Date(slot.startedAt));
+		const mnDate = dates.reduce(function (a, b) {
+			return a < b ? a : b;
+		});
+		const mxDate = dates.reduce(function (a, b) {
+			return a > b ? a : b;
+		});
+		return await this.commandBus.execute(
+			new TimeSlotMergeCommand(slots[0].employeeId, mnDate, mxDate)
+		);
 	}
 }
