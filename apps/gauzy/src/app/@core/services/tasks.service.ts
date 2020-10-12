@@ -10,7 +10,7 @@ import {
 import { tap, catchError, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { toParams } from 'libs/utils';
+import { toParams } from '@gauzy/utils';
 
 interface ITaskResponse {
 	items: ITask[];

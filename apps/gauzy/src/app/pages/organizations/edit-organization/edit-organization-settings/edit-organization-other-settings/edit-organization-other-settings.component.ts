@@ -1,3 +1,5 @@
+import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -12,8 +14,6 @@ import {
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';

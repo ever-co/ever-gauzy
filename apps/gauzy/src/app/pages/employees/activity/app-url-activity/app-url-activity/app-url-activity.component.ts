@@ -11,7 +11,7 @@ import {
 	IActivity
 } from '@gauzy/models';
 import { debounceTime } from 'rxjs/operators';
-import { toUTC, toLocal } from 'libs/utils';
+import { toUTC, toLocal } from '@gauzy/utils';
 import { ActivityService } from 'apps/gauzy/src/app/@shared/timesheet/activity.service';
 import { ActivatedRoute } from '@angular/router';
 import * as _ from 'underscore';
@@ -65,7 +65,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	prgressStatus(value) {
+	progressStatus(value) {
 		if (value <= 25) {
 			return 'danger';
 		} else if (value <= 50) {

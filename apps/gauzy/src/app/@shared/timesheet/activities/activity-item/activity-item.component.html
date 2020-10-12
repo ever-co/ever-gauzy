@@ -17,7 +17,7 @@
 				<nb-progress-bar
 					class="mb-1"
 					[value]="item.durationPercentage"
-					[status]="prgressStatus(item.durationPercentage)"
+					[status]="progressStatus(item.durationPercentage)"
 					[displayValue]="true"
 					size="tiny"
 				>
@@ -31,15 +31,9 @@
 </div>
 <div *ngIf="item?.childItems?.length && childOpen" class="child-items">
 	<div class="row pt-2 pb-2 border-bottom font-weight-bold">
-		<div class="col-sm-2">
-			Title
-		</div>
-		<div class="col-sm-8">
-			Url
-		</div>
-		<div class="col-sm-2 text-right">
-			Time spent (hours)
-		</div>
+		<div class="col-sm-2">Title</div>
+		<div class="col-sm-8">Url</div>
+		<div class="col-sm-2 text-right">Time spent (hours)</div>
 	</div>
 	<div
 		class="row pt-2 pb-2 border-top"

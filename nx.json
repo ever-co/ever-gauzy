@@ -17,7 +17,7 @@
 		"api": {
 			"tags": []
 		},
-		"api-interface": {
+		"utils": {
 			"tags": []
 		},
 		"desktop": {
@@ -30,6 +30,15 @@
 			"tags": []
 		},
 		"api-desktop": {
+			"tags": []
+		},
+		"integration-ai": {
+			"tags": []
+		},
+		"integration-upwork": {
+			"tags": []
+		},
+		"integration-hubstaff": {
 			"tags": []
 		}
 	}

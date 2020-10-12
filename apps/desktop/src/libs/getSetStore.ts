@@ -27,7 +27,10 @@ export const LocalStore = {
 				organizationId: auth ? auth.organizationId : null,
 				tenantId: auth ? auth.tenantId : null,
 				note: projectInfo ? projectInfo.note : null,
-				aw: projectInfo ? projectInfo.aw : null
+				aw: projectInfo ? projectInfo.aw : null,
+				organizationContactId: projectInfo
+					? projectInfo.organizationContactId
+					: null
 			};
 		} catch (error) {
 			console.log(error);

@@ -279,9 +279,9 @@
 				}
 			}
 		},
-		"api-interface": {
-			"root": "libs/api-interface",
-			"sourceRoot": "libs\\api-interface\\src",
+		"utils": {
+			"root": "libs/utils",
+			"sourceRoot": "libs\\utils\\src",
 			"projectType": "library",
 			"schematics": {},
 			"architect": {
@@ -289,8 +289,8 @@
 					"builder": "@angular-devkit/build-angular:tslint",
 					"options": {
 						"tsConfig": [
-							"libs\\api-interface\\tsconfig.lib.json",
-							"libs/api-interface/tsconfig.spec.json"
+							"libs\\utils\\tsconfig.lib.json",
+							"libs/utils/tsconfig.spec.json"
 						],
 						"exclude": ["**/node_modules/**"]
 					}
@@ -298,8 +298,8 @@
 				"test": {
 					"builder": "@nrwl/jest:jest",
 					"options": {
-						"jestConfig": "libs/api-interface/jest.config.js",
-						"tsConfig": "libs/api-interface/tsconfig.spec.json"
+						"jestConfig": "libs/utils/jest.config.js",
+						"tsConfig": "libs/utils/tsconfig.spec.json"
 					}
 				}
 			}
@@ -477,7 +477,8 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/pace-js/templates/pace-theme-flash.tmpl.css",
-							"node_modules/leaflet/dist/leaflet.css"
+							"node_modules/leaflet/dist/leaflet.css",
+							"apps/desktop/src/assets/styles/styles.scss"
 						],
 						"scripts": []
 					},
@@ -605,6 +606,81 @@
 						"jestConfig": "apps/desktop/desktop-api/jest.config.js",
 						"tsConfig": "apps/desktop/desktop-api/tsconfig.spec.json",
 						"passWithNoTests": true
+					}
+				}
+			}
+		},
+		"integration-ai": {
+			"root": "libs/integration-ai",
+			"sourceRoot": "libs\\integration-ai\\src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"libs\\integration-ai\\tsconfig.lib.json",
+							"libs/integration-ai/tsconfig.spec.json"
+						],
+						"exclude": ["**/node_modules/**"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/integration-ai/jest.config.js",
+						"tsConfig": "libs/integration-ai/tsconfig.spec.json"
+					}
+				}
+			}
+		},
+		"integration-upwork": {
+			"root": "libs/integration-upwork",
+			"sourceRoot": "libs\\integration-upwork\\src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"libs\\integration-upwork\\tsconfig.lib.json",
+							"libs/integration-upwork/tsconfig.spec.json"
+						],
+						"exclude": ["**/node_modules/**"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/integration-upwork/jest.config.js",
+						"tsConfig": "libs/integration-upwork/tsconfig.spec.json"
+					}
+				}
+			}
+		},
+		"integration-hubstaff": {
+			"root": "libs/integration-hubstaff",
+			"sourceRoot": "libs\\integration-hubstaff\\src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"libs\\integration-hubstaff\\tsconfig.lib.json",
+							"libs/integration-hubstaff/tsconfig.spec.json"
+						],
+						"exclude": ["**/node_modules/**"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/integration-hubstaff/jest.config.js",
+						"tsConfig": "libs/integration-hubstaff/tsconfig.spec.json"
 					}
 				}
 			}

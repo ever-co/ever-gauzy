@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { TagsService } from '../../../@core/services/tags.service';
 import { ITag, IOrganization } from '@gauzy/models';
-import { getContrastColor } from 'libs/utils';
+import { getContrastColor } from '@gauzy/utils';
 import { Store } from '../../../@core/services/store.service';
 import { Subscription } from 'rxjs';
 

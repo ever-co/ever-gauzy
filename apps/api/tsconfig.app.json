@@ -5,7 +5,6 @@
 		"module": "commonjs",
 		"target": "es2017",
 		"removeComments": true,
-		"incremental": true,
 		"types": ["node"],
 		"resolveJsonModule": true
 	},

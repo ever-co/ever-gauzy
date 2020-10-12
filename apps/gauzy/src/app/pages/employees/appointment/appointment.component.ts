@@ -1,3 +1,5 @@
+import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 import {
 	Component,
 	ViewChild,
@@ -27,7 +29,6 @@ import {
 	PermissionsEnum,
 	IOrganization
 } from '@gauzy/models';
-import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
@@ -51,7 +52,8 @@ import { first } from 'rxjs/operators';
 		}
 	]
 })
-export class AppointmentComponent extends TranslationBaseComponent
+export class AppointmentComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;
@@ -72,8 +74,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 	calendarComponent: FullCalendarComponent;
 
 	hasEventTypesViewPermission: boolean = false;
-	selectedTimeZoneName = moment.tz.guess();
-	selectedTimeZoneOffset = moment.tz(this.selectedTimeZoneName).format('Z');
+	selectedTimeZoneName = timezone.tz.guess();
+	selectedTimeZoneOffset = timezone.tz(this.selectedTimeZoneName).format('Z');
 	calendarOptions: CalendarOptions;
 	allowedDuration: number;
 	calendarEvents: EventInput[] = [];
@@ -210,7 +212,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 					this._selectedOrganizationId = org.id;
 					if (org.timeZone && !this.selectedEventType) {
 						this.selectedTimeZoneName = org.timeZone;
-						this.selectedTimeZoneOffset = moment
+						this.selectedTimeZoneOffset = timezone
 							.tz(org.timeZone)
 							.format('Z');
 						const calendarApi = this.calendarComponent.getApi();
@@ -684,7 +686,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 			.subscribe(async (data) => {
 				if (data) {
 					this.selectedTimeZoneName = data;
-					this.selectedTimeZoneOffset = moment.tz(data).format('Z');
+					this.selectedTimeZoneOffset = timezone.tz(data).format('Z');
 					this.calendarComponent
 						.getApi()
 						.setOption('timeZone', this.selectedTimeZoneName);

@@ -152,7 +152,8 @@ export function ipcTimer(
 				projectId: arg.projectId,
 				taskId: arg.taskId,
 				note: arg.note,
-				aw: arg.aw
+				aw: arg.aw,
+				organizationContactId: arg.organizationContactId
 			}
 		});
 		timerHandler.startTimer(setupWindow, knex, timeTrackerWindow);

@@ -7,7 +7,7 @@ import {
 	TimesheetStatus,
 	IGetTimesheetInput
 } from '@gauzy/models';
-import { toUTC } from 'libs/utils';
+import { toUTC } from '@gauzy/utils';
 import {
 	NbCheckboxComponent,
 	NbDialogRef,

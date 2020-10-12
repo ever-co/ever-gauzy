@@ -115,7 +115,7 @@ export default class Timerhandler {
 	async getSetActivity(knex, setupWindow, lastTimeSlot, quitApp) {
 		const now = moment();
 		const userInfo = LocalStore.beforeRequestParams();
-		const lastSavedTime = await TimerData.getLastTimer(knex, userInfo)
+		const lastSavedTime = await TimerData.getLastTimer(knex, userInfo);
 		// get aw activity
 		let awActivities = await TimerData.getWindowEvent(
 			knex,
@@ -145,6 +145,8 @@ export default class Timerhandler {
 				type: 'APP',
 				taskId: userInfo.taskId,
 				projectId: userInfo.projectId,
+				organizationContactId: userInfo.organizationContactId,
+				organizationId: userInfo.organizationId,
 				source: 'DESKTOP'
 			};
 		});
@@ -168,7 +170,9 @@ export default class Timerhandler {
 				duration: 0,
 				type: 'APP',
 				taskId: userInfo.taskId,
+				organizationId: userInfo.organizationId,
 				projectId: userInfo.projectId,
+				organizationContactId: userInfo.organizationContactId,
 				metaData:
 					this.configs && this.configs.db === 'sqlite'
 						? JSON.stringify(activityMetadata)

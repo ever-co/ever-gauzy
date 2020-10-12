@@ -1,3 +1,6 @@
+import * as _ from 'underscore';
+import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 import { Connection } from 'typeorm';
 import { Organization } from './organization.entity';
 import * as faker from 'faker';
@@ -11,10 +14,7 @@ import {
 } from '@gauzy/models';
 import { Tenant } from './../tenant/tenant.entity';
 import { Skill } from '../skills/skill.entity';
-import * as _ from 'underscore';
-import * as moment from 'moment';
 import { Contact } from '../contact/contact.entity';
-import * as timezone from 'moment-timezone';
 
 const defaultOrganizationsData = [
 	{

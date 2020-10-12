@@ -8,19 +8,22 @@ export class FileStorageMiddleware implements NestMiddleware {
 
 	async use(req, res, next) {
 		const authHeader = req.headers.authorization;
-		const token = authHeader.split(' ')[1];
-		const data: any = jwt.decode(token);
 
-		let tenantSettings = {};
-		if (data && data.tenantId) {
-			tenantSettings = await this.tenantSettingService.get({
-				where: {
-					tenantId: data.tenantId
-				}
-			});
+		if (authHeader) {
+			const token = authHeader.split(' ')[1];
+			const data: any = jwt.decode(token);
+
+			let tenantSettings = {};
+			if (data && data.tenantId) {
+				tenantSettings = await this.tenantSettingService.get({
+					where: {
+						tenantId: data.tenantId
+					}
+				});
+			}
+
+			req.tenantSettings = tenantSettings;
 		}
-
-		req.tenantSettings = tenantSettings;
 
 		next();
 	}

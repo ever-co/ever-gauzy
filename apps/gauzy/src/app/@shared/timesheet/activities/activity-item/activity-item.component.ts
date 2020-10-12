@@ -33,7 +33,7 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {}
 
-	prgressStatus(value) {
+	progressStatus(value) {
 		if (value <= 25) {
 			return 'danger';
 		} else if (value <= 50) {
