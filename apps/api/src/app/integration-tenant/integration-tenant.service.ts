@@ -18,8 +18,9 @@ export class IntegrationTenantService extends CrudService<IntegrationTenant> {
 	}
 
 	async addIntegration(createIntegrationDto): Promise<IntegrationTenant> {
+		const { tenantId } = createIntegrationDto;
 		const { record: tenant } = await this._tenantService.findOneOrFail(
-			createIntegrationDto.tenantId
+			tenantId
 		);
 		const integration = await this.create({
 			tenant,
@@ -28,11 +29,11 @@ export class IntegrationTenantService extends CrudService<IntegrationTenant> {
 		});
 		const settingsDto = createIntegrationDto.settings.map((setting) => ({
 			...setting,
-			integration
+			integration,
+			tenantId
 		}));
 
 		await this._integrationSettingService.create(settingsDto);
-
 		return integration;
 	}
 

@@ -2,6 +2,7 @@ import {
 	FileStorageProviderEnum,
 	S3FileStorageProviderConfig
 } from './file-provider';
+import { IOrganization } from './organization.model';
 
 export interface ITenant {
 	id?: string;
@@ -10,7 +11,7 @@ export interface ITenant {
 	readonly createdAt?: Date;
 	readonly updatedAt?: Date;
 
-	// organizations?: IOrganization[];
+	organizations?: IOrganization[];
 }
 
 export interface ITenantCreateInput {

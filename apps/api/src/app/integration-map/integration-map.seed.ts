@@ -3,6 +3,8 @@ import { Tenant } from '../tenant/tenant.entity';
 import { IntegrationMap } from './integration-map.entity';
 import * as faker from 'faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
+import { Organization } from '../organization/organization.entity';
+import { IntegrationEntity } from '@gauzy/models';
 
 export const createRandomIntegrationMap = async (
 	connection: Connection,
@@ -24,16 +26,22 @@ export const createRandomIntegrationMap = async (
 				where: [{ tenant: tenant }]
 			}
 		);
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
 		for (const integrationTenant of integrationTenants) {
 			const integrationMap = new IntegrationMap();
-
 			integrationMap.integration = integrationTenant;
-
+			integrationMap.organization = faker.random.arrayElement(
+				organizations
+			);
+			integrationMap.tenant = tenant;
 			//todo: need to understand real values here
-			integrationMap.entity = 'entity-' + faker.random.number(40);
+			integrationMap.entity = faker.random.arrayElement(
+				Object.values(IntegrationEntity)
+			);
 			integrationMap.sourceId = 'sourceId-' + faker.random.number(40);
 			integrationMap.gauzyId = 'gauzyId-' + faker.random.number(40);
-
 			integrationMaps.push(integrationMap);
 		}
 	}

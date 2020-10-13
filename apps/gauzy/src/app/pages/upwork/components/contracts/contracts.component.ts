@@ -18,16 +18,18 @@ import { ActivatedRoute } from '@angular/router';
 	styleUrls: ['./contracts.component.scss'],
 	providers: [TitleCasePipe]
 })
-export class ContractsComponent extends TranslationBaseComponent
+export class ContractsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('contractsTable', { static: false }) contractsTable;
 	private _ngDestroy$: Subject<void> = new Subject();
-	contracts$: Observable<IEngagement[]> = this._us.contracts$;
+	contracts$: Observable<IEngagement[]> = this._upworkStoreServices
+		.contracts$;
 	smartTableSettings;
 	selectedContracts: IEngagement[] = [];
 
 	constructor(
-		private _us: UpworkStoreService,
+		private _upworkStoreServices: UpworkStoreService,
 		private toastrService: NbToastrService,
 		private _ehs: ErrorHandlingService,
 		public translateService: TranslateService,
@@ -40,7 +42,7 @@ export class ContractsComponent extends TranslationBaseComponent
 	}
 
 	private _loagContracts() {
-		this._us
+		this._upworkStoreServices
 			.getContracts()
 			.pipe(
 				catchError((error) => {
@@ -120,7 +122,7 @@ export class ContractsComponent extends TranslationBaseComponent
 	}
 
 	syncContracts() {
-		this._us
+		this._upworkStoreServices
 			.syncContracts(this.selectedContracts)
 			.pipe(
 				tap(() => {

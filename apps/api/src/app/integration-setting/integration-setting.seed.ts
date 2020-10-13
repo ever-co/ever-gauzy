@@ -3,36 +3,45 @@ import { Tenant } from '../tenant/tenant.entity';
 import { IntegrationSetting } from './integration-setting.entity';
 import * as faker from 'faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createRandomIntegrationSetting = async (
-  connection: Connection,
-  tenants: Tenant[]
+	connection: Connection,
+	tenants: Tenant[]
 ): Promise<IntegrationSetting[]> => {
-  if (!tenants) {
-    console.warn(
-      'Warning: tenants not found, Integration Setting  will not be created'
-    );
-    return;
-  }
+	if (!tenants) {
+		console.warn(
+			'Warning: tenants not found, Integration Setting  will not be created'
+		);
+		return;
+	}
 
-  const integrationSettings: IntegrationSetting[] = [];
+	const integrationSettings: IntegrationSetting[] = [];
 
-  for (const tenant of tenants) {
-    const integrationTenants = await connection.manager.find(IntegrationTenant, {
-      where: [{ tenant: tenant }]
-    });
-    for (const integrationTenant of integrationTenants) {
+	for (const tenant of tenants) {
+		const integrationTenants = await connection.manager.find(
+			IntegrationTenant,
+			{
+				where: [{ tenant: tenant }]
+			}
+		);
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
+		for (const integrationTenant of integrationTenants) {
+			const integrationSetting = new IntegrationSetting();
+			integrationSetting.integration = integrationTenant;
+			integrationSetting.organization = faker.random.arrayElement(
+				organizations
+			);
+			integrationSetting.tenant = tenant;
+			//todo: need to understand real values here
+			integrationSetting.settingsName =
+				'Setting-' + faker.random.number(40);
+			integrationSetting.settingsValue = faker.name.jobArea();
+			integrationSettings.push(integrationSetting);
+		}
+	}
 
-      const integrationSetting = new IntegrationSetting();
-
-      integrationSetting.integration = integrationTenant;
-      //todo: need to understand real values here
-      integrationSetting.settingsName = "Setting-"+faker.random.number(40);
-      integrationSetting.settingsValue = faker.name.jobArea();
-
-      integrationSettings.push(integrationSetting);
-    }
-  }
-
-  await connection.manager.save(integrationSettings);
+	await connection.manager.save(integrationSettings);
 };

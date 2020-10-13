@@ -1,9 +1,11 @@
 import { Connection } from 'typeorm';
-import { IntegrationEnum, IntegrationTypeNameEnum } from '@gauzy/models';
+import {
+	IIntegration,
+	IntegrationEnum,
+	IntegrationTypeNameEnum
+} from '@gauzy/models';
 import { IntegrationType } from './integration-type.entity';
 import { Integration } from './integration.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 
 const DEFAULT_INTEGRATIONS = [
 	{
@@ -34,10 +36,8 @@ const DEFAULT_INTEGRATIONS = [
 
 export const createDefaultIntegrations = async (
 	connection: Connection,
-	tenant: Tenant,
-	integrationTypes: IntegrationType[] | void,
-	organization: Organization
-): Promise<Integration[]> => {
+	integrationTypes: IntegrationType[] | void
+): Promise<IIntegration[]> => {
 	if (!integrationTypes) {
 		console.warn(
 			'Warning: integrationTypes not found, DefaultIntegrations will not be created'
@@ -45,15 +45,13 @@ export const createDefaultIntegrations = async (
 		return;
 	}
 
-	const integrations: Integration[] = [];
+	const integrations: IIntegration[] = [];
 	DEFAULT_INTEGRATIONS.forEach(
 		({ name, imgSrc, isComingSoon, integrationTypesMap }) => {
 			const entity = new Integration();
 			entity.name = name;
 			entity.imgSrc = imgSrc;
 			entity.isComingSoon = isComingSoon;
-			entity.tenant = tenant;
-			entity.organization = organization;
 			entity.integrationTypes = integrationTypes.filter((it) =>
 				integrationTypesMap.includes(it.name)
 			);
@@ -67,5 +65,5 @@ export const createDefaultIntegrations = async (
 
 const insertIntegrations = async (
 	connection: Connection,
-	integrations: Integration[]
+	integrations: IIntegration[]
 ) => await connection.manager.save(integrations);

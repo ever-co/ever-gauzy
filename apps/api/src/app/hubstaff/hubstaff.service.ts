@@ -22,7 +22,6 @@ import {
 } from '@gauzy/models';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
 import {
@@ -57,14 +56,12 @@ import { RequestContext } from '../core/context';
 import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
 import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 import { TaskUpdateCommand } from '../tasks/commands/task-update.command';
-
 @Injectable()
 export class HubstaffService {
 	constructor(
 		private _httpService: HttpService,
 		private _integrationService: IntegrationTenantService,
 		private _integrationSettingService: IntegrationSettingService,
-		private _organizationProjectService: OrganizationProjectsService,
 		private _integrationMapService: IntegrationMapService,
 		private _integrationEntitySettingService: IntegrationEntitySettingService,
 		private _integrationEntitySettingTiedEntityService: IntegrationEntitySettingTiedEntityService,

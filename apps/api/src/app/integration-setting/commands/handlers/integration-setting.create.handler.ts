@@ -1,13 +1,13 @@
-import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IntegrationSettingCreateCommand } from '..';
 import { IntegrationSettingService } from '../../integration-setting.service';
 import { IIntegrationSetting } from '@gauzy/models';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(IntegrationSettingCreateCommand)
 export class IntegrationSettingCreateHandler
 	implements ICommandHandler<IntegrationSettingCreateCommand> {
 	constructor(
-		private readonly commandBus: CommandBus,
 		private readonly integrationSettingService: IntegrationSettingService
 	) {}
 
@@ -15,7 +15,9 @@ export class IntegrationSettingCreateHandler
 		command: IntegrationSettingCreateCommand
 	): Promise<IIntegrationSetting> {
 		const { input } = command;
-
-		return await this.integrationSettingService.create(input);
+		const tenantId = RequestContext.currentTenantId();
+		return await this.integrationSettingService.create(
+			Object.assign(input, { tenantId })
+		);
 	}
 }

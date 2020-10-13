@@ -1,21 +1,38 @@
 import { SafeResourceUrl } from '@angular/platform-browser';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganizationProjectsCreateInput } from '..';
+import {
+	IBaseEntityModel,
+	IBasePerTenantAndOrganizationEntityModel,
+	IBasePerTenantEntityModel
+} from './base-entity.model';
+import { IOrganizationProjectsCreateInput } from './organization-projects.model';
+import { ITag } from './tag-entity.model';
 
-export interface IIntegrationSetting {
+export interface IIntegrationSetting
+	extends IBasePerTenantAndOrganizationEntityModel {
 	integration: IIntegrationTenant;
 	settingsName: string;
 	settingsValue: string;
 }
 
-export interface IIntegrationEntitySetting {
-	// integration: IIntegration;
+export interface IIntegrationEntitySetting
+	extends IBasePerTenantAndOrganizationEntityModel {
+	integration?: IIntegrationTenant;
+	readonly integrationId?: string;
 	entity: string;
 	sync: boolean;
 	tiedEntities?: any[];
 }
 
-export interface IIntegrationMap {
+export interface IIntegrationEntitySettingTied
+	extends IBasePerTenantAndOrganizationEntityModel {
+	entity: string;
+	sync: boolean;
+	integrationEntitySetting?: IIntegrationEntitySetting;
+	readonly integrationEntitySettingId?: string;
+}
+
+export interface IIntegrationMap
+	extends IBasePerTenantAndOrganizationEntityModel {
 	integration: IIntegrationTenant;
 	sourceId: string;
 	gauzyId: string;
@@ -28,20 +45,25 @@ export interface IIntegrationViewModel {
 	isComingSoon?: boolean;
 }
 
-export interface IIntegrationTenant
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationTenant extends IBasePerTenantEntityModel {
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];
 }
 
-export interface IIntegration extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegration {
 	name: string;
-	imgSrc?: string;
+	imgSrc: string;
+	isComingSoon?: boolean;
+	isPaid?: boolean;
+	version?: string;
+	docUrl?: string;
+	isFreeTrial?: boolean;
+	freeTrialPeriod?: number;
 	integrationTypes?: IIntegrationType[];
+	tags?: ITag[];
 }
 
-export interface IIntegrationType
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationType extends IBaseEntityModel {
 	name: string;
 	groupName: string;
 	order: number;
@@ -59,14 +81,15 @@ export interface IIntegrationMapSyncProject {
 	sourceId: string;
 }
 
-export interface IIntegrationMapSyncEntityInput {
+export interface IIntegrationMapSyncEntityInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	integrationId: string;
 	sourceId: string;
 	gauzyId: string;
 	entity: string;
 }
 
-export interface IIntegrationTenantCreateDto {
+export interface IIntegrationTenantCreateDto extends IBasePerTenantEntityModel {
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: any[];
@@ -92,6 +115,12 @@ export enum IntegrationEntity {
 	INCOME = 'Income',
 	EXPENSE = 'Expense',
 	PROPOSAL = 'Proposal'
+}
+
+export enum IntegrationProjectTiedEntity {
+	TASK = 'Task',
+	ACTIVITY = 'Activity',
+	SCREENSHOT = 'Screenshot'
 }
 
 export enum IntegrationTypeGroupEnum {

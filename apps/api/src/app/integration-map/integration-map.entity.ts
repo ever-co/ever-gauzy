@@ -2,10 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne } from 'typeorm';
 import { IIntegrationMap } from '@gauzy/models';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('integration_map')
-export class IntegrationMap extends TenantBase implements IIntegrationMap {
+export class IntegrationMap
+	extends TenantOrganizationBase
+	implements IIntegrationMap {
 	@ApiProperty({ type: IntegrationTenant })
 	@ManyToOne((type) => IntegrationTenant, {
 		nullable: false
