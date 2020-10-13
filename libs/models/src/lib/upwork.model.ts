@@ -12,7 +12,7 @@ export interface IAccessToken {
 
 export interface IAccessTokenSecretPair {
 	integrationId?: string;
-	organiztionId?: string;
+	organizationId?: string;
 	url: string;
 	requestToken: string;
 	requestTokenSecret?: string;
