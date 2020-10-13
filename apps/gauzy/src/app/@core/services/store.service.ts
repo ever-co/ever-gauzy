@@ -34,6 +34,8 @@ export interface AppState {
 }
 
 export interface PersistState {
+	organizationId?: string;
+	clientId?: string;
 	token: string;
 	userId: string;
 	serverConnection: string;

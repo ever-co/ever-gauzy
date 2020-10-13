@@ -135,7 +135,10 @@ export class UpworkService {
 		return false;
 	}
 
-	async getAccessTokenSecretPair(config): Promise<IAccessTokenSecretPair> {
+	async getAccessTokenSecretPair(
+		config,
+		organizationId
+	): Promise<IAccessTokenSecretPair> {
 		const consumerAccessToken = await this._consumerHasAccessToken(
 			config.consumerKey
 		);
@@ -180,7 +183,9 @@ export class UpworkService {
 									settingsName: 'requestTokenSecret',
 									settingsValue: requestTokenSecret
 								}
-							]
+							].map((setting) => {
+								return { organizationId, ...setting };
+							})
 						})
 					);
 					return resolve({ url, requestToken, requestTokenSecret });
@@ -189,10 +194,10 @@ export class UpworkService {
 		});
 	}
 
-	getAccessToken({
-		requestToken,
-		verifier
-	}: IAccessTokenDto): Promise<IAccessToken> {
+	getAccessToken(
+		{ requestToken, verifier }: IAccessTokenDto,
+		organizationId: string
+	): Promise<IAccessToken> {
 		return new Promise(async (resolve, reject) => {
 			const { integration } = await this.commandBus.execute(
 				new IntegrationSettingGetCommand({
@@ -221,14 +226,16 @@ export class UpworkService {
 						new IntegrationSettingCreateCommand({
 							integration,
 							settingsName: 'accessToken',
-							settingsValue: accessToken
+							settingsValue: accessToken,
+							organizationId
 						})
 					);
 					await this.commandBus.execute(
 						new IntegrationSettingCreateCommand({
 							integration,
 							settingsName: 'accessTokenSecret',
-							settingsValue: accessTokenSecret
+							settingsValue: accessTokenSecret,
+							organizationId
 						})
 					);
 

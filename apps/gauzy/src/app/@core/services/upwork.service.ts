@@ -24,16 +24,22 @@ export class UpworkService {
 		);
 	}
 
-	getAccessTokenSecretPair(config): Observable<IAccessTokenSecretPair> {
+	getAccessTokenSecretPair(
+		config,
+		organizationId: string
+	): Observable<IAccessTokenSecretPair> {
 		return this.http.post<IAccessTokenSecretPair>(
-			'/api/integrations/upwork/token-secret-pair',
+			`/api/integrations/upwork/token-secret-pair/${organizationId}`,
 			config
 		);
 	}
 
-	getAccessToken(accessTokenDto: IAccessTokenDto): Observable<IAccessToken> {
+	getAccessToken(
+		accessTokenDto: IAccessTokenDto,
+		organizationId: string
+	): Observable<IAccessToken> {
 		return this.http.post<IAccessToken>(
-			'/api/integrations/upwork/access-token',
+			`/api/integrations/upwork/access-token/${organizationId}`,
 			accessTokenDto
 		);
 	}

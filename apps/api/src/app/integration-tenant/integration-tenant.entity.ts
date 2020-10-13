@@ -5,7 +5,8 @@ import { IntegrationEntitySetting } from '../integration-entity-setting/integrat
 import { TenantBase } from '../core/entities/tenant-base';
 
 @Entity('integration_tenant')
-export class IntegrationTenant extends TenantBase
+export class IntegrationTenant
+	extends TenantBase
 	implements IIntegrationTenant {
 	@ApiPropertyOptional({ type: IntegrationEntitySetting, isArray: true })
 	@OneToMany(

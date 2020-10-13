@@ -9,7 +9,7 @@ import { ITag } from './tag-entity.model';
 
 export interface IIntegrationSetting
 	extends IBasePerTenantAndOrganizationEntityModel {
-	integration: IIntegrationTenant;
+	integration?: IIntegrationTenant;
 	settingsName: string;
 	settingsValue: string;
 }
@@ -92,7 +92,7 @@ export interface IIntegrationMapSyncEntityInput
 export interface IIntegrationTenantCreateDto extends IBasePerTenantEntityModel {
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];
-	settings?: any[];
+	settings?: IIntegrationSetting[];
 }
 
 export enum IntegrationEnum {
@@ -115,12 +115,6 @@ export enum IntegrationEntity {
 	INCOME = 'Income',
 	EXPENSE = 'Expense',
 	PROPOSAL = 'Proposal'
-}
-
-export enum IntegrationProjectTiedEntity {
-	TASK = 'Task',
-	ACTIVITY = 'Activity',
-	SCREENSHOT = 'Screenshot'
 }
 
 export enum IntegrationTypeGroupEnum {

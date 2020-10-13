@@ -18,7 +18,8 @@ export class ActivityCreateHandler
 				projectId,
 				date,
 				employeeId,
-				taskId = null
+				taskId = null,
+				organizationId
 			} = input;
 
 			return await this._activityService.create({
@@ -28,7 +29,8 @@ export class ActivityCreateHandler
 				date,
 				projectId,
 				employeeId,
-				taskId
+				taskId,
+				organizationId
 			});
 		} catch (error) {
 			throw new BadRequestException('Cant create activity for time slot');
