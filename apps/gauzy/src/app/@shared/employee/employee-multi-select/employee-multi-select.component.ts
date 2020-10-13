@@ -65,15 +65,16 @@ export class EmployeeSelectComponent implements OnInit {
 	constructor() {}
 
 	set employeeId(val: string[] | string) {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
-		if (val) {
-			this.val = val;
+		setTimeout(() => {
+			if (this.multiple) {
+				this.val = val instanceof Array ? val : [val];
+			} else {
+				this.val = val instanceof Array ? val[0] : val;
+			}
 			this.onChange(val);
-			//this.onTouched(val);
-		}
+		});
 	}
 	get employeeId(): string[] | string {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
 		return this.val;
 	}
 
