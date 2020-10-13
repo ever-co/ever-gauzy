@@ -71,11 +71,15 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Cannot Authorize'
 	})
-	@Post('/token-secret-pair')
+	@Post('/token-secret-pair/:organizationId')
 	async getAccessTokenSecretPair(
-		@Body() config
+		@Body() config,
+		@Param('organizationId') organizationId: string
 	): Promise<IAccessTokenSecretPair> {
-		return await this._upworkService.getAccessTokenSecretPair(config);
+		return await this._upworkService.getAccessTokenSecretPair(
+			config,
+			organizationId
+		);
 	}
 
 	@ApiOperation({ summary: 'Get Access Token.' })
@@ -91,11 +95,15 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
-	@Post('/access-token')
+	@Post('/access-token/:organizationId')
 	async getAccessToken(
-		@Body() accessTokenDto: IAccessTokenDto
+		@Body() accessTokenDto: IAccessTokenDto,
+		@Param('organizationId') organizationId: string
 	): Promise<IAccessToken> {
-		return await this._upworkService.getAccessToken(accessTokenDto);
+		return await this._upworkService.getAccessToken(
+			accessTokenDto,
+			organizationId
+		);
 	}
 
 	@ApiOperation({ summary: 'Get Work Diary.' })

@@ -27,7 +27,8 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 	styleUrls: ['./hubstaff.component.scss'],
 	providers: [TitleCasePipe]
 })
-export class HubstaffComponent extends TranslationBaseComponent
+export class HubstaffComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('projectsTable') projectsTable;
 	settingsSmartTable: object;
@@ -133,6 +134,10 @@ export class HubstaffComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string'
 				},
+				description: {
+					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
+					type: 'string'
+				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string',
@@ -164,7 +169,7 @@ export class HubstaffComponent extends TranslationBaseComponent
 			);
 	}
 
-	selectProject({ isSelected, selected }) {
+	selectProject({ selected }) {
 		this.projectsTable.grid.dataSet.willSelect = false;
 		this.selectedProjects = selected;
 	}

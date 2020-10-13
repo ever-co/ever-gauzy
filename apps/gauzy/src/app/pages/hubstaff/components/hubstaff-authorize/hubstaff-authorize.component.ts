@@ -4,6 +4,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { HubstaffService } from 'apps/gauzy/src/app/@core/services/hubstaff.service';
+import {
+	PersistQuery,
+	PersistStore,
+	Store
+} from 'apps/gauzy/src/app/@core/services/store.service';
+import { IOrganization } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-hubstaff-authorize',
@@ -16,15 +22,30 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	clientSecretForm: FormGroup;
 	hubStaffAppCode: string;
 	rememberState: boolean;
+	organization: IOrganization;
 
 	constructor(
 		private _activatedRoute: ActivatedRoute,
 		private _hubstaffService: HubstaffService,
 		private fb: FormBuilder,
-		private _router: Router
+		private _router: Router,
+		private _storeService: Store,
+		private _persistStore: PersistStore,
+		private _persistQuery: PersistQuery
 	) {}
 
 	ngOnInit() {
+		this._storeService.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe((organization: IOrganization) => {
+				this.organization = organization;
+				this._persistStore.update({
+					organizationId: this.organization.id
+				});
+			});
 		this._initializeForms();
 		this._getHubstaffCode();
 	}
@@ -93,13 +114,23 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 
 	authorizeHubstaff() {
 		const { client_id } = this.authorizeForm.value;
+		this._persistStore.update({
+			clientId: client_id
+		});
 		this._hubstaffService.authorizeClient(client_id);
 	}
 
 	addIntegration() {
 		const { client_secret } = this.clientSecretForm.value;
+		const { clientId, organizationId } = this._persistQuery.getValue();
+
 		this._hubstaffService
-			.addIntegration(this.hubStaffAppCode, client_secret)
+			.addIntegration({
+				code: this.hubStaffAppCode,
+				client_secret,
+				clientId,
+				organizationId
+			})
 			.pipe(
 				tap(({ id }) => {
 					this._redirectToHubstaffIntegration(id);
@@ -110,7 +141,10 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		localStorage.removeItem('client_id');
+		this._persistStore.update({
+			organizationId: null,
+			clientId: null
+		});
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}

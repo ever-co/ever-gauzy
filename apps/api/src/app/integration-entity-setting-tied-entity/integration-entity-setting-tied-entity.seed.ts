@@ -5,10 +5,8 @@ import { IntegrationTenant } from '../integration-tenant/integration-tenant.enti
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
 import { Organization } from '../organization/organization.entity';
-import {
-	IntegrationEntity,
-	IntegrationProjectTiedEntity
-} from 'libs/models/src/lib/integration.model';
+import { IntegrationEntity } from 'libs/models/src/lib/integration.model';
+import { PROJECT_TIED_ENTITIES } from '../hubstaff/hubstaff-entity-settings';
 
 export const createRandomIntegrationEntitySettingTiedEntity = async (
 	connection: Connection,
@@ -55,8 +53,8 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 					IntegrationEntity.PROJECT
 				) {
 					integrationEntitySettingTiedEntity.entity = faker.random.arrayElement(
-						Object.values(IntegrationProjectTiedEntity)
-					);
+						PROJECT_TIED_ENTITIES
+					)['entity'];
 				} else {
 					integrationEntitySettingTiedEntity.entity = faker.random.arrayElement(
 						Object.values(IntegrationEntity)

@@ -39,23 +39,21 @@ export class HubstaffController {
 		@Param('integrationId') integrationId: string,
 		@Body() body
 	): Promise<IHubstaffOrganization[]> {
-		const { organizations } = await this._hubstaffService.fetchIntegration(
-			'https://api.hubstaff.com/v2/organizations',
-			body.token
-		);
-		return organizations;
+		return this._hubstaffService.fetchOrganizations({
+			integrationId,
+			...body
+		});
 	}
 
 	@Post('/projects/:organizationId')
 	async getProjects(
 		@Param('organizationId') organizationId: string,
-		@Body() { token, integrationId }
+		@Body() body
 	): Promise<IHubstaffProject[]> {
-		const { projects } = await this._hubstaffService.fetchIntegration(
-			`https://api.hubstaff.com/v2/organizations/${organizationId}/projects?status=all`,
-			token
-		);
-		return projects;
+		return this._hubstaffService.fetchOrganizationProjects({
+			organizationId,
+			...body
+		});
 	}
 
 	@Post('/sync-projects/:integrationId')
