@@ -32,6 +32,11 @@ export class TimeSlotBulkCreateHandler
 			return [];
 		}
 
+		slots = slots.map((slot) => {
+			slot.startedAt = moment.utc(slot.startedAt).toDate();
+			return slot;
+		});
+
 		const insertedSlots = await this.timeSlotRepository.find({
 			where: {
 				startedAt: In(_.pluck(slots, 'startedAt'))
@@ -86,7 +91,7 @@ export class TimeSlotBulkCreateHandler
 		}
 		slots = insertedSlots.concat(slots);
 
-		const dates = slots.map((slot) => new Date(slot.startedAt));
+		const dates = slots.map((slot) => moment(slot.startedAt).toDate());
 		const mnDate = dates.reduce(function (a, b) {
 			return a < b ? a : b;
 		});
