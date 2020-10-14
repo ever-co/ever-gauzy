@@ -230,6 +230,7 @@ export class HubstaffService {
 			.pipe(
 				switchMap(({ data }) =>
 					this._integrationService.addIntegration({
+						organizationId,
 						tenantId,
 						name: IntegrationEnum.HUBSTAFF,
 						entitySettings,
@@ -367,10 +368,21 @@ export class HubstaffService {
 				});
 				//if organization already integrated then only update model/entity
 				if (record) {
+					//unset sourceId before update organization
+					delete organization['sourceId'];
 					await this.commandBus.execute(
 						new OrganizationUpdateCommand(
 							Object.assign(organization, {
-								gauzyId: record.gauzyId
+								gauzyId: record.gauzyId,
+								imageUrl:
+									organization.imageUrl ||
+									getDummyImage(
+										330,
+										300,
+										organization.name
+											.charAt(0)
+											.toUpperCase()
+									)
 							})
 						)
 					);
@@ -381,7 +393,11 @@ export class HubstaffService {
 						...organization,
 						imageUrl:
 							organization.imageUrl ||
-							getDummyImage(330, 300, organization.name)
+							getDummyImage(
+								330,
+								300,
+								organization.name.charAt(0).toUpperCase()
+							)
 					})
 				);
 				return await this._integrationMapService.create({
@@ -543,10 +559,13 @@ export class HubstaffService {
 		integrationId,
 		organizationId
 	) {
+		const tenantId = RequestContext.currentTenantId();
 		const { record } = await this._integrationMapService.findOneOrFail({
 			where: {
 				sourceId: user_id,
-				entity: IntegrationEntity.EMPLOYEE
+				entity: IntegrationEntity.EMPLOYEE,
+				organizationId,
+				tenantId
 			}
 		});
 
@@ -607,7 +626,7 @@ export class HubstaffService {
 		end
 	) {
 		let integratedTimeLogs = [];
-
+		const tenantId = RequestContext.currentRequest();
 		for await (const timeLog of timeLogs) {
 			const employee = await this._getEmployeeByHubstaffUserId(
 				timeLog.user_id,
@@ -618,7 +637,11 @@ export class HubstaffService {
 
 			let timesheet = await this.commandBus.execute(
 				new TimesheetGetCommand({
-					where: { employeeId: employee.gauzyId }
+					where: {
+						employeeId: employee.gauzyId,
+						organizationId,
+						tenantId
+					}
 				})
 			);
 
@@ -631,7 +654,8 @@ export class HubstaffService {
 						// to be get from formatedLogs, filtered by user and get totals
 						mouse: 0,
 						keyboard: 0,
-						duration: 0
+						duration: 0,
+						organizationId
 					})
 				);
 			}
@@ -644,7 +668,8 @@ export class HubstaffService {
 					duration: timeLog.tracked,
 					startedAt: timeLog.starts_at,
 					timesheetId: timesheet.id,
-					source: TimeLogSourceEnum.HUBSTAFF
+					source: TimeLogSourceEnum.HUBSTAFF,
+					organizationId
 				})
 			);
 
@@ -652,7 +677,8 @@ export class HubstaffService {
 				gauzyId: gauzyTimeLog.id,
 				integrationId,
 				sourceId: timeLog.id,
-				entity: IntegrationEntity.TIME_LOG
+				entity: IntegrationEntity.TIME_LOG,
+				organizationId
 			});
 			integratedTimeLogs = integratedTimeLogs.concat(integratedLogs);
 		}
@@ -705,7 +731,8 @@ export class HubstaffService {
 			gauzyId: employee.id,
 			integrationId,
 			sourceId: user.id,
-			entity: IntegrationEntity.EMPLOYEE
+			entity: IntegrationEntity.EMPLOYEE,
+			organizationId
 		});
 	}
 

@@ -19,6 +19,7 @@ import { Expense } from '../expense/expense.entity';
 import { Income } from '../income/income.entity';
 import { reflect } from '../core';
 import { v4 as uuidv4 } from 'uuid';
+import { RequestContext } from '../core/context';
 
 @Injectable()
 export class UpworkTransactionService {
@@ -49,7 +50,7 @@ export class UpworkTransactionService {
 		private commandBus: CommandBus
 	) {}
 
-	async handleTransactions(file, { orgId }) {
+	async handleTransactions(file, { organizationId }) {
 		const uuid = uuidv4();
 		const dirPath = `./apps/api/src/app/integrations/upwork/csv/${uuid}`;
 		const csvData = file.buffer.toString();
@@ -63,6 +64,8 @@ export class UpworkTransactionService {
 			.createReadStream(filePath)
 			.pipe(csv())
 			.on('data', (data) => (results = results.concat(data)));
+
+		const tenantId = RequestContext.currentTenantId();
 
 		return new Promise((resolve, reject) => {
 			csvReader.on('end', async () => {
@@ -98,7 +101,7 @@ export class UpworkTransactionService {
 							record: employee
 						} = await this._findRecordOrThrow(
 							this._employeeService,
-							{ where: { user } },
+							{ where: { user, organizationId, tenantId } },
 							`Employee ${Freelancer} not found`
 						);
 
@@ -108,7 +111,9 @@ export class UpworkTransactionService {
 							this._expenseCategoryService,
 							{
 								where: {
-									name: ExpenseCategoriesEnum.SERVICE_FEE
+									name: ExpenseCategoriesEnum.SERVICE_FEE,
+									organizationId,
+									tenantId
 								}
 							},
 							`Category: ${ExpenseCategoriesEnum.SERVICE_FEE} not found`
@@ -121,7 +126,8 @@ export class UpworkTransactionService {
 							{
 								where: {
 									name: OrganizationVendorEnum.UPWORK,
-									organizationId: orgId
+									organizationId,
+									tenantId
 								}
 							},
 							`Vendor: ${OrganizationVendorEnum.UPWORK} not found`
@@ -132,7 +138,7 @@ export class UpworkTransactionService {
 						} = await this._findRecordOrThrow(
 							this._orgClientService,
 							{
-								where: { name: Team, organizationId: orgId }
+								where: { name: Team, organizationId, tenantId }
 							},
 							`Client: ${Team} not found`
 						);
@@ -143,7 +149,7 @@ export class UpworkTransactionService {
 							valueDate: new Date(date),
 							employeeId: employee.id,
 							currency: Currency,
-							orgId
+							organizationId
 						};
 
 						const cmd = this.commandBusMapper[result.Type];

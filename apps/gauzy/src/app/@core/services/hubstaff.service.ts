@@ -282,9 +282,9 @@ export class HubstaffService {
 	/*
 	 * Check remeber state for upwork integration
 	 */
-	checkRemeberState() {
+	checkRemeberState(organizationId: string) {
 		return this._http.get<any>(
-			`/api/integration/check/state/${IntegrationEnum.HUBSTAFF}`
+			`/api/integration/check/state/${IntegrationEnum.HUBSTAFF}/${organizationId}`
 		);
 	}
 }

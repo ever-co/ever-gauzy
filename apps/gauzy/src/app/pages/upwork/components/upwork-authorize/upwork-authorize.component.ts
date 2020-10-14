@@ -1,7 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { tap, switchMap, takeUntil, filter } from 'rxjs/operators';
+import {
+	tap,
+	switchMap,
+	takeUntil,
+	filter,
+	debounceTime
+} from 'rxjs/operators';
 import { EMPTY, Subject } from 'rxjs';
 import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
 import {
@@ -33,14 +39,6 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this._activatedRoute.data
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data: any) => {
-				if (data.hasOwnProperty('state')) {
-					this.rememberState = data['state'];
-					this._getUpworkVerifier();
-				}
-			});
 		this._storeService.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -51,6 +49,14 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 				this._persistStore.update({
 					organizationId: this.organization.id
 				});
+			});
+		this._activatedRoute.data
+			.pipe(takeUntil(this._ngDestroy$), debounceTime(100))
+			.subscribe((data: any) => {
+				if (data.hasOwnProperty('state')) {
+					this.rememberState = data['state'];
+					this._getUpworkVerifier();
+				}
 			});
 	}
 
@@ -93,8 +99,9 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	}
 
 	private _checkRemeberState() {
+		const { organizationId } = this._persistQuery.getValue();
 		this._upworkService
-			.checkRemeberState()
+			.checkRemeberState(organizationId)
 			.pipe(
 				tap((res) => {
 					if (res.success) {

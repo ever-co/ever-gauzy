@@ -2,11 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
 import { IIntegrationTenant } from '@gauzy/models';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('integration_tenant')
 export class IntegrationTenant
-	extends TenantBase
+	extends TenantOrganizationBase
 	implements IIntegrationTenant {
 	@ApiPropertyOptional({ type: IntegrationEntitySetting, isArray: true })
 	@OneToMany(

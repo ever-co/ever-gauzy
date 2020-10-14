@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { takeUntil, tap } from 'rxjs/operators';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { NbToastrService } from '@nebular/theme';
@@ -13,8 +13,9 @@ import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service'
 	templateUrl: './transactions.component.html',
 	styleUrls: ['./transactions.component.scss']
 })
-export class TransactionsComponent extends TranslationBaseComponent
-	implements OnInit {
+export class TransactionsComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$: Subject<void> = new Subject();
 	private _selectedOrganizationId: string;
 	file: File;
@@ -39,6 +40,11 @@ export class TransactionsComponent extends TranslationBaseComponent
 			});
 	}
 
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
+
 	imageUrlChanged(event) {
 		const [file] = event.target.files;
 		this.file = file;
@@ -48,7 +54,7 @@ export class TransactionsComponent extends TranslationBaseComponent
 	importCsv() {
 		const formData = new FormData();
 		formData.append('file', this.file);
-		formData.append('orgId', this._selectedOrganizationId);
+		formData.append('organizationId', this._selectedOrganizationId);
 		this._upworkService
 			.uploadTransaction(formData)
 			.pipe(

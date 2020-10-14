@@ -91,8 +91,9 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	 * Hubstaff integration remember state API call
 	 */
 	private _checkRemeberState() {
+		const { organizationId } = this._persistQuery.getValue();
 		this._hubstaffService
-			.checkRemeberState()
+			.checkRemeberState(organizationId)
 			.pipe(
 				tap((res) => {
 					if (res.success) {

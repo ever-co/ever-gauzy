@@ -8,7 +8,8 @@ import {
 	IEngagement,
 	IUpworkApiConfig,
 	IIntegrationMap,
-	IntegrationEnum
+	IntegrationEnum,
+	IUpworkClientSecretPair
 } from '@gauzy/models';
 
 @Injectable({
@@ -25,7 +26,7 @@ export class UpworkService {
 	}
 
 	getAccessTokenSecretPair(
-		config,
+		config: IUpworkClientSecretPair,
 		organizationId: string
 	): Observable<IAccessTokenSecretPair> {
 		return this.http.post<IAccessTokenSecretPair>(
@@ -52,9 +53,11 @@ export class UpworkService {
 		);
 	}
 
-	getConfig(integrationId): Observable<IUpworkApiConfig> {
+	getConfig(dto): Observable<IUpworkApiConfig> {
+		const { integrationId, data } = dto;
 		return this.http.get<IUpworkApiConfig>(
-			`/api/integrations/upwork/config/${integrationId}`
+			`/api/integrations/upwork/config/${integrationId}`,
+			{ params: { data } }
 		);
 	}
 
@@ -83,9 +86,9 @@ export class UpworkService {
 	/*
 	 * Check remember state for upwork integration
 	 */
-	checkRemeberState() {
+	checkRemeberState(organizationId: string) {
 		return this.http.get<any>(
-			`/api/integration/check/state/${IntegrationEnum.UPWORK}`
+			`/api/integration/check/state/${IntegrationEnum.UPWORK}/${organizationId}`
 		);
 	}
 }

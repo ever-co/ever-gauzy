@@ -18,12 +18,13 @@ export class IntegrationTenantService extends CrudService<IntegrationTenant> {
 	}
 
 	async addIntegration(createIntegrationDto): Promise<IntegrationTenant> {
-		const { tenantId } = createIntegrationDto;
+		const { tenantId, organizationId } = createIntegrationDto;
 		const { record: tenant } = await this._tenantService.findOneOrFail(
 			tenantId
 		);
 		const integration = await this.create({
 			tenant,
+			organizationId,
 			name: createIntegrationDto.name,
 			entitySettings: createIntegrationDto.entitySettings
 		});

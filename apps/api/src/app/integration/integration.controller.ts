@@ -79,12 +79,14 @@ export class IntegrationController extends CrudController<Integration> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
-	@Get('check/state/:integration')
+	@Get('check/state/:integration/:organizationId')
 	async checkRememberState(
-		@Param('integration') integration: IntegrationEnum
+		@Param('integration') integration: IntegrationEnum,
+		@Param('organizationId') organizationId: string
 	): Promise<any> {
 		return await this._integrationService.checkIntegrationRemeberState(
-			integration
+			integration,
+			organizationId
 		);
 	}
 }

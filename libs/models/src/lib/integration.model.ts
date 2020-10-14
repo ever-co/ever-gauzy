@@ -89,7 +89,8 @@ export interface IIntegrationMapSyncEntityInput
 	entity: string;
 }
 
-export interface IIntegrationTenantCreateDto extends IBasePerTenantEntityModel {
+export interface IIntegrationTenantCreateDto
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];

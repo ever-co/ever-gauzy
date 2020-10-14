@@ -5,6 +5,7 @@ import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { EmployeeStatisticsService } from '../../../employee-statistics';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(ExpenseCreateCommand)
 export class ExpenseCreateHandler
@@ -68,6 +69,7 @@ export class ExpenseCreateHandler
 		expense.splitExpense = input.splitExpense;
 		expense.tags = input.tags;
 		expense.status = input.status;
+		expense.tenantId = RequestContext.currentTenantId();
 
 		if (!expense.currency) {
 			expense.currency = organization.currency;

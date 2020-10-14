@@ -8,28 +8,31 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/internal/operators/tap';
-import { debounceTime } from 'rxjs/internal/operators/debounceTime';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from 'apps/gauzy/src/app/@shared/table-components/income-amount/income-amount.component';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { UpworkStoreService } from '../../../../@core/services/upwork-store.service';
-import { IUpworkDateRange } from '@gauzy/models';
+import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/models';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ngx-reports',
 	templateUrl: './reports.component.html',
 	styleUrls: ['./reports.component.scss']
 })
-export class ReportsComponent extends TranslationBaseComponent
+export class ReportsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 	reports$: Observable<any> = this._upworkStoreService.reports$;
 	settingsSmartTable: object;
 	today: Date = new Date();
-	defaultDateRange$;
+	defaultDateRange$ = this._upworkStoreService.dateRangeActivity$;
 	displayDate: any;
 	updateReports$: Subject<any> = new Subject();
+	private _ngDestroy$: Subject<void> = new Subject();
+	organization: IOrganization;
 
 	private _selectedDateRange: IUpworkDateRange;
 	public get selectedDateRange(): IUpworkDateRange {
@@ -42,7 +45,8 @@ export class ReportsComponent extends TranslationBaseComponent
 	constructor(
 		private readonly cdr: ChangeDetectorRef,
 		public translateService: TranslateService,
-		private readonly _upworkStoreService: UpworkStoreService
+		private readonly _upworkStoreService: UpworkStoreService,
+		private readonly _storeService: Store
 	) {
 		super(translateService);
 	}
@@ -50,16 +54,27 @@ export class ReportsComponent extends TranslationBaseComponent
 	ngOnInit(): void {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this._setDefaultRange();
-
-		this.updateReports$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this._getReport();
+		this._storeService.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe((organization: IOrganization) => {
+				this.organization = organization;
+				this._setDefaultRange();
 			});
+		this.updateReports$
+			.pipe(
+				tap(() => this._getReport()),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	ngAfterViewInit(): void {
 		this.cdr.detectChanges();
@@ -67,8 +82,8 @@ export class ReportsComponent extends TranslationBaseComponent
 
 	private _getReport(): void {
 		this._upworkStoreService
-			.loadReports()
-			.pipe(untilDestroyed(this))
+			.loadReports(this.organization)
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe();
 	}
 
@@ -93,7 +108,7 @@ export class ReportsComponent extends TranslationBaseComponent
 						if (item.hasOwnProperty('category')) {
 							return item.category ? item.category.name : null;
 						}
-						return 'Hourly';
+						return IncomeTypeEnum.HOURLY;
 					}
 				},
 				clientName: {
@@ -149,7 +164,7 @@ export class ReportsComponent extends TranslationBaseComponent
 
 	private _applyTranslationOnSmartTable(): void {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this._loadSettingsSmartTable();
 			});
@@ -160,6 +175,7 @@ export class ReportsComponent extends TranslationBaseComponent
 	 */
 	private _setDefaultRange(): void {
 		this.defaultDateRange$ = this._upworkStoreService.dateRangeActivity$.pipe(
+			debounceTime(100),
 			tap(
 				(dateRange) => (
 					(this.selectedDateRange = dateRange),
@@ -230,6 +246,9 @@ export class ReportsComponent extends TranslationBaseComponent
 	 * Disable next month button
 	 */
 	public isNextButtonDisabled(): boolean {
+		if (!this.selectedDateRange) {
+			return true;
+		}
 		return moment(this.selectedDateRange.end).isSameOrAfter(
 			this.today,
 			'day'

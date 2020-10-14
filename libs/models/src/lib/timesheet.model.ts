@@ -27,7 +27,8 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	status: string;
 }
 
-export interface ITimesheetCreateInput {
+export interface ITimesheetCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
 	approvedById?: string;
 	duration: number;
