@@ -23,7 +23,10 @@ export class IntegrationService extends CrudService<Integration> {
 	/*
 	 * Check upwork remember state for logged in user
 	 */
-	public async checkIntegrationRemeberState(integration: IntegrationEnum) {
+	public async checkIntegrationRemeberState(
+		integration: IntegrationEnum,
+		organizationId: string
+	) {
 		try {
 			const user = RequestContext.currentUser();
 			const { tenantId } = user;
@@ -33,7 +36,8 @@ export class IntegrationService extends CrudService<Integration> {
 			return await this._integrationTenantService.findOneOrFail({
 				where: {
 					tenant: tenant,
-					name: integration
+					name: integration,
+					organizationId
 				},
 				order: {
 					updatedAt: 'DESC'

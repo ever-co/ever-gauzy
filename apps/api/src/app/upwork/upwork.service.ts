@@ -25,7 +25,8 @@ import {
 	IUpworkProposalStatusEnum,
 	IUpworkDateRange,
 	ContactType,
-	TimeLogSourceEnum
+	TimeLogSourceEnum,
+	IUpworkClientSecretPair
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
@@ -97,10 +98,16 @@ export class UpworkService {
 		private commandBus: CommandBus
 	) {}
 
-	private async _consumerHasAccessToken(consumerKey: string) {
+	private async _consumerHasAccessToken(
+		config: IUpworkClientSecretPair,
+		organizationId: string
+	) {
 		const integrationSetting = await this.commandBus.execute(
 			new IntegrationSettingGetCommand({
-				where: { settingsValue: consumerKey },
+				where: {
+					settingsValue: config.consumerKey,
+					organizationId: organizationId
+				},
 				relations: ['integration']
 			})
 		);
@@ -110,7 +117,10 @@ export class UpworkService {
 
 		const integrationSettings = await this.commandBus.execute(
 			new IntegrationSettingGetManyCommand({
-				where: { integration: integrationSetting.integration }
+				where: {
+					integration: integrationSetting.integration,
+					organizationId
+				}
 			})
 		);
 		if (!integrationSettings.length) {
@@ -136,11 +146,12 @@ export class UpworkService {
 	}
 
 	async getAccessTokenSecretPair(
-		config,
-		organizationId
+		config: IUpworkClientSecretPair,
+		organizationId: string
 	): Promise<IAccessTokenSecretPair> {
 		const consumerAccessToken = await this._consumerHasAccessToken(
-			config.consumerKey
+			config,
+			organizationId
 		);
 
 		// access token live forever, if user already registered app, return the access token;
@@ -164,6 +175,7 @@ export class UpworkService {
 
 					await this.commandBus.execute(
 						new IntegrationTenantCreateCommand({
+							organizationId,
 							name: IntegrationEnum.UPWORK,
 							entitySettings: [],
 							settings: [
@@ -188,7 +200,12 @@ export class UpworkService {
 							})
 						})
 					);
-					return resolve({ url, requestToken, requestTokenSecret });
+					return resolve({
+						url,
+						requestToken,
+						requestTokenSecret,
+						organizationId
+					});
 				}
 			);
 		});
@@ -201,13 +218,19 @@ export class UpworkService {
 		return new Promise(async (resolve, reject) => {
 			const { integration } = await this.commandBus.execute(
 				new IntegrationSettingGetCommand({
-					where: { settingsValue: requestToken },
+					where: {
+						settingsValue: requestToken,
+						organizationId
+					},
 					relations: ['integration']
 				})
 			);
 			const integrationSettings = await this.commandBus.execute(
 				new IntegrationSettingGetManyCommand({
-					where: { integration }
+					where: {
+						integration,
+						organizationId
+					}
 				})
 			);
 			const integrationSetting = arrayToObject(
@@ -249,21 +272,25 @@ export class UpworkService {
 		});
 	}
 
-	async getConfig(integrationId): Promise<IUpworkApiConfig> {
-		const tenantId = RequestContext.currentTenantId();
+	async getConfig(integrationId: string, filter): Promise<IUpworkApiConfig> {
+		const { organizationId, tenantId } = filter;
 		const integration = await this.commandBus.execute(
 			new IntegrationTenantGetCommand({
 				where: {
 					id: integrationId,
 					tenant: {
 						id: tenantId
-					}
+					},
+					organizationId
 				}
 			})
 		);
 		const integrationSettings = await this.commandBus.execute(
 			new IntegrationSettingGetManyCommand({
-				where: { integration }
+				where: {
+					integration,
+					organizationId
+				}
 			})
 		);
 		const {
@@ -1285,6 +1312,7 @@ export class UpworkService {
 		filter,
 		relations
 	): Promise<IPagination<any>> {
+		const { organizationId, tenantId } = filter;
 		const { items, total } = await this._integrationMapService.findAll({
 			where: {
 				integration: {
@@ -1293,7 +1321,9 @@ export class UpworkService {
 				entity: In([
 					IntegrationEntity.INCOME,
 					IntegrationEntity.EXPENSE
-				])
+				]),
+				organizationId,
+				tenantId
 			}
 		});
 
@@ -1309,24 +1339,23 @@ export class UpworkService {
 		const {
 			dateRange: { start, end }
 		} = filter;
+
+		const whereClause = {
+			id: In(gauzyIds),
+			valueDate: Between(
+				moment(start).format('YYYY-MM-DD hh:mm:ss'),
+				moment(end).format('YYYY-MM-DD hh:mm:ss')
+			),
+			organizationId,
+			tenantId
+		};
+
 		const income = await this._incomeService.findAll({
-			where: {
-				id: In(gauzyIds),
-				valueDate: Between(
-					moment(start).format('YYYY-MM-DD hh:mm:ss'),
-					moment(end).format('YYYY-MM-DD hh:mm:ss')
-				)
-			},
+			where: whereClause,
 			relations: relations.income
 		});
 		const expense = await this._expenseService.findAll({
-			where: {
-				id: In(gauzyIds),
-				valueDate: Between(
-					moment(start).format('YYYY-MM-DD hh:mm:ss'),
-					moment(end).format('YYYY-MM-DD hh:mm:ss')
-				)
-			},
+			where: whereClause,
 			relations: relations.expense
 		});
 

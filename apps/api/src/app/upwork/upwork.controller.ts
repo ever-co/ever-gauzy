@@ -22,7 +22,8 @@ import {
 	IGetWorkDiaryDto,
 	IGetContractsDto,
 	IEngagement,
-	IUpworkApiConfig
+	IUpworkApiConfig,
+	IUpworkClientSecretPair
 } from '@gauzy/models';
 import { Expense } from '../expense/expense.entity';
 import { Income } from '../income/income.entity';
@@ -73,7 +74,7 @@ export class UpworkController {
 	})
 	@Post('/token-secret-pair/:organizationId')
 	async getAccessTokenSecretPair(
-		@Body() config,
+		@Body() config: IUpworkClientSecretPair,
 		@Param('organizationId') organizationId: string
 	): Promise<IAccessTokenSecretPair> {
 		return await this._upworkService.getAccessTokenSecretPair(
@@ -161,9 +162,11 @@ export class UpworkController {
 	})
 	@Get('config/:integrationId')
 	async getConfig(
-		@Param('integrationId') integrationId: string
+		@Param('integrationId') integrationId: string,
+		@Query('data') data: string
 	): Promise<IUpworkApiConfig> {
-		return await this._upworkService.getConfig(integrationId);
+		const { filter } = JSON.parse(data);
+		return await this._upworkService.getConfig(integrationId, filter);
 	}
 
 	@ApiOperation({ summary: 'Sync Contracts.' })

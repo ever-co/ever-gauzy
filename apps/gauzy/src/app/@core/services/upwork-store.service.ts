@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
-import { IEngagement, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/models';
+import {
+	IEngagement,
+	IOrganization,
+	IUpworkApiConfig,
+	IUpworkDateRange
+} from '@gauzy/models';
 import { UpworkService } from './upwork.service';
 import { tap, switchMap, map } from 'rxjs/operators';
 import { Store } from './store.service';
@@ -107,14 +112,18 @@ export class UpworkStoreService {
 	/**
 	 * Get upwork income/expense reports
 	 */
-	loadReports(): Observable<any> {
+	loadReports(organization: IOrganization): Observable<any> {
+		const { id: organizationId, tenantId } = organization;
 		const relations: object = {
 			income: ['employee', 'employee.user'],
 			expense: ['employee', 'employee.user', 'vendor', 'category']
 		};
 		const dateRange = this._dateRangeActivity$.getValue();
 		const integrationId = this._selectedIntegrationId$.getValue();
-		const data = JSON.stringify({ relations, filter: { dateRange } });
+		const data = JSON.stringify({
+			relations,
+			filter: { dateRange, ...{ organizationId, tenantId } }
+		});
 
 		return this._upworkService.getAllReports({ integrationId, data }).pipe(
 			map((reports) => reports.items),
@@ -182,14 +191,18 @@ export class UpworkStoreService {
 		});
 	}
 
-	getConfig(integrationId: string): Observable<IUpworkApiConfig> {
+	getConfig(findInput): Observable<IUpworkApiConfig> {
+		const { integrationId, organizationId, tenantId } = findInput;
 		this.setSelectedIntegrationId(integrationId);
 		const config$ = this._config$.getValue();
 		if (config$) {
 			return EMPTY;
 		}
+		const data = JSON.stringify({
+			filter: { ...{ organizationId, tenantId } }
+		});
 		return this._upworkService
-			.getConfig(integrationId)
+			.getConfig({ integrationId, data })
 			.pipe(tap((config) => this._config$.next(config)));
 	}
 
