@@ -78,7 +78,7 @@ export class TimeSlotMergeHandler
 					);
 
 					const newTimeSlot = new TimeSlot({
-						..._.omit(timeSlots[0], 'id'),
+						..._.omit(timeSlots[0]),
 						duration,
 						screenshots,
 						timeLogs,
@@ -86,9 +86,13 @@ export class TimeSlotMergeHandler
 					});
 					await this.screenshotRepository.save(screenshots);
 					await this.timeSlotRepository.save(newTimeSlot);
-					await this.timeSlotRepository.delete({
-						id: In(_.pluck(timeSlots, 'id'))
-					});
+					const ids = _.pluck(timeSlots, 'id');
+					ids.splice(0, 1);
+					if (ids.length > 0) {
+						await this.timeSlotRepository.delete({
+							id: In(ids)
+						});
+					}
 				})
 				.values()
 				.value();
