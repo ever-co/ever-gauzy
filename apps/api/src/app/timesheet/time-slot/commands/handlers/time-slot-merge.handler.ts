@@ -64,17 +64,14 @@ export class TimeSlotMergeHandler
 					let duration = 0;
 					for (let index = 0; index < timeSlots.length; index++) {
 						const timeSlot = timeSlots[index];
-						duration += timeSlot.duration;
+						duration =
+							duration + parseInt(timeSlot.duration + '', 10);
 						screenshots = screenshots.concat(timeSlot.screenshots);
 						timeLogs = timeLogs.concat(timeSlot.timeLogs);
 					}
-
-					timeLogs = _.uniq(timeLogs, (timeLog) => timeLog.id);
 					screenshots = screenshots.map(
 						(screenshot) =>
-							new Screenshot(
-								_.omit(screenshot, ['id', 'timeSlotId'])
-							)
+							new Screenshot(_.omit(screenshot, ['timeSlotId']))
 					);
 
 					const newTimeSlot = new TimeSlot({
@@ -84,7 +81,7 @@ export class TimeSlotMergeHandler
 						timeLogs,
 						startedAt: moment.utc(slotStart).toDate()
 					});
-					await this.screenshotRepository.save(screenshots);
+					// await this.screenshotRepository.save(screenshots);
 					await this.timeSlotRepository.save(newTimeSlot);
 					const ids = _.pluck(timeSlots, 'id');
 					ids.splice(0, 1);
