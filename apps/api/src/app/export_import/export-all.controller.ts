@@ -28,9 +28,10 @@ export class ExportAllController implements OnDestroy {
 		description: 'Record not found'
 	})
 	@Get()
-	async exportAll(@Res() res) {
+	async exportAll(@Query('data') data: string, @Res() res) {
+		const { findInput = null } = JSON.parse(data);
 		await this.exportService.createFolders();
-		await this.exportService.exportTables();
+		await this.exportService.exportTables(findInput);
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
@@ -52,10 +53,13 @@ export class ExportAllController implements OnDestroy {
 	})
 	@Get('filter')
 	async exportByName(@Query('data') data: string, @Res() res): Promise<any> {
-		const { names } = JSON.parse(data);
+		const {
+			entities: { names },
+			findInput = null
+		} = JSON.parse(data);
 
 		await this.exportService.createFolders();
-		await this.exportService.exportSpecificTables(names);
+		await this.exportService.exportSpecificTables(names, findInput);
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();

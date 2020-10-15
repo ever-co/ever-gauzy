@@ -65,7 +65,7 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@RelationId((employee: Employee) => employee.contact)
 	readonly contactId?: string;
 
-	@ManyToMany((type) => Skill, (skill) => skill.employee)
+	@ManyToMany((type) => Skill, (skill) => skill.employees)
 	@JoinTable({
 		name: 'skill_employee'
 	})

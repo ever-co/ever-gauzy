@@ -8,7 +8,11 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { EmailTemplateNameEnum, LanguagesEnum } from '@gauzy/models';
+import {
+	EmailTemplateNameEnum,
+	IOrganization,
+	LanguagesEnum
+} from '@gauzy/models';
 import { NbThemeService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import 'brace';
@@ -25,7 +29,8 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 	templateUrl: './email-templates.component.html',
 	styleUrls: ['./email-templates.component.scss']
 })
-export class EmailTemplatesComponent extends TranslationBaseComponent
+export class EmailTemplatesComponent
+	extends TranslationBaseComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -33,6 +38,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 	previewSubject: SafeHtml;
 	organizationName: string;
 	organizationId: string;
+	organization: IOrganization;
 	form: FormGroup;
 
 	@ViewChild('subjectEditor') subjectEditor;
@@ -56,11 +62,12 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 	async ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
+			.subscribe(async (org) => {
 				if (org) {
+					this.organization = org;
 					this.organizationName = org.name;
 					this.organizationId = org.id;
-					this.getTemplate();
+					await this.getTemplate();
 				}
 			});
 
@@ -103,40 +110,49 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 		this.subjectEditor
 			.getEditor()
 			.setOptions({ ...editorOptions, maxLines: 2 });
-		this.getTemplate();
 	}
 
 	async getTemplate() {
-		const result = this.form
-			? await this.emailTemplateService.getTemplate({
-					languageCode: this.form.get('languageCode').value,
-					name: this.form.get('name').value,
-					organizationId: this.organizationId
-			  })
-			: await this.emailTemplateService.getTemplate({
-					languageCode: LanguagesEnum.ENGLISH,
-					name: EmailTemplateNameEnum.WELCOME_USER,
-					organizationId: this.organizationId
-			  });
-		this.emailEditor.value = result.template;
-		this.subjectEditor.value = result.subject;
+		try {
+			const { id: organizationId, tenantId } = this.organization;
+			const result = this.form
+				? await this.emailTemplateService.getTemplate({
+						languageCode: this.form.get('languageCode').value,
+						name: this.form.get('name').value,
+						organizationId,
+						tenantId
+				  })
+				: await this.emailTemplateService.getTemplate({
+						languageCode: LanguagesEnum.ENGLISH,
+						name: EmailTemplateNameEnum.WELCOME_USER,
+						organizationId,
+						tenantId
+				  });
+			this.emailEditor.value = result.template;
+			this.subjectEditor.value = result.subject;
 
-		const {
-			html: email
-		} = await this.emailTemplateService.generateTemplatePreview(
-			result.template
-		);
-		const {
-			html: subject
-		} = await this.emailTemplateService.generateTemplatePreview(
-			result.subject
-		);
-		this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(email);
+			const {
+				html: email
+			} = await this.emailTemplateService.generateTemplatePreview(
+				result.template
+			);
+			const {
+				html: subject
+			} = await this.emailTemplateService.generateTemplatePreview(
+				result.subject
+			);
+			this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(email);
 
-		this.previewSubject = this.sanitizer.sanitize(
-			SecurityContext.HTML,
-			subject
-		);
+			this.previewSubject = this.sanitizer.sanitize(
+				SecurityContext.HTML,
+				subject
+			);
+		} catch (error) {
+			this.toastrService.danger(
+				error.error.message || error,
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
 	}
 
 	private _initializeForm() {
@@ -166,9 +182,11 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 
 	async submitForm() {
 		try {
+			const { id: organizationId, tenantId } = this.organization;
 			await this.emailTemplateService.saveEmailTemplate({
 				...this.form.value,
-				organizationId: this.organizationId
+				organizationId,
+				tenantId
 			});
 			this.toastrService.primary(
 				this.getTranslation('TOASTR.MESSAGE.EMAIL_TEMPLATE_SAVED', {

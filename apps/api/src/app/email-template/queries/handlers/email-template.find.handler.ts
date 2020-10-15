@@ -18,7 +18,7 @@ export class FindEmailTemplateHandler
 		command: FindEmailTemplateQuery
 	): Promise<ICustomizableEmailTemplate> {
 		const {
-			input: { languageCode, name, organizationId }
+			input: { languageCode, name, organizationId, tenantId }
 		} = command;
 
 		const emailTemplate: ICustomizableEmailTemplate = {
@@ -27,8 +27,20 @@ export class FindEmailTemplateHandler
 		};
 
 		[emailTemplate.subject, emailTemplate.template] = await Promise.all([
-			this._fetchTemplate(languageCode, name, organizationId, 'subject'),
-			this._fetchTemplate(languageCode, name, organizationId, 'html')
+			this._fetchTemplate(
+				languageCode,
+				name,
+				organizationId,
+				tenantId,
+				'subject'
+			),
+			this._fetchTemplate(
+				languageCode,
+				name,
+				organizationId,
+				tenantId,
+				'html'
+			)
 		]);
 
 		return emailTemplate;
@@ -38,6 +50,7 @@ export class FindEmailTemplateHandler
 		languageCode: LanguagesEnum,
 		name: EmailTemplateNameEnum,
 		organizationId: string,
+		tenantId: string,
 		type: 'html' | 'subject'
 	): Promise<string> {
 		let subject = '';
@@ -52,7 +65,8 @@ export class FindEmailTemplateHandler
 		} = await this.emailTemplateService.findOneOrFail({
 			languageCode,
 			name: `${name}/${type}`,
-			organization: { id: organizationId }
+			organization: { id: organizationId },
+			tenantId
 		});
 
 		if (found) {

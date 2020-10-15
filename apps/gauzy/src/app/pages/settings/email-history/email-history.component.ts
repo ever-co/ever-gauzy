@@ -7,13 +7,16 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { EmailFiltersComponent } from './email-filters/email-filters.component';
-
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 @Component({
 	selector: 'ngx-email-history',
 	templateUrl: './email-history.component.html',
 	styleUrls: ['./email-history.component.scss']
 })
-export class EmailHistoryComponent implements OnInit, OnDestroy {
+export class EmailHistoryComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _onDestroy$ = new Subject<void>();
 
 	private _selectedOrganization: IOrganization;
@@ -39,8 +42,11 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 		private emailService: EmailService,
 		private sanitizer: DomSanitizer,
 		private store: Store,
-		private toastrService: NbToastrService
-	) {}
+		private toastrService: NbToastrService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.store.selectedOrganization$
@@ -48,8 +54,15 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganization = org;
-					// TODO: Here reset all filters!
-					this._getSelectedOrganizationEmails(org.id);
+					const {
+						id: organizationId,
+						tenantId
+					} = this._selectedOrganization;
+					this.resetFilters();
+					this._getSelectedOrganizationEmails(
+						organizationId,
+						tenantId
+					);
 				}
 			});
 	}
@@ -61,17 +74,21 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 	async openFiltersDialog() {
 		const filters = await this.dialogService
 			.open(EmailFiltersComponent, {
-				context: { filters: this.filters }
+				context: {
+					filters: this.filters,
+					organization: this._selectedOrganization
+				}
 			})
 			.onClose.pipe(first())
 			.toPromise();
 
 		if (filters) {
+			const { id: organizationId, tenantId } = this._selectedOrganization;
 			this._getSelectedOrganizationEmails(
-				this._selectedOrganization.id,
+				organizationId,
+				tenantId,
 				filters
 			);
-
 			const getCount = function (obj) {
 				return Object.values(obj).filter(
 					(value) => typeof value !== 'undefined'
@@ -97,26 +114,34 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 
 	private async _getSelectedOrganizationEmails(
 		organizationId: string,
+		tenantId: string,
 		filters?: any
 	) {
 		try {
 			await this.emailService
 				.getAll(['emailTemplate', 'user'], {
 					organizationId,
+					tenantId,
 					...filters
 				})
 				.then((data) => {
-					console.log(data);
 					this.emails = data.items;
 					this.loading = false;
 
 					this.selectedEmail = null;
 				});
 		} catch (error) {
-			// TODO: toastr
+			this.toastrService.danger(
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
 			console.error(error);
 			this.loading = false;
 		}
+	}
+
+	public resetFilters() {
+		this.filters = [];
+		this.filteredCount = 0;
 	}
 
 	ngOnDestroy() {

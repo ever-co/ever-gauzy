@@ -273,7 +273,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
 				icon: 'file-text-outline',
-				link: 'pages/integrations/upwork/contracts',
+				link: 'pages/integrations/upwork',
 				hidden: !this.hasPermissionContractEdit
 			},
 			// TODO: divider

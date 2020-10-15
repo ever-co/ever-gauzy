@@ -3,6 +3,7 @@ import { Connection } from 'typeorm';
 import { EmailTemplate } from './email-template.entity';
 import * as mjml2html from 'mjml';
 import * as path from 'path';
+import { IOrganization, ITenant } from '@gauzy/models';
 /**
  * Note: This seed file assumes the following directory structure in seeds/data/email/default-email-templates/ folder
  *
@@ -13,7 +14,11 @@ import * as path from 'path';
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
 export const createDefaultEmailTemplates = async (
-	connection: Connection
+	connection: Connection,
+	defaultData: {
+		tenant: ITenant;
+		organization: IOrganization;
+	}
 ): Promise<any> => {
 	try {
 		const templatePath = [
@@ -35,7 +40,7 @@ export const createDefaultEmailTemplates = async (
 
 		findInDir(FOLDER_PATH, files);
 		console.log(files);
-		await fileToTemplate(connection, files);
+		await fileToTemplate(connection, files, defaultData);
 	} catch (error) {
 		// it's not a big issue for now if we can't create email templates
 		console.error(error);
@@ -57,9 +62,9 @@ function findInDir(dir, fileList = []) {
 	});
 }
 
-const fileToTemplate = async (connection, files) => {
+const fileToTemplate = async (connection, files, defaultData) => {
 	for (const file of files) {
-		const template = await pathToEmailTemplate(file);
+		const template = await pathToEmailTemplate(file, defaultData);
 		if (template && template.hbs) {
 			await insertTemplate(connection, template);
 		}
@@ -79,10 +84,14 @@ const insertTemplate = async (
 };
 
 const pathToEmailTemplate = async (
-	fullPath: string
+	fullPath: string,
+	{ tenant, organization }
 ): Promise<EmailTemplate> => {
 	try {
 		const template = new EmailTemplate();
+		template.tenant = tenant;
+		template.organization = organization;
+
 		const templatePath = fullPath.replace(/\\/g, '/').split('/');
 		const fileName = templatePath[templatePath.length - 1].split('.', 2);
 		const fileExtension = fileName[1];

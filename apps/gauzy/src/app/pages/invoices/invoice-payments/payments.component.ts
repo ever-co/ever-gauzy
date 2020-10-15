@@ -27,7 +27,8 @@ export interface SelectedPayment {
 	templateUrl: './payments.component.html',
 	styleUrls: ['./payments.component.scss']
 })
-export class InvoicePaymentsComponent extends TranslationBaseComponent
+export class InvoicePaymentsComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	constructor(
 		private route: ActivatedRoute,
@@ -265,7 +266,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent
 					),
 					type: 'text',
 					valuePrepareFunction: (cell, row) => {
-						if (cell.firstName && cell.lastName) {
+						if (cell && cell.firstName && cell.lastName) {
 							return `${cell.firstName} ${cell.lastName}`;
 						} else {
 							return ``;

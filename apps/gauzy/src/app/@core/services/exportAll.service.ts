@@ -7,8 +7,12 @@ import { HttpClient } from '@angular/common/http';
 export class ExportAllService {
 	constructor(private http: HttpClient) {}
 
-	downloadAllData() {
-		return this.http.get(`/api/download`, { responseType: 'blob' });
+	downloadAllData(findInput) {
+		const data = JSON.stringify({ findInput });
+		return this.http.get(`/api/download`, {
+			responseType: 'blob',
+			params: { data }
+		});
 	}
 
 	downloadTemplates() {
@@ -17,8 +21,8 @@ export class ExportAllService {
 		});
 	}
 
-	downloadSpecificData(names: string[]) {
-		const data = JSON.stringify({ names });
+	downloadSpecificData(names: string[], findInput) {
+		const data = JSON.stringify({ entities: { names }, findInput });
 		return this.http.get(`/api/download/filter`, {
 			responseType: 'blob',
 			params: { data }

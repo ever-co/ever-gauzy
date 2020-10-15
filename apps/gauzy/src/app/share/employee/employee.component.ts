@@ -19,7 +19,8 @@ import { EmployeeAwardService } from '../../@core/services/employee-award.servic
 	templateUrl: './employee.component.html',
 	styleUrls: ['./employee.component.scss']
 })
-export class EmployeeComponent extends TranslationBaseComponent
+export class EmployeeComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$: Subject<void> = new Subject();
 	hasEditPermission$: Observable<boolean>;
@@ -99,7 +100,6 @@ export class EmployeeComponent extends TranslationBaseComponent
 	}
 
 	openEditEmployeeDialog(employee) {
-		console.log(this.employeeAwards);
 		this.dialogService
 			.open(PublicPageEmployeeMutationComponent, {
 				context: {
