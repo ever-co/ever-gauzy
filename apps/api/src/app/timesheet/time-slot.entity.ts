@@ -4,7 +4,6 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	Unique,
 	AfterLoad,
 	OneToMany,
 	ManyToMany
