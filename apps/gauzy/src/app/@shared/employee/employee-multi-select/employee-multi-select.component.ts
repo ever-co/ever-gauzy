@@ -50,7 +50,6 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		return this.val;
 	}
 	public set selectedEmployeeIds(value: string[] | string) {
-		console.log('selectedEmployeeIds', value);
 		this.changeValue$.next(value);
 	}
 
@@ -99,7 +98,6 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	}
 
 	writeValue(value: any) {
-		console.log('writeValue', value);
 		this.changeValue$.next(value);
 	}
 	registerOnChange(fn: (rating: number) => void): void {

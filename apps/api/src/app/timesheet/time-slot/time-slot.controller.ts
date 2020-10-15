@@ -64,7 +64,6 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 
 	@Put('/:id')
 	async update(@Param() params, @Body() entity: TimeSlot): Promise<TimeSlot> {
-		console.log('id', params.id);
 		return this.timeSlotService.update(params.id, entity);
 	}
 
