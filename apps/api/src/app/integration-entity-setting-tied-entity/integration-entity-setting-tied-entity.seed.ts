@@ -4,6 +4,9 @@ import * as faker from 'faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
+import { Organization } from '../organization/organization.entity';
+import { IntegrationEntity } from 'libs/models/src/lib/integration.model';
+import { PROJECT_TIED_ENTITIES } from '../hubstaff/hubstaff-entity-settings';
 
 export const createRandomIntegrationEntitySettingTiedEntity = async (
 	connection: Connection,
@@ -19,6 +22,9 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 	const randomIntegrationEntitySettingsTiedEntity: IntegrationEntitySettingTiedEntity[] = [];
 
 	for (const tenant of tenants) {
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
 		const integrationTenants = await connection.manager.find(
 			IntegrationTenant,
 			{
@@ -37,10 +43,23 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 
 				integrationEntitySettingTiedEntity.integrationEntitySetting = integrationEntitySetting;
 				integrationEntitySettingTiedEntity.sync = faker.random.boolean();
+				integrationEntitySettingTiedEntity.organization = faker.random.arrayElement(
+					organizations
+				);
+				integrationEntitySettingTiedEntity.tenant = tenant;
 				//todo: need to understand real values here
-				integrationEntitySettingTiedEntity.entity =
-					'entity-' + faker.random.number(40);
-
+				if (
+					integrationEntitySetting['entity'] ===
+					IntegrationEntity.PROJECT
+				) {
+					integrationEntitySettingTiedEntity.entity = faker.random.arrayElement(
+						PROJECT_TIED_ENTITIES
+					)['entity'];
+				} else {
+					integrationEntitySettingTiedEntity.entity = faker.random.arrayElement(
+						Object.values(IntegrationEntity)
+					);
+				}
 				randomIntegrationEntitySettingsTiedEntity.push(
 					integrationEntitySettingTiedEntity
 				);

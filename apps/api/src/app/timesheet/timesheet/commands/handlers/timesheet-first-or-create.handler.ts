@@ -36,6 +36,8 @@ export class TimesheetFirstOrCreateHandler
 		if (!command.organizationId) {
 			const employee = await this.employeeRepository.findOne(employeeId);
 			organizationId = employee.organizationId;
+		} else {
+			organizationId = command.organizationId;
 		}
 
 		if (!timesheet) {

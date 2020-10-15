@@ -21,7 +21,8 @@ export class ScreenshotCreateHandler
 				thumb,
 				recordedAt,
 				activityTimestamp,
-				employeeId
+				employeeId,
+				organizationId
 			} = input;
 
 			let {
@@ -68,7 +69,8 @@ export class ScreenshotCreateHandler
 				timeSlotId: timeSlot,
 				file,
 				thumb,
-				recordedAt
+				recordedAt,
+				organizationId
 			});
 		} catch (error) {
 			throw new BadRequestException(

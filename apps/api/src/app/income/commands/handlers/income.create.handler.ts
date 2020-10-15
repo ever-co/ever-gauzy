@@ -5,6 +5,7 @@ import { Income } from '../../income.entity';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { EmployeeStatisticsService } from '../../../employee-statistics';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(IncomeCreateCommand)
 export class IncomeCreateHandler
@@ -62,6 +63,7 @@ export class IncomeCreateHandler
 		income.isBonus = input.isBonus;
 		income.reference = input.reference;
 		income.tags = input.tags;
+		income.tenantId = RequestContext.currentTenantId();
 
 		if (!income.currency) {
 			income.currency = organization.currency;

@@ -47,7 +47,8 @@ import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialo
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
-export class TaskComponent extends TranslationBaseComponent
+export class TaskComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('tasksTable') tasksTable;
 	private _ngDestroy$: Subject<void> = new Subject();
@@ -204,7 +205,6 @@ export class TaskComponent extends TranslationBaseComponent
 			this.view = 'team-tasks';
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
 			this._teamTaskStore.fetchTasks();
-			// load teams for the select box of teams column
 			// this.availableTasks$ = this.teamTasks$;
 		} else {
 			this.view = 'tasks';

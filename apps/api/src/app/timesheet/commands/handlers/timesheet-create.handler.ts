@@ -3,6 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TimesheetCreateCommand } from '..';
 import { TimeSheetService } from '../../timesheet/timesheet.service';
 import { BadRequestException } from '@nestjs/common';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(TimesheetCreateCommand)
 export class TimesheetCreateHandler
@@ -18,16 +19,20 @@ export class TimesheetCreateHandler
 				keyboard,
 				mouse,
 				overall,
-				startedAt
+				startedAt,
+				organizationId
 			} = input;
 
+			const tenantId = RequestContext.currentTenantId();
 			return await this._timesheetService.create({
 				employeeId,
 				duration,
 				keyboard,
 				mouse,
 				overall,
-				startedAt
+				startedAt,
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			throw new BadRequestException('Cant create timesheet');

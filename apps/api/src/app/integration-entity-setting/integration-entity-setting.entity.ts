@@ -7,13 +7,18 @@ import {
 	ManyToOne,
 	OneToMany
 } from 'typeorm';
-import { IIntegrationEntitySetting } from '@gauzy/models';
+import {
+	IIntegrationEntitySetting,
+	IIntegrationEntitySettingTied,
+	IIntegrationTenant
+} from '@gauzy/models';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
-import { TenantBase } from '../core/entities/tenant-base';
+import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('integration_entity_setting')
-export class IntegrationEntitySetting extends TenantBase
+export class IntegrationEntitySetting
+	extends TenantOrganizationBase
 	implements IIntegrationEntitySetting {
 	@ApiPropertyOptional({ type: IntegrationTenant })
 	@ManyToOne(
@@ -21,7 +26,7 @@ export class IntegrationEntitySetting extends TenantBase
 		(integration) => integration.entitySettings
 	)
 	@JoinColumn()
-	integration?: IntegrationTenant;
+	integration?: IIntegrationTenant;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId(
@@ -40,7 +45,7 @@ export class IntegrationEntitySetting extends TenantBase
 		{ cascade: true }
 	)
 	@JoinColumn()
-	tiedEntities?: IntegrationEntitySettingTiedEntity[];
+	tiedEntities?: IIntegrationEntitySettingTied[];
 
 	@ApiProperty({ type: String })
 	@Column({ nullable: false })

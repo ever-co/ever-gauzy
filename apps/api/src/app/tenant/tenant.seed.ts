@@ -5,11 +5,10 @@ import * as faker from 'faker';
 export const createDefaultTenants = async (
 	connection: Connection
 ): Promise<Tenant> => {
-	const tenant = {
+	const tenant: Tenant = {
 		name: 'Ever'
 	};
 	await insertTenants(connection, [tenant]);
-
 	return tenant;
 };
 
@@ -18,7 +17,6 @@ export const createRandomTenants = async (
 	noOfTenants: number = 0
 ): Promise<Tenant[]> => {
 	const randomTenants: Tenant[] = [];
-
 	for (let i = 0; i < noOfTenants; i++) {
 		randomTenants.push({
 			name: faker.company.companyName()
@@ -26,7 +24,6 @@ export const createRandomTenants = async (
 	}
 
 	await insertTenants(connection, randomTenants);
-
 	return randomTenants;
 };
 

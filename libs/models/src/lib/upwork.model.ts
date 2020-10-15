@@ -12,6 +12,7 @@ export interface IAccessToken {
 
 export interface IAccessTokenSecretPair {
 	integrationId?: string;
+	organizationId?: string;
 	url: string;
 	requestToken: string;
 	requestTokenSecret?: string;
@@ -55,11 +56,14 @@ export interface IEngagement {
 	hourly_charge_rate: string;
 }
 
-export interface IUpworkApiConfig {
-	consumerKey: string;
-	consumerSecret: string;
+export interface IUpworkApiConfig extends IUpworkClientSecretPair {
 	accessToken: string;
 	accessSecret: string;
+}
+
+export interface IUpworkClientSecretPair {
+	consumerKey: string;
+	consumerSecret: string;
 }
 
 export interface IUpworkDateRange {

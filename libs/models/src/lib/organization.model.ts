@@ -126,6 +126,10 @@ export interface IOrganizationCreateInput extends IContact {
 	fiscalInformation?: string;
 }
 
+export interface IOrganizationUpdateInput extends IOrganizationCreateInput {
+	gauzyId?: string;
+}
+
 export enum OrganizationSelectInput {
 	id = 'id',
 	name = 'name',
