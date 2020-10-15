@@ -44,21 +44,19 @@ export class TimeSlotMergeHandler
 					employeeId
 				});
 			},
-			// where: {
-			// 	startedAt: Between(start, end),
-			// 	employeeId: employeeId
-			// },
 			relations: ['timeLogs', 'screenshots']
 		});
 
 		if (timerSlots.length > 0) {
 			const savePromises = _.chain(timerSlots)
-				.groupBy((timerSlot) => {
-					const date = moment.utc(timerSlot.startedAt);
+				.groupBy((timeSlots) => {
+					let date = moment.utc(timeSlots.startedAt);
 					const minutes = date.get('minute');
-					date.set('minute', minutes - (minutes % 10));
-					date.set('millisecond', 0);
-					return date.format('YYYY-MM-DD HH:mm');
+					date = date
+						.set('minute', minutes - (minutes % 10))
+						.set('second', 0)
+						.set('millisecond', 0);
+					return date.format('YYYY-MM-DD HH:mm:ss');
 				})
 				.mapObject(async (timeSlots, slotStart) => {
 					let timeLogs: TimeLog[] = [];
@@ -66,34 +64,32 @@ export class TimeSlotMergeHandler
 					let duration = 0;
 					for (let index = 0; index < timeSlots.length; index++) {
 						const timeSlot = timeSlots[index];
-						duration += timeSlot.duration;
+						duration =
+							duration + parseInt(timeSlot.duration + '', 10);
 						screenshots = screenshots.concat(timeSlot.screenshots);
 						timeLogs = timeLogs.concat(timeSlot.timeLogs);
 					}
-
-					timeLogs = _.uniq(timeLogs, (timeLog) => timeLog.id);
 					screenshots = screenshots.map(
 						(screenshot) =>
-							new Screenshot(
-								_.omit(screenshot, ['id', 'timeSlotId'])
-							)
+							new Screenshot(_.omit(screenshot, ['timeSlotId']))
 					);
 
 					const newTimeSlot = new TimeSlot({
-						..._.omit(timeSlots[0], 'id'),
+						..._.omit(timeSlots[0]),
 						duration,
 						screenshots,
 						timeLogs,
-						startedAt: new Date(slotStart)
+						startedAt: moment.utc(slotStart).toDate()
 					});
-					await this.screenshotRepository.save(screenshots);
-					const data = await this.timeSlotRepository.delete({
-						id: In(_.pluck(timeSlots, 'id'))
-					});
-					console.log({ data }, _.pluck(timeSlots, 'id'));
+					// await this.screenshotRepository.save(screenshots);
 					await this.timeSlotRepository.save(newTimeSlot);
-					console.log({ newTimeSlot });
-					return timeSlots;
+					const ids = _.pluck(timeSlots, 'id');
+					ids.splice(0, 1);
+					if (ids.length > 0) {
+						await this.timeSlotRepository.delete({
+							id: In(ids)
+						});
+					}
 				})
 				.values()
 				.value();
