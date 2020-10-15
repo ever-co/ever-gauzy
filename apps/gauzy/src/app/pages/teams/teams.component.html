@@ -2,7 +2,7 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}</h4>
-			<div class="main-header">
+			<div class="main-header" *ngIf="!showAddCard">
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
@@ -43,11 +43,11 @@
 			"
 		>
 			<nb-card
-				style="padding: 0 !important;"
+				style="padding: 0 !important"
 				class="card-body"
 				*ngFor="let team of teams"
 			>
-				<nb-card-header style="padding: 0.5rem;">
+				<nb-card-header style="padding: 0.5rem">
 					<div class="header-container">
 						<ga-notes-with-tags [rowData]="team">
 						</ga-notes-with-tags>
@@ -177,7 +177,7 @@
 				(userRowSelect)="selectTeam($event)"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
-				style="cursor: pointer;"
+				style="cursor: pointer"
 				#teamTable
 			>
 			</ng2-smart-table>

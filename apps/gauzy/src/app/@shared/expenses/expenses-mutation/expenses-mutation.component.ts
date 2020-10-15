@@ -44,7 +44,8 @@ import { OrganizationExpenseCategoriesService } from '../../../@core/services/or
 	templateUrl: './expenses-mutation.component.html',
 	styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent extends TranslationBaseComponent
+export class ExpensesMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -116,8 +117,6 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async getDefaultData() {
-		console.log(this.store.selectedOrganization);
-
 		this.organizationId = this.store.selectedOrganization.id;
 		this.tenantId = this.store.selectedOrganization.tenantId;
 

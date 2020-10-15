@@ -16,7 +16,6 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Store } from '../../../@core/services/store.service';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 
@@ -24,7 +23,8 @@ import { OrganizationContactService } from '../../../@core/services/organization
 	selector: 'ga-projects-mutation',
 	templateUrl: './projects-mutation.component.html'
 })
-export class ProjectsMutationComponent extends TranslationBaseComponent
+export class ProjectsMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
 	employees: IEmployee[];
@@ -58,7 +58,6 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		private readonly fb: FormBuilder,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
-		private store: Store,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
 		private readonly router: Router

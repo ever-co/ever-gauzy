@@ -11,7 +11,7 @@ import {
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, first, takeUntil } from 'rxjs/operators';
 import {
 	ActivatedRoute,
 	Router,
@@ -34,7 +34,8 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 	templateUrl: './projects.component.html',
 	styleUrls: ['./projects.component.scss']
 })
-export class ProjectsComponent extends TranslationBaseComponent
+export class ProjectsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	loading = true;
@@ -74,14 +75,13 @@ export class ProjectsComponent extends TranslationBaseComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				takeUntil(this._ngDestroy$),
+				filter((organization) => !!organization)
+			)
 			.subscribe((organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.loadProjects();
-					this.loadEmployees();
-					this.loadOrganizationContacts();
-				}
+				this.organization = organization;
+				this._initMethod();
 			});
 		this.store.userRolePermissions$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -90,15 +90,6 @@ export class ProjectsComponent extends TranslationBaseComponent
 					PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 				);
 			});
-
-		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
-					this.showAddCard = !this.showAddCard;
-					this.loadProjects();
-				}
-			});
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
@@ -106,11 +97,29 @@ export class ProjectsComponent extends TranslationBaseComponent
 					this.setView();
 				}
 			});
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.showAddCard =
+						params.get('openAddDialog') === 'true' ? true : false;
+					this._initMethod();
+				}
+			});
 	}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	private _initMethod() {
+		if (!this.organization) {
+			return;
+		}
+		this.loadProjects();
+		this.loadEmployees();
+		this.loadOrganizationContacts();
 	}
 
 	private async loadEmployees() {

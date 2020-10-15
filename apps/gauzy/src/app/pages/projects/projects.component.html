@@ -4,7 +4,7 @@
 			<h4>{{ 'ORGANIZATIONS_PAGE.PROJECTS' | translate }}</h4>
 		</div>
 		<div class="main-header">
-			<div class="main-header">
+			<div class="main-header" *ngIf="!showAddCard">
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
@@ -25,7 +25,7 @@
 					>{{ 'BUTTONS.REQUEST' | translate }}
 				</button>
 				<ga-projects-mutation
-					*ngIf="showAddCard"
+					*ngIf="showAddCard && organization"
 					[employees]="employees"
 					[organization]="organization"
 					[project]="projectToEdit"
@@ -165,7 +165,7 @@
 			(userRowSelect)="selectProject($event)"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			#projectsTable
 		>
 		</ng2-smart-table>

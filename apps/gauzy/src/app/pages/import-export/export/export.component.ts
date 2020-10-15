@@ -3,7 +3,10 @@ import { ExportAllService } from '../../../@core/services/exportAll.service';
 import { saveAs } from 'file-saver';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Store } from '../../../@core/services/store.service';
+import { IOrganization } from '@gauzy/models';
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 
 export interface IEntityModel {
 	name: string;
@@ -22,15 +25,32 @@ export class ExportComponent implements OnInit, OnDestroy {
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
 	checkedAll = true;
+	organization: IOrganization;
+	private _ngDestroy$ = new Subject<void>();
 
-	constructor(private exportAll: ExportAllService, private router: Router) {}
+	constructor(
+		private exportAll: ExportAllService,
+		private router: Router,
+		private store: Store
+	) {}
 
 	ngOnInit() {
 		this.getEntities();
 		this.onCheckboxChangeAll(this.checkedAll);
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe((organization) => {
+				this.organization = organization;
+			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 
 	onCheckboxChangeAll(checked: boolean) {
 		this.entities.forEach((entity) => {
@@ -91,23 +111,28 @@ export class ExportComponent implements OnInit, OnDestroy {
 	}
 
 	onSubmit() {
+		const { id: organizationId, tenantId } = this.organization;
 		this.exportAll
-			.downloadSpecificData(this.selectedEntities)
-			.pipe(untilDestroyed(this))
+			.downloadSpecificData(this.selectedEntities, {
+				organizationId,
+				tenantId
+			})
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => saveAs(data, `export.zip`));
 	}
 
 	onDownloadAll() {
+		const { id: organizationId, tenantId } = this.organization;
 		this.exportAll
-			.downloadAllData()
-			.pipe(untilDestroyed(this))
+			.downloadAllData({ organizationId, tenantId })
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => saveAs(data, `export.zip`));
 	}
 
 	onDownloadTemplates() {
 		this.exportAll
 			.downloadTemplates()
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => saveAs(data, `template.zip`));
 	}
 

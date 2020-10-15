@@ -1,8 +1,11 @@
+import { IOrganization, ITenant } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { Skill } from './skill.entity';
 
-export const createSkills = async (
-	connection: Connection
+export const createDefaultSkills = async (
+	connection: Connection,
+	tenant: ITenant,
+	organization: IOrganization
 ): Promise<Skill[]> => {
 	const skills: Skill[] = [];
 	const skillNames = [
@@ -17,6 +20,8 @@ export const createSkills = async (
 	for (const name of skillNames) {
 		const skill = new Skill();
 		skill.name = name;
+		skill.tenant = tenant;
+		skill.organization = organization;
 		skill.description = '';
 		skill.color = '#479bfa';
 		skills.push(skill);

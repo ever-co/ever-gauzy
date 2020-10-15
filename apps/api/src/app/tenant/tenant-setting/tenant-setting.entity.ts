@@ -8,13 +8,12 @@ import {
 	RelationId
 } from 'typeorm';
 import { ITenant } from '@gauzy/models';
-import { Base } from '../../core/entities/base';
 import { IsOptional, IsString } from 'class-validator';
 import { TenantBase } from '../../core/entities/tenant-base';
 import { Tenant } from '../tenant.entity';
 
-@Entity('tenant')
-export class TenantSetting extends Base implements ITenant {
+@Entity('tenant_setting')
+export class TenantSetting extends TenantBase implements ITenant {
 	@ApiProperty({ type: String })
 	@Column({ nullable: false })
 	name?: string;
