@@ -21,7 +21,7 @@ import {
 	IManualTimesStatistics
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
-import { debounceTime, filter } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import _ from 'underscore';
 import { progressStatus } from '@gauzy/utils';
 import * as moment from 'moment';
