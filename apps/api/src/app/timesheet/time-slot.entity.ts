@@ -4,7 +4,6 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	Unique,
 	AfterLoad,
 	OneToMany,
 	ManyToMany
@@ -28,7 +27,7 @@ import { Activity } from './activity.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('time_slot')
-@Unique(['employeeId', 'startedAt'])
+// @Unique(['employeeId', 'startedAt'])
 export class TimeSlot extends TenantOrganizationBase implements ITimeSlot {
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)

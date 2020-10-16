@@ -1,15 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter } from 'rxjs/operators';
 import { IAggregatedEmployeeStatistic, IOrganization } from '@gauzy/models';
 import {
 	SelectedEmployee,
 	ALL_EMPLOYEES_SELECTED
 } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Router } from '@angular/router';
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-accounting',
 	templateUrl: './accounting.component.html',
@@ -19,8 +19,6 @@ import { Router } from '@angular/router';
 	]
 })
 export class AccountingComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDate: Date;
 	selectedOrganization: IOrganization;
@@ -34,24 +32,29 @@ export class AccountingComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				this.selectedOrganization = organization;
 				this.loadData(organization);
 			});
-
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
 				if (this.selectedOrganization) {
 					this.loadData(this.selectedOrganization);
 				}
 			});
-
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this)
+			)
 			.subscribe((employee) => {
+				this.selectedEmployee = employee;
 				if (employee && employee.id) {
 					this.navigateToEmployeeStatistics();
 				}
@@ -64,10 +67,10 @@ export class AccountingComponent implements OnInit, OnDestroy {
 
 	loadData = async (organization) => {
 		if (organization) {
-			const { tenantId } = organization;
+			const { tenantId, id: organizationId } = organization;
 			this.aggregatedEmployeeStatistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 				{
-					organizationId: organization.id,
+					organizationId,
 					tenantId,
 					filterDate:
 						this.selectedDate || this.store.selectedDate || null
@@ -89,8 +92,5 @@ export class AccountingComponent implements OnInit, OnDestroy {
 		this.navigateToEmployeeStatistics();
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

@@ -1,5 +1,5 @@
-import { Entity, Column, Unique, ManyToMany } from 'typeorm';
-import { ISkill } from '@gauzy/models';
+import { Entity, Column, Unique, ManyToMany, JoinTable } from 'typeorm';
+import { IEmployee, ISkill } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { Employee } from '../employee/employee.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
@@ -20,5 +20,8 @@ export class Skill extends TenantOrganizationBase implements ISkill {
 	color?: string;
 
 	@ManyToMany((type) => Employee, (employee) => employee.skills)
-	employee?: Employee[];
+	@JoinTable({
+		name: 'skill_employee'
+	})
+	employees?: IEmployee[];
 }

@@ -8,7 +8,7 @@ import {
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 import { Store } from '../../../@core/services/store.service';
 import { ProfitHistoryComponent } from '../../../@shared/dashboard/profit-history/profit-history.component';
@@ -27,8 +27,6 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	selectedEmployee: SelectedEmployee;
 	selectedOrganization: IOrganization;
 
-	incomeCurrency: string;
-	expenseCurrency: string;
 	defaultCurrency: string;
 
 	incomePermissionsError = false;
@@ -46,6 +44,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	bonusType: BonusTypeEnum;
 	bonusPercentage: number;
 	salary: number;
+	avarageBonus: number;
 
 	constructor(
 		private store: Store,
@@ -56,35 +55,38 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 
 	async ngOnInit() {
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((emp) => {
-				this.expenseCurrency = null;
-				this.incomeCurrency = null;
+			.pipe(
+				filter((employee) => !!employee),
+				debounceTime(200),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe((employee) => {
 				this.defaultCurrency = null;
-				if (emp) {
-					this.selectedEmployee = emp;
+				if (employee) {
+					this.selectedEmployee = employee;
 				}
-
 				if (this.selectedDate) {
 					this._loadEmployeeStatistics();
 				}
 			});
-
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((date) => !!date),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((date) => {
 				this.selectedDate = date;
-
 				if (this.selectedEmployee) {
 					this._loadEmployeeStatistics();
 				}
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((organization) => {
 				this.selectedOrganization = organization;
-
 				if (this.selectedOrganization) {
 					this.bonusType = this.selectedOrganization
 						.bonusType as BonusTypeEnum;
@@ -105,11 +107,13 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	async _loadEmployeeStatistics() {
+		const organizationId = this.selectedOrganization.id;
 		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
 			{
 				employeeId: this.selectedEmployee.id,
 				valueDate: this.selectedDate || new Date(),
-				months: this.selectedDate ? 1 : 12
+				months: this.selectedDate ? 1 : 12,
+				organizationId
 			}
 		);
 		this.income = this._statsSum(this.employeeStatistics, 'income');
@@ -132,6 +136,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	async openHistoryDialog(type: EmployeeStatisticsHistoryEnum) {
+		const organizationId = this.selectedOrganization.id;
 		this.dialogService.open(RecordsHistoryComponent, {
 			context: {
 				type,
@@ -140,7 +145,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 						employeeId: this.selectedEmployee.id,
 						valueDate: this.selectedDate || new Date(),
 						months: this.selectedDate ? 1 : 12,
-						type
+						type,
+						organizationId
 					}
 				)
 			}
@@ -148,12 +154,14 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	async openProfitDialog() {
+		const organizationId = this.selectedOrganization.id;
 		const incomes = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
 			{
 				employeeId: this.selectedEmployee.id,
 				valueDate: this.selectedDate || new Date(),
 				months: this.selectedDate ? 1 : 12,
-				type: EmployeeStatisticsHistoryEnum.INCOME
+				type: EmployeeStatisticsHistoryEnum.INCOME,
+				organizationId
 			}
 		);
 		const expenses = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
@@ -161,7 +169,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				employeeId: this.selectedEmployee.id,
 				valueDate: this.selectedDate || new Date(),
 				months: this.selectedDate ? 1 : 12,
-				type: EmployeeStatisticsHistoryEnum.EXPENSES
+				type: EmployeeStatisticsHistoryEnum.EXPENSES,
+				organizationId
 			}
 		);
 

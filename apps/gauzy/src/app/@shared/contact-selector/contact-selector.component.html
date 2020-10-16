@@ -11,7 +11,7 @@
 </nb-select> -->
 
 <ng-select
-	[addTag]="createNew"
+	[addTag]="hasPermissionContactEdit ? createNew : null"
 	[disabled]="disabled"
 	[clearable]="true"
 	[items]="contacts"

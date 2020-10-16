@@ -7,7 +7,8 @@ import {
 	NbCardModule,
 	NbIconModule,
 	NbButtonModule,
-	NbDialogModule
+	NbDialogModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { PaymentsRoutingModule } from './payments-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -37,6 +38,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		CardGridModule,
 		ThemeModule,
 		NbIconModule,
+		NbSpinnerModule,
 		NbButtonModule,
 		NbDialogModule.forChild()
 	],

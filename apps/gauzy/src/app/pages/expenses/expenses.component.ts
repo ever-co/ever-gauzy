@@ -9,7 +9,7 @@ import {
 	IEmployee,
 	IOrganization
 } from '@gauzy/models';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { Store } from '../../@core/services/store.service';
@@ -65,7 +65,8 @@ export interface ExpenseViewModel {
 	templateUrl: './expenses.component.html',
 	styleUrls: ['./expenses.component.scss']
 })
-export class ExpensesComponent extends TranslationBaseComponent
+export class ExpensesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	smartTableSettings: object;
 	selectedEmployeeId: string;
@@ -221,10 +222,15 @@ export class ExpensesComponent extends TranslationBaseComponent
 					}
 				}
 			});
+
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
+				if (params.get('openAddDialog') === 'true') {
 					this.openAddExpenseDialog();
 				}
 			});
@@ -254,7 +260,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 
 	canShowTable() {
 		if (this.expensesTable) {
-			this.expensesTable.grid.dataSet.willSelect = 'false';
+			this.expensesTable.grid.dataSet.willSelect = false;
 		}
 		return this.showTable;
 	}

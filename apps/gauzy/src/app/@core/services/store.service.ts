@@ -297,8 +297,10 @@ export class Store {
 
 	getDateFromOrganizationSettings() {
 		const dateObj = this.selectedDate;
-
-		switch (this.selectedOrganization.defaultValueDateType) {
+		switch (
+			this.selectedOrganization &&
+			this.selectedOrganization.defaultValueDateType
+		) {
 			case DefaultValueDateTypeEnum.TODAY: {
 				return new Date(Date.now());
 			}

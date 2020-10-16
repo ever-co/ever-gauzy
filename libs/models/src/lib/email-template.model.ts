@@ -9,7 +9,8 @@ export interface IEmailTemplate
 	languageCode: string;
 }
 
-export interface IEmailTemplateFindInput {
+export interface IEmailTemplateFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	languageCode?: string;
 }
@@ -36,7 +37,8 @@ export enum EmailTemplateNameEnum {
 	EMAIL_ESTIMATE = 'email-estimate'
 }
 
-export interface ICustomizeEmailTemplateFindInput {
+export interface ICustomizeEmailTemplateFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: EmailTemplateNameEnum;
 	languageCode: LanguagesEnum;
 	organizationId: string;

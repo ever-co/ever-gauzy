@@ -1,5 +1,9 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
-import { IOrganization, IOrganizationProject } from '@gauzy/models';
+import {
+	IOrganization,
+	IOrganizationProject,
+	PermissionsEnum
+} from '@gauzy/models';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -30,6 +34,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	@Input() disabled = false;
 	@Input() multiple = false;
 	organizationId: string;
+	hasPermissionProjEdit: boolean;
 
 	@Input()
 	public get employeeId() {
@@ -71,6 +76,14 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.hasPermissionProjEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_PROJECT_EDIT
+				);
+			});
+
 		this.loadProjects$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(async () => {

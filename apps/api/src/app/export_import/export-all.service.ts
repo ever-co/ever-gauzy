@@ -104,210 +104,7 @@ export class ExportAllService implements OnDestroy {
 	public idZip = new BehaviorSubject<string>('');
 	public idCsv = new BehaviorSubject<string>('');
 	private _ngDestroy$ = new Subject<void>();
-	private services = [
-		{ service: this.activityService, nameFile: 'activity' },
-		{
-			service: this.appointmentEmployeeService,
-			nameFile: 'appointment_employee'
-		},
-		{ service: this.approvalPolicyService, nameFile: 'approval_policy' },
-		{
-			service: this.availabilitySlotsService,
-			nameFile: 'availability_slot'
-		},
-		{ service: this.candidateService, nameFile: 'candidate' },
-		{
-			service: this.candidateCrieationsRatingService,
-			nameFile: 'candidate_creation_rating'
-		},
-		{
-			service: this.candidateDocumnetsService,
-			nameFile: 'candidate_document'
-		},
-		{
-			service: this.candidateEducationService,
-			nameFile: 'candidate_education'
-		},
-		{
-			service: this.candidateExperienceService,
-			nameFile: 'candidate_experience'
-		},
-		{
-			service: this.candidateFeedbacksService,
-			nameFile: 'candidate_feedback'
-		},
-		{
-			service: this.candidateInterviewService,
-			nameFile: 'candidate_interview'
-		},
-		{
-			service: this.candidateInterviewsService,
-			nameFile: 'candidate_interviewer'
-		},
-		{
-			service: this.candidatePersonalQualitiesService,
-			nameFile: 'candidate_personal_quality'
-		},
-		{ service: this.candidateSkillService, nameFile: 'candidate_skill' },
-		{ service: this.candidateSourceService, nameFile: 'candidate_source' },
-		{
-			service: this.candidateTechnologiesService,
-			nameFile: 'candidate_technology'
-		},
-		{ service: this.contactService, nameFile: 'contact' },
-		{ service: this.countryService, nameFile: 'country' },
-		{ service: this.dealService, nameFile: 'deal' },
-		{ service: this.emailService, nameFile: 'email' },
-		{ service: this.emailTemplate, nameFile: 'email_template' },
-		{ service: this.estimateEmailService, nameFile: 'estimate_email' },
-		{ service: this.employeeService, nameFile: 'employee' },
-		{
-			service: this.employeeAppointmentService,
-			nameFile: 'employee_appointment'
-		},
-		{
-			service: this.employeeRecurringExpensesService,
-			nameFile: 'employee_recurring_expense'
-		},
-		{ service: this.employeeSettingService, nameFile: 'employee_setting' },
-		{ service: this.equpmentService, nameFile: 'equipment' },
-		{
-			service: this.equipmentSharingService,
-			nameFile: 'equipment_sharing'
-		},
-		{ service: this.eventTypesService, nameFile: 'event_types' },
-		{ service: this.expenseService, nameFile: 'expense' },
-		{
-			service: this.expenseCategoriesService,
-			nameFile: 'expense_category'
-		},
-		{ service: this.goalService, nameFile: 'goal' },
-		{ service: this.goalKpiService, nameFile: 'goal_kpi' },
-		{ service: this.goalTimeFrameService, nameFile: 'goal_time_frame' },
-		{ service: this.helpCenterService, nameFile: 'knowledge_base' },
-		{
-			service: this.helpCenterArticleService,
-			nameFile: 'knowledge_base_article'
-		},
-		{
-			service: this.helpCenterAuthorService,
-			nameFile: 'knowledge_base_author'
-		},
-		{ service: this.incomeService, nameFile: 'income' },
-		{ service: this.integrationService, nameFile: 'integration' },
-		{
-			service: this.integrationEntitySettingService,
-			nameFile: 'integration_entity_setting'
-		},
-		{
-			service: this.integrationEntitySettingTiedEntityService,
-			nameFile: 'integration_entity_setting_tied_entity'
-		},
-		{ service: this.integrationMapService, nameFile: 'integration_map' },
-		{
-			service: this.integrationSettingService,
-			nameFile: 'integration_setting'
-		},
-		{
-			service: this.integrationTenantService,
-			nameFile: 'integration_tenant'
-		},
-		{ service: this.inviteService, nameFile: 'invite' },
-		{ service: this.invoiceService, nameFile: 'invoice' },
-		{ service: this.invoiceItemService, nameFile: 'invoice_item' },
-		{ service: this.keyResultService, nameFile: 'key_result' },
-		{ service: this.keyResultUpdateService, nameFile: 'key_result_update' },
-		{ service: this.languageService, nameFile: 'language' },
-		{ service: this.organizationService, nameFile: 'organization' },
-		{
-			service: this.organizationAwardsService,
-			nameFile: 'organization_award'
-		},
-		{
-			service: this.organizationContactService,
-			nameFile: 'organization_contact'
-		},
-		{
-			service: this.organizationDepartmentService,
-			nameFile: 'organization_department'
-		},
-		{
-			service: this.organizationDocumnetService,
-			nameFile: 'organization_document'
-		},
-		{
-			service: this.employeeLevelService,
-			nameFile: 'organization_employee_level'
-		},
-		{
-			service: this.organizationEmploymentTypeService,
-			nameFile: 'organization_employment_type'
-		},
-		{
-			service: this.organizationLanguagesService,
-			nameFile: 'organization_languages'
-		},
-		{
-			service: this.organizationPositionsService,
-			nameFile: 'organization_position'
-		},
-		{
-			service: this.organizationProjectsService,
-			nameFile: 'organization_project'
-		},
-		{
-			service: this.organizationRecurringExpenseService,
-			nameFile: 'organization_recurring_expense'
-		},
-		{
-			service: this.organizationSprintService,
-			nameFile: 'organization_sprint'
-		},
-		{
-			service: this.organizationTeamService,
-			nameFile: 'organization_team'
-		},
-		{
-			service: this.organizationTeamEmployeeService,
-			nameFile: 'organization_team_employee'
-		},
-		{
-			service: this.organizationVendorsService,
-			nameFile: 'organization_vendor'
-		},
-		{ service: this.paymentService, nameFile: 'payment' },
-		{ service: this.pipelineService, nameFile: 'pipeline' },
-		{ service: this.productService, nameFile: 'product' },
-		{ service: this.productCategoryService, nameFile: 'product_category' },
-		{ service: this.productOptionService, nameFile: 'product_option' },
-		{ service: this.productTypeService, nameFile: 'product_type' },
-		{ service: this.productVariantService, nameFile: 'product_variant' },
-		{
-			service: this.productVariantPriceService,
-			nameFile: 'product_variant_price'
-		},
-		{
-			service: this.productSettingsService,
-			nameFile: 'product_variant_setting'
-		},
-		{ service: this.proposalService, nameFile: 'proposal' },
-		{ service: this.requestApprovalService, nameFile: 'request_approval' },
-		{ service: this.roleService, nameFile: 'role' },
-		{ service: this.rolePermissionsService, nameFile: 'role_permission' },
-		{ service: this.screenShotService, nameFile: 'screenshot' },
-		{ service: this.skillService, nameFile: 'skill' },
-		{ service: this.stageService, nameFile: 'pipeline_stage' },
-		{ service: this.tagService, nameFile: 'tag' },
-		{ service: this.taskService, nameFile: 'task' },
-		{ service: this.tenantService, nameFile: 'tenant' },
-		{ service: this.timeOffPolicyService, nameFile: 'time_off_policy' },
-		{ service: this.timeOffRequestService, nameFile: 'time_off_request' },
-		{ service: this.timeSheetService, nameFile: 'timesheet' },
-		{ service: this.timeLogService, nameFile: 'time_log' },
-		{ service: this.timeSlotService, nameFile: 'time_slot' },
-		{ service: this.userService, nameFile: 'user' },
-		{ service: this.userOrganizationService, nameFile: 'user_organization' }
-	];
+	private services = [];
 
 	constructor(
 		private activityService: ActivityService,
@@ -415,7 +212,9 @@ export class ExportAllService implements OnDestroy {
 
 		private userService: UserService,
 		private userOrganizationService: UserOrganizationService
-	) {}
+	) {
+		this.services = this.loadServices();
+	}
 
 	async createFolders(): Promise<any> {
 		return new Promise((resolve, reject) => {
@@ -485,16 +284,30 @@ export class ExportAllService implements OnDestroy {
 		});
 	}
 
-	async getAsCsv(service_count: number): Promise<any> {
-		const incommingData = (
-			await this.services[service_count].service.findAll()
+	async getAsCsv(
+		service_count: number,
+		findInput: {
+			organizationId: string;
+			tenantId: string;
+		}
+	): Promise<any> {
+		const whereClause = {};
+		if (this.services[service_count]['tenantOrganizationBase'] !== false) {
+			whereClause['where'] = findInput;
+		}
+		if (this.services[service_count]['tenantBase'] === true) {
+			whereClause['where'] = {
+				tenantId: findInput['tenantId']
+			};
+		}
+		const incommingData: Array<any> = (
+			await this.services[service_count].service.findAll(whereClause)
 		).items;
 
-		if (incommingData[0] !== undefined) {
+		if (incommingData.length > 0) {
 			return new Promise((resolve, reject) => {
 				const createCsvWriter = csv.createObjectCsvWriter;
 				const dataIn = [];
-
 				const dataKeys = Object.keys(incommingData[0]);
 
 				for (const count of dataKeys) {
@@ -518,6 +331,7 @@ export class ExportAllService implements OnDestroy {
 				});
 			});
 		}
+		return false;
 	}
 
 	async downloadToUser(res): Promise<any> {
@@ -580,25 +394,315 @@ export class ExportAllService implements OnDestroy {
 		});
 	}
 
-	async exportTables() {
+	async exportTables(findInput: {
+		organizationId: string;
+		tenantId: string;
+	}) {
 		return new Promise(async (resolve, reject) => {
 			for (const [i] of this.services.entries()) {
-				await this.getAsCsv(i);
+				await this.getAsCsv(i, findInput);
 			}
 			resolve();
 		});
 	}
 
-	async exportSpecificTables(names: string[]) {
+	async exportSpecificTables(
+		names: string[],
+		findInput: {
+			organizationId: string;
+			tenantId: string;
+		}
+	) {
 		return new Promise(async (resolve, reject) => {
 			for (let i = 0; i < this.services.length; i++) {
 				const name = names.find((n) => this.services[i].nameFile === n);
 				if (name) {
-					await this.getAsCsv(i);
+					await this.getAsCsv(i, findInput);
 				}
 			}
 			resolve();
 		});
+	}
+
+	/*
+	 * Load all services after create instance
+	 */
+	loadServices() {
+		return [
+			{ service: this.activityService, nameFile: 'activity' },
+			{
+				service: this.appointmentEmployeeService,
+				nameFile: 'appointment_employee'
+			},
+			{
+				service: this.approvalPolicyService,
+				nameFile: 'approval_policy'
+			},
+			{
+				service: this.availabilitySlotsService,
+				nameFile: 'availability_slot'
+			},
+			{ service: this.candidateService, nameFile: 'candidate' },
+			{
+				service: this.candidateCrieationsRatingService,
+				nameFile: 'candidate_creation_rating'
+			},
+			{
+				service: this.candidateDocumnetsService,
+				nameFile: 'candidate_document'
+			},
+			{
+				service: this.candidateEducationService,
+				nameFile: 'candidate_education'
+			},
+			{
+				service: this.candidateExperienceService,
+				nameFile: 'candidate_experience'
+			},
+			{
+				service: this.candidateFeedbacksService,
+				nameFile: 'candidate_feedback'
+			},
+			{
+				service: this.candidateInterviewService,
+				nameFile: 'candidate_interview'
+			},
+			{
+				service: this.candidateInterviewsService,
+				nameFile: 'candidate_interviewer'
+			},
+			{
+				service: this.candidatePersonalQualitiesService,
+				nameFile: 'candidate_personal_quality'
+			},
+			{
+				service: this.candidateSkillService,
+				nameFile: 'candidate_skill'
+			},
+			{
+				service: this.candidateSourceService,
+				nameFile: 'candidate_source'
+			},
+			{
+				service: this.candidateTechnologiesService,
+				nameFile: 'candidate_technology'
+			},
+			{ service: this.contactService, nameFile: 'contact' },
+			{
+				service: this.countryService,
+				nameFile: 'country',
+				tenantOrganizationBase: false
+			},
+			{ service: this.dealService, nameFile: 'deal' },
+			{ service: this.emailService, nameFile: 'email' },
+			{ service: this.emailTemplate, nameFile: 'email_template' },
+			{ service: this.estimateEmailService, nameFile: 'estimate_email' },
+			{ service: this.employeeService, nameFile: 'employee' },
+			{
+				service: this.employeeAppointmentService,
+				nameFile: 'employee_appointment'
+			},
+			{
+				service: this.employeeRecurringExpensesService,
+				nameFile: 'employee_recurring_expense'
+			},
+			{
+				service: this.employeeSettingService,
+				nameFile: 'employee_setting'
+			},
+			{ service: this.equpmentService, nameFile: 'equipment' },
+			{
+				service: this.equipmentSharingService,
+				nameFile: 'equipment_sharing'
+			},
+			{ service: this.eventTypesService, nameFile: 'event_types' },
+			{ service: this.expenseService, nameFile: 'expense' },
+			{
+				service: this.expenseCategoriesService,
+				nameFile: 'expense_category'
+			},
+			{ service: this.goalService, nameFile: 'goal' },
+			{ service: this.goalKpiService, nameFile: 'goal_kpi' },
+			{ service: this.goalTimeFrameService, nameFile: 'goal_time_frame' },
+			{ service: this.helpCenterService, nameFile: 'knowledge_base' },
+			{
+				service: this.helpCenterArticleService,
+				nameFile: 'knowledge_base_article'
+			},
+			{
+				service: this.helpCenterAuthorService,
+				nameFile: 'knowledge_base_author'
+			},
+			{ service: this.incomeService, nameFile: 'income' },
+			{
+				service: this.integrationService,
+				nameFile: 'integration',
+				tenantOrganizationBase: false
+			},
+			{
+				service: this.integrationEntitySettingService,
+				nameFile: 'integration_entity_setting'
+			},
+			{
+				service: this.integrationEntitySettingTiedEntityService,
+				nameFile: 'integration_entity_setting_tied_entity'
+			},
+			{
+				service: this.integrationMapService,
+				nameFile: 'integration_map'
+			},
+			{
+				service: this.integrationSettingService,
+				nameFile: 'integration_setting'
+			},
+			{
+				service: this.integrationTenantService,
+				nameFile: 'integration_tenant'
+			},
+			{ service: this.inviteService, nameFile: 'invite' },
+			{ service: this.invoiceService, nameFile: 'invoice' },
+			{ service: this.invoiceItemService, nameFile: 'invoice_item' },
+			{ service: this.keyResultService, nameFile: 'key_result' },
+			{
+				service: this.keyResultUpdateService,
+				nameFile: 'key_result_update'
+			},
+			{
+				service: this.languageService,
+				nameFile: 'language',
+				tenantOrganizationBase: false
+			},
+			{
+				service: this.organizationService,
+				nameFile: 'organization',
+				tenantOrganizationBase: false,
+				tenantBase: true
+			},
+			{
+				service: this.organizationAwardsService,
+				nameFile: 'organization_award'
+			},
+			{
+				service: this.organizationContactService,
+				nameFile: 'organization_contact'
+			},
+			{
+				service: this.organizationDepartmentService,
+				nameFile: 'organization_department'
+			},
+			{
+				service: this.organizationDocumnetService,
+				nameFile: 'organization_document'
+			},
+			{
+				service: this.employeeLevelService,
+				nameFile: 'organization_employee_level'
+			},
+			{
+				service: this.organizationEmploymentTypeService,
+				nameFile: 'organization_employment_type'
+			},
+			{
+				service: this.organizationLanguagesService,
+				nameFile: 'organization_languages'
+			},
+			{
+				service: this.organizationPositionsService,
+				nameFile: 'organization_position'
+			},
+			{
+				service: this.organizationProjectsService,
+				nameFile: 'organization_project'
+			},
+			{
+				service: this.organizationRecurringExpenseService,
+				nameFile: 'organization_recurring_expense'
+			},
+			{
+				service: this.organizationSprintService,
+				nameFile: 'organization_sprint'
+			},
+			{
+				service: this.organizationTeamService,
+				nameFile: 'organization_team'
+			},
+			{
+				service: this.organizationTeamEmployeeService,
+				nameFile: 'organization_team_employee'
+			},
+			{
+				service: this.organizationVendorsService,
+				nameFile: 'organization_vendor'
+			},
+			{ service: this.paymentService, nameFile: 'payment' },
+			{ service: this.pipelineService, nameFile: 'pipeline' },
+			{ service: this.productService, nameFile: 'product' },
+			{
+				service: this.productCategoryService,
+				nameFile: 'product_category'
+			},
+			{ service: this.productOptionService, nameFile: 'product_option' },
+			{ service: this.productTypeService, nameFile: 'product_type' },
+			{
+				service: this.productVariantService,
+				nameFile: 'product_variant'
+			},
+			{
+				service: this.productVariantPriceService,
+				nameFile: 'product_variant_price'
+			},
+			{
+				service: this.productSettingsService,
+				nameFile: 'product_variant_setting'
+			},
+			{ service: this.proposalService, nameFile: 'proposal' },
+			{
+				service: this.requestApprovalService,
+				nameFile: 'request_approval'
+			},
+			{
+				service: this.roleService,
+				nameFile: 'role',
+				tenantOrganizationBase: false
+			},
+			{
+				service: this.rolePermissionsService,
+				nameFile: 'role_permission',
+				tenantOrganizationBase: false
+			},
+			{ service: this.screenShotService, nameFile: 'screenshot' },
+			{
+				service: this.skillService,
+				nameFile: 'skill',
+				tenantOrganizationBase: false
+			},
+			{ service: this.stageService, nameFile: 'pipeline_stage' },
+			{ service: this.tagService, nameFile: 'tag' },
+			{ service: this.taskService, nameFile: 'task' },
+			{
+				service: this.tenantService,
+				nameFile: 'tenant',
+				tenantOrganizationBase: false
+			},
+			{ service: this.timeOffPolicyService, nameFile: 'time_off_policy' },
+			{
+				service: this.timeOffRequestService,
+				nameFile: 'time_off_request'
+			},
+			{ service: this.timeSheetService, nameFile: 'timesheet' },
+			{ service: this.timeLogService, nameFile: 'time_log' },
+			{ service: this.timeSlotService, nameFile: 'time_slot' },
+			{
+				service: this.userService,
+				nameFile: 'user',
+				tenantOrganizationBase: false,
+				tenantBase: true
+			},
+			{
+				service: this.userOrganizationService,
+				nameFile: 'user_organization'
+			}
+		];
 	}
 
 	ngOnDestroy() {
