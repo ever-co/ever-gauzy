@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
-import { ITask, TaskStatusEnum } from '@gauzy/models';
+import { ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from '../../../../@core/services/tasks.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
@@ -26,6 +26,7 @@ export class TaskSelectorComponent
 
 	@Input() disabled = false;
 	@Input() allowAddNew = true;
+	hasPermissionTaskEdit: boolean;
 
 	@Input()
 	public get projectId() {
@@ -68,6 +69,14 @@ export class TaskSelectorComponent
 	onTouched: any = () => {};
 
 	ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.hasPermissionTaskEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
+				);
+			});
+
 		this.loadTasks$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(async () => {

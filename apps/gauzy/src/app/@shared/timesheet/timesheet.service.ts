@@ -62,6 +62,15 @@ export class TimesheetService {
 			});
 	}
 
+	getTimeSheetCount(request?: IGetTimesheetInput) {
+		return this.http
+			.get('/api/timesheet/count', { params: toParams(request) })
+			.toPromise()
+			.then((data: number) => {
+				return data;
+			});
+	}
+
 	updateStatus(ids: string | string[], status: TimesheetStatus) {
 		return this.http
 			.put(`/api/timesheet/status`, { ids, status })

@@ -44,6 +44,20 @@ export class TimeSheetController extends CrudController<Timesheet> {
 	async get(@Query() entity: IGetTimesheetInput): Promise<any> {
 		return this.timeSheetService.getTimeSheets(entity);
 	}
+	@ApiOperation({ summary: 'Get timesheet Count' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Get timesheet Count'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/count')
+	async getCount(@Query() entity: IGetTimesheetInput): Promise<any> {
+		return this.timeSheetService.getTimeSheetCount(entity);
+	}
 
 	@ApiOperation({ summary: 'Update timesheet' })
 	@ApiResponse({
