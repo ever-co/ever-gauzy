@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { PaymentService } from '../../@core/services/payment.service';
 import { Store } from '../../@core/services/store.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil, first, filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
 	IPayment,
@@ -27,13 +27,15 @@ import { OrganizationProjectsService } from '../../@core/services/organization-p
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ngx-payments',
 	templateUrl: './payments.component.html',
 	styleUrls: ['./payments.component.scss']
 })
-export class PaymentsComponent extends TranslationBaseComponent
+export class PaymentsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('invoicesTable') paymentsTable;
 
@@ -48,7 +50,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
 		private toastrService: NbToastrService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 		this.setView();
@@ -68,6 +71,7 @@ export class PaymentsComponent extends TranslationBaseComponent
 	currency: string;
 	organizationContacts: IOrganizationContact[];
 	projects: IOrganizationProject[];
+	loading = true;
 
 	ngOnInit() {
 		this.loadSmartTable();
@@ -94,58 +98,73 @@ export class PaymentsComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe(async (org) => {
 				if (org) {
-					this.organization = org;
-					const orgData = await this.organizationsService
-						.getById(org.id, [OrganizationSelectInput.currency])
-						.pipe(first())
-						.toPromise();
-					this.currency = orgData.currency;
-					const invoices = await this.invoicesService.getAll([], {
-						organizationId: org.id,
-						tenantId: org.tenantId,
-						isEstimate: false
-					});
-					this.invoices = invoices.items;
-					this.selectedPayment = null;
-					const { items } = await this.paymentService.getAll(
-						['invoice', 'recordedBy', 'contact', 'project', 'tags'],
-						{
+					this.loading = true;
+					try {
+						this.organization = org;
+						const orgData = await this.organizationsService
+							.getById(org.id, [OrganizationSelectInput.currency])
+							.pipe(first())
+							.toPromise();
+						this.currency = orgData.currency;
+						const invoices = await this.invoicesService.getAll([], {
 							organizationId: org.id,
-							tenantId: org.tenantId
+							tenantId: org.tenantId,
+							isEstimate: false
+						});
+						this.invoices = invoices.items;
+						this.selectedPayment = null;
+						const { items } = await this.paymentService.getAll(
+							[
+								'invoice',
+								'recordedBy',
+								'contact',
+								'project',
+								'tags'
+							],
+							{
+								organizationId: org.id,
+								tenantId: org.tenantId
+							}
+						);
+						for (const payment of items) {
+							if (payment.invoice) {
+								const organizationContact = await this.organizationContactService.getById(
+									payment.invoice.organizationContactId
+								);
+								payment.invoice.toContact = organizationContact;
+							}
 						}
-					);
-					for (const payment of items) {
-						if (payment.invoice) {
-							const organizationContact = await this.organizationContactService.getById(
-								payment.invoice.organizationContactId
-							);
-							payment.invoice.toContact = organizationContact;
-						}
-					}
-					const res = await this.organizationContactService.getAll(
-						[],
-						{
-							organizationId: org.id,
-							tenantId: org.tenantId
-						}
-					);
+						const res = await this.organizationContactService.getAll(
+							[],
+							{
+								organizationId: org.id,
+								tenantId: org.tenantId
+							}
+						);
 
-					if (res) {
-						this.organizationContacts = res.items;
-					}
-
-					const projects = await this.organizationProjectsService.getAll(
-						[],
-						{
-							organizationId: org.id,
-							tenantId: org.tenantId
+						if (res) {
+							this.organizationContacts = res.items;
 						}
-					);
-					this.projects = projects.items;
-					this.smartTableSource.load(items);
+
+						const projects = await this.organizationProjectsService.getAll(
+							[],
+							{
+								organizationId: org.id,
+								tenantId: org.tenantId
+							}
+						);
+						this.projects = projects.items;
+						this.smartTableSource.load(items);
+						this.loading = false;
+					} catch (error) {
+						this._errorHandlingService.handleError(error);
+					}
 				}
 			});
 	}

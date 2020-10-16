@@ -79,15 +79,32 @@ export class AggregateOrganizationQueryHandler
 
 		if (employees.length > 0) {
 			// 1.Load Income and Direct Bonus in employeeMap
-			await this._loadIncomeAndDirectBonus(searchInput, employeeMap);
+			await this._loadIncomeAndDirectBonus(
+				searchInput,
+				employeeMap,
+				organizationId
+			);
 
 			// 2. Populate Expenses(One time, Recurring, and split expenses) in employeeMap
-			await this._loadEmployeeExpenses(searchInput, employeeMap);
-			await this._loadEmployeeRecurringExpenses(searchInput, employeeMap);
-			await this._loadOrganizationSplitExpenses(searchInput, employeeMap);
+			await this._loadEmployeeExpenses(
+				searchInput,
+				employeeMap,
+				organizationId
+			);
+			await this._loadEmployeeRecurringExpenses(
+				searchInput,
+				employeeMap,
+				organizationId
+			);
+			await this._loadOrganizationSplitExpenses(
+				searchInput,
+				employeeMap,
+				organizationId
+			);
 			await this._loadOrganizationRecurringSplitExpenses(
 				searchInput,
-				employeeMap
+				employeeMap,
+				organizationId
 			);
 
 			// 3. Populate Profit in employeeMap
@@ -111,7 +128,8 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadIncomeAndDirectBonus(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, IEmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>,
+		organizationId: string
 	) {
 		// Fetch employees' incomes for past N months from given date
 		const {
@@ -119,7 +137,8 @@ export class AggregateOrganizationQueryHandler
 		} = await this.employeeStatisticsService.employeeIncomeInNMonths(
 			[...employeeMap.keys()],
 			searchInput.valueDate,
-			searchInput.months
+			searchInput.months,
+			organizationId
 		);
 		incomes.forEach((income) => {
 			const stat = employeeMap.get(income.employeeId);
@@ -133,7 +152,8 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadEmployeeExpenses(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, IEmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>,
+		organizationId: string
 	) {
 		// Fetch employees' expenses for past N months from given date
 		const {
@@ -141,7 +161,8 @@ export class AggregateOrganizationQueryHandler
 		} = await this.employeeStatisticsService.employeeExpenseInNMonths(
 			[...employeeMap.keys()],
 			searchInput.valueDate,
-			searchInput.months
+			searchInput.months,
+			organizationId
 		);
 		expenses.forEach((expense) => {
 			const stat = employeeMap.get(expense.employeeId);
@@ -152,14 +173,16 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadEmployeeRecurringExpenses(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, IEmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>,
+		organizationId: string
 	) {
 		// Fetch employees' recurring expenses for past N months from given date
 		const {
 			items: employeeRecurringExpenses
-		} = await this.employeeStatisticsService.employeeRecurringExpenses([
-			...employeeMap.keys()
-		]);
+		} = await this.employeeStatisticsService.employeeRecurringExpenses(
+			[...employeeMap.keys()],
+			organizationId
+		);
 
 		/**
 		 * Add recurring expense from the
@@ -205,7 +228,8 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadOrganizationSplitExpenses(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, IEmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>,
+		organizationId: string
 	) {
 		const employeeIds = [...employeeMap.keys()];
 
@@ -214,7 +238,8 @@ export class AggregateOrganizationQueryHandler
 		const expenses = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
 			employeeIds[0], // split expenses are fetched at organization level, 1st Employee
 			searchInput.valueDate,
-			searchInput.months //this is always 1
+			searchInput.months, //this is always 1
+			organizationId
 		);
 
 		//Since we are only calculating for one month, we only expect one value here.
@@ -234,7 +259,8 @@ export class AggregateOrganizationQueryHandler
 
 	private async _loadOrganizationRecurringSplitExpenses(
 		searchInput: { valueDate: Date; months: number },
-		employeeMap: Map<string, IEmployeeStatisticSum>
+		employeeMap: Map<string, IEmployeeStatisticSum>,
+		organizationId: string
 	) {
 		const employeeIds = [...employeeMap.keys()];
 
@@ -242,7 +268,8 @@ export class AggregateOrganizationQueryHandler
 		const organizationRecurringSplitExpenses = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
 			employeeIds[0],
 			searchInput.valueDate,
-			searchInput.months //this is always 1
+			searchInput.months, //this is always 1
+			organizationId
 		);
 
 		//Since we are only calculating for one month, we only expect one value here.

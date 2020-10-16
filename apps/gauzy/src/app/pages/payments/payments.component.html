@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
 		<div>
 			<h4>{{ 'PAYMENTS_PAGE.HEADER' | translate }}</h4>
@@ -45,7 +45,7 @@
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			(userRowSelect)="selectPayment($event)"
 			#paymentsTable
 		>
