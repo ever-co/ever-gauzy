@@ -2,10 +2,11 @@ import { Component, OnInit, Input, forwardRef, OnDestroy } from '@angular/core';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { ContactType, IOrganizationContact } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { merge, Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
 	selector: 'gauzy-contact-selector',
@@ -56,22 +57,31 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 	onTouched: any = () => {};
 
 	ngOnInit() {
-		this.loadContacts$.pipe(untilDestroyed(this)).subscribe(async () => {
-			const organizationId = this.store.selectedOrganization.id;
-			if (this.employeeId) {
-				const items = await this.organizationContactService.getAllByEmployee(
-					this.employeeId
-				);
-				this.contacts = items;
-			} else {
-				const {
-					items = []
-				} = await this.organizationContactService.getAll([], {
-					organizationId
-				});
-				this.contacts = items;
-			}
-		});
+		merge(this.loadContacts$, this.store.selectedDate$)
+			.pipe(untilDestroyed(this), debounceTime(300))
+			.subscribe(async () => {
+				if (this.store.selectedOrganization)
+					if (this.employeeId) {
+						const items = await this.organizationContactService.getAllByEmployee(
+							this.employeeId
+						);
+						this.contacts = items;
+					} else {
+						const {
+							items = []
+						} = await this.organizationContactService.getAll([], {
+							...(this.store.selectedOrganization.id
+								? {
+										organizationId: this.store
+											.selectedOrganization.id
+								  }
+								: {})
+						});
+						this.contacts = items;
+					}
+			});
+
+		this.loadContacts$.next();
 	}
 
 	writeValue(value: string | string[]) {
@@ -96,11 +106,16 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 
 	createNew = async (name: string) => {
 		const organizationId = this.store.selectedOrganization.id;
+		const members = [];
+		if (this.employeeId) {
+			members.push({ id: this.employeeId });
+		}
 		try {
 			const contact = await this.organizationContactService.create({
 				name,
 				organizationId: organizationId,
 				contactType: ContactType.CLIENT,
+				members,
 				imageUrl:
 					'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
 			});
