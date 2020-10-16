@@ -1,6 +1,10 @@
 import { Component, OnInit, Input, forwardRef, OnDestroy } from '@angular/core';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
-import { ContactType, IOrganizationContact } from '@gauzy/models';
+import {
+	ContactType,
+	IOrganizationContact,
+	PermissionsEnum
+} from '@gauzy/models';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { merge, Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
@@ -27,6 +31,7 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 
 	@Input() disabled = false;
 	@Input() multiple = false;
+	hasPermissionContactEdit: boolean;
 	@Input()
 	public get employeeId() {
 		return this._employeeId;
@@ -57,6 +62,14 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 	onTouched: any = () => {};
 
 	ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.hasPermissionContactEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_CONTACT_EDIT
+				);
+			});
+
 		merge(this.loadContacts$, this.store.selectedDate$)
 			.pipe(untilDestroyed(this), debounceTime(300))
 			.subscribe(async () => {

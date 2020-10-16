@@ -1,6 +1,6 @@
 <div (click)="$event.stopPropagation()">
 	<ng-select
-		[addTag]="createNew"
+		[addTag]="hasPermissionTaskEdit ? createNew : null"
 		[disabled]="disabled"
 		[clearable]="true"
 		[items]="tasks"
