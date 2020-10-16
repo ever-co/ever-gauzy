@@ -14,6 +14,7 @@ export interface IEmployeeStatistics {
 }
 export interface IMonthAggregatedEmployeeStatisticsFindInput {
 	employeeId: string;
+	organizationId: string;
 	valueDate: Date;
 	months: number;
 }

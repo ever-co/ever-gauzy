@@ -80,7 +80,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		} = await this.employeeStatisticsService.employeeIncomeInNMonths(
 			[input.employeeId],
 			input.valueDate,
-			input.months
+			input.months,
+			input.organizationId
 		);
 		incomes.forEach((income) => {
 			const key = `${income.valueDate.getMonth()}-${income.valueDate.getFullYear()}`;
@@ -133,7 +134,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		} = await this.employeeStatisticsService.employeeExpenseInNMonths(
 			[input.employeeId],
 			input.valueDate,
-			input.months
+			input.months,
+			input.organizationId
 		);
 
 		expenses.forEach((expense) => {
@@ -177,9 +179,10 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	) {
 		const {
 			items: employeeRecurringExpenses
-		} = await this.employeeStatisticsService.employeeRecurringExpenses([
-			input.employeeId
-		]);
+		} = await this.employeeStatisticsService.employeeRecurringExpenses(
+			[input.employeeId],
+			input.organizationId
+		);
 
 		/**
 		 * Add recurring expense from the
@@ -269,7 +272,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		const splitExpensesMap = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
 			input.employeeId,
 			input.valueDate,
-			input.months
+			input.months,
+			input.organizationId
 		);
 
 		splitExpensesMap.forEach((value, key) => {
@@ -316,7 +320,8 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		const splitExpensesMap = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
 			input.employeeId,
 			input.valueDate,
-			input.months
+			input.months,
+			input.organizationId
 		);
 
 		splitExpensesMap.forEach((value, key) => {

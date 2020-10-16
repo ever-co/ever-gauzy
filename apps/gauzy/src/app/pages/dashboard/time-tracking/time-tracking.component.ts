@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
 import { Store } from '../../../@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
 	IGetTimeSlotStatistics,
@@ -21,11 +21,11 @@ import {
 	IManualTimesStatistics
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter } from 'rxjs/operators';
 import _ from 'underscore';
 import { progressStatus } from '@gauzy/utils';
 import * as moment from 'moment';
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-tracking',
 	templateUrl: './time-tracking.component.html',
@@ -63,13 +63,14 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getStatistics();
-			});
+		this.updateLogs$.pipe(untilDestroyed(this)).subscribe(() => {
+			this.getStatistics();
+		});
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;

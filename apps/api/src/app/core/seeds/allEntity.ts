@@ -102,6 +102,7 @@ import { IntegrationSetting } from '../../integration-setting/integration-settin
 import { IntegrationMap } from '../../integration-map/integration-map.entity';
 import { EmployeeAward } from '../../employee-award/employee-award.entity';
 import { GoalKPITemplate } from '../../goal-kpi-template/goal-kpi-template.entity';
+import { TenantSetting } from '../../tenant/tenant-setting/tenant-setting.entity';
 
 export const allEntities = [
 	AppointmentEmployee,
@@ -198,6 +199,7 @@ export const allEntities = [
 	Tag,
 	Task,
 	Tenant,
+	TenantSetting,
 	TimeOffPolicy,
 	TimeOffRequest,
 	Activity,

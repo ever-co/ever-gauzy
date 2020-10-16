@@ -75,31 +75,41 @@ export class StatisticService {
 		/*
 		 *  Get employees count who worked in this week.
 		 */
-		const employeesCountQuery = await this.employeeRepository.createQueryBuilder();
-		employeesCountQuery
-			.innerJoin(`${employeesCountQuery.alias}.timeLogs`, 'timeLogs')
-			.where({
-				id: In(employeeIds)
-			})
-			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			});
+		const employeesCountQuery = this.employeeRepository.createQueryBuilder();
+		employeesCountQuery.innerJoin(
+			`${employeesCountQuery.alias}.timeLogs`,
+			'timeLogs'
+		);
+		if (employeeIds.length) {
+			employeesCountQuery
+				.where({
+					id: In(employeeIds)
+				})
+				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				});
+		}
 		const employeesCount = await employeesCountQuery.getCount();
 
 		/*
 		 *  Get projects count who worked in this week.
 		 */
-		const projectsCountQuery = await this.organizationProjectsRepository.createQueryBuilder();
-		projectsCountQuery
-			.innerJoin(`${projectsCountQuery.alias}.timeLogs`, 'timeLogs')
-			.where(`"timeLogs"."employeeId" IN (:...employeeId)`, {
-				employeeId: employeeIds
-			})
-			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			});
+		const projectsCountQuery = this.organizationProjectsRepository.createQueryBuilder();
+		projectsCountQuery.innerJoin(
+			`${projectsCountQuery.alias}.timeLogs`,
+			'timeLogs'
+		);
+		if (employeeIds.length) {
+			projectsCountQuery
+				.where(`"timeLogs"."employeeId" IN (:...employeeId)`, {
+					employeeId: employeeIds
+				})
+				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				});
+		}
 		const projectsCount = await projectsCountQuery.getCount();
 
 		/*
@@ -271,7 +281,11 @@ export class StatisticService {
 						`duration`
 					)
 					.addSelect(
-						`${environment.database.type === 'sqlite' ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`,
+						`${
+							environment.database.type === 'sqlite'
+								? `(strftime('%w', timeLogs.startedAt))`
+								: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+						}`,
 						'day'
 					)
 					.where({ id: member.id })
@@ -283,7 +297,13 @@ export class StatisticService {
 						}
 					)
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
-					.addGroupBy(`${environment.database.type === 'sqlite' ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`)
+					.addGroupBy(
+						`${
+							environment.database.type === 'sqlite'
+								? `(strftime('%w', timeLogs.startedAt))`
+								: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+						}`
+					)
 					.getRawMany();
 			}
 		}
