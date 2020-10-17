@@ -16,6 +16,7 @@ import { TimesheetService } from '../../timesheet/timesheet.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { filter } from 'rxjs/operators';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-time-tracker',

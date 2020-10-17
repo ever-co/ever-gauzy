@@ -9,8 +9,8 @@ import {
 } from '@angular/core';
 import { AlertComponent, AlertDialogOptions } from '../alert/alert.component';
 import { NbDialogService } from '@nebular/theme';
-import { untilDestroyed } from 'ngx-take-until-destroy';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Directive({
 	selector: '[ngxAlertDialog]'
 })

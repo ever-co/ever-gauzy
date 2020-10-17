@@ -15,14 +15,16 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-proposal-register',
 	templateUrl: './proposal-register.component.html',
 	styleUrls: ['././proposal-register.component.scss']
 })
-export class ProposalRegisterComponent extends TranslationBaseComponent
+export class ProposalRegisterComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;

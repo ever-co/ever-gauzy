@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { RouteUtil } from 'apps/gauzy/src/app/@core/services/route-utils';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-layout',
 	templateUrl: './layout.component.html',

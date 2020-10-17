@@ -12,7 +12,7 @@ import {
 } from '@gauzy/models';
 import { toUTC } from '@gauzy/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { NbDialogService } from '@nebular/theme';
@@ -26,6 +26,7 @@ interface WeeklyDayData {
 	dates: any;
 }
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-weekly',
 	templateUrl: './weekly.component.html',

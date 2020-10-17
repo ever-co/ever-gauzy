@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs';
 import {
 	IOrganization,
@@ -18,6 +18,7 @@ import * as _ from 'underscore';
 import * as moment from 'moment';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-app-url-activity',
 	styleUrls: ['./app-url-activity.component.scss'],

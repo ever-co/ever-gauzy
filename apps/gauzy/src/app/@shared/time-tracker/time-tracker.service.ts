@@ -13,7 +13,7 @@ import { toLocal } from '@gauzy/utils';
 import * as moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
 import { Store as AppStore } from '../../@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {
@@ -59,6 +59,7 @@ export class TimerQuery extends Query<TimerState> {
 	}
 }
 
+@UntilDestroy({ checkProperties: true })
 @Injectable({
 	providedIn: 'root'
 })

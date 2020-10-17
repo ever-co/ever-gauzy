@@ -10,7 +10,7 @@ import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
 import { GalleryItem } from './gallery.directive';
 import { GalleryService } from './gallery.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -24,6 +24,7 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	])
 ]);
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-gallery',
 	templateUrl: './gallery.component.html',

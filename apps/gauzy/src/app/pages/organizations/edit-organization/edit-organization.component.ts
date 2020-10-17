@@ -9,8 +9,9 @@ import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationEditStore } from '../../../@core/services/organization-edit-store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './edit-organization.component.html',
 	styleUrls: [
@@ -18,7 +19,8 @@ import { untilDestroyed } from 'ngx-take-until-destroy';
 		'../../dashboard/dashboard.component.scss'
 	]
 })
-export class EditOrganizationComponent extends TranslationBaseComponent
+export class EditOrganizationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	selectedOrg: IOrganization;
 	selectedOrgFromHeader: IOrganization;

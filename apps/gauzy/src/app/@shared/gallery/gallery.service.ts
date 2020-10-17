@@ -2,7 +2,7 @@ import { Injectable, OnInit, OnDestroy, Input } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Router, NavigationStart } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as _ from 'underscore';
 
 export interface GalleryItem {
@@ -10,6 +10,7 @@ export interface GalleryItem {
 	fullUrl: string;
 }
 
+@UntilDestroy({ checkProperties: true })
 @Injectable({
 	providedIn: 'root'
 })
