@@ -10,9 +10,10 @@ import {
 import { IEmployee } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs/operators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-multi-select',
 	templateUrl: './employee-multi-select.component.html',

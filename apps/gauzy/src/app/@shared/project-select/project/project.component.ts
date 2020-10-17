@@ -8,10 +8,11 @@ import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/o
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-project-selector',
 	templateUrl: './project.component.html',

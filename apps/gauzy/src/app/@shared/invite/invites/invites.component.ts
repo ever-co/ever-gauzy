@@ -22,7 +22,7 @@ import { DepartmentNamesComponent } from './department-names/department-names.co
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 interface InviteViewModel {
 	email: string;
@@ -38,12 +38,14 @@ interface InviteViewModel {
 	inviteUrl: string;
 }
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invites',
 	templateUrl: './invites.component.html',
 	styleUrls: ['invites.component.scss']
 })
-export class InvitesComponent extends TranslationBaseComponent
+export class InvitesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input()
 	invitationType: InvitationTypeEnum;

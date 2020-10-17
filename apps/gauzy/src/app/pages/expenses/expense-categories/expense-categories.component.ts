@@ -9,14 +9,17 @@ import { ITag, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { IOrganizationExpenseCategory } from 'libs/models/src/lib/organization-expense-category.model';
 import { Store } from '../../../@core/services/store.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-expense-categories',
 	templateUrl: './expense-categories.component.html'
 })
-export class ExpenseCategoriesComponent extends TranslationBaseComponent
+export class ExpenseCategoriesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationId: string;
 	tenantId: string;

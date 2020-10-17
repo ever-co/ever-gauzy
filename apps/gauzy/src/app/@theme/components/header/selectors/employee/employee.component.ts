@@ -15,7 +15,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { ITag, IOrganization, ISkill } from '@gauzy/models';
 import { ActivatedRoute } from '@angular/router';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 //TODO: Currently the whole application assumes that if employee or id is null then you need to get data for All Employees
 //That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
@@ -55,6 +55,7 @@ export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
 	skills: []
 };
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-selector',
 	templateUrl: './employee.component.html',
