@@ -10,7 +10,6 @@ import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { error } from 'console';
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -113,7 +112,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) => {
-			const thumbSize = this.determineScreenshot();
+			const thumbSize = this.determineScreenshot(arg.screensize);
 			this.electronService.desktopCapturer
 				.getSources({ types: ['screen'], thumbnailSize: thumbSize })
 				.then((sources) => {
@@ -364,13 +363,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	doshoot() {
-		console.log('shoot');
 		this.electronService.ipcRenderer.send('screen_shoot');
 	}
 
-	determineScreenshot() {
-		const screensize = this.electronService.screen.getPrimaryDisplay()
-			.workAreaSize;
+	determineScreenshot(screensize) {
 		const maxDimension = Math.max(screensize.width, screensize.height);
 		console.log(maxDimension);
 
