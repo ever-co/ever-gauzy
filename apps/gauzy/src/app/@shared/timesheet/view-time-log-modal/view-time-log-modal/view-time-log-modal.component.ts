@@ -6,10 +6,11 @@ import {
 	OrganizationPermissionsEnum
 } from '@gauzy/models';
 import { EditTimeLogModalComponent } from '../../edit-time-log-modal/edit-time-log-modal.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TimesheetService } from '../../timesheet.service';
 import { TimeLogsLable } from 'apps/gauzy/src/app/static-data/timesheet';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-view-time-log-modal',
 	templateUrl: './view-time-log-modal.component.html',

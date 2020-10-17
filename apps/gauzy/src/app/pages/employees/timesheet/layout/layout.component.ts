@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/models';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-layout',
 	templateUrl: './layout.component.html',

@@ -10,9 +10,10 @@ import {
 	PromptComponent,
 	PromptDialogOptions
 } from '../prompt/prompt.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 
+@UntilDestroy({ checkProperties: true })
 @Directive({
 	selector: '[ngxPromptDialog]'
 })

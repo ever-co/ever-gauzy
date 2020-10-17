@@ -16,14 +16,16 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './pipelines.component.html',
 	selector: 'ga-pipelines',
 	styleUrls: ['./pipelines.component.scss']
 })
-export class PipelinesComponent extends TranslationBaseComponent
+export class PipelinesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	smartTableSettings = {
 		actions: false,

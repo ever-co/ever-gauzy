@@ -17,11 +17,12 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { debounceTime, filter, map } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Router } from '@angular/router';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approvals',
 	templateUrl: './approvals.component.html',

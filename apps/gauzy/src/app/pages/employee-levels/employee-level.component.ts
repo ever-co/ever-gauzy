@@ -15,12 +15,15 @@ import { Store } from '../../@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-level',
 	templateUrl: './employee-level.component.html'
 })
-export class EmployeeLevelComponent extends TranslationBaseComponent
+export class EmployeeLevelComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationId: string;
 	selectedOrganization: IOrganization;

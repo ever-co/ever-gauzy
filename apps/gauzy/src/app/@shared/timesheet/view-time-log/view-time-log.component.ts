@@ -3,10 +3,11 @@ import { ITimeLog, OrganizationPermissionsEnum } from '@gauzy/models';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from '../edit-time-log-modal/edit-time-log-modal.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ViewTimeLogModalComponent } from '../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { TimesheetService } from '../timesheet.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-view-time-log',
 	templateUrl: './view-time-log.component.html',

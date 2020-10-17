@@ -146,7 +146,6 @@ function startServer(value) {
 
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
-	serverDesktop = fork(path.join(__dirname, 'desktop-api/main.js'));
 
 	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
@@ -162,13 +161,13 @@ app.on('ready', async () => {
 	} else {
 		setupWindow = createSetupWindow(setupWindow, false);
 	}
-
 	ipcMainHandler(store, startServer, knex);
 });
 
 app.on('window-all-closed', quit);
 
 ipcMain.on('server_is_ready', () => {
+	serverDesktop = fork(path.join(__dirname, 'desktop-api/main.js'));
 	LocalStore.setDefaultApplicationSetting();
 
 	onWaitingServer = false;

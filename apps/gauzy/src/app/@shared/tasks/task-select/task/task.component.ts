@@ -2,12 +2,13 @@ import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from '../../../../@core/services/tasks.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-task-selector',
 	templateUrl: './task.component.html',

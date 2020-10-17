@@ -7,11 +7,12 @@ import {
 } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { merge, Subject } from 'rxjs';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { debounceTime } from 'rxjs/operators';
 
+@UntilDestroy()
 @Component({
 	selector: 'gauzy-contact-selector',
 	templateUrl: './contact-selector.component.html',

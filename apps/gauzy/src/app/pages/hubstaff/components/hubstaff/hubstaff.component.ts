@@ -19,8 +19,9 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-hubstaff',
 	templateUrl: './hubstaff.component.html',
