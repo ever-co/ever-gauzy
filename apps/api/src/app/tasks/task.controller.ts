@@ -34,10 +34,10 @@ export class TaskController extends CrudController<Task> {
 		super(taskService);
 	}
 
-	@ApiOperation({ summary: 'Find all policies.' })
+	@ApiOperation({ summary: 'Find all tasks.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found policies',
+		description: 'Found tasks',
 		type: Task
 	})
 	@ApiResponse({
@@ -45,10 +45,15 @@ export class TaskController extends CrudController<Task> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllTimeOffPolicies(
+	async findAllTasks(
 		@Query('data') data: string
 	): Promise<IPagination<Task>> {
+		const tenantId = RequestContext.currentTenantId();
 		const { relations, findInput } = JSON.parse(data);
+		if (!findInput.hasOwnProperty('tenantId')) {
+			findInput['tenantId'] = tenantId;
+		}
+
 		return this.taskService.findAll({
 			where: findInput,
 			relations

@@ -15,8 +15,8 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-tabset>
-			<nb-tab tabTitle="Actions">
+		<nb-tabset (changeTab)="onChangeTab($event)">
+			<nb-tab tabTitle="Actions" tabId="actions">
 				<div class="mb-3" *ngIf="hasInvoiceEditPermission">
 					<div class="actions-container">
 						<button
@@ -48,7 +48,7 @@
 					</div>
 				</div>
 			</nb-tab>
-			<nb-tab tabTitle="Search">
+			<nb-tab tabTitle="Search" tabId="search">
 				<form [formGroup]="form">
 					<div class="row">
 						<div class="col-sm-3">
@@ -312,7 +312,7 @@
 					</div>
 				</form>
 			</nb-tab>
-			<nb-tab tabTitle="History">
+			<nb-tab tabTitle="History" tabId="history">
 				<nb-list-item
 					*ngIf="disableButton && !isEstimate"
 					class="history-list-select"
@@ -361,7 +361,7 @@
 			[source]="smartTableSource"
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			(userRowSelect)="selectInvoice($event)"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			#invoicesTable
 		>
 		</ng2-smart-table>

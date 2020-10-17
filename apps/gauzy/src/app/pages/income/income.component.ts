@@ -333,7 +333,10 @@ export class IncomeComponent
 								? null
 								: this._selectedOrganizationId
 						);
-						this.selectedIncome = null;
+						this.selectIncome({
+							isSelected: false,
+							data: null
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -376,7 +379,11 @@ export class IncomeComponent
 								? null
 								: this._selectedOrganizationId
 						);
-						this.selectedIncome = null;
+
+						this.selectIncome({
+							isSelected: false,
+							data: null
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
