@@ -1,4 +1,4 @@
-import { ipcMain, screen } from 'electron';
+import { ipcMain } from 'electron';
 import { TimerData } from '../local-data/timer';
 import { metaData } from '../local-data/coding-activity';
 import TimerHandler from './timer';

@@ -222,11 +222,10 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 	try {
 		const displays = arg.screens;
 		const appSetting = LocalStore.getStore('appSetting');
-		let captured = null;
 		const activeWindow = detectActiveWindow();
 		switch (appSetting.monitor.captured) {
 			case 'all':
-				captured = await captureAllWindow(
+				await captureAllWindow(
 					displays,
 					arg.timeSlotId,
 					activeWindow,
@@ -236,7 +235,7 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 				);
 				break;
 			case 'active-only':
-				captured = await captureOnlyActiveWindow(
+				await captureOnlyActiveWindow(
 					displays,
 					arg.timeSlotId,
 					activeWindow,
