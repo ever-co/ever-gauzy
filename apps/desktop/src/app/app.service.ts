@@ -7,6 +7,7 @@ import { environment } from '../environments/environment';
 })
 export class AppService {
 	AW_HOST = environment.AWHost;
+	buckets: any = {};
 	constructor(private http: HttpClient) {}
 
 	pingServer(values) {
@@ -54,7 +55,31 @@ export class AppService {
 			.toPromise();
 	}
 
-	collectevents(tpURL, tp, start, end): Promise<any> {
+	getAwBuckets(tpURL): Promise<any> {
+		return this.http.get(`${tpURL}/api/0/buckets`).pipe().toPromise();
+	}
+
+	parseBuckets(buckets) {
+		Object.keys(buckets).forEach((key) => {
+			const keyParse = key.split('_')[0];
+			switch (keyParse) {
+				case 'aw-watcher-window':
+					this.buckets.windowBucket = buckets[key];
+					break;
+				case 'aw-watcher-afk':
+					this.buckets.afkBucket = buckets[key];
+					break;
+				default:
+					break;
+			}
+		});
+	}
+
+	async collectevents(tpURL, tp, start, end): Promise<any> {
+		if (!this.buckets.windowBucket) {
+			const allBuckets = await this.getAwBuckets(tpURL);
+			this.parseBuckets(allBuckets);
+		}
 		return this.collectFromAW(tpURL, start, end);
 	}
 
@@ -65,20 +90,21 @@ export class AppService {
 	pushActivityCollectionToGauzy() {
 		return true;
 	}
-
 	collectFromAW(tpURL, start, end) {
+		if (!this.buckets.windowBucket) return Promise.resolve([]);
 		return this.http
 			.get(
-				`${tpURL}/api/0/buckets/aw-watcher-window_btr.local/events?start=${start}&end=${end}&limit=-1`
+				`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`
 			)
 			.pipe()
 			.toPromise();
 	}
 
 	collectAfkFromAW(tpURL, start, end) {
+		if (!this.buckets.afkBucket) return Promise.resolve([]);
 		return this.http
 			.get(
-				`${tpURL}/api/0/buckets/aw-watcher-afk_btr.local/events?limit=1`
+				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`
 			)
 			.pipe()
 			.toPromise();

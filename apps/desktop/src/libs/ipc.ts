@@ -127,13 +127,17 @@ export function ipcMainHandler(store, startServer, knex) {
 	});
 
 	ipcMain.on('request_permission', async (event) => {
-		if (process.platform === 'darwin') {
-			const screenCapturePermission = hasScreenCapturePermission();
-			if (!screenCapturePermission) {
-				if (!hasPromptedForPermission()) {
-					await openSystemPreferences();
+		try {
+			if (process.platform === 'darwin') {
+				const screenCapturePermission = hasScreenCapturePermission();
+				if (!screenCapturePermission) {
+					if (!hasPromptedForPermission()) {
+						await openSystemPreferences();
+					}
 				}
 			}
+		} catch (error) {
+			console.log('error opening permission', error.message);
 		}
 	});
 }
@@ -188,7 +192,10 @@ export function ipcTimer(
 			case 'ElectronDesktopCapturer':
 				timeTrackerWindow.webContents.send('take_screenshot', {
 					timeSlotId: arg.timeSlotId,
-					screensize: screen.getPrimaryDisplay().workAreaSize
+					screensize: {
+						width: 1920,
+						height: 1080
+					}
 				});
 				break;
 			case 'ScreenshotDesktopLib':
