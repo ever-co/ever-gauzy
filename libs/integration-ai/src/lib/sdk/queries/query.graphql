@@ -1,0 +1,15 @@
+query employeeJobPosts {
+	employeeJobPosts {
+		edges {
+			node {
+				id
+				employee {
+					name
+				}
+				jobPost {
+					title
+				}
+			}
+		}
+	}
+}
