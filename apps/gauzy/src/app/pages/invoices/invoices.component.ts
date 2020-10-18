@@ -491,17 +491,7 @@ export class InvoicesComponent
 								isEstimate: this.isEstimate
 							}
 						);
-						const res = await this.organizationContactService.getAll(
-							[],
-							{
-								organizationId: org.id,
-								tenantId: org.tenantId
-							}
-						);
 
-						if (res) {
-							this.organizationContacts = res.items;
-						}
 						const invoiceVM: IInvoice[] = items.map((i) => {
 							return {
 								id: i.id,
@@ -856,6 +846,19 @@ export class InvoicesComponent
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+
+	async onChangeTab(event) {
+		if (event.tabId === 'search') {
+			const organizationId = this.organization.id;
+			const res = await this.organizationContactService.getAll([], {
+				organizationId
+			});
+
+			if (res) {
+				this.organizationContacts = res.items;
+			}
+		}
 	}
 
 	ngOnDestroy() {

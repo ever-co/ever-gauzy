@@ -3,7 +3,8 @@ import { ITask } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { DefaultEditor } from 'ng2-smart-table';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
 		<nb-select
@@ -19,29 +20,28 @@ import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 	`,
 	styles: []
 })
-export class InvoiceTasksSelectorComponent extends DefaultEditor
+export class InvoiceTasksSelectorComponent
+	extends DefaultEditor
 	implements OnInit {
 	tasks: ITask[] = [];
 	task: ITask;
+	observableTasks: Observable<ITask[]> = this.tasksStore.tasks$;
 
 	constructor(private tasksStore: TasksStoreService) {
 		super();
-		this.observableTasks = this.tasksStore.tasks$;
 	}
 
-	observableTasks: Observable<ITask[]>;
-
 	ngOnInit() {
+		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
+			this.tasks = data;
+			const task = this.tasks.find((t) => t.id === this.cell.newValue);
+			this.task = task;
+		});
 		this._loadTasks();
 	}
 
 	private async _loadTasks() {
 		this.tasksStore.fetchTasks();
-		this.observableTasks.subscribe((data) => {
-			this.tasks = data;
-			const task = this.tasks.find((t) => t.id === this.cell.newValue);
-			this.task = task;
-		});
 	}
 
 	selectTask($event) {

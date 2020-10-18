@@ -310,6 +310,7 @@ export class ExpensesComponent
 				this.selectedEmployeeId,
 				this.selectedEmployeeId ? null : this._selectedOrganizationId
 			);
+			this.clearItem();
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -369,6 +370,7 @@ export class ExpensesComponent
 								? null
 								: this._selectedOrganizationId
 						);
+						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -443,7 +445,7 @@ export class ExpensesComponent
 								? null
 								: this._selectedOrganizationId
 						);
-						this.selectedExpense = null;
+						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -556,6 +558,13 @@ export class ExpensesComponent
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSettingsSmartTable();
+		});
+	}
+
+	clearItem() {
+		this.selectExpense({
+			isSelected: false,
+			data: null
 		});
 	}
 

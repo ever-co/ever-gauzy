@@ -3,9 +3,10 @@ import { IEmployee } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { DefaultEditor } from 'ng2-smart-table';
 import { Store } from '../../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
 		<nb-select
@@ -29,7 +30,8 @@ import { Subject } from 'rxjs';
 	`,
 	styles: []
 })
-export class InvoiceEmployeesSelectorComponent extends DefaultEditor
+export class InvoiceEmployeesSelectorComponent
+	extends DefaultEditor
 	implements OnInit, OnDestroy {
 	employee: IEmployee;
 	employees: IEmployee[];
@@ -48,23 +50,20 @@ export class InvoiceEmployeesSelectorComponent extends DefaultEditor
 
 	async getEmployees() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe(async (organization) => {
 				if (organization) {
+					const { id: organizationId } = organization;
 					this.employeeService
-						.getAll(['user'])
-						.pipe(takeUntil(this._ngDestroy$))
+						.getAll(['user'], { organizationId })
+						.pipe(untilDestroyed(this))
 						.subscribe((employees) => {
-							const filteredEmployees = employees.items.filter(
-								(emp) => {
-									return (
-										emp.orgId === organization.id ||
-										organization.id === ''
-									);
-								}
-							);
+							const filteredEmployees = employees.items;
 							this.employees = filteredEmployees;
-							if (this.employees) {
+							if (this.employees.length) {
 								const employee = this.employees.find(
 									(e) => e.id === this.cell.newValue
 								);

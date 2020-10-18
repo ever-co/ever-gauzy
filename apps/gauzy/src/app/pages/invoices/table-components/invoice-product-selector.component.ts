@@ -1,11 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IProduct } from '@gauzy/models';
+import { IOrganization, IProduct } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ProductService } from '../../../@core/services/product.service';
 import { DefaultEditor } from 'ng2-smart-table';
-
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
 		<nb-select
@@ -21,35 +23,50 @@ import { DefaultEditor } from 'ng2-smart-table';
 	`,
 	styles: []
 })
-export class InvoiceProductsSelectorComponent extends DefaultEditor
+export class InvoiceProductsSelectorComponent
+	extends DefaultEditor
 	implements OnInit, OnDestroy {
 	product: IProduct;
 	products: IProduct[];
 	private _ngDestroy$ = new Subject<void>();
+	selectedLanguage: string;
+	organization: IOrganization;
 
-	constructor(private store: Store, private productService: ProductService) {
+	constructor(
+		private store: Store,
+		private productService: ProductService,
+		private translateService: TranslateService
+	) {
 		super();
 	}
 
 	ngOnInit() {
-		this._loadProducts();
+		this.selectedLanguage = this.translateService.currentLang;
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((organization) => {
+				this.organization = organization;
+				this._loadProducts();
+			});
 	}
 
 	private async _loadProducts() {
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (organization) => {
-				if (organization) {
-					const products = await this.productService.getAll([], {
-						organizationId: organization.id
-					});
-					this.products = products.items;
-					const product = this.products.find(
-						(p) => p.id === this.cell.newValue
-					);
-					this.product = product;
-				}
-			});
+		if (this.organization) {
+			const organizationId = this.organization.id;
+			const products = await this.productService.getAll(
+				[],
+				{ organizationId },
+				this.selectedLanguage
+			);
+			this.products = products.items;
+			const product = this.products.find(
+				(p) => p.id === this.cell.newValue
+			);
+			this.product = product;
+		}
 	}
 
 	selectProduct($event) {
