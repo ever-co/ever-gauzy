@@ -408,10 +408,12 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async duplicateTaskDialog(selectedItem?: ITask) {
-		this.selectTask({
-			isSelected: true,
-			data: selectedItem
-		});
+		if (selectedItem) {
+			this.selectTask({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
@@ -455,10 +457,12 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async deleteTask(selectedItem?: ITask) {
-		this.selectTask({
-			isSelected: true,
-			data: selectedItem
-		});
+		if (selectedItem) {
+			this.selectTask({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
