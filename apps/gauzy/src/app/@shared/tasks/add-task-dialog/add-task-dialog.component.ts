@@ -36,7 +36,8 @@ const initialTaskValue = {
 	templateUrl: './add-task-dialog.component.html',
 	styleUrls: ['./add-task-dialog.component.scss']
 })
-export class AddTaskDialogComponent extends TranslationBaseComponent
+export class AddTaskDialogComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
@@ -76,7 +77,9 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 		this.loadEmployees();
 		this.loadTeams();
 
-		this.initializeForm(Object.assign({}, initialTaskValue, this.task));
+		this.initializeForm(
+			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
+		);
 	}
 
 	private async loadProjects() {
