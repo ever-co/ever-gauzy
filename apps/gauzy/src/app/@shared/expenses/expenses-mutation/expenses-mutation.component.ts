@@ -73,7 +73,7 @@ export class ExpensesMutationComponent
 	calculatedValue = '0';
 	duplicate: boolean;
 	showNotes = false;
-	showTaxesInput = false;
+	_showTaxesInput = false;
 	showWarning = false;
 	disable = true;
 	loading = false;
@@ -85,6 +85,13 @@ export class ExpensesMutationComponent
 	showTooltip = false;
 	disableStatuses = false;
 	averageExpense = 0;
+
+	public get showTaxesInput(): boolean {
+		return this._showTaxesInput;
+	}
+	public set showTaxesInput(value: boolean) {
+		this._showTaxesInput = value;
+	}
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -306,6 +313,12 @@ export class ExpensesMutationComponent
 				tags: [this.expense.tags],
 				status: [this.expense.status]
 			});
+			if (this.form.value.taxLabel) {
+				this.includeTaxes();
+			}
+			if (this.form.value.notes) {
+				this.showNotesInput();
+			}
 		} else {
 			this.form = this.fb.group({
 				amount: ['', Validators.required],

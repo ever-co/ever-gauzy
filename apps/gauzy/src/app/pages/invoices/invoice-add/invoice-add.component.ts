@@ -23,13 +23,13 @@ import {
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { Subject, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
@@ -45,13 +45,15 @@ import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mu
 import { ExpensesService } from '../../../@core/services/expenses.service';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-add',
 	templateUrl: './invoice-add.component.html',
 	styleUrls: ['./invoice-add.component.scss']
 })
-export class InvoiceAddComponent extends TranslationBaseComponent
+export class InvoiceAddComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
@@ -65,7 +67,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	generatedTask: string;
 	organization: IOrganization;
 	selectedTasks: ITask[];
-	observableTasks: Observable<ITask[]>;
+	observableTasks: Observable<ITask[]> = this.tasksStore.tasks$;
 	tasks: ITask[];
 	organizationContact: IOrganizationContact;
 	organizationContacts: IOrganizationContact[];
@@ -91,12 +93,12 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	subtotal = 0;
 	total = 0;
 	tags: ITag[] = [];
-	private _ngDestroy$ = new Subject<void>();
 	get currency() {
 		return this.form.get('currency');
 	}
 
 	@Input() isEstimate: boolean;
+	selectedLanguage: string;
 
 	constructor(
 		private fb: FormBuilder,
@@ -118,7 +120,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
-		this.observableTasks = this.tasksStore.tasks$;
 	}
 
 	ngOnInit() {
@@ -129,6 +130,17 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.initializeForm();
 		this.form.get('currency').disable();
 		this.loading = false;
+
+		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
+			this.tasks = data;
+		});
+
+		this.selectedLanguage = this.translateService.currentLang;
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe((languageEvent) => {
+				this.selectedLanguage = languageEvent.lang;
+			});
 	}
 
 	initializeForm() {
@@ -420,7 +432,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				);
 				return;
 			}
-
+			const { id: organizationId, tenantId } = this.organization;
 			const createdInvoice = await this.invoicesService.add({
 				invoiceNumber: invoiceData.invoiceNumber,
 				invoiceDate: invoiceData.invoiceDate,
@@ -437,9 +449,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				totalValue: +this.total.toFixed(2),
 				toContact: invoiceData.organizationContact,
 				organizationContactId: invoiceData.organizationContact.id,
-				tenantId: invoiceData.organizationContact.tenantId,
 				fromOrganization: this.organization,
-				organizationId: this.organization.id,
+				organizationId,
+				tenantId,
 				invoiceType: this.selectedInvoiceType,
 				tags: this.tags,
 				isEstimate: this.isEstimate,
@@ -457,7 +469,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					totalValue: invoiceItem.totalValue,
 					invoiceId: createdInvoice.id,
 					applyTax: invoiceItem.applyTax,
-					applyDiscount: invoiceItem.applyDiscount
+					applyDiscount: invoiceItem.applyDiscount,
+					organizationId,
+					tenantId
 				};
 				switch (this.selectedInvoiceType) {
 					case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -671,65 +685,58 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		}
 	}
 
+	private _loadTasks() {
+		this.tasksStore.fetchTasks(this.organization);
+	}
+
 	private async _loadOrganizationData() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe(async (organization) => {
 				if (organization) {
+					this.organization = organization;
 					this.discountAfterTax = organization.discountAfterTax;
 
+					const { id: organizationId, tenantId } = organization;
 					this.employeeService
-						.getAll(['user'])
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe((employees) => {
-							this.employees = employees.items.filter((emp) => {
-								return (
-									emp.orgId === organization.id ||
-									organization.id === ''
-								);
-							});
+						.getAll(['user'], { organizationId })
+						.pipe(untilDestroyed(this))
+						.subscribe(({ items }) => {
+							this.employees = items;
 						});
 
 					const projects = await this.organizationProjectsService.getAll(
 						[],
-						{
-							organizationId: organization.id,
-							tenantId: organization.tenantId
-						}
+						{ organizationId, tenantId }
 					);
 					this.projects = projects.items;
-					this.organization = organization;
+
 					const orgData = await this.organizationsService
 						.getById(organization.id, [
 							OrganizationSelectInput.currency
 						])
 						.pipe(first())
 						.toPromise();
-
 					if (orgData && this.currency && !this.currency.value) {
 						this.currency.setValue(orgData.currency);
 					}
 
-					const res = await this.organizationContactService.getAll(
+					const contacts = await this.organizationContactService.getAll(
 						['projects'],
-						{
-							organizationId: organization.id,
-							tenantId: organization.tenantId
-						}
+						{ organizationId, tenantId }
 					);
+					this.organizationContacts = contacts.items;
 
-					if (res) {
-						this.organizationContacts = res.items;
-					}
-
-					this.tasksStore.fetchTasks();
-					this.observableTasks.subscribe((data) => {
-						this.tasks = data;
-					});
-
-					const products = await this.productService.getAll([], {
-						organizationId: organization.id
-					});
+					const products = await this.productService.getAll(
+						[],
+						{
+							organizationId: organization.id
+						},
+						this.selectedLanguage
+					);
 					this.products = products.items;
 
 					const expenses = await this.expensesService.getAll([], {
@@ -740,6 +747,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						}
 					});
 					this.expenses = expenses.items;
+
+					this._loadTasks();
 				}
 			});
 	}
@@ -1158,8 +1167,5 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		return date;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

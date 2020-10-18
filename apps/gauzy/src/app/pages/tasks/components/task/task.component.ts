@@ -363,7 +363,13 @@ export class TaskComponent
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
-				this.storeInstance.createTask(data);
+				const { id: organizationId, tenantId } = this.organization;
+				const payload = Object.assign(data, {
+					organizationId,
+					tenantId
+				});
+
+				this.storeInstance.createTask(payload);
 				this.selectTask({ isSelected: false, data: null });
 			}
 		}
@@ -380,7 +386,7 @@ export class TaskComponent
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					task: this.selectedTask
+					selectedTask: this.selectedTask
 				}
 			});
 		} else if (this.isMyTasksPage()) {
@@ -409,8 +415,14 @@ export class TaskComponent
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
+				const { id: organizationId, tenantId } = this.organization;
+				const payload = Object.assign(data, {
+					organizationId,
+					tenantId
+				});
+
 				this.storeInstance.editTask({
-					...data,
+					...payload,
 					id: this.selectedTask.id
 				});
 				this.selectTask({ isSelected: false, data: null });
@@ -419,10 +431,12 @@ export class TaskComponent
 	}
 
 	async duplicateTaskDialog(selectedItem?: ITask) {
-		this.selectTask({
-			isSelected: true,
-			data: selectedItem
-		});
+		if (selectedItem) {
+			this.selectTask({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
@@ -459,17 +473,25 @@ export class TaskComponent
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
-				this.storeInstance.createTask(data);
+				const { id: organizationId, tenantId } = this.organization;
+				const payload = Object.assign(data, {
+					organizationId,
+					tenantId
+				});
+
+				this.storeInstance.createTask(payload);
 				this.selectTask({ isSelected: false, data: null });
 			}
 		}
 	}
 
 	async deleteTask(selectedItem?: ITask) {
-		this.selectTask({
-			isSelected: true,
-			data: selectedItem
-		});
+		if (selectedItem) {
+			this.selectTask({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
