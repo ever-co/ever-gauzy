@@ -44,7 +44,8 @@ import { OrganizationExpenseCategoriesService } from '../../../@core/services/or
 	templateUrl: './expenses-mutation.component.html',
 	styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent extends TranslationBaseComponent
+export class ExpensesMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -72,7 +73,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	calculatedValue = '0';
 	duplicate: boolean;
 	showNotes = false;
-	showTaxesInput = false;
+	_showTaxesInput = false;
 	showWarning = false;
 	disable = true;
 	loading = false;
@@ -84,6 +85,13 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	showTooltip = false;
 	disableStatuses = false;
 	averageExpense = 0;
+
+	public get showTaxesInput(): boolean {
+		return this._showTaxesInput;
+	}
+	public set showTaxesInput(value: boolean) {
+		this._showTaxesInput = value;
+	}
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -116,8 +124,6 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async getDefaultData() {
-		console.log(this.store.selectedOrganization);
-
 		this.organizationId = this.store.selectedOrganization.id;
 		this.tenantId = this.store.selectedOrganization.tenantId;
 
@@ -307,6 +313,12 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				tags: [this.expense.tags],
 				status: [this.expense.status]
 			});
+			if (this.form.value.taxLabel) {
+				this.includeTaxes();
+			}
+			if (this.form.value.notes) {
+				this.showNotesInput();
+			}
 		} else {
 			this.form = this.fb.group({
 				amount: ['', Validators.required],

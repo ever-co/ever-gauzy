@@ -19,7 +19,8 @@ export class TimeSlotCreateHandler
 				keyboard,
 				mouse,
 				overall,
-				time_slot
+				time_slot,
+				organizationId
 			}: ITimeSlot = input;
 
 			return await this._timeSlotService.create({
@@ -30,7 +31,8 @@ export class TimeSlotCreateHandler
 				overall,
 				startedAt: new Date(
 					moment(time_slot).format('YYYY-MM-DD HH:mm:ss')
-				)
+				),
+				organizationId
 			});
 		} catch (error) {
 			throw new BadRequestException('Cant create time slot');

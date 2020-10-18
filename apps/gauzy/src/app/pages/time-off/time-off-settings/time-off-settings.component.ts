@@ -24,17 +24,19 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 import { RequestApprovalIcon } from '../table-components/request-approval-icon';
 import { PaidIcon } from '../table-components/paid-icon';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { Subject } from 'rxjs/internal/Subject';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-off-settings',
 	templateUrl: './time-off-settings.component.html',
 	styleUrls: ['./time-off-settings.component.scss']
 })
-export class TimeOffSettingsComponent extends TranslationBaseComponent
+export class TimeOffSettingsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	constructor(
 		private dialogService: NbDialogService,

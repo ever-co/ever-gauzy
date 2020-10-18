@@ -6,6 +6,7 @@ import { TimeSlotBulkCreateOrUpdateHandler } from './time-slot-bulk-create-or-up
 import { TimeSlotBulkCreateHandler } from './time-slot-bulk-create.handler';
 import { DeleteTimeSlotHandler } from './delete-time-slot.handler';
 import { TimeSlotRangeDeleteHandler } from './time-slot-range-delete.handler';
+import { TimeSlotMergeHandler } from './time-slot-merge.handler';
 
 export const TimeSlotCommandHandlers = [
 	CreateTimeSlotHandler,
@@ -15,5 +16,6 @@ export const TimeSlotCommandHandlers = [
 	TimeSlotBulkCreateHandler,
 	CreateTimeSlotMinutesHandler,
 	UpdateTimeSlotMinutesHandler,
-	TimeSlotRangeDeleteHandler
+	TimeSlotRangeDeleteHandler,
+	TimeSlotMergeHandler
 ];

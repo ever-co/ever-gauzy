@@ -4,11 +4,16 @@ import {
 	Input,
 	Output,
 	OnInit,
-	forwardRef
+	forwardRef,
+	OnDestroy
 } from '@angular/core';
 import { IEmployee } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { debounceTime } from 'rxjs/operators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-multi-select',
 	templateUrl: './employee-multi-select.component.html',
@@ -21,14 +26,7 @@ import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 		}
 	]
 })
-export class EmployeeSelectComponent implements OnInit {
-	@Output() selectedChange = new EventEmitter();
-
-	@Input() multiple = true;
-	@Input() label = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
-	@Input() disabled = false;
-	@Input() placeholder = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
-	select: FormControl = new FormControl();
+export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	@Input()
 	public set reset(value: boolean | null) {
 		if (value) {
@@ -39,9 +37,6 @@ export class EmployeeSelectComponent implements OnInit {
 			}
 		}
 	}
-
-	employees: IEmployee[];
-	private _allEmployees: IEmployee[];
 	@Input()
 	public get allEmployees(): IEmployee[] {
 		return this._allEmployees;
@@ -53,38 +48,58 @@ export class EmployeeSelectComponent implements OnInit {
 
 	@Input()
 	public get selectedEmployeeIds(): string[] | string {
-		return this.employeeId;
+		return this.val;
 	}
 	public set selectedEmployeeIds(value: string[] | string) {
-		this.employeeId = value;
+		this.changeValue$.next(value);
 	}
-	val: string[] | string = null;
-	onChange: any = () => {};
-	onTouched: any = () => {};
 
 	constructor() {}
 
-	set employeeId(val: string[] | string) {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
-		if (val) {
-			this.val = val;
-			this.onChange(val);
-			//this.onTouched(val);
-		}
+	set employeeId(value: string[] | string) {
+		this.changeValue$.next(value);
 	}
 	get employeeId(): string[] | string {
-		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
 		return this.val;
 	}
+	@Output() selectedChange = new EventEmitter();
 
-	ngOnInit(): void {}
+	@Input() multiple = true;
+	@Input() label = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
+	@Input() disabled = false;
+	@Input() placeholder = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
+	select: FormControl = new FormControl();
+
+	employees: IEmployee[];
+	private _allEmployees: IEmployee[];
+	val: string[] | string = null;
+	changeValue$ = new Subject<string | string[]>();
+	onChange: any = () => {};
+	onTouched: any = () => {};
+
+	ngOnInit(): void {
+		this.changeValue$
+			.pipe(untilDestroyed(this), debounceTime(100))
+			.subscribe((value) => {
+				this.checkForMultiSelectValue(value);
+				this.onChange(this.val);
+			});
+	}
+
+	checkForMultiSelectValue(val): void {
+		if (this.multiple) {
+			this.val = val instanceof Array ? val : [val];
+		} else {
+			this.val = val instanceof Array ? val[0] : val;
+		}
+	}
 
 	onMembersSelected(selectEvent: any): void {
 		this.selectedChange.emit(selectEvent);
 	}
 
 	writeValue(value: any) {
-		this.employeeId = value;
+		this.changeValue$.next(value);
 	}
 	registerOnChange(fn: (rating: number) => void): void {
 		this.onChange = fn;
@@ -97,4 +112,6 @@ export class EmployeeSelectComponent implements OnInit {
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
+
+	ngOnDestroy(): void {}
 }

@@ -34,6 +34,8 @@ export interface AppState {
 }
 
 export interface PersistState {
+	organizationId?: string;
+	clientId?: string;
 	token: string;
 	userId: string;
 	serverConnection: string;
@@ -295,8 +297,10 @@ export class Store {
 
 	getDateFromOrganizationSettings() {
 		const dateObj = this.selectedDate;
-
-		switch (this.selectedOrganization.defaultValueDateType) {
+		switch (
+			this.selectedOrganization &&
+			this.selectedOrganization.defaultValueDateType
+		) {
 			case DefaultValueDateTypeEnum.TODAY: {
 				return new Date(Date.now());
 			}

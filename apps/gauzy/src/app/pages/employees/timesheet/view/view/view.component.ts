@@ -1,6 +1,6 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import {
 	IGetTimeLogInput,
@@ -18,6 +18,7 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-view',
 	templateUrl: './view.component.html'

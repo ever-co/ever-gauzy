@@ -6,16 +6,18 @@ import {
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-records-history',
 	templateUrl: './records-history.component.html',
 	styleUrls: ['./records-history.component.scss']
 })
-export class RecordsHistoryComponent extends TranslationBaseComponent
+export class RecordsHistoryComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	type: HistoryType;
 	recordsData: IEmployeeStatisticsHistory[];
@@ -196,8 +198,11 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSettingsSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSettingsSmartTable();
+				this._populateSmartTable();
+			});
 	}
 }

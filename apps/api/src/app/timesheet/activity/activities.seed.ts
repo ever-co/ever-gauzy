@@ -74,7 +74,7 @@ export const createRandomActivities = async (
 				activities.push(activity);
 			}
 
-			for (let i = 0; i < faker.random.number({ min: 0, max: 30 }); i++) {
+			for (let i = 0; i < faker.random.number({ min: 0, max: 10 }); i++) {
 				const url = faker.internet.domainName();
 				for (
 					let j = 0;

@@ -2,8 +2,9 @@ import { Pipe, PipeTransform, OnDestroy } from '@angular/core';
 import { Store } from '../../@core/services/store.service';
 import { IOrganization } from '@gauzy/models';
 import * as moment from 'moment';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Pipe({
 	name: 'timeFormat',
 	pure: false

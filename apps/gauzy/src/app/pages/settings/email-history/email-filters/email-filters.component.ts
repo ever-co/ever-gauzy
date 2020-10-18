@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EmailTemplateService } from 'apps/gauzy/src/app/@core/services/email-template.service';
-import { IEmailTemplate, IEmail } from '@gauzy/models';
+import { IEmailTemplate, IEmail, IOrganization } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { EmailService } from 'apps/gauzy/src/app/@core/services/email.service';
 
@@ -29,6 +29,7 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 	organizationId: string;
 
 	filters: any;
+	organization: IOrganization;
 	ngOnInit() {
 		this._getAllEmailTemplates();
 		this._getEmails();
@@ -76,7 +77,11 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 	}
 
 	private async _getAllEmailTemplates() {
-		const { items } = await this.emailTemplateService.getAll();
+		const { id: organizationId, tenantId } = this.organization;
+		const { items } = await this.emailTemplateService.getAll([], {
+			organizationId,
+			tenantId
+		});
 
 		// Remove repeating template names
 		this.emailTemplates = items.filter((et) => et.name.includes('html'));
@@ -87,7 +92,11 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 		);
 	}
 	private async _getEmails() {
-		const { items } = await this.emailService.getAll(['emailTemplate']);
+		const { id: organizationId, tenantId } = this.organization;
+		const { items } = await this.emailService.getAll(['emailTemplate'], {
+			organizationId,
+			tenantId
+		});
 		items.forEach((i) => {
 			this.to = [...this.to, { email: i.email }];
 		});

@@ -28,7 +28,6 @@ export class ActivityService extends CrudService<Activity> {
 		request: IGetActivitiesInput
 	): Promise<IDailyActivity[]> {
 		const query = this.filterQuery(request);
-
 		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
 		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
 		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
@@ -48,7 +47,7 @@ export class ActivityService extends CrudService<Activity> {
 		query.orderBy(`time`, 'ASC');
 		query.orderBy(`"duration"`, 'DESC');
 
-		return await query.getRawMany();
+		return query.getRawMany();
 	}
 
 	async getAllActivites(request: IGetActivitiesInput) {
@@ -106,14 +105,12 @@ export class ActivityService extends CrudService<Activity> {
 		}
 
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
 				const startDate = moment.utc(request.startDate).toDate();
 				const endDate = moment.utc(request.endDate).toDate();
 				qb.andWhere(
 					`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
-					//`"${query.alias}"."date" Between :startDate AND :endDate`,
 					{
 						startDate,
 						endDate
@@ -190,6 +187,7 @@ export class ActivityService extends CrudService<Activity> {
 				});
 			}
 		});
+
 		return query;
 	}
 }

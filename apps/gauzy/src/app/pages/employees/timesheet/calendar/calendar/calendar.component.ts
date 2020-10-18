@@ -24,7 +24,7 @@ import {
 import { toUTC, toLocal } from '@gauzy/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
@@ -34,6 +34,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 import * as _ from 'underscore';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-calendar',
 	templateUrl: './calendar.component.html'

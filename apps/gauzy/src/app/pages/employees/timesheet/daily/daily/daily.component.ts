@@ -20,13 +20,14 @@ import { filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { ConfirmComponent } from 'apps/gauzy/src/app/@shared/dialogs';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 import * as _ from 'underscore';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-daily',
 	templateUrl: './daily.component.html',

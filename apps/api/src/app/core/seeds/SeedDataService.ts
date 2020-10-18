@@ -16,7 +16,7 @@ import chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
 import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
-import { createSkills } from '../../skills/skill.seed';
+import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
 import { User } from '../../user/user.entity';
 import {
@@ -248,8 +248,8 @@ import { createRandomDeal } from '../../deal/deal.seed';
 import { createRandomIntegrationSetting } from '../../integration-setting/integration-setting.seed';
 import { createRandomIntegrationMap } from '../../integration-map/integration-map.seed';
 import { createRandomIntegrationTenant } from '../../integration-tenant/integration-tenant.seed';
-import { createRandomIntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.seed';
 import { createRandomIntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.seed';
+import { createRandomIntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.seed';
 import { createRandomRequestApprovalTeam } from '../../request-approval-team/request-approval-team.seed';
 import { createRandomRequestApprovalEmployee } from '../../request-approval-employee/request-approval-employee.seed';
 import {
@@ -429,12 +429,6 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-
-			await this.tryExecute(
-				'Default Email Templates',
-				createDefaultEmailTemplates(this.connection)
-			);
-
 			await this.tryExecute(
 				'Countries',
 				createCountries(this.connection)
@@ -461,7 +455,6 @@ export class SeedDataService {
 	private async seedBasicDefaultData() {
 		//Platform level data
 
-		await this.tryExecute('Skills', createSkills(this.connection));
 		await this.tryExecute('Languages', createLanguages(this.connection));
 
 		this.tenant = await createDefaultTenants(this.connection);
@@ -476,6 +469,23 @@ export class SeedDataService {
 			this.tenant
 		);
 		this.organizations = defaultOrganizations;
+
+		await this.tryExecute(
+			'Default Email Templates',
+			createDefaultEmailTemplates(this.connection, {
+				tenant: this.tenant,
+				organization: this.organizations[0]
+			})
+		);
+
+		await this.tryExecute(
+			'Skills',
+			createDefaultSkills(
+				this.connection,
+				this.tenant,
+				this.organizations[0]
+			)
+		);
 
 		const noOfRandomContacts = 5;
 		await this.tryExecute(
@@ -569,17 +579,12 @@ export class SeedDataService {
 		//seed default integrations with types
 		const integrationTypes = await this.tryExecute(
 			'Default Integration Types',
-			createDefaultIntegrationTypes(this.connection, this.tenant)
+			createDefaultIntegrationTypes(this.connection)
 		);
 
 		await this.tryExecute(
 			'Default Integrations',
-			createDefaultIntegrations(
-				this.connection,
-				this.tenant,
-				integrationTypes,
-				this.organizations[0]
-			)
+			createDefaultIntegrations(this.connection, integrationTypes)
 		);
 	}
 

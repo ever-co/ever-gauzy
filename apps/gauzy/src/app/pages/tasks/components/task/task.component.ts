@@ -9,7 +9,14 @@ import {
 
 import { uniqBy } from 'lodash';
 import { Observable, Subject } from 'rxjs';
-import { first, takeUntil, map, tap } from 'rxjs/operators';
+import {
+	first,
+	takeUntil,
+	map,
+	tap,
+	filter,
+	debounceTime
+} from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
@@ -47,7 +54,8 @@ import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialo
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
-export class TaskComponent extends TranslationBaseComponent
+export class TaskComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('tasksTable') tasksTable;
 	private _ngDestroy$: Subject<void> = new Subject();
@@ -93,20 +101,6 @@ export class TaskComponent extends TranslationBaseComponent
 		this._loadTableSettings();
 		this.initProjectFilter();
 		this._applyTranslationOnSmartTable();
-		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
-		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
-					this.createTaskDialog();
-				}
-			});
 		this._organizationsStore.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((selectedEmployee: SelectedEmployee) => {
@@ -125,6 +119,24 @@ export class TaskComponent extends TranslationBaseComponent
 					this.organization = organization;
 					this.loadTeams();
 					this.storeInstance.fetchTasks(this.organization);
+				}
+			});
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe((params) => {
+				if (params.get('openAddDialog') === 'true') {
+					this.createTaskDialog();
+				}
+			});
+		this.router.events
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
 				}
 			});
 	}
@@ -204,7 +216,6 @@ export class TaskComponent extends TranslationBaseComponent
 			this.view = 'team-tasks';
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
 			this._teamTaskStore.fetchTasks();
-			// load teams for the select box of teams column
 			// this.availableTasks$ = this.teamTasks$;
 		} else {
 			this.view = 'tasks';

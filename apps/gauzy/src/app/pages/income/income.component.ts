@@ -16,7 +16,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { Store } from '../../@core/services/store.service';
@@ -32,7 +32,8 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent extends TranslationBaseComponent
+export class IncomeComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
@@ -118,39 +119,45 @@ export class IncomeComponent extends TranslationBaseComponent
 			});
 
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((org) => {
-				if (org) {
-					this._selectedOrganization = org;
-					this._selectedOrganizationId = org.id;
-					if (this.loading) {
-						this._loadEmployeeIncomeData(
-							this.store.selectedEmployee
-								? this.store.selectedEmployee.id
-								: null,
-							this.store.selectedEmployee &&
-								this.store.selectedEmployee.id
-								? null
-								: this._selectedOrganizationId
-						);
-					}
+				this._selectedOrganization = org;
+				this._selectedOrganizationId = org.id;
+				if (this.loading) {
+					this._loadEmployeeIncomeData(
+						this.store.selectedEmployee
+							? this.store.selectedEmployee.id
+							: null,
+						this.store.selectedEmployee &&
+							this.store.selectedEmployee.id
+							? null
+							: this._selectedOrganizationId
+					);
 				}
 			});
 
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
+				if (params.get('openAddDialog') === 'true') {
 					this.addIncome();
 				}
 			});
 
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
+			.pipe(
+				filter((event: RouterEvent) => event instanceof NavigationEnd),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe(() => {
+				this.setView();
 			});
 	}
 
@@ -211,15 +218,18 @@ export class IncomeComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSettingsSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSettingsSmartTable();
+			});
 	}
 
 	async addIncome() {
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
 		}
+
 		this.dialogService
 			.open(IncomeMutationComponent)
 			.onClose.pipe(takeUntil(this._ngDestroy$))
@@ -323,7 +333,10 @@ export class IncomeComponent extends TranslationBaseComponent
 								? null
 								: this._selectedOrganizationId
 						);
-						this.selectedIncome = null;
+						this.selectIncome({
+							isSelected: false,
+							data: null
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -366,7 +379,11 @@ export class IncomeComponent extends TranslationBaseComponent
 								? null
 								: this._selectedOrganizationId
 						);
-						this.selectedIncome = null;
+
+						this.selectIncome({
+							isSelected: false,
+							data: null
+						});
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}

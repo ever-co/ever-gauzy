@@ -42,6 +42,10 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		return this.commandBus.execute(new TimesheetUpdateStatusCommand(input));
 	}
 
+	async getTimeSheetCount(request: IGetTimesheetInput) {
+		const timesheets = await this.getTimeSheets(request);
+		return timesheets.length;
+	}
 	async getTimeSheets(request: IGetTimesheetInput) {
 		let employeeIds: string[];
 		const startDate = moment(request.startDate).format(

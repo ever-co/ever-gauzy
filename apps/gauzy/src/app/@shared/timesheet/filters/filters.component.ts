@@ -19,7 +19,7 @@ import {
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Options, ChangeContext } from 'ng5-slider';
@@ -28,6 +28,7 @@ import { TimesheetFilterService } from '../timesheet-filter.service';
 import { debounceTime, take } from 'rxjs/operators';
 import { isEmpty } from '@gauzy/utils';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-filters',
 	templateUrl: './filters.component.html',

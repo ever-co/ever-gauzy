@@ -1,6 +1,4 @@
 import { IntegrationEntity } from '@gauzy/models';
-import { DeepPartial } from 'typeorm';
-import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 
 export const DEFAULT_ENTITY_SETTINGS = [
 	{
@@ -30,4 +28,4 @@ export const PROJECT_TIED_ENTITIES = [
 		entity: IntegrationEntity.SCREENSHOT,
 		sync: true
 	}
-] as DeepPartial<IntegrationEntitySetting>;
+];

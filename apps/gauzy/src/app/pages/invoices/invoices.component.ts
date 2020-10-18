@@ -47,7 +47,8 @@ import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-esti
 	templateUrl: './invoices.component.html',
 	styleUrls: ['invoices.component.scss']
 })
-export class InvoicesComponent extends TranslationBaseComponent
+export class InvoicesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
@@ -490,17 +491,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 								isEstimate: this.isEstimate
 							}
 						);
-						const res = await this.organizationContactService.getAll(
-							[],
-							{
-								organizationId: org.id,
-								tenantId: org.tenantId
-							}
-						);
 
-						if (res) {
-							this.organizationContacts = res.items;
-						}
 						const invoiceVM: IInvoice[] = items.map((i) => {
 							return {
 								id: i.id,
@@ -850,9 +841,24 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
+	}
+
+	async onChangeTab(event) {
+		if (event.tabId === 'search') {
+			const organizationId = this.organization.id;
+			const res = await this.organizationContactService.getAll([], {
+				organizationId
+			});
+
+			if (res) {
+				this.organizationContacts = res.items;
+			}
+		}
 	}
 
 	ngOnDestroy() {

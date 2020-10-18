@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, screen } from 'electron';
 import { TimerData } from '../local-data/timer';
 import { metaData } from '../local-data/coding-activity';
 import TimerHandler from './timer';
@@ -187,7 +187,8 @@ export function ipcTimer(
 		) {
 			case 'ElectronDesktopCapturer':
 				timeTrackerWindow.webContents.send('take_screenshot', {
-					timeSlotId: arg.timeSlotId
+					timeSlotId: arg.timeSlotId,
+					screensize: screen.getPrimaryDisplay().workAreaSize
 				});
 				break;
 			case 'ScreenshotDesktopLib':

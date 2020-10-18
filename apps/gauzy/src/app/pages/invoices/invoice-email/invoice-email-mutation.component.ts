@@ -27,7 +27,8 @@ import { InvoiceItemService } from '../../../@core/services/invoice-item.service
 	selector: 'ga-invoice-email',
 	templateUrl: './invoice-email-mutation.component.html'
 })
-export class InvoiceEmailMutationComponent extends TranslationBaseComponent
+export class InvoiceEmailMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	invoice: IInvoice;
 	form: FormGroup;
@@ -66,6 +67,7 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 	}
 
 	async sendEmail() {
+		const { id: organizationId, tenantId } = this.invoice.fromOrganization;
 		if (this.saveAndSend) {
 			const createdInvoice = await this.invoicesService.add(this.invoice);
 			this.createdInvoice = createdInvoice;
@@ -80,8 +82,8 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.invoice.fromOrganization,
-				organizationId: this.invoice.fromOrganization.id,
-				tenantId: this.invoice.fromOrganization.tenantId
+				organizationId,
+				tenantId
 			});
 		}
 		pdfMake.vfs = pdfFonts.pdfMake.vfs;
@@ -143,7 +145,8 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 			user: this.store.user,
 			userId: this.store.userId,
 			organization: this.invoice.fromOrganization,
-			organizationId: this.invoice.fromOrganization.id
+			organizationId,
+			tenantId
 		});
 
 		this.toastrService.primary(

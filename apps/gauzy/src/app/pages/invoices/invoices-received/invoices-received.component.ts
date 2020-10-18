@@ -1,22 +1,28 @@
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit, Component, OnDestroy, ViewChild, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { LocalDataSource } from 'ng2-smart-table';
-import { IInvoice, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	IInvoice,
+	ComponentLayoutStyleEnum,
+	IOrganization
+} from '@gauzy/models';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-invoices-received',
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent extends TranslationBaseComponent
+export class InvoicesReceivedComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	loading = true;
 	private _ngDestroy$ = new Subject<void>();
@@ -27,6 +33,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	organization: IOrganization;
 
 	@Input() isEstimate: boolean;
 	@ViewChild('invoicesTable') invoicesTable;
@@ -35,7 +42,8 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 		private store: Store,
 		private invoicesService: InvoicesService,
 		readonly translateService: TranslateService,
-		private router: Router
+		private router: Router,
+		private _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 		this.setView();
@@ -47,7 +55,19 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 		}
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.getInvoices();
+
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe((organization) => {
+				this.organization = organization;
+				if (organization) {
+					this.getInvoices();
+				}
+			});
+
 		this.router.events
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((event: RouterEvent) => {
@@ -68,22 +88,18 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 	}
 
 	async getInvoices() {
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (organization) => {
-				if (organization) {
-					const invoices = await this.invoicesService.getAll(
-						['payments'],
-						{
-							sentTo: organization.id,
-							isEstimate: this.isEstimate
-						}
-					);
-					this.loading = false;
-					this.invoices = invoices.items;
-					this.smartTableSource.load(invoices.items);
-				}
+		try {
+			const organization = this.organization;
+			const invoices = await this.invoicesService.getAll(['payments'], {
+				sentTo: organization.id,
+				isEstimate: this.isEstimate
 			});
+			this.loading = false;
+			this.invoices = invoices.items;
+			this.smartTableSource.load(invoices.items);
+		} catch (error) {
+			this._errorHandlingService.handleError(error);
+		}
 	}
 
 	view(selectedItem?: IInvoice) {

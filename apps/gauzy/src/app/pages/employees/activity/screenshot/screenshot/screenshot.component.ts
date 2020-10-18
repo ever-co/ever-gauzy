@@ -13,11 +13,12 @@ import { Subject } from 'rxjs';
 import { toUTC, toLocal } from '@gauzy/utils';
 import * as _ from 'underscore';
 import * as moment from 'moment';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-screenshot',
 	templateUrl: './screenshot.component.html',

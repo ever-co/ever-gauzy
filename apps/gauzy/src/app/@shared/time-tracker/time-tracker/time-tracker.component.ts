@@ -13,9 +13,11 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 import { Store } from '../../../@core/services/store.service';
 import { NgForm } from '@angular/forms';
 import { TimesheetService } from '../../timesheet/timesheet.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { filter } from 'rxjs/operators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-time-tracker',
 	templateUrl: './time-tracker.component.html',
@@ -105,15 +107,23 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 			});
 
-		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: IUser) => {
-			this.user = user;
-			this.employeeId = user.employeeId;
-		});
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				untilDestroyed(this)
+			)
+			.subscribe((user: IUser) => {
+				this.user = user;
+				this.employeeId = user.employeeId;
+			});
 
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))

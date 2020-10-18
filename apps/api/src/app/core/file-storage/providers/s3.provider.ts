@@ -61,6 +61,7 @@ export class S3Provider extends Provider<S3Provider> {
 		if (request) {
 			const settings = request['tenantSettings'];
 			if (
+				settings &&
 				settings.aws_access_key_id &&
 				!_.isEmpty(settings.aws_access_key_id.trim()) &&
 				settings.aws_secret_access_key &&

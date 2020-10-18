@@ -19,15 +19,17 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-hubstaff',
 	templateUrl: './hubstaff.component.html',
 	styleUrls: ['./hubstaff.component.scss'],
 	providers: [TitleCasePipe]
 })
-export class HubstaffComponent extends TranslationBaseComponent
+export class HubstaffComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('projectsTable') projectsTable;
 	settingsSmartTable: object;
@@ -133,6 +135,10 @@ export class HubstaffComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string'
 				},
+				description: {
+					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
+					type: 'string'
+				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string',
@@ -164,7 +170,7 @@ export class HubstaffComponent extends TranslationBaseComponent
 			);
 	}
 
-	selectProject({ isSelected, selected }) {
+	selectProject({ selected }) {
 		this.projectsTable.grid.dataSet.willSelect = false;
 		this.selectedProjects = selected;
 	}

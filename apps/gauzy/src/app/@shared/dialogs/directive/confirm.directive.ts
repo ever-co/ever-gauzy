@@ -11,8 +11,9 @@ import {
 	ConfirmDialogOptions
 } from '../confirm/confirm.component';
 import { NbDialogService } from '@nebular/theme';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Directive({
 	selector: '[ngxConfirmDialog]'
 })

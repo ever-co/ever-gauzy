@@ -126,7 +126,6 @@ export class HubstaffService {
 	}
 
 	authorizeClient(client_id: string): void {
-		localStorage.setItem('client_id', client_id);
 		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${
 			environment.HUBSTAFF_REDIRECT_URI
 		}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=oauth2&nonce=${uuid()}`;
@@ -134,29 +133,23 @@ export class HubstaffService {
 		window.location.replace(url);
 	}
 
-	addIntegration(
-		code: string,
-		client_secret: string
-	): Observable<IIntegrationTenant> {
-		const client_id = localStorage.getItem('client_id');
-
+	addIntegration({
+		code,
+		client_secret,
+		clientId,
+		organizationId
+	}): Observable<IIntegrationTenant> {
 		const getAccessTokensDto = {
-			client_id,
+			client_id: clientId,
 			code,
 			redirect_uri: environment.HUBSTAFF_REDIRECT_URI,
-			client_secret
+			client_secret,
+			organizationId
 		};
 
-		return this._store.selectedOrganization$.pipe(
-			switchMap(({ tenantId }) =>
-				this._http.post<IIntegrationTenant>(
-					'/api/integrations/hubstaff/add-integration',
-					{
-						...getAccessTokensDto,
-						tenantId
-					}
-				)
-			)
+		return this._http.post<IIntegrationTenant>(
+			'/api/integrations/hubstaff/add-integration',
+			{ ...getAccessTokensDto }
 		);
 	}
 
@@ -181,7 +174,7 @@ export class HubstaffService {
 			`/api/integrations/hubstaff/sync-projects/${integrationId}`,
 			{
 				projects: this._mapProjectPayload(projects),
-				orgId: organizationId
+				organizationId
 			}
 		);
 	}
@@ -275,20 +268,23 @@ export class HubstaffService {
 	}
 
 	private _mapProjectPayload(data: any[]) {
-		return data.map(({ name, id, billable, description }) => ({
-			name,
-			sourceId: id,
-			billable,
-			description
-		}));
+		return data.map(
+			({ name, id, billable, description, client_id = null }) => ({
+				name,
+				sourceId: id,
+				billable,
+				description,
+				client_id
+			})
+		);
 	}
 
 	/*
 	 * Check remeber state for upwork integration
 	 */
-	checkRemeberState() {
+	checkRemeberState(organizationId: string) {
 		return this._http.get<any>(
-			`/api/integration/check/state/${IntegrationEnum.HUBSTAFF}`
+			`/api/integration/check/state/${IntegrationEnum.HUBSTAFF}/${organizationId}`
 		);
 	}
 }

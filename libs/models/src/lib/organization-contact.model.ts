@@ -41,6 +41,7 @@ export interface IOrganizationContactCreateInput extends IContact {
 	primaryPhone?: string;
 	phones?: string[];
 	projects?: IOrganizationProject[];
+	members?: IEmployee[];
 	notes?: string;
 	imageUrl?: string;
 	contactType?: string;

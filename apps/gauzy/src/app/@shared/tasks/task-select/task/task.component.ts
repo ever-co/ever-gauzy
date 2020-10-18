@@ -1,13 +1,14 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
-import { ITask, TaskStatusEnum } from '@gauzy/models';
+import { ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { TasksService } from '../../../../@core/services/tasks.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-task-selector',
 	templateUrl: './task.component.html',
@@ -26,6 +27,7 @@ export class TaskSelectorComponent
 
 	@Input() disabled = false;
 	@Input() allowAddNew = true;
+	hasPermissionTaskEdit: boolean;
 
 	@Input()
 	public get projectId() {
@@ -68,6 +70,14 @@ export class TaskSelectorComponent
 	onTouched: any = () => {};
 
 	ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.hasPermissionTaskEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
+				);
+			});
+
 		this.loadTasks$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(async () => {

@@ -15,7 +15,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, first, takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -44,7 +44,8 @@ interface EmployeeViewModel {
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent extends TranslationBaseComponent
+export class EmployeesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationName: string;
 	settingsSmartTable: object;
@@ -134,9 +135,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
+				if (params.get('openAddDialog') === 'true') {
 					this.add();
 				}
 			});

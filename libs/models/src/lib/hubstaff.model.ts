@@ -7,6 +7,7 @@ export interface IHubstaffAccessTokens {
 
 export interface ICreateIntegrationDto {
 	tenantId: string;
+	organizationId: string;
 	client_id: string;
 	code: string;
 	grant_type: string;

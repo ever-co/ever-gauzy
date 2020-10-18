@@ -245,7 +245,8 @@ export class EmployeeStatisticsService {
 	employeeIncomeInNMonths = async (
 		employeeIds: string[],
 		searchMonth: Date,
-		lastNMonths: number
+		lastNMonths: number,
+		organizationId: string
 	) =>
 		await this.incomeService.findAll({
 			select: [
@@ -258,6 +259,7 @@ export class EmployeeStatisticsService {
 				'isBonus'
 			],
 			where: {
+				organizationId,
 				employee: {
 					id: In(employeeIds)
 				},
@@ -277,7 +279,8 @@ export class EmployeeStatisticsService {
 	employeeExpenseInNMonths = async (
 		employeeIds: string[],
 		searchMonth: Date,
-		lastNMonths: number
+		lastNMonths: number,
+		organizationId: string
 	) =>
 		await this.expenseService.findAll({
 			select: [
@@ -290,6 +293,7 @@ export class EmployeeStatisticsService {
 				'category'
 			],
 			where: {
+				organizationId,
 				employee: {
 					id: In(employeeIds)
 				},
@@ -305,7 +309,10 @@ export class EmployeeStatisticsService {
 	/**
 	 * Fetch all recurring expenses of one or more employees using employeeId
 	 */
-	employeeRecurringExpenses = async (employeeIds: string[]) =>
+	employeeRecurringExpenses = async (
+		employeeIds: string[],
+		organizationId: string
+	) =>
 		await this.employeeRecurringExpenseService.findAll({
 			select: [
 				'employeeId',
@@ -316,7 +323,8 @@ export class EmployeeStatisticsService {
 				'endDate'
 			],
 			where: {
-				employeeId: In(employeeIds)
+				employeeId: In(employeeIds),
+				organizationId
 			}
 		});
 
@@ -333,12 +341,14 @@ export class EmployeeStatisticsService {
 	employeeSplitExpenseInNMonths = async (
 		employeeId: string,
 		searchMonth: Date,
-		lastNMonths: number
+		lastNMonths: number,
+		organizationId: string
 	): Promise<Map<string, IMonthAggregatedSplitExpense>> => {
 		// 1 Get Employee's Organization
 		const employee = await this.employeeService.findOne({
 			where: {
-				id: employeeId
+				id: employeeId,
+				organizationId
 			},
 			relations: ['organization']
 		});
@@ -404,12 +414,14 @@ export class EmployeeStatisticsService {
 	organizationRecurringSplitExpenses = async (
 		employeeId: string,
 		searchMonth: Date,
-		lastNMonths: number
+		lastNMonths: number,
+		organizationId: string
 	) => {
 		// 1 Get Employee's Organization
 		const employee = await this.employeeService.findOne({
 			where: {
-				id: employeeId
+				id: employeeId,
+				organizationId
 			},
 			relations: ['organization']
 		});

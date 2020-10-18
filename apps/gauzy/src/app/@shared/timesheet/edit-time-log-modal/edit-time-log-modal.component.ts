@@ -19,7 +19,7 @@ import { TimesheetService } from '../timesheet.service';
 import { FormGroup, FormControl } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { EmployeesService } from '../../../@core/services';
@@ -29,6 +29,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { debounceTime, tap } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-time-log-modal',
 	templateUrl: './edit-time-log-modal.component.html',

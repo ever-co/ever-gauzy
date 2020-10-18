@@ -3951,6 +3951,16 @@
   dependencies:
     tslib "^1.10.0"
 
+"@ngneat/until-destroy@^8.0.2":
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/@ngneat/until-destroy/-/until-destroy-8.0.2.tgz#4ce26456ed523f211542dd3db5998e4e47c24381"
+  integrity sha512-r0wAvCfd5tgr46semZ6RIe5tkpTmMBKvUBLUehbHC2/FpnwSsjLIR8L3lXxsRYmZNMSdm0vQ/9K5tYu2ivsEuA==
+  dependencies:
+    glob "^7.1.6"
+    minimist "1.2.5"
+    ts-morph "^7.1.2"
+    tslib "^2.0.0"
+
 "@ngtools/webpack@10.1.5":
   version "10.1.5"
   resolved "https://registry.yarnpkg.com/@ngtools/webpack/-/webpack-10.1.5.tgz#08fe0c8cc9defb156f3b01e9f8a32994ed66fa0b"
@@ -5350,6 +5360,18 @@
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
+
+"@ts-morph/common@~0.5.2":
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/@ts-morph/common/-/common-0.5.2.tgz#d02c2493c1e07dfd47f247b4f0b72f083fcaea3a"
+  integrity sha512-eLmfYV6u6gUgHrB9QV9lpuWg3cD60mhXdv0jvM5exWR/Cor8HG+GziFIj2hPEWHJknqzuU4meZd8DTqIzZfDRQ==
+  dependencies:
+    "@dsherret/to-absolute-glob" "^2.0.2"
+    fast-glob "^3.2.2"
+    fs-extra "^9.0.0"
+    is-negated-glob "^1.0.0"
+    multimatch "^4.0.0"
+    typescript "~3.9.7"
 
 "@ts-morph/common@~0.6.0":
   version "0.6.0"
@@ -13232,7 +13254,7 @@ fast-deep-equal@^3.1.1:
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-3.1.1.tgz#545145077c501491e33b15ec408c294376e94ae4"
   integrity sha512-8UEa58QDLauDNfpbrX55Q9jrGHThw2ZMdOky5Gl1CDtVeJDPVrG4Jxx1N8jw2gkWaff5UUuX1KJd+9zGe2B+ZA==
 
-fast-glob@3.2.4, fast-glob@^3.2.4:
+fast-glob@3.2.4, fast-glob@^3.2.2, fast-glob@^3.2.4:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/fast-glob/-/fast-glob-3.2.4.tgz#d20aefbf99579383e7f3cc66529158c9b98554d3"
   integrity sha512-kr/Oo6PX51265qeuCYsyGypiO5uJFgBS0jksyG7FUeCyQzNwYnzrNIMR1NXfkZXsMYXYLRAHgISHBz8gQcxKHQ==
@@ -20296,13 +20318,6 @@ ngx-permissions@^7.0.3:
   dependencies:
     tslib "^1.9.0"
 
-ngx-take-until-destroy@^5.4.0:
-  version "5.4.0"
-  resolved "https://registry.yarnpkg.com/ngx-take-until-destroy/-/ngx-take-until-destroy-5.4.0.tgz#6c8606ee956584dc947e2eb609c48b8f98b09900"
-  integrity sha512-e+VfCrHbLybdKWoQ8prdhmVzWI6vTnedr/9cVGQTkfepMdLz5D++VDk+Wnbs7mru6S9C+kIpNWUlh2YMPl928Q==
-  dependencies:
-    tslib "^1.9.0"
-
 nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
@@ -20910,9 +20925,9 @@ npm-run-path@^4.0.0:
     path-key "^3.0.0"
 
 npm-user-validate@~1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/npm-user-validate/-/npm-user-validate-1.0.0.tgz#8ceca0f5cea04d4e93519ef72d0557a75122e951"
-  integrity sha1-jOyg9c6gTU6TUZ73LQVXp1Ei6VE=
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/npm-user-validate/-/npm-user-validate-1.0.1.tgz#31428fc5475fe8416023f178c0ab47935ad8c561"
+  integrity sha512-uQwcd/tY+h1jnEaze6cdX/LrhWhoBxfSknxentoqmIuStxUExxjWd3ULMLFPiFUrZKbOVMowH6Jq2FRWfmhcEw==
 
 npm@^6.10.3:
   version "6.14.5"
@@ -27836,6 +27851,15 @@ ts-loader@^8.0.4:
     micromatch "^4.0.0"
     semver "^6.0.0"
 
+ts-morph@^7.1.2:
+  version "7.3.0"
+  resolved "https://registry.yarnpkg.com/ts-morph/-/ts-morph-7.3.0.tgz#1777b893d9573b3522108b43159b5ba2515ffde7"
+  integrity sha512-BUKSoz7AFSKPcYTZODbICW2mOthAN4vc5juD6FL1lD/dLwZ0WvrC3zqBM3/X6f5gHxq3yaz+HmanHGaWm0ddbQ==
+  dependencies:
+    "@dsherret/to-absolute-glob" "^2.0.2"
+    "@ts-morph/common" "~0.5.2"
+    code-block-writer "^10.1.0"
+
 ts-morph@^8.0.0:
   version "8.1.1"
   resolved "https://registry.yarnpkg.com/ts-morph/-/ts-morph-8.1.1.tgz#26698328116434737c2ed7bd473a5f07274b08c0"
@@ -28202,6 +28226,11 @@ typescript@^3.3.3333:
   version "3.9.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.3.tgz#d3ac8883a97c26139e42df5e93eeece33d610b8a"
   integrity sha512-D/wqnB2xzNFIcoBG9FG8cXRDjiqSTbG2wd8DMZeQyJlP1vfTkIxH4GKveWaEBYySKIg+USu+E+EDIR47SqnaMQ==
+
+typescript@~3.9.7:
+  version "3.9.7"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.7.tgz#98d600a5ebdc38f40cb277522f12dc800e9e25fa"
+  integrity sha512-BLbiRkiBzAwsjut4x/dsibSTB6yWpwT5qWmC2OfuCg3GgVQCSgMs4vEctYPhsaGtd0AeuuHMkjZ2h2WG8MSzRw==
 
 ua-parser-js@0.7.22:
   version "0.7.22"
