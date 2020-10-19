@@ -28,7 +28,6 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounce } from 'underscore';
 
 export interface ProposalViewModel {
 	tags?: ITag[];
