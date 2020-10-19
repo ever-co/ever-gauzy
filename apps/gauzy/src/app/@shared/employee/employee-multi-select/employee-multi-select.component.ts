@@ -32,6 +32,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		if (value) {
 			if (this.multiple) {
 				this.select.setValue([]);
+				this.select.updateValueAndValidity();
 			} else {
 				this.select.reset();
 			}
@@ -51,7 +52,8 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		return this.val;
 	}
 	public set selectedEmployeeIds(value: string[] | string) {
-		this.changeValue$.next(value);
+		this.select.setValue(value);
+		this.select.updateValueAndValidity();
 	}
 
 	constructor() {}
@@ -83,6 +85,11 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 			.subscribe((value) => {
 				this.checkForMultiSelectValue(value);
 				this.onChange(this.val);
+			});
+		this.select.valueChanges
+			.pipe(untilDestroyed(this))
+			.subscribe((value) => {
+				this.employeeId = value;
 			});
 	}
 

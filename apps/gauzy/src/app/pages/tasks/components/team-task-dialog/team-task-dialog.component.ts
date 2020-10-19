@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import {
 	ITask,
 	IOrganizationProject,
@@ -33,7 +33,8 @@ const initialTaskValue = {
 	templateUrl: './team-task-dialog.component.html',
 	styleUrls: ['./team-task-dialog.component.scss']
 })
-export class TeamTaskDialogComponent extends TranslationBaseComponent
+export class TeamTaskDialogComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
@@ -46,6 +47,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	selectedTask: ITask;
 	organizationId: string;
 	tags: ITag[] = [];
+	@Input() task: Partial<ITask> = {};
 
 	constructor(
 		public dialogRef: NbDialogRef<TeamTaskDialogComponent>,
@@ -64,7 +66,9 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.loadProjects();
 		this.loadTeams();
-		this.initializeForm(this.selectedTask || initialTaskValue);
+		this.initializeForm(
+			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
+		);
 	}
 
 	private async loadProjects() {

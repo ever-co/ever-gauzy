@@ -231,6 +231,7 @@ export class PaymentsComponent
 				organizationId: this.organization.id,
 				tenantId: this.organization.tenantId
 			});
+			this.clearItem();
 		}
 	}
 
@@ -257,6 +258,7 @@ export class PaymentsComponent
 				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
+			this.clearItem();
 		}
 		this.disableButton = true;
 	}
@@ -375,11 +377,19 @@ export class PaymentsComponent
 		};
 	}
 
+	clearItem() {
+		this.selectPayment({
+			isSelected: false,
+			data: null
+		});
+	}
+
 	async selectPayment({ isSelected, data }) {
 		const selectedPayment = isSelected ? data : null;
 		if (this.paymentsTable) {
 			this.paymentsTable.grid.dataSet.willSelect = false;
 		}
+
 		this.disableButton = !isSelected;
 		this.selectedPayment = selectedPayment;
 	}

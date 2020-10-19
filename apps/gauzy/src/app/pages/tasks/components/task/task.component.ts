@@ -450,13 +450,13 @@ export class TaskComponent
 			selectedTask.members = null;
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
 				context: {
-					selectedTask: selectedTask
+					task: selectedTask
 				}
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
+					task: this.selectedTask
 				}
 			});
 		}

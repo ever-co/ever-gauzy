@@ -341,10 +341,7 @@ export class EmployeesComponent
 
 		const { items } = await this.employeesService
 			.getAll(['user', 'tags'], {
-				organization: {
-					id: this.selectedOrganizationId,
-					tenantId: this.selectedOrganization.tenantId
-				}
+				organization: { id: this.selectedOrganizationId }
 			})
 			.pipe(first())
 			.toPromise();

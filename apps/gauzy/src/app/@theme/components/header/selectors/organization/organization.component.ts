@@ -1,9 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
 import { IOrganization } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
 
 @Component({
@@ -18,7 +17,6 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
-		private organizationsService: OrganizationsService,
 		private store: Store,
 		private userOrganizationService: UsersOrganizationsService
 	) {}
@@ -53,7 +51,10 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 
 	private loadOrganizationsId() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((organization: IOrganization) => {
 				this.selectedOrganization = organization;
 			});
