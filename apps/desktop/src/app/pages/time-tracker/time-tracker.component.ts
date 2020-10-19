@@ -113,10 +113,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) => {
+			const thumbSize = this.determineScreenshot(arg.screensize);
 			this.electronService.desktopCapturer
 				.getSources({
 					types: ['screen'],
-					thumbnailSize: arg.screensize
+					thumbnailSize: thumbSize
 				})
 				.then((sources) => {
 					const screens = [];
@@ -385,15 +386,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('screen_shoot');
 	}
 
-	// determineScreenshot(screensize) {
-	// 	const maxDimension = Math.max(screensize.width, screensize.height);
-	// 	console.log(maxDimension);
+	determineScreenshot(screensize) {
+		const maxDimension = Math.max(screensize.width, screensize.height);
+		console.log(maxDimension);
 
-	// 	return {
-	// 		width: maxDimension * window.devicePixelRatio,
-	// 		height: maxDimension * window.devicePixelRatio
-	// 	};
-	// }
+		return {
+			width: maxDimension * window.devicePixelRatio,
+			height: maxDimension * window.devicePixelRatio
+		};
+	}
 
 	getTodayTime(arg) {
 		this.timeTrackerService.getTimeLogs(arg).then((res: any) => {
