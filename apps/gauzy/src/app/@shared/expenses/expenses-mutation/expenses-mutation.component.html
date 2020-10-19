@@ -67,7 +67,10 @@
 						[selectedDate]="valueDate.value"
 					></ga-employee-selector>
 				</div>
-				<div class="col-sm-6 categories">
+				<div
+					class="col-sm-6 categories"
+					[ngClass]="{ 'col-sm-12': expense && !duplicate }"
+				>
 					<div class="form-group">
 						<ng-select
 							[items]="expenseCategories"

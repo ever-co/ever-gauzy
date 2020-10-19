@@ -1,5 +1,10 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { takeUntil } from 'rxjs/operators';
+import {
+	debounceTime,
+	filter,
+	takeUntil,
+	withLatestFrom
+} from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import {
@@ -22,6 +27,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 export interface ProposalViewModel {
 	tags?: ITag[];
@@ -36,13 +42,14 @@ export interface ProposalViewModel {
 	status?: string;
 	author?: string;
 }
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-proposals',
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent extends TranslationBaseComponent
+export class ProposalsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
@@ -74,7 +81,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 	totalProposals: number;
 	countAccepted = 0;
 	showTable: boolean;
-	loading = true;
+	loading = false;
 	hasEditPermission = false;
 	disableButton = true;
 	private _selectedOrganizationId: string;
@@ -97,40 +104,43 @@ export class ProposalsComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((date) => {
 				this.selectedDate = date;
-
-				if (this.selectedEmployeeId) {
+				if (this.selectedOrganization) {
 					this._loadTableData();
-				} else {
-					if (this._selectedOrganizationId) {
-						this._loadTableData(this._selectedOrganizationId);
-					}
 				}
 			});
 
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				if (org) {
-					this.selectedOrganization = org;
-					this._selectedOrganizationId = org.id;
-					this._loadTableData(this._selectedOrganizationId);
-				}
-			});
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
 
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
+		storeEmployee$
+			.pipe(
+				filter((value) => !!value),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.selectedOrganization) {
 					this.selectedEmployeeId = employee.id;
 					this._loadTableData();
 				} else {
-					if (this._selectedOrganizationId) {
-						this.selectedEmployeeId = null;
-						this._loadTableData(this._selectedOrganizationId);
-					}
+					this.selectedEmployeeId = null;
 				}
+			});
 
-				this.loading = false;
+		storeOrganization$
+			.pipe(
+				filter((value) => !!value),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
+				if (organization) {
+					this.selectedOrganization = organization;
+					this._loadTableData();
+				}
 			});
 
 		this.router.events
@@ -363,19 +373,24 @@ export class ProposalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async _loadTableData(orgId?: string) {
+	private async _loadTableData() {
+		if (!this.selectedOrganization) {
+			return;
+		}
+
 		this.showTable = false;
 		this.selectedProposal = null;
 		this.disableButton = true;
 
 		let items: IProposal[];
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
 				['employee', 'organization', 'tags'],
 				{
 					employeeId: this.selectedEmployeeId,
-					organizationId: this._selectedOrganizationId,
-					tenantId: this.selectedOrganization.tenantId
+					organizationId,
+					tenantId
 				},
 				this.selectedDate
 			);
@@ -385,10 +400,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		} else {
 			const response = await this.proposalsService.getAll(
 				['organization', 'employee', 'employee.user', 'tags'],
-				{
-					organizationId: orgId,
-					tenantId: this.selectedOrganization.tenantId
-				},
+				{ organizationId, tenantId },
 				this.selectedDate
 			);
 

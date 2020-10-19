@@ -6,7 +6,6 @@
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth
 	[disabled]="disabled"
-	[(ngModel)]="employeeId"
 	placeholder="{{ placeholder | translate }}"
 >
 	<nb-option *ngFor="let employee of employees" [value]="employee.id">

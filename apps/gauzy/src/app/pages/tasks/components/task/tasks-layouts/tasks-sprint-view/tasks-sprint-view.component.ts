@@ -11,7 +11,8 @@ import { SprintStoreService } from '../../../../../../@core/services/organizatio
 import {
 	ITask,
 	IOrganizationSprint,
-	IOrganizationProject
+	IOrganizationProject,
+	IOrganization
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { map, tap, filter, take } from 'rxjs/operators';
@@ -24,13 +25,16 @@ import { GauzyEditableGridComponent } from '../../../../../../@shared/components
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TasksStoreService } from '../../../../../../@core/services/tasks-store.service';
-
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-tasks-sprint-view',
 	templateUrl: './tasks-sprint-view.component.html',
 	styleUrls: ['./tasks-sprint-view.component.scss']
 })
-export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask>
+export class TasksSprintViewComponent
+	extends GauzyEditableGridComponent<ITask>
 	implements OnInit, OnChanges {
 	@Input() tasks: ITask[] = [];
 	sprints: IOrganizationSprint[] = [];
@@ -62,7 +66,8 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask>
 		private store$: SprintStoreService,
 		translateService: TranslateService,
 		dialogService: NbDialogService,
-		private taskStore: TasksStoreService
+		private taskStore: TasksStoreService,
+		private storeSerive: Store
 	) {
 		super(translateService, dialogService);
 	}
@@ -75,34 +80,55 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask>
 		];
 	}
 
+	initOrganization(project: IOrganizationProject) {
+		this.storeSerive.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization: IOrganization) =>
+					this.store$.fetchSprints({
+						organizationId: organization.id,
+						projectId: project.id
+					})
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
 	reduceTasks(tasks: ITask[]): void {
-		this.sprints$.subscribe((availableSprints: IOrganizationSprint[]) => {
-			const sprints = availableSprints.reduce(
-				(
-					acc: { [key: string]: IOrganizationSprint },
-					sprint: IOrganizationSprint
-				) => {
-					acc[sprint.id] = { ...sprint, tasks: [] };
-					return acc;
-				},
-				{}
-			);
-			const backlog = [];
-			tasks.forEach((task) => {
-				if (!!task.organizationSprint) {
-					sprints[task.organizationSprint.id].tasks.push(task);
-				} else {
-					backlog.push(task);
-				}
+		this.sprints$
+			.pipe(untilDestroyed(this))
+			.subscribe((availableSprints: IOrganizationSprint[]) => {
+				const sprints = availableSprints.reduce(
+					(
+						acc: { [key: string]: IOrganizationSprint },
+						sprint: IOrganizationSprint
+					) => {
+						acc[sprint.id] = { ...sprint, tasks: [] };
+						return acc;
+					},
+					{}
+				);
+				const backlog = [];
+				tasks.forEach((task) => {
+					if (!!task.organizationSprint) {
+						sprints[task.organizationSprint.id].tasks.push(task);
+					} else {
+						backlog.push(task);
+					}
+				});
+				this.sprints = Object.values(sprints);
+				this.backlogTasks = backlog;
 			});
-			this.sprints = Object.values(sprints);
-			this.backlogTasks = backlog;
-		});
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
-		if (!!changes && !!changes.tasks) {
+		if (changes.tasks) {
 			this.reduceTasks(changes.tasks.currentValue);
+		}
+
+		if (changes.project) {
+			this.initOrganization(changes.project.currentValue);
 		}
 	}
 
@@ -170,7 +196,7 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask>
 				...sprint,
 				isActive: false
 			})
-			.pipe(take(1))
+			.pipe(take(1), untilDestroyed(this))
 			.subscribe();
 	}
 

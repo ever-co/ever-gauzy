@@ -185,21 +185,28 @@ export class EmployeeSelectorComponent
 	}
 
 	private async _loadEmployees() {
-		this.store.selectedOrganization$.subscribe(async (org) => {
-			if (org) {
-				await this.loadWorkingEmployeesIfRequired(
-					org,
-					this.store.selectedDate
-				);
-			}
-		});
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(async (org) => {
+				if (org) {
+					await this.loadWorkingEmployeesIfRequired(
+						org,
+						this.store.selectedDate
+					);
+				}
+			});
 
-		this.store.selectedDate$.subscribe((date) => {
-			this.loadWorkingEmployeesIfRequired(
-				this.store.selectedOrganization,
-				date
-			);
-		});
+		this.store.selectedDate$
+			.pipe(untilDestroyed(this))
+			.subscribe((date) => {
+				this.loadWorkingEmployeesIfRequired(
+					this.store.selectedOrganization,
+					date
+				);
+			});
 
 		if (!this.selectedEmployee) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
