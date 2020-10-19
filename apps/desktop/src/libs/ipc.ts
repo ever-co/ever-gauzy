@@ -127,13 +127,17 @@ export function ipcMainHandler(store, startServer, knex) {
 	});
 
 	ipcMain.on('request_permission', async (event) => {
-		if (process.platform === 'darwin') {
-			const screenCapturePermission = hasScreenCapturePermission();
-			if (!screenCapturePermission) {
-				if (!hasPromptedForPermission()) {
-					await openSystemPreferences();
+		try {
+			if (process.platform === 'darwin') {
+				const screenCapturePermission = hasScreenCapturePermission();
+				if (!screenCapturePermission) {
+					if (!hasPromptedForPermission()) {
+						await openSystemPreferences();
+					}
 				}
 			}
+		} catch (error) {
+			console.log('error opening permission', error.message);
 		}
 	});
 }

@@ -251,8 +251,8 @@ app.on('before-quit', (e) => {
 		}, 1000);
 	} else {
 		app.exit(0);
-		serverDesktop.kill();
-		serverGauzy.kill();
+		if (serverDesktop) serverDesktop.kill();
+		if (serverGauzy) serverGauzy.kill();
 	}
 });
 

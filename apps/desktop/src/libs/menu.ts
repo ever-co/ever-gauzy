@@ -61,15 +61,15 @@ export default class AppMenu {
 								});
 							}, 500);
 						}
-					},
-					{
-						id: 'devtools',
-						label: 'DevTool',
-						enabled: true,
-						click() {
-							timeTrackerWindow.webContents.toggleDevTools();
-						}
 					}
+					// {
+					// 	id: 'devtools',
+					// 	label: 'DevTool',
+					// 	enabled: true,
+					// 	click() {
+					// 		timeTrackerWindow.webContents.toggleDevTools();
+					// 	}
+					// }
 				]
 			},
 			{

@@ -79,6 +79,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.projectSelect = arg.projectId;
 				this.organizationContactId = arg.organizationContactId;
 				this.note = arg.note;
+				this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
 				this.getClient(arg);
 				this.getProjects(arg);
 				this.getTask(arg);
@@ -114,7 +115,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) => {
 			const thumbSize = this.determineScreenshot(arg.screensize);
 			this.electronService.desktopCapturer
-				.getSources({ types: ['screen'], thumbnailSize: thumbSize })
+				.getSources({
+					types: ['screen'],
+					thumbnailSize: thumbSize
+				})
 				.then((sources) => {
 					const screens = [];
 					sources.forEach(async (source, i) => {
@@ -143,6 +147,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			'show_last_capture',
 			(event, arg) => {
 				this.getLastTimeSlotImage(arg);
+			}
+		);
+
+		this.electronService.ipcRenderer.on(
+			'last_capture_local',
+			(event, arg) => {
+				this.lastScreenCapture = {
+					fullUrl: arg.fullUrl,
+					textTime: moment().fromNow(),
+					createdAt: Date.now()
+				};
 			}
 		);
 	}
@@ -196,6 +211,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		if (value.second % 5 === 0) {
 			this.pingAw(null);
+			if (this.lastScreenCapture.createdAt) {
+				this.lastScreenCapture.textTime = moment(
+					this.lastScreenCapture.createdAt
+				).fromNow();
+			}
 		}
 		this._cdr.detectChanges();
 	}
@@ -430,10 +450,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	getLastTimeSlotImage(arg) {
 		this.timeTrackerService.getTimeSlot(arg).then((res: any) => {
-			this.lastScreenCapture =
-				res.screenshots && res.screenshots.length > 0
-					? res.screenshots[0]
-					: '';
+			if (res.screenshots && res.screenshots.length > 0) {
+				this.lastScreenCapture = res.screenshots[0];
+			}
 			if (this.lastScreenCapture.createdAt) {
 				this.lastScreenCapture.textTime = moment(
 					this.lastScreenCapture.createdAt

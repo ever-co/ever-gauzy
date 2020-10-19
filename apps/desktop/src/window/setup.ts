@@ -18,7 +18,6 @@ export function createSetupWindow(setupWindow, value) {
 	if (value) {
 		setupWindow.hide();
 	}
-
 	return setupWindow;
 }
 
