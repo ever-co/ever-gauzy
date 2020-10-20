@@ -43,6 +43,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	})
 	@Get('/')
 	async getLogs(@Query() entity: IGetTimeLogInput): Promise<ITimeLog[]> {
+		console.log('gfasdasd');
 		return this.timeLogService.getTimeLogs(entity);
 	}
 

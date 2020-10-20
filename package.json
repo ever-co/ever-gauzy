@@ -178,6 +178,7 @@
 		"angular2-chartjs": "^0.5.1",
 		"angular2-draggable": "^2.3.2",
 		"angular2-toaster": "^8.0.0",
+		"apollo-server-micro": "^2.18.2",
 		"archiver": "^3.1.1",
 		"bcrypt": "^5.0.0",
 		"bootstrap": "^4.3.1",

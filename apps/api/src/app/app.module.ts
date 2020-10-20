@@ -5,6 +5,7 @@ import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
 import { SkillModule } from './skills/skill.module';
 import { LanguageModule } from './language/language.module';
+import { JobPostModule } from './jobPost/jobPost.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
@@ -334,6 +335,10 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 						module: LanguageModule
 					},
 					{
+						path: '/jobposts',
+						module: JobPostModule
+					},
+					{
 						path: '/tasks',
 						module: TaskModule
 					},
@@ -555,6 +560,7 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 		TagModule,
 		SkillModule,
 		LanguageModule,
+		JobPostModule,
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,

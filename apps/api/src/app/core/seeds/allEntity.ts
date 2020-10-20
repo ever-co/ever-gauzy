@@ -103,9 +103,11 @@ import { IntegrationMap } from '../../integration-map/integration-map.entity';
 import { EmployeeAward } from '../../employee-award/employee-award.entity';
 import { GoalKPITemplate } from '../../goal-kpi-template/goal-kpi-template.entity';
 import { TenantSetting } from '../../tenant/tenant-setting/tenant-setting.entity';
+import { JobPost } from '../../jobPost/jobPost.entity';
 
 export const allEntities = [
 	AppointmentEmployee,
+	JobPost,
 	ApprovalPolicy,
 	AvailabilitySlot,
 	Candidate,

@@ -114,10 +114,12 @@ import { EmployeeAward } from '../employee-award/employee-award.entity';
 import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
 import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
 import { TenantSetting } from '../tenant/tenant-setting/tenant-setting.entity';
+import { JobPost } from '../jobPost/jobPost.entity';
 import { FileStorageModule } from './file-storage';
 
 const entities = [
 	Invite,
+	JobPost,
 	User,
 	Employee,
 	Candidate,
