@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core';
 import { JobPost } from './jobPost.entity';

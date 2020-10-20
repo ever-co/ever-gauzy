@@ -3,7 +3,6 @@ import { JobPost } from './jobPost.entity';
 import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ApolloServer, gql } from 'apollo-server-micro';
 import { graphql, buildSchema } from 'graphql';
 
 const schema = buildSchema(`
