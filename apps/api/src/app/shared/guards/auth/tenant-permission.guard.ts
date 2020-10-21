@@ -58,11 +58,19 @@ export class TenantPermissionGuard implements CanActivate {
 			if ('tenantId' in body) {
 				const bodyTenantId = body['tenantId'];
 				isAuthorized = currentTenantId === bodyTenantId;
+				//if tenantId not matched reject request
+				if (!isAuthorized) {
+					return false;
+				}
 			}
 
 			if ('tenant' in body) {
 				const bodyTenantId = body['tenant']['id'];
 				isAuthorized = currentTenantId === bodyTenantId;
+				//if tenantId not matched reject request
+				if (!isAuthorized) {
+					return false;
+				}
 			}
 		}
 
