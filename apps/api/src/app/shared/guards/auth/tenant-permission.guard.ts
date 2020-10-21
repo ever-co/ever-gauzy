@@ -39,6 +39,10 @@ export class TenantPermissionGuard implements CanActivate {
 						//We will use tenantId from headers in future
 						// const findTenantId = request.headers.TenantId;
 						isAuthorized = currentTenantId === findTenantId;
+						//if tenantId not matched reject request
+						if (!isAuthorized) {
+							return false;
+						}
 					}
 				} catch (e) {
 					console.log('Json Parser Error:', e);
@@ -54,11 +58,19 @@ export class TenantPermissionGuard implements CanActivate {
 			if ('tenantId' in body) {
 				const bodyTenantId = body['tenantId'];
 				isAuthorized = currentTenantId === bodyTenantId;
+				//if tenantId not matched reject request
+				if (!isAuthorized) {
+					return false;
+				}
 			}
 
 			if ('tenant' in body) {
 				const bodyTenantId = body['tenant']['id'];
 				isAuthorized = currentTenantId === bodyTenantId;
+				//if tenantId not matched reject request
+				if (!isAuthorized) {
+					return false;
+				}
 			}
 		}
 
