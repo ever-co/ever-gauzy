@@ -3,6 +3,7 @@ import {
 	S3FileStorageProviderConfig
 } from './file-provider';
 import { IOrganization } from './organization.model';
+import { IRolePermission } from './role-permission.model';
 
 export interface ITenant {
 	id?: string;
@@ -12,6 +13,7 @@ export interface ITenant {
 	readonly updatedAt?: Date;
 
 	organizations?: IOrganization[];
+	rolePermissions?: IRolePermission[];
 }
 
 export interface ITenantCreateInput {

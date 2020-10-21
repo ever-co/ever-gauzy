@@ -6,8 +6,10 @@ import { FindManyOptions, Repository, Not, In } from 'typeorm';
 import {
 	IApprovalPolicy,
 	IApprovalPolicyCreateInput,
-	ApprovalPolicyTypesStringEnum
+	ApprovalPolicyTypesStringEnum,
+	IRequestApprovalFindInput
 } from '@gauzy/models';
+import { RequestContext } from '../core/context';
 
 @Injectable()
 export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
@@ -28,13 +30,11 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 	}
 
 	async findApprovalPoliciesForRequestApproval(
-		organizationId?: string,
+		findInput?: IRequestApprovalFindInput,
 		relations?: string[]
 	): Promise<IPagination<IApprovalPolicy>> {
-		console.log('organizationId', organizationId);
-		console.log('relations', relations);
-
-		const total = await this.approvalPolicyRepository.count({
+		const { organizationId, tenantId } = findInput;
+		const query = {
 			where: {
 				approvalType: Not(
 					In([
@@ -42,23 +42,13 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 						ApprovalPolicyTypesStringEnum.TIME_OFF
 					])
 				),
-				organizationId
-			}
-		});
-
-		const items = await this.approvalPolicyRepository.find({
-			where: {
-				approvalType: Not(
-					In([
-						ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
-						ApprovalPolicyTypesStringEnum.TIME_OFF
-					])
-				),
-				organizationId
+				organizationId,
+				tenantId
 			},
 			relations
-		});
-
+		};
+		const total = await this.approvalPolicyRepository.count(query);
+		const items = await this.approvalPolicyRepository.find(query);
 		return { items, total };
 	}
 
@@ -68,7 +58,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
-			approvalPolicy.tenantId = entity.tenantId;
+			approvalPolicy.tenantId = RequestContext.currentTenantId();
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
@@ -89,7 +79,7 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 			);
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
-			approvalPolicy.tenantId = entity.tenantId;
+			approvalPolicy.tenantId = RequestContext.currentTenantId();
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
