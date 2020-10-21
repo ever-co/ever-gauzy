@@ -63,12 +63,9 @@ export class TenantPermissionGuard implements CanActivate {
 		}
 
 		//Super admin and admin has allowed to access request
-		const isAdmin = RequestContext.hasRoles([
-			RolesEnum.SUPER_ADMIN,
-			RolesEnum.ADMIN
-		]);
-		if (isAdmin === true) {
-			isAuthorized = isAdmin;
+		const isSuperAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
+		if (isSuperAdmin === true) {
+			isAuthorized = isSuperAdmin;
 			return isAuthorized;
 		}
 
