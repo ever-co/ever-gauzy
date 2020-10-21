@@ -17,6 +17,7 @@ import { OrganizationModule } from './organization/organization.module';
 import { IncomeModule } from './income/income.module';
 import { ExpenseModule } from './expense/expense.module';
 import { EmployeeSettingModule } from './employee-setting';
+import { EmployeeJobPostModule } from './employee-job';
 import { EmployeeAppointmentModule } from './employee-appointment';
 import { CoreModule } from './core';
 import { AuthModule } from './auth/auth.module';
@@ -196,7 +197,10 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 					},
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
-
+					{
+						path: '/employee-job',
+						module: EmployeeJobPostModule
+					},
 					{
 						path: '/employee-settings',
 						module: EmployeeSettingModule
@@ -516,6 +520,7 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
+		EmployeeJobPostModule,
 		EmployeeStatisticsModule,
 		EmployeeAppointmentModule,
 		AppointmentEmployeesModule,
