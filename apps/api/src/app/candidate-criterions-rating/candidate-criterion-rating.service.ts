@@ -1,10 +1,12 @@
-import { ICandidateCriterionsRating } from './../../../../../libs/models/src/lib/candidate-criterions-rating.model';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
-import { ICandidateCriterionsRatingCreateInput } from '@gauzy/models';
+import {
+	ICandidateCriterionsRating,
+	ICandidateCriterionsRatingCreateInput
+} from '@gauzy/models';
 
 @Injectable()
 export class CandidateCriterionsRatingService extends CrudService<

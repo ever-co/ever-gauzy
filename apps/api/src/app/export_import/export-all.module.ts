@@ -195,9 +195,11 @@ import { ProductCategory } from '../product-category/product-category.entity';
 import { ProductCategoryService } from '../product-category/product-category.service';
 import { OrganizationDocuments } from '../organization-documents/organization-documents.entity';
 import { OrganizationDocumentsService } from '../organization-documents/organization-documents.service';
-import { UpworkReportService } from '../upwork/upwork-report.service';
-import { UpworkJobService } from '../upwork/upwork-job.service';
-import { UpworkOffersService } from '../upwork/upwork-offers.service';
+import {
+	UpworkReportService,
+	UpworkJobService,
+	UpworkOffersService
+} from '@gauzy/integration-upwork';
 
 @Module({
 	imports: [

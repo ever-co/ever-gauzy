@@ -2,12 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 
-// tslint:disable-next-line: nx-enforce-module-boundaries
 import {
 	IOrganizationExpenseCategoryCreateInput,
 	IOrganizationExpenseCategory,
 	IOrganizationExpenseCategoryFindInput
-} from 'libs/models/src/lib/organization-expense-category.model';
+} from '@gauzy/models';
 
 @Injectable({
 	providedIn: 'root'

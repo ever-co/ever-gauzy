@@ -1,4 +1,4 @@
-import { ICandidateCriterionsRating } from './../../../../../../../libs/models/src/lib/candidate-criterions-rating.model';
+import { ICandidateCriterionsRating } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CandidateCriterionsRatingService } from '../../candidate-criterion-rating.service';
 import { CandidateCriterionsRatingBulkUpdateCommand } from '../candidate-criterions-rating.bulk.update.command';

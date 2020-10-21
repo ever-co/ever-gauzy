@@ -30,6 +30,7 @@ export * from './lib/organization-vendors.model';
 export * from './lib/organization-team-model';
 export * from './lib/organization-team-employee-model';
 export * from './lib/organization-recurring-expense.model';
+export * from './lib/organization-expense-category.model';
 export * from './lib/organization-awards.model';
 export * from './lib/employee-recurring-expense.model';
 export * from './lib/country.model';

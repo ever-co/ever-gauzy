@@ -28,6 +28,7 @@ import {
 import { Expense } from '../expense/expense.entity';
 import { Income } from '../income/income.entity';
 import { IPagination } from '../core';
+
 @ApiTags('Integrations')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
