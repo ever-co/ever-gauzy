@@ -20,7 +20,8 @@ import { Store } from '../../../@core/services/store.service';
 	templateUrl: './edit-roles-permissions.component.html',
 	styleUrls: ['./edit-roles-permissions.component.scss']
 })
-export class EditRolesPermissionsComponent extends TranslationBaseComponent
+export class EditRolesPermissionsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	private currentUser: IUser;
@@ -95,8 +96,10 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	}
 
 	async refreshPermissions() {
+		const tenantId = this.currentUser.tenantId;
 		const { items } = await this.rolePermissionsService.getRolePermissions({
-			roleId: this.selectedRoleId
+			roleId: this.selectedRoleId,
+			tenantId
 		});
 
 		items.forEach((p) => {

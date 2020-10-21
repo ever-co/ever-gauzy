@@ -14,7 +14,8 @@ export interface IApprovalPolicyCreateInput
 	approvalType?: string;
 }
 
-export interface IApprovalPolicyUpdateInput {
+export interface IApprovalPolicyUpdateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	description?: string;
 	approvalType?: string;

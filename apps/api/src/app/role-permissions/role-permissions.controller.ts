@@ -41,7 +41,7 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findRole(
+	async findRolePermission(
 		@Query('data') data: string
 	): Promise<IPagination<RolePermissions>> {
 		const { findInput } = JSON.parse(data);
