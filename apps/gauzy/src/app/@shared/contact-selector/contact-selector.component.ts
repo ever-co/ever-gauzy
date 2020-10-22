@@ -129,7 +129,7 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 				name,
 				organizationId: organizationId,
 				contactType: ContactType.CLIENT,
-				members,
+				...(members.length > 0 ? { members } : 0),
 				imageUrl:
 					'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
 			});

@@ -230,6 +230,32 @@ export class PagesComponent implements OnInit, OnDestroy {
 			]
 		},
 		{
+			title: 'Jobs',
+			icon: 'browser-outline',
+			link: '/pages/jobs',
+			data: {
+				translationKey: 'MENU.JOBS'
+			},
+			children: [
+				{
+					title: 'Search',
+					icon: 'list-outline',
+					link: '/pages/jobs/search',
+					data: {
+						translationKey: 'MENU.JOBS_SEARCH'
+					}
+				},
+				{
+					title: 'Macthing',
+					icon: 'person-outline',
+					link: '/pages/jobs/matching',
+					data: {
+						translationKey: 'MENU.JOBS_MACTHING'
+					}
+				}
+			]
+		},
+		{
 			title: 'Employees',
 			icon: 'people-outline',
 			data: {

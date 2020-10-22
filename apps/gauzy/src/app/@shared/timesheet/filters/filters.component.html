@@ -114,7 +114,19 @@
 					[nbPopover]="templateRef"
 					nbPopoverPlacement="bottom"
 				>
-					{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
+					<span
+						*ngIf="
+							activityLevel?.start > 0 ||
+								activityLevel?.end < 100;
+							else selectLable
+						"
+					>
+						Activity Level : {{ activityLevel?.start }}% -
+						{{ activityLevel?.end }}%
+					</span>
+					<ng-template #selectLable>
+						{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
+					</ng-template>
 					<nb-icon icon="chevron-down-outline"></nb-icon>
 				</button>
 				<ng-template #templateRef>
