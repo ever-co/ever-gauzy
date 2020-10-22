@@ -11,9 +11,10 @@ import {
 	IGetCountsStatistics,
 	IGetManualTimesStatistics
 } from '@gauzy/models';
+import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('TimesheetStatistic')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller('statistics')
 export class StatisticController {
 	constructor(private readonly statisticService: StatisticService) {}

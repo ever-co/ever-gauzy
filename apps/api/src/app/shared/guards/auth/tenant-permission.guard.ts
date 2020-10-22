@@ -25,28 +25,41 @@ export class TenantPermissionGuard implements CanActivate {
 
 		//if request to get data using another tenantId then reject request.
 		if (RequestMethodEnum.GET === method) {
-			const query: any = request.query.data;
-			const isJson = isJSON(query);
-			if (isJson) {
-				try {
-					const parse = JSON.parse(query);
-					//Match provided tenantId with logged in tenantId
-					if (
-						'findInput' in parse &&
-						'tenantId' in parse['findInput']
-					) {
-						const findTenantId = parse['findInput']['tenantId'];
-						//We will use tenantId from headers in future
-						// const findTenantId = request.headers.TenantId;
-						isAuthorized = currentTenantId === findTenantId;
-						//if tenantId not matched reject request
-						if (!isAuthorized) {
-							return false;
+			if (request.query.hasOwnProperty('data')) {
+				const query: any = request.query.data;
+				const isJson = isJSON(query);
+				if (isJson) {
+					try {
+						const parse = JSON.parse(query);
+						//Match provided tenantId with logged in tenantId
+						if (
+							'findInput' in parse &&
+							'tenantId' in parse['findInput']
+						) {
+							const findTenantId = parse['findInput']['tenantId'];
+							//We will use tenantId from headers in future
+							// const findTenantId = request.headers.TenantId;
+							isAuthorized = currentTenantId === findTenantId;
+							//if tenantId not matched reject request
+							if (!isAuthorized) {
+								return false;
+							}
 						}
+					} catch (e) {
+						console.log('Json Parser Error:', e);
+						return isAuthorized;
 					}
-				} catch (e) {
-					console.log('Json Parser Error:', e);
-					return isAuthorized;
+				}
+			}
+
+			if ('tenantId' in request.query) {
+				const findTenantId = request.query['tenantId'];
+				//We will use tenantId from headers in future
+				// const findTenantId = request.headers.TenantId;
+				isAuthorized = currentTenantId === findTenantId;
+				//if tenantId not matched reject request
+				if (!isAuthorized) {
+					return false;
 				}
 			}
 		}
@@ -55,6 +68,9 @@ export class TenantPermissionGuard implements CanActivate {
 		const payload = [RequestMethodEnum.POST, RequestMethodEnum.PUT];
 		if (payload.includes(method)) {
 			const body: any = request.body;
+			//We will use tenantId from headers in future
+			// const bodyTenantId = request.headers.TenantId;
+
 			if ('tenantId' in body) {
 				const bodyTenantId = body['tenantId'];
 				isAuthorized = currentTenantId === bodyTenantId;

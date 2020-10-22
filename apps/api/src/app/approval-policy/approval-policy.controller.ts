@@ -26,7 +26,7 @@ import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.g
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('ApprovalPolicy')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	constructor(private readonly approvalPolicyService: ApprovalPolicyService) {
@@ -43,7 +43,6 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@Get()
 	findAllApprovalPolicies(@Query('data', ParseJsonPipe) data: any): any {
@@ -67,7 +66,6 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@Get('/requestapproval')
 	findApprovalPoliciesForRequestApproval(
@@ -90,7 +88,6 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Post('')
 	async createApprovalPolicy(
@@ -114,7 +111,6 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Put(':id')
 	async updateApprovalPolicy(

@@ -77,21 +77,27 @@ export class RequestApprovalService {
 		}
 	}
 
-	approvalRequestByAdmin(id: string): Promise<IRequestApproval> {
+	approvalRequestByAdmin(
+		id: string,
+		tenantId: string
+	): Promise<IRequestApproval> {
 		return this.http
 			.put<IRequestApproval>(
 				`${this.REQUETS_APPROVAL_URL}/approval/${id}`,
-				null
+				{ tenantId }
 			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	refuseRequestByAdmin(id: string): Promise<IRequestApproval> {
+	refuseRequestByAdmin(
+		id: string,
+		tenantId: string
+	): Promise<IRequestApproval> {
 		return this.http
 			.put<IRequestApproval>(
 				`${this.REQUETS_APPROVAL_URL}/refuse/${id}`,
-				null
+				{ tenantId }
 			)
 			.pipe(first())
 			.toPromise();

@@ -5,7 +5,6 @@ import {
 	IRequestApproval,
 	PermissionsEnum,
 	IRequestApprovalCreateInput,
-	RolesEnum,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
 import {
@@ -25,11 +24,12 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
-import { Roles } from '../shared/decorators/roles';
 import { RequestApprovalStatusCommand } from './commands';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('RequestApproval')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class RequestApprovalControler extends CrudController<RequestApproval> {
 	constructor(
@@ -49,18 +49,14 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
 	@Get()
 	findAllRequestApprovals(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IRequestApproval>> {
-		const { relations, findInput } = JSON.parse(data);
-
+		const { relations, findInput } = data;
 		return this.requestApprovalService.findAllRequestApprovals(
-			{
-				relations
-			},
+			{ relations },
 			findInput
 		);
 	}
@@ -75,14 +71,13 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
 	@Get('employee/:id')
 	findRequestApprovalsByEmployeeId(
 		@Param('id') id: string,
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IRequestApproval>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.requestApprovalService.findRequestApprovalsByEmployeeId(
 			id,
 			relations,
@@ -100,7 +95,6 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Post()
 	async createRequestApproval(
@@ -120,8 +114,6 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('approval/:id')
 	async employeeApprovalRequestApproval(
@@ -146,8 +138,6 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('refuse/:id')
 	async employeeRefuseRequestApproval(
@@ -172,7 +162,6 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put(':id')
 	async updateRequestApprovalByAdmin(

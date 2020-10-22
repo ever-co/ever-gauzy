@@ -5,13 +5,12 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	IRequestApproval,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IRolePermission
 } from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
-import { PermissionsEnum } from '@gauzy/models';
-import { takeUntil, first } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
@@ -21,18 +20,21 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 export interface IApprovalsData {
 	icon: string;
 	title: string;
 }
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approvals',
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })
-export class ApprovalsComponent extends TranslationBaseComponent
+export class ApprovalsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
 	public loading = true;
@@ -44,9 +46,6 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	public selectedEmployeeId: string;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	private ngDestroy$ = new Subject<void>();
-	private selectedOrganizationId: string;
-	private _ngDestroy$ = new Subject<void>();
 	requestApprovalData: IRequestApproval[];
 	organization: IOrganization;
 
@@ -58,7 +57,8 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		private store: Store,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
-		private router: Router
+		private router: Router,
+		private permissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -66,51 +66,56 @@ export class ApprovalsComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this.ngDestroy$))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.REQUEST_APPROVAL_EDIT
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
 				);
+				this.permissionsService.loadPermissions(permissions);
 			});
-
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this)
+			)
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
 					this.loadSettings();
 				}
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org) => {
 				if (org) {
 					this.organization = org;
-					this.selectedOrganizationId = org.id;
 					this.loadSettings();
 				}
 			});
-
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
-		// this.loadSettings();
-		// this.initListApprovals();
-
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.APPROVALS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -126,7 +131,11 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	}
 
 	async loadSettings() {
+		if (!this.organization) {
+			return;
+		}
 		const { id: organizationId, tenantId } = this.organization;
+
 		this.selectedRequestApproval = null;
 		this.disableButton = true;
 		let items = [];
@@ -135,23 +144,18 @@ export class ApprovalsComponent extends TranslationBaseComponent
 				await this.approvalRequestService.getByEmployeeId(
 					this.selectedEmployeeId,
 					['requestApprovals'],
-					{
-						organizationId,
-						tenantId
-					}
+					{ organizationId, tenantId }
 				)
 			).items;
 		} else {
 			items = (
 				await this.approvalRequestService.getAll(
 					['employeeApprovals', 'teamApprovals', 'tags'],
-					{
-						organizationId,
-						tenantId
-					}
+					{ organizationId, tenantId }
 				)
 			).items;
 		}
+
 		this.loading = false;
 		this.requestApprovalData = items;
 		this.smartTableSource.load(items);
@@ -229,9 +233,11 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					type: 'custom',
 					renderComponent: RequestApprovalActionComponent,
 					onComponentInitFunction: (instance) => {
-						instance.updateResult.subscribe((params) => {
-							this.handleEvent(params);
-						});
+						instance.updateResult
+							.pipe(untilDestroyed(this))
+							.subscribe((params) => {
+								this.handleEvent(params);
+							});
 					},
 					filter: false
 				}
@@ -255,9 +261,14 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	}
 
 	async handleEvent(params: any) {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.organization;
 		if (params.isApproval) {
 			const request = await this.approvalRequestService.approvalRequestByAdmin(
-				params.data.id
+				params.data.id,
+				tenantId
 			);
 			if (request) {
 				this.toastrService.primary(
@@ -270,7 +281,8 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			this.loadSettings();
 		} else {
 			const request = await this.approvalRequestService.refuseRequestByAdmin(
-				params.data.id
+				params.data.id,
+				tenantId
 			);
 			if (request) {
 				this.toastrService.primary(
@@ -283,9 +295,11 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
 	manageAppropvalPolicy() {
@@ -344,8 +358,5 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	ngOnDestroy() {
-		this.ngDestroy$.next();
-		this.ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

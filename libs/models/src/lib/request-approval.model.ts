@@ -18,6 +18,7 @@ export interface IRequestApproval
 	approvalPolicyId?: string;
 	approvalPolicy?: IApprovalPolicy;
 	tags?: ITag[];
+	createdByName?: string;
 }
 
 export interface IRequestApprovalCreateInput

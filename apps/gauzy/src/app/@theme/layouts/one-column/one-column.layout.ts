@@ -90,7 +90,9 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 					employeeId: this.user.employee
 						? this.user.employee.id
 						: null,
-					organizationId: this.user.employee ? this.user.employee.organizationId : null,
+					organizationId: this.user.employee
+						? this.user.employee.organizationId
+						: null,
 					tenantId: this.user.tenantId ? this.user.tenantId : null
 				});
 			}
@@ -103,7 +105,10 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 			return;
 		}
 
-		this.store.userRolePermissions = this.user.role.rolePermissions;
+		//only enabled permissions assign to logged in user
+		this.store.userRolePermissions = this.user.role.rolePermissions.filter(
+			(permission) => permission.enabled
+		);
 		this.store.user = this.user;
 
 		if (
@@ -130,7 +135,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 			this.store.selectedEmployee = null;
 		} else {
 			const { items: emp } = await this.employeesService
-				.getAll([], { user: this.user })
+				.getAll([], { user: this.user, tenantId: this.user.tenantId })
 				.pipe(first())
 				.toPromise();
 			if (emp && emp.length > 0) {

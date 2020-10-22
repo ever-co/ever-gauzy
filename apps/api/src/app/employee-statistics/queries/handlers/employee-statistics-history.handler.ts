@@ -1,5 +1,4 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../employee-statistics.service';
 import { startOfMonth, subMonths } from 'date-fns';
 import {
@@ -17,10 +16,7 @@ import { EmployeeStatisticsHistoryQuery } from '../employee-statistics-history.q
 @QueryHandler(EmployeeStatisticsHistoryQuery)
 export class EmployeeStatisticsHistoryQueryHandler
 	implements IQueryHandler<EmployeeStatisticsHistoryQuery> {
-	constructor(
-		private employeeStatisticsService: EmployeeStatisticsService,
-		private employeeService: EmployeeService
-	) {}
+	constructor(private employeeStatisticsService: EmployeeStatisticsService) {}
 
 	public async execute(
 		command: EmployeeStatisticsHistoryQuery

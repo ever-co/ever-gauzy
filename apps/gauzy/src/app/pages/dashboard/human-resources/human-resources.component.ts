@@ -107,13 +107,14 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	async _loadEmployeeStatistics() {
-		const organizationId = this.selectedOrganization.id;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
 			{
 				employeeId: this.selectedEmployee.id,
 				valueDate: this.selectedDate || new Date(),
 				months: this.selectedDate ? 1 : 12,
-				organizationId
+				organizationId,
+				tenantId
 			}
 		);
 		this.income = this._statsSum(this.employeeStatistics, 'income');
@@ -136,7 +137,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	async openHistoryDialog(type: EmployeeStatisticsHistoryEnum) {
-		const organizationId = this.selectedOrganization.id;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.dialogService.open(RecordsHistoryComponent, {
 			context: {
 				type,
@@ -146,7 +147,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 						valueDate: this.selectedDate || new Date(),
 						months: this.selectedDate ? 1 : 12,
 						type,
-						organizationId
+						organizationId,
+						tenantId
 					}
 				)
 			}
@@ -154,14 +156,15 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	async openProfitDialog() {
-		const organizationId = this.selectedOrganization.id;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const incomes = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
 			{
 				employeeId: this.selectedEmployee.id,
 				valueDate: this.selectedDate || new Date(),
 				months: this.selectedDate ? 1 : 12,
 				type: EmployeeStatisticsHistoryEnum.INCOME,
-				organizationId
+				organizationId,
+				tenantId
 			}
 		);
 		const expenses = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
@@ -170,7 +173,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				valueDate: this.selectedDate || new Date(),
 				months: this.selectedDate ? 1 : 12,
 				type: EmployeeStatisticsHistoryEnum.EXPENSES,
-				organizationId
+				organizationId,
+				tenantId
 			}
 		);
 

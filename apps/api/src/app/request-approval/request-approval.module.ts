@@ -22,6 +22,7 @@ import {
 import { RequestApprovalStatusHandler } from './commands/handlers/request-approval.status.handler';
 import { TimeOffRequestService } from '../time-off-request/time-off-request.service';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -36,7 +37,8 @@ import { CqrsModule } from '@nestjs/cqrs';
 			EquipmentSharing
 		]),
 		CqrsModule,
-		OrganizationTeamEmployeeModule
+		OrganizationTeamEmployeeModule,
+		TenantModule
 	],
 	controllers: [RequestApprovalControler],
 	providers: [

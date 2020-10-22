@@ -21156,12 +21156,12 @@ ngx-perfect-scrollbar@^8.0.0:
     perfect-scrollbar "^1.4.0"
     resize-observer-polyfill "^1.5.0"
 
-ngx-permissions@^7.0.3:
-  version "7.0.3"
-  resolved "https://registry.yarnpkg.com/ngx-permissions/-/ngx-permissions-7.0.3.tgz#aefc58a14d5a71042277cbdb322560cb6e9b6535"
-  integrity sha512-WwmUcO2IuE5gSgsR+wf23XkJDJzUzQ9iVNOGGfHq7tavdQK1VBY7C0oJOq7+H5vLDSfc+pEDsBwc03lXhq7J1g==
+ngx-permissions@^8.1.1:
+  version "8.1.1"
+  resolved "https://registry.yarnpkg.com/ngx-permissions/-/ngx-permissions-8.1.1.tgz#4c02cbb9b53101fc1c217d1e54c39aa6869ef85f"
+  integrity sha512-gxpZtyg9Hucx+sgoC+iJTYL02E6GOoDCfMKZ1rDnSzIFsyGWIsaNFbSi0FaoT4diWnQ+8B/kL4mEM7ldO/FTxA==
   dependencies:
-    tslib "^1.9.0"
+    tslib "^1.10.0"
 
 nice-try@^1.0.4:
   version "1.0.5"

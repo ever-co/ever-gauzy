@@ -11,13 +11,15 @@ import { AuthService } from '../auth/auth.service';
 import { EmailService, EmailModule } from '../email';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { TimeLog } from '../timesheet/time-log.entity';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Employee, User, TimeLog]),
 		EmailModule,
 		UserOrganizationModule,
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [EmployeeController],
 	providers: [
