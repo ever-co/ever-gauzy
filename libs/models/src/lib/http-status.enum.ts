@@ -45,3 +45,14 @@ export enum HttpStatus {
 	GATEWAY_TIMEOUT = 504,
 	HTTP_VERSION_NOT_SUPPORTED = 505
 }
+
+export enum RequestMethodEnum {
+	GET = 'GET',
+	POST = 'POST',
+	PUT = 'PUT',
+	DELETE = 'DELETE',
+	PATCH = 'PATCH',
+	ALL = 'ALL',
+	OPTIONS = 'OPTIONS',
+	HEAD = 'HEAD'
+}
