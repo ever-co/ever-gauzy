@@ -4,11 +4,7 @@ import { IOrganizationProject } from './organization-projects.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITag } from './tag-entity.model';
-
-export interface IPagination {
-	limit?: number;
-	page?: number;
-}
+import { IPaginationInput } from './core.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
@@ -348,7 +344,7 @@ export interface IGetTimeSlotInput extends ITimeLogFilters {
 	relations?: string[];
 }
 
-export interface IGetActivitiesInput extends ITimeLogFilters, IPagination {
+export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput {
 	relations?: string[];
 	types?: string[];
 	titles?: string[];

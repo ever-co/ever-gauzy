@@ -1,7 +1,14 @@
 import { IEmployee } from './employee.model';
 
 export interface GetEmployeeJobPostInput {
-	employeeId?: string;
+	employeeIds?: string[];
+	search?: string;
+	take?: number;
+	skip?: number;
+	budget?: [number, number];
+	jobStatus?: JobPostStatusEnum[];
+	jobSource?: JobPostSourceEnum[];
+	jobType?: JobPostTypeEnum[];
 }
 
 export interface EmployeeJobPost {
@@ -21,8 +28,9 @@ export class JobPost {
 	title: string;
 	description: string;
 	jobDateCreated?: string;
-	jobStatus?: string;
-	jobType?: string;
+	jobStatus?: JobPostStatusEnum;
+	jobSource?: JobPostSourceEnum;
+	jobType?: JobPostTypeEnum;
 	url?: string;
 	budget?: string;
 	duration?: string;
@@ -43,4 +51,18 @@ export class JobPost {
 	searchOccupationId?: string;
 	searchJobType?: string;
 	searchKeyword?: string;
+}
+
+export enum JobPostSourceEnum {
+	UPWORK = 'Upwork'
+}
+
+export enum JobPostStatusEnum {
+	OPEN = 'Open',
+	CLOSED = 'Colosed'
+}
+
+export enum JobPostTypeEnum {
+	HOURLY = 'Hourly',
+	FIX_PRICE = 'Fix Price'
 }

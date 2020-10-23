@@ -5,49 +5,117 @@
 	<nb-card-body>
 		<div class="job-fitlers py-3">
 			<div class="row">
-				<div class="col-sm-3 col-lg-2 search-box">
-					<input
-						type="text"
-						class="w-100"
-						[placeholder]="'JOBS.JOB_SEARCH' | translate"
-						nbInput
-						[(ngModel)]="jobRequest.keyword"
-					/>
+				<div class="col-sm-4">
+					<ga-employee-multi-select
+						[label]="false"
+						(selectedChange)="applayFilter()"
+						[(ngModel)]="jobRequest.employeeIds"
+					></ga-employee-multi-select>
 				</div>
-				<div class="col-sm-3 col-lg-2 source-box">
-					<nb-select
-						placeholder="Source"
-						class="w-100"
-						[(ngModel)]="jobRequest.spurce"
-					>
-						<nb-option value="upwork">Upwork</nb-option>
-					</nb-select>
+				<div class="ml-auto col-sm-4">
+					<div class="row">
+						<div class="col form-group m-0">
+							<input
+								type="text"
+								class="w-100"
+								[placeholder]="'JOBS.JOB_SEARCH' | translate"
+								nbInput
+								[(ngModel)]="jobRequest.search"
+								(input)="applayFilter()"
+							/>
+						</div>
+						<div class="col-auto">
+							<button
+								type="button"
+								(click)="
+									isOpenAdvancedFilter = !isOpenAdvancedFilter
+								"
+								nbButton
+								status="info"
+							>
+								<nb-icon icon="funnel-outline"></nb-icon>
+								Filter
+							</button>
+						</div>
+					</div>
 				</div>
-				<div class="col-sm-3 col-lg-2 source-box">
-					<nb-select
-						placeholder="Job Type"
-						class="w-100"
-						[(ngModel)]="jobRequest.jobType"
-					>
-						<nb-option value="hourly">Hourly</nb-option>
-						<nb-option value="fix-price">Fix Price</nb-option>
-					</nb-select>
-				</div>
-				<div class="col-sm-3 col-lg-2 source-box">
-					<nb-select
-						placeholder="Budget"
-						class="w-100"
-						[(ngModel)]="jobRequest.budget"
-					>
-						<nb-option [value]="[0, 100]">
-							Less than $100</nb-option
-						>
-						<nb-option [value]="[100, 500]">$100 - $500</nb-option>
-						<nb-option [value]="[500, 1000]">$500 - $1K</nb-option>
-						<nb-option [value]="[1000, 5000]">$1K - $5K</nb-option>
-						<nb-option [value]="[5000, 0]">$5K+</nb-option>
-					</nb-select>
-				</div>
+			</div>
+			<div class="advanced-filter my-4" *ngIf="isOpenAdvancedFilter">
+				<nb-card>
+					<nb-card-header>
+						<h6>Advanced Filter</h6>
+					</nb-card-header>
+					<nb-card-body>
+						<div class="row">
+							<div class="col-sm-6 form-group">
+								<label class="d-block">Source</label>
+								<nb-select
+									(selectedChange)="applayFilter()"
+									placeholder="Source"
+									class="w-100"
+									multiple
+									[(ngModel)]="jobRequest.jobSource"
+								>
+									<nb-option
+										*ngFor="
+											let source of JobPostSourceEnum
+												| keyvalue
+										"
+										[value]="source.value"
+										>{{
+											source.value | titlecase
+										}}</nb-option
+									>
+								</nb-select>
+							</div>
+							<div class="col-sm-6 form-group">
+								<label class="d-block">Job type</label>
+								<nb-select
+									(selectedChange)="applayFilter()"
+									placeholder="Job Type"
+									class="w-100"
+									multiple
+									[(ngModel)]="jobRequest.jobType"
+								>
+									<nb-option
+										*ngFor="
+											let type of JobPostTypeEnum
+												| keyvalue
+										"
+										[value]="type.value"
+										>{{ type.value | titlecase }}
+									</nb-option>
+								</nb-select>
+							</div>
+							<div class="col-sm-6 form-group">
+								<label class="d-block">Budget</label>
+								<nb-select
+									(selectedChange)="applayFilter()"
+									placeholder="Budget"
+									class="w-100"
+									multiple
+									[(ngModel)]="jobRequest.budget"
+								>
+									<nb-option [value]="[null, 100]"
+										>Less than $100</nb-option
+									>
+									<nb-option [value]="[100, 500]"
+										>$100 - $500</nb-option
+									>
+									<nb-option [value]="[500, 1000]"
+										>$500 - $1K</nb-option
+									>
+									<nb-option [value]="[1000, 5000]"
+										>$1K - $5K</nb-option
+									>
+									<nb-option [value]="[5000, null]"
+										>$5K+</nb-option
+									>
+								</nb-select>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
 			</div>
 		</div>
 		<div
@@ -59,22 +127,25 @@
 			<div
 				class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 			>
-				<div class="col employee-name">
+				<div class="col-sm employee-name">
 					{{ 'JOBS.EMPLOYEE' | translate }}
 				</div>
-				<div class="col">{{ 'JOBS.EMPLOYEE' | translate }}</div>
-				<div class="col">{{ 'JOBS.TITLE' | translate }}</div>
-				<div class="col">{{ 'JOBS.DESCRIPTION' | translate }}</div>
-				<div class="col">{{ 'JOBS.CREATED_DATE' | translate }}</div>
-				<div class="col">{{ 'JOBS.STATUS' | translate }}</div>
-				<div class="col action">{{ 'JOBS.ACTION' | translate }}</div>
+				<div class="col-sm">{{ 'JOBS.TITLE' | translate }}</div>
+				<div class="col-sm">{{ 'JOBS.DESCRIPTION' | translate }}</div>
+				<div class="col-sm-1">
+					{{ 'JOBS.CREATED_DATE' | translate }}
+				</div>
+				<div class="col-sm-1">{{ 'JOBS.STATUS' | translate }}</div>
+				<div class="col-sm-1 action">
+					{{ 'JOBS.ACTION' | translate }}
+				</div>
 			</div>
 			<ng-template [ngIf]="jobs?.length > 0" [ngIfElse]="notFound">
 				<div
 					class="row border-bottom py-3 align-items-center"
 					*ngFor="let job of jobs"
 				>
-					<div class="col employee-name">
+					<div class="col-sm employee-name">
 						<div class="name-container">
 							<ngx-avatar
 								[name]="job?.employee?.user?.name"
@@ -83,15 +154,15 @@
 							</ngx-avatar>
 						</div>
 					</div>
-					<div class="col">{{ job?.jobPost?.title }}</div>
-					<div class="col">{{ job?.jobPost?.description }}</div>
-					<div class="col">
+					<div class="col-sm">{{ job?.jobPost?.title }}</div>
+					<div class="col-sm-3">{{ job?.jobPost?.description }}</div>
+					<div class="col-sm-1">
 						{{ job?.jobPost?.jobDateCreated | amDateFormat: 'LL' }}
 					</div>
-					<div class="col">
+					<div class="col-sm-1">
 						{{ job?.jobPost?.jobStatus | titlecase }}
 					</div>
-					<div class="col action">
+					<div class="col-sm-1 action">
 						<div class="action-button">
 							<button
 								outline
@@ -151,6 +222,15 @@
 					</div>
 				</div>
 			</ng-template>
+
+			<div class="row font-weight-bold py-3 align-items-center">
+				<div class="col text-center">
+					<button nbButton (click)="loadMore()">
+						{{ 'JOBS.LOAD_MORE' | translate }}
+					</button>
+				</div>
+			</div>
+
 			<ng-template #notFound>
 				<div class="row font-weight-bold py-3 align-items-center">
 					<div class="col text-center">

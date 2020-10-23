@@ -1,4 +1,11 @@
-export class JobPost {
+import {
+	JobPostSourceEnum,
+	JobPostStatusEnum,
+	JobPostTypeEnum
+} from '@gauzy/models';
+import { Model } from '../core/entities/base';
+
+export class JobPost extends Model {
 	jobPostId: string;
 	id?: string;
 	providerCode: string;
@@ -6,8 +13,9 @@ export class JobPost {
 	title: string;
 	description: string;
 	jobDateCreated?: string;
-	jobStatus?: string;
-	jobType?: string;
+	jobStatus?: JobPostStatusEnum;
+	jobSource?: JobPostSourceEnum;
+	jobType?: JobPostTypeEnum;
 	url?: string;
 	budget?: string;
 	duration?: string;

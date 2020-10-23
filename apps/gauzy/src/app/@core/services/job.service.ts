@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { JobPost, GetEmployeeJobPostInput } from '@gauzy/models';
+import {
+	GetEmployeeJobPostInput,
+	EmployeeJobPost,
+	Pagination
+} from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 
 @Injectable({
@@ -12,7 +16,7 @@ export class JobService {
 
 	getJobs(request?: GetEmployeeJobPostInput) {
 		return this.http
-			.get<JobPost[]>(`/api/employee-job`, {
+			.get<Pagination<EmployeeJobPost>>(`/api/employee-job`, {
 				params: request ? toParams(request) : {}
 			})
 			.pipe(first())
