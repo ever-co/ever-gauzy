@@ -1,1 +1,158 @@
-<p>matching works!</p>
+<nb-card class="jobs-page">
+	<nb-card-header class="header">
+		<h4>
+			{{
+				'JOB_MATCHING.CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING' | translate
+			}}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form">
+			<div class="row">
+				<div class="form-group col-sm-4">
+					<ga-employee-multi-select
+						[multiple]="false"
+						label="Emplyee"
+						formControlName="employeeId"
+					>
+					</ga-employee-multi-select>
+				</div>
+
+				<div class="form-group col-sm-4">
+					<label class="d-block">Source</label>
+					<nb-select
+						placeholder="Source"
+						class="w-100"
+						formControlName="jobSource"
+					>
+						<nb-option
+							*ngFor="let source of JobPostSourceEnum | keyvalue"
+							[value]="source.value"
+						>
+							{{ source.value | titlecase }}</nb-option
+						>
+					</nb-select>
+				</div>
+
+				<div class="form-group col-sm-4">
+					<label class="d-block">Preset</label>
+					<nb-select
+						placeholder="Source"
+						class="w-100"
+						formControlName="jobSource"
+					>
+						<nb-option
+							*ngFor="let preset of presets"
+							[value]="preset.value"
+						>
+							{{ preset.value | titlecase }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+
+			<div class="row align-items-center my-3">
+				<h6 class="col m-0">Criterias</h6>
+				<div class="col-auto">
+					<button
+						nbButton
+						status="primary"
+						(click)="addNewCriterias()"
+					>
+						<nb-icon icon="plus-outline"></nb-icon>Add New
+					</button>
+				</div>
+			</div>
+			<div formArrayName="criterias">
+				<div
+					class="card my-3 p-4"
+					*ngFor="let item of criterias.controls; let index = index"
+					[formGroupName]="index"
+				>
+					<div class="row">
+						<div class="col-auto">
+							<h6>{{ index + 1 }}</h6>
+						</div>
+						<div class="col-sm">
+							<div class="form-group">
+								<label class="d-block">Keywords</label>
+								<ng-select
+									[addTag]="createNewKeyword"
+									formControlName="keywords"
+									[clearable]="true"
+									[items]="keywords"
+									placeholder="Select Keywords"
+								>
+								</ng-select>
+							</div>
+							<div class="form-group">
+								<label class="d-block">Categories</label>
+								<ng-select
+									[addTag]="createNewCategories"
+									formControlName="categories"
+									[clearable]="true"
+									[items]="categories"
+									placeholder="Select Categories"
+								>
+								</ng-select>
+							</div>
+							<div class="form-group">
+								<label class="d-block">Occupations</label>
+								<ng-select
+									[addTag]="createNewOccupations"
+									formControlName="occupations"
+									[clearable]="true"
+									[items]="occupations"
+									placeholder="Select Occupations"
+								>
+								</ng-select>
+							</div>
+
+							<div class="row">
+								<div class="col-sm">
+									<div class="row">
+										<div class="col-sm-4">
+											<nb-checkbox
+												formControlName="fixPrice"
+												>Fix Price</nb-checkbox
+											>
+										</div>
+										<div class="col-sm-4">
+											<nb-checkbox
+												formControlName="hourly"
+												>Hourly</nb-checkbox
+											>
+										</div>
+									</div>
+								</div>
+
+								<div class="col-auto">
+									<button
+										nbButton
+										status="danger"
+										*ngIf="criterias.controls.length > 1"
+										(click)="deleteCriteria(index)"
+									>
+										<nb-icon icon="trash-outline"></nb-icon>
+										Delete
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row align-items-center my-3">
+				<div class="ml-auto col-auto">
+					<button
+						nbButton
+						status="primary"
+						(click)="addNewCriterias()"
+					>
+						<nb-icon icon="plus-outline"></nb-icon>Add New
+					</button>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>

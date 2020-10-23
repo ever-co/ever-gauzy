@@ -1622,6 +1622,9 @@
 		"JOB_SEARCH": "Job Search",
 		"LOAD_MORE": "Load More"
 	},
+	"JOB_MATCHING": {
+		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching"
+	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
 		"SPRINT_UPDATED": "Sprint updated",
