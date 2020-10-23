@@ -264,11 +264,9 @@ export class ApprovalsComponent
 		if (!this.organization) {
 			return;
 		}
-		const { tenantId } = this.organization;
 		if (params.isApproval) {
 			const request = await this.approvalRequestService.approvalRequestByAdmin(
-				params.data.id,
-				tenantId
+				params.data.id
 			);
 			if (request) {
 				this.toastrService.primary(
@@ -281,8 +279,7 @@ export class ApprovalsComponent
 			this.loadSettings();
 		} else {
 			const request = await this.approvalRequestService.refuseRequestByAdmin(
-				params.data.id,
-				tenantId
+				params.data.id
 			);
 			if (request) {
 				this.toastrService.primary(
